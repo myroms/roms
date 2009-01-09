@@ -186,6 +186,12 @@
       ncFWDid(ng)=ncHISid(ng)
 #   endif
 #  endif
+#  ifdef ADJUST_BOUNDARY
+!
+!  Initialize open boundary counter for storage arrays.
+!
+      OBCcount(ng)=0
+#  endif
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
@@ -233,7 +239,7 @@
 # else
         CALL get_grid (ng, iADM)
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iADM, exit_flag, 1)
+        CALL mp_bcasti (ng, iADM, exit_flag)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -452,14 +458,14 @@
 #  ifdef INI_FILE
       CALL get_state (ng, iADM, 1, IADname(ng), IniRec, Tindex)
 #   ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iADM, exit_flag, 1)
+      CALL mp_bcasti (ng, iADM, exit_flag)
 #   endif
       IF (exit_flag.ne.NoError) RETURN
 #  else
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iADM, 1, IADname(ng), IniRec, Tindex)
 #   ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iADM, exit_flag, 1)
+        CALL mp_bcasti (ng, iADM, exit_flag)
 #   endif
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -541,7 +547,7 @@
 # endif
       CALL ad_get_data (ng)
 #  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iADM, exit_flag, 1)
+      CALL mp_bcasti (ng, iADM, exit_flag)
 #  endif
       IF (exit_flag.ne.NoError) RETURN
 

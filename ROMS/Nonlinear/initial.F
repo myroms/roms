@@ -65,7 +65,8 @@
 
       integer :: LBi, UBi, LBj, UBj
       integer :: IniRec, Tindex, subs, tile, thread
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_BOUNDARY || \
+    defined ADJUST_STFLUX   || defined ADJUST_WSTRESS
       integer :: irec
 #endif
       integer :: my_numthreads
@@ -159,7 +160,7 @@
         LdefHIS(ng)=.TRUE.    
         CALL def_ini (ng)
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
         IniRec=nrrec(ng)
@@ -168,6 +169,12 @@
         IniRec=tINIindx(ng)
       END IF
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Initialize open boundary counter for storage arrays.
+!
+      OBCcount(ng)=0
+# endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
@@ -231,7 +238,7 @@
 #else
         CALL get_grid (ng, iNLM)
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         if (exit_flag.ne.NoError) RETURN
 #endif
@@ -417,7 +424,7 @@
 !
       CALL get_state (ng, iNLM, 1, INIname(ng), IniRec, Tindex)
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+      CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
 #else
@@ -427,7 +434,7 @@
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, 0, 1, INIname(ng), IniRec, Tindex)
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -509,6 +516,18 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 
+# ifdef ADJUST_BOUNDARY
+!
+!  If first pass of iteration loop, set time of open boundary
+!  adjustment.
+!
+      IF (Nrun.eq.ERstr) THEN
+        OBC_time(1,ng)=time(ng)
+        DO irec=2,Nbrec(ng)
+          OBC_time(irec,ng)=OBC_time(irec-1,ng)+nOBC(ng)*dt(ng)
+        END DO
+      END IF
+# endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  If first pass of iteration loop, set time of surface forcing
@@ -530,7 +549,7 @@
 # endif
       CALL get_data (ng)
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+      CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
 #endif
@@ -546,7 +565,7 @@
         FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
       END IF

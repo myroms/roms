@@ -77,7 +77,7 @@
       SUBROUTINE sediment (ng, tile)
 !***********************************************************************
 !
-# if defined BED_COHESIVE
+# if defined COHESIVE_BED
 !!    USE sed_bed_cohesive_mod, ONLY : sed_bed_cohesive
 # else
       USE sed_bed_mod, ONLY : sed_bed
@@ -126,7 +126,7 @@
 !  Compute sediment bed stratigraphy.
 !-----------------------------------------------------------------------
 !
-# if defined BED_COHESIVE
+# if defined COHESIVE_BED
 !!    CALL sed_bed_cohesive (ng, tile)
 # else
       CALL sed_bed (ng, tile)

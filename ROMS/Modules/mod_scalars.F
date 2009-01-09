@@ -650,6 +650,14 @@
 #endif
         real(r8), parameter :: jul_off = 2440000.0_r8
 !
+!  Set special check value.  Notice that a smaller value is assigned
+!  to account for both NetCDF fill value and roundoff. There are
+!  many Matlab scripts out there that do not inquire correctly
+!  the spval from the _FillValue attribute in single/double
+!  precision.
+!
+        real(r8), parameter :: spval_check = 1.0E+35_r8
+!
 !-----------------------------------------------------------------------
 !  Horizontal and vertical constant mixing coefficients.
 !-----------------------------------------------------------------------
@@ -716,7 +724,6 @@
         logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
         logical, dimension(Ngrids) :: LdefLCZ    ! Lanczos file
         logical, dimension(Ngrids) :: LdefMOD    ! 4DVAR file
-        logical, dimension(Ngrids) :: LdefNRM    ! Norm file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
         logical, dimension(Ngrids) :: LdefSTA    ! Stations file
         logical, dimension(Ngrids) :: LdefTIDE   ! tide forcing file
@@ -727,11 +734,13 @@
         logical, dimension(Ngrids) :: LwrtAVG    ! Write average file
         logical, dimension(Ngrids) :: LwrtDIA    ! Write diagnostic file
         logical, dimension(Ngrids) :: LwrtHIS    ! Write history file
-        logical, dimension(Ngrids) :: LwrtNRM    ! Write norm file
         logical, dimension(Ngrids) :: LwrtPER    ! Write during ensemble
         logical, dimension(Ngrids) :: LwrtRST    ! Write restart file
         logical, dimension(Ngrids) :: LwrtTLM    ! Write tangent file
         logical, dimension(Ngrids) :: LwrtTLF    ! Write impulse file
+
+        logical, dimension(4,Ngrids) :: LdefNRM  ! Norm file
+        logical, dimension(4,Ngrids) :: LwrtNRM  ! Write norm file
 !
 !  Switch to write out adjoint 2D state arrays instead of IO solution
 !  arrays and adjoint ocean time. This is used in 4DVAR for IO
@@ -790,15 +799,45 @@
         integer, dimension(Ngrids) :: NrecINI    ! NLM Initial file
         integer, dimension(Ngrids) :: NrecITL    ! TLM Initial file
         integer, dimension(Ngrids) :: NrecLCZ    ! Lanczos file
-        integer, dimension(Ngrids) :: NrecNRM    ! norm file
         integer, dimension(Ngrids) :: NrecRST    ! Restart file
         integer, dimension(Ngrids) :: NrecSTA    ! Station file
         integer, dimension(Ngrids) :: NrecTLM    ! Tangent linear file
+
+        integer, dimension(4,Ngrids) :: NrecNRM  ! norm file
 !
 !  Number of timesteps between print of single line information to
 !  standard output.
 !
         integer, dimension(Ngrids) :: ninfo
+!
+!  Number of timesteps between 4DVAR adjustment of open boundaries.
+!  In strong constraint 4DVAR, it is possible to open bounadies at
+!  other intervals in addition to initial time. These parameters are
+!  used to store the appropriate number of open boundary records in
+!  output history NetCDF files.
+!
+!    Nbrec(:) = 1 + ntimes(:) / nOBC(:)
+!
+!  Here, it is assumed that nOBC is a multiple of NTIMES or greater
+!  than NTIMES. If nOBC > NTIMES, only one record is stored in the
+!  output history NetCDF files and the adjustment is for constant
+!  open boundaries with constant correction.
+!
+        integer, dimension(Ngrids) :: nOBC       ! number of timesteps
+        integer, dimension(Ngrids) :: Nbrec      ! number of records
+        integer, dimension(Ngrids) :: OBCcount   ! record counter
+
+#ifdef ADJUST_BOUNDARY
+!
+!  Logical switch to process open boundary arrays during 4DVar
+!  adjustments.
+!
+        logical, allocatable :: Lobc(:,:,:)
+!
+!  Time (s) of surface forcing adjustment.
+!
+        real(r8), allocatable :: OBC_time(:,:)
+#endif
 !
 !  Number of timesteps between adjustment of 4DVAR surface forcing
 !  fields. In strong constraint 4DVAR, it is possible to adjust surface
@@ -860,7 +899,6 @@
 !  field records are saved.
 !
         logical, dimension(Ngrids) :: LcycleADJ
-        logical, dimension(Ngrids) :: LcycleINI
         logical, dimension(Ngrids) :: LcycleRST
         logical, dimension(Ngrids) :: LcycleTLM
 
@@ -915,14 +953,15 @@
 !
         integer :: MstateVar
 !
-!  Logical switches to compute correlation normalization coefficients
-!  for each state variable.
+!  Logical switch to compute initial conditions, model and surface
+!  forcing error covariance normalization factors.
 !
-        logical,  allocatable :: Cnorm(:)
+        logical,  allocatable :: Cnorm(:,:)
 !
-!  Weak constraint scale factor for the forcing error covariance matrix.
+!  Logical switch to compute boundary conditions error covariance
+!  normalization factors.
 !
-        real(r8),  allocatable :: Cfscale(:,:)
+        logical,  allocatable :: CnormB(:,:)
 !
 !  Logical switches to process weak constraint forcing as intermittent
 !  or continuous impulses.
@@ -937,10 +976,26 @@
         real(r8) :: Hgamma = 0.5
         real(r8) :: Vgamma = 0.1
 !
-! Covariance horizontal and vertical decorrelation scale (m).
+!  Initial conditions, model and surface forcing error covariance
+!  horizontal decorrelation scales (m).
 !
-        real(r8), allocatable :: Hdecay(:,:)
-        real(r8), allocatable :: Vdecay(:,:)
+        real(r8), allocatable :: Hdecay(:,:,:)
+!
+!  Initial conditions, model and surface forcing error covariance
+!  vertical decorrelation scales (m).
+!
+        real(r8), allocatable :: Vdecay(:,:,:)
+
+!
+!  Boundary conditions error covariance horizontal decorrelation
+!  scales (m).
+!
+        real(r8), allocatable :: HdecayB(:,:,:)
+!
+!  Boundary conditions error covariance vertical decorrelation
+!  scales (m).
+!
+        real(r8), allocatable :: VdecayB(:,:,:)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1648,10 +1703,18 @@
       allocate ( EobsTmax(MT,Ngrids) )
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
-      allocate ( Cnorm(MstateVar) )
-      allocate ( Cfscale(MstateVar,Ngrids) )
-      allocate ( Hdecay(MstateVar,Ngrids) )
-      allocate ( Vdecay(MstateVar,Ngrids) )
+      allocate ( Cnorm(2,MstateVar) )
+
+      allocate ( Hdecay(2,MstateVar,Ngrids) )
+      allocate ( Vdecay(2,MstateVar,Ngrids) )
+
+      allocate ( CnormB(MstateVar,4) )
+
+      allocate ( HdecayB(MstateVar,4,Ngrids) )
+      allocate ( VdecayB(MstateVar,4,Ngrids) )
+#endif
+#ifdef ADJUST_BOUNDARY
+      allocate ( Lobc(4,MstateVar,Ngrids) )
 #endif
 !
 !---------------------------------------------------------------------
@@ -1925,13 +1988,28 @@
         Lassimilate(ng)=.TRUE.
         Lbiology(ng)=.TRUE.
         LcycleADJ(ng)=.FALSE.
-        LcycleINI(ng)=.FALSE.
         LcycleRST(ng)=.FALSE.
         LcycleTLM(ng)=.FALSE.
         Lfloats(ng)=.TRUE.
         Lsediment(ng)=.TRUE.
         Lstations(ng)=.TRUE.
       END DO
+
+#ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Initilize switches to process open boundary arrays for 4DVar
+!  adjustments.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        DO j=1,MstateVar
+          DO i=1,4
+            Lobc(i,j,ng)=.FALSE.
+          END DO
+        END DO
+      END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize several scalar variables.
@@ -1945,6 +2023,9 @@
         gamma2(ng)=-1.0_r8
 #if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
         Hcount(ng)=0
+#endif
+#ifdef ADJUST_BOUNDARY
+        OBCcount(ng)=0
 #endif
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         SFcount(ng)=0
@@ -1980,6 +2061,19 @@
 !
       lmd_Cg=lmd_Cstar*                                                 &
      &       vonKar*(lmd_cs*vonKar*lmd_epsilon)**(1.0_r8/3.0_r8)
+#endif
+
+#if defined FOUR_DVAR || defined VERIFICATION
+!
+!  Initialize error covariace variables.
+!
+      Cnorm=.FALSE.
+      Hdecay=IniVal
+      Vdecay=IniVal
+
+      CnormB=.FALSE.
+      HdecayB=IniVal
+      VdecayB=IniVal
 #endif
 !
 !  Initialize several IO flags.
@@ -2027,11 +2121,12 @@
         NrecFLT(ng)=0
         NrecINI(ng)=0
         NrecITL(ng)=0
-        NrecNRM(ng)=0
         NrecHIS(ng)=0
         NrecRST(ng)=0
         NrecSTA(ng)=0
         NrecTLM(ng)=0
+
+        NrecNRM(1:4,ng)=0
 
       END DO
 

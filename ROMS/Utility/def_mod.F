@@ -52,7 +52,9 @@
       real(r8) :: Aval(6)
 
       character (len=80) :: Vinfo(Natt)
-      character (len=80) :: ncname
+      character (len=80) :: ncname, type
+!
+      SourceFile='def_mod.F'
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
@@ -85,21 +87,11 @@
 !=======================================================================
 !
       DEFINE : IF (LdefMOD(ng)) THEN
-        IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), CMODE, ncMODid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_create (ng, iNLM, TRIM(ncname), ncMODid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          IF (Master) WRITE (stdout,30) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncSTAid(ng), 1)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Define dimensions.
@@ -313,7 +305,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -807,7 +799,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
       END IF DEFINE
@@ -831,21 +823,11 @@
 !
 !  Open model/observation for read/write.
 !
-        IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncMODid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,60) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, iNLM, ncname, 1, ncMODid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,60) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncMODid(ng), 1)
-# endif
 !
 !  Initialize logical switches.
 !

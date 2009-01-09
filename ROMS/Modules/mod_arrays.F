@@ -19,7 +19,9 @@
 #ifdef AVERAGES
       USE mod_average, ONLY : allocate_average, initialize_average
 #endif
+#ifdef OBC
       USE mod_boundary, ONLY : allocate_boundary, initialize_boundary
+#endif
 #if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
     defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
@@ -76,7 +78,9 @@
 #ifdef AVERAGES
           CALL allocate_average (ng, LBi, UBi, LBj, UBj)
 #endif
+#ifdef OBC
           CALL allocate_boundary (ng)
+#endif
 #ifdef BBL_MODEL
           CALL allocate_bbl (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -126,7 +130,9 @@
 #ifdef BBL_MODEL
             CALL initialize_bbl (ng, TILE)
 #endif
-            CALL initialize_boundary (ng, TILE)
+#ifdef OBC
+            CALL initialize_boundary (ng, TILE, model)
+#endif
 #if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
     defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI

@@ -47,6 +47,8 @@
 # endif
       character (len=1) :: lchar(5)
 !
+      SourceFile='wrt_gst.F'
+!
 !-----------------------------------------------------------------------
 !  Write out checkpointing information variables.
 !-----------------------------------------------------------------------
@@ -284,26 +286,13 @@
 !  is available to other processes.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncGSTid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(GSTname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, model, GSTname(ng), ncGSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-      IF (Master) THEN
-        WRITE (stdout,20) Nrun+1
-      END IF
+      IF (Master) WRITE (stdout,10) Nrun+1
 !
-  10  FORMAT (/,' WRT_GST - unable to synchronize to disk GST restart', &
-     &        ' file:',/,11x,a)
-  20  FORMAT (6x,'WRT_GST   - wrote GST checkpointing fields at ',      &
-     &           'iteration: ', i5.5)
+  10  FORMAT (6x,'WRT_GST   - wrote GST checkpointing fields at ',      &
+     &        'iteration: ', i5.5)
 
       RETURN
       END SUBROUTINE wrt_gst

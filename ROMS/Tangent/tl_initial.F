@@ -44,6 +44,9 @@
       USE ini_lanczos_mod, ONLY : ini_lanczos
 # endif
       USE metrics_mod, ONLY : metrics
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary, ONLY : initialize_boundary
+# endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces, ONLY : initialize_forces
 # endif
@@ -204,6 +207,12 @@
 !
       IniRec=tITLindx(ng)
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Initialize open boundary counter for storage arrays.
+!
+      OBCcount(ng)=0
+# endif
 #   if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
@@ -270,7 +279,7 @@
 # else
         CALL get_grid (ng, iTLM)
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -383,10 +392,13 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL initialize_ocean (ng, TILE, iTLM)
+#    ifdef ADJUST_BOUNDARY
+            CALL initialize_boundary (ng, TILE, iTLM)
+#    endif
 #    if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
             CALL initialize_forces (ng, TILE, iTLM)
 #    endif
+            CALL initialize_ocean (ng, TILE, iTLM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -632,7 +644,7 @@
 # endif
       CALL tl_get_data (ng)
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+      CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
 

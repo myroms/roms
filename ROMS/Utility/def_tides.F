@@ -61,6 +61,8 @@
       character (len=80) :: Vinfo(Natt)
       character (len=80) :: ncname
 !
+      SourceFile='def_tides.F'
+!
 !=======================================================================
 !  Open existing tidal forcing file and define new variables.
 !=======================================================================
@@ -137,21 +139,13 @@
 !
 !  Open existing tidal forcing file.
 !
-        IF (Ldefine.and.OutThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncTIDEid(ng))
-          IF (status.ne.nf90_noerr) THEN
+        IF (Ldefine) THEN
+          CALL netcdf_open (ng, iNLM, ncname, 1, ncTIDEid(ng))
+          IF (exit_flag.ne.NoError) THEN
             WRITE (stdout,10) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
+            RETURN
           END IF
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncTIDEid(ng), 1)
-# endif
 !
 !  Put existing file into define mode so new variables can be added.
 !
@@ -164,7 +158,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -457,7 +451,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
       END IF DEFINE
@@ -481,21 +475,11 @@
 !
 !  Open tidal forcing file for read/write.
 !
-        IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncTIDEid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, iNLM, ncname, 1, ncTIDEid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncTIDEid(ng), 1)
-# endif
 !
 !  Initialize logical switches.
 !

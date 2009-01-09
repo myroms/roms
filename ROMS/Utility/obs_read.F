@@ -38,6 +38,8 @@
       integer :: Mstr, Mend
       integer :: i, iobs, itrc, status
 !
+      SourceFile='obs_read.F'
+!
 !---------------------------------------------------------------------
 !  Read observation variables needed for interpolating the model
 !  state at the observation locations.

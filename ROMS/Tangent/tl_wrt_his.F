@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+# endif
 # ifdef SOLVE3D
       USE mod_coupling
 # endif
@@ -36,9 +39,6 @@
 # endif
       USE mod_stepping
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -53,6 +53,9 @@
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
+# ifdef ADJUST_BOUNDARY
+      integer :: IorJ, LBij, UBij
+# endif
       integer :: gfactor, gtype, status
 # ifdef SOLVE3D
       integer :: i, itrc, j, k, tile
@@ -64,6 +67,13 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+# ifdef ADJUST_BOUNDARY
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij
+      IorJ=IOBOUNDS(ng)%IorJ
+# endif
+!
+      SourceFile='tl_wrt_his.F'
 !
 !-----------------------------------------------------------------------
 !  Write out tangent linear fields.
@@ -216,8 +226,25 @@
         END IF
 # endif
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component (m/s) in the XI-direction.
+!  Write out free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isFsur))),            &
+     &                        BOUNDARY(ng)% tl_zeta_obc(LBij:,:,:,      &
+     &                                                  KOUT),          &
+     &                        (/1,1,1,tTLMindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncTLMid(ng),                       &
+     &                        varid = tlmVid(idSbry(isFsur),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D U-momentum component (m/s).
 !
       IF (Hout(idUbar,ng)) THEN
         scale=1.0_r8
@@ -306,8 +333,25 @@
 #  endif
 # endif
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component (m/s) in the ETA-direction.
+!  Write out 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUbar))),            &
+     &                        BOUNDARY(ng)% tl_ubar_obc(LBij:,:,:,      &
+     &                                                  KOUT),          &
+     &                        (/1,1,1,tTLMindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncTLMid(ng),                       &
+     &                        varid = tlmVid(idSbry(isUbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D V-momentum component (m/s).
 !
       IF (Hout(idVbar,ng)) THEN
         scale=1.0_r8
@@ -396,9 +440,26 @@
 #  endif
 # endif
       END IF
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Write out 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVbar))),            &
+     &                        BOUNDARY(ng)% tl_vbar_obc(LBij:,:,:,      &
+     &                                                  KOUT),          &
+     &                        (/1,1,1,tTLMindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncTLMid(ng),                       &
+     &                        varid = tlmVid(idSbry(isVbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
 # ifdef SOLVE3D
 !
-!  Write out 3D momentum component (m/s) in the XI-direction.
+!  Write out 3D U-momentum component (m/s).
 !
       IF (Hout(idUvel,ng)) THEN
         scale=1.0_r8
@@ -436,8 +497,25 @@
         END IF
 #  endif
       END IF
+
+#  ifdef ADJUST_BOUNDARY
 !
-!  Write out 3D momentum component (m/s) in the ETA-direction.
+!  Write out 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUvel))),            &
+     &                        BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,      &
+     &                                                NOUT),            &
+     &                        (/1,1,1,1,tTLMindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncTLMid(ng),                       &
+     &                        varid = tlmVid(idSbry(isUvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+!
+!  Write out 3D V-momentum component (m/s).
 !
       IF (Hout(idVvel,ng)) THEN
         scale=1.0_r8
@@ -475,6 +553,23 @@
         END IF
 #  endif
       END IF
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVvel))),            &
+     &                        BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,      &
+     &                                                NOUT),            &
+     &                        (/1,1,1,1,tTLMindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncTLMid(ng),                       &
+     &                        varid = tlmVid(idSbry(isVvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
 !
 !  Write out tracer type variables.
 !
@@ -500,6 +595,25 @@
           END IF
         END IF
       END DO
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out tracers open boundaries.
+!
+      DO itrc=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                  &
+     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,    &
+     &                                                  NOUT,itrc),     &
+     &                          (/1,1,1,1,tTLMindx(ng),itrc/),          &
+     &                          (/IorJ,N(ng),4,Nbrec(ng),1,1/),         &
+     &                          ncid = ncTLMid(ng),                     &
+     &                          varid = tlmVid(idSbry(isTvar(itrc)),ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+#  endif
 !
 !  Write out density anomaly.
 !
@@ -715,38 +829,28 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncTLMid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(TLMname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, iTLM, TLMname(ng), ncTLMid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
 # ifdef SOLVE3D
-      IF (Master) WRITE (stdout,30) KOUT, NOUT, tTLMindx(ng)
+      IF (Master) WRITE (stdout,20) KOUT, NOUT, tTLMindx(ng)
 # else
-      IF (Master)  WRITE (stdout,30) KOUT, tTLMindx(ng)
+      IF (Master)  WRITE (stdout,20) KOUT, tTLMindx(ng)
 # endif
 !
   10  FORMAT (/,' TL_WRT_HIS - error while writing variable: ',a,/,14x, &
      &        'into tangent NetCDF file for time record: ',i4)
-  20  FORMAT (/,' TL_WRT_HIS - unable to synchronize to disk tangent ', &
-     &        'linear file:',/,14x,a)
+
 # ifdef SOLVE3D
-  30  FORMAT (3x,'TL_WRT_HIS   - wrote tangent  fields (Index=', i1,    &
+  20  FORMAT (3x,'TL_WRT_HIS   - wrote tangent  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)
 # else
-  30  FORMAT (3x,'TL_WRT_HIS   - wrote tangent  fields (Index=', i1,    &
+  20  FORMAT (3x,'TL_WRT_HIS   - wrote tangent  fields (Index=', i1,    &
      &        ') into time record = ',i7.7)
 # endif
-      RETURN
-      END SUBROUTINE tl_wrt_his
+
 #else
       SUBROUTINE tl_wrt_his
+#endif
       RETURN
       END SUBROUTINE tl_wrt_his
-#endif

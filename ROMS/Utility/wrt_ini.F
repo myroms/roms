@@ -34,9 +34,6 @@
 # endif
       USE mod_stepping
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -59,6 +56,8 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+      SourceFile='wrt_ini.F'
 !
 !-----------------------------------------------------------------------
 !  Write out initial conditions.
@@ -148,6 +147,7 @@
         ioerror=status
         RETURN
       END IF
+
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
@@ -211,6 +211,7 @@
           RETURN
         END IF
       END DO
+
 #  if defined BVF_MIXING  || defined GLS_MIXING || \
       defined MY25_MIXING || defined LMD_MIXING
 !
@@ -258,6 +259,7 @@
           RETURN
         END IF
       END IF
+
 #   ifdef SALINITY
 !
 !  If defined, write out vertical diffusion coefficient for salinity.
@@ -290,46 +292,37 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncINIid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(INIname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, iNLM, INIname(ng), ncINIid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
       IF (Master) THEN
 # ifdef SOLVE3D
-        WRITE (stdout,30) Nrun, Tindex, Tindex, tINIindx(ng)
+        WRITE (stdout,20) Nrun, Tindex, Tindex, tINIindx(ng)
 # else
-        WRITE (stdout,30) Nrun, Tindex, tINIindx(ng)
+        WRITE (stdout,20) Nrun, Tindex, tINIindx(ng)
 # endif
       END IF
 !
   10  FORMAT (/,' WRT_INI - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_INI - unable to synchronize to disk initial ',    &
-     &        'file:',/,11x,a)
 # ifdef SOLVE3D
-  30  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
+  20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
      &           ', Index=',i1,',',i1,', Rec=',i4.4,')')
 # else
-  30  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
+  20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
      &           ', Index=',i1,', Rec=',i4.4,')')
 # endif
       RETURN
       END SUBROUTINE wrt_ini
 
-# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+# if defined ADJUST_BOUNDARY || \
+     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
       SUBROUTINE wrt_frc (ng, Tindex, OutRec)
 !
 !=======================================================================
 !                                                                      !
-!  This routine writes surface forcing background state into initial   !
-!  conditions NetCDF file.                                             !
+!  This routine writes surface forcing and/or open boundary background !
+!  state into nonlinear model initial conditions NetCDF file.          !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -341,17 +334,19 @@
 !
       USE mod_param
       USE mod_parallel
+#  if defined ADJUST_BOUNDARY
+      USE mod_boundary
+#  endif
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       USE mod_forces
       USE mod_grid
+#  endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
       USE mod_stepping
 !
-#  ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#  endif
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 !
       implicit none
@@ -362,15 +357,30 @@
 !
 !  Local variable declarations.
 !
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       integer :: LBi, UBi, LBj, UBj
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      integer :: IorJ, LBij, UBij
+#  endif
+
       integer :: gfactor, gtype, i, itrc, status
 
       real(r8) :: scale
 !
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij
+      IorJ=IOBOUNDS(ng)%IorJ
+#  endif
+!
+      SourceFile='wrt_ini.F, wrt_frc'
 !
 !-----------------------------------------------------------------------
 !  Write out initial conditions.
@@ -385,6 +395,102 @@
       gfactor=-1
 #  else
       gfactor=1
+#  endif
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out open boundary fields. Notice that these fields have their
+!  own fixed time-dimension (of size Nbrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+!  Write out free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isFsur))),            &
+     &                        BOUNDARY(ng) % zeta_obc(LBij:,:,:,        &
+     &                                                Tindex),          &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isFsur),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUbar))),            &
+     &                        BOUNDARY(ng)% ubar_obc(LBij:,:,:,         &
+     &                                               Tindex),           &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isUbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVbar))),            &
+     &                        BOUNDARY(ng) % vbar_obc(LBij:,:,:,        &
+     &                                                Tindex),          &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isVbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+
+#   ifdef SOLVE3D
+!
+!  Write out 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUvel))),            &
+     &                        BOUNDARY(ng) % u_obc(LBij:,:,:,:,         &
+     &                                             Tindex),             &
+     &                        (/1,1,1,1,OutRec/),                       &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isUvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVvel))),            &
+     &                        BOUNDARY(ng) % v_obc(LBij:,:,:,:,         &
+     &                                             Tindex),             &
+     &                        (/1,1,1,1,OutRec/),                       &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isVvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D tracers open boundaries.
+!
+      DO itrc=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                  &
+     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          BOUNDARY(ng) % t_obc(LBij:,:,:,:,       &
+     &                                               Tindex,itrc),      &
+     &                          (/1,1,1,1,OutRec,itrc/),                &
+     &                          (/IorJ,N(ng),4,Nbrec(ng),1,1/),         &
+     &                          ncid = ncINIid(ng),                     &
+     &                          varid = iniVid(idSbry(isTvar(itrc)),ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+#   endif
 #  endif
 
 #  ifdef ADJUST_WSTRESS
@@ -470,26 +576,16 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncINIid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(INIname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#  endif
+      CALL netcdf_sync (ng, iNLM, INIname(ng), ncINIid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
       IF (Master) THEN
-        WRITE (stdout,30) Nrun, Tindex, OutRec
+        WRITE (stdout,20) Nrun, Tindex, OutRec
       END IF
 !
   10  FORMAT (/,' WRT_FRC - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_FRC - unable to synchronize to disk initial ',    &
-     &        'file:',/,11x,a)
-  30  FORMAT (6x,'WRT_FRC   - wrote initial  fields (Iter=',i4.4,       &
+  20  FORMAT (6x,'WRT_FRC   - wrote initial  fields (Iter=',i4.4,       &
      &           ', Index=',i1,', Rec=',i4.4,')')
 
       RETURN
@@ -499,8 +595,8 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine writes surface forcing background state into initial   !
-!  conditions NetCDF file.                                             !
+!  This routine writes surface forcing and/or open boundary fields     !
+!  into initial conditions NetCDF file.                                !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -512,17 +608,19 @@
 !
       USE mod_param
       USE mod_parallel
+#  if defined ADJUST_BOUNDARY
+      USE mod_boundary
+#  endif
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       USE mod_forces
       USE mod_grid
+#  endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
       USE mod_stepping
 !
-#  ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#  endif
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 !
       implicit none
@@ -533,15 +631,29 @@
 !
 !  Local variable declarations.
 !
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       integer :: LBi, UBi, LBj, UBj
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      integer :: IorJ, LBij, UBij
+#  endif
       integer :: gfactor, gtype, i, itrc, status
 
       real(r8) :: scale
 !
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij
+      IorJ=IOBOUNDS(ng)%IorJ
+#  endif
+!
+      SourceFile='wrt_ini.F, wrt_frc_AD'
 !
 !-----------------------------------------------------------------------
 !  Write out initial conditions.
@@ -556,6 +668,102 @@
       gfactor=-1
 #  else
       gfactor=1
+#  endif
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out open boundary fields. Notice that these fields have their
+!  own fixed time-dimension (of size Nbrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+!  Write out free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isFsur))),            &
+     &                        BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,     &
+     &                                                   Tindex),       &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isFsur),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUbar))),            &
+     &                        BOUNDARY(ng)% ad_ubar_obc(LBij:,:,:,      &
+     &                                                  Tindex),        &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isUbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVbar))),            &
+     &                        BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,     &
+     &                                                   Tindex),       &
+     &                        (/1,1,1,OutRec/),                         &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isVbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+
+#   ifdef SOLVE3D
+!
+!  Write out 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUvel))),            &
+     &                        BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,      &
+     &                                                Tindex),          &
+     &                        (/1,1,1,1,OutRec/),                       &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isUvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVvel))),            &
+     &                        BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,      &
+     &                                                Tindex),          &
+     &                        (/1,1,1,1,OutRec/),                       &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncINIid(ng),                       &
+     &                        varid = iniVid(idSbry(isVvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D tracers open boundaries.
+!
+      DO itrc=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                  &
+     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,    &
+     &                                                  Tindex,itrc),   &
+     &                          (/1,1,1,1,OutRec/),                     &
+     &                          (/IorJ,N(ng),4,Nbrec(ng),1/),           &
+     &                          ncid = ncINIid(ng),                     &
+     &                          varid = iniVid(idSbry(isTvar(itrc)),ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+#   endif
 #  endif
 
 #  ifdef ADJUST_WSTRESS
@@ -637,26 +845,16 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncINIid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(INIname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#  endif
+      CALL netcdf_sync (ng, iNLM, INIname(ng), ncINIid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
       IF (Master) THEN
-        WRITE (stdout,30) Nrun, Tindex, OutRec
+        WRITE (stdout,20) Nrun, Tindex, OutRec
       END IF
 !
   10  FORMAT (/,' WRT_FRC_AD - error while writing variable: ',a,/,11x, &
      &        'into initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_FRC_AD - unable to synchronize to disk initial ', &
-     &        'file:',/,11x,a)
-  30  FORMAT (6x,'WRT_FRC_AD   - wrote initial  fields (Iter=',i4.4,    &
+  20  FORMAT (6x,'WRT_FRC_AD   - wrote initial  fields (Iter=',i4.4,    &
      &           ', Index=',i1,', Rec=',i4.4,')')
 
       RETURN

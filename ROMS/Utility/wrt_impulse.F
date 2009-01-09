@@ -59,12 +59,14 @@
       integer :: Iinp, Iout, Irec, MyType, Nrec
       integer :: INPncid, INPvid
       integer :: i, gtype, status, varid
-      integer :: Vsize(4)
+      integer :: ibuffer(2), Vsize(4)
 
       real(r8) :: Fmin, Fmax, scale
       real(r8) :: inp_time(1)
 
 # include "set_bounds.h"
+!
+      SourceFile='wrt_impulse.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -100,19 +102,11 @@
 !
 !  Open input NetCDF file.
 !
-      IF (InpThread) THEN
-        status=nf90_open(TRIM(INPncname), nf90_nowrite, INPncid)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(INPncname)
-          exit_flag=2
-          ioerror=status
-        END IF
+      CALL netcdf_open (ng, model, INPncname, 0, INPncid)
+      IF (exit_flag.ne.NoError) THEN
+        WRITE (stdout,10) TRIM(INPncname)
+        RETURN
       END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, INPncid, 1)
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-      IF (exit_flag.ne.NoError) RETURN
 !
 !  Process each record in input adjoint NetCDF except last. Note that
 !  the adjoint records are processed backwards (Nrec-1:1) and written
@@ -449,7 +443,7 @@
         END IF
       END IF
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag)
 # endif
       IF (Master)  WRITE (stdout,60) Nrec-1, TRIM(TLFname(ng))
 !

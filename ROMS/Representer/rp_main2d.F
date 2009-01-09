@@ -25,9 +25,6 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : load_TLforcing
-# endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
@@ -38,7 +35,13 @@
 !!    USE oi_update_mod, ONLY : oi_update
 # endif
       USE rp_diag_mod, ONLY : rp_diag
+# ifdef defined ADJUST_WSTRESS
+      USE rp_frc_adjust_mod, ONLY : rp_frc_adjust
+# endif
       USE rp_ini_fields_mod, ONLY : rp_ini_fields, rp_ini_zeta
+# ifdef ADJUST_BOUNDARY
+      USE rp_obc_adjust_mod, ONLY : rp_obc_adjust
+# endif
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
 # endif
@@ -248,20 +251,42 @@
       END DO
 !$OMP END PARALLEL DO
 
-# ifdef ADJUST_WSTRESS
+# ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL load_TLforcing (ng, TILE, Lfout(ng))
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL rp_obc_adjust (ng, TILE, Lbinp(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END IF
+# endif
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Skip the last output timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL rp_frc_adjust (ng, TILE, Lfinp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

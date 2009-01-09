@@ -99,7 +99,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ad_convolution (ng, tile, Linp, ifac)
+      SUBROUTINE ad_convolution (ng, tile, Linp, Lweak, ifac)
 !***********************************************************************
 !
       USE mod_param
@@ -113,6 +113,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: Lweak
+
       integer, intent(in) :: ng, tile, Linp, ifac
 !
 !  Local variable declarations.
@@ -122,7 +124,7 @@
       CALL ad_convolution_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
-     &                          nstp(ng), nnew(ng), Linp, ifac,         &
+     &                          nstp(ng), nnew(ng), Linp, Lweak, ifac,  &
      &                          GRID(ng) % pm,                          &
      &                          GRID(ng) % om_r,                        &
      &                          GRID(ng) % om_u,                        &
@@ -194,7 +196,7 @@
       SUBROUTINE ad_convolution_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
-     &                                nstp, nnew, Linp, ifac,           &
+     &                                nstp, nnew, Linp, Lweak, ifac,    &
      &                                pm, om_r, om_u, om_v,             &
      &                                pn, on_r, on_u, on_v,             &
      &                                pmon_p, pmon_r, pmon_u,           &
@@ -252,6 +254,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: Lweak
+
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
@@ -290,9 +294,9 @@
       real(r8), intent(inout) :: h(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: VnormR(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: VnormU(LBi:,LBj:,:)
-      real(r8), intent(in) :: VnormV(LBi:,LBj:,:)
+      real(r8), intent(in) :: VnormR(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: VnormU(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: VnormV(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
       real(r8), intent(in) :: HnormSTF(LBi:,LBj:,:)
 #   endif
@@ -301,9 +305,9 @@
       real(r8), intent(in) :: HnormSUS(LBi:,LBj:)
       real(r8), intent(in) :: HnormSVS(LBi:,LBj:)
 #  endif
-      real(r8), intent(in) :: HnormR(LBi:,LBj:)
-      real(r8), intent(in) :: HnormU(LBi:,LBj:)
-      real(r8), intent(in) :: HnormV(LBi:,LBj:)
+      real(r8), intent(in) :: HnormR(LBi:,LBj:,:)
+      real(r8), intent(in) :: HnormU(LBi:,LBj:,:)
+      real(r8), intent(in) :: HnormV(LBi:,LBj:,:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -357,9 +361,9 @@
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: VnormR(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(in) :: VnormU(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: VnormV(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: VnormR(LBi:UBi,LBj:UBj,N(ng),NSA,NT(ng))
+      real(r8), intent(in) :: VnormU(LBi:UBi,LBj:UBj,NSA,N(ng))
+      real(r8), intent(in) :: VnormV(LBi:UBi,LBj:UBj,NSA,N(ng))
 #   ifdef ADJUST_STFLUX
       real(r8), intent(in) :: HnormSTF(LBi:UBi,LBj:UBj,NT(ng))
 #   endif
@@ -368,9 +372,9 @@
       real(r8), intent(in) :: HnormSUS(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: HnormSVS(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: HnormR(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: HnormU(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: HnormV(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: HnormR(LBi:UBi,LBj:UBj,NSA)
+      real(r8), intent(in) :: HnormU(LBi:UBi,LBj:UBj,NSA)
+      real(r8), intent(in) :: HnormV(LBi:UBi,LBj:UBj,NSA)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -408,7 +412,7 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: i, is, j, k
+      integer :: i, is, j, k, rec
 # ifdef SOLVE3D
       integer :: itrc
 # endif
@@ -421,6 +425,16 @@
 # endif
 !
 # include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Determine error covariance normalization factors to use.
+!-----------------------------------------------------------------------
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint
+      ELSE
+        rec=1                        ! strong constraint
+      END IF
 
 # ifdef SOLVE3D
 !
@@ -457,7 +471,7 @@
 !
       DO j=JR_RANGE
         DO i=IR_RANGE
-          ad_zeta(i,j,Linp)=ad_zeta(i,j,Linp)*HnormR(i,j)
+          ad_zeta(i,j,Linp)=ad_zeta(i,j,Linp)*HnormR(i,j,rec)
         END DO
       END DO
 !
@@ -465,12 +479,12 @@
 !
       DO j=JU_RANGE
         DO i=IU_RANGE
-          ad_ubar(i,j,Linp)=ad_ubar(i,j,Linp)*HnormU(i,j)
+          ad_ubar(i,j,Linp)=ad_ubar(i,j,Linp)*HnormU(i,j,rec)
         END DO
       END DO
       DO j=JV_RANGE
         DO i=IV_RANGE
-          ad_vbar(i,j,Linp)=ad_vbar(i,j,Linp)*HnormV(i,j)
+          ad_vbar(i,j,Linp)=ad_vbar(i,j,Linp)*HnormV(i,j,rec)
         END DO
       END DO
 # ifdef DISTRIBUTE
@@ -481,30 +495,6 @@
      &                       ad_ubar(:,:,Linp),                         &
      &                       ad_vbar(:,:,Linp))
 # endif
-# ifdef ADJUST_WSTRESS
-!
-!  Adjoint surface momentum stress.
-!
-      DO k=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
-            ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)*HnormSUS(i,j)
-          END DO
-        END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
-            ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)*HnormSVS(i,j)
-          END DO
-        END DO
-      END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
-     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ustr(:,:,:,Linp),                       &
-     &                       ad_vstr(:,:,:,Linp))
-#  endif
-# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
@@ -512,12 +502,12 @@
       DO k=1,N(ng)
         DO j=JU_RANGE
           DO i=IU_RANGE
-            ad_u(i,j,k,Linp)=ad_u(i,j,k,Linp)*VnormU(i,j,k)
+            ad_u(i,j,k,Linp)=ad_u(i,j,k,Linp)*VnormU(i,j,k,rec)
           END DO
         END DO
         DO j=JV_RANGE
           DO i=IV_RANGE
-            ad_v(i,j,k,Linp)=ad_v(i,j,k,Linp)*VnormV(i,j,k)
+            ad_v(i,j,k,Linp)=ad_v(i,j,k,Linp)*VnormV(i,j,k,rec)
           END DO
         END DO
       END DO
@@ -536,7 +526,7 @@
           DO j=JR_RANGE
             DO i=IR_RANGE
               ad_t(i,j,k,Linp,itrc)=ad_t(i,j,k,Linp,itrc)*              &
-     &                              VnormR(i,j,k,itrc)
+     &                              VnormR(i,j,k,rec,itrc)
             END DO
           END DO
         END DO
@@ -547,33 +537,63 @@
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
 #  endif
-#  ifdef ADJUST_STFLUX
+# endif
+# ifdef ADJUST_WSTRESS
 !
-!  Adjoint surface tracers flux.
+!  Adjoint surface momentum stress.
 !
-      DO itrc=1,NT(ng)
+      IF (.not.Lweak) THEN
         DO k=1,Nfrec(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
-              ad_tflux(i,j,k,Linp,itrc)=ad_tflux(i,j,k,Linp,itrc)*      &
-     &                                  HnormSTF(i,j,itrc)
+          DO j=JU_RANGE
+            DO i=IU_RANGE
+              ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)*HnormSUS(i,j)
+            END DO
+          END DO
+          DO j=JV_RANGE
+            DO i=IV_RANGE
+              ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)*HnormSVS(i,j)
             END DO
           END DO
         END DO
-      END DO
-#   ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
-     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,:,Linp,:))
-#   endif
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
+     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_ustr(:,:,:,Linp),                     &
+     &                         ad_vstr(:,:,:,Linp))
 #  endif
+      END IF
+# endif
+# ifdef ADJUST_STFLUX
+!
+!  Adjoint surface tracers flux.
+!
+      IF (.not.Lweak) THEN
+        DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+                ad_tflux(i,j,k,Linp,itrc)=ad_tflux(i,j,k,Linp,itrc)*    &
+     &                                    HnormSTF(i,j,itrc)
+              END DO
+            END DO
+          END DO
+        END DO
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange4d (ng, tile, iADM, 1,                       &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         1, Nfrec(ng), 1, NT(ng),                 &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_tflux(:,:,:,Linp,:))
+#  endif
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
-!  Convolve adjoint state vector with a generalized adjoint diffusion
-!  equation to filter solution with specified horizontal scales.
-!  Convert from model space to minimization space (v-space).
+!  Initial conditions or model error covariance: Convolve adjoint state
+!  vector with a generalized adjoint diffusion equation to filter
+!  solution with specified horizontal scales. Convert from model space
+!  to minimization space (v-space).
 !-----------------------------------------------------------------------
 !
 !  Adjoint free-surface.
@@ -582,7 +602,7 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
-     &                       NHsteps(isFsur)/ifac,                      &
+     &                       NHsteps(rec,isFsur)/ifac,                  &
      &                       DTsizeH(isFsur),                           &
      &                       Kh,                                        &
      &                       pm, pn, pmon_u, pnom_v,                    &
@@ -597,7 +617,7 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
-     &                       NHsteps(isUbar)/ifac,                      &
+     &                       NHsteps(rec,isUbar)/ifac,                  &
      &                       DTsizeH(isUbar),                           &
      &                       Kh,                                        &
      &                       pm, pn, pmon_r, pnom_p,                    &
@@ -610,7 +630,7 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
-     &                       NHsteps(isVbar)/ifac,                      &
+     &                       NHsteps(rec,isVbar)/ifac,                  &
      &                       DTsizeH(isVbar),                           &
      &                       Kh,                                        &
      &                       pm, pn, pmon_p, pnom_r,                    &
@@ -618,38 +638,6 @@
      &                       vmask, pmask,                              &
 # endif
      &                       ad_vbar(:,:,Linp))
-# ifdef ADJUST_WSTRESS
-!
-!  Adjoint surface momentum stress.
-!
-      DO k=1,Nfrec(ng)
-        CALL ad_conv_u2d_tile (ng, tile, iADM,                          &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         NghostPoints,                            &
-     &                         NHsteps(isUstr)/ifac,                    &
-     &                         DTsizeH(isUstr),                         &
-     &                         Kh,                                      &
-     &                         pm, pn, pmon_r, pnom_p,                  &
-#  ifdef MASKING
-     &                         umask, pmask,                            &
-#  endif
-     &                         ad_ustr(:,:,k,Linp))
-
-        CALL ad_conv_v2d_tile (ng, tile, iADM,                          &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         NghostPoints,                            &
-     &                         NHsteps(isVstr)/ifac,                    &
-     &                         DTsizeH(isVstr),                         &
-     &                         Kh,                                      &
-     &                         pm, pn, pmon_p, pnom_r,                  &
-#  ifdef MASKING
-     &                         vmask, pmask,                            &
-#  endif
-     &                         ad_vstr(:,:,k,Linp))
-      END DO
-# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
@@ -658,8 +646,8 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
-     &                       NHsteps(isUvel)/ifac,                      &
-     &                       NVsteps(isUvel)/ifac,                      &
+     &                       NHsteps(rec,isUvel)/ifac,                  &
+     &                       NVsteps(rec,isUvel)/ifac,                  &
      &                       DTsizeH(isUvel),                           &
      &                       DTsizeV(isUvel),                           &
      &                       Kh, Kv,                                    &
@@ -674,8 +662,8 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
-     &                       NHsteps(isUvel)/ifac,                      &
-     &                       NVsteps(isUvel)/ifac,                      &
+     &                       NHsteps(rec,isUvel)/ifac,                  &
+     &                       NVsteps(rec,isUvel)/ifac,                  &
      &                       DTsizeH(isUvel),                           &
      &                       DTsizeV(isUvel),                           &
      &                       Kh, Kv,                                    &
@@ -694,8 +682,8 @@
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         NghostPoints,                            &
-     &                         NHsteps(is)/ifac,                        &
-     &                         NVsteps(is)/ifac,                        &
+     &                         NHsteps(rec,is)/ifac,                    &
+     &                         NVsteps(rec,is)/ifac,                    &
      &                         DTsizeH(is),                             &
      &                         DTsizeV(is),                             &
      &                         Kh, Kv,                                  &
@@ -706,28 +694,74 @@
      &                         Hz, z_r,                                 &
      &                         ad_t(:,:,:,Linp,itrc))
       END DO
-#  ifdef ADJUST_STFLUX
+# endif
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!  Adjoint surface tracers flux.
+!-----------------------------------------------------------------------
+!  Surface forcing error covariance: Convolve adjoint state vector with
+!  a generalized adjoint diffusion equation to filter solution with
+!  specified horizontal scales. Convert from model spaceto minimization
+!  space (v-space).
+!-----------------------------------------------------------------------
+
+#  ifdef ADJUST_WSTRESS
 !
-      DO itrc=1,NT(ng)
-        is=isTsur(itrc)
+!  Adjoint surface momentum stress.
+!
+      IF (.not.Lweak) THEN
         DO k=1,Nfrec(ng)
-          CALL ad_conv_r2d_tile (ng, tile, iADM,                        &
+          CALL ad_conv_u2d_tile (ng, tile, iADM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           NghostPoints,                          &
-     &                           NHsteps(is)/ifac,                      &
-     &                           DTsizeH(is),                           &
+     &                           NHsteps(rec,isUstr)/ifac,              &
+     &                           DTsizeH(isUstr),                       &
      &                           Kh,                                    &
-     &                           pm, pn, pmon_u, pnom_v,                &
+     &                           pm, pn, pmon_r, pnom_p,                &
 #   ifdef MASKING
-     &                           rmask, umask, vmask,                   &
+     &                           umask, pmask,                          &
 #   endif
-     &                           ad_tflux(:,:,k,Linp,itrc))
+     &                           ad_ustr(:,:,k,Linp))
+
+          CALL ad_conv_v2d_tile (ng, tile, iADM,                        &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
+     &                           NghostPoints,                          &
+     &                           NHsteps(rec,isVstr)/ifac,              &
+     &                           DTsizeH(isVstr),                       &
+     &                           Kh,                                    &
+     &                           pm, pn, pmon_p, pnom_r,                &
+#   ifdef MASKING
+     &                           vmask, pmask,                          &
+#   endif
+     &                           ad_vstr(:,:,k,Linp))
         END DO
-      END DO
+      END IF
 #  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Adjoint surface tracers flux.
+!
+      IF (.not.Lweak) THEN
+        DO itrc=1,NT(ng)
+          is=isTsur(itrc)
+          DO k=1,Nfrec(ng)
+            CALL ad_conv_r2d_tile (ng, tile, iADM,                      &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             NghostPoints,                        &
+     &                             NHsteps(rec,is)/ifac,                &
+     &                             DTsizeH(is),                         &
+     &                             Kh,                                  &
+     &                             pm, pn, pmon_u, pnom_v,              &
+#   ifdef MASKING
+     &                             rmask, umask, vmask,                 &
+#   endif
+     &                             ad_tflux(:,:,k,Linp,itrc))
+          END DO
+        END DO
+#  endif
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
@@ -765,32 +799,6 @@
      &                       ad_zeta(:,:,Linp),                         &
      &                       ad_ubar(:,:,Linp),                         &
      &                       ad_vbar(:,:,Linp))
-# endif
-# ifdef ADJUST_WSTRESS
-!
-!  Adjoint surface momentum stress.
-!
-      DO k=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
-            ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)/                    &
-     &                          SQRT(om_u(i,j)*on_u(i,j))
-          END DO
-        END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
-            ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)/                    &
-     &                          SQRT(om_v(i,j)*on_v(i,j))
-          END DO
-        END DO
-      END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
-     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ustr(:,:,:,Linp),                       &
-     &                       ad_vstr(:,:,:,Linp))
-#  endif
 # endif
 # ifdef SOLVE3D
 !
@@ -841,28 +849,60 @@
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
 #  endif
-#  ifdef ADJUST_STFLUX
+# endif
+# ifdef ADJUST_WSTRESS
 !
-!  Adjoint surface tracers flux.
+!  Adjoint surface momentum stress.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
-          fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
-          DO itrc=1,NT(ng)
-            DO k=1,Nfrec(ng)
-              ad_tflux(i,j,k,Linp,itrc)=fac*ad_tflux(i,j,k,Linp,itrc)
+      IF (.not.Lweak) THEN
+        DO k=1,Nfrec(ng)
+          DO j=JU_RANGE
+            DO i=IU_RANGE
+              ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)/                  &
+     &                            SQRT(om_u(i,j)*on_u(i,j))
+            END DO
+          END DO
+          DO j=JV_RANGE
+            DO i=IV_RANGE
+              ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)/                  &
+     &                            SQRT(om_v(i,j)*on_v(i,j))
             END DO
           END DO
         END DO
-      END DO
-#   ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
-     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,:,Linp,:))
-#   endif
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
+     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_ustr(:,:,:,Linp),                     &
+     &                         ad_vstr(:,:,:,Linp))
 #  endif
+      END IF
 # endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Adjoint surface tracers flux.
+!
+      IF (.not.Lweak) THEN
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+            fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+            DO itrc=1,NT(ng)
+              DO k=1,Nfrec(ng)
+                ad_tflux(i,j,k,Linp,itrc)=fac*ad_tflux(i,j,k,Linp,itrc)
+              END DO
+            END DO
+          END DO
+        END DO
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange4d (ng, tile, iADM, 1,                       &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         1, Nfrec(ng), 1, NT(ng),                 &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_tflux(:,:,:,Linp,:))
+#  endif
+      END IF
+# endif
+
 # undef IR_RANGE
 # undef IU_RANGE
 # undef IV_RANGE

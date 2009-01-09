@@ -418,7 +418,7 @@
       CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                  &
      &                  0, r2dvar, 1.0_r8,                              &
      &                  rmask, rmask, Npts, mask, .FALSE.)
-      CALL mp_bcastf (ng, model, mask, Npts)
+      CALL mp_bcastf (ng, model, mask)
 #  else
 !
 !  Load masking at RHO-points in mask vector.
@@ -499,7 +499,7 @@
       CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                  &
      &                  0, p2dvar, 1.0_r8,                              &
      &                  pmask, pmask, Npts, mask, .FALSE.)
-      CALL mp_bcastf (ng, model, mask, Npts)
+      CALL mp_bcastf (ng, model, mask)
 !
 !  Determine water PSI-points for IO purposes.
 !
@@ -520,7 +520,7 @@
       CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                  &
      &                  0, u2dvar, 1.0_r8,                              &
      &                  umask, umask, Npts, mask, .FALSE.)
-      CALL mp_bcastf (ng, model, mask, Npts)
+      CALL mp_bcastf (ng, model, mask)
 #  else
 !
 !  Load masking at U-points in mask vector.
@@ -601,7 +601,7 @@
       CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                  &
      &                  0, v2dvar, 1.0_r8,                              &
      &                  vmask, vmask, Npts, mask, .FALSE.)
-      CALL mp_bcastf (ng, model, mask, Npts)
+      CALL mp_bcastf (ng, model, mask)
 #  else
 !
 !  Load masking at V-points in mask vector.

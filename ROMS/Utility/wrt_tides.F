@@ -24,9 +24,6 @@
       USE mod_stepping
       USE mod_tides
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 # ifdef SOLVE3D
       USE nf_fwrite4d_mod, ONLY : nf_fwrite4d
@@ -44,6 +41,8 @@
       integer :: gtype, status, varid
 
       real(r8) :: scale
+!
+      SourceFile='wrt_tides.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -232,24 +231,14 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncTIDEid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
-      IF (Master) WRITE (stdout,30) TRIM(TIDEname(ng))
+      CALL netcdf_sync (ng, iNLM, TIDEname(ng), ncTIDEid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
+      IF (Master) WRITE (stdout,20)
 !
   10  FORMAT (/,' WRT_TIDES - error while writing variable: ',a,        &
      &        /,13x,'into tide forcing NetCDF file: ',/,13x,a)
-  20  FORMAT (/,' WRT_TIDES - unable to synchronize to disk tide ',     &
-     &        'forcing file:',/,13x,a)
-  30  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics ')
+  20  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics ')
 #else
       SUBROUTINE wrt_tides
 #endif

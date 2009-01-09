@@ -134,15 +134,8 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-#  if defined AVERAGES_DETIDE && defined AVERAGES
-      USE distribute_mod, ONLY : mp_bcastl
-#  endif
-# endif
 !
 ! Inported variable declarations.
 !
@@ -150,7 +143,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, Nrec, nvd, Vsize(4)
+      logical :: foundit
+
+      integer :: Vid, i, ifile, nvatt, nvdim
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
@@ -161,27 +156,39 @@
 !  Inquire about the maximum number of tidal components.
 !
       IF (ng.eq.1) THEN
-        IF (InpThread) THEN
-          CALL opencdf (ng, nFfiles(ng), FRCname(1,ng), ncfile, N(ng),  &
-     &                  idTper, Nrec, nvd, Vsize)
-          MTC=Vsize(1)
+        foundit=.FALSE.
+
+        QUERY : DO ifile=1,nFfiles(ng)
+          CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,ng),             &
+     &                         MyVarName = TRIM(Vname(1,idTper)),       &
+     &                         SearchVar = foundit,                     &
+     &                         VarID = Vid,                             &
+     &                         nVardim = nvdim,                         &
+     &                         nVarAtt = nvatt)
+          IF (exit_flag.ne.NoError) RETURN
+
 # if defined AVERAGES_DETIDE && defined AVERAGES
 !
 !  Check if detiding variables are available and set definition switch.
 !
-          DO i=1,nvars
-            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsuH))) THEN
-              LdefTIDE(ng)=.FALSE.
-            END IF
-          END DO
+          IF (foundit) THEN
+            DO i=1,n_var
+              IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsuH))) THEN
+                LdefTIDE(ng)=.FALSE.
+              END IF
+            END DO
+          ENDIF
 # endif
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, MTC, 1)
-#  if defined AVERAGES_DETIDE && defined AVERAGES
-        CALL mp_bcastl (ng, iNLM, LdefTIDE, Ngrids)
-#  endif
-# endif
+!
+!  Set maximun numbert of tidal components.
+!
+          IF (foundit) THEN
+            MTC=var_Dsize(1)            ! first dimension
+            EXIT QUERY
+          END IF
+
+        END DO QUERY
+
       END IF
 !
 !  Allocate tidal forcing variables.

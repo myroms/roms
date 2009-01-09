@@ -86,7 +86,7 @@
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: STDrec, ng, thread
+      integer :: STDrec, Tindex, ng, thread
 
 #ifdef DISTRIBUTE
 !
@@ -157,15 +157,54 @@
 !
         CALL initialize_fourdvar
 !
-!  Read in background/model error standard deviation factors and
-!  spatial convolution diffusion coefficients.
-!  
+!  Read in standard deviation factors for initial conditions
+!  error covariance.  They are loaded in Tindex=1 of the
+!  e_var(...,Tindex) state variables.
+!
         STDrec=1
+        Tindex=1
         DO ng=1,Ngrids
-          CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
+          CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
           IF (exit_flag.ne.NoError) RETURN
         END DO
+!
+!  Read in standard deviation factors for model error covariance.
+!  They are loaded in Tindex=2 of the e_var(...,Tindex) state
+!  variables.
+!
+        STDrec=1
+        Tindex=2
+        DO ng=1,Ngrids
+          IF (NSA.eq.2) THEN
+            CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+        END DO
 
+#ifdef ADJUST_BOUNDARY
+!
+!  Read in standard deviation factors for boundary conditions
+!  error covariance.
+!
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Read in standard deviation factors for boundary conditions
+!  error covariance.
+!
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, 1)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
+#endif
       END IF
 
       RETURN
@@ -209,7 +248,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: add
+      logical :: Lweak, add
       integer :: i, ng, subs, tile, thread
 #ifdef BALANCE_OPERATOR
       integer :: Lbck = 1
@@ -236,9 +275,22 @@
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation and needs to be computed once for an application grid.
 !  
-        IF (LwrtNRM(ng)) THEN
-          CALL def_norm (ng)
+        IF (ANY(LwrtNRM(:,ng))) THEN
+          CALL def_norm (ng, iNLM, 1)
           IF (exit_flag.ne.NoError) RETURN
+
+          IF (NSA.eq.2) THEN
+            CALL def_norm (ng, iNLM, 2)
+          IF (exit_flag.ne.NoError) RETURN
+          END IF
+#ifdef ADJUST_BOUNDARY
+          CALL def_norm (ng, iNLM, 3)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+          CALL def_norm (ng, iNLM, 4)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -247,12 +299,24 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
-          LdefNRM(ng)=.FALSE.
-          LwrtNRM(ng)=.FALSE.
+          LdefNRM(1:4,ng)=.FALSE.
+          LwrtNRM(1:4,ng)=.FALSE.
         ELSE
-          tNRMindx(ng)=1
-          CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
+          CALL get_state (ng, 5, 5, NRMname(1,ng), 1, 1)
           IF (exit_flag.ne.NoError) RETURN
+
+          IF (NSA.eq.2) THEN
+            CALL get_state (ng, 5, 5, NRMname(2,ng), 1, 2)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+#ifdef ADJUST_BOUNDARY
+          CALL get_state (ng, 10, 10, NRMname(3,ng), 1, 1)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+          CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
         END IF
 
 #ifdef BALANCE_OPERATOR
@@ -275,7 +339,9 @@
 !  diffusion operator.
 ! 
         ADmodel=.TRUE.
+        Lweak=.FALSE.
         Lnew(ng)=1
+
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -283,9 +349,9 @@
             CALL ana_perturb (ng, TILE, iADM)
 #ifdef BALANCE_OPERATOR
             CALL ad_balance (ng, TILE, Lbck, Lnew(ng))
-            CALL ad_variability (ng, TILE, Lnew(ng), .FALSE.)
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
 #endif
-            CALL ad_convolution (ng, TILE, Lnew(ng), 2)
+            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -301,9 +367,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
             CALL load_ADtoTL (ng, TILE, Lnew(ng), Lnew(ng), add)
-            CALL tl_convolution (ng, TILE, Lnew(ng), 2)
+            CALL tl_convolution (ng, TILE, Lnew(ng), Lweak, 2)
 #ifdef BALANCE_OPERATOR
-            CALL tl_variability (ng, TILE, Lnew(ng), .FALSE.)
+            CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
             CALL tl_balance (ng, TILE, Lbck, Lnew(ng))
 #endif
             CALL load_TLtoAD (ng, TILE, Lnew(ng), Lnew(ng), add)

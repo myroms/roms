@@ -82,6 +82,10 @@
 !
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
+      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod, ONLY : ad_mp_exchange3d
+#  endif
 # endif
       USE ad_extract_obs_mod, ONLY : ad_extract_obs2d
 # ifdef SOLVE3D
@@ -130,6 +134,18 @@
 !
 !  Local variable declarations.
 !
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
       integer :: Mstr, Mend, ObsSum, ObsVoid
 # ifdef DISTRIBUTE
       integer :: Ncollect
@@ -148,6 +164,19 @@
 !  representer coefficients (or its approximation PSI) has been
 !  already loaded into vector ADmodVal in the conjugate gradient
 !  or read in.
+!
+# ifdef DISTRIBUTE
+!  The adjoint of this operator is tricky in parallel (tile partitions)
+!  because we need to avoid adding observation contributions to ghost
+!  points. In the case that an observation is located between neighbor
+!  tiles, both tiles need to process it and the contribution to f_var
+!  (an adjoint variable) is only done in the tile where (i,j) or
+!  (i,j,k) is not a ghost point.
+!
+!  Alternatively, only one tile process such observation and the
+!  ad_mp_exchange*d routine is used to add the contribution to the
+!  correct (i,j) or (i,j,k) point. This is the strategy used here.
+# endif
 !-----------------------------------------------------------------------
 !
       IF (ProcessObs(ng)) THEN
@@ -181,6 +210,12 @@
      &                           rmask,                                 &
 # endif
      &                           ADmodVal)
+# ifdef DISTRIBUTE
+          CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           f_zeta)
+# endif
         END IF
 !
 !  2D u-momentum component.
@@ -205,6 +240,12 @@
      &                           umask,                                 &
 # endif
      &                           ADmodVal)
+# ifdef DISTRIBUTE
+          CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           f_ubar)
+# endif
         END IF
 !
 !  2D v-momentum component.
@@ -229,6 +270,12 @@
      &                           vmask,                                 &
 # endif
      &                           ADmodVal)
+# ifdef DISTRIBUTE
+          CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           f_vbar)
+# endif
         END IF
 # ifdef SOLVE3D
 !
@@ -264,6 +311,12 @@
      &                           umask,                                 &
 #  endif
      &                           ADmodVal)
+#  ifdef DISTRIBUTE
+          CALL ad_mp_exchange3d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           f_u)
+#  endif
         END IF
 !
 !  3D v-momentum component.
@@ -298,6 +351,12 @@
      &                           vmask,                                 &
 #  endif
      &                           ADmodVal)
+#  ifdef DISTRIBUTE
+          CALL ad_mp_exchange3d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           f_v)
+#  endif
         END IF
 !
 !  Tracer type variables.
@@ -325,6 +384,13 @@
      &                             rmask,                               &
 #  endif
      &                             ADmodVal)
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
+     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
+     &                             NghostPoints, EWperiodic, NSperiodic,&
+     &                             f_t(:,:,:,itrc))
+#  endif
+
           END IF
         END DO
 # endif

@@ -142,7 +142,6 @@
 !
       integer :: ObsSum, ObsVoid
       integer :: i, ie, iobs, is, kfrc
-
 # ifdef SOLVE3D
       integer :: itrc, j, k, nfrc
 # endif
@@ -152,6 +151,12 @@
 !
 !-----------------------------------------------------------------------
 !  Compute model minus observations adjoint misfit forcing.
+# ifdef DISTRIBUTE
+!  Notice that ad_mp_exchange*d calls are not required here
+!  (see weak constraint routine ad_htobs.F) because we are
+!  using the adjoint state arrays directly which will be
+!  exchanged during the initialization step.
+# endif
 !-----------------------------------------------------------------------
 !
       IF (ProcessObs(ng)) THEN

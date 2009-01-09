@@ -789,11 +789,14 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_grid
-      USE mod_ocean
+#  ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+#  endif
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces
 #  endif
+      USE mod_grid
+      USE mod_ocean
 !
 !  Imported variable declarations.
 !
@@ -808,7 +811,7 @@
       CALL wclock_on (ng, iTLM, 7)
 #  endif
       CALL load_ADtoTL_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
@@ -816,35 +819,57 @@
      &                       GRID(ng) % umask,                          &
      &                       GRID(ng) % vmask,                          &
 #  endif
-#  ifdef SOLVE3D
-     &                       OCEAN(ng) % ad_t,                          &
-     &                       OCEAN(ng) % ad_u,                          &
-     &                       OCEAN(ng) % ad_v,                          &
-#   ifdef ADJUST_STFLUX
-     &                       FORCES(ng) % ad_tflux,                     &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       BOUNDARY(ng) % ad_t_obc,                   &
+     &                       BOUNDARY(ng) % ad_u_obc,                   &
+     &                       BOUNDARY(ng) % ad_v_obc,                   &
 #   endif
+     &                       BOUNDARY(ng) % ad_ubar_obc,                &
+     &                       BOUNDARY(ng) % ad_vbar_obc,                &
+     &                       BOUNDARY(ng) % ad_zeta_obc,                &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                       FORCES(ng) % ad_ustr,                      &
      &                       FORCES(ng) % ad_vstr,                      &
 #  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % ad_tflux,                     &
+#   endif
+     &                       OCEAN(ng) % ad_t,                          &
+     &                       OCEAN(ng) % ad_u,                          &
+     &                       OCEAN(ng) % ad_v,                          &
+#  else
      &                       OCEAN(ng) % ad_ubar,                       &
      &                       OCEAN(ng) % ad_vbar,                       &
+#  endif
      &                       OCEAN(ng) % ad_zeta,                       &
-#  ifdef SOLVE3D
-     &                       OCEAN(ng) % tl_t,                          &
-     &                       OCEAN(ng) % tl_u,                          &
-     &                       OCEAN(ng) % tl_v,                          &
-#   ifdef ADJUST_STFLUX
-     &                       FORCES(ng) % tl_tflux,                     &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       BOUNDARY(ng) % tl_t_obc,                   &
+     &                       BOUNDARY(ng) % tl_u_obc,                   &
+     &                       BOUNDARY(ng) % tl_v_obc,                   &
 #   endif
+     &                       BOUNDARY(ng) % tl_ubar_obc,                &
+     &                       BOUNDARY(ng) % tl_vbar_obc,                &
+     &                       BOUNDARY(ng) % tl_zeta_obc,                &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                       FORCES(ng) % tl_ustr,                      &
      &                       FORCES(ng) % tl_vstr,                      &
 #  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % tl_tflux,                     &
+#   endif
+     &                       OCEAN(ng) % tl_t,                          &
+     &                       OCEAN(ng) % tl_u,                          &
+     &                       OCEAN(ng) % tl_v,                          &
+#  else
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
+#  endif
      &                       OCEAN(ng) % tl_zeta)
 #  ifdef PROFILE
       CALL wclock_off (ng, iTLM, 7)
@@ -854,32 +879,50 @@
 !
 !***********************************************************************
       SUBROUTINE load_ADtoTL_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj,                  &
+     &                             LBi, UBi, LBj, UBj, LBij, UBij,      &
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
 #  endif
-#  ifdef SOLVE3D
-     &                             ad_t, ad_u, ad_v,                    &
-#   ifdef ADJUST_STFLUX
-     &                             ad_tflux,                            &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                             ad_t_obc, ad_u_obc, ad_v_obc,        &
 #   endif
+     &                             ad_ubar_obc, ad_vbar_obc,            &
+     &                             ad_zeta_obc,                         &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                             ad_ustr, ad_vstr,                    &
 #  endif
-     &                             ad_ubar, ad_vbar, ad_zeta,           &
 #  ifdef SOLVE3D
-     &                             tl_t, tl_u, tl_v,                    &
 #   ifdef ADJUST_STFLUX
-     &                             tl_tflux,                            &
+     &                             ad_tflux,                            &
 #   endif
+     &                             ad_t, ad_u, ad_v,                    &
+#  else
+     &                             ad_ubar, ad_vbar,                    &
+#  endif
+     &                             ad_zeta,                             &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                             tl_t_obc, tl_u_obc, tl_v_obc,        &
+#   endif
+     &                             tl_ubar_obc, tl_vbar_obc,            &
+     &                             tl_zeta_obc,                         &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                             tl_ustr, tl_vstr,                    &
 #  endif
-     &                             tl_ubar, tl_vbar, tl_zeta)
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                             tl_tflux,                            &
+#   endif
+     &                             tl_t, tl_u, tl_v,                    &
+#  else
+     &                             tl_ubar, tl_vbar,                    &
+#  endif
+     &                             tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -887,11 +930,14 @@
       USE mod_scalars
 #  endif
 !
+      USE state_addition_mod, ONLY : state_addition
+      USE state_copy_mod, ONLY : state_copy
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: add
       integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
@@ -901,35 +947,57 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(in) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(in) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(in) :: ad_v_obc(LBij:,:,:,:,:)
+#    endif
+      real(r8), intent(in) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: ad_zeta_obc(LBij:,:,:,:)
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
+#   endif
 #   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:,:)
+#    endif
       real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
-#    endif
-#   endif
-#   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
-#   endif
+#   else
       real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
+#   endif
       real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
 #    endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
 #   endif
 #   ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
 #   endif
+#   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
+#    endif
+      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+#   else
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+#   endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -937,241 +1005,152 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(in) :: ad_t_obc(LBij:UBij,N(ng),4,               &
+     &                                 Nbrec(ng),2,NT(ng))
+      real(r8), intent(in) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#    endif
+      real(r8), intent(in) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#   endif
 #   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
+#    endif
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
-     &                                    Nfrec(ng),2,NT(ng))
-#    endif
-#   endif
-#   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-#   endif
+#   else
       real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+#   endif
       real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
-     &                                    Nfrec(ng),2,NT(ng))
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
 #    endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 #   endif
 #   ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
+#   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
+#    endif
+      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#   else
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+#   endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  endif
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k
-#  ifdef SOLVE3D
-      integer :: itrc
-#  endif
-
-#  include "set_bounds.h"
+      real(r8) :: fac1, fac2
 !      
 !-----------------------------------------------------------------------
-!  Load or add tangent linear state variables into adjoint state
+!  Load or add adjoint state variables into tangent linear state
 !  variables.
 !-----------------------------------------------------------------------
 !
-!  Free-surface.
+!  Add adjoint state to tangent linear state.
+!
+!    tl_var(Lout) = fac1 * tl_var(Lout) + fac2 * ad_var(Linp)
 !
       IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)+ad_zeta(i,j,Linp)
+
+        fac1=1.0_r8
+        fac2=1.0_r8
+
+        CALL state_addition (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
+     &                       Lout, Linp, Lout, fac1, fac2,              &
 #  ifdef MASKING
-            tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
+     &                       rmask, umask, vmask,                       &
 #  endif
-          END DO
-        END DO
-      ELSE
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            tl_zeta(i,j,Lout)=ad_zeta(i,j,Linp)
-          END DO
-        END DO
-      END IF
-!
-!  2D momentum.
-!    
-      IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)+ad_ubar(i,j,Linp)
-#  ifdef MASKING
-            tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       tl_t_obc, ad_t_obc,                        &
+     &                       tl_u_obc, ad_u_obc,                        &
+     &                       tl_v_obc, ad_v_obc,                        &
+#   endif
+     &                       tl_ubar_obc, ad_ubar_obc,                  &
+     &                       tl_vbar_obc, ad_vbar_obc,                  &
+     &                       tl_zeta_obc, ad_zeta_obc,                  &
 #  endif
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)+ad_vbar(i,j,Linp)
-#  ifdef MASKING
-            tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
-#  endif
-          END DO
-        END DO
-      ELSE
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            tl_ubar(i,j,Lout)=ad_ubar(i,j,Linp)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            tl_vbar(i,j,Lout)=ad_vbar(i,j,Linp)
-          END DO
-        END DO
-      END IF
 #  ifdef ADJUST_WSTRESS
-!
-!  surface momentum stress.
-!    
-      IF (add) THEN
-        DO k=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              tl_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Lout)+                  &
-     &                            ad_ustr(i,j,k,Linp)
-#   ifdef MASKING
-              tl_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Lout)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              tl_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Lout)+                  &
-     &                            ad_vstr(i,j,k,Linp)
-#   ifdef MASKING
-              tl_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Lout)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO k=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              tl_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Linp)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              tl_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Linp)
-            END DO
-          END DO
-        END DO
-      END IF
+     &                       tl_ustr, ad_ustr,                          &
+     &                       tl_vstr, ad_vstr,                          &
 #  endif
 #  ifdef SOLVE3D
-!
-!  3D momentum.
-!
-      IF (add) THEN
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)+ad_u(i,j,k,Linp)
-#   ifdef MASKING
-              tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)+ad_v(i,j,k,Linp)
-#   ifdef MASKING
-              tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              tl_u(i,j,k,Lout)=ad_u(i,j,k,Linp)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              tl_v(i,j,k,Lout)=ad_v(i,j,k,Linp)
-            END DO
-          END DO
-        END DO
-      END IF
-!
-!  Tracers.
-!
-      IF (add) THEN
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)+            &
-     &                                ad_t(i,j,k,Linp,itrc)
-#   ifdef MASKING
-                tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
-#   endif
-              END DO
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                tl_t(i,j,k,Lout,itrc)=ad_t(i,j,k,Linp,itrc)
-              END DO
-            END DO
-          END DO
-        END DO
-      END IF
 #   ifdef ADJUST_STFLUX
-!
-!  surface tracer flux.
-!
-      IF (add) THEN
-        DO itrc=1,NT(ng)
-          DO k=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Lout,itrc)+    &
-     &                                    ad_tflux(i,j,k,Linp,itrc)
-#    ifdef MASKING
-                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Lout,itrc)*    &
-     &                                    rmask(i,j)
-#    endif
-              END DO
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO itrc=1,NT(ng)
-          DO k=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                tl_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Linp,itrc)
-              END DO
-            END DO
-          END DO
-        END DO
-      END IF
+     &                       tl_tflux, tl_tflux,                        &
 #   endif
+     &                       tl_t, ad_t,                                &
+     &                       tl_u, ad_u,                                &
+     &                       tl_v, ad_v,                                &
+#  else
+     &                       tl_ubar, ad_ubar,                          &
+     &                       tl_vbar, ad_vbar,                          &
 #  endif
+     &                       tl_zeta, ad_zeta)
+!
+!  Otherwise, copy adjoint state into tangent linear state.
+!
+!    tl_var(Lout) = ad_var(Linp)
+!
+      ELSE
+
+        CALL state_copy (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
+     &                   Linp, Lout,                                    &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                   tl_t_obc, ad_t_obc,                            &
+     &                   tl_u_obc, ad_u_obc,                            &
+     &                   tl_v_obc, ad_v_obc,                            &
+#   endif
+     &                   tl_ubar_obc, ad_ubar_obc,                      &
+     &                   tl_vbar_obc, ad_vbar_obc,                      &
+     &                   tl_zeta_obc, ad_zeta_obc,                      &
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                   tl_ustr, ad_ustr,                              &
+     &                   tl_vstr, ad_vstr,                              &
+#  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                   tl_tflux, ad_tflux,                            &
+#   endif
+     &                   tl_t, ad_t,                                    &
+     &                   tl_u, ad_u,                                    &
+     &                   tl_v, ad_v,                                    &
+#  else
+     &                   tl_ubar, ad_ubar,                              &
+     &                   tl_vbar, ad_vbar,                              &
+#  endif
+     &                   tl_zeta, ad_zeta)
+      END IF
+
       RETURN
       END SUBROUTINE load_ADtoTL_tile
 
@@ -1193,11 +1172,14 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_grid
-      USE mod_ocean
+#  ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+#  endif
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces
 #  endif
+      USE mod_grid
+      USE mod_ocean
 !
 !  Imported variable declarations.
 !
@@ -1212,7 +1194,7 @@
       CALL wclock_on (ng, iADM, 7)
 #  endif
       CALL load_TLtoAD_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
@@ -1220,35 +1202,57 @@
      &                       GRID(ng) % umask,                          &
      &                       GRID(ng) % vmask,                          &
 #  endif
-#  ifdef SOLVE3D
-     &                       OCEAN(ng) % tl_t,                          &
-     &                       OCEAN(ng) % tl_u,                          &
-     &                       OCEAN(ng) % tl_v,                          &
-#   ifdef ADJUST_STFLUX
-     &                       FORCES(ng) % tl_tflux,                     &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       BOUNDARY(ng) % tl_t_obc,                   &
+     &                       BOUNDARY(ng) % tl_u_obc,                   &
+     &                       BOUNDARY(ng) % tl_v_obc,                   &
 #   endif
+     &                       BOUNDARY(ng) % tl_ubar_obc,                &
+     &                       BOUNDARY(ng) % tl_vbar_obc,                &
+     &                       BOUNDARY(ng) % tl_zeta_obc,                &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                       FORCES(ng) % tl_ustr,                      &
      &                       FORCES(ng) % tl_vstr,                      &
 #  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % tl_tflux,                     &
+#   endif
+     &                       OCEAN(ng) % tl_t,                          &
+     &                       OCEAN(ng) % tl_u,                          &
+     &                       OCEAN(ng) % tl_v,                          &
+#  else
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
+#  endif
      &                       OCEAN(ng) % tl_zeta,                       &
-#  ifdef SOLVE3D
-     &                       OCEAN(ng) % ad_t,                          &
-     &                       OCEAN(ng) % ad_u,                          &
-     &                       OCEAN(ng) % ad_v,                          &
-#   ifdef ADJUST_STFLUX
-     &                       FORCES(ng) % ad_tflux,                     &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       BOUNDARY(ng) % ad_t_obc,                   &
+     &                       BOUNDARY(ng) % ad_u_obc,                   &
+     &                       BOUNDARY(ng) % ad_v_obc,                   &
 #   endif
+     &                       BOUNDARY(ng) % ad_ubar_obc,                &
+     &                       BOUNDARY(ng) % ad_vbar_obc,                &
+     &                       BOUNDARY(ng) % ad_zeta_obc,                &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                       FORCES(ng) % ad_ustr,                      &
      &                       FORCES(ng) % ad_vstr,                      &
 #  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % ad_tflux,                     &
+#   endif
+     &                       OCEAN(ng) % ad_t,                          &
+     &                       OCEAN(ng) % ad_u,                          &
+     &                       OCEAN(ng) % ad_v,                          &
+#  else
      &                       OCEAN(ng) % ad_ubar,                       &
      &                       OCEAN(ng) % ad_vbar,                       &
+#  endif
      &                       OCEAN(ng) % ad_zeta)
 #  ifdef PROFILE
       CALL wclock_off (ng, iADM, 7)
@@ -1258,32 +1262,50 @@
 !
 !***********************************************************************
       SUBROUTINE load_TLtoAD_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj,                  &
+     &                             LBi, UBi, LBj, UBj, LBij, UBij,      &
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
 #  endif
-#  ifdef SOLVE3D
-     &                             tl_t, tl_u, tl_v,                    &
-#   ifdef ADJUST_STFLUX
-     &                             tl_tflux,                            &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                             tl_t_obc, tl_u_obc, tl_v_obc,        &
 #   endif
+     &                             tl_ubar_obc, tl_vbar_obc,            &
+     &                             tl_zeta_obc,                         &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                             tl_ustr, tl_vstr,                    &
 #  endif
-     &                             tl_ubar, tl_vbar, tl_zeta,           &
 #  ifdef SOLVE3D
-     &                             ad_t, ad_u, ad_v,                    &
 #   ifdef ADJUST_STFLUX
-     &                             ad_tflux,                            &
+     &                             tl_tflux,                            &
 #   endif
+     &                             tl_t, tl_u, tl_v,                    &
+#  else
+     &                             tl_ubar, tl_vbar,                    &
+#  endif
+     &                             tl_zeta,                             &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                             ad_t_obc, ad_u_obc, ad_v_obc,        &
+#   endif
+     &                             ad_ubar_obc, ad_vbar_obc,            &
+     &                             ad_zeta_obc,                         &
 #  endif
 #  ifdef ADJUST_WSTRESS
      &                             ad_ustr, ad_vstr,                    &
 #  endif
-     &                             ad_ubar, ad_vbar, ad_zeta)
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                             ad_tflux,                            &
+#   endif
+     &                             ad_t, ad_u, ad_v,                    &
+#  else
+     &                             ad_ubar, ad_vbar,                    &
+#  endif
+     &                             ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -1291,11 +1313,14 @@
       USE mod_scalars
 #  endif
 !
+      USE state_addition_mod, ONLY : state_addition
+      USE state_copy_mod, ONLY : state_copy
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: add
       integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
@@ -1305,35 +1330,57 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(in) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(in) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(in) :: tl_v_obc(LBij:,:,:,:,:)
+#    endif
+      real(r8), intent(in) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: tl_zeta_obc(LBij:,:,:,:)
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
+#   endif
 #   ifdef SOLVE3D
-      real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #    ifdef ADJUST_STFLUX
       real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #    endif
-#   endif
-#   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
-#   endif
+      real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
+#   else
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
+#   endif
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
 #    endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
 #   endif
 #   ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #   endif
+#   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
+#    endif
+      real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
+#   else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+#   endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -1341,241 +1388,152 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(in) :: tl_t_obc(LBij:UBij,N(ng),4,               &
+     &                                 Nbrec(ng),2,NT(ng))
+      real(r8), intent(in) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(in) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#    endif
+      real(r8), intent(in) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#   endif
 #   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
+#    endif
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
-     &                                    Nfrec(ng),2,NT(ng))
-#    endif
-#   endif
-#   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-#   endif
+#   else
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+#   endif
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
-     &                                    Nfrec(ng),2,NT(ng))
+#   ifdef ADJUST_BOUNDARY
+#    ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
 #    endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 #   endif
 #   ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
+#   ifdef SOLVE3D
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
+#    endif
+      real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+#   else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+#   endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
 #  endif
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k
-#  ifdef SOLVE3D
-      integer :: itrc
-#  endif
-
-#  include "set_bounds.h"
+      real(r8) :: fac1, fac2
 !      
 !-----------------------------------------------------------------------
 !  Load or add tangent linear state variables into adjoint state
 !  variables.
 !-----------------------------------------------------------------------
 !
-!  Free-surface.
+!  Add tangent lnear state tp adjoint state.
+!
+!    ad_var(Lout) = fac1 * ad_var(Lout) + fac2 * tl_var(Linp)
 !
       IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            ad_zeta(i,j,Lout)=ad_zeta(i,j,Lout)+tl_zeta(i,j,Linp)
+
+        fac1=1.0_r8
+        fac2=1.0_r8
+
+        CALL state_addition (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
+     &                       Lout, Linp, Lout, fac1, fac2,              &
 #  ifdef MASKING
-            ad_zeta(i,j,Lout)=ad_zeta(i,j,Lout)*rmask(i,j)
+     &                       rmask, umask, vmask,                       &
 #  endif
-          END DO
-        END DO
-      ELSE
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            ad_zeta(i,j,Lout)=tl_zeta(i,j,Linp)
-          END DO
-        END DO
-      END IF
-!
-!  2D momentum.
-!    
-      IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_ubar(i,j,Lout)=ad_ubar(i,j,Lout)+tl_ubar(i,j,Linp)
-#  ifdef MASKING
-            ad_ubar(i,j,Lout)=ad_ubar(i,j,Lout)*umask(i,j)
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                       ad_t_obc, tl_t_obc,                        &
+     &                       ad_u_obc, tl_u_obc,                        &
+     &                       ad_v_obc, tl_v_obc,                        &
+#   endif
+     &                       ad_ubar_obc, tl_ubar_obc,                  &
+     &                       ad_vbar_obc, tl_vbar_obc,                  &
+     &                       ad_zeta_obc, tl_zeta_obc,                  &
 #  endif
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_vbar(i,j,Lout)=ad_vbar(i,j,Lout)+tl_vbar(i,j,Linp)
-#  ifdef MASKING
-            ad_vbar(i,j,Lout)=ad_vbar(i,j,Lout)*vmask(i,j)
-#  endif
-          END DO
-        END DO
-      ELSE
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_ubar(i,j,Lout)=tl_ubar(i,j,Linp)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_vbar(i,j,Lout)=tl_vbar(i,j,Linp)
-          END DO
-        END DO
-      END IF
 #  ifdef ADJUST_WSTRESS
-!
-!  surface momentum stress.
-!    
-      IF (add) THEN
-        DO k=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              ad_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Lout)+                  &
-     &                            tl_ustr(i,j,k,Linp)
-#   ifdef MASKING
-              ad_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Lout)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              ad_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Lout)+                  &
-     &                            tl_vstr(i,j,k,Linp)
-#   ifdef MASKING
-              ad_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Lout)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO k=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              ad_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Linp)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              ad_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Linp)
-            END DO
-          END DO
-        END DO
-      END IF
+     &                       ad_ustr, tl_ustr,                          &
+     &                       ad_vstr, tl_vstr,                          &
 #  endif
 #  ifdef SOLVE3D
-!
-!  3D momentum.
-!
-      IF (add) THEN
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              ad_u(i,j,k,Lout)=ad_u(i,j,k,Lout)+tl_u(i,j,k,Linp)
-#   ifdef MASKING
-              ad_u(i,j,k,Lout)=ad_u(i,j,k,Lout)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              ad_v(i,j,k,Lout)=ad_v(i,j,k,Lout)+tl_v(i,j,k,Linp)
-#   ifdef MASKING
-              ad_v(i,j,k,Lout)=ad_v(i,j,k,Lout)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              ad_u(i,j,k,Lout)=tl_u(i,j,k,Linp)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              ad_v(i,j,k,Lout)=tl_v(i,j,k,Linp)
-            END DO
-          END DO
-        END DO
-      END IF
-!
-!  Tracers.
-!
-      IF (add) THEN
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                ad_t(i,j,k,Lout,itrc)=ad_t(i,j,k,Lout,itrc)+            &
-     &                                tl_t(i,j,k,Linp,itrc)
-#   ifdef MASKING
-                ad_t(i,j,k,Lout,itrc)=ad_t(i,j,k,Lout,itrc)*rmask(i,j)
-#   endif
-              END DO
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                ad_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Linp,itrc)
-              END DO
-            END DO
-          END DO
-        END DO
-      END IF
 #   ifdef ADJUST_STFLUX
-!
-!  surface tracer flux.
-!
-      IF (add) THEN
-        DO itrc=1,NT(ng)
-          DO k=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                ad_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Lout,itrc)+    &
-     &                                    tl_tflux(i,j,k,Linp,itrc)
-#    ifdef MASKING
-                ad_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Lout,itrc)*    &
-     &                                    rmask(i,j)
-#    endif
-              END DO
-            END DO
-          END DO
-        END DO
-      ELSE
-        DO itrc=1,NT(ng)
-          DO k=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                ad_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)
-              END DO
-            END DO
-          END DO
-        END DO
-      END IF
+     &                       ad_tflux, tl_tflux,                        &
 #   endif
+     &                       ad_t, tl_t,                                &
+     &                       ad_u, tl_u,                                &
+     &                       ad_v, tl_v,                                &
+#  else
+     &                       ad_ubar, tl_ubar,                          &
+     &                       ad_vbar, tl_vbar,                          &
 #  endif
+     &                       ad_zeta, tl_zeta)
+!
+!  Otherwise, copy tangent linear state into adjoint state.
+!
+!    ad_var(Lout) = tl_var(Linp)
+!
+      ELSE
+
+        CALL state_copy (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
+     &                   Linp, Lout,                                    &
+#  ifdef ADJUST_BOUNDARY
+#   ifdef SOLVE3D
+     &                   ad_t_obc, tl_t_obc,                            &
+     &                   ad_u_obc, tl_u_obc,                            &
+     &                   ad_v_obc, tl_v_obc,                            &
+#   endif
+     &                   ad_ubar_obc, tl_ubar_obc,                      &
+     &                   ad_vbar_obc, tl_vbar_obc,                      &
+     &                   ad_zeta_obc, tl_zeta_obc,                      &
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                   ad_ustr, tl_ustr,                              &
+     &                   ad_vstr, tl_vstr,                              &
+#  endif
+#  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+     &                   ad_tflux, tl_tflux,                            &
+#   endif
+     &                   ad_t, tl_t,                                    &
+     &                   ad_u, tl_u,                                    &
+     &                   ad_v, tl_v,                                    &
+#  else
+     &                   ad_ubar, tl_ubar,                              &
+     &                   ad_vbar, tl_vbar,                              &
+#  endif
+     &                   ad_zeta, tl_zeta)
+      END IF
+
       RETURN
       END SUBROUTINE load_TLtoAD_tile
 # endif       

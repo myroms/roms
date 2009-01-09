@@ -36,7 +36,11 @@
 !  LCZname     Input/output Lanczos vectors file name.                 !
 !  MODname     Output 4DVAR processed fields file name.                !
 !  MyAppCPP    Application C-preprocessing flag.                       !
-!  NRMname     Input/output correlations normalization file name.      !
+!  NRMname     Input/output error covariance normalization file name:  !
+!                NRMname(1)  initial conditions                        !
+!                NRMname(2)  model                                     !
+!                NRMname(3)  boundary conditions                       !
+!                NRMname(4)  surface forcing                           !
 !  OBSname     Input/output datum observations file name.              !
 !  REPname     Input/output representer coefficients file name.        !
 !  Rerror      Running error messages.                                 !
@@ -60,8 +64,14 @@
 !  nFfiles     Number of forcing files.                                !
 !  sparnam     Input sediment transport parameters file name.          !
 !  sposnam     Input station positions file name.                      !
+!  SourceFile  Current executed file name. It is used for IO error     !
+!                purposes.                                             !
 !  STAname     Output station data file name.                          !
-!  STDname     Input background-error standard deviations file name.   !
+!  STDname     Input error covariance standard deviations file name:   !
+!                STDname(1)  initial conditions                        !
+!                STDname(2)  model                                     !
+!                STDname(3)  boundary conditions                       !
+!                STDname(4)  surface forcing                           !
 !  stdinp      Unit number for standard input (often 5).               !
 !  stdout      Unit number for standard output (often 6).              !
 !  usrout      Unit number for generic USER output.                    !
@@ -81,6 +91,8 @@
         integer, dimension(Ngrids) :: nFfiles
 
         integer, allocatable :: FRCids(:,:)
+
+        character (len=80) :: SourceFile
 
         character (len=50), dimension(8) :: Rerror =                    &
      &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
@@ -118,7 +130,6 @@
         character (len=80), dimension(Ngrids) :: ITLname
         character (len=80), dimension(Ngrids) :: LCZname
         character (len=80), dimension(Ngrids) :: MODname
-        character (len=80), dimension(Ngrids) :: NRMname
         character (len=80), dimension(Ngrids) :: OBSname
         character (len=80), dimension(Ngrids) :: REPname
         character (len=80), dimension(Ngrids) :: SSHname
@@ -132,7 +143,9 @@
         character (len=80), dimension(Ngrids) :: VOBSname
         character (len=80), dimension(Ngrids) :: RSTname
         character (len=80), dimension(Ngrids) :: STAname
-        character (len=80), dimension(Ngrids) :: STDname
+
+        character (len=80), dimension(4,Ngrids) :: NRMname
+        character (len=80), dimension(4,Ngrids) :: STDname
 
         character (len=80) :: Iname
         character (len=80) :: Wname

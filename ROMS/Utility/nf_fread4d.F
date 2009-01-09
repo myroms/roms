@@ -125,7 +125,7 @@
 !  grid type is only known by the input thread so broadcast its value
 !  to all nodes.
 !
-      CALL mp_bcasti (ng, model, gtype, 1)
+      CALL mp_bcasti (ng, model, gtype)
 #endif
 !
 !  Set first and last grid point according to staggered C-grid
@@ -243,7 +243,7 @@
           status=nf90_get_var(ncid, ncvarid, wrk, start, total)
           IF (status.eq.nf90_noerr) THEN
             DO i=1,Npts
-              IF (wrk(i).ge.spval) THEN
+              IF (wrk(i).ge.spval_check) THEN
                 wrk(i)=0.0_r8           ! land/sea maked with _FillValue
               ELSE
                 wrk(i)=Ascl*wrk(i)
@@ -254,7 +254,7 @@
           END IF
         END IF          
 #ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, status, 1)
+        CALL mp_bcasti (ng, model, status)
 #endif
         IF (status.ne.nf90_noerr) THEN
           nf_fread4d=status

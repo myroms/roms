@@ -84,6 +84,7 @@
 !-----------------------------------------------------------------------
 !
 #ifdef MY_APPLICATION
+# ifdef EAST_TOBS
       IF (EASTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -93,6 +94,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef WEST_TOBS
       IF (WESTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -102,6 +105,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef SOUTH_TOBS
       IF (SOUTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -111,6 +116,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef NORTH_TOBS
       IF (NORTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -120,6 +127,7 @@
           END DO
         END DO
       END IF
+# endif
 #else
       ana_tobc.h: No values provided for BOUNDARY(ng)%t_xxxx.
 #endif

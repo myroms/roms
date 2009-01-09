@@ -134,6 +134,9 @@
 !***********************************************************************
 !
       USE mod_param
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+#endif
 #ifdef SOLVE3D
       USE mod_coupling
 #endif
@@ -156,7 +159,7 @@
       CALL wclock_on (ng, model, 36)
 #endif
       CALL cgradient_tile (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lold(ng), Lnew(ng),                          &
      &                     innLoop, outLoop,                            &
@@ -164,6 +167,16 @@
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     BOUNDARY(ng) % t_obc,                        &
+     &                     BOUNDARY(ng) % u_obc,                        &
+     &                     BOUNDARY(ng) % v_obc,                        &
+# endif
+     &                     BOUNDARY(ng) % ubar_obc,                     &
+     &                     BOUNDARY(ng) % vbar_obc,                     &
+     &                     BOUNDARY(ng) % zeta_obc,                     &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % ustr,                           &
@@ -181,6 +194,16 @@
      &                     OCEAN(ng) % vbar,                            &
 #endif
      &                     OCEAN(ng) % zeta,                            &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     BOUNDARY(ng) % tl_t_obc,                     &
+     &                     BOUNDARY(ng) % tl_u_obc,                     &
+     &                     BOUNDARY(ng) % tl_v_obc,                     &
+# endif
+     &                     BOUNDARY(ng) % tl_ubar_obc,                  &
+     &                     BOUNDARY(ng) % tl_vbar_obc,                  &
+     &                     BOUNDARY(ng) % tl_zeta_obc,                  &
+#endif
 #ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % tl_ustr,                        &
      &                     FORCES(ng) % tl_vstr,                        &
@@ -197,6 +220,16 @@
      &                     OCEAN(ng) % tl_vbar,                         &
 #endif
      &                     OCEAN(ng) % tl_zeta,                         &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     BOUNDARY(ng) % d_t_obc,                      &
+     &                     BOUNDARY(ng) % d_u_obc,                      &
+     &                     BOUNDARY(ng) % d_v_obc,                      &
+# endif
+     &                     BOUNDARY(ng) % d_ubar_obc,                   &
+     &                     BOUNDARY(ng) % d_vbar_obc,                   &
+     &                     BOUNDARY(ng) % d_zeta_obc,                   &
+#endif
 #ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % d_sustr,                        &
      &                     FORCES(ng) % d_svstr,                        &
@@ -213,6 +246,16 @@
      &                     OCEAN(ng) % d_vbar,                          &
 #endif
      &                     OCEAN(ng) % d_zeta,                          &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     BOUNDARY(ng) % ad_t_obc,                     &
+     &                     BOUNDARY(ng) % ad_u_obc,                     &
+     &                     BOUNDARY(ng) % ad_v_obc,                     &
+# endif
+     &                     BOUNDARY(ng) % ad_ubar_obc,                  &
+     &                     BOUNDARY(ng) % ad_vbar_obc,                  &
+     &                     BOUNDARY(ng) % ad_zeta_obc,                  &
+#endif
 #ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % ad_ustr,                        &
      &                     FORCES(ng) % ad_vstr,                        &
@@ -237,12 +280,19 @@
 !
 !***********************************************************************
       SUBROUTINE cgradient_tile (ng, tile, model,                       &
-     &                           LBi, UBi, LBj, UBj,                    &
+     &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lold, Lnew,                            &
      &                           innLoop, outLoop,                      &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                           nl_t_obc, nl_u_obc, nl_v_obc,          &
+# endif
+     &                           nl_ubar_obc, nl_vbar_obc,              &
+     &                           nl_zeta_obc,                           &
 #endif
 #ifdef ADJUST_WSTRESS
      &                           nl_ustr, nl_vstr,                      &
@@ -256,6 +306,13 @@
      &                           nl_ubar, nl_vbar,                      &
 #endif
      &                           nl_zeta,                               &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                           tl_t_obc, tl_u_obc, tl_v_obc,          &
+# endif
+     &                           tl_ubar_obc, tl_vbar_obc,              &
+     &                           tl_zeta_obc,                           &
+#endif
 #ifdef ADJUST_WSTRESS
      &                           tl_ustr, tl_vstr,                      &
 #endif
@@ -268,6 +325,13 @@
      &                           tl_ubar, tl_vbar,                      &
 #endif
      &                           tl_zeta,                               &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                           d_t_obc, d_u_obc, d_v_obc,             &
+# endif
+     &                           d_ubar_obc, d_vbar_obc,                &
+     &                           d_zeta_obc,                            &
+#endif
 #ifdef ADJUST_WSTRESS
      &                           d_sustr, d_svstr,                      &
 #endif
@@ -280,6 +344,13 @@
      &                           d_ubar, d_vbar,                        &
 #endif
      &                           d_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                           ad_t_obc, ad_u_obc, ad_v_obc,          &
+# endif
+     &                           ad_ubar_obc, ad_vbar_obc,              &
+     &                           ad_zeta_obc,                           &
+#endif
 #ifdef ADJUST_WSTRESS
      &                           ad_ustr, ad_vstr,                      &
 #endif
@@ -302,14 +373,14 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcastf_m, mp_bcasti
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #endif
       USE state_copy_mod, ONLY : state_copy
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
       integer, intent(in) :: innLoop, outLoop
@@ -319,6 +390,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
@@ -336,6 +417,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: d_t_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: d_u_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: d_v_obc(LBij:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: d_ubar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_vbar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_zeta_obc(LBij:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: d_sustr(LBi:,LBj:,:)
       real(r8), intent(inout) :: d_svstr(LBi:,LBj:,:)
@@ -352,6 +443,16 @@
       real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
 # endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: nl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: nl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:,:)
@@ -368,6 +469,16 @@
       real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -384,11 +495,24 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -407,6 +531,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: d_t_obc(LBij:UBij,N(ng),4,             &
+     &                                   Nbrec(ng),NT(ng))
+      real(r8), intent(inout) :: d_u_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+      real(r8), intent(inout) :: d_v_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+#  endif
+      real(r8), intent(inout) :: d_ubar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(inout) :: d_vbar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(inout) :: d_zeta_obc(LBij:UBij,4,Nbrec(ng))
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
       real(r8), intent(inout) :: d_svstr(LBi:UBi,LBj:UBj,Nfrec(ng))
@@ -424,6 +559,17 @@
       real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: nl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -441,6 +587,17 @@
       real(r8), intent(inout) :: nl_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -498,8 +655,18 @@
 !  Copy ad_var(L2) into nl_var(L1)
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L2, L1,                                        &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   nl_t_obc, ad_t_obc,                            &
+     &                   nl_u_obc, ad_u_obc,                            &
+     &                   nl_v_obc, ad_v_obc,                            &
+# endif
+     &                   nl_ubar_obc, ad_ubar_obc,                      &
+     &                   nl_vbar_obc, ad_vbar_obc,                      &
+     &                   nl_zeta_obc, ad_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   nl_ustr, ad_ustr,                              &
      &                   nl_vstr, ad_vstr,                              &
@@ -518,12 +685,19 @@
      &                   nl_zeta, ad_zeta)
 !
         CALL precond (ng, tile, model, 'convert gradient to y-space',   &
-     &                LBi, UBi, LBj, UBj,                               &
+     &                LBi, UBi, LBj, UBj, LBij, UBij,                   &
      &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale, Ltrans,                    &
      &                innLoop, outLoop,                                 &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                nl_t_obc, nl_u_obc, nl_v_obc,                     &
+# endif
+     &                nl_ubar_obc, nl_vbar_obc,                         &
+     &                nl_zeta_obc,                                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                nl_ustr, nl_vstr,                                 &
@@ -542,8 +716,18 @@
 !  Copy nl_var(L1) into ad_var(L2).
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L1, L2,                                        &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   ad_t_obc, nl_t_obc,                            &
+     &                   ad_u_obc, nl_u_obc,                            &
+     &                   ad_v_obc, nl_v_obc,                            &
+# endif
+     &                   ad_ubar_obc, nl_ubar_obc,                      &
+     &                   ad_vbar_obc, nl_vbar_obc,                      &
+     &                   ad_zeta_obc, nl_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   ad_ustr, nl_ustr,                              &
      &                   ad_vstr, nl_vstr,                              &
@@ -572,12 +756,19 @@
         Linp=1
         Lout=2
         CALL hessian (ng, tile, model,                                  &
-     &                LBi, UBi, LBj, UBj,                               &
+     &                LBi, UBi, LBj, UBj, LBij, UBij,                   &
      &                IminS, ImaxS, JminS, JmaxS,                       &
      &                Linp, Lout, Lwrk,                                 &
      &                innLoop, outLoop,                                 &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                ad_t_obc, ad_u_obc, ad_v_obc,                     &
+# endif
+     &                ad_ubar_obc, ad_vbar_obc,                         &
+     &                ad_zeta_obc,                                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                ad_ustr, ad_vstr,                                 &
@@ -591,6 +782,13 @@
      &                ad_ubar, ad_vbar,                                 &
 #endif
      &                ad_zeta,                                          &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                tl_t_obc, tl_u_obc, tl_v_obc,                     &
+# endif
+     &                tl_ubar_obc, tl_vbar_obc,                         &
+     &                tl_zeta_obc,                                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                tl_ustr, tl_vstr,                                 &
 #endif
@@ -608,8 +806,9 @@
 !  Check for positive Hessian, J''.
 !
         IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
-          PRINT *,'CG_DELTA not positive'
-          PRINT *, 'CG_DELTA = ', innLoop, cg_delta(innLoop,outLoop)
+          PRINT *, 'CG_DELTA not positive'
+          PRINT *, 'CG_DELTA = ', cg_delta(innLoop,outLoop),            &
+     &             ', outer = ', outLoop, ', inner = ', innLoop
           STOP
         END IF
       END IF
@@ -622,12 +821,19 @@
       Lout=2
       Lwrk=2
       CALL lanczos (ng, tile, model,                                    &
-     &              LBi, UBi, LBj, UBj,                                 &
+     &              LBi, UBi, LBj, UBj, LBij, UBij,                     &
      &              IminS, ImaxS, JminS, JmaxS,                         &
      &              Linp, Lout, Lwrk,                                   &
      &              innLoop, outLoop,                                   &
 #ifdef MASKING
      &              rmask, umask, vmask,                                &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &              tl_t_obc, tl_u_obc, tl_v_obc,                       &
+# endif
+     &              tl_ubar_obc, tl_vbar_obc,                           &
+     &              tl_zeta_obc,                                        &
 #endif
 #ifdef ADJUST_WSTRESS
      &              tl_ustr, tl_vstr,                                   &
@@ -641,6 +847,13 @@
      &              tl_ubar, tl_vbar,                                   &
 #endif
      &              tl_zeta,                                            &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &              ad_t_obc, ad_u_obc, ad_v_obc,                       &
+# endif
+     &              ad_ubar_obc, ad_vbar_obc,                           &
+     &              ad_zeta_obc,                                        &
+#endif
 #ifdef ADJUST_WSTRESS
      &              ad_ustr, ad_vstr,                                   &
 #endif
@@ -658,11 +871,18 @@
 !  Compute new direction, d(k+1).
 !
       CALL new_direction (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Linp, Lout,                                   &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc, ad_u_obc, ad_v_obc,                 &
+# endif
+     &                    ad_ubar_obc, ad_vbar_obc,                     &
+     &                    ad_zeta_obc,                                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr, ad_vstr,                             &
@@ -676,6 +896,13 @@
      &                    ad_ubar, ad_vbar,                             &
 #endif
      &                    ad_zeta,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    d_t_obc, d_u_obc, d_v_obc,                    &
+# endif
+     &                    d_ubar_obc, d_vbar_obc,                       &
+     &                    d_zeta_obc,                                   &
+#endif
 #ifdef ADJUST_WSTRESS
      &                    d_sustr, d_svstr,                             &
 #endif
@@ -727,12 +954,19 @@
         Lout=2
         Lwrk=2
         CALL new_gradient (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Linp, Lout, Lwrk,                            &
      &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     tl_t_obc, tl_u_obc, tl_v_obc,                &
+# endif
+     &                     tl_ubar_obc, tl_vbar_obc,                    &
+     &                     tl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     tl_ustr, tl_vstr,                            &
@@ -746,6 +980,13 @@
      &                     tl_ubar, tl_vbar,                            &
 #endif
      &                     tl_zeta,                                     &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     ad_t_obc, ad_u_obc, ad_v_obc,                &
+# endif
+     &                     ad_ubar_obc, ad_vbar_obc,                    &
+     &                     ad_zeta_obc,                                 &
+#endif
 #ifdef ADJUST_WSTRESS
      &                     ad_ustr, ad_vstr,                            &
 #endif
@@ -764,11 +1005,18 @@
 !
       IF (innLoop.gt.0) THEN
         CALL new_cost (ng, tile, model,                                 &
-     &                 LBi, UBi, LBj, UBj,                              &
+     &                 LBi, UBi, LBj, UBj, LBij, UBij,                  &
      &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 innLoop, outLoop,                                &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                 nl_t_obc, nl_u_obc, nl_v_obc,                    &
+# endif
+     &                 nl_ubar_obc, nl_vbar_obc,                        &
+     &                 nl_zeta_obc,                                     &
 #endif
 #ifdef ADJUST_WSTRESS
      &                 nl_ustr, nl_vstr,                                &
@@ -810,15 +1058,15 @@
      &                   cg_zv, Ninner, work, info)
           END IF
 #ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iTLM, info, 1)
+          CALL mp_bcasti (ng, model, info)
 #endif
           IF (info.ne.0) THEN
             PRINT *,'Error in DSTEQR: info=',info
             STOP
           END IF
 #ifdef DISTRIBUTE
-          CALL mp_bcastf (ng, iTLM, cg_Ritz(:,outLoop), Ninner)
-          CALL mp_bcastf_m (ng, ITLM, cg_zv, Ninner, Ninner)
+          CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop))
+          CALL mp_bcastf (ng, model, cg_zv)
 #endif
 !
 !  Estimate the Ritz value error bounds.
@@ -849,12 +1097,19 @@
             Linp=1
             Lout=2
             CALL hessian_evecs (ng, tile, model,                        &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, LBij, UBij,         &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Linp, Lout, Lwrk,                       &
      &                          innLoop, outLoop,                       &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          nl_t_obc, nl_u_obc, nl_v_obc,           &
+# endif
+     &                          nl_ubar_obc, nl_vbar_obc,               &
+     &                          nl_zeta_obc,                            &
 #endif
 #ifdef ADJUST_WSTRESS
      &                          nl_ustr, nl_vstr,                       &
@@ -868,6 +1123,14 @@
      &                          nl_ubar, nl_vbar,                       &
 #endif
      &                          nl_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          tl_t_obc, tl_u_obc, tl_v_obc,           &
+# endif
+     &                          tl_ubar_obc, tl_vbar_obc,               &
+
+     &                          tl_zeta_obc,                            &
+#endif
 #ifdef ADJUST_WSTRESS
      &                          tl_ustr, tl_vstr,                       &
 #endif
@@ -880,6 +1143,13 @@
      &                          tl_ubar, tl_vbar,                       &
 #endif
      &                          tl_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          ad_t_obc, ad_u_obc, ad_v_obc,           &
+# endif
+     &                          ad_ubar_obc, ad_vbar_obc,               &
+     &                          ad_zeta_obc,                            &
+#endif
 #ifdef ADJUST_WSTRESS
      &                          ad_ustr, ad_vstr,                       &
 #endif
@@ -913,12 +1183,19 @@
       Linp=1
       Lout=2
       CALL tl_new_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Linp, Lout,                                    &
      &                   innLoop, outLoop,                              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   d_t_obc, d_u_obc, d_v_obc,                     &
+# endif
+     &                   d_ubar_obc, d_vbar_obc,                        &
+     &                   d_zeta_obc,                                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   d_sustr, d_svstr,                              &
@@ -932,6 +1209,13 @@
      &                   d_ubar, d_vbar,                                &
 #endif
      &                   d_zeta,                                        &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, tl_u_obc, tl_v_obc,                  &
+# endif
+     &                   tl_ubar_obc, tl_vbar_obc,                      &
+     &                   tl_zeta_obc,                                   &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, tl_vstr,                              &
 #endif
@@ -944,6 +1228,13 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta,                                       &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   ad_t_obc, ad_u_obc, ad_v_obc,                  &
+# endif
+     &                   ad_ubar_obc, ad_vbar_obc,                      &
+     &                   ad_zeta_obc,                                   &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   ad_ustr, ad_vstr,                              &
 #endif
@@ -967,8 +1258,18 @@
 !  Copy tl_var(Lout) into nl_var(L1).
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lout, L1,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   nl_t_obc, tl_t_obc,                            &
+     &                   nl_u_obc, tl_u_obc,                            &
+     &                   nl_v_obc, tl_v_obc,                            &
+# endif
+     &                   nl_ubar_obc, tl_ubar_obc,                      &
+     &                   nl_vbar_obc, tl_vbar_obc,                      &
+     &                   nl_zeta_obc, tl_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   nl_ustr, tl_ustr,                              &
      &                   nl_vstr, tl_vstr,                              &
@@ -987,12 +1288,19 @@
      &                   nl_zeta, tl_zeta)
 !
         CALL precond (ng, tile, model, 'convert increment to v-space',  &
-     &                LBi, UBi, LBj, UBj,                               &
+     &                LBi, UBi, LBj, UBj, LBij, UBij,                   &
      &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale, Ltrans,                    &
      &                innLoop, outLoop,                                 &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                nl_t_obc, nl_u_obc, nl_v_obc,                     &
+# endif
+     &                nl_ubar_obc, nl_vbar_obc,                         &
+     &                nl_zeta_obc,                                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                nl_ustr, nl_vstr,                                 &
@@ -1011,8 +1319,18 @@
 !  Copy nl_var(L1) into tl_var(Lout)
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L1, Lout,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, nl_t_obc,                            &
+     &                   tl_u_obc, nl_u_obc,                            &
+     &                   tl_v_obc, nl_v_obc,                            &
+# endif
+     &                   tl_ubar_obc, nl_ubar_obc,                      &
+     &                   tl_vbar_obc, nl_vbar_obc,                      &
+     &                   tl_zeta_obc, nl_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, nl_ustr,                              &
      &                   tl_vstr, nl_vstr,                              &
@@ -1088,12 +1406,19 @@
 !
 !***********************************************************************
       SUBROUTINE tl_new_state (ng, tile, model,                         &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp, Lout,                              &
      &                         innLoop, outLoop,                        &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         d_t_obc, d_u_obc, d_v_obc,               &
+# endif
+     &                         d_ubar_obc, d_vbar_obc,                  &
+     &                         d_zeta_obc,                              &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         d_sustr, d_svstr,                        &
@@ -1107,6 +1432,13 @@
      &                         d_ubar, d_vbar,                          &
 #endif
      &                         d_zeta,                                  &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         tl_t_obc, tl_u_obc, tl_v_obc,            &
+# endif
+     &                         tl_ubar_obc, tl_vbar_obc,                &
+     &                         tl_zeta_obc,                             &
+#endif
 #ifdef ADJUST_WSTRESS
      &                         tl_ustr, tl_vstr,                        &
 #endif
@@ -1119,6 +1451,13 @@
      &                         tl_ubar, tl_vbar,                        &
 #endif
      &                         tl_zeta,                                 &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, ad_u_obc, ad_v_obc,            &
+# endif
+     &                         ad_ubar_obc, ad_vbar_obc,                &
+     &                         ad_zeta_obc,                             &
+#endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, ad_vstr,                        &
 #endif
@@ -1146,7 +1485,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
       integer, intent(in) :: innLoop, outLoop
@@ -1156,6 +1495,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: d_t_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: d_u_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: d_v_obc(LBij:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: d_ubar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_vbar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_zeta_obc(LBij:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(in) :: d_sustr(LBi:,LBj:,:)
@@ -1173,6 +1522,16 @@
       real(r8), intent(in) :: d_vbar(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: d_zeta(LBi:,LBj:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
@@ -1189,6 +1548,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -1205,29 +1574,53 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: d_t_obc(LBij:UBij,N(ng),4,                &
+     &                                Nbrec(ng),NT(ng))
+      real(r8), intent(in) :: d_u_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+      real(r8), intent(in) :: d_v_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+#  endif
+      real(r8), intent(in) :: d_ubar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(in) :: d_vbar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(in) :: d_zeta_obc(LBij:UBij,4,Nbrec(ng))
+# endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
-      real(r8), intent(inout) :: d_svstr(LBi:UBi,LBj:UBj,Nfrec(ng))
+      real(r8), intent(in) :: d_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
+      real(r8), intent(in) :: d_svstr(LBi:UBi,LBj:UBj,Nfrec(ng))
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: d_stflx(LBi:UBi,LBj:UBj,               &
-     &                                   Nfrec(ng),NT(ng))
+      real(r8), intent(in) :: d_stflx(LBi:UBi,LBj:UBj,                  &
+     &                                Nfrec(ng),NT(ng))
 #  endif
-      real(r8), intent(inout) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(inout) :: d_u(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: d_v(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: d_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: d_v(LBi:UBi,LBj:UBj,N(ng))
 # else
-      real(r8), intent(inout) :: d_ubar(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: d_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: d_vbar(LBi:UBi,LBj:UBj)
 # endif
-      real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: d_zeta(LBi:UBi,LBj:UBj)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -1245,6 +1638,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -1267,9 +1671,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, lstr, rec
-#ifdef SOLVE3D
-      integer :: itrc
-#endif
+      integer :: ib, ir, it
 
       real(r8) :: fac, fac1, fac2
 
@@ -1293,9 +1695,60 @@
 #endif
           END DO
         END DO
+
+#ifdef ADJUST_BOUNDARY
+!
+!  Free-surface open boundaries.
+!
+        IF (ANY(Lobc(:,isFsur,ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO j=Jstr,Jend
+                tl_zeta_obc(j,ib,ir,Lout)=d_zeta_obc(j,ib,ir)
+# ifdef MASKING
+                tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*    &
+     &                                    rmask(Istr-1,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO j=Jstr,Jend
+                tl_zeta_obc(j,ib,ir,Lout)=d_zeta_obc(j,ib,ir)
+# ifdef MASKING
+                tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*    &
+     &                                    rmask(Iend+1,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO i=Istr,Iend
+                tl_zeta_obc(i,ib,ir,Lout)=d_zeta_obc(i,ib,ir)
+# ifdef MASKING
+                tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*    &
+     &                                    rmask(i,Jstr-1)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO i=Istr,Iend
+                tl_zeta_obc(i,ib,ir,Lout)=d_zeta_obc(i,ib,ir)
+# ifdef MASKING
+                tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*    &
+     &                                    rmask(i,Jend+1)
+# endif
+              END DO
+            END IF
+          END DO
+        END IF
+#endif
+
 #ifndef SOLVE3D
 !
-!  2D momentum.
+!  2D U-momentum.
 !
         DO j=JstrR,JendR
           DO i=Istr,IendR
@@ -1305,6 +1758,62 @@
 # endif
           END DO
         END DO
+#endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D U-momentum open boundaries.
+!
+        IF (ANY(Lobc(:,isUbar,ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO j=Jstr,Jend
+                tl_ubar_obc(j,ib,ir,Lout)=d_ubar_obc(j,ib,ir)
+# ifdef MASKING
+                tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*    &
+     &                                    umask(Istr,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO j=Jstr,Jend
+                tl_ubar_obc(j,ib,ir,Lout)=d_ubar_obc(j,ib,ir)
+# ifdef MASKING
+                tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*    &
+     &                                    umask(Iend+1,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO i=IstrU,Iend
+                tl_ubar_obc(i,ib,ir,Lout)=d_ubar_obc(i,ib,ir)
+# ifdef MASKING
+                tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*    &
+     &                                    umask(i,Jstr-1)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO i=IstrU,Iend
+                tl_ubar_obc(i,ib,ir,Lout)=d_ubar_obc(i,ib,ir)
+# ifdef MASKING
+                tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*    &
+     &                                    umask(i,Jend+1)
+# endif
+              END DO
+            END IF
+          END DO
+        END IF
+#endif
+
+#ifndef SOLVE3D
+!
+!  2D V-momentum.
+!
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             tl_vbar(i,j,Lout)=d_vbar(i,j)
@@ -1314,32 +1823,84 @@
           END DO
         END DO
 #endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D V-momentum open boundaries.
+!
+        IF (ANY(Lobc(:,isVbar,ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO j=JstrV,Jend
+                tl_vbar_obc(j,ib,ir,Lout)=d_vbar_obc(j,ib,ir)
+# ifdef MASKING
+                tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*    &
+     &                                    vmask(Istr-1,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO j=JstrV,Jend
+                tl_vbar_obc(j,ib,ir,Lout)=d_vbar_obc(j,ib,ir)
+# ifdef MASKING
+                tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*    &
+     &                                    vmask(Iend+1,j)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO i=Istr,Iend
+                tl_vbar_obc(i,ib,ir,Lout)=d_vbar_obc(i,ib,ir)
+# ifdef MASKING
+                tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*    &
+     &                                    vmask(i,Jstr)
+# endif
+              END DO
+            END IF
+            IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO i=Istr,Iend
+                tl_vbar_obc(i,ib,ir,Lout)=d_vbar_obc(i,ib,ir)
+# ifdef MASKING
+                tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*    &
+     &                                    vmask(i,Jend+1)
+# endif
+              END DO
+            END IF
+          END DO
+        END IF
+#endif
+
 #ifdef ADJUST_WSTRESS
 !
 !  Surface momentum stress.
 !
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrR,JendR
             DO i=Istr,IendR
-              tl_ustr(i,j,k,Lout)=d_sustr(i,j,k)
+              tl_ustr(i,j,ir,Lout)=d_sustr(i,j,ir)
 # ifdef MASKING
-              tl_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Lout)*umask(i,j)
+              tl_ustr(i,j,ir,Lout)=tl_ustr(i,j,ir,Lout)*umask(i,j)
 # endif
             END DO
           END DO
           DO j=Jstr,JendR
             DO i=IstrR,IendR
-              tl_vstr(i,j,k,Lout)=d_svstr(i,j,k)
+              tl_vstr(i,j,ir,Lout)=d_svstr(i,j,ir)
 # ifdef MASKING
-              tl_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Lout)*vmask(i,j)
+              tl_vstr(i,j,ir,Lout)=tl_vstr(i,j,ir,Lout)*vmask(i,j)
 # endif
             END DO
           END DO
         END DO
 #endif
+
 #ifdef SOLVE3D
 !
-!  3D momentum.
+!  3D U-momentum.
 !
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -1350,6 +1911,69 @@
 # endif
             END DO
           END DO
+        END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D U-momentum open boundaries.
+!
+        IF (ANY(Lobc(:,isUvel,ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  tl_u_obc(j,k,ib,ir,Lout)=d_u_obc(j,k,ib,ir)
+#  ifdef MASKING
+                  tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*    &
+     &                                     umask(Istr,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  tl_u_obc(j,k,ib,ir,Lout)=d_u_obc(j,k,ib,ir)
+#  ifdef MASKING
+                  tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*    &
+     &                                     umask(Iend+1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO k=1,N(ng)
+                DO i=IstrU,Iend
+                  tl_u_obc(i,k,ib,ir,Lout)=d_u_obc(i,k,ib,ir)
+#  ifdef MASKING
+                  tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*    &
+     &                                     umask(i,Jstr-1)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO k=1,N(ng)
+                DO i=IstrU,Iend
+                  tl_u_obc(i,k,ib,ir,Lout)=d_u_obc(i,k,ib,ir)
+#  ifdef MASKING
+                  tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*    &
+     &                                     umask(i,Jend+1)
+#  endif
+                END DO
+              END DO
+            END IF
+          END DO
+        END IF
+# endif
+!
+!  3D V-momentum.
+!
+        DO k=1,N(ng)
           DO j=Jstr,JendR
             DO i=IstrR,IendR
               tl_v(i,j,k,Lout)=d_v(i,j,k)
@@ -1359,39 +1983,159 @@
             END DO
           END DO
         END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D V-momentum open boundaries.
+!
+        IF (ANY(Lobc(:,isVvel,ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO k=1,N(ng)
+                DO j=JstrV,Jend
+                  tl_v_obc(j,k,ib,ir,Lout)=d_v_obc(j,k,ib,ir)
+#  ifdef MASKING
+                  tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*    &
+     &                                     vmask(Istr-1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO k=1,N(ng)
+                DO j=JstrV,Jend
+                  tl_v_obc(j,k,ib,ir,Lout)=d_v_obc(j,k,ib,ir)
+#  ifdef MASKING
+                  tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*    &
+     &                                     vmask(Iend+1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  tl_v_obc(i,k,ib,ir,Lout)=d_v_obc(i,k,ib,ir)
+#  ifdef MASKING
+                  tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*    &
+     &                                     vmask(i,Jstr)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  tl_v_obc(i,k,ib,ir,Lout)=d_v_obc(i,k,ib,ir)
+#  ifdef MASKING
+                  tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*    &
+     &                                     vmask(i,Jend+1)
+#  endif
+                END DO
+              END DO
+            END IF
+          END DO
+        END IF
+# endif
 !
 !  Tracers.
 !
-        DO itrc=1,NT(ng)
+        DO it=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                tl_t(i,j,k,Lout,itrc)=d_t(i,j,k,itrc)
+                tl_t(i,j,k,Lout,it)=d_t(i,j,k,it)
 # ifdef MASKING
-                tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
+                tl_t(i,j,k,Lout,it)=tl_t(i,j,k,Lout,it)*rmask(i,j)
 # endif
               END DO
             END DO
           END DO
         END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Tracers open boundaries.
+!
+        DO it=1,NT(ng)
+          IF (ANY(Lobc(:,isTvar(it),ng))) THEN
+            DO ir=1,Nbrec(ng)
+              IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+                ib=iwest
+                DO k=1,N(ng)
+                  DO j=Jstr,Jend
+                    tl_t_obc(j,k,ib,ir,Lout,it)=d_t_obc(j,k,ib,ir,it)
+#  ifdef MASKING
+                    tl_t_obc(j,k,ib,ir,Lout,it)=                        &
+     &                      tl_t_obc(j,k,ib,ir,Lout,it)*rmask(Istr-1,j)
+#  endif
+                  END DO
+                END DO
+              END IF
+              IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+                ib=ieast
+                DO k=1,N(ng)
+                  DO j=Jstr,Jend
+                    tl_t_obc(j,k,ib,ir,Lout,it)=d_t_obc(j,k,ib,ir,it)
+#  ifdef MASKING
+                    tl_t_obc(j,k,ib,ir,Lout,it)=                        &
+     &                      tl_t_obc(j,k,ib,ir,Lout,it)*rmask(Iend+1,j)
+#  endif
+                  END DO
+                END DO
+              END IF
+              IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+                ib=isouth
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    tl_t_obc(i,k,ib,ir,Lout,it)=d_t_obc(i,k,ib,ir,it)
+#  ifdef MASKING
+                    tl_t_obc(i,k,ib,ir,Lout,it)=                        &
+     &                      tl_t_obc(i,k,ib,ir,Lout,it)*rmask(i,Jstr-1)
+#  endif
+                  END DO
+                END DO
+              END IF
+              IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+                ib=inorth
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    tl_t_obc(i,k,ib,ir,Lout,it)=d_t_obc(i,k,ib,ir,it)
+#  ifdef MASKING
+                    tl_t_obc(i,k,ib,ir,Lout,it)=                        &
+     &                      tl_t_obc(i,k,ib,ir,Lout,it)*rmask(i,Jend+1)
+#  endif
+                  END DO
+                END DO
+              END IF
+            END DO
+          END IF
+        END DO
+# endif
+
 # ifdef ADJUST_STFLUX
 !
 !  Surface tracers flux.
 !
-        DO itrc=1,NT(ng)
-          DO k=1,Nfrec(ng)
+        DO it=1,NT(ng)
+          DO ir=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                tl_tflux(i,j,k,Lout,itrc)=d_stflx(i,j,k,itrc)
+                tl_tflux(i,j,ir,Lout,it)=d_stflx(i,j,ir,it)
 #  ifdef MASKING
-                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Lout,itrc)*    &
-     &                                    rmask(i,j)
+                tl_tflux(i,j,ir,Lout,it)=tl_tflux(i,j,ir,Lout,it)*      &
+     &                                   rmask(i,j)
 #  endif
               END DO
             END DO
           END DO
         END DO
 # endif
+
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1410,10 +2154,17 @@
         fac=0.0_r8
 
         CALL state_initialize (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         Linp, fac,                               &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, ad_u_obc, ad_v_obc,            &
+# endif
+     &                         ad_ubar_obc, ad_vbar_obc,                &
+     &                         ad_zeta_obc,                             &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, ad_vstr,                        &
@@ -1444,11 +2195,18 @@
 !  at index Lout.
 !
           CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     Lout, rec,                                   &
      &                     ndefADJ(ng), ncADJid(ng), ncname,            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     tl_t_obc, tl_u_obc, tl_v_obc,                &
+# endif
+     &                     tl_ubar_obc, tl_vbar_obc,                    &
+     &                     tl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     tl_ustr, tl_vstr,                            &
@@ -1472,10 +2230,20 @@
           fac2=cg_zu(rec,outLoop)
 
           CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         Linp, Lout, Linp, fac1, fac2,            &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, tl_t_obc,                      &
+     &                         ad_u_obc, tl_u_obc,                      &
+     &                         ad_v_obc, tl_v_obc,                      &
+# endif
+     &                         ad_ubar_obc, tl_ubar_obc,                &
+     &                         ad_vbar_obc, tl_vbar_obc,                &
+     &                         ad_zeta_obc, tl_zeta_obc,                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, tl_ustr,                        &
@@ -1501,8 +2269,18 @@
 !    tl_var(Lout) = ad_var(Linp)
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Linp, Lout,                                    &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, ad_t_obc,                            &
+     &                   tl_u_obc, ad_u_obc,                            &
+     &                   tl_v_obc, ad_v_obc,                            &
+# endif
+     &                   tl_ubar_obc, ad_ubar_obc,                      &
+     &                   tl_vbar_obc, ad_vbar_obc,                      &
+     &                   tl_zeta_obc, ad_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, ad_ustr,                              &
      &                   tl_vstr, ad_vstr,                              &
@@ -1526,11 +2304,18 @@
 !
 !***********************************************************************
       SUBROUTINE read_state (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lwrk, rec,                                 &
      &                       ndef, ncfileid, ncname,                    &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       s_t_obc, s_u_obc, s_v_obc,                 &
+# endif
+     &                       s_ubar_obc, s_vbar_obc,                    &
+     &                       s_zeta_obc,                                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       s_ustr, s_vstr,                            &
@@ -1564,7 +2349,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: Lwrk, rec, ndef
 
       integer, intent(inout) :: ncfileid
@@ -1576,6 +2361,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: s_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: s_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: s_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: s_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: s_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: s_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s_ustr(LBi:,LBj:,:,:)
@@ -1593,11 +2388,24 @@
       real(r8), intent(inout) :: s_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: s_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: s_t_obc(LBij:UBij,N(ng),4,             &
+     &                                   Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: s_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: s_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: s_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: s_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: s_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -1621,16 +2429,16 @@
 !  Local variable declarations.
 !
       integer :: i, j, k
-#ifdef SOLVE3D
-      integer :: itrc
-#endif
-      integer :: gtype, ncid, status
-      integer, dimension(NV) :: vid
+      integer :: ib, ir, it
+      integer :: gtype, ncid, status, varid
+
       integer, dimension(4) :: Vsize
 
       real(r8) :: Fmin, Fmax, scale
 
 #include "set_bounds.h"
+!
+      SourceFile='cgradient_lanczos.h, read_state'
 !
 !-----------------------------------------------------------------------
 !  Read in requested model state record. Load data into state array
@@ -1640,46 +2448,16 @@
 !  Determine file and variables ids.
 !
       IF (ndef.gt.0) THEN
-        IF (InpThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-          END IF            
-          ncfileid=ncid
+        CALL netcdf_open (ng, model, ncname, 0, ncid)
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
         END IF
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, ncfileid, 1)
-        CALL mp_bcasti (ng, model, exit_flag, 1)
-        IF (exit_flag.ne.NoError) RETURN
-#endif
+        ncfileid=ncid
       ELSE
         ncid=ncfileid
       END IF
-      IF (InpThread) THEN
-#ifndef SOLVE3D
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
-#endif
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
-#ifdef ADJUST_WSTRESS
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
-#endif
-#ifdef SOLVE3D
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
-        DO itrc=1,NT(ng)
-          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),      &
-     &                          vid(idTvar(itrc)))
-# ifdef ADJUST_STFLUX
-          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),      &
-     &                          vid(idTsur(itrc)))
-# endif
-        END DO
-#endif
-      END IF
+
       DO i=1,4
         Vsize(i)=0
       END DO
@@ -1688,7 +2466,11 @@
 !
       gtype=r2dvar
       scale=1.0_r8
-      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idFsur),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 #ifdef MASKING
@@ -1710,7 +2492,11 @@
 !
       gtype=u2dvar
       scale=1.0_r8
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUbar),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1728,7 +2514,11 @@
 
       gtype=v2dvar
       scale=1.0_r8
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVbar),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1751,7 +2541,11 @@
 !
       gtype=u3dvar
       scale=1.0_r8
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUsms),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1769,7 +2563,11 @@
 
       gtype=v3dvar
       scale=1.0_r8
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVsms),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1792,7 +2590,11 @@
 !
       gtype=u3dvar
       scale=1.0_r8
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUvel),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1810,7 +2612,11 @@
 
       gtype=v3dvar
       scale=1.0_r8
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, gtype,        &
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVvel),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1830,17 +2636,21 @@
 !
       gtype=r3dvar
       scale=1.0_r8
-      DO itrc=1,NT(ng)
-        status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
-     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
+      DO it=1,NT(ng)
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idTvar(it)),  &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d(ng, model, ncid, varid, rec, gtype,           &
+     &                    Vsize, LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
      &                    rmask,                                        &
 # endif
-     &                    s_t(:,:,:,Lwrk,itrc))
+     &                    s_t(:,:,:,Lwrk,it))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
+            WRITE (stdout,20) TRIM(Vname(1,idTvar(it))), rec,           &
      &                        TRIM(ncname)
           END IF
           exit_flag=3
@@ -1854,18 +2664,22 @@
 !  Read in surface tracers flux.
 !
       gtype=r3dvar
-      DO itrc=1,NT(ng)
-        scale=1.0_r8
-        status=nf_fread3d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
-     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
+      scale=1.0_r8
+      DO it=1,NT(ng)
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idTsur(it)),  &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d(ng, model, ncid, varid, rec, gtype,           &
+     &                    Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),      &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
      &                    rmask,                                        &
 #  endif
-     &                    s_tflux(:,:,:,Lwrk,itrc))
+     &                    s_tflux(:,:,:,Lwrk,it))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
+            WRITE (stdout,20) TRIM(Vname(1,idTsur(it))), rec,           &
      &                        TRIM(ncname)
           END IF
           exit_flag=3
@@ -1878,8 +2692,8 @@
 !
 !  If multiple files, close current file.
 !
-      IF (InpThread.and.(ndef.gt.0)) THEN
-        status=nf90_close(ncid)
+      IF (ndef.gt.0) THEN
+        CALL netcdf_close (ng, model, ncid)
       END IF
 !
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)
@@ -1892,11 +2706,18 @@
 !
 !***********************************************************************
       SUBROUTINE new_direction (ng, tile, model,                        &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, LBij, UBij,         &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lold, Lnew,                             &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          ad_t_obc, ad_u_obc, ad_v_obc,           &
+# endif
+     &                          ad_ubar_obc, ad_vbar_obc,               &
+     &                          ad_zeta_obc,                            &
 #endif
 #ifdef ADJUST_WSTRESS
      &                          ad_ustr, ad_vstr,                       &
@@ -1910,6 +2731,13 @@
      &                          ad_ubar, ad_vbar,                       &
 #endif
      &                          ad_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          d_t_obc, d_u_obc, d_v_obc,              &
+# endif
+     &                          d_ubar_obc, d_vbar_obc,                 &
+     &                          d_zeta_obc,                             &
+#endif
 #ifdef ADJUST_WSTRESS
      &                          d_sustr, d_svstr,                       &
 #endif
@@ -1925,6 +2753,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_parallel
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_scalars
@@ -1933,7 +2762,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
 !
@@ -1943,22 +2772,42 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(in) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(in) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(in) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(in) :: ad_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:,:)
 #  endif
-      real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
 # else
-      real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
 # endif
-      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: d_t_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: d_u_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: d_v_obc(LBij:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: d_ubar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_vbar_obc(LBij:,:,:)
+      real(r8), intent(inout) :: d_zeta_obc(LBij:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: d_sustr(LBi:,LBj:,:)
       real(r8), intent(inout) :: d_svstr(LBi:,LBj:,:)
@@ -1975,29 +2824,53 @@
       real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
 # endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: ad_t_obc(LBij:UBij,N(ng),4,               &
+     &                                 Nbrec(ng),2,NT(ng))
+      real(r8), intent(in) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(in) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(in) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBI,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBI,LBj:UBj,Nfrec(ng),2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
-     &                                    Nfrec(ng),2,NT(ng))
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #  endif
-      real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 # else
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: d_t_obc(LBij:UBij,N(ng),4,             &
+     &                                   Nbrec(ng),NT(ng))
+      real(r8), intent(inout) :: d_u_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+      real(r8), intent(inout) :: d_v_obc(LBij:UBij,N(ng),4,Nbrec(ng))
+#  endif
+      real(r8), intent(inout) :: d_ubar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(inout) :: d_vbar_obc(LBij:UBij,4,Nbrec(ng))
+      real(r8), intent(inout) :: d_zeta_obc(LBij:UBij,4,Nbrec(ng))
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
       real(r8), intent(inout) :: d_svstr(LBi:UBI,LBj:UBj,Nfrec(ng))
@@ -2020,9 +2893,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k
-#ifdef SOLVE3D
-      integer :: itrc
-#endif
+      integer :: ib, ir, it
 
 #include "set_bounds.h"
 !
@@ -2041,9 +2912,60 @@
 #endif
         END DO
       END DO
+
+#ifdef ADJUST_BOUNDARY
+!
+!  Free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=Jstr,Jend
+              d_zeta_obc(j,ib,ir)=ad_zeta_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_zeta_obc(j,ib,ir)=d_zeta_obc(j,ib,ir)*                  &
+     &                            rmask(Istr-1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=Jstr,Jend
+              d_zeta_obc(j,ib,ir)=ad_zeta_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_zeta_obc(j,ib,ir)=d_zeta_obc(j,ib,ir)*                  &
+     &                            rmask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=Istr,Iend
+              d_zeta_obc(i,ib,ir)=ad_zeta_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_zeta_obc(i,ib,ir)=d_zeta_obc(i,ib,ir)*                  &
+     &                            rmask(i,Jstr-1)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=Istr,Iend
+              d_zeta_obc(i,ib,ir)=ad_zeta_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_zeta_obc(i,ib,ir)=d_zeta_obc(i,ib,ir)*                  &
+     &                            rmask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
 #ifndef SOLVE3D
 !
-!  2D momentum.
+!  2D U-momentum.
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
@@ -2053,6 +2975,62 @@
 # endif
         END DO
       END DO
+#endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D U-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=Jstr,Jend
+              d_ubar_obc(j,ib,ir)=ad_ubar_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_ubar_obc(j,ib,ir)=d_ubar_obc(j,ib,ir)*                   &
+     &                            umask(Istr,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=Jstr,Jend
+              d_ubar_obc(j,ib,ir)=ad_ubar_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_ubar_obc(j,ib,ir)=d_ubar_obc(j,ib,ir)*                   &
+     &                            umask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=IstrU,Iend
+              d_ubar_obc(i,ib,ir)=ad_ubar_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_ubar_obc(i,ib,ir)=d_ubar_obc(i,ib,ir)*                  &
+     &                            umask(i,Jstr-1)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=IstrU,Iend
+              d_ubar_obc(i,ib,ir)=ad_ubar_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_ubar_obc(i,ib,ir)=d_ubar_obc(i,ib,ir)*                  &
+     &                            umask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
+#ifndef SOLVE3D
+!
+!  2D V-momentum.
+!
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           d_vbar(i,j)=ad_vbar(i,j,Lnew)
@@ -2062,32 +3040,84 @@
         END DO
       END DO
 #endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D V-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=JstrV,Jend
+              d_vbar_obc(j,ib,ir)=ad_vbar_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_vbar_obc(j,ib,ir)=d_vbar_obc(j,ib,ir)*                  &
+     &                            vmask(Istr-1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=JstrV,Jend
+              d_vbar_obc(j,ib,ir)=ad_vbar_obc(j,ib,ir,Lnew)
+# ifdef MASKING
+              d_vbar_obc(j,ib,ir)=d_vbar_obc(j,ib,ir)*                  &
+     &                            vmask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=Istr,Iend
+              d_vbar_obc(i,ib,ir)=ad_vbar_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_vbar_obc(i,ib,ir)=d_vbar_obc(i,ib,ir)*                  &
+     &                            vmask(i,Jstr)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=Istr,Iend
+              d_vbar_obc(i,ib,ir)=ad_vbar_obc(i,ib,ir,Lnew)
+# ifdef MASKING
+              d_vbar_obc(i,ib,ir)=d_vbar_obc(i,ib,ir)*                  &
+     &                            vmask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
 #ifdef ADJUST_WSTRESS
 !
 !  Surface momentum stress.
 !
-      DO k=1,Nfrec(ng)
+      DO ir=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            d_sustr(i,j,k)=ad_ustr(i,j,k,Lnew)
+            d_sustr(i,j,ir)=ad_ustr(i,j,ir,Lnew)
 # ifdef MASKING
-            d_sustr(i,j,k)=d_sustr(i,j,k)*umask(i,j)
+            d_sustr(i,j,ir)=d_sustr(i,j,ir)*umask(i,j)
 # endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            d_svstr(i,j,k)=ad_vstr(i,j,k,Lnew)
+            d_svstr(i,j,ir)=ad_vstr(i,j,ir,Lnew)
 # ifdef MASKING
-            d_svstr(i,j,k)=d_svstr(i,j,k)*vmask(i,j)
+            d_svstr(i,j,ir)=d_svstr(i,j,ir)*vmask(i,j)
 # endif
           END DO
         END DO
       END DO
 #endif
+
 #ifdef SOLVE3D
 !
-!  3D momentum.
+!  3D U-momentum.
 !
       DO k=1,N(ng)
         DO j=JstrR,JendR
@@ -2098,6 +3128,69 @@
 # endif
           END DO
         END DO
+      END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D U-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                d_u_obc(j,k,ib,ir)=ad_u_obc(j,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_u_obc(j,k,ib,ir)=d_u_obc(j,k,ib,ir)*                  &
+     &                             umask(Istr,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                d_u_obc(j,k,ib,ir)=ad_u_obc(j,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_u_obc(j,k,ib,ir)=d_u_obc(j,k,ib,ir)*                  &
+     &                             umask(Iend+1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO k=1,N(ng)
+              DO i=IstrU,Iend
+                d_u_obc(i,k,ib,ir)=ad_u_obc(i,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_u_obc(i,k,ib,ir)=d_u_obc(i,k,ib,ir)*                  &
+     &                             umask(i,Jstr-1)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO k=1,N(ng)
+              DO i=IstrU,Iend
+                d_u_obc(i,k,ib,ir)=ad_u_obc(i,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_u_obc(i,k,ib,ir)=d_u_obc(i,k,ib,ir)*                  &
+     &                             umask(i,Jend+1)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END IF
+# endif
+!
+!  3D V-momentum.
+!
+      DO k=1,N(ng)
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             d_v(i,j,k)=ad_v(i,j,k,Lnew)
@@ -2107,32 +3200,151 @@
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D V-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO k=1,N(ng)
+              DO j=JstrV,Jend
+                d_v_obc(j,k,ib,ir)=ad_v_obc(j,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_v_obc(j,k,ib,ir)=d_v_obc(j,k,ib,ir)*                  &
+     &                             vmask(Istr-1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO k=1,N(ng)
+              DO j=JstrV,Jend
+                d_v_obc(j,k,ib,ir)=ad_v_obc(j,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_v_obc(j,k,ib,ir)=d_v_obc(j,k,ib,ir)*                  &
+     &                             vmask(Iend+1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                d_v_obc(i,k,ib,ir)=ad_v_obc(i,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_v_obc(i,k,ib,ir)=d_v_obc(i,k,ib,ir)*                  &
+     &                             vmask(i,Jstr)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                d_v_obc(i,k,ib,ir)=ad_v_obc(i,k,ib,ir,Lnew)
+#  ifdef MASKING
+                d_v_obc(i,k,ib,ir)=d_v_obc(i,k,ib,ir)*                  &
+     &                             vmask(i,Jend+1)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END IF
+# endif
 !
 !  Tracers.
 !
-      DO itrc=1,NT(ng)
+      DO it=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              d_t(i,j,k,itrc)=ad_t(i,j,k,Lnew,itrc)
+              d_t(i,j,k,it)=ad_t(i,j,k,Lnew,it)
 # ifdef MASKING
-              d_t(i,j,k,itrc)=d_t(i,j,k,itrc)*rmask(i,j)
+              d_t(i,j,k,it)=d_t(i,j,k,it)*rmask(i,j)
 # endif
             END DO
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Tracers open boundaries.
+!
+      DO it=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(it),ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  d_t_obc(j,k,ib,ir,it)=ad_t_obc(j,k,ib,ir,Lnew,it)
+#  ifdef MASKING
+                  d_t_obc(j,k,ib,ir,it)=d_t_obc(j,k,ib,ir,it)*          &
+     &                                  rmask(Istr-1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  d_t_obc(j,k,ib,ir,it)=ad_t_obc(j,k,ib,ir,Lnew,it)
+#  ifdef MASKING
+                  d_t_obc(j,k,ib,ir,it)=d_t_obc(j,k,ib,ir,it)*          &
+     &                                  rmask(Iend+1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  d_t_obc(i,k,ib,ir,it)=ad_t_obc(i,k,ib,ir,Lnew,it)
+#  ifdef MASKING
+                  d_t_obc(i,k,ib,ir,it)=d_t_obc(i,k,ib,ir,it)*          &
+     &                                  rmask(i,Jstr-1)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  d_t_obc(i,k,ib,ir,it)=ad_t_obc(i,k,ib,ir,Lnew,it)
+#  ifdef MASKING
+                  d_t_obc(i,k,ib,ir,it)=d_t_obc(i,k,ib,ir,it)*          &
+     &                                  rmask(i,Jend+1)
+#  endif
+                END DO
+              END DO
+            END IF
+          END DO
+        END IF
+      END DO
+# endif
+
 # ifdef ADJUST_STFLUX
 !
 !  Surface tracers flux.
 !
-      DO itrc=1,NT(ng)
-        DO k=1,Nfrec(ng)
+      DO it=1,NT(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              d_stflx(i,j,k,itrc)=ad_tflux(i,j,k,Lnew,itrc)
+              d_stflx(i,j,ir,it)=ad_tflux(i,j,ir,Lnew,it)
 #  ifdef MASKING
-              d_stflx(i,j,k,itrc)=d_stflx(i,j,k,itrc)*rmask(i,j)
+              d_stflx(i,j,ir,it)=d_stflx(i,j,ir,it)*rmask(i,j)
 #  endif
             END DO
           END DO
@@ -2146,12 +3358,19 @@
 !
 !***********************************************************************
       SUBROUTINE hessian (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc, ad_u_obc, ad_v_obc,                 &
+# endif
+     &                    ad_ubar_obc, ad_vbar_obc,                     &
+     &                    ad_zeta_obc,                                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr, ad_vstr,                             &
@@ -2165,6 +3384,13 @@
      &                    ad_ubar, ad_vbar,                             &
 #endif
      &                    ad_zeta,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    tl_t_obc, tl_u_obc, tl_v_obc,                 &
+# endif
+     &                    tl_ubar_obc, tl_vbar_obc,                     &
+     &                    tl_zeta_obc,                                  &
+#endif
 #ifdef ADJUST_WSTRESS
      &                    tl_ustr, tl_vstr,                             &
 #endif
@@ -2190,7 +3416,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -2200,6 +3426,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
@@ -2217,6 +3453,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -2233,11 +3479,24 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -2256,6 +3515,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -2278,9 +3548,8 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, lstr
-#ifdef SOLVE3D
-      integer :: itrc
-#endif
+      integer :: ib, ir, it
+
       real(r8) :: fac
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
@@ -2315,9 +3584,68 @@
 #endif
         END DO
       END DO
+
+#ifdef ADJUST_BOUNDARY
+!
+!  Free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=Jstr,Jend
+              ad_zeta_obc(j,ib,ir,Lnew)=ad_zeta_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_zeta_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_zeta_obc(j,ib,ir,Lnew)=ad_zeta_obc(j,ib,ir,Lnew)*      &
+     &                                  rmask(Istr-1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=Jstr,Jend
+              ad_zeta_obc(j,ib,ir,Lnew)=ad_zeta_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_zeta_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_zeta_obc(j,ib,ir,Lnew)=ad_zeta_obc(j,ib,ir,Lnew)*      &
+     &                                  rmask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=Istr,Iend
+              ad_zeta_obc(i,ib,ir,Lnew)=ad_zeta_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_zeta_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_zeta_obc(i,ib,ir,Lnew)=ad_zeta_obc(i,ib,ir,Lnew)*      &
+     &                                  rmask(i,Jstr-1)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=Istr,Iend
+              ad_zeta_obc(i,ib,ir,Lnew)=ad_zeta_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_zeta_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_zeta_obc(i,ib,ir,Lnew)=ad_zeta_obc(i,ib,ir,Lnew)*      &
+     &                                  rmask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
 #ifndef SOLVE3D
 !
-!  2D momentum.
+!  2D U-momentum.
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
@@ -2329,6 +3657,70 @@
 # endif
         END DO
       END DO
+#endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D U-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=Jstr,Jend
+              ad_ubar_obc(j,ib,ir,Lnew)=ad_ubar_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_ubar_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_ubar_obc(j,ib,ir,Lnew)=ad_ubar_obc(j,ib,ir,Lnew)*      &
+     &                                  umask(Istr,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=Jstr,Jend
+              ad_ubar_obc(j,ib,ir,Lnew)=ad_ubar_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_ubar_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_ubar_obc(j,ib,ir,Lnew)=ad_ubar_obc(j,ib,ir,Lnew)*      &
+     &                                  umask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=IstrU,Iend
+              ad_ubar_obc(i,ib,ir,Lnew)=ad_ubar_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_ubar_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_ubar_obc(i,ib,ir,Lnew)=ad_ubar_obc(i,ib,ir,Lnew)*      &
+     &                                  umask(i,Jstr-1)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=IstrU,Iend
+              ad_ubar_obc(i,ib,ir,Lnew)=ad_ubar_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_ubar_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_ubar_obc(i,ib,ir,Lnew)=ad_ubar_obc(i,ib,ir,Lnew)*      &
+     &                                  umask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
+#ifndef SOLVE3D
+!
+!  2D V-momentum.
+!
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lnew)-                          &
@@ -2340,36 +3732,96 @@
         END DO
       END DO
 #endif
+
+#ifdef ADJUST_BOUNDARY
+!
+!  2D V-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO j=JstrV,Jend
+              ad_vbar_obc(j,ib,ir,Lnew)=ad_vbar_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_vbar_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_vbar_obc(j,ib,ir,Lnew)=ad_vbar_obc(j,ib,ir,Lnew)*      &
+     &                                  vmask(Istr-1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO j=JstrV,Jend
+              ad_vbar_obc(j,ib,ir,Lnew)=ad_vbar_obc(j,ib,ir,Lnew)-      &
+     &                                  ad_vbar_obc(j,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_vbar_obc(j,ib,ir,Lnew)=ad_vbar_obc(j,ib,ir,Lnew)*      &
+     &                                  vmask(Iend+1,j)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO i=Istr,Iend
+              ad_vbar_obc(i,ib,ir,Lnew)=ad_vbar_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_vbar_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_vbar_obc(i,ib,ir,Lnew)=ad_vbar_obc(i,ib,ir,Lnew)*      &
+     &                                  vmask(i,Jstr)
+# endif
+            END DO
+          END IF
+          IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO i=Istr,Iend
+              ad_vbar_obc(i,ib,ir,Lnew)=ad_vbar_obc(i,ib,ir,Lnew)-      &
+     &                                  ad_vbar_obc(i,ib,ir,Lold)*      &
+     &                                  cg_Gnorm(outLoop)
+# ifdef MASKING
+              ad_vbar_obc(i,ib,ir,Lnew)=ad_vbar_obc(i,ib,ir,Lnew)*      &
+     &                                  vmask(i,Jend+1)
+# endif
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
 #ifdef ADJUST_WSTRESS
 !
 !  Surface momentum stress.
 !
-      DO k=1,Nfrec(ng)
+      DO ir=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            ad_ustr(i,j,k,Lnew)=ad_ustr(i,j,k,Lnew)-                    &
-     &                          ad_ustr(i,j,k,Lold)*                    &
-     &                          cg_Gnorm(outLoop)
+            ad_ustr(i,j,ir,Lnew)=ad_ustr(i,j,ir,Lnew)-                  &
+     &                           ad_ustr(i,j,ir,Lold)*                  &
+     &                           cg_Gnorm(outLoop)
 # ifdef MASKING
-            ad_ustr(i,j,k,Lnew)=ad_ustr(i,j,k,Lnew)*umask(i,j)
+            ad_ustr(i,j,ir,Lnew)=ad_ustr(i,j,ir,Lnew)*umask(i,j)
 # endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            ad_vstr(i,j,k,Lnew)=ad_vstr(i,j,k,Lnew)-                    &
-     &                          ad_vstr(i,j,k,Lold)*                    &
-     &                          cg_Gnorm(outLoop)
+            ad_vstr(i,j,ir,Lnew)=ad_vstr(i,j,ir,Lnew)-                  &
+     &                           ad_vstr(i,j,ir,Lold)*                  &
+     &                           cg_Gnorm(outLoop)
 # ifdef MASKING
-            ad_vstr(i,j,k,Lnew)=ad_vstr(i,j,k,Lnew)*vmask(i,j)
+            ad_vstr(i,j,ir,Lnew)=ad_vstr(i,j,ir,Lnew)*vmask(i,j)
 # endif
           END DO
         END DO
       END DO
 #endif
+
 #ifdef SOLVE3D
 !
-!  3D momentum.
+!  3D U-momentum.
 !
       DO k=1,N(ng)
         DO j=JstrR,JendR
@@ -2382,6 +3834,77 @@
 # endif
           END DO
         END DO
+      END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D U-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                ad_u_obc(j,k,ib,ir,Lnew)=ad_u_obc(j,k,ib,ir,Lnew)-      &
+     &                                   ad_u_obc(j,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_u_obc(j,k,ib,ir,Lnew)=ad_u_obc(j,k,ib,ir,Lnew)*      &
+     &                                   umask(Istr,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                ad_u_obc(j,k,ib,ir,Lnew)=ad_u_obc(j,k,ib,ir,Lnew)-      &
+     &                                   ad_u_obc(j,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_u_obc(j,k,ib,ir,Lnew)=ad_u_obc(j,k,ib,ir,Lnew)*      &
+     &                                   umask(Iend+1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO k=1,N(ng)
+              DO i=IstrU,Iend
+                ad_u_obc(i,k,ib,ir,Lnew)=ad_u_obc(i,k,ib,ir,Lnew)-      &
+     &                                   ad_u_obc(i,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_u_obc(i,k,ib,ir,Lnew)=ad_u_obc(i,k,ib,ir,Lnew)*      &
+     &                                   umask(i,Jstr-1)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO k=1,N(ng)
+              DO i=IstrU,Iend
+                ad_u_obc(i,k,ib,ir,Lnew)=ad_u_obc(i,k,ib,ir,Lnew)-      &
+     &                                   ad_u_obc(i,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_u_obc(i,k,ib,ir,Lnew)=ad_u_obc(i,k,ib,ir,Lnew)*      &
+     &                                   umask(i,Jend+1)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END IF
+# endif
+!
+!  3D V-momentum.
+!
+      DO k=1,N(ng)
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lnew)-                          &
@@ -2393,38 +3916,176 @@
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  3D V-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        DO ir=1,Nbrec(ng)
+          IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
+            DO k=1,N(ng)
+              DO j=JstrV,Jend
+                ad_v_obc(j,k,ib,ir,Lnew)=ad_v_obc(j,k,ib,ir,Lnew)-      &
+     &                                   ad_v_obc(j,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_v_obc(j,k,ib,ir,Lnew)=ad_v_obc(j,k,ib,ir,Lnew)*      &
+     &                                   vmask(Istr-1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
+            DO k=1,N(ng)
+              DO j=JstrV,Jend
+                ad_v_obc(j,k,ib,ir,Lnew)=ad_v_obc(j,k,ib,ir,Lnew)-      &
+     &                                   ad_v_obc(j,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_v_obc(j,k,ib,ir,Lnew)=ad_v_obc(j,k,ib,ir,Lnew)*      &
+     &                                   vmask(Iend+1,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                ad_v_obc(i,k,ib,ir,Lnew)=ad_v_obc(i,k,ib,ir,Lnew)-      &
+     &                                   ad_v_obc(i,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_v_obc(i,k,ib,ir,Lnew)=ad_v_obc(i,k,ib,ir,Lnew)*      &
+     &                                   vmask(i,Jstr)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                ad_v_obc(i,k,ib,ir,Lnew)=ad_v_obc(i,k,ib,ir,Lnew)-      &
+     &                                   ad_v_obc(i,k,ib,ir,Lold)*      &
+     &                                   cg_Gnorm(outLoop)
+#  ifdef MASKING
+                ad_v_obc(i,k,ib,ir,Lnew)=ad_v_obc(i,k,ib,ir,Lnew)*      &
+     &                                   vmask(i,Jend+1)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END IF
+# endif
 !
 !  Tracers.
 !
-      DO itrc=1,NT(ng)
+      DO it=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lnew,itrc)-              &
-     &                              ad_t(i,j,k,Lold,itrc)*              &
-     &                              cg_Gnorm(outLoop)
+              ad_t(i,j,k,Lnew,it)=ad_t(i,j,k,Lnew,it)-                  &
+     &                            ad_t(i,j,k,Lold,it)*                  &
+     &                            cg_Gnorm(outLoop)
 # ifdef MASKING
-              ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lnew,itrc)*rmask(i,j)
+              ad_t(i,j,k,Lnew,it)=ad_t(i,j,k,Lnew,it)*rmask(i,j)
 # endif
             END DO
           END DO
         END DO
       END DO
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Tracers open boundaries.
+!
+      DO it=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(it),ng))) THEN
+          DO ir=1,Nbrec(ng)
+            IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+              ib=iwest
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  ad_t_obc(j,k,ib,ir,Lnew,it)=                          &
+     &                                    ad_t_obc(j,k,ib,ir,Lnew,it)-  &
+     &                                    ad_t_obc(j,k,ib,ir,Lold,it)*  &
+     &                                    cg_Gnorm(outLoop)
+#  ifdef MASKING
+                  ad_t_obc(j,k,ib,ir,Lnew,it)=                          &
+     &                    ad_t_obc(j,k,ib,ir,Lnew,it)*rmask(Istr-1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+              ib=ieast
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+                  ad_t_obc(j,k,ib,ir,Lnew,it)=                          &
+     &                                    ad_t_obc(j,k,ib,ir,Lnew,it)-  &
+     &                                    ad_t_obc(j,k,ib,ir,Lold,it)*  &
+     &                                    cg_Gnorm(outLoop)
+#  ifdef MASKING
+                  ad_t_obc(j,k,ib,ir,Lnew,it)=                          &
+     &                    ad_t_obc(j,k,ib,ir,Lnew,it)*rmask(Iend+1,j)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+              ib=isouth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  ad_t_obc(i,k,ib,ir,Lnew,it)=                          &
+     &                                    ad_t_obc(i,k,ib,ir,Lnew,it)-  &
+     &                                    ad_t_obc(i,k,ib,ir,Lold,it)*  &
+     &                                    cg_Gnorm(outLoop)
+#  ifdef MASKING
+                  ad_t_obc(i,k,ib,ir,Lnew,it)=                          &
+     &                    ad_t_obc(i,k,ib,ir,Lnew,it)*rmask(i,Jstr-1)
+#  endif
+                END DO
+              END DO
+            END IF
+            IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+              ib=inorth
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  ad_t_obc(i,k,ib,ir,Lnew,it)=                          &
+     &                                    ad_t_obc(i,k,ib,ir,Lnew,it)-  &
+     &                                    ad_t_obc(i,k,ib,ir,Lold,it)*  &
+     &                                    cg_Gnorm(outLoop)
+#  ifdef MASKING
+                  ad_t_obc(i,k,ib,ir,Lnew,it)=                          &
+     &                    ad_t_obc(i,k,ib,ir,Lnew,it)*rmask(i,Jend+1)
+#  endif
+                END DO
+              END DO
+            END IF
+          END DO
+        END IF
+      END DO
+# endif
+
 # ifdef ADJUST_STFLUX
 !
 !  Surface tracers flux.
 !
-      DO itrc=1,NT(ng)
-        DO k=1,Nfrec(ng)
+      DO it=1,NT(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              ad_tflux(i,j,k,Lnew,itrc)=ad_tflux(i,j,k,Lnew,itrc)-      &
-     &                                  ad_tflux(i,j,k,Lold,itrc)*      &
-     &                                  cg_Gnorm(outLoop)
+              ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)-        &
+     &                                 ad_tflux(i,j,ir,Lold,it)*        &
+     &                                 cg_Gnorm(outLoop)
 #  ifdef MASKING
-              ad_tflux(i,j,k,Lnew,itrc)=ad_tflux(i,j,k,Lnew,itrc)*      &
-     &                                  rmask(i,j)
+              ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)*        &
+     &                                 rmask(i,j)
 #  endif
             END DO
           END DO
@@ -2452,11 +4113,18 @@
 !  into tangent linear state array, index Lwrk.
 !
       CALL read_state (ng, tile, model,                                 &
-     &                 LBi, UBi, LBj, UBj,                              &
+     &                 LBi, UBi, LBj, UBj, LBij, UBij,                  &
      &                 Lwrk, innLoop,                                   &
      &                 ndefADJ(ng), ncADJid(ng), ncname,                &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                 tl_t_obc, tl_u_obc, tl_v_obc,                    &
+# endif
+     &                 tl_ubar_obc, tl_vbar_obc,                        &
+     &                 tl_zeta_obc,                                     &
 #endif
 #ifdef ADJUST_WSTRESS
      &                 tl_ustr, tl_vstr,                                &
@@ -2476,10 +4144,26 @@
 !  matrix T(k) in the Lanczos recurrence.
 !
       CALL state_dotprod (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc(:,:,:,:,Lnew,:),                     &
+     &                    tl_t_obc(:,:,:,:,Lwrk,:),                     &
+     &                    ad_u_obc(:,:,:,:,Lnew),                       &
+     &                    tl_u_obc(:,:,:,:,Lwrk),                       &
+     &                    ad_v_obc(:,:,:,:,Lnew),                       &
+     &                    tl_v_obc(:,:,:,:,Lwrk),                       &
+# endif
+     &                    ad_ubar_obc(:,:,:,Lnew),                      &
+     &                    tl_ubar_obc(:,:,:,Lwrk),                      &
+     &                    ad_vbar_obc(:,:,:,Lnew),                      &
+     &                    tl_vbar_obc(:,:,:,Lwrk),                      &
+     &                    ad_zeta_obc(:,:,:,Lnew),                      &
+     &                    tl_zeta_obc(:,:,:,Lwrk),                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr(:,:,:,Lnew), tl_ustr(:,:,:,Lwrk),     &
@@ -2506,12 +4190,19 @@
 !
 !***********************************************************************
       SUBROUTINE lanczos (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    tl_t_obc, tl_u_obc, tl_v_obc,                 &
+# endif
+     &                    tl_ubar_obc, tl_vbar_obc,                     &
+     &                    tl_zeta_obc,                                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    tl_ustr, tl_vstr,                             &
@@ -2525,6 +4216,13 @@
      &                    tl_ubar, tl_vbar,                             &
 #endif
      &                    tl_zeta,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc, ad_u_obc, ad_v_obc,                 &
+# endif
+     &                    ad_ubar_obc, ad_vbar_obc,                     &
+     &                    ad_zeta_obc,                                  &
+#endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr, ad_vstr,                             &
 #endif
@@ -2553,7 +4251,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -2563,6 +4261,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
@@ -2580,6 +4288,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -2596,11 +4314,24 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -2619,6 +4350,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -2641,9 +4383,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, lstr, rec
-#ifdef SOLVE3D
-      integer :: itrc, k
-#endif
+
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
@@ -2676,10 +4416,20 @@
         fac2=-cg_delta(innLoop,outLoop)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       ad_t_obc, tl_t_obc,                        &
+     &                       ad_u_obc, tl_u_obc,                        &
+     &                       ad_v_obc, tl_v_obc,                        &
+# endif
+     &                       ad_ubar_obc, tl_ubar_obc,                  &
+     &                       ad_vbar_obc, tl_vbar_obc,                  &
+     &                       ad_zeta_obc, tl_zeta_obc,                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       ad_ustr, tl_ustr,                          &
@@ -2716,11 +4466,18 @@
 !  Read in the previous (innLoop-1) orthonormal Lanczos vector.
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, innLoop-1,                               &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, tl_u_obc, tl_v_obc,                  &
+# endif
+     &                   tl_ubar_obc, tl_vbar_obc,                      &
+     &                   tl_zeta_obc,                                   &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, tl_vstr,                              &
@@ -2744,10 +4501,20 @@
         fac2=-cg_beta(innLoop,outLoop)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       ad_t_obc, tl_t_obc,                        &
+     &                       ad_u_obc, tl_u_obc,                        &
+     &                       ad_v_obc, tl_v_obc,                        &
+# endif
+     &                       ad_ubar_obc, tl_ubar_obc,                  &
+     &                       ad_vbar_obc, tl_vbar_obc,                  &
+     &                       ad_zeta_obc, tl_zeta_obc,                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       ad_ustr, tl_ustr,                          &
@@ -2791,11 +4558,18 @@
 !  solution is loaded into TANGENT LINEAR STATE ARRAYS at index Lwrk.
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, tl_u_obc, tl_v_obc,                  &
+# endif
+     &                   tl_ubar_obc, tl_vbar_obc,                      &
+     &                   tl_zeta_obc,                                   &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, tl_vstr,                              &
@@ -2814,10 +4588,26 @@
 !  Compute dot product <q(k+1), q(rec)>.
 !
         CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                      ad_t_obc(:,:,:,:,Lnew,:),                   &
+     &                      tl_t_obc(:,:,:,:,Lwrk,:),                   &
+     &                      ad_u_obc(:,:,:,:,Lnew),                     &
+     &                      tl_u_obc(:,:,:,:,Lwrk),                     &
+     &                      ad_v_obc(:,:,:,:,Lnew),                     &
+     &                      tl_v_obc(:,:,:,:,Lwrk),                     &
+# endif
+     &                      ad_ubar_obc(:,:,:,Lnew),                    &
+     &                      tl_ubar_obc(:,:,:,Lwrk),                    &
+     &                      ad_vbar_obc(:,:,:,Lnew),                    &
+     &                      tl_vbar_obc(:,:,:,Lwrk),                    &
+     &                      ad_zeta_obc(:,:,:,Lnew),                    &
+     &                      tl_zeta_obc(:,:,:,Lwrk),                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                      ad_ustr(:,:,:,Lnew), tl_ustr(:,:,:,Lwrk),   &
@@ -2849,10 +4639,20 @@
         fac2=-DotProd(rec)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       ad_t_obc, tl_t_obc,                        &
+     &                       ad_u_obc, tl_u_obc,                        &
+     &                       ad_v_obc, tl_v_obc,                        &
+# endif
+     &                       ad_ubar_obc, tl_ubar_obc,                  &
+     &                       ad_vbar_obc, tl_vbar_obc,                  &
+     &                       ad_zeta_obc, tl_zeta_obc,                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       ad_ustr, tl_ustr,                          &
@@ -2877,10 +4677,26 @@
 !-----------------------------------------------------------------------
 !
       CALL state_dotprod (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc(:,:,:,:,Lnew,:),                     &
+     &                    ad_t_obc(:,:,:,:,Lnew,:),                     &
+     &                    ad_u_obc(:,:,:,:,Lnew),                       &
+     &                    ad_u_obc(:,:,:,:,Lnew),                       &
+     &                    ad_v_obc(:,:,:,:,Lnew),                       &
+     &                    ad_v_obc(:,:,:,:,Lnew),                       &
+# endif
+     &                    ad_ubar_obc(:,:,:,Lnew),                      &
+     &                    ad_ubar_obc(:,:,:,Lnew),                      &
+     &                    ad_vbar_obc(:,:,:,Lnew),                      &
+     &                    ad_vbar_obc(:,:,:,Lnew),                      &
+     &                    ad_zeta_obc(:,:,:,Lnew),                      &
+     &                    ad_zeta_obc(:,:,:,Lnew),                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr(:,:,:,Lnew), ad_ustr(:,:,:,Lnew),     &
@@ -2913,10 +4729,17 @@
       fac=1.0_r8/SQRT(dot(0))
 
       CALL state_scale (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj,                             &
+     &                  LBi, UBi, LBj, UBj, LBij, UBij,                 &
      &                  Lnew, Lnew, fac,                                &
 #ifdef MASKING
      &                  rmask, umask, vmask,                            &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                  ad_t_obc, ad_u_obc, ad_v_obc,                   &
+# endif
+     &                  ad_ubar_obc, ad_vbar_obc,                       &
+     &                  ad_zeta_obc,                                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                  ad_ustr, ad_vstr,                               &
@@ -2937,10 +4760,26 @@
 !
       IF (innLoop.eq.0) THEN
         CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                      ad_t_obc(:,:,:,:,Lnew,:),                   &
+     &                      ad_t_obc(:,:,:,:,Lnew,:),                   &
+     &                      ad_u_obc(:,:,:,:,Lnew),                     &
+     &                      ad_u_obc(:,:,:,:,Lnew),                     &
+     &                      ad_v_obc(:,:,:,:,Lnew),                     &
+     &                      ad_v_obc(:,:,:,:,Lnew),                     &
+# endif
+     &                      ad_ubar_obc(:,:,:,Lnew),                    &
+     &                      ad_ubar_obc(:,:,:,Lnew),                    &
+     &                      ad_vbar_obc(:,:,:,Lnew),                    &
+     &                      ad_vbar_obc(:,:,:,Lnew),                    &
+     &                      ad_zeta_obc(:,:,:,Lnew),                    &
+     &                      ad_zeta_obc(:,:,:,Lnew),                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                      ad_ustr(:,:,:,Lnew), ad_ustr(:,:,:,Lnew),   &
@@ -2961,10 +4800,26 @@
      &                      ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
       ELSE
         CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                      ad_t_obc(:,:,:,:,Lold,:),                   &
+     &                      ad_t_obc(:,:,:,:,Lnew,:),                   &
+     &                      ad_u_obc(:,:,:,:,Lold),                     &
+     &                      ad_u_obc(:,:,:,:,Lnew),                     &
+     &                      ad_v_obc(:,:,:,:,Lold),                     &
+     &                      ad_v_obc(:,:,:,:,Lnew),                     &
+# endif
+     &                      ad_ubar_obc(:,:,:,Lold),                    &
+     &                      ad_ubar_obc(:,:,:,Lnew),                    &
+     &                      ad_vbar_obc(:,:,:,Lold),                    &
+     &                      ad_vbar_obc(:,:,:,Lnew),                    &
+     &                      ad_zeta_obc(:,:,:,Lold),                    &
+     &                      ad_zeta_obc(:,:,:,Lnew),                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                      ad_ustr(:,:,:,Lold), ad_ustr(:,:,:,Lnew),   &
@@ -3013,11 +4868,18 @@
 !  at index Lwrk.
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 # ifdef MASKING
      &                   rmask, umask, vmask,                           &
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+     &                   tl_t_obc, tl_u_obc, tl_v_obc,                  &
+#  endif
+     &                   tl_ubar_obc, tl_vbar_obc,                      &
+     &                   tl_zeta_obc,                                   &
 # endif
 # ifdef ADJUST_WSTRESS
      &                   tl_ustr, tl_vstr,                              &
@@ -3034,10 +4896,26 @@
         IF (exit_flag.ne.NoError) RETURN
 !
         CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+     &                      ad_t_obc(:,:,:,:,Lnew,:),                   &
+     &                      tl_t_obc(:,:,:,:,Lwrk,:),                   &
+     &                      ad_u_obc(:,:,:,:,Lnew),                     &
+     &                      tl_u_obc(:,:,:,:,Lwrk),                     &
+     &                      ad_v_obc(:,:,:,:,Lnew),                     &
+     &                      tl_v_obc(:,:,:,:,Lwrk),                     &
+#  endif
+     &                      ad_ubar_obc(:,:,:,Lnew),                    &
+     &                      tl_ubar_obc(:,:,:,Lwrk),                    &
+     &                      ad_vbar_obc(:,:,:,Lnew),                    &
+     &                      tl_vbar_obc(:,:,:,Lwrk),                    &
+     &                      ad_zeta_obc(:,:,:,Lnew),                    &
+     &                      tl_zeta_obc(:,:,:,Lwrk),                    &
 # endif
 # ifdef ADJUST_WSTRESS
      &                      ad_ustr(:,:,:,Lnew), tl_ustr(:,:,:,Lwrk),   &
@@ -3087,12 +4965,19 @@
 !
 !***********************************************************************
       SUBROUTINE new_gradient (ng, tile, model,                         &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Lold, Lnew, Lwrk,                        &
      &                         innLoop, outLoop,                        &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         tl_t_obc, tl_u_obc, tl_v_obc,            &
+# endif
+     &                         tl_ubar_obc, tl_vbar_obc,                &
+     &                         tl_zeta_obc,                             &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         tl_ustr, tl_vstr,                        &
@@ -3106,6 +4991,13 @@
      &                         tl_ubar, tl_vbar,                        &
 #endif
      &                         tl_zeta,                                 &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, ad_u_obc, ad_v_obc,            &
+# endif
+     &                         ad_ubar_obc, ad_vbar_obc,                &
+     &                         ad_zeta_obc,                             &
+#endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, ad_vstr,                        &
 #endif
@@ -3134,7 +5026,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -3150,6 +5042,16 @@
       real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 # endif
 # ifdef SOLVE3D
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
+# endif
 #  ifdef ADJUST_STFLUX
       real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #  endif
@@ -3161,6 +5063,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -3177,11 +5089,24 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -3200,6 +5125,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -3221,10 +5157,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, lstr, rec
-#ifdef SOLVE3D
-      integer :: itrc, k
-#endif
+      integer :: lstr, rec
+
       real(r8) :: fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
@@ -3247,10 +5181,20 @@
       fac2=cg_beta(innLoop+1,outLoop)*cg_Tmatrix(innLoop,3)
 
       CALL state_addition (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     Lold, Lnew, Lold, fac1, fac2,                &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     ad_t_obc, ad_t_obc,                          &
+     &                     ad_u_obc, ad_u_obc,                          &
+     &                     ad_v_obc, ad_v_obc,                          &
+# endif
+     &                     ad_ubar_obc, ad_ubar_obc,                    &
+     &                     ad_vbar_obc, ad_vbar_obc,                    &
+     &                     ad_zeta_obc, ad_zeta_obc,                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     ad_ustr, ad_ustr,                            &
@@ -3286,11 +5230,18 @@
 !  solution is loaded into TANGENT LINEAR STATE ARRAYS at index Lwrk.
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   tl_t_obc, tl_u_obc, tl_v_obc,                  &
+# endif
+     &                   tl_ubar_obc, tl_vbar_obc,                      &
+     &                   tl_zeta_obc,                                   &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   tl_ustr, tl_vstr,                              &
@@ -3321,10 +5272,20 @@
         fac2=-cg_QG(rec,outLoop)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lold, Lwrk, Lold, fac1, fac2,              &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       ad_t_obc, tl_t_obc,                        &
+     &                       ad_u_obc, tl_u_obc,                        &
+     &                       ad_v_obc, tl_v_obc,                        &
+# endif
+     &                       ad_ubar_obc, tl_ubar_obc,                  &
+     &                       ad_vbar_obc, tl_vbar_obc,                  &
+     &                       ad_zeta_obc, tl_zeta_obc,                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       ad_ustr, tl_ustr,                          &
@@ -3347,10 +5308,26 @@
 !  Compute cost function gradient reduction.
 !
       CALL state_dotprod (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    ad_t_obc(:,:,:,:,Lold,:),                     &
+     &                    ad_t_obc(:,:,:,:,Lold,:),                     &
+     &                    ad_u_obc(:,:,:,:,Lold),                       &
+     &                    ad_u_obc(:,:,:,:,Lold),                       &
+     &                    ad_v_obc(:,:,:,:,Lold),                       &
+     &                    ad_v_obc(:,:,:,:,Lold),                       &
+# endif
+     &                    ad_ubar_obc(:,:,:,Lold),                      &
+     &                    ad_ubar_obc(:,:,:,Lold),                      &
+     &                    ad_vbar_obc(:,:,:,Lold),                      &
+     &                    ad_vbar_obc(:,:,:,Lold),                      &
+     &                    ad_zeta_obc(:,:,:,Lold),                      &
+     &                    ad_zeta_obc(:,:,:,Lold),                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    ad_ustr(:,:,:,Lold), ad_ustr(:,:,:,Lold),     &
@@ -3377,12 +5354,19 @@
 !
 !***********************************************************************
       SUBROUTINE hessian_evecs (ng, tile, model,                        &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, LBij, UBij,         &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          nl_t_obc, nl_u_obc, nl_v_obc,           &
+# endif
+     &                          nl_ubar_obc, nl_vbar_obc,               &
+     &                          nl_zeta_obc,                            &
 #endif
 #ifdef ADJUST_WSTRESS
      &                          nl_ustr, nl_vstr,                       &
@@ -3396,6 +5380,13 @@
      &                          nl_ubar, nl_vbar,                       &
 #endif
      &                          nl_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          tl_t_obc, tl_u_obc, tl_v_obc,           &
+# endif
+     &                          tl_ubar_obc, tl_vbar_obc,               &
+     &                          tl_zeta_obc,                            &
+#endif
 #ifdef ADJUST_WSTRESS
      &                          tl_ustr, tl_vstr,                       &
 #endif
@@ -3408,6 +5399,13 @@
      &                          tl_ubar, tl_vbar,                       &
 #endif
      &                          tl_zeta,                                &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                          ad_t_obc, ad_u_obc, ad_v_obc,           &
+# endif
+     &                          ad_ubar_obc, ad_vbar_obc,               &
+     &                          ad_zeta_obc,                            &
+#endif
 #ifdef ADJUST_WSTRESS
      &                          ad_ustr, ad_vstr,                       &
 #endif
@@ -3439,7 +5437,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -3449,6 +5447,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: ad_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: ad_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
@@ -3466,6 +5474,16 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: tl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
@@ -3482,6 +5500,16 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: nl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: nl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:,:,:,:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:,:)
@@ -3498,11 +5526,24 @@
       real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: ad_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -3521,6 +5562,17 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -3538,6 +5590,17 @@
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: nl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -3559,11 +5622,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ingood, j, lstr, rec, nvec, status, varid
+      integer :: i, ingood, lstr, rec, nvec, status, varid
       integer :: L1
-#ifdef SOLVE3D
-      integer :: itrc, k
-#endif
       integer :: start(4), total(4)
 
       real(r8) :: fac, fac1, fac2
@@ -3576,6 +5636,8 @@
       character (len=80) :: ncname
 
 #include "set_bounds.h"
+!
+      SourceFile='cgradient_lanczos.h, hessian_evecs'
 !
 !-----------------------------------------------------------------------
 !  Calculate converged eigenvectors of the Hessian.
@@ -3614,10 +5676,17 @@
         fac=0.0_r8
 
         CALL state_initialize (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         Lold, fac,                               &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, ad_u_obc, ad_v_obc,            &
+# endif
+     &                         ad_ubar_obc, ad_vbar_obc,                &
+     &                         ad_zeta_obc,                             &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, ad_vstr,                        &
@@ -3647,11 +5716,18 @@
 !  at index Lwrk.
 !
           CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     Lwrk, rec,                                   &
      &                     ndefADJ(ng), ncADJid(ng), ncname,            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     tl_t_obc, tl_u_obc, tl_v_obc,                &
+# endif
+     &                     tl_ubar_obc, tl_vbar_obc,                    &
+     &                     tl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     tl_ustr, tl_vstr,                            &
@@ -3675,10 +5751,20 @@
           fac2=cg_zv(rec,nvec)
 
           CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         Lold, Lwrk, Lold, fac1, fac2,            &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         ad_t_obc, tl_t_obc,                      &
+     &                         ad_u_obc, tl_u_obc,                      &
+     &                         ad_v_obc, tl_v_obc,                      &
+# endif
+     &                         ad_ubar_obc, tl_ubar_obc,                &
+     &                         ad_vbar_obc, tl_vbar_obc,                &
+     &                         ad_zeta_obc, tl_zeta_obc,                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         ad_ustr, tl_ustr,                        &
@@ -3730,11 +5816,18 @@
 !  index Lold.
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lold, nvec,                                    &
      &                   0, ncHSSid(ng), ncname,                        &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   ad_t_obc, ad_u_obc, ad_v_obc,                  &
+# endif
+     &                   ad_ubar_obc, ad_vbar_obc,                      &
+     &                   ad_zeta_obc,                                   &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   ad_ustr, ad_vstr,                              &
@@ -3758,8 +5851,18 @@
         L1=1
 
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lold, L1,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   nl_t_obc, ad_t_obc,                            &
+     &                   nl_u_obc, ad_u_obc,                            &
+     &                   nl_v_obc, ad_v_obc,                            &
+# endif
+     &                   nl_ubar_obc, ad_ubar_obc,                      &
+     &                   nl_vbar_obc, ad_vbar_obc,                      &
+     &                   nl_zeta_obc, ad_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   nl_ustr, ad_ustr,                              &
      &                   nl_vstr, ad_vstr,                              &
@@ -3785,11 +5888,18 @@
 !  linear state array index Lwrk.
 !
           CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     Lwrk, rec,                                   &
      &                     0, ncHSSid(ng), ncname,                      &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     tl_t_obc, tl_u_obc, tl_v_obc,                &
+# endif
+     &                     tl_ubar_obc, tl_vbar_obc,                    &
+     &                     tl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     tl_ustr, tl_vstr,                            &
@@ -3808,10 +5918,26 @@
 !  Compute dot product.
 !
           CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, LBij, UBij,           &
      &                        NstateVar(ng), dot(0:),                   &
 #ifdef MASKING
      &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                        ad_t_obc(:,:,:,:,Lold,:),                 &
+     &                        tl_t_obc(:,:,:,:,Lwrk,:),                 &
+     &                        ad_u_obc(:,:,:,:,Lold),                   &
+     &                        tl_u_obc(:,:,:,:,Lwrk),                   &
+     &                        ad_v_obc(:,:,:,:,Lold),                   &
+     &                        tl_v_obc(:,:,:,:,Lwrk),                   &
+# endif
+     &                        ad_ubar_obc(:,:,:,Lold),                  &
+     &                        tl_ubar_obc(:,:,:,Lwrk),                  &
+     &                        ad_vbar_obc(:,:,:,Lold),                  &
+     &                        tl_vbar_obc(:,:,:,Lwrk),                  &
+     &                        ad_zeta_obc(:,:,:,Lold),                  &
+     &                        tl_zeta_obc(:,:,:,Lwrk),                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                        ad_ustr(:,:,:,Lold), tl_ustr(:,:,:,Lwrk), &
@@ -3839,10 +5965,20 @@
           fac2=-dot(0)
 
           CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         L1, Lwrk, L1, fac1, fac2,                &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         nl_t_obc, tl_t_obc,                      &
+     &                         nl_u_obc, tl_u_obc,                      &
+     &                         nl_v_obc, tl_v_obc,                      &
+# endif
+     &                         nl_ubar_obc, tl_ubar_obc,                &
+     &                         nl_vbar_obc, tl_vbar_obc,                &
+     &                         nl_zeta_obc, tl_zeta_obc,                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         nl_ustr, tl_ustr,                        &
@@ -3865,10 +6001,26 @@
 !  Compute normalization factor.
 !
         CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                      nl_t_obc(:,:,:,:,L1,:),                     &
+     &                      nl_t_obc(:,:,:,:,L1,:),                     &
+     &                      nl_u_obc(:,:,:,:,L1),                       &
+     &                      nl_u_obc(:,:,:,:,L1),                       &
+     &                      nl_v_obc(:,:,:,:,L1),                       &
+     &                      nl_v_obc(:,:,:,:,L1),                       &
+# endif
+     &                      nl_ubar_obc(:,:,:,L1),                      &
+     &                      nl_ubar_obc(:,:,:,L1),                      &
+     &                      nl_vbar_obc(:,:,:,L1),                      &
+     &                      nl_vbar_obc(:,:,:,L1),                      &
+     &                      nl_zeta_obc(:,:,:,L1),                      &
+     &                      nl_zeta_obc(:,:,:,L1),                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                      nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L1),       &
@@ -3895,10 +6047,17 @@
         fac=1.0_r8/SQRT(dot(0))
 
         CALL state_scale (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    L1, L1, fac,                                  &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    nl_t_obc, nl_u_obc, nl_v_obc,                 &
+# endif
+     &                    nl_ubar_obc, nl_vbar_obc,                     &
+     &                    nl_zeta_obc,                                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    nl_ustr, nl_vstr,                             &
@@ -3916,8 +6075,18 @@
 !  Copy nl_var(L1) into  ad_var(Lold).
 !
         CALL state_copy (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L1, Lold,                                      &
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   ad_t_obc, nl_t_obc,                            &
+     &                   ad_u_obc, nl_u_obc,                            &
+     &                   ad_v_obc, nl_v_obc,                            &
+# endif
+     &                   ad_ubar_obc, nl_ubar_obc,                      &
+     &                   ad_vbar_obc, nl_vbar_obc,                      &
+     &                   ad_zeta_obc, nl_zeta_obc,                      &
+#endif
 #ifdef ADJUST_WSTRESS
      &                   ad_ustr, nl_ustr,                              &
      &                   ad_vstr, nl_vstr,                              &
@@ -3981,11 +6150,6 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -3996,6 +6160,8 @@
 !  Local variable declarations.
 !
       integer :: status
+!
+      SourceFile='cgradient_lanczos.h, cg_write'
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors.
@@ -4154,31 +6320,25 @@
 !  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncMODid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-#endif
-
-  10  FORMAT (/,' CG_WRITE - unable to synchronize to disk ',           &
-     &        ' model/observation file: ',/,12x,a)
+      CALL netcdf_sync (ng, model, MODname(ng), ncMODid(ng))
 
       RETURN
       END SUBROUTINE cg_write
 !
 !=======================================================================
       SUBROUTINE new_cost (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     nl_t_obc, nl_u_obc, nl_v_obc,                &
+# endif
+     &                     nl_ubar_obc, nl_vbar_obc,                    &
+     &                     nl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     nl_ustr, nl_vstr,                            &
@@ -4208,7 +6368,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: innLoop, outLoop
 !
@@ -4217,6 +6377,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: nl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: nl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
@@ -4242,6 +6412,17 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: nl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -4263,10 +6444,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k, lstr, rec, Lscale
-#ifdef SOLVE3D
-      integer :: itrc
-#endif
+      integer :: i, lstr, rec, Lscale
       integer :: L1 = 1
       integer :: L2 = 2
 
@@ -4305,10 +6483,17 @@
       fac=0.0_r8
 
       CALL state_initialize (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       L1, fac,                                   &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       nl_t_obc, nl_u_obc, nl_v_obc,              &
+# endif
+     &                       nl_ubar_obc, nl_vbar_obc,                  &
+     &                       nl_zeta_obc,                               &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       nl_ustr, nl_vstr,                          &
@@ -4338,11 +6523,18 @@
 !  Read gradient solution and load it into nl_var(L2).
 !
         CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L2, rec,                                       &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                   nl_t_obc, nl_u_obc, nl_v_obc,                  &
+# endif
+     &                   nl_ubar_obc, nl_vbar_obc,                      &
+     &                   nl_zeta_obc,                                   &
 #endif
 #ifdef ADJUST_WSTRESS
      &                   nl_ustr, nl_vstr,                              &
@@ -4366,10 +6558,20 @@
         fac2=cg_zu(rec,outLoop)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       L1, L2, L1, fac1, fac2,                    &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       nl_t_obc, nl_t_obc,                        &
+     &                       nl_u_obc, nl_u_obc,                        &
+     &                       nl_v_obc, nl_v_obc,                        &
+# endif
+     &                       nl_ubar_obc, nl_ubar_obc,                  &
+     &                       nl_vbar_obc, nl_vbar_obc,                  &
+     &                       nl_zeta_obc, nl_zeta_obc,                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       nl_ustr, nl_ustr,                          &
@@ -4400,11 +6602,18 @@
       END IF
 !
       CALL read_state (ng, tile, model,                                 &
-     &                 LBi, UBi, LBj, UBj,                              &
+     &                 LBi, UBi, LBj, UBj, LBij, UBij,                  &
      &                 L2, rec,                                         &
      &                 ndefADJ(ng), ncADJid(ng), ncname,                &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                 nl_t_obc, nl_u_obc, nl_v_obc,                    &
+# endif
+     &                 nl_ubar_obc, nl_vbar_obc,                        &
+     &                 nl_zeta_obc,                                     &
 #endif
 #ifdef ADJUST_WSTRESS
      &                 nl_ustr, nl_vstr,                                &
@@ -4424,10 +6633,26 @@
 !  current increment.
 !
       CALL state_dotprod (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    nl_t_obc(:,:,:,:,L1,:),                       &
+     &                    nl_t_obc(:,:,:,:,L2,:),                       &
+     &                    nl_u_obc(:,:,:,:,L1),                         &
+     &                    nl_u_obc(:,:,:,:,L2),                         &
+     &                    nl_v_obc(:,:,:,:,L1),                         &
+     &                    nl_v_obc(:,:,:,:,L2),                         &
+# endif
+     &                    nl_ubar_obc(:,:,:,L1),                        &
+     &                    nl_ubar_obc(:,:,:,L2),                        &
+     &                    nl_vbar_obc(:,:,:,L1),                        &
+     &                    nl_vbar_obc(:,:,:,L2),                        &
+     &                    nl_zeta_obc(:,:,:,L1),                        &
+     &                    nl_zeta_obc(:,:,:,L2),                        &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),         &
@@ -4469,12 +6694,19 @@
         Ltrans=.FALSE.
 !
         CALL precond (ng, tile, model, 'new cost function',             &
-     &                LBi, UBi, LBj, UBj,                               &
+     &                LBi, UBi, LBj, UBj, LBij, UBij,                   &
      &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale, Ltrans,                    &
      &                innLoop, outLoop,                                 &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                nl_t_obc, nl_u_obc, nl_v_obc,                     &
+# endif
+     &                nl_ubar_obc, nl_vbar_obc,                         &
+     &                nl_zeta_obc,                                      &
 #endif
 #ifdef ADJUST_WSTRESS
      &                nl_ustr, nl_vstr,                                 &
@@ -4497,11 +6729,18 @@
 !  to nl_var(L2). 
 !
       CALL read_state (ng, tile, model,                                 &
-     &                 LBi, UBi, LBj, UBj,                              &
+     &                 LBi, UBi, LBj, UBj, LBij, UBij,                  &
      &                 L2, 4,                                           &
      &                 ndefTLM(ng), ncITLid(ng), ITLname(ng),           &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                 nl_t_obc, nl_u_obc, nl_v_obc,                    &
+# endif
+     &                 nl_ubar_obc, nl_vbar_obc,                        &
+     &                 nl_zeta_obc,                                     &
 #endif
 #ifdef ADJUST_WSTRESS
      &                 nl_ustr, nl_vstr,                                &
@@ -4525,10 +6764,20 @@
       fac2=1.0_r8
 
       CALL state_addition (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     L1, L2, L1, fac1, fac2,                      &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     nl_t_obc, nl_t_obc,                          &
+     &                     nl_u_obc, nl_u_obc,                          &
+     &                     nl_v_obc, nl_v_obc,                          &
+# endif
+     &                     nl_ubar_obc, nl_ubar_obc,                    &
+     &                     nl_vbar_obc, nl_vbar_obc,                    &
+     &                     nl_zeta_obc, nl_zeta_obc,                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     nl_ustr, nl_ustr,                            &
@@ -4548,10 +6797,26 @@
      &                     nl_zeta, nl_zeta)
 !
       CALL state_dotprod (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    nl_t_obc(:,:,:,:,L1,:),                       &
+     &                    nl_t_obc(:,:,:,:,L1,:),                       &
+     &                    nl_u_obc(:,:,:,:,L1),                         &
+     &                    nl_u_obc(:,:,:,:,L1),                         &
+     &                    nl_v_obc(:,:,:,:,L1),                         &
+     &                    nl_v_obc(:,:,:,:,L1),                         &
+# endif
+     &                    nl_ubar_obc(:,:,:,L1),                        &
+     &                    nl_ubar_obc(:,:,:,L1),                        &
+     &                    nl_vbar_obc(:,:,:,L1),                        &
+     &                    nl_vbar_obc(:,:,:,L1),                        &
+     &                    nl_zeta_obc(:,:,:,L1),                        &
+     &                    nl_zeta_obc(:,:,:,L1),                        &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L1),         &
@@ -4584,12 +6849,19 @@
 !
 !***********************************************************************
       SUBROUTINE precond (ng, tile, model, message,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
+     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NstateVars, Lscale, Ltrans,                   &
      &                    innLoop, outLoop,                             &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                    nl_t_obc, nl_u_obc, nl_v_obc,                 &
+# endif
+     &                    nl_ubar_obc, nl_vbar_obc,                     &
+     &                    nl_zeta_obc,                                  &
 #endif
 #ifdef ADJUST_WSTRESS
      &                    nl_ustr, nl_vstr,                             &
@@ -4625,7 +6897,7 @@
       logical, intent(in) :: Ltrans
 
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: NstateVars, Lscale
       integer, intent(in) :: innLoop, outLoop
@@ -4637,6 +6909,16 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:,:,:,:,:,:)
+      real(r8), intent(inout) :: nl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(inout) :: nl_v_obc(LBij:,:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:,:,:,:)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:,:,:,:)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
@@ -4661,6 +6943,17 @@
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_BOUNDARY
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: nl_t_obc(LBij:UBij,N(ng),4,            &
+     &                                    Nbrec(ng),2,NT(ng))
+      real(r8), intent(inout) :: nl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#  endif
+      real(r8), intent(inout) :: nl_ubar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
+      real(r8), intent(inout) :: nl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 # endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -4690,7 +6983,7 @@
       integer :: lstr
       integer :: namm
 #ifdef SOLVE3D
-      integer :: itrc
+      integer :: it
 #endif
       integer, parameter :: ndef = 1
 
@@ -4755,11 +7048,11 @@
           WRITE (stdout,30) outLoop, innLoop, TRIM(ncname)
         END IF
 !
-        CALL netcdf_get_fvar (ng, iADM, ncname, 'cg_beta',              &
+        CALL netcdf_get_fvar (ng, model, ncname, 'cg_beta',             &
      &                        beta_lcz)
         IF (exit_flag.ne. NoError) RETURN
 
-        CALL netcdf_get_fvar (ng, iADM, ncname, 'cg_zv',                &
+        CALL netcdf_get_fvar (ng, model, ncname, 'cg_zv',               &
      &                        zv_lcz)
         IF (exit_flag.ne. NoError) RETURN
 !
@@ -4818,11 +7111,18 @@
 !
               rec=Ninner+1
               CALL read_state (ng, tile, model,                         &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         L2, rec,                                 &
      &                         ndef, ncid, ncname,                      &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         nl_t_obc, nl_u_obc, nl_v_obc,            &
+# endif
+     &                         nl_ubar_obc, nl_vbar_obc,                &
+     &                         nl_zeta_obc,                             &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         nl_ustr, nl_vstr,                        &
@@ -4842,10 +7142,26 @@
 !  Lanczos vector.
 !
               CALL state_dotprod (ng, tile, model,                      &
-     &                            LBi, UBi, LBj, UBj,                   &
+     &                            LBi, UBi, LBj, UBj, LBij, UBij,       &
      &                            NstateVars, Dotprod(0:),              &
 #ifdef MASKING
      &                            rmask, umask, vmask,                  &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                            nl_t_obc(:,:,:,:,L1,:),               &
+     &                            nl_t_obc(:,:,:,:,L2,:),               &
+     &                            nl_u_obc(:,:,:,:,L1),                 &
+     &                            nl_u_obc(:,:,:,:,L2),                 &
+     &                            nl_v_obc(:,:,:,:,L1),                 &
+     &                            nl_v_obc(:,:,:,:,L2),                 &
+# endif
+     &                            nl_ubar_obc(:,:,:,L1),                &
+     &                            nl_ubar_obc(:,:,:,L2),                &
+     &                            nl_vbar_obc(:,:,:,L1),                &
+     &                            nl_vbar_obc(:,:,:,L2),                &
+     &                            nl_zeta_obc(:,:,:,L1),                &
+     &                            nl_zeta_obc(:,:,:,L2),                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                            nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2), &
@@ -4889,11 +7205,18 @@
           END IF
 !
           CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
+     &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     L2, nvec,                                    &
      &                     ndef, ncid, ncname,                          &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                     nl_t_obc, nl_u_obc, nl_v_obc,                &
+# endif
+     &                     nl_ubar_obc, nl_vbar_obc,                    &
+     &                     nl_zeta_obc,                                 &
 #endif
 #ifdef ADJUST_WSTRESS
      &                     nl_ustr, nl_vstr,                            &
@@ -4914,10 +7237,26 @@
 !  nl_var(L2)
 !
           CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, LBij, UBij,           &
      &                        NstateVars, Dotprod(0:),                  &
 #ifdef MASKING
      &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                        nl_t_obc(:,:,:,:,L1,:),                   &
+     &                        nl_t_obc(:,:,:,:,L2,:),                   &
+     &                        nl_u_obc(:,:,:,:,L1),                     &
+     &                        nl_u_obc(:,:,:,:,L2),                     &
+     &                        nl_v_obc(:,:,:,:,L1),                     &
+     &                        nl_v_obc(:,:,:,:,L2),                     &
+# endif
+     &                        nl_ubar_obc(:,:,:,L1),                    &
+     &                        nl_ubar_obc(:,:,:,L2),                    &
+     &                        nl_vbar_obc(:,:,:,L1),                    &
+     &                        nl_vbar_obc(:,:,:,L2),                    &
+     &                        nl_zeta_obc(:,:,:,L1),                    &
+     &                        nl_zeta_obc(:,:,:,L2),                    &
 #endif
 #ifdef ADJUST_WSTRESS
      &                        nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),     &
@@ -4971,10 +7310,20 @@
           END IF
 !
           CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         L1, L2, L1, fac1, fac2,                  &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                         nl_t_obc, nl_t_obc,                      &
+     &                         nl_u_obc, nl_u_obc,                      &
+     &                         nl_v_obc, nl_v_obc,                      &
+# endif
+     &                         nl_ubar_obc, nl_ubar_obc,                &
+     &                         nl_vbar_obc, nl_vbar_obc,                &
+     &                         nl_zeta_obc, nl_zeta_obc,                &
 #endif
 #ifdef ADJUST_WSTRESS
      &                         nl_ustr, nl_ustr,                        &
@@ -5007,11 +7356,18 @@
 !
             rec=Ninner+1
             CALL read_state (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       L2, rec,                                   &
      &                       ndef, ncid, ncname,                        &
 #ifdef MASKING
      &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                       nl_t_obc, nl_u_obc, nl_v_obc,              &
+# endif
+     &                       nl_ubar_obc, nl_vbar_obc,                  &
+     &                       nl_zeta_obc,                               &
 #endif
 #ifdef ADJUST_WSTRESS
      &                       nl_ustr, nl_vstr,                          &
@@ -5035,10 +7391,20 @@
             END IF
 !
             CALL state_addition (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
+     &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
      &                           L1, L2, L1, fac1, fac2,                &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
+#endif
+#ifdef ADJUST_BOUNDARY
+# ifdef SOLVE3D
+     &                           nl_t_obc, nl_t_obc,                    &
+     &                           nl_u_obc, nl_u_obc,                    &
+     &                           nl_v_obc, nl_v_obc,                    &
+# endif
+     &                           nl_ubar_obc, nl_ubar_obc,              &
+     &                           nl_vbar_obc, nl_vbar_obc,              &
+     &                           nl_zeta_obc, nl_zeta_obc,              &
 #endif
 #ifdef ADJUST_WSTRESS
      &                           nl_ustr, nl_ustr,                      &

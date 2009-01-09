@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+# endif
       USE mod_forces
 # if defined WEAK_CONSTRAINT || defined IOM
       USE mod_fourdvar
@@ -32,9 +35,6 @@
 # endif
       USE mod_stepping
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -49,6 +49,9 @@
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
+# ifdef ADJUST_BOUNDARY
+      integer :: IorJ, LBij, UBij
+# endif
       integer :: i, j, gfactor, gtype, status
       integer :: kout
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -64,6 +67,13 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+# ifdef ADJUST_BOUNDARY
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij
+      IorJ=IOBOUNDS(ng)%IorJ
+# endif
+!
+      SourceFile='ad_wrt_his.F'
 !
 !-----------------------------------------------------------------------
 !  Write out adjoint fields.
@@ -277,8 +287,25 @@
         END IF
 # endif
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component (m/s) in the XI-direction.
+!  Write out free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isFsur))),            &
+     &                        BOUNDARY(ng)% ad_zeta_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tADJindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idSbry(isFsur),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D U-momentum component (m/s).
 !
       IF (Hout(idUbar,ng)) THEN
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -337,8 +364,25 @@
 #  endif
 # endif
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component (m/s) in the ETA-direction.
+!  Write out 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUbar))),            &
+     &                        BOUNDARY(ng)% ad_ubar_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tADJindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idSbry(isUbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D V-momentum component (m/s).
 !
       IF (Hout(idVbar,ng)) THEN
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -398,9 +442,26 @@
 # endif
       END IF
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Write out 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVbar))),            &
+     &                        BOUNDARY(ng)% ad_vbar_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tADJindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idSbry(isVbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+
 # ifdef SOLVE3D
 !
-!  Write out 3D momentum component (m/s) in the XI-direction.
+!  Write out 3D U-momentum component (m/s).
 !
       IF (Hout(idUvel,ng)) THEN
 #  if defined WEAK_CONSTRAINT || defined IOM
@@ -445,8 +506,25 @@
         END IF
 #  endif
       END IF
+
+#  ifdef ADJUST_BOUNDARY
 !
-!  Write out 3D momentum component (m/s) in the ETA-direction.
+!  Write out 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUvel))),            &
+     &                        BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,      &
+     &                                                nout),            &
+     &                        (/1,1,1,1,tADJindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idSbry(isUvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+!
+!  Write out 3D V-momentum component (m/s).
 !
       IF (Hout(idVvel,ng)) THEN
 #  if defined WEAK_CONSTRAINT || defined IOM
@@ -491,6 +569,23 @@
         END IF
 #  endif
       END IF
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVvel))),            &
+     &                        BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,      &
+     &                                                kout),            &
+     &                        (/1,1,1,1,tADJindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idSbry(isVvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
 !
 !  Write out tracer type variables.
 !
@@ -541,6 +636,25 @@
 #  endif
         END IF
       END DO
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out tracers open boundaries.
+!
+      DO itrc=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                  &
+     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,    &
+     &                                                  nout,itrc),     &
+     &                          (/1,1,1,1,tADJindx(ng),itrc/),          &
+     &                          (/IorJ,N(ng),4,Nbrec(ng),1,1/),         &
+     &                          ncid = ncADJid(ng),                     &
+     &                          varid = adjVid(idSbry(isTvar(itrc)),ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+#  endif
 !
 !  Write out density anomaly.
 !
@@ -780,32 +894,22 @@
 !  processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncADJid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(ADJname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iADM, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, iADM, ADJname(ng), ncADJid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
 # ifdef SOLVE3D
-      IF (Master) WRITE (stdout,30) kout, nout, tADJindx(ng)
+      IF (Master) WRITE (stdout,20) kout, nout, tADJindx(ng)
 # else
-      IF (Master) WRITE (stdout,30) kout, tADJindx(ng)
+      IF (Master) WRITE (stdout,20) kout, tADJindx(ng)
 # endif
 !
   10  FORMAT (/,' AD_WRT_HIS - error while writing variable: ',a,/,14x, &
      &        'into adjoint NetCDF file for time record: ',i4)
-  20  FORMAT (/,' AD_WRT_HIS - unable to synchronize to disk adjoint ', &
-     &        'file:',/,14x,a)
 # ifdef SOLVE3D
-  30  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
+  20  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)
 # else
-  30  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
+  20  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
      &        ') into time record = ',i7.7)
 # endif
       RETURN

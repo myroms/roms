@@ -80,7 +80,7 @@
       buffer(1)=DimID
       buffer(2)=status
       buffer(3)=exit_flag
-      CALL mp_bcasti (ng, model, buffer, 3)
+      CALL mp_bcasti (ng, model, buffer)
       DimID=buffer(1)
       status=buffer(2)
       exit_flag=buffer(3)

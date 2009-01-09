@@ -33,9 +33,12 @@
       USE forcing_mod, ONLY : forcing
 # endif
 # ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_NLadjust, load_NLforcing
+      USE frc_adjust_mod, ONLY : frc_adjust, load_forcing
 # endif
       USE ini_fields_mod, ONLY : ini_fields, ini_zeta
+# if defined ADJUST_BOUNDARY
+      USE obc_adjust_mod, ONLY : obc_adjust, load_obc
+# endif
 # ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : ocn2atm_coupling
 # endif
@@ -205,6 +208,27 @@
       END IF
 # endif
 
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Interpolate open boundary increments and adjust open boundary.
+!  Load open boundary into storage arrays. Skip the last output
+!  timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL obc_adjust (ng, TILE, Lbinp(ng))
+            CALL load_obc (ng, TILE, Lbout(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
 # ifdef ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
@@ -212,15 +236,17 @@
 !  Load surface forcing to storage arrays.
 !-----------------------------------------------------------------------
 !
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
-          CALL load_NLforcing (ng, TILE, Lfout(ng))
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_adjust (ng, TILE, Lfinp(ng), Lfout(ng))
+            CALL load_forcing (ng, TILE, Lfout(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 # endif
 
 # ifdef WAVES_OCEAN

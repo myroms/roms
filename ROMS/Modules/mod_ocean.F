@@ -210,17 +210,16 @@
 
 #if defined FOUR_DVAR || defined IMPULSE
 !
-!  Working arrays to store adjoint impulse forcing, background error
-!  covariance, background-error standard deviations, or descent
-!  conjugate vectors (directions).
+!  Working arrays to store adjoint impulse forcing, error covariance,
+!  standard deviations, or descent conjugate vectors (directions).
 !
-          real(r8), pointer :: b_ubar(:,:)
-          real(r8), pointer :: b_vbar(:,:)
-          real(r8), pointer :: b_zeta(:,:)
+          real(r8), pointer :: b_ubar(:,:,:)
+          real(r8), pointer :: b_vbar(:,:,:)
+          real(r8), pointer :: b_zeta(:,:,:)
 # ifdef SOLVE3D
-          real(r8), pointer :: b_t(:,:,:,:)
-          real(r8), pointer :: b_u(:,:,:)
-          real(r8), pointer :: b_v(:,:,:)
+          real(r8), pointer :: b_t(:,:,:,:,:)
+          real(r8), pointer :: b_u(:,:,:,:)
+          real(r8), pointer :: b_v(:,:,:,:)
 # endif
 # ifdef FOUR_DVAR
           real(r8), pointer :: d_ubar(:,:)
@@ -231,13 +230,13 @@
           real(r8), pointer :: d_u(:,:,:)
           real(r8), pointer :: d_v(:,:,:)
 #  endif
-          real(r8), pointer :: e_ubar(:,:)
-          real(r8), pointer :: e_vbar(:,:)
-          real(r8), pointer :: e_zeta(:,:)
+          real(r8), pointer :: e_ubar(:,:,:)
+          real(r8), pointer :: e_vbar(:,:,:)
+          real(r8), pointer :: e_zeta(:,:,:)
 #  ifdef SOLVE3D
-          real(r8), pointer :: e_t(:,:,:,:)
-          real(r8), pointer :: e_u(:,:,:)
-          real(r8), pointer :: e_v(:,:,:)
+          real(r8), pointer :: e_t(:,:,:,:,:)
+          real(r8), pointer :: e_u(:,:,:,:)
+          real(r8), pointer :: e_v(:,:,:,:)
 #  endif
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -467,14 +466,14 @@
 !  covariance, background-error standard deviations, or descent
 !  conjugate vectors (directions).
 !
-      allocate ( OCEAN(ng) % b_ubar(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % b_vbar(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % b_zeta(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % b_ubar(LBi:UBi,LBj:UBj,NSA) )
+      allocate ( OCEAN(ng) % b_vbar(LBi:UBi,LBj:UBj,NSA) )
+      allocate ( OCEAN(ng) % b_zeta(LBi:UBi,LBj:UBj,NSA) )
 
 # ifdef SOLVE3D
-      allocate ( OCEAN(ng) % b_t(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
-      allocate ( OCEAN(ng) % b_u(LBi:UBi,LBj:UBj,N(ng)) )
-      allocate ( OCEAN(ng) % b_v(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % b_t(LBi:UBi,LBj:UBj,N(ng),NSA,NT(ng)) )
+      allocate ( OCEAN(ng) % b_u(LBi:UBi,LBj:UBj,N(ng),NSA) )
+      allocate ( OCEAN(ng) % b_v(LBi:UBi,LBj:UBj,N(ng),NSA) )
 # endif
 
 # ifdef FOUR_DVAR
@@ -488,14 +487,14 @@
       allocate ( OCEAN(ng) % d_v(LBi:UBi,LBj:UBj,N(ng)) )
 #  endif
 
-      allocate ( OCEAN(ng) % e_ubar(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % e_vbar(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % e_zeta(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % e_ubar(LBi:UBi,LBj:UBj,NSA) )
+      allocate ( OCEAN(ng) % e_vbar(LBi:UBi,LBj:UBj,NSA) )
+      allocate ( OCEAN(ng) % e_zeta(LBi:UBi,LBj:UBj,NSA) )
 
 #  ifdef SOLVE3D
-      allocate ( OCEAN(ng) % e_t(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
-      allocate ( OCEAN(ng) % e_u(LBi:UBi,LBj:UBj,N(ng)) )
-      allocate ( OCEAN(ng) % e_v(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % e_t(LBi:UBi,LBj:UBj,N(ng),NSA,NT(ng)) )
+      allocate ( OCEAN(ng) % e_u(LBi:UBi,LBj:UBj,N(ng),NSA) )
+      allocate ( OCEAN(ng) % e_v(LBi:UBi,LBj:UBj,N(ng),NSA) )
 #  endif
 
 #  if defined WEAK_CONSTRAINT || defined IOM
@@ -576,7 +575,7 @@
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: i, j
+      integer :: i, j, rec
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
@@ -889,57 +888,79 @@
 !
       IF (model.eq.0) THEN
         DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            OCEAN(ng) % b_ubar(i,j) = IniVal
-            OCEAN(ng) % b_vbar(i,j) = IniVal
-            OCEAN(ng) % b_zeta(i,j) = IniVal
+          DO rec=1,NSA
+            DO i=Imin,Imax
+              OCEAN(ng) % b_ubar(i,j,rec) = IniVal
+              OCEAN(ng) % b_vbar(i,j,rec) = IniVal
+              OCEAN(ng) % b_zeta(i,j,rec) = IniVal
 # ifdef FOUR_DVAR
+              OCEAN(ng) % e_ubar(i,j,rec) = IniVal
+              OCEAN(ng) % e_vbar(i,j,rec) = IniVal
+              OCEAN(ng) % e_zeta(i,j,rec) = IniVal
+# endif
+            END DO
+          END DO
+# ifdef FOUR_DVAR
+          DO i=Imin,Imax
             OCEAN(ng) % d_ubar(i,j) = IniVal
             OCEAN(ng) % d_vbar(i,j) = IniVal
             OCEAN(ng) % d_zeta(i,j) = IniVal
 
-            OCEAN(ng) % e_ubar(i,j) = IniVal
-            OCEAN(ng) % e_vbar(i,j) = IniVal
-            OCEAN(ng) % e_zeta(i,j) = IniVal
 #  if defined WEAK_CONSTRAINT || defined IOM
             OCEAN(ng) % f_ubar(i,j) = IniVal
             OCEAN(ng) % f_vbar(i,j) = IniVal
             OCEAN(ng) % f_zeta(i,j) = IniVal
 #  endif
-# endif
           END DO
+# endif
 # ifdef SOLVE3D
+          DO rec=1,NSA          
+            DO k=1,N(ng)
+              DO i=Imin,Imax
+                OCEAN(ng) % b_u(i,j,k,rec) = IniVal
+                OCEAN(ng) % b_v(i,j,k,rec) = IniVal
+#  ifdef FOUR_DVAR
+                OCEAN(ng) % e_u(i,j,k,rec) = IniVal
+                OCEAN(ng) % e_v(i,j,k,rec) = IniVal
+#  endif
+              END DO
+            END DO
+          END DO
+#  ifdef FOUR_DVAR
           DO k=1,N(ng)
             DO i=Imin,Imax
-              OCEAN(ng) % b_u(i,j,k) = IniVal
-              OCEAN(ng) % b_v(i,j,k) = IniVal
-#  ifdef FOUR_DVAR
               OCEAN(ng) % d_u(i,j,k) = IniVal
               OCEAN(ng) % d_v(i,j,k) = IniVal
 
-              OCEAN(ng) % e_u(i,j,k) = IniVal
-              OCEAN(ng) % e_v(i,j,k) = IniVal
 #   if defined WEAK_CONSTRAINT || defined IOM
               OCEAN(ng) % f_u(i,j,k) = IniVal
               OCEAN(ng) % f_v(i,j,k) = IniVal
 #   endif
-#  endif
             END DO
           END DO
+#  endif
           DO itrc=1,NT(ng)
+            DO rec=1,NSA
+              DO k=1,N(ng)
+                DO i=Imin,Imax
+                  OCEAN(ng) % b_t(i,j,k,rec,itrc) = IniVal
+#  ifdef FOUR_DVAR
+                  OCEAN(ng) % e_t(i,j,k,rec,itrc) = IniVal
+#  endif
+                END DO
+              END DO
+            END DO
+#  ifdef FOUR_DVAR
             DO k=1,N(ng)
               DO i=Imin,Imax
-                OCEAN(ng) % b_t(i,j,k,itrc) = IniVal
-#  ifdef FOUR_DVAR
                 OCEAN(ng) % d_t(i,j,k,itrc) = IniVal
 
-                OCEAN(ng) % e_t(i,j,k,itrc) = IniVal
 #   if defined WEAK_CONSTRAINT || defined IOM
                 OCEAN(ng) % f_t(i,j,k,itrc) = IniVal
 #   endif
-#  endif
               END DO
             END DO
+#  endif
           END DO
 # endif
         END DO

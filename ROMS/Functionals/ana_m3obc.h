@@ -99,6 +99,7 @@
         END DO
       END IF
 #else
+# ifdef EAST_M3OBS
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -109,6 +110,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef WEST_M3OBS
       IF (WESTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -119,6 +122,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef SOUTH_M3OBS
       IF (SOUTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
@@ -129,6 +134,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef NORTH_M3OBS
       IF (NORTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
@@ -139,6 +146,7 @@
           END DO
         END DO
       END IF
+# endif
 #endif
       RETURN
       END SUBROUTINE ana_m3obc_tile

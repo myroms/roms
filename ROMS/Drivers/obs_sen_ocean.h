@@ -145,7 +145,7 @@
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: STDrec, ng, thread
+      integer :: STDrec, Tindex, ng, thread
 
 #ifdef DISTRIBUTE
 !
@@ -227,6 +227,8 @@
 !  by solving a tri-diagonal system that uses cg_beta and cg_gamma.
 !-----------------------------------------------------------------------
 !
+      SourceFile='obs_sen_ocean.h, ROMS_initialize'
+
       DO ng=1,Ngrids
         CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_beta',         &
      &                        cg_beta)
@@ -237,24 +239,76 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Read in background-error standard deviation factors used in the
+!  Read in error covariance standard deviation factors used in the
 !  spatial convolutions.
 !-----------------------------------------------------------------------
 !  
+!  Standard deviation factors for initial conditions error covariance.
+!  They are loaded in Tindex=1 of the e_var(...,Tindex) state variables.
+!
       STDrec=1
+      Tindex=1
       DO ng=1,Ngrids
-        CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
+        CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
+!  Standard deviation factors for model error covariance. They are
+!  loaded in Tindex=2 of the e_var(...,Tindex) state variables.
+!
+      STDrec=1
+      Tindex=2
+      DO ng=1,Ngrids
+        IF (NSA.eq.2) THEN
+          CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+
+#ifdef ADJUST_BOUNDARY
+!
+!  Standard deviation factors for boundary conditions error covariance.
+!
+      STDrec=1
+      Tindex=1
+      DO ng=1,Ngrids
+        CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Standard deviation factors for boundary conditions error covariance.
+!
+      STDrec=1
+      Tindex=1
+      DO ng=1,Ngrids
+        CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, 1)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+#endif
+!
 !-----------------------------------------------------------------------
-!  Read in background-error covariance normalization factors.
+!  Read in initial conditions, model, boundary conditions, and surface
+!  forcing error covariance covariance normalization factors.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        tNRMindx(ng)=1
-        CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
+        CALL get_state (ng, 5, 5, NRMname(1,ng), 1, 1)
         IF (exit_flag.ne.NoError) RETURN
+
+        IF (NSA.eq.2) THEN
+          CALL get_state (ng, 5, 5, NRMname(2,ng), 1, 2)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#ifdef ADJUST_BOUNDARY
+        CALL get_state (ng, 10, 10, NRMname(3,ng), 1, 1)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+        CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
       END DO
 
       RETURN
@@ -423,7 +477,7 @@
             CALL ad_balance (ng, TILE, Lini, Lnew(ng))
 #endif
             CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
-            CALL ad_convolution (ng, TILE, Lnew(ng), 2)
+            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -432,6 +486,8 @@
 !  time to run the tangent linear model.  This time must be the same
 !  as the IS4DVAR Lanczos algorithm.
 !
+        SourceFile='obs_sen_ocean.h, ROMS_run'
+
         CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
      &                        ntimes(ng))
         IF (exit_flag.ne. NoError) RETURN
@@ -487,7 +543,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_convolution (ng, TILE, Litl, 2)
+            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
             CALL tl_variability (ng, TILE, Litl, Lweak)
 #ifdef BALANCE_OPERATOR
             CALL tl_balance (ng, TILE, Lini, Litls)

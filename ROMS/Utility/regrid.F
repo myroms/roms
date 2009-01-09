@@ -155,7 +155,7 @@
 !
 !  Broadcast gridded data to all nodes in the group, itself included.
 !
-      CALL mp_bcastf (ng, model, Awrk, Npts)
+      CALL mp_bcastf (ng, model, Awrk)
 !
 !  Unpack broadcasted data.
 !

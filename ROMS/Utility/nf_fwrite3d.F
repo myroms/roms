@@ -318,7 +318,7 @@
 !  Broadcast IO error flag to all nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mp_bcasti (ng, model, status, 1)
+      CALL mp_bcasti (ng, model, status)
 #endif
       nf_fwrite3d=status
       RETURN

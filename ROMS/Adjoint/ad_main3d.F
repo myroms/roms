@@ -50,6 +50,9 @@
 !!    USE ad_bvf_mix_mod, ONLY : ad_bvf_mix
 # endif
       USE ad_diag_mod, ONLY : ad_diag
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE ad_frc_adjust_mod, ONLY : ad_frc_adjust
+# endif
       USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
 # if defined WEAK_CONSTRAINT || defined IOM
       USE ad_forcing_mod, ONLY : ad_forcing
@@ -71,6 +74,9 @@
 # ifdef MY25_MIXING
 !!    USE ad_my25_corstep_mod, ONLY : ad_my25_corstep
 !!    USE ad_my25_prestep_mod, ONLY : ad_my25_prestep
+# endif
+# ifdef ADJUST_BOUNDARY
+      USE ad_obc_adjust_mod, ONLY : ad_obc_adjust
 # endif
       USE ad_omega_mod, ONLY : ad_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -107,9 +113,6 @@
 # endif
 # ifdef BULK_FLUXES
       USE bulk_flux_mod, ONLY : bulk_flux
-# endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_ADadjust
 # endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
@@ -714,20 +717,41 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Skip first timestep.
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).ne.ntstart(ng)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL frc_ADadjust (ng, TILE, Lfout(ng))
+            CALL ad_frc_adjust (ng, TILE, Lfout(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO
       END IF
 # endif
+
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Interpolate open boundary increments and adjust open boundaries.
+!  Skip first timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_obc_adjust (ng, TILE, Lbout(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
@@ -771,6 +795,7 @@
 !$OMP END PARALLEL DO
       END IF
 # endif
+
 # if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
      defined OPT_OBSERVATIONS
 !

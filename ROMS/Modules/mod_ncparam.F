@@ -137,6 +137,10 @@
         real(r8), dimension(Ngrids) :: vYmin
         real(r8), dimension(Ngrids) :: vYmax
 !
+!  Lower and upper bound ranges
+
+
+!
 !  Switches indicating which variables are written to output files.
 !
         logical  :: Hout(NV,Ngrids) ! history file switches
@@ -399,6 +403,7 @@
         integer, allocatable :: isTsur(:)     ! surface tracer flux
         integer, allocatable :: isTvar(:)     ! tracers
         integer, allocatable :: idSvar(:)     ! state vector indices
+        integer, allocatable :: idSbry(:)     ! state boundaries indices
 !
 !  Input/Output NetCDF files IDs.
 !
@@ -420,7 +425,7 @@
         integer  :: ncITLid(Ngrids)     ! input/output TLM initial
         integer  :: ncLCZid(Ngrids)     ! input/output Lanczos vectors
         integer  :: ncMODid(Ngrids)     ! output 4DVAR fields
-        integer  :: ncNRMid(Ngrids)     ! input/output covariance norm
+        integer  :: ncNRMid(4,Ngrids)    ! input/output covariance norm
         integer  :: ncOBSid(Ngrids)     ! input/output observations
         integer  :: ncRSTid(Ngrids)     ! input/output restart
         integer  :: ncSSHid(Ngrids)     ! SSH observations
@@ -451,7 +456,6 @@
         integer, allocatable :: irpTid(:,:)   ! initial RPM tracers IDs
         integer, allocatable :: itlTid(:,:)   ! initial TLM tracers IDs
         integer, allocatable :: lczTid(:,:)   ! Lanczos vectors IDs
-        integer, allocatable :: nrmTid(:,:)   ! norm tracers IDs
         integer, allocatable :: obsTid(:,:)   ! observations tracers IDs
         integer, allocatable :: rstTid(:,:)   ! restart tracers IDs
         integer, allocatable :: staTid(:,:)   ! stations tracers IDs
@@ -469,7 +473,7 @@
         integer  :: itlVid(NV,Ngrids)    ! initial TLM variables IDs
         integer  :: lczVid(NV,Ngrids)    ! Lanczos variables IDs
         integer  :: modVid(NV,Ngrids)    ! 4DVAR variables IDs
-        integer  :: nrmVid(NV,Ngrids)    ! norm variables IDs
+        integer  :: nrmVid(4,NV,Ngrids)  ! norm variables IDs
         integer  :: obsVid(NV,Ngrids)    ! observations variables IDs
         integer  :: rstVid(NV,Ngrids)    ! restart variables IDs
         integer  :: staVid(NV,Ngrids)    ! stations variables IDs
@@ -487,21 +491,11 @@
         integer  :: tIRPindx(Ngrids)     ! initial RPM time record index
         integer  :: tITLindx(Ngrids)     ! initial TLM time record index
         integer  :: tLCZindx(Ngrids)     ! Lanczos time record index
-        integer  :: tNRMindx(Ngrids)     ! norm time record index
+        integer  :: tNRMindx(4,Ngrids)   ! norm time record index
         integer  :: tRSTindx(Ngrids)     ! restart time record index
         integer  :: tSTAindx(Ngrids)     ! stations time record index
         integer  :: tTLFindx(Ngrids)     ! TLM impulse time record index
         integer  :: tTLMindx(Ngrids)     ! tangent time record index
-!
-!  Current NetCDF file information.
-!
-        integer  :: nvars          ! number of variables
-        integer  :: nvdims(MV)     ! number of variable dimensions
-        integer  :: tsize          ! size of unlimited dimension
-        integer  :: vdims(5,MV)    ! variables dimensions IDs
-        integer  :: vflag(MV)      ! variable flag: 1: full field
-                                   !               -1: water points only
-        character (len=80 ) :: type
 !
 !  Input/Output information variables.
 !
@@ -579,9 +573,10 @@
 #ifdef DISTRIBUTE
         integer :: Itile, Jtile
 #endif
-        integer :: Lvar, gtype, i, ic, ie, is, j, ng, varid
+        integer :: Lvar, Ntiles, gtype, i, ic, ie, is, j, ng, varid
 
         real(r8), parameter :: epsilon = 1.0E-8_r8 
+        real(r8), parameter :: spv = 0.0_r8 
         real(r8) :: scale
 
         character (len=80), dimension(7) :: Vinfo
@@ -612,7 +607,6 @@
         allocate ( irpTid(MT,Ngrids) )
         allocate ( itlTid(MT,Ngrids) )
         allocate ( lczTid(MT,Ngrids) )
-        allocate ( nrmTid(MT,Ngrids) )
         allocate ( obsTid(MT,Ngrids) )
         allocate ( rstTid(MT,Ngrids) )
         allocate ( staTid(MT,Ngrids) )
@@ -643,6 +637,7 @@
         allocate ( idDv3d(NDM3d) )
 #endif
         allocate ( idSvar(MAXVAL(NSV)+1) )
+        allocate ( idSbry(MAXVAL(NSV)+1) )
 
 #if defined SSH_TIDES || defined UV_TIDES
         allocate ( Vtime(MAX(2,MTC),NV,Ngrids) )
@@ -671,6 +666,54 @@
 #endif
 !-----------------------------------------------------------------------
 !   
+!  Allocate fractional grid lower and upper bounds structure.
+!
+      IF (.not.allocated(DOMAIN)) THEN
+        allocate ( DOMAIN(Ngrids) )
+        DO ng=1,Ngrids
+          Ntiles=NtileI(ng)*NtileJ(ng)-1
+          allocate ( DOMAIN(ng) % Xmin_psi (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmax_psi (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymin_psi (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymax_psi (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmin_rho (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmax_rho (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymin_rho (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymax_rho (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmin_u   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmax_u   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymin_u   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymax_u   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmin_v   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Xmax_v   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymin_v   (0:Ntiles) )
+          allocate ( DOMAIN(ng) % Ymax_v   (0:Ntiles) )
+        END DO
+      END IF
+!
+!  Initialize.
+!
+      DO ng=1,Ngrids
+        DOMAIN(ng) % Xmin_psi = spv
+        DOMAIN(ng) % Xmax_psi = spv
+        DOMAIN(ng) % Ymin_psi = spv
+        DOMAIN(ng) % Ymax_psi = spv
+        DOMAIN(ng) % Xmin_rho = spv
+        DOMAIN(ng) % Xmax_rho = spv
+        DOMAIN(ng) % Ymin_rho = spv
+        DOMAIN(ng) % Ymax_rho = spv
+        DOMAIN(ng) % Xmin_u   = spv
+        DOMAIN(ng) % Xmax_u   = spv
+        DOMAIN(ng) % Ymin_u   = spv
+        DOMAIN(ng) % Ymax_u   = spv
+        DOMAIN(ng) % Xmin_v   = spv
+        DOMAIN(ng) % Xmax_v   = spv
+        DOMAIN(ng) % Ymin_v   = spv
+        DOMAIN(ng) % Ymax_v   = spv
+      END DO
+!
+!  RHO-points lower and upper bounds.
+!
       DO ng=1,Ngrids
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, r2dvar, 0, Itile, Jtile,           &
@@ -690,6 +733,18 @@
           rJUB(ng)=rJUB(ng)-1
         END IF
 #  endif
+#  ifdef NEW_CODE
+        rXmin(ng)=REAL(rILB(ng),r8)-0.5_r8
+        rXmax(ng)=REAL(rIUB(ng),r8)+0.5_r8
+        rYmin(ng)=REAL(rJLB(ng),r8)-0.5_r8
+        rYmax(ng)=REAL(rJUB(ng),r8)+0.5_r8
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          rXmax(ng)=rXmax(ng)+epsilon     ! include eastern edge values
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          rYmax(ng)=rYmax(ng)+epsilon     ! include northern edge values
+        END IF
+#  else
         rXmin(ng)=REAL(rILB(ng),r8)
         rXmax(ng)=REAL(rIUB(ng),r8)
         rYmin(ng)=REAL(rJLB(ng),r8)
@@ -704,6 +759,11 @@
         ELSE
           rYmax(ng)=rYmax(ng)+1.0         ! observations between tiles
         END IF
+#  endif
+        DOMAIN(ng) % Xmin_rho(MyRank) = rXmin(ng)
+        DOMAIN(ng) % Xmax_rho(MyRank) = rXmax(ng)
+        DOMAIN(ng) % Ymin_rho(MyRank) = rYmin(ng)
+        DOMAIN(ng) % Ymax_rho(MyRank) = rYmax(ng)
 # else
 #  ifdef FULL_GRID
         rILB(ng)=0
@@ -720,7 +780,13 @@
         rXmax(ng)=REAL(rIUB(ng),r8)+epsilon
         rYmin(ng)=REAL(rJLB(ng),r8)
         rYmax(ng)=REAL(rJUB(ng),r8)+epsilon
+        DOMAIN(ng) % Xmin_rho = rXmin(ng)
+        DOMAIN(ng) % Xmax_rho = rXmax(ng)
+        DOMAIN(ng) % Ymin_rho = rYmin(ng)
+        DOMAIN(ng) % Ymax_rho = rYmax(ng)
 # endif
+!
+!  U-points lower and upper bounds.
 !
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, u2dvar, 0, Itile, Jtile,           &
@@ -753,6 +819,10 @@
         ELSE
           uYmax(ng)=uYmax(ng)+1.0_r8      ! observations between tiles
         END IF
+        DOMAIN(ng) % Xmin_u(MyRank) = uXmin(ng)
+        DOMAIN(ng) % Xmax_u(MyRank) = uXmax(ng)
+        DOMAIN(ng) % Ymin_u(MyRank) = uYmin(ng)
+        DOMAIN(ng) % Ymax_u(MyRank) = uYmax(ng)
 # else
 #  ifdef FULL_GRID
         uILB(ng)=1
@@ -769,7 +839,13 @@
         uXmax(ng)=REAL(uIUB(ng),r8)-0.5_r8+epsilon
         uYmin(ng)=REAL(uJLB(ng),r8)
         uYmax(ng)=REAL(uJUB(ng),r8)+epsilon
+        DOMAIN(ng) % Xmin_u = uXmin(ng)
+        DOMAIN(ng) % Xmax_u = uXmax(ng)
+        DOMAIN(ng) % Ymin_u = uYmin(ng)
+        DOMAIN(ng) % Ymax_u = uYmax(ng)
 # endif
+!
+!  V-points lower and upper bounds.
 !
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, v2dvar, 0, Itile, Jtile,           &
@@ -802,6 +878,10 @@
         ELSE
           vYmax(ng)=vYmax(ng)+1.0_r8      ! observations between tiles
         END IF
+        DOMAIN(ng) % Xmin_v(MyRank) = vXmin(ng)
+        DOMAIN(ng) % Xmax_v(MyRank) = vXmax(ng)
+        DOMAIN(ng) % Ymin_v(MyRank) = vYmin(ng)
+        DOMAIN(ng) % Ymax_v(MyRank) = vYmax(ng)
 # else
 #  ifdef FULL_GRID
         vILB(ng)=0
@@ -818,6 +898,10 @@
         vXmax(ng)=REAL(vIUB(ng),r8)+epsilon
         vYmin(ng)=REAL(vJLB(ng),r8)-0.5_r8
         vYmax(ng)=REAL(vJUB(ng),r8)-0.5_r8+epsilon
+        DOMAIN(ng) % Xmin_v = vXmin(ng)
+        DOMAIN(ng) % Xmax_v = vXmax(ng)
+        DOMAIN(ng) % Ymin_v = vYmin(ng)
+        DOMAIN(ng) % Ymax_v = vYmax(ng)
 # endif
       END DO
 !
@@ -848,7 +932,7 @@
           ncITLid(ng)=-1
           ncLCZid(ng)=-1
           ncMODid(ng)=-1
-          ncNRMid(ng)=-1
+          ncNRMid(1:4,ng)=-1
           ncOBSid(ng)=-1
           ncRSTid(ng)=-1
           ncSSHid(ng)=-1
@@ -869,7 +953,7 @@
           tINIindx(ng)=0
           tIRPindx(ng)=1
           tITLindx(ng)=1
-          tNRMindx(ng)=0
+          tNRMindx(1:4,ng)=0
           tRSTindx(ng)=0
           tSTAindx(ng)=0
           tTLFindx(ng)=0
@@ -3311,11 +3395,14 @@
         idSvar(isFsur)=idFsur
         idSvar(isUbar)=idUbar
         idSvar(isVbar)=idVbar
+        ic=3
 #ifdef SOLVE3D
         idSvar(isUvel)=idUvel
         idSvar(isVvel)=idVvel
+        ic=ic+2
         DO i=1,MT
           idSvar(isTvar(i))=idTvar(i)
+          ic=ic+1
         END DO
 #endif   
 #ifdef ADJUST_WSTRESS
@@ -3325,6 +3412,105 @@
 #ifdef ADJUST_STFLUX
         DO i=1,MT
           idSvar(isTsur(i))=idTsur(i)
+        END DO
+#endif
+#ifdef ADJUST_BOUNDARY
+!
+!  Set switches indicating which open boundary arrays to process in
+!  4DVar adjustments. 
+!
+# ifdef WEST_FSOBC
+        Lobc(iwest,isFsur,1:Ngrids)=.TRUE.
+# endif
+# ifdef EAST_FSOBC
+        Lobc(ieast,isFsur,1:Ngrids)=.TRUE.
+# endif
+# ifdef SOUTH_FSOBC
+        Lobc(isouth,isFsur,1:Ngrids)=.TRUE.
+# endif
+# ifdef NORTH_FSOBC
+        Lobc(inorth,isFsur,1:Ngrids)=.TRUE.
+# endif
+
+# ifdef WEST_M2OBC
+        Lobc(iwest,isUbar,1:Ngrids)=.TRUE.
+        Lobc(iwest,isVbar,1:Ngrids)=.TRUE.
+# endif
+# ifdef EAST_M2OBC
+        Lobc(ieast,isUbar,1:Ngrids)=.TRUE.
+        Lobc(ieast,isVbar,1:Ngrids)=.TRUE.
+# endif
+# ifdef SOUTH_M2OBC
+        Lobc(isouth,isUbar,1:Ngrids)=.TRUE.
+        Lobc(isouth,isVbar,1:Ngrids)=.TRUE.
+# endif
+# ifdef NORTH_M2OBC
+        Lobc(inorth,isUbar,1:Ngrids)=.TRUE.
+        Lobc(inorth,isVbar,1:Ngrids)=.TRUE.
+# endif
+
+# ifdef SOLVE3D
+#  ifdef WEST_M3OBC
+        Lobc(iwest,isUvel,1:Ngrids)=.TRUE.
+        Lobc(iwest,isVvel,1:Ngrids)=.TRUE.
+#  endif
+#  ifdef EAST_M3OBC
+        Lobc(ieast,isUvel,1:Ngrids)=.TRUE.
+        Lobc(ieast,isVvel,1:Ngrids)=.TRUE.
+#  endif
+#  ifdef SOUTH_M3OBC
+        Lobc(isouth,isUvel,1:Ngrids)=.TRUE.
+        Lobc(isouth,isVvel,1:Ngrids)=.TRUE.
+#  endif
+#  ifdef NORTH_M3OBC
+        Lobc(inorth,isUvel,1:Ngrids)=.TRUE.
+        Lobc(inorth,isVvel,1:Ngrids)=.TRUE.
+#  endif
+
+        DO i=1,MT
+#  ifdef WEST_TOBC
+          Lobc(iwest,isTvar(i),1:Ngrids)=.TRUE.
+#  endif
+#  ifdef EAST_TOBC
+          Lobc(ieast,isTvar(i),1:Ngrids)=.TRUE.
+#  endif
+#  ifdef SOUTH_TOBC
+          Lobc(isouth,isTvar(i),1:Ngrids)=.TRUE.
+#  endif
+#  ifdef NORTH_TOBC
+          Lobc(inorth,isTvar(i),1:Ngrids)=.TRUE.
+#  endif
+        END DO
+# endif
+#endif
+#ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  If adjusting open boundaries, set metadata variables.  The variable
+!  name is the same as the state variable but with the _obc suffix.
+!-----------------------------------------------------------------------
+!
+        DO i=1,ic
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,60) MV, varid
+            STOP
+          END IF
+          idSbry(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8
+            Iinfo(1,varid,ng)=0
+          END DO
+          WRITE (Vname(1,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idSvar(i)))), '_obc'
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idSvar(i)))), ', open boundaries'
+          WRITE (Vname(3,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(3,idSvar(i))))
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &          TRIM(Vname(1,varid)), ', scalar, series'
+          WRITE (Vname(5,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(5,idSvar(i))))
         END DO
 #endif
 !

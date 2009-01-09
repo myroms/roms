@@ -22,10 +22,6 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !    
@@ -48,6 +44,8 @@
       real(r8) :: tend
 
       character (len=80) :: fname
+!
+      SourceFile='obs_initial.F'
 !
 !-----------------------------------------------------------------------
 !  Inquire about the contents of observation NetCDF file:  Inquire about
@@ -186,21 +184,12 @@
 !
 !  Open observations NetCDF file.
 !
-        IF (OutThread) THEN
-          status=nf90_open(TRIM(OBSname(ng)), nf90_write, ncOBSid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, model, OBSname(ng), 1, ncOBSid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,20) TRIM(OBSname(ng))
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, ncOBSid(ng), 1)
-# endif
+
       END IF QUERY
 
 #  ifdef IOM

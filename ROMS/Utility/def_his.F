@@ -45,12 +45,18 @@
 
       integer, parameter :: Natt = 24
 
-      integer :: i, j, itrc, nvd3, nvd4, varid
+      integer :: i, j, ifield, itrc, nvd3, nvd4, varid
       integer :: recdim, status
+#ifdef ADJUST_BOUNDARY
+      integer :: IorJdim, brecdim
+#endif
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 #endif
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+#ifdef ADJUST_BOUNDARY
+      integer :: t2dobc(4)
+#endif
       integer :: Vsize(4)
 
       integer :: def_dim
@@ -60,6 +66,9 @@
       integer :: b3dgrd(4)
 # endif
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+# ifdef ADJUST_BOUNDARY
+      integer :: t3dobc(5)
+# endif
 # ifdef ADJUST_STFLUX
       integer :: t3dfrc(3)
 # endif
@@ -70,8 +79,10 @@
 
       real(r8) :: Aval(6)
 
-      character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
+      character (len=120) :: Vinfo(Natt)
+!
+      SourceFile='def_his.F'
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
@@ -93,21 +104,11 @@
 !=======================================================================
 !
       DEFINE : IF (ldef) THEN
-        IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), CMODE, ncHISid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_create (ng, iNLM, TRIM(ncname), ncHISid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          IF (Master) WRITE (stdout,30) TRIM(ncname)
+          RETURN
         END IF
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
-        IF (exit_flag.ne.NoError) RETURN
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncHISid(ng), 1)
-#endif
 !
 !-----------------------------------------------------------------------
 !  Define file dimensions.
@@ -146,6 +147,12 @@
         status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'eta_psi',        &
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
         IF (exit_flag.ne.NoError) RETURN
+
+#ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'IorJ',           &
+     &                 IOBOUNDS(ng)%IorJ, IorJdim)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
 
 #if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'xy_rho',         &
@@ -238,8 +245,14 @@
 #endif
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-        status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'Nadjust',        &
+        status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'frc_adjust',     &
      &                 Nfrec(ng), DimIDs(30))
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, ncHISid(ng), ncname, 'obc_adjust',     &
+     &                 Nbrec(ng), DimIDs(31))
         IF (exit_flag.ne.NoError) RETURN
 #endif
 
@@ -252,6 +265,9 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         frecdim=DimIDs(30)
 #endif
+# ifdef ADJUST_BOUNDARY
+        brecdim=DimIDs(31)
+# endif
 !
 !  Set number of dimensions for output variables.
 !
@@ -286,6 +302,19 @@
         t3dfrc(1)=DimIDs( 1)
         t3dfrc(2)=DimIDs( 5)
         t3dfrc(3)=frecdim
+# endif
+#endif
+#ifdef ADJUST_BOUNDARY
+        t2dobc(1)=IorJdim
+        t2dobc(2)=DimIDs(14)
+        t2dobc(3)=brecdim
+        t2dobc(4)=DimIDs(12)
+# ifdef SOLVE3D
+        t3dobc(1)=IorJdim
+        t3dobc(2)=DimIDs( 9)
+        t3dobc(3)=DimIDs(14)
+        t3dobc(4)=brecdim
+        t3dobc(5)=DimIDs(12)
 # endif
 #endif
 !
@@ -596,8 +625,26 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
         END IF
+#ifdef ADJUST_BOUNDARY
 !
-!  Define 2D momentum in the XI-direction.
+!  Define free-surface open boundaries.
+!
+        IF (ANY(Lobc(:,isFsur,ng))) THEN
+          ifield=idSbry(isFsur)
+          Vinfo( 1)=Vname(1,ifield)
+          Vinfo( 2)=Vname(2,ifield)
+          Vinfo( 3)=Vname(3,ifield)
+          Vinfo(14)=Vname(4,ifield)
+          Vinfo(16)=Vname(1,idtime)
+          Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),      &
+     &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
+     &                   .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
+!
+!  Define 2D U-momentum component.
 !
         IF (Hout(idUbar,ng)) THEN
           Vinfo( 1)=Vname(1,idUbar)
@@ -674,8 +721,26 @@
 # endif
 #endif
         END IF
+#ifdef ADJUST_BOUNDARY
 !
-!  Define 2D momentum in the ETA-direction.
+!  Define 2D U-momentum component open boundaries.
+!
+        IF (ANY(Lobc(:,isUbar,ng))) THEN
+          ifield=idSbry(isUbar)
+          Vinfo( 1)=Vname(1,ifield)
+          Vinfo( 2)=Vname(2,ifield)
+          Vinfo( 3)=Vname(3,ifield)
+          Vinfo(14)=Vname(4,ifield)
+          Vinfo(16)=Vname(1,idtime)
+          Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),      &
+     &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
+     &                   .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
+!
+!  Define 2D V-momentum component.
 !
         IF (Hout(idVbar,ng)) THEN
           Vinfo( 1)=Vname(1,idVbar)
@@ -752,9 +817,27 @@
 # endif
 #endif
         END IF
+#ifdef ADJUST_BOUNDARY
+!
+!  Define 2D V-momentum component open boundaries.
+!
+        IF (ANY(Lobc(:,isVbar,ng))) THEN
+          ifield=idSbry(isVbar)
+          Vinfo( 1)=Vname(1,ifield)
+          Vinfo( 2)=Vname(2,ifield)
+          Vinfo( 3)=Vname(3,ifield)
+          Vinfo(14)=Vname(4,ifield)
+          Vinfo(16)=Vname(1,idtime)
+          Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),      &
+     &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
+     &                   .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
 #ifdef SOLVE3D
 !
-!  Define 3D momentum component in the XI-direction.
+!  Define 3D U-momentum component.
 !
         IF (Hout(idUvel,ng)) THEN
           Vinfo( 1)=Vname(1,idUvel)
@@ -786,8 +869,26 @@
           IF (exit_flag.ne.NoError) RETURN
 # endif
         END IF
+# ifdef ADJUST_BOUNDARY
 !
-!  Define 3D momentum component in the ETA-direction.
+!  Define 3D U-momentum component open boundaries.
+!
+        IF (ANY(Lobc(:,isUvel,ng))) THEN
+          ifield=idSbry(isUvel)
+          Vinfo( 1)=Vname(1,ifield)
+          Vinfo( 2)=Vname(2,ifield)
+          Vinfo( 3)=Vname(3,ifield)
+          Vinfo(14)=Vname(4,ifield)
+          Vinfo(16)=Vname(1,idtime)
+          Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),      &
+     &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
+     &                   .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+!
+!  Define 3D V-momentum component.
 !
         IF (Hout(idVvel,ng)) THEN
           Vinfo( 1)=Vname(1,idVvel)
@@ -819,6 +920,24 @@
           IF (exit_flag.ne.NoError) RETURN
 # endif
         END IF
+# ifdef ADJUST_BOUNDARY
+!
+!  Define 3D V-momentum component open boundaries.
+!
+        IF (ANY(Lobc(:,isVvel,ng))) THEN
+          ifield=idSbry(isVvel)
+          Vinfo( 1)=Vname(1,ifield)
+          Vinfo( 2)=Vname(2,ifield)
+          Vinfo( 3)=Vname(3,ifield)
+          Vinfo(14)=Vname(4,ifield)
+          Vinfo(16)=Vname(1,idtime)
+          Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),      &
+     &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
+     &                   .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
 !
 !  Define 3D momentum component in the S-direction.
 !
@@ -843,7 +962,7 @@
         IF (Hout(idOvel,ng)) THEN
           Vinfo( 1)=Vname(1,idOvel)
           Vinfo( 2)=Vname(2,idOvel)
-          Vinfo( 3)=Vname(3,idOvel)
+          Vinfo( 3)='meter second-1'
           Vinfo(14)=Vname(4,idOvel)
           Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
@@ -882,6 +1001,33 @@
           IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
+# ifdef ADJUST_BOUNDARY
+!
+!  Define tracer type variables open boundaries.
+!
+        DO itrc=1,NT(ng)
+          IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            ifield=idSbry(isTvar(itrc))
+            Vinfo( 1)=Vname(1,ifield)
+            Vinfo( 2)=Vname(2,ifield)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+#  ifdef SEDIMENT
+            DO i=1,NST
+              IF (itrc.eq.idsed(i)) THEN
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+              END IF
+            END DO
+#  endif
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iNLM, ncHISid(ng), hisVid(ifield,ng),    &
+     &                     NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,     &
+     &                     .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+        END DO
+# endif
 !
 !  Define density anomaly.
 !
@@ -2025,7 +2171,7 @@
           END IF
         END IF
 #ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 #endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -2057,21 +2203,11 @@
 !
 !  Open history file for read/write.
 !
-        IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncHISid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,60) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, iNLM, ncname, 1, ncHISid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,60) TRIM(ncname)
+          RETURN
         END IF
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
-        IF (exit_flag.ne.NoError) RETURN
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncHISid(ng), 1)
-#endif
 !
 !  Initialize logical switches.
 !
@@ -2111,6 +2247,20 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
             hisVid(idVbar,ng)=var_id(i)
+#ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSvar(isFsur)))) THEN
+            got_var(idSvar(isFsur))=.TRUE.
+            hisVid(idSvar(isFsur),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSvar(isUbar)))) THEN
+            got_var(idSvar(isUbar))=.TRUE.
+            hisVid(idSvar(isUbar),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSvar(isVbar)))) THEN
+            got_var(idSvar(isVbar))=.TRUE.
+            hisVid(idSvar(isVbar),ng)=var_id(i)
+#endif
 #ifdef FORWARD_WRITE
 # ifdef FORWARD_RHS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRzet))) THEN
@@ -2164,6 +2314,16 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
             hisVid(idVvel,ng)=var_id(i)
+# ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSvar(isUvel)))) THEN
+            got_var(idSvar(isUvel))=.TRUE.
+            hisVid(idSvar(isUvel),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSvar(isVvel)))) THEN
+            got_var(idSvar(isVvel))=.TRUE.
+            hisVid(idSvar(isVvel),ng)=var_id(i)
+# endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             hisVid(idWvel,ng)=var_id(i)
@@ -2347,6 +2507,12 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
               got_var(idTvar(itrc))=.TRUE.
               hisTid(itrc,ng)=var_id(i)
+# ifdef ADJUST_BOUNDARY
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idSvar(isTvar(itrc))))) THEN
+              got_var(idSvar(isTvar(itrc)))=.TRUE.
+              hisVid(idSvar(isTvar(itrc)),ng)=var_id(i)
+# endif
             END IF
           END DO
           DO itrc=1,NAT
@@ -2455,6 +2621,26 @@
           exit_flag=3
           RETURN
         END IF
+#ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSvar(isFsur))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isFsur))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSvar(isUbar))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSvar(isVbar))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
 #ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUvel)),          &
@@ -2468,6 +2654,20 @@
           exit_flag=3
           RETURN
         END IF
+# ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSvar(isUvel))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSvar(isVvel))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
         IF (.not.got_var(idWvel).and.Hout(idWvel,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWvel)),          &
      &                                  TRIM(ncname)
@@ -2804,6 +3004,14 @@
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
+# ifdef ADJUST_BOUNDARY
+          ELSE IF (.not.got_var(idSvar(isTvar(itrc)))) THEN
+            IF (Master) WRITE (stdout,70)                               &
+     &                        TRIM(Vname(1,idSvar(isTvar(itrc)))),      &
+     &                        TRIM(ncname)
+            exit_flag=3
+            RETURN
+# endif
           END IF
         END DO
         DO itrc=1,NAT

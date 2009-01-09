@@ -108,6 +108,7 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_east(j)=???
@@ -116,6 +117,8 @@
           BOUNDARY(ng)%vbar_east(j)=???
         END DO
       END IF
+# endif
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_west(j)=???
@@ -124,6 +127,8 @@
           BOUNDARY(ng)%vbar_west(j)=???
         END DO
       END IF
+# endif
+# ifdef SOUTH_M2OBC
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_south(i)=???
@@ -132,6 +137,8 @@
           BOUNDARY(ng)%vbar_south(i)=???
         END DO
       END IF
+# endif
+# ifdef NORTH_M2OBC
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_north(i)=???
@@ -140,6 +147,7 @@
           BOUNDARY(ng)%vbar_north(i)=???
         END DO
       END IF
+# endif
 #else
       ana_m2obc.h: No values provided for BOUNDARY(ng)%ubar_xxxx
                                           BOUNDARY(ng)%vbar_xxxx

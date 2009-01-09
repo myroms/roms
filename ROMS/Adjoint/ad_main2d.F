@@ -36,16 +36,22 @@
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
-      USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
 # if defined WEAK_CONSTRAINT || defined IOM
       USE ad_forcing_mod, ONLY : ad_forcing
 # endif
+# ifdef ADJUST_WSTRESS
+      USE ad_frc_adjust_mod, ONLY : ad_frc_adjust
+# endif
+      USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
 # if defined FOUR_DVAR && defined OBSERVATIONS
 #  if defined WEAK_CONSTRAINT || defined IOM
       USE ad_htobs_mod, ONLY : ad_htobs
 #  else
       USE ad_misfit_mod, ONLY : ad_misfit
 #  endif
+# endif
+# ifdef ADJUST_BOUNDARY
+      USE ad_obc_adjust_mod, ONLY : ad_obc_adjust
 # endif
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
@@ -61,8 +67,8 @@
 # ifdef FLOATS_NOT_YET
 !!    USE ad_step_floats_mod, ONLY : tl_step_floats
 # endif
-# ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_ADadjust
+# if defined WEAK_CONSTRAINT || defined IOM
+      USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
 # endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
@@ -169,6 +175,25 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+# endif
+
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  If appropriate, add representer coefficients (Beta hat) impulse
+!  forcing to adjoint solution. Read next impulse record, if available.
+!-----------------------------------------------------------------------
+!
+      IF (ProcessObs(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_forcing (ng, TILE, knew(ng), nnew(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
 # endif
 !
 !  Avoid time-stepping if additional delayed IO time-step.
@@ -386,17 +411,57 @@
 # ifdef ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Skip first timestep.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL frc_ADadjust (ng, TILE, Lfout(ng))
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_frc_adjust (ng, TILE, Lfout(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
+# endif
+
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Interpolate open boundary increments and adjust open boundaries.
+!  Skip first timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_obc_adjust (ng, TILE, Lbout(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  Gather weak constraint forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_ADgather (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
@@ -409,16 +474,15 @@
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
-!  If appropriate, add representer coefficients (Beta hat) impulse
-!  forcing to adjoint solution. Read next impulse record, if available.
+!  Copy storage arrays index 1 into index 2, and clear index 1.
 !-----------------------------------------------------------------------
 !
-      IF (ProcessObs(ng)) THEN
+      IF (MOD(iic(ng)-1,nADJ(ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ad_forcing (ng, TILE, knew(ng), nnew(ng))
+            CALL frc_clear (ng, TILE)
           END DO
         END DO
 !$OMP END PARALLEL DO

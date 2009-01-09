@@ -27,6 +27,8 @@
 
       integer :: MyError, i, ng, status
 !
+      SourceFile='close_io.F'
+!
 !-----------------------------------------------------------------------
 !  Close output NetCDF files. Set file indices to closed state.
 !-----------------------------------------------------------------------

@@ -10,9 +10,13 @@
 !                                                                      !
 !  This MODULE contains time stepping indices.                         !
 !                                                                      !
+#ifdef BOUNDARY
+!  Lbinp     Open boundary adjustment input  fields index.             !
+!  Lbout     Open boundary adjustment output fields index.             !
+#endif
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!  Lfinp      Surface forcing adjustment input  fields index.          !
-!  Lfout      Surface forcing adjustment output fields index.          !
+!  Lfinp     Surface forcing adjustment input  fields index.           !
+!  Lfout     Surface forcing adjustment output fields index.           !
 #endif
 !  Lnew      New descent algorithm state solution index.               !
 !  Lold      Previous descent algorithm state solution index.          !
@@ -69,6 +73,10 @@
 
 #if defined SSH_TIDES || defined UV_TIDES
         integer, dimension(Ngrids) :: NTC
+#endif
+#ifdef ADJUST_BOUNDARY
+        integer, dimension(Ngrids) :: Lbinp = (/ (1, ig=1,Ngrids) /)
+        integer, dimension(Ngrids) :: Lbout = (/ (1, ig=1,Ngrids) /)
 #endif
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         integer, dimension(Ngrids) :: Lfinp = (/ (1, ig=1,Ngrids) /)

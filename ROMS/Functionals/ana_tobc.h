@@ -206,6 +206,7 @@
         END DO
       END IF
 #else
+# ifdef EAST_TOBS
       IF (EASTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -215,6 +216,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef WEST_TOBS
       IF (WESTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -224,6 +227,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef SOUTH_TOBS
       IF (SOUTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -233,6 +238,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef NORTH_TOBS
       IF (NORTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -242,6 +249,7 @@
           END DO
         END DO
       END IF
+# endif
 #endif
       RETURN
       END SUBROUTINE ana_tobc_tile

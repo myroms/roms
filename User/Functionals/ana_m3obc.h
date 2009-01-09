@@ -65,6 +65,7 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
+# ifdef EAST_M3OBC
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -75,6 +76,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef WEST_M3OBC
       IF (WESTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -85,6 +88,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef SOUTH_M3OBC
       IF (SOUTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
@@ -95,6 +100,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef NORTH_M3OBC
       IF (NORTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
@@ -105,6 +112,7 @@
           END DO
         END DO
       END IF
+# endif
 #else
       ana_m3obc.h: No values provided for BOUNDARY(ng)%u_xxxx and
                                           BOUNDARY(ng)%v_xxxx

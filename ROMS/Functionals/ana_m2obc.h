@@ -305,6 +305,7 @@
         END DO
       END IF
 #else
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_east(j)=0.0_r8
@@ -313,6 +314,8 @@
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_west(j)=0.0_r8
@@ -321,6 +324,8 @@
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef SOUTH_M2OBC
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_south(i)=0.0_r8
@@ -329,6 +334,8 @@
           BOUNDARY(ng)%vbar_south(i)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef NORTH_M2OBC
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_north(i)=0.0_r8
@@ -337,6 +344,7 @@
           BOUNDARY(ng)%vbar_north(i)=0.0_r8
         END DO
       END IF
+# endif
 #endif
       RETURN
       END SUBROUTINE ana_m2obc_tile

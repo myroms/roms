@@ -708,7 +708,7 @@
 !  Set error flag
 !
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag)
 #endif
       def_var=exit_flag
 !

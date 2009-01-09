@@ -120,8 +120,7 @@
 
 # ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl,      &
-     &                           mp_bcastf_m
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
       implicit none
 !
@@ -802,7 +801,7 @@
 !
  10   CONTINUE
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
    
@@ -812,15 +811,15 @@
 !  Broadcast new solution to other nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mp_bcastf (ng, model, ADmodVal, Mobs)
-      CALL mp_bcasti (ng, model, info, 1)
-      CALL mp_bcastf (ng, model, cg_beta(:,outLoop), Ninner+1)
-      CALL mp_bcastf_m (ng, model, zcglwk(:,:,outLoop), Mobs, Ninner+1)
+      CALL mp_bcastf (ng, model, ADmodVal)
+      CALL mp_bcasti (ng, model, info)
+      CALL mp_bcastf (ng, model, cg_beta(:,outLoop))
+      CALL mp_bcastf (ng, model, zcglwk(:,:,outLoop))
       IF ((LhessianEV.or.Lprecond).and.(innLoop.eq.NinnLoop)) THEN
-        CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop), Ninner)
-        CALL mp_bcastf (ng, model, cg_RitzErr(:,outLoop), Ninner)
-        CALL mp_bcastf_m (ng, model, cg_zv(:,:,outLoop), Ninner, Ninner)
-        CALL mp_bcastf_m (ng, model, vcglev(:,:,outLoop),Mobs, Ninner)
+        CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop))
+        CALL mp_bcastf (ng, model, cg_RitzErr(:,outLoop))
+        CALL mp_bcastf (ng, model, cg_zv(:,:,outLoop))
+        CALL mp_bcastf (ng, model, vcglev(:,:,outLoop))
       END IF
 # endif
 !
@@ -954,9 +953,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_fourdvar
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
-# endif
+!
       implicit none
 !
 !  Imported variable declarations
@@ -1130,11 +1127,6 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -1147,6 +1139,8 @@
 !  Local variable declarations.
 !
       integer :: status
+!
+      SourceFile='congrad.F, cg_write'
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient variables.
@@ -1324,21 +1318,9 @@
 !  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncMODid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-#endif
+      CALL netcdf_sync (ng, model, MODname(ng), ncMODid(ng))
 
-  10  FORMAT (/,' CG_WRITE - unable to synchronize to disk ',           &
-     &        ' model/observation file: ',/,12x,a)
-
+      RETURN
       END SUBROUTINE cg_write
 #else
       SUBROUTINE congrad

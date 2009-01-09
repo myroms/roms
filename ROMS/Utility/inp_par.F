@@ -20,7 +20,7 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
+      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts, mp_collect
 #endif
       USE ran_state, ONLY: ran_seed
 !
@@ -42,6 +42,7 @@
       integer :: inp, out, itrc, ng, npts, sequence
 
       real(r8) :: cff
+      real(r8), parameter :: spv = 0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Read in and report input model parameters.
@@ -64,7 +65,7 @@
 #ifdef DISTRIBUTE
       IF (Master) CALL get_date (date_str)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, date_str, LEN(date_str))
+        CALL mp_bcasts (ng, model, date_str)
       END DO
 #else
       CALL get_date (date_str)
@@ -104,7 +105,7 @@
 !!    CALL my_getarg (1,Iname)
       IF (Master) CALL my_getarg (1,Iname)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, Iname, LEN(Iname))
+        CALL mp_bcasts (ng, model, Iname)
       END DO
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
      &      ERR=20)
@@ -126,7 +127,7 @@
 
       CALL read_PhyPar (model, inp, out, Lwrite)
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (1, model, exit_flag, 1)
+      CALL mp_bcasti (1, model, exit_flag)
 #endif
       IF (exit_flag.ne.NoError) RETURN
 !
@@ -167,6 +168,8 @@
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
+        BOUNDS(ng) % LBij = Lm(ng)
+        BOUNDS(ng) % UBij = 1
         DO tile=-1,NtileI(ng)*NtileJ(ng)-1
           BOUNDS(ng) % tile(tile) = tile
           CALL get_tile (ng, tile, Itile, Jtile,                        &
@@ -189,6 +192,12 @@
      &                     BOUNDS(ng) % UBi(tile),                      &
      &                     BOUNDS(ng) % LBj(tile),                      &
      &                     BOUNDS(ng) % UBj(tile))
+          BOUNDS(ng) % LBij = MIN(BOUNDS(ng) % LBij,                    &
+     &                            BOUNDS(ng) % LBi(tile),               &
+     &                            BOUNDS(ng) % LBj(tile))
+          BOUNDS(ng) % UBij = MAX(BOUNDS(ng) % UBij,                    &
+     &                            BOUNDS(ng) % UBi(tile),               &
+     &                            BOUNDS(ng) % UBj(tile))
         END DO
       END DO
 !
@@ -285,9 +294,62 @@
      &          /,11x,'Decrease partition parameter: ',a)
       END IF
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (1, model, exit_flag, 1)
+      CALL mp_bcasti (1, model, exit_flag)
 #endif
       IF (exit_flag.ne.NoError) RETURN
+!
+!  Report tile minimum and maximum fractional grid coordinates.
+!
+      DO ng=1,Ngrids
+#ifdef DISTRIBUTE
+        npts=NtileI(ng)*NtileJ(ng)
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_rho(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_rho(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_rho(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_rho(0:))
+
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_u(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_u(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_u(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_u(0:))
+
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_v(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_v(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_v(0:))
+        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_v(0:))
+#endif
+        IF (Master) THEN
+          WRITE (stdout,90)
+          DO tile=0,NtileI(ng)*NtileJ(ng)-1
+            WRITE (stdout,100) tile,                                    &
+     &                         DOMAIN(ng)%Xmin_rho(tile),               &
+     &                         DOMAIN(ng)%Xmax_rho(tile),               &
+     &                         DOMAIN(ng)%Ymin_rho(tile),               &
+     &                         DOMAIN(ng)%Ymax_rho(tile), 'RHO-points'
+          END DO
+          WRITE (stdout,'(1x)')
+          DO tile=0,NtileI(ng)*NtileJ(ng)-1
+            WRITE (stdout,100) tile,                                    &
+     &                         DOMAIN(ng)%Xmin_u(tile),                 &
+     &                         DOMAIN(ng)%Xmax_u(tile),                 &
+     &                         DOMAIN(ng)%Ymin_u(tile),                 &
+     &                         DOMAIN(ng)%Ymax_u(tile), '  U-points'
+          END DO
+          WRITE (stdout,'(1x)')
+          DO tile=0,NtileI(ng)*NtileJ(ng)-1
+            WRITE (stdout,100) tile,                                    &
+     &                         DOMAIN(ng)%Xmin_v(tile),                 &
+     &                         DOMAIN(ng)%Xmax_v(tile),                 &
+     &                         DOMAIN(ng)%Ymin_v(tile),                 &
+     &                         DOMAIN(ng)%Ymax_v(tile), '  V-points'
+          END DO
+ 90       FORMAT (/,' Tile minimum and maximum fractional grid ',       & 
+     &            'coordinates:',/,/,                                   &
+     &            5x,'tile',5x,'Xmin',5x,'Xmax',5x,'Ymin',5x,'Ymax',    &
+     &            5x,'grid',/)
+ 100      FORMAT (5x,i4,4f9.2,2x,a)
+        END IF
+      END DO
 
 #ifdef DISTRIBUTE
 !
@@ -318,9 +380,9 @@
         TileSide(ng)=MAX(MaxHaloLenI,MaxHaloLenJ)
         TileSize(ng)=MaxHaloLenI*MaxHaloLenJ
         IF (Master) THEN
-          WRITE (stdout,90) ng, HaloSizeI(ng), ng, HaloSizeJ(ng),        &
-     &                      ng, TileSide(ng),  ng, TileSize(ng)
- 90       FORMAT (/,' Maximum halo size in XI and ETA directions:',/,    &
+          WRITE (stdout,110) ng, HaloSizeI(ng), ng, HaloSizeJ(ng),       &
+     &                       ng, TileSide(ng),  ng, TileSize(ng)
+ 110      FORMAT (/,' Maximum halo size in XI and ETA directions:',/,    &
      &            /,'               HaloSizeI(',i1,') = ',i7,            &
      &            /,'               HaloSizeJ(',i1,') = ',i7,            &
      &            /,'                TileSide(',i1,') = ',i7,            &
@@ -390,7 +452,7 @@
         CALL my_flush (out)
       END IF
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (1, model, exit_flag, 1)
+      CALL mp_bcasti (1, model, exit_flag)
 #endif
       IF (exit_flag.ne.NoError) RETURN
 !
@@ -524,7 +586,7 @@
 !
       IF (MyRank.eq.0) CALL my_getarg (1,Cname)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, Cname, LEN(Cname))
+        CALL mp_bcasts (ng, model, Cname)
       END DO
       IF (MyRank.eq.0) THEN
         WRITE(stdout,*) 'Coupled Input File name = ', TRIM(Cname)
@@ -1083,6 +1145,14 @@
             Npts=load_i(Nval, Rval, Ngrids, nADJ)
           ELSE IF (TRIM(KeyWord).eq.'NDEFADJ') THEN
             Npts=load_i(Nval, Rval, Ngrids, ndefADJ)
+          ELSE IF (TRIM(KeyWord).eq.'NOBC') THEN
+            Npts=load_i(Nval, Rval, Ngrids, nOBC)
+#ifdef ADJUST_BOUNDARY
+            DO ng=1,Ngrids
+              Nbrec(ng)=1+ntimes(ng)/nOBC(ng)
+            END DO
+            allocate ( OBC_time(MAXVAL(Nbrec),Ngrids) )
+#endif
           ELSE IF (TRIM(KeyWord).eq.'NSFF') THEN
             Npts=load_i(Nval, Rval, Ngrids, nSFF)
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -1091,6 +1161,7 @@
             END DO
             allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
 #endif
+
           ELSE IF (TRIM(KeyWord).eq.'LrstGST') THEN
             Npts=load_l(Nval, Cval, 1, LrstGST)
           ELSE IF (TRIM(KeyWord).eq.'MaxIterGST') THEN
@@ -1968,6 +2039,21 @@
 !
         nRST(ng)=ntimes(ng)
 #endif
+#if defined FOUR_DVAR || defined IMPULSE
+!
+!  Set size of additonal dimension for error covariance normalization
+!  and standard deviation factors.
+!
+# if defined IOM || defined WEAK_CONSTRAINT
+        IF (nADJ(ng).lt.ntimes(ng)) THEN
+          NSA=2
+        ELSE
+          NSA=1
+        END IF 
+# else
+        NSA=1
+# endif
+#endif
 #if defined IOM || defined WEAK_CONSTRAINT
 !
 !  If weak constraint assimilation, ensure that nADJ=nHIS. 
@@ -2173,6 +2259,11 @@
      &            'Number of timesteps between creation of new',        &
      &            'adjoint file.'
           END IF
+#endif
+#ifdef ADJUST_BOUNDARY
+          WRITE (out,130) nSFF(ng), 'nOBC',                             &
+     &          'Number of timesteps between 4DVAR adjustment of',      &
+     &          'open boundaries.'
 #endif
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           WRITE (out,130) nSFF(ng), 'nSFF',                             &
@@ -6359,7 +6450,7 @@
       logical :: inhere
 
       integer :: Npts, Nval
-      integer :: i, igrid, itrc, k, ng, status
+      integer :: i, ib, igrid, itrc, k, ng, status
 
       integer :: decode_line, load_i, load_l, load_r
 
@@ -6370,12 +6461,18 @@
 # endif
 # if defined FOUR_DVAR || defined VERIFICATION
       logical, dimension(MT) :: Ltracer
-
+#  ifdef ADJUST_BOUNDARY
+      logical, dimension(MT,4) :: Lboundary
+      real(r8), dimension(MT,4,Ngrids) :: Rboundary
+#  endif
       real(r8), dimension(MT,Ngrids) :: Rtracer
 # endif
       real(r8), dimension(100) :: Rval
 
       character (len=1 ), parameter :: blank = ' '
+# ifdef ADJUST_BOUNDARY
+      character (len=10) :: Text
+# endif
       character (len=40) :: KeyWord
       character (len=160) :: fname, line
       character (len=160), dimension(100) :: Cval
@@ -6721,13 +6818,7 @@
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'LcycleINI') THEN 
-            Npts=load_l(Nval, Cval, Ngrids, LcycleINI)
-          ELSE IF (TRIM(KeyWord).eq.'CGstepI') THEN
-            Npts=load_r(Nval, Rval, 1, CGstepI)
-          ELSE IF (TRIM(KeyWord).eq.'CGeps') THEN
-            Npts=load_r(Nval, Rval, 1, CGeps)
-          ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
+          IF (TRIM(KeyWord).eq.'GradErr') THEN
             Npts=load_r(Nval, Rval, 1, GradErr)
           ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
             Npts=load_r(Nval, Rval, 1, HevecErr)
@@ -6758,73 +6849,115 @@
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'LdefNRM') THEN 
-            Npts=load_l(Nval, Cval, Ngrids, LdefNRM)
+            Npts=load_l(Nval, Cval, 4*Ngrids, LdefNRM)
           ELSE IF (TRIM(KeyWord).eq.'LwrtNRM') THEN 
-            Npts=load_l(Nval, Cval, Ngrids, LwrtNRM)
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isFsur)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, LwrtNRM)
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isFsur)') THEN
             IF (isFsur.eq.0) THEN
-              WRITE (out,170) 'isFsur'
+              WRITE (out,190) 'isFsur'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isFsur))
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isUbar)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(2,isFsur))
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isUbar)') THEN
             IF (isUbar.eq.0) THEN
-              WRITE (out,170) 'isUbar'
+              WRITE (out,190) 'isUbar'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isUbar))
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isVbar)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(2,isUbar))
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isVbar)') THEN
             IF (isVbar.eq.0) THEN
-              WRITE (out,170) 'isVbar'
+              WRITE (out,190) 'isVbar'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isVbar))
-#  ifdef ADJUST_WSTRESS
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isUstr)') THEN
-            IF (isUstr.eq.0) THEN
-              WRITE (out,170) 'isUstr'
-              STOP
-            END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isUstr))
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isVstr)') THEN
-            IF (isVstr.eq.0) THEN
-              WRITE (out,170) 'isVstr'
-              STOP
-            END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isVstr))
-#  endif
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isUvel)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(2,isVbar))
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isUvel)') THEN
             IF (isUvel.eq.0) THEN
-              WRITE (out,170) 'isUvel'
+              WRITE (out,190) 'isUvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isUvel))
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isVvel)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(2,isUvel))
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isVvel)') THEN
             IF (isVvel.eq.0) THEN
-              WRITE (out,170) 'isVvel'
+              WRITE (out,190) 'isVvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, 1, Cnorm(isVvel))
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isTvar)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(2,isVvel))
+          ELSE IF (TRIM(KeyWord).eq.'CnormM(isTvar)') THEN
             IF (MAXVAL(isTvar).eq.0) THEN
-              WRITE (out,170) 'isTvar'
+              WRITE (out,190) 'isTvar'
               STOP
             END IF
             Npts=load_l(Nval, Cval, MT, Ltracer)
             DO itrc=1,MT
               i=isTvar(itrc)
-              Cnorm(i)=Ltracer(itrc)
+              Cnorm(2,i)=Ltracer(itrc)
             END DO
-#  ifdef ADJUST_STFLUX
-          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isTsur)') THEN
+#  endif
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isFsur)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isFsur))
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isUbar)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isUbar))
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isVbar)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isVbar))
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isUvel)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isUvel))
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isVvel)') THEN
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isVvel))
+          ELSE IF (TRIM(KeyWord).eq.'CnormI(isTvar)') THEN
+            Npts=load_l(Nval, Cval, MT, Ltracer)
+            DO itrc=1,MT
+              i=isTvar(itrc)
+              Cnorm(1,i)=Ltracer(itrc)
+            END DO
+#  endif
+#  ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isFsur)') THEN
+            Npts=load_l(Nval, Cval, 4, CnormB(isFsur,:))
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isUbar)') THEN
+            Npts=load_l(Nval, Cval, 4, CnormB(isUbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isVbar)') THEN
+            Npts=load_l(Nval, Cval, 4, CnormB(isVbar,:))
+#   ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isUvel)') THEN
+            Npts=load_l(Nval, Cval, 4, CnormB(isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isVvel)') THEN
+            Npts=load_l(Nval, Cval, 4, CnormB(isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'CnormB(isTvar)') THEN
+            Npts=load_l(Nval, Cval, MT*4, Lboundary)
+            DO ib=1,4
+              DO itrc=1,MT
+                i=isTvar(itrc)
+                CnormB(i,ib)=Lboundary(itrc,ib)
+              END DO
+            END DO
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+          ELSE IF (TRIM(KeyWord).eq.'CnormF(isUstr)') THEN
+            IF (isUstr.eq.0) THEN
+              WRITE (out,190) 'isUstr'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isUstr))
+          ELSE IF (TRIM(KeyWord).eq.'CnormF(isVstr)') THEN
+            IF (isVstr.eq.0) THEN
+              WRITE (out,190) 'isVstr'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, 1, Cnorm(1,isVstr))
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'CnormF(isTsur)') THEN
             IF (MAXVAL(isTsur).eq.0) THEN
-              WRITE (out,170) 'isTsur'
+              WRITE (out,190) 'isTsur'
               STOP
             END IF
             Npts=load_l(Nval, Cval, MT, Ltracer)
             DO itrc=1,MT
               i=isTsur(itrc)
-              Cnorm(i)=Ltracer(itrc)
+              Cnorm(1,i)=Ltracer(itrc)
             END DO
 #  endif
           ELSE IF (TRIM(KeyWord).eq.'Nmethod') THEN
@@ -6839,95 +6972,157 @@
           ELSE IF (TRIM(KeyWord).eq.'Vgamma') THEN
             Npts=load_r(Nval, Rval, 1, Vgamma)
 #  endif
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isFsur)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isFsur,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isUbar)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUbar,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isVbar)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isVbar,1))
-#  ifdef ADJUST_WSTRESS
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isUstr)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUstr,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isVstr)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isVstr,1))
-#  endif
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isFsur)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isFsur,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isUbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isUbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isVbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isVbar,:))
 #  ifdef SOLVE3D
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isUvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isVvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isVvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isTvar)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayM(isTvar)') THEN
             Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
             DO ng=1,Ngrids
               DO itrc=1,NT(ng)
-                Hdecay(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                Hdecay(2,isTvar(itrc),ng)=Rtracer(itrc,ng)
               END DO
             END DO
-#   ifdef ADJUST_STFLUX
-          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isTsur)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'VdecayM(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Vdecay(2,isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayM(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Vdecay(2,isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayM(isTvar)') THEN
             Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
             DO ng=1,Ngrids
               DO itrc=1,NT(ng)
-                Hdecay(isTsur(itrc),ng)=Rtracer(itrc,ng)
+                Vdecay(2,isTvar(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+#  endif
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isFsur)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isFsur,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isUbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isVbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isVbar,:))
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayI(isTvar)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Hdecay(1,isTvar(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'VdecayI(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Vdecay(1,isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayI(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Vdecay(1,isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayI(isTvar)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Vdecay(1,isTvar(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+#  endif
+#  ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isFsur)') THEN
+            Npts=load_r(Nval, Rval, 4*Ngrids, HdecayB(isFsur,:,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isUbar)') THEN
+            Npts=load_r(Nval, Rval, 4*Ngrids, HdecayB(isUbar,:,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isVbar)') THEN
+            Npts=load_r(Nval, Rval, 4*Ngrids, HdecayB(isVbar,:,:))
+#   ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isUvel)') THEN
+            Npts=load_r(Nval, Rval, 4*Ngrids, HdecayB(isUvel,:,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isVvel)') THEN
+            Npts=load_r(Nval, Rval, 4*Ngrids, HdecayB(isVvel,:,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayB(isTvar)') THEN
+            Npts=load_r(Nval, Rval, 4*MT*Ngrids, Rboundary)
+            DO ng=1,Ngrids
+              DO ib=1,4 
+                DO itrc=1,NT(ng)
+                  HdecayB(isTvar(itrc),ib,ng)=Rboundary(itrc,ib,ng)
+                END DO
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'VdecayB(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, VdecayB(isUvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayB(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, VdecayB(isVvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'VdecayB(isTvar)') THEN
+            Npts=load_r(Nval, Rval, 4*MT*Ngrids, Rboundary)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                DO itrc=1,NT(ng)
+                  VdecayB(isTvar(itrc),ib,ng)=Rboundary(itrc,ib,ng)
+                END DO
               END DO
             END DO
 #   endif
-          ELSE IF (TRIM(KeyWord).eq.'Vdecay(isUvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Vdecay(isUvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Vdecay(isVvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Vdecay(isVvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Vdecay(isTvar)') THEN
-            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
-            DO ng=1,Ngrids
-              DO itrc=1,NT(ng)
-                Vdecay(isTvar(itrc),ng)=Rtracer(itrc,ng)
-              END DO
-            END DO
 #  endif
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isFsur)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isFsur,1))
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUbar)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUbar,1))
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVbar)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVbar,1))
 #  ifdef ADJUST_WSTRESS
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUstr)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUstr,1))
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVstr)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVstr,1))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayF(isUstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUstr,:))
+          ELSE IF (TRIM(KeyWord).eq.'HdecayF(isVstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isVstr,:))
 #  endif
-#  ifdef SOLVE3D
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isTvar)') THEN
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'HdecayF(isTsur)') THEN
             Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
             DO ng=1,Ngrids
               DO itrc=1,NT(ng)
-                Cfscale(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                Hdecay(1,isTsur(itrc),ng)=Rtracer(itrc,ng)
               END DO
             END DO
-#   ifdef ADJUST_STFLUX
-          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isTsur)') THEN
-            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
-            DO ng=1,Ngrids
-              DO itrc=1,NT(ng)
-                Cfscale(isTsur(itrc),ng)=Rtracer(itrc,ng)
-              END DO
-            END DO
-#   endif
 #  endif
-          ELSE IF (TRIM(KeyWord).eq.'STDname') THEN
-            DO i=1,LEN(STDname(Nval))
-              STDname(Nval)(i:i)=blank
+          ELSE IF (TRIM(KeyWord).eq.'STDnameI') THEN
+            DO i=1,LEN(STDname(1,Nval))
+              STDname(1,Nval)(i:i)=blank
             END DO
-            STDname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'NRMname') THEN
-            DO i=1,LEN(NRMname(Nval))
-              NRMname(Nval)(i:i)=blank
+            STDname(1,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'STDnameM') THEN
+            DO i=1,LEN(STDname(2,Nval))
+              STDname(2,Nval)(i:i)=blank
             END DO
-            NRMname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            STDname(2,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'STDnameB') THEN
+            DO i=1,LEN(STDname(3,Nval))
+              STDname(3,Nval)(i:i)=blank
+            END DO
+            STDname(3,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'STDnameF') THEN
+            DO i=1,LEN(STDname(4,Nval))
+              STDname(4,Nval)(i:i)=blank
+            END DO
+            STDname(4,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'NRMnameI') THEN
+            DO i=1,LEN(NRMname(1,Nval))
+              NRMname(1,Nval)(i:i)=blank
+            END DO
+            NRMname(1,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'NRMnameM') THEN
+            DO i=1,LEN(NRMname(2,Nval))
+              NRMname(2,Nval)(i:i)=blank
+            END DO
+            NRMname(2,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'NRMnameB') THEN
+            DO i=1,LEN(NRMname(3,Nval))
+              NRMname(3,Nval)(i:i)=blank
+            END DO
+            NRMname(3,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'NRMnameF') THEN
+            DO i=1,LEN(NRMname(4,Nval))
+              NRMname(4,Nval)(i:i)=blank
+            END DO
+            NRMname(4,Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'OBSname') THEN
             DO i=1,LEN(OBSname(Nval))
               OBSname(Nval)(i:i)=blank
@@ -6965,19 +7160,7 @@
         DO ng=1,Ngrids
 #  if defined FOUR_DVAR
           WRITE (out,60) ng
-#   ifndef OBS_SENSITIVITY
-          WRITE (out,70) LcycleINI(ng), 'LcycleINI',                    &
-     &            'Switch to recycle time-record in initial file.'
-#   endif
-#   if !(defined WEAK_CONSTRAINT || defined IOM || \
-         defined OBS_SENSITIVITY)
-          WRITE (out,100) CGstepI, 'CGstepI',                           &
-     &            'Initial descent algorithm step size.'
-#   else
-#    ifndef OBS_SENSITIVITY
-          WRITE (out,100) CGeps, 'CGeps',                               &
-     &            'Conjugate gradient convergence criteria.'
-#    endif
+#   if defined WEAK_CONSTRAINT || defined IOM
 #    ifdef RPM_RELAXATION
           WRITE (out,120) tl_M2diff, 'tl_M2diff',                       &
      &            'RPM 2D momentum diffusive relaxation coefficient.'
@@ -7020,11 +7203,11 @@
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
 #    ifndef OBS_SENSITIVITY
-          WRITE (out,70) LdefNRM(ng), 'LdefNRM',                        &
+          WRITE (out,170) LdefNRM(1:4,ng), 'LdefNRM',                   &
      &            'Switch to create a normalization NetCDF file.'
-          WRITE (out,70) LwrtNRM(ng), 'LwrtNRM',                        &
+          WRITE (out,170) LwrtNRM(1:4,ng), 'LwrtNRM',                   &
      &            'Switch to write out normalization factors.'
-          IF (LwrtNRM(ng)) THEN
+          IF (ANY(LwrtNRM(:,ng))) THEN
             IF (Nmethod(ng).eq.0) THEN
               WRITE (out,80) Nmethod(ng), 'Nmethod',                    &
      &            'Correlation normalization method: Exact.'
@@ -7037,43 +7220,90 @@
      &            'Number of iterations for randomization.'
             END IF
           END IF
-          IF (LwrtNRM(ng)) THEN
+          IF (ANY(LwrtNRM(:,ng))) THEN
             DO i=1,NstateVar(ng)
-              Cnorm(i)=.TRUE.         ! force computation of all factors
+!!            Cnorm(1,i)=.TRUE.       ! force computation of all factors
+!!            Cnorm(2,i)=.TRUE.       ! force computation of all factors
             END DO
           END IF
-          IF (LwrtNRM(ng)) THEN
-            WRITE (out,70) Cnorm(isFsur), 'Cnorm(isFsur)',              &
-     &            'Compute 2D normalization factors at RHO-points.'
-            WRITE (out,70) Cnorm(isUbar), 'Cnorm(isUbar)',              &
-     &            'Compute 2D normalization factors at U-points.'
-            WRITE (out,70) Cnorm(isVbar), 'Cnorm(isVbar)',              &
-     &            'Compute 2D normalization factors at V-points.'
-#     ifdef ADJUST_WSTRESS
-            WRITE (out,70) Cnorm(isUstr), 'Cnorm(isUstr)',              &
-     &            'Compute normalization factors at surface U-stress.'
-            WRITE (out,70) Cnorm(isVstr), 'Cnorm(isVstr)',              &
-     &            'Compute normalization factors at surface V-stress.'
-#     endif
-#     ifdef SOLVE3D
-            WRITE (out,70) Cnorm(isUvel), 'Cnorm(isUvel)',              &
-     &            'Compute 3D normalization factors at U-points.'
-            WRITE (out,70) Cnorm(isVvel), 'Cnorm(isVvel)',              &
-     &            'Compute 3D normalization factors at V-points.'
+#     if defined W4DPSAS || defined W4DVAR
+          IF (ANY(LwrtNRM(:,ng))) THEN
+            WRITE (out,70) Cnorm(2,isFsur), 'CnormM(isFsur)',           &
+     &            'Compute model 2D RHO-normalization factors.'
+            WRITE (out,70) Cnorm(2,isUbar), 'CnormM(isUbar)',           &
+     &            'Compute model 2D U-normalization factors.'
+            WRITE (out,70) Cnorm(2,isVbar), 'CnormM(isVbar)',           &
+     &            'Compute model 2D V-normalization factors.'
+#      ifdef SOLVE3D
+            WRITE (out,70) Cnorm(2,isUvel), 'CnormM(isUvel)',           &
+     &            'Compute model 3D U-normalization factors.'
+            WRITE (out,70) Cnorm(2,isVvel), 'CnormM(isVvel)',           &
+     &            'Compute model 3D V-normalization factors.'
             DO itrc=1,NT(ng)
-              WRITE (out,110) Cnorm(isTvar(itrc)), 'Cnorm(isTvar)',     &
-     &            'Compute normalization factors for tracer ',itrc,     &
-     &            TRIM(Vname(1,idTvar(itrc)))
-            END DO
-#      ifdef ADJUST_STFLUX
-            DO itrc=1,NT(ng)
-              WRITE (out,110) Cnorm(isTsur(itrc)), 'Cnorm(isTsur)',     &
-     &            'Compute normalization factors for flux of tracer ',  &
+              WRITE (out,110) Cnorm(2,isTvar(itrc)), 'CnormM(isTvar)',  &
+     &            'Compute model normalization factors for tracer ',    &
      &            itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
 #      endif
+          END IF
+#     endif
+          IF (ANY(LwrtNRM(:,ng))) THEN
+            WRITE (out,70) Cnorm(1,isFsur), 'CnormI(isFsur)',           &
+     &            'Compute initial 2D RHO-normalization factors.'
+            WRITE (out,70) Cnorm(1,isUbar), 'CnormI(isUbar)',           &
+     &            'Compute initial 2D U-normalization factors.'
+            WRITE (out,70) Cnorm(1,isVbar), 'CnormI(isVbar)',           &
+     &            'Compute initial 2D V-normalization factors.'
+#     ifdef SOLVE3D
+            WRITE (out,70) Cnorm(1,isUvel), 'CnormI(isUvel)',           &
+     &            'Compute initial 3D U-normalization factors.'
+            WRITE (out,70) Cnorm(1,isVvel), 'CnormI(isVvel)',           &
+     &            'Compute initial 3D V-normalization factors.'
+            DO itrc=1,NT(ng)
+              WRITE (out,110) Cnorm(1,isTvar(itrc)), 'CnormI(isTvar)',  &
+     &            'Compute initial normalization factors for tracer ',  &
+     &            itrc, TRIM(Vname(1,idTvar(itrc)))
+            END DO
 #     endif
           END IF
+#     ifdef ADJUST_BOUNDARY
+          IF (ANY(LwrtNRM(:,ng))) THEN
+            WRITE (out,170) CnormB(isFsur,1:4), 'CnormB(isFsur)',       &
+     &            'Compute boundary 2D RHO-normalization factors.'
+            WRITE (out,170) CnormB(isUbar,1:4), 'CnormB(isUbar)',       &
+     &            'Compute boundary 2D U-normalization factors.'
+            WRITE (out,170) CnormB(isVbar,1:4), 'CnormB(isVbar)',       &
+     &            'Compute initial 2D V-normalization factors.'
+#      ifdef SOLVE3D
+            WRITE (out,170) CnormB(isUvel,1:4), 'CnormB(isUvel)',       &
+     &            'Compute initial 3D U-normalization factors.'
+            WRITE (out,170) CnormB(isVvel,1:4), 'CnormI(isVvel)',       &
+     &            'Compute initial 3D V-normalization factors.'
+            DO itrc=1,NT(ng)
+              WRITE (out,180) CnormB(isTvar(itrc),1:4),'CnormI(isTvar)',&
+     &            'Compute initial normalization factors for tracer ',  &
+     &            itrc, TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#      endif
+          END IF
+#     endif
+#     ifdef ADJUST_WSTRESS
+          IF (ANY(LwrtNRM(:,ng))) THEN
+            WRITE (out,70) Cnorm(1,isUstr), 'CnormF(isUstr)',           &
+     &            'Compute normalization factors at surface U-stress.'
+            WRITE (out,70) Cnorm(1,isVstr), 'CnormF(isVstr)',           &
+     &            'Compute normalization factors at surface V-stress.'
+          END IF
+#     endif
+#     if defined ADJUST_STFLUX && defined SOLVE3D
+          IF (ANY(LwrtNRM(:,ng))) THEN
+            DO itrc=1,NT(ng)
+              WRITE (out,110) Cnorm(1,isTsur(itrc)), 'CnormF(isTsur)',  &
+     &            'Compute normalization factors for flux of tracer ',  &
+     &            itrc, TRIM(Vname(1,idTvar(itrc)))
+            END DO
+          END IF
+#     endif
 #    endif
           WRITE (out,100) Hgamma, 'Hgamma',                             &
      &            'Horizontal diffusion stability/accuracy factor.'
@@ -7081,76 +7311,117 @@
           WRITE (out,100) Vgamma, 'Vgamma',                             &
      &            'Vertical diffusion stability/accuracy factor.'
 #    endif
-          WRITE (out,120) Hdecay(isFsur,ng), 'Hdecay(isFsur)',          &
-     &            'Horizontal decorrelation scale (m), free-surface.'
-          WRITE (out,120) Hdecay(isUbar,ng), 'Hdecay(isUbar)',          &
-     &            'Horizontal decorrelation scale (m), 2D U-momentum.'
-          WRITE (out,120) Hdecay(isVbar,ng), 'Hdecay(isVbar)',          &
-     &            'Horizontal decorrelation scale (m), 2D V-momentum.'
-#    ifdef ADJUST_WSTRESS
-          WRITE (out,120) Hdecay(isUstr,ng), 'Hdecay(isUstr)',          &
-     &            'Horizontal decorrelation scale (m), U-stress.'
-          WRITE (out,120) Hdecay(isVstr,ng), 'Hdecay(isVstr)',          &
-     &            'Horizontal decorrelation scale (m), V-stress.'
+#    if defined W4DPSAS || defined W4DVAR
+          IF (nADJ(ng).lt.ntimes(ng)) THEN
+            WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
+     &            'Model decorrelation H-scale (m), free-surface.'
+            WRITE (out,120) Hdecay(2,isUbar,ng), 'HdecayM(isUbar)',     &
+     &            'Model decorrelation H-scale (m), 2D U-momentum.'
+            WRITE (out,120) Hdecay(2,isVbar,ng), 'HdecayM(isVbar)',     &
+     &            'Model decorrelation H-scale (m), 2D V-momentum.'
+#     ifdef SOLVE3D
+            WRITE (out,120) Hdecay(2,isUvel,ng), 'HdecayM(isUvel)',     &
+     &            'Model decorrelation H-scale (m), 3D U-momentum.'
+            WRITE (out,120) Hdecay(2,isVvel,ng), 'HdecayM(isVvel)',     &
+     &            'Model decorrelation H-scale (m), 3D V-momentum.'
+            DO itrc=1,NT(ng)
+              WRITE (out,130) Hdecay(2,isTvar(itrc),ng),                &
+     &            'HdecayM(idTvar)',                                    &
+     &            'Model decorrelation H-scale (m), ',                  &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            WRITE (out,120) Vdecay(2,isUvel,ng), 'VdecayM(isUvel)',     &
+     &            'Model decorrelation V-scale (m), 3D U-momentum.'
+            WRITE (out,120) Vdecay(2,isVvel,ng), 'VdecayM(isVvel)',     &
+     &            'Model decorrelation V-scale (m), 3D V-momentum.'
+            DO itrc=1,NT(ng)
+              WRITE (out,130) Vdecay(2,isTvar(itrc),ng),                &
+     &            'VdecayM(idTvar)',                                    &
+     &            'Model decorrelation V-scale (m), ',                  &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#     endif
+          END IF
 #    endif
+          WRITE (out,120) Hdecay(1,isFsur,ng), 'HdecayI(isFsur)',       &
+     &            'Initial decorrelation H-scale (m), free-surface.'
+          WRITE (out,120) Hdecay(1,isUbar,ng), 'HdecayI(isUbar)',       &
+     &            'Initial decorrelation H-scale (m), 2D U-momentum.'
+          WRITE (out,120) Hdecay(1,isVbar,ng), 'HdecayI(isVbar)',       &
+     &            'Initial decorrelation H-scale (m), 2D V-momentum.'
 #    ifdef SOLVE3D
-          WRITE (out,120) Hdecay(isUvel,ng), 'Hdecay(isUvel)',          &
-     &            'Horizontal decorrelation scale (m), 3D U-momentum.'
-          WRITE (out,120) Hdecay(isVvel,ng), 'Hdecay(isVvel)',          &
-     &            'Horizontal decorrelation scale (m), 3D V-momentum.'
+          WRITE (out,120) Hdecay(1,isUvel,ng), 'HdecayI(isUvel)',       &
+     &            'Initial decorrelation H-scale (m), 3D U-momentum.'
+          WRITE (out,120) Hdecay(1,isVvel,ng), 'HdecayI(isVvel)',       &
+     &            'Initial decorrelation H-scale (m), 3D V-momentum.'
           DO itrc=1,NT(ng)
-            WRITE (out,130) Hdecay(isTvar(itrc),ng), 'Hdecay(idTvar)',  &
-     &            'Horizontal decorrelation scale (m), ',               &
+            WRITE (out,130) Hdecay(1,isTvar(itrc),ng),                  &
+     &            'HdecayI(idTvar)',                                    &
+     &            'Initial decorrelation H-scale (m), ',                &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
-#     ifdef ADJUST_STFLUX
+          WRITE (out,120) Vdecay(1,isUvel,ng), 'VdecayI(isUvel)',       &
+     &            'Initial decorrelation V-scale (m), 3D U-momentum.'
+          WRITE (out,120) Vdecay(1,isVvel,ng), 'VdecayI(isVvel)',       &
+     &            'Initial decorrelation V-scale (m), 3D V-momentum.'
           DO itrc=1,NT(ng)
-            WRITE (out,130) Hdecay(isTsur(itrc),ng), 'Hdecay(idTsur)',  &
-     &            'Horizontal decorrelation scale (m), ',               &
+            WRITE (out,130) Vdecay(1,isTvar(itrc),ng),                  &
+     &            'VdecayI(idTvar)',                                    &
+     &            'Initial decorrelation V-scale (m), ',                &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+#    endif
+#    ifdef ADJUST BOUNDARY
+          DO ib=1,4
+            IF (ib.eq.1) THEN
+              Text='W-Boundary'
+            ELSE (ib.eq.2) THEN
+              Text='S-Boundary'
+            ELSE (ib.eq.2) THEN
+              Text='E-Boundary'
+            ELSE (ib.eq.2) THEN
+              Text='N-Boundary'
+            END IF
+            WRITE (out,120) HdecayB(isFsur,ib,ng), 'HdecayB(isFsur)',   &
+     &            Text//' decorrelation H-scale (m), free-surface.'
+            WRITE (out,120) HdecayB(isUbar,ib,ng), 'HdecayB(isUbar)',   &
+     &            Text//' decorrelation H-scale (m), 2D U-momentum.'
+            WRITE (out,120) HdecayB(isVbar,ib,ng), 'HdecayB(isVbar)',   &
+     &            Text//' decorrelation H-scale (m), 2D V-momentum.'
+#     ifdef SOLVE3D
+            WRITE (out,120) HdecayB(isUvel,ib,ng), 'HdecayB(isUvel)',   &
+     &            Text//' decorrelation H-scale (m), 3D U-momentum.'
+            WRITE (out,120) HdecayB(isVvel,ib,ng), 'HdecayB(isVvel)',   &
+     &            Text//' decorrelation H-scale (m), 3D V-momentum.'
+            DO i=1,NT(ng)
+              WRITE(out,130) HdecayB(isTvar(i),ib,ng),'HdecayB(idTvar)',&
+     &            Text//' decorrelation H-scale (m), ',                 &
+     &              TRIM(Vname(1,idTvar(i)))
+            END DO
+            WRITE (out,120) VdecayB(isUvel,ib,ng), 'VdecayB(isUvel)',   &
+     &            Text//' decorrelation V-scale (m), 3D U-momentum.'
+            WRITE (out,120) VdecayB(isVvel,ib,ng), 'VdecayB(isVvel)',   &
+     &            Text//' decorrelation V-scale (m), 3D V-momentum.'
+            DO i=1,NT(ng)
+              WRITE(out,130) VdecayB(isTvar(i),ib,ng),'VdecayB(idTvar)',&
+     &            Text//' decorrelation V-scale (m), ',                 &
+     &              TRIM(Vname(1,idTvar(i)))
+            END DO
+#     endif
+          END DO
+#    endif
+#    ifdef ADJUST_WSTRESS
+          WRITE (out,120) HdecayF(isUstr,ng), 'HdecayF(isUstr)',        &
+     &            'Forcing decorrelation H-scale (m), U-stress.'
+          WRITE (out,120) HdecayF(isVstr,ng), 'HdecayF(isVstr)',        &
+     &            'Forcing decorrelation H-scale (m), V-stress.'
+#    endif
+#    ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            WRITE (out,130) HdecayF(isTsur(itrc),ng),'HdecayF(idTsur)', &
+     &            'Forcing decorrelation H-scale (m), ',                &
      &            TRIM(Vname(1,idTsur(itrc)))
           END DO
-#     endif
-          WRITE (out,120) Vdecay(isUvel,ng), 'Vdecay(isUvel)',          &
-     &            'Vertical decorrelation scale (m), 3D U-momentum.'
-          WRITE (out,120) Vdecay(isVvel,ng), 'Vdecay(isVvel)',          &
-     &            'Vertical decorrelation scale (m), 3D V-momentum.'
-          DO itrc=1,NT(ng)
-            WRITE (out,130) Vdecay(isTvar(itrc),ng), 'Vdecay(idTvar)',  &
-     &            'Vertical decorrelation scale (m), ',                 &
-     &            TRIM(Vname(1,idTvar(itrc)))
-          END DO
-#    endif
-          WRITE (out,120) Cfscale(isFsur,ng), 'Cfscale(isFsur)',        &
-     &            'Forcing error scale factor, free-surface.'
-          WRITE (out,120) Cfscale(isUbar,ng), 'Cfscale(isUbar)',        &
-     &            'Forcing error scale factor, 2D U-momentum.'
-          WRITE (out,120) Cfscale(isVbar,ng), 'Cfscale(isVbar)',        &
-     &            'Forcing error scale factor, 2D V-momentum.'
-#    ifdef ADJUST_WSTRESS
-          WRITE (out,120) Cfscale(isUstr,ng), 'Cfscale(isUstr)',        &
-     &            'Forcing error scale factor, surface U-stress.'
-          WRITE (out,120) Cfscale(isVstr,ng), 'Cfscale(isVstr)',        &
-     &            'Forcing error scale factor, surface V-stress.'
-#    endif
-#    ifdef SOLVE3D
-          WRITE (out,120) Cfscale(isUvel,ng), 'Cfscale(isUvel)',        &
-     &            'Forcing error scale factor, 3D U-momentum.'
-          WRITE (out,120) Cfscale(isVvel,ng), 'Cfscale(isVvel)',        &
-     &            'Forcing error scale factor, 3D V-momentum.'
-          DO itrc=1,NT(ng)
-            WRITE (out,130) Cfscale(isTvar(itrc),ng),                   &
-     &              'Cfscale(idTvar)',                                  &
-     &              'Forcing error scale factor, ',                     &
-     &              TRIM(Vname(1,idTvar(itrc)))
-          END DO
-#     ifdef ADJUST_STFLUX
-          DO itrc=1,NT(ng)
-            WRITE (out,130) Cfscale(isTsur(itrc),ng),                   &
-     &              'Cfscale(idTsur)',                                  &
-     &              'Forcing error scale factor flux of tracer, ',      &
-     &              TRIM(Vname(1,idTsur(itrc)))
-          END DO
-#     endif
 #    endif
 #   endif
 #  endif
@@ -7171,19 +7442,67 @@
 #   if defined IS4DVAR         || defined IOM              || \
        defined OBS_SENSITIBITY || defined OPT_OBSERVATIONS || \
        defined WEAK_CONSTRAINT
-          fname=STDname(ng)
+#    if defined W4DPSAS || defined W4DVAR
+          fname=STDname(2,ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
-          WRITE (out,160) '      Standard Deviation File:  ',           &
+          WRITE (out,160) '               Model STD File:  ',           &
      &                    TRIM(fname)
+#    endif
+          fname=STDname(1,ng)
+          INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+          IF (.not.inhere) GO TO 30
+          WRITE (out,160) '  Initial Conditions STD File:  ',           &
+     &                    TRIM(fname)
+#    ifdef ADJUST_BOUNDARY
+          fname=STDname(3,ng)
+          INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+          IF (.not.inhere) GO TO 30
+          WRITE (out,160) ' Boundary Conditions STD File:  ',           &
+     &                    TRIM(fname)
+#    endif
+#    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+          fname=STDname(4,ng)
+          INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+          IF (.not.inhere) GO TO 30
+          WRITE (out,160) '     Surface Forcing STD File:  ',           &
+     &                    TRIM(fname)
+#    endif
 #   endif
-          fname=NRMname(ng)
-          WRITE (out,160) 'Correlation Norm Factors File:  ',           &
+#   if defined W4DPSAS || defined W4DVAR
+          fname=NRMname(2,ng)
+          WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)
-          IF (.not.LdefNRM(ng)) THEN
+          IF (.not.LdefNRM(2,ng)) THEN
             INQUIRE (FILE=TRIM(fname), EXIST=inhere)
             IF (.not.inhere) GO TO 30
           END IF
+#   endif
+          fname=NRMname(1,ng)
+          WRITE (out,160) ' Initial Conditions Norm File:  ',           &
+     &                    TRIM(fname)
+          IF (.not.LdefNRM(1,ng)) THEN
+            INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+            IF (.not.inhere) GO TO 30
+          END IF
+#   ifdef ADJUST_BOUNDARY
+          fname=NRMname(3,ng)
+          WRITE (out,160) 'Boundary Conditions Norm File:  ',           &
+     &                    TRIM(fname)
+          IF (.not.LdefNRM(3,ng)) THEN
+            INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+            IF (.not.inhere) GO TO 30
+          END IF
+#   endif
+#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+          fname=NRMname(4,ng)
+          WRITE (out,160) '    Surface Forcing Norm File:  ',           &
+     &                    TRIM(fname)
+          IF (.not.LdefNRM(4,ng)) THEN
+            INQUIRE (FILE=TRIM(fname), EXIST=inhere)
+            IF (.not.inhere) GO TO 30
+          END IF
+#   endif
 #   if !(defined CORRELATION || defined CONVOLUTION || \
          defined OPT_OBSERVATIONS)
           fname=OBSname(ng)
@@ -7207,7 +7526,7 @@
      &                    TRIM(MODname(ng))
 #  endif
           GO TO 40
-  30      WRITE (out,170) TRIM(fname)
+  30      WRITE (out,200) TRIM(fname)
           STOP
   40      CONTINUE
         END DO
@@ -7225,8 +7544,10 @@
  130  FORMAT (f11.3,2x,a,t30,a,a,'.')
  150  FORMAT (/,' Input Assimilation Files:',/)
  160  FORMAT (2x,a,a)
- 170  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
- 180  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
+ 170  FORMAT (3x,4(1x,l1),2x,a,t30,a)
+ 180  FORMAT (3x,4(1x,l1),2x,a,t30,a,i2.2,':',1x,a)
+ 190  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
+ 200  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
 # endif
 
       RETURN

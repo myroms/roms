@@ -91,7 +91,7 @@
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: STDrec, ng, thread
+      integer :: STDrec, Tindex, ng, thread
 
 #ifdef DISTRIBUTE
 !
@@ -162,15 +162,41 @@
 !
         CALL initialize_fourdvar
 !
-!  Read in background-error standard deviation factors and spatial
-!  convolution diffusion coefficients.
-!  
+!  Read in standard deviation factors for initial conditions
+!  error covariance.  They are loaded in Tindex=1 of the
+!  e_var(...,Tindex) state variables.
+!
         STDrec=1
+        Tindex=1
         DO ng=1,Ngrids
-          CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
+          CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
+#ifdef ADJUST_BOUNDARY
+!
+!  Read in standard deviation factors for boundary conditions
+!  error covariance.
+!
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Read in standard deviation factors for boundary conditions
+!  error covariance.
+!
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, 1)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
+#endif
       END IF
 
       RETURN
@@ -214,7 +240,6 @@
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
-      USE tl_ini_adjust_mod, ONLY : tl_ini_adjust
       USE tl_variability_mod, ONLY : tl_variability
 !
 !  Imported variable declarations
@@ -291,10 +316,8 @@
 !  are used in the algorithm below.
 !
           IF (Nrun.eq.1) THEN
-            IF (LcycleINI(ng)) THEN
-              tINIindx(ng)=1
-              NrecINI(ng)=1
-            END IF
+            tINIindx(ng)=1
+            NrecINI(ng)=1
             CALL wrt_ini (ng, 1)
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -305,9 +328,18 @@
 !  computed only once for a particular application grid.
 !  
           IF (Nrun.eq.1) THEN
-            IF (LwrtNRM(ng)) THEN
-              CALL def_norm (ng)
+            IF (ANY(LwrtNRM(:,ng))) THEN
+              CALL def_norm (ng, iNLM, 1)
               IF (exit_flag.ne.NoError) RETURN
+
+#ifdef ADJUST_BOUNDARY
+              CALL def_norm (ng, iNLM, 3)
+              IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+              CALL def_norm (ng, iNLM, 4)
+              IF (exit_flag.ne.NoError) RETURN
+#endif
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
               DO thread=0,numthreads-1
                 subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -316,12 +348,20 @@
                 END DO
               END DO
 !$OMP END PARALLEL DO
-              LdefNRM(ng)=.FALSE.
-              LwrtNRM(ng)=.FALSE.
+              LdefNRM(1:4,ng)=.FALSE.
+              LwrtNRM(1:4,ng)=.FALSE.
             ELSE
-              tNRMindx(ng)=1
-              CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
+              CALL get_state (ng, 5, 5, NRMname(1,ng), 1, 1)
               IF (exit_flag.ne.NoError) RETURN
+
+#ifdef ADJUST_BOUNDARY
+              CALL get_state (ng, 10, 10, NRMname(3,ng), 1, 1)
+              IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+              CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+              IF (exit_flag.ne.NoError) RETURN
+#endif
             END IF
           END IF
 !
@@ -374,6 +414,8 @@
 !  Write out nonlinear model misfit cost function into MODname NetCDF
 !  file.
 !
+          SourceFile='is4dvar_lanzos_ocean.h, ROMS_run'
+
           CALL netcdf_put_fvar (ng, iNLM, MODname(ng),                  &
      &                          'NLcost_function',                      &
      &                          FOURDVAR(ng)%NLobsCost(0:),             &
@@ -490,6 +532,8 @@
 !  If multiple TLM history NetCDF files, close current NetCDF file.
 !
             IF (ncTLMid(ng).ne.-1) THEN
+              SourceFile='is4dvar_lanczos_ocean.h, ROMS_run'
+
               CALL netcdf_close (ng, iTLM, ncTLMid(ng))
               IF (exit_flag.ne.NoError) RETURN
             END IF
@@ -592,7 +636,7 @@
                 CALL ad_balance (ng, TILE, Lini, LADJ2)
 #endif
                 CALL ad_variability (ng, TILE, LADJ2, Lweak)
-                CALL ad_convolution (ng, TILE, LADJ2, 2)
+                CALL ad_convolution (ng, TILE, LADJ2, Lweak, 2)
                 CALL cost_grad (ng, TILE, LTLM1, LTLM2, LADJ2)
               END DO
             END DO
@@ -780,7 +824,7 @@
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL tl_convolution (ng, TILE, Lcon, 2)
+                CALL tl_convolution (ng, TILE, Lcon, Lweak, 2)
                 CALL tl_variability (ng, TILE, Lcon, Lweak)
 #ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lini, Lcon)
@@ -809,6 +853,8 @@
 !  Close adjoint NetCDF file.
 !
           IF (ncADJid(ng).ne.-1) THEN
+            SourceFile='is4dvar_lanczos_ocean.h, ROMS_run'
+
             CALL netcdf_close (ng, iADM, ncADJid(ng))
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -816,6 +862,8 @@
 !  Close Hessian NetCDF file.
 !
           IF (ncHSSid(ng).ne.-1) THEN
+            SourceFile='is4dvar_lanczos_ocean.h, ROMS_run'
+
             CALL netcdf_close (ng, iADM, ncHSSid(ng))
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -875,10 +923,8 @@
 !  Write out new nonlinear model initial conditions into record Lini
 !  of INIname.
 !
-          IF (LcycleINI(ng)) THEN
-            tINIindx(ng)=0
-            NrecINI(ng)=1
-          END IF
+          tINIindx(ng)=0
+          NrecINI(ng)=1
           CALL wrt_ini (ng, Lini)
           IF (exit_flag.ne.NoError) RETURN
 !
@@ -931,7 +977,7 @@
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1,+1
-              CALL tl_convolution (ng, TILE, Lcon, 2)
+              CALL tl_convolution (ng, TILE, Lcon, Lweak, 2)
               CALL tl_variability (ng, TILE, Lcon, Lweak)
 # ifdef BALANCE_OPERATOR
               CALL tl_balance (ng, TILE, Lini, Lcon)
@@ -1012,6 +1058,8 @@
 !  Write out nonlinear model final misfit cost function into MODname
 !  NetCDF file. Notice that it is written in the Nouter+1 record.
 !
+        SourceFile='is4dvar_lanczos_ocean.h, ROMS_run'
+
         CALL netcdf_put_fvar (ng, iNLM, MODname(ng), 'NLcost_function', &
      &                        FOURDVAR(ng)%NLobsCost(0:),               &
      &                        (/1,Nouter+1/), (/NstateVar(ng)+1,1/),    &

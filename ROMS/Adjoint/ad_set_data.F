@@ -1509,6 +1509,27 @@
 #  endif
 # endif
 
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Clear adjoint open boundary conditions arrays for IO purposes at
+!  every time-step. Otherwise, their cumulative values will be written
+!  instead of instantaneous values.
+!-----------------------------------------------------------------------
+!
+      IF (NORTH_EAST_TEST) THEN
+#  ifdef SOLVE3D
+        BOUNDARY(ng) % ad_t_obc = 0.0_r8
+        BOUNDARY(ng) % ad_u_obc = 0.0_r8
+        BOUNDARY(ng) % ad_v_obc = 0.0_r8
+#  else
+        BOUNDARY(ng) % ad_ubar_obc = 0.0_r8
+        BOUNDARY(ng) % ad_vbar_obc = 0.0_r8
+#  endif
+        BOUNDARY(ng) % ad_zeta_obc = 0.0_r8
+      END IF
+# endif
+
 # if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS  || \
      defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SO_SEMI

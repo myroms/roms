@@ -43,30 +43,32 @@
       implicit none
 
       INTERFACE mp_bcastf
-        MODULE PROCEDURE mp_bcastf_s
-        MODULE PROCEDURE mp_bcastf_v
-        MODULE PROCEDURE mp_bcastf_m
+        MODULE PROCEDURE mp_bcastf_0d
+        MODULE PROCEDURE mp_bcastf_1d
+        MODULE PROCEDURE mp_bcastf_2d
+        MODULE PROCEDURE mp_bcastf_3d
+        MODULE PROCEDURE mp_bcastf_4d
       END INTERFACE mp_bcastf
 
       INTERFACE mp_bcastl
-        MODULE PROCEDURE mp_bcastl_s
-        MODULE PROCEDURE mp_bcastl_v
+        MODULE PROCEDURE mp_bcastl_0d
+        MODULE PROCEDURE mp_bcastl_1d
       END INTERFACE mp_bcastl
 
       INTERFACE mp_bcasti
-        MODULE PROCEDURE mp_bcasti_s
-        MODULE PROCEDURE mp_bcasti_v
-        MODULE PROCEDURE mp_bcasti_m
+        MODULE PROCEDURE mp_bcasti_0d
+        MODULE PROCEDURE mp_bcasti_1d
+        MODULE PROCEDURE mp_bcasti_2d
       END INTERFACE mp_bcasti
 
       INTERFACE mp_bcasts
-        MODULE PROCEDURE mp_bcasts_s
-        MODULE PROCEDURE mp_bcasts_v
+        MODULE PROCEDURE mp_bcasts_0d
+        MODULE PROCEDURE mp_bcasts_1d
       END INTERFACE mp_bcasts
 
       INTERFACE mp_reduce
-        MODULE PROCEDURE mp_reduce_s
-        MODULE PROCEDURE mp_reduce_v
+        MODULE PROCEDURE mp_reduce_0d
+        MODULE PROCEDURE mp_reduce_1d
       END INTERFACE mp_reduce
 
       CONTAINS
@@ -104,20 +106,19 @@
       RETURN
       END SUBROUTINE mp_barrier
 
-      SUBROUTINE mp_bcastf_s (ng, model, A, Asize)
+      SUBROUTINE mp_bcastf_0d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
 !  This routine broadcasts a floating-point scalar variable to all     !
-!  processors in the group. It is called by all the members in the     !
+!  processors the in group. It is called by all the members in the     !
 !  group.                                                              !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          Variable to broadcast (real).                         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -135,7 +136,6 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-      integer, intent(in), optional :: Asize
 
       real(r8), intent(inout) :: A
 !
@@ -164,7 +164,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTF_S - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTF_0D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -180,26 +180,25 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcastf_s
+      END SUBROUTINE mp_bcastf_0d
 
-      SUBROUTINE mp_bcastf_v (ng, model, A, Asize)
+      SUBROUTINE mp_bcastf_1d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a floating-point vector variable to all     !
-!  processors in the group. It is called by all the members in the     !
-!  group.                                                              !
+!  This routine broadcasts a 1D floating-point, nontiled, array to     !
+!  all processors processors in the group. It is called by all the     !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          1D array to broadcast (real).                         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Broadcasted variable.                                 !
+!     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
 !
@@ -212,13 +211,13 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Asize
+      integer, intent(in) :: ng, model
 
-      real(r8), intent(inout) :: A(Asize)
+      real(r8), intent(inout) :: A(:)
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -235,14 +234,16 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=UBOUND(A, DIM=1)
+
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTF_V - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTF_1D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -258,101 +259,273 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcastf_v
+      END SUBROUTINE mp_bcastf_1d
 
-      SUBROUTINE mp_bcastf_m (ng, model, A, Isize, Jsize)
+      SUBROUTINE mp_bcastf_2d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a floating-point 2D-array variable to       !
-!  all processors in the group.  It is called by all the members       !
+!  This routine broadcasts a 2D floating-point, nontiled, array to     !
+!  all processors processors in the group. It is called by all the     !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          2D array to broadcast (real).                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 2D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      real(r8), intent(inout) :: A(:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyError, Npts, Serror
+
+      integer :: Asize(2)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Npts=Asize(1)*Asize(2)
+
+# ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_2D - error during ',a,' call, Node = ',   &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcastf_2d
+
+      SUBROUTINE mp_bcastf_3d (ng, model, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 3D floating-point, nontiled, array to     !
+!  all processors processors in the group. It is called by all the     !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          3D array to broadcast (real).                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 3D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      real(r8), intent(inout) :: A(:,:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyError, Npts, Serror
+
+      integer :: Asize(3)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Asize(3)=UBOUND(A, DIM=3)
+      Npts=Asize(1)*Asize(2)*Asize(3)
+
+# ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_3D - error during ',a,' call, Node = ',   &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcastf_3d
+
+      SUBROUTINE mp_bcastf_4d (ng, model, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 4D floating-point, nontiled, array to     !
+!  all processors processors in the group. It is called by all the     !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          4D array to broadcast (real).                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 4D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      real(r8), intent(inout) :: A(:,:,:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyError, Npts, Serror
+
+      integer :: Asize(4)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Asize(3)=UBOUND(A, DIM=3)
+      Asize(4)=UBOUND(A, DIM=4)
+      Npts=Asize(1)*Asize(2)*Asize(3)*Asize(4)
+
+# ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_4D - error during ',a,' call, Node = ',   &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcastf_4d
+
+      SUBROUTINE mp_bcasti_0d (ng, model, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts an integer scalar variable to all           !
+!  processors the in group.  It is called by all the members           !
 !  in the group.                                                       !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Isize      Number of columns to broadcast.                       !
-!     Jsize      Number of rows to broadcast.                          !
-!                                                                      !
-!  On Output:                                                          !
-!                                                                      !
-!     A          Broadcasted variable.                                 !
-!                                                                      !
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, model, Isize, Jsize
-
-      real(r8), intent(inout) :: A(Isize,Jsize)
-!
-!  Local variable declarations
-!
-      integer :: Asize, Lstr, MyError, Serror
-
-      character (len=MPI_MAX_ERROR_STRING) :: string
-
-# ifdef PROFILE
-!
-!-----------------------------------------------------------------------
-!  Turn on time clocks.
-!-----------------------------------------------------------------------
-!
-      CALL wclock_on (ng, model, 42)
-# endif
-!
-!-----------------------------------------------------------------------
-!  Broadcast requested variable.
-!-----------------------------------------------------------------------
-!
-# ifdef MPI
-      Asize=Isize*Jsize
-      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
-     &                MyError)
-      IF (MyError.ne.MPI_SUCCESS) THEN
-        CALL mpi_error_string (MyError, string, Lstr, Serror)
-        Lstr=LEN_TRIM(string)
-        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTF_M - error during ',a,' call, Node = ',    &
-     &          i3.3,' Error = ',i3,/,13x,a)
-        exit_flag=2
-        RETURN
-      END IF
-# endif
-# ifdef PROFILE
-!
-!-----------------------------------------------------------------------
-!  Turn off time clocks.
-!-----------------------------------------------------------------------
-!
-      CALL wclock_off (ng, model, 42)
-# endif
-
-      RETURN
-      END SUBROUTINE mp_bcastf_m
-
-      SUBROUTINE mp_bcasti_s (ng, model, A, Asize)
-!
-!***********************************************************************
-!                                                                      !
-!  This routine broadcasts an integer scalar variable to all processors!
-!  the in group. It is called by all the members in the group.         !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          Variable to broadcast (integer).                      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -369,7 +542,6 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-      integer, intent(in), optional :: Asize
 
       integer, intent(inout) :: A
 !
@@ -399,7 +571,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTI_S - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTI_0D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         RETURN
       END IF
@@ -414,25 +586,25 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasti_s
+      END SUBROUTINE mp_bcasti_0d
 
-      SUBROUTINE mp_bcasti_v (ng, model, A, Asize)
+      SUBROUTINE mp_bcasti_1d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts an integer vector variable to all processors! 
-!  in the group. It is called by all the members in the group.         !
+!  This routine broadcasts a 1D nontiled, integer array to all         1
+!  processors processors in the group. It is called by all the         !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          1D array to broadcast (integer).                      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Broadcasted variable.                                 !
+!     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
 !
@@ -445,13 +617,13 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Asize
+      integer, intent(in) :: ng, model
 
-      integer, intent(inout) :: A(Asize)
+      integer, intent(inout) :: A(:)
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
       
@@ -468,14 +640,16 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=UBOUND(A, DIM=1)
+
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,  &
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTI_V - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTI_1D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -491,27 +665,25 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasti_v
+      END SUBROUTINE mp_bcasti_1d
 
-      SUBROUTINE mp_bcasti_m (ng, model, A, Isize, Jsize)
+      SUBROUTINE mp_bcasti_2d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts an integer 2D-array variable to all         !
-!  processors in the group. It is called by all the members in         !
-!  the group.                                                          !
+!  This routine broadcasts a 2D nontiled, integer array to all         1
+!  processors processors in the group. It is called by all the         !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Isize      Number of columns to broadcast.                       !
-!     Jsize      Number of rows to broadcast.                          !
+!     A          2D array to broadcast (integer).                      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Broadcasted variable.                                 !
+!     A          Broadcasted 2D array.                                 !
 !                                                                      !
 !***********************************************************************
 !
@@ -524,13 +696,14 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Isize, Jsize
+      integer, intent(in) :: ng, model
 
-      integer, intent(inout) :: A(Isize,Jsize)
+      integer, intent(inout) :: A(:,:)
 !
 !  Local variable declarations
 !
-      integer :: Asize, Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
+      integer :: Asize(2)
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -547,15 +720,18 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Npts=Asize(1)*Asize(2)
+
 # ifdef MPI
-      Asize=Isize*Jsize
-      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTI_M - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTI_2D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -571,21 +747,21 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasti_m
+      END SUBROUTINE mp_bcasti_2d
 
-      SUBROUTINE mp_bcastl_s (ng, model, A, Asize)
+      SUBROUTINE mp_bcastl_0d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a logical scalar variable to all processors !
-!  in the group. It is called by all the members in the group.         !
+!  This routine broadcasts a logical scalar variable to all            !
+!  processors the in group. It is called by all the members            !
+!  in the group.                                                       !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          Variable to broadcast (logical).                      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -603,7 +779,6 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-      integer, intent(in), optional :: Asize
 
       logical, intent(inout) :: A
 !
@@ -633,7 +808,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTL_S - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTL_0D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -649,25 +824,25 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcastl_s
+      END SUBROUTINE mp_bcastl_0d
 
-      SUBROUTINE mp_bcastl_v (ng, model, A, Asize)
+      SUBROUTINE mp_bcastl_1d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a logical vector variable to all processors !
-!  in the group. It is called by all the members in the group.         !
+!  This routine broadcasts a 1D nontiled, logical array to all         !
+!  processors processors in the group. It is called by all the         !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          1D array to broadcast (logical).                      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Broadcasted variable.                                 !
+!     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
 !
@@ -680,13 +855,13 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Asize
+      integer, intent(in) :: ng, model
 
-      logical, intent(inout) :: A(Asize)
+      logical, intent(inout) :: A(:)
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -703,14 +878,16 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=UBOUND(A, DIM=1)
+
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,  &
+      CALL mpi_bcast (A, Npts, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,   &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTL_V - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTL_1D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -726,9 +903,9 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcastl_v
+      END SUBROUTINE mp_bcastl_1d
 
-      SUBROUTINE mp_bcasts_s (ng, model, A, Asize)
+      SUBROUTINE mp_bcasts_0d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
@@ -739,8 +916,7 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          Variable to broadcast (string).                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -757,7 +933,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Asize
+      integer, intent(in) :: ng, model
 
       character (len=*), intent(inout) :: A
 !
@@ -788,7 +964,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTS_S - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTS_0D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -804,26 +980,25 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasts_s
+      END SUBROUTINE mp_bcasts_0d
 
-      SUBROUTINE mp_bcasts_v (ng, model, A, Asize)
+      SUBROUTINE mp_bcasts_1d (ng, model, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This subroutine broadcasts a  string 1D-array variable to all       !
-!  processors! in the  group. It is called by all the members in       !
-!  the group.                                                          !
+!  This routine broadcasts a 1D nontiled,  string array to all         !
+!  processors processors in the group. It is called by all the         !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     A          Variable to broadcast.                                !
-!     Asize      Number of entries to broadcast.                       !
+!     A          1D array to broadcast (string).                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Broadcasted variable.                                 !
+!     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
 !
@@ -836,13 +1011,13 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Asize
+      integer, intent(in) :: ng, model
 
-      character (len=*), intent(inout) :: A(Asize)
+      character (len=*), intent(inout) :: A(:)
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Nchars, Serror
+      integer :: Asize, Lstr, MyError, Nchars, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -859,7 +1034,9 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Asize=UBOUND(A, DIM=1)
       Nchars=LEN(A(1))*Asize
+
 # ifdef MPI
       CALL mpi_bcast (A, Nchars, MPI_BYTE, MyMaster, OCN_COMM_WORLD,    &
      &                MyError)
@@ -867,7 +1044,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTS_V - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTS_1D - error during ',a,' call, Node = ',   &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -883,7 +1060,7 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasts_v
+      END SUBROUTINE mp_bcasts_1d
 
       SUBROUTINE mp_boundary (ng, model, Imin, Imax,                    &
      &                        LBi, UBi, LBk, UBk,                       &
@@ -2177,7 +2354,7 @@
 !
       ibuffer(1)=exit_flag
       ibuffer(2)=ioerror
-      CALL mp_bcasti (ng, model, ibuffer, 2)
+      CALL mp_bcasti (ng, model, ibuffer)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 !
@@ -2422,7 +2599,7 @@
 !
       ibuffer(1)=exit_flag
       ibuffer(2)=ioerror
-      CALL mp_bcasti (ng, model, ibuffer, 2)
+      CALL mp_bcasti (ng, model, ibuffer)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 !
@@ -2451,7 +2628,7 @@
       RETURN
       END FUNCTION mp_ncwrite
 
-      SUBROUTINE mp_reduce_s (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_0d (ng, model, Asize, A, op_handle)
 !
 !***********************************************************************
 !                                                                      !
@@ -2616,8 +2793,8 @@
         RETURN
       END IF
 # endif
- 10   FORMAT (/,' MP_REDUCE - error during ',a,' call, Node = ',        &
-     &        i3.3,' Error = ',i3,/,13x,a)
+ 10   FORMAT (/,' MP_REDUCE_0D - error during ',a,' call, Node = ',     &
+     &        i3.3,' Error = ',i3,/,16x,a)
 !
 !  Unpack.
 !
@@ -2632,9 +2809,9 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_reduce_s
+      END SUBROUTINE mp_reduce_0d
 
-      SUBROUTINE mp_reduce_v (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_1d (ng, model, Asize, A, op_handle)
 !
 !***********************************************************************
 !                                                                      !
@@ -2809,8 +2986,8 @@
         RETURN
       END IF
 # endif
- 10   FORMAT (/,' MP_REDUCE - error during ',a,' call, Node = ',        &
-     &        i3.3,' Error = ',i3,/,13x,a)
+ 10   FORMAT (/,' MP_REDUCE_1D - error during ',a,' call, Node = ',     &
+     &        i3.3,' Error = ',i3,/,16x,a)
 !
 !  Unpack.
 !
@@ -2827,7 +3004,7 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_reduce_v
+      END SUBROUTINE mp_reduce_1d
 
       SUBROUTINE mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,           &
      &                         Nghost, gtype, Amin, Amax,               &

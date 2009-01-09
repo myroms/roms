@@ -27,10 +27,6 @@
 # ifdef ANA_VMIX
       USE analytical_mod, ONLY : ana_vmix
 # endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_RPadjust
-      USE frc_adjust_mod, ONLY : load_TLforcing
-# endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
@@ -58,6 +54,9 @@
 !!    USE rp_bvf_mix_mod, ONLY : rp_bvf_mix
 # endif
       USE rp_diag_mod, ONLY : rp_diag
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE rp_frc_adjust_mod, ONLY : rp_frc_adjust
+# endif
 # ifdef GLS_MIXING_NOT_YET
 !!    USE rp_gls_corstep_mod, ONLY : rp_gls_corstep
 !!    USE rp_gls_prestep_mod, ONLY : rp_gls_prestep
@@ -69,6 +68,9 @@
 # ifdef MY25_MIXING
 !!    USE rp_my25_corstep_mod, ONLY : rp_my25_corstep
 !!    USE rp_my25_prestep_mod, ONLY : rp_my25_prestep
+# endif
+# ifdef ADJUST_BOUNDARY
+      USE rp_obc_adjust_mod, ONLY : rp_obc_adjust
 # endif
       USE rp_omega_mod, ONLY : rp_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -328,6 +330,26 @@
       END DO
 !$OMP END PARALLEL DO
 
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing into storage arrays. Skip the last output
+!  timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL rp_obc_adjust (ng, TILE, Lbinp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
@@ -341,7 +363,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL frc_RPadjust (ng, TILE, Lfinp(ng))
+            CALL rp_frc_adjust (ng, TILE, Lfinp(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO

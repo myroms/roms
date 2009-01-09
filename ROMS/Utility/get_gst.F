@@ -23,7 +23,7 @@
 
 # ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+      USE distribute_mod, ONLY : mp_bcasti
       USE distribute_mod, ONLY : mp_ncread
 # endif
 !
@@ -48,6 +48,8 @@
       character (len=2 ) :: char2
       character (len=80) :: ncname
 !
+      SourceFile='get_gst.F'
+!
 !-----------------------------------------------------------------------
 !  Read GST checkpointing restart variables.  Check for consistency.
 !-----------------------------------------------------------------------
@@ -56,18 +58,11 @@
 !
       ncname=GSTname(ng)
       IF (ncGSTid(ng).eq.-1) THEN
-        IF (InpThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncGSTid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, model, ncname, 1, ncGSTid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Read in number of eigenvalues to compute.

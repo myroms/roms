@@ -37,11 +37,6 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -71,6 +66,8 @@
       real(r8), allocatable :: Obs_value(:)
 
       character (len=11), dimension(NstateVar(ng)) :: text, svar_name
+!
+      SourceFile='stats_modobs.F'
 !
 !-----------------------------------------------------------------------
 !  Read in model and observations data.
@@ -287,17 +284,7 @@
 !
 !  Synchronize NetCDF file to disk.
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncMODid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,60)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
 !
  10   FORMAT (/,' 4DVAR Model-Observations Comparison Statistics:',/)
  20   FORMAT (t22,5(a11,1x))

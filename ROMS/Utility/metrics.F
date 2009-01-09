@@ -299,7 +299,7 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: NSUB, i, is, j, k
+      integer :: NSUB, i, is, j, k, rec
 
       real(r8), parameter :: Large = 1.0E+20_r8
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
@@ -320,6 +320,9 @@
 #endif
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
       character (len=4) :: units
+#endif
+#if defined FOUR_DVAR
+      character (len=8) :: Text
 #endif
 
 #ifdef DISTRIBUTE
@@ -1006,50 +1009,93 @@
 # endif
       END DO
 !
+!-----------------------------------------------------------------------
 !  Determine FULL number of integeration steps as function of the
 !  spatial decorrelation scale (Hdecay, Vdecay). Notice that in
 !  the squared-root filter only half of number of step is used.
 !  Thefore, the number of steps are forced to be even.
+!-----------------------------------------------------------------------
 !
-      DO is=1,NstateVar(ng)
-        NHsteps(is)=NINT(Hdecay(is,ng)*Hdecay(is,ng)/                   &
-     &                   (2.0_r8*KhMax(ng)*DTsizeH(is)))
-        IF (MOD(NHsteps(is),2).ne.0) THEN
-          NHsteps(is)=NHsteps(is)+1
-        END IF
+!  Initial conditions, surface forcing and model error covariance.
+!
+      DO rec=1,2
+        DO is=1,NstateVar(ng)
+          IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
+            NHsteps(rec,is)=NINT(Hdecay(rec,is,ng)*Hdecay(rec,is,ng)/   &
+     &                           (2.0_r8*KhMax(ng)*DTsizeH(is)))
+            IF (MOD(NHsteps(rec,is),2).ne.0) THEN
+              NHsteps(rec,is)=NHsteps(rec,is)+1
+            END IF
+          END IF
 # ifdef SOLVE3D
-        NVsteps(is)=NINT(Vdecay(is,ng)*Vdecay(is,ng)/                   &
-     &                   (2.0_r8*KvMax(ng)*DTsizeV(is)))
+          IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
+            NVsteps(rec,is)=NINT(Vdecay(rec,is,ng)*Vdecay(rec,is,ng)/   &
+     &                           (2.0_r8*KvMax(ng)*DTsizeV(is)))
 #  ifdef IMPLICIT_VCONV
-        NVsteps(is)=MAX(1,NVsteps(is))
+            NVsteps(rec,is)=MAX(1,NVsteps(rec,is))
 #  endif
-        IF (MOD(NVsteps(is),2).ne.0) THEN
-          NVsteps(is)=NVsteps(is)+1
-        END IF
+            IF (MOD(NVsteps(rec,is),2).ne.0) THEN
+              NVsteps(rec,is)=NVsteps(rec,is)+1
+            END IF
 # endif
+          END IF
+        END DO
       END DO
 !
 !  Report convolution parameters.
 !
       IF (Master.and.LwrtInfo(ng)) THEN
         LwrtInfo(ng)=.FALSE.
-        DO is=1,NstateVar(ng)
-          WRITE (stdout,70) NHsteps(is), DTsizeH(ng),                   &
-     &                      TRIM(Vname(1,idSvar(is)))
-  70      FORMAT (' Horizontal convolution, NHsteps, DTsizeH = ',       &
-     &            i5,1x,1pe15.8,' s',2x,a)
+        DO rec=1,NSA
+          DO is=1,NstateVar(ng)
+            IF (rec.eq.1) THEN
+              Text='NHstepsI'
+            ELSE IF (rec.eq.2) THEN
+              Text='NHstepsM'
+#  ifdef SOLVE3D
+            ELSE IF (is.gt.(5+NT(ng))) THEN
+#  else
+            ELSE IF (is.gt.3) THEN
+#  endif
+              Text='NHstepsF'
+            END IF
+            IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
+              WRITE (stdout,70) TRIM(Text), NHsteps(rec,is),            &
+     &                          DTsizeH(is), TRIM(Vname(1,idSvar(is)))
+            END IF
+          END DO
+          WRITE (stdout,90)
         END DO
 # if defined SOLVE3D && defined VCONVOLUTION
-        WRITE (stdout,'(1x)')
-        DO is=4,5+NT(ng)
-          WRITE (stdout,80) NVsteps(is), DTsizeV(is),                   &
-     &                      TRIM(Vname(1,idSvar(is)))
-  80      FORMAT (' Vertical   convolution, NVsteps, DTsizeV = ',       &
-     &            i5,1x,1pe15.8,' s',2x,a)
+        DO rec=1,NSA
+          DO is=1,NstateVar(ng)
+            IF (rec.eq.1) THEN
+              Text='NVstepsI'
+            ELSE IF (rec.eq.2) THEN
+              Text='NVstepsM'
+#  ifdef SOLVE3D
+            ELSE IF (is.gt.(5+NT(ng))) THEN
+#  else
+            ELSE IF (is.gt.3) THEN
+#  endif
+              Text='NVstepsF'
+            END IF
+            IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
+              WRITE (stdout,80) TRIM(Text), NVsteps(rec,is),            &
+     &                          DTsizeV(is), TRIM(Vname(1,idSvar(is)))
+             END IF
+          END DO
+          WRITE (stdout,90)
         END DO
 # endif
-        WRITE (stdout,'(/)')
       END IF
+
+  70  FORMAT (' Horizontal convolution, ',a,', DTsizeH = ',             &
+     &        i5,1x,1pe15.8,' s',2x,a)
+  80  FORMAT (' Vertical   convolution, ',a,', DTsizeV = ',             &
+     &            i5,1x,1pe15.8,' s',2x,a)
+  90  FORMAT (1x)
+
 #endif
 
       RETURN

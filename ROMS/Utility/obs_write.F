@@ -27,7 +27,7 @@
       USE mod_stepping
 !  
 # ifdef DISTRIBUTE
-      USE distribute_mod, ONLY :  mp_bcasti, mp_collect
+      USE distribute_mod, ONLY :  mp_collect
 # endif
       USE extract_obs_mod, ONLY : extract_obs2d
 # ifdef SOLVE3D
@@ -57,6 +57,8 @@
       character (len=50) :: string
 
 # include "set_bounds.h"
+!
+      SourceFile='obs_write.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -605,20 +607,17 @@
 !  Synchronize observations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-            status=nf90_sync(ncMODid(ng))
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10)
-              exit_flag=3
-              ioerror=status
-            END IF
+        IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+          CALL netcdf_sync (ng, model, MODname(ng), ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+
+# ifdef SOLVE3D
+          IF (Load_Zobs(ng)) THEN
+            CALL netcdf_sync (ng, model, OBSname(ng), ncOBSid(ng))
+            IF (exit_flag.ne.NoError) RETURN
           END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, exit_flag, 1)
 # endif
-        IF (exit_flag.ne.NoError) RETURN
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Set counters for number of rejected observations for each state
@@ -676,14 +675,14 @@
           DO i=1,NstateVar(ng)
             IF (FOURDVAR(ng)%ObsCount(i).gt.0) THEN
               ie=is+FOURDVAR(ng)%ObsCount(i)-1
-              WRITE (stdout,20) TRIM(Vname(1,idSvar(i))), is, ie,       &
+              WRITE (stdout,10) TRIM(Vname(1,idSvar(i))), is, ie,       &
      &                          ie-is+1, FOURDVAR(ng)%ObsReject(i)
               is=ie+1
               ObsSum=ObsSum+FOURDVAR(ng)%ObsCount(i)
               ObsVoid=ObsVoid+FOURDVAR(ng)%ObsReject(i)
             END IF
           END DO
-          WRITE (stdout,30) ObsSum, ObsVoid,                            &
+          WRITE (stdout,20) ObsSum, ObsVoid,                            &
      &                      FOURDVAR(ng)%ObsCount(0),                   &
      &                      FOURDVAR(ng)%ObsReject(0)
         END IF
@@ -709,17 +708,15 @@
         END IF
         IF (Master) THEN
           IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-             WRITE (stdout,40) TRIM(string), NstrObs(ng), NendObs(ng)
+             WRITE (stdout,30) TRIM(string), NstrObs(ng), NendObs(ng)
           END IF
         END IF
       END IF
 !
-  10  FORMAT (/,' OBS_WRITE - unable to synchronize observations',      &
-     &        1x,'NetCDF file to disk.')
-  20  FORMAT (10x,a,t25,4(1x,i10))
-  30  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
+  10  FORMAT (10x,a,t25,4(1x,i10))
+  20  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
      &        /,10x,'Obs Tally',t47,2(1x,i10),/)
-  40  FORMAT (1x,a,' datum = ',i7.7,' - ',i7.7,/)
+  30  FORMAT (1x,a,' datum = ',i7.7,' - ',i7.7,/)
 
       RETURN
       END SUBROUTINE obs_write

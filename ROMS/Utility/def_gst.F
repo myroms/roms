@@ -72,21 +72,11 @@
 !=======================================================================
 !
       DEFINE : IF (.not.LrstGST) THEN
-        IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), CMODE, ncGSTid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_create (ng, model, TRIM(ncname), ncGSTid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          IF (Master) WRITE (stdout,30) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, ncGSTid(ng), 1)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Define the dimensions of staggered fields.
@@ -408,7 +398,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, exit_flag, 1)
+        CALL mp_bcasti (ng, model, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
       END IF DEFINE

@@ -156,9 +156,6 @@
       USE mod_scalars
       USE mod_stepping
 !
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE dotproduct_mod, ONLY : ad_dotproduct
 !
 !  Imported variable declarations
@@ -226,6 +223,8 @@
 !
 !  Close current nonlinear model history file.
 !
+        SourceFile='tlcheck_ocean.h, ROMS_run'
+
         CALL netcdf_close (ng, iNLM, ncHISid(ng))
         IF (exit_flag.ne.NoError) RETURN
 
@@ -415,6 +414,8 @@
 !
 !  Close current tangent linear model history file.
 !
+            SourceFile='tlcheck_ocean.h, ROMS_run'
+
             CALL netcdf_close (ng, iTLM, ncTLMid(ng))
             IF (exit_flag.ne.NoError) RETURN
 !

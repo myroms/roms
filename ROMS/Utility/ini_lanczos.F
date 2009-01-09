@@ -257,6 +257,8 @@
 
 # include "set_bounds.h"
 !
+      SourceFile='ini_lanczos.F, ini_lanczos_tile'
+!
 !------------------------------------------------------------------------
 !  Compute tangent linear model initial conditions from the weighted
 !  sum of the Lanczos vectors.
@@ -580,12 +582,15 @@
       integer :: itrc
 # endif
       integer :: gtype, ncid, status
-      integer, dimension(NV) :: vid
+
       integer, dimension(4) :: Vsize
+      integer, dimension(NV) :: vid
 
       real(r8) :: Fmin, Fmax, scale
 
 # include "set_bounds.h"
+!
+      SourceFile='ini_lanczos.F, read_state'
 !
 !-----------------------------------------------------------------------
 !  Read in requested model state record. Load data into state array
@@ -595,55 +600,29 @@
 !  Determine file and variables ids.
 !
       IF ((ndef.gt.0).or.(ncfileid.eq.-1)) THEN
-        IF (InpThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-          END IF            
-          ncfileid=ncid
+        CALL netcdf_open (ng, model, ncname, 0, ncid)
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, model, ncfileid, 1)
-        CALL mp_bcasti (ng, model, exit_flag, 1)
-        IF (exit_flag.ne.NoError) RETURN
-# endif
+        ncfileid=ncid
       ELSE
         ncid=ncfileid
       END IF
-      IF (InpThread) THEN
-# ifndef SOLVE3D
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
-# endif
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
-# ifdef ADJUST_WSTRESS
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
-# endif
-# ifdef SOLVE3D
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
-        DO itrc=1,NT(ng)
-          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),      &
-     &                          vid(idTvar(itrc)))
-#  ifdef ADJUST_STFLUX
-          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),      &
-     &                          vid(idTsur(itrc)))
-#  endif
-        END DO
-# endif
-      END IF
+
       DO i=1,4
         Vsize(i)=0
       END DO
-      scale=1.0_r8
 !
 !  Read in free-surface.
 !
       gtype=r2dvar
-      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idFsur),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -664,7 +643,12 @@
 !  Read in 2D momentum.
 !
       gtype=u2dvar
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUbar),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -681,7 +665,12 @@
       END IF
 
       gtype=v2dvar
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVbar),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -703,7 +692,12 @@
 !  Read surface momentum stress.
 !
       gtype=u3dvar
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUsms),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -720,7 +714,12 @@
       END IF
 
       gtype=v3dvar
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVsms),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -742,7 +741,12 @@
 !  Read in 3D momentum.
 !
       gtype=u3dvar
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idUvel),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -759,7 +763,12 @@
       END IF
 
       gtype=v3dvar
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, gtype,        &
+      scale=1.0_r8
+      CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVvel),        &
+     &                       ncid, varid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -778,8 +787,13 @@
 !  Read in tracers.
 !
       gtype=r3dvar
+      scale=1.0_r8
       DO itrc=1,NT(ng)
-        status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
+        CALL netcdf_inq_varid (ng, model, ncname,                       &
+     &                         Vname(1,idTvar(itrc)), ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d(ng, model, ncid, vid(idTvar(itrc)), rec,      &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
@@ -802,8 +816,13 @@
 !  Read in surface tracers flux.
 !
       gtype=r3dvar
+      scale=1.0_r8
       DO itrc=1,NT(ng)
-        status=nf_fread3d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
+        CALL netcdf_inq_varid (ng, model, ncname,                       &
+     &                         Vname(1,idTsur(itrc)), ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d(ng, model, ncid, vid(idTsur(itrc)), rec,      &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
      &                    scale, Fmin, Fmax,                            &
 #   ifdef MASKING
@@ -825,8 +844,8 @@
 !
 !  If multiple files, close current file.
 !
-      IF (InpThread.and.(ndef.gt.0)) THEN
-        status=nf90_close(ncid)
+      IF (ndef.gt.0) THEN
+        CALL netcdf_close (ng, model, ncid)
       END IF
 !
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)

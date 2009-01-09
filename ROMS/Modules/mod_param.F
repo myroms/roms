@@ -101,6 +101,9 @@
           integer, pointer :: LBj(:)   ! lower bound J-dimension
           integer, pointer :: UBj(:)   ! upper bound J-dimension
 
+          integer :: LBij              ! Lower bound MIN(I,J)-dimension
+          integer :: UBij              ! upper bound MAX(I,J)-dimension
+
           integer, pointer :: Istr(:)  ! starting tile I-direction
           integer, pointer :: Iend(:)  ! ending   tile I-direction
           integer, pointer :: Jstr(:)  ! starting tile J-direction
@@ -126,45 +129,75 @@
 !-----------------------------------------------------------------------
 !
         TYPE T_IOBOUNDS
-          integer :: ILB_psi        ! I-direction lower bound (PSI)
-          integer :: IUB_psi        ! I-direction upper bound (PSI)
-          integer :: JLB_psi        ! J-direction lower bound (PSI)
-          integer :: JUB_psi        ! J-direction upper bound (PSI)
+          integer :: ILB_psi       ! I-direction lower bound (PSI)
+          integer :: IUB_psi       ! I-direction upper bound (PSI)
+          integer :: JLB_psi       ! J-direction lower bound (PSI)
+          integer :: JUB_psi       ! J-direction upper bound (PSI)
 
-          integer :: ILB_rho        ! I-direction lower bound (RHO)
-          integer :: IUB_rho        ! I-direction upper bound (RHO)
-          integer :: JLB_rho        ! J-direction lower bound (RHO)
-          integer :: JUB_rho        ! J-direction upper bound (RHO)
+          integer :: ILB_rho       ! I-direction lower bound (RHO)
+          integer :: IUB_rho       ! I-direction upper bound (RHO)
+          integer :: JLB_rho       ! J-direction lower bound (RHO)
+          integer :: JUB_rho       ! J-direction upper bound (RHO)
 
-          integer :: ILB_u          ! I-direction lower bound (U)
-          integer :: IUB_u          ! I-direction upper bound (U)
-          integer :: JLB_u          ! J-direction lower bound (U)
-          integer :: JUB_u          ! J-direction upper bound (U)
+          integer :: ILB_u         ! I-direction lower bound (U)
+          integer :: IUB_u         ! I-direction upper bound (U)
+          integer :: JLB_u         ! J-direction lower bound (U)
+          integer :: JUB_u         ! J-direction upper bound (U)
 
-          integer :: ILB_v          ! I-direction lower bound (V)
-          integer :: IUB_v          ! I-direction upper bound (V)
-          integer :: JLB_v          ! J-direction lower bound (V)
-          integer :: JUB_v          ! J-direction upper bound (V)
+          integer :: ILB_v         ! I-direction lower bound (V)
+          integer :: IUB_v         ! I-direction upper bound (V)
+          integer :: JLB_v         ! J-direction lower bound (V)
+          integer :: JUB_v         ! J-direction upper bound (V)
 
-          integer :: xi_psi         ! number of I-direction points (PSI)
-          integer :: xi_rho         ! number of I-direction points (RHO)
-          integer :: xi_u           ! number of I-direction points (U)
-          integer :: xi_v           ! number of I-direction points (V)
+          integer :: IorJ          ! number of MAX(I,J)-direction points
 
-          integer :: eta_psi        ! number of J-direction points (PSI)
-          integer :: eta_rho        ! number of J-direction points (RHO)
-          integer :: eta_u          ! number of I-direction points (U)
-          integer :: eta_v          ! number of I-direction points (V)
+          integer :: xi_psi        ! number of I-direction points (PSI)
+          integer :: xi_rho        ! number of I-direction points (RHO)
+          integer :: xi_u          ! number of I-direction points (U)
+          integer :: xi_v          ! number of I-direction points (V)
+
+          integer :: eta_psi       ! number of J-direction points (PSI)
+          integer :: eta_rho       ! number of J-direction points (RHO)
+          integer :: eta_u         ! number of I-direction points (U)
+          integer :: eta_v         ! number of I-direction points (V)
 
 #if (defined READ_WATER || defined WRITE_WATER) && defined MASKING
-          integer :: xy_psi         ! number of IJ-water points (PSI)
-          integer :: xy_rho         ! number of IJ-water points (RHO)
-          integer :: xy_u           ! number of IJ-water points (U)
-          integer :: xy_v           ! number of IJ-water points (V)
+          integer :: xy_psi        ! number of IJ-water points (PSI)
+          integer :: xy_rho        ! number of IJ-water points (RHO)
+          integer :: xy_u          ! number of IJ-water points (U)
+          integer :: xy_v          ! number of IJ-water points (V)
 #endif
         END TYPE T_IOBOUNDS
 
         TYPE (T_IOBOUNDS) :: IOBOUNDS(Ngrids)
+!
+!-----------------------------------------------------------------------
+!  Tiles minimum and maximum fractional grid coordinates.
+!-----------------------------------------------------------------------
+!
+        TYPE T_DOMAIN
+          real(r8), pointer :: Xmin_psi(:)
+          real(r8), pointer :: Xmax_psi(:)
+          real(r8), pointer :: Ymin_psi(:)
+          real(r8), pointer :: Ymax_psi(:)
+
+          real(r8), pointer :: Xmin_rho(:)
+          real(r8), pointer :: Xmax_rho(:)
+          real(r8), pointer :: Ymin_rho(:)
+          real(r8), pointer :: Ymax_rho(:)
+
+          real(r8), pointer :: Xmin_u(:)
+          real(r8), pointer :: Xmax_u(:)
+          real(r8), pointer :: Ymin_u(:)
+          real(r8), pointer :: Ymax_u(:)
+
+          real(r8), pointer :: Xmin_v(:)
+          real(r8), pointer :: Xmax_v(:)
+          real(r8), pointer :: Ymin_v(:)
+          real(r8), pointer :: Ymax_v(:)
+        END TYPE T_DOMAIN
+
+        TYPE (T_DOMAIN), allocatable :: DOMAIN(:)
 !
 !-----------------------------------------------------------------------
 !  Model grid(s) parameters.
@@ -391,6 +424,21 @@
 !  Number of diagnostic 3D right-hand-side fields.
 !
         integer :: NDrhs
+#endif
+
+#if defined FOUR_DVAR || defined IMPULSE
+!
+!-----------------------------------------------------------------------
+!  4DVAR parameters.
+!-----------------------------------------------------------------------
+!
+!  Number of state arrays (size of additional dimension) for error
+!  covariance normalization and standard deviation factors. This
+!  paramenter is NSA=1 for strong constraint and NSA=2 for weak
+!  constraint. In weak constraint, it contains fields for initial
+!  conditions and model error covariance states.
+!
+        integer :: NSA
 #endif
 !
 !-----------------------------------------------------------------------

@@ -65,6 +65,8 @@
       character (len=80) :: Vinfo(Natt)
       character (len=80) :: ncname
 !
+      SourceFile='def_station.F'
+!
 !-----------------------------------------------------------------------
 !  Set and report file name.
 !-----------------------------------------------------------------------
@@ -85,21 +87,11 @@
 !=======================================================================
 !
       DEFINE : IF (ldef) THEN
-        IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), CMODE, ncSTAid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_create (ng, iNLM, TRIM(ncname), ncSTAid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          IF (Master) WRITE (stdout,30) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, INLM, ncSTAid(ng), 1)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Define file dimensions.
@@ -829,7 +821,7 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -861,21 +853,11 @@
 !
 !  Open stations file for read/write.
 !
-        IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname), nf90_write, ncSTAid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,60) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+        CALL netcdf_open (ng, iNLM, ncname, 1, ncSTAid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          WRITE (stdout,60) TRIM(ncname)
+          RETURN
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, ncSTAid(ng), 1)
-# endif
 !
 !  Initialize logical switches.
 !

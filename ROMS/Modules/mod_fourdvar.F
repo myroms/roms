@@ -97,6 +97,36 @@
         implicit none
 
 # ifdef OBSERVATIONS
+!
+!  Define module structure.
+!
+        TYPE T_FOURDVAR
+
+          integer , pointer :: NobsSurvey(:)
+          integer , pointer :: ObsCount(:)
+          integer , pointer :: ObsReject(:)
+#  ifdef FOUR_DVAR
+          real(r8), pointer :: BackCost(:)
+          real(r8), pointer :: Cost0(:)
+          real(r8), pointer :: CostFun(:)
+          real(r8), pointer :: CostFunOld(:)
+          real(r8), pointer :: CostNorm(:)
+          real(r8), pointer :: ObsCost(:)
+          real(r8), pointer :: DataPenalty(:)
+#   if defined DATALESS_LOOPS || defined W4DPSAS
+          real(r8), pointer :: NLPenalty(:)
+#   endif
+          real(r8), pointer :: NLobsCost(:)
+#  endif
+          real(r8), pointer :: ObsVar(:)
+          real(r8), pointer :: SurveyTime(:)
+  
+        END TYPE T_FOURDVAR
+
+        TYPE (T_FOURDVAR), allocatable :: FOURDVAR(:)
+!
+!  Define other module arrays.
+!
         integer,  allocatable :: ObsType(:)
 
         real(r8), allocatable :: ObsErr(:)
@@ -126,31 +156,6 @@
         real(r8), allocatable :: cg_pxsave(:)
         real(r8), allocatable :: cg_dla(:,:)
 #  endif
-!
-        TYPE T_FOURDVAR
-
-          integer , pointer :: NobsSurvey(:)
-          integer , pointer :: ObsCount(:)
-          integer , pointer :: ObsReject(:)
-#  ifdef FOUR_DVAR
-          real(r8), pointer :: BackCost(:)
-          real(r8), pointer :: Cost0(:)
-          real(r8), pointer :: CostFun(:)
-          real(r8), pointer :: CostFunOld(:)
-          real(r8), pointer :: CostNorm(:)
-          real(r8), pointer :: ObsCost(:)
-          real(r8), pointer :: DataPenalty(:)
-#   if defined DATALESS_LOOPS || defined W4DPSAS
-          real(r8), pointer :: NLPenalty(:)
-#   endif
-          real(r8), pointer :: NLobsCost(:)
-#  endif
-          real(r8), pointer :: ObsVar(:)
-          real(r8), pointer :: SurveyTime(:)
-  
-        END TYPE T_FOURDVAR
-
-        TYPE (T_FOURDVAR), allocatable :: FOURDVAR(:)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -280,12 +285,14 @@
 !  Spatial convolutions parameters
 !-----------------------------------------------------------------------
 !
-!  Full number of horizontal and vertical diffusion operator step for
-!  spatial convolutions.
+!  Initial conditions, surface forcing and model error covariance: Full
+!  number of horizontal and vertical diffusion operator step for spatial
+!  convolutions.
 !
-        integer, allocatable :: NHsteps(:)
-        integer, allocatable :: NVsteps(:)
+        integer, allocatable :: NHsteps(:,:)
+        integer, allocatable :: NVsteps(:,:)
 !
+!  Initial conditions, surface forcing and model error covariance:
 !  Horizontal and vertical diffusion operator time-step size for
 !  spatial convolutions.
 !
@@ -405,14 +412,6 @@
         integer :: NritzEV
         integer :: nConvRitz = 0
 !
-!  Conjugate gradient alogorithm initial step size.
-!
-        real(r8) :: CGstepI              ! initial step size
-!
-!  Weak constraint conjugate gradient algorithm convergence criteria.
-!
-        real(r8) :: CGeps
-!
 !  Weak contraint conjugate gradient norms.
 !
         real(r8) :: cg_gammam1 = 0.0_r8
@@ -492,8 +491,16 @@
 # ifdef OBSERVATIONS
       real(r8), parameter :: IniVal = 0.0_r8
 # endif
+!
+      SourceFile='mod_fourdvar.F, initialize_fourdvar'
 
 # ifdef OBSERVATIONS
+!
+!-----------------------------------------------------------------------
+!  Allocate module structure.
+!-----------------------------------------------------------------------
+!
+      allocate ( FOURDVAR(Ngrids) )
 !
 !-----------------------------------------------------------------------
 !  Inquire observations NetCDF and determine the maximum dimension of
@@ -531,11 +538,9 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Allocate module structure.
+!  Allocate module variables.
 !-----------------------------------------------------------------------
 !
-      allocate ( FOURDVAR(Ngrids) )
-
       DO ng=1,Ngrids
 
 #  ifdef SOLVE3D
@@ -607,14 +612,18 @@
 !
         CALL netcdf_get_ivar (ng, iNLM, TRIM(OBSname(ng)),              &
      &                        TRIM(Vname(1,idNobs)),                    &
-     &                        FOURDVAR(ng)%NobsSurvey)
+     &                        FOURDVAR(ng)%NobsSurvey,                  &
+     &                        start = (/1/),                            &
+     &                        total = (/Nsurvey(ng)/))
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in the time of each observation survey.
 !
         CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
      &                        TRIM(Vname(1,idOday)),                    &
-     &                        FOURDVAR(ng)%SurveyTime)
+     &                        FOURDVAR(ng)%SurveyTime,                  &
+     &                        start = (/1/),                            &
+     &                        total = (/Nsurvey(ng)/))
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Determine maximum size of observation arrays.
@@ -706,7 +715,7 @@
 # else
 !
 !-----------------------------------------------------------------------
-!  Allocate module variables.
+!  Allocate other module variables.
 !-----------------------------------------------------------------------
 !
 !  Set number of state variables.
@@ -728,10 +737,17 @@
 !
 !  Allocate convolution parameters.
 !
-      allocate ( NHsteps(MstateVar) )
-      allocate ( NVsteps(MstateVar) )
+      allocate ( NHsteps(2,MstateVar) )
+      NHsteps = 0
+
+      allocate ( NVsteps(2,MstateVar) )
+      NHsteps = 0
+
       allocate ( DTsizeH(MstateVar) )
+      DTsizeH = IniVal
+
       allocate ( DTsizeV(MstateVar) )
+      DTsizeV = IniVal
 
 # if defined IS4DVAR || defined WEAK_CONSTRAINT || defined IOM
 !
@@ -832,7 +848,8 @@
         CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
      &                        TRIM(Vname(1,idOvar)),                    &
      &                        FOURDVAR(ng)%ObsVar,                      &
-     &                        start = (/1/), total = (/my_NstateVar/))
+     &                        start = (/1/),                            &
+     &                        total = (/my_NstateVar/))
         IF (exit_flag.ne.NoError) RETURN
 # endif
       END DO

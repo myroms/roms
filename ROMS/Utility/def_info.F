@@ -100,6 +100,7 @@
 
       character (len=11) :: frcatt
       character (len=50) :: tiling
+      character (len=80) :: type
       character (len=80) :: Vinfo(Natt)
 #ifdef BIOLOGY
       character (len=512) :: bio_file
@@ -210,8 +211,14 @@
           type='ROMS/TOMS tangent linear model initial file'
         ELSE IF (ncid.eq.ncLCZid(ng)) THEN
           type='ROMS/TOMS 4DVAR Lanczos vectors file'
-        ELSE IF (ncid.eq.ncNRMid(ng)) THEN
-          type='ROMS/TOMS background error covariance norm file'
+        ELSE IF (ncid.eq.ncNRMid(1,ng)) THEN
+          type='ROMS/TOMS initial conditions error covariance norm file'
+        ELSE IF (ncid.eq.ncNRMid(2,ng)) THEN
+          type='ROMS/TOMS model error covariance norm file'
+        ELSE IF (ncid.eq.ncNRMid(3,ng)) THEN
+         type='ROMS/TOMS boundary conditions error covariance norm file'
+        ELSE IF (ncid.eq.ncNRMid(4,ng)) THEN
+          type='ROMS/TOMS surface forcing error covariance norm file'
         ELSE IF (ncid.eq.ncRSTid(ng)) THEN
           type='ROMS/TOMS restart file'
         ELSE IF (ncid.eq.ncSTAid(ng)) THEN
@@ -427,7 +434,7 @@
     defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'nrm_file',            &
-     &                        TRIM(NRMname(ng)))
+     &                        TRIM(NRMname(1,ng)))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'nrm_file', TRIM(ncname)
             exit_flag=3
@@ -796,7 +803,7 @@
       END IF
 
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag)
 #endif
       IF (exit_flag.ne.NoError) RETURN
 
@@ -947,6 +954,15 @@
       Vinfo( 1)='ndefTLM'
       Vinfo( 2)=                                                        &
      &    'number of time-steps between the creation of tanget files'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#ifdef ADJUST_BOUNDARY
+      Vinfo( 1)='nOBC'
+      Vinfo( 2)=                                                        &
+     &  'number of time-steps between 4DVAR open boundary adjustment'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname)
       IF (exit_flag.ne.NoError) RETURN
@@ -1505,7 +1521,8 @@
 # endif
 
       Vinfo( 1)='Hdecay'
-      Vinfo( 2)='background covariance horizontal decorrelation scale'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal decorrelation scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/statedim/), Aval, Vinfo, ncname)
@@ -1513,11 +1530,50 @@
 
 # ifdef SOLVE3D
       Vinfo( 1)='Vdecay'
-      Vinfo( 2)='background covariance vertical decorrelation scale'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &           'vertical decorrelation scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/statedim/), Aval, Vinfo, ncname)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef WEAK_CONSTRAINT
+      Vinfo( 1)='HdecayM'
+      Vinfo( 2)='model error covariance horizontal decorrelation scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/statedim/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef SOLVE3D
+      Vinfo( 1)='VdecayM'
+      Vinfo( 2)='model error covariance vertical decorrelation scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/statedim/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      Vinfo( 1)='HdecayB'
+      Vinfo( 2)='open boundary conditions error covariance '//          &
+     &          'horizontal decorrelation scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               2, (/statedim, brydim/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef SOLVE3D
+      Vinfo( 1)='VdecayB'
+      Vinfo( 2)='open boundary conditions error covariance '//          &
+     &           'vertical decorrelation scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               2, (/statedim, brydim/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 
 # ifdef RPM_RELAXATION

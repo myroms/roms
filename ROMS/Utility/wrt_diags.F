@@ -23,9 +23,6 @@
       USE mod_netcdf
       USE mod_scalars
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -43,6 +40,8 @@
       integer :: gfactor, gtype, ifield, itrc, ivar, status
 
       real(r8) :: scale
+!
+      SourceFile='wrt_diags.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -251,24 +250,14 @@
 !  Synchronize time-average NetCDF file to disk to allow other processes
 !  to access data immediately after it is written.
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncDIAid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)  TRIM(DIAname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
-      IF (Master) WRITE (stdout,30) tDIAindx(ng)
+      CALL netcdf_sync (ng, iNLM, DIAname(ng), ncDIAid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
+      IF (Master) WRITE (stdout,20) tDIAindx(ng)
 !
   10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,11x,  &
      &        'into diagnostics NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_DIAGS - unable to synchronize to disk ',          &
-     &        'diagnostics file:',/,13x,a)
-  30  FORMAT (6x,'WRT_DIAGS - wrote diagnostics fields into time ',     &
+  20  FORMAT (6x,'WRT_DIAGS - wrote diagnostics fields into time ',     &
      &        'record = ',t72,i7.7)
 #else
       SUBROUTINE wrt_diags

@@ -30,9 +30,6 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : tl_dotproduct
 # endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_TLadjust, load_TLforcing
-# endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
@@ -63,6 +60,9 @@
 # if defined WEAK_CONSTRAINT || defined IOM
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE tl_frc_adjust_mod, ONLY : tl_frc_adjust
+# endif
 # ifdef GLS_MIXING_NOT_YET
 !!    USE tl_gls_corstep_mod, ONLY : tl_gls_corstep
 !!    USE tl_gls_prestep_mod, ONLY : tl_gls_prestep
@@ -74,6 +74,9 @@
 # ifdef MY25_MIXING_NOT_YET
 !!    USE tl_my25_corstep_mod, ONLY : tl_my25_corstep
 !!    USE tl_my25_prestep_mod, ONLY : tl_my25_prestep
+# endif
+# ifdef ADJUST_BOUNDARY
+      USE tl_obc_adjust_mod, ONLY : tl_obc_adjust
 # endif
       USE tl_omega_mod, ONLY : tl_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -333,12 +336,11 @@
       END DO
 !$OMP END PARALLEL DO
 
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
-!  Interpolate surface forcing increments and adjust surface forcing.
-!  Load surface forcing into storage arrays. Skip the last output
-!  timestep.
+!  Interpolate open boundary increments and adjust open boundaries.
+!  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).lt.(ntend(ng)+1)) THEN
@@ -346,7 +348,26 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL frc_TLadjust (ng, TILE, Lfinp(ng))
+            CALL tl_obc_adjust (ng, TILE, Lbinp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Skip the last output timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_frc_adjust (ng, TILE, Lfinp(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO

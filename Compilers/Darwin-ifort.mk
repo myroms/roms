@@ -5,7 +5,7 @@
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
-# Include file for Intel IFORT (version 8.x) compiler on Linux
+# Include file for Intel IFORT (version 10.1) compiler on Linux
 # -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
@@ -24,7 +24,7 @@
 # First the defaults
 #
                FC := ifort
-           FFLAGS :=
+           FFLAGS := -heap-arrays
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional-cpp
           LDFLAGS := 

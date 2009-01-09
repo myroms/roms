@@ -67,6 +67,8 @@
       character (len=1 ) :: char1
       character (len=80) :: ncname
 !
+      SourceFile='get_grid.F'
+!
 !-----------------------------------------------------------------------
 !  Inquire about the contents of grid NetCDF file:  Inquire about
 !  the dimensions and variables.  Check for consistency.
@@ -175,18 +177,13 @@
 !
 !  Open grid NetCDF file for reading.
 !
-      IF (InpThread.and.(ncGRDid(ng).eq.-1)) THEN
-        status=nf90_open(TRIM(ncname), nf90_nowrite, ncGRDid(ng))
-        IF (status.ne.nf90_noerr) THEN
+      IF (ncGRDid(ng).eq.-1) THEN
+        CALL netcdf_open (ng, model, ncname, 0, ncGRDid(ng))
+        IF (exit_flag.ne.NoError) THEN
           WRITE (stdout,20) TRIM(ncname)
-          exit_flag=4
-          ioerror=status
+          RETURN
         END IF
       END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-      IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in logical switch for spherical grid configuration.
 !
@@ -208,7 +205,7 @@
         END IF
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) THEN
         IF (Master) THEN
@@ -217,7 +214,7 @@
         RETURN
       END IF
 # ifdef DISTRIBUTE
-      CALL mp_bcastl (ng, model, spherical, 1)
+      CALL mp_bcastl (ng, model, spherical)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -260,11 +257,11 @@
               END IF
             END IF
 # ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, model, exit_flag, 1)
+            CALL mp_bcasti (ng, model, exit_flag)
 # endif
             IF (exit_flag.ne.NoError) EXIT
 # ifdef DISTRIBUTE
-            CALL mp_bcastf (ng, model, xl(ng), 1)
+            CALL mp_bcastf (ng, model, xl(ng))
 # endif
 !
 !  Read in basin Y-length.
@@ -278,11 +275,11 @@
               END IF
             END IF
 # ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, model, exit_flag, 1)
+            CALL mp_bcasti (ng, model, exit_flag)
 # endif
             IF (exit_flag.ne.NoError) EXIT
 # ifdef DISTRIBUTE
-            CALL mp_bcastf (ng, model, el(ng), 1)
+            CALL mp_bcastf (ng, model, el(ng))
 # endif
 !
 !  Read in bathymetry.
@@ -1103,10 +1100,8 @@
 !
 ! Close GRID NetCDF file.
 !
-      IF (InpThread) THEN
-        status=nf90_close(ncGRDid(ng))
-        ncGRDid(ng)=-1
-      END IF
+      CALL netcdf_close (ng, model, ncGRDid(ng), ncname)
+      IF (exit_flag.ne.NoError) RETURN
 
 # if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SO_SEMI
@@ -1159,18 +1154,13 @@
 !
 !  Open adjoint sensitivity NetCDF file for reading.
 !
-      IF (InpThread.and.GotScope(4).and.(ncADSid(ng).eq.-1)) THEN
-        status=nf90_open(TRIM(ncname), nf90_nowrite, ncADSid(ng))
-        IF (status.ne.nf90_noerr) THEN
+      IF (GotScope(4).and.(ncADSid(ng).eq.-1)) THEN
+        CALL netcdf_open (ng, model, ncname, 0, ncADSid(ng))
+        IF (exit_flag.ne.NoError) THEN
           WRITE (stdout,20) TRIM(ncname)
-          exit_flag=4
-          ioerror=status
+          RETURN
         END IF
       END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
-# endif
-      IF (exit_flag.ne.NoError) RETURN
 !
 !  Scan adjoint sensitivity variables.
 !

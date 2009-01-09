@@ -22,11 +22,6 @@
       USE mod_netcdf
       USE mod_scalars
       USE mod_stepping
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -39,6 +34,8 @@
       integer :: itrc, l, status
 
       real(r8), dimension(Nfloats(ng)) :: Tout
+!
+      SourceFile='wrt_floats.F'
 !
 !-----------------------------------------------------------------------
 !  Write out station data at RHO-points.
@@ -210,20 +207,8 @@
 !  Synchronize floats NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncFLTid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(FLTname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
-!
-  10  FORMAT (/,' WRT_FLOATS - unable to synchronize to disk stations', &
-     &        ' file: ',/,14x,a)
+      CALL netcdf_sync (ng, iNLM, FLTname(ng), ncFLTid(ng))
+
 #else
       SUBROUTINE wrt_floats
 #endif

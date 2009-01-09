@@ -15,6 +15,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+# endif
       USE mod_forces
       USE mod_grid
       USE mod_iounits
@@ -25,9 +28,6 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -42,16 +42,26 @@
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
+# ifdef ADJUST_BOUNDARY
+      integer :: IorJ, LBij, UBij
+# endif
       integer :: i, j, gfactor, gtype, status
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
       real(r8) :: scale
 !
+      SourceFile='wrt_hessian.F'
+!
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+# ifdef ADJUST_BOUNDARY
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij
+      IorJ=IOBOUNDS(ng)%IorJ
+# endif
 !
 !-----------------------------------------------------------------------
 !  Write out Hessian eigenvectors.
@@ -101,8 +111,25 @@
         ioerror=status
         RETURN
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component in the XI-direction.
+!  Write out free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isFsur))),            &
+     &                        BOUNDARY(ng)% ad_zeta_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tHSSindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        varid = hssVid(idSbry(isFsur),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D U-momentum component.
 !
       scale=1.0_r8
       gtype=gfactor*u2dvar
@@ -121,8 +148,25 @@
         ioerror=status
         RETURN
       END IF
+
+# ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D momentum component in the ETA-direction.
+!  Write out 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUbar))),            &
+     &                        BOUNDARY(ng)% ad_ubar_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tHSSindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        varid = hssVid(idSbry(isUbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+!
+!  Write out 2D V-momentum component.
 !
       scale=1.0_r8
       gtype=gfactor*v2dvar
@@ -141,9 +185,27 @@
         ioerror=status
         RETURN
       END IF
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Write out 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVbar))),            &
+     &                        BOUNDARY(ng)% ad_vbar_obc(LBij:,:,:,      &
+     &                                                  kout),          &
+     &                        (/1,1,1,tHSSindx(ng)/),                   &
+     &                        (/IorJ,4,Nbrec(ng),1/),                   &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        varid = hssVid(idSbry(isVbar),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+
 # ifdef SOLVE3D
 !
-!  Write out 3D momentum component in the XI-direction.
+!  Write out 3D U-momentum component.
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
@@ -162,8 +224,25 @@
         ioerror=status
         RETURN
       END IF
+
+#  ifdef ADJUST_BOUNDARY
 !
-!  Write out 3D momentum component in the ETA-direction.
+!  Write out 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isUvel))),            &
+     &                        BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,      &
+     &                                                nout),            &
+     &                        (/1,1,1,1,tHSSindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        varid = hssVid(idSbry(isUvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+!
+!  Write out 3D V-momentum component.
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
@@ -182,6 +261,23 @@
         ioerror=status
         RETURN
       END IF
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                    &
+     &                        TRIM(Vname(1,idSbry(isVvel))),            &
+     &                        BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,      &
+     &                                                nout),            &
+     &                        (/1,1,1,1,tHSSindx(ng)/),                 &
+     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        varid = hssVid(idSbry(isVvel),ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
 !
 !  Write out tracer type variables.
 !
@@ -205,6 +301,26 @@
           RETURN
         END IF
       END DO
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Write out tracers open boundaries.
+!
+      DO itrc=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                  &
+     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,    &
+     &                                                  nout,itrc),     &
+     &                          (/1,1,1,1,tHSSindx(ng),itrc/),          &
+     &                          (/IorJ,N(ng),4,Nbrec(ng),1,1/),         &
+     &                          ncid = ncHSSid(ng),                     &
+     &                          varid = hssVid(idSbry(isTvar(itrc)),ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+#  endif
+
 #  ifdef ADJUST_STFLUX
 !
 !  Write out surface net tracers fluxes. Notice that fluxes have their
@@ -284,32 +400,22 @@
 !  processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncHSSid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(HSSname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iADM, exit_flag, 1)
-# endif
+      CALL netcdf_sync (ng, iADM, HSSname(ng), ncHSSid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
 # ifdef SOLVE3D
-      IF (Master) WRITE (stdout,30) kout, nout, tHSSindx(ng)
+      IF (Master) WRITE (stdout,20) kout, nout, tHSSindx(ng)
 # else
-      IF (Master) WRITE (stdout,30) kout, tHSSindx(ng)
+      IF (Master) WRITE (stdout,20) kout, tHSSindx(ng)
 # endif
 !
   10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
      &        15x,'into Hessian NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_HESSIAN - unable to synchronize to disk Hessian', &
-     &        'file:',/,15x,a)
 # ifdef SOLVE3D
-  30  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)
 # else
-  30  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
      &        ') into time record = ',i7.7)
 # endif
       RETURN

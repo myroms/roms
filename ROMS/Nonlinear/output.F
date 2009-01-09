@@ -40,6 +40,8 @@
       logical :: Ldefine, NewFile
 
       integer :: ifile, lstr, status, tile
+!
+      SourceFile='output.F'
 
 # ifdef PROFILE
 !

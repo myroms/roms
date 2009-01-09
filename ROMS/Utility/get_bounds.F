@@ -88,22 +88,22 @@
      &               IstrR, IstrT, IstrU, IendR, IendT,                 &
      &               JstrR, JstrT, JstrV, JendR, JendT)
 !
-      IF (Itile.eq.0) THEN
+      IF ((Itile.eq.-1).or.(Itile.eq.0)) THEN
         LBi=Imin
       ELSE
         LBi=Istr-Nghost
       END IF
-      IF (Itile.eq.(NtileI(ng)-1)) THEN
+      IF ((Itile.eq.-1).or.(Itile.eq.(NtileI(ng)-1))) THEN
         UBi=Imax
       ELSE
         UBi=Iend+Nghost
       END IF
-      IF (Jtile.eq.0) THEN
+      IF ((Jtile.eq.-1).or.(Jtile.eq.0)) THEN
         LBj=Jmin
       ELSE
         LBj=Jstr-Nghost
       END IF
-      IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+      IF ((Jtile.eq.-1).or.(Jtile.eq.(NtileJ(ng)-1))) THEN
         UBj=Jmax
       ELSE
         UBj=Jend+Nghost
@@ -217,6 +217,9 @@
 !
 !  Set IO NetCDF files horizontal dimension size. Recall that NetCDF
 !  does not support arrays with zero index as an array element.
+!
+      IOBOUNDS(ng) % IorJ    = BOUNDS(ng) % UBij -                      &
+     &                         BOUNDS(ng) % LBij + 1
 !
       IOBOUNDS(ng) % xi_psi  = IOBOUNDS(ng) % IUB_psi -                 &
      &                         IOBOUNDS(ng) % ILB_psi + 1

@@ -102,10 +102,7 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
-#  ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-#  endif
+      USE mod_netcdf
 # endif
 !
 !  Imported variable declarations.
@@ -115,7 +112,9 @@
 !  Local variable declarations.
 ! 
 # ifndef ANA_PSOURCE
-      integer :: Nrec, nvd, Vsize(4)
+      logical :: foundit
+
+      integer :: Vid, ifile, nvatt, nvdim
 # endif
       integer :: is, itrc, k
 
@@ -132,14 +131,23 @@
 !
 !  Inquire about the number of point sources.
 !
-      IF (InpThread) THEN
-        CALL opencdf (ng, nFfiles(ng), FRCname(1,ng), ncfile, N(ng),    &
-     &                idRxpo, Nrec, nvd, Vsize)
-        Nsrc(ng)=Vsize(1)
-      END IF
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, Nsrc(ng), 1)
-#  endif
+      foundit=.FALSE.
+
+      QUERY : DO ifile=1,nFfiles(ng)
+        CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,ng),               &
+     &                       MyVarName = TRIM(Vname(1,idRxpo)),         &
+     &                       SearchVar = foundit,                       &
+     &                       VarID = Vid,                               &
+     &                       nVardim = nvdim,                           &
+     &                       nVarAtt = nvatt)
+        IF (exit_flag.ne.NoError) RETURN
+
+        IF (foundit) THEN
+          Nsrc(ng)=var_Dsize(1)         ! first dimension
+          EXIT QUERY
+        END IF
+
+      END DO QUERY
 # else
 !
 !  Set number of point sources to maximum number of analytical sources.

@@ -31,9 +31,6 @@
 # endif
       USE mod_stepping
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 # ifdef SOLVE3D
       USE extract_sta_mod, ONLY : extract_sta2d, extract_sta3d
 # else
@@ -65,7 +62,9 @@
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: XposW, YposW, ZposW
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta
 # endif
-
+!
+      SourceFile='wrt_station.F'
+!
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
@@ -869,20 +868,8 @@
 !  Synchronize stations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncSTAid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(STAname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-!
-  10  FORMAT (/,' WRT_STATION - unable to synchronize to disk ',        &
-     &        ' stations file:',/,15x,a)
+      CALL netcdf_sync (ng, iNLM, STAname(ng), ncSTAid(ng))
+
 #else
       SUBROUTINE wrt_station
 #endif

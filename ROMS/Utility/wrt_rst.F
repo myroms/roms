@@ -25,11 +25,7 @@
       USE mod_sediment
 #endif
       USE mod_stepping
-
-# ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # if defined PERFECT_RESTART || defined SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -57,6 +53,8 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+      SourceFile='wrt_rst.F'
 !
 !-----------------------------------------------------------------------
 !  Write out restart fields.
@@ -976,32 +974,22 @@
 !  Synchronize restart NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncRSTid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(RSTname(ng))
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
+      CALL netcdf_sync (ng, iNLM, RSTname(ng), ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
 #ifdef SOLVE3D
-      IF (Master) WRITE (stdout,30) KOUT, NOUT, tRSTindx(ng)
+      IF (Master) WRITE (stdout,20) KOUT, NOUT, tRSTindx(ng)
 #else
-      IF (Master) WRITE (stdout,30) KOUT, tRSTindx(ng)
+      IF (Master) WRITE (stdout,20) KOUT, tRSTindx(ng)
 #endif
 !
   10  FORMAT (/,' WRT_RST - error while writing variable: ',a,/,11x,    &
      &        'into restart NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_RST - unable to synchronize to disk restart ',    &
-     &        'file:',/,11x,a)
 #ifdef SOLVE3D
-  30  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
+  20  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
      &        ',',i1,') into time record = ',i7.7)
 #else
-  30  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
+  20  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
      &        ') into time record = ',i7.7)
 #endif
 

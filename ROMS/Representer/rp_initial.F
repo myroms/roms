@@ -173,6 +173,12 @@
       END IF
       IniRec=tIRPindx(ng)
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Initialize open boundary counter for storage arrays.
+!
+      OBCcount(ng)=0
+# endif
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
@@ -521,7 +527,7 @@
         FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+        CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
       END IF

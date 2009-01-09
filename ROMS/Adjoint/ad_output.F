@@ -34,6 +34,8 @@
       logical :: Ldefine, NewFile, wrtHIS
 
       integer :: ifile, lstr, status
+!
+      SourceFile='ad_output.F'
 
 # ifdef PROFILE
 !

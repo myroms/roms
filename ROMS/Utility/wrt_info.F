@@ -86,6 +86,8 @@
       character (len=1), dimension(NT(ng)) :: char1_trc
 #endif
 !
+      SourceFile='wrt_info.F'
+!
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
@@ -196,6 +198,13 @@
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefTLM',               &
      &                      ndefTLM(ng), (/0/), (/0/),                  &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#ifdef ADJUST_BOUNDARY
+      CALL netcdf_put_ivar (ng, model, ncname, 'nOBC',                  &
+     &                      nOBC(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 #endif
@@ -664,15 +673,45 @@
 # endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Hdecay',                &
-     &                      Hdecay(:,ng), (/1/), (/NstateVar(ng)/),     &
+     &                      Hdecay(1,:,ng), (/1/), (/NstateVar(ng)/),   &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'Vdecay',                &
-     &                      Vdecay(:,ng), (/1/), (/NstateVar(ng)/),     &
+     &                      Vdecay(1,:,ng), (/1/), (/NstateVar(ng)/),   &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef WEAK_CONSTRAINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'HdecayM',               &
+     &                      Hdecay(2,:,ng), (/1/), (/NstateVar(ng)/),   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef SOLVE3D
+      CALL netcdf_put_fvar (ng, model, ncname, 'VdecayM',               &
+     &                      Vdecay(2,:,ng), (/1/), (/NstateVar(ng)/),   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      CALL netcdf_put_fvar (ng, model, ncname, 'HdecayB',               &
+     &                      HdecayB(:,:,ng),                            &
+     &                      (/1,1/), (/NstateVar(ng),4/),               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef SOLVE3D
+      CALL netcdf_put_fvar (ng, model, ncname, 'VdecayB',               &
+     &                      VdecayB(:,:,ng),                            &
+     &                      (/1,1/), (/NstateVar(ng),4/),               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 
 # ifdef RPM_RELAXATION
@@ -2457,16 +2496,8 @@
 !  data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        IF (exit_flag.eq.NoError) THEN
-          status=nf90_sync(ncid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-      END IF
+      CALL netcdf_sync (ng, model, ncname, ncid)
+      IF (exit_flag.ne.NoError) RETURN
 
 #ifdef DISTRIBUTE
 !
@@ -2474,7 +2505,7 @@
 !
       ibuffer(1)=exit_flag
       ibuffer(2)=ioerror
-      CALL mp_bcasti (ng, model, ibuffer, 1)
+      CALL mp_bcasti (ng, model, ibuffer)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif

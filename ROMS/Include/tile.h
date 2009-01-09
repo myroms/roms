@@ -7,7 +7,7 @@
 *******************************************************************************
 */
       integer :: IminS, ImaxS, JminS, JmaxS
-      integer :: LBi, UBi, LBj, UBj
+      integer :: LBi, UBi, LBj, UBj, LBij, UBij
 !
 !  Set horizontal starting and ending indices for automatic private storage
 !  arrays.
@@ -23,3 +23,8 @@
       UBi=BOUNDS(ng)%UBi(tile)
       LBj=BOUNDS(ng)%LBj(tile)
       UBj=BOUNDS(ng)%UBj(tile)
+!
+!  Set array lower and upper bounds for MIN(I,J)- and MAX(I,J)-directions.
+!
+      LBij=BOUNDS(ng)%LBij
+      UBij=BOUNDS(ng)%UBij

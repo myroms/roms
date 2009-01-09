@@ -199,7 +199,7 @@
           status=nf90_get_var(ncTIDEid(ng), tideVid(idtime,ng), Htime)
         END IF
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, status, 1)
+        CALL mp_bcasti (ng, iNLM, status)
 #  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -210,7 +210,7 @@
           RETURN
         END IF
 #  ifdef DISTRIBUTE
-        CALL mp_bcastf (ng, iNLM, Htime, 1)
+        CALL mp_bcastf (ng, iNLM, Htime)
 #  endif
         IF (time(ng).ne.Htime) THEN
           IF (Master) THEN
@@ -228,7 +228,7 @@
           status=nf90_get_var(ncTIDEid(ng), varid, Hcount(ng))
         END IF
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, status, 1)
+        CALL mp_bcasti (ng, iNLM, status)
 #  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -239,7 +239,7 @@
           RETURN
         END IF
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, Hcount(ng), 1)
+        CALL mp_bcasti (ng, iNLM, Hcount(ng))
 #  endif
 !
 !  Time-accumulated COS(omega(k)*t) harmonics.
