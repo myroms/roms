@@ -1344,7 +1344,7 @@
 'Wave_break'                                       ! Input
   'percent wave breaking'
   'nondimensionsal'                                ! []
-  'Wave_dissip, scalar, series'
+  'Wave_break, scalar, series'
   'wave_time'
   'idWbrk'
   'r2dvar'
