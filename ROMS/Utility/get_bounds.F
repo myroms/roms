@@ -166,7 +166,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: Lfullgrid
+      logical, intent(in) :: Lfullgrid
 
       integer, intent(in) :: ng, tile, gtype, Nghost
 
