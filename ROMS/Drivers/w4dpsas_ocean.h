@@ -179,7 +179,7 @@
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!  Read in standard deviation factors for boundary conditions
+!  Read in standard deviation factors for surface forcing
 !  error covariance.
 !
         STDrec=1
@@ -353,7 +353,7 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+          CALL get_state (ng, 11, 11, NRMname(4,ng), 1, 1)
           IF (exit_flag.ne.NoError) RETURN
 #endif
         END IF
@@ -417,7 +417,7 @@
             END IF
             IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
               WRITE (stdout,30) outer, inner, 'NLM',                    &
-     &                          FOURDVAR(ng)%DataPenalty(i),            &
+     &                          FOURDVAR(ng)%NLPenalty(i),              &
      &                          TRIM(string)
             END IF
           END DO
@@ -1183,7 +1183,7 @@
               END IF
               IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
                 WRITE (stdout,30) outer, inner, 'NLM',                  &
-     &                            FOURDVAR(ng)%DataPenalty(i),          &
+     &                            FOURDVAR(ng)%NLPenalty(i),            &
      &                            TRIM(string)
               END IF
             END DO

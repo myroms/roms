@@ -928,10 +928,10 @@
       Coptions(is:is+15)=' FT_EIGENMODES,'
       idriver=idriver+1
 #endif
-#if defined FOUR_DVAR || defined PROPAGATOR
+#if defined FOUR_DVAR || defined PROPAGATOR || defined VERIFICATION
 # ifdef FULL_GRID
       IF (Master) WRITE (stdout,20) 'FULL_GRID',                        &
-#  if defined FOUR_DVAR
+#  if (defined FOUR_DVAR || defined VERIFICATION)
      &   'Considering observations at interior and boundary points.'
 #  elif defined PROPAGATOR
      &   'State vector includes interior and boundary points.'

@@ -752,7 +752,7 @@
         END DO
       END IF
 #  endif
-#  if defined ADJUST_STFLUX || defined SOLVE3D
+#  if defined ADJUST_STFLUX && defined SOLVE3D
 !
 !  Tangent linear surface tracers flux.
 !

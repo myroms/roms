@@ -115,7 +115,7 @@
 !
 !  Compute nonlinear model data penalty function.
 !
-      IF (model.eq.iRPM) THEN
+      IF (model.eq.iNLM) THEN
         DO ivar=0,NstateVar(ng)
           my_ObsCost(ivar)=0.0_r8
         END DO

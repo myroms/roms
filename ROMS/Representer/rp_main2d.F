@@ -254,7 +254,7 @@
 # ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
-!  Interpolate surface forcing increments and adjust surface forcing.
+!  Interpolate open boundary increments and adjust open boundaries.
 !  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !

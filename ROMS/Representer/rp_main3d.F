@@ -333,9 +333,8 @@
 # ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
-!  Interpolate surface forcing increments and adjust surface forcing.
-!  Load surface forcing into storage arrays. Skip the last output
-!  timestep.
+!  Interpolate open boundary increments and adjust open boundaries.
+!  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).lt.(ntend(ng)+1)) THEN
@@ -354,8 +353,7 @@
 !
 !-----------------------------------------------------------------------
 !  Interpolate surface forcing increments and adjust surface forcing.
-!  Load surface forcing into storage arrays. Skip the last output
-!  timestep.
+!  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).lt.(ntend(ng)+1)) THEN

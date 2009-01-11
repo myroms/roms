@@ -148,13 +148,13 @@
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!  Read in standard deviation factors for boundary conditions
+!  Read in standard deviation factors for surface forcing
 !  error covariance.
 !
         STDrec=1
         Tindex=1
         DO ng=1,Ngrids
-          CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, 1)
+          CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, Tindex)
           IF (exit_flag.ne.NoError) RETURN
         END DO
 #endif
@@ -248,8 +248,7 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
           IF (exit_flag.ne.NoError) RETURN
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
-!$OMP&            SHARED(inner,numthreads)
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
@@ -272,7 +271,7 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+          CALL get_state (ng, 11, 11, NRMname(4,ng), 1, 1)
           IF (exit_flag.ne.NoError) RETURN
 #endif
         END IF

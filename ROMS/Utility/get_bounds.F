@@ -125,6 +125,157 @@
       RETURN
       END SUBROUTINE get_bounds
 
+      SUBROUTINE get_domain (ng, tile, gtype, Nghost,                   &
+     &                       epsilon, Lfullgrid,                        &
+     &                       Xmin, Xmax, Ymin, Ymax)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes tile minimum and maximum fractional grid      !
+!  coordinates.                                                        !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     tile       Domain partition.                                     !
+!     Nghost     Number of ghost-points in the halo region:            !
+!                  Nghost = 0,  compute non-overlaping coordinates.    !
+!                  Nghost > 0,  compute overlaping bounds.             !
+!     gtype      C-grid type                                           !
+!     epsilon    Small value to add to Xmax and Ymax when the tile     !
+!                  is lying on the eastern and northern boundaries     !
+!                  of the grid. This is usefull when processing        !
+!                  observations.                                       !
+!     Lfullgrid  Switch to include interior and boundaries points      !
+!                  (TRUE) or just interior points (FALSE).             !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Xmin       Minimum tile fractional X-coordinate.                 !
+!     Xmax       Maximum tile fractional X-coordinate.                 !
+!     Ymin       Minimum tile fractional Y-coordinate.                 !
+!     Ymax       Maximum tile fractional Y-coordinate.                 !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_ncparam
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: Lfullgrid
+
+      integer, intent(in) :: ng, tile, gtype, Nghost
+
+      real(r8), intent(in) :: epsilon
+      real(r8), intent(out) :: Xmin, Xmax, Ymin, Ymax
+!
+!  Local variable declarations.
+!
+      integer :: Imin, Imax, Jmin, Jmax
+      integer :: Itile, Jtile
+!
+!-----------------------------------------------------------------------
+!  Computes tile minimum and maximum fractional-grid coordinates.
+!-----------------------------------------------------------------------
+! 
+      CALL get_bounds (ng, tile, gtype, Nghost, Itile, Jtile,           &
+     &                 Imin, Imax, Jmin, Jmax)
+!
+!  Include interior and boundary points.
+!
+      IF (Lfullgrid) THEN
+        IF ((Itile.eq.0).and.                                           &
+     &      ((gtype.eq.r2dvar).or.(gtype.eq.r3dvar).or.                 &
+     &       (gtype.eq.v2dvar).or.(gtype.eq.v3dvar))) THEN
+          Xmin=REAL(Imin,r8)
+        ELSE
+          Xmin=REAL(Imin,r8)-0.5_r8
+        END IF
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          IF ((gtype.eq.u2dvar).or.(gtype.eq.u3dvar)) THEN
+            Xmax=REAL(Imax,r8)-0.5_r8
+          ELSE
+            Xmax=REAL(Imax,r8)
+          END IF
+        ELSE
+          Xmax=REAL(Imax,r8)+0.5_r8
+        END IF
+        IF ((Jtile.eq.0).and.                                           &
+     &      ((gtype.eq.r2dvar).or.(gtype.eq.r3dvar).or.                 &
+     &       (gtype.eq.u2dvar).or.(gtype.eq.u3dvar))) THEN
+          Ymin=REAL(Jmin,r8)
+        ELSE
+          Ymin=REAL(Jmin,r8)-0.5_r8
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          IF ((gtype.eq.v2dvar).or.(gtype.eq.v3dvar)) THEN
+            Ymax=REAL(Jmax,r8)-0.5_r8
+          ELSE
+            Ymax=REAL(Jmax,r8)
+          END IF
+        ELSE
+          Ymax=REAL(Jmax,r8)+0.5_r8
+        END IF
+!
+!   Include only interior points.
+!
+      ELSE
+        IF (Itile.eq.0) THEN
+          IF ((gtype.eq.u2dvar).or.(gtype.eq.u3dvar)) THEN
+             Xmin=REAL(Imin,r8)
+          ELSE
+             Xmin=REAL(Imin,r8)+0.5_r8
+          END IF
+        ELSE
+          Xmin=REAL(Imin,r8)-0.5_r8
+        END IF
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          IF ((gtype.eq.u2dvar).or.(gtype.eq.u3dvar)) THEN
+            Xmax=REAL(Imax,r8)-1.0_r8
+          ELSE
+            Xmax=REAL(Imax,r8)-0.5_r8
+          END IF
+        ELSE
+          Xmax=REAL(Imax,r8)+0.5_r8
+        END IF
+        IF (Jtile.eq.0) THEN
+          IF ((gtype.eq.v2dvar).or.(gtype.eq.v3dvar)) THEN
+            Ymin=REAL(Jmin,r8)
+          ELSE
+            Ymin=REAL(Jmin,r8)+0.5
+          END IF
+        ELSE
+          Ymin=REAL(Jmin,r8)-0.5_r8
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          IF ((gtype.eq.v2dvar).or.(gtype.eq.v3dvar)) THEN
+            Ymax=REAL(Jmax,r8)-1.0_r8
+          ELSE
+            Ymax=REAL(Jmax,r8)-0.5_r8
+          END IF
+        ELSE
+          Ymax=REAL(Jmax,r8)+0.5_r8
+        END IF
+      END IF
+!
+!  If tile lie at the grid eastern or northen boundary, add provided
+!  offset value to allow processing at those boundaries.
+!
+      IF (Itile.eq.(NtileI(ng)-1)) THEN
+        Xmax=Xmax+epsilon
+      END IF
+      IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+        Ymax=Ymax+epsilon
+      END IF
+
+      RETURN     
+
+      END SUBROUTINE get_domain
+
       SUBROUTINE get_iobounds (ng)
 !
 !=======================================================================

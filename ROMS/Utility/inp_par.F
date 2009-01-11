@@ -20,7 +20,7 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts, mp_collect
+      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
 #endif
       USE ran_state, ONLY: ran_seed
 !
@@ -301,23 +301,6 @@
 !  Report tile minimum and maximum fractional grid coordinates.
 !
       DO ng=1,Ngrids
-#ifdef DISTRIBUTE
-        npts=NtileI(ng)*NtileJ(ng)
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_rho(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_rho(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_rho(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_rho(0:))
-
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_u(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_u(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_u(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_u(0:))
-
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmin_v(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Xmax_v(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymin_v(0:))
-        CALL mp_collect (ng, iNLM, npts, spv, DOMAIN(ng)%Ymax_v(0:))
-#endif
         IF (Master) THEN
           WRITE (stdout,90)
           DO tile=0,NtileI(ng)*NtileJ(ng)-1
@@ -344,7 +327,12 @@
      &                         DOMAIN(ng)%Ymax_v(tile), '  V-points'
           END DO
  90       FORMAT (/,' Tile minimum and maximum fractional grid ',       & 
-     &            'coordinates:',/,/,                                   &
+     &            'coordinates:',/,                                     &
+#ifdef FULL_GRID
+     &            '   (interior and boundary points)',/,/,              &
+#else
+     &            '   (interior points only)',/,/,                      &
+#endif
      &            5x,'tile',5x,'Xmin',5x,'Xmax',5x,'Ymin',5x,'Ymax',    &
      &            5x,'grid',/)
  100      FORMAT (5x,i4,4f9.2,2x,a)
@@ -7190,10 +7178,8 @@
 #    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
      &           'Switch to preconditioning conjugate gradient.'
-#    ifdef IS4DVAR
           WRITE (out,70) Lritz, 'Lritz',                                &
      &           'Switch to Ritz limited-memory preconditioning.'
-#    endif
 #    if defined WEAK_CONSTRAINT || defined IOM
           IF (Lprecond.and.(NritzEV.gt.0)) THEN
             WRITE (out,80) NritzEV, 'NritzEV',                          &
@@ -7411,14 +7397,15 @@
           END DO
 #    endif
 #    ifdef ADJUST_WSTRESS
-          WRITE (out,120) HdecayF(isUstr,ng), 'HdecayF(isUstr)',        &
+          WRITE (out,120) Hdecay(1,isUstr,ng), 'HdecayF(isUstr)',       &
      &            'Forcing decorrelation H-scale (m), U-stress.'
-          WRITE (out,120) HdecayF(isVstr,ng), 'HdecayF(isVstr)',        &
+          WRITE (out,120) Hdecay(1,isVstr,ng), 'HdecayF(isVstr)',       &
      &            'Forcing decorrelation H-scale (m), V-stress.'
 #    endif
 #    ifdef ADJUST_STFLUX
           DO itrc=1,NT(ng)
-            WRITE (out,130) HdecayF(isTsur(itrc),ng),'HdecayF(idTsur)', &
+            WRITE (out,130) Hdecay(1,isTsur(itrc),ng),                  &
+     &            'HdecayF(idTsur)',                                    &
      &            'Forcing decorrelation H-scale (m), ',                &
      &            TRIM(Vname(1,idTsur(itrc)))
           END DO

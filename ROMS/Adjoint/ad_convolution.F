@@ -760,8 +760,8 @@
      &                             ad_tflux(:,:,k,Linp,itrc))
           END DO
         END DO
-#  endif
       END IF
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------

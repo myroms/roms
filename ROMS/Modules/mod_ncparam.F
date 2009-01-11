@@ -573,11 +573,12 @@
 #ifdef DISTRIBUTE
         integer :: Itile, Jtile
 #endif
-        integer :: Lvar, Ntiles, gtype, i, ic, ie, is, j, ng, varid
+        integer :: Lvar, Ntiles, i, ic, ie, is, j, ng
+        integer :: gtype, tile, varid
 
         real(r8), parameter :: epsilon = 1.0E-8_r8 
         real(r8), parameter :: spv = 0.0_r8 
-        real(r8) :: scale
+        real(r8) :: offset, scale
 
         character (len=80), dimension(7) :: Vinfo
 !
@@ -656,14 +657,6 @@
 !     IF (...
 !    &    ((Xmin.le.Xobs(iobs)).and.(Xobs(iobs).lt.Xmax)).and.          &
 !    &    ((Ymin.le.Yobs(iobs)).and.(Yobs(iobs).lt.Ymax))) THEN
-!
-#if distributed
-!  Notice that, in distributed-memory, a unity value is added to
-!  Xmax and Ymax, in all tiles except those next to the eastern
-!  and northern boundaries, so observations are processed between
-!  the tile boundaries.
-!
-#endif
 !-----------------------------------------------------------------------
 !   
 !  Allocate fractional grid lower and upper bounds structure.
@@ -712,13 +705,12 @@
         DOMAIN(ng) % Ymax_v   = spv
       END DO
 !
-!  RHO-points lower and upper bounds.
+!  Set RHO-points domain lower and upper bounds (integer).
 !
       DO ng=1,Ngrids
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, r2dvar, 0, Itile, Jtile,           &
      &                   rILB(ng), rIUB(ng), rJLB(ng), rJUB(ng))
-
 #  ifndef FULL_GRID
         IF (Itile.eq.0) THEN
           rILB(ng)=rILB(ng)+1
@@ -733,37 +725,6 @@
           rJUB(ng)=rJUB(ng)-1
         END IF
 #  endif
-#  ifdef NEW_CODE
-        rXmin(ng)=REAL(rILB(ng),r8)-0.5_r8
-        rXmax(ng)=REAL(rIUB(ng),r8)+0.5_r8
-        rYmin(ng)=REAL(rJLB(ng),r8)-0.5_r8
-        rYmax(ng)=REAL(rJUB(ng),r8)+0.5_r8
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          rXmax(ng)=rXmax(ng)+epsilon     ! include eastern edge values
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          rYmax(ng)=rYmax(ng)+epsilon     ! include northern edge values
-        END IF
-#  else
-        rXmin(ng)=REAL(rILB(ng),r8)
-        rXmax(ng)=REAL(rIUB(ng),r8)
-        rYmin(ng)=REAL(rJLB(ng),r8)
-        rYmax(ng)=REAL(rJUB(ng),r8)
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          rXmax(ng)=rXmax(ng)+epsilon     ! include eastern edge values
-        ELSE
-          rXmax(ng)=rXmax(ng)+1.0_r8      ! observations between tiles
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          rYmax(ng)=rYmax(ng)+epsilon     ! include northern edge values
-        ELSE
-          rYmax(ng)=rYmax(ng)+1.0         ! observations between tiles
-        END IF
-#  endif
-        DOMAIN(ng) % Xmin_rho(MyRank) = rXmin(ng)
-        DOMAIN(ng) % Xmax_rho(MyRank) = rXmax(ng)
-        DOMAIN(ng) % Ymin_rho(MyRank) = rYmin(ng)
-        DOMAIN(ng) % Ymax_rho(MyRank) = rYmax(ng)
 # else
 #  ifdef FULL_GRID
         rILB(ng)=0
@@ -776,18 +737,38 @@
         rJLB(ng)=1
         rJUB(ng)=Mm(ng)
 #  endif
-        rXmin(ng)=REAL(rILB(ng),r8)
-        rXmax(ng)=REAL(rIUB(ng),r8)+epsilon
-        rYmin(ng)=REAL(rJLB(ng),r8)
-        rYmax(ng)=REAL(rJUB(ng),r8)+epsilon
-        DOMAIN(ng) % Xmin_rho = rXmin(ng)
-        DOMAIN(ng) % Xmax_rho = rXmax(ng)
-        DOMAIN(ng) % Ymin_rho = rYmin(ng)
-        DOMAIN(ng) % Ymax_rho = rYmax(ng)
 # endif
 !
-!  U-points lower and upper bounds.
+!  Minimum and maximum fractional coordinates for RHO-points.
 !
+        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+          CALL get_domain (ng, tile, r2dvar, 0, epsilon,                &
+# ifdef FULL_GRID
+     &                     .TRUE.,                                      &
+# else
+     &                     .FALSE.,                                     &
+# endif
+     &                     DOMAIN(ng) % Xmin_rho(tile),                 &
+     &                     DOMAIN(ng) % Xmax_rho(tile),                 &
+     &                     DOMAIN(ng) % Ymin_rho(tile),                 &
+     &                     DOMAIN(ng) % Ymax_rho(tile))
+        END DO
+# ifdef DISTRIBUTE
+        rXmin(ng)=DOMAIN(ng)%Xmin_rho(MyRank)
+        rXmax(ng)=DOMAIN(ng)%Xmax_rho(MyRank)
+        rYmin(ng)=DOMAIN(ng)%Ymin_rho(MyRank)
+        rYmax(ng)=DOMAIN(ng)%Ymax_rho(MyRank)
+# else
+        rXmin(ng)=DOMAIN(ng)%Xmin_rho(0)
+        rXmax(ng)=DOMAIN(ng)%Xmax_rho(0)
+        rYmin(ng)=DOMAIN(ng)%Ymin_rho(0)
+        rYmax(ng)=DOMAIN(ng)%Ymax_rho(0)
+# endif
+      END DO
+!
+!  Set U-points domain lower and upper bounds (integer).
+!
+      DO ng=1,Ngrids
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, u2dvar, 0, Itile, Jtile,           &
      &                   uILB(ng), uIUB(ng), uJLB(ng), uJUB(ng))
@@ -805,24 +786,6 @@
           uJUB(ng)=uJUB(ng)-1
         END IF
 #  endif
-        uXmin(ng)=REAL(uILB(ng),r8)-0.5_r8
-        uXmax(ng)=REAL(uIUB(ng),r8)-0.5_r8
-        uYmin(ng)=REAL(uJLB(ng),r8)
-        uYmax(ng)=REAL(uJUB(ng),r8)
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          uXmax(ng)=uXmax(ng)+epsilon     ! include eastern edge values
-        ELSE
-          uXmax(ng)=uXmax(ng)+1.0_r8      ! observations between tiles
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          uYmax(ng)=uYmax(ng)+epsilon     ! include northern edge values
-        ELSE
-          uYmax(ng)=uYmax(ng)+1.0_r8      ! observations between tiles
-        END IF
-        DOMAIN(ng) % Xmin_u(MyRank) = uXmin(ng)
-        DOMAIN(ng) % Xmax_u(MyRank) = uXmax(ng)
-        DOMAIN(ng) % Ymin_u(MyRank) = uYmin(ng)
-        DOMAIN(ng) % Ymax_u(MyRank) = uYmax(ng)
 # else
 #  ifdef FULL_GRID
         uILB(ng)=1
@@ -835,18 +798,38 @@
         uJLB(ng)=1
         uJUB(ng)=Mm(ng)
 #  endif
-        uXmin(ng)=REAL(uILB(ng),r8)-0.5_r8
-        uXmax(ng)=REAL(uIUB(ng),r8)-0.5_r8+epsilon
-        uYmin(ng)=REAL(uJLB(ng),r8)
-        uYmax(ng)=REAL(uJUB(ng),r8)+epsilon
-        DOMAIN(ng) % Xmin_u = uXmin(ng)
-        DOMAIN(ng) % Xmax_u = uXmax(ng)
-        DOMAIN(ng) % Ymin_u = uYmin(ng)
-        DOMAIN(ng) % Ymax_u = uYmax(ng)
 # endif
 !
-!  V-points lower and upper bounds.
+!  Minimum and maximum fractional coordinates for U-points.
 !
+        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+          CALL get_domain (ng, tile, u2dvar, 0, epsilon,                &
+# ifdef FULL_GRID
+     &                     .TRUE.,                                      &
+# else
+     &                     .FALSE.,                                     &
+# endif
+     &                     DOMAIN(ng) % Xmin_u(tile),                   &
+     &                     DOMAIN(ng) % Xmax_u(tile),                   &
+     &                     DOMAIN(ng) % Ymin_u(tile),                   &
+     &                     DOMAIN(ng) % Ymax_u(tile))
+        END DO
+# ifdef DISTRIBUTE
+        uXmin(ng)=DOMAIN(ng)%Xmin_u(MyRank)
+        uXmax(ng)=DOMAIN(ng)%Xmax_u(MyRank)
+        uYmin(ng)=DOMAIN(ng)%Ymin_u(MyRank)
+        uYmax(ng)=DOMAIN(ng)%Ymax_u(MyRank)
+# else
+        uXmin(ng)=DOMAIN(ng)%Xmin_u(0)
+        uXmax(ng)=DOMAIN(ng)%Xmax_u(0)
+        uYmin(ng)=DOMAIN(ng)%Ymin_u(0)
+        uYmax(ng)=DOMAIN(ng)%Ymax_u(0)
+# endif
+      END DO
+!
+!  Set V-points domain lower and upper bounds (integer).
+!
+      DO ng=1,Ngrids
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, v2dvar, 0, Itile, Jtile,           &
      &                   vILB(ng), vIUB(ng), vJLB(ng), vJUB(ng))
@@ -864,24 +847,6 @@
           vJUB(ng)=vJUB(ng)-1
         END IF
 #  endif
-        vXmin(ng)=REAL(vILB(ng),r8)
-        vXmax(ng)=REAL(vIUB(ng),r8)
-        vYmin(ng)=REAL(vJLB(ng),r8)-0.5_r8
-        vYmax(ng)=REAL(vJUB(ng),r8)-0.5_r8
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          vXmax(ng)=vXmax(ng)+epsilon     ! include eastern edge values
-        ELSE
-          vXmax(ng)=vXmax(ng)+1.0_r8      ! observations between tiles
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          vYmax(ng)=vYmax(ng)+epsilon     ! include northern edge values
-        ELSE
-          vYmax(ng)=vYmax(ng)+1.0_r8      ! observations between tiles
-        END IF
-        DOMAIN(ng) % Xmin_v(MyRank) = vXmin(ng)
-        DOMAIN(ng) % Xmax_v(MyRank) = vXmax(ng)
-        DOMAIN(ng) % Ymin_v(MyRank) = vYmin(ng)
-        DOMAIN(ng) % Ymax_v(MyRank) = vYmax(ng)
 # else
 #  ifdef FULL_GRID
         vILB(ng)=0
@@ -894,14 +859,32 @@
         vJLB(ng)=2
         vJUB(ng)=Mm(ng)
 #  endif
-        vXmin(ng)=REAL(vILB(ng),r8)
-        vXmax(ng)=REAL(vIUB(ng),r8)+epsilon
-        vYmin(ng)=REAL(vJLB(ng),r8)-0.5_r8
-        vYmax(ng)=REAL(vJUB(ng),r8)-0.5_r8+epsilon
-        DOMAIN(ng) % Xmin_v = vXmin(ng)
-        DOMAIN(ng) % Xmax_v = vXmax(ng)
-        DOMAIN(ng) % Ymin_v = vYmin(ng)
-        DOMAIN(ng) % Ymax_v = vYmax(ng)
+# endif
+!
+!  Minimum and maximum fractional coordinates for V-points.
+!
+        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+          CALL get_domain (ng, tile, v2dvar, 0, epsilon,                &
+# ifdef FULL_GRID
+     &                     .TRUE.,                                      &
+# else
+     &                     .FALSE.,                                     &
+# endif
+     &                     DOMAIN(ng) % Xmin_v(tile),                   &
+     &                     DOMAIN(ng) % Xmax_v(tile),                   &
+     &                     DOMAIN(ng) % Ymin_v(tile),                   &
+     &                     DOMAIN(ng) % Ymax_v(tile))
+        END DO
+# ifdef DISTRIBUTE
+        vXmin(ng)=DOMAIN(ng)%Xmin_v(MyRank)
+        vXmax(ng)=DOMAIN(ng)%Xmax_v(MyRank)
+        vYmin(ng)=DOMAIN(ng)%Ymin_v(MyRank)
+        vYmax(ng)=DOMAIN(ng)%Ymax_v(MyRank)
+# else
+        vXmin(ng)=DOMAIN(ng)%Xmin_v(0)
+        vXmax(ng)=DOMAIN(ng)%Xmax_v(0)
+        vYmin(ng)=DOMAIN(ng)%Ymin_v(0)
+        vYmax(ng)=DOMAIN(ng)%Ymax_v(0)
 # endif
       END DO
 !
