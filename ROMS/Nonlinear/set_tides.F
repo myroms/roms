@@ -55,7 +55,6 @@
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
 # endif
-     &                     TIDES(ng) % Tperiod,                         &
 # ifdef SSH_TIDES
      &                     TIDES(ng) % SSH_Tamp,                        &
      &                     TIDES(ng) % SSH_Tphase,                      &
@@ -77,18 +76,39 @@
      &                     CLIMA(ng) % ubarclm,                         &
      &                     CLIMA(ng) % vbarclm,                         &
 # endif
+# ifdef SSH_TIDES
+#  ifdef EAST_FSOBC
      &                     BOUNDARY(ng) % zeta_east,                    &
+#  endif
+#  ifdef WEST_FSOBC
      &                     BOUNDARY(ng) % zeta_west,                    &
+#  endif
+#  ifdef SOUTH_FSOBC
      &                     BOUNDARY(ng) % zeta_south,                   &
+#  endif
+#  ifdef NORTH_FSOBC
      &                     BOUNDARY(ng) % zeta_north,                   &
+#  endif
+# endif
+# ifdef UV_TIDES
+#  ifdef EAST_M2OBC
      &                     BOUNDARY(ng) % ubar_east,                    &
      &                     BOUNDARY(ng) % vbar_east,                    &
+#  endif
+#  ifdef WEST_M2OBC
      &                     BOUNDARY(ng) % ubar_west,                    &
      &                     BOUNDARY(ng) % vbar_west,                    &
+#  endif
+#  ifdef SOUTH_M2OBC
      &                     BOUNDARY(ng) % ubar_south,                   &
      &                     BOUNDARY(ng) % vbar_south,                   &
+#  endif
+#  ifdef NORTH_M2OBC
      &                     BOUNDARY(ng) % ubar_north,                   &
-     &                     BOUNDARY(ng) % vbar_north)
+     &                     BOUNDARY(ng) % vbar_north,                   &
+#  endif
+# endif
+     &                     TIDES(ng) % Tperiod)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 11)
 # endif
@@ -104,7 +124,6 @@
 # ifdef MASKING
      &                           rmask, umask, vmask,                   &
 # endif
-     &                           Tperiod,                               &
 # ifdef SSH_TIDES
      &                           SSH_Tamp, SSH_Tphase,                  &
 # endif
@@ -121,12 +140,36 @@
 # ifdef M2CLIMATOLOGY
      &                           ubarclm, vbarclm,                      &
 # endif
-     &                           zeta_east, zeta_west,                  &
-     &                           zeta_south, zeta_north,                &
+# ifdef SSH_TIDES
+#  ifdef EAST_FSOBC
+     &                           zeta_east,                             &
+#  endif
+#  ifdef WEST_FSOBC
+     &                           zeta_west,                             &
+#  endif
+#  ifdef SOUTH_FSOBC
+     &                           zeta_south,                            &
+#  endif
+#  ifdef NORTH_FSOBC
+     &                           zeta_north,                            &
+#  endif
+# endif
+# ifdef UV_TIDES
+#  ifdef EAST_M2OBC
      &                           ubar_east, vbar_east,                  &
+#  endif
+
+#  ifdef WEST_M2OBC
      &                           ubar_west, vbar_west,                  &
+#  endif
+#  ifdef SOUTH_M2OBC
      &                           ubar_south, vbar_south,                &
-     &                           ubar_north, vbar_north)
+#  endif
+#  ifdef NORTH_M2OBC
+     &                           ubar_north, vbar_north,                &
+#  endif
+# endif
+     &                           Tperiod)
 !***********************************************************************
 !
       USE mod_param
@@ -178,18 +221,38 @@
       real(r8), intent(inout) :: ubarclm(LBi:,LBj:)
       real(r8), intent(inout) :: vbarclm(LBi:,LBj:)
 #  endif
+#  ifdef SSH_TIDES
+#   ifdef EAST_FSOBC
       real(r8), intent(inout) :: zeta_east(LOWER_BOUND_J:)
+#   endif
+#   ifdef WEST_FSOBC
       real(r8), intent(inout) :: zeta_west(LOWER_BOUND_J:)
+#   endif
+#   ifdef SOUTH_FSOBC
       real(r8), intent(inout) :: zeta_south(LOWER_BOUND_I:)
+#   endif
+#   ifdef NORTH_FSOBC
       real(r8), intent(inout) :: zeta_north(LOWER_BOUND_I:)
+#   endif
+#  endif
+#  ifdef UV_TIDES
+#   ifdef EAST_M2OBC
       real(r8), intent(inout) :: ubar_east(LOWER_BOUND_J:)
       real(r8), intent(inout) :: vbar_east(LOWER_BOUND_J:)
+#   endif
+#   ifdef WEST_M2OBC
       real(r8), intent(inout) :: ubar_west(LOWER_BOUND_J:)
       real(r8), intent(inout) :: vbar_west(LOWER_BOUND_J:)
+#   endif
+#   ifdef SOUTH_M2OBC
       real(r8), intent(inout) :: ubar_south(LOWER_BOUND_I:)
       real(r8), intent(inout) :: vbar_south(LOWER_BOUND_I:)
+#   endif
+#   ifdef NORTH_M2OBC
       real(r8), intent(inout) :: ubar_north(LOWER_BOUND_I:)
       real(r8), intent(inout) :: vbar_north(LOWER_BOUND_I:)
+#   endif
+#  endif
 # else
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
@@ -219,18 +282,38 @@
       real(r8), intent(inout) :: ubarclm(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: vbarclm(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef SSH_TIDES
+#   ifdef EAST_FSOBC
       real(r8), intent(inout) :: zeta_east(ETA_DIM)
+#   endif
+#   ifdef WEST_FSOBC
       real(r8), intent(inout) :: zeta_west(ETA_DIM)
+#   endif
+#   ifdef SOUTH_FSOBC
       real(r8), intent(inout) :: zeta_south(XI_DIM)
+#   endif
+#   ifdef NORTH_FSOBC
       real(r8), intent(inout) :: zeta_north(XI_DIM)
+#   endif
+#  endif
+#  ifdef UV_TIDES
+#   ifdef EAST_M2OBC
       real(r8), intent(inout) :: ubar_east(ETA_DIM)
       real(r8), intent(inout) :: vbar_east(ETA_DIM)
+#   endif
+#   ifdef WEST_M2OBC
       real(r8), intent(inout) :: ubar_west(ETA_DIM)
       real(r8), intent(inout) :: vbar_west(ETA_DIM)
+#   endif
+#   ifdef SOUTH_M2OBC
       real(r8), intent(inout) :: ubar_south(XI_DIM)
       real(r8), intent(inout) :: vbar_south(XI_DIM)
+#   endif
+#   ifdef NORTH_M2OBC
       real(r8), intent(inout) :: ubar_north(XI_DIM)
       real(r8), intent(inout) :: vbar_north(XI_DIM)
+#   endif
+#  endif
 # endif
 !
 !  Local variables declarations.
