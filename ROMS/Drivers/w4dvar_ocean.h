@@ -572,11 +572,14 @@
               CALL ad_initial (ng)
               IF (exit_flag.ne.NoError) RETURN
               wrtMisfit(ng)=.FALSE.
+
+# ifdef RPM_RELAXATION
 !
 !  Adjoint of representer relaxation is not applied during the 
 !  inner-loops.
 !
               LweakRelax(ng)=.FALSE.
+# endif
 !
 !  Set adjoint history NetCDF parameters.  Define adjoint history
 !  file only once to avoid opening too many files.
@@ -924,11 +927,14 @@
 !
           CALL ad_initial (ng)
           IF (exit_flag.ne.NoError) RETURN
+
+# ifdef RPM_RELAXATION
 !
 !  Adjoint of representer relaxation is applied during the 
 !  outer-loops.
 !
           LweakRelax(ng)=.TRUE.
+# endif
 !
 !  Set adjoint history NetCDF parameters.  Define adjoint history
 !  file one to avoid opening to many files.

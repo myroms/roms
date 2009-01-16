@@ -152,26 +152,34 @@
         END DO
       END IF
 #else
+# ifdef EAST_FSOBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_east(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef WEST_FSOBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef SOUTH_FSOBC
       IF (SOUTHERN_EDGE) THEN
         DO i=IstrR,IendR
           BOUNDARY(ng)%zeta_south(i)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef NORTH_FSOBC
       IF (NORTHERN_EDGE) THEN
         DO i=IstrR,IendR
           BOUNDARY(ng)%zeta_north(i)=0.0_r8
         END DO
       END IF
+# endif
 #endif
       RETURN
       END SUBROUTINE ana_fsobc_tile
