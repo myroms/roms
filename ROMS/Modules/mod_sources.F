@@ -103,6 +103,7 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
+      USE mod_scalars
 # endif
 !
 !  Imported variable declarations.

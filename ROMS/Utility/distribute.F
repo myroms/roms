@@ -1538,8 +1538,10 @@
       Jo=0
       Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar)) Jo=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
+     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
+     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
       IF (Io.eq.0) THEN
         Ioff=1
       ELSE
@@ -3108,8 +3110,10 @@
       Jo=0
       Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar)) Jo=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
+     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
+     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
       IF (Io.eq.0) THEN
         Ioff=1
       ELSE
