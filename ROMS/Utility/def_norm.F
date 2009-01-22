@@ -27,9 +27,6 @@
 # endif
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -329,7 +326,8 @@
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iTLM, ncNRMid(ifile,ng),                     &
      &                 nrmVid(ifile,idtime,ng),                         &
-     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -542,17 +540,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-          IF (OutThread) THEN
-            status=nf90_enddef(ncNRMid(ifile,ng))
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,40) TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
-          END IF
-# ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, model, exit_flag)
-# endif
+          CALL netcdf_enddef (ng, model, ncname, ncNRMid(ng))
           IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -588,7 +576,7 @@
 !
         CALL netcdf_open (ng, model, ncname, 1, ncNRMid(ifile,ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,40) TRIM(ncname)
           RETURN
         END IF
 !
@@ -651,38 +639,38 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur).and.(ifile.le.2)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.(ifile.le.2)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.(ifile.le.2)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.(ifile.le.2)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.(ifile.le.2)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -690,13 +678,13 @@
 # endif
 # ifdef ADJUST_WSTRESS
         IF (.not.got_var(idUsms).and.(ifile.eq.4)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUsms)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms).and.(ifile.eq.4)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVsms)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -705,14 +693,14 @@
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.(ifile.le.2)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
 #  ifdef ADJUST_STFLUX
           IF (.not.got_var(idTsur(itrc)).and.(ifile.eq.4)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTsur(itrc))),  &
+            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -730,10 +718,8 @@
   10  FORMAT (/,' DEF_NORM - unable to create norm NetCDF file: ',a)
   20  FORMAT (a,', ',a)
   30  FORMAT (1pe11.4,1x,'millimeter')
-  40  FORMAT (/,' DEF_NORM - unable to leave definition mode for',      &
-     &        ' file: ', a)
-  50  FORMAT (/,' DEF_NORM - unable to open norm NetCDF file: ',a)
-  60  FORMAT (/,' DEF_NORM - unable to find variable: ',a,2x,           &
+  40  FORMAT (/,' DEF_NORM - unable to open norm NetCDF file: ',a)
+  50  FORMAT (/,' DEF_NORM - unable to find variable: ',a,2x,           &
      &        ' in norm NetCDF file: ',a)
 
       RETURN

@@ -144,7 +144,8 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
-     &                     GRID(ng) % h, .FALSE.)
+     &                     GRID(ng) % h,                                &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idbath)), tRSTindx(ng)
@@ -167,7 +168,8 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-     &                   GRID(ng) % rmask_wet, .FALSE.)
+     &                   GRID(ng) % rmask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idRwet)), tRSTindx(ng)
@@ -187,7 +189,8 @@
 # ifdef MASKING
      &                   GRID(ng) % umask,                              &
 # endif
-     &                   GRID(ng) % umask_wet, .FALSE.)
+     &                   GRID(ng) % umask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUwet)), tRSTindx(ng)
@@ -207,7 +210,8 @@
 # ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 # endif
-     &                   GRID(ng) % vmask_wet, .FALSE.)
+     &                   GRID(ng) % vmask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVwet)), tRSTindx(ng)
@@ -906,8 +910,9 @@
      &                   GRID(ng) % umask,                              &
 # endif
      &                   OCEAN(ng) % ubar_stokes)
-        IF (OutThread.and.(status.ne.nf90_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idU2Sd)),tRSTindx(ng)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idU2Sd)),          &
+     &                                  tRSTindx(ng)
           exit_flag=3
           ioerror=status
           RETURN
@@ -924,8 +929,9 @@
      &                   GRID(ng) % vmask,                              &
 # endif
      &                   OCEAN(ng) % vbar_stokes)
-        IF (OutThread.and.(status.ne.nf90_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idV2Sd)),tRSTindx(ng)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idV2Sd)),          &
+     &                                  tRSTindx(ng)
           exit_flag=3
           ioerror=status
           RETURN
@@ -943,8 +949,9 @@
      &                   GRID(ng) % umask,                              &
 #  endif
      &                   OCEAN(ng) % u_stokes)
-        IF (OutThread.and.(status.ne.nf90_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idU3Sd)),tRSTindx(ng)
+        IF (status.ne.nf90_noerr) THEN
+          IF(Master) WRITE (stdout,10) TRIM(Vname(1,idU3Sd)),           &
+     &                                 tRSTindx(ng)
           exit_flag=3
           ioerror=status
           RETURN
@@ -961,8 +968,9 @@
      &                   GRID(ng) % vmask,                              &
 #  endif
      &                   OCEAN(ng) % v_stokes)
-        IF (OutThread.and.(status.ne.nf90_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idV3Sd)),tRSTindx(ng)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idV3Sd)),          &
+     &                                  tRSTindx(ng)
           exit_flag=3
           ioerror=status
           RETURN

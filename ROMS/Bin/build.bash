@@ -146,23 +146,24 @@ if [ -n "${USE_MPIF90:+1}" ]; then
   case "$FORT" in
     ifort )
 #     export PATH=/opt/intelsoft/mpich/bin:$PATH
-#     export PATH=/opt/intelsoft/mpich2/bin:$PATH
-      export PATH=/opt/intelsoft/openmpi/bin:$PATH
+      export PATH=/opt/intelsoft/mpich2/bin:$PATH
+#     export PATH=/opt/intelsoft/openmpi/bin:$PATH
       ;;
 
     pgi )
-      export PATH=/opt/pgisoft/mpich/bin:$PATH
+#     export PATH=/opt/pgisoft/mpich/bin:$PATH
+      export PATH=/opt/pgisoft/mpich2/bin:$PATH
 #     export PATH=/opt/pgisoft/openmpi/bin:$PATH
-      ;;
-
-    g95 )
-#     export PATH=/opt/g95soft/mpich2/bin:$PATH
-      export PATH=/opt/g95soft/openmpi/bin:$PATH
       ;;
 
     gfortran )
 #     export PATH=/opt/gfortransoft/mpich2/bin:$PATH
       export PATH=/opt/gfortansoft/openmpi/bin:$PATH
+      ;;
+
+    g95 )
+#     export PATH=/opt/g95soft/mpich2/bin:$PATH
+      export PATH=/opt/g95soft/openmpi/bin:$PATH
       ;;
 
   esac
@@ -203,17 +204,25 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export         MCT_LIBDIR=/opt/intelsoft/mct/lib
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
-          export  NETCDF_INCDIR=/opt/intelsoft/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/intelsoft/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/intelsoft/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/intelsoft/mpich/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/intelsoft/mpich/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/intelsoft/mpich/hdf5/lib
+
+          export  NETCDF_INCDIR=/opt/intelsoft/mpich2/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/intelsoft/mpich2/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/intelsoft/mpich2/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/intelsoft/openmpi/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/intelsoft/openmpi/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/intelsoft/openmpi/hdf5/lib
         else
-          export  NETCDF_INCDIR=/opt/intelsoft/s_netcdf4/include
-          export  NETCDF_LIBDIR=/opt/intelsoft/s_netcdf4/lib
-          export    HDF5_LIBDIR=/opt/intelsoft/s_hdf5/lib
+          export  NETCDF_INCDIR=/opt/intelsoft/serial/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/intelsoft/serial/hdf5/lib
         fi
       else
-        export    NETCDF_INCDIR=/opt/intelsoft/netcdf/include
-        export    NETCDF_LIBDIR=/opt/intelsoft/netcdf/lib
+        export    NETCDF_INCDIR=/opt/intelsoft/serial/netcdf3/include
+        export    NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf3/lib
       fi
       export     PARPACK_LIBDIR=/opt/intelsoft/PARPACK
       ;;
@@ -231,40 +240,27 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export         MCT_LIBDIR=/opt/pgisoft/mct/lib
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
-          export  NETCDF_INCDIR=/opt/pgisoft/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/pgisoft/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/pgisoft/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/pgisoft/mpich/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/pgisoft/mpich/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/pgisoft/mpich/hdf5/lib
+
+          export  NETCDF_INCDIR=/opt/pgisoft/mpich2/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/pgisoft/mpich2/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/pgisoft/mpich2/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/pgisoft/openmpi/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/pgisoft/openmpi/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/pgisoft/openmpi/hdf5/lib
         else
-          export  NETCDF_INCDIR=/opt/pgisoft/s_netcdf4/include
-          export  NETCDF_LIBDIR=/opt/pgisoft/s_netcdf4/lib
-          export    HDF5_LIBDIR=/opt/pgisoft/s_hdf5/lib
+          export  NETCDF_INCDIR=/opt/pgisoft/serial/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/pgisoft/serial/hdf5/lib
         fi
       else
-        export    NETCDF_INCDIR=/opt/pgisoft/netcdf/include
-        export    NETCDF_LIBDIR=/opt/pgisoft/netcdf/lib
+        export    NETCDF_INCDIR=/opt/pgisoft/serial/netcdf3/include
+        export    NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf3/lib
       fi
       export     PARPACK_LIBDIR=/opt/pgisoft/PARPACK
-      ;;
-
-    g95 )
-      export      ARPACK_LIBDIR=/opt/g95soft/PARPACK
-      export         MCT_INCDIR=/opt/g95soft/mct/include
-      export         MCT_LIBDIR=/opt/g95soft/mct/lib
-      if [ -n "${USE_NETCDF4:+1}" ]; then
-        if [ -n "${USE_MPI:+1}" ]; then
-          export  NETCDF_INCDIR=/opt/g95soft/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/g95soft/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/g95soft/hdf5/lib
-        else
-          export  NETCDF_INCDIR=/opt/g95soft/s_netcdf4/include
-          export  NETCDF_LIBDIR=/opt/g95soft/s_netcdf4/lib
-          export    HDF5_LIBDIR=/opt/g95soft/s_hdf5/lib
-        fi
-      else
-        export    NETCDF_INCDIR=/opt/g95soft/netcdf/include
-        export    NETCDF_LIBDIR=/opt/g95soft/netcdf/lib
-      fi
-      export     PARPACK_LIBDIR=/opt/g95soft/PARPACK
       ;;
 
     gfortran )
@@ -273,19 +269,52 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export         MCT_LIBDIR=/opt/gfortransoft/mct/lib
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
-          export  NETCDF_INCDIR=/opt/gfortransoft/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/gfortransoft/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/gfortransoft/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/gfortransoft/mpich/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/gfortransoft/mpich/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/gfortransoft/mpich/hdf5/lib
+
+          export  NETCDF_INCDIR=/opt/gfortransoft/mpich2/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/gfortransoft/mpich2/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/gfortransoft/mpich2/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/gfortransoft/openmpi/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/gfortransoft/openmpi/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/gfortransoft/openmpi/hdf5/lib
         else
-          export  NETCDF_INCDIR=/opt/gfortransoft/s_netcdf4/include
-          export  NETCDF_LIBDIR=/opt/gfortransoft/s_netcdf4/lib
-          export    HDF5_LIBDIR=/opt/gfortransoft/s_hdf5/lib
+          export  NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/gfortransoft/serial/hdf5/lib
         fi
       else
-          export  NETCDF_INCDIR=/opt/gfortransoft/netcdf/include
-          export  NETCDF_LIBDIR=/opt/gfortransoft/netcdf/lib
+          export  NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf3/include
+          export  NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf3/lib
       fi
         export   PARPACK_LIBDIR=/opt/gfortransoft/PARPACK
+      ;;
+
+    g95 )
+      export      ARPACK_LIBDIR=/opt/g95soft/PARPACK
+      export         MCT_INCDIR=/opt/g95soft/mct/include
+      export         MCT_LIBDIR=/opt/g95soft/mct/lib
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_MPI:+1}" ]; then
+          export  NETCDF_INCDIR=/opt/g95soft/mpich2/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/g95soft/mpich2/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/g95soft/mpich2/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/g95soft/openmpi/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/g95soft/openmpi/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/g95soft/openmpi/hdf5/lib
+        else
+          export  NETCDF_INCDIR=/opt/g95soft/serial/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/g95soft/serial/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/g95soft/serial/hdf5/lib
+        fi
+      else
+        export    NETCDF_INCDIR=/opt/g95soft/serial/netcdf3/include
+        export    NETCDF_LIBDIR=/opt/g95soft/serial/netcdf3/lib
+      fi
+      export     PARPACK_LIBDIR=/opt/g95soft/PARPACK
       ;;
 
   esac

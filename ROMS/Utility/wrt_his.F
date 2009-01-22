@@ -194,7 +194,8 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
-     &                     GRID(ng) % h, .FALSE.)
+     &                     GRID(ng) % h,                                &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idbath)), tHISindx(ng)
@@ -217,7 +218,8 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-     &                   GRID(ng) % rmask_wet, .FALSE.)
+     &                   GRID(ng) % rmask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idRwet)), tHISindx(ng)
@@ -237,7 +239,8 @@
 # ifdef MASKING
      &                   GRID(ng) % umask,                              &
 # endif
-     &                   GRID(ng) % umask_wet, .FALSE.)
+     &                   GRID(ng) % umask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUwet)), tHISindx(ng)
@@ -257,7 +260,8 @@
 # ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 # endif
-     &                   GRID(ng) % vmask_wet, .FALSE.)
+     &                   GRID(ng) % vmask_wet,                          &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVwet)), tHISindx(ng)

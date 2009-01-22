@@ -18,8 +18,8 @@
 !     gtype      C-grid type. If zero, compute array allocation bounds.!
 !                  Otherwise, compute bounds for IO processing.        !
 !     Nghost     Number of ghost-points in the halo region:            !
-!                  Nghost = 0,  compute non-overlaping bounds.         !
-!                  Nghost > 0,  compute overlaping bounds.             !
+!                  Nghost = 0,  compute non-overlapping bounds.        !
+!                  Nghost > 0,  compute overlapping bounds.            !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -80,7 +80,7 @@
      &      (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jmin=1
       END IF
 !
-!  Set physical, overlaping (Nghost>0) or non-overlaping (Nghost=0) 
+!  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0) 
 !  grid bounds according to tile rank.
 !
       CALL get_tile (ng, tile, Itile, Jtile,                            &
@@ -139,8 +139,8 @@
 !     ng         Nested grid number.                                   !
 !     tile       Domain partition.                                     !
 !     Nghost     Number of ghost-points in the halo region:            !
-!                  Nghost = 0,  compute non-overlaping coordinates.    !
-!                  Nghost > 0,  compute overlaping bounds.             !
+!                  Nghost = 0,  compute non-overlapping coordinates.   !
+!                  Nghost > 0,  compute overlapping bounds.            !
 !     gtype      C-grid type                                           !
 !     epsilon    Small value to add to Xmax and Ymax when the tile     !
 !                  is lying on the eastern and northern boundaries     !
@@ -448,7 +448,7 @@
       integer :: ChunkSizeI, ChunkSizeJ, MarginI, MarginJ
 !
 !-----------------------------------------------------------------------
-!  Set physical non-overlaping grid bounds according to tile rank.
+!  Set physical non-overlapping grid bounds according to tile rank.
 !-----------------------------------------------------------------------
 !
 !  Non-tiled grid bounds.  This is used in serial or shared-memory

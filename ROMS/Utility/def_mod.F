@@ -46,7 +46,9 @@
 # endif
       integer :: i, j, status, varid
       integer :: CostDim(2), Vsize(4), vardim(3)
-
+# ifdef DISTRIBUTE
+      integer :: ibuffer(2)
+# endif
       integer :: def_dim
 
       real(r8) :: Aval(6)
@@ -87,6 +89,7 @@
 !=======================================================================
 !
       DEFINE : IF (LdefMOD(ng)) THEN
+
         CALL netcdf_create (ng, iNLM, TRIM(ncname), ncMODid(ng))
         IF (exit_flag.ne.NoError) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
@@ -305,7 +308,11 @@
           END IF
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
+        ibuffer(1)=exit_flag
+        ibuffer(2)=ioerror
+        CALL mp_bcasti (ng, iNLM, ibuffer)
+        exit_flag=ibuffer(1)
+        ioerror=ibuffer(2)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -321,13 +328,15 @@
         Vinfo( 1)='outer'
         Vinfo( 2)='outer loop counter'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='inner'
         Vinfo( 2)='inner loop counter'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifndef OBS_SENSITIVITY
@@ -337,55 +346,64 @@
         Vinfo( 1)='Nobs'
         Vinfo( 2)='Number of usable observations'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='obs_mean'
         Vinfo( 2)='observations mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='obs_std'
         Vinfo( 2)='observations standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_mean'
         Vinfo( 2)='model mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_std'
         Vinfo( 2)='model standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_bias'
         Vinfo( 2)='model bias'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo,ncname)
+     &                 1, (/stateDim/), Aval, Vinfo,ncname,             &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='SDE'
         Vinfo( 2)='model-observations standard deviation error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='CC'
         Vinfo( 2)='model-observations cross-correlation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='MSE'
         Vinfo( 2)='model-observations mean squared error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/stateDim/), Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -395,7 +413,8 @@
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='Number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # elif defined WEAK_CONSTRAINT
 !
@@ -404,7 +423,8 @@
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='Number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, (/Nouterdim/), Aval, Vinfo, ncname)
+     &                 1, (/Nouterdim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -414,7 +434,8 @@
         Vinfo( 1)='Ritz'
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/Ninnerdim/), Aval, Vinfo, ncname)
+     &                 1, (/Ninnerdim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # elif defined WEAK_CONSTRAINT
 !
@@ -425,7 +446,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
@@ -437,7 +459,8 @@
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
@@ -449,7 +472,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #  ifdef WEAK_CONSTRAINT
         Vinfo( 1)='cg_dla'
@@ -457,7 +481,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 #  ifdef IS4DVAR
@@ -466,7 +491,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
@@ -477,7 +503,8 @@
         Vinfo( 1)='cg_Gnorm'
         Vinfo( 2)='initial gradient normalization factor'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # elif defined WEAK_CONSTRAINT
 !
@@ -486,13 +513,15 @@
         Vinfo( 1)='cg_Gnorm_v'
         Vinfo( 2)='initial gradient normalization factor, v-space'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='cg_Gnorm_y'
         Vinfo( 2)='initial gradient normalization factor, y-space'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
@@ -504,7 +533,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -516,7 +546,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # elif defined WEAK_CONSTRAINT
 !
@@ -527,7 +558,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='cg_Greduc_y'
@@ -535,7 +567,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -547,7 +580,8 @@
         vardim(1)=NinnerDim
         vardim(2)=threeDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Lanczos tridiagonal matrix, upper diagonal elements.
@@ -557,7 +591,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
@@ -569,7 +604,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Eigenvalues relative error.
@@ -579,7 +615,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -591,7 +628,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NinnerDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # elif defined WEAK_CONSTRAINT
 !
@@ -603,7 +641,9 @@
         vardim(2)=NinnerDim
         vardim(3)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 3, vardim, Aval, Vinfo, ncname, .FALSE.)
+     &                 3, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetFillVal = .FALSE.,                            &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined W4DVAR || defined IOM
@@ -613,7 +653,8 @@
         Vinfo( 1)='RPcost_function'
         Vinfo( 2)='representer model data penalty function'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifdef WEAK_CONSTRAINT
@@ -625,7 +666,8 @@
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define state estimate data misfit.
@@ -635,7 +677,8 @@
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define model penalty function.
@@ -645,7 +688,8 @@
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define optimal penalty function.
@@ -655,7 +699,8 @@
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, vardim, Aval, Vinfo, ncname)
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !
@@ -738,7 +783,8 @@
         Vinfo( 1)='TLcost_function'
         Vinfo( 2)='tangent linear model misfit cost function'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/iterDim/), Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifdef BACKGROUND
@@ -748,7 +794,8 @@
         Vinfo( 1)='back_function'
         Vinfo( 2)='model minus background misfit cost function'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/iterDim/), Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -759,7 +806,8 @@
         Vinfo( 1)='Jmin'
         Vinfo( 2)='normalized, optimal cost function minimum'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/iterDim/), Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -790,18 +838,9 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncMODid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-# endif
+        CALL netcdf_enddef (ng, iNLM, ncname, ncMODid(ng))
         IF (exit_flag.ne.NoError) RETURN
+
       END IF DEFINE
 !
 !=======================================================================
@@ -825,7 +864,7 @@
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, ncMODid(ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,60) TRIM(ncname)
+          WRITE (stdout,50) TRIM(ncname)
           RETURN
         END IF
 !
@@ -873,21 +912,21 @@
 !  Check if needed variables are available.
 !
         IF (.not.got_var(idObsS)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsS)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idObsS)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
         END IF
 # ifdef FOUR_DVAR
         IF (.not.got_var(idNLmi)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idNLmi)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idNLmi)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
         END IF
 # endif
         IF (.not.got_var(idNLmo)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idNLmo)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idNLmo)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
@@ -895,7 +934,7 @@
 # if defined IS4DVAR         || defined IOM || \
      defined WEAK_CONSTRAINT
         IF (.not.got_var(idTLmo)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTLmo)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTLmo)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
@@ -904,13 +943,13 @@
 # if defined IS4DVAR         || defined IOM || \
      defined WEAK_CONSTRAINT
         IF (.not.got_var(idMOMi)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMi)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMOMi)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idMOMf)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMf)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMOMf)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN
@@ -926,11 +965,9 @@
      &        1x,a)
   40  FORMAT (/,' DEF_MOD - unable to create globat attribute: ',       &
      &        a,/,11x,a)
-  50  FORMAT (/,' DEF_MOD - unable to leave definition mode for',       &
-     &        ' file: ', a)
-  60  FORMAT (/,' DEF_MOD - unable to open observation/model file: ',a)
+  50  FORMAT (/,' DEF_MOD - unable to open observation/model file: ',a)
 
-  70  FORMAT (/,' DEF_MOD - unable to find model/observation variable:',&
+  60  FORMAT (/,' DEF_MOD - unable to find model/observation variable:',&
      &        1x,a,/,11x,'in file: ',a)
 
       RETURN

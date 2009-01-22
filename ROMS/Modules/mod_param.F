@@ -93,6 +93,15 @@
 !  Lower and upper bounds indices per domain partition for all grids.
 !-----------------------------------------------------------------------
 !
+!  All the 1D array indices are of size -1:NtileI(ng)*NtileJ(ng)-1. The
+!  -1 index include the values for the full (no partitions) grid.
+!
+!  Notice that the starting (Imin, Jmin) and ending (Imax, Jmax) indices
+!  for I/O processing are 3D arrays. The first dimension (1:4) is for
+!  1=PSI, 2=RHO, 3=u, 4=v points; the second dimension (0:1) is number
+!  of ghost points (0: no ghost points, 1: Nghost points), and the
+!  the third dimension is for 0:NtileI(ng)*NtileJ(ng)-1.
+!
         TYPE T_BOUNDS
           integer, pointer :: tile(:)  ! tile partition
 
@@ -120,6 +129,11 @@
           integer, pointer :: JstrV(:) ! starting tile J-direction (V)
           integer, pointer :: JendR(:) ! ending   tile J-direction (RHO)
           integer, pointer :: JendT(:) ! ending   nest J-direction (RHO)
+
+          integer, pointer :: Imin(:,:,:)  ! starting ghost I-direction
+          integer, pointer :: Imax(:,:,:)  ! ending   ghost I-direction
+          integer, pointer :: Jmin(:,:,:)  ! starting ghost J-direction
+          integer, pointer :: Jmax(:,:,:)  ! ending   ghost J-direction
         END TYPE T_BOUNDS
 
         TYPE (T_BOUNDS), allocatable :: BOUNDS(:)

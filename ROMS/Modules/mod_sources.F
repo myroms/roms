@@ -117,7 +117,7 @@
 
       integer :: Vid, ifile, nvatt, nvdim
 # endif
-      integer :: is, itrc, k. mg
+      integer :: is, itrc, k, mg
 
       real(r8), parameter :: IniVal = 0.0_r8
 !

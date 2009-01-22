@@ -622,8 +622,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+      status=nf_fread2d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idFsur), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj,                             &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
      &                  rmask,                                          &
@@ -648,8 +650,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+      status=nf_fread2d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idUbar), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj,                             &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  umask,                                          &
@@ -670,8 +674,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread2d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+      status=nf_fread2d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idVbar), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj,                             &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  vmask,                                          &
@@ -697,8 +703,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+      status=nf_fread3d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idUsms), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj, 1, Nfrec(ng),               &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  umask,                                          &
@@ -719,8 +727,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+      status=nf_fread3d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idVsms), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj, 1, Nfrec(ng),               &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  vmask,                                          &
@@ -746,8 +756,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
+      status=nf_fread3d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idUvel), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  umask,                                          &
@@ -768,8 +780,10 @@
      &                       ncid, varid)
       IF (exit_flag.ne.NoError) RETURN
 
-      status=nf_fread3d(ng, model, ncid, varid, rec, gtype,             &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
+      status=nf_fread3d(ng, model, ncname, ncid,                        &
+     &                  Vname(1,idVvel), varid,                         &
+     &                  rec, gtype, Vsize,                              &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
      &                  vmask,                                          &
@@ -793,8 +807,10 @@
      &                         Vname(1,idTvar(itrc)), ncid, varid)
         IF (exit_flag.ne.NoError) RETURN
 
-        status=nf_fread3d(ng, model, ncid, vid(idTvar(itrc)), rec,      &
-     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
+        status=nf_fread3d(ng, model, ncname, ncid,                      &
+     &                    Vname(1,idTvar(itrc)), varid,                 &
+     &                    rec, gtype, Vsize,                            &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
      &                    rmask,                                        &
@@ -822,8 +838,10 @@
      &                         Vname(1,idTsur(itrc)), ncid, varid)
         IF (exit_flag.ne.NoError) RETURN
 
-        status=nf_fread3d(ng, model, ncid, vid(idTsur(itrc)), rec,      &
-     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
+        status=nf_fread3d(ng, model, ncname, ncid,                      &
+     &                    Vname(1,idTsur(itrc)), varid,                 &
+     &                    rec, gtype, Vsize,                            &
+     &                    LBi, UBi, LBj, UBj, 1,Nfrec(ng),              &
      &                    scale, Fmin, Fmax,                            &
 #   ifdef MASKING
      &                    rmask,                                        &

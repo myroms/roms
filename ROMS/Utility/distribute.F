@@ -1495,14 +1495,13 @@
 # ifdef MASKING
       logical :: LandFill
 # endif
-      integer :: Itile, Jtile, Nghost
+      integer :: Cgrid, ghost, rank
       integer :: Io, Ie, Jo, Je, Ioff, Joff
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen
       integer :: Lstr, MyError, MyType, Serror, Srequest
-      integer :: i, ic, j, jc, np, rank
+      integer :: i, ic, j, jc, np
 
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: MySize
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Rrequest
 
@@ -1530,42 +1529,84 @@
 !  partitions in the XI- and ETA-directions.
 !-----------------------------------------------------------------------
 !
-!  Set first and last grid point according to staggered C-grid
-!  classification.
+!  Set full grid first and last point according to staggered C-grid
+!  classification. Notice that the offsets are for the private array
+!  counter.
 !
-      Io=0
-      Ie=Lm(ng)+1
-      Jo=0
-      Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
-      IF (Io.eq.0) THEN
-        Ioff=1
-      ELSE
-        Ioff=0
-      END IF
-      IF (Jo.eq.0) THEN
-        Joff=0
-      ELSE
-        Joff=1
-      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=1
+        CASE (r2dvar, r3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+        CASE (u2dvar, u3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=0
+        CASE (v2dvar, v3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=1
+        CASE DEFAULT                              ! RHO-points
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+      END SELECT
+
       Ilen=Ie-Io+1
       Jlen=Je-Jo+1
       Npts=Ilen*Jlen
 !
-!  Set physical, non-overlaping (no ghost-points) ranges according to
-!  tile rank. Compute size of distributed buffers.
+!  Set physical, non-overlapping (no ghost-points) ranges according to
+!  tile rank.
 !
-      Nghost=0
+      ghost=0
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Cgrid=1
+        CASE (r2dvar, r3dvar)
+          Cgrid=2 
+        CASE (u2dvar, u3dvar)
+          Cgrid=3
+        CASE (v2dvar, v3dvar)
+          Cgrid=4
+        CASE DEFAULT                              ! RHO-points
+          Cgrid=2
+      END SELECT
+
+      Imin=BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
+      Imax=BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
+      Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
+      Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
+!
+!  Compute size of distributed buffers.
+!
       DO rank=0,NtileI(ng)*NtileJ(ng)-1
-        CALL get_bounds (ng, rank, gtype, Nghost, Itile, Jtile,         &
-     &                   Imin(rank), Imax(rank),                        &
-     &                   Jmin(rank), Jmax(rank))
-        MySize(rank)=(Imax(rank)-Imin(rank)+1)*                         &
-     &               (Jmax(rank)-Jmin(rank)+1)
+        MySize(rank)=(BOUNDS(ng) % Imax(Cgrid,ghost,rank)-              &
+     &                BOUNDS(ng) % Imin(Cgrid,ghost,rank)+1)*           &
+     &               (BOUNDS(ng) % Jmax(Cgrid,ghost,rank)-              &
+     &                BOUNDS(ng) % Jmin(Cgrid,ghost,rank)+1)
       END DO
 !
 !  Initialize local arrays to avoid denormalized numbers. This
@@ -1581,8 +1622,8 @@
 !  Pack and scale input data.
 !
       np=0
-      DO j=Jmin(MyRank),Jmax(MyRank)
-        DO i=Imin(MyRank),Imax(MyRank)
+      DO j=Jmin,Jmax
+        DO i=Imin,Imax
           np=np+1
           Asend(np)=A(i,j)*Ascl
         END DO
@@ -1600,8 +1641,8 @@
       END IF
       IF (gtype.lt.0) THEN
         np=0
-        DO j=Jmin(MyRank),Jmax(MyRank)
-          DO i=Imin(MyRank),Imax(MyRank)
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
             np=np+1
             IF (Amask(i,j).eq.0.0_r8) THEN
               Asend(np)=spval
@@ -1610,8 +1651,8 @@
         END DO
       ELSE IF (LandFill) THEN
         np=0
-        DO j=Jmin(MyRank),Jmax(MyRank)
-          DO i=Imin(MyRank),Imax(MyRank)
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
             np=np+1
             IF (Amask(i,j).eq.0.0_r8) THEN
               Asend(np)=spval
@@ -1626,9 +1667,9 @@
 !
       IF (MyRank.eq.MyMaster) THEN
         np=0
-        DO j=Jmin(MyRank),Jmax(MyRank)
+        DO j=Jmin,Jmax
           jc=(j-Joff)*Ilen
-          DO i=Imin(MyRank),Imax(MyRank)
+          DO i=Imin,Imax
             np=np+1
             ic=i+Ioff+jc
             Aout(ic)=Asend(np)
@@ -1655,10 +1696,16 @@
             exit_flag=2
             RETURN
           END IF
+
           np=0
-          DO j=Jmin(rank),Jmax(rank)
+          Imin=BOUNDS(ng) % Imin(Cgrid,ghost,rank)
+          Imax=BOUNDS(ng) % Imax(Cgrid,ghost,rank)
+          Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,rank)
+          Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,rank)
+
+          DO j=Jmin,Jmax
             jc=(j-Joff)*Ilen
-            DO i=Imin(rank),Imax(rank)
+            DO i=Imin,Imax
               np=np+1
               ic=i+Ioff+jc
               Aout(ic)=Arecv(np,rank)
@@ -1777,14 +1824,13 @@
 # ifdef MASKING
       logical :: LandFill
 # endif
-      integer :: Itile, Jtile, Nghost
+      integer :: Cgrid, ghost, rank
       integer :: Io, Ie, Jo, Je, Ioff, Joff, Koff
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, Klen, IJlen
       integer :: Lstr, MyError, MyType, Serror, Srequest
-      integer :: i, ic, j, jc, k, kc, np, rank
+      integer :: i, ic, j, jc, k, kc, np
 
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: MySize
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Rrequest
 
@@ -1812,47 +1858,93 @@
 !  partitions in the XI- and ETA-directions.
 !-----------------------------------------------------------------------
 !
-!  Set first and last grid point according to staggered C-grid
-!  classification.
+!  Set full grid first and last point according to staggered C-grid
+!  classification. Notice that the offsets are for the private array
+!  counter.
 !
-      Io=0
-      Ie=Lm(ng)+1
-      Jo=0
-      Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
-      IF ((MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
-      IF (Io.eq.0) THEN
-        Ioff=1
-      ELSE
-        Ioff=0
-      END IF
-      IF (Jo.eq.0) THEN
-        Joff=0
-      ELSE
-        Joff=1
-      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=1
+        CASE (r2dvar, r3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+        CASE (u2dvar, u3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=0
+        CASE (v2dvar, v3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=1
+        CASE DEFAULT                              ! RHO-points
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+      END SELECT
+
       IF (LBk.eq.0) THEN
         Koff=0
       ELSE
         Koff=1
       END IF
+
       Ilen=Ie-Io+1
       Jlen=Je-Jo+1
       Klen=UBk-LBk+1
       IJlen=Ilen*Jlen
       Npts=IJlen*Klen
 !
-!  Set physical, non-overlaping (no ghost-points) ranges according to
-!  tile rank. Compute size of distributed buffers.
+!  Set tile physical, non-overlapping (no ghost-points) ranges according
+!  to tile rank.
 !
-      Nghost=0
+      ghost=0
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Cgrid=1
+        CASE (r2dvar, r3dvar)
+          Cgrid=2 
+        CASE (u2dvar, u3dvar)
+          Cgrid=3
+        CASE (v2dvar, v3dvar)
+          Cgrid=4
+        CASE DEFAULT                              ! RHO-points
+          Cgrid=2
+      END SELECT
+
+      Imin=BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
+      Imax=BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
+      Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
+      Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
+!
+!  Compute size of distributed buffers.
+!
       DO rank=0,NtileI(ng)*NtileJ(ng)-1
-        CALL get_bounds (ng, rank, gtype, Nghost, Itile, Jtile,         &
-     &                   Imin(rank), Imax(rank),                        &
-     &                   Jmin(rank), Jmax(rank))
-        MySize(rank)=(Imax(rank)-Imin(rank)+1)*                         &
-     &               (Jmax(rank)-Jmin(rank)+1)*(UBk-LBk+1)
+        MySize(rank)=(BOUNDS(ng) % Imax(Cgrid,ghost,rank)-              &
+     &                BOUNDS(ng) % Imin(Cgrid,ghost,rank)+1)*           &
+     &               (BOUNDS(ng) % Jmax(Cgrid,ghost,rank)-              &
+     &                BOUNDS(ng) % Jmin(Cgrid,ghost,rank)+1)*           &
+     &               (UBk-LBk+1)
       END DO
 !
 !  Initialize local arrays to avoid denormalized numbers. This
@@ -1869,8 +1961,8 @@
 !
       np=0
       DO k=LBk,UBk
-        DO j=Jmin(MyRank),Jmax(MyRank)
-          DO i=Imin(MyRank),Imax(MyRank)
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
             np=np+1
             Asend(np)=A(i,j,k)*Ascl
           END DO
@@ -1890,8 +1982,8 @@
       IF (gtype.lt.0) THEN
         np=0
         DO k=LBk,UBk
-          DO j=Jmin(MyRank),Jmax(MyRank)
-            DO i=Imin(MyRank),Imax(MyRank)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               np=np+1
               IF (Amask(i,j).eq.0.0_r8) THEN
                 Asend(np)=spval
@@ -1902,8 +1994,8 @@
       ELSE IF (LandFill) THEN
         np=0
         DO k=LBk,UBk
-          DO j=Jmin(MyRank),Jmax(MyRank)
-            DO i=Imin(MyRank),Imax(MyRank)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               np=np+1
               IF (Amask(i,j).eq.0.0_r8) THEN
                 Asend(np)=spval
@@ -1921,9 +2013,9 @@
         np=0
         DO k=LBk,UBk
           kc=(k-Koff)*IJlen
-          DO j=Jmin(MyRank),Jmax(MyRank)
+          DO j=Jmin,Jmax
             jc=(j-Joff)*Ilen+kc
-            DO i=Imin(MyRank),Imax(MyRank)
+            DO i=Imin,Imax
               np=np+1
               ic=i+Ioff+jc
               Aout(ic)=Asend(np)
@@ -1951,12 +2043,18 @@
             exit_flag=2
             RETURN
           END IF
+
           np=0
+          Imin=BOUNDS(ng) % Imin(Cgrid,ghost,rank)
+          Imax=BOUNDS(ng) % Imax(Cgrid,ghost,rank)
+          Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,rank)
+          Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,rank)
+
           DO k=LBk,UBk
             kc=(k-Koff)*IJlen
-            DO j=Jmin(rank),Jmax(rank)
+            DO j=Jmin,Jmax
               jc=(j-Joff)*Ilen+kc
-              DO i=Imin(rank),Imax(rank)
+              DO i=Imin,Imax
                 np=np+1
                 ic=i+Ioff+jc
                 Aout(ic)=Arecv(np,rank)
@@ -3076,13 +3174,10 @@
 !  Local variable declarations.
 !
       integer :: Io, Ie, Jo, Je, Ioff, Joff
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, IJlen
-      integer :: Lstr, MyError, MySize, MyType, Serror, rank
+      integer :: Lstr, MyError, MySize, MyType, Serror, ghost
       integer :: i, ic, ij, j, jc, mc, nc
-
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Itile, Jtile
 
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: Arecv
 
@@ -3102,41 +3197,90 @@
 !  partitions in the XI- and ETA-directions.
 !-----------------------------------------------------------------------
 !
-!  Set first and last grid point according to staggered C-grid
-!  classification. The, set 1D counter offsets.
+!  Set full grid first and last point according to staggered C-grid
+!  classification. Notice that the offsets are for the private array
+!  counter.
 !
-      Io=0
-      Ie=Lm(ng)+1
-      Jo=0
-      Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
-      IF (Io.eq.0) THEN
-        Ioff=1
-      ELSE
-        Ioff=0
-      END IF
-      IF (Jo.eq.0) THEN
-        Joff=0
-      ELSE
-        Joff=1
-      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=1
+        CASE (r2dvar, r3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+        CASE (u2dvar, u3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=0
+        CASE (v2dvar, v3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=1
+        CASE DEFAULT                              ! RHO-points
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+      END SELECT
+
       Ilen=Ie-Io+1
       Jlen=Je-Jo+1
       IJlen=Ilen*Jlen
 !
-!  Set physical, non-overlaping (no ghost-points) ranges according to
-!  tile rank.
+!  Set physical, non-overlapping (Nghost=0) or overlapping (Nghost>0)
+!  ranges according to tile rank.
 !
-      DO rank=0,NtileI(ng)*NtileJ(ng)-1
-        CALL get_bounds (ng, rank, gtype, Nghost,                       &
-     &                   Itile(rank), Jtile(rank),                      &
-     &                   Imin(rank), Imax(rank),                        &
-     &                   Jmin(rank), Jmax(rank))
-      END DO
+      IF (Nghost.eq.0) THEN
+        ghost=0                                   ! non-overlapping
+      ELSE
+        ghost=1                                   ! overlapping
+      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Imin=BOUNDS(ng) % Imin(1,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(1,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(1,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(1,ghost,MyRank)
+        CASE (r2dvar, r3dvar)
+          Imin=BOUNDS(ng) % Imin(2,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(2,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(2,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(2,ghost,MyRank)
+        CASE (u2dvar, u3dvar)
+          Imin=BOUNDS(ng) % Imin(3,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(3,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(3,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(3,ghost,MyRank)
+        CASE (v2dvar, v3dvar)
+          Imin=BOUNDS(ng) % Imin(4,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(4,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(4,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(4,ghost,MyRank)
+        CASE DEFAULT                              ! RHO-points
+          Imin=BOUNDS(ng) % Imin(2,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(2,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(2,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(2,ghost,MyRank)
+      END SELECT
 !
 !  Size of broadcast buffer.
 !
@@ -3208,9 +3352,9 @@
 !
 !  Unpack data buffer.
 !
-      DO j=Jmin(MyRank),Jmax(MyRank)
+      DO j=Jmin,Jmax
         jc=(j-Joff)*Ilen
-        DO i=Imin(MyRank),Imax(MyRank)
+        DO i=Imin,Imax
           ic=i+Ioff+jc
           Aout(i,j)=Arecv(ic)
         END DO
@@ -3299,13 +3443,10 @@
 !  Local variable declarations.
 !
       integer :: Io, Ie, Jo, Je, Ioff, Joff, Koff
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, Klen, IJlen
-      integer :: Lstr, MyError, MySize, MyType, Serror, rank
+      integer :: Lstr, MyError, MySize, MyType, Serror, ghost
       integer :: i, ic, ij, j, jc, k, kc, mc, nc
-
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
-      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Itile, Jtile
 
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Arecv
 
@@ -3325,47 +3466,97 @@
 !  partitions in the XI- and ETA-directions.
 !-----------------------------------------------------------------------
 !
-!  Set first and last grid point according to staggered C-grid
-!  classification. The, set 1D counter offsets.
+!  Set full grid first and last point according to staggered C-grid
+!  classification. Notice that the offsets are for the private array
+!  counter.
 !
-      Io=0
-      Ie=Lm(ng)+1
-      Jo=0
-      Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
-      IF (Io.eq.0) THEN
-        Ioff=1
-      ELSE
-        Ioff=0
-      END IF
-      IF (Jo.eq.0) THEN
-        Joff=0
-      ELSE
-        Joff=1
-      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=1
+        CASE (r2dvar, r3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+        CASE (u2dvar, u3dvar)
+          Io=BOUNDS(ng) % Istr (-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=0
+          Joff=0
+        CASE (v2dvar, v3dvar)
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % Jstr (-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=1
+        CASE DEFAULT                              ! RHO-points
+          Io=BOUNDS(ng) % IstrR(-1)
+          Ie=BOUNDS(ng) % IendR(-1)
+          Jo=BOUNDS(ng) % JstrR(-1)
+          Je=BOUNDS(ng) % JendR(-1)
+          Ioff=1
+          Joff=0
+      END SELECT
+
       IF (LBk.eq.0) THEN
         Koff=0
       ELSE
         Koff=1
       END IF
+
       Ilen=Ie-Io+1
       Jlen=Je-Jo+1
       Klen=UBk-LBk+1
       IJlen=Ilen*Jlen
 !
-!  Set physical, non-overlaping (no ghost-points) ranges according to
-!  tile rank.
+!  Set physical, non-overlapping (Nghost=0) or overlapping (Nghost>0)
+!  ranges according to tile rank.
 !
-      DO rank=0,NtileI(ng)*NtileJ(ng)-1
-        CALL get_bounds (ng, rank, gtype, Nghost,                       &
-     &                   Itile(rank), Jtile(rank),                      &
-     &                   Imin(rank), Imax(rank),                        &
-     &                   Jmin(rank), Jmax(rank))
-      END DO
+      IF (Nghost.eq.0) THEN
+        ghost=0                                   ! non-overlapping
+      ELSE
+        ghost=1                                   ! overlapping
+      END IF
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          Imin=BOUNDS(ng) % Imin(1,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(1,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(1,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(1,ghost,MyRank)
+        CASE (r2dvar, r3dvar)
+          Imin=BOUNDS(ng) % Imin(2,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(2,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(2,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(2,ghost,MyRank)
+        CASE (u2dvar, u3dvar)
+          Imin=BOUNDS(ng) % Imin(3,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(3,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(3,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(3,ghost,MyRank)
+        CASE (v2dvar, v3dvar)
+          Imin=BOUNDS(ng) % Imin(4,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(4,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(4,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(4,ghost,MyRank)
+        CASE DEFAULT                              ! RHO-points
+          Imin=BOUNDS(ng) % Imin(2,ghost,MyRank)
+          Imax=BOUNDS(ng) % Imax(2,ghost,MyRank)
+          Jmin=BOUNDS(ng) % Jmin(2,ghost,MyRank)
+          Jmax=BOUNDS(ng) % Jmax(2,ghost,MyRank)
+      END SELECT
 !
 !  Size of broadcast buffer.
 !
@@ -3442,9 +3633,9 @@
 !
       DO k=LBk,UBk
         kc=(k-Koff)*IJlen
-        DO j=Jmin(MyRank),Jmax(MyRank)
+        DO j=Jmin,Jmax
           jc=(j-Joff)*Ilen+kc
-          DO i=Imin(MyRank),Imax(MyRank)
+          DO i=Imin,Imax
             ic=i+Ioff+jc
             Aout(i,j,k)=Arecv(ic)
           END DO

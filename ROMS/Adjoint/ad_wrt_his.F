@@ -222,7 +222,8 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-     &                   GRID(ng)% ad_h, .FALSE.)
+     &                   GRID(ng)% ad_h,                                &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idbath)), tADJindx(ng)

@@ -202,6 +202,22 @@
                 END DO
               END IF
             END IF
+!
+!  If Nrec=0, input file is not CF compliant, check variable dimension
+!  to see if the dimension contains the "time" string.
+!
+            IF (got_time.and.(Nrec.eq.0)) THEN
+              DO i=1,n_vdim
+                IF (INDEX(TRIM(var_Dname(i)),'time').ne.0) THEN
+                  Nrec=var_Dsize(i)
+                END IF
+              END DO
+            END IF
+            IF (got_time.and.(Nrec.eq.0)) THEN
+              IF (Master) WRITE (stdout,10) TRIM(Tname(ifield)),        &
+     &                                      TRIM(Vname(1,ifield)),      &
+     &                                      TRIM(fname(ifile))
+            END IF
           END IF
 !
 !  Determine initial time record to read and cycling switch.
@@ -237,12 +253,12 @@
 !
         IF (.not.got_var) THEN
           IF (nfiles.gt.1) THEN
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), 'files:'
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), 'files:'
             DO i=1,nfiles
               WRITE (stdout,'(15x,a)') TRIM(fname(i))
             END DO
           ELSE
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), 'file:'
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), 'file:'
             WRITE (stdout,'(15x,a)') TRIM(ncfile)
           END IF
           exit_flag=2
@@ -250,12 +266,12 @@
         END IF
         IF (.not.got_time) THEN
           IF (nfiles.gt.1) THEN
-            WRITE (stdout,10) TRIM(Tname(ifield)), 'files:'
+            WRITE (stdout,20) TRIM(Tname(ifield)), 'files:'
             DO i=1,nfiles
               WRITE (stdout,'(15x,a)') TRIM(fname(i))
             END DO
           ELSE
-            WRITE (stdout,10) TRIM(Tname(ifield)), 'file:'
+            WRITE (stdout,20) TRIM(Tname(ifield)), 'file:'
             WRITE (stdout,'(15x,a)') TRIM(ncfile)
           END IF
           exit_flag=2
@@ -272,7 +288,7 @@
         IF (ncid.eq.-1) THEN
           CALL netcdf_open (ng, model, ncfile, 0, ncid)
           IF (exit_flag.ne.NoError) THEN
-            WRITE (stdout,20) TRIM(ncfile)
+            WRITE (stdout,30) TRIM(ncfile)
             RETURN
           END IF
           CALL netcdf_openid (nFfiles(ng), FRCname(1,ng), FRCids(1,ng), &
@@ -313,7 +329,7 @@
      &                          start = (/Trec-1/),                     &
      &                          total = (/1/))
           IF (exit_flag.ne.NoError) THEN
-            IF (Master) WRITE (stdout,30) TRIM(Tname(ifield)), Trec
+            IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
             RETURN
           END IF
           Tval=Tval*Tscale
@@ -398,7 +414,7 @@
      &                            start = (/Trec/),                     &
      &                            total = (/1/))
             IF (exit_flag.ne.NoError) THEN
-              IF (Master) WRITE (stdout,30) TRIM(Tname(ifield)), Trec
+              IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               RETURN
             END IF
           END IF
@@ -416,16 +432,20 @@
               IF (special) THEN
                 Vsize(3)=Irec
                 gtype=Vtype+4
-                status=nf_fread3d(ng, model, ncid, Vid, 0, gtype,       &
-     &                            Vsize, LBi, UBi, LBj, UBj, 1, Irec,   &
+                status=nf_fread3d(ng, model, ncfile, ncid,              &
+     &                            Vname(1,ifield), Vid,                 &
+     &                            0, gtype, Vsize,                      &
+     &                            LBi, UBi, LBj, UBj, 1, Irec,          &
      &                            Fscale(ifield,ng), Fmin, Fmax,        &
 # ifdef MASKING
      &                            Fmask,                                &
 # endif
      &                            Fout)
               ELSE
-                status=nf_fread2d(ng, model, ncid, Vid, Trec, Vtype,    &
-     &                            Vsize, LBi, UBi, LBj, UBj,            &
+                status=nf_fread2d(ng, model, ncfile, ncid,              &
+     &                            Vname(1,ifield), Vid,                 &
+     &                            Trec, Vtype, Vsize,                   &
+     &                            LBi, UBi, LBj, UBj,                   &
      &                            Fscale(ifield,ng), Fmin, Fmax,        &
 # ifdef MASKING
      &                            Fmask,                                &
@@ -441,21 +461,21 @@
               Fpoint(Tindex,ifield,ng)=Fval*Fscale(ifield,ng)
             END IF
             IF (exit_flag.ne.NoError) THEN
-              IF (Master) WRITE (stdout,30) TRIM(Vname(1,ifield)), Trec
+              IF (Master) WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
             Finfo(8,ifield,ng)=Fmin
             Finfo(9,ifield,ng)=Fmax
             IF (Master) THEN
               IF (special) THEN
-                WRITE (stdout,40) TRIM(Vname(2,ifield)), Fmin, Fmax
+                WRITE (stdout,50) TRIM(Vname(2,ifield)), Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
                 lvar=MIN(43,LEN_TRIM(Vname(2,ifield)))
                 Tval=Tval*day2sec
                 CALL time_string (Tval, t_code)
-                WRITE (stdout,50) Vname(2,ifield)(1:lvar),              &
+                WRITE (stdout,60) Vname(2,ifield)(1:lvar),              &
      &                            t_code, ncfile(lstr:lend),            &
      &                            Trec, Tindex, Tmin, Tmax, Fmin, Fmax
               END IF
@@ -480,14 +500,17 @@
         END IF
       END IF
 !
-  10  FORMAT (/,' GET_2DFLDR  - unable to find requested variable: ',a, &
+  10  FORMAT (/,' GET_2DFLDR  - unable to find dimension ',a,           &
+     &        /,15x,'for variable: ',a,/,15x,'in file: ',a,             &
+     &        /,15x,'file is not CF compliant...')
+  20  FORMAT (/,' GET_2DFLDR  - unable to find requested variable: ',a, &
      &        /,15x,'in input NetCDF ',a)
-  20  FORMAT (/,' GET_2DFLDR  - unable to open input NetCDF file: ',a)
-  30  FORMAT (/,' GET_2DFLDR  - error while reading variable: ',a,2x,   &
+  30  FORMAT (/,' GET_2DFLDR  - unable to open input NetCDF file: ',a)
+  40  FORMAT (/,' GET_2DFLDR  - error while reading variable: ',a,2x,   &
      &        ' at TIME index = ',i4)
-  40  FORMAT (3x,' GET_2DFLDR  - ',a,/,19x,'(Min = ',1p,e15.8,0p,       &
+  50  FORMAT (3x,' GET_2DFLDR  - ',a,/,19x,'(Min = ',1p,e15.8,0p,       &
      &        ' Max = ',1p,e15.8,0p,')')
-  50  FORMAT (3x,' GET_2DFLDR  - ',a,',',t62,'t = ',a,/,19x,            &
+  60  FORMAT (3x,' GET_2DFLDR  - ',a,',',t62,'t = ',a,/,19x,            &
      &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')

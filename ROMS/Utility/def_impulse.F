@@ -27,9 +27,6 @@
 # endif
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -327,7 +324,8 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idtime,ng),        &
-     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define free-surface impulse forcing.
@@ -346,7 +344,7 @@
      &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Define 2D momentum impulse forcing in the XI-direction.
+!  Define 2D U-momentum component impulse forcing.
 !
         Vinfo( 1)=Vname(1,idUbtf)
         Vinfo( 2)=Vname(2,idUbtf)
@@ -362,7 +360,7 @@
      &                 NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Define 2D momentum impulse forcing in the ETA-direction.
+!  Define 2D V-momentum component impulse forcing.
 !
         Vinfo( 1)=Vname(1,idVbtf)
         Vinfo( 2)=Vname(2,idVbtf)
@@ -380,7 +378,7 @@
 
 # ifdef SOLVE3D
 !
-!  Define 3D momentum impulse forcing in the XI-direction.
+!  Define 3D U-momentum component impulse forcing.
 !
         Vinfo( 1)=Vname(1,idUtlf)
         Vinfo( 2)=Vname(2,idUtlf)
@@ -396,7 +394,7 @@
      &                 NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Define 3D momentum impulse forcing in the ETA-direction.
+!  Define 3D V-momentum component impulse forcing.
 !
         Vinfo( 1)=Vname(1,idVtlf)
         Vinfo( 2)=Vname(2,idVtlf)
@@ -442,17 +440,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncTLFid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag)
-# endif
+        CALL netcdf_enddef (ng, iTLM, ncname, ncTLFid(ng))
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -487,7 +475,7 @@
 !
         CALL netcdf_open (ng, iTLM, ncname, 1, ncTLFid(ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,40) TRIM(ncname)
+          WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
 !
@@ -536,38 +524,38 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idZtlf)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idZtlf)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idZtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbtf)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUbtf)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbtf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbtf)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVbtf)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbtf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUtlf)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUtlf)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVtlf)) THEN
-          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVtlf)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -576,7 +564,7 @@
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTtlf(itrc))) THEN
-            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTtlf(itrc))),  &
+            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTtlf(itrc))),  &
      &                                   TRIM(ncname)
             exit_flag=3
             RETURN
@@ -592,10 +580,8 @@
   10  FORMAT (/,' DEF_IMPULSE - unable to create impulse forcing',      &
      &          ' NetCDF file: ',a)
   20  FORMAT (1pe11.4,1x,'millimeter')
-  30  FORMAT (/,' DEF_IMPULSE - unable to leave definition mode for',   &
-     &        ' file: ', a)
-  40  FORMAT (/,' DEF_IMPULSE - unable to open norm NetCDF file: ',a)
-  50  FORMAT (/,' DEF_IMPULSE - unable to find variable: ',a,2x,        &
+  30  FORMAT (/,' DEF_IMPULSE - unable to open norm NetCDF file: ',a)
+  40  FORMAT (/,' DEF_IMPULSE - unable to find variable: ',a,2x,        &
      &        ' in impulse forcing NetCDF file: ',a)
 
       RETURN

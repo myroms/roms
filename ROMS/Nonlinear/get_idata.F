@@ -266,7 +266,8 @@
 !  Time-accumulated free-surface tide harmonics.
 !
         gtype=r3dvar
-        status=nf_fread3d(ng, iNLM, ncTIDEid(ng), tideVid(idFsuH,ng),   &
+        status=nf_fread3d(ng, iNLM, TIDEname(ng), ncTIDEid(ng),         &
+     &                    Vname(1,idFsuH), tideVid(idFsuH,ng),          &
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
@@ -290,7 +291,8 @@
 !  Time-accumulated 2D u-momentum tide harmonics.
 !
         gtype=u3dvar
-        status=nf_fread3d(ng, iNLM, ncTIDEid(ng), tideVid(idu2dH,ng),   &
+        status=nf_fread3d(ng, iNLM, TIDEname(ng), ncTIDEid(ng),         &
+     &                    Vname(1,idu2dH), tideVid(idu2dH,ng),          &
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
@@ -314,7 +316,8 @@
 !  Time-accumulated 2D v-momentum tide harmonics.
 !
         gtype=v3dvar
-        status=nf_fread3d(ng, iNLM, ncTIDEid(ng), tideVid(idv2dH,ng),   &
+        status=nf_fread3d(ng, iNLM, TIDEname(ng), ncTIDEid(ng),         &
+     &                    Vname(1,idv2dH), tideVid(idv2dH,ng),          &
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
@@ -340,7 +343,8 @@
 !  Time-accumulated 3D u-momentum tide harmonics.
 !
         gtype=u3dvar
-        status=nf_fread4d(ng, iNLM, ncTIDEid(ng), tideVid(idu3dH,ng),   &
+        status=nf_fread4d(ng, iNLM, TIDEname(ng), ncTIDEid(ng),         &
+     &                    Vname(1,idu3dH), tideVid(idu3dH,ng),          &
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &
@@ -364,7 +368,8 @@
 !  Time-accumulated 3D v-momentum tide harmonics.
 !
         gtype=v3dvar
-        status=nf_fread4d(ng, iNLM, ncTIDEid(ng), tideVid(idv3dH,ng),   &
+        status=nf_fread4d(ng, iNLM, TIDEname(ng), ncTIDEid(ng),         &
+     &                    Vname(1,idv3dH), tideVid(idv3dH,ng),          &
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &

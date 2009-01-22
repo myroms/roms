@@ -30,9 +30,6 @@
 # endif
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -472,7 +469,8 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, ncLCZid(ng), lczVid(idtime,ng),        &
-     &                  NF_TYPE, 1, (/recdim/), Aval, Vinfo,ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo,ncname,      &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define free-surface.
@@ -505,7 +503,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
@@ -540,7 +538,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
@@ -575,7 +573,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
@@ -611,7 +609,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),      &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -646,7 +644,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),      &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -698,7 +696,7 @@
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iADM, ncLCZid(ng), lczVid(ifield,ng),    &
      &                     NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,     &
-     &                     .FALSE.)
+     &                     SetFillVal = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
@@ -771,17 +769,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncLCZid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,60) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iADM, exit_flag)
-# endif
+        CALL netcdf_enddef (ng, iADM, ncname, ncLCZid(ng))
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -814,7 +802,7 @@
 !
         CALL netcdf_open (ng, iADM, ncname, 1, ncLCZid(ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,70) TRIM(ncname)
+          WRITE (stdout,60) TRIM(ncname)
           RETURN
         END IF
 !
@@ -907,44 +895,44 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSvar(isFsur))) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSvar(isFsur))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isFsur))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSvar(isUbar))) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSvar(isUbar))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSvar(isVbar))) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSvar(isVbar))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -952,13 +940,13 @@
 # endif
 # ifdef ADJUST_WSTRESS
         IF (.not.got_var(idUsms)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUsms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVsms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -966,26 +954,26 @@
 # endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSvar(isUvel))) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSvar(isUvel))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSvar(isVvel))) THEN
-          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSvar(isVvel))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -995,14 +983,14 @@
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,80) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
 #  ifdef ADJUST_BOUNDARY
           IF (.not.got_var(idSvar(isTvar(itrc)))) THEN
-            IF (Master) WRITE (stdout,80)                               &
+            IF (Master) WRITE (stdout,70)                               &
      &                        TRIM(Vname(1,idSvar(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
@@ -1011,7 +999,7 @@
 #  endif
 #  ifdef ADJUST_STFLUX
           IF (.not.got_var(idTsur(itrc))) THEN
-            IF (Master) WRITE (stdout,80) TRIM(Vname(1,idTsur(itrc))),  &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -1031,10 +1019,8 @@
      &        1x,a)
   40  FORMAT (a,', Lanczos vectors')
   50  FORMAT (1pe11.4,1x,'millimeter')
-  60  FORMAT (/,' DEF_LANCZOS - unable to leave definition mode for',   &
-     &        ' file: ',a) 
-  70  FORMAT (/,' DEF_LANCZOS - unable to open Lanczos NetCDF file: ',a)
-  80  FORMAT (/,' DEF_LANCZOS - unable to find variable: ',a,2x,        &
+  60  FORMAT (/,' DEF_LANCZOS - unable to open Lanczos NetCDF file: ',a)
+  70  FORMAT (/,' DEF_LANCZOS - unable to find variable: ',a,2x,        &
      &        ' in Lanczos NetCDF file: ',a)
 
       RETURN

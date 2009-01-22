@@ -22,9 +22,6 @@
       USE mod_scalars
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -180,21 +177,15 @@
       IF (Ldefine) THEN
         CALL netcdf_open (ng, iNLM, ncname, 1, ncINIid(ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          IF (Master) WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
-        IF (OutThread) THEN
-          status=nf90_redef(ncINIid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+!
+        CALL netcdf_redef (ng, iNLM, ncname, ncINIid(ng))
+        IF (exit_flag.ne.NoError) THEN
+          IF (Master) WRITE (stdout,20) TRIM(ncname)
+          RETURN
         END IF
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-#  endif
-        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !-----------------------------------------------------------------------
@@ -351,7 +342,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -367,7 +358,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -383,7 +374,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),      &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
@@ -401,7 +392,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),      &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -417,7 +408,7 @@
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),      &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
-     &                   .FALSE.)
+     &                   SetFillVal = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -434,7 +425,7 @@
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iNLM, ncINIid(ng), iniVid(ifield,ng),    &
      &                     NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,     &
-     &                     .FALSE.)
+     &                     SetFillVal = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
@@ -507,18 +498,9 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncINIid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-#  endif
+        CALL netcdf_enddef (ng, iNLM, ncname, ncINIid(ng))
         IF (exit_flag.ne.NoError) RETURN
+
       END IF DEFINE
 # endif
 !
@@ -608,45 +590,45 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,30) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -662,9 +644,7 @@
   10  FORMAT (/,' DEF_INI - unable to open initial NetCDF file: ',a)
   20  FORMAT (/,' DEF_INI - unable to put in define mode initial',      &
      &        ' NetCDF file: ',a)
-  30  FORMAT (/,' DEF_INI - unable to leave definition mode for',       &
-     &        ' file: ', a)
-  40  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
+  30  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
      &        ' in file: ',a)
 
       RETURN

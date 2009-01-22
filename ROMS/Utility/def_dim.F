@@ -33,10 +33,10 @@
       USE mod_netcdf
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasti
-# endif
+#endif
 !
       implicit none
 !
@@ -56,7 +56,7 @@
 
       integer :: def_dim
 
-#ifdef DISTRIBUTE
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(3) :: buffer
 #endif
 !
@@ -73,7 +73,7 @@
         END IF
       END IF
 
-#ifdef DISTRIBUTE
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
 !  Broadcast information to all threads in the group.
 !

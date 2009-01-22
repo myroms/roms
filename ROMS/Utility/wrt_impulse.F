@@ -32,9 +32,6 @@
       USE mod_ocean
       USE mod_scalars
 !
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
 # ifdef SOLVE3D
       USE nf_fread3d_mod, ONLY : nf_fread3d
@@ -146,7 +143,8 @@
         IF (find_string(var_name, n_var, Vname(1,idZtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*r2dvar
           MyType=gtype
-          status=nf_fread2d(ng, model, INPncid, INPvid,                 &
+          status=nf_fread2d(ng, model, INPncname, INPncid,              &
+     &                      Vname(1,idZtlf), INPvid,                    &
      &                      Irec, MyType, Vsize,                        &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
@@ -195,7 +193,8 @@
         IF (find_string(var_name, n_var, Vname(1,idUbtf), INPvid)) THEN
           gtype=var_flag(INPvid)*u2dvar
           MyType=gtype
-          status=nf_fread2d(ng, model, INPncid, INPvid,                 &
+          status=nf_fread2d(ng, model, INPncname, INPncid,              &
+     &                      Vname(1,idUbtf), INPvid,                    &
      &                      Irec, MyType, Vsize,                        &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
@@ -242,7 +241,8 @@
         IF (find_string(var_name, n_var, Vname(1,idVbtf), INPvid)) THEN
           gtype=var_flag(INPvid)*v2dvar
           MyType=gtype
-          status=nf_fread2d(ng, model, INPncid, INPvid,                 &
+          status=nf_fread2d(ng, model, INPncname, INPncid,              &
+     &                      Vname(1,idVbtf), INPvid,                    &
      &                      Irec, MyType, Vsize,                        &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
@@ -291,7 +291,8 @@
         IF (find_string(var_name, n_var, Vname(1,idUtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*u3dvar
           MyType=gtype
-          status=nf_fread3d(ng, model, INPncid, INPvid,                 &
+          status=nf_fread3d(ng, model, INPncname, INPncid,              &
+     &                      Vname(1,idUtlf), INPvid,                    &
      &                      Irec, MyType, Vsize,                        &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, Fmin, Fmax,                          &
@@ -337,7 +338,8 @@
         IF (find_string(var_name, n_var, Vname(1,idVtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*v3dvar
           MyType=gtype
-          status=nf_fread3d(ng, model, INPncid, INPvid,                 &
+          status=nf_fread3d(ng, model, INPncname, INPncid,              &
+     &                      Vname(1,idVtlf), INPvid,                    &
      &                      Irec, MyType, Vsize,                        &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, Fmin, Fmax,                          &
@@ -385,7 +387,8 @@
      &                    INPvid)) THEN
             gtype=var_flag(INPvid)*r3dvar
             MyType=gtype
-            status=nf_fread3d(ng, model, INPncid, INPvid,               &
+            status=nf_fread3d(ng, model, INPncname, INPncid,            &
+     &                        Vname(1,idTtlf(i)), INPvid,               &
      &                        Irec, MyType, Vsize,                      &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        scale, Fmin, Fmax,                        &
@@ -434,18 +437,10 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        status=nf90_sync(ncTLFid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,50)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag)
-# endif
-      IF (Master)  WRITE (stdout,60) Nrec-1, TRIM(TLFname(ng))
+      CALL netcdf_sync (ng, model, INPncname, ncTLFid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
+      IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLFname(ng))
 !
   10  FORMAT (/,' WRT_IMPULSE - unable to open input NetCDF file: ',a)
   20  FORMAT (/,' WRT_IMPULSE - error while reading variable: ',a,2x,   &
@@ -454,9 +449,7 @@
      &        'at time record = ',i3,/,17x,'into NetCDF file: ',a)
   40  FORMAT (/,' WRT_IMPULSE - cannot find state variable: ',a,        &
      &        /,12x,'in input NetCDF file: ',a)
-  50  FORMAT (/,' WRT_IMPULSE - unable to synchronize impulse NetCDF',  &
-     &        ' to disk.')
-  60  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
+  50  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
      &           'records: 001 to ',i3.3,/,18x,'file: ',a)
       
       RETURN

@@ -12,52 +12,54 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number (integer).                         !
-!     model      Calling model identifier (integer).                   !
-!     ncid       NetCDF file ID (integer).                             !
-!     Vtype      NetCDF variable type (integer).                       !
-!     nVdim      Number of variable dimensions (integer; 0=scalar).    !
-!     Vdim       Dimensions IDs for this variable (integer vector).    !
-!     Aval       Attribute values (real vector):                       !
-!                  Aval(1)   =>  Add offset value.                     !
-!                  Aval(2)   =>  Valid minimum value.                  !
-!                  Aval(3)   =>  Valid maximum value.                  !
-!                  Aval(4)   =>  Missing value.                        !
-!                  Aval(5)   =>  C-grid variable type.                 !
-!                  Aval(6)   =>  Fill value.                           !
-!     Vinfo      Variable information (character array):               !
-!                  Vinfo( 1) =>  Variable name.                        !
-!                  Vinfo( 2) =>  Variable "longname" attribute.        !
-!                  Vinfo( 3) =>  Variable "units" attribute.           !
-!                  Vinfo( 4) =>  Variable "calendar" attribute.        !
-!                  Vinfo( 5) =>  Variable "valid_min" attribute.       !
-!                  Vinfo( 6) =>  Variable "valid_max" attribute.       !
-!                  Vinfo( 7) =>  Variable "option_T" attribute.        !
-!                  Vinfo( 8) =>  Variable "option_F" attribute.        !
-!                  Vinfo( 9) =>  Variable "option_0" attribute.        !
-!                  Vinfo(10) =>  Variable "option_1" attribute.        !
-!                  Vinfo(11) =>  Variable "negative_value" attribute.  !
-!                  Vinfo(12) =>  Variable "positive_value" attribute.  !
-!                  Vinfo(13) =>  Variable "cycle" attribute.           !
-!                  Vinfo(14) =>  Variable "field" attribute.           !
-!                  Vinfo(15) =>  Variable "positions" attribute.       !
-!                  Vinfo(16) =>  Variable "time" attribute.            !
-!                  Vinfo(17) =>  Variable "missing_value" attribute.   !
-!                  Vinfo(18) =>  Variable "add_offset" attribute.      !
-!                  Vinfo(19) =>  Variable "size_class" attribute.      !
-!                  Vinfo(20) =>  Variable "water_points" attribute.    !
-!                  Vinfo(21) =>  Variable "standard_name" attribute.   !
-!                  Vinfo(22) =>  Variable "coordinates" attribute.     !
-!                  Vinfo(23) =>  Variable "formula_terms" attribute.   !
-!                  Vinfo(24) =>  Variable "_FillValue" attribute.      !
-!     ncname     NetCDF file name.                                     !
-!     SetFillVal Logical switch to set fill value in land areas        !
-!                  (optional).                                         !
+!     ng           Nested grid number (integer).                       !
+!     model        Calling model identifier (integer).                 !
+!     ncid         NetCDF file ID (integer).                           !
+!     Vtype        NetCDF variable type (integer).                     !
+!     nVdim        Number of variable dimensions (integer; 0=scalar).  !
+!     Vdim         Dimensions IDs for this variable (integer vector).  !
+!     Aval         Attribute values (real vector):                     !
+!                    Aval(1)   =>  Add offset value                    !
+!                    Aval(2)   =>  Valid minimum value                 !
+!                    Aval(3)   =>  Valid maximum value                 !
+!                    Aval(4)   =>  Missing value                       !
+!                    Aval(5)   =>  C-grid variable type                !
+!                    Aval(6)   =>  Fill value                          !
+!     Vinfo        Variable information (character array):             !
+!                    Vinfo( 1) =>  Variable name                       !
+!                    Vinfo( 2) =>  Variable "longname" attribute       !
+!                    Vinfo( 3) =>  Variable "units" attribute          !
+!                    Vinfo( 4) =>  Variable "calendar" attribute       !
+!                    Vinfo( 5) =>  Variable "valid_min" attribute      !
+!                    Vinfo( 6) =>  Variable "valid_max" attribute      !
+!                    Vinfo( 7) =>  Variable "option_T" attribute       !
+!                    Vinfo( 8) =>  Variable "option_F" attribute       !
+!                    Vinfo( 9) =>  Variable "option_0" attribute       !
+!                    Vinfo(10) =>  Variable "option_1" attribute       !
+!                    Vinfo(11) =>  Variable "negative_value" attribute !
+!                    Vinfo(12) =>  Variable "positive_value" attribute !
+!                    Vinfo(13) =>  Variable "cycle" attribute          !
+!                    Vinfo(14) =>  Variable "field" attribute          !
+!                    Vinfo(15) =>  Variable "positions" attribute      !
+!                    Vinfo(16) =>  Variable "time" attribute           !
+!                    Vinfo(17) =>  Variable "missing_value" attribute  !
+!                    Vinfo(18) =>  Variable "add_offset" attribute     !
+!                    Vinfo(19) =>  Variable "size_class" attribute     !
+!                    Vinfo(20) =>  Variable "water_points" attribute   !
+!                    Vinfo(21) =>  Variable "standard_name" attribute  !
+!                    Vinfo(22) =>  Variable "coordinates" attribute    !
+!                    Vinfo(23) =>  Variable "formula_terms" attribute  !
+!                    Vinfo(24) =>  Variable "_FillValue" attribute     !
+!     ncname       NetCDF file name.                                   !
+!     SetFillVal   Logical switch to set fill value in land areas      !
+!                    (optional).                                       !
+!     SetParAccess Logical switch to set parallel I/O access flag to   !
+!                    either collective or independent (optional).      !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     def_var    Error flag (integer).                                 !
-!     Vid        NetCDF variable ID (integer).                         !
+!     def_var      Error flag (integer).                               !
+!     Vid          NetCDF variable ID (integer).                       !
 !                                                                      !
 !  Notice that arrays "Aval" and "Vinfo" is destroyed on output to     !
 !  facilitate the definition of the next variable.                     !
@@ -70,7 +72,7 @@
 !
 !***********************************************************************
       FUNCTION def_var (ng, model, ncid, Vid, Vtype, nVdim, Vdim,       &
-     &                  Aval, Vinfo, ncname, SetFillVal)
+     &                  Aval, Vinfo, ncname, SetFillVal, SetParAccess)
 !***********************************************************************
 !
       USE mod_param
@@ -80,7 +82,7 @@
       USE mod_netcdf
       USE mod_scalars
 
-#ifdef DISTRIBUTE
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasti
 #endif
@@ -88,6 +90,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in), optional :: SetFillVal
+      logical, intent(in), optional :: SetParAccess
 
       integer, intent (in) :: ng, model, ncid, Vtype, nVdim
 
@@ -104,6 +107,9 @@
 !
 #ifdef MASKING
       logical :: LandFill
+#endif
+#if defined PARALLEL_IO && defined DISTRIBUTE
+      logical :: Laccess
 #endif
       integer :: i, j, latt, status
 
@@ -137,7 +143,7 @@
           END IF
         END IF
 
-#if defined NETCDF4 && defined DEFLATE
+#if !defined PARALLEL_IO && (defined NETCDF4 && defined DEFLATE)
 !
 !  Define deflate (file compresion) parameters. Notice that deflation
 !  cannot be used in parallel I/O for writing data. This is because
@@ -696,6 +702,30 @@
           END IF
         END IF
 #endif
+#if defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Set either collective or independent parallel access. This information
+!  is not written to the data file. 
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (PRESENT(SetParAccess)) THEN
+            Laccess=SetParAccess
+          ELSE
+            Laccess=.TRUE.
+          END IF
+          IF (Laccess) THEN
+            status=nf90_var_par_access(ncid, Vid, IO_collective)
+          ELSE
+            status=nf90_var_par_access(ncid, Vid, IO_independent)
+          END IF
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,40) TRIM(Vinfo(1)),               &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#endif
 !
 !  Clean information variables.
 !
@@ -707,7 +737,7 @@
 !
 !  Set error flag
 !
-#ifdef DISTRIBUTE
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
       CALL mp_bcasti (ng, model, exit_flag)
 #endif
       def_var=exit_flag
@@ -718,6 +748,10 @@
      &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
  30   FORMAT (/,'DEF_VAR - error while defining attribute: ',a,         &
      &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
+#if defined PARALLEL_IO && defined DISTRIBUTE
+ 40   FORMAT (/,'DEF_VAR - error while setting parallel access flag',   &
+     &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
+#endif
 
       RETURN
       END FUNCTION def_var

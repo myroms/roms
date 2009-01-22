@@ -28,9 +28,6 @@
 # endif
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -371,7 +368,8 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iNLM, ncDIAid(ng), diaVid(idtime,ng),        &
-     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 
 # ifdef DIAGNOSTICS_UV
@@ -523,17 +521,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncDIAid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-# endif
+        CALL netcdf_enddef (ng, iNLM, ncname, ncDIAid(ng))
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -566,7 +554,7 @@
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, ncDIAid(ng))
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,60) TRIM(ncname)
+          WRITE (stdout,50) TRIM(ncname)
           RETURN
         END IF
 !
@@ -642,7 +630,7 @@
 !  Check if diagnostics variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -650,13 +638,13 @@
 # ifdef DIAGNOSTICS_UV
         DO ivar=1,NDM2d
           IF (.not.got_var(idDu2d(ivar))) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDu2d(ivar))),  &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDu2d(ivar))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
           IF (.not.got_var(idDv2d(ivar))) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDv2d(ivar))),  &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDv2d(ivar))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -665,13 +653,13 @@
 #  ifdef SOLVE3D
         DO ivar=1,NDM3d
           IF (.not.got_var(idDu3d(ivar))) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDu3d(ivar))),  &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDu3d(ivar))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
           IF (.not.got_var(idDv3d(ivar))) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDv3d(ivar))),  &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDv3d(ivar))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -684,7 +672,7 @@
           DO ivar=1,NDT
             ifield=idDtrc(itrc,ivar)
             IF (.not.got_var(ifield)) THEN
-              IF (Master) WRITE (stdout,70) TRIM(Vname(1,ifield)),      &
+              IF (Master) WRITE (stdout,60) TRIM(Vname(1,ifield)),      &
      &                                      TRIM(ncname)
               exit_flag=3
               RETURN
@@ -696,7 +684,7 @@
         DO ivar=1,NDbio2d
           ifield=iDbio2(ivar)
           IF (.not.got_var(ifield).and.Hout(ifield,ng)) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,ifield)),        &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,ifield)),        &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -705,7 +693,7 @@
         DO ivar=1,NDbio3d
           ifield=iDbio3(ivar)
           IF (.not.got_var(ifield).and.Hout(ifield,ng)) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,ifield)),        &
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,ifield)),        &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -742,11 +730,9 @@
   30  FORMAT (/,' DEF_DIAGS - unable to create diagnostics NetCDF',     &
      &        ' file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
-  50  FORMAT (/,' DEF_DIAGS - unable to leave definition mode for',     &
-     &        ' file: ', a)
-  60  FORMAT (/,' DEF_DIAGS - unable to open diagnostics NetCDF',       &
+  50  FORMAT (/,' DEF_DIAGS - unable to open diagnostics NetCDF',       &
      &        ' file: ',a)
-  70  FORMAT (/,' DEF_DIAGS - unable to find variable: ',a,2x,          &
+  60  FORMAT (/,' DEF_DIAGS - unable to find variable: ',a,2x,          &
      &        ' in diagnostics NetCDF file: ',a)
 
       RETURN

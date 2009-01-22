@@ -181,8 +181,7 @@
 !
       logical :: ITERATE, Lcomplex, LwrtGST
 
-      integer :: NconvRitz, i, iter, ng, status, varid
-      integer :: start(4), total(4)
+      integer :: NconvRitz, i, iter, ng
 
 #ifdef DISTRIBUTE
       real(r8), external :: dlapy2, pdnorm2
@@ -452,21 +451,27 @@
 !  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm to
 !  NetCDF file(s).
 !
-                  IF (OutThread.and.LwrtADJ(ng)) THEN
-                    start(1)=i
-                    total(1)=1
-                    status=nf90_inq_varid(ncADJid(ng), 'Ritz_rvalue',   &
-     &                                    varid)
-                    status=nf90_put_var(ncADJid(ng), varid, RvalueR(i:),&
-     &                                  start, total)
-                    status=nf90_inq_varid(ncADJid(ng), 'Ritz_ivalue',   &
-     &                                    varid)
-                    status=nf90_put_var(ncADJid(ng), varid, RvalueI(i:),&
-     &                                  start, total)
-                    status=nf90_inq_varid(ncADJid(ng), 'Ritz_norm',
-     &                                    varid)
-                    status=nf90_put_var(ncADJid(ng), varid, norm(i:),   &
-     &                                  start, total)
+                  IF (LwrtADJ(ng)) THEN
+                    CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
+     &                                    'Ritz_rvalue', RvalueR(i:),   &
+     &                                    start = (/i/),                &
+     &                                    total = (/1/),                &
+     &                                    ncid = ncADJid(ng))
+                    IF (exit_flag.ne. NoError) RETURN
+
+                    CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
+     &                                    'Ritz_ivalue', RvalueI(i:),   &
+     &                                    start = (/i/),                &
+     &                                    total = (/1/),                &
+     &                                    ncid = ncADJid(ng))
+                    IF (exit_flag.ne. NoError) RETURN
+
+                    CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
+     &                                    'Ritz_norm', norm(i:),        &
+     &                                    start = (/i/),                &
+     &                                    total = (/1/),                &
+     &                                    ncid = ncADJid(ng))
+                    IF (exit_flag.ne. NoError) RETURN
                   END IF
                 END DO
               END IF

@@ -98,6 +98,10 @@
 !  Ocean model MPI group communicator handle.
 !
         integer :: OCN_COMM_WORLD
+!
+!  Set mpi_info opaque object handle.
+!
+        integer :: MP_INFO = MPI_INFO_NULL
 # endif
 !
 !  Type of message-passage floating point bindings.
@@ -170,8 +174,16 @@
             RETURN
           END IF
 !
-!  Identify master thread and output thread.
+!  Identify master, input and output threads.
 !
+#  ifdef PARALLEL_IO
+          Master=.FALSE.
+          InpThread=.TRUE.
+          OutThread=.TRUE.
+          IF (MyRank.eq.MyMaster) THEN
+            Master=.TRUE.
+          END IF
+#  else
           Master=.FALSE.
           InpThread=.FALSE.
           OutThread=.FALSE.
@@ -180,6 +192,7 @@
             InpThread=.TRUE.
             OutThread=.TRUE.
           END IF
+#  endif
 # endif
 #endif
 !

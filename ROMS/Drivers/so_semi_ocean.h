@@ -188,9 +188,8 @@
 !
       logical :: ITERATE, LwrtGST
 
-      integer :: NconvRitz, i, iter, ng, status, varid
+      integer :: NconvRitz, i, iter, ng
       integer :: thread, subs, tile
-      integer :: start(4), total(4)
 
 #ifdef DISTRIBUTE
       real(r8), external :: pdnorm2
@@ -475,23 +474,25 @@
 !  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm to
 !  NetCDF file.
 !
-                  IF (OutThread) THEN
-                    start(1)=i
-                    total(1)=1
-                    status=nf90_inq_varid(ncHISid(ng), 'Ritz_rvalue',   &
-     &                                    varid)
-                    status=nf90_put_var(ncHISid(ng), varid, RvalueR(i:),&
-     &                                  start, total)
-                    status=nf90_inq_varid(ncHISid(ng), 'Ritz_norm',     &
-     &                                    varid)
-                    status=nf90_put_var(ncHISid(ng), varid, norm(i:),   &
-     &                                  start, total)
-                    IF (i.eq.1) THEN
-                      status=nf90_inq_varid(ncHISid(ng), 'SO_trace',    &
-     &                                      varid)
-                      status=nf90_put_var(ncHISid(ng), varid,           &
-     &                                    TRnorm(ng))
-                    END IF
+                  CALL netcdf_put_fvar (ng, iNLM, HISname(ng),          &
+     &                                  'Ritz_rvalue', RvalueR(i:),     &
+     &                                  start = (/i/),                  &
+     &                                  total = (/1/),                  &
+     &                                  ncid = ncHISid(ng))
+                  IF (exit_flag.ne. NoError) RETURN
+
+                  CALL netcdf_put_fvar (ng, iNLM, HISname(ng),          &
+     &                                  'Ritz_norm', norm(i:),          &
+     &                                  start = (/i/),                  &
+     &                                  total = (/1/),                  &
+     &                                  ncid = ncHISid(ng))
+                  IF (exit_flag.ne. NoError) RETURN
+
+                  IF (i.eq.1) THEN
+                    CALL netcdf_put_fvar (ng, iNLM, HISname(ng),          &
+     &                                    'SO_trace', TRnorm(ng),         &
+     &                                    ncid = ncHISid(ng))
+                    IF (exit_flag.ne. NoError) RETURN
                   END IF
                 END DO
               END IF

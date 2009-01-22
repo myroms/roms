@@ -25,9 +25,6 @@
       USE mod_tides
 !
       USE def_var_mod, ONLY : def_var
-# ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-# endif
 !
       implicit none
 !
@@ -149,18 +146,13 @@
 !
 !  Put existing file into define mode so new variables can be added.
 !
-        IF (Ldefine.and.OutThread) THEN
-          status=nf90_redef(ncTIDEid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
+        IF (Ldefine) THEN
+          CALL netcdf_redef (ng, iNLM, ncname, ncTIDEid(ng))
+          IF (exit_flag.ne.NoError) THEN
+            IF (Master) WRITE (stdout,20) TRIM(ncname)
+            RETURN
           END IF
         END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-# endif
-        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Inquire and define (if needed) file dimensions.
@@ -270,7 +262,8 @@
         Vinfo( 1)='Hcount'
         Vinfo( 2)='number of time-accumulated tide harmonics'
         status=def_var(ng, iNLM, ncTIDEid(ng), varid, nf90_int,         &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !  
 !  Define model time for accumulated tide harmonic fields.
@@ -292,7 +285,8 @@
           Vinfo( 4)='gregorian'
         END IF
         status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idtime,ng),      &
-     &                 NF_FRST, 1, (/0/), Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/0/), Aval, Vinfo, ncname,          &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define time-accumulated COS(omega(k)*t) harmonics.
@@ -302,7 +296,8 @@
           Vinfo( 2)=Vname(2,idCosW)
           Vinfo( 3)=Vname(3,idCosW)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idCosW,ng),    &
-     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname)
+     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname, &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -313,7 +308,8 @@
           Vinfo( 2)=Vname(2,idSinW)
           Vinfo( 3)=Vname(3,idSinW)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idSinW,ng),    &
-     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname)
+     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname, &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -324,7 +320,8 @@
           Vinfo( 2)=Vname(2,idCos2)
           Vinfo( 3)=Vname(3,idCos2)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idCos2,ng),    &
-     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname)
+     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname,        &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -335,7 +332,8 @@
           Vinfo( 2)=Vname(2,idSin2)
           Vinfo( 3)=Vname(3,idSin2)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idSin2,ng),    &
-     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname)
+     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname,        &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -346,7 +344,8 @@
           Vinfo( 2)=Vname(2,idSWCW)
           Vinfo( 3)=Vname(3,idSWCW)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idSWCW,ng),    &
-     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname)
+     &                   NF_FRST, 2, tharm, Aval, Vinfo, ncname,        &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -442,18 +441,9 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        IF (OutThread) THEN
-          status=nf90_enddef(ncTIDEid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag)
-# endif
+        CALL netcdf_enddef (ng, iNLM, ncname, ncTIDEid(ng))
         IF (exit_flag.ne.NoError) RETURN
+
       END IF DEFINE
 !
 !=======================================================================
@@ -532,68 +522,68 @@
 !  Check if tide variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idCosW)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idCosW)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idCosW)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSinW)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSinW)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idSinW)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idCos2)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idCos2)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idCos2)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSin2)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSin2)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idSin2)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSWCW)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSWCW)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idSWCW)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsuH)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsuH)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idFsuH)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idu2dH)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idu2dH)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idu2dH)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idv2dH)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idv2dH)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idv2dH)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idu3dH)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idu3dH)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idu3dH)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idv3dH)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idv3dH)),          &
+          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idv3dH)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -604,9 +594,7 @@
   10  FORMAT (/,' DEF_TIDES - unable to open tide NetCDF file: ',a)
   20  FORMAT (/,' DEF_TIDES - unable to put in define mode tide NetCDF',  &
      &        ' file: ',a)
-  30  FORMAT (/,' DEF_TIDES - unable to leave definition mode for',       &
-     &        ' file: ', a)
-  40  FORMAT (/,' DEF_TIDES - unable to find variable: ',a,2x,            &
+  30  FORMAT (/,' DEF_TIDES - unable to find variable: ',a,2x,            &
      &        ' in tide NetCDF file: ',a)
 
       RETURN

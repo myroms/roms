@@ -1555,6 +1555,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' OXYGEN,'
 #endif
+#if defined PARALLEL_IO && defined DISTRIBUTE
+      IF (Master) WRITE (stdout,20) 'PARALLEL_IO',                      &
+     &   'Parallel I/O processing with NetCDF-4/HDF5 libraries.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' PERFECT_RESTART,'
+#endif
 #ifdef PERFECT_RESTART
       IF (Master) WRITE (stdout,20) 'PERFECT_RESTART',                  &
      &   'Processing perfect restart variables.'

@@ -40,13 +40,15 @@
       implicit none
 
       CONTAINS
+
+#if defined PARALLEL_IO && defined DISTRIBUTE
 !
 !***********************************************************************
       FUNCTION nf_fwrite3d (ng, model, ncid, ncvarid, tindex, gtype,    &
      &                      LBi, UBi, LBj, UBj, LBk, UBk, Ascl,         &
-#ifdef MASKING
+# ifdef MASKING
      &                      Amask,                                      &
-#endif
+# endif
      &                      A,  SetFillVal)
 !***********************************************************************
 !
@@ -55,16 +57,6 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-# ifdef INLINE_2DIO
-      USE distribute_mod, ONLY : mp_gather2d
-# else
-      USE distribute_mod, ONLY : mp_gather3d
-# endif
-#endif
 !
 !  Imported variable declarations.
 !
@@ -75,23 +67,236 @@
 
       real(r8), intent(in) :: Ascl
 
-#ifdef ASSUMED_SHAPE
-# ifdef MASKING
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
-# endif
+#  endif
       real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
-#else
-# ifdef MASKING
+# else
+#  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-# endif
+#  endif
       real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
-#endif
+# endif
 !
 !  Local variable declarations.
 !
-#ifdef MASKING
+# ifdef MASKING
       logical :: LandFill
-#endif
+# endif
+      integer :: i, j, k, ic, Npts
+      integer :: Imin, Imax, Jmin, Jmax
+      integer :: Ioff, Joff, Koff
+      integer :: Ilen, Jlen, Klen, IJlen
+      integer :: MyType, status
+
+      integer, dimension(4) :: start, total
+
+      integer :: nf_fwrite3d
+
+      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)) :: Aout
+!
+!-----------------------------------------------------------------------
+!  Set starting and ending indices to process.
+!-----------------------------------------------------------------------
+!
+!  Set first and last grid point according to staggered C-grid
+!  classification.
+!
+      MyType=gtype
+
+      SELECT CASE (ABS(MyType))
+        CASE (p2dvar, p3dvar)
+          Ioff=0
+          Joff=0
+          Imin=BOUNDS(ng)%Istr (MyRank)
+          Imax=BOUNDS(ng)%IendR(MyRank)
+          Jmin=BOUNDS(ng)%Jstr (MyRank)
+          Jmax=BOUNDS(ng)%JendR(MyRank)
+        CASE (r2dvar, r3dvar)
+          Ioff=1
+          Joff=1
+          Imin=BOUNDS(ng)%IstrR(MyRank)
+          Imax=BOUNDS(ng)%IendR(MyRank)
+          Jmin=BOUNDS(ng)%JstrR(MyRank)
+          Jmax=BOUNDS(ng)%JendR(MyRank)
+        CASE (u2dvar, u3dvar)
+          Ioff=0
+          Joff=1
+          Imin=BOUNDS(ng)%Istr (MyRank)
+          Imax=BOUNDS(ng)%IendR(MyRank)
+          Jmin=BOUNDS(ng)%JstrR(MyRank)
+          Jmax=BOUNDS(ng)%JendR(MyRank)
+        CASE (v2dvar, v3dvar)
+          Ioff=1
+          Joff=0
+          Imin=BOUNDS(ng)%IstrR(MyRank)
+          Imax=BOUNDS(ng)%IendR(MyRank)
+          Jmin=BOUNDS(ng)%Jstr (MyRank)
+          Jmax=BOUNDS(ng)%JendR(MyRank)
+        CASE DEFAULT
+          Ioff=1
+          Joff=1
+          Imin=BOUNDS(ng)%IstrR(MyRank)
+          Imax=BOUNDS(ng)%IendR(MyRank)
+          Jmin=BOUNDS(ng)%JstrR(MyRank)
+          Jmax=BOUNDS(ng)%JendR(MyRank)
+      END SELECT
+
+      Ilen=Imax-Imin+1
+      Jlen=Jmax-Jmin+1
+      Klen=UBk-LBk+1
+      IJlen=Ilen*Jlen
+
+      IF (LBk.eq.0) THEN
+        Koff=1
+      ELSE
+        Koff=0
+      END IF
+
+# ifdef MASKING
+!
+!  Set switch to replace land areas with fill value, spval.
+!
+      IF (PRESENT(SetFillVal)) THEN
+        LandFill=SetFillVal
+      ELSE
+        LandFill=tindex.gt.0
+      END IF
+# endif
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Aout=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Pack tile data into a 1D array in column-major order.
+# ifdef MASKING
+#  ifdef WRiTE_WATER 
+!                Remove land points and pack water points into 1D-array.
+#  else
+!                Overwrite masked points with special value.
+#  endif
+# endif
+!-----------------------------------------------------------------------
+!
+      IF (gtype.gt.0) THEN
+        ic=0
+        Npts=IJlen*Klen
+        DO k=LBk,UBk
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ic=ic+1
+              Aout(ic)=A(i,j,k)*Ascl
+# ifdef MASKING
+              IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
+                Aout(ic)=spval
+              END IF
+# endif
+            END DO
+          END DO
+        END DO
+# ifdef MASKING
+      ELSE
+        Npts=0
+        DO k=LBk,UBk
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              IF (Amask(i,j).gt.0.0_r8) THEN
+                Npts=Npts+1
+                Aout(Npts)=A(i,j,k)*Ascl
+              END IF
+            END DO
+          END DO
+        END DO
+# endif
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Write tile data into the appropiate block in output
+!                NetCDF file.
+!-----------------------------------------------------------------------
+!
+      nf_fwrite3d=nf90_noerr
+      IF (gtype.gt.0) THEN
+        start(1)=Imin+Ioff
+        total(1)=Ilen
+        start(2)=Jmin+Joff
+        total(2)=Jlen
+        start(3)=LBk+Koff
+        total(3)=Klen
+        start(4)=tindex
+        total(4)=1
+# ifdef MASKING
+      ELSE
+        start(1)=1
+        total(1)=Npts
+        start(2)=tindex
+        total(2)=1
+# endif
+      END IF
+      status=nf90_put_var(ncid, ncvarid, Aout, start, total)
+
+      nf_fwrite3d=status
+
+      RETURN
+      END FUNCTION nf_fwrite3d
+
+#else  
+
+!
+!***********************************************************************
+      FUNCTION nf_fwrite3d (ng, model, ncid, ncvarid, tindex, gtype,    &
+     &                      LBi, UBi, LBj, UBj, LBk, UBk, Ascl,         &
+# ifdef MASKING
+     &                      Amask,                                      &
+# endif
+     &                      A,  SetFillVal)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#  ifdef INLINE_2DIO
+      USE distribute_mod, ONLY : mp_gather2d
+#  else
+      USE distribute_mod, ONLY : mp_gather3d
+#  endif
+# endif
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: SetFillVal
+
+      integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+
+      real(r8), intent(in) :: Ascl
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef MASKING
+      logical :: LandFill
+# endif
       integer :: i, j, k, ic, Npts
       integer :: Imin, Imax, Jmin, Jmax, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, status
@@ -100,11 +305,11 @@
 
       integer :: nf_fwrite3d
 
-#if defined INLINE_2DIO && defined DISTRIBUTE
+# if defined INLINE_2DIO && defined DISTRIBUTE
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: Aout
-#else
+# else
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Aout
-#endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -154,7 +359,7 @@
         Koff=1
       END IF
 
-#ifdef MASKING
+# ifdef MASKING
 !
 !  Set switch to replace land areas with fill value, spval.
 !
@@ -163,29 +368,29 @@
       ELSE
         LandFill=tindex.gt.0
       END IF
-#endif
+# endif
 !
 !  Initialize local array to avoid denormalized numbers. This
 !  facilitates processing and debugging.
 !
       Aout=0.0_r8
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  If distributed-memory set-up, collect tile data from all spawned
 !  nodes and store it into a global scratch 1D array, packed in column-
 !  major order.
-# ifdef MASKING
-#  ifdef WRiTE_WATER 
+#  ifdef MASKING
+#   ifdef WRiTE_WATER 
 !  Remove land points and pack water points into 1D-array.
-#  else
+#   else
 !  Overwrite masked points with special value.
+#   endif
 #  endif
-# endif
 !-----------------------------------------------------------------------
 !
-# ifdef INLINE_2DIO
+#  ifdef INLINE_2DIO
 
 !  If appropriate, process 3D data level by level to reduce memory
 !  requirements.
@@ -193,18 +398,18 @@
       DO k=LBk,UBk
         CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                &
      &                    tindex, gtype, Ascl,                          &
-#  ifdef MASKING
+#   ifdef MASKING
      &                    Amask,                                        &
-#  endif
+#   endif
      &                    A(:,:,k), Npts, Aout, SetFillVal)
-# else
+#  else
         CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,      &
      &                    tindex, gtype, Ascl,                          &
-#  ifdef MASKING
+#   ifdef MASKING
      &                    Amask,                                        &
-#  endif
+#   endif
      &                    A, Npts, Aout, SetFillVal)
-# endif
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Write output buffer into NetCDF file.
@@ -217,41 +422,41 @@
             total(1)=Ilen
             start(2)=1
             total(2)=Jlen
-# ifdef INLINE_2DIO
+#  ifdef INLINE_2DIO
             start(3)=k-Koff+1
             total(3)=1
-# else
+#  else
             start(3)=1
             total(3)=Klen
-# endif
+#  endif
             start(4)=tindex
             total(4)=1
-# ifdef MASKING
+#  ifdef MASKING
           ELSE
             start(1)=1
             total(1)=Npts
             start(2)=tindex
             total(2)=1
-# endif
+#  endif
           END IF
           status=nf90_put_var(ncid, ncvarid, Aout, start, total)
           nf_fwrite3d=status
         END IF
-# ifdef INLINE_2DIO
+#  ifdef INLINE_2DIO
       END DO
-# endif
-#else
+#  endif
+# else
 !
 !-----------------------------------------------------------------------
 !  If serial or shared-memory applications and serial output, pack data
 !  into a global 1D array in column-major order.
-# ifdef MASKING
-#  ifdef WRiTE_WATER 
+#  ifdef MASKING
+#   ifdef WRiTE_WATER 
 !  Remove land points and pack water points into 1D-array.
-#  else
+#   else
 !  Overwrite masked points with special value.
+#   endif
 #  endif
-# endif
 !-----------------------------------------------------------------------
 !
       IF (gtype.gt.0) THEN
@@ -262,15 +467,15 @@
             DO i=Imin,Imax
               ic=ic+1
               Aout(ic)=A(i,j,k)*Ascl
-# ifdef MASKING
+#  ifdef MASKING
               IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                 Aout(ic)=spval
               END IF
-# endif
+#  endif
             END DO
           END DO
         END DO
-# ifdef MASKING
+#  ifdef MASKING
       ELSE
         Npts=0
         DO k=LBk,UBk
@@ -283,7 +488,7 @@
             END DO
           END DO
         END DO
-# endif
+#  endif
       END IF
 !
 !-----------------------------------------------------------------------
@@ -301,27 +506,28 @@
           total(3)=Klen
           start(4)=tindex
           total(4)=1
-# ifdef MASKING
+#  ifdef MASKING
         ELSE
           start(1)=1
           total(1)=Npts
           start(2)=tindex
           total(2)=1
-# endif
+#  endif
         END IF
         status=nf90_put_var(ncid, ncvarid, Aout, start, total)
       END IF
-#endif
-#ifdef DISTRIBUTE
+# endif
+# ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Broadcast IO error flag to all nodes.
 !-----------------------------------------------------------------------
 !
       CALL mp_bcasti (ng, model, status)
-#endif
+# endif
       nf_fwrite3d=status
+
       RETURN
       END FUNCTION nf_fwrite3d
-
+#endif
       END MODULE nf_fwrite3d_mod

@@ -50,7 +50,10 @@
       USE mod_strings
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+# ifdef SOLVE3D
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+# endif
 #endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
       USE nf_fread3d_mod, ONLY : nf_fread3d
@@ -71,6 +74,18 @@
 !
 !  Local variable declarations.
 !
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
       logical :: Perfect2D, Perfect3D, foundit
 #if defined ADJUST_BOUNDARY || \
     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
@@ -335,63 +350,50 @@
 !
 !  Read in time-stepping indices.
 !
-        IF (InpThread.and.((model.eq.0).and.(nrrec(ng).ne.0))) THEN
-          start(1)=InpRec
-          total(1)=1
+        IF ((model.eq.0).and.(nrrec(ng).ne.0)) THEN
 #  ifdef SOLVE3D
-          status=nf90_inq_varid(ncINPid, 'nstp', varid)
-          status=nf90_get_var(ncINPid, varid, nstp(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'nstp', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          status=nf90_inq_varid(ncINPid, 'nrhs', varid)
-          status=nf90_get_var(ncINPid, varid, nrhs(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'nrhs', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          status=nf90_inq_varid(ncINPid, 'nnew', varid)
-          status=nf90_get_var(ncINPid, varid, nnew(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'nnew', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'nstp',              &
+     &                          nstp(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
+
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'nrhs',              &
+     &                          nrhs(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
+
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'nnew',              &
+     &                          nnew(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
-          status=nf90_inq_varid(ncINPid, 'kstp', varid)
-          status=nf90_get_var(ncINPid, varid, kstp(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'kstp', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          status=nf90_inq_varid(ncINPid,'krhs',varid)
-          status=nf90_get_var(ncINPid, varid, krhs(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'krhs', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          status=nf90_inq_varid(ncINPid, 'knew', varid)
-          status=nf90_get_var(ncINPid, varid, knew(ng:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, 'knew', InpRec, TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'kstp',              &
+     &                          kstp(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
+
+
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'krhs',              &
+     &                          krhs(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
+
+          CALL netcdf_get_ivar (ng, IDmod, ncname, 'knew',              &
+     &                          knew(ng:),                              &
+     &                          ncid = ncINPid,                         &
+     &                          start = (/InpRec/),                     &
+     &                          total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
 # if defined SEDIMENT && defined SED_MORPH
@@ -402,8 +404,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idbath)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idbath), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -436,16 +440,20 @@
             gtype=var_flag(varid)*r2dvar
           END IF
           IF (Perfect2d) THEN
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idFsur), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, 3,                 &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % rmask,                         &
 # endif
      &                        OCEAN(ng) % zeta)
           ELSE
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idFsur), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -495,8 +503,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idRzet)),   &
      &                        varid)
           gtype=var_flag(varid)*r3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idRzet), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, 2,                   &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -528,16 +538,20 @@
             gtype=var_flag(varid)*u2dvar
           END IF
           IF (Perfect2D) THEN
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUbar), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, 3,                 &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % umask,                         &
 # endif
      &                        OCEAN(ng) % ubar)
           ELSE
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUbar), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % umask,                         &
@@ -587,8 +601,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idRu2d)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idRu2d), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, 2,                   &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -620,16 +636,20 @@
             gtype=var_flag(varid)*v2dvar
           END IF
           IF (Perfect2D) THEN
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVbar), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, 3,                 &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % vmask,                         &
 # endif
      &                        OCEAN(ng) % vbar)
           ELSE
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVbar), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 # ifdef MASKING
      &                        GRID(ng) % vmask,                         &
@@ -679,8 +699,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idRv2d)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idRv2d), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, 2,                   &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -710,8 +732,10 @@
      &                        varid)
           gtype=var_flag(varid)*u3dvar
           scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -739,8 +763,10 @@
      &                        varid)
           gtype=var_flag(varid)*v3dvar
           scale=1.0_r8/rho0                   ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -770,16 +796,20 @@
      &                        varid)
           gtype=var_flag(varid)*u3dvar
           IF (Perfect3D) THEN
-            status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,&
+            status=nf_fread4d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUvel), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,       &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % umask,                         &
 #  endif
      &                        OCEAN(ng) % u)
           ELSE
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUvel), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % umask,                         &
@@ -829,8 +859,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idRu3d)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
+          status=nf_fread4d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idRu3d), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -858,16 +890,20 @@
      &                        varid)
           gtype=var_flag(varid)*v3dvar
           IF (Perfect3D) THEN
-            status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,&
+            status=nf_fread4d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVvel), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,       &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % vmask,                         &
 #  endif
      &                        OCEAN(ng) % v)
           ELSE
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVvel), varid,                   &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % vmask,                         &
@@ -917,8 +953,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idRv3d)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
+          status=nf_fread4d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idRv3d), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -947,8 +985,9 @@
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
             IF (Perfect3D) THEN
-              status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec,      &
-     &                          gtype, Vsize,                           &
+              status=nf_fread4d(ng, IDmod, ncname, ncINPid,             &
+     &                          Vname(1,idTvar(itrc)), varid,           &
+     &                          InpRec, gtype, Vsize,                   &
      &                          LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,     &
      &                          Fscl, Fmin, Fmax,                       &
 #  ifdef MASKING
@@ -956,8 +995,9 @@
 #  endif
      &                          OCEAN(ng) % t(:,:,:,:,itrc))
             ELSE
-              status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec,      &
-     &                          gtype, Vsize,                           &
+              status=nf_fread3d(ng, IDmod, ncname, ncINPid,             &
+     &                          Vname(1,idTvar(itrc)), varid,           &
+     &                          InpRec, gtype, Vsize,                   &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          Fscl, Fmin, Fmax,                       &
 #  ifdef MASKING
@@ -1019,8 +1059,10 @@
             ELSE
               scale=1.0_r8
             END IF
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
      &                        scale, Fmin, Fmax,                        &
 #    ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1051,8 +1093,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvis)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvis), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin,Fmax,                            &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1079,8 +1123,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idTdif)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idTdif), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin,Fmax,                            &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1108,8 +1154,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idSdif)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idSdif), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin,Fmax,                            &
 #    ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1139,8 +1187,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idMtke)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
+          status=nf_fread4d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idMtke), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,         &
      &                      Fscl, Fmin, Fmax,                           &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1167,8 +1217,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idMtls)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
+          status=nf_fread4d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idMtls), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,         &
      &                      Fscl, Fmin, Fmax,                           &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1195,8 +1247,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmLS)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVmLS), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1223,8 +1277,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmKK)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVmKK), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1252,8 +1308,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmKP)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVmKP), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #    ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1285,8 +1343,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idfrac(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idfrac(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1313,8 +1373,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idBmas(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBmas(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1343,8 +1405,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idSbed(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idSbed(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1375,8 +1439,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idUbld(i))), varid)
             gtype=var_flag(varid)*u2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % umask,                         &
@@ -1401,8 +1467,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idVbld(i))), varid)
             gtype=var_flag(varid)*v2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % vmask,                         &
@@ -1435,8 +1503,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idBott(i))), varid)
             gtype=var_flag(varid)*r2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBott(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1493,8 +1563,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idFsur), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -1542,8 +1614,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -1591,8 +1665,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -1642,8 +1718,10 @@
      &                        varid)
           gtype=var_flag(varid)*u3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -1671,8 +1749,10 @@
      &                        varid)
           gtype=var_flag(varid)*v3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -1701,8 +1781,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -1750,8 +1832,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -1800,8 +1884,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTvar(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1856,8 +1942,9 @@
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
             scale=1.0_r8
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec,        &
-     &                        gtype, Vsize,                             &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
      &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
      &                        scale, Fmin, Fmax,                        &
 #   ifdef MASKING
@@ -1891,8 +1978,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idfrac(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idfrac(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1920,8 +2009,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idBmas(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBmas(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1950,8 +2041,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idSbed(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idSbed(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -1982,8 +2075,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idUbld(i))), varid)
             gtype=var_flag(varid)*u2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % umask,                         &
@@ -2008,8 +2103,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idVbld(i))), varid)
             gtype=var_flag(varid)*v2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % vmask,                         &
@@ -2042,8 +2139,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idBott(i))), varid)
             gtype=var_flag(varid)*r2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBott(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2083,8 +2182,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idFsur), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -2132,8 +2233,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2181,8 +2284,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -2232,8 +2337,10 @@
      &                        varid)
           gtype=var_flag(varid)*u3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2261,8 +2368,10 @@
      &                        varid)
           gtype=var_flag(varid)*v3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -2291,8 +2400,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2340,8 +2451,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -2390,8 +2503,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTvar(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2446,8 +2561,10 @@
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
             scale=1.0_r8
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
      &                        scale, Fmin, Fmax,                        &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2480,8 +2597,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idfrac(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idfrac(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2508,8 +2627,10 @@
             foundit=find_string(var_name, n_var,
      &                          TRIM(Vname(1,idBmas(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBmas(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2538,8 +2659,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idSbed(i))), varid)
             gtype=var_flag(varid)*b3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idSbed(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2569,8 +2692,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idUbld(i))), varid)
             gtype=var_flag(varid)*u2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idUbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % umask,                         &
@@ -2595,8 +2720,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idVbld(i))), varid)
             gtype=var_flag(varid)*v2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idVbld(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #    ifdef MASKING
      &                        GRID(ng) % vmask,                         &
@@ -2628,8 +2755,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idBott(i))), varid)
             gtype=var_flag(varid)*r2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idBott(i)), varid,                &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2671,8 +2800,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idFsur), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -2691,6 +2822,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idFsur)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % b_zeta(:,:,Tindex))
+# endif
         END IF
 !
 !  Read in 2D U-momentum component normalization factor.
@@ -2699,8 +2836,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2719,6 +2858,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUbar)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % b_ubar(:,:,Tindex))
+# endif
         END IF
 !
 !  Read in 2D V-momentum component normalization factor.
@@ -2727,8 +2872,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                       LBi, UBi, LBj, UBj,                        &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -2747,6 +2894,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVbar)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % b_vbar(:,:,Tindex))
+# endif
         END IF
 # ifdef SOLVE3D
 !
@@ -2756,8 +2909,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2776,6 +2931,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUvel)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % b_u(:,:,:,Tindex))
+#  endif
         END IF
 !
 !  Read in 3D V-momentum component normalization factor.
@@ -2784,8 +2945,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -2804,6 +2967,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVvel)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % b_v(:,:,:,Tindex))
+#  endif
         END IF
 !
 !  Read in tracer type variables normalization factor.
@@ -2813,8 +2982,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTvar(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -2834,6 +3005,12 @@
      &                             Fmin, Fmax
               END IF
             END IF
+#  ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, MyRank, IDmod, 1,                   &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          OCEAN(ng) % b_t(:,:,:,Tindex,itrc))
+#  endif
           END IF
         END DO
 # endif
@@ -2960,8 +3137,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -2980,6 +3159,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % b_sustr)
+#  endif
         END IF
 !
 !  Read in surface V-momentum stress normalization factors.
@@ -2988,8 +3173,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3008,6 +3195,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % b_svstr)
+#  endif
         END IF
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
@@ -3019,8 +3212,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r2dvar
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -3040,6 +3235,12 @@
      &                             Fmin, Fmax
               END IF
             END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % b_stflx(:,:,itrc))
+#  endif
           END IF
         END DO
 # endif
@@ -3062,8 +3263,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idFsur), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -3082,6 +3285,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idFsur)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_zeta(:,:,Tindex))
+# endif
         END IF
 !
 !  Read in 2D U-momentum component standard deviation.
@@ -3090,8 +3299,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3110,6 +3321,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUbar)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_ubar(:,:,Tindex))
+# endif
         END IF
 !
 !  Read in 2D V-momentum component standard deviation.
@@ -3118,8 +3335,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3138,6 +3357,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVbar)), Fmin, Fmax
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_vbar(:,:,Tindex))
+# endif
         END IF
 # ifdef SOLVE3D
 !
@@ -3147,8 +3372,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3167,6 +3394,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUvel)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_u(:,:,:,Tindex))
+#  endif
         END IF
 !
 !  Read in 3D V-momentum standard deviation.
@@ -3175,8 +3408,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3195,6 +3430,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVvel)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_v(:,:,:,Tindex))
+#  endif
         END IF
 !
 !  Read in tracer type variables standard deviation.
@@ -3204,8 +3445,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTvar(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -3225,6 +3468,12 @@
      &                             Fmin, Fmax
               END IF
             END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        OCEAN(ng) % e_t(:,:,:,Tindex,itrc))
+#  endif
           END IF
         END DO
 # endif
@@ -3235,8 +3484,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idKhor)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idKhor), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, KhMin(ng), KhMax(ng),                 &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -3256,6 +3507,12 @@
      &                           KhMax(ng)
             END IF
           END IF
+# ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        MIXING(ng) % Kh)
+# endif
         END IF
 # ifdef SOLVE3D
 !
@@ -3265,8 +3522,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idKver)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idKver), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      Fscl, KvMin(ng), KvMax(ng),                 &
 #  ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -3286,6 +3545,12 @@
      &                           KvMax(ng)
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        MIXING(ng) % Kv)
+#  endif
         END IF
 # endif
 # ifdef ADJUST_BOUNDARY
@@ -3412,8 +3677,10 @@
      &                        varid)
           gtype=var_flag(varid)*u2dvar
           scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3432,6 +3699,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % e_sustr)
+#  endif
         END IF
 !
 !  Read in surface V-momentum stress standard deviation.
@@ -3441,8 +3714,10 @@
      &                        varid)
           gtype=var_flag(varid)*v2dvar
           scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3461,6 +3736,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
             END IF
           END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % e_svstr)
+#  endif
         END IF
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
@@ -3477,8 +3758,10 @@
             ELSE
               scale=1.0_r8
             END IF
-            status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+                              Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        scale, Fmin, Fmax,                        &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -3498,6 +3781,12 @@
      &                             Fmin, Fmax
               END IF
             END IF
+#  ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        FORCES(ng) % e_stflx(:,:,itrc))
+#  endif
           END IF
         END DO
 # endif
@@ -3518,26 +3807,12 @@
 !
 !  Read in next impulse forcing time to process.
 !
-        IF (InpThread) THEN
-          start(1)=InpRec
-          total(1)=1
-          status=nf90_inq_varid(ncINPid, TRIM(tvarnam), varid)
-          status=nf90_get_var(ncINPid, varid, FrcTime(ng:),             &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, TRIM(tvarnam), InpRec,            &
-     &                        TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, IDmod, exit_flag)
-# endif
+        CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam),         &
+     &                        FrcTime(ng:),                             &
+     &                        ncid = ncINPid,                           &
+     &                        start = (/InpRec/),                       &
+     &                        total = (/1/))
         IF (exit_flag.ne.NoError) RETURN
-# ifdef DISTRIBUTE
-        CALL mp_bcastf (ng, IDmod, FrcTime(ng))
-# endif
 !
 !  Read in free-surface forcing.
 !
@@ -3545,8 +3820,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idFsur), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -3575,8 +3852,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3603,8 +3882,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
-          status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVbar), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3633,8 +3914,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3661,8 +3944,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVvel), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3690,8 +3975,10 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTvar(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Fscl, Fmin, Fmax,                         &
 #  ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -3865,8 +4152,10 @@
      &                        varid)
           gtype=var_flag(varid)*u3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idUsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -3894,8 +4183,10 @@
      &                        varid)
           gtype=var_flag(varid)*v3dvar
           scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idVsms), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
@@ -3926,8 +4217,9 @@
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
             scale=1.0_r8
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec,        &
-     &                        gtype, Vsize,                             &
+            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTsur(itrc)), varid,             &
+     &                        InpRec, gtype, Vsize,                     &
      &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
      &                        scale, Fmin, Fmax,                        &
 #  ifdef MASKING

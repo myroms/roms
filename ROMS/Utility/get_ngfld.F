@@ -185,9 +185,25 @@
                 END DO
               END IF
             END IF
+!
+!  If Nrec=0, input file is not CF compliant, check variable dimension
+!  to see if the dimension contains the "time" string.
+!
+            IF (got_time.and.(Nrec.eq.0)) THEN
+              DO i=1,n_dim
+                IF (INDEX(TRIM(var_Dname(i)),'time').ne.0) THEN
+                  Nrec=var_Dsize(i)
+                END IF
+              END DO
+            END IF
+            IF (got_time.and.(Nrec.eq.0)) THEN
+              IF (Master) WRITE (stdout,10) TRIM(Tname(ifield)),        &
+     &                                      TRIM(Vname(1,ifield)),      &
+     &                                      TRIM(fname(ifile))
+            END IF
           END IF
           IF ((UBk.eq.1).and.(Nrec.gt.UBi)) THEN
-            IF (Master) WRITE (stdout,10) TRIM(Vname(1,ifield)),        &
+            IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)),        &
      &                                    UBi, Nrec
             exit_flag=4
             RETURN
@@ -226,12 +242,12 @@
 !  Terminate execution requested variables are not found.
 !
         IF (.not.got_var) THEN
-          WRITE (stdout,20) TRIM(Vname(1,ifield)), TRIM(ncfile)
+          WRITE (stdout,30) TRIM(Vname(1,ifield)), TRIM(ncfile)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_time) THEN
-          WRITE (stdout,20) TRIM(Tname(ifield)), TRIM(ncfile)
+          WRITE (stdout,30) TRIM(Tname(ifield)), TRIM(ncfile)
           exit_flag=2
           RETURN
         END IF
@@ -246,7 +262,7 @@
         IF (ncid.eq.-1) THEN
           CALL netcdf_open (ng, model, ncfile, 0, ncid)
           IF (exit_flag.ne.NoError) THEN
-            WRITE (stdout,30) TRIM(ncfile)
+            WRITE (stdout,40) TRIM(ncfile)
             RETURN
           END IF
           CALL netcdf_openid (nFfiles(ng), FRCname(1,ng), FRCids(1,ng), &
@@ -356,7 +372,7 @@
      &                            start = (/Trec/),                     &
      &                            total = (/1/))
             IF (exit_flag.ne.NoError) THEN
-              IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
+              IF (Master) WRITE (stdout,50) TRIM(Tname(ifield)), Trec
               RETURN
             END IF
             Tval=Tval*Tscale
@@ -384,7 +400,7 @@
      &                              total = (/Iend-Istr+1,1/))
             END IF
             IF (exit_flag.ne.NoError) THEN
-              IF (Master) WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
+              IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
             Fmin=A(1)*Fscale(ifield,ng)
@@ -403,13 +419,13 @@
             Finfo(9,ifield,ng)=Fmax
             IF (Master) THEN
               IF (UBk.eq.1) THEN
-                WRITE (stdout,50) TRIM(Vname(2,ifield)), Fmin, Fmax
+                WRITE (stdout,60) TRIM(Vname(2,ifield)), Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
                 Tval=Tval*day2sec
                 CALL time_string (Tval, t_code)
-                WRITE (stdout,60) TRIM(Vname(2,ifield)), t_code,        &
+                WRITE (stdout,70) TRIM(Vname(2,ifield)), t_code,        &
      &                            ncfile(lstr:lend), Trec, Tindex,      &
      &                            Tmin, Tmax, Fmin, Fmax
               END IF
@@ -434,16 +450,19 @@
         END IF
       END IF
 !
-  10  FORMAT (/,' GET_NGFLD   - too small dimension for variable ',a,   &
+  10  FORMAT (/,' GET_NGFLD   - unable to find dimension ',a,           &
+     &        /,15x,'for variable: ',a,/,15x,'in file: ',a,             &
+     &        /,15x,'file is not CF compliant...') 
+  20  FORMAT (/,' GET_NGFLD   - too small dimension for variable ',a,   &
      &        ': ',2i5)
-  20  FORMAT (/,' GET_NGFLD   - unable to find requested variable: ',a, &
-     &       /,15x,'in input NetCDF file: ',a)
-  30  FORMAT (/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
-  40  FORMAT (/,' GET_NGFLD   - error while reading variable: ',a,2x,   &
+  30  FORMAT (/,' GET_NGFLD   - unable to find requested variable: ',a, &
+     &       /,15x,'in file: ',a)
+  40  FORMAT (/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
+  50  FORMAT (/,' GET_NGFLD   - error while reading variable: ',a,2x,   &
      &          ' at TIME index = ',i4)
-  50  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
+  60  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
      &        1pe15.8,')')
-  60  FORMAT (3x,' GET_NGFLD   - ',a,',',t62,'t = ',a,/,19x,            &
+  70  FORMAT (3x,' GET_NGFLD   - ',a,',',t62,'t = ',a,/,19x,            &
      &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')

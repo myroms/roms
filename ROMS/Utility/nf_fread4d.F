@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#undef DEBUG
       MODULE nf_fread4d_mod
 !
 !svn $Id$
@@ -14,48 +13,323 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     ncid       NetCDF file ID.                                       !
-!     ncvarid    NetCDF variable ID.                                   !
-!     tindex     NetCDF time record index to read (integer).           !
-!     gtype      Grid type.                                            !
-!     Vsize      Variable dimensions in NetCDF file.                   !
-!     LBi        I-dimension Lower bound.                              !
-!     UBi        I-dimension Upper bound.                              !
-!     LBj        J-dimension Lower bound.                              !
-!     UBj        J-dimension Upper bound.                              !
-!     LBk        K-dimension Lower bound.                              !
-!     UBk        K-dimension Upper bound.                              !
-!     LBt        Time-dimension Lower bound.                           !
-!     UBt        Time-dimension Upper bound.                           !
+!     ng         Nested grid number (integer)                          !
+!     model      Calling model identifier (integer)                    !
+!     ncname     NetCDF file name (string)                             !
+!     ncid       NetCDF file ID (integer)                              !
+!     ncvname    NetCDF variable name (string)                         !
+!     ncvarid    NetCDF variable ID (integer)                          !
+!     tindex     NetCDF time record index to read (integer)            !
+!     gtype      C-grid type (integer)                                 !
+!     Vsize      Variable dimensions in NetCDF file (integer 1D array) !
+!     LBi        I-dimension Lower bound (integer)                     !
+!     UBi        I-dimension Upper bound (integer)                     !
+!     LBj        J-dimension Lower bound (integer)                     !
+!     UBj        J-dimension Upper bound (integer)                     !
+!     LBk        K-dimension Lower bound (integer)                     !
+!     UBk        K-dimension Upper bound (integer)                     !
+!     LBt        Time-dimension Lower bound (integer)                  !
+!     UBt        Time-dimension Upper bound (integer)                  !
 !     Ascl       Factor to scale field after reading (real).           !
-!     Amask      Land/Sea mask, if any (real).                         !
+!     Amask      Land/Sea mask, if any (real 4D array)                 !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Amin       Field minimum value (real).                           !
-!     Amax       Field maximum value (real).                           !
-!     A          Field to read in (real).                              !
-#ifdef DISTRIBUTE
-!     gtype      Grid type.                                            !
-#endif
-!     nf_fread4d Error flag (integer).                                 !
+!     Amin       Field minimum value (real)                            !
+!     Amax       Field maximum value (real)                            !
+!     A          Field to read in (real 4D array)                      !
+!     nf_fread4d Error flag (integer)                                  !
 !                                                                      !
 !=======================================================================
 !
       implicit none
 
       CONTAINS
+
+#if defined PARALLEL_IO && defined DISTRIBUTE
 !
 !***********************************************************************
-      FUNCTION nf_fread4d (ng, model, ncid, ncvarid, tindex, gtype,     &
-     &                     Vsize,                                       &
+      FUNCTION nf_fread4d (ng, model, ncname, ncid,                     &
+     &                     ncvname, ncvarid,                            &
+     &                     tindex, gtype, Vsize,                        &
      &                     LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,      &
      &                     Ascl, Amin, Amax,                            &
-#ifdef MASKING
+# ifdef MASKING
      &                     Amask,                                       &
-#endif
+# endif
+     &                     A)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE distribute_mod, ONLY : mp_bcasti, mp_reduce
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
+      integer, intent(in) :: Vsize(4)
+
+      real(r8), intent(in)  :: Ascl
+      real(r8), intent(out) :: Amin
+      real(r8), intent(out) :: Amax
+
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: ncvname
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+#  endif
+      real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j, k, ic, it, Npts, NWpts
+      integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize
+      integer :: Ioff, Joff, Koff, Loff
+      integer :: Ilen, Jlen, Klen, Llen, IJlen
+      integer :: Cgrid, MyType, ghost, status, wtype
+
+      integer, dimension(5) :: start, total
+
+      integer :: nf_fread4d
+
+      real(r8) :: BIG = 1.0E+37_r8
+      real(r8) :: Aval
+
+      real(r8), dimension(2) :: buffer
+
+      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)*(UBt-LBt+1)) :: wrk
+
+      character (len=3), dimension(2) :: op_handle
+!
+!-----------------------------------------------------------------------
+!  Set starting and ending indices to process.
+!-----------------------------------------------------------------------
+!
+!  Set first and last grid point according to staggered C-grid
+!  classification. Set the offsets for variables with starting 
+!  zero-index.  Recall the NetCDF does not support a zero-index.
+!
+!  Notice that ghost=0, so (Imin,Jmin) and (Imax,Jmax) are the
+!  corners of the computational tile and the ghost points are
+!  not processed. They will be processed elsewhere by an
+!  appropriate call to any of the routines in "mp_exchange.F".
+!
+      MyType=gtype
+
+      ghost=0                        ! non-overlapping, no ghost points
+
+      SELECT CASE (ABS(MyType))
+        CASE (p2dvar, p3dvar)
+          Cgrid=1
+          Ioff=0
+          Joff=0
+          Isize=IOBOUNDS(ng)%IUB_psi-IOBOUNDS(ng)%ILB_psi+1
+          Jsize=IOBOUNDS(ng)%JUB_psi-IOBOUNDS(ng)%JLB_psi+1
+        CASE (r2dvar, r3dvar)
+          Cgrid=2
+          Ioff=1
+          Joff=1
+          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
+          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+        CASE (u2dvar, u3dvar)
+          Cgrid=3
+          Ioff=0
+          Joff=1
+          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_u+1
+          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_u+1
+        CASE (v2dvar, v3dvar)
+          Cgrid=4
+          Ioff=1
+          Joff=0
+          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_v+1
+          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_v+1
+        CASE DEFAULT
+          Cgrid=1
+          Ioff=1
+          Joff=1
+          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
+          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+      END SELECT
+
+      Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
+      Imax=BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
+      Jmin=BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
+      Jmax=BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
+
+      Ilen=Imax-Imin+1
+      Jlen=Jmax-Jmin+1
+      Klen=UBk-LBk+1
+      Llen=UBt-LBt+1
+      IJlen=Ilen*Jlen
+
+      IF (LBk.eq.0) THEN
+        Koff=1
+      ELSE
+        Koff=0
+      END IF
+
+      IF (LBt.eq.0) THEN
+        Loff=1
+      ELSE
+        Loff=0
+      END IF
+
+# if defined READ_WATER && defined MASKING
+!
+!  If processing water points only, set number of points and type
+!  switch.
+!
+      SELECT CASE (ABS(MyType))
+        CASE (p3dvar)
+          Npts=IOBOUNDS(ng)%xy_psi
+          wtype=p2dvar
+        CASE (r3dvar)
+          Npts=IOBOUNDS(ng)%xy_rho
+          wtype=r2dvar
+        CASE (u3dvar)
+          Npts=IOBOUNDS(ng)%xy_u
+          wtype=u2dvar
+        CASE (v3dvar)
+          Npts=IOBOUNDS(ng)%xy_v
+          wtype=v2dvar
+        CASE DEFAULT
+          Npts=IOBOUNDS(ng)%xy_rho
+          wtype=r2dvar
+      END SELECT
+      NWpts=(Lm(ng)+2)*(Mm(ng)+2)
+      Npts=Npts*Klen*Llen
+# endif
+!
+!  Set NetCDF dimension counters for processing requested field.
+!
+      IF (MyType.gt.0) THEN
+        start(1)=Imin+Ioff
+        total(1)=Ilen
+        start(2)=Jmin+Joff
+        total(2)=Jlen
+        start(3)=LBk+Koff
+        total(3)=Klen
+        start(4)=LBt+Loff
+        total(4)=Llen
+        start(5)=tindex
+        total(5)=1
+        Npts=IJlen*Klen*Llen
+# if defined READ_WATER && defined MASKING
+      ELSE
+        start(1)=1
+        total(1)=Npts
+        start(2)=1
+        total(2)=tindex
+# endif
+      END IF
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      wrk=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Read in tile data from requested field and scale it.
+!-----------------------------------------------------------------------
+!
+      Amin=BIG
+      Amax=-BIG
+
+      status=nf90_get_var(ncid, ncvarid, wrk, start, total)
+      nf_fread4d=status
+
+      IF (status.eq.nf90_noerr) THEN
+        DO i=1,Npts
+          IF (wrk(i).ge.spval_check) THEN
+            wrk(i)=0.0_r8               ! land/sea maked with _FillValue
+          ELSE
+            wrk(i)=Ascl*wrk(i)
+            Amin=MIN(Amin,wrk(i))
+            Amax=MAX(Amax,wrk(i))
+          END IF
+        END DO
+      ELSE
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Unpack read tile data block and load into model array.
+!-----------------------------------------------------------------------
+!
+      IF (MyType.gt.0) THEN
+        ic=0
+        DO it=LBt,UBt
+          DO k=LBk,UBk
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                ic=ic+1
+                A(i,j,k,it)=wrk(ic)
+              END DO
+            END DO
+          END DO
+        END DO   
+# if defined MASKING || defined READ_WATER
+      ELSE
+        ic=0
+        DO it=LBt,UBt
+          DO k=LBk,UBk
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                IF (Amask(i,j).gt.0.0_r8) THEN
+                  ic=ic+1
+                  A(i,j,k,it)=wrk(ic)
+                ELSE
+                  A(i,j,k,it)=0.0_r8
+                END IF
+              END DO
+            END DO
+          END DO
+        END DO
+# endif
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Set global minimun and maximun values: global reduction.
+!-----------------------------------------------------------------------
+!
+      buffer(1)=Amin
+      op_handle(1)='MIN'
+      buffer(2)=Amax
+      op_handle(2)='MAX'
+      CALL mp_reduce (ng, model, 2, buffer, op_handle)
+      Amin=buffer(1)
+      Amax=buffer(2)
+
+      RETURN
+      END FUNCTION nf_fread4d
+
+#else
+
+!
+!***********************************************************************
+      FUNCTION nf_fread4d (ng, model, ncname, ncid,                     &
+     &                     ncvname, ncvarid,                            &
+     &                     tindex, gtype, Vsize,                        &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,      &
+     &                     Ascl, Amin, Amax,                            &
+# ifdef MASKING
+     &                     Amask,                                       &
+# endif
      &                     A)
 !***********************************************************************
 !
@@ -65,47 +339,46 @@
       USE mod_netcdf
       USE mod_scalars
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasti, mp_scatter3d
-#endif
+# endif
 !
       implicit none
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, ncid, ncvarid, tindex
+      integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
       integer, intent(in) :: Vsize(4)
-
-#ifndef DISTRIBUTE
-      integer, intent(in) :: gtype
-#else
-      integer, intent(inout) :: gtype
-#endif
 
       real(r8), intent(in)  :: Ascl
       real(r8), intent(out) :: Amin
       real(r8), intent(out) :: Amax
 
-#ifdef ASSUMED_SHAPE
-# ifdef MASKING
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: ncvname
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
-# endif
+#  endif
       real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
-#else
-# ifdef MASKING
+# else
+#  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-# endif
+#  endif
       real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
-#endif
+# endif
 !
 !  Local variable declarations.
 !
       integer :: i, j, k, ic, fourth, Npts, NWpts, status, wtype
       integer :: Imin, Imax, Jmin, Jmax, Loff
-      integer :: Ilen, Jlen, Klen, IJlen, MyType, Nghost
-
+      integer :: Ilen, Jlen, Klen, IJlen, MyType
+# ifdef DISTRIBUTE
+      integer :: Nghost
+# endif
       integer, dimension(5) :: start, total
 
       integer :: nf_fread4d
@@ -118,42 +391,29 @@
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
 !-----------------------------------------------------------------------
-
-#ifdef DISTRIBUTE
-!
-!  In some parts of the code the IO is serial and the value of the
-!  grid type is only known by the input thread so broadcast its value
-!  to all nodes.
-!
-      CALL mp_bcasti (ng, model, gtype)
-#endif
 !
 !  Set first and last grid point according to staggered C-grid
-!  classification. Set loops offsets.  Notice that Nghost is set
-!  to zero when processing an adjoint solution.  Therefore, the
-!  ghost points will be not assigned in mp_scatter. This is the
-!  correct adjoint solution reading.  The ghost points are then
-!  assumed to be zero.
+!  classification. Set loops offsets.
 !
       MyType=gtype
 
       SELECT CASE (ABS(MyType))
-        CASE (p3dvar)
+        CASE (p2dvar, p3dvar)
           Imin=IOBOUNDS(ng)%ILB_psi
           Imax=IOBOUNDS(ng)%IUB_psi
           Jmin=IOBOUNDS(ng)%JLB_psi
           Jmax=IOBOUNDS(ng)%JUB_psi
-        CASE (r3dvar)
+        CASE (r2dvar, r3dvar)
           Imin=IOBOUNDS(ng)%ILB_rho
           Imax=IOBOUNDS(ng)%IUB_rho
           Jmin=IOBOUNDS(ng)%JLB_rho
           Jmax=IOBOUNDS(ng)%JUB_rho
-        CASE (u3dvar)
+        CASE (u2dvar, u3dvar)
           Imin=IOBOUNDS(ng)%ILB_u
           Imax=IOBOUNDS(ng)%IUB_u
           Jmin=IOBOUNDS(ng)%JLB_u
           Jmax=IOBOUNDS(ng)%JUB_u
-        CASE (v3dvar)
+        CASE (v2dvar, v3dvar)
           Imin=IOBOUNDS(ng)%ILB_v
           Imax=IOBOUNDS(ng)%IUB_v
           Jmin=IOBOUNDS(ng)%JLB_v
@@ -176,33 +436,40 @@
         Loff=0
       END IF
 
-      IF (model.eq.iADM) THEN
-        Nghost=0
-      ELSE  
-        Nghost=GHOST_POINTS
-      END IF
-
-#if defined READ_WATER && defined MASKING
+# ifdef DISTRIBUTE
+!
+!  Notice that Nghost=0, so (Imin,Jmin) and (Imax,Jmax) are the
+!  corner of the computational tile and the ghost points are
+!  not processed. They will be processed elsewhere by the 
+!  appropriate call to any of the routines in "mp_exchange.F".
+!
+      Nghost=0
+# endif
+# if defined READ_WATER && defined MASKING
 !
 !  If processing water points only, set number of points and type
 !  switch.
 !
-      IF (ABS(MyType).eq.p3dvar) THEN
-        Npts=IOBOUNDS(ng)%xy_psi
-        wtype=p2dvar
-      ELSE IF (ABS(MyType).eq.u3dvar) THEN
-        Npts=IOBOUNDS(ng)%xy_u
-        wtype=u2dvar
-      ELSE IF (ABS(MyType).eq.v3dvar) THEN
-        Npts=IOBOUNDS(ng)%xy_v
-        wtype=v2dvar
-      ELSE
-        Npts=IOBOUNDS(ng)%xy_rho
-        wtype=r2dvar
-      END IF
+      SELECT CASE (ABS(MyType))
+        CASE (p3dvar)
+          Npts=IOBOUNDS(ng)%xy_psi
+          wtype=p2dvar
+        CASE (r3dvar)
+          Npts=IOBOUNDS(ng)%xy_rho
+          wtype=r2dvar
+        CASE (u3dvar)
+          Npts=IOBOUNDS(ng)%xy_u
+          wtype=u2dvar
+        CASE (v3dvar)
+          Npts=IOBOUNDS(ng)%xy_v
+          wtype=v2dvar
+        CASE DEFAULT
+          Npts=IOBOUNDS(ng)%xy_rho
+          wtype=r2dvar
+      END SELECT
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)
       Npts=Npts*Klen
-#endif
+# endif
 !
 !  Initialize local array to avoid denormalized numbers. This
 !  facilitates processing and debugging.
@@ -210,13 +477,14 @@
       wrk=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Read in requested field and scale it.
+!  Serial I/O: Read in requested field and scale it.
 !-----------------------------------------------------------------------
 !
 !  Proccess data as 3D slides.
 !
       Amin=BIG
       Amax=-BIG
+
       DO fourth=LBt,UBt
         IF (MyType.gt.0) THEN
           start(1)=1
@@ -230,13 +498,13 @@
           start(5)=tindex
           total(5)=1
           Npts=IJlen*Klen
-#if defined READ_WATER && defined MASKING
+# if defined READ_WATER && defined MASKING
         ELSE
           start(1)=1+(fourth+Loff-1)*Npts
           total(1)=Npts
           start(2)=1
           total(2)=tindex
-#endif
+# endif
         END IF
         status=nf90_noerr
         IF (InpThread) THEN
@@ -253,26 +521,26 @@
             END DO
           END IF
         END IF          
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
         CALL mp_bcasti (ng, model, status)
-#endif
+# endif
         IF (status.ne.nf90_noerr) THEN
           nf_fread4d=status
           RETURN
         END IF
 !
 !-----------------------------------------------------------------------
-!  Unpack read field.
+!  Serial I/O: Unpack read field.
 !-----------------------------------------------------------------------
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
         CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
      &                     Nghost, MyType, Amin, Amax,                  &
-# if defined READ_WATER && defined MASKING
+#  if defined READ_WATER && defined MASKING
      &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
-# endif
+#  endif
      &                     Npts, wrk, A(:,:,:,fourth))
-#else        
+# else        
         IF (MyType.gt.0) THEN
           ic=0
           DO k=LBk,UBk
@@ -283,7 +551,7 @@
               END DO
             END DO
           END DO
-# if defined MASKING || defined READ_WATER
+#  if defined MASKING || defined READ_WATER
         ELSE
           ic=0
           DO k=LBk,UBk
@@ -298,14 +566,14 @@
               END DO
             END DO
           END DO
-# endif
+#  endif
         END IF
-#endif
+# endif
       END DO
 
       nf_fread4d=status
 
       RETURN
       END FUNCTION nf_fread4d
-
+#endif
       END MODULE nf_fread4d_mod

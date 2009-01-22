@@ -161,10 +161,14 @@
           allocate ( BOUNDS(ng) % JstrV(-1:Ntiles) )
           allocate ( BOUNDS(ng) % JendR(-1:Ntiles) )
           allocate ( BOUNDS(ng) % JendT(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % Imin (4,0:1,0:Ntiles) )
+          allocate ( BOUNDS(ng) % Imax (4,0:1,0:Ntiles) )
+          allocate ( BOUNDS(ng) % Jmin (4,0:1,0:Ntiles) )
+          allocate ( BOUNDS(ng) % Jmax (4,0:1,0:Ntiles) )
         END DO
       END IF
 !
-!  Set tile and arrays bounds.
+!  Set tile computational indices and arrays allocation bounds.
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
@@ -198,6 +202,59 @@
           BOUNDS(ng) % UBij = MAX(BOUNDS(ng) % UBij,                    &
      &                            BOUNDS(ng) % UBi(tile),               &
      &                            BOUNDS(ng) % UBj(tile))
+        END DO
+      END DO
+!
+!  Set I/O processing minimum (Imin, Jmax) and maximum (Imax, Jmax)
+!  indices for non-overlapping (Nghost=0) and overlapping (Nghost>0)
+!  tiles for each C-grid type variable.
+!
+      Nghost=GHOST_POINTS
+      DO ng=1,Ngrids
+        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+          CALL get_bounds (ng, tile, p2dvar, 0     , Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(1,0,tile),                 &
+     &                     BOUNDS(ng) % Imax(1,0,tile),                 &
+     &                     BOUNDS(ng) % Jmin(1,0,tile),                 &
+     &                     BOUNDS(ng) % Jmax(1,0,tile))
+          CALL get_bounds (ng, tile, p2dvar, Nghost, Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(1,1,tile),                 &
+     &                     BOUNDS(ng) % Imax(1,1,tile),                 &
+     &                     BOUNDS(ng) % Jmin(1,1,tile),                 &
+     &                     BOUNDS(ng) % Jmax(1,1,tile))
+
+          CALL get_bounds (ng, tile, r2dvar, 0     , Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(2,0,tile),                 &
+     &                     BOUNDS(ng) % Imax(2,0,tile),                 &
+     &                     BOUNDS(ng) % Jmin(2,0,tile),                 &
+     &                     BOUNDS(ng) % Jmax(2,0,tile))
+          CALL get_bounds (ng, tile, r2dvar, Nghost, Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(2,1,tile),                 &
+     &                     BOUNDS(ng) % Imax(2,1,tile),                 &
+     &                     BOUNDS(ng) % Jmin(2,1,tile),                 &
+     &                     BOUNDS(ng) % Jmax(2,1,tile))
+
+          CALL get_bounds (ng, tile, u2dvar, 0     , Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(3,0,tile),                 &
+     &                     BOUNDS(ng) % Imax(3,0,tile),                 &
+     &                     BOUNDS(ng) % Jmin(3,0,tile),                 &
+     &                     BOUNDS(ng) % Jmax(3,0,tile))
+          CALL get_bounds (ng, tile, u2dvar, Nghost, Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(3,1,tile),                 &
+     &                     BOUNDS(ng) % Imax(3,1,tile),                 &
+     &                     BOUNDS(ng) % Jmin(3,1,tile),                 &
+     &                     BOUNDS(ng) % Jmax(3,1,tile))
+
+          CALL get_bounds (ng, tile, v2dvar, 0     , Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(4,0,tile),                 &
+     &                     BOUNDS(ng) % Imax(4,0,tile),                 &
+     &                     BOUNDS(ng) % Jmin(4,0,tile),                 &
+     &                     BOUNDS(ng) % Jmax(4,0,tile))
+          CALL get_bounds (ng, tile, v2dvar, Nghost, Itile, Jtile,      &
+     &                     BOUNDS(ng) % Imin(4,1,tile),                 &
+     &                     BOUNDS(ng) % Imax(4,1,tile),                 &
+     &                     BOUNDS(ng) % Jmin(4,1,tile),                 &
+     &                     BOUNDS(ng) % Jmax(4,1,tile))
         END DO
       END DO
 !
