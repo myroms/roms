@@ -136,6 +136,7 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+      USE mod_stepping
 !
 ! Inported variable declarations.
 !
@@ -145,51 +146,58 @@
 !
       logical :: foundit
 
-      integer :: Vid, i, ifile, nvatt, nvdim
+      integer :: Vid, i, ifile, mg, nvatt, nvdim
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
-      IF (ng.eq.1) allocate ( TIDES(Ngrids) )
-!
 !  Inquire about the maximum number of tidal components.
 !
       IF (ng.eq.1) THEN
-        foundit=.FALSE.
+        MTC=0
+        DO mg=1,Ngrids
 
-        QUERY : DO ifile=1,nFfiles(ng)
-          CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,ng),             &
-     &                         MyVarName = TRIM(Vname(1,idTper)),       &
-     &                         SearchVar = foundit,                     &
-     &                         VarID = Vid,                             &
-     &                         nVardim = nvdim,                         &
-     &                         nVarAtt = nvatt)
-          IF (exit_flag.ne.NoError) RETURN
+          foundit=.FALSE.
+
+          QUERY : DO ifile=1,nFfiles(mg)
+            CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,mg),           &
+     &                           MyVarName = TRIM(Vname(1,idTper)),     &
+     &                           SearchVar = foundit,                   &
+     &                           VarID = Vid,                           &
+     &                           nVardim = nvdim,                       &
+     &                           nVarAtt = nvatt)
+            IF (exit_flag.ne.NoError) RETURN
 
 # if defined AVERAGES_DETIDE && defined AVERAGES
 !
 !  Check if detiding variables are available and set definition switch.
 !
-          IF (foundit) THEN
-            DO i=1,n_var
-              IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsuH))) THEN
-                LdefTIDE(ng)=.FALSE.
-              END IF
-            END DO
-          ENDIF
+            IF (foundit) THEN
+              DO i=1,n_var
+                IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsuH))) THEN
+                  LdefTIDE(ng)=.FALSE.
+                END IF
+              END DO
+            ENDIF
 # endif
 !
 !  Set maximun numbert of tidal components.
 !
-          IF (foundit) THEN
-            MTC=var_Dsize(1)            ! first dimension
-            EXIT QUERY
-          END IF
+            IF (foundit) THEN
+              MTC=MAX(MTC,var_Dsize(1))              ! first dimension
+              NTC(mg)=var_Dsize(1)
+              TIDEname(ng)=TRIM(FRCname(ifile,mg))
+              EXIT QUERY
+            END IF
+          END DO QUERY
 
-        END DO QUERY
-
+        END DO
       END IF
+!
+!  Allocate structure.
+!
+      IF (ng.eq.1) allocate ( TIDES(Ngrids) )
 !
 !  Allocate tidal forcing variables.
 !

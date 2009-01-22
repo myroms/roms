@@ -117,44 +117,49 @@
 
       integer :: Vid, ifile, nvatt, nvdim
 # endif
-      integer :: is, itrc, k
+      integer :: is, itrc, k. mg
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
-!
-      IF (ng.eq.1) allocate ( SOURCES(Ngrids) )
 
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                               defined TS_PSOURCE || defined Q_PSOURCE)
 !
 !  Inquire about the number of point sources.
 !
-      foundit=.FALSE.
+      IF (ng.eq.1) THEN
+        DO mg=1,Ngrids
+          foundit=.FALSE.
 
-      QUERY : DO ifile=1,nFfiles(ng)
-        CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,ng),               &
-     &                       MyVarName = TRIM(Vname(1,idRxpo)),         &
-     &                       SearchVar = foundit,                       &
-     &                       VarID = Vid,                               &
-     &                       nVardim = nvdim,                           &
-     &                       nVarAtt = nvatt)
-        IF (exit_flag.ne.NoError) RETURN
+          QUERY : DO ifile=1,nFfiles(mg)
+            CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,mg),           &
+     &                           MyVarName = TRIM(Vname(1,idRxpo)),     &
+     &                           SearchVar = foundit,                   &
+     &                           VarID = Vid,                           &
+     &                           nVardim = nvdim,                       &
+     &                           nVarAtt = nvatt)
+            IF (exit_flag.ne.NoError) RETURN
 
-        IF (foundit) THEN
-          Nsrc(ng)=var_Dsize(1)         ! first dimension
-          EXIT QUERY
-        END IF
-
-      END DO QUERY
+            IF (foundit) THEN
+              Nsrc(mg)=var_Dsize(1)         ! first dimension
+              EXIT QUERY
+            END IF
+          END DO QUERY
+        END DO
+      END IF
 # else
 !
 !  Set number of point sources to maximum number of analytical sources.
 !
       Nsrc(ng)=Msrc
 # endif
+!
+!  Allocate structure.
+!
+      IF (ng.eq.1) allocate ( SOURCES(Ngrids) )
 !
 !  Allocate point Sources/Sinks variables.
 !

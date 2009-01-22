@@ -2050,6 +2050,15 @@
           nADJ(ng)=nHIS(ng)
         END IF
 #endif
+#if defined WEAK_CONSTRAINT || defined IOM
+!
+!  If weak constraint assimilation, set tangent linear number of
+!  time-steps between writing of fields the same as the basic
+!  state.  Disallow recycling.
+!
+        nTLM(ng)=nHIS(ng)
+        LcycleTLM(ng)=.FALSE.
+#endif
 #if defined FOUR_DVAR
 !
 !  If variational data assimilation, disallow creation of multiple
@@ -2221,10 +2230,6 @@
           END IF
 #endif
 #ifdef TANGENT
-# if defined WEAK_CONSTRAINT || defined IOM
-          LcycleTLM(ng)=.FALSE.       ! disallow recycling
-          nTLM(ng)=nHIS(ng)           ! same as basic state
-# endif
           WRITE (out,170) LcycleTLM(ng), 'LcycleTLM',                   &
      &          'Switch to recycle time-records in tangent file.'
           WRITE (out,130) nTLM(ng), 'nTLM',                             &
