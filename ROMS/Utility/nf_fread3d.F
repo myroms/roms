@@ -60,6 +60,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
@@ -253,6 +254,8 @@
           END IF
         END DO
       ELSE
+        exit_flag=2
+        ioerror=status
         RETURN
       END IF          
 !
@@ -320,6 +323,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
@@ -531,6 +535,8 @@
         CALL mp_bcasti (ng, model, status)
 # endif
         IF (status.ne.nf90_noerr) THEN
+          exit_flag=2
+          ioerror=status
           nf_fread3d=status
           RETURN
         END IF

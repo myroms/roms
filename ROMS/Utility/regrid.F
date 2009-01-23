@@ -123,6 +123,12 @@
         END DO
       END DO
 !
+!  Initialize local fractional coordinates arrays to avoid
+!  deframentation.
+!
+      Iout=0.0_r8
+      Jout=0.0_r8
+!
 !-----------------------------------------------------------------------
 !  Check if gridded data contains model grid.
 !-----------------------------------------------------------------------

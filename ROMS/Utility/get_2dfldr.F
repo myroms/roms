@@ -217,6 +217,8 @@
               IF (Master) WRITE (stdout,10) TRIM(Tname(ifield)),        &
      &                                      TRIM(Vname(1,ifield)),      &
      &                                      TRIM(fname(ifile))
+              exit_flag=4
+              RETURN
             END IF
           END IF
 !

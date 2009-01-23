@@ -59,6 +59,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_grid
+      USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
@@ -120,7 +121,7 @@
 !  Set first and last grid point according to staggered C-grid
 !  classification. Set the offsets for variables with starting 
 !  zero-index.  Recall the NetCDF does not support a zero-index.
-su!
+!
 !  Notice that ghost=0, so (Imin,Jmin) and (Imax,Jmax) are the
 !  corner of the computational tile and the ghost points are
 !  not processed. They will be processed elsewhere by the 
@@ -183,6 +184,7 @@ su!
         interpolate=.TRUE.
         Ilen=Vsize(1)
         Jlen=Vsize(2)
+!!      status=nf90_var_par_access(ncid, ncvarid, IO_independent)
       END IF
       IJlen=Ilen*Jlen
 
@@ -247,7 +249,7 @@ su!
         IF (.not.interpolate) THEN
           allocate ( wrk(TileSize(ng)) )
         ELSE
-          allocate ( wrk(Npts+2) )
+          allocate ( wrk(Npts) )
         END IF
         wrk=0.0_r8
       END IF
@@ -273,6 +275,8 @@ su!
           END IF
         END DO
       ELSE
+        exit_flag=2
+        ioerror=status
         RETURN
       END IF
 !
@@ -381,13 +385,14 @@ su!
       USE mod_param
       USE mod_parallel
       USE mod_grid
+      USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
 
 # ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_scatter2d
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_scatter2d
 # endif
 !
       implicit none
@@ -550,7 +555,11 @@ su!
 !  communications.
 !
       IF (.not.allocated(wrk)) THEN
-        allocate ( wrk(Npts+2) )
+        IF (interpolate) THEN
+          allocate ( wrk(Npts) )
+        ELSE
+          allocate ( wrk(Npts+2) )
+        END IF
         wrk=0.0_r8
       END IF
 !
@@ -579,6 +588,8 @@ su!
       CALL mp_bcasti (ng, model, status)
 # endif
       IF (status.ne.nf90_noerr) THEN
+        exit_flag=2
+        ioerror=status
         nf_fread2d=status
         RETURN
       END IF
@@ -619,6 +630,10 @@ su!
           END DO
 #  endif
         END IF
+# endif
+# ifdef DISTRIBUTE
+      ELSE
+        CALL mp_bcastf (ng, model, wrk)
 # endif
       END IF
 !
