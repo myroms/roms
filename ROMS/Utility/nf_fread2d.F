@@ -64,7 +64,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_reduce
+      USE distribute_mod, ONLY : mp_bcasti, mp_collect, mp_reduce
 !
       implicit none
 !
@@ -95,21 +95,29 @@
 !
 !  Local variable declarations.
 !
-      logical :: interpolate
-      integer :: i, j, ic, Npts, NWpts
-      integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize
-      integer :: Ioff, Joff
-      integer :: Ilen, Jlen, IJlen
+      logical :: foundit, interpolate
+
+      integer :: i, ic, ij, j, jc, np, MyNpts, Npts
+      integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize, IJsize
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: Ioff, Joff, IJoff
+      integer :: Ilen, Itile, Jlen, Jtile, IJlen
       integer :: Cgrid, MyType, ghost, status, wtype
 
       integer, dimension(3) :: start, total
 
       integer :: nf_fread2d
+       
+      real(r8) :: Aspval
 
-      real(r8) :: Aval
+      real(r8), parameter :: IniVal = 0.0_r8
 
       real(r8), dimension(2) :: buffer
 
+      real(r8), allocatable :: Awrk(:,:)
+# if defined MASKING && defined READ_WATER
+      real(r8), allocatable :: A2d(:)
+# endif
       real(r8), allocatable :: wrk(:)
 
       character (len=3), dimension(2) :: op_handle
@@ -134,34 +142,24 @@
       SELECT CASE (ABS(MyType))
         CASE (p2dvar, p3dvar)
           Cgrid=1
-          Ioff=0
-          Joff=0
-          Isize=IOBOUNDS(ng)%IUB_psi-IOBOUNDS(ng)%ILB_psi+1
-          Jsize=IOBOUNDS(ng)%JUB_psi-IOBOUNDS(ng)%JLB_psi+1
+          Isize=IOBOUNDS(ng)%xi_psi
+          Jsize=IOBOUNDS(ng)%eta_psi
         CASE (r2dvar, r3dvar)
           Cgrid=2
-          Ioff=1
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
-          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
         CASE (u2dvar, u3dvar)
           Cgrid=3
-          Ioff=0
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_u+1
-          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_u+1
+          Isize=IOBOUNDS(ng)%xi_u
+          Jsize=IOBOUNDS(ng)%eta_u
         CASE (v2dvar, v3dvar)
           Cgrid=4
-          Ioff=1
-          Joff=0
-          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_v+1
-          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_v+1
+          Isize=IOBOUNDS(ng)%xi_v
+          Jsize=IOBOUNDS(ng)%eta_v
         CASE DEFAULT
-          Cgrid=1
-          Ioff=1
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
-          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+          Cgrid=2
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
       END SELECT
 
       Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
@@ -184,182 +182,327 @@
         interpolate=.TRUE.
         Ilen=Vsize(1)
         Jlen=Vsize(2)
-!!      status=nf90_var_par_access(ncid, ncvarid, IO_independent)
       END IF
-      IJlen=Ilen*Jlen
+!
+!  If interpolating, check if the variable has a _FillValue attribute.
+!
+      IF (interpolate) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, ncvarid, '_FillValue', &
+     &                        Aspval, foundit,                          &
+     &                        ncid = ncid)
+        IF (.not.foundit) THEN
+          Aspval=spval_check
+        END IF
+      ELSE
+        Aspval=spval_check
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Read in tile data from requested field and scale it.
+!                Processing both water and land points.
+!-----------------------------------------------------------------------
+!
+      IF (gtype.gt.0) THEN
+!
+!  Set offsets due the NetCDF dimensions. Recall that some output
+!  variables not always start at one.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            Ioff=0
+            Joff=0
+          CASE (r2dvar, r3dvar)
+            Ioff=1
+            Joff=1
+          CASE (u2dvar, u3dvar)
+            Ioff=0
+            Joff=1
+          CASE (v2dvar, v3dvar)
+            Ioff=1
+            Joff=0
+          CASE DEFAULT
+            Ioff=1
+            Joff=1
+        END SELECT
 
-# if defined READ_WATER && defined MASKING
+        Npts=Ilen*Jlen
 !
-!  If processing water points only, set number of points and type
-!  switch.
+!  Allocate scratch work arrays.
 !
-      SELECT CASE (ABS(MyType))
-        CASE (p2dvar)
-          Npts=IOBOUNDS(ng)%xy_psi
-          wtype=p2dvar
-        CASE (r2dvar)
-          Npts=IOBOUNDS(ng)%xy_rho
-          wtype=r2dvar
-        CASE (u2dvar)
-          Npts=IOBOUNDS(ng)%xy_u
-          wtype=u2dvar
-        CASE (v2dvar)
-          Npts=IOBOUNDS(ng)%xy_v
-          wtype=v2dvar
-        CASE DEFAULT
-          Npts=IOBOUNDS(ng)%xy_rho
-          wtype=r2dvar
-      END SELECT
-      NWpts=(Lm(ng)+2)*(Mm(ng)+2)
-# endif
+        IF (interpolate) THEN
+          IF (.not.allocated(Awrk)) THEN
+            allocate ( Awrk(Ilen,Jlen) )
+            Awrk=IniVal
+          END IF
+          IF (.not.allocated(wrk)) THEN
+            allocate ( wrk(Npts) )
+            wrk=0.0_r8
+          END IF
+        ELSE
+          IF (.not.allocated(wrk)) THEN
+            allocate ( wrk(TileSize(ng)) )
+            wrk=0.0_r8
+          END IF
+        END IF
 !
-!  Set NetCDF dimension counters for processing requested field.
+!  Read in data: all parallel nodes read their own tile data.
 !
-      IF (MyType.gt.0) THEN
         IF (Interpolate) THEN
-          start(1)=1
-          total(1)=Ilen
-          start(2)=1
-          total(2)=Jlen
+          CALL tile_bounds_2d (ng, MyRank, Ilen, Jlen, Itile, Jtile,    &
+     &                         Istr, Iend, Jstr, Jend)
+          start(1)=Istr
+          total(1)=Iend-Istr+1
+          start(2)=Jstr
+          total(2)=Jend-Jstr+1
         ELSE
           start(1)=Imin+Ioff
           total(1)=Ilen
           start(2)=Jmin+Joff
           total(2)=Jlen
         END IF
-        Npts=IJlen
+        MyNpts=total(1)*total(2)
         start(3)=tindex
         total(3)=1
-# if defined READ_WATER && defined MASKING
-      ELSE
-        start(1)=1
-        total(1)=Npts
-        start(2)=1
-        total(2)=tindex
-# endif
-      END IF
+
+        status=nf90_get_var(ncid, ncvarid, wrk, start, total)
+        nf_fread2d=status
 !
-!  Allocate scratch work vector. The dimension of this vector is 
-!  unknown when interpolating input data to model grid. Notice
-!  that the array length is increased by two because the minimum
-!  and maximum values are appended in distributed-memory
-!  communications.
+!  Scale read data and process fill values, if any.  Compute minimum
+!  and maximum values.
 !
-      IF (.not.allocated(wrk)) THEN
-        IF (.not.interpolate) THEN
-          allocate ( wrk(TileSize(ng)) )
+        IF (status.eq.nf90_noerr) THEN
+          Amin=spval
+          Amax=-spval
+          DO i=1,MyNpts
+            IF (wrk(i).ge.Aspval) THEN
+              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+            ELSE
+              wrk(i)=Ascl*wrk(i)
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END IF
+          END DO
+!
+!  Set minimum and maximum values: global reduction.
+!
+          buffer(1)=Amin
+          op_handle(1)='MIN'
+          buffer(2)=Amax
+          op_handle(2)='MAX'
+          CALL mp_reduce (ng, model, 2, buffer, op_handle)
+          Amin=buffer(1)
+          Amax=buffer(2)
+!
+!  Unpack read data. If not interpolating, the data is loaded into
+!  model array.
+!
+          IF (interpolate) THEN
+            ic=0
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                ic=ic+1
+                Awrk(i,j)=wrk(ic)
+              END DO
+            END DO
+            CALL mp_collect (ng, model, Npts, IniVal, Awrk)
+          ELSE
+            ic=0
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                ic=ic+1
+                A(i,j)=wrk(ic)
+              END DO
+            END DO
+          END IF
         ELSE
-          allocate ( wrk(Npts) )
+          exit_flag=2
+          ioerror=status
         END IF
-        wrk=0.0_r8
       END IF
+
+# if defined MASKING && defined READ_WATER
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: Read in tile data from requested field and scale it.
+!                Processing water points only. Interpolation is not
+!                allowed.
 !-----------------------------------------------------------------------
 !
-      Amin=spval
-      Amax=-spval
+      IF (gtype.lt.0) THEN
+!
+!  Set number of points to process, grid type switch, and offsets due
+!  array packing into 1D array in column-major order.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar)
+            Npts=IOBOUNDS(ng)%xy_psi
+            wtype=p2dvar
+            Ioff=0
+            Joff=1
+          CASE (r2dvar)
+            Npts=IOBOUNDS(ng)%xy_rho
+            wtype=r2dvar
+            Ioff=1
+            Joff=0
+          CASE (u2dvar)
+            Npts=IOBOUNDS(ng)%xy_u
+            wtype=u2dvar
+            Ioff=0
+            Joff=0
+          CASE (v2dvar)
+            Npts=IOBOUNDS(ng)%xy_v
+            wtype=v2dvar
+            Ioff=1
+            Joff=1
+          CASE DEFAULT
+            Npts=IOBOUNDS(ng)%xy_rho
+            wtype=r2dvar
+            Ioff=1
+            Joff=0
+        END SELECT
+        IJsize=Isize*Jsize
+!
+!  Allocate scratch work arrays.
+!
+        IF (.not.allocated(A2d)) THEN
+          allocate ( A2d(IJsize) )
+          A2d=IniVal
+        END IF
+        IF (.not.allocated(wrk)) THEN
+          allocate ( wrk(Npts) )
+          wrk=IniVal
+        END IF
+!
+!  Read in data: all parallel nodes read a segment of the 1D data.
+!  Recall that water points are pack in the NetCDF file in a single
+!  dimension.
+!
+        CALL tile_bounds_1d (ng, MyRank, Npts, Istr, Iend)
 
-      status=nf90_get_var(ncid, ncvarid, wrk, start, total)
-      nf_fread2d=status
+        start(1)=Istr
+        total(1)=Iend-Istr+1
+        start(2)=1
+        total(2)=tindex
 
-      IF (status.eq.nf90_noerr) THEN
-        DO i=1,Npts
-          IF (wrk(i).ge.spval_check) THEN
-            wrk(i)=0.0_r8               ! land/sea maked with _FillValue
-          ELSE
-            wrk(i)=Ascl*wrk(i)
-            Amin=MIN(Amin,wrk(i))
-            Amax=MAX(Amax,wrk(i))
-          END IF
-        END DO
-      ELSE
-        exit_flag=2
-        ioerror=status
-        RETURN
-      END IF
+        status=nf90_get_var(ncid, ncvarid, wrk(Istr:), start, total)
+        nf_fread2d=status
 !
-!-----------------------------------------------------------------------
-!  Parallel I/O: If not interpolating, unpack read tile data block and
-!                load into model array.
-!-----------------------------------------------------------------------
+!  Global reduction of work array.  We need this because the packing
+!  of the water point only affects the model tile partition.
 !
-      IF (.not.interpolate) THEN
-        IF (MyType.gt.0) THEN
-          ic=0
+        IF (status.eq.nf90_noerr) THEN
+          CALL mp_collect (ng, model, Npts, IniVal, wrk)
+!
+!  Scale read data and process fill values, if any.  Compute minimum
+!  and maximum values.
+!
+          Amin=spval
+          Amax=-spval
+          DO i=1,Npts
+            IF (wrk(i).ge.Aspval) THEN
+              wrk(i)=0.0_r8             ! set _FillValue to zero
+            ELSE
+              wrk(i)=Ascl*wrk(i)
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END IF
+          END DO
+!
+!  Unpack read data.  This is tricky in parallel I/O.  The cheapeast
+!  thing to do is reconstruct a packed global array and then select
+!  the appropriate values for the tile.
+!
+          DO np=1,Npts
+            ij=SCALARS(ng)%IJwater(np,wtype)
+            A2d(ij)=wrk(np)
+          END DO
+
           DO j=Jmin,Jmax
+            jc=(j-Joff)*Isize
             DO i=Imin,Imax
-              ic=ic+1
-              A(i,j)=wrk(ic)
+              ij=i+Ioff+jc
+              A(i,j)=A2d(ij)
             END DO
           END DO
-#  if defined MASKING || defined READ_WATER
         ELSE
-          ic=0
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              IF (Amask(i,j).gt.0.0_r8) THEN
-                ic=ic+1
-                A(i,j)=wrk(ic)
-              ELSE
-                A(i,j)=0.0_r8
-              END IF
-            END DO
-          END DO
-#  endif
+          exit_flag=2
+          ioerror=status
         END IF
       END IF
-!
-!-----------------------------------------------------------------------
-!  Set global minimun and maximun values: global reduction.
-!-----------------------------------------------------------------------
-!
-      buffer(1)=Amin
-      op_handle(1)='MIN'
-      buffer(2)=Amax
-      op_handle(2)='MAX'
-      CALL mp_reduce (ng, model, 2, buffer, op_handle)
-      Amin=buffer(1)
-      Amax=buffer(2)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: If interpolating from gridded data, read its associated
 !                locations and interpolate.
 !-----------------------------------------------------------------------
 !
-      IF (interpolate) THEN
-        IF (ABS(MyType).eq.u2dvar) THEN
-          CALL regrid (ng, model, ncid, ncvarid, MyType, InterpFlag,    &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonu,                                 &
-     &                 GRID(ng) % latu,                                 &
-     &                 A)
-        ELSE IF (ABS(MyType).eq.v2dvar) THEN
-          CALL regrid (ng, model, ncid, ncvarid, MyType, InterpFlag,    &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonv,                                 &
-     &                 GRID(ng) % latv,                                 &
-     &                 A)
-        ELSE IF (ABS(MyType).eq.r2dvar) THEN
-          CALL regrid (ng, model, ncid, ncvarid, MyType, InterpFlag,    &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonr,                                 &
-     &                 GRID(ng) % latr,                                 &
-     &                 A)
-        END IF
+      IF (interpolate.and.(status.eq.nf90_noerr)) THEN
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonp,                               &
+     &                   GRID(ng) % latp,                               &
+     &                   A)
+          CASE (r2dvar, r3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonr,                               &
+     &                   GRID(ng) % latr,                               &
+     &                   A)
+          CASE (u2dvar, u3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonu,                               &
+     &                   GRID(ng) % latu,                               &
+     &                   A)
+          CASE (v2dvar, v3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonv,                               &
+     &                   GRID(ng) % latv,                               &
+     &                   A)
+
+          CASE DEFAULT
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonr,                               &
+     &                   GRID(ng) % latr,                               &
+     &                   A)
+        END SELECT
       END IF
 !
 !-----------------------------------------------------------------------
-!  Deallocate scratch work vector.
+!  Deallocate scratch work arrays.
 !-----------------------------------------------------------------------
 !
+      IF (interpolate) THEN
+        IF (allocated(Awrk)) THEN
+          deallocate ( Awrk )
+        END IF
+      END IF
+
+# if defined MASKING && defined READ_WATER
+      IF (allocated(A2d)) THEN
+        deallocate (A2d)
+      END IF
+# endif
+
       IF (allocated(wrk)) THEN
         deallocate (wrk)
       END IF
@@ -435,7 +578,7 @@
 
       integer :: nf_fread2d
 
-      real(r8) :: Aval
+      real(r8), parameter :: Aspv = 0.0_r8
 
       real(r8), allocatable :: wrk(:)
 !
@@ -643,34 +786,54 @@
 !-----------------------------------------------------------------------
 !
       IF (interpolate) THEN
-        IF (ABS(MyType).eq.u2dvar) THEN
-          CALL regrid (ng, model, ncname, ncid,                         &
-     &                 ncvname, ncvarid, MyType, InterpFlag,            &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonu,                                 &
-     &                 GRID(ng) % latu,                                 &
-     &                 A)
-        ELSE IF (ABS(MyType).eq.v2dvar) THEN
-          CALL regrid (ng, model, ncname, ncid,                         &
-     &                 ncvname, ncvarid, MyType, InterpFlag,            &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonv,                                 &
-     &                 GRID(ng) % latv,                                 &
-     &                 A)
-        ELSE IF (ABS(MyType).eq.r2dvar) THEN
-          CALL regrid (ng, model, ncname, ncid,                         &
-     &                 ncvname, ncvarid, MyType, InterpFlag,            &
-     &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonr,                                 &
-     &                 GRID(ng) % latr,                                 &
-     &                 A)
-        END IF
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, wrk, Amin, Amax,                   &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonp,                               &
+     &                   GRID(ng) % latp,                               &
+     &                   A)
+          CASE (r2dvar, r3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, wrk, Amin, Amax,                   &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonr,                               &
+     &                   GRID(ng) % latr,                               &
+     &                   A)
+          CASE (u2dvar, u3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, wrk, Amin, Amax,                   &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonu,                               &
+     &                   GRID(ng) % latu,                               &
+     &                   A)
+          CASE (v2dvar, v3dvar)
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, wrk, Amin, Amax,                   &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonv,                               &
+     &                   GRID(ng) % latv,                               &
+     &                   A)
+
+          CASE DEFAULT
+            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
+     &                   MyType, InterpFlag,                            &
+     &                   Ilen, Jlen, wrk, Amin, Amax,                   &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Imin, Imax, Jmin, Jmax,                        &
+     &                   GRID(ng) % lonr,                               &
+     &                   GRID(ng) % latr,                               &
+     &                   A)
+        END SELECT
       END IF
 !
 !-----------------------------------------------------------------------

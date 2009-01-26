@@ -65,7 +65,10 @@
       USE mod_netcdf
       USE mod_scalars
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_reduce, mp_barrier
+      USE distribute_mod, ONLY : mp_bcasti, mp_reduce
+# if defined MASKING && defined READ_WATER
+      USE distribute_mod, ONLY : mp_collect
+# endif
 !
       implicit none
 !
@@ -96,8 +99,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k, ic, Npts, NWpts
-      integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize
+      integer :: i, ic, ij, j, jc, k, kc, np, MyNpts, Npts
+      integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize, IJsize
+      integer :: Istr, Iend
       integer :: Ioff, Joff, Koff
       integer :: Ilen, Jlen, Klen, IJlen
       integer :: Cgrid, MyType, ghost, status, wtype
@@ -106,12 +110,14 @@
 
       integer :: nf_fread3d
 
-      real(r8) :: BIG = 1.0E+37_r8
-      real(r8) :: Aval
+      real(r8), parameter :: IniVal= 0.0_r8
 
       real(r8), dimension(2) :: buffer
 
-      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)) :: wrk
+# if defined MASKING && defined READ_WATER
+      real(r8), allocatable :: A2d(:)
+# endif
+      real(r8), allocatable :: wrk(:)
 
       character (len=3), dimension(2) :: op_handle
 !
@@ -135,34 +141,24 @@
       SELECT CASE (ABS(MyType))
         CASE (p2dvar, p3dvar)
           Cgrid=1
-          Ioff=0
-          Joff=0
-          Isize=IOBOUNDS(ng)%IUB_psi-IOBOUNDS(ng)%ILB_psi+1
-          Jsize=IOBOUNDS(ng)%JUB_psi-IOBOUNDS(ng)%JLB_psi+1
-        CASE (r2dvar, r3dvar)
+          Isize=IOBOUNDS(ng)%xi_psi
+          Jsize=IOBOUNDS(ng)%eta_psi
+        CASE (r2dvar, r3dvar, w3dvar)
           Cgrid=2
-          Ioff=1
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
-          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
         CASE (u2dvar, u3dvar)
           Cgrid=3
-          Ioff=0
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_u+1
-          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_u+1
+          Isize=IOBOUNDS(ng)%xi_u
+          Jsize=IOBOUNDS(ng)%eta_u
         CASE (v2dvar, v3dvar)
           Cgrid=4
-          Ioff=1
-          Joff=0
-          Isize=IOBOUNDS(ng)%IUB_u-IOBOUNDS(ng)%ILB_v+1
-          Jsize=IOBOUNDS(ng)%JUB_u-IOBOUNDS(ng)%JLB_v+1
+          Isize=IOBOUNDS(ng)%xi_v
+          Jsize=IOBOUNDS(ng)%eta_v
         CASE DEFAULT
-          Cgrid=1
-          Ioff=1
-          Joff=1
-          Isize=IOBOUNDS(ng)%IUB_rho-IOBOUNDS(ng)%ILB_rho+1
-          Jsize=IOBOUNDS(ng)%JUB_rho-IOBOUNDS(ng)%JLB_rho+1
+          Cgrid=2
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
       END SELECT
 
       Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
@@ -173,43 +169,52 @@
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
       Klen=UBk-LBk+1
-      IJlen=Ilen*Jlen
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Read in tile data from requested field and scale it.
+!                Processing both water and land points.
+!-----------------------------------------------------------------------
+!
+      IF (gtype.gt.0) THEN
+!
+!  Set offsets due the NetCDF dimensions. Recall that some output
+!  variables not always start at one.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            Ioff=0
+            Joff=0
+          CASE (r2dvar, r3dvar, w3dvar)
+            Ioff=1
+            Joff=1
+          CASE (u2dvar, u3dvar)
+            Ioff=0
+            Joff=1
+          CASE (v2dvar, v3dvar)
+            Ioff=1
+            Joff=0
+          CASE DEFAULT
+            Ioff=1
+            Joff=1
+        END SELECT
 
-      IF (LBk.eq.0) THEN
-        Koff=1
-      ELSE
-        Koff=0
-      END IF
+        IF (LBk.eq.0) THEN
+          Koff=1
+        ELSE
+          Koff=0
+        END IF
 
-# if defined READ_WATER && defined MASKING
+        Npts=Ilen*Jlen*Klen
 !
-!  If processing water points only, set number of points and type
-!  switch.
+!  Allocate scratch work array.
 !
-      SELECT CASE (ABS(MyType))
-        CASE (p3dvar)
-          Npts=IOBOUNDS(ng)%xy_psi
-          wtype=p2dvar
-        CASE (r3dvar)
-          Npts=IOBOUNDS(ng)%xy_rho
-          wtype=r2dvar
-        CASE (u3dvar)
-          Npts=IOBOUNDS(ng)%xy_u
-          wtype=u2dvar
-        CASE (v3dvar)
-          Npts=IOBOUNDS(ng)%xy_v
-          wtype=v2dvar
-        CASE DEFAULT
-          Npts=IOBOUNDS(ng)%xy_rho
-          wtype=r2dvar
-      END SELECT
-      NWpts=(Lm(ng)+2)*(Mm(ng)+2)
-      Npts=Npts*Klen
-# endif
+        IF (.not.allocated(wrk)) THEN
+          allocate ( wrk(Npts) )
+          wrk=0.0_r8
+        END IF
 !
-!  Set NetCDF dimension counters for processing requested field.
+!  Read in data: all parallel nodes read their own tile data.
 !
-      IF (MyType.gt.0) THEN
         start(1)=Imin+Ioff
         total(1)=Ilen
         start(2)=Jmin+Joff
@@ -218,90 +223,186 @@
         total(3)=Klen
         start(4)=tindex
         total(4)=1
-        Npts=IJlen*Klen
-# if defined READ_WATER && defined MASKING
-      ELSE
-        start(1)=1
-        total(1)=Npts
-        start(2)=1
-        total(2)=tindex
-# endif
+
+        status=nf90_get_var(ncid, ncvarid, wrk, start, total)
+        nf_fread3d=status
+!
+!  Scale read data and process fill values, if any.  Compute minimum
+!  and maximum values.
+!
+        IF (status.eq.nf90_noerr) THEN
+          Amin=spval
+          Amax=-spval
+          DO i=1,Npts
+            IF (wrk(i).ge.spval_check) THEN
+              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+            ELSE
+              wrk(i)=Ascl*wrk(i)
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END IF
+          END DO
+!
+!  Set minimum and maximum values: global reduction.
+!
+          buffer(1)=Amin
+          op_handle(1)='MIN'
+          buffer(2)=Amax
+          op_handle(2)='MAX'
+          CALL mp_reduce (ng, model, 2, buffer, op_handle)
+          Amin=buffer(1)
+          Amax=buffer(2)
+!
+!  Unpack read data.
+!
+          ic=0
+          DO k=LBk,UBk
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                ic=ic+1
+                A(i,j,k)=wrk(ic)
+              END DO
+            END DO
+          END DO
+        ELSE
+          exit_flag=2
+          ioerror=status
+        END IF
       END IF
-!
-!  Initialize local array to avoid denormalized numbers. This
-!  facilitates processing and debugging.
-!
-      wrk=0.0_r8
+
+# if defined MASKING && defined READ_WATER
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: Read in tile data from requested field and scale it.
+!                Processing water points only.
 !-----------------------------------------------------------------------
 !
-      Amin=BIG
-      Amax=-BIG
+      IF (gtype.lt.0) THEN
+!
+!  Set number of points to process, grid type switch, and offsets due
+!  array packing into 1D array in column-major order.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p3dvar)
+            IJlen=IOBOUNDS(ng)%xy_psi
+            wtype=p2dvar
+            Ioff=0
+            Joff=1
+          CASE (r3dvar, w3dvar)
+            IJlen=IOBOUNDS(ng)%xy_rho
+            wtype=r2dvar
+            Ioff=1
+            Joff=0
+          CASE (u3dvar)
+            IJlen=IOBOUNDS(ng)%xy_u
+            wtype=u2dvar
+            Ioff=0
+            Joff=0
+          CASE (v3dvar)
+            IJlen=IOBOUNDS(ng)%xy_v
+            wtype=v2dvar
+            Ioff=1
+            Joff=1
+          CASE DEFAULT
+            IJlen=IOBOUNDS(ng)%xy_rho
+            wtype=r2dvar
+            Ioff=1
+            Joff=0
+        END SELECT
 
-      status=nf90_get_var(ncid, ncvarid, wrk, start, total)
-      nf_fread3d=status
+        IF (LBk.eq.0) THEN
+          Koff=0
+        ELSE
+          Koff=1
+        END IF
 
-      IF (status.eq.nf90_noerr) THEN
-        DO i=1,Npts
-          IF (wrk(i).ge.spval_check) THEN
-            wrk(i)=0.0_r8               ! land/sea maked with _FillValue
-          ELSE
-            wrk(i)=Ascl*wrk(i)
-            Amin=MIN(Amin,wrk(i))
-            Amax=MAX(Amax,wrk(i))
-          END IF
-        END DO
-      ELSE
-        exit_flag=2
-        ioerror=status
-        RETURN
-      END IF          
+        Npts=IJlen*Klen
+        IJsize=Isize*Jsize
 !
-!-----------------------------------------------------------------------
-!  Parallel I/O: Unpack read tile data block and load into model array.
-!-----------------------------------------------------------------------
+!  Allocate scratch work arrays.
 !
-      IF (MyType.gt.0) THEN
-        ic=0
-        DO k=LBk,UBk
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              ic=ic+1
-              A(i,j,k)=wrk(ic)
+        IF (.not.allocated(A2d)) THEN
+          allocate ( A2d(IJsize) )
+        END IF
+        IF (.not.allocated(wrk)) THEN
+          allocate ( wrk(Npts) )
+          wrk=IniVal
+        END IF
+!
+!  Read in data: all parallel nodes read a segment of the 1D data.
+!  Recall that water points are pack in the NetCDF file in a single
+!  dimension.
+!
+        CALL tile_bounds_1d (ng, MyRank, Npts, Istr, Iend)
+
+        start(1)=Istr
+        total(1)=Iend-Istr+1
+        start(2)=1
+        total(2)=tindex
+
+        status=nf90_get_var(ncid, ncvarid, wrk(Istr:), start, total)
+        nf_fread3d=status
+!
+!  Global reduction of work array.  We need this because the packing
+!  of the water point only affects the model tile partition.
+!
+        IF (status.eq.nf90_noerr) THEN
+          CALL mp_collect (ng, model, Npts, IniVal, wrk)
+!
+!  Scale read data and process fill values, if any.  Compute minimum
+!  and maximum values.
+!
+          Amin=spval
+          Amax=-spval
+          DO i=1,Npts
+            IF (wrk(i).ge.spval_check) THEN
+              wrk(i)=0.0_r8             ! set _FillValue to zero
+            ELSE
+              wrk(i)=Ascl*wrk(i)
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END IF
+          END DO
+!
+!  Unpack read data.  This is tricky in parallel I/O.  The cheapeast
+!  thing to do is reconstruct a packed 2D global array and then select
+!  the appropriate values for the tile.
+!
+          DO k=LBk,UBk
+            kc=(k-Koff)*IJlen
+            A2d=IniVal
+            DO np=1,IJlen
+              ij=SCALARS(ng)%IJwater(np,wtype)
+              A2d(ij)=wrk(np+kc)
+            END DO
+            DO j=Jmin,Jmax
+              jc=(j-Joff)*Isize
+              DO i=Imin,Imax
+                ij=i+Ioff+jc
+                A(i,j,k)=A2d(ij)
+              END DO
             END DO
           END DO
-        END DO
-# if defined MASKING || defined READ_WATER
-      ELSE
-        ic=0
-        DO k=LBk,UBk
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              IF (Amask(i,j).gt.0.0_r8) THEN
-                ic=ic+1
-                A(i,j,k)=wrk(ic)
-              ELSE
-                A(i,j,k)=0.0_r8
-              END IF
-            END DO
-          END DO
-        END DO
-# endif
+        ELSE
+          exit_flag=2
+          ioerror=status
+        END IF
       END IF
+# endif
 !
 !-----------------------------------------------------------------------
-!  Set global minimun and maximun values: global reduction.
+!  Deallocate scratch work vector.
 !-----------------------------------------------------------------------
 !
-      buffer(1)=Amin
-      op_handle(1)='MIN'
-      buffer(2)=Amax
-      op_handle(2)='MAX'
-      CALL mp_reduce (ng, model, 2, buffer, op_handle)
-      Amin=buffer(1)
-      Amax=buffer(2)
+# if defined MASKING && defined READ_WATER
+      IF (allocated(A2d)) THEN
+        deallocate (A2d)
+      END IF
+# endif
+
+      IF (allocated(wrk)) THEN
+        deallocate (wrk)
+      END IF
 
       RETURN
       END FUNCTION nf_fread3d
@@ -377,9 +478,6 @@
 
       integer :: nf_fread3d
 
-      real(r8) :: BIG = 1.0E+37_r8
-      real(r8) :: Aval
-
 # if defined INLINE_2DIO && defined DISTRIBUTE
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)) :: wrk
 # else
@@ -401,7 +499,7 @@
           Imax=IOBOUNDS(ng)%IUB_psi
           Jmin=IOBOUNDS(ng)%JLB_psi
           Jmax=IOBOUNDS(ng)%JUB_psi
-        CASE (r2dvar, r3dvar)
+        CASE (r2dvar, r3dvar, w3dvar)
           Imin=IOBOUNDS(ng)%ILB_rho
           Imax=IOBOUNDS(ng)%IUB_rho
           Jmin=IOBOUNDS(ng)%JLB_rho
@@ -452,7 +550,7 @@
         CASE (p3dvar)
           Npts=IOBOUNDS(ng)%xy_psi
           wtype=p2dvar
-        CASE (r3dvar)
+        CASE (r3dvar, w3dvar)
           Npts=IOBOUNDS(ng)%xy_rho
           wtype=r2dvar
         CASE (u3dvar)
@@ -504,8 +602,8 @@
 !  Serial I/O: Read in requested field and scale it.
 !-----------------------------------------------------------------------
 !
-      Amin=BIG
-      Amax=-BIG
+      Amin=spval
+      Amax=-spval
 
 # if defined INLINE_2DIO && defined DISTRIBUTE
 !

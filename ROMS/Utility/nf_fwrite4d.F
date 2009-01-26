@@ -60,6 +60,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef MASKING
+!
+      USE distribute_mod, ONLY : mp_collect
+# endif
 !
 !  Imported variable declarations.
 !
@@ -87,82 +92,72 @@
 # ifdef MASKING
       logical :: LandFill
 # endif
-      integer :: i, j, k, ic, it, Npts
+      integer :: i, ic, j, jc, k, kc, l, lc, Npts
       integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer :: Ioff, Joff, Koff, Loff
-      integer :: Ilen, Jlen, Klen, Llen, IJlen
+      integer :: Istr, Iend
+      integer :: Ilen, Isize, Jlen, Jsize, IJlen, IJKlen, Klen, Llen
       integer :: MyType, status
 
       integer, dimension(5) :: start, total
 
       integer :: nf_fwrite4d
 
-      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)*(UBt-LBt+1)) :: Aout
+      real(r8), parameter :: IniVal = 0.0_r8
+
+      real(r8), allocatable :: Aout(:)
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
 !-----------------------------------------------------------------------
 !
 !  Set first and last grid point according to staggered C-grid
-!  classification. Set loops offsets.
+!  classification.
 !
       MyType=gtype
 
       SELECT CASE (ABS(MyType))
         CASE (p2dvar, p3dvar)
-          Ioff=0
-          Joff=0
           Imin=BOUNDS(ng)%Istr (MyRank)
           Imax=BOUNDS(ng)%IendR(MyRank)
           Jmin=BOUNDS(ng)%Jstr (MyRank)
           Jmax=BOUNDS(ng)%JendR(MyRank)
+          Isize=IOBOUNDS(ng)%xi_psi
+          Jsize=IOBOUNDS(ng)%eta_psi
         CASE (r2dvar, r3dvar)
-          Ioff=1
-          Joff=1
           Imin=BOUNDS(ng)%IstrR(MyRank)
           Imax=BOUNDS(ng)%IendR(MyRank)
           Jmin=BOUNDS(ng)%JstrR(MyRank)
           Jmax=BOUNDS(ng)%JendR(MyRank)
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
         CASE (u2dvar, u3dvar)
-          Ioff=0
-          Joff=1
           Imin=BOUNDS(ng)%Istr (MyRank)
           Imax=BOUNDS(ng)%IendR(MyRank)
           Jmin=BOUNDS(ng)%JstrR(MyRank)
           Jmax=BOUNDS(ng)%JendR(MyRank)
+          Isize=IOBOUNDS(ng)%xi_u
+          Jsize=IOBOUNDS(ng)%eta_u
         CASE (v2dvar, v3dvar)
-          Ioff=1
-          Joff=0
           Imin=BOUNDS(ng)%IstrR(MyRank)
           Imax=BOUNDS(ng)%IendR(MyRank)
           Jmin=BOUNDS(ng)%Jstr (MyRank)
           Jmax=BOUNDS(ng)%JendR(MyRank)
+          Isize=IOBOUNDS(ng)%xi_v
+          Jsize=IOBOUNDS(ng)%eta_v
         CASE DEFAULT
-          Ioff=1
-          Joff=1
           Imin=BOUNDS(ng)%IstrR(MyRank)
           Imax=BOUNDS(ng)%IendR(MyRank)
           Jmin=BOUNDS(ng)%JstrR(MyRank)
           Jmax=BOUNDS(ng)%JendR(MyRank)
+          Isize=IOBOUNDS(ng)%xi_rho
+          Jsize=IOBOUNDS(ng)%eta_rho
       END SELECT
 
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
       Klen=UBk-LBk+1
       Llen=UBt-LBt+1
-      IJlen=Ilen*Jlen
-
-      IF (LBk.eq.0) THEN
-        Koff=1
-      ELSE
-        Koff=0
-      END IF
-
-      IF (LBt.eq.0) THEN
-        Loff=1
-      ELSE
-        Loff=0
-      END IF
 
 # ifdef MASKING
 !
@@ -175,33 +170,68 @@
       END IF
 # endif
 !
-!  Initialize local array to avoid denormalized numbers. This
-!  facilitates processing and debugging.
-!
-      Aout=0.0_r8
-!
 !-----------------------------------------------------------------------
-!  Parallel I/O: Pack tile data into a 1D array in column-major order.
+!  Parallel I/O: Pack tile data into 1D array in column-major order.
 # ifdef MASKING
-#  ifdef WRiTE_WATER
-!                Remove land points and pack water points into 1D-array.
-#  else
 !                Overwrite masked points with special value.
-#  endif
 # endif
 !-----------------------------------------------------------------------
 !
-!  Process data as 3D slices.
-!
       IF (gtype.gt.0) THEN
+!
+!  Set offsets due the NetCDF dimensions. Recall that some output
+!  variables not always start at one.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            Ioff=0
+            Joff=0
+          CASE (r2dvar, r3dvar)
+            Ioff=1
+            Joff=1
+          CASE (u2dvar, u3dvar)
+            Ioff=0
+            Joff=1
+          CASE (v2dvar, v3dvar)
+            Ioff=1
+            Joff=0
+          CASE DEFAULT
+            Ioff=1
+            Joff=1
+        END SELECT
+
+        IF (LBk.eq.0) THEN
+          Koff=1
+        ELSE
+          Koff=0
+        END IF
+
+        IF (LBt.eq.0) THEN
+          Loff=1
+        ELSE
+          Loff=0
+        END IF
+!
+!  Allocate and initialize scratch work array.
+!
+        IJlen=Ilen*Jlen
+        IJKlen=IJlen*Klen
+        Npts=IJKlen*Llen
+
+        IF (.not.allocated(Aout)) THEN
+          allocate ( Aout(Npts) )
+          Aout=IniVal
+        END IF
+!
+!  Pack and scale tile data.
+!
         ic=0
-        Npts=IJlen*Klen*Llen
-        DO it=LBt,UBt
+        DO l=LBt,UBt
           DO k=LBk,UBk
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ic=ic+1
-                Aout(ic)=A(i,j,k,it)*Ascl
+                Aout(ic)=A(i,j,k,l)*Ascl
 # ifdef MASKING
                 IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                   Aout(ic)=spval
@@ -210,32 +240,10 @@
               END DO
             END DO
           END DO
-        END DO        
-# ifdef MASKING
-      ELSE
-        Npts=0
-        DO it=LBt,UBt
-          DO k=LBk,UBk
-            DO j=Jmin,Jmax
-              DO i=Imin,Imax
-                IF (Amask(i,j).gt.0.0_r8) THEN
-                  Npts=Npts+1
-                  Aout(Npts)=A(i,j,k,it)*Ascl
-                END IF
-              END DO
-            END DO
-          END DO
         END DO
-# endif
-      END IF
 !
-!-----------------------------------------------------------------------
-!  Parallel I/O: Write tile data into the appropiate block in output
-!                NetCDF file.
-!-----------------------------------------------------------------------
+!  Write out data: all parallel nodes write their own packed tile data.
 !
-      nf_fwrite4d=nf90_noerr
-      IF (gtype.gt.0) THEN
         start(1)=Imin+Ioff
         total(1)=Ilen
         start(2)=Jmin+Joff
@@ -246,17 +254,120 @@
         total(4)=Llen
         start(5)=tindex
         total(5)=1
-# ifdef MASKING
-      ELSE
-        start(1)=1
-        total(1)=Npts
+
+        status=nf90_put_var(ncid, ncvarid, Aout, start, total)
+        nf_fwrite4d=status
+      END IF
+
+# if defined WRITE_WATER && defined MASKING
+!
+!-----------------------------------------------------------------------
+!  Parallel I/O: Remove land points and pack tile data into 1D array.
+!-----------------------------------------------------------------------
+!
+      IF (gtype.lt.0) THEN
+!
+!  Set offsets due array packing into 1D array in column-major order.
+!
+        SELECT CASE (ABS(MyType))
+          CASE (p2dvar, p3dvar)
+            Ioff=0
+            Joff=1
+          CASE (r2dvar, r3dvar)
+            Ioff=1
+            Joff=0
+          CASE (u2dvar, u3dvar)
+            Ioff=0
+            Joff=0
+          CASE (v2dvar, v3dvar)
+            Ioff=1
+            Joff=1
+          CASE DEFAULT
+            Ioff=1
+            Joff=0
+        END SELECT
+
+        IF (LBk.eq.0) THEN
+          Koff=0
+        ELSE
+          Koff=1
+        END IF
+
+        IF (LBt.eq.0) THEN
+          Loff=0
+        ELSE
+          Loff=1
+        END IF
+!
+!  Allocate and initialize scratch work array.
+!
+        IJlen=Isize*Jsize
+        IJKlen=IJlen*Klen
+        Npts=IJKlen*Llen
+
+        IF (.not.allocated(Aout)) THEN
+          allocate ( Aout(Npts) )
+          Aout=IniVal
+        END IF
+!
+!  Scale and gather data from all spawned nodes. Store data into a 1D
+!  global array, packed in column-major order. Flag land point with
+!  special value.
+!
+        DO l=LBt,UBt
+          lc=(l-Loff)*IJKlen
+          DO k=LBk,UBk
+            kc=(k-Koff)*IJlen+lc
+            DO j=Jmin,Jmax
+              jc=(j-Joff)*Isize+kc
+              DO i=Imin,Imax
+                ic=i+Ioff+jc
+                Aout(ic)=A(i,j,k,l)*Ascl
+                IF (Amask(i,j).eq.0.0_r8) THEN
+                  Aout(ic)=spval
+                END IF
+              END DO
+            END DO
+          END DO
+        END DO
+!
+!  Global reduction of work array.
+!
+        CALL mp_collect (ng, model, Npts, IniVal, Aout)
+!
+!  Remove land points.
+!
+        ic=0
+        DO i=1,Npts
+          IF (Aout(i).lt.spval) THEN
+            ic=ic+1
+            Aout(ic)=Aout(i)
+          END IF
+        END DO
+        Npts=ic
+!
+!  Write out data: all parallel nodes write a section of the packed
+!                  data.
+!
+        CALL tile_bounds_1d (ng, MyRank, Npts, Istr, Iend)
+
+        start(1)=Istr
+        total(1)=Iend-Istr+1
         start(2)=tindex
         total(2)=1
-# endif
-      END IF
-      status=nf90_put_var(ncid, ncvarid, Aout, start, total)
 
-      nf_fwrite4d=status
+        status=nf90_put_var(ncid, ncvarid, Aout(Istr:), start, total)
+        nf_fwrite4d=status
+      END IF
+# endif
+!
+!-----------------------------------------------------------------------
+!  Deallocate scratch work array.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(Aout)) THEN
+        deallocate (Aout)
+      END IF
 
       RETURN
       END FUNCTION nf_fwrite4d

@@ -1030,6 +1030,163 @@
       RETURN
       END SUBROUTINE netcdf_inq_varid
 
+      SUBROUTINE netcdf_get_fatt (ng, model, ncname, varid, AttName,    &
+     &                            AttVal, foundit, ncid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine gets requested floating-point variable attribute.      !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     varid        Variabke ID of the attribute's variable, or         !
+!                    NF90_GLOBAL for a global attribute (integer)      !
+!     AttName      Attribute name to read (string)                     !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     AttVal       Attribute value (real)                              !
+!     foundit      Switch (T/F) activated when the requested           !
+!                    attribute is found (logical)                      !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, varid
+
+      integer, intent(in), optional :: ncid
+
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: AttName
+
+      logical, intent(out) :: foundit
+
+      real(r8), intent(out) :: AttVal
+!
+!  Local variable declarations.
+!
+      integer :: i, my_natts, my_ncid, status
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      real(r8), dimension(4) :: buffer
+#endif
+
+      character (len=40) :: my_Aname
+      character (len=40) :: my_Vname
+!
+!-----------------------------------------------------------------------
+!  Inquire ID of requested variable.
+!-----------------------------------------------------------------------
+!
+!  If appropriate, open file for reading.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 0, my_ncid)
+        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  Inquire about requested attribute value.
+!
+      foundit=.FALSE.
+
+      IF (InpThread) THEN
+        status=nf90_inquire_variable(my_ncid, varid,                    &
+     &                               name = my_Vname,                   &
+     &                               nAtts = my_natts)
+        IF (status.eq.nf90_noerr) THEN
+          DO i=1,my_natts
+            status=nf90_inq_attname(my_ncid, varid, i, my_Aname)
+            IF (status.eq.nf90_noerr) THEN
+              IF (TRIM(my_Aname).eq.TRIM(AttName)) THEN
+                status=nf90_get_att(my_ncid, varid, TRIM(AttName),      &
+     &                              AttVal)
+                IF (status.ne.nf90_noerr) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(AttName),          &
+     &                                          TRIM(my_Vname),         &
+     &                                          TRIM(ncname),           &
+     &                                          TRIM(SourceFile)
+                  exit_flag=2
+                  ioerror=status
+                END IF
+                foundit=.TRUE.
+                EXIT
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(AttName),              &
+     &                                      TRIM(my_Vname),             &
+     &                                      TRIM(ncname),               &
+     &                                      TRIM(SourceFile)
+              exit_flag=2
+              ioerror=status
+              EXIT
+            END IF
+          END DO
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+          IF (foundit) THEN
+            buffer(1)=1.0_r8
+          ELSE
+            buffer(1)=0.0_r8
+          END IF
+#endif
+        ELSE
+          IF (Master) WRITE (stdout,30) TRIM(my_Vname),                 &
+     &                                  TRIM(ncname),                   &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+!  Broadcast information to all processors in the group.
+
+      buffer(2)=REAL(exit_flag, r8)
+      buffer(3)=REAL(ioerror, r8)
+      buffer(4)=AttVal
+      CALL mp_bcastf (ng, model, buffer)
+      IF (buffer(1).gt.0.0_r8) foundit=.TRUE.
+      exit_flag=INT(buffer(2))
+      ioerror=INT(buffer(3))
+      AttVal=buffer(4)
+#endif
+!
+!  If applicable, close input NetCDF file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_GET_FATT - error while reading attribute:',    &
+     &        1x,a,'for variable',1x,a,/,19x,'in input file:',2x,a,/,   &
+     &        19x,'call from:',2x,a)
+  20  FORMAT (/,' NETCDF_GET_FATT - error while inquiring attribute:',  &
+     &        1x,a,'for variable',1x,a,/,19x,'in input file:',2x,a,/,   &
+     &        19x,'call from:',2x,a)
+  30  FORMAT (/,' NETCDF_GET_FATT - error while inquiring number of ',  &
+     &        'attributes for variable:',1x,a,/,19x,'in input file:',   &
+     &        2x,a,/,19x,'call from:',2x,a)
+
+      RETURN
+      END SUBROUTINE netcdf_get_fatt
+
       SUBROUTINE netcdf_get_fvar_0d (ng, model, ncname, myVarName, A,   &
      &                               ncid, start, total,                &
      &                               min_val, max_val)
@@ -4051,9 +4208,9 @@
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
-
-#if defined PARALLEL_IO && defined DISTRIBUTE
 !
+#if defined PARALLEL_IO && defined DISTRIBUTE
+
 ! There is not need to call this function when processing NetCDF-4
 ! format type file.
 !

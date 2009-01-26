@@ -1488,7 +1488,7 @@
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in)  :: A(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Aout((Lm(ng)+2)*(Mm(ng)+2))
+      real(r8), intent(out) :: Aout(:)
 !
 !  Local variable declarations.
 !
@@ -1817,7 +1817,7 @@
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in)  :: A(LBi:UBi,LBj:UBj,LBk:UBk)
-      real(r8), intent(out) :: Aout((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1))
+      real(r8), intent(out) :: Aout(:)
 !
 !  Local variable declarations.
 !

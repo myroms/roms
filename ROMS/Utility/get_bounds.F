@@ -497,6 +497,138 @@
       RETURN
       END SUBROUTINE get_tile
 
+      SUBROUTINE tile_bounds_1d (ng, tile, Imax, Istr, Iend)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the starting and ending indices for the 1D    !
+!  decomposition between all available threads or partitions.          !
+!                                                                      !
+!                    1 _____________________  Imax                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number                                    !
+!     tile       Thread or partition                                   !
+!     Imax       Global number of points                               !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Istr       Starting partition index                              !
+!     Iend       Ending   partition index                              !
+!                                                                      !
+!======================================================================!
+!
+      USE mod_param
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Imax
+      integer, intent(out) :: Iend, Istr
+!
+!  Local variable declarations.
+!
+      integer :: ChunkSize, Margin, Nnodes
+!
+!-----------------------------------------------------------------------
+!  Compute 1D decomposition starting and ending indices.
+!-----------------------------------------------------------------------
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)
+      ChunkSize=(Imax+Nnodes-1)/Nnodes
+      Margin=(Nnodes*ChunkSize-Imax)/2
+
+      IF (Imax.ge.Nnodes) THEN
+        Istr=1+tile*ChunkSize-Margin
+        Iend=Istr+ChunkSize-1
+        Istr=MAX(Istr,1)
+        Iend=MIN(Iend,Imax)
+      ELSE
+        Istr=1
+        Iend=Imax
+      END IF
+
+      RETURN
+      END SUBROUTINE tile_bounds_1d
+
+      SUBROUTINE tile_bounds_2d (ng, tile, Imax, Jmax, Itile, Jtile,    &
+     &                           Istr, Iend, Jstr, Jend)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the starting and ending horizontal indices    !
+!  for each sub-domain partition or tile for a grid bounded between    !
+!  (1,1) and (Imax,Jmax):                                              !
+!                                                                      !
+!                      _________  (Imax,Jmax)                          !
+!                     |         |                                      !
+!                     |         |                                      !
+!                     |_________|                                      !
+!                (1,1)                                                 !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number                                    !
+!     tile       Sub-domain partition                                  !
+!     Imax       Global number of points in the I-direction            !
+!     Jmax       Global number of points in the J-direction            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Itile      I-tile coordinate (a value from 0 to NtileI(ng))      !
+!     Jtile      J-tile coordinate (a value from 0 to NtileJ(ng))      !
+!     Istr       Starting tile index in the I-direction                !
+!     Iend       Ending   tile index in the I-direction                !
+!     Jstr       Starting tile index in the J-direction                !
+!     Jend       Ending   tile index in the J-direction                !
+!                                                                      !
+!======================================================================!
+!
+      USE mod_param
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Imax, Jmax
+      integer, intent(out) :: Itile, Jtile
+      integer, intent(out) :: Iend, Istr, Jend, Jstr
+!
+!  Local variable declarations.
+!
+      integer :: ChunkSizeI, ChunkSizeJ, MarginI, MarginJ
+!
+!-----------------------------------------------------------------------
+!  Compute tile decomposition for a horizontal grid bounded between
+!  (1,1) and (Imax,Jmax).
+!-----------------------------------------------------------------------
+!
+      ChunkSizeI=(Imax+NtileI(ng)-1)/NtileI(ng)
+      ChunkSizeJ=(Jmax+NtileJ(ng)-1)/NtileJ(ng)
+      MarginI=(NtileI(ng)*ChunkSizeI-Imax)/2
+      MarginJ=(NtileJ(ng)*ChunkSizeJ-Jmax)/2
+      Jtile=tile/NtileI(ng)
+      Itile=tile-Jtile*NtileI(ng)
+!
+!  Tile bounds in the I-direction.
+!
+      Istr=1+Itile*ChunkSizeI-MarginI
+      Iend=Istr+ChunkSizeI-1
+      Istr=MAX(Istr,1)
+      Iend=MIN(Iend,Imax)
+!
+!  Tile bounds in the J-direction.
+!
+      Jstr=1+Jtile*ChunkSizeJ-MarginJ
+      Jend=Jstr+ChunkSizeJ-1
+      Jstr=MAX(Jstr,1)
+      Jend=MIN(Jend,Jmax)
+
+      RETURN
+      END SUBROUTINE tile_bounds_2d
+
       SUBROUTINE var_bounds (ng, Istr, Iend, Jstr, Jend,                &
      &                       IstrR, IstrT, IstrU, IendR, IendT,         &
      &                       JstrR, JstrT, JstrV, JendR, JendT)
