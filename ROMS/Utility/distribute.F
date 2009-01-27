@@ -3964,7 +3964,7 @@
 
       real(r8) :: Ascl
 
-      real(r8), dimension(0:Lm(ng)+1,0:Mm(ng)+1,LBk:UBk) :: Aout
+      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Aout
 !
 !------------------------------------------------------------------------
 !  Aggregate all tile data into a single array.
@@ -3977,7 +3977,7 @@
      &                  Amask(LBi:,LBj:),                                &
 # endif
      &                  A(LBi:,LBj:,LBk:),                               &
-     &                  Npts, Aout(0:,0:,LBk:))
+     &                  Npts, Aout, .FALSE.)
 
       RETURN
       END SUBROUTINE mp_aggregate

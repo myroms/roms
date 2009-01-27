@@ -379,7 +379,7 @@
 
       integer :: nf_fwrite2d
 
-      real(r8), allocatable :: Aout(:)
+      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: Aout
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
