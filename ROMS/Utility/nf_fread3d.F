@@ -129,14 +129,23 @@
 !  classification. Set the offsets for variables with starting 
 !  zero-index.  Recall the NetCDF does not support a zero-index.
 !
-!  Notice that ghost=0, so (Imin,Jmin) and (Imax,Jmax) are the
-!  corner of the computational tile and the ghost points are
-!  not processed. They will be processed elsewhere by the 
-!  appropriate call to any of the routines in "mp_exchange.F".
+!  Notice that (Imin,Jmin) and (Imax,Jmax) are the corner of the
+!  computational tile. If ghost=0, ghost points are not processed.
+!  They will be processed elsewhere by the appropriate call to any 
+!  of the routines in "mp_exchange.F".  If ghost=1, the ghost points
+!  are read.
 !
-      MyType=gtype
-
+# ifdef NO_READ_GHOST
       ghost=0                        ! non-overlapping, no ghost points
+# else
+      IF (model.eq.iADM) THEN
+        ghost=0                      ! non-overlapping, no ghost points
+      ELSE
+        ghost=1                      ! overlapping, read ghost points
+      END IF
+# endif
+
+      MyType=gtype
 
       SELECT CASE (ABS(MyType))
         CASE (p2dvar, p3dvar)
@@ -534,12 +543,20 @@
 
 # ifdef DISTRIBUTE
 !
-!  Notice that Nghost=0, so (Imin,Jmin) and (Imax,Jmax) are the
-!  corner of the computational tile and the ghost points are
-!  not processed. They will be processed elsewhere by the 
+!  Set the number of tile ghost points, Nghost, to scatter in
+!  distributed-memory applications. If Nghost=0, the ghost points
+!  are not processed.  They will be processed elsewhere by the 
 !  appropriate call to any of the routines in "mp_exchange.F".
 !
+#  ifdef NO_READ_GHOST
       Nghost=0
+#  else
+      IF (model.eq.iADM) THEN
+        Nghost=0
+      ELSE
+        Nghost=GHOST_POINTS
+      END IF
+#  endif
 # endif
 # if defined READ_WATER && defined MASKING
 !

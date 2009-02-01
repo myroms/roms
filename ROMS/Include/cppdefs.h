@@ -606,6 +606,7 @@
 **                                                                           **
 ** DEFLATE             use to set compression NetCDF-4/HDF5 format files     **
 ** NETCDF4             use to create NetCDF-4/HDF5 format files              **
+** NO_READ_GHOST       use to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID       use if not writing grid arrays                        **
 ** PERFECT_RESTART     use to include perfect restart variables              **
 ** READ_WATER          use if only reading water points data                 **

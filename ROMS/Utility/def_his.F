@@ -451,12 +451,15 @@
         Vinfo( 1)='Ritz_rvalue'
         Vinfo( 2)='real Ritz eigenvalues'
         status=def_var(ng, iNLM, ncHISid(ng), varid, NF_TYPE,           &
-     &                 1, (/recdim/), Aval, Vinfo, ncname)
+     &                 1, (/recdim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='Ritz_norm'
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
         status=def_var(ng, iNLM, ncHISid(ng), varid, NF_TYPE,           &
-     &                 1, (/recdim/), Aval, Vinfo, ncname)
+     &                 1, (/recdim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #endif
 #ifdef ADJUST_WSTRESS

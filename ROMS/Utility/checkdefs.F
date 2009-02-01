@@ -1427,6 +1427,12 @@
       Coptions(is:is+18)=' NORTH_TRADIATION,'
       T_north=T_north+1
 #endif
+#if defined NO_READ_GHOST && defined DISTRIBUTE
+      IF (Master) WRITE (stdout,20) 'NO_READ_GRID',                     &
+     &   'Not including ghost points during scattering read data.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' NO_READ_GRID,'
+#endif
 #ifdef NO_WRITE_GRID
       IF (Master) WRITE (stdout,20) 'NO_WRITE_GRID',                    &
      &   'Not Writing grid arrays into NetCDF ouput files.'

@@ -1115,6 +1115,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idVvis)), Fmin, Fmax
             END IF
           END IF
+#   ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        MIXING(ng) % AKv)
+#   endif
         END IF
 !
 !  Read in temperature vertical diffusion.
@@ -1145,6 +1151,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idTdif)), Fmin, Fmax
             END IF
           END IF
+#   ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        MIXING(ng) % AKt(:,:,:,itemp))
+#   endif
         END IF
 #   ifdef SALINITY
 !
@@ -1176,6 +1188,12 @@
               WRITE (stdout,100) TRIM(Vname(2,idSdif)), Fmin, Fmax
             END IF
           END IF
+#   ifdef DISTRIBUTE
+          CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        MIXING(ng) % AKt(:,:,:,isalt))
+#   endif
         END IF
 #   endif
 #  endif

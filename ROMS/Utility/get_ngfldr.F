@@ -440,7 +440,7 @@
                 Tval=Tval*day2sec
                 CALL time_string (Tval, t_code)
                 WRITE (stdout,70) TRIM(Vname(2,ifield)), t_code,        &
-     &                            ncfile(lstr:lend), Trec, Tindex,      &
+     &                            Trec, Tindex, ncfile(lstr:lend),      &
      &                            Tmin, Tmax, Fmin, Fmax
               END IF
             END IF
@@ -477,7 +477,7 @@
   60  FORMAT (3x,' GET_NGFLDR  - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
      &        1pe15.8,')')
   70  FORMAT (3x,' GET_NGFLDR  - ',a,',',t62,'t = ',a,/,19x,            &
-     &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
+     &        '(Rec=',i4.4,', Index=',i1,', File: ',a,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
 

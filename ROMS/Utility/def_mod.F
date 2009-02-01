@@ -187,7 +187,8 @@
             END IF
           END IF
 
-# ifdef SVN_REV
+# ifndef DEBUGGING
+#  ifdef SVN_REV
           IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'svn_rev', TRIM(svn_rev))
@@ -197,9 +198,9 @@
               ioerror=status
             END IF
           END IF
-# endif
+#  endif
 
-# ifdef ROOT_DIR
+#  ifdef ROOT_DIR
           IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'code_dir', TRIM(Rdir))
@@ -209,9 +210,9 @@
               ioerror=status
             END IF
           END IF
-# endif
+#  endif
 
-# ifdef HEADER_DIR
+#  ifdef HEADER_DIR
           IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'header_dir', TRIM(Hdir))
@@ -221,9 +222,9 @@
               ioerror=status
             END IF
           END IF
-# endif
+#  endif
 
-# ifdef ROMS_HEADER
+#  ifdef ROMS_HEADER
           IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'header_file', TRIM(Hfile))
@@ -233,7 +234,7 @@
               ioerror=status
             END IF
           END IF
-# endif
+#  endif
 !
 !  Attributes describing platform and compiler
 !
@@ -306,6 +307,7 @@
               ioerror=status
             END IF
           END IF
+# endif
         END IF
 # ifdef DISTRIBUTE
         ibuffer(1)=exit_flag

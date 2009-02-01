@@ -459,9 +459,9 @@
                 lvar=MIN(43,LEN_TRIM(Vname(2,ifield)))
                 Tval=Tval*day2sec
                 CALL time_string (Tval, t_code)
-                WRITE (stdout,60) Vname(2,ifield)(1:lvar),              &
-     &                            t_code, ncfile(lstr:lend),            &
-     &                            Trec, Tindex, Tmin, Tmax, Fmin, Fmax
+                WRITE (stdout,60) Vname(2,ifield)(1:lvar), t_code,      &
+     &                            Trec, Tindex, ncfile(lstr:lend),      &
+     &                            Tmin, Tmax, Fmin, Fmax
               END IF
             END IF
             update=.TRUE.
@@ -495,7 +495,7 @@
   50  FORMAT (3x,' GET_3DFLDR  - ',a,/,19x,'(Min = ',1p,e15.8,0p,       &
      &        ' Max = ',1p,e15.8,0p,')')
   60  FORMAT (3x,' GET_3DFLDR  - ',a,',',t62,'t = ',a,/,19x,            &
-     &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
+     &        '(Rec=',i4.4,', Index=',i1,', File: ',a,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
 

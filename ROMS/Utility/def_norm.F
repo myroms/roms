@@ -540,7 +540,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-          CALL netcdf_enddef (ng, model, ncname, ncNRMid(ng))
+          CALL netcdf_enddef (ng, model, ncname, ncNRMid(ifile,ng))
           IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------

@@ -49,6 +49,9 @@
 # if defined TLM_OBS
         readNLmod=.TRUE.
         readTLmod=.TRUE.
+# else
+        readNLmod=.FALSE.
+        readTLmod=.FALSE.
 # endif
 !
 !  Initialize observations processing counters.
