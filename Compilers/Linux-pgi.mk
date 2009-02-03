@@ -96,6 +96,7 @@ endif
 ifdef USE_DEBUG
 #          FFLAGS += -g -C -Mchkstk -Mchkfpstk
            FFLAGS += -g -C
+#          FFLAGS += -gopt -C
 #          FFLAGS += -g
 else
 #          FFLAGS += -Bstatic -fastsse -Mipa=fast -tp k8-64

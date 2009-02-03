@@ -1518,7 +1518,7 @@
         Lsame=.FALSE.
         DO itrc=1,NT(ng)
           is=isTsur(itrc)
-          IF (Cnorm(irec,is)) Lsame=.TRUE.
+          IF (Cnorm(rec,is)) Lsame=.TRUE.
         END DO
         IF (Lsame) THEN
           WRITE (stdout,30) TRIM(Text),                                 &
@@ -1538,8 +1538,8 @@
       Jmin=1
       Jmax=Mm(ng)
       DO itrc=2,NT(ng)
-        IF (Hdecay(irec,isTsur(itrc  ),ng).ne.                          &
-     &      Hdecay(irec,isTsur(itrc-1),ng)) THEN
+        IF (Hdecay(rec,isTsur(itrc  ),ng).ne.                           &
+     &      Hdecay(rec,isTsur(itrc-1),ng)) THEN
           Ldiffer=.TRUE.
         END IF
       END DO
@@ -1558,7 +1558,7 @@
       END DO
       DO itrc=1,UBt
         is=isTsur(itrc)
-        IF (CnormF(is)) THEN
+        IF (Cnorm(rec,is)) THEN
           DO jc=Jmin,Jmax
             DO ic=Imin,Imax
 #  ifdef MASKING
@@ -2811,7 +2811,7 @@
       END DO
       DO itrc=1,UBt
         is=isTsur(itrc)
-        IF (CnormF(is)) THEN
+        IF (Cnorm(rec,is)) THEN
           DO j=JR_RANGE
             DO i=IR_RANGE
               A2davg(i,j)=0.0_r8
@@ -2877,7 +2877,7 @@
       END IF
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
-        IF (CnormF(is)) THEN
+        IF (Cnorm(rec,is)) THEN
           CALL bc_r2d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      HnormSTF(:,:,itrc))

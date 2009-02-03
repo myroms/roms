@@ -160,13 +160,16 @@
       END IF        
 !
 !  If not cycling, stop execution if there is not field data
-!  available for current model time.
+!  available for current model time. Avoid check on tidal data
+!  since time is in terms of frequencies.
 !
-      IF (.not.cycle.and.(ntime.gt.1)) THEN
-        IF (smday.lt.Tmin) THEN
-          IF (Master) WRITE (stdout,10) TRIM(TvarName), Tmin, smday
-          exit_flag=2
-          RETURN
+      IF (INDEX(TRIM(TvarName),'period').eq.0) THEN
+        IF (.not.cycle.and.(ntime.gt.1)) THEN
+          IF (smday.lt.Tmin) THEN
+            IF (Master) WRITE (stdout,10) TRIM(TvarName), Tmin, smday
+            exit_flag=2
+            RETURN
+          END IF
         END IF
       END IF
 !

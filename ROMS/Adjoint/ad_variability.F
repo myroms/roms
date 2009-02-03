@@ -728,8 +728,7 @@
           DO j=JR_RANGE
             DO i=IR_RANGE
               ad_tflux(i,j,ir,Linp,it)=ad_tflux(i,j,ir,Linp,it)*        &
-     &                                 stflx_std(i,j,it)*               &
-     &                                 fac(isTsur(it))
+     &                                 stflx_std(i,j,it)
             END DO
           END DO
         END DO

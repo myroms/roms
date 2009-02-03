@@ -1296,6 +1296,8 @@
 !
 !  Adjoint of free-surface initialization.
 !
+      ad_cff1=0.0_r8
+
 # ifndef OBC_FSRADIATION
       DO j=Jstr,Jend
         DO i=Istr,Iend

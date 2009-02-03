@@ -52,7 +52,7 @@
 !***********************************************************************
 !
       USE mod_param
-#if defined ADJUST_BOUNDARY || ADJUST_STFLUX || \
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
       USE mod_ncparam
       USE mod_scalars

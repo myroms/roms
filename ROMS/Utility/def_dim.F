@@ -64,6 +64,8 @@
 !  Define requested NetCDF dimension.
 !-----------------------------------------------------------------------
 !
+      status=nf90_noerr
+
       IF (OutThread) THEN
         status=nf90_def_dim(ncid, TRIM(DimName), DimSize, DimId)
         IF (status.ne.nf90_noerr) THEN
