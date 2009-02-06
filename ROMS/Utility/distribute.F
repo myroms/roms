@@ -1537,38 +1537,38 @@
 
       SELECT CASE (MyType)
         CASE (p2dvar, p3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_psi
+          Ie=IOBOUNDS(ng) % IUB_psi
+          Jo=IOBOUNDS(ng) % JLB_psi
+          Je=IOBOUNDS(ng) % JUB_psi
           Ioff=0
           Joff=1
         CASE (r2dvar, r3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
         CASE (u2dvar, u3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_u
+          Ie=IOBOUNDS(ng) % IUB_u
+          Jo=IOBOUNDS(ng) % JLB_u
+          Je=IOBOUNDS(ng) % JUB_u
           Ioff=0
           Joff=0
         CASE (v2dvar, v3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_v
+          Ie=IOBOUNDS(ng) % IUB_v
+          Jo=IOBOUNDS(ng) % JLB_v
+          Je=IOBOUNDS(ng) % JUB_v
           Ioff=1
           Joff=1
         CASE DEFAULT                              ! RHO-points
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
       END SELECT
@@ -1866,38 +1866,38 @@
 
       SELECT CASE (MyType)
         CASE (p2dvar, p3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_psi
+          Ie=IOBOUNDS(ng) % IUB_psi
+          Jo=IOBOUNDS(ng) % JLB_psi
+          Je=IOBOUNDS(ng) % JUB_psi
           Ioff=0
           Joff=1
         CASE (r2dvar, r3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
         CASE (u2dvar, u3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_u
+          Ie=IOBOUNDS(ng) % IUB_u
+          Jo=IOBOUNDS(ng) % JLB_u
+          Je=IOBOUNDS(ng) % JUB_u
           Ioff=0
           Joff=0
         CASE (v2dvar, v3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_v
+          Ie=IOBOUNDS(ng) % IUB_v
+          Jo=IOBOUNDS(ng) % JLB_v
+          Je=IOBOUNDS(ng) % JUB_v
           Ioff=1
           Joff=1
         CASE DEFAULT                              ! RHO-points
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
       END SELECT
@@ -3205,38 +3205,38 @@
 
       SELECT CASE (MyType)
         CASE (p2dvar, p3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_psi
+          Ie=IOBOUNDS(ng) % IUB_psi
+          Jo=IOBOUNDS(ng) % JLB_psi
+          Je=IOBOUNDS(ng) % JUB_psi
           Ioff=0
           Joff=1
         CASE (r2dvar, r3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
         CASE (u2dvar, u3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_u
+          Ie=IOBOUNDS(ng) % IUB_u
+          Jo=IOBOUNDS(ng) % JLB_u
+          Je=IOBOUNDS(ng) % JUB_u
           Ioff=0
           Joff=0
         CASE (v2dvar, v3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_v
+          Ie=IOBOUNDS(ng) % IUB_v
+          Jo=IOBOUNDS(ng) % JLB_v
+          Je=IOBOUNDS(ng) % JUB_v
           Ioff=1
           Joff=1
         CASE DEFAULT                              ! RHO-points
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
       END SELECT
@@ -3474,38 +3474,38 @@
 
       SELECT CASE (MyType)
         CASE (p2dvar, p3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_psi
+          Ie=IOBOUNDS(ng) % IUB_psi
+          Jo=IOBOUNDS(ng) % JLB_psi
+          Je=IOBOUNDS(ng) % JUB_psi
           Ioff=0
           Joff=1
         CASE (r2dvar, r3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
         CASE (u2dvar, u3dvar)
-          Io=BOUNDS(ng) % Istr (-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_u
+          Ie=IOBOUNDS(ng) % IUB_u
+          Jo=IOBOUNDS(ng) % JLB_u
+          Je=IOBOUNDS(ng) % JUB_u
           Ioff=0
           Joff=0
         CASE (v2dvar, v3dvar)
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % Jstr (-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_v
+          Ie=IOBOUNDS(ng) % IUB_v
+          Jo=IOBOUNDS(ng) % JLB_v
+          Je=IOBOUNDS(ng) % JUB_v
           Ioff=1
           Joff=1
         CASE DEFAULT                              ! RHO-points
-          Io=BOUNDS(ng) % IstrR(-1)
-          Ie=BOUNDS(ng) % IendR(-1)
-          Jo=BOUNDS(ng) % JstrR(-1)
-          Je=BOUNDS(ng) % JendR(-1)
+          Io=IOBOUNDS(ng) % ILB_rho
+          Ie=IOBOUNDS(ng) % IUB_rho
+          Jo=IOBOUNDS(ng) % JLB_rho
+          Je=IOBOUNDS(ng) % JUB_rho
           Ioff=1
           Joff=0
       END SELECT
