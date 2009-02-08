@@ -175,7 +175,7 @@
      &                               TRIM(version)
         END IF
 !
-!  Define tile decomposition global attribute.
+!  Set tile decomposition global attribute.
 !
         WRITE (tiling,10) NtileI(ng), NtileJ(ng)
 !
@@ -186,6 +186,41 @@
      &                        TRIM(ncname))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+
+#ifndef DEBUGGING
+!
+!  Define NetCDF format type.
+!
+        IF (exit_flag.eq.NoError) THEN
+# ifdef NETCDF4
+          status=nf90_put_att(ncid, nf90_global, 'format',              &
+     &                        'netCDF-4/HDF5 file')
+# else
+          status=nf90_put_att(ncid, nf90_global, 'format',              &
+     &                        'netCDF-3 classic file')
+# endif
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'format', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+
+#endif
+!
+!  Define file climate and forecast metadata convention global
+!  attribute.
+!
+        type='CF-1.0'
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'Conventions',         &
+     &                        TRIM(type))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'Conventions', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -237,21 +272,6 @@
      &                        TRIM(type))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'type', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-!
-!  Define file climate and forecast metadata convention global
-!  attribute.
-!
-
-        type='CF-1.0'
-        IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_att(ncid, nf90_global, 'Conventions',         &
-     &                        TRIM(type))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) WRITE (stdout,20) 'Conventions', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF

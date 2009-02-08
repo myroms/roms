@@ -64,7 +64,7 @@
       integer, parameter :: Mdims = 50  ! maximun number of dimensions
       integer, parameter :: Mvars = 500 ! maximun number of variables
       integer, parameter :: NvarD = 5   ! number of variable dimensions
-      integer, parameter :: NvarA = 10  ! number of variable attributes
+      integer, parameter :: NvarA = 50  ! number of variable attributes
 !
 !  Generic information about current NetCDF for all dimensions and
 !  all variables.
@@ -145,8 +145,8 @@
 !  Note: the parallel access flags nf90_independent and nf90_collective
 !        are currently missing in module netcdf.mod.
 !
-      integer :: IO_independent = 0           ! nf90_independent
-      integer :: IO_collective = 1            ! nf90_collective
+      integer, parameter :: IO_independent = 0      ! nf90_independent
+      integer, parameter :: IO_collective = 1       ! nf90_collective
 
       CONTAINS
 
@@ -689,7 +689,7 @@
      &                                   var_ndim(i), var_dim(:,i),     &
      &                                   var_natt(i))
             IF (status.eq.nf90_noerr) THEN
-              DO j=1,var_natt(i)
+              DO j=1,MIN(NvarA,var_natt(i))
                 status=nf90_inq_attname(my_ncid, var_id(i), j,          &
      &                                  var_Aname(j))
                 IF (status.eq.nf90_noerr) THEN
@@ -810,7 +810,7 @@
               END IF
             END DO
             IF (status.eq.nf90_noerr) THEN
-              DO i=1,n_vatt
+              DO i=1,MIN(NvarA, n_vatt)
                 status=nf90_inq_attname(my_ncid, my_id, i, var_Aname(i))
                 IF (status.eq.nf90_noerr) THEN
                   status=nf90_inquire_attribute(my_ncid, my_id,         &
@@ -4112,7 +4112,6 @@
 !  Local variable declarations.
 !
       integer :: status
-
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer :: ibuffer(3)
 #endif
@@ -4122,8 +4121,13 @@
 !-----------------------------------------------------------------------
 !
 #if defined PARALLEL_IO && defined DISTRIBUTE
-      status=nf90_create_par(TRIM(ncname),                              &
-     &                       OR(nf90_clobber, nf90_netcdf4),            &
+
+!  Create a netCDF-4/HDF5  format file. Since nf90_clobber=0, then
+!  OR(nf90_clobber, nf90_netcdf4)=nf90_netcdf.  Therefore, the default
+!  is to overwrite an existing file on disk with the same file name.
+!  This is what we usually do anyway.
+!
+      status=nf90_create_par(TRIM(ncname), nf90_netcdf4,                &
      &                       OCN_COMM_WORLD, MP_INFO, ncid)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)

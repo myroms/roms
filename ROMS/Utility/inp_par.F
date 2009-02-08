@@ -18,6 +18,9 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
+#ifdef DISTRIBUTE
+      USE mod_strings
+#endif
 !
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
@@ -498,6 +501,7 @@
       END IF
 #ifdef DISTRIBUTE
       CALL mp_bcasti (1, model, exit_flag)
+      CALL mp_bcasts (1, model, Coptions)
 #endif
       IF (exit_flag.ne.NoError) RETURN
 !
