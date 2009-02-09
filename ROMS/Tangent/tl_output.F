@@ -25,6 +25,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasts
+# endif
 !
       implicit none
 !
@@ -95,6 +100,9 @@
               WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iTLM, TLMname(ng))
+# endif
             IF (ncTLMid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iTLM, ncTLMid(ng))
             END IF

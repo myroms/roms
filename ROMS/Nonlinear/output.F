@@ -28,6 +28,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasts
+# endif
 !
       implicit none
 !
@@ -100,6 +105,9 @@
               WRITE (HISname(ng),10) HISbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iNLM, HISname(ng))
+# endif
             IF (ncHISid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iNLM, ncHISid(ng))
             END IF
@@ -191,6 +199,9 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iNLM, AVGname(ng))
+# endif
             IF (ncAVGid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iNLM, ncAVGid(ng))
             END IF
@@ -272,6 +283,9 @@
               WRITE (DIAname(ng),30) DIAbase(ng)(1:lstr-3),ifile
   30          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iNLM, DIAname(ng))
+# endif
             IF (ncDIAid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iNLM, ncDIAid(ng))
             END IF

@@ -335,10 +335,9 @@
             CALL initial (ng)
             IF (exit_flag.ne.NoError) RETURN
 
-            IF (Master) THEN
-              lstr=LEN_TRIM(HISbase(ng))
-              WRITE (HISname,60) HISbase(ng)(1:lstr-3), Nrun
-            END IF
+            lstr=LEN_TRIM(HISbase(ng))
+            WRITE (HISname,60) HISbase(ng)(1:lstr-3), Nrun
+
             IF (ndefTLM(ng).lt.0) THEN
               LdefHIS(ng)=.FALSE.              ! suppress IO
               LwrtHIS(ng)=.FALSE.
@@ -380,10 +379,9 @@
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) RETURN
 
-            IF (Master) THEN
-              lstr=LEN_TRIM(TLMbase(ng))
-              WRITE (TLMname(ng),60) TLMbase(ng)(1:lstr-3), Nrun
-            END IF
+            lstr=LEN_TRIM(TLMbase(ng))
+            WRITE (TLMname(ng),60) TLMbase(ng)(1:lstr-3), Nrun
+
             IF (ndefTLM(ng).lt.0) THEN
               LdefTLM(ng)=.FALSE.              ! suppress IO
               LwrtTLM(ng)=.FALSE.

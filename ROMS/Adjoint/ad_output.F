@@ -22,6 +22,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasts
+# endif
 !
       implicit none
 !
@@ -94,6 +99,9 @@
               WRITE (ADJname(ng),10) ADJbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iADM, ADJname(ng))
+# endif
             IF (ncADJid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iADM, ncADJid(ng))
             END IF
@@ -193,6 +201,9 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
+# ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iADM, AVGname(ng))
+# endif
             IF (ncAVGid(ng).ne.-1) THEN
               CALL netcdf_close (ng, iADM, ncAVGid(ng))
             END IF
