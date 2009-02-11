@@ -15,7 +15,7 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     msg        Message index for Mstate.                             !
+!     msg        Message index for StateMsg.                           !
 !     ncname     Nonlinear initial conditions NetCDF file name.        !
 !     IniRec     Nonlinear initial conditions time record to read.     !
 !     Tindex     State variable time index to intialize.               !
@@ -313,10 +313,10 @@
       IF (Master) THEN
         CALL time_string (INPtime, t_code)
         IF (ERend.gt.ERstr) THEN
-          WRITE (stdout,80) string, TRIM(Mstate(msg)), t_code, Nrun,    &
+          WRITE (stdout,80) string, TRIM(StateMsg(msg)), t_code, Nrun,  &
      &                      ncname(lstr:lend), InpRec, Tindex
         ELSE
-          WRITE (stdout,90) string, TRIM(Mstate(msg)), t_code,          &
+          WRITE (stdout,90) string, TRIM(StateMsg(msg)), t_code,        &
      &                      ncname(lstr:lend), InpRec, Tindex
         END IF
       END IF

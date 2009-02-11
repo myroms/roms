@@ -529,7 +529,7 @@
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r2dvar,r8)
             status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
-     &                     nrmVid(idTsur(itrc),ng), NF_FOUT,            &
+     &                     nrmVid(ifile,idTsur(itrc),ng), NF_FOUT,      &
      &                     nvd3, t2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END DO
@@ -628,7 +628,7 @@
             ELSE IF (TRIM(var_name(i)).eq.                              &
      &               TRIM(Vname(1,idTsur(itrc)))) THEN
               got_var(idTsur(itrc))=.TRUE.
-              nrmVid(ifile,idTsur(itrc),ng)=var_id(i)
+               nrmVid(ifile,idTsur(itrc),ng)=var_id(i)
 #  endif
             END IF
           END DO
