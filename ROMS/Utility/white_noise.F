@@ -149,11 +149,11 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ic, j
+      integer :: Npts, i, ic, j
 
       real(r8), parameter :: fac = 2.0_r8 * 1.73205080756887720_r8
 
-      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: random
+      real(r8), allocatable :: random(:)
 !
 !-----------------------------------------------------------------------
 !  Generate an array of random numbers.
@@ -195,19 +195,28 @@
 !  mean and unit variance.
 !
       ELSE IF (Rscheme.eq.1) THEN
+        Npts=(Lm(ng)+2)*(Mm(ng)+2)
+        IF (.not.allocated(random)) THEN
+          allocate ( random(Npts+2) )
+        END IF
         IF (Master) THEN
           CALL gasdev (random)
-          Rmin=MINVAL(random)
-          Rmax=MAXVAL(random)
+          Rmin=random(1)
+          Rmax=random(1)
+          DO ic=1,Npts
+            Rmin=MIN(Rmin,random(ic))
+            Rmax=MAX(Rmax,random(ic))
+          END DO
         END IF
 #ifdef DISTRIBUTE
+        Npts=SIZE(random)
         CALL mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,               &
      &                     NghostPoints, gtype, Rmin, Rmax,             &
 # if defined READ_WATER && defined MASKING
      &                     (Lm(ng)+2)*(Mm(ng)+2),                       &
      &                     SCALARS(ng)%IJwater(:,gtype),                &
 # endif
-     &                     SIZE(random), random, R)
+     &                     Npts, random, R)
 #else
         ic=0
         DO j=Jmin,Jmax
@@ -217,6 +226,9 @@
           END DO
         END DO
 #endif
+        IF (allocated(random)) THEN
+          deallocate (random)
+        END IF
       END IF
 
       RETURN
@@ -252,11 +264,11 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ic, j, k
+      integer :: Npts, i, ic, j, k
 
       real(r8), parameter :: fac = 2.0_r8 * 1.73205080756887720_r8
 
-      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: random
+      real(r8), allocatable :: random(:)
 !
 !-----------------------------------------------------------------------
 !  Generate an array of random numbers.
@@ -302,19 +314,28 @@
 !  mean and unit variance.
 !
       ELSE IF (Rscheme.eq.1) THEN
+        Npts=(Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)
+        IF (.not.allocated(random)) THEN
+          allocate ( random(Npts+2) )
+        END IF
         IF (Master) THEN
           CALL gasdev (random)
-          Rmin=MINVAL(random)
-          Rmax=MAXVAL(random)
+          Rmin=random(1)
+          Rmax=random(1)
+          DO ic=1,Npts
+            Rmin=MIN(Rmin,random(ic))
+            Rmax=MAX(Rmax,random(ic))
+          END DO
         END IF
 # ifdef DISTRIBUTE
+        Npts=SIZE(random)
         CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
      &                     NghostPoints, gtype, Rmin, Rmax,             &
 #  if defined READ_WATER && defined MASKING
      &                     (Lm(ng)+2)*(Mm(ng)+2),                       &
      &                     SCALARS(ng)%IJwater(:,gtype),                &
 #  endif
-     &                     SIZE(random), random, R)
+     &                     Npts, random, R)
 # else
         ic=0
         DO k=LBk,UBk
@@ -326,6 +347,9 @@
           END DO
         END DO
 # endif
+        IF (allocated(random)) THEN
+          deallocate (random)
+        END IF
       END IF
 
       RETURN
