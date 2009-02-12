@@ -535,23 +535,23 @@
           END DO
 #  endif
 # endif
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-          CALL netcdf_enddef (ng, model, ncname, ncNRMid(ifile,ng))
-          IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_enddef (ng, model, ncname, ncNRMid(ifile,ng))
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.  Deactive file
 !  creation switch.
 !-----------------------------------------------------------------------
 !
-          CALL wrt_info (ng, model, ncNRMid(ifile,ng), ncname)
-          IF (exit_flag.ne.NoError) RETURN
-          LdefNRM(ifile,ng)=.FALSE.
-        END IF
+        CALL wrt_info (ng, model, ncNRMid(ifile,ng), ncname)
+        IF (exit_flag.ne.NoError) RETURN
+        LdefNRM(ifile,ng)=.FALSE.
       END IF DEFINE
 !
 !=======================================================================

@@ -172,15 +172,17 @@
       END DO
 #  endif
 !
+!  Open initialization file for read/write.
+!
+      CALL netcdf_open (ng, iNLM, ncname, 1, ncINIid(ng))
+      IF (exit_flag.ne.NoError) THEN
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        RETURN
+      END IF
+!
 !  Put existing file into define mode so new variables can be added.
 !
       IF (Ldefine) THEN
-        CALL netcdf_open (ng, iNLM, ncname, 1, ncINIid(ng))
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) WRITE (stdout,10) TRIM(ncname)
-          RETURN
-        END IF
-!
         CALL netcdf_redef (ng, iNLM, ncname, ncINIid(ng))
         IF (exit_flag.ne.NoError) THEN
           IF (Master) WRITE (stdout,20) TRIM(ncname)

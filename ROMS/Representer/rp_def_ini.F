@@ -172,15 +172,17 @@
       END DO
 #  endif
 !
+!  Open representer model initialization file for read/write.
+!
+      CALL netcdf_open (ng, iRPM, ncname, 1, ncIRPid(ng))
+      IF (exit_flag.ne.NoError) THEN
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        RETURN
+      END IF
+!
 !  Put existing file into define mode so new variables can be added.
 !
       IF (Ldefine) THEN
-        CALL netcdf_open (ng, iRPM, ncname, 1, ncIRPid(ng))
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) WRITE (stdout,10) TRIM(ncname)
-          RETURN
-        END IF
-!
         CALL netcdf_redef (ng, IRPM, ncname, ncIRPid(ng))
         IF (exit_flag.ne.NoError) THEN
           IF (Master) WRITE (stdout,20) TRIM(ncname)

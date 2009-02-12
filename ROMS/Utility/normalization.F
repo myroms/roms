@@ -1947,7 +1947,7 @@
 !  Set time record index to write in normalization NetCDF file.
 !
         ncname=NRMname(ifile,ng)
-        tNRMindx(1,ng)=tNRMindx(1,ng)+1
+        tNRMindx(ifile,ng)=tNRMindx(ifile,ng)+1
         NrecNRM(ifile,ng)=NrecNRM(ifile,ng)+1
 !
 !  Write out model time (s).
