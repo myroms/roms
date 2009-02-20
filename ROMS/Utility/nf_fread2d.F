@@ -283,7 +283,7 @@
           Amin=spval
           Amax=-spval
           DO i=1,MyNpts
-            IF (wrk(i).ge.Aspval) THEN
+            IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
               wrk(i)=0.0_r8             ! land/sea maked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
@@ -576,7 +576,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: interpolate
+      logical :: foundit, interpolate
       integer :: i, j, ic, Npts, NWpts, status, wtype
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, IJlen, MyType
@@ -588,6 +588,8 @@
       integer :: nf_fread2d
 
       real(r8), parameter :: Aspv = 0.0_r8
+
+      real(r8) :: Aspval
 
       real(r8), allocatable :: wrk(:)
 !
@@ -663,6 +665,19 @@
         Jlen=Vsize(2)
       END IF
       IJlen=Ilen*Jlen
+!
+!  If interpolating, check if the variable has a _FillValue attribute.
+!
+      IF (interpolate) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, ncvarid, '_FillValue', &
+     &                        Aspval, foundit,                          &
+     &                        ncid = ncid)
+        IF (.not.foundit) THEN
+          Aspval=spval_check
+        END IF
+      ELSE
+        Aspval=spval_check
+      END IF
 
 # if defined READ_WATER && defined MASKING
 !
@@ -734,7 +749,7 @@
           Amin=spval
           Amax=-spval
           DO i=1,Npts
-            IF (wrk(i).ge.spval_check) THEN
+            IF (ABS(wrk(i)).ge.(Aspval)) THEN
               wrk(i)=0.0_r8             ! land/sea maked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)

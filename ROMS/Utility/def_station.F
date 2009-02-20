@@ -239,7 +239,8 @@
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idFsur,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -265,7 +266,8 @@
           Vinfo(14)=Vname(4,idVbar)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbar,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # ifdef SOLVE3D
@@ -279,7 +281,8 @@
           Vinfo(14)=Vname(4,idUvel)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUvel,ng),      &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -292,7 +295,8 @@
           Vinfo(14)=Vname(4,idVvel)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVvel,ng),      &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -305,7 +309,8 @@
           Vinfo(14)=Vname(4,idWvel)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWvel,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -318,7 +323,8 @@
           Vinfo(14)=Vname(4,idOvel)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idOvel,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -339,7 +345,8 @@
             END DO
 #  endif
             status=def_var(ng, iNLM, ncSTAid(ng), staTid(itrc,ng),      &
-     &                     NF_FOUT, 3, rgrd, Aval, Vinfo, ncname)
+     &                     NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,       &
+     &                     SetParAccess = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
@@ -353,7 +360,8 @@
           Vinfo(14)=Vname(4,idDano)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idDano,ng),      &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
@@ -368,7 +376,8 @@
           Vinfo(14)=Vname(4,idHsbl)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idHsbl,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -383,7 +392,8 @@
           Vinfo(14)=Vname(4,idHbbl)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idHbbl,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -397,7 +407,8 @@
           Vinfo(14)=Vname(4,idVvis)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVvis,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -425,7 +436,8 @@
           Vinfo(14)=Vname(4,idSdif)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idSdif,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -440,7 +452,8 @@
           Vinfo(14)=Vname(4,idMtke)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idMtke,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -453,7 +466,8 @@
           Vinfo(14)=Vname(4,idMtls)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idMtls,ng),      &
-     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -470,7 +484,8 @@
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng),                         &
      &                   staVid(idTsur(itemp),ng), NF_FOUT,             &
-     &                   2, pgrd, Aval, Vinfo, ncname)
+     &                   2, pgrd, Aval, Vinfo, ncname,                  &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -486,7 +501,8 @@
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng),                         &
      &                   staVid(idTsur(isalt),ng), NF_FOUT,             &
-     &                   2, pgrd, Aval, Vinfo, ncname)
+     &                   2, pgrd, Aval, Vinfo, ncname,                  &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  ifdef BULK_FLUXES
@@ -502,7 +518,8 @@
           Vinfo(14)=Vname(4,idLhea)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idLhea,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -517,7 +534,8 @@
           Vinfo(14)=Vname(4,idShea)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idShea,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -532,7 +550,8 @@
           Vinfo(14)=Vname(4,idLrad)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idLrad,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -549,7 +568,8 @@
           Vinfo(14)=Vname(4,idSrad)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idSrad,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -564,7 +584,8 @@
           Vinfo(14)=Vname(4,idUsms)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUsms,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -577,7 +598,8 @@
           Vinfo(14)=Vname(4,idVsms)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVsms,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -590,7 +612,8 @@
           Vinfo(14)=Vname(4,idUbms)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbms,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -603,7 +626,8 @@
           Vinfo(14)=Vname(4,idVbms)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbms,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
@@ -619,7 +643,8 @@
           Vinfo(14)=Vname(4,idUbrs)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbrs,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -632,7 +657,8 @@
           Vinfo(14)=Vname(4,idVbrs)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbrs,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -645,7 +671,8 @@
           Vinfo(14)=Vname(4,idUbws)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbws,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -658,7 +685,8 @@
           Vinfo(14)=Vname(4,idVbws)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbws,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -671,7 +699,8 @@
           Vinfo(14)=Vname(4,idUbcs)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbcs,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -684,7 +713,8 @@
           Vinfo(14)=Vname(4,idVbcs)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbcs,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -697,7 +727,8 @@
           Vinfo(14)=Vname(4,idUbot)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbot,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -710,7 +741,8 @@
           Vinfo(14)=Vname(4,idVbot)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbot,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -723,7 +755,8 @@
           Vinfo(14)=Vname(4,idUbur)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idUbur,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -736,7 +769,8 @@
           Vinfo(14)=Vname(4,idVbvr)
           Vinfo(16)=Vname(1,idtime)
           status=def_var(ng, iNLM, ncSTAid(ng), staVid(idVbvr,ng),      &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
@@ -753,7 +787,8 @@
             Vinfo(16)=Vname(1,idtime)
             WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
             status=def_var(ng, iNLM, ncSTAid(ng), staVid(idfrac(i),ng), &
-     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname)
+     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname,       &
+     &                     SetParAccess = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
 !
@@ -767,7 +802,8 @@
             Vinfo(16)=Vname(1,idtime)
             WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
             status=def_var(ng, iNLM, ncSTAid(ng), staVid(idBmas(i),ng), &
-     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname)
+     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname,       &
+     &                     SetParAccess = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
@@ -782,7 +818,8 @@
             Vinfo(14)=Vname(4,idSbed(i))
             Vinfo(16)=Vname(1,idtime)
             status=def_var(ng, iNLM, ncSTAid(ng), staVid(idSbed(i),ng), &
-     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname)
+     &                     NF_FOUT, 3, bgrd, Aval, Vinfo, ncname,       &
+     &                     SetParAccess = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
@@ -799,7 +836,8 @@
             Vinfo(14)=Vname(4,idBott(i))
             Vinfo(16)=Vname(1,idtime)
             status=def_var(ng, iNLM, ncSTAid(ng), staVid(idBott(i),ng), &
-     &                     NF_FOUT, 2, pgrd, Aval, Vinfo, ncname)
+     &                     NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,       &
+     &                     SetParAccess = .FALSE.)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO

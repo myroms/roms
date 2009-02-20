@@ -100,7 +100,15 @@
         DO i=1,nvatt
           IF (TRIM(var_Aname(i)).eq.'cycle_length') THEN
             cycle=.TRUE.
-            clength=var_Afloat(i)
+            IF (var_Afloat(i).gt.0.0_r8) THEN
+              clength=var_Afloat(i)
+            ELSE IF (var_Aint(i).gt.0) THEN    ! no CF compliance
+              clength=REAL(var_Aint(i),r8)     ! attribute is an integer
+            ELSE
+              IF (Master) WRITE (stdout,10) TRIM(TvarName)
+              exit_flag=2
+              RETURN
+            END IF
           ELSE IF (TRIM(var_Aname(i)).eq.'units') THEN
             tunits=TRIM(var_Achar(i))
             IF (tunits(1:6).eq.'second') THEN
@@ -166,14 +174,18 @@
       IF (INDEX(TRIM(TvarName),'period').eq.0) THEN
         IF (.not.cycle.and.(ntime.gt.1)) THEN
           IF (smday.lt.Tmin) THEN
-            IF (Master) WRITE (stdout,10) TRIM(TvarName), Tmin, smday
+            IF (Master) WRITE (stdout,20) TRIM(TvarName), Tmin, smday
             exit_flag=2
             RETURN
           END IF
         END IF
       END IF
 !
-  10  FORMAT (/,' GET_CYCLE - starting time for variable: ',a,          &
+  10  FORMAT (/,' GET_CYCLE - unable to get value for attribute: ',a,   &
+     &        /,13x,'in variable: ',a,                                  &
+     &        /,13x,'This attribute value is expected to be of',        &
+     &        /,13x,'the same external type as the variable.')
+  20  FORMAT (/,' GET_CYCLE - starting time for variable: ',a,          &
      &        /,13x,'is greater than current model time. ',             &
      &        /,13x,'TMIN = ',f15.4,2x,'TDAYS = ',f15.4)
 
