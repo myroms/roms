@@ -383,9 +383,24 @@
 !  Northern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
+#   ifdef MASKING
+!>        tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*                &
+!>   &                           GRID(ng)%rmask(i,Jend+1)
+!>
+          ad_zeta(i,Jend+1,kout)=ad_zeta(i,Jend+1,kout)*                &
+     &                           GRID(ng)%rmask(i,Jend+1)
+#   endif
+#   ifdef ADJUST_BOUNDARY
+!>        tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
+!>
+          BOUNDARY(ng)%ad_zeta_north(i)=BOUNDARY(ng)%ad_zeta_north(i)+  &
+     &                                  ad_zeta(i,Jend+1,kout)
+          ad_zeta(i,Jend+1,kout)=0.0_r8
+#   else
 !>        tl_zeta(i,Jend+1,kout)=0.0_r8
 !>
           ad_zeta(i,Jend+1,kout)=0.0_r8
+#   endif
         END DO
 
 #  elif defined NORTH_FSGRADIENT
@@ -538,9 +553,24 @@
 !  Southern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
+#   ifdef MASKING
+!>        tl_zeta(i,Jstr-1,kout)=tl_zeta(i,Jstr-1,kout)*                &
+!>   &                           GRID(ng)%rmask(i,Jstr-1)
+!>
+          ad_zeta(i,Jstr-1,kout)=ad_zeta(i,Jstr-1,kout)*                &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+#   endif
+#   ifdef ADJUST_BOUNDARY
+!>        tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
+!>
+          BOUNDARY(ng)%ad_zeta_south(i)=BOUNDARY(ng)%ad_zeta_south(i)+  &
+     &                                  ad_zeta(i,Jstr-1,kout)
+          ad_zeta(i,Jstr-1,kout)=0.0_r8
+#   else
 !>        tl_zeta(i,Jstr-1,kout)=0.0_r8
 !>
           ad_zeta(i,Jstr-1,kout)=0.0_r8
+#   endif
         END DO
 
 #  elif defined SOUTH_FSGRADIENT
@@ -696,9 +726,24 @@
 !  Eastern edge, clamped boundary condition.
 !
         DO j=Jstr,Jend
+#   ifdef MASKING
+!>        tl_zeta(Iend+1,j,kout)=tl_zeta(Iend+1,j,kout)*                &
+!>   &                           GRID(ng)%rmask(Iend+1,j)
+!>
+          ad_zeta(Iend+1,j,kout)=ad_zeta(Iend+1,j,kout)*                &
+     &                           GRID(ng)%rmask(Iend+1,j)
+#   endif
+#   ifdef ADJUST_BOUNDARY
+!>        tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
+!>
+          BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)+    &
+     &                                 ad_zeta(Iend+1,j,kout)
+          ad_zeta(Iend+1,j,kout)=0.0_r8
+#   else
 !>        tl_zeta(Iend+1,j,kout)=0.0_r8
 !>
           ad_zeta(Iend+1,j,kout)=0.0_r8
+#   endif
         END DO
 
 #  elif defined EAST_FSGRADIENT
@@ -852,9 +897,24 @@
 !  Western edge, clamped boundary condition.
 !
         DO j=Jstr,Jend
+#   ifdef MASKING
+!>        tl_zeta(Istr-1,j,kout)=tl_zeta(Istr-1,j,kout)*                &
+!>   &                           GRID(ng)%rmask(Istr-1,j)
+!>
+          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)*                &
+     &                           GRID(ng)%rmask(Istr-1,j)
+#   endif
+#   ifdef ADJUST_BOUNDARY
+!>        tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
+!>
+          BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+    &
+                                       ad_zeta(Istr-1,j,kout)
+          ad_zeta(Istr-1,j,kout)=0.0_r8
+#   else
 !>        tl_zeta(Istr-1,j,kout)=0.0_r8
 !>
           ad_zeta(Istr-1,j,kout)=0.0_r8
+#   endif
         END DO
 
 #  elif defined WEST_FSGRADIENT

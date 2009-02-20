@@ -200,61 +200,61 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef WEST_FSOBC
-      real(r8), intent(in) :: ad_zeta_west(LBj:)
+      real(r8), intent(inout) :: ad_zeta_west(LBj:)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(in) :: ad_zeta_east(LBj:)
+      real(r8), intent(inout) :: ad_zeta_east(LBj:)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: ad_zeta_south(LBi:)
+      real(r8), intent(inout) :: ad_zeta_south(LBi:)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(in) :: ad_zeta_north(LBi:)
+      real(r8), intent(inout) :: ad_zeta_north(LBi:)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(in) :: ad_ubar_west(LBj:)
-      real(r8), intent(in) :: ad_vbar_west(LBj:)
+      real(r8), intent(inout) :: ad_ubar_west(LBj:)
+      real(r8), intent(inout) :: ad_vbar_west(LBj:)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(in) :: ad_ubar_east(LBj:)
-      real(r8), intent(in) :: ad_vbar_east(LBj:)
+      real(r8), intent(inout) :: ad_ubar_east(LBj:)
+      real(r8), intent(inout) :: ad_vbar_east(LBj:)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(in) :: ad_ubar_south(LBi:)
-      real(r8), intent(in) :: ad_vbar_south(LBi:)
+      real(r8), intent(inout) :: ad_ubar_south(LBi:)
+      real(r8), intent(inout) :: ad_vbar_south(LBi:)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(in) :: ad_ubar_north(LBi:)
-      real(r8), intent(in) :: ad_vbar_north(LBi:)
+      real(r8), intent(inout) :: ad_ubar_north(LBi:)
+      real(r8), intent(inout) :: ad_vbar_north(LBi:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(in) :: ad_u_west(LBj:,:)
-      real(r8), intent(in) :: ad_v_west(LBj:,:)
+      real(r8), intent(inout) :: ad_u_west(LBj:,:)
+      real(r8), intent(inout) :: ad_v_west(LBj:,:)
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(in) :: ad_u_east(LBj:,:)
-      real(r8), intent(in) :: ad_v_east(LBj:,:)
+      real(r8), intent(inout) :: ad_u_east(LBj:,:)
+      real(r8), intent(inout) :: ad_v_east(LBj:,:)
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(in) :: ad_u_south(LBi:,:)
-      real(r8), intent(in) :: ad_v_south(LBi:,:)
+      real(r8), intent(inout) :: ad_u_south(LBi:,:)
+      real(r8), intent(inout) :: ad_v_south(LBi:,:)
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(in) :: ad_u_north(LBi:,:)
-      real(r8), intent(in) :: ad_v_north(LBi:,:)
+      real(r8), intent(inout) :: ad_u_north(LBi:,:)
+      real(r8), intent(inout) :: ad_v_north(LBi:,:)
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(in) :: ad_t_west(LBj:,:,:)
+      real(r8), intent(inout) :: ad_t_west(LBj:,:,:)
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(in) :: ad_t_east(LBj:,:,:)
+      real(r8), intent(inout) :: ad_t_east(LBj:,:,:)
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(in) :: ad_t_south(LBi:,:,:)
+      real(r8), intent(inout) :: ad_t_south(LBi:,:,:)
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(in) :: ad_t_north(LBi:,:,:)
+      real(r8), intent(inout) :: ad_t_north(LBi:,:,:)
 #   endif
 #  endif
 #  ifdef SOLVE3D
@@ -269,61 +269,61 @@
 # else
 
 #  ifdef WEST_FSOBC
-      real(r8), intent(in) :: ad_zeta_west(LBj:UBj)
+      real(r8), intent(inout) :: ad_zeta_west(LBj:UBj)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(in) :: ad_zeta_east(LBj:UBj)
+      real(r8), intent(inout) :: ad_zeta_east(LBj:UBj)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: ad_zeta_south(LBi:UBi)
+      real(r8), intent(inout) :: ad_zeta_south(LBi:UBi)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(in) :: ad_zeta_north(LBi:UBi)
+      real(r8), intent(inout) :: ad_zeta_north(LBi:UBi)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(in) :: ad_ubar_west(LBj:UBj)
-      real(r8), intent(in) :: ad_vbar_west(LBj:UBj)
+      real(r8), intent(inout) :: ad_ubar_west(LBj:UBj)
+      real(r8), intent(inout) :: ad_vbar_west(LBj:UBj)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(in) :: ad_ubar_east(LBj:UBj)
-      real(r8), intent(in) :: ad_vbar_east(LBj:UBj)
+      real(r8), intent(inout) :: ad_ubar_east(LBj:UBj)
+      real(r8), intent(inout) :: ad_vbar_east(LBj:UBj)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(in) :: ad_ubar_south(LBi:UBi)
-      real(r8), intent(in) :: ad_vbar_south(LBi:UBi)
+      real(r8), intent(inout) :: ad_ubar_south(LBi:UBi)
+      real(r8), intent(inout) :: ad_vbar_south(LBi:UBi)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(in) :: ad_ubar_north(LBi:UBi)
-      real(r8), intent(in) :: ad_vbar_north(LBi:UBi)
+      real(r8), intent(inout) :: ad_ubar_north(LBi:UBi)
+      real(r8), intent(inout) :: ad_vbar_north(LBi:UBi)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(in) :: ad_u_west(LBj:UBj,N(ng))
-      real(r8), intent(in) :: ad_v_west(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_u_west(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_v_west(LBj:UBj,N(ng))
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(in) :: ad_u_east(LBj:UBj,N(ng))
-      real(r8), intent(in) :: ad_v_east(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_u_east(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_v_east(LBj:UBj,N(ng))
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(in) :: ad_u_south(LBi:UBi,N(ng))
-      real(r8), intent(in) :: ad_v_south(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: ad_u_south(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: ad_v_south(LBi:UBi,N(ng))
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(in) :: ad_u_north(LBi:UBi,N(ng))
-      real(r8), intent(in) :: ad_v_north(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: ad_u_north(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: ad_v_north(LBi:UBi,N(ng))
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(in) :: ad_t_west(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: ad_t_west(LBj:UBj,N(ng),NT(ng))
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(in) :: ad_t_east(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: ad_t_east(LBj:UBj,N(ng),NT(ng))
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(in) :: ad_t_south(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(inout) :: ad_t_south(LBi:UBi,N(ng),NT(ng))
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(in) :: ad_t_north(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(inout) :: ad_t_north(LBi:UBi,N(ng),NT(ng))
 #   endif
 #  endif
 #  ifdef SOLVE3D
@@ -382,6 +382,7 @@
      &                                 fac1*ad_zeta_west(j)
             ad_zeta_obc(j,ib,it2,Linp)=ad_zeta_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_zeta_west(j)
+            ad_zeta_west(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -396,6 +397,7 @@
      &                                 fac1*ad_zeta_east(j)
             ad_zeta_obc(j,ib,it2,Linp)=ad_zeta_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_zeta_east(j)
+            ad_zeta_east(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -410,6 +412,7 @@
      &                                 fac1*ad_zeta_south(i)
             ad_zeta_obc(i,ib,it2,Linp)=ad_zeta_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_zeta_south(i)
+            ad_zeta_south(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -424,6 +427,7 @@
      &                                 fac1*ad_zeta_north(i)
             ad_zeta_obc(i,ib,it2,Linp)=ad_zeta_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_zeta_north(i)
+            ad_zeta_north(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -443,6 +447,7 @@
      &                                 fac1*ad_ubar_west(j)
             ad_ubar_obc(j,ib,it2,Linp)=ad_ubar_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_ubar_west(j)
+            ad_ubar_west(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -457,6 +462,7 @@
      &                                 fac1*ad_ubar_east(j)
             ad_ubar_obc(j,ib,it2,Linp)=ad_ubar_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_ubar_east(j)
+            ad_ubar_east(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -471,6 +477,7 @@
      &                                 fac1*ad_ubar_south(i)
             ad_ubar_obc(i,ib,it2,Linp)=ad_ubar_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_ubar_south(i)
+            ad_ubar_south(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -485,6 +492,7 @@
      &                                 fac1*ad_ubar_north(i)
             ad_ubar_obc(i,ib,it2,Linp)=ad_ubar_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_ubar_north(i)
+            ad_ubar_north(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -504,6 +512,7 @@
      &                                 fac1*ad_vbar_west(j)
             ad_vbar_obc(j,ib,it2,Linp)=ad_vbar_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_vbar_west(j)
+            ad_vbar_west(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -518,6 +527,7 @@
      &                                 fac1*ad_vbar_east(j)
             ad_vbar_obc(j,ib,it2,Linp)=ad_vbar_obc(j,ib,it2,Linp)+      &
      &                                 fac2*ad_vbar_east(j)
+            ad_vbar_east(j)=0.0_r8
           END DO
         END IF
 # endif
@@ -532,6 +542,7 @@
      &                                 fac1*ad_vbar_south(i)
             ad_vbar_obc(i,ib,it2,Linp)=ad_vbar_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_vbar_south(i)
+            ad_vbar_south(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -546,6 +557,7 @@
      &                                 fac1*ad_vbar_north(i)
             ad_vbar_obc(i,ib,it2,Linp)=ad_vbar_obc(i,ib,it2,Linp)+      &
      &                                 fac2*ad_vbar_north(i)
+            ad_vbar_north(i)=0.0_r8
           END DO
         END IF
 # endif
@@ -568,6 +580,7 @@
      &                                  fac1*ad_u_west(j,k)
               ad_u_obc(j,k,ib,it2,Linp)=ad_u_obc(j,k,ib,it2,Linp)+      &
      &                                  fac2*ad_u_west(j,k)
+              ad_u_west(j,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -584,6 +597,7 @@
      &                                  fac1*ad_u_east(j,k)
               ad_u_obc(j,k,ib,it2,Linp)=ad_u_obc(j,k,ib,it2,Linp)+      &
      &                                  fac2*ad_u_east(j,k)
+              ad_u_east(j,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -600,6 +614,7 @@
      &                                  fac1*ad_u_south(i,k)
               ad_u_obc(i,k,ib,it2,Linp)=ad_u_obc(i,k,ib,it2,Linp)+      &
      &                                  fac2*ad_u_south(i,k)
+              ad_u_south(i,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -616,6 +631,7 @@
      &                                  fac1*ad_u_north(i,k)
               ad_u_obc(i,k,ib,it2,Linp)=ad_u_obc(i,k,ib,it2,Linp)+      &
      &                                  fac2*ad_u_north(i,k)
+              ad_u_north(i,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -637,6 +653,7 @@
      &                                  fac1*ad_v_west(j,k)
               ad_v_obc(j,k,ib,it2,Linp)=ad_v_obc(j,k,ib,it2,Linp)+      &
      &                                  fac2*ad_v_west(j,k)
+              ad_v_west(j,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -653,6 +670,7 @@
      &                                  fac1*ad_v_east(j,k)
               ad_v_obc(j,k,ib,it2,Linp)=ad_v_obc(j,k,ib,it2,Linp)+      &
      &                                  fac2*ad_v_east(j,k)
+              ad_v_east(j,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -669,6 +687,7 @@
      &                                  fac1*ad_v_south(i,k)
               ad_v_obc(i,k,ib,it2,Linp)=ad_v_obc(i,k,ib,it2,Linp)+      &
      &                                  fac2*ad_v_south(i,k)
+              ad_v_south(i,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -685,6 +704,7 @@
      &                                  fac1*ad_v_north(i,k)
               ad_v_obc(i,k,ib,it2,Linp)=ad_v_obc(i,k,ib,it2,Linp)+      &
      &                                  fac2*ad_v_north(i,k)
+              ad_v_north(i,k)=0.0_r8
             END DO
           END DO
         END IF
@@ -709,6 +729,7 @@
                 ad_t_obc(j,k,ib,it2,Linp,it)=                           &
      &                                   ad_t_obc(j,k,ib,it2,Linp,it)+  &
      &                                   fac2*ad_t_west(j,k,it)
+                ad_t_west(j,k,it)=0.0_r8
               END DO
             END DO
           END IF
@@ -727,6 +748,7 @@
                 ad_t_obc(j,k,ib,it2,Linp,it)=                           &
      &                                   ad_t_obc(j,k,ib,it2,Linp,it)+  &
      &                                   fac2*ad_t_east(j,k,it)
+                ad_t_east(j,k,it)=0.0_r8
               END DO
             END DO
           END IF
@@ -743,8 +765,9 @@
      &                                   ad_t_obc(i,k,ib,it1,Linp,it)+  &
      &                                   fac1*ad_t_south(i,k,it)
                 ad_t_obc(i,k,ib,it2,Linp,it)=                           &
-     &                                   ad_t_obc(j,k,ib,it2,Linp,it)+  &
+     &                                   ad_t_obc(i,k,ib,it2,Linp,it)+  &
      &                                   fac2*ad_t_south(i,k,it)
+                ad_t_south(i,k,it)=0.0_r8
               END DO
             END DO
           END IF
@@ -761,8 +784,9 @@
      &                                   ad_t_obc(i,k,ib,it1,Linp,it)+  &
      &                                   fac1*ad_t_north(i,k,it)
                 ad_t_obc(i,k,ib,it2,Linp,it)=                           &
-     &                                   ad_t_obc(j,k,ib,it2,Linp,it)+  &
+     &                                   ad_t_obc(i,k,ib,it2,Linp,it)+  &
      &                                   fac2*ad_t_north(i,k,it)
+                ad_t_north(i,k,it)=0.0_r8
               END DO
             END DO
           END IF

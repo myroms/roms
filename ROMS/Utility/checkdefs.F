@@ -940,7 +940,7 @@
       Coptions(is:is+11)=' FULL_GRID,'
 # else
       IF (Master) WRITE (stdout,20) '!FULL_GRID',                       &
-#  if defined FOUR_DVAR
+#  if (defined FOUR_DVAR || defined VERIFICATION)
      &   'Considering observations at interior points only.'
 #  elif defined PROPAGATOR
      &   'State vector includes interior points only.'

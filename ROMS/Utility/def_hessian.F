@@ -814,17 +814,17 @@
             hssVid(idVbar,ng)=var_id(i)
 # ifdef ADJUST_BOUNDARY
           ELSE IF (TRIM(var_name(i)).eq.                                &
-     &             TRIM(Vname(1,idSvar(isFsur)))) THEN
-            got_var(idSvar(isFsur))=.TRUE.
-            hssVid(idSvar(isFsur),ng)=var_id(i)
+     &             TRIM(Vname(1,idSbry(isFsur)))) THEN
+            got_var(idSbry(isFsur))=.TRUE.
+            hssVid(idSbry(isFsur),ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.                                &
-     &             TRIM(Vname(1,idSvar(isUbar)))) THEN
-            got_var(idSvar(isUbar))=.TRUE.
-            hssVid(idSvar(isUbar),ng)=var_id(i)
+     &             TRIM(Vname(1,idSbry(isUbar)))) THEN
+            got_var(idSbry(isUbar))=.TRUE.
+            hssVid(idSbry(isUbar),ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.                                &
-     &             TRIM(Vname(1,idSvar(isVbar)))) THEN
-            got_var(idSvar(isVbar))=.TRUE.
-            hssVid(idSvar(isVbar),ng)=var_id(i)
+     &             TRIM(Vname(1,idSbry(isVbar)))) THEN
+            got_var(idSbry(isVbar))=.TRUE.
+            hssVid(idSbry(isVbar),ng)=var_id(i)
 # endif
 # ifdef ADJUST_WSTRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
@@ -843,13 +843,13 @@
             hssVid(idVvel,ng)=var_id(i)
 #  ifdef ADJUST_BOUNDARY
           ELSE IF (TRIM(var_name(i)).eq.                                &
-     &             TRIM(Vname(1,idSvar(isUvel)))) THEN
-            got_var(idSvar(isUvel))=.TRUE.
-            hssVid(idSvar(isUvel),ng)=var_id(i)
+     &             TRIM(Vname(1,idSbry(isUvel)))) THEN
+            got_var(idSbry(isUvel))=.TRUE.
+            hssVid(idSbry(isUvel),ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.                                &
-     &             TRIM(Vname(1,idSvar(isVvel)))) THEN
-            got_var(idSvar(isVvel))=.TRUE.
-            hssVid(idSvar(isVvel),ng)=var_id(i)
+     &             TRIM(Vname(1,idSbry(isVvel)))) THEN
+            got_var(idSbry(isVvel))=.TRUE.
+            hssVid(idSbry(isVvel),ng)=var_id(i)
 #  endif
 # endif
           END IF
@@ -860,9 +860,9 @@
               hssTid(itrc,ng)=var_id(i)
 #  ifdef ADJUST_BOUNDARY
             ELSE IF (TRIM(var_name(i)).eq.                              &
-     &               TRIM(Vname(1,idSvar(isTvar(itrc))))) THEN
-              got_var(idSvar(isTvar(itrc)))=.TRUE.
-              hssVid(idSvar(isTvar(itrc)),ng)=var_id(i)
+     &               TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
+              got_var(idSbry(isTvar(itrc)))=.TRUE.
+              hssVid(idSbry(isTvar(itrc)),ng)=var_id(i)
 #  endif
 #  ifdef ADJUST_STFLUX
             ELSE IF (TRIM(var_name(i)).eq.                              &
@@ -903,20 +903,20 @@
           RETURN
         END IF
 # ifdef ADJUST_BOUNDARY
-        IF (.not.got_var(idSvar(isFsur))) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isFsur))),  &
+        IF (.not.got_var(idSbry(isFsur))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isFsur))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idSvar(isUbar))) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUbar))),  &
+        IF (.not.got_var(idSbry(isUbar))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idSvar(isVbar))) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVbar))),  &
+        IF (.not.got_var(idSbry(isVbar))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isVbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -950,14 +950,14 @@
           RETURN
         END IF
 #  ifdef ADJUST_BOUNDARY
-        IF (.not.got_var(idSvar(isUvel))) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isUvel))),  &
+        IF (.not.got_var(idSbry(isUvel))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idSvar(isVvel))) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSvar(isVvel))),  &
+        IF (.not.got_var(idSbry(isVvel))) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isVvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -973,9 +973,9 @@
             RETURN
           END IF
 #  ifdef ADJUST_BOUNDARY
-          IF (.not.got_var(idSvar(isTvar(itrc)))) THEN
+          IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
             IF (Master) WRITE (stdout,70)                               &
-     &                        TRIM(Vname(1,idSvar(isTvar(itrc)))),      &
+     &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
             RETURN

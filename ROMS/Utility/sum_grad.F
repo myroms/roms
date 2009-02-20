@@ -103,8 +103,12 @@
 !
       USE mod_param
       USE mod_ncparam
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
       USE mod_scalars
+# endif
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary
 # endif
 !
 !  Imported variable declarations.

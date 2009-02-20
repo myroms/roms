@@ -219,13 +219,12 @@
 !
         DO j=Jstr,Jend
 !>        zeta(Istr-1,j,kout)=BOUNDARY(ng)%zeta_west(j)
+!>
+          tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
 #   ifdef MASKING
 !>        zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
 !>   &                        GRID(ng)%rmask(Istr-1,j)
-#   endif
 !>
-          tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%zeta_west(j)
-#   ifdef MASKING
           tl_zeta(Istr-1,j,kout)=tl_zeta(Istr-1,j,kout)*                &
      &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
@@ -377,13 +376,12 @@
 !
         DO j=Jstr,Jend
 !>        zeta(Iend+1,j,kout)=BOUNDARY(ng)%zeta_east(j)
+!>
+          tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
 #   ifdef MASKING
 !>        zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
 !>   &                        GRID(ng)%rmask(Iend+1,j)
-#   endif
 !>
-          tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%zeta_east(j)
-#   ifdef MASKING
           tl_zeta(Iend+1,j,kout)=tl_zeta(Iend+1,j,kout)*                &
      &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
@@ -538,13 +536,12 @@
 !
         DO i=Istr,Iend
 !>        zeta(i,Jstr-1,kout)=BOUNDARY(ng)%zeta_south(i)
+!>
+          tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
 #   ifdef MASKING
 !>        zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
 !>   &                        GRID(ng)%rmask(i,Jstr-1)
-#   endif
 !>
-          tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%zeta_south(i)
-#   ifdef MASKING
           tl_zeta(i,Jstr-1,kout)=tl_zeta(i,Jstr-1,kout)*                &
      &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
@@ -695,13 +692,12 @@
 !
         DO i=Istr,Iend
 !>        zeta(i,Jend+1,kout)=BOUNDARY(ng)%zeta_north(i)
+!>
+          tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
 #   ifdef MASKING
 !>        zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
 !>   &                        GRID(ng)%rmask(i,Jend+1)
-#   endif
 !>
-          tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%zeta_north(i)
-#   ifdef MASKING
           tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*                &
      &                           GRID(ng)%rmask(i,Jend+1)
 #   endif

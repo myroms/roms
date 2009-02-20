@@ -762,36 +762,42 @@
 !
 #  ifdef SOLVE3D
           real(r8), pointer :: t_obc(:,:,:,:,:,:)
+          real(r8), pointer :: b_t_obc(:,:,:,:)
           real(r8), pointer :: d_t_obc(:,:,:,:,:)
           real(r8), pointer :: e_t_obc(:,:,:,:)
           real(r8), pointer :: ad_t_obc(:,:,:,:,:,:)
           real(r8), pointer :: tl_t_obc(:,:,:,:,:,:)
 
           real(r8), pointer :: u_obc(:,:,:,:,:)
+          real(r8), pointer :: b_u_obc(:,:,:)
           real(r8), pointer :: d_u_obc(:,:,:,:)
           real(r8), pointer :: e_u_obc(:,:,:)
           real(r8), pointer :: ad_u_obc(:,:,:,:,:)
           real(r8), pointer :: tl_u_obc(:,:,:,:,:)
 
           real(r8), pointer :: v_obc(:,:,:,:,:)
+          real(r8), pointer :: b_v_obc(:,:,:)
           real(r8), pointer :: d_v_obc(:,:,:,:)
           real(r8), pointer :: e_v_obc(:,:,:)
           real(r8), pointer :: ad_v_obc(:,:,:,:,:)
           real(r8), pointer :: tl_v_obc(:,:,:,:,:)
 #  endif
           real(r8), pointer :: ubar_obc(:,:,:,:)
+          real(r8), pointer :: b_ubar_obc(:,:)
           real(r8), pointer :: d_ubar_obc(:,:,:)
           real(r8), pointer :: e_ubar_obc(:,:)
           real(r8), pointer :: ad_ubar_obc(:,:,:,:)
           real(r8), pointer :: tl_ubar_obc(:,:,:,:)
 
           real(r8), pointer :: vbar_obc(:,:,:,:)
+          real(r8), pointer :: b_vbar_obc(:,:)
           real(r8), pointer :: d_vbar_obc(:,:,:)
           real(r8), pointer :: e_vbar_obc(:,:)
           real(r8), pointer :: ad_vbar_obc(:,:,:,:)
           real(r8), pointer :: tl_vbar_obc(:,:,:,:)
 
           real(r8), pointer :: zeta_obc(:,:,:,:)
+          real(r8), pointer :: b_zeta_obc(:,:)
           real(r8), pointer :: d_zeta_obc(:,:,:)
           real(r8), pointer :: e_zeta_obc(:,:)
           real(r8), pointer :: ad_zeta_obc(:,:,:,:)
@@ -1215,6 +1221,7 @@
 #  ifdef SOLVE3D
       allocate ( BOUNDARY(ng) % t_obc(LBij:UBij,N(ng),4,                &
      &                                Nbrec(ng),2,NT(ng)) )
+      allocate ( BOUNDARY(ng) % b_t_obc(LBij:UBij,N(ng),4,NT(ng)) )
       allocate ( BOUNDARY(ng) % d_t_obc(LBij:UBij,N(ng),4,              &
      &                                  Nbrec(ng),NT(ng)) )
       allocate ( BOUNDARY(ng) % e_t_obc(LBij:UBij,N(ng),4,NT(ng)) )
@@ -1225,6 +1232,7 @@
 
       allocate ( BOUNDARY(ng) % u_obc(LBij:UBij,N(ng),                  &
      &                                4,Nbrec(ng),2) )
+      allocate ( BOUNDARY(ng) % b_u_obc(LBij:UBij,N(ng),4) )
       allocate ( BOUNDARY(ng) % d_u_obc(LBij:UBij,N(ng),                &
      &                                   4,Nbrec(ng)) )
       allocate ( BOUNDARY(ng) % e_u_obc(LBij:UBij,N(ng),4) )
@@ -1235,6 +1243,7 @@
 
       allocate ( BOUNDARY(ng) % v_obc(LBij:UBij,N(ng),                  &
      &                                4,Nbrec(ng),2) )
+      allocate ( BOUNDARY(ng) % b_v_obc(LBij:UBij,N(ng),4) )
       allocate ( BOUNDARY(ng) % d_v_obc(LBij:UBij,N(ng),                &
      &                                  4,Nbrec(ng)) )
       allocate ( BOUNDARY(ng) % e_v_obc(LBij:UBij,N(ng),4) )
@@ -1244,18 +1253,21 @@
      &                                   4,Nbrec(ng),2) )
 #  endif
       allocate ( BOUNDARY(ng) % ubar_obc(LBij:UBij,4,Nbrec(ng),2) )
+      allocate ( BOUNDARY(ng) % b_ubar_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % d_ubar_obc(LBij:UBij,4,Nbrec(ng)) )
       allocate ( BOUNDARY(ng) % e_ubar_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % ad_ubar_obc(LBij:UBij,4,Nbrec(ng),2) )
       allocate ( BOUNDARY(ng) % tl_ubar_obc(LBij:UBij,4,Nbrec(ng),2) )
 
       allocate ( BOUNDARY(ng) % vbar_obc(LBij:UBij,4,Nbrec(ng),2) )
+      allocate ( BOUNDARY(ng) % b_vbar_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % d_vbar_obc(LBij:UBij,4,Nbrec(ng)) )
       allocate ( BOUNDARY(ng) % e_vbar_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % ad_vbar_obc(LBij:UBij,4,Nbrec(ng),2) )
       allocate ( BOUNDARY(ng) % tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2) )
 
       allocate ( BOUNDARY(ng) % zeta_obc(LBij:UBij,4,Nbrec(ng),2) )
+      allocate ( BOUNDARY(ng) % b_zeta_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % d_zeta_obc(LBij:UBij,4,Nbrec(ng)) )
       allocate ( BOUNDARY(ng) % e_zeta_obc(LBij:UBij,4) )
       allocate ( BOUNDARY(ng) % ad_zeta_obc(LBij:UBij,4,Nbrec(ng),2) )
@@ -1775,6 +1787,10 @@
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         IF (NORTH_EAST_TEST) THEN
 #  ifdef SOLVE3D
+          BOUNDARY(ng) % b_t_obc = IniVal
+          BOUNDARY(ng) % b_u_obc = IniVal
+          BOUNDARY(ng) % b_v_obc = IniVal
+
           BOUNDARY(ng) % d_t_obc = IniVal
           BOUNDARY(ng) % d_u_obc = IniVal
           BOUNDARY(ng) % d_v_obc = IniVal
@@ -1787,6 +1803,10 @@
           BOUNDARY(ng) % u_obc = IniVal
           BOUNDARY(ng) % v_obc = IniVal
 #  endif
+          BOUNDARY(ng) % b_ubar_obc = IniVal
+          BOUNDARY(ng) % b_vbar_obc = IniVal
+          BOUNDARY(ng) % b_zeta_obc = IniVal
+
           BOUNDARY(ng) % d_ubar_obc = IniVal
           BOUNDARY(ng) % d_vbar_obc = IniVal
           BOUNDARY(ng) % d_zeta_obc = IniVal

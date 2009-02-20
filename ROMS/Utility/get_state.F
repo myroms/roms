@@ -55,6 +55,12 @@
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
 #endif
+#ifdef ADJUST_BOUNDARY
+      USE nf_fread2d_bry_mod, ONLY : nf_fread2d_bry
+# ifdef SOLVE3D
+      USE nf_fread3d_bry_mod, ONLY : nf_fread3d_bry
+# endif
+#endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
       USE nf_fread3d_mod, ONLY : nf_fread3d
 #ifdef SOLVE3D
@@ -97,7 +103,7 @@
 #ifdef ADJUST_BOUNDARY
       integer :: IorJ, LBij, UBij
 #endif
-      integer :: IDmod, InpRec, gtype, i, itrc, lstr, lend
+      integer :: IDmod, InpRec, gtype, i, ifield, itrc, lstr, lend
       integer :: Nrec, mySize, ncINPid, nvatts, nvdim, status, varid
       integer :: Vsize(4), start(4), total(4)
 
@@ -481,18 +487,28 @@
 !
         IF (get_var(idSbry(isFsur)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isFsur,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isFsur)),                &
-     &                          BOUNDARY(ng) % zeta_obc(LBij:,:,:,      &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isFsur))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isFsur)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, r2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % zeta_obc(:,:,:,         &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -579,18 +595,28 @@
 !
         IF (get_var(idSbry(isUbar)).and.get_adjust.and.                 &
      &        ANY(Lobc(:,isUbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUbar)),                &
-     &                          BOUNDARY(ng) % ubar_obc(LBij:,:,:,      &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ubar_obc(:,:,:,         &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -677,18 +703,28 @@
 !
         IF (get_var(idSbry(isVbar)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVbar)),                &
-     &                          BOUNDARY(ng) % vbar_obc(LBij:,:,:,      &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % vbar_obc(:,:,:,         &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -837,18 +873,28 @@
 !
         IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isUvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUvel)),                &
-     &                          BOUNDARY(ng) % u_obc(LBij:,:,:,:,       &
-     &                                               Tindex),           &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % u_obc(:,:,:,:,          &
+     &                                                Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -931,18 +977,28 @@
 !
         IF (get_var(idSbry(isVvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVvel)),                &
-     &                          BOUNDARY(ng) % v_obc(LBij:,:,:,:,       &
-     &                                               Tindex),           &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % v_obc(:,:,:,:,          &
+     &                                                Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -1028,19 +1084,29 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.get_adjust.and.         &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
-            CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
-     &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            BOUNDARY(ng) % t_obc(LBij:,:,:,:,     &
-     &                                                 Tindex,itrc),    &
-     &                            ncid = ncINPid,                       &
-     &                            start =(/1,1,1,1,InpRec,itrc/),       &
-     &                            total =(/IorJ,N(ng),4,Nbrec(ng),1,1/),&
-     &                            min_val = Fmin, max_val = Fmax)
-            IF (exit_flag.ne.NoError) RETURN
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(1,idSbry(isTvar(itrc)))),   &
-     &                           Fmin, Fmax
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            ifield=idSbry(isTvar(itrc))
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)), &
+     &                          varid)
+            status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,          &
+     &                             Vname(1,ifield), varid,              &
+     &                             InpRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             Fscl, Fmin, Fmax,                    &
+     &                             BOUNDARY(ng) % t_obc(:,:,:,:,        &
+     &                                                  Tindex,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,ifield)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+              END IF
             END IF
           END IF
         END DO
@@ -1610,18 +1676,28 @@
 !
         IF (get_var(idSbry(isFsur)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isFsur,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isFsur)),                &
-     &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isFsur))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isFsur)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, r2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_zeta_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -1661,18 +1737,28 @@
 !
         IF (get_var(idSbry(isUbar)).and.get_adjust.and.                 &
      &        ANY(Lobc(:,isUbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUbar)),                &
-     &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_ubar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -1712,18 +1798,28 @@
 !
         IF (get_var(idSbry(isVbar)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVbar)),                &
-     &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_vbar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -1828,18 +1924,28 @@
 !
         IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isUvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUvel)),                &
-     &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_u_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -1879,18 +1985,28 @@
 !
         IF (get_var(idSbry(isVvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVvel)),                &
-     &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_v_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -1933,19 +2049,29 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.get_adjust.and.         &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
-            CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
-     &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,  &
-     &                                                    Tindex,itrc), &
-     &                            ncid = ncINPid,                       &
-     &                            start =(/1,1,1,1,InpRec,itrc/),       &
-     &                            total =(/IorJ,N(ng),4,Nbrec(ng),1,1/),&
-     &                            min_val = Fmin, max_val = Fmax)
-            IF (exit_flag.ne.NoError) RETURN
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(1,idSbry(isTvar(itrc)))),   &
-     &                           Fmin, Fmax
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            ifield=idSbry(isTvar(itrc))
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)), &
+     &                          varid)
+            status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,          &
+     &                             Vname(1,ifield), varid,              &
+     &                             InpRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             Fscl, Fmin, Fmax,                    &
+     &                             BOUNDARY(ng) % tl_t_obc(:,:,:,:,     &
+     &                                                     Tindex,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,ifield)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+              END IF
             END IF
           END IF
         END DO
@@ -2229,18 +2355,28 @@
 !
         IF (get_var(idSbry(isFsur)).and.                                &
      &      ANY(Lobc(:,isFsur,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isFsur)),                &
-     &                          BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isFsur))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isFsur)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, r2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ad_zeta_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -2280,18 +2416,29 @@
 !
         IF (get_var(idSbry(isUbar)).and.                                &
      &        ANY(Lobc(:,isUbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUbar)),                &
-     &                          BOUNDARY(ng) % ad_ubar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUbar))),           &
-     &                         Fmin, Fmax
+
+          ifield=idSbry(isUbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ad_ubar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -2331,18 +2478,28 @@
 !
         IF (get_var(idSbry(isVbar)).and.                                &
      &      ANY(Lobc(:,isVbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVbar)),                &
-     &                          BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ad_vbar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 # endif
@@ -2447,18 +2604,28 @@
 !
         IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isUvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUvel)),                &
-     &                          BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ad_u_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -2498,18 +2665,28 @@
 !
         IF (get_var(idSbry(isVvel)).and.                                &
      &      ANY(Lobc(:,isVvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVvel)),                &
-     &                          BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % ad_v_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 #  endif
@@ -2552,19 +2729,29 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.                        &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
-            CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
-     &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,  &
-     &                                                    Tindex,itrc), &
-     &                            ncid = ncINPid,                       &
-     &                            start =(/1,1,1,1,InpRec,itrc/),       &
-     &                            total =(/IorJ,N(ng),4,Nbrec(ng),1,1/),&
-     &                            min_val = Fmin, max_val = Fmax)
-            IF (exit_flag.ne.NoError) RETURN
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(1,idSbry(isTvar(itrc)))),   &
-     &                           Fmin, Fmax
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            ifield=idSbry(isTvar(itrc))
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)), &
+     &                          varid)
+            status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,          &
+     &                             Vname(1,ifield), varid,              &
+     &                             InpRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             Fscl, Fmin, Fmax,                    &
+     &                             BOUNDARY(ng) % ad_t_obc(:,:,:,:,     &
+     &                                                     Tindex,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,ifield)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+              END IF
             END IF
           END IF
         END DO
@@ -3129,7 +3316,7 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.10).and.      &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
      &                            BOUNDARY(ng) % b_t_obc(LBij:,:,:,     &
@@ -3668,7 +3855,7 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.8).and.       &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
      &                            BOUNDARY(ng) % e_t_obc(LBij:,:,:,     &
@@ -4046,18 +4233,28 @@
 !
         IF (get_var(idSbry(isFsur)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isFsur,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isFsur)),                &
-     &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isFsur))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isFsur)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, r2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_zeta_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 !
@@ -4065,18 +4262,28 @@
 !
         IF (get_var(idSbry(isUbar)).and.get_adjust.and.                 &
      &        ANY(Lobc(:,isUbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUbar)),                &
-     &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_ubar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 !
@@ -4084,18 +4291,28 @@
 !
         IF (get_var(idSbry(isVbar)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVbar,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVbar)),                &
-     &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
-     &                                                     Tindex),     &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,InpRec/),               &
-     &                          total = (/IorJ,4,Nbrec(ng),1/),         &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVbar))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVbar)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v2dvar,                        &
+     &                           LBij, UBij, Nbrec(ng),                 &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_vbar_obc(:,:,:,      &
+     &                                                      Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 
@@ -4105,18 +4322,28 @@
 !
         IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isUvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isUvel)),                &
-     &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isUvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isUvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, u3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_u_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 !
@@ -4124,18 +4351,28 @@
 !
         IF (get_var(idSbry(isVvel)).and.get_adjust.and.                 &
      &      ANY(Lobc(:,isVvel,ng))) THEN
-          CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
-     &                          Vname(1,idSbry(isVvel)),                &
-     &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
-     &                                                  Tindex),        &
-     &                          ncid = ncINPid,                         &
-     &                          start = (/1,1,1,1,InpRec/),             &
-     &                          total = (/IorJ,N(ng),4,Nbrec(ng),1/),   &
-     &                          min_val = Fmin, max_val = Fmax)
-          IF (exit_flag.ne.NoError) RETURN
-          IF (Master) THEN
-            WRITE (stdout,100) TRIM(Vname(1,idSbry(isVvel))),           &
-     &                         Fmin, Fmax
+          ifield=idSbry(isVvel)
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
+     &                        varid)
+          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
+     &                           Vname(1,ifield), varid,                &
+     &                           InpRec, v3dvar,                        &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           Fscl, Fmin, Fmax,                      &
+     &                           BOUNDARY(ng) % tl_v_obc(:,:,:,:,       &
+     &                                                   Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+            END IF
           END IF
         END IF
 !
@@ -4143,19 +4380,29 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idSbry(isTvar(itrc))).and.get_adjust.and.         &
-     &        ANY(Lobc(:,isTvar,ng))) THEN
-            CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
-     &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,  &
-     &                                                    Tindex,itrc), &
-     &                            ncid = ncINPid,                       &
-     &                            start =(/1,1,1,1,InpRec,itrc/),       &
-     &                            total =(/IorJ,N(ng),4,Nbrec(ng),1,1/),&
-     &                            min_val = Fmin, max_val = Fmax)
-            IF (exit_flag.ne.NoError) RETURN
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(1,idSbry(isTvar(itrc)))),   &
-     &                           Fmin, Fmax
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            ifield=idSbry(isTvar(itrc))
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)), &
+     &                          varid)
+            status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,          &
+     &                             Vname(1,ifield), varid,              &
+     &                             InpRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             Fscl, Fmin, Fmax,                    &
+     &                             BOUNDARY(ng) % tl_t_obc(:,:,:,:,     &
+     &                                                     Tindex,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,ifield)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
+              END IF
             END IF
           END IF
         END DO

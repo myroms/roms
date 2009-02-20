@@ -292,12 +292,24 @@
         integer, allocatable :: NHsteps(:,:)
         integer, allocatable :: NVsteps(:,:)
 !
+!  Boundary conditions error covariance: Full number of horizontal and
+!  vertical diffusion operator step for spatial convolutions.
+!
+        integer, allocatable :: NHstepsB(:,:)
+        integer, allocatable :: NVstepsB(:,:)
+!
 !  Initial conditions, surface forcing and model error covariance:
 !  Horizontal and vertical diffusion operator time-step size for
 !  spatial convolutions.
 !
         real(r8), allocatable :: DTsizeH(:)
         real(r8), allocatable :: DTsizeV(:)
+!
+!  Boundary conditions error covariance: Horizontal and vertical
+!  diffusion operator time-step size for spatial convolutions.
+!
+        real(r8), allocatable :: DTsizeHB(:,:)
+        real(r8), allocatable :: DTsizeVB(:,:)
 !
 !  Minimum and maximum Horizontal and vertical diffusion coefficients
 !  used in spatial convolutions.
@@ -741,13 +753,26 @@
       NHsteps = 0
 
       allocate ( NVsteps(2,MstateVar) )
-      NHsteps = 0
+      NVsteps = 0
 
       allocate ( DTsizeH(MstateVar) )
       DTsizeH = IniVal
 
       allocate ( DTsizeV(MstateVar) )
       DTsizeV = IniVal
+
+      allocate ( NVstepsB(4,MstateVar) )
+      NVstepsB = 0
+
+      allocate ( NHstepsB(4,MstateVar) )
+      NHstepsB = 0
+
+      allocate ( DTsizeHB(4,MstateVar) )
+      DTsizeHB = IniVal
+
+      allocate ( DTsizeVB(4,MstateVar) )
+      DTsizeVB = IniVal
+
 
 # if defined IS4DVAR || defined WEAK_CONSTRAINT || defined IOM
 !

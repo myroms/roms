@@ -110,8 +110,10 @@
           integer, pointer :: LBj(:)   ! lower bound J-dimension
           integer, pointer :: UBj(:)   ! upper bound J-dimension
 
-          integer :: LBij              ! Lower bound MIN(I,J)-dimension
+          integer :: LBij              ! lower bound MIN(I,J)-dimension
           integer :: UBij              ! upper bound MAX(I,J)-dimension
+
+          integer :: edge(4,4)         ! boundary edges I- or J-indices
 
           integer, pointer :: Istr(:)  ! starting tile I-direction
           integer, pointer :: Iend(:)  ! ending   tile I-direction

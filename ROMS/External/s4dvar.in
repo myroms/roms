@@ -212,7 +212,7 @@ HdecayB(isTvar) == 4*100.0d+3  4*100.0d+3                 ! 1:NT tracers
 
 VdecayB(isUvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D U-momentum
 VdecayB(isVvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D V-momentum
-vdecayB(isTvar) == 4*100.d0  4*100.d0                     ! 1:NT tracers
+VdecayB(isTvar) == 4*100.d0  4*100.d0                     ! 1:NT tracers
 
 ! Surface forcing error covariance: horizontal, isotropic decorrelation
 ! scales (m).

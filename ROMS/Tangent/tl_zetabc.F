@@ -208,12 +208,19 @@
 !
         DO j=Jstr,Jend
 !>        zeta(Istr-1,j,kout)=BOUNDARY(ng)%zeta_west(j)
+!>
+#   ifdef ADJUST_BOUNDARY
+          tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
+#   else
+          tl_zeta(Istr-1,j,kout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>        zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
 !>   &                        GRID(ng)%rmask(Istr-1,j)
-#   endif
 !>
-          tl_zeta(Istr-1,j,kout)=0.0_r8
+          tl_zeta(Istr-1,j,kout)=tl_zeta(Istr-1,j,kout)*                &
+     &                           GRID(ng)%rmask(Istr-1,j)
+#   endif
         END DO
 
 #  elif defined WEST_FSGRADIENT
@@ -352,12 +359,19 @@
 !
         DO j=Jstr,Jend
 !>        zeta(Iend+1,j,kout)=BOUNDARY(ng)%zeta_east(j)
+!>
+#   ifdef ADJUST_BOUNDARY
+          tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
+#   else
+          tl_zeta(Iend+1,j,kout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>        zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
 !>   &                        GRID(ng)%rmask(Iend+1,j)
-#   endif
 !>
-          tl_zeta(Iend+1,j,kout)=0.0_r8
+          tl_zeta(Iend+1,j,kout)=tl_zeta(Iend+1,j,kout)*                &
+     &                           GRID(ng)%rmask(Iend+1,j)
+#   endif
         END DO
 
 #  elif defined EAST_FSGRADIENT
@@ -499,12 +513,19 @@
 !
         DO i=Istr,Iend
 !>        zeta(i,Jstr-1,kout)=BOUNDARY(ng)%zeta_south(i)
+!>
+#   ifdef ADJUST_BOUNDARY
+          tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
+#   else
+          tl_zeta(i,Jstr-1,kout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>        zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
 !>   &                        GRID(ng)%rmask(i,Jstr-1)
-#   endif
 !>
-          tl_zeta(i,Jstr-1,kout)=0.0_r8
+          tl_zeta(i,Jstr-1,kout)=tl_zeta(i,Jstr-1,kout)*                &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+#   endif
         END DO
 
 #  elif defined SOUTH_FSGRADIENT
@@ -642,12 +663,19 @@
 !
         DO i=Istr,Iend
 !>        zeta(i,Jend+1,kout)=BOUNDARY(ng)%zeta_north(i)
+!>
+#   ifdef ADJUST_BOUNDARY
+          tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
+#   else
+          tl_zeta(i,Jend+1,kout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>        zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
 !>   &                        GRID(ng)%rmask(i,Jend+1)
-#   endif
 !>
-          tl_zeta(i,Jend+1,kout)=0.0_r8
+          tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*                &
+     &                           GRID(ng)%rmask(i,Jend+1)
+#   endif
         END DO
 
 #  elif defined NORTH_FSGRADIENT

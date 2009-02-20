@@ -2341,6 +2341,12 @@
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 #endif
+#ifdef ADJUST_BOUNDARY
+      USE nf_fread2d_bry_mod, ONLY : nf_fread2d_bry
+# ifdef SOLVE3D
+      USE nf_fread3d_bry_mod, ONLY : nf_fread3d_bry
+# endif
+#endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
 #ifdef SOLVE3D
       USE nf_fread3d_mod, ONLY : nf_fread3d
@@ -2429,7 +2435,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k
-      integer :: ib, ir, it
+      integer :: ifield, it
       integer :: gtype, ncid, status, varid
 
       integer, dimension(4) :: Vsize
@@ -2488,9 +2494,37 @@
         RETURN
       END IF
 
+#ifdef ADJUST_BOUNDARY
+!
+!  Read in free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+        ifield=idSbry(isFsur)
+        gtype=r2dvar
+        scale=1.0_r8
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),      &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread2d_bry (ng, model, ncname, ncid,                 &
+     &                         Vname(1,ifield), varid,                  &
+     &                         rec, gtype,                              &
+     &                         LBij, UBij, Nbrec(ng),                   &
+     &                         scale, Fmin, Fmax,                       &
+     &                         s_zeta_obc(:,:,:,Lwrk))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
 #ifndef SOLVE3D
 !
-!  Read in 2D momentum.
+!  Read in 2D U-momentum component.
 !
       gtype=u2dvar
       scale=1.0_r8
@@ -2515,7 +2549,9 @@
         ioerror=status
         RETURN
       END IF
-
+!
+!  Read in 2D V-momentum component.
+!
       gtype=v2dvar
       scale=1.0_r8
       CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVbar),        &
@@ -2540,7 +2576,60 @@
         RETURN
       END IF
 #endif
+#ifdef ADJUST_BOUNDARY
+!
+!  Read in 2D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+        ifield=idSbry(isUbar)
+        gtype=u2dvar
+        scale=1.0_r8
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),      &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
 
+        status=nf_fread2d_bry (ng, model, ncname, ncid,                 &
+     &                         Vname(1,ifield), varid,                  &
+     &                         rec, gtype,                              &
+     &                         LBij, UBij, Nbrec(ng),                   &
+     &                         scale, Fmin, Fmax,                       &
+     &                         s_ubar_obc(:,:,:,Lwrk))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Read in 2D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+        ifield=idSbry(isVbar)
+        gtype=u2dvar
+        scale=1.0_r8
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),      &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread2d_bry (ng, model, ncname, ncid,                 &
+     &                         Vname(1,ifield), varid,                  &
+     &                         rec, gtype,                              &
+     &                         LBij, UBij, Nbrec(ng),                   &
+     &                         scale, Fmin, Fmax,                       &
+     &                         s_vbar_obc(:,:,:,Lwrk))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
 #ifdef ADJUST_WSTRESS
 !
 !  Read surface momentum stress.
@@ -2596,7 +2685,7 @@
 
 #ifdef SOLVE3D
 !
-!  Read in 3D momentum.
+!  Read in 3D U-momentum component.
 !
       gtype=u3dvar
       scale=1.0_r8
@@ -2622,6 +2711,37 @@
         RETURN
       END IF
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Read in 3D U-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isUvel,ng))) THEN
+        ifield=idSbry(isUvel)
+        gtype=u3dvar
+        scale=1.0_r8
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),      &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d_bry (ng, model, ncname, ncid,                 &
+     &                         Vname(1,ifield), varid,                  &
+     &                         rec, gtype,                              &
+     &                         LBij, UBij, 1, N(ng), Nbrec(ng),         &
+     &                         scale, Fmin, Fmax,                       &
+     &                         s_u_obc(:,:,:,:,Lwrk))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
+!
+!  Read in 3D U-momentum component.
+!
       gtype=v3dvar
       scale=1.0_r8
       CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idVvel),        &
@@ -2645,6 +2765,35 @@
         ioerror=status
         RETURN
       END IF
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Read in 3D V-momentum component open boundaries.
+!
+      IF (ANY(Lobc(:,isVvel,ng))) THEN
+        ifield=idSbry(isVvel)
+        gtype=u3dvar
+        scale=1.0_r8
+        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),      &
+     &                         ncid, varid)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=nf_fread3d_bry (ng, model, ncname, ncid,                 &
+     &                         Vname(1,ifield), varid,                  &
+     &                         rec, gtype,                              &
+     &                         LBij, UBij, 1, N(ng), Nbrec(ng),         &
+     &                         scale, Fmin, Fmax,                       &
+     &                         s_v_obc(:,:,:,:,Lwrk))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
 !
 !  Read in tracers.
 !
@@ -2675,6 +2824,36 @@
         END IF
       END DO
 
+# ifdef ADJUST_BOUNDARY
+!
+!  Read in tracers open boundaries.
+!
+      DO it=1,NT(ng)
+        IF (ANY(Lobc(:,isTvar(it),ng))) THEN
+          ifield=idSbry(isTvar(it))
+          gtype=r3dvar
+          scale=1.0_r8
+          CALL netcdf_inq_varid (ng, model, ncname, Vname(1,ifield),    &
+     &                           ncid, varid)
+          IF (exit_flag.ne.NoError) RETURN
+
+          status=nf_fread3d_bry (ng, model, ncname, ncid,               &
+     &                           Vname(1,ifield), varid,                &
+     &                           rec, gtype,                            &
+     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
+     &                           scale, Fmin, Fmax,                     &
+     &                           s_t_obc(:,:,:,:,Lwrk,it))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,ifield)), rec, TRIM(ncname)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+# endif
 # ifdef ADJUST_STFLUX
 !
 !  Read in surface tracers flux.
@@ -2707,6 +2886,11 @@
       END DO
 # endif
 #endif
+
+
+
+
+
 !
 !  If multiple files, close current file.
 !
@@ -2773,7 +2957,8 @@
       USE mod_param
       USE mod_ncparam
       USE mod_parallel
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
+    defined ADJUST_BOUNDARY
       USE mod_scalars
 #endif
 !

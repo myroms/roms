@@ -299,7 +299,7 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: NSUB, i, is, j, k, rec
+      integer :: NSUB, bry, i, is, j, k, rec
 
       real(r8), parameter :: Large = 1.0E+20_r8
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
@@ -322,7 +322,7 @@
       character (len=4) :: units
 #endif
 #if defined FOUR_DVAR
-      character (len=8) :: Text
+      character (len=50) :: Text
 #endif
 
 #ifdef DISTRIBUTE
@@ -1008,6 +1008,31 @@
 #  endif
 # endif
       END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Open boundaries convolutions. Recall that the horizontal convolutions
+!  are one-dimensional so a factor of 2 is used instead.
+!
+      DO bry=1,4
+        DO is=1,NstateVar(ng)
+          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
+            DTsizeHB(bry,is)=Hgamma*DYmin(ng)*DYmin(ng)/                &
+     &                       (2.0_r8*KhMax(ng))
+          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
+            DTsizeHB(bry,is)=Hgamma*DXmin(ng)*DXmin(ng)/                &
+     &                       (2.0_r8*KhMax(ng))
+          END IF
+#  ifdef SOLVE3D
+#   ifdef IMPLICIT_VCONV
+          DTsizeVB(bry,is)=Vgamma*DZmax(ng)*DZmax(ng)/(2.0_r8*KvMax(ng))
+#   else
+          DTsizeVB(bry,is)=Vgamma*DZmin(ng)*DZmin(ng)/(2.0_r8*KvMax(ng))
+#   endif
+#  endif
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Determine FULL number of integeration steps as function of the
@@ -1021,7 +1046,8 @@
       DO rec=1,2
         DO is=1,NstateVar(ng)
           IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
-            NHsteps(rec,is)=NINT(Hdecay(rec,is,ng)*Hdecay(rec,is,ng)/   &
+            NHsteps(rec,is)=NINT(Hdecay(rec,is,ng)*                     &
+     &                           Hdecay(rec,is,ng)/                     &
      &                           (2.0_r8*KhMax(ng)*DTsizeH(is)))
             IF (MOD(NHsteps(rec,is),2).ne.0) THEN
               NHsteps(rec,is)=NHsteps(rec,is)+1
@@ -1029,7 +1055,8 @@
           END IF
 # ifdef SOLVE3D
           IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
-            NVsteps(rec,is)=NINT(Vdecay(rec,is,ng)*Vdecay(rec,is,ng)/   &
+            NVsteps(rec,is)=NINT(Vdecay(rec,is,ng)*                     &
+     &                           Vdecay(rec,is,ng)/                     &
      &                           (2.0_r8*KvMax(ng)*DTsizeV(is)))
 #  ifdef IMPLICIT_VCONV
             NVsteps(rec,is)=MAX(1,NVsteps(rec,is))
@@ -1041,6 +1068,37 @@
           END IF
         END DO
       END DO
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Boundary conditions model error covariance.
+!
+      DO bry=1,4
+        DO is=1,NstateVar(ng)
+          IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
+            NHstepsB(bry,is)=NINT(HdecayB(is,bry,ng)*                   &
+     &                            HdecayB(is,bry,ng)/                   &
+     &                           (2.0_r8*KhMax(ng)*DTsizeHB(bry,is)))
+            IF (MOD(NHstepsB(bry,is),2).ne.0) THEN
+              NHstepsB(bry,is)=NHstepsB(bry,is)+1
+            END IF
+          END IF
+#  ifdef SOLVE3D
+          IF (VdecayB(is,bry,ng).gt.0.0_r8) THEN
+            NVstepsB(bry,is)=NINT(VdecayB(is,bry,ng)*                   &
+     &                            VdecayB(is,bry,ng)/                   &
+     &                           (2.0_r8*KvMax(ng)*DTsizeVB(bry,is)))
+#   ifdef IMPLICIT_VCONV
+            NVstepsB(bry,is)=MAX(1,NVstepsB(bry,is))
+#   endif
+            IF (MOD(NVstepsB(bry,is),2).ne.0) THEN
+              NVstepsB(bry,is)=NVstepsB(bry,is)+1
+            END IF
+#  endif
+          END IF
+        END DO
+      END DO
+# endif      
 !
 !  Report convolution parameters.
 !
@@ -1049,53 +1107,95 @@
         DO rec=1,NSA
           DO is=1,NstateVar(ng)
             IF (rec.eq.1) THEN
-              Text='NHstepsI'
+              Text='Horizontal convolution, NHstepsI, DTsizeH  ='
             ELSE IF (rec.eq.2) THEN
-              Text='NHstepsM'
+              Text='Horizontal convolution, NHstepsM, DTsizeH  ='
 #  ifdef SOLVE3D
             ELSE IF (is.gt.(5+NT(ng))) THEN
 #  else
             ELSE IF (is.gt.3) THEN
 #  endif
-              Text='NHstepsF'
+              Text='Horizontal convolution, NHstepsF, DTsizeH  ='
             END IF
             IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
               WRITE (stdout,70) TRIM(Text), NHsteps(rec,is),            &
      &                          DTsizeH(is), TRIM(Vname(1,idSvar(is)))
             END IF
           END DO
-          WRITE (stdout,90)
+          WRITE (stdout,80)
         END DO
 # if defined SOLVE3D && defined VCONVOLUTION
         DO rec=1,NSA
           DO is=1,NstateVar(ng)
             IF (rec.eq.1) THEN
-              Text='NVstepsI'
+              Text='Vertical   convolution, NVstepsI, DTsizeV  ='
             ELSE IF (rec.eq.2) THEN
-              Text='NVstepsM'
+              Text='Vertical   convolution, NVstepsM, DTsizeV  ='
 #  ifdef SOLVE3D
             ELSE IF (is.gt.(5+NT(ng))) THEN
 #  else
             ELSE IF (is.gt.3) THEN
 #  endif
-              Text='NVstepsF'
+              Text='Vertical   convolution, NVstepsF, DTsizeV  ='
             END IF
             IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
-              WRITE (stdout,80) TRIM(Text), NVsteps(rec,is),            &
+              WRITE (stdout,70) TRIM(Text), NVsteps(rec,is),            &
      &                          DTsizeV(is), TRIM(Vname(1,idSvar(is)))
              END IF
           END DO
-          WRITE (stdout,90)
+          WRITE (stdout,80)
         END DO
 # endif
+# ifdef ADJUST_BOUNDARY
+        DO is=1,NstateVar(ng)
+          DO bry=1,4
+            IF (Lobc(bry,is,ng)) THEN
+              IF (bry.eq.iwest) THEN
+                Text='West  bry Hconvolution, NHstepsB, DTsizeHB ='
+              ELSE IF (bry.eq.isouth) THEN
+                Text='South bry Hconvolution, NHstepsB, DTsizeHB ='
+              ELSE IF (bry.eq.ieast) THEN
+                Text='East  bry Hconvolution, NHstepsB, DTsizeHB ='
+              ELSE IF (bry.eq.isouth) THEN
+                Text='North bry Hconvolution, NHstepsB, DTsizeHB ='
+              END IF
+              IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
+                WRITE (stdout,70) TRIM(Text), NHstepsB(bry,is),         &
+     &                            DTsizeHB(bry,is),                     &
+     &                            TRIM(Vname(1,idSbry(is)))
+              END IF
+            END IF
+          END DO
+        END DO
+        WRITE (stdout,80)
+#  if defined SOLVE3D && defined VCONVOLUTION
+        DO is=1,NstateVar(ng)
+          DO bry=1,4
+            IF (Lobc(bry,is,ng)) THEN
+              IF (bry.eq.iwest) THEN
+
+                Text='West  bry Vconvolution, NVstepsB, DTsizeVB ='
+              ELSE IF (bry.eq.isouth) THEN
+                Text='South bry Vconvolution, NVstepsB, DTsizeVB ='
+              ELSE IF (bry.eq.ieast) THEN
+                Text='East  bry Vconvolution, NVstepsB, DTsizeVB ='
+              ELSE IF (bry.eq.isouth) THEN
+                Text='North bry Vconvolution, NVstepsB, DTsizeVB ='
+              END IF
+              IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
+                WRITE (stdout,70) TRIM(Text), NVstepsB(bry,is),         &
+     &                            DTsizeVB(bry,is),                     &
+     &                            TRIM(Vname(1,idSbry(is)))
+              END IF
+            END IF
+          END DO
+        END DO
+#  endif
+# endif 
       END IF
 
-  70  FORMAT (' Horizontal convolution, ',a,', DTsizeH = ',             &
-     &        i5,1x,1pe15.8,' s',2x,a)
-  80  FORMAT (' Vertical   convolution, ',a,', DTsizeV = ',             &
-     &            i5,1x,1pe15.8,' s',2x,a)
-  90  FORMAT (1x)
-
+  70  FORMAT (1X,a,i5,1x,1pe15.8,' s',2x,a)
+  80  FORMAT (1x)
 #endif
 
       RETURN

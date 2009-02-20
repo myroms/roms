@@ -161,13 +161,12 @@
         DO k=1,N(ng)
           DO j=Jstr,Jend
 !>          u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
+!>
+            tl_u(Istr,j,k,nout)=BOUNDARY(ng)%tl_u_west(j,k)
 #   ifdef MASKING
 !>          u(Istr,j,k,nout)=u(Istr,j,k,nout)*                          &
 !>   &                       GRID(ng)%umask(Istr,j)
-#   endif
 !>
-            tl_u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
-#   ifdef MASKING
             tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                    &
      &                          GRID(ng)%umask(Istr,j)
 #   endif
@@ -281,13 +280,12 @@
       DO k=1,N(ng)
         DO j=Jstr,Jend
 !>          u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
+!>
+            tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_u_east(j,k)
 #   ifdef MASKING
 !>          u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                      &
 !>   &                         GRID(ng)%umask(Iend+1,j)
-#   endif
 !>
-            tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
-#   ifdef MASKING
             tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*                &
      &                            GRID(ng)%umask(Iend+1,j)
 #   endif
@@ -404,13 +402,12 @@
         DO k=1,N(ng)
           DO i=IstrU,Iend
 !>          u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
+!>
+            tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%tl_u_south(i,k)
 #   ifdef MASKING
 !>          u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
 !>   &                         GRID(ng)%umask(i,Jstr-1)
-#   endif
 !>
-            tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
-#   ifdef MASKING
             tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*                &
      &                            GRID(ng)%umask(i,Jstr-1)
 #   endif
@@ -539,13 +536,12 @@
         DO k=1,N(ng)
           DO i=IstrU,Iend
 !>          u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
+!>
+            tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_u_north(i,k)
 #   ifdef MASKING
 !>          u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
 !>   &                         GRID(ng)%umask(i,Jend+1)
-#   endif
 !>
-            tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
-#   ifdef MASKING
             tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*                &
      &                            GRID(ng)%umask(i,Jend+1)
 #   endif

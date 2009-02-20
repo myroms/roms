@@ -42,8 +42,13 @@
 
       integer :: i, j, nvd3, nvd4
       integer :: recdim, status, varid
-
+# ifdef ADJUST_BOUNDARY
+      integer :: IorJdim, ifield
+# endif
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+# ifdef ADJUST_BOUNDARY
+      integer :: t2dobc(3)
+# endif
       integer :: Vsize(4)
 
       integer :: def_dim
@@ -52,6 +57,9 @@
       integer :: itrc
 
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4)
+#  ifdef ADJUST_BOUNDARY
+      integer :: t3dobc(4)
+#  endif
 # endif
 
       real(r8) :: Aval(6)
@@ -113,6 +121,14 @@
         status=def_dim(ng, iTLM, ncNRMid(ifile,ng), ncname, 'eta_psi',  &
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
         IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJUST_BOUNDARY
+        IF (ifile.eq.3) THEN
+          status=def_dim(ng, iTLM, ncNRMid(ifile,ng), ncname, 'IorJ',   &
+     &                   IOBOUNDS(ng)%IorJ, IorJdim)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
 
 # if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iTLM, ncNRMid(ifile,ng), ncname, 'xy_rho',   &
@@ -235,6 +251,17 @@
         t3dgrd(2)=DimIDs( 5)
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
+#  endif
+# endif
+# ifdef ADJUST_BOUNDARY
+        t2dobc(1)=IorJdim
+        t2dobc(2)=DimIDs(14)
+        t2dobc(3)=DimIDs(12)
+#  ifdef SOLVE3D
+        t3dobc(1)=IorJdim
+        t3dobc(2)=DimIDs( 9)
+        t3dobc(3)=DimIDs(14)
+        t3dobc(4)=DimIDs(12)
 #  endif
 # endif
 !
@@ -462,8 +489,121 @@
 !-----------------------------------------------------------------------
 !
         ELSE IF (ifile.eq.3) THEN
-          Text='boundary conditions error covariance normalization'
+          Text='error covariance normalization'
+!
+!  Define free-surface open boundaries.
+!
+          IF (ANY(Lobc(:,isFsur,ng))) THEN
+            ifield=idSbry(isFsur)
+            Vinfo( 1)=Vname(1,ifield)
+            WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
+     &                     nrmVid(ifile,ifield,ng),                     &
+     &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
+     &                   SetFillVal = .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+!
+!  Define 2D U-momentum component open boundaries.
+!
+          IF (ANY(Lobc(:,isUbar,ng))) THEN
+            ifield=idSbry(isUbar)
+            Vinfo( 1)=Vname(1,ifield)
+            WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
+     &                     nrmVid(ifile,ifield,ng),                     &
+     &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
+     &                     SetFillVal = .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+!
+!  Define 2D V-momentum component open boundaries.
+!
+          IF (ANY(Lobc(:,isVbar,ng))) THEN
+            ifield=idSbry(isVbar)
+            Vinfo( 1)=Vname(1,ifield)
+            WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
+     &                     nrmVid(ifile,ifield,ng),                     &
+     &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
+     &                     SetFillVal = .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
 
+#  ifdef SOLVE3D
+!
+!  Define 3D U-momentum component open boundaries.
+!
+          IF (ANY(Lobc(:,isUvel,ng))) THEN
+            ifield=idSbry(isUvel)
+            Vinfo( 1)=Vname(1,ifield)
+            WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
+     &                     nrmVid(ifile,ifield,ng),                     &
+     &                     NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,     &
+     &                     SetFillVal = .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+!
+!  Define 3D V-momentum component open boundaries.
+!
+          IF (ANY(Lobc(:,isVvel,ng))) THEN
+            ifield=idSbry(isVvel)
+            Vinfo( 1)=Vname(1,ifield)
+            WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+            Vinfo( 3)=Vname(3,ifield)
+            Vinfo(14)=Vname(4,ifield)
+            Vinfo(16)=Vname(1,idtime)
+            Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
+     &                     nrmVid(ifile,ifield,ng),                     &
+     &                     NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,     &
+     &                     SetFillVal = .FALSE.)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+!
+!  Define tracer type variables open boundaries.
+!
+          DO itrc=1,NT(ng)
+            IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+              ifield=idSbry(isTvar(itrc))
+              Vinfo( 1)=Vname(1,ifield)
+              WRITE (Vinfo( 2),20) TRIM(Vname(2,ifield)), TRIM(Text)
+              Vinfo( 3)=Vname(3,ifield)
+              Vinfo(14)=Vname(4,ifield)
+              Vinfo(16)=Vname(1,idtime)
+#   ifdef SEDIMENT
+              DO i=1,NST
+                IF (itrc.eq.idsed(i)) THEN
+                  WRITE (Vinfo(19),30) 1000.0_r8*Sd50(i,ng)
+                END IF
+              END DO
+#   endif
+              Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
+              status=def_var(ng, iTLM, ncNRMid(ifile,ng),               &
+     &                       nrmVid(ifile,ifield,ng),                   &
+     &                       NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,   &
+     &                       SetFillVal = .FALSE.)
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
+          END DO
+#  endif
 # endif
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -602,6 +742,20 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
             nrmVid(ifile,idVbar,ng)=var_id(i)
+# ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isFsur)))) THEN
+            got_var(idSbry(isFsur))=.TRUE.
+            nrmVid(ifile,idSbry(isFsur),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isUbar)))) THEN
+            got_var(idSbry(isUbar))=.TRUE.
+            nrmVid(ifile,idSbry(isUbar),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isVbar)))) THEN
+            got_var(idSbry(isVbar))=.TRUE.
+            nrmVid(ifile,idSbry(isVbar),ng)=var_id(i)
+# endif
 # ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
@@ -609,6 +763,16 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
             nrmVid(ifile,idVvel,ng)=var_id(i)
+#  ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isUvel)))) THEN
+            got_var(idSbry(isUvel))=.TRUE.
+            nrmVid(ifile,idSbry(isUvel),ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isVvel)))) THEN
+            got_var(idSbry(isVvel))=.TRUE.
+            nrmVid(ifile,idSbry(isVvel),ng)=var_id(i)
+#  endif
 # endif
 # ifdef ADJUST_WSTRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
@@ -624,6 +788,12 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
               got_var(idTvar(itrc))=.TRUE.
               nrmVid(ifile,idTvar(itrc),ng)=var_id(i)
+#  ifdef ADJUST_BOUNDARY
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
+              got_var(idSbry(isTvar(itrc)))=.TRUE.
+              nrmVid(ifile,idSbry(isTvar(itrc)),ng)=var_id(i)
+#  endif
 #  ifdef ADJUST_STFLUX
             ELSE IF (TRIM(var_name(i)).eq.                              &
      &               TRIM(Vname(1,idTsur(itrc)))) THEN
@@ -662,6 +832,26 @@
           exit_flag=3
           RETURN
         END IF
+# ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSbry(isFsur)).and.(ifile.eq.3)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isFsur))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isUbar)).and.(ifile.eq.3)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isUbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isVbar)).and.(ifile.eq.3)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isVbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.(ifile.le.2)) THEN
           IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUvel)),          &
@@ -675,6 +865,20 @@
           exit_flag=3
           RETURN
         END IF
+#  ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSbry(isUvel)).and.(ifile.eq.3)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSvar(isUvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isVvel)).and.(ifile.eq.3)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSvar(isVvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
 # endif
 # ifdef ADJUST_WSTRESS
         IF (.not.got_var(idUsms).and.(ifile.eq.4)) THEN
@@ -698,6 +902,15 @@
             exit_flag=3
             RETURN
           END IF
+#  ifdef ADJUST_BOUNDARY
+          IF (.not.got_var(idSbry(isTvar(itrc))).and.(ifile.eq.3)) THEN
+            IF (Master) WRITE (stdout,50)                               &
+     &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
+     &                        TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+#  endif
 #  ifdef ADJUST_STFLUX
           IF (.not.got_var(idTsur(itrc)).and.(ifile.eq.4)) THEN
             IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTsur(itrc))),  &

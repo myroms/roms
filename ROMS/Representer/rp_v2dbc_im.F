@@ -200,7 +200,8 @@
           bry_pgr=-g*(zeta(i,Jstr,know)-                                &
      &                BOUNDARY(ng)%zeta_south(i))*                      &
      &            0.5_r8*GRID(ng)%pn(i,Jstr)
-          tl_bry_pgr=-g*tl_zeta(i,Jstr,know)*                           &
+          tl_bry_pgr=-g*(tl_zeta(i,Jstr,know)-                          &
+     &                   BOUNDARY(ng)%tl_zeta_south(i))*                &
      &               0.5_r8*GRID(ng)%pn(i,Jstr)
 #    else
           bry_pgr=-g*(zeta(i,Jstr  ,know)-                              &
@@ -283,7 +284,7 @@
 #   else
 !>        bry_val=BOUNDARY(ng)%vbar_south(i)
 !>
-          tl_bry_val=0.0_r8
+          tl_bry_val=BOUNDARY(ng)%tl_vbar_south(i)
 #   endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                     &
      &                        zeta(i,Jstr-1,know)+                      &
@@ -311,10 +312,12 @@
      &                                        zeta(i,Jstr  ,know))-     &
      &                                BOUNDARY(ng)%zeta_south(i))-      &
      &                         Ce*(0.5_r8*(tl_zeta(i,Jstr-1,know)+      &
-     &                                     tl_zeta(i,Jstr  ,know)))+    &
+     &                                     tl_zeta(i,Jstr  ,know))-     &
+     &                             BOUNDARY(ng)%tl_zeta_south(i))+      &
 #   ifdef TL_IOMS
      &                         Ce*(0.5_r8*(zeta(i,Jstr-1,know)+         &
-     &                                     zeta(i,Jstr  ,know)))
+     &                                     zeta(i,Jstr  ,know))-        &
+     &                             BOUNDARY(ng)%zeta_south(i))
 #   endif
 #   ifdef MASKING
 !>        vbar(i,Jstr,kout)=vbar(i,Jstr,kout)*                          &
@@ -331,13 +334,12 @@
 !
         DO i=Istr,Iend
 !>        vbar(i,Jstr,kout)=BOUNDARY(ng)%vbar_south(i)
+!>
+          tl_vbar(i,Jstr,kout)=BOUNDARY(ng)%tl_vbar_south(i)
 #   ifdef MASKING
 !>        vbar(i,Jstr,kout)=vbar(i,Jstr,kout)*                          &
 !>    &                     GRID(ng)%vmask(i,Jstr)
-#   endif
 !>
-          tl_vbar(i,Jstr,kout)=BOUNDARY(ng)%vbar_south(i)
-#   ifdef MASKING
           tl_vbar(i,Jstr,kout)=tl_vbar(i,Jstr,kout)*                    &
       &                        GRID(ng)%vmask(i,Jstr)
 #   endif
@@ -370,7 +372,8 @@
 !>   &                BOUNDARY(ng)%zeta_south(i))*                      &
 !>   &            0.5_r8*GRID(ng)%pn(i,Jstr)
 !>
-          tl_bry_pgr=-g*tl_zeta(i,Jstr,know)*                           &
+          tl_bry_pgr=-g*(tl_zeta(i,Jstr,know)-                          &
+     &                   BOUNDARY(ng)%tl_zeta_south(i))*                &
      &               0.5_r8*GRID(ng)%pn(i,Jstr)
 #  else
 !>        bry_pgr=-g*(zeta(i,Jstr,know)-                                &
@@ -527,7 +530,8 @@
           bry_pgr=-g*(BOUNDARY(ng)%zeta_north(i)-                       &
      &                zeta(i,Jend,know))*                               &
      &            0.5_r8*GRID(ng)%pn(i,Jend)
-          tl_bry_pgr=g*tl_zeta(i,Jend,know)*                            &
+          tl_bry_pgr=-g*(BOUNDARY(ng)%tl_zeta_north(i)-                 &
+     &                   tl_zeta(i,Jend,know))*                         &
      &               0.5_r8*GRID(ng)%pn(i,Jend)
 #    else
           bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
@@ -610,7 +614,7 @@
 #   else
 !>        bry_val=BOUNDARY(ng)%vbar_north(i)
 !>
-          tl_bry_val=0.0_r8
+          tl_bry_val=BOUNDARY(ng)%tl_vbar_north(i)
 #   endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                     &
      &                        zeta(i,Jend  ,know)+                      &
@@ -638,10 +642,12 @@
      &                                          zeta(i,Jend+1,know))-   &
      &                                  BOUNDARY(ng)%zeta_north(i))+    &
      &                           Ce*(0.5_r8*(tl_zeta(i,Jend  ,know)+    &
-     &                                       tl_zeta(i,Jend+1,know)))-  &
+     &                                       tl_zeta(i,Jend+1,know))-   &
+     &                               BOUNDARY(ng)%tl_zeta_north(i))-    &
 #   ifdef TL_IOMS
      &                           Ce*(0.5_r8*(zeta(i,Jend  ,know)+       &
-     &                                       zeta(i,Jend+1,know)))
+     &                                       zeta(i,Jend+1,know))-      &
+     &                               BOUNDARY(ng)%zeta_north(i))
 #   endif
 #   ifdef MASKING
 !>        vbar(i,Jend+1,kout)=vbar(i,Jend+1,kout)*                      &
@@ -663,7 +669,7 @@
 !>   &                        GRID(ng)%vmask(i,Jend+1)
 #   endif
 !>
-          tl_vbar(i,Jend+1,kout)=BOUNDARY(ng)%vbar_north(i)
+          tl_vbar(i,Jend+1,kout)=BOUNDARY(ng)%tl_vbar_north(i)
 #   ifdef MASKING
           tl_vbar(i,Jend+1,kout)=tl_vbar(i,Jend+1,kout)*                &
      &                           GRID(ng)%vmask(i,Jend+1)
@@ -697,7 +703,8 @@
 !>   &                zeta(i,Jend,know))*                               &
 !>   &            0.5_r8*GRID(ng)%pn(i,Jend)
 !>
-          tl_bry_pgr=g*zeta(i,Jend,know))*                              &
+          tl_bry_pgr=-g*(BOUNDARY(ng)%tl_zeta_north(i)-                 &
+     &                   tl_zeta(i,Jend,know))*                         &
      &               0.5_r8*GRID(ng)%pn(i,Jend)
 #  else
 !>        bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
@@ -899,13 +906,12 @@
 !
         DO j=JstrV,Jend
 !>        vbar(Istr-1,j,kout)=BOUNDARY(ng)%vbar_west(j)
+!>
+          tl_vbar(Istr-1,j,kout)=BOUNDARY(ng)%tl_vbar_west(j)
 #   ifdef MASKING
 !>        vbar(Istr-1,j,kout)=vbar(Istr-1,j,kout)*                      &
 !>   &                        GRID(ng)%vmask(Istr-1,j)
-#   endif
 !>
-          tl_vbar(Istr-1,j,kout)=BOUNDARY(ng)%vbar_west(j)
-#   ifdef MASKING
           tl_vbar(Istr-1,j,kout)=tl_vbar(Istr-1,j,kout)*                &
      &                           GRID(ng)%vmask(Istr-1,j)
 #   endif
@@ -1069,13 +1075,12 @@
 !
         DO j=JstrV,Jend
 !>        vbar(Iend+1,j,kout)=BOUNDARY(ng)%vbar_east(j)
+!>
+          tl_vbar(Iend+1,j,kout)=BOUNDARY(ng)%tl_vbar_east(j)
 #   ifdef MASKING
 !>        vbar(Iend+1,j,kout)=vbar(Iend+1,j,kout)*                      &
 !>   &                        GRID(ng)%vmask(Iend+1,j)
-#   endif
 !>
-          tl_vbar(Iend+1,j,kout)=BOUNDARY(ng)%vbar_east(j)
-#   ifdef MASKING
           tl_vbar(Iend+1,j,kout)=tl_vbar(Iend+1,j,kout)*                &
      &                           GRID(ng)%vmask(Iend+1,j)
 #   endif

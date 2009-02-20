@@ -160,12 +160,19 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
 !>          v(i,Jstr,k,nout)=BOUNDARY(ng)%v_south(i,k)
+!>
+#   ifdef ADJUST_BOUNDARY
+            tl_v(i,Jstr,k,nout)=BOUNDARY(ng)%tl_v_south(i,k)
+#   else
+            tl_v(i,Jstr,k,nout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>          v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                          &
 !>   &                       GRID(ng)%vmask(i,Jstr)
-#   endif
 !>
-            tl_v(i,Jstr,k,nout)=0.0_r8
+            tl_v(i,Jstr,k,nout)=tl_v(i,Jstr,k,nout)*                    &
+     &                          GRID(ng)%vmask(i,Jstr)
+#   endif
           END DO
         END DO
 
@@ -276,12 +283,19 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
 !>          v(i,Jend+1,k,nout)=BOUNDARY(ng)%v_north(i,k)
+!>
+#   ifdef ADJUST_BOUNDARY
+            tl_v(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_v_north(i,k)
+#   else
+            tl_v(i,Jend+1,k,nout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>          v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                      &
 !>   &                         GRID(ng)%vmask(i,Jend+1)
-#   endif
 !>
-            tl_v(i,Jend+1,k,nout)=0.0_r8
+            tl_v(i,Jend+1,k,nout)=tl_v(i,Jend+1,k,nout)*                &
+     &                            GRID(ng)%vmask(i,Jend+1)
+#   endif
           END DO
         END DO
 
@@ -394,12 +408,19 @@
         DO k=1,N(ng)
           DO j=JstrV,Jend
 !>          v(Istr-1,j,k,nout)=BOUNDARY(ng)%v_west(j,k)
+!>
+#   ifdef ADJUST_BOUNDARY
+            tl_v(Istr-1,j,k,nout)=BOUNDARY(ng)%tl_v_west(j,k)
+#   else
+            tl_v(Istr-1,j,k,nout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>          v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                      &
 !>   &                         GRID(ng)%vmask(Istr-1,j)
-#   endif
 !>
-            tl_v(Istr-1,j,k,nout)=0.0_r8
+            tl_v(Istr-1,j,k,nout)=tl_v(Istr-1,j,k,nout)*                &
+     &                            GRID(ng)%vmask(Istr-1,j)
+#   endif
           END DO
         END DO
 
@@ -524,12 +545,19 @@
         DO k=1,N(ng)
           DO j=JstrV,Jend
 !>          v(Iend+1,j,k,nout)=BOUNDARY(ng)%v_east(j,k)
+!>
+#   ifdef ADJUST_BOUNDARY
+            tl_v(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_v_east(j,k)
+#   else
+            tl_v(Iend+1,j,k,nout)=0.0_r8
+#   endif
 #   ifdef MASKING
 !>          v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                      &
 !>   &                         GRID(ng)%vmask(Iend+1,j)
-#   endif
 !>
-            tl_v(Iend+1,j,k,nout)=0.0_r8
+            tl_v(Iend+1,j,k,nout)=tl_v(Iend+1,j,k,nout)*                &
+     &                            GRID(ng)%vmask(Iend+1,j)
+#   endif
           END DO
         END DO
 

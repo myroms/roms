@@ -769,12 +769,22 @@
      &                  BOUNDARY(ng) % zetaG_west(JLB,1),               &
      &                  BOUNDARY(ng) % zeta_west(JLB),                  &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idZbry(iwest), JLB, JUB, 1,           &
+     &                  0, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % zetaG_west(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_zeta_west(JLB),               &
+     &                  update)
 #   endif
 #   ifdef EAST_FSOBC
         CALL set_ngfld (ng, iRPM, idZbry(ieast), JLB, JUB, 1,           &
      &                  0, Mm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % zetaG_east(JLB,1),               &
      &                  BOUNDARY(ng) % zeta_east(JLB),                  &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idZbry(ieast), JLB, JUB, 1,           &
+     &                  0, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % zetaG_east(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_zeta_east(JLB),               &
      &                  update)
 #   endif
 #   ifdef SOUTH_FSOBC
@@ -783,12 +793,22 @@
      &                  BOUNDARY(ng) % zetaG_south(ILB,1),              &
      &                  BOUNDARY(ng) % zeta_south(ILB),                 &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idZbry(isouth), ILB, IUB, 1,          &
+     &                  0, Lm(ng)+1 ,1,                                 &
+     &                  BOUNDARY(ng) % zetaG_south(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_zeta_south(ILB),              &
+     &                  update)
 #   endif
 #   ifdef NORTH_FSOBC
         CALL set_ngfld (ng, iRPM, idZbry(inorth), ILB, IUB, 1,          &
      &                  0, Lm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % zetaG_north(ILB,1),              &
      &                  BOUNDARY(ng) % zeta_north(ILB),                 &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idZbry(inorth), ILB, IUB, 1,          &
+     &                  0, Lm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % zetaG_north(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_zeta_north(ILB),              &
      &                  update)
 #   endif
       END IF
@@ -803,10 +823,21 @@
      &                  BOUNDARY(ng) % ubarG_west(JLB,1),               &
      &                  BOUNDARY(ng) % ubar_west(JLB),                  &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU2bc(iwest), JLB, JUB, 1,           &
+     &                  0, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % ubarG_west(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_ubar_west(JLB),               &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV2bc(iwest), JLB, JUB, 1,           &
      &                  1, Mm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % vbarG_west(JLB,1),               &
      &                  BOUNDARY(ng) % vbar_west(JLB),                  &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV2bc(iwest), JLB, JUB, 1,           &
+     &                  1, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % vbarG_west(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_vbar_west(JLB),               &
      &                  update)
 #   endif
 #   ifdef EAST_M2OBC
@@ -815,10 +846,21 @@
      &                  BOUNDARY(ng) % ubarG_east(JLB,1),               &
      &                  BOUNDARY(ng) % ubar_east(JLB),                  &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU2bc(ieast), JLB, JUB, 1,           &
+     &                  0, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % ubarG_east(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_ubar_east(JLB),               &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV2bc(ieast), JLB, JUB, 1,           &
      &                  1, Mm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % vbarG_east(JLB,1),               &
      &                  BOUNDARY(ng) % vbar_east(JLB),                  &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV2bc(ieast), JLB, JUB, 1,           &
+     &                  1, Mm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % vbarG_east(JLB,1),               &
+     &                  BOUNDARY(ng) % tl_vbar_east(JLB),               &
      &                  update)
 #   endif
 #   ifdef SOUTH_M2OBC
@@ -827,10 +869,21 @@
      &                  BOUNDARY(ng) % ubarG_south(ILB,1),              &
      &                  BOUNDARY(ng) % ubar_south(ILB),                 &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU2bc(isouth), ILB, IUB, 1,          &
+     &                  1, Lm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % ubarG_south(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_ubar_south(ILB),              &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV2bc(isouth), ILB, IUB, 1,          &
      &                  0, Lm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % vbarG_south(ILB,1),              &
      &                  BOUNDARY(ng) % vbar_south(ILB),                 &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV2bc(isouth), ILB, IUB, 1,          &
+     &                  0, Lm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % vbarG_south(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_vbar_south(ILB),              &
      &                  update)
 #   endif
 #   ifdef NORTH_M2OBC
@@ -839,10 +892,21 @@
      &                  BOUNDARY(ng) % ubarG_north(ILB,1),              &
      &                  BOUNDARY(ng) % ubar_north(ILB),                 &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU2bc(inorth), ILB, IUB, 1,          &
+     &                  1, Lm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % ubarG_north(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_ubar_north(ILB),              &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV2bc(inorth), ILB, IUB, 1,          &
      &                  0, Lm(ng)+1, 1,                                 &
      &                  BOUNDARY(ng) % vbarG_north(ILB,1),              &
      &                  BOUNDARY(ng) % vbar_north(ILB),                 &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV2bc(inorth), ILB, IUB, 1,          &
+     &                  0, Lm(ng)+1, 1,                                 &
+     &                  BOUNDARY(ng) % vbarG_north(ILB,1),              &
+     &                  BOUNDARY(ng) % tl_vbar_north(ILB),              &
      &                  update)
 #   endif
       END IF
@@ -858,10 +922,21 @@
      &                  BOUNDARY(ng) % uG_west(JLB,1,1),                &
      &                  BOUNDARY(ng) % u_west(JLB,1),                   &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU3bc(iwest), JLB, JUB, N(ng),       &
+     &                  0, Mm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % uG_west(JLB,1,1),                &
+     &                  BOUNDARY(ng) % tl_u_west(JLB,1),                &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV3bc(iwest), JLB, JUB, N(ng),       &
      &                  1, Mm(ng)+1, N(ng),                             &
      &                  BOUNDARY(ng) % vG_west(JLB,1,1),                &
      &                  BOUNDARY(ng) % v_west(JLB,1),                   &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV3bc(iwest), JLB, JUB, N(ng),       &
+     &                  1, Mm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % vG_west(JLB,1,1),                &
+     &                  BOUNDARY(ng) % tl_v_west(JLB,1),                &
      &                  update)
 #    endif
 #    ifdef EAST_M3OBC
@@ -870,10 +945,21 @@
      &                  BOUNDARY(ng) % uG_east(JLB,1,1),                &
      &                  BOUNDARY(ng) % u_east(JLB,1),                   &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU3bc(ieast), JLB, JUB, N(ng),       &
+     &                  0, Mm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % uG_east(JLB,1,1),                &
+     &                  BOUNDARY(ng) % tl_u_east(JLB,1),                &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV3bc(ieast), JLB, JUB, N(ng),       &
      &                  1, Mm(ng)+1, N(ng),                             &
      &                  BOUNDARY(ng) % vG_east(JLB,1,1),                &
      &                  BOUNDARY(ng) % v_east(JLB,1),                   &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV3bc(ieast), JLB, JUB, N(ng),       &
+     &                  1, Mm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % vG_east(JLB,1,1),                &
+     &                  BOUNDARY(ng) % tl_v_east(JLB,1),                &
      &                  update)
 #    endif
 #    ifdef SOUTH_M3OBC
@@ -882,10 +968,21 @@
      &                  BOUNDARY(ng) % uG_south(ILB,1,1),               &
      &                  BOUNDARY(ng) % u_south(ILB,1),                  &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU3bc(isouth), ILB, IUB, N(ng),      &
+     &                  1, Lm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % uG_south(ILB,1,1),               &
+     &                  BOUNDARY(ng) % tl_u_south(ILB,1),               &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV3bc(isouth), ILB, IUB, N(ng),      &
      &                  0, Lm(ng)+1, N(ng),                             &
      &                  BOUNDARY(ng) % vG_south(ILB,1,1),               &
      &                  BOUNDARY(ng) % v_south(ILB,1),                  &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV3bc(isouth), ILB, IUB, N(ng),      &
+     &                  0, Lm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % vG_south(ILB,1,1),               &
+     &                  BOUNDARY(ng) % tl_v_south(ILB,1),               &
      &                  update)
 #    endif
 #    ifdef NORTH_M3OBC
@@ -894,10 +991,21 @@
      &                  BOUNDARY(ng) % uG_north(ILB,1,1),               &
      &                  BOUNDARY(ng) % u_north(ILB,1),                  &
      &                  update)
+        CALL set_ngfld (ng, iRPM, idU3bc(inorth), ILB, IUB, N(ng),      &
+     &                  1, Lm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % uG_north(ILB,1,1),               &
+     &                  BOUNDARY(ng) % tl_u_north(ILB,1),               &
+     &                  update)
+
         CALL set_ngfld (ng, iRPM, idV3bc(inorth), ILB, IUB, N(ng),      &
      &                  0, Lm(ng)+1, N(ng),                             &
      &                  BOUNDARY(ng) % vG_north(ILB,1,1),               &
      &                  BOUNDARY(ng) % v_north(ILB,1),                  &
+     &                  update)
+        CALL set_ngfld (ng, iRPM, idV3bc(inorth), ILB, IUB, N(ng),      &
+     &                  0, Lm(ng)+1, N(ng),                             &
+     &                  BOUNDARY(ng) % vG_north(ILB,1,1),               &
+     &                  BOUNDARY(ng) % tl_v_north(ILB,1),               &
      &                  update)
 #    endif
       END IF
@@ -913,12 +1021,22 @@
      &                    BOUNDARY(ng) % tG_west(JLB,1,1,itrc),         &
      &                    BOUNDARY(ng) % t_west(JLB,1,itrc),            &
      &                    update)
+          CALL set_ngfld (ng, iRPM, idTbry(iwest,itrc),                 &
+     &                    JLB, JUB, N(ng), 0, Mm(ng)+1, N(ng),          &
+     &                    BOUNDARY(ng) % tG_west(JLB,1,1,itrc),         &
+     &                    BOUNDARY(ng) % tl_t_west(JLB,1,itrc),         &
+     &                    update)
 #    endif
 #    ifdef EAST_TOBC
           CALL set_ngfld (ng, iRPM, idTbry(ieast,itrc),                 &
      &                    JLB, JUB, N(ng), 0, Mm(ng)+1, N(ng),          &
      &                    BOUNDARY(ng) % tG_east(JLB,1,1,itrc),         &
      &                    BOUNDARY(ng) % t_east(JLB,1,itrc),            &
+     &                    update)
+          CALL set_ngfld (ng, iRPM, idTbry(ieast,itrc),                 &
+     &                    JLB, JUB, N(ng), 0, Mm(ng)+1, N(ng),          &
+     &                    BOUNDARY(ng) % tG_east(JLB,1,1,itrc),         &
+     &                    BOUNDARY(ng) % tl_t_east(JLB,1,itrc),         &
      &                    update)
 #    endif
 #    ifdef SOUTH_TOBC
@@ -927,12 +1045,22 @@
      &                    BOUNDARY(ng) % tG_south(ILB,1,1,itrc),        &
      &                    BOUNDARY(ng) % t_south(ILB,1,itrc),           &
      &                    update)
+          CALL set_ngfld (ng, iRPM, idTbry(isouth,itrc),                &
+     &                    ILB, IUB, N(ng), 0, Lm(ng)+1, N(ng),          &
+     &                    BOUNDARY(ng) % tG_south(ILB,1,1,itrc),        &
+     &                    BOUNDARY(ng) % tl_t_south(ILB,1,itrc),        &
+     &                    update)
 #    endif
 #    ifdef NORTH_TOBC
           CALL set_ngfld (ng, iRPM, idTbry(inorth,itrc),                &
      &                    ILB, IUB, N(ng), 0, Lm(ng)+1, N(ng),          &
      &                    BOUNDARY(ng) % tG_north(ILB,1,1,itrc),        &
      &                    BOUNDARY(ng) % t_north(ILB,1,itrc),           &
+     &                    update)
+          CALL set_ngfld (ng, iRPM, idTbry(inorth,itrc),                &
+     &                    ILB, IUB, N(ng), 0, Lm(ng)+1, N(ng),          &
+     &                    BOUNDARY(ng) % tG_north(ILB,1,1,itrc),        &
+     &                    BOUNDARY(ng) % tl_t_north(ILB,1,itrc),        &
      &                    update)
 #    endif
         END DO

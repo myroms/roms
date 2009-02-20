@@ -217,6 +217,9 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces, ONLY : initialize_forces
 #endif
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary, ONLY : initialize_boundary
+#endif
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
       USE mod_forces, ONLY : initialize_forces
@@ -534,6 +537,9 @@
 # endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+# endif
             END DO
           END DO
 !$OMP END PARALLEL DO

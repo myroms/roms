@@ -42,8 +42,14 @@
       USE mod_stepping
 !
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+# ifdef ADJUST_BOUNDARY
+      USE nf_fwrite2d_bry_mod, ONLY : nf_fwrite2d_bry
+# endif
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
+#  ifdef ADJUST_BOUNDARY
+      USE nf_fwrite3d_bry_mod, ONLY : nf_fwrite3d_bry
+#  endif
 # endif
 !
       implicit none
@@ -56,7 +62,7 @@
 !
       integer :: LBi, UBi, LBj, UBj
 # ifdef ADJUST_BOUNDARY
-      integer :: IorJ, LBij, UBij
+      integer :: LBij, UBij
 # endif
       integer :: gfactor, gtype, i, itrc, status, varid
 
@@ -71,7 +77,6 @@
 # ifdef ADJUST_BOUNDARY
       LBij=BOUNDS(ng)%LBij
       UBij=BOUNDS(ng)%UBij
-      IorJ=IOBOUNDS(ng)%IorJ
 # endif
 !
       SourceFile='rp_wrt_ini.F'
@@ -125,15 +130,22 @@
 !  Write out free-surface open boundaries.
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
-        CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                    &
-     &                        TRIM(Vname(1,idSbry(isFsur))),            &
-     &                        BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,     &
-     &                                                   Tindex),       &
-     &                        (/1,1,1,tIRPindx(ng)/),                   &
-     &                        (/IorJ,4,Nbrec(ng),1/),                   &
-     &                        ncid = ncIRPid(ng),                       &
-     &                        varid = irpVid(idSbry(isFsur),ng))
-        IF (exit_flag.ne.NoError) RETURN
+        scale=1.0_r8
+        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+     &                          Vname(1,idSbry(isFsur)),                &
+     &                          irpVid(idSbry(isFsur),ng),              &
+     &                          OutRec, r2dvar,                         &
+     &                          LBij, UBij, Nbrec(ng), scale,           &
+     &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
+     &                                                     Tindex))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))), OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 # endif
 !
@@ -162,15 +174,22 @@
 !  Write out 2D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
-        CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                    &
-     &                        TRIM(Vname(1,idSbry(isUbar))),            &
-     &                        BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,     &
-     &                                                   Tindex),       &
-     &                        (/1,1,1,tIRPindx(ng)/),                   &
-     &                        (/IorJ,4,Nbrec(ng),1/),                   &
-     &                        ncid = ncIRPid(ng),                       &
-     &                        varid = irpVid(idSbry(isUbar),ng))
-        IF (exit_flag.ne.NoError) RETURN
+        scale=1.0_r8
+        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+     &                          Vname(1,idSbry(isUbar)),                &
+     &                          irpVid(idSbry(isUbar),ng),              &
+     &                          OutRec, u2dvar,                         &
+     &                          LBij, UBij, Nbrec(ng), scale,           &
+     &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
+     &                                                     Tindex))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))), OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 # endif
 !
@@ -199,15 +218,22 @@
 !  Write out 2D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
-        CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                    &
-     &                        TRIM(Vname(1,idSbry(isVbar))),            &
-     &                        BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,     &
-     &                                                   Tindex),       &
-     &                        (/1,1,1,tIRPindx(ng)/),                   &
-     &                        (/IorJ,4,Nbrec(ng),1/),                   &
-     &                        ncid = ncIRPid(ng),                       &
-     &                        varid = irpVid(idSbry(isVbar),ng))
-        IF (exit_flag.ne.NoError) RETURN
+        scale=1.0_r8
+        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+     &                          Vname(1,idSbry(isVbar)),                &
+     &                          irpVid(idSbry(isVbar),ng),              &
+     &                          OutRec, v2dvar,                         &
+     &                          LBij, UBij, Nbrec(ng), scale,           &
+     &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
+     &                                                     Tindex))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))), OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 # endif
 
@@ -285,15 +311,22 @@
 !  Write out 3D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
-        CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                    &
-     &                        TRIM(Vname(1,idSbry(isUvel))),            &
-     &                        BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,      &
-     &                                                Tindex),          &
-     &                        (/1,1,1,1,tIRPindx(ng)/),                 &
-     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
-     &                        ncid = ncIRPid(ng),                       &
-     &                        varid = irpVid(idSbry(isUvel),ng))
-        IF (exit_flag.ne.NoError) RETURN
+        scale=1.0_r8
+        status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+     &                          Vname(1,idSbry(isUvel)),                &
+     &                          irpVid(idSbry(isUvel),ng),              &
+     &                          OutRec, u3dvar,                         &
+     &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
+     &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
+     &                                                  Tindex))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))), OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 #  endif
 !
@@ -322,15 +355,22 @@
 !  Write out 3D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
-        CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                    &
-     &                        TRIM(Vname(1,idSbry(isVvel))),            &
-     &                        BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,      &
-     &                                                Tindex),          &
-     &                        (/1,1,1,1,tIRPindx(ng)/),                 &
-     &                        (/IorJ,N(ng),4,Nbrec(ng),1/),             &
-     &                        ncid = ncIRPid(ng),                       &
-     &                        varid = irpVid(idSbry(isVvel),ng))
-        IF (exit_flag.ne.NoError) RETURN
+        scale=1.0_r8
+        status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+     &                          Vname(1,idSbry(isVvel)),                &
+     &                          irpVid(idSbry(isVvel),ng),              &
+     &                          OutRec, v3dvar,                         &
+     &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
+     &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
+     &                                                  Tindex))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))), OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 #  endif
 !
@@ -362,15 +402,24 @@
 !
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
-          CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                  &
-     &                          TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
-     &                          BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,    &
-     &                                                  Tindex,itrc),   &
-     &                          (/1,1,1,1,tIRPindx(ng),itrc/),          &
-     &                          (/IorJ,N(ng),4,Nbrec(ng),1,1/),         &
-     &                          ncid = ncIRPid(ng),                     &
-     &                          varid = irpVid(idSbry(isTvar(itrc)),ng))
-          IF (exit_flag.ne.NoError) RETURN
+          scale=1.0_r8
+          status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),   &
+     &                            Vname(1,idSbry(isTvar(itrc))),        &
+     &                            irpVid(idSbry(isTvar(itrc)),ng),      &
+     &                            OutRec, r3dvar,                       &
+     &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
+     &                            scale,                                &
+     &                            BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,  &
+     &                                                    Tindex,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+     &                          OutRec
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
         END IF
       END DO
 #  endif

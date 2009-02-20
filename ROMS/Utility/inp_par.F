@@ -171,12 +171,36 @@
         END DO
       END IF
 !
+!  Set boundary edge I- or J-indices for each variable type.
+!
+      DO ng=1,Ngrids
+        BOUNDS(ng) % edge(iwest ,p2dvar) = 1
+        BOUNDS(ng) % edge(iwest ,r2dvar) = 0
+        BOUNDS(ng) % edge(iwest ,u2dvar) = 1
+        BOUNDS(ng) % edge(iwest ,v2dvar) = 0
+
+        BOUNDS(ng) % edge(ieast ,p2dvar) = Lm(ng)+1
+        BOUNDS(ng) % edge(ieast ,r2dvar) = Lm(ng)+1
+        BOUNDS(ng) % edge(ieast ,u2dvar) = Lm(ng)+1
+        BOUNDS(ng) % edge(ieast ,v2dvar) = Lm(ng)+1
+
+        BOUNDS(ng) % edge(isouth,p2dvar) = 1
+        BOUNDS(ng) % edge(isouth,u2dvar) = 0
+        BOUNDS(ng) % edge(isouth,r2dvar) = 0
+        BOUNDS(ng) % edge(isouth,v2dvar) = 1
+
+        BOUNDS(ng) % edge(inorth,p2dvar) = Mm(ng)+1
+        BOUNDS(ng) % edge(inorth,r2dvar) = Mm(ng)+1
+        BOUNDS(ng) % edge(inorth,u2dvar) = Mm(ng)+1
+        BOUNDS(ng) % edge(inorth,v2dvar) = Mm(ng)+1
+      END DO
+!
 !  Set tile computational indices and arrays allocation bounds.
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
-        BOUNDS(ng) % LBij = Lm(ng)
-        BOUNDS(ng) % UBij = 1
+        BOUNDS(ng) % LBij = 0
+        BOUNDS(ng) % UBij = MAX(Lm(ng)+1,Mm(ng)+1)
         DO tile=-1,NtileI(ng)*NtileJ(ng)-1
           BOUNDS(ng) % tile(tile) = tile
           CALL get_tile (ng, tile, Itile, Jtile,                        &
@@ -199,12 +223,6 @@
      &                     BOUNDS(ng) % UBi(tile),                      &
      &                     BOUNDS(ng) % LBj(tile),                      &
      &                     BOUNDS(ng) % UBj(tile))
-          BOUNDS(ng) % LBij = MIN(BOUNDS(ng) % LBij,                    &
-     &                            BOUNDS(ng) % LBi(tile),               &
-     &                            BOUNDS(ng) % LBj(tile))
-          BOUNDS(ng) % UBij = MAX(BOUNDS(ng) % UBij,                    &
-     &                            BOUNDS(ng) % UBi(tile),               &
-     &                            BOUNDS(ng) % UBj(tile))
         END DO
       END DO
 !
@@ -6525,7 +6543,7 @@
 
       character (len=1 ), parameter :: blank = ' '
 # ifdef ADJUST_BOUNDARY
-      character (len=10) :: Text
+      character (len=7) :: Text
 # endif
       character (len=40) :: KeyWord
       character (len=160) :: fname, line
@@ -7108,9 +7126,9 @@
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'VdecayB(isUvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, VdecayB(isUvel,:))
+            Npts=load_r(Nval, Rval, 4*Ngrids, VdecayB(isUvel,:,:))
           ELSE IF (TRIM(KeyWord).eq.'VdecayB(isVvel)') THEN
-            Npts=load_r(Nval, Rval, Ngrids, VdecayB(isVvel,:))
+            Npts=load_r(Nval, Rval, 4*Ngrids, VdecayB(isVvel,:,:))
           ELSE IF (TRIM(KeyWord).eq.'VdecayB(isTvar)') THEN
             Npts=load_r(Nval, Rval, 4*MT*Ngrids, Rboundary)
             DO ng=1,Ngrids
@@ -7423,41 +7441,61 @@
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 #    endif
-#    ifdef ADJUST BOUNDARY
+#    ifdef ADJUST_BOUNDARY
           DO ib=1,4
-            IF (ib.eq.1) THEN
-              Text='W-Boundary'
-            ELSE (ib.eq.2) THEN
-              Text='S-Boundary'
-            ELSE (ib.eq.2) THEN
-              Text='E-Boundary'
-            ELSE (ib.eq.2) THEN
-              Text='N-Boundary'
+            IF (ib.eq.iwest) THEN
+              Text='W-bry  '
+            ELSE IF (ib.eq.isouth) THEN
+              Text='S-bry  '
+            ELSE IF (ib.eq.ieast) THEN
+              Text='E-bry  '
+            ELSE IF (ib.eq.inorth) THEN
+              Text='N-bry  '
             END IF
-            WRITE (out,120) HdecayB(isFsur,ib,ng), 'HdecayB(isFsur)',   &
-     &            Text//' decorrelation H-scale (m), free-surface.'
-            WRITE (out,120) HdecayB(isUbar,ib,ng), 'HdecayB(isUbar)',   &
-     &            Text//' decorrelation H-scale (m), 2D U-momentum.'
-            WRITE (out,120) HdecayB(isVbar,ib,ng), 'HdecayB(isVbar)',   &
-     &            Text//' decorrelation H-scale (m), 2D V-momentum.'
+            IF (Lobc(ib,isFsur,ng)) THEN
+              WRITE (out,120) HdecayB(isFsur,ib,ng), 'HdecayB(isFsur)', &
+     &              Text//' decorrelation H-scale (m), free-surface.'
+            END IF
+            IF (Lobc(ib,isUbar,ng)) THEN
+              WRITE (out,120) HdecayB(isUbar,ib,ng), 'HdecayB(isUbar)', &
+     &              Text//' decorrelation H-scale (m), 2D U-momentum.'
+            END IF
+            IF (Lobc(ib,isVbar,ng)) THEN
+              WRITE (out,120) HdecayB(isVbar,ib,ng), 'HdecayB(isVbar)', &
+     &              Text//' decorrelation H-scale (m), 2D V-momentum.'
+            END IF
 #     ifdef SOLVE3D
-            WRITE (out,120) HdecayB(isUvel,ib,ng), 'HdecayB(isUvel)',   &
-     &            Text//' decorrelation H-scale (m), 3D U-momentum.'
-            WRITE (out,120) HdecayB(isVvel,ib,ng), 'HdecayB(isVvel)',   &
-     &            Text//' decorrelation H-scale (m), 3D V-momentum.'
+            IF (Lobc(ib,isUvel,ng)) THEN
+              WRITE (out,120) HdecayB(isUvel,ib,ng), 'HdecayB(isUvel)', &
+     &              Text//' decorrelation H-scale (m), 3D U-momentum.'
+            END IF
+            IF (Lobc(ib,isVvel,ng)) THEN
+              WRITE (out,120) HdecayB(isVvel,ib,ng), 'HdecayB(isVvel)', &
+     &              Text//' decorrelation H-scale (m), 3D V-momentum.'
+            END IF
             DO i=1,NT(ng)
-              WRITE(out,130) HdecayB(isTvar(i),ib,ng),'HdecayB(idTvar)',&
-     &            Text//' decorrelation H-scale (m), ',                 &
+              IF (Lobc(ib,isTvar(i),ng)) THEN
+                WRITE(out,130) HdecayB(isTvar(i),ib,ng),                &
+     &              'HdecayB(idTvar)',                                  &
+     &              Text//' decorrelation H-scale (m), ',               &
      &              TRIM(Vname(1,idTvar(i)))
+              END IF
             END DO
-            WRITE (out,120) VdecayB(isUvel,ib,ng), 'VdecayB(isUvel)',   &
-     &            Text//' decorrelation V-scale (m), 3D U-momentum.'
-            WRITE (out,120) VdecayB(isVvel,ib,ng), 'VdecayB(isVvel)',   &
-     &            Text//' decorrelation V-scale (m), 3D V-momentum.'
+            IF (Lobc(ib,isUvel,ng)) THEN
+              WRITE (out,120) VdecayB(isUvel,ib,ng), 'VdecayB(isUvel)', &
+     &              Text//' decorrelation V-scale (m), 3D U-momentum.'
+            END IF
+            IF (Lobc(ib,isVvel,ng)) THEN
+              WRITE (out,120) VdecayB(isVvel,ib,ng), 'VdecayB(isVvel)', &
+     &              Text//' decorrelation V-scale (m), 3D V-momentum.'
+            END IF
             DO i=1,NT(ng)
-              WRITE(out,130) VdecayB(isTvar(i),ib,ng),'VdecayB(idTvar)',&
-     &            Text//' decorrelation V-scale (m), ',                 &
+              IF (Lobc(ib,isTvar(i),ng)) THEN
+                WRITE(out,130) VdecayB(isTvar(i),ib,ng),                &
+     &              'VdecayB(idTvar)',                                  &
+     &              Text//' decorrelation V-scale (m), ',               &
      &              TRIM(Vname(1,idTvar(i)))
+              END IF
             END DO
 #     endif
           END DO

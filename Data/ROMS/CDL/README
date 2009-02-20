@@ -37,8 +37,12 @@ Currently, you can find the following CDL scripts:
     bry_limit.cdl            Boundary NetCDF file (various time dimensions)
     bry_unlimit.cdl          Boundary NetCDF file (unlimited time dimensions)
 
-    s4dvar_obs.cdl           4DVAR observation
-    s4dvar_std.cdl           4DVAR background error covariance standard deviation
+    s4dvar_obs.cdl           4DVAR observations
+
+    s4dvar_std_m.cdl         4DVAR model error covariance standard deviation
+    s4dvar_std_i.cdl         4DVAR initial conditions error covariance standard deviation
+    s4dvar_std_b.cdl         4DVAR open boundaries error covariance standard deviation
+    s4dvar_std_f.cdl         4DVAR surface forcing error covariance standard deviation
 
 You can easily edit any of these files to change NetCDF file name, change
 dimensions, add and remove variables, and add and modify global attibutes.
