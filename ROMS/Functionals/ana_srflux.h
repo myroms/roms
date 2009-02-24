@@ -207,12 +207,12 @@
 !  same daily average as the original data.  This approach assumes 
 !  the net effect of clouds is incorporated into the SRFLX data. 
 !
-!  Normalization factor = INTEGRAL{ABS(a+b*COS(t)) dt} from 0 to 2*pi 
-!                       = (a*ARCCOS(-a/b)+SQRT(b**2-a**2))/pi
+!  Normalization = (1/2*pi)*INTEGRAL{ABS(a+b*COS(t)) dt}  from 0 to 2*pi
+!                = (a*ARCCOS(-a/b)+SQRT(b**2-a**2))/pi    for |a| < |b|
 !  
           IF (ABS(cff1).gt.ABS(cff2)) THEN
             IF (cff1*cff2.gt.0.0_r8) THEN
-              cff=cff1*2.0_r8*pi                       ! All day case
+              cff=cff1                                 ! All day case
               srflx(i,j)=MAX(0.0_r8,                                    &
      &                       srflx(i,j)/cff*                            &
      &                       (cff1+cff2*COS(Hangle-lonr(i,j)*deg2rad)))
