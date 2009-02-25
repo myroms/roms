@@ -186,7 +186,7 @@
 !  very large input files.
 !
       interpolate=.FALSE.
-      IF (((Vsize(1).gt.0).and.(Vsize(1).ne.Isize)).or.                &
+      IF (((Vsize(1).gt.0).and.(Vsize(1).ne.Isize)).or.                 &
      &    ((Vsize(2).gt.0).and.(Vsize(2).ne.Jsize))) THEN
         interpolate=.TRUE.
         Ilen=Vsize(1)
@@ -284,7 +284,7 @@
           Amax=-spval
           DO i=1,MyNpts
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
-              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+              wrk(i)=0.0_r8                      ! maked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -408,8 +408,8 @@
           Amin=spval
           Amax=-spval
           DO i=1,Npts
-            IF (wrk(i).ge.Aspval) THEN
-              wrk(i)=0.0_r8             ! set _FillValue to zero
+            IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
+              wrk(i)=0.0_r8                      ! maked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -749,8 +749,8 @@
           Amin=spval
           Amax=-spval
           DO i=1,Npts
-            IF (ABS(wrk(i)).ge.(Aspval)) THEN
-              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+            IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
+              wrk(i)=0.0_r8                      ! maked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))

@@ -616,7 +616,7 @@
       IF (Master) WRITE (stdout,20) 'DEFLATE',                          &
      &   'Setting compression in output NetCDF-4/HDF5 files.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' NETCDF4,'
+      Coptions(is:is+9)=' DEFLATE,'
 #endif
 #if defined DENITRIFICATION && defined BIO_FASHAM
       IF (Master) WRITE (stdout,20) 'DENITRIFICATION',                  &
