@@ -85,33 +85,38 @@
 !-----------------------------------------------------------------------
 !
 #ifdef ESTUARY_TEST
+# ifdef EAST_TOBC
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%t_east(j,k,itemp)=T0(ng)
             BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
-# if defined SEDIMENT
+#  if defined SEDIMENT
             DO ised=1,NST
               BOUNDARY(ng)%t_east(j,k,idsed(ised))=0.0_r8
             END DO
-# endif
+#  endif
           END DO
         END DO
       END IF
+# endif
+# ifdef WEST_TOBC
       IF (WESTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%t_west(j,k,itemp)=T0(ng)
             BOUNDARY(ng)%t_west(j,k,isalt)=30.0_r8
-# if defined SEDIMENT
+#  if defined SEDIMENT
             DO ised=1,NST
               BOUNDARY(ng)%t_west(j,k,idsed(ised))=0.0_r8
             END DO
-# endif
+#  endif
           END DO
         END DO
       END IF
+# endif
 #elif defined NJ_BIGHT
+# ifdef EAST_TOBC
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -154,6 +159,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef SOUTH_TOBC
       IF (SOUTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=IstrR,IendR
@@ -196,7 +203,9 @@
           END DO
         END DO
       END IF
+# endif
 #elif defined SED_TEST1
+# ifdef EAST_TOBC
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -205,8 +214,9 @@
           END DO
         END DO
       END IF
+# endif
 #else
-# ifdef EAST_TOBS
+# ifdef EAST_TOBC
       IF (EASTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -217,7 +227,7 @@
         END DO
       END IF
 # endif
-# ifdef WEST_TOBS
+# ifdef WEST_TOBC
       IF (WESTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -228,7 +238,7 @@
         END DO
       END IF
 # endif
-# ifdef SOUTH_TOBS
+# ifdef SOUTH_TOBC
       IF (SOUTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -239,7 +249,7 @@
         END DO
       END IF
 # endif
-# ifdef NORTH_TOBS
+# ifdef NORTH_TOBC
       IF (NORTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)

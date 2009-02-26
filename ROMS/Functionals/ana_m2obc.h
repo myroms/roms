@@ -117,6 +117,7 @@
 !-----------------------------------------------------------------------
 !
 #if defined ESTUARY_TEST
+# ifdef WEST_M2OBC
         cff1=0.40_r8                                          ! west end
         cff2=0.08_r8
         riv_flow=cff2*300.0_r8*5.0_r8
@@ -136,6 +137,8 @@
             BOUNDARY(ng)%vbar_west(j)=0.0_r8
           END DO
         END IF
+# endif
+# ifdef EAST_M2OBC
         cff2=0.08_r8                                          ! east end
         riv_flow=cff2*300.0_r8*5.0_r8
         IF (EASTERN_EDGE) THEN
@@ -152,10 +155,12 @@
             BOUNDARY(ng)%vbar_east(j)=0.0_r8
           END DO
         END IF
+# endif
 #elif defined KELVIN
       fac=1.0_r8                                ! zeta0
       omega=2.0_r8*pi/(12.42_r8*3600.0_r8)      ! M2 Tide period
       val=fac*SIN(omega*time(ng))
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           cff=SQRT(g*GRID(ng)%h(Istr-1,j))
@@ -167,6 +172,8 @@
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           cff=SQRT(g*GRID(ng)%h(Iend,j))
@@ -179,7 +186,9 @@
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
+# endif
 #elif defined SED_TEST1
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           val=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                  &
@@ -190,6 +199,8 @@
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
+# endif
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           val=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
@@ -200,8 +211,10 @@
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
+# endif
 #elif defined TEST_CHAN
       ramp=MIN(time(ng)/150000.0_r8,1.0_r8)
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         my_area =0.0_r8
         my_width=0.0_r8
@@ -216,6 +229,8 @@
           BOUNDARY(ng)%ubar_west(j)=fac/my_area
         END DO
       END IF
+# endif
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         my_area =0.0_r8
         my_width=0.0_r8
@@ -230,7 +245,9 @@
           BOUNDARY(ng)%ubar_east(j)=fac/my_area
         END DO
       END IF
-# elif defined TRENCH
+# endif
+#elif defined TRENCH
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         my_area=0.0_r8
         my_width=0.0_r8
@@ -245,6 +262,8 @@
           BOUNDARY(ng)%ubar_west(j)=fac/my_area
         END DO
       END IF
+# endif
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         my_area=0.0_r8
         my_width=0.0_r8
@@ -259,7 +278,9 @@
           BOUNDARY(ng)%ubar_east(j)=fac/my_area
         END DO
       END IF
+# endif
 #elif defined WEDDELL
+# ifdef WEST_M2OBC
       IF (WESTERN_EDGE) THEN
         fac=TANH((tdays(ng)-dstart)/1.0_r8)
         omega=2.0_r8*pi*time(ng)/(12.42_r8*3600.0_r8)  !  M2 Tide period
@@ -282,6 +303,8 @@
      &                                         COS(omega-phase))
         END DO
       END IF
+# endif
+# ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN
         fac=TANH((tdays(ng)-dstart)/1.0_r8)
         omega=2.0_r8*pi*time(ng)/(12.42_r8*3600.0_r8)  !  M2 Tide period
@@ -304,6 +327,7 @@
      &                                         COS(omega-phase))
         END DO
       END IF
+# endif
 #else
 # ifdef EAST_M2OBC
       IF (EASTERN_EDGE) THEN

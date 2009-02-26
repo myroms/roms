@@ -84,7 +84,7 @@
 !-----------------------------------------------------------------------
 !
 #ifdef MY_APPLICATION
-# ifdef EAST_TOBS
+# ifdef EAST_TOBC
       IF (EASTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -95,7 +95,7 @@
         END DO
       END IF
 # endif
-# ifdef WEST_TOBS
+# ifdef WEST_TOBC
       IF (WESTERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -106,7 +106,7 @@
         END DO
       END IF
 # endif
-# ifdef SOUTH_TOBS
+# ifdef SOUTH_TOBC
       IF (SOUTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
@@ -117,7 +117,7 @@
         END DO
       END IF
 # endif
-# ifdef NORTH_TOBS
+# ifdef NORTH_TOBC
       IF (NORTHERN_EDGE) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)

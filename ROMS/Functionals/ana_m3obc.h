@@ -66,6 +66,7 @@
 !-----------------------------------------------------------------------
 !
 #if defined SED_TEST1
+# ifdef WEST_M3OBC
       IF (WESTERN_EDGE) THEN
         fac=5.0E-06_r8
         DO k=1,N(ng)
@@ -82,6 +83,8 @@
           END DO
         END DO
       END IF
+# endif
+# ifdef EAST_M3OBC
       IF (EASTERN_EDGE) THEN
         fac=5.0E-06_r8
         DO k=1,N(ng)
@@ -98,8 +101,9 @@
           END DO
         END DO
       END IF
+# endif
 #else
-# ifdef EAST_M3OBS
+# ifdef EAST_M3OBC
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -111,7 +115,7 @@
         END DO
       END IF
 # endif
-# ifdef WEST_M3OBS
+# ifdef WEST_M3OBC
       IF (WESTERN_EDGE) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -123,7 +127,7 @@
         END DO
       END IF
 # endif
-# ifdef SOUTH_M3OBS
+# ifdef SOUTH_M3OBC
       IF (SOUTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
@@ -135,7 +139,7 @@
         END DO
       END IF
 # endif
-# ifdef NORTH_M3OBS
+# ifdef NORTH_M3OBC
       IF (NORTHERN_EDGE) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
