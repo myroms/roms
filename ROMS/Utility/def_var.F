@@ -50,6 +50,7 @@
 !                    Vinfo(22) =>  Variable "coordinates" attribute    !
 !                    Vinfo(23) =>  Variable "formula_terms" attribute  !
 !                    Vinfo(24) =>  Variable "_FillValue" attribute     !
+!                    Vinfo(25) =>  Variable "positive" attribute       !
 !     ncname       NetCDF file name.                                   !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (optional).                                       !
@@ -101,7 +102,7 @@
       real(r8), dimension(:), intent(inout) :: Aval
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(inout) :: Vinfo(24)
+      character (len=*), intent(inout) :: Vinfo(25)
 !
 !  Local variable declarations.
 !
@@ -115,7 +116,7 @@
 
       integer :: def_var
 
-      character (len=60) text
+      character (len=160) text
 !
 !-----------------------------------------------------------------------
 !  Define requested variable and its attributes.
@@ -293,15 +294,30 @@
           END IF
         END IF
 !
-!  If applicable, define "option_T" attribute.
+!  If applicable, define "flag_values" and "flag_meanings" attributes
+!  for logical variables.
 !
         IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(7))
-          IF (latt.gt.0) THEN
-            status=nf90_put_att(ncid, Vid, 'option_T',                  &
-     &                          Vinfo(7)(1:latt))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,30) 'option_T',                 &
+          IF ((LEN_TRIM(Vinfo(7)).gt.0).and.                            &
+     &        (LEN_TRIM(Vinfo(8)).gt.0)) THEN
+            text='T, F'
+            latt=LEN_TRIM(text)
+            status=nf90_put_att(ncid, Vid, 'flag_values',               &
+     &                          text(1:latt))
+            IF (status.eq.nf90_noerr) THEN
+              text=TRIM(Vinfo(7))//' '//TRIM(Vinfo(8))
+              latt=LEN_TRIM(text)
+              status=nf90_put_att(ncid, Vid, 'flag_meanings',           &
+     &                            text(1:latt))
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'flag_meanings (T/F)',    &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,30) 'flag_values (T/F)',        &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -310,15 +326,38 @@
           END IF
         END IF
 !
-!  If applicable, define "option_F" attribute.
+!  If applicable, define "flag_values" and "flag_meanings" attributes
+!  for integer and floating point variables.
 !
         IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(8))
-          IF (latt.gt.0) THEN
-            status=nf90_put_att(ncid, Vid, 'option_F',                  &
-     &                          Vinfo(8)(1:latt))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,30) 'option_F',                 &
+          IF ((LEN_TRIM(Vinfo( 9)).gt.0).and.                           &
+     &        (LEN_TRIM(Vinfo(10)).gt.0)) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, 'flag_values',             &
+     &                            (/0,1/))
+#ifndef NO_4BYTE_REALS
+            ELSE IF (Vtype.eq.nf90_float) THEN
+              status=nf90_put_att(ncid, Vid, 'flag_values',             &
+     &                            (/0.0_r4, 1.0_r4/))
+#endif
+            ELSE
+              status=nf90_put_att(ncid, Vid, 'flag_values',             &
+     &                            (/0.0_r8, 1.0_r8/))
+            END IF
+            IF (status.eq.nf90_noerr) THEN
+              text=TRIM(Vinfo(9))//' '//TRIM(Vinfo(10))
+              latt=LEN_TRIM(text)
+              status=nf90_put_att(ncid, Vid, 'flag_meanings',           &
+     &                            text(1:latt))
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'flag_meanings',          &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,30) 'flag_values',              &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -327,41 +366,7 @@
           END IF
         END IF
 !
-!  If applicable, define "option_0" attribute.
-!
-        IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(9))
-          IF (latt.gt.0) THEN
-            status=nf90_put_att(ncid, Vid, 'option_0',                  &
-     &                          Vinfo(9)(1:latt))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,30) 'option_0',                 &
-     &                                      TRIM(Vinfo(1)),             &
-     &                                      TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
-          END IF
-        END IF
-!
-!  If applicable, define "option_1" attribute.
-!
-        IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(10))
-          IF (latt.gt.0) THEN
-            status=nf90_put_att(ncid, Vid, 'option_1',                  &
-     &                          Vinfo(10)(1:latt))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,30) 'option_1',                 &
-     &                                      TRIM(Vinfo(1)),             &
-     &                                      TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
-          END IF
-        END IF
-!
-!  If applicable, define "negative" attribute.
+!  If applicable, define "negative_value" attribute.
 !
         IF (exit_flag.eq.NoError) THEN
           latt=LEN_TRIM(Vinfo(11))
@@ -376,9 +381,9 @@
               ioerror=status
             END IF
           END IF
-        END IF
+        END IF!
 !
-!  If applicable, define "option_F" attribute.
+!  If applicable, define "positive_value" attribute.
 !
         IF (exit_flag.eq.NoError) THEN
           latt=LEN_TRIM(Vinfo(12))
@@ -387,6 +392,23 @@
      &                          Vinfo(12)(1:latt))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) WRITE (stdout,30) 'positive_value',           &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+!
+!  If applicable, define CF "positive" attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(25))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'positive',                  &
+     &                          Vinfo(25)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'positive',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3

@@ -33,7 +33,7 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 24
+      integer, parameter :: Natt = 25
 
       integer :: Mstatedim, NCVdim, Nnodesdim, SworkDdim, SworkLdim
       integer :: char1dim, char2dim, iaitrdim, iaupddim, iaup2dim

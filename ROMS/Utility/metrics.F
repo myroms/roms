@@ -1182,7 +1182,7 @@
               ELSE IF (bry.eq.isouth) THEN
                 Text='North bry Vconvolution, NVstepsB, DTsizeVB ='
               END IF
-              IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
+              IF (VdecayB(is,bry,ng).gt.0.0_r8) THEN
                 WRITE (stdout,70) TRIM(Text), NVstepsB(bry,is),         &
      &                            DTsizeVB(bry,is),                     &
      &                            TRIM(Vname(1,idSbry(is)))

@@ -40,7 +40,7 @@
 
       logical :: Ldefine = .FALSE.
 
-      integer, parameter :: Natt = 24
+      integer, parameter :: Natt = 25
 
       integer :: i, j, nvd3, nvd4
       integer :: status, varid

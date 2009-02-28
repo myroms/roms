@@ -2633,8 +2633,8 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
-# endif
       END IF
+# endif
 !
       IF (Master) THEN
         WRITE (stdout,30)

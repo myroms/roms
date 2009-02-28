@@ -78,7 +78,7 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 24
+      integer, parameter :: Natt = 25
 
       integer :: brydim, i, ie, is, j, lstr, varid
       integer :: srdim, stadim, status, swdim, trcdim, usrdim
@@ -1541,7 +1541,6 @@
 
       Vinfo( 1)='Scoef'
       Vinfo( 2)='Saline contraction coefficient'
-      Vinfo( 3)='PSU-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -1598,7 +1597,7 @@
       Vinfo( 1)='Nmethod'
       Vinfo( 2)='background error covariance normalization method'
       Vinfo( 9)='exact'
-      Vinfo(10)='approximated, randomization'
+      Vinfo(10)='randomization'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -1606,8 +1605,8 @@
 
       Vinfo( 1)='Rscheme'
       Vinfo( 2)='Random number generation scheme'
-      Vinfo( 9)='intrisic F90 routine randon_number'
-      Vinfo(10)='Gaussian distributed deviates'
+      Vinfo( 9)='intrisic_randon_number'
+      Vinfo(10)='Gaussian_distributed_deviates'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -1745,11 +1744,11 @@
       Vinfo( 2)='adjoint sensitivity on 2D U-momentum'
       Vinfo( 7)='on'
       Vinfo( 8)='off'
-
       status=def_var(ng, model, ncid, varid, nf90_char,                 &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
       Vinfo( 1)='Lvbar'
       Vinfo( 2)='adjoint sensitivity on 2D V-momentum'
       Vinfo( 7)='on'
@@ -1764,11 +1763,11 @@
       Vinfo( 2)='adjoint sensitivity on 3D U-momentum'
       Vinfo( 7)='on'
       Vinfo( 8)='off'
-
       status=def_var(ng, model, ncid, varid, nf90_char,                 &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
       Vinfo( 1)='Lvvel'
       Vinfo( 2)='adjoint sensitivity on 3D V-momentum'
       Vinfo( 7)='on'
@@ -3279,6 +3278,7 @@
         Vinfo( 3)='meter'
         Vinfo(14)='bath, scalar'
         Vinfo(22)='coordinates'
+        vinfo(25)='down'
         Aval(5)=REAL(r2dvar,r8)
         IF (ncid.eq.ncSTAid(ng)) THEN
           status=def_var(ng, model, ncid, varid, NF_TYPE,               &
@@ -3336,6 +3336,7 @@
           Vinfo( 2)='longitude of RHO-points'
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_rho, scalar'
+          Vinfo(21)='longitude'
           IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo, ncname)
@@ -3350,6 +3351,7 @@
           Vinfo( 2)='latitude of RHO-points'
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_rho, scalar'
+          Vinfo(21)='latitude'
           IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo,  ncname)

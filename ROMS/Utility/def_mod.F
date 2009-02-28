@@ -38,7 +38,7 @@
 !
       logical, dimension(NV) :: got_var(NV)
 
-      integer, parameter :: Natt = 24
+      integer, parameter :: Natt = 25
 
       integer :: iterDim, datumDim, recordDim, stateDim
 # if defined IS4DVAR || defined WEAK_CONSTRAINT

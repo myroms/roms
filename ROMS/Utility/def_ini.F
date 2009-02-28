@@ -39,7 +39,7 @@
 # endif
       logical :: got_var(NV)
 
-      integer, parameter :: Natt = 24
+      integer, parameter :: Natt = 25
 
       logical :: Ldefine = .FALSE.
 
