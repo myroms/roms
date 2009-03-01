@@ -3168,6 +3168,7 @@
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_rho, scalar'
       Vinfo(21)='ocean_s_coordinate'
+      vinfo(25)='up'
 #if defined SEDIMENT && defined SED_MORPH
       Vinfo(23)=                                                        &
      &'s: s_rho eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
@@ -3190,6 +3191,7 @@
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_w, scalar'
       Vinfo(21)='ocean_s_coordinate'
+      vinfo(25)='up'
 #if defined SEDIMENT && defined SED_MORPH
       Vinfo(23)=                                                        &
      &  's: s_w eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
@@ -3278,7 +3280,6 @@
         Vinfo( 3)='meter'
         Vinfo(14)='bath, scalar'
         Vinfo(22)='coordinates'
-        vinfo(25)='down'
         Aval(5)=REAL(r2dvar,r8)
         IF (ncid.eq.ncSTAid(ng)) THEN
           status=def_var(ng, model, ncid, varid, NF_TYPE,               &
@@ -3375,6 +3376,7 @@
      &                     2, t2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='y_rho'
           Vinfo( 2)='y-locations of RHO-points'
           Vinfo( 3)='meter'
@@ -3397,15 +3399,18 @@
           Vinfo( 2)='longitude of U-points'
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_u, scalar'
+          Vinfo(21)='longitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='lat_u'
           Vinfo( 2)='latitude of U-points'
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_u, scalar'
+          Vinfo(21)='latitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
@@ -3421,6 +3426,7 @@
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='y_u'
           Vinfo( 2)='y-locations of U-points'
           Vinfo( 3)='meter'
@@ -3439,15 +3445,18 @@
           Vinfo( 2)='longitude of V-points'
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_v, scalar'
+          Vinfo(21)='longitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='lat_v'
           Vinfo( 2)='latitude of V-points'
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_v, scalar'
+          Vinfo(21)='latitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
@@ -3463,6 +3472,7 @@
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='y_v'
           Vinfo( 2)='y-locations of V-points'
           Vinfo( 3)='meter'
@@ -3481,15 +3491,18 @@
           Vinfo( 2)='longitude of PSI-points'
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_psi, scalar'
+          Vinfo(21)='longitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='lat_psi'
           Vinfo( 2)='latitude of PSI-points'
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_psi, scalar'
+          Vinfo(21)='latitude'
           IF (ncid.ne.ncSTAid(ng)) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
@@ -3505,6 +3518,7 @@
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
           Vinfo( 1)='y_psi'
           Vinfo( 2)='y-locations of PSI-points'
           Vinfo( 3)='meter'
