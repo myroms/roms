@@ -491,7 +491,8 @@
       Coptions(is:is+12)=' BIO_FASHAM,'
       ibiology=ibiology+1
 #endif
-#if defined BIO_SEDIMENT && (defined BIO_FASHAM || defined NEMURO)
+#if defined BIO_SEDIMENT && \
+   (defined BIO_FASHAM   || defined NEMURO || defined ECOSIM)
       IF (Master) WRITE (stdout,20) 'BIO_SEDIMENT',                     &
      &   'Restore fallen particulate material to the nutrient pool.'
       is=LEN_TRIM(Coptions)+1
