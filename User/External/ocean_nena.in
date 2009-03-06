@@ -204,11 +204,17 @@
      LEVSFRC == 30
      LEVBFRC == 1
 
+! Set vertical, terrain-following coordinates transformation equation and
+! stretching function (see below for details), [1:Ngrids].
+
+  Vtransform == 1                          ! transformation equation
+ Vstretching == 1                          ! stretching function
+
 ! Vertical S-coordinates parameters, [1:Ngrids].
 
-     THETA_S == 5.0d0                      ! 0 < THETA_S < 20
-     THETA_B == 0.4d0                      ! 0 < THETA_B < 1
-      TCLINE == 50.0d0                     ! m
+     THETA_S == 5.0d0                      ! surface stretching parameter
+     THETA_B == 0.4d0                      ! bottom  stretching parameter
+      TCLINE == 50.0d0                     ! critical depth (m)
 
 ! Mean Density and Brunt-Vaisala frequency.
 
@@ -977,17 +983,99 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Vertical S-coordinates parameters.
 !------------------------------------------------------------------------------
 !
-!  THETA_S     S-coordinate surface control parameter, [0 < theta_s < 20].
+! The parameters below must be consistent in all input fields associated with
+! the vertical grid.  The same vertical grid transformation (depths) needs to
+! be used when preparing initial conditions, boundary conditions, climatology,
+! observations, and so on. Please check
 !
-!  THETA_B     S-coordinate bottom  control parameter, [0 < theta_b < 1].
+!   https://www.myroms.org/wiki/index.php/Vertical_S-coordinate
 !
-!  TCLINE      Width (m) of surface or bottom boundary layer in which
-!              higher vertical resolution is required during stretching.
+! for details, rules and examples.
 !
-!              WARNING:  Users need to experiment with these parameters. We
-!                        have found out that the model goes unstable with
-!                        high values of THETA_S.  In steep and very tall
-!                        topography, it is recommended to use THETA_S < 3.0.
+!
+!  Vtransform  Vertical transformation equation:
+!
+!                (1) Original formulation (Shchepetkin and McWilliams, 2005),
+!                    Vtransform=1 (In ROMS since 1999)
+!
+!                      z(x,y,s,t)=Zo(x,y,s)+zeta(x,y,t)*[1+Zo(x,y,s)/h(x,y)]
+!
+!                    where
+!
+!                      Zo(x,y,s)=hc*s+[h(x,y)-hc]*C(s)
+!
+!                (2) New formulation (A. Shchepetkin),
+!                    Vtransform=2
+!
+!                      z(x,y,s,t)=zeta(x,y,t)*[zeta(x,y,t)+h(x,y)]*Zo(x,y,s)
+!
+!                    where
+!
+!                      Zo(x,y,s)=[hc*s(k)+h(x,y)*C(k)]/[hc+h(x,y)]
+!
+!  Vstretching Vertical stretching function, C(s):
+!
+!                (1) Original function (Song and Haidvogel, 1994),
+!                    Vstretching=1
+!
+!                    C(s)=(1-theta_b)*[SINH(s*theta_s)/SINH(theta_s)]+
+!                         theta_b*[-0.5+0.5*TANH(theta_s*(s+0.5))/
+!                                           TANH(0.5*theta_s)]
+!
+!                (2) A. Shchepetkin function,
+!                    Vstretching=2
+!
+!                      C(s)=Cweight*Csur(s)+(1-Cweight)*Cbot(s)
+!
+!                    where
+!
+!                      Csur(s)=[1-COSH(theta_s*s)]/[COSH(theta_s)-1]
+!
+!                      Cbot(s)=-1+[1-SINH(theta_b*(s+1))]/SINH(theta_b)
+!
+!                      Cweight=(s+1)**alpha*
+!                              (1+(alpha/beta)*(1-(s+1)**beta))
+!
+!                (3) R. Geyer function for shallow sediment applications,
+!                    Vstretching=3
+!
+!                      C(s)=Cweight*Cbot(s)+(1-Cweight)*Csur(s)
+!
+!                    where
+!
+!                      Csur(s)=-LOG(COSH(Hscale*ABS(s)** alpha))/
+!                               LOG(COSH(Hscale))
+!
+!                      Cbot(s)= LOG(COSH(Hscale*(s+1)** beta))/
+!                               LOG(COSH(Hscale))-1
+!
+!                      Cweight=0.5*(1-TANH(Hscale*(s+0.5))
+!
+!              Many other stretching functions (Vstretching>3) are possible
+!              provided that:
+!
+!                * C(s) is a dimensionless, nonlinear, monotonic function.
+!                * C(s) is a continuous differentiable function, or
+!                  a diffentiable piecewise function with smooth transition.
+!                * The stretching vertical coordinate ,s, is constrained
+!                  between -1 <= s <= 0, with s=0 corresponding to the
+!                  free-surface and s=-1 corresponding to the bathymetry.
+!                * Similarly, the stretching function, C(s), is constrained
+!                  between -1 <= C(s) <= 0, with C(0)=0 corresponding to the
+!                  free-surface and C(-1)=-1 corresponding to the bathymetry.
+!
+!              These functions are coded in routine "Utility/set_scoord.F".
+!               
+!  THETA_S     S-coordinate surface control parameter. The range of optimal
+!              values depends on the vertical stretching function, C(s).
+!
+!  THETA_B     S-coordinate bottom  control parameter. The range of optimal
+!              values depends on the vertical stretching function, C(s).
+!
+!  TCLINE      Critical depth (hc) in meters (positive) contolling the
+!              stretching. It can be interpreted as the width of surface or
+!              bottom boundary layer in which higher vertical resolution
+!              (levels) is required during stretching.
 !
 !------------------------------------------------------------------------------
 ! Mean Density and background Brunt-Vaisala frequency.

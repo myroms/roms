@@ -5,10 +5,10 @@ dimensions:
 	state_variable = 7 ;
 	datum = UNLIMITED ; // (0 currently)
 variables:
-	char spherical(survey) ;
-		spherical:long_name = "grid type logical switch" ;
-		spherical:option_T = "spherical" ;
-		spherical:option_F = "Cartesian" ;
+        char spherical ;
+                spherical:long_name = "grid type logical switch" ;
+                spherical:flag_values = "T, F" ;
+                spherical:flag_meanings = "spherical Cartesian" ;
 	int Nobs(survey) ;
 		Nobs:long_name = "number of observations with the same survey time" ;
 	double survey_time(survey) ;
@@ -56,7 +56,7 @@ variables:
 		obs_value:units = "state variable units" ;
 
 // global attributes:
-		:type = "ROMS Observation file" ;
+		:type = "ROMS Observations" ;
 		:title = "ROMS/TOMS 3.0 - Eastern Australia Current 1/4 Application" ;
 		:state_units = "Free-sruface (m), 2D momentum (m/s), 3D momentum (m/s), potential temperature (Celsius), salinity (PSU)" ;
 		:history = "4DVAR observations, Wednesday - February 15, 2006 - 1:37:14.3733 AM" ;

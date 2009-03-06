@@ -83,7 +83,7 @@
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, IDmod, ncname)        
+      CALL netcdf_check_var (ng, model, ncname)        
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Initialize logical switches.

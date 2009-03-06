@@ -44,6 +44,50 @@ Currently, you can find the following CDL scripts:
     s4dvar_std_b.cdl         4DVAR open boundaries error covariance standard deviation
     s4dvar_std_f.cdl         4DVAR surface forcing error covariance standard deviation
 
+
+Currently, there are two vertical, terrain-following coordinates
+transformation in ROMS.  You need to choose the appropriate
+"standard_name" attribute:
+
+(1) Original transformation: "ocean_s_coordinate_g1"
+
+        double s_rho(s_rho) ;
+                s_rho:long_name = "S-coordinate at RHO-points" ;
+                s_rho:valid_min = 0. ;
+                s_rho:valid_max = -1. ;
+                s_rho:positive = "up" ;
+                s_rho:standard_name = "ocean_s_coordinate_g1" ;
+                s_rho:formula_terms = "s: s_rho C: Cs_r eta: zeta depth: h depth_c: hc" ;
+
+        double s_w(s_w) ;
+                s_w:long_name = "S-coordinate at W-points" ;
+                s_w:valid_min = 0. ;
+                s_w:valid_max = -1. ;
+                s_w:positive = "up" ;
+                s_w:standard_name = "ocean_s_coordinate_g1" ;
+                s_w:formula_terms = "s: s_w C: Cs_w eta: zeta depth: h depth_c: hc" ;
+
+(2) New transformation: "ocean_s_coordinate_g2"
+
+        double s_rho(s_rho) ;
+                s_rho:long_name = "S-coordinate at RHO-points" ;
+                s_rho:valid_min = 0. ;
+                s_rho:valid_max = -1. ;
+                s_rho:positive = "up" ;
+                s_rho:standard_name = "ocean_s_coordinate_g2" ;
+                s_rho:formula_terms = "s: s_rho C: Cs_r eta: zeta depth: h depth_c: hc" ;
+
+        double s_w(s_w) ;
+                s_w:long_name = "S-coordinate at W-points" ;
+                s_w:valid_min = 0. ;
+                s_w:valid_max = -1. ;
+                s_w:positive = "up" ;
+                s_w:standard_name = "ocean_s_coordinate_g2" ;
+                s_w:formula_terms = "s: s_w C: Cs_w eta: zeta depth: h depth_c: hc" ;
+ 
+Notice that the nondimentional, fractional, stretched vertical coordinate
+is the same excet to the value of the attribute "standard_name".
+
 You can easily edit any of these files to change NetCDF file name, change
 dimensions, add and remove variables, and add and modify global attibutes.
 A NetCDF file can be created by typing:

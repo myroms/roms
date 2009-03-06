@@ -16,17 +16,14 @@ variables:
 		sms_time:interval = "367 daily data" ;
 		sms_time:start_date = "01-Jan-1993" ;
 		sms_time:end_date = "07-Jan-1994" ;
-		sms_time:field = "sms_time, scalar, series" ;
 	short sustr(time, eta_u, xi_u) ;
 		sustr:long_name = "surface u-momentum stress" ;
 		sustr:units = "Newton meter-2" ;
-		sustr:field = "surface u-momentum stress, scalar, series" ;
 		sustr:time = "sms_time" ;
 		sustr:scale_factor = 0.0005 ;
 	short svstr(time, eta_v, xi_v) ;
 		svstr:long_name = "surface v-momentum stress" ;
 		svstr:units = "Newton meter-2 * 1000" ;
-		svstr:field = "surface v-momentum stress, scalar, series" ;
 		svstr:time = "sms_time" ;
 		svstr:scale_factor = 0.0005 ;
 
@@ -36,6 +33,4 @@ variables:
 		:grd_file = "roms_nena_grid_3.nc" ;
 		:source_file = "../natl/ncepflx1_NATL1993.nc" ;
 		:source_file_history = "extraction from grib files using NCEP_GRBdaily - 27-Mar-2002 17:08:28" ;
-		:history = "Created by Julia Levin - 06-Aug-2002 15:22:28. Modified 15-Aug-2002 by John Wilkin to change sms_time(1) to 365.25 days" ;
-
 }

@@ -400,10 +400,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: foundit
-
       integer :: ncid, i, status
-      integer :: myID, myValue
 !
 !-----------------------------------------------------------------------
 !  Inquire about the NetCDF dimensions (names and values).
@@ -537,6 +534,344 @@
 
       RETURN
       END SUBROUTINE netcdf_check_dim
+
+      SUBROUTINE netcdf_check_var (ng, model, ncname)
+!
+!=======================================================================
+!                                                                      !
+!  This routine inquires the NetCDF file variables and check if the    !
+!  values of few of them are consitent with the parameters provided    !
+!  in input scripts. All the variables information is stored in the    !
+!  module variables declared above.                                    !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!                                                                      !
+!  On output the following information is stored in this module:       !
+!                                                                      !
+!     n_dim        Number of dimensions                                !
+!     n_var        Number of variables                                 !
+!     n_gatt       Number of global attributes                         !
+!     rec_id       Unlimited dimension ID                              !
+!     var_name     Variables name (1:n_var)                            !
+!     var_id       Variables ID (1:n_var)                              !
+!     var_natt     Variables number of attributes (1:n_var)            !
+!     var_flag     Variables flag [1=full field, -1=water points only] !
+!     var_type     Variables external data type (1:n_var)              !
+!     var_ndim     Variables number of dimensions (1:n_var)            !
+!     var_dim      Variables dimensions ID (:,1:n_var)                 !
+!                                                                      !
+!     WARNING: This is information is rewritten during each CALL.      !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      character (len=*), intent(in) :: ncname
+!
+!  Local variable declarations.
+!
+      integer :: IDmod, Npts, i, ib, ic, j, ncid, status
+      integer :: IvarS
+
+      real(r8) :: FvarS, FvarV(50)
+
+      character (len=80) :: text
+!
+!-----------------------------------------------------------------------
+!  Inquire about the NetCDF variables.
+!-----------------------------------------------------------------------
+!
+!  Limit model identifier. The profiling is limited to iNLM, iTLM, iRPM,
+!  and iADM.
+!
+      IF ((model.lt.1).or.(model.gt.4)) THEN
+        IDmod=iNLM
+      ELSE
+        IDmod=model
+      END IF
+!
+! Inquire about all variables.
+!
+      CALL netcdf_inq_var (ng, IDmod, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+!
+!-----------------------------------------------------------------------
+!  Check several important variables for consistency.
+!-----------------------------------------------------------------------
+!
+      DO i=1,n_var
+        SELECT CASE (TRIM(ADJUSTL(var_name(i))))
+
+#ifdef SOLVE3D
+          CASE ('Vtransform')
+            CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),       &
+     &                            IvarS)
+            IF (exit_flag.ne.NoError) RETURN
+
+            IF (IvarS.ne.Vtransform(ng)) THEN
+              IF (Master) WRITE (stdout,10) TRIM(var_name(i)),          &
+     &                                      IvarS, Vtransform(ng),      &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+          CASE ('Vstretching')
+            CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),       &
+     &                            IvarS)
+            IF (exit_flag.ne.NoError) RETURN
+
+            IF (IvarS.ne.Vstretching(ng)) THEN
+              IF (Master) WRITE (stdout,10) TRIM(var_name(i)),          &
+     &                                      IvarS, Vstretching(ng),     &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+          CASE ('hc')
+            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
+     &                            FvarS)
+            IF (exit_flag.ne.NoError) RETURN
+
+            IF (FvarS.ne.hc(ng)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
+     &                                      FvarS, hc(ng),              &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+          CASE ('theta_s')
+            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
+     &                            FvarS)
+            IF (FvarS.ne.theta_s(ng)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
+     &                                      FvarS, theta_s(ng),         &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+          CASE ('theta_b')
+            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
+     &                            FvarS)
+            IF (exit_flag.ne.NoError) RETURN
+
+            IF (FvarS.ne.theta_b(ng)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
+     &                                      FvarS, theta_b(ng),         &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+          CASE ('Tcline')
+            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
+     &                            FvarS)
+            IF (exit_flag.ne.NoError) RETURN
+
+            IF (FvarS.ne.Tcline(ng)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
+     &                                      FvarS, Tcline(ng),          &
+     &                                      TRIM(ncname)
+              exit_flag=5
+              EXIT
+            END IF
+#endif
+#ifdef FOUR_DVAR
+          CASE ('Hgamma')
+            IF ((model.eq.5).or.(model.eq.10).or.(model.eq.11)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (FvarS.ne.Hgamma) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Hgamma,            &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+# ifdef SOLVE3D
+          CASE ('Vgamma')
+            IF ((model.eq.5).or.(model.eq.10).or.(model.eq.11)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (FvarS.ne.Vgamma) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Vgamma,            &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+# endif
+          CASE ('Hdecay')
+            IF ((model.eq.5).or.(model.eq.11)) THEN
+              Npts=UBOUND(Hdecay,DIM=2)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1/), total = (/Npts/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              DO j=1,Npts
+                IF (FvarV(j).ne.Hdecay(1,j,ng)) THEN
+                  text=TRIM(var_name(i))//                              &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          Hdecay(1,j,ng),         &
+     &                                          TRIM(ncname)
+                  exit_flag=5
+                  EXIT
+                END IF
+              END DO
+            END IF
+# ifdef SOLVE3D
+          CASE ('Vdecay')
+            IF ((model.eq.5).or.(model.eq.11)) THEN
+              Npts=UBOUND(Vdecay,DIM=2)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1/), total = (/Npts/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              DO j=1,Npts
+                IF (FvarV(j).ne.Vdecay(1,j,ng)) THEN
+                  text=TRIM(var_name(i))//                              &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          Vdecay(1,j,ng),         &
+     &                                          TRIM(ncname)
+                  exit_flag=5
+                  EXIT
+                END IF
+              END DO
+            END IF
+# endif
+# ifdef WEAK_CONSTRAINT
+          CASE ('HdecayM')
+            IF ((model.eq.5).and.(NSA.eq.2)) THEN
+              Npts=UBOUND(Hdecay,DIM=2)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1/), total = (/Npts/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              DO j=1,Npts
+                IF (FvarV(j).ne.Hdecay(NSA,j,ng)) THEN
+                  text=TRIM(var_name(i))//                              &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          Hdecay(NSA,j,ng),       &
+     &                                          TRIM(ncname)
+                  exit_flag=5
+                  EXIT
+                END IF
+              END DO
+            END IF
+#  ifdef SOLVE3D
+          CASE ('VdecayM')
+            IF ((model.eq.5).and.(NSA.eq.2)) THEN
+              Npts=UBOUND(Vdecay,DIM=2)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1/), total = (/Npts/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              DO j=1,Npts
+                IF (FvarV(j).ne.Vdecay(NSA,j,ng)) THEN
+                  text=TRIM(var_name(i))//                              &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          Vdecay(NSA,j,ng),       &
+     &                                          TRIM(ncname)
+                  exit_flag=5
+                  EXIT
+                END IF
+              END DO
+            END IF
+#  endif
+# endif
+# ifdef ADJUST_BOUNDARY
+          CASE ('HdecayB')
+            IF (model.eq.10) THEN
+              Npts=UBOUND(HdecayB,DIM=1)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1,1/), total = (/Npts,4/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              ic=0
+              DO ib=1,4
+                DO j=1,Npts
+                  ic=ic+1
+                    WRITE (text,"(a,'(',i1,',',a,')')")                 &
+     &                TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
+                  IF (FvarV(ic).ne.HdecayB(j,ib,ng)) THEN
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(ic),            &
+     &                                            HdecayB(j,ib,ng),     &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+#  ifdef SOLVE3D
+          CASE ('VdecayB')
+            IF (model.eq.10) THEN
+              Npts=UBOUND(VdecayB,DIM=1)
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarV,                              &
+     &                              start = (/1,1/), total = (/Npts,4/))
+              IF (exit_flag.ne.NoError) RETURN
+
+              ic=0
+              DO ib=1,4
+                DO j=1,Npts
+                  ic=ic+1
+                    WRITE (text,"(a,'(',i1,',',a,')')")                 &
+     &                TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
+                  IF (FvarV(ic).ne.VdecayB(j,ib,ng)) THEN
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(ic),            &
+     &                                            VdecayB(j,ib,ng),     &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+#  endif
+# endif
+#endif
+        END SELECT
+      END DO
+
+ 10   FORMAT (/,' NETCDF_CHECK_VAR - inconsistent value of variable: ', &
+     &        a,2x,2i5,/,20x,'in file: ',a)
+ 20   FORMAT (/,' NETCDF_CHECK_VAR - inconsistent value of variable: ', &
+     &        a,2x,2(1pe14.6),/,20x,'in file: ',a)
+
+      RETURN
+      END SUBROUTINE netcdf_check_var
 
       SUBROUTINE netcdf_inq_var (ng, model, ncname, ncid, myVarName,    &
      &                           SearchVar, VarID, nVarDim, nVarAtt)

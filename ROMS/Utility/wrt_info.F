@@ -1657,6 +1657,16 @@
 !
 !  S-coordinate parameters.
 !
+      CALL netcdf_put_ivar (ng, model, ncname, 'Vtransform',            &
+     &                      Vtransform(ng), (/0/), (/0/),               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'Vstretching',           &
+     &                      Vstretching(ng), (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
       CALL netcdf_put_fvar (ng, model, ncname, 'theta_s',               &
      &                      theta_s(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)

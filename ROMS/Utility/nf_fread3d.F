@@ -244,7 +244,7 @@
           Amax=-spval
           DO i=1,Npts
             IF (wrk(i).ge.spval_check) THEN
-              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+              wrk(i)=0.0_r8                   ! masked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -637,7 +637,7 @@
           IF (status.eq.nf90_noerr) THEN
             DO i=1,Npts
               IF (wrk(i).ge.spval_check) THEN
-                wrk(i)=0.0_r8           ! land/sea maked with _FillValue
+                wrk(i)=0.0_r8                 ! masked with _FillValue
               ELSE
                 wrk(i)=Ascl*wrk(i)
                 Amin=MIN(Amin,wrk(i))

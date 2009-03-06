@@ -3130,6 +3130,20 @@
 !
 !  S-coordinate parameters.
 !
+      Vinfo( 1)='Vtransform'
+      Vinfo( 2)='vertical terrain-following transformation equation'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Vstretching'
+      Vinfo( 2)='vertical terrain-following stretching function'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
       Vinfo( 1)='theta_s'
       Vinfo( 2)='S-coordinate surface control parameter'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -3167,15 +3181,17 @@
       Vinfo( 5)='valid_min'
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_rho, scalar'
-      Vinfo(21)='ocean_s_coordinate'
-      vinfo(25)='up'
+      IF (Vtransform(ng).eq.1) THEN
+        Vinfo(21)='ocean_s_coordinate_g1'
+      ELSE IF (Vtransform(ng).eq.2) THEN
+        Vinfo(21)='ocean_s_coordinate_g2'
+      END IF
 #if defined SEDIMENT && defined SED_MORPH
-      Vinfo(23)=                                                        &
-     &'s: s_rho eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
+      Vinfo(23)='s: s_rho C: Cs_r eta: zeta depth: bath depth_c: hc'
 #else
-      Vinfo(23)=                                                        &
-     &   's: s_rho eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
+      Vinfo(23)='s: s_rho C: Cs_r eta: zeta depth: h depth_c: hc'
 #endif
+      vinfo(25)='up'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -3191,14 +3207,17 @@
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_w, scalar'
       Vinfo(21)='ocean_s_coordinate'
-      vinfo(25)='up'
+      IF (Vtransform(ng).eq.1) THEN
+        Vinfo(21)='ocean_s_coordinate_g1'
+      ELSE IF (Vtransform(ng).eq.2) THEN
+        Vinfo(21)='ocean_s_coordinate_g2'
+      END IF
 #if defined SEDIMENT && defined SED_MORPH
-      Vinfo(23)=                                                        &
-     &  's: s_w eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
+      Vinfo(23)='s: s_w C: Cs_w eta: zeta depth: bath depth_c: hc'
 #else
-      Vinfo(23)=                                                        &
-     &     's: s_w eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
+      Vinfo(23)='s: s_w C: Cs_w eta: zeta depth: h depth_c: hc'
 #endif
+      vinfo(25)='up'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &

@@ -284,7 +284,7 @@
           Amax=-spval
           DO i=1,MyNpts
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
-              wrk(i)=0.0_r8                      ! maked with _FillValue
+              wrk(i)=0.0_r8                     ! masked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -409,7 +409,7 @@
           Amax=-spval
           DO i=1,Npts
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
-              wrk(i)=0.0_r8                      ! maked with _FillValue
+              wrk(i)=0.0_r8                     ! masked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -750,7 +750,7 @@
           Amax=-spval
           DO i=1,Npts
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
-              wrk(i)=0.0_r8                      ! maked with _FillValue
+              wrk(i)=0.0_r8                     ! msaked with _FillValue
             ELSE
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))

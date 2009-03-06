@@ -12,6 +12,10 @@
 !  This routine computes the time evolving depths of the model grid    !
 !  and its associated vertical transformation metric (thickness).      !
 !                                                                      !
+!  Currently, two vertical coordinate transformations are available    !
+!  with various possible vertical stretching, C(s), functions, (see    !
+!  routine "set_scoord.F" for details).                                !
+!                                                                      !
 !=======================================================================
 !
       implicit none
@@ -133,7 +137,7 @@
 # endif
       integer :: i, j, k
 
-      real(r8) :: cff_r, cff1_r, cff_w, cff1_w
+      real(r8) :: cff_r, cff1_r, cff2_r, cff_w, cff1_w, cff2_w
       real(r8) :: hinv, hwater, z_r0, z_w0
 # ifdef WET_DRY
       real(r8), parameter :: eps = 1.0E-14_r8
@@ -142,47 +146,103 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Compute time evolving depths and vertical thicknesses.
+!  Original formulation: Compute vertical depths (meters, negative) at
+!                        RHO- and W-points, and vertical grid
+!  thicknesses. Various stretching functions are possible.
+!
+!         z_w(x,y,s,t) = Zo_w + zeta(x,y,t) * [1.0 + Zo_w / h(x,y)]
+!
+!                 Zo_w = hc * [s(k) - C(k)] + C(k) * h(x,y)
+!
 !-----------------------------------------------------------------------
 !
-!  Compute vertical depths (meters, negative) at RHO- and W-points,
-!  and vertical grid thicknesses.
-!
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      IF (Vtransform(ng).eq.1) THEN
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
 # if defined SEDIMENT && defined SED_MORPH
-          h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
+            h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
 # endif
 # if defined WET_DRY
-          IF (h(i,j).eq.0.0_r8) THEN
-            h(i,j)=eps
-          END IF
+            IF (h(i,j).eq.0.0_r8) THEN
+              h(i,j)=eps
+            END IF
 # endif
-          z_w(i,j,0)=-h(i,j)
-        END DO
-        DO k=1,N(ng)
-          cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
-          cff1_w=SCALARS(ng)%Cs_w(k)
-          cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
-          cff1_r=SCALARS(ng)%Cs_r(k)
-          DO i=IstrR,IendR
-            hwater=h(i,j)
+            z_w(i,j,0)=-h(i,j)
+          END DO
+          DO k=1,N(ng)
+            cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
+            cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
+            cff1_r=SCALARS(ng)%Cs_r(k)
+            cff1_w=SCALARS(ng)%Cs_w(k)
+            DO i=IstrR,IendR
+              hwater=h(i,j)
 # ifdef ICESHELF
-            hwater=hwater-ABS(zice(i,j))
+              hwater=hwater-ABS(zice(i,j))
 # endif
-            hinv=1.0_r8/hwater
-            z_w0=cff_w+cff1_w*hwater
-            z_w(i,j,k)=z_w0+Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)
-            z_r0=cff_r+cff1_r*hwater
-            z_r(i,j,k)=z_r0+Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)
+              hinv=1.0_r8/hwater
+              z_w0=cff_w+cff1_w*hwater
+              z_w(i,j,k)=z_w0+Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)
+              z_r0=cff_r+cff1_r*hwater
+              z_r(i,j,k)=z_r0+Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)
 # ifdef ICESHELF
-            z_w(i,j,k)=z_w(i,j,k)-ABS(zice(i,j))
-            z_r(i,j,k)=z_r(i,j,k)-ABS(zice(i,j))
+              z_w(i,j,k)=z_w(i,j,k)-ABS(zice(i,j))
+              z_r(i,j,k)=z_r(i,j,k)-ABS(zice(i,j))
 # endif
-            Hz(i,j,k)=z_w(i,j,k)-z_w(i,j,k-1)
+              Hz(i,j,k)=z_w(i,j,k)-z_w(i,j,k-1)
+            END DO
           END DO
         END DO
-      END DO
+!
+!-----------------------------------------------------------------------
+!  New formulation: Compute vertical depths (meters, negative) at
+!                   RHO- and W-points, and vertical grid thicknesses.
+!  Various stretching functions are possible.
+!
+!         z_w(x,y,s,t) = zeta(x,y,t) + [zeta(x,y,t)+ h(x,y)] * Zo_w
+!
+!                 Zo_w = [hc * s(k) + C(k) * h(x,y)] / [hc + h(x,y)]
+!
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Vtransform(ng).eq.2) THEN
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+# if defined SEDIMENT && defined SED_MORPH
+            h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
+# endif
+# if defined WET_DRY
+            IF (h(i,j).eq.0.0_r8) THEN
+              h(i,j)=eps
+            END IF
+# endif
+            z_w(i,j,0)=-h(i,j)
+          END DO
+          DO k=1,N(ng)
+            cff_r=hc(ng)*SCALARS(ng)%sc_r(k)
+            cff_w=hc(ng)*SCALARS(ng)%sc_w(k)
+            cff1_r=SCALARS(ng)%Cs_r(k)
+            cff1_w=SCALARS(ng)%Cs_w(k)
+            DO i=IstrR,IendR
+              hwater=h(i,j)
+# ifdef ICESHELF
+              hwater=hwater-ABS(zice(i,j))
+# endif
+              hinv=1.0_r8/(hc(ng)+hwater)
+              cff2_r=(cff_r+cff1_r*hwater)*hinv
+              cff2_w=(cff_w+cff1_w*hwater)*hinv
+
+              z_w(i,j,k)=Zt_avg1(i,j)+(Zt_avg1(i,j)+hwater)*cff2_w
+              z_r(i,j,k)=Zt_avg1(i,j)+(Zt_avg1(i,j)+hwater)*cff2_r
+# ifdef ICESHELF
+              z_w(i,j,k)=z_w(i,j,k)-ABS(zice(i,j))
+              z_r(i,j,k)=z_r(i,j,k)-ABS(zice(i,j))
+# endif
+              Hz(i,j,k)=z_w(i,j,k)-z_w(i,j,k-1)
+            END DO
+          END DO
+        END DO
+      END IF
+
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------

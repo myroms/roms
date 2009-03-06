@@ -12,6 +12,10 @@
 !  This routine computes the time evolving depths of the model grid    !
 !  and its associated vertical transformation metric (thickness).      !
 !                                                                      !
+!  Currently, two vertical coordinate transformations are available    !
+!  with various possible vertical stretching, C(s), functions, (see    !
+!  routine "set_scoord.F" for details).                                !
+!                                                                      !
 !  BASIC STATE variables needed: NONE                                  !
 !  Independent Variables: ad_Hz, ad_z_r, ad_z_w                        !
 !                                                                      !
@@ -152,6 +156,7 @@
       real(r8) :: cff, cff_r, cff1_r, cff2_r, cff_w, cff1_w, cff2_w
       real(r8) :: hinv, hwater, z_r0, z_w0
       real(r8) :: adfac, ad_hinv, ad_hwater, ad_z_r0, ad_z_w0
+      real(r8) :: ad_cff2_r, ad_cff2_w
 
 # include "set_bounds.h"
 !
@@ -159,6 +164,8 @@
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
+      ad_cff2_r=0.0_r8
+      ad_cff2_w=0.0_r8
       ad_z_r0=0.0_r8
       ad_z_w0=0.0_r8
       ad_hinv=0.0_r8
@@ -234,93 +241,204 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Compute adjoint vertical depths (meters, negative) at RHO- and
-!  W-points, and vertical grid thicknesses (Hz=d(z_w)/d(s), meters).
+!  Original formulation: Compute vertical depths (meters, negative) at
+!                        RHO- and W-points, and vertical grid
+!  thicknesses. Various stretching functions are possible.
+!
+!         z_w(x,y,s,t) = Zo_w + zeta(x,y,t) * [1.0 + Zo_w / h(x,y)]
+!
+!                 Zo_w = hc * [s(k) - C(k)] + C(k) * h(x,y)
+!
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO k=N(ng),1,-1
-          cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
-          cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
-          cff1_r=SCALARS(ng)%Cs_r(k)
-          cff1_w=SCALARS(ng)%Cs_w(k)
-          DO i=IstrR,IendR
-            hwater=h(i,j)
+      IF (Vtransform(ng).eq.1) THEN
+        DO j=JstrR,JendR
+          DO k=N(ng),1,-1
+            cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
+            cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
+            cff1_r=SCALARS(ng)%Cs_r(k)
+            cff1_w=SCALARS(ng)%Cs_w(k)
+            DO i=IstrR,IendR
+              hwater=h(i,j)
 # ifdef ICESHELF
-            hwater=hwater-ABS(zice(i,j))
+              hwater=hwater-ABS(zice(i,j))
 # endif
-            hinv=1.0_r8/hwater
-            z_w0=cff_w+cff1_w*hwater
-            z_r0=cff_r+cff1_r*hwater
+              hinv=1.0_r8/hwater
+              z_w0=cff_w+cff1_w*hwater
+              z_r0=cff_r+cff1_r*hwater
 
-!>          tl_Hz(i,j,k)=tl_z_w(i,j,k)-tl_z_w(i,j,k-1)
+!>            tl_Hz(i,j,k)=tl_z_w(i,j,k)-tl_z_w(i,j,k-1)
 !>
-            ad_z_w(i,j,k  )=ad_z_w(i,j,k  )+ad_Hz(i,j,k)
-            ad_z_w(i,j,k-1)=ad_z_w(i,j,k-1)-ad_Hz(i,j,k)
-            ad_Hz(i,j,k)=0.0_r8
-!>          tl_z_r(i,j,k)=tl_z_r0+                                      &
-!>   &                    tl_Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)+           &
-!>   &                    Zt_avg1(i,j)*(tl_z_r0*hinv+z_r0*tl_hinv)
+              ad_z_w(i,j,k  )=ad_z_w(i,j,k  )+ad_Hz(i,j,k)
+              ad_z_w(i,j,k-1)=ad_z_w(i,j,k-1)-ad_Hz(i,j,k)
+              ad_Hz(i,j,k)=0.0_r8
+!>            tl_z_r(i,j,k)=tl_z_r0+                                    &
+!>   &                      tl_Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)+         &
+!>   &                      Zt_avg1(i,j)*(tl_z_r0*hinv+z_r0*tl_hinv)
 !>
-            adfac=Zt_avg1(i,j)*ad_z_r(i,j,k)
-            ad_z_r0=ad_z_r0+hinv*adfac+ad_z_r(i,j,k)
-            ad_hinv=ad_hinv+z_r0*adfac
-            ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+                            &
-     &                      (1.0_r8+z_r0*hinv)*ad_z_r(i,j,k)
-            ad_z_r(i,j,k)=0.0_r8
-!>          tl_z_r0=cff1_r*tl_hwater
+              adfac=Zt_avg1(i,j)*ad_z_r(i,j,k)
+              ad_z_r0=ad_z_r0+hinv*adfac+ad_z_r(i,j,k)
+              ad_hinv=ad_hinv+z_r0*adfac
+              ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+                          &
+     &                        (1.0_r8+z_r0*hinv)*ad_z_r(i,j,k)
+              ad_z_r(i,j,k)=0.0_r8
+!>            tl_z_r0=cff1_r*tl_hwater
 !>
-            ad_hwater=ad_hwater+cff1_r*ad_z_r0
-            ad_z_r0=0.0_r8
-!>          tl_z_w(i,j,k)=tl_z_w0+                                      &
-!>   &                    tl_Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)+           &
-!>   &                    Zt_avg1(i,j)*(tl_z_w0*hinv+z_w0*tl_hinv)
+              ad_hwater=ad_hwater+cff1_r*ad_z_r0
+              ad_z_r0=0.0_r8
+!>            tl_z_w(i,j,k)=tl_z_w0+                                    &
+!>   &                      tl_Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)+         &
+!>   &                      Zt_avg1(i,j)*(tl_z_w0*hinv+z_w0*tl_hinv)
 !>
-            adfac=Zt_avg1(i,j)*ad_z_w(i,j,k)
-            ad_z_w0=ad_z_w0+hinv*adfac+ad_z_w(i,j,k)
-            ad_hinv=ad_hinv+z_w0*adfac
-            ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+                            &
-     &                      (1.0_r8+z_w0*hinv)*ad_z_w(i,j,k)
-            ad_z_w(i,j,k)=0.0_r8
-!>          tl_z_w0=cff1_w*tl_hwater
+              adfac=Zt_avg1(i,j)*ad_z_w(i,j,k)
+              ad_z_w0=ad_z_w0+hinv*adfac+ad_z_w(i,j,k)
+              ad_hinv=ad_hinv+z_w0*adfac
+              ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+                          &
+     &                        (1.0_r8+z_w0*hinv)*ad_z_w(i,j,k)
+              ad_z_w(i,j,k)=0.0_r8
+!>            tl_z_w0=cff1_w*tl_hwater
 !>
-            ad_hwater=ad_hwater+cff1_w*ad_z_w0
-            ad_z_w0=0.0_r8
-!>          tl_hinv=-hinv*hinv*tl_hwater
+              ad_hwater=ad_hwater+cff1_w*ad_z_w0
+              ad_z_w0=0.0_r8
+!>            tl_hinv=-hinv*hinv*tl_hwater
 !>
-            ad_hwater=ad_hwater-hinv*hinv*ad_hinv
-            ad_hinv=0.0_r8
-!>          tl_hwater=tl_h(i,j)
+              ad_hwater=ad_hwater-hinv*hinv*ad_hinv
+              ad_hinv=0.0_r8
+!>            tl_hwater=tl_h(i,j)
 !>
-            ad_h(i,j)=ad_h(i,j)+ad_hwater
-            ad_hwater=0.0_r8
+              ad_h(i,j)=ad_h(i,j)+ad_hwater
+              ad_hwater=0.0_r8
+            END DO
           END DO
-        END DO
 
-        DO i=IstrR,IendR
-!>        tl_z_w(i,j,0)=-tl_h(i,j)
+          DO i=IstrR,IendR
+!>          tl_z_w(i,j,0)=-tl_h(i,j)
 !>
-          ad_h(i,j)=ad_h(i,j)-ad_z_w(i,j,0)
-          ad_z_w(i,j,0)=0.0_r8
+            ad_h(i,j)=ad_h(i,j)-ad_z_w(i,j,0)
+            ad_z_w(i,j,0)=0.0_r8
 # if defined WET_DRY
-          IF (h(i,j).eq.0.0_r8) THEN
-!>          tl_h(i,j)=0.0_r8
+            IF (h(i,j).eq.0.0_r8) THEN
+!>            tl_h(i,j)=0.0_r8
 !>
-            ad_h(i,j)=0.0_r8
-          END IF
+              ad_h(i,j)=0.0_r8
+            END IF
 # endif
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>        tl_h(i,j)=tl_h(i,j)-                                          &
-!>   &              tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
+!>          tl_h(i,j)=tl_h(i,j)-                                        &
+!>   &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
 !>
-          ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+                &
-     &                           ad_h(i,j)
+            ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+              &
+     &                             ad_h(i,j)
 
-          ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)-                &
-     &                           ad_h(i,j)
+            ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)-              &
+     &                             ad_h(i,j)
 # endif
+          END DO
         END DO
-      END DO
+!
+!-----------------------------------------------------------------------
+!  New formulation: Compute vertical depths (meters, negative) at
+!                   RHO- and W-points, and vertical grid thicknesses.
+!  Various stretching functions are possible.
+!
+!         z_w(x,y,s,t) = zeta(x,y,t) + [zeta(x,y,t)+ h(x,y)] * Zo_w
+!
+!                 Zo_w = [hc * s(k) + C(k) * h(x,y)] / [hc + h(x,y)]
+!
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Vtransform(ng).eq.2) THEN
+        DO j=JstrR,JendR
+          DO k=N(ng),1,-1
+            cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
+            cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
+            cff1_r=SCALARS(ng)%Cs_r(k)
+            cff1_w=SCALARS(ng)%Cs_w(k)
+            DO i=IstrR,IendR
+              hwater=h(i,j)
+# ifdef ICESHELF
+              hwater=hwater-ABS(zice(i,j))
+# endif
+              hinv=1.0_r8/hwater
+              cff2_r=(cff_r+cff1_r*hwater)*hinv
+              cff2_w=(cff_w+cff1_w*hwater)*hinv
+!>            tl_Hz(i,j,k)=tl_z_w(i,j,k)-tl_z_w(i,j,k-1)
+!>
+              ad_z_w(i,j,k  )=ad_z_w(i,j,k  )+ad_Hz(i,j,k)
+              ad_z_w(i,j,k-1)=ad_z_w(i,j,k-1)-ad_Hz(i,j,k)
+              ad_Hz(i,j,k)=0.0_r8
+!>            tl_z_r(i,j,k)=tl_Zt_avg1(i,j)+                            &
+!>   &                      (tl_Zt_avg1(i,j)+tl_hwater)*cff2_r+         &
+!>   &                      (Zt_avg1(i,j)+hwater)*tl_cff2_r
+!>
+              adfac=cff2_r*ad_z_r(i,j,k)
+              ad_cff2_r=ad_cff2_r+                                      &
+     &                  (Zt_avg1(i,j)+hwater)*ad_z_r(i,j,k)
+              ad_hwater=ad_hwater+adfac
+              ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+ad_z_r(i,j,k)+adfac
+              ad_z_r(i,j,k)=0.0_r8
+!>            tl_cff2_r=cff1_r*tl_hwater*hinv+                          &
+!>   &                  (cff_r+cff1_r*hwater)*tl_hinv
+!>
+              ad_hinv=ad_hinv+                                          &
+     &                (cff_r+cff1_r*hwater)*ad_cff2_r
+              ad_hwater=ad_hwater+                                      &
+     &                  cff1_r*hinv*ad_cff2_r
+              ad_cff2_r=0.0_r8
+!>            tl_z_w(i,j,k)=tl_Zt_avg1(i,j)+                            &
+!>   &                      (tl_Zt_avg1(i,j)+tl_hwater)*cff2_w+         &
+!>   &                      (Zt_avg1(i,j)+hwater)*tl_cff2_w
+!>
+              adfac=cff2_w*ad_z_w(i,j,k)
+              ad_cff2_w=ad_cff2_w+                                      &
+     &                  (Zt_avg1(i,j)+hwater)*ad_z_w(i,j,k)
+              ad_hwater=ad_hwater+adfac
+              ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+ad_z_w(i,j,k)+adfac
+              ad_z_w(i,j,k)=0.0_r8
+!>            tl_cff2_w=cff1_w*tl_hwater*hinv+                          &
+!>   &                  (cff_w+cff1_w*hwater)*tl_hinv
+!>
+              ad_hinv=ad_hinv+                                          &
+     &                (cff_w+cff1_w*hwater)*ad_cff2_w
+              ad_hwater=ad_hwater+                                      &
+     &                  cff1_w*hinv*ad_cff2_w
+              ad_cff2_w=0.0_r8
+!>            tl_hinv=-hinv*hinv*tl_hwater
+!>
+              ad_hwater=ad_hwater-hinv*hinv*ad_hinv
+              ad_hinv=0.0_r8
+!>            tl_hwater=tl_h(i,j)
+!>
+              ad_h(i,j)=ad_h(i,j)+ad_hwater
+              ad_hwater=0.0_r8
+            END DO
+          END DO
+
+          DO i=IstrR,IendR
+!>          tl_z_w(i,j,0)=-tl_h(i,j)
+!>
+            ad_h(i,j)=ad_h(i,j)-ad_z_w(i,j,0)
+            ad_z_w(i,j,0)=0.0_r8
+# if defined WET_DRY
+            IF (h(i,j).eq.0.0_r8) THEN
+!>            tl_h(i,j)=0.0_r8
+!>
+              ad_h(i,j)=0.0_r8
+            END IF
+# endif
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+!>          tl_h(i,j)=tl_h(i,j)-                                        &
+!>   &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
+!>
+            ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+              &
+     &                             ad_h(i,j)
+
+            ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)-              &
+     &                             ad_h(i,j)
+# endif
+          END DO
+        END DO
+      END IF
 
       RETURN
       END SUBROUTINE ad_set_depth_tile
