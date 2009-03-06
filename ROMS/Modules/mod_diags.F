@@ -45,7 +45,7 @@
 
         TYPE T_DIAGS
 
-# ifdef BIO_FASHAM
+# ifdef BIO_FENNEL
           real(r8), pointer :: DiaBio2d(:,:,:)
           real(r8), pointer :: DiaBio3d(:,:,:,:)
 # endif
@@ -105,7 +105,7 @@
 !
       IF (ng.eq.1 ) allocate ( DIAGS(Ngrids) )
 !
-# ifdef BIO_FASHAM
+# ifdef BIO_FENNEL
       allocate ( DIAGS(ng) % DiaBio2d(LBi:UBi,LBj:UBj,NDbio2d) )
       allocate ( DIAGS(ng) % DiaBio3d(LBi:UBi,LBj:UBj,N(ng),NDbio3d) )
 # endif
@@ -206,7 +206,7 @@
 !-----------------------------------------------------------------------
 !
       DO j=Jmin,Jmax
-# ifdef BIO_FASHAM
+# ifdef BIO_FENNEL
         DO idiag=1,NDbio2d
           DO i=Imin,Imax
             DIAGS(ng) % DiaBio2d(i,j,idiag) = IniVal

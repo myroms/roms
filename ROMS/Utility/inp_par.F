@@ -3399,10 +3399,10 @@
       character (len=160) :: line
       character (len=160), dimension(100) :: Cval
 
-# if defined BIO_FASHAM
+# if defined BIO_FENNEL
 !
 !-----------------------------------------------------------------------
-!  Read in Fasham biological model parameters.
+!  Read in Fennel et al. (2006) biological model parameters.
 !-----------------------------------------------------------------------
 !
       DO WHILE (.TRUE.)
@@ -3787,7 +3787,7 @@
       END DO
 
   30  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
-  40  FORMAT (/,/,' Fasham Model Parameters, Grid: ',i2.2,              &
+  40  FORMAT (/,/,' Fennel Model Parameters, Grid: ',i2.2,              &
      &        /,  ' =================================',/)  
   50  FORMAT (1x,i10,2x,a,t30,a)
   60  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
@@ -4155,7 +4155,7 @@
 # elif defined NEMURO
 !
 !-----------------------------------------------------------------------
-!  Read in Fasham biological model parameters.
+!  Read in Fennel et al. (2006) biological model parameters.
 !-----------------------------------------------------------------------
 !
       DO WHILE (.TRUE.)

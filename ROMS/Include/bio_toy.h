@@ -10,7 +10,7 @@
 **
 ** Application flag:   BIO_TOY
 ** Input script:       ocean_bio_toy.in
-**                     bioFasham.in, ecosim.in, npzd_Franks.in, npzd_Powell.in
+**                     bioFennel.in, ecosim.in, npzd_Franks.in, npzd_Powell.in
 */
 
 #define UV_ADV
@@ -39,15 +39,15 @@
 # define LMD_BKPP
 # define LMD_NONLOCAL
 #endif
-#undef BIO_FASHAM
-#ifdef BIO_FASHAM
+#undef BIO_FENNEL
+#ifdef BIO_FENNEL
 # define CARBON
 # define DENITRIFICATION
 # define BIO_SEDIMENT
 # define DIAGNOSTICS_BIO
 #endif
 #define ECOSIM
-#if defined ECOSIM || defined BIO_FASHAM
+#if defined ECOSIM || defined BIO_FENNEL
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX

@@ -7,18 +7,65 @@
 !    See License_ROMS.txt                               Katja Fennel   !
 !****************************************** Alexander F. Shchepetkin ***
 !                                                                      !
-!  This routine computes the biological sources and sinks and adds     !
-!  then the global biological fields.                                  !
+!  This routine computes the  biological sources and sinks for the     !
+!  Fennel et at. (2006) ecosystem model. Then, it adds those terms     !
+!  to the global biological fields.                                    !
 !                                                                      !
-!  Reference:                                                          !
+!  This model is loosly based on the model by Fasham et al. (1990)     !
+!  but it differs in many respects.  The detailed equations of the     !
+!  nitrogen cycling component  are given in  Fennel et al. (2006).     !
+!  Nitrogen is the  fundamental elemental  currency in this model.     !
+!  This model was adapted from a code written originally  by  John     !
+!  Moisan and Emanule DiLorenzo.                                       !
 !                                                                      !
-!    Fasham, M.J.R., H.W. Ducklow, and S.M. McKelvie,  1990:  A        !
-!      nitrogen-based model of plankton dynamics in the oceanic        !
-!      mixed layer, J. of Marine Res., 48, 591-639.                    !
+!  It is recommended to activate always the  "BIO_SEDIMENT" option     !
+!  to ensure conservation of mass by converting the organic matter     !
+!  that is sinking out of the bottom most grid cell into inorganic     !
+!  nutrients (i.e.,  instantanaous remineralization  at the water-     !
+!  sediment interface). Additionally, the "DENITRIFICATION" option     !
+!  can be activated.  Hence, a fraction of the instantenous bottom     !
+!  remineralization is  assumed to  occur  through  the  anearobic     !
+!  (denitrification)  pathway  and  thus  lost  from the  pool  of     !
+!  biologically availalbe fixed nitrogen. See Fennel et al. (2006)     !
+!  for details.                                                        !
 !                                                                      !
-!  Adapted from code written originally by John Moisan and modified    !
-!  by Emanule Di Lorenzo.  This new model has been further modified    !
-!  and tested by Katja Fennel and John Wilkin.                         !
+!  Additional  options can be  activated to  enable  simulation of     !
+!  inorganic carbon and dissolved oxygen.  Accounting of inorganic     !
+!  carbon is activated by the "CARBON" option,  and results in two     !
+!  additional  biological  tracer  variables:  DIC and alkalinity.     !
+!  See Fennel et al. (2008) for details.                               !
+!                                                                      !
+!  If the "pCO2_RZ" options is activated, in addition to "CARBON",     !
+!  the carbonate system  routines by Zeebe and Wolf-Gladrow (2001)     !
+!  are used,  while the  OCMIP  standard routines are the default.     !
+!  There are two different ways of treating alkalinity.  It can be     !
+!  treated diagnostically (default),  in this case alkalinity acts     !
+!  like a passive tracer  that is  not affected  by changes in the     !
+!  concentration of  nitrate or ammonium.  However,  if the option     !
+!  "TALK_NONCONSERV" is used,  the alkalinity  will be affected by     !
+!  sources and sinks in nitrate. See Fennel et al. (2008) for more     !
+!  details.                                                            !
+!                                                                      !
+!  If the "OXYGEN" option is activated,  one additional biological     !
+!  tracer variable for dissolved oxygen. "OXYGEN" can be activated     !
+!  independently of the  "CARBON"  option. If "OCMIP_OXYGEN_SC" is     !
+!  used, in addition to "OXYGEN",  the Schmidt number of oxygen in     !
+!  seawater will be  computed  using the  formulation  proposed by     !
+!  Keeling et al. (1998, Global Biogeochem. Cycles,  12, 141-163).     !
+!  Otherwise, the Wanninkhof's (1992) formula will be used.            !
+!                                                                      !
+!  References:                                                         !
+!                                                                      !
+!    Fennel, K., Wilkin, J., Levin, J., Moisan, J., O'Reilly, J.,      !
+!      Haidvogel, D., 2006: Nitrogen cycling in the Mid Atlantic       !
+!      Bight and implications for the North Atlantic nitrogen          !
+!      budget: Results from a three-dimensional model.  Global         !
+!      Biogeochemical Cycles 20, GB3007, doi:10.1029/2005GB002456.     !
+!                                                                      !
+!    Fennel, K., Wilkin, J., Previdi, M., Najjar, R. 2008:             !
+!      Denitrification effects on air-sea CO2 flux in the coastal      !
+!      ocean: Simulations for the Northwest North Atlantic.            !
+!      Geophys. Res. Letters 35, L24608, doi:10.1029/2008GL036147.     !
 !                                                                      !
 !***********************************************************************
 !

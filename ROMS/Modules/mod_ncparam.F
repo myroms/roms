@@ -627,7 +627,7 @@
         allocate ( idVbld(NST) )
 #endif
 #ifdef DIAGNOSTICS
-# if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+# if defined BIO_FENNEL && defined DIAGNOSTICS_BIO
         allocate ( iDbio2(NDbio2d) )
         allocate ( iDbio3(NDbio3d) )
 # endif
@@ -998,7 +998,7 @@
         END DO
 # endif
 #endif
-#if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+#if defined BIO_FENNEL && defined DIAGNOSTICS_BIO
 !
 !  Initialize biology diagnostic indices.
 !
@@ -1402,7 +1402,7 @@
               CASE ('idRtrc(iSDet)')
                 idRtrc(iSDet)=varid
 #endif
-#ifdef BIO_FASHAM
+#ifdef BIO_FENNEL
               CASE ('idRtrc(iNO3_)')
                 idRtrc(iNO3_)=varid
               CASE ('idRtrc(iNH4_)')
@@ -1775,7 +1775,7 @@
               CASE ('idTbry(inorth,iSDet)')
                 idTbry(inorth,iSDet)=varid
 #endif
-#ifdef BIO_FASHAM
+#ifdef BIO_FENNEL
               CASE ('idTvar(iNO3_)')
                 idTvar(iNO3_)=varid
               CASE ('idTvar(iNH4_)')

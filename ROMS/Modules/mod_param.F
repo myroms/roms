@@ -293,9 +293,10 @@
 !  Biological tracers parameters.
 !-----------------------------------------------------------------------
 
-# if defined BIO_FASHAM
+# if defined BIO_FENNEL
 !
-!  Number of tracers for Fasham-type, Nitrogen-based biological model.
+!  Number of tracers for Fennel et al. (2006), Nitrogen-based biological
+!  model.
 !
 #  ifdef CARBON
 #    ifdef OXYGEN
@@ -432,7 +433,7 @@
         integer :: NDM3d                  ! 3D momentum
 !
 !  Number of diagnostic biology fields.  Currenly, only available for
-!  the Fasham model.
+!  the Fennel model.
 !
         integer :: NDbio2d                ! 2D fields
         integer :: NDbio3d                ! 3D fields
@@ -618,7 +619,7 @@
         NDrhs=0
 #  endif
 # endif
-# if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+# if defined BIO_FENNEL && defined DIAGNOSTICS_BIO
 !
 !  Source and sink biology diagnostic terms.
 !

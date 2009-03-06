@@ -85,7 +85,7 @@
         integer :: iZoop              ! Zooplankton concentration
         integer :: iSDet              ! Small detritus concentration
 #endif
-#ifdef BIO_FASHAM
+#ifdef BIO_FENNEL
         integer, pointer :: idbio(:)  ! Biological tracers
         integer :: iNO3_              ! Nitrate concentration
         integer :: iNH4_              ! Ammonium concentration
@@ -1775,9 +1775,9 @@
         idsed(NCS+i)=isand(i)
       END DO
 #endif
-#if defined BIO_FASHAM
+#if defined BIO_FENNEL
 !
-!  Set Fasham Nitrogen-based biological tracer indices.
+!  Set Fennel et al (2006) Nitrogen-based biological tracer indices.
 !
       DO i=1,NBT
         idbio(i)=ic+i

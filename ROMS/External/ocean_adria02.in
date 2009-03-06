@@ -471,7 +471,7 @@ Hout(idBott) == T T F T T T T F T T F F F F T F
      APARNAM =  ROMS/External/s4dvar.in
      SPOSNAM =  ROMS/External/stations_adria02.in
      FPOSNAM =  ROMS/External/floats_adria02.in
-     BPARNAM =  ROMS/External/bioFasham.in
+     BPARNAM =  ROMS/External/bio_Fennel.in
      SPARNAM =  ROMS/External/sediment_adria02.in
      USRNAME =  ROMS/External/MyFile.dat
 

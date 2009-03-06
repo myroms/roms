@@ -484,15 +484,15 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' BEDLOAD_SOULSBY,'
 #endif
-#ifdef BIO_FASHAM
-      IF (Master) WRITE (stdout,20) 'BIO_FASHAM',                       &
-     &   'Fasham type nitrogen-based model.'
+#ifdef BIO_FENNEL
+      IF (Master) WRITE (stdout,20) 'BIO_FENNEL',                       &
+     &   'Fennel et al. (2006) nitrogen-based model.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' BIO_FASHAM,'
+      Coptions(is:is+12)=' BIO_FENNEL,'
       ibiology=ibiology+1
 #endif
 #if defined BIO_SEDIMENT && \
-   (defined BIO_FASHAM   || defined NEMURO || defined ECOSIM)
+   (defined BIO_FENNEL   || defined NEMURO || defined ECOSIM)
       IF (Master) WRITE (stdout,20) 'BIO_SEDIMENT',                     &
      &   'Restore fallen particulate material to the nutrient pool.'
       is=LEN_TRIM(Coptions)+1
@@ -529,7 +529,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CANUTO_B,'
 #endif
-#if defined CARBON && defined BIO_FASHAM
+#if defined CARBON && defined BIO_FENNEL
       IF (Master) WRITE (stdout,20) 'CARBON',                           &
      &   'Add Carbon constituents.'
       is=LEN_TRIM(Coptions)+1
@@ -619,13 +619,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DEFLATE,'
 #endif
-#if defined DENITRIFICATION && defined BIO_FASHAM
+#if defined DENITRIFICATION && defined BIO_FENNEL
       IF (Master) WRITE (stdout,20) 'DENITRIFICATION',                  &
      &   'Add denitrification processes.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DENITRIFICATION,'
 #endif
-#if defined DIAGNOSTICS_BIO && defined BIO_FASHAM
+#if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
       IF (Master) WRITE (stdout,20) 'DIAGNOSTICS_BIO',                  &
      &   'Computing and writing biological diagnostic terms.'
       is=LEN_TRIM(Coptions)+1
@@ -1545,7 +1545,7 @@
       Coptions(is:is+18)=' OPT_PERTURBATION,'
       idriver=idriver+1
 #endif
-#if defined OXYGEN && defined BIO_FASHAM
+#if defined OXYGEN && defined BIO_FENNEL
 # ifdef OCMIP_OXYGEN_SC
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
      &   'Schmidt number from Keeling et al. (1998).'
@@ -2121,7 +2121,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' SWAN_COUPLING,'
 #endif
-#if defined CARBON && defined BIO_FASHAM
+#if defined CARBON && defined BIO_FENNEL
 # ifdef TALK_NONCONSERV
       IF (Master) WRITE (stdout,20) 'TALK_NONCONSERV',                  &
      &   'Nonconservative computation of alkalinity.'

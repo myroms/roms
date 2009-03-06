@@ -194,7 +194,7 @@
       END DO
 # endif
 
-# ifdef BIO_FASHAM
+# ifdef BIO_FENNEL
 !
 !  Write out 2D biological diagnostic fields.
 !

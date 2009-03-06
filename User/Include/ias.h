@@ -70,8 +70,8 @@
 # define N2S2_HORAVG
 #endif
 
-#undef  BIO_FASHAM
-#ifdef BIO_FASHAM
+#undef  BIO_FENNEL
+#ifdef BIO_FENNEL
 # define CARBON
 # define DENITRIFICATION
 # define BIO_SEDIMENT

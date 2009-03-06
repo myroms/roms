@@ -50,7 +50,7 @@
 # define ANA_VMIX
 #endif
 
-#if defined BIO_FASHAM  || defined ECOSIM || \
+#if defined BIO_FENNEL  || defined ECOSIM || \
     defined NPZD_POWELL || defined NEMURO
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
@@ -63,7 +63,7 @@
 # undef  IVLEV_EXPLICIT
 #endif
 
-#ifdef BIO_FASHAM
+#ifdef BIO_FENNEL
 # define CARBON
 # define DENITRIFICATION
 # define BIO_SEDIMENT

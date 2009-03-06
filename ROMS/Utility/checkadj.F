@@ -34,6 +34,13 @@
 !  Report issues with various C-preprocessing options.
 !-----------------------------------------------------------------------
 !
+#ifdef BIO_FASHAM
+      ic=ic+1
+      string=uppercase('bio_fasham')
+      IF (Master) WRITE(stdout,10) TRIM(string),                      &
+     &            'CPP option renamed to '//uppercase('bio_fennel')
+#endif
+
       string=uppercase('ts_smagorinsky')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -114,7 +121,7 @@
         IF (Master) WRITE(stdout,20) TRIM(string), 'not coded'
       END IF
 
-      string=uppercase('bio_fasham')
+      string=uppercase('bio_fennel')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
         ic=ic+1

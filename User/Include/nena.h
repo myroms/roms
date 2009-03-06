@@ -42,8 +42,8 @@
 # define LMD_NONLOCAL
 #endif
 #undef  GLS_MIXING
-#define BIO_FASHAM
-#ifdef BIO_FASHAM
+#define BIO_FENNEL
+#ifdef BIO_FENNEL
 # define CARBON
 # define DENITRIFICATION
 # define BIO_SEDIMENT

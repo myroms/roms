@@ -9,9 +9,9 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 
-# ifdef BIO_FASHAM
+# ifdef BIO_FENNEL
 !                                                                      !
-!  Parameters for Fasham et al. (1990) type model:                     !
+!  Parameters for Fennel et al (2006) model:                           !
 !                                                                      !
 !   AttSW    Light attenuation due to sea water [1/m].                 !
 !   AttChl   Light attenuation by Chlorophyll [1/(mg_Chl m2)].         !

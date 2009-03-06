@@ -72,7 +72,7 @@ MY_HEADER_DIR ?=
 #  "User/Functionals".
 #
 #  If applicable, also used this directory to place your customized
-#  biology model header file (like fasham.h, nemuro.h, ecosim.h, etc).
+#  biology model header file (like fennel.h, nemuro.h, ecosim.h, etc).
 
 MY_ANALYTICAL_DIR ?=
 

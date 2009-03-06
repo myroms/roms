@@ -550,9 +550,9 @@
 **                                                                           **
 ** FULL_GRID           use to consider both interior and boundary points     **
 **                                                                           **
-** Fasham-type biology model OPTIONS:                                        ** 
+** Fennel et al. (2006) biology model OPTIONS:                               ** 
 **                                                                           **
-** BIO_FASHAM          use if Fasham type nitrogen-based model               **
+** BIO_FENNEL          use if Fennel et al. (2006) nitrogen-based model      **
 ** BIO_SEDIMENT        use to restore fallen material to the nutrient pool   **
 ** CARBON              use to add carbon constituents                        **
 ** DENITRIFICATION     use to add denitrification processes                  **

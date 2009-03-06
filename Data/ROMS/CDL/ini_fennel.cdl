@@ -1,4 +1,4 @@
-netcdf ini_fasham {
+netcdf ini_fennel {
 
 dimensions:
 	xi_rho = 43 ;

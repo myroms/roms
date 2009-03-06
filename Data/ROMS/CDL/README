@@ -21,7 +21,7 @@ Currently, you can find the following CDL scripts:
     grd_spherical.cdl        Spherical grid NetCDF file
 
     ini_hydro.cdl            Initial conditions NetCDF file (hydrodynamics)
-    ini_fasham.cdl           Initial conditions NetCDF file (hydrodynamics and biology)
+    ini_fennel.cdl           Initial conditions NetCDF file (hydrodynamics and biology)
     ini_ecosim.cdl           Initial conditions NetCDF file (hydrodynamics and bio-optics)
     ini_sed.cdl              Initial conditions NetCDF file (hydrodynamics and sediment)
 

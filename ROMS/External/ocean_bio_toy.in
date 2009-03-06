@@ -424,8 +424,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == biotoy_grd.nc
-     ININAME == biotoy_ini_fasham.nc
-!    ININAME == biotoy_ini_ecosim.nc
+     ININAME == biotoy_ini_ecosim.nc
      ITLNAME == /dev/null
      IRPNAME == /dev/null
      IADNAME == /dev/null
@@ -466,7 +465,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
      APARNAM =  ROMS/External/s4dvar.in
      SPOSNAM =  ROMS/External/stations.in
      FPOSNAM =  ROMS/External/floats.in
-     BPARNAM =  ROMS/External/bioFasham.in
+     BPARNAM =  ROMS/External/bio_Fennel.in
 !    BPARNAM =  ROMS/External/ecosim.in
 !    BPARNAM =  ROMS/External/npzd_Franks.in
 !    BPARNAM =  ROMS/External/npzd_Powell.in

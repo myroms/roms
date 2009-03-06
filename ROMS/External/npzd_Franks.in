@@ -131,7 +131,7 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 !  =========
 !
 !------------------------------------------------------------------------------
-! Fasham, Nitrogen-based Biological Model Parameters.
+! NPZD (Franks et al. 1986), Nitrogen-based Biological Model Parameters.
 !------------------------------------------------------------------------------
 !
 !  Lbiology  Switch to control the computation of a particular module within

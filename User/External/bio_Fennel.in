@@ -1,4 +1,4 @@
-!  Fasham Nitrogen-based Biological Model Parameters.
+!  Fennel et al (2006) Nitrogen-based Biological Model Parameters.
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
@@ -225,7 +225,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !  =========
 !
 !------------------------------------------------------------------------------
-! Fasham, Nitrogen-based Biological Model Parameters.
+! Fennel et al (2006), Nitrogen-based Biological Model Parameters.
 !------------------------------------------------------------------------------
 !
 !  Lbiology  Switch to control the computation of a particular module within

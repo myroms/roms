@@ -465,7 +465,7 @@ Hout(idBott) == T T T T T T T F T T T F F F T F
      APARNAM =  ROMS/External/s4dvar.in
      SPOSNAM =  ROMS/External/stations.in
      FPOSNAM =  ROMS/External/floats.in
-     BPARNAM =  ROMS/External/fasham.in
+     BPARNAM =  ROMS/External/bio_Fennel.in
      SPARNAM =  ROMS/External/sediment_sed_toy.in
      USRNAME =  ROMS/External/MyFile.dat
 

@@ -1876,9 +1876,9 @@
 #endif
 
 #if defined BIOLOGY && defined SOLVE3D
-# if defined BIO_FASHAM
+# if defined BIO_FENNEL
 !
-!  Define Fasham biological model parameters.
+!  Define Fennel et al. (2006) biological model parameters.
 !
       Vinfo( 1)='BioIter'
       Vinfo( 2)='number of iterations to achieve convergence'
