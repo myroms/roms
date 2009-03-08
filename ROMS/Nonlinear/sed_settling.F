@@ -174,7 +174,11 @@
           indx=idsed(ised)
           DO k=1,N(ng)
             DO i=Istr,Iend
+# ifdef TS_MPDATA
+              qc(i,k)=t(i,j,k,3,indx)
+# else
               qc(i,k)=t(i,j,k,nnew,indx)*Hz_inv(i,k)
+# endif
             END DO
           END DO
 !
@@ -240,28 +244,28 @@
           END DO
           DO i=Istr,Iend
             FC(i,N(ng))=0.0_r8              ! no-flux boundary condition
-#  if defined LINEAR_CONTINUATION
+# if defined LINEAR_CONTINUATION
             qL(i,N(ng))=qR(i,N(ng)-1)
             qR(i,N(ng))=2.0_r8*qc(i,N(ng))-qL(i,N(ng))
-#  elif defined NEUMANN
+# elif defined NEUMANN
             qL(i,N(ng))=qR(i,N(ng)-1)
             qR(i,N(ng))=1.5_r8*qc(i,N(ng))-0.5_r8*qL(i,N(ng))
-#  else
+# else
             qR(i,N(ng))=qc(i,N(ng))         ! default strictly monotonic
             qL(i,N(ng))=qc(i,N(ng))         ! conditions
             qR(i,N(ng)-1)=qc(i,N(ng))
-#  endif
-#  if defined LINEAR_CONTINUATION 
+# endif
+# if defined LINEAR_CONTINUATION 
             qR(i,1)=qL(i,2)
             qL(i,1)=2.0_r8*qc(i,1)-qR(i,1)
-#  elif defined NEUMANN
+# elif defined NEUMANN
             qR(i,1)=qL(i,2)
             qL(i,1)=1.5_r8*qc(i,1)-0.5_r8*qR(i,1)
-#  else  
+# else  
             qL(i,2)=qc(i,1)                 ! bottom grid boxes are
             qR(i,1)=qc(i,1)                 ! re-assumed to be
             qL(i,1)=qc(i,1)                 ! piecewise constant.
-#  endif
+# endif
           END DO
 !
 !  Apply monotonicity constraint again, since the reconciled interfacial
@@ -338,9 +342,9 @@
           DO i=Istr,Iend
             DO k=1,N(ng)
               t(i,j,k,nnew,indx)=qc(i,k)*Hz(i,j,k)+(FC(i,k)-FC(i,k-1))
-#  ifdef TS_MPDATA
+# ifdef TS_MPDATA
               t(i,j,k,3,indx)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
-#  endif
+# endif
             END DO
             settling_flux(i,j,ised)=FC(i,0)
           END DO
