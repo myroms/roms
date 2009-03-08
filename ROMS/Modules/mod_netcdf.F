@@ -585,6 +585,8 @@
       integer :: IDmod, Npts, i, ib, ic, j, ncid, status
       integer :: IvarS
 
+      real(r8), parameter :: RoundOff = 1.0e-7_r8
+
       real(r8) :: FvarS, FvarV(50)
 
       character (len=80) :: text
@@ -644,7 +646,7 @@
      &                            FvarS)
             IF (exit_flag.ne.NoError) RETURN
 
-            IF (FvarS.ne.hc(ng)) THEN
+            IF (ABS(hc(ng)-FvarS).gt.RoundOff) THEN
               IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
      &                                      FvarS, hc(ng),              &
      &                                      TRIM(ncname)
@@ -654,7 +656,7 @@
           CASE ('theta_s')
             CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
      &                            FvarS)
-            IF (FvarS.ne.theta_s(ng)) THEN
+            IF (ABS(theta_s(ng)-FvarS).gt.RoundOff) THEN
               IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
      &                                      FvarS, theta_s(ng),         &
      &                                      TRIM(ncname)
@@ -666,7 +668,7 @@
      &                            FvarS)
             IF (exit_flag.ne.NoError) RETURN
 
-            IF (FvarS.ne.theta_b(ng)) THEN
+            IF (ABS(theta_b(ng)-FvarS).gt.RoundOff) THEN
               IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
      &                                      FvarS, theta_b(ng),         &
      &                                      TRIM(ncname)
@@ -678,7 +680,7 @@
      &                            FvarS)
             IF (exit_flag.ne.NoError) RETURN
 
-            IF (FvarS.ne.Tcline(ng)) THEN
+            IF (ABS(Tcline(ng)-FvarS).gt.RoundOff) THEN
               IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
      &                                      FvarS, Tcline(ng),          &
      &                                      TRIM(ncname)
@@ -693,7 +695,7 @@
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
 
-              IF (FvarS.ne.Hgamma) THEN
+              IF (ABS(Hgamma-FvarS).gt.RoundOff) THEN
                 IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
      &                                        FvarS, Hgamma,            &
      &                                        TRIM(ncname)
@@ -708,7 +710,7 @@
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
 
-              IF (FvarS.ne.Vgamma) THEN
+              IF (ABS(FvarS-Vgamma).gt.RoundOff) THEN
                 IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
      &                                        FvarS, Vgamma,            &
      &                                        TRIM(ncname)
@@ -726,7 +728,7 @@
               IF (exit_flag.ne.NoError) RETURN
 
               DO j=1,Npts
-                IF (FvarV(j).ne.Hdecay(1,j,ng)) THEN
+                IF (ABS(Hdecay(1,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
      &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
                   IF (Master) WRITE (stdout,20) TRIM(text),             &
@@ -748,7 +750,7 @@
               IF (exit_flag.ne.NoError) RETURN
 
               DO j=1,Npts
-                IF (FvarV(j).ne.Vdecay(1,j,ng)) THEN
+                IF (ABS(Vdecay(1,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
      &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
                   IF (Master) WRITE (stdout,20) TRIM(text),             &
@@ -771,7 +773,7 @@
               IF (exit_flag.ne.NoError) RETURN
 
               DO j=1,Npts
-                IF (FvarV(j).ne.Hdecay(NSA,j,ng)) THEN
+                IF (ABS(Hdecay(NSA,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
      &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
                   IF (Master) WRITE (stdout,20) TRIM(text),             &
@@ -793,7 +795,7 @@
               IF (exit_flag.ne.NoError) RETURN
 
               DO j=1,Npts
-                IF (FvarV(j).ne.Vdecay(NSA,j,ng)) THEN
+                IF (ABS(Vdecay(NSA,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
      &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
                   IF (Master) WRITE (stdout,20) TRIM(text),             &
@@ -820,9 +822,9 @@
               DO ib=1,4
                 DO j=1,Npts
                   ic=ic+1
-                    WRITE (text,"(a,'(',i1,',',a,')')")                 &
-     &                TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
-                  IF (FvarV(ic).ne.HdecayB(j,ib,ng)) THEN
+                  WRITE (text,"(a,'(',i1,',',a,')')")                   &
+     &                  TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
+                  IF (ABS(HdecayB(j,ib,ng)-FvarV(ic)).gt.RoundOff) THEN
                     IF (Master) WRITE (stdout,20) TRIM(text),           &
      &                                            FvarV(ic),            &
      &                                            HdecayB(j,ib,ng),     &
@@ -846,9 +848,9 @@
               DO ib=1,4
                 DO j=1,Npts
                   ic=ic+1
-                    WRITE (text,"(a,'(',i1,',',a,')')")                 &
-     &                TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
-                  IF (FvarV(ic).ne.VdecayB(j,ib,ng)) THEN
+                  WRITE (text,"(a,'(',i1,',',a,')')")                   &
+     &                  TRIM(var_name(i)), ib, TRIM(Vname(1,idSvar(j)))
+                  IF (ABS(VdecayB(j,ib,ng)-FvarV(ic)).gt.RoundOff) THEN
                     IF (Master) WRITE (stdout,20) TRIM(text),           &
      &                                            FvarV(ic),            &
      &                                            VdecayB(j,ib,ng),     &
