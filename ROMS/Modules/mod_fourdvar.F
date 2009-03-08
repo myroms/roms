@@ -500,9 +500,7 @@
 !
       integer :: my_NstateVar, i, ng
 
-# ifdef OBSERVATIONS
       real(r8), parameter :: IniVal = 0.0_r8
-# endif
 !
       SourceFile='mod_fourdvar.F, initialize_fourdvar'
 
