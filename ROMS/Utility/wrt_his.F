@@ -292,7 +292,12 @@
      &                     GRID(ng) % rmask,                            &
 # endif
 #endif
+#ifdef WET_DRY
+     &                     OCEAN(ng) % zeta(:,:,KOUT),                  &
+     &                     SetFillVal = .FALSE.)
+#else
      &                     OCEAN(ng) % zeta(:,:,KOUT))
+#endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), tHISindx(ng)

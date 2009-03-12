@@ -95,7 +95,12 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
+# ifdef WET_DRY
+     &                     AVERAGE(ng) % avgzeta,                       &
+     &                     SetFillVal = .FALSE.)
+# else
      &                     AVERAGE(ng) % avgzeta)
+# endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), tAVGindx(ng)

@@ -271,7 +271,12 @@
 # ifdef MASKING
      &                         GRID(ng) % rmask,                        &
 # endif
+# ifdef WET_DRY
+     &                         OCEAN(ng)% ad_zeta(:,:,kout),            &
+     &                         SetFillVal = .FALSE.)
+# else
      &                         OCEAN(ng)% ad_zeta(:,:,kout))
+# endif
           ELSE
             status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),&
      &                         tADJindx(ng), gtype,                     &
@@ -279,7 +284,12 @@
 # ifdef MASKING
      &                         GRID(ng) % rmask,                        &
 # endif
+# ifdef WET_DRY
+     &                         OCEAN(ng)% ad_zeta_sol,                  &
+     &                         SetFillVal = .FALSE.)
+# else
      &                         OCEAN(ng)% ad_zeta_sol)
+# endif
           ENDIF
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN

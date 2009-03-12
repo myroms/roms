@@ -640,7 +640,7 @@
 #endif
 #if defined SEDIMENT && defined SED_MORPH
 !
-!  Define free-surface.
+!  Define time-varying bathymetry.
 !
         Vinfo( 1)=Vname(1,idbath)
         Vinfo( 2)=Vname(2,idbath)
@@ -678,10 +678,21 @@
         Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
 #ifdef PERFECT_RESTART
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idFsur,ng),        &
+# ifdef WET_DRY
+     &                 NF_FRST, nvd4, t2dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
+# else
      &                 NF_FRST, nvd4, t2dgrd, Aval, Vinfo, ncname)
+# endif
 #else
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idFsur,ng),        &
+# ifdef WET_DRY
+     &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
+# else
      &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+
+# endif
 #endif
         IF (exit_flag.ne.NoError) RETURN
 

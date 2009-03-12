@@ -98,7 +98,12 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
+# ifdef WET_DRY
+     &                   OCEAN(ng) % zeta(:,:,Tindex),                  &
+     &                   SetFillVal = .FALSE.)
+# else
      &                   OCEAN(ng) % zeta(:,:,Tindex))
+# endif
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idFsur)), tINIindx(ng)

@@ -524,7 +524,7 @@
 #endif
 #if defined SEDIMENT && defined SED_MORPH
 !
-!  Define bathymetry.
+!  Define time-varying bathymetry.
 !
         IF (Hout(idbath,ng)) THEN
           Vinfo( 1)=Vname(1,idbath)
@@ -608,7 +608,12 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
           status=def_var(ng, iNLM, ncHISid(ng), hisVid(idFsur,ng),      &
+#ifdef WET_DRY
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+#else
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+#endif
           IF (exit_flag.ne.NoError) RETURN
 #if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRzet)

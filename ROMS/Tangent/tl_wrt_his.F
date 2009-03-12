@@ -204,7 +204,12 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
+# ifdef WET_DRY
+     &                     OCEAN(ng) % tl_zeta(:,:,KOUT),               &
+     &                     SetFillVal = .FALSE.)
+# else
      &                     OCEAN(ng) % tl_zeta(:,:,KOUT))
+# endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), tTLMindx(ng)
