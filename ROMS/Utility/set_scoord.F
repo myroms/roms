@@ -247,6 +247,7 @@
 !  to allow near-bottom refinement.  This is done by blending it with
 !  another function.
 !
+        hc(ng)=Tcline(ng)
         IF (hc(ng).le.hmin(ng)) THEN
           Aweight=1.0_r8
           Bweight=1.0_r8
@@ -342,6 +343,7 @@
 !         alpha = theta_s
 !         beta  = theta_b
 !
+        hc(ng)=Tcline(ng)
         IF (hc(ng).le.hmin(ng)) THEN
           exp_sur=theta_s(ng)
           exp_bot=theta_b(ng)
