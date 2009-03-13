@@ -173,7 +173,7 @@
       ELSE IF (exit_flag.eq.3) THEN
         IF (Master) WRITE (stdout,80) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.4) THEN
-        IF (Master) WRITE (stdout,90) nf90_strerror(ioerror)
+        IF (Master) WRITE (stdout,90)
       ELSE IF (exit_flag.eq.5) THEN
         IF (Master) WRITE (stdout,100)
       ELSE IF (exit_flag.eq.6) THEN
@@ -196,11 +196,10 @@
      &          ' REASON: ',a)
  80   FORMAT (/,' ERROR: Abnormal termination: NetCDF OUTPUT.',/,       &
      &          ' REASON: ',a)
- 90   FORMAT (/,' ERROR: OPENCDF - Can not open NetCDF file.',/,        &
-     &          ' REASON: ',a)
-100   FORMAT (/,' ERROR: CHECKDEFS - Illegal model configuration.')
-110   FORMAT (/,' ERROR: PARAM - Illegal domain partition.')
-120   FORMAT (/,' ERROR: INP_PAR - Illegal input parameter.')
+ 90   FORMAT (/,' ERROR: I/O related problem.')
+100   FORMAT (/,' ERROR: Illegal model configuration.')
+110   FORMAT (/,' ERROR: Illegal domain partition.')
+120   FORMAT (/,' ERROR: Illegal input parameter.')
 130   FORMAT (/,' ERROR: Fatal algorithm result.')
 
       RETURN

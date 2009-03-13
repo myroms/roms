@@ -92,7 +92,7 @@
      &      ERR=20)
       GO TO 40
  20   IF (Master) WRITE (stdout,30)
-      exit_flag=5
+      exit_flag=2
       RETURN
  30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
      &              'file.')
@@ -115,7 +115,7 @@
      &      ERR=20)
       GO TO 40
  20   IF (Master) WRITE (stdout,30)
-      exit_flag=5
+      exit_flag=2
       RETURN
  30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
      &              'file.',                                            &
@@ -665,7 +665,7 @@
       GO TO 30
  10   WRITE (stdout,20)
       IF (Master) WRITE(stdout,*) 'MyRank = ', MyRank, TRIM(Cname)
-      exit_flag=5
+      exit_flag=4
       RETURN
  20   FORMAT (/,' INP_PAR - Unable to open coupling input script.',     &
      &        /,11x,'In distributed-memory applications, the input',    &
@@ -883,7 +883,7 @@
         END IF
       END DO
   40  IF (Master) WRITE (out,60) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   50  CLOSE (inp)
 
@@ -2105,7 +2105,7 @@
               IF (nFfiles(ng).le.0) THEN
                 IF (Master) WRITE (out,260) 'NFFILES',                  &
      &                            'Must be equal or greater than one.'
-                exit_flag=5
+                exit_flag=4
                 RETURN
               END IF
             END DO                
@@ -2184,7 +2184,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,50) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CLOSE (inp)
 !
@@ -3237,7 +3237,7 @@
           IF (.not.inhere) GO TO 30
           GO TO 40
   30      IF (Master) WRITE (out,270) TRIM(fname)
-          exit_flag=5
+          exit_flag=4
           RETURN
   40      CONTINUE
         END DO
@@ -3619,7 +3619,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -3951,7 +3951,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CLOSE (inp)
 !
@@ -4396,7 +4396,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -4841,7 +4841,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -5093,7 +5093,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -5486,7 +5486,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,30) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -6535,7 +6535,7 @@
         END IF
       END DO
   10  IF (Master) WRITE (out,40) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   20  CONTINUE
 !
@@ -6837,7 +6837,7 @@
         END IF
       END DO
  10   IF (Master) WRITE (out,50) line
-      exit_flag=5
+      exit_flag=4
       RETURN
  20   CONTINUE
 !
@@ -6990,7 +6990,7 @@
 #  endif
             GO TO 40
   30        WRITE (out,190) TRIM(fname)
-            exit_flag=5
+            exit_flag=4
             RETURN
   40        CONTINUE
           END IF
@@ -7403,7 +7403,7 @@
         END IF
       END DO
  10   IF (Master) WRITE (out,50) line
-      exit_flag=5
+      exit_flag=4
       RETURN
  20   CONTINUE
 !
@@ -7801,7 +7801,7 @@
 #  endif
           GO TO 40
   30      WRITE (out,200) TRIM(fname)
-          exit_flag=5
+          exit_flag=4
           RETURN
   40      CONTINUE
         END DO
@@ -7927,7 +7927,7 @@
      &                                   Fdz(nentry(igrid)+1,igrid)
               IF (igrid.gt.Ngrids) THEN
                 IF (Lwrite) WRITE (out,40) fposnam
-                exit_flag=5
+                exit_flag=4
                 RETURN
               END IF
               ncount(igrid)=ncount(igrid)+Fcount(nentry(igrid)+1,igrid)
@@ -7937,7 +7937,7 @@
         END IF
       END DO
   20  IF (Master) WRITE (out,50) line
-      exit_flag=5
+      exit_flag=4
       RETURN
   30  CONTINUE
 !
@@ -7949,7 +7949,7 @@
         DO ng=1,Ngrids
           IF (ncount(ng).ne.Nfloats(ng)) THEN
             WRITE (stdout,60) ncount(ng), Nfloats(ng)
-            exit_flag=5
+            exit_flag=4
             RETURN
           END IF
           IF (Lfloats(ng)) THEN
@@ -8302,7 +8302,7 @@
  10         DO ng=1,Ngrids
               IF (Nstation(ng).ne.is(ng)) THEN
                 IF (Master) WRITE (out,40) Nstation(ng), is(ng)
-                exit_flag=5
+                exit_flag=4
                 RETURN
               END IF
             END DO
@@ -8310,7 +8310,7 @@
         END IF
       END DO
  20   IF (Master) WRITE (out,50) line
-      exit_flag=5
+      exit_flag=4
       RETURN
  30   CONTINUE
 !
