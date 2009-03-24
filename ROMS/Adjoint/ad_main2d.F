@@ -31,8 +31,8 @@
       USE mod_storage
 # endif
 !
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
@@ -153,28 +153,35 @@
 !  locations.  Then, compute adjoint misfit forcing terms.
 !-----------------------------------------------------------------------
 !
-      HalfDT=0.5_r8*dt(ng)
-      IF (((time(ng)-HalfDT).le.ObsTime(ng)).and.                       &
-     &    (ObsTime(ng).lt.(time(ng)+HalfDT))) THEN
-        ProcessObs(ng)=.TRUE.
-        CALL obs_read (ng, iADM, backward)
-        IF (exit_flag.ne.NoError) RETURN
-      ELSE
-        ProcessObs(ng)=.FALSE.
-      END IF
+#  ifdef SENSITIVITY_4DVAR
+      IF (.not.LsenPSAS(ng)) THEN
+#  endif
+        HalfDT=0.5_r8*dt(ng)
+        IF (((time(ng)-HalfDT).le.ObsTime(ng)).and.                     &
+     &      (ObsTime(ng).lt.(time(ng)+HalfDT))) THEN
+          ProcessObs(ng)=.TRUE.
+          CALL obs_read (ng, iADM, backward)
+          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          ProcessObs(ng)=.FALSE.
+        END IF
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
 #  if defined WEAK_CONSTRAINT || defined IOM
-          CALL ad_htobs (ng, TILE, iADM)
+            CALL ad_htobs (ng, TILE, iADM)
 #  else
-          CALL ad_misfit (ng, TILE, iADM)
+            CALL ad_misfit (ng, TILE, iADM)
 #  endif
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+        IF (exit_flag.ne.NoError) RETURN
+#  ifdef SENSITIVITY_4DVAR
+      END IF
+#  endif
 # endif
 
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -489,24 +496,30 @@
       END IF
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
 !
 !-----------------------------------------------------------------------
 !  Add appropriate forcing terms to the adjoint model. The form of the
 !  forcing depends on the functional whose sensitivity is required.
 !-----------------------------------------------------------------------
 !
-      IF ((DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
+#  ifdef SENS4DVAR
+      IF (LsenPSAS(ng)) THEN
+#  endif
+        IF ((DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL adsen_force (ng, TILE)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL adsen_force (ng, TILE)
+            END DO
           END DO
-        END DO
 !$OMP END PARALLEL DO
+        END IF
+#  ifdef SENSITIVITY_4DVAR
       END IF
+#  endif
 # endif
 
       RETURN

@@ -14,7 +14,8 @@
 !  Weak Constraint 4-Dimensional Variational (4DVar) Pre-conditioned   !
 !                     Conjugate Gradient Algorithm                     !
 
-# if defined W4DVAR || defined IOM
+# if defined IOM    || defined TL_W4DVAR          || \
+     defined W4DVAR || defined W4DVAR_SENSITIVITY
 !                                                                      !
 !  The indirect representer method solves the system:                  !
 !                                                                      !
@@ -55,7 +56,8 @@
 !    Chua, B. S. and A. F. Bennett,  2001:  An inverse ocean modeling  !
 !      sytem, Ocean Modelling, 3, 137-165.                             !
 
-# elif defined W4DPSAS
+# elif defined TL_W4DPSAS || \
+       defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
 !                                                                      !
 !  Solve the system (following Courtier, 1997):                        !
 !                                                                      !
@@ -193,7 +195,8 @@
               cg_pxsave(iobs)=0.0_r8
             END DO
 
-# ifdef W4DPSAS
+# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY
 !
 !  If this is the first outer-loop, save NLmodVal in BCKmodVal.
 !
@@ -211,7 +214,8 @@
 !  observation error standard deviations (i.e. sqrt(ObsErr)).
 !
             DO iobs=1,Ndatum(ng)
-# ifdef W4DPSAS
+# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY
               pgrad(iobs)=-ObsScale(iobs)*                              &
      &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else
@@ -289,7 +293,8 @@
 !
               DO iobs=1,Ndatum(ng)
                 ADmodVal(iobs)=cg_pxsave(iobs)
-# ifdef W4DPSAS
+# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY
                 cg_innov(iobs)=-ObsScale(iobs)*                         &
      &                         (ObsVal(iobs)-BCKmodVal(iobs))
 # else
@@ -393,6 +398,10 @@
 !
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
+# if defined SENSITIVITY_4DVAR || \
+     defined TL_W4DPSAS        || defined TL_W4DVAR
+            TLmodVal_S(iobs,innLoop,outLoop)=TLmodVal(iobs)
+# endif
 !
 !  Convert gradient contribution from x-space to v-space.
 !
@@ -812,8 +821,20 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_bcastf (ng, model, ADmodVal)
+#  if defined SENSITIVITY_4DVAR || \
+      defined TL_W4DPSAS        || defined TL_W4DVAR
+      CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))
+#  endif
       CALL mp_bcasti (ng, model, info)
       CALL mp_bcastf (ng, model, cg_beta(:,outLoop))
+      CALL mp_bcastf (ng, model, cg_QG(:,outLoop))
+      CALL mp_bcastf (ng, model, cg_delta(:,outLoop))
+      CALL mp_bcastf (ng, model, cg_dla(:,outLoop))
+      CALL mp_bcastf (ng, model, cg_Gnorm_y(:))
+      CALL mp_bcastf (ng, model, cg_Gnorm_v(:))
+      CALL mp_bcastf (ng, model, cg_pxsave(:))
+      CALL mp_bcastf (ng, model, cg_innov(:))
+      CALL mp_bcastf (ng, model, zgrad0(:,outLoop))
       CALL mp_bcastf (ng, model, zcglwk(:,:,outLoop))
       IF ((LhessianEV.or.Lprecond).and.(innLoop.eq.NinnLoop)) THEN
         CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop))

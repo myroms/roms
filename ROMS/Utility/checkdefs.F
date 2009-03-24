@@ -61,7 +61,7 @@
       Coptions=' '
       IF (Master) WRITE (stdout,10)
   10  FORMAT (/,' Activated C-preprocessing Options:',/)
-  20  FORMAT (2x,a,t22,a)
+  20  FORMAT (1x,a,t22,a)
 !
       IF (Master) THEN
         WRITE (stdout,20) TRIM(ADJUSTL(MyAppCPP)), TRIM(ADJUSTL(title))
@@ -2466,11 +2466,25 @@
       Coptions(is:is+9)=' W4DPSAS,'
       idriver=idriver+1
 #endif
+#ifdef W4DPSAS_SENSITIVITY
+      IF (Master) WRITE (stdout,20) 'W4DPSAS_SENSITIVITY',              &
+     &   'Weak constraint 4D-PSAS observation sensitivity.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+21)=' W4DPSAS_SENSITIVITY,'
+      idriver=idriver+1
+#endif
 #ifdef W4DVAR
       IF (Master) WRITE (stdout,20) 'W4DVAR',                           &
      &   'Weak constraint 4DVAR data assimilation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' W4DVAR,'
+      idriver=idriver+1
+#endif
+#ifdef W4DVAR_SENSITIVITY
+      IF (Master) WRITE (stdout,20) 'W4DVAR_SENSITIVITY',               &
+     &   'Weak constraint 4DVAR observation sensitivity.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' W4DVAR_SENSITIVITY,'
       idriver=idriver+1
 #endif
 #ifdef WAVES_OCEAN

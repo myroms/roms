@@ -1,15 +1,15 @@
       MODULE ocean_control_mod
 !
 !svn $Id$
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!=================================================== Andrew M. Moore ===
+!  Copyright (c) 2002-2009 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
 !  ROMS/TOMS Weak Constraint 4-Dimensional Variational (4DVar) Data    !
-!          Assimilation Driver: Physical-space Statistical Analysis    !
-!          System (PSAS)                                               !
+!        Assimilation and its Tangent Linear Driver: Physical-space    !
+!        Statistical Analysis System (PSAS)                            !
 !                                                                      !
 !  This driver is used for weak constraint 4DVar where errors are      !
 !  considered in both model and observations.                          !
@@ -213,7 +213,7 @@
       USE mod_scalars
       USE mod_stepping
 !
-#ifdef BALANCE_OPERATOR
+#ifdef BALANCE_OPERATOR_NOT_YET
       USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
@@ -225,7 +225,8 @@
       USE mod_forces, ONLY : initialize_forces
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
-#ifdef BALANCE_OPERATOR
+      USE strings_mod, ONLY : uppercase
+#ifdef BALANCE_OPERATOR_NOT_YET
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
@@ -243,6 +244,7 @@
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2, indxSave
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
+      integer :: Mstr
 
       real(r8) :: MyTime, LB_time, UB_time
 
@@ -358,6 +360,7 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
         END IF
+
 !
 !  Define tangent linear initial conditions file.
 !
@@ -463,7 +466,7 @@
 !
 !-----------------------------------------------------------------------
 !
-        OUTER_LOOP : DO my_outer=1,Nouter
+        OUTER_LOOP1 : DO my_outer=1,Nouter
           outer=my_outer
           inner=0
 !
@@ -490,16 +493,16 @@
           END DO
 !$OMP END PARALLEL DO 
 !
-          INNER_LOOP : DO my_inner=0,Ninner
+          INNER_LOOP1 : DO my_inner=0,Ninner
             inner=my_inner
 !
 ! Initialize conjugate gradient algorithm depending on hot start or
 ! outer loop index.
 !
-            IF (inner.eq.0) THEN
-              Lcgini=.TRUE.
-              CALL congrad (ng, iRPM, outer, inner, Ninner, Lcgini)
-            END IF
+           IF (inner.eq.0) THEN
+             Lcgini=.TRUE.
+             CALL congrad (ng, iRPM, outer, inner, Ninner, Lcgini)
+           END IF
 !
 !  If initialization step, skip the inner-loop computations.
 !
@@ -804,6 +807,14 @@
                 wrtMisfit(ng)=.TRUE.
               END IF
 !
+!  Set tangent linear history NetCDF parameters.  Define tangent linear
+!  history file at the beggining of each inner loop  to avoid opening
+!  too many NetCDF files.
+!
+              IF (inner.gt.1) LdefTLM(ng)=.FALSE.
+              NrecTLM(ng)=0
+              tTLMindx(ng)=0
+!
 !  Run tangent linear model forward and force with convolved adjoint
 !  trajectory impulses. Compute (H M B M' H')_n * PSI at observation
 !  points which are used in the conjugate gradient algorithm.
@@ -815,7 +826,7 @@
               MyTime=time(ng)
               time(ng)=time(ng)-dt(ng)
 
-              TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
+              TL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
                 iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -827,7 +838,7 @@
 
                 IF (exit_flag.ne.NoError) RETURN
 
-              END DO TL_LOOP
+              END DO TL_LOOP1
               wrtNLmod(ng)=.FALSE.
               wrtTLmod(ng)=.FALSE.
 !
@@ -843,7 +854,12 @@
 
             END IF INNER_COMPUTE
 
-          END DO INNER_LOOP
+          END DO INNER_LOOP1
+!
+!  Close tangent linear NetCDF file.
+!
+          status=nf90_close(ncTLMid(ng))
+          ncTLMid(ng)=-1
 !
 !-----------------------------------------------------------------------
 !  Once the w_n, have been approximated with sufficient accuracy,
@@ -1151,7 +1167,7 @@
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
+          NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -1161,7 +1177,7 @@
 #endif
             IF (exit_flag.ne.NoError) RETURN
 
-          END DO NL_LOOP3
+          END DO NL_LOOP2
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
 !
@@ -1191,16 +1207,768 @@
           CALL netcdf_close (ng, iNLM, ncFWDid(ng))
           IF (exit_flag.ne.NoError) RETURN
 
-        END DO OUTER_LOOP
-!
-!  Done.  Set history file ID to closed state since we manipulated
-!  its indices with the forward file ID which was closed above.
-!
-        ncHISid(ng)=-1
+        END DO OUTER_LOOP1
 !
 !  Compute and report model-observation comparison statistics.
 !
-        CALL stats_modobs (ng)
+!       CALL stats_modobs (ng)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+!  Tangent linear of 4D-PSAS
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+!
+!  Read observations.
+!
+        Mstr=NstrObs(ng)
+
+        CALL netcdf_get_fvar (ng, iTLM, OBSname(ng),                    &
+     &                        'obs_value',                              &
+     &                        tl_ObsVal(Mstr:),                         &
+     &                        start = (/NstrObs(ng)/),                  &
+     &                        total = (/Nobs(ng)/))
+!
+!  Reset value of "Nrun" and clear "TLmodVal".
+!
+        Nrun=1
+        TLmodVal=0.0_r8
+!
+!  Start outer loop.
+!
+        OUTER_LOOP2 : DO my_outer=1,Nouter
+          outer=my_outer
+          inner=0
+!
+!  Set basic state trajectory (X_n-1) file to previous outer loop file
+!  (outer-1).
+!
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+!
+!  Clear tangent linear forcing arrays before entering inner-loop.
+!  This is very important since these arrays are non-zero and must
+!  be zero when running the tangent linear model.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#else
+            subs=1
+#endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+            END DO
+          END DO
+!$OMP END PARALLEL DO 
+!
+          INNER_LOOP2 : DO my_inner=0,Ninner
+            inner=my_inner
+
+           IF (Master) THEN
+              WRITE (stdout,60) 'Tangent linear of',                    &
+     &                          uppercase('w4dpsas'), outer, inner
+           END IF
+!
+! Initialize tangent linear conjugate gradient algorithm depending on
+! hot start or outer loop index.
+!
+           IF (inner.eq.0) THEN
+              Lcgini=.TRUE.
+              CALL tl_congrad (ng, iRPM, outer, inner, Ninner, Lcgini)
+           END IF
+!
+!  If initialization step, skip the inner-loop computations.
+!
+            Linner=.FALSE.
+            IF ((inner.ne.0).or.(Nrun.ne.1)) THEN
+              IF (((inner.eq.0).and.LhotStart).or.(inner.ne.0)) THEN
+                Linner=.TRUE.
+              END IF
+            END IF
+!
+!  Start inner loop computations.
+!
+            INNER_COMPUTE2 : IF (Linner) THEN
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate adjoint model forced with any vector PSI at the observation
+!  locations and generate adjoint trajectory, Lambda_n(t).
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  Initialize the adjoint model from rest.
+!
+              CALL ad_initial (ng)
+              IF (exit_flag.ne.NoError) RETURN
+              wrtMisfit(ng)=.FALSE.
+!
+!  Set adjoint history NetCDF parameters.  Define adjoint history
+!  file only once to avoid opening too many files.
+!
+              WRTforce(ng)=.TRUE.
+              IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
+              NrecADJ(ng)=0
+              tADJindx(ng)=0
+!
+!  Time-step adjoint model backwards forced with current PSI vector.
+!
+              IF (Master) THEN
+                WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+              END IF
+
+              time(ng)=time(ng)+dt(ng)
+
+              AD_LOOP3 : DO my_iic=ntstart(ng),ntend(ng),-1
+
+                iic(ng)=my_iic
+#ifdef SOLVE3D
+                CALL ad_main3d (ng)
+#else
+                CALL ad_main2d (ng)
+#endif
+                IF (exit_flag.ne.NoError) RETURN
+
+              END DO AD_LOOP3
+!
+!  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
+!  record into the adjoint history file.  Note that the weak-constraint
+!  forcing is delayed by nADJ time-steps.
+!
+              CALL ad_wrt_his (ng)
+              IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out adjoint initial condition record into the adjoint
+!  history file.
+!
+              WRTforce(ng)=.FALSE.
+              CALL ad_wrt_his (ng)
+              IF (exit_flag.ne.NoError) RETURN
+
+#ifdef CONVOLVE
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Convolve adjoint trajectory with error covariances and convert
+!  to impulse forcing.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+              Nrec=NrecADJ(ng)
+              NrecADJ(ng)=0
+              tADJindx(ng)=0
+              LwrtState2d(ng)=.TRUE.
+              LwrtTime(ng)=.FALSE.
+              IF (Master) THEN
+                WRITE (stdout,40) outer, inner
+              END IF
+!
+!  Clear adjoint state arrays.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL initialize_ocean (ng, TILE, iADM)
+                END DO
+              END DO
+!$OMF END PARALLEL DO
+!
+!  Convolve initial conditions record and adjoint forcing
+!  (ADJname, record Nrec) with  initial conditions background error
+!  covariance. Note that we only do this for the forcing in
+!  record Nrec since this is the only record for which
+!  the adjoing forcing arrays are complete. Since routine
+!  "get_state" loads data into the ghost points, the adjoint
+!  solution is read into the tangent linear state arrays by using
+!  iTLM instead of iADM in the calling arguments.
+!
+              ADrec=Nrec
+              FrcRec(ng)=Nrec
+              Lweak=.FALSE.
+              CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+              IF (exit_flag.ne.NoError) RETURN
+!
+!  Load interior solution, read above, into adjoint state arrays. 
+!  Then, multiply adjoint solution by the background-error standard
+!  deviations. Next, convolve resulting adjoint solution with the 
+!  squared-root adjoint diffusion operator which impose initial
+!  conditions background error covaraince. Notice that the spatial
+!  convolution is only done for half of the diffusion steps
+!  (squared-root filter). Clear tangent linear state arrays when
+!  done.
+!
+              add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL ad_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                  CALL ad_variability (ng, TILE, Lold(ng), Lweak)
+                  CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
+                  CALL initialize_ocean (ng, TILE, iTLM)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+!  To insure symmetry, convolve resulting filtered adjoint solution
+!  from above with the squared-root (half of steps) tangent linear
+!  diffusion operator. Then, multiply result with its corresponding
+!  background-error standard deviations. Since the convolved solution
+!  is in the adjoint state arrays, first copy to tangent linear state
+!  arrays including the ghosts points.
+!
+              add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1,+1
+                  CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
+                  CALL tl_convolution (ng, TILE, Lold(ng), 2)
+                  CALL tl_variability (ng, TILE, Lold(ng), Lweak)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL tl_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+!  Write out tangent linear model initial conditions and tangent
+!  linear surface forcing adjustments for next inner
+!  loop into ITLname (record Rec1). The tangent model initial
+!  conditions are set to the convolved adjoint solution.
+!
+              CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+              IF (exit_flag.ne.NoError) RETURN
+!
+!  If weak constraint, convolve records 2-Nrec in ADJname and
+!  impose model error covariance. NOTE: We will not use the
+!  convolved forcing increments generated here since these arrays
+!  do not contain the complete solution and are redundant.
+!  AMM: We might want to get rid of these unwanted records to
+!  avoid any confusion in the future.
+!
+              IF (Nrec.gt.3) THEN
+                LwrtTime(ng)=.TRUE.
+                DO rec=1,Nrec-1
+                  Lweak=.TRUE.
+!
+!  Read adjoint solution. Since routine "get_state" loads data into the
+!  ghost points, the adjoint solution is read in the tangent linear
+!  state arrays by using iTLM instead of iADM in the calling arguments.
+!
+                  ADrec=rec
+                  CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec,      &
+     &                            Lold(ng))
+                  IF (exit_flag.ne.NoError) RETURN
+!
+!  Load interior solution, read above, into adjoint state arrays. 
+!  Then, multiply adjoint solution by the background-error standard
+!  deviations. Next, convolve resulting adjoint solution with the 
+!  squared-root adjoint diffusion operator which impose the model-error
+!  spatial correlations. Notice that the spatial convolution is only
+!  done for half of the diffusion steps (squared-root filter). Clear
+!  tangent linear state arrays when done.
+!
+                  add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+                  DO thread=0,numthreads-1
+                    subs=NtileX(ng)*NtileE(ng)/numthreads
+                    DO tile=subs*thread,subs*(thread+1)-1
+                      CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng),   &
+     &                                  add)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                      CALL ad_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                      CALL ad_variability (ng, TILE, Lold(ng), Lweak)
+                      CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
+                      CALL initialize_ocean (ng, TILE, iTLM)
+                    END DO
+                  END DO
+!$OMP END PARALLEL DO
+!
+!  To insure symmetry, convolve resulting filtered adjoint solution
+!  from above with the squared-root (half of steps) tangent linear
+!  diffusion operator. Then, multiply result with its corresponding
+!  background-error standard deviations.  Since the convolved solution
+!  is in the adjoint state arrays, first copy to tangent linear state
+!  arrays including the ghosts points. Copy back to adjoint state
+!  arrays when done with the convolution for output purposes.
+!
+                  add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+                  DO thread=0,numthreads-1
+                    subs=NtileX(ng)*NtileE(ng)/numthreads
+                    DO tile=subs*thread,subs*(thread+1)-1,+1
+                      CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng),   &
+     &                                  add)
+                      CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
+                      CALL tl_variability (ng, TILE, Lold(ng), Lweak)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                      CALL tl_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                      CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng),   &
+     &                                  add)
+                    END DO
+                  END DO
+!$OMP END PARALLEL DO
+!
+!  Overwrite ADJname history NetCDF file with convolved adjoint
+!  solution.
+!
+                  kstp(ng)=Lold(ng)
+# ifdef SOLVE3D
+                  nstp(ng)=Lold(ng)
+# endif
+                  CALL ad_wrt_his (ng)
+                  IF (exit_flag.ne.NoError) RETURN
+                END DO
+                LwrtState2d(ng)=.FALSE.
+              END IF
+#endif
+!
+!  Convert the current adjoint solution in ADJname to impulse forcing.
+!  Write out impulse forcing into TLFname NetCDF file. To facilitate
+!  the forcing to the TLM and RPM, the forcing is processed and written
+!  in increasing time coordinates (recall that the adjoint solution
+!  in ADJname is backwards in time).
+!
+              IF (Master) THEN
+                WRITE (stdout,40) outer, inner
+              END IF
+              tTLFindx(ng)=0
+#ifdef DISTRIBUTE
+              tile=MyRank
+#else
+              tile=-1
+#endif
+              CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+              IF (exit_flag.ne.NoError) RETURN
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model forced by the convolved adjoint
+!  trajectory (impulse forcing) to compute R_n * PSI at observation
+!  points.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  Initialize tangent linear model from initial impulse which is now
+!  stored in file ITLname.
+! 
+              wrtNLmod(ng)=.FALSE.
+              wrtTLmod(ng)=.TRUE.
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+              IF (FrcRec(ng).gt.3) THEN
+                FrequentImpulse=.TRUE.
+              END IF
+!
+!  Initialize tangent linear model from ITLname, record Rec1. 
+!
+              tITLindx(ng)=Rec1
+              CALL tl_initial (ng)
+              IF (exit_flag.ne.NoError) RETURN
+!
+!  Activate switch to write out initial misfit between model and
+!  observations.
+!
+              IF ((outer.eq.1).and.(inner.eq.1)) THEN
+                wrtMisfit(ng)=.TRUE.
+              END IF
+!
+!  Set tangent linear history NetCDF parameters.  Define tangent linear
+!  history file at the beggining of each inner loop  to avoid opening
+!  too many NetCDF files.
+!
+              IF (inner.gt.1) LdefTLM(ng)=.FALSE.
+              NrecTLM(ng)=0
+              tTLMindx(ng)=0
+!
+!  Run tangent linear model forward and force with convolved adjoint
+!  trajectory impulses. Compute (H M B M' H')_n * PSI at observation
+!  points which are used in the conjugate gradient algorithm.
+!
+              IF (Master) THEN
+                WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+              END IF
+
+              MyTime=time(ng)
+              time(ng)=time(ng)-dt(ng)
+
+              TL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+                iic(ng)=my_iic
+#ifdef SOLVE3D
+                CALL tl_main3d (ng)
+#else
+                CALL tl_main2d (ng)
+#endif
+                MyTime=time(ng)
+                IF (exit_flag.ne.NoError) RETURN
+
+              END DO TL_LOOP2
+              wrtNLmod(ng)=.FALSE.
+              wrtTLmod(ng)=.FALSE.
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Use conjugate gradient algorithm to find a better approximation
+!  PSI to coefficients Beta_n.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+              Nrun=Nrun+1
+              Lcgini=.FALSE.
+              CALL tl_congrad (ng, iTLM, outer, inner, Ninner, Lcgini)
+              IF (exit_flag.ne.NoError) RETURN
+
+            END IF INNER_COMPUTE2
+
+          END DO INNER_LOOP2
+!
+!-----------------------------------------------------------------------
+!  Once the w_n, have been approximated with sufficient accuracy,
+!  compute estimates of Lambda_n and Xhat_n by carrying out one
+!  backward intergration of the adjoint model and one forward
+!  itegration of the nonlinear model.
+!-----------------------------------------------------------------------
+!
+!  Initialize the adjoint model always from rest.
+!
+          CALL ad_initial (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Set adjoint history NetCDF parameters.  Define adjoint history
+!  file one to avoid opening to many files.
+!
+          WRTforce(ng)=.TRUE.
+          IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
+          NrecADJ(ng)=0
+          tADJindx(ng)=0
+!
+!  Time-step adjoint model backwards forced with estimated representer
+!  coefficients, Beta_n.
+!
+          IF (Master) THEN
+            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+          END IF
+
+          time(ng)=time(ng)+dt(ng)
+
+          AD_LOOP4 : DO my_iic=ntstart(ng),ntend(ng),-1
+
+            iic(ng)=my_iic
+#ifdef SOLVE3D
+            CALL ad_main3d (ng)
+#else
+            CALL ad_main2d (ng)
+#endif
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO AD_LOOP4
+!
+!  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
+!  record into the adjoint history file.  Note that the weak-constraint
+!  forcing is delayed by nADJ time-steps.
+!
+          CALL ad_wrt_his (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out adjoint initial condition record into the adjoint
+!  history file.
+!
+          WRTforce(ng)=.FALSE.
+          CALL ad_wrt_his (ng)
+          IF (exit_flag.ne.NoError) RETURN
+
+#ifdef CONVOLVE
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Convolve adjoint trajectory with model-error covariance and convert
+!  to impulse forcing.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+          Nrec=NrecADJ(ng)
+          NrecADJ(ng)=0
+          tADJindx(ng)=0
+          LwrtState2d(ng)=.TRUE.
+          LwrtTime(ng)=.FALSE.
+          IF (Master) THEN
+            WRITE (stdout,40) outer, inner
+          END IF
+!
+!  Clear adjoint state arrays.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_ocean (ng, TILE, iADM)
+            END DO
+          END DO
+!$OMF END PARALLEL DO
+!
+!  Convolve initial conditions record (ADJname, record Nrec) with
+!  initial conditions background error covariance. Since routine
+!  "get_state" loads data into the ghost points, the adjoint
+!  solution is read into the tangent linear state arrays by using
+!  iTLM instead of iADM in the calling arguments.
+!
+          ADrec=Nrec
+          Lweak=.FALSE.
+          CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Load interior solution, read above, into adjoint state arrays. 
+!  Then, multiply adjoint solution by the background-error standard
+!  deviations. Next, convolve resulting adjoint solution with the 
+!  squared-root adjoint diffusion operator which impose initial
+!  conditions background error covaraince. Notice that the spatial
+!  convolution is only done for half of the diffusion steps
+!  (squared-root filter). Clear tangent linear state arrays when
+!  done.
+!
+          add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
+# ifdef BALANCE_OPERATOR_NOT_YET
+              CALL ad_balance (ng, TILE, Lini, Lold(ng))
+# endif
+              CALL ad_variability (ng, TILE, Lold(ng), Lweak)
+              CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
+              CALL initialize_ocean (ng, TILE, iTLM)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+!  To insure symmetry, convolve resulting filtered adjoint solution
+!  from above with the squared-root (half of steps) tangent linear
+!  diffusion operator. Then, multiply result with its corresponding
+!  background-error standard deviations.  Since the convolved solution
+!  is in the adjoint state arrays, first copy to tangent linear state
+!  arrays including the ghosts points. Copy back to adjoint state
+!  arrays when done with the convolution. Compute representer model
+!  initial conditions by adding convolved adjoint solution to the
+!  reference nonlinear state (INIname, record Lbck).
+!
+          CALL get_state (ng, iNLM, 9, INIname(ng), Lbck, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
+
+          add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
+              CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
+              CALL tl_variability (ng, TILE, Lold(ng), Lweak)
+# ifdef BALANCE_OPERATOR_NOT_YET
+              CALL tl_balance (ng, TILE, Lini, Lold(ng))
+# endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+!  Write out tangent linear model initial conditions and tangent
+!  linear surface forcing adjustments for next inner
+!  loop into ITLname (record Rec1). The tangent model initial
+!  conditions are set to the convolved adjoint solution.
+!  
+          CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+          IF (exit_flag.ne.NoError) RETURN
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+          CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
+          IF (exit_flag.ne.NoError) RETURN
+# endif
+!
+!  If weak constraint, convolve adjoint records in ADJname and impose
+!  model error covariance.
+!
+          IF (Nrec.gt.3) THEN
+            LwrtTime(ng)=.TRUE.
+            DO rec=1,Nrec-1
+              Lweak=.TRUE.
+!
+!  Read adjoint solution. Since routine "get_state" loads data into the
+!  ghost points, the adjoint solution is read in the tangent linear
+!  state arrays by using iTLM instead of iADM in the calling arguments.
+!
+              ADrec=rec
+              CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+              IF (exit_flag.ne.NoError) RETURN
+!
+!  Load interior solution, read above, into adjoint state arrays. 
+!  Then, multiply adjoint solution by the background-error standard
+!  deviations. Next, convolve resulting adjoint solution with the 
+!  squared-root adjoint diffusion operator which impose the model-error
+!  spatial correlations. Notice that the spatial convolution is only
+!  done for half of the diffusion steps (squared-root filter). Clear
+!  tangent linear state arrays when done.
+!
+              add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL ad_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                  CALL ad_variability (ng, TILE, Lold(ng), Lweak)
+                  CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
+                  CALL initialize_ocean (ng, TILE, iTLM)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+!  To insure symmetry, convolve resulting filtered adjoint solution
+!  from above with the squared-root (half of steps) tangent linear
+!  diffusion operator. Then, multiply result with its corresponding
+!  background-error standard deviations.  Since the convolved solution
+!  is in the adjoint state arrays, first copy to tangent linear state
+!  arrays including the ghosts points. Copy back to adjoint state
+!  arrays when done with the convolution for output purposes.
+!
+              add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1,+1
+                  CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
+                  CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
+                  CALL tl_variability (ng, TILE, Lold(ng), Lweak)
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL tl_balance (ng, TILE, Lini, Lold(ng))
+# endif
+                  CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+!  Overwrite ADJname history NetCDF file with convolved adjoint
+!  solution.
+!
+              kstp(ng)=Lold(ng)
+# ifdef SOLVE3D
+              nstp(ng)=Lold(ng)
+# endif
+              CALL ad_wrt_his (ng)
+              IF (exit_flag.ne.NoError) RETURN
+            END DO
+            LwrtState2d(ng)=.FALSE.
+            LwrtTime(ng)=.TRUE.
+          END IF
+#endif
+!
+!  Convert the current adjoint solution in ADJname to impulse forcing.
+!  Write out impulse forcing into TLFname NetCDF file. To facilitate
+!  the forcing to the TLM and RPM, the forcing is processed and written
+!  in increasing time coordinates (recall that the adjoint solution
+!  in ADJname is backwards in time).
+!
+          IF (Master) THEN
+            WRITE (stdout,50) outer, inner
+          END IF
+          tTLFindx(ng)=0
+#ifdef DISTRIBUTE
+          tile=MyRank
+#else
+          tile=-1
+#endif
+          CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+          IF (exit_flag.ne.NoError) RETURN
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model forced by the convolved adjoint
+!  trajectory (impulse forcing) to compute R_n * PSI at observation
+!  points.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer
+!
+!  Initialize tangent linear model from initial impulse which is now
+!  stored in file ITLname.
+!
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.TRUE.
+          LdefTLM(ng)=.TRUE.
+          LwrtTLM(ng)=.TRUE.
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+          IF (FrcRec(ng).gt.3) THEN
+            FrequentImpulse=.TRUE.
+          END IF
+!
+!  Initialize tangent linear model from ITLname, record Rec1.
+!
+          tITLindx(ng)=Rec1
+          CALL tl_initial (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Set tangent linear history NetCDF parameters.  Define tangent linear
+!  history file at the beggining of each inner loop  to avoid opening
+!  too many NetCDF files.
+!
+!AMM      IF (inner.gt.1) LdefTLM(ng)=.FALSE.
+          NrecTLM(ng)=0
+          tTLMindx(ng)=0
+!
+!  Run tangent linear model forward and force with convolved adjoint
+!  trajectory impulses. Compute (HMBM'H')_n * PSI at observation points
+!  which are used in the conjugate gradient algorithm.
+!
+          IF (Master) THEN
+            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+          END IF
+
+          MyTime=time(ng)
+          time(ng)=time(ng)-dt(ng)
+
+          TL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+            iic(ng)=my_iic
+#ifdef SOLVE3D
+            CALL tl_main3d (ng)
+#else
+            CALL tl_main2d (ng)
+#endif
+            MyTime=time(ng)
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO TL_LOOP3
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.FALSE.
+!
+!  Close tangent linear NetCDF file.
+!
+          SourceFile='tl_w4dpsas.h, ROMS_run'
+
+          CALL netcdf_close (ng, iTLM, ncTLMid(ng))
+          ncTLMid(ng)=-1
+!
+!  Close current forward NetCDF file.
+!
+          SourceFile='tl_w4dpsas.h, ROMS_run'
+
+          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
+          ncFWDid(ng)=-1
+
+        END DO OUTER_LOOP2
 
       END DO NEST_LOOP
 !
@@ -1213,6 +1981,8 @@
      &          ' Inner = ',i3.3)
  50   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
+ 60   FORMAT (/,'ROMS/TOMS: ',a,1x,a,', Outer = ',i3.3,                 &
+     &          ' Inner = ',i3.3,/)
 
       RETURN
       END SUBROUTINE ROMS_run

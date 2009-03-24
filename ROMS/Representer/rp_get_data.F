@@ -1277,7 +1277,7 @@
       END DO
 #   endif
 #  endif
-#  ifdef W4DVAR
+#  if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Read frequent impulse forcing for weak constraint.

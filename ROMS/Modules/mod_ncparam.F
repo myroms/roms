@@ -1482,8 +1482,9 @@
                 idTclm(itemp)=varid
               CASE ('idTclm(isalt)')
                 idTclm(isalt)=varid
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
               CASE ('idZads')
                 idZads=varid
               CASE ('idUbas')
@@ -1731,8 +1732,9 @@
                 idTvar(iZoop)=varid
               CASE ('idTvar(iSDet)')
                 idTvar(iSDet)=varid
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
               CASE ('idTads(iNO3_)')
                 idTads(iNO3_)=varid
               CASE ('idTads(iPhyt)')
@@ -1790,8 +1792,9 @@
                 idTvar(iSDeN)=varid
               CASE ('idTvar(iChlo)')
                 idTvar(iChlo)=varid
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
               CASE ('idTads(iNO3_)')
                 idTads(iNO3_)=varid
               CASE ('idTads(iNH4_)')
@@ -1816,8 +1819,9 @@
                 idTvar(iLDeC)=varid
               CASE ('idTvar(iSDeC)')
                 idTvar(iSDeC)=varid
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
               CASE ('idTads(iTIC_)')
                 idTads(iTIC_)=varid
               CASE ('idTads(iTAlk)')
@@ -1831,8 +1835,9 @@
 # ifdef OXYGEN
               CASE ('idTvar(iOxyg)')
                 idTvar(iOxyg)=varid
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
               CASE ('idTads(iOxyg)')
                 idTads(iOxyg)=varid
 #  endif

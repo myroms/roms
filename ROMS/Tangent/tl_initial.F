@@ -50,7 +50,9 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces, ONLY : initialize_forces
 # endif
-# if defined W4DPSAS || defined W4DVAR
+# if defined SENSITIVITY_4DVAR || \
+     defined TL_W4DPSAS        || defined TL_W4DVAR  || \
+     defined W4DPSAS           || defined W4DVAR
       USE tl_set_depth_mod, ONLY : tl_bath
 # endif
 # ifdef SOLVE3D
@@ -94,7 +96,9 @@
 # if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-# elif defined IS4DVAR || defined W4DPSAS || defined W4DVAR
+# elif defined IS4DVAR    || defined SENSITIVITY_4DVAR || \
+       defined TL_W4DPSAS || defined TL_W4DVAR         || \
+       defined W4DPSAS    || defined W4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
@@ -435,7 +439,9 @@
 !$OMP END PARALLEL DO
 # endif
 
-# if defined W4DPSAS || defined W4DVAR
+# if defined SENSITIVITY_4DVAR || \
+     defined TL_W4DPSAS        || defined TL_W4DVAR || \
+     defined W4DPSAS           || defined W4DVAR
 !
 !-----------------------------------------------------------------------
 !  Initialize tangent linear bathymetry to zero.

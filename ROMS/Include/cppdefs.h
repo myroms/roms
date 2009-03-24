@@ -199,7 +199,7 @@
 ** ANA_SPFLUX          use if analytical surface passive tracers fluxes      **
 ** ANA_SPINNING        use if analytical time-varying rotation force         **
 ** ANA_SRFLUX          use if analytical surface shortwave radiation flux    **
-** ANA_SSFLUX          use if analytical surface salinity flux               ** 
+** ANA_SSFLUX          use if analytical surface salinity flux               **
 ** ANA_SSH             use if analytical sea surface height                  **
 ** ANA_SSS             use if analytical sea surface salinity                **
 ** ANA_SST             use if analytical SST and dQdSST                      **
@@ -266,7 +266,7 @@
 ** LMD_DDMIX           use to add double-diffusive mixing                    **
 ** LMD_NONLOCAL        use if nonlocal transport                             **
 ** LMD_RIMIX           use to add diffusivity due to shear instability       **
-** LMD_SHAPIRO         use if Shapiro filtering boundary layer depth         **       
+** LMD_SHAPIRO         use if Shapiro filtering boundary layer depth         **
 ** LMD_SKPP            use if surface boundary layer KPP mixing              **
 **                                                                           **
 ** OPTIONS to activate smoothing of Richardson number, if SPLINES is not     **
@@ -518,8 +518,10 @@
 ** STOCHASTIC_OPT      use if stochastic optimals                            **
 ** TLM_CHECK           use if tangent linear model linearization check       **
 ** TLM_DRIVER          use if generic tangent linear model driver            **
-** W4DPSAS             use if weak constraint 4D-PSAS data assimilation      **
+** W4DPSAS             use if weak constraint 4DPSAS data assimilation       **
+** W4DPSAS_SENSITIVITY use if weak constraint 4DPSAS observation sensitivity **
 ** W4DVAR              use if Weak constraint 4DVar data assimilation        **
+** W4DVAR_SENSITIVITY  use if Weak constraint 4DVar observation sensitivity  **
 **                                                                           **
 ** OPTIONS associated with tangent linear, representer and adjoint models:   **
 **                                                                           **
@@ -550,7 +552,7 @@
 **                                                                           **
 ** FULL_GRID           use to consider both interior and boundary points     **
 **                                                                           **
-** Fennel et al. (2006) biology model OPTIONS:                               ** 
+** Fennel et al. (2006) biology model OPTIONS:                               **
 **                                                                           **
 ** BIO_FENNEL          use if Fennel et al. (2006) nitrogen-based model      **
 ** BIO_SEDIMENT        use to restore fallen material to the nutrient pool   **
@@ -561,7 +563,7 @@
 ** RIVER_BIOLOGY       use to process river biology point-sources            **
 ** TALK_NONCONSERV     use if nonconservative computation of alkalinity      **
 **                                                                           **
-** NPZD biology model OPTIONS:                                               ** 
+** NPZD biology model OPTIONS:                                               **
 **                                                                           **
 ** NPZD_FRANKS         use if NPZD Biology model, Franks et al. (1986)       **
 ** NPZD_POWELL         use if NPZD Biology model, Powell et al. (2006)       **

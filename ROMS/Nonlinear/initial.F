@@ -79,7 +79,9 @@
 #if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-#elif defined IS4DVAR || defined W4DPSAS || defined W4DVAR
+#elif defined IS4DVAR    || defined SENSITIVITY_4DVAR || \
+      defined TL_W4DPSAS || defined TL_W4DVAR         || \
+      defined W4DPSAS    || defined W4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
@@ -554,7 +556,8 @@
       IF (exit_flag.ne.NoError) RETURN
 #endif
 
-#if defined W4DPSAS || defined NLM_OUTER
+#if defined NLM_OUTER || defined TL_W4DPSAS          || \
+    defined W4DPSAS   || defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Read in convolved adjoint impulse forcing (first record) and its

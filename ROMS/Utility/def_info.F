@@ -437,9 +437,9 @@
 # endif
 
 # if defined ADJOINT && \
-    !(defined AD_SENSITIVITY  || defined FOUR_DVAR        || \
-      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SO_SEMI)
+    !(defined AD_SENSITIVITY    || defined FOUR_DVAR        || \
+      defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
+      defined SENSITIVITY_4DVAR || defined SO_SEMI)
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'iad_file',            &
      &                        TRIM(IADname(ng)))
@@ -544,8 +544,9 @@
         END IF
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'ads_file',            &
      &                        TRIM(ADSname(ng)))
@@ -1726,8 +1727,9 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
 !
@@ -3614,8 +3616,9 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !

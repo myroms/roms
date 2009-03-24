@@ -44,15 +44,18 @@
 !
       USE mod_param
       USE mod_boundary
-# if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
-     defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-     defined SO_SEMI
+# if defined AD_SENSITIVITY    || defined CLIMATOLOGY      || \
+     defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
+     defined SENSITIVITY_4DVAR || defined SO_SEMI
       USE mod_clima
 # endif
 # if defined FORWARD_READ && defined SOLVE3D
       USE mod_coupling
 # endif
       USE mod_forces
+# ifdef SENSITIVITY_4DVAR
+      USE mod_fourdvar
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ncparam
@@ -1440,8 +1443,9 @@
 #  endif   
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
 !
 !-----------------------------------------------------------------------
 !  Set forcing adjoint sensitivity functional.
@@ -1449,63 +1453,69 @@
 !
 !  Free-surface.
 !
-      IF (SCALARS(ng)%Lstate(isFsur)) THEN
-        CALL set_2dfldr_tile (ng, tile, iADM, idZads,                   &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        CLIMA(ng)%zeta_adsG,                      &
-     &                        CLIMA(ng)%zeta_ads,                       &
-     &                        update)
-      END IF
+#  ifdef SENSITIVITY_4DVAR
+      IF (LsenPSAS(ng)) THEN
+#  endif
+        IF (SCALARS(ng)%Lstate(isFsur)) THEN
+          CALL set_2dfldr_tile (ng, tile, iADM, idZads,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          CLIMA(ng)%zeta_adsG,                    &
+     &                          CLIMA(ng)%zeta_ads,                     &
+     &                          update)
+        END IF
 !
 !  2D momentum.
 !
-      IF (SCALARS(ng)%Lstate(isUbar)) THEN
-        CALL set_2dfldr_tile (ng, tile, iADM, idUbas,                   &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        CLIMA(ng)%ubar_adsG,                      &
-     &                        CLIMA(ng)%ubar_ads,                       &
-     &                        update)
-      END IF
+        IF (SCALARS(ng)%Lstate(isUbar)) THEN
+          CALL set_2dfldr_tile (ng, tile, iADM, idUbas,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          CLIMA(ng)%ubar_adsG,                    &
+     &                          CLIMA(ng)%ubar_ads,                     &
+     &                          update)
+        END IF
 !
-      IF (SCALARS(ng)%Lstate(isVbar)) THEN
-        CALL set_2dfldr_tile (ng, tile, iADM, idVbas,                   &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        CLIMA(ng)%vbar_adsG,                      &
-     &                        CLIMA(ng)%vbar_ads,                       &
-     &                        update)
-      END IF
+        IF (SCALARS(ng)%Lstate(isVbar)) THEN
+          CALL set_2dfldr_tile (ng, tile, iADM, idVbas,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          CLIMA(ng)%vbar_adsG,                    &
+     &                          CLIMA(ng)%vbar_ads,                     &
+     &                          update)
+        END IF
 
 #  ifdef SOLVE3D
 !
 !  Set 3D momentum.
 !
-      IF (SCALARS(ng)%Lstate(isUvel)) THEN
-        CALL set_3dfldr_tile (ng, tile, iADM, idUads,                   &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        CLIMA(ng)%u_adsG,                         &
-     &                        CLIMA(ng)%u_ads,                          &
-     &                        update)
-      END IF
+        IF (SCALARS(ng)%Lstate(isUvel)) THEN
+          CALL set_3dfldr_tile (ng, tile, iADM, idUads,                 &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          CLIMA(ng)%u_adsG,                       &
+     &                          CLIMA(ng)%u_ads,                        &
+     &                          update)
+        END IF
 !
-      IF (SCALARS(ng)%Lstate(isVvel)) THEN
-        CALL set_3dfldr_tile (ng, tile, iADM, idVads,                   &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        CLIMA(ng)%v_adsG,                         &
-     &                        CLIMA(ng)%v_ads,                          &
-     &                        update)
-      END IF
+        IF (SCALARS(ng)%Lstate(isVvel)) THEN
+          CALL set_3dfldr_tile (ng, tile, iADM, idVads,                 &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          CLIMA(ng)%v_adsG,                       &
+     &                          CLIMA(ng)%v_ads,                        &
+     &                          update)
+        END IF
 !
 !  Set 3D tracers.
 !
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%Lstate(isTvar(itrc))) THEN
-          CALL set_3dfldr_tile (ng, tile, iADM, idTads(itrc),           &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          CLIMA(ng)%t_adsG(:,:,:,:,itrc),         &
-     &                          CLIMA(ng)%t_ads(:,:,:,itrc),            &
-     &                          update)
-        END IF
-      END DO
+        DO itrc=1,NT(ng)
+          IF (SCALARS(ng)%Lstate(isTvar(itrc))) THEN
+            CALL set_3dfldr_tile (ng, tile, iADM, idTads(itrc),         &
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            CLIMA(ng)%t_adsG(:,:,:,:,itrc),       &
+     &                            CLIMA(ng)%t_ads(:,:,:,itrc),          &
+     &                            update)
+          END IF
+        END DO
+#  endif
+#  ifdef SENSITIVITY_4DVAR
+      END IF
 #  endif
 # endif
 
@@ -1530,9 +1540,10 @@
       END IF
 # endif
 
-# if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS  || \
-     defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS    || \
+     defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
 !
 !-----------------------------------------------------------------------
 !  Clear adjoint vertical boundary conditions arrays for IO purposes at

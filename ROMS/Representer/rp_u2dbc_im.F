@@ -132,7 +132,7 @@
 !
       IF (WESTERN_EDGE) THEN
 
-#  if defined WEST_M2RADIATION
+#  if defined WEST_M2RADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -147,7 +147,7 @@
           DO j=Jstr,Jend
 #   ifdef WEST_M2NUDGING
             IF (BOUNDARY(ng)%ubar_west_Cx(j).eq.0.0_r8) THEN
-     &        tau=M2obc_in(ng,iwest)
+              tau=M2obc_in(ng,iwest)
             ELSE
               tau=M2obc_out(ng,iwest)
             END IF
@@ -463,7 +463,7 @@
 !
       IF (EASTERN_EDGE) THEN
 
-#  if defined EAST_M2RADIATION
+#  if defined EAST_M2RADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -796,7 +796,7 @@
 !
       IF (SOUTHERN_EDGE) THEN
 
-#  if defined SOUTH_M2RADIATION
+#  if defined SOUTH_M2RADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -965,7 +965,7 @@
 !
       IF (NORTHERN_EDGE) THEN
 
-#  if defined NORTH_M2RADIATION
+#  if defined NORTH_M2RADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !

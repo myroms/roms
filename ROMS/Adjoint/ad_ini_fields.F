@@ -1246,8 +1246,8 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_zeta(:,:,kstp))
 # endif
-# if !(defined AD_SENSITIVITY || defined OBS_SENSITIVITY || \
-       defined SO_SEMI)
+# if !(defined AD_SENSITIVITY    || defined OBS_SENSITIVITY || \
+       defined SENSITIVITY_4DVAR || defined SO_SEMI)
 #  ifndef OBC_FSRADIATION
 #   ifdef SOLVE3D
 !>    CALL tl_zetabc_tile (ng, tile,                                    &

@@ -178,7 +178,8 @@
 #   endif
         CALL obs_read (ng, iRPM, .FALSE.)
         CALL obs_write (ng, tile, iRPM)
-#   if defined W4DVAR || defined IOM
+#   if defined IOM || defined TL_W4DVAR || defined W4DVAR || \
+       defined W4DVAR_SENSITIVITY
         CALL obs_cost (ng, iRPM)
 #   endif
       ELSE

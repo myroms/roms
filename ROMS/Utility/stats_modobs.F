@@ -106,7 +106,8 @@
 !
 !  Read in model values at observation locations.
 !
-# if defined W4DVAR || defined IOMS
+# if defined IOMS   || defined TL_W4DVAR          || \
+     defined W4DVAR || defined W4DVAR_SENSITIVITY
       CALL netcdf_get_fvar (ng, iNLM, MODname(ng), Vname(1,idTLmo),     &
      &                      mod_value,                                  &
      &                      ncid = ncMODid(ng),                         &

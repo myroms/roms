@@ -943,8 +943,9 @@
       logical, dimension(MBOTP,Ngrids) :: Lbottom
 #endif
       logical, allocatable :: Ltracer(:,:)
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
       logical, allocatable :: Ladsen(:)
 #endif
 
@@ -1104,8 +1105,9 @@
             CALL initialize_param
             CALL initialize_scalars
             CALL initialize_ncparam
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
             IF (.not.allocated(Ladsen)) THEN
               allocate (Ladsen(MT*Ngrids))
             END IF
@@ -1379,6 +1381,9 @@
             Npts=load_r(Nval, Rval, Ngrids, theta_b)
           ELSE IF (TRIM(KeyWord).eq.'TCLINE') THEN
             Npts=load_r(Nval, Rval, Ngrids, Tcline)
+            DO ng=1,Ngrids
+              hc(ng)=Tcline(ng)
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'RHO0') THEN
             Npts=load_r(Nval, Rval, 1, rho0)
           ELSE IF (TRIM(KeyWord).eq.'BVF_BAK') THEN
@@ -1426,8 +1431,9 @@
             END DO
           ELSE IF (TRIM(KeyWord).eq.'GAMMA2') THEN
             Npts=load_r(Nval, Rval, Ngrids, gamma2)
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
           ELSE IF (TRIM(KeyWord).eq.'DstrS') THEN
             Npts=load_r(Nval, Rval, Ngrids, DstrS)
           ELSE IF (TRIM(KeyWord).eq.'DendS') THEN
@@ -2350,8 +2356,10 @@
           WRITE (out,120) Nouter, 'Nouter',                             &
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
-#if defined IS4DVAR || defined OBS_SENSITIVITY || \
-    defined W4DPSAS || defined W4DVAR
+#if defined IS4DVAR           || defined OBS_SENSITIVITY || \
+    defined SENSITIVITY_4DVAR || \
+    defined TL_W4DPSAS        || defined TL_W4DVAR       || \
+    defined W4DPSAS           || defined W4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximun number of 4DVAR inner loop iterations.'
 #endif
@@ -2713,8 +2721,9 @@
           WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
           WRITE (out,140) DstrS(ng), 'DstrS',                           &
      &          'Starting day for ADM sensitivity forcing.'
           WRITE (out,140) DendS(ng), 'DendS',                           &
@@ -3139,16 +3148,18 @@
      &                    TRIM(fname)
 # endif
 # if defined TANGENT && \
-    !(defined FOUR_DVAR       || defined GRADIENT_CHECK   || \
-      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SANITY_CHECK    || defined TLM_CHECK)
+    !(defined FOUR_DVAR       || defined GRADIENT_CHECK    || \
+      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS  || \
+      defined SANITY_CHECK    || defined SENSITIVITY_4DVAR || \
+      defined TLM_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
           WRITE (out,230) '    Input Tangent Initial File:  ',          &
      &                    TRIM(fname)
 # endif
-# if (defined WEAK_CONSTRAINT || defined IOM) && !defined W4DPSAS
+# if (defined WEAK_CONSTRAINT || defined IOM) && \
+    !(defined W4DPSAS || defined W4DPSAS_SENSITIVITY)
           fname=IRPname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -3156,9 +3167,10 @@
      &                    TRIM(fname)
 # endif
 # if defined ADJOINT && \
-    !(defined AD_SENSITIVITY  || defined FOUR_DVAR        || \
-      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SANITY_CHECK    || defined SO_SEMI)
+    !(defined AD_SENSITIVITY  || defined FOUR_DVAR         || \
+      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS  || \
+      defined SANITY_CHECK    || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI)
           fname=IADname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -3189,8 +3201,9 @@
           WRITE (out,230) '      Input Forward State File:  ',          &
      &                    TRIM(fname)
 #endif
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI
           fname=ADSname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -7479,7 +7492,9 @@
 !!            Cnorm(2,i)=.TRUE.       ! force computation of all factors
             END DO
           END IF
-#     if defined W4DPSAS || defined W4DVAR
+#     if defined SENSITIVITY_4DVAR || \
+         defined TL_W4DPSAS        || defined TL_W4DVAR || \
+         defined W4DPSAS           || defined W4DVAR
           IF (ANY(LwrtNRM(:,ng))) THEN
             WRITE (out,70) Cnorm(2,isFsur), 'CnormM(isFsur)',           &
      &            'Compute model 2D RHO-normalization factors.'
@@ -7564,8 +7579,10 @@
           WRITE (out,100) Vgamma, 'Vgamma',                             &
      &            'Vertical diffusion stability/accuracy factor.'
 #    endif
-#    if defined W4DPSAS || defined W4DVAR
-          IF (nADJ(ng).lt.ntimes(ng)) THEN
+#    if defined SENSITIVITY_4DVAR || \
+        defined TL_W4DPSAS        || defined TL_W4DVAR || \
+        defined W4DPSAS           || defined W4DVAR
+         IF (nADJ(ng).lt.ntimes(ng)) THEN
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
      &            'Model decorrelation H-scale (m), free-surface.'
             WRITE (out,120) Hdecay(2,isUbar,ng), 'HdecayM(isUbar)',     &
@@ -7716,7 +7733,9 @@
 #   if defined IS4DVAR         || defined IOM              || \
        defined OBS_SENSITIBITY || defined OPT_OBSERVATIONS || \
        defined WEAK_CONSTRAINT
-#    if defined W4DPSAS || defined W4DVAR
+#    if defined SENSITIVITY_4DVAR || \
+        defined TL_W4DPSAS        || defined TL_W4DVAR || \
+        defined W4DPSAS           || defined W4DVAR
           fname=STDname(2,ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -7743,7 +7762,9 @@
      &                    TRIM(fname)
 #    endif
 #   endif
-#   if defined W4DPSAS || defined W4DVAR
+#   if defined SENSITIVITY_4DVAR || \
+       defined TL_W4DPSAS        || defined TL_W4DVAR || \
+       defined W4DPSAS           || defined W4DVAR
           fname=NRMname(2,ng)
           WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)

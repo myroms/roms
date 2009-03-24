@@ -90,7 +90,9 @@
 */
 
 #if defined PROPAGATOR || defined W4DPSAS ||  defined W4DVAR || \
-    defined IS4DVAR
+    defined IS4DVAR    || defined W4DPSAS_SENSITIVITY        || \
+    defined TL_W4DPSAS || defined W4DVAR_SENSITIVITY         || \
+    defined TL_W4DVAR
   USE_ARPACK := on
 #else
   USE_ARPACK :=

@@ -373,6 +373,9 @@
         integer :: Nrun = 1                     ! Current counter
         integer :: inner = 0                    ! inner loop counter
         integer :: outer = 0                    ! outer loop counter
+# ifdef SENSITIVITY_4DVAR
+        integer :: NrunSAVE = 0                 ! Loop counter
+# endif
 !
 !  First, starting, and ending timestepping parameters
 !

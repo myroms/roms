@@ -92,7 +92,7 @@
 !
       IF (WESTERN_EDGE) THEN
 
-#  if defined WEST_TRADIATION
+#  if defined WEST_TRADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -228,7 +228,7 @@
 !
       IF (EASTERN_EDGE) THEN
 
-#  if defined EAST_TRADIATION
+#  if defined EAST_TRADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -366,7 +366,7 @@
 !
       IF (SOUTHERN_EDGE) THEN
 
-#  if defined SOUTH_TRADIATION
+#  if defined SOUTH_TRADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !
@@ -501,7 +501,7 @@
 !
       IF (NORTHERN_EDGE) THEN
 
-#  if defined NORTH_TRADIATION
+#  if defined NORTH_TRADIATION_NOT_YET
 
         IF (iic(ng).ne.0) THEN
 !

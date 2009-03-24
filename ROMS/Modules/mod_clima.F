@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       MODULE mod_clima
-#if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
-    defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY    || defined CLIMATOLOGY      || \
+    defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
+    defined SENSITIVITY_4DVAR || defined SO_SEMI
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -90,8 +90,9 @@
 # ifdef ZCLM_NUDGING
           real(r8), pointer :: Znudgcof(:,:)
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
           real(r8), pointer :: zeta_ads(:,:)
           real(r8), pointer :: zeta_adsG(:,:,:)
 # endif
@@ -103,8 +104,9 @@
           real(r8), pointer :: vbarclmG(:,:,:)
 #  endif
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
           real(r8), pointer :: ubar_ads(:,:)
           real(r8), pointer :: vbar_ads(:,:)
           real(r8), pointer :: ubar_adsG(:,:,:)
@@ -123,8 +125,9 @@
 #  ifdef TCLM_NUDGING
           real(r8), pointer :: Tnudgcof(:,:,:)
 #  endif
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
           real(r8), pointer :: t_ads(:,:,:,:)
           real(r8), pointer :: t_adsG(:,:,:,:,:)
 #  endif
@@ -139,8 +142,9 @@
 #  ifdef M3CLM_NUDGING
           real(r8), pointer :: M3nudgcof(:,:)
 #  endif
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
           real(r8), pointer :: u_ads(:,:,:)
           real(r8), pointer :: v_ads(:,:,:)
           real(r8), pointer :: u_adsG(:,:,:,:)
@@ -187,8 +191,9 @@
       allocate ( CLIMA(ng) % Znudgcof(LBi:UBi,LBj:UBj) )
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
       allocate ( CLIMA(ng) % zeta_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % zeta_adsG(LBi:UBi,LBj:UBj,2) )
 # endif
@@ -206,8 +211,9 @@
       allocate ( CLIMA(ng) % M2nudgcof(LBi:UBi,LBj:UBj) )
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
       allocate ( CLIMA(ng) % ubar_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % vbar_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % ubar_adsG(LBi:UBi,LBj:UBj,2) )
@@ -226,8 +232,9 @@
       allocate ( CLIMA(ng) % Tnudgcof(LBi:UBi,LBj:UBj,NT(ng)) )
 #  endif
 
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
       allocate ( CLIMA(ng) % t_ads(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       allocate ( CLIMA(ng) % t_adsG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
 #  endif
@@ -245,8 +252,9 @@
       allocate ( CLIMA(ng) % M3nudgcof(LBi:UBi,LBj:UBj) )
 #  endif
 
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
       allocate ( CLIMA(ng) % u_ads(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( CLIMA(ng) % v_ads(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( CLIMA(ng) % u_adsG(LBi:UBi,LBj:UBj,N(ng),2) )
@@ -334,8 +342,9 @@
 # ifdef ZCLM_NUDGING
           CLIMA(ng) % Znudgcof(i,j) = IniVal
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
           CLIMA(ng) % zeta_ads(i,j) = IniVal
           CLIMA(ng) % zeta_adsG(i,j,1) = IniVal
           CLIMA(ng) % zeta_adsG(i,j,2) = IniVal
@@ -356,8 +365,9 @@
 # if defined M3CLM_NUDGING && defined SOLVE3D
           CLIMA(ng) % M3nudgcof(i,j) = IniVal
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
           CLIMA(ng) % ubar_ads(i,j) = IniVal
           CLIMA(ng) % vbar_ads(i,j) = IniVal
           CLIMA(ng) % ubar_adsG(i,j,1) = IniVal
@@ -379,8 +389,9 @@
             CLIMA(ng) % vclmG(i,j,k,2) = IniVal
 #   endif
 #  endif
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
             CLIMA(ng) % u_ads(i,j,k) = IniVal
             CLIMA(ng) % v_ads(i,j,k) = IniVal
             CLIMA(ng) % u_adsG(i,j,k,1) = IniVal
@@ -400,8 +411,9 @@
               CLIMA(ng) % tclmG(i,j,k,2,itrc) = IniVal
 #   endif
 #  endif
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+      defined SO_SEMI
               CLIMA(ng) % t_ads(i,j,k,itrc) = IniVal
               CLIMA(ng) % t_adsG(i,j,k,1,itrc) = IniVal
               CLIMA(ng) % t_adsG(i,j,k,2,itrc) = IniVal

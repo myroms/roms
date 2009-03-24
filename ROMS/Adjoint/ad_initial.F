@@ -41,8 +41,9 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
       USE adsen_initial_mod, ONLY : adsen_initial
 # endif
       USE metrics_mod, ONLY : metrics
@@ -84,7 +85,8 @@
 # if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-# elif defined IS4DVAR || defined W4DPSAS || defined W4DVAR
+# elif defined IS4DVAR || defined SENSITIVITY_4DVAR || \
+       defined W4DPSAS || defined W4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
@@ -551,22 +553,29 @@
 #  endif
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+     defined SO_SEMI
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint state with the functional whose sensitivity is
 !  is required.
 !-----------------------------------------------------------------------
 !
+#  ifdef SENSITIVITY_4DVAR
+      IF (LsenPSAS(ng)) THEN
+#  endif
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1
-          CALL adsen_initial (ng, TILE)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+            CALL adsen_initial (ng, TILE)
+          END DO
         END DO
-      END DO
 !$OMF END PARALLEL DO
+#  ifdef SENSITIVITY_4DVAR
+      END IF
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
