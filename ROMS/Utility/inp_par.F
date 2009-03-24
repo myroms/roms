@@ -1029,7 +1029,7 @@
 #ifdef SOLVE3D
           ELSE IF (TRIM(KeyWord).eq.'NAT') THEN
             Npts=load_i(Nval, Rval, 1, NAT)
-            IF ((NAT.lt.0).or.(NAT.gt.2)) THEN
+            IF ((NAT.lt.1).or.(NAT.gt.2)) THEN
               IF (Master) WRITE (out,290) 'NAT = ', NAT,                &
      &                          'make sure that NAT is either 1 or 2.'
               exit_flag=5
