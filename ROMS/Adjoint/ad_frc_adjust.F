@@ -94,11 +94,11 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_sustr(LBi:,LBj:)
-      real(r8), intent(in) :: ad_svstr(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(in) :: ad_stflx(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
 #  endif
 #  ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
@@ -109,11 +109,11 @@
 #  endif
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ad_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(in) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
 #  endif
 #  ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -169,6 +169,7 @@
      &                          fac1*ad_sustr(i,j)
           ad_ustr(i,j,it2,Linp)=ad_ustr(i,j,it2,Linp)+                  &
      &                           fac2*ad_sustr(i,j)
+          ad_sustr(i,j)=0.0_r8
         END DO
       END DO
       DO j=Jstr,JendR
@@ -180,6 +181,7 @@
      &                          fac1*ad_svstr(i,j)
           ad_vstr(i,j,it2,Linp)=ad_vstr(i,j,it2,Linp)+                  &
      &                          fac2*ad_svstr(i,j)
+          ad_svstr(i,j)=0.0_r8
         END DO
       END DO
 # endif
@@ -187,7 +189,47 @@
 !
 !  Adjoint of surface tracer fluxes adjustmenst.
 !
-      DO itrc=1,NT(ng)
+#  ifdef QCORRECTION
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!>        tl_stflx(i,j,itemp)= tl_stflx(i,j,itemp)+                     &
+!>   &                         fac1*tl_tflux(i,j,it1,Linp,itemp)+       &
+!>   &                         fac2*tl_tflux(i,j,it2,Linp,itemp)
+!>
+          ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+    &
+     &                                 fac1*ad_stflx(i,j,itemp)
+          ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+    &
+     &                                 fac2*ad_stflx(i,j,itemp)
+        END DO
+      END DO
+#  else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!>        tl_stflx(i,j,itemp)=fac1*tl_tflux(i,j,it1,Linp,itemp)+        &
+!>   &                        fac2*tl_tflux(i,j,it2,Linp,itemp)
+!>
+          ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+    &
+     &                                 fac1*ad_stflx(i,j,itemp)
+          ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+    &
+     &                                 fac2*ad_stflx(i,j,itemp)
+          ad_stflx(i,j,itemp)=0.0_r8
+        END DO
+      END DO
+#  endif
+
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!>        tl_stflx(i,j,isalt)= tl_stflx(i,j,isalt)+                     &
+!>   &                         fac1*tl_tflux(i,j,it1,Linp,isalt)+       &
+!>   &                         fac2*tl_tflux(i,j,it2,Linp,isalt)
+!>
+          ad_tflux(i,j,it1,Linp,isalt)=ad_tflux(i,j,it1,Linp,isalt)+    &
+     &                                 fac1*ad_stflx(i,j,isalt)
+          ad_tflux(i,j,it2,Linp,isalt)=ad_tflux(i,j,it2,Linp,isalt)+    &
+     &                                 fac2*ad_stflx(i,j,isalt)
+        END DO
+      END DO
+      DO itrc=NAT+1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
 !>          tl_stflx(i,j,itrc)=fac1*tl_tflux(i,j,it1,Linp,itrc)+        &
@@ -197,6 +239,7 @@
      &                                  fac1*ad_stflx(i,j,itrc)
             ad_tflux(i,j,it2,Linp,itrc)=ad_tflux(i,j,it2,Linp,itrc)+    &
      &                                  fac2*ad_stflx(i,j,itrc)
+            ad_stflx(i,j,itrc)=0.0_r8
           END DO
         END DO
       END DO

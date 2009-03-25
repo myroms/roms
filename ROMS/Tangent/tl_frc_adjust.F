@@ -178,7 +178,30 @@
 !  Adjust surface tracer fluxes. Interpolate between surface forcing
 !  increments, if appropriate.
 !
-      DO itrc=1,NT(ng)
+#  ifdef QCORRECTION
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_stflx(i,j,itemp)=tl_stflx(i,j,itemp)+                      &
+     &                        fac1*tl_tflux(i,j,it1,Linp,itemp)+        &
+     &                        fac2*tl_tflux(i,j,it2,Linp,itemp)
+        END DO
+      END DO
+#  else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_stflx(i,j,itemp)=fac1*tl_tflux(i,j,it1,Linp,itemp)+        &
+     &                        fac2*tl_tflux(i,j,it2,Linp,itemp)
+        END DO
+      END DO
+#  endif
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_stflx(i,j,isalt)=tl_stflx(i,j,isalt)+                      &
+     &                        fac1*tl_tflux(i,j,it1,Linp,isalt)+        &
+     &                        fac2*tl_tflux(i,j,it2,Linp,isalt)
+        END DO
+      END DO
+      DO itrc=NAT+1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             tl_stflx(i,j,itrc)=fac1*tl_tflux(i,j,it1,Linp,itrc)+        &

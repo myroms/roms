@@ -82,12 +82,12 @@
 !
 !  Inquire about the dimensions and check for consistency.
 !
-      CALL netcdf_check_dim (ng, iNLM, ncname)
+      CALL netcdf_check_dim (ng, iRPM, ncname)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, iNLM, ncname)
+      CALL netcdf_inq_var (ng, iRPM, ncname)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if surface forcing variables have been already defined.
@@ -248,7 +248,7 @@
         DimIDs(12)=rec_id
 #  ifdef ADJUST_BOUNDARY
         IF (.not.got_boundary) THEN
-          status=def_dim(ng, iNLM, ncINIid(ng), ncname, 'boundary',     &
+          status=def_dim(ng, iRPM, ncIRPid(ng), ncname, 'boundary',     &
      &                   4, DimIDs(14))
           IF (exit_flag.ne.NoError) RETURN
         END IF

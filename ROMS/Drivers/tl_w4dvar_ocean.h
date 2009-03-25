@@ -695,6 +695,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO
@@ -773,6 +774,7 @@
                       CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                       CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                       CALL initialize_ocean (ng, TILE, iTLM)
+                      CALL initialize_forces (ng, TILE, iTLM)
                     END DO
                   END DO
 !$OMP END PARALLEL DO
@@ -1047,6 +1049,7 @@
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
               CALL initialize_ocean (ng, TILE, iTLM)
+              CALL initialize_forces (ng, TILE, iTLM)
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1125,6 +1128,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO
@@ -1512,6 +1516,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO
@@ -1590,6 +1595,7 @@
                       CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                       CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                       CALL initialize_ocean (ng, TILE, iTLM)
+                      CALL initialize_forces (ng, TILE, iTLM)
                     END DO
                   END DO
 !$OMP END PARALLEL DO
@@ -1854,6 +1860,7 @@
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
               CALL initialize_ocean (ng, TILE, iTLM)
+              CALL initialize_forces (ng, TILE, iTLM)
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1936,6 +1943,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO

@@ -1107,7 +1107,7 @@
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-     &                       tl_tflux, tl_tflux,                        &
+     &                       tl_tflux, ad_tflux,                        &
 #   endif
      &                       tl_t, ad_t,                                &
      &                       tl_u, ad_u,                                &

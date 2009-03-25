@@ -160,7 +160,7 @@
         STDrec=1
         Tindex=2
         DO ng=1,Ngrids
-          IF (NSA.eq.2) THEN         
+          IF (NSA.eq.2) THEN
             CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -488,7 +488,7 @@
               CALL initialize_forces (ng, TILE, iTLM)
             END DO
           END DO
-!$OMP END PARALLEL DO 
+!$OMP END PARALLEL DO
 !
           INNER_LOOP : DO my_inner=0,Ninner
             inner=my_inner
@@ -631,6 +631,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO
@@ -709,6 +710,7 @@
                       CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                       CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                       CALL initialize_ocean (ng, TILE, iTLM)
+                      CALL initialize_forces (ng, TILE, iTLM)
                     END DO
                   END DO
 !$OMP END PARALLEL DO
@@ -960,6 +962,7 @@
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
               CALL initialize_ocean (ng, TILE, iTLM)
+              CALL initialize_forces (ng, TILE, iTLM)
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1042,6 +1045,7 @@
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
+                  CALL initialize_forces (ng, TILE, iTLM)
                 END DO
               END DO
 !$OMP END PARALLEL DO
