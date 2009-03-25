@@ -236,22 +236,6 @@
      &                      update)
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-!
-!-----------------------------------------------------------------------
-!  Set surface air pressure (mb).
-!-----------------------------------------------------------------------
-!
-#   ifdef ANA_PAIR
-      CALL ana_pair (ng, tile, iADM)
-#   else
-      CALL set_2dfldr_tile (ng, tile, iADM, idPair,                     &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%PairG,                           &
-     &                      FORCES(ng)%Pair,                            &
-     &                      update)
-#   endif
-#  endif
 #  if defined BULK_FLUXES || defined ECOSIM
 !
 !-----------------------------------------------------------------------
@@ -515,6 +499,23 @@
       END IF
 #    endif
 #   endif
+#  endif
+# endif
+
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+!
+!-----------------------------------------------------------------------
+!  Set surface air pressure (mb).
+!-----------------------------------------------------------------------
+!
+#  ifdef ANA_PAIR
+      CALL ana_pair (ng, tile, iADM)
+#  else
+      CALL set_2dfldr_tile (ng, tile, iADM, idPair,                     &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%PairG,                           &
+     &                      FORCES(ng)%Pair,                            &
+     &                      update)
 #  endif
 # endif
 

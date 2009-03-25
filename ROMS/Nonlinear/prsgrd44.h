@@ -35,6 +35,9 @@
 # ifdef DIAGNOSTICS
       USE mod_diags
 # endif
+# ifdef ATM_PRESS
+      USE mod_forces
+# endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -59,6 +62,9 @@
      &                  GRID(ng) % on_u,                                &
      &                  GRID(ng) % z_w,                                 &
      &                  OCEAN(ng) % rho,                                &
+# ifdef ATM_PRESS
+     &                  FORCES(ng) % Pair,                              &
+# endif
 # ifdef DIAGNOSTICS_UV
      &                  DIAGS(ng) % DiaRU,                              &
      &                  DIAGS(ng) % DiaRV,                              &
@@ -78,6 +84,9 @@
      &                        nrhs,                                     &
      &                        Hz, om_v, on_u, z_w,                      &
      &                        rho,                                      &
+# ifdef ATM_PRESS
+     &                        Pair,                                     &
+# endif
 # ifdef DIAGNOSTICS_UV
      &                        DiaRU, DiaRV,                             &
 # endif
@@ -100,6 +109,9 @@
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
+#  ifdef ATM_PRESS
+      real(r8), intent(in) :: Pair(LBi:,LBj:)
+#  endif
 #  ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
@@ -112,6 +124,9 @@
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+#  ifdef ATM_PRESS
+      real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
+#  endif
 #  ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
       real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
@@ -128,7 +143,9 @@
 
       real(r8) :: Ampl, Hdd, cff, cff1, cff2, cff3, cffL, cffR
       real(r8) :: deltaL, deltaR, dh, dP, limtr, rr
-
+#ifdef ATM_PRESS
+      real(r8) :: OneAtm, fac
+#endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: P
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: r
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: d
@@ -149,6 +166,10 @@
 !  Finite-volume pressure gradient force algorithm.
 !---------------------------------------------------------------------
 !
+# ifdef ATM_PRESS
+      OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
+      fac=100.0_r8/g
+# endif
       DO j=JstrV-1,Jend
         DO k=N(ng)-1,1,-1
           DO i=IstrU-1,Iend
@@ -324,7 +345,11 @@
 !  pressure at the free-surface as zero
 !
         DO i=IstrU-1,Iend
+#ifdef ATM_PRESS
+          P(i,j,N(ng))=fac*(Pair(i,j)-OneAtm)
+#else
           P(i,j,N(ng))=0.0_r8
+#endif
         END DO
         cff3=1.0_r8/12.0_r8
         DO k=N(ng),1,-1

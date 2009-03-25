@@ -170,6 +170,13 @@
           real(r8), pointer :: bustr(:,:)
           real(r8), pointer :: bvstr(:,:)
 
+#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+          real(r8), pointer :: Pair(:,:)
+# ifndef ANA_PAIR
+          real(r8), pointer :: PairG(:,:,:)
+# endif
+#endif
+
 #ifdef WAVES_DIR
           real(r8), pointer :: Dwave(:,:)
 # ifndef ANA_WWAVE
@@ -262,12 +269,6 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-          real(r8), pointer :: Pair(:,:)
-#  ifndef ANA_PAIR
-          real(r8), pointer :: PairG(:,:,:)
-#  endif
-# endif
 # if defined BULK_FLUXES || defined ECOSIM
           real(r8), pointer :: Uwind(:,:)
           real(r8), pointer :: Vwind(:,:)
@@ -462,6 +463,13 @@
       allocate ( FORCES(ng) % bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % bvstr(LBi:UBi,LBj:UBj) )
 
+#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+      allocate ( FORCES(ng) % Pair(LBi:UBi,LBj:UBj) )
+# ifndef ANA_PAIR
+      allocate ( FORCES(ng) % PairG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
 #ifdef WAVES_DIR
       allocate ( FORCES(ng) % Dwave(LBi:UBi,LBj:UBj) )
 # ifndef ANA_WWAVE
@@ -559,14 +567,6 @@
 
 #  ifndef ANA_TAIR
       allocate ( FORCES(ng) % TairG(LBi:UBi,LBj:UBj,2) )
-#  endif
-# endif
-
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-      allocate ( FORCES(ng) % Pair(LBi:UBi,LBj:UBj) )
-
-#  ifndef ANA_PAIR
-      allocate ( FORCES(ng) % PairG(LBi:UBi,LBj:UBj,2) )
 #  endif
 # endif
 
@@ -822,6 +822,13 @@
 #endif
             FORCES(ng) % bustr(i,j) = IniVal
             FORCES(ng) % bvstr(i,j) = IniVal
+#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+            FORCES(ng) % Pair(i,j) = IniVal
+# ifndef ANA_PAIR
+            FORCES(ng) % PairG(i,j,1) = IniVal
+            FORCES(ng) % PairG(i,j,2) = IniVal
+# endif
+#endif
 #ifdef WAVES_DIR
             FORCES(ng) % Dwave(i,j) = IniVal
 # ifndef ANA_WWAVE
@@ -904,9 +911,6 @@
             FORCES(ng) % Hair(i,j) = IniVal
             FORCES(ng) % Tair(i,j) = IniVal
 # endif
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-            FORCES(ng) % Pair(i,j) = IniVal
-# endif
 # if defined BULK_FLUXES || defined ECOSIM
             FORCES(ng) % Uwind(i,j) = IniVal
             FORCES(ng) % Vwind(i,j) = IniVal
@@ -925,12 +929,6 @@
 #  ifndef ANA_HUMIDITY
             FORCES(ng) % HairG(i,j,1) = IniVal
             FORCES(ng) % HairG(i,j,2) = IniVal
-#  endif
-# endif
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-#  ifndef ANA_PAIR
-            FORCES(ng) % PairG(i,j,1) = IniVal
-            FORCES(ng) % PairG(i,j,2) = IniVal
 #  endif
 # endif
 # if defined BULK_FLUXES || defined ECOSIM

@@ -28,6 +28,9 @@
 #ifdef DIAGNOSTICS
       USE mod_diags
 #endif
+#ifdef ATM_PRESS
+      USE mod_forces
+#endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -53,6 +56,9 @@
      &                  GRID(ng) % z_r,                                 &
      &                  GRID(ng) % z_w,                                 &
      &                  OCEAN(ng) % rho,                                &
+#ifdef ATM_PRESS
+     &                  FORCES(ng) % Pair,                              &
+#endif
 #ifdef DIAGNOSTICS_UV
      &                  DIAGS(ng) % DiaRU,                              &
      &                  DIAGS(ng) % DiaRV,                              &
@@ -72,6 +78,9 @@
      &                        nrhs,                                     &
      &                        Hz, om_v, on_u, z_r, z_w,                 &
      &                        rho,                                      &
+#ifdef ATM_PRESS
+     &                        Pair,                                     &
+#endif
 #ifdef DIAGNOSTICS_UV
      &                        DiaRU, DiaRV,                             &
 #endif
@@ -95,7 +104,9 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
-
+# ifdef ATM_PRESS
+      real(r8), intent(in) :: Pair(LBi:,LBj:)
+# endif
 # ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
@@ -109,7 +120,9 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-
+# ifdef ATM_PRESS
+      real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
+# endif
 # ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
       real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
@@ -121,7 +134,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k
-      real(r8) :: fac1, fac2, fac3
+      real(r8) :: fac, fac1, fac2, fac3
       real(r8) :: cff1, cff2, cff3, cff4
 #ifdef WJ_GRADP
       real(r8) :: gamma
@@ -138,6 +151,9 @@
 !
 !  Compute surface baroclinic pressure gradient.
 !
+#ifdef ATM_PRESS
+      fac=100.0_r8/rho0
+#endif
       fac1=0.5_r8*g/rho0
       fac2=1000.0_r8*g/rho0
       fac3=0.25_r8*g/rho0
@@ -147,6 +163,9 @@
           cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                       &
      &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
           phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1
+#ifdef ATM_PRESS
+          phix(i)=phix(i)+fac*(Pair(i,j)-Pair(i-1,j))
+#endif
 #ifdef RHO_SURF
           phix(i)=phix(i)+                                              &
      &            (fac2+fac1*(rho(i,j,N(ng))+rho(i-1,j,N(ng))))*        &
@@ -214,6 +233,9 @@
             cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                     &
      &           z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
             phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1
+#ifdef ATM_PRESS
+            phie(i)=phix(i)+fac*(Pair(i,j)-Pair(i,j-1))
+#endif
 #ifdef RHO_SURF
             phie(i)=phie(i)+                                            &
      &              (fac2+fac1*(rho(i,j,N(ng))+rho(i,j-1,N(ng))))*      &

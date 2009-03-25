@@ -107,6 +107,13 @@
         IF (Master) WRITE(stdout,20) TRIM(string), 'conflict'
       END IF
 
+      string=uppercase('atm_press')
+      ifound=INDEX(TRIM(Coptions), TRIM(string))
+      IF (ifound.ne.0) THEN
+        ic=ic+1
+        IF (Master) WRITE(stdout,20) TRIM(string), 'not tested'
+      END IF
+
       string=uppercase('bedload_mpm')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
