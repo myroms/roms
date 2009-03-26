@@ -371,7 +371,7 @@
      &                 phie(i)
 #endif
 #ifdef ATM_PRESS
-            phie(i)=phix(i)+fac*(Pair(i,j)-Pair(i,j-1))
+            phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
 #endif
 #ifdef RHO_SURF
             phie(i)=phie(i)+                                            &

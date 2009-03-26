@@ -234,7 +234,7 @@
      &           z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
             phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1
 #ifdef ATM_PRESS
-            phie(i)=phix(i)+fac*(Pair(i,j)-Pair(i,j-1))
+            phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
 #endif
 #ifdef RHO_SURF
             phie(i)=phie(i)+                                            &
