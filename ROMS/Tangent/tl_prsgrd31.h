@@ -329,7 +329,7 @@
      &                 ((tl_rho(i,j,N(ng))-tl_rho(i,j-1,N(ng)))*cff1+   &
      &                  (rho(i,j,N(ng))-rho(i,j-1,N(ng)))*tl_cff1)
 #ifdef ATM_PRESS
-            phie(i)=phix(i)+fac*(Pair(i,j)-Pair(i,j-1))
+            phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
 #endif
 #ifdef RHO_SURF
             phie(i)=phie(i)+                                            &
