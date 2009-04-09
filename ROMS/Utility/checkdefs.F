@@ -289,7 +289,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ANA_RAIN,'
 #endif
-#if defined SEDIMENT && defined ANA_SEDIMENT
+#if defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
       IF (Master) WRITE (stdout,20) 'ANA_SEDIMENT',                     &
      &   'Analytical sediment initial conditions.'
       is=LEN_TRIM(Coptions)+1

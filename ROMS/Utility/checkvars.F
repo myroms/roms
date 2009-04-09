@@ -188,9 +188,11 @@
 #  endif
 # endif 
 # if defined SEDIMENT || defined BBL_MODEL
+#  ifndef ANA_SEDIMENT
         DO itrc=1,MBOTP
           get_var(idBott(itrc))=.TRUE.
         END DO
+#  endif
 # endif
 #endif
 #ifdef PERFECT_RESTART
