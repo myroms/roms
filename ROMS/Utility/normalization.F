@@ -2485,8 +2485,7 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
-# endif
-# if defined ADJUST_STFLUX && defined SOLVE3D
+#  if defined ADJUST_STFLUX && defined SOLVE3D
 !
 !  2D norm at surface tracer fluxes points.
 !
@@ -2537,18 +2536,18 @@
           IF (Cnorm(rec,is)) THEN
             DO jc=Jmin,Jmax
               DO ic=Imin,Imax
-#  ifdef MASKING
+#   ifdef MASKING
                 compute=0.0_r8
                 IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   IF (rmask(ic,jc).gt.0) compute=1.0_r8
                 END IF
-#   ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
                 CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
-#   endif
-#  else
+#    endif
+#   else
                 compute=1.0_r8
-#  endif
+#   endif
                 IF (compute.gt.0.0_r8) THEN
                   DO j=LBj,UBj
                     DO i=LBi,UBi
@@ -2567,9 +2566,9 @@
      &                                   DTsizeH(is),                   &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_u, pnom_v,        &
-#  ifdef MASKING
+#   ifdef MASKING
      &                                   rmask, umask, vmask,           &
-#  endif
+#   endif
      &                                   A2d)
                   DO j=JR_RANGE
                     DO i=IR_RANGE
@@ -2584,9 +2583,9 @@
      &                                   DTsizeH(is),                   &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_u, pnom_v,        &
-#  ifdef MASKING
+#   ifdef MASKING
      &                                   rmask, umask, vmask,           &
-#  endif
+#   endif
      &                                   A2d)
                   IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
@@ -2615,24 +2614,25 @@
             CALL bc_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSTF(:,:,itrc))
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints, EWperiodic, NSperiodic,   &
      &                          HnormSTF(:,:,itrc))
-#  endif
+#   endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
      &                       LBi, UBi, LBj, UBj, idTsur(itrc),          &
      &                       ncNRMid(ifile,ng),                         &
      &                       nrmVid(ifile,idTsur(itrc),ng),             &
      &                       tNRMindx(ifile,ng),                        &
-#  ifdef MASKING
+#   ifdef MASKING
      &                       rmask,                                     &
-#  endif
+#   endif
      &                       HnormSTF(:,:,itrc))
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
+#  endif
       END IF
 # endif
 !
@@ -4719,9 +4719,7 @@
      &                     HnormSVS)
         END IF
 #  endif
-# endif
-
-# if defined ADJUST_STFLUX && defined SOLVE3D
+#  if defined ADJUST_STFLUX && defined SOLVE3D
 !
 !  2D norm at surface treace flux points.
 !
@@ -4790,9 +4788,9 @@
      &                               DTsizeH(is),                       &
      &                               Kh,                                &
      &                               pm, pn, pmon_u, pnom_v,            &
-#  ifdef MASKING
+#   ifdef MASKING
      &                               rmask, umask, vmask,               &
-#  endif
+#   endif
      &                               A2d)
               DO j=Jstr,Jend
                 DO i=Istr,Iend
@@ -4804,7 +4802,7 @@
             DO j=Jstr,Jend
               DO i=Istr,Iend
                 Aavg=FacAvg*A2davg(i,j)
-#  ifdef MASKING
+#   ifdef MASKING
                 IF (rmask(i,j).gt.0.0_r8) THEN
 !!                HnormSTF(i,j,itrc)=FacSqr/                            &
 !!   &                               SQRT(A2dsqr(i,j)-Aavg*Aavg)
@@ -4812,10 +4810,10 @@
                 ELSE
                   HnormSTF(i,j,itrc)=0.0_r8
                 END IF
-#  else
+#   else
 !!              HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
                 HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
-#  endif
+#   endif
               END DO
             END DO
           END IF
@@ -4835,23 +4833,24 @@
             CALL bc_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSTF(:,:,itrc))
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints, EWperiodic, NSperiodic,   &
      &                          HnormSTF(:,:,itrc))
-#  endif
+#   endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
      &                       LBi, UBi, LBj, UBj, idTsur(itrc),          &
      &                       ncNRMid(ifile,ng),                         &
      &                       nrmVid(ifile,idTsur(itrc),ng),             &
      &                       tNRMindx(ifile,ng),                        &
-#  ifdef MASKING
+#   ifdef MASKING
      &                       rmask,                                     &
-#  endif
+#   endif
      &                       HnormSTF(:,:,itrc))
           END IF
         END DO
+#  endif
       END IF
 # endif
 !
