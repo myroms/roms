@@ -195,7 +195,7 @@
               cg_pxsave(iobs)=0.0_r8
             END DO
 
-# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+# if defined W4DPSAS             || defined TL_W4DPSAS || \
      defined W4DPSAS_SENSITIVITY
 !
 !  If this is the first outer-loop, save NLmodVal in BCKmodVal.
@@ -214,7 +214,7 @@
 !  observation error standard deviations (i.e. sqrt(ObsErr)).
 !
             DO iobs=1,Ndatum(ng)
-# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+# if defined W4DPSAS             || defined TL_W4DPSAS || \
      defined W4DPSAS_SENSITIVITY
               pgrad(iobs)=-ObsScale(iobs)*                              &
      &                    (ObsVal(iobs)-BCKmodVal(iobs))
@@ -293,7 +293,7 @@
 !
               DO iobs=1,Ndatum(ng)
                 ADmodVal(iobs)=cg_pxsave(iobs)
-# if defined TL_W4DPSAS          || defined TL_W4DPSAS || \
+# if defined W4DPSAS             || defined TL_W4DPSAS || \
      defined W4DPSAS_SENSITIVITY
                 cg_innov(iobs)=-ObsScale(iobs)*                         &
      &                         (ObsVal(iobs)-BCKmodVal(iobs))
