@@ -784,7 +784,6 @@
      &                                   vbar(Iend  ,Jend+1,kout))
       END IF
 #endif
-      RETURN
 
 #if defined WET_DRY
 !
@@ -871,6 +870,8 @@
       END IF
 # endif
 #endif
+
+      RETURN
 
       END SUBROUTINE v2dbc_tile
       END MODULE v2dbc_mod

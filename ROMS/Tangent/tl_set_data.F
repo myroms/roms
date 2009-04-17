@@ -721,6 +721,47 @@
 #   endif
       END IF
 #  endif
+
+#  if defined WET_DRY
+!
+! Ensure that water level on boundary cells is above bed elevation.
+!
+      IF (SOUTH_WEST_TEST) THEN
+#   ifdef WEST_FSOBC
+        DO j=JLB,JUB
+          cff=Dcrit(ng)-GRID(ng)%h(0,j))
+          IF (BOUNDARY(ng)%zeta_west(j).le.cff) THEN
+            BOUNDARY(ng)%zeta_west(j)=cff
+          END IF
+        END DO
+#   endif
+#   ifdef EAST_FSOBC
+        DO j=JLB,JUB
+          cff=Dcrit(ng)-GRID(ng)%h(Lm(ng)+1,j)
+          IF (BOUNDARY(ng)%zeta_east(j).le.cff) THEN
+            BOUNDARY(ng)%zeta_east(j)=cff
+          END IF
+        END DO
+#   endif
+#   ifdef SOUTH_FSOBC
+        DO i=ILB,IUB
+          cff=Dcrit(ng)-GRID(ng)%h(i,0)
+          IF (BOUNDARY(ng)%zeta_south(i).le.cff) THEN
+            BOUNDARY(ng)%zeta_south(i)=cff
+          END IF
+        END DO
+#   endif
+#   ifdef NORTH_FSOBC
+        DO i=ILB,IUB
+          cff=Dcrit(ng)-GRID(ng)%h(i,Mm(ng)+1)
+          IF (BOUNDARY(ng)%zeta_north(i).le.cff) THEN
+            BOUNDARY(ng)%zeta_north(i)=cff
+          END IF
+        END DO
+#   endif
+      END IF
+#  endif
+
 #  ifdef ANA_M2OBC
       CALL ana_m2obc (ng, tile, iTLM)
 #  else
@@ -866,48 +907,6 @@
         END DO
       END IF
 #   endif
-#  endif
-
-#  if defined WET_DRY
-!
-!-----------------------------------------------------------------------
-! Ensure that water level on boundary cells is above bed elevation.
-!-----------------------------------------------------------------------
-!
-      IF (SOUTH_WEST_TEST) THEN
-#   ifdef WEST_FSOBC
-        DO j=JLB,JUB
-          cff=Dcrit(ng)-GRID(ng)%h(0,j))
-          IF (BOUNDARY(ng)%zeta_west(j).le.cff) THEN
-            BOUNDARY(ng)%zeta_west(j)=cff
-          END IF
-        END DO
-#   endif
-#   ifdef EAST_FSOBC
-        DO j=JLB,JUB
-          cff=Dcrit(ng)-GRID(ng)%h(Lm(ng)+1,j)
-          IF (BOUNDARY(ng)%zeta_east(j).le.cff) THEN
-            BOUNDARY(ng)%zeta_east(j)=cff
-          END IF
-        END DO
-#   endif
-#   ifdef SOUTH_FSOBC
-        DO i=ILB,IUB
-          cff=Dcrit(ng)-GRID(ng)%h(i,0)
-          IF (BOUNDARY(ng)%zeta_south(i).le.cff) THEN
-            BOUNDARY(ng)%zeta_south(i)=cff
-          END IF
-        END DO
-#   endif
-#   ifdef NORTH_FSOBC
-        DO i=ILB,IUB
-          cff=Dcrit(ng)-GRID(ng)%h(i,Mm(ng)+1)
-          IF (BOUNDARY(ng)%zeta_north(i).le.cff) THEN
-            BOUNDARY(ng)%zeta_north(i)=cff
-          END IF
-        END DO
-#   endif
-      END IF
 #  endif
 # endif
 

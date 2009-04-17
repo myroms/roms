@@ -3699,7 +3699,7 @@
      &            'Zooplankton maximum growth rate (day-1).'
             WRITE (out,100) ZooMin(ng), 'ZooMin',                       &
      &            'Zooplankton minimum threshold (mmol_N/m3).'
-            WRITE (out,100) ZooER(ng), 'ZooMR',                         &
+            WRITE (out,100) ZooMR(ng), 'ZooMR',                         &
      &            'Zooplankton mortality rate (day-1).'
             WRITE (out,100) LDeRRN(ng), 'LDeRRN',                       &
      &            'Large detritus N re-mineralization rate (day-1).'
