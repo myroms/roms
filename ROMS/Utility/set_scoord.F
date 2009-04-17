@@ -157,6 +157,26 @@
       real(r8) :: cff, cff1, cff2, cff3
 !
 !-----------------------------------------------------------------------
+!  Set thickness controlling vertical coordinate stretching.
+!-----------------------------------------------------------------------
+!
+!  Set hc <= hmin, in the original formulation (Vtransform=1) to avoid
+!  [h(x,y)-hc] to be negative which results in dz/ds to be negative.
+!  Notice that this restriction is REMOVED in the new transformation
+!  (Vtransform=2): hc can be any value. It works for both hc < hmin
+!  and hc > hmin.
+!
+      IF (Vtransform(ng).eq.1) THEN
+# if defined WET_DRY
+        hc(ng)=MIN(MAX(hmin(ng),0.0_r8),Tcline(ng))
+# else
+        hc(ng)=MIN(hmin(ng),Tcline(ng))
+# endif
+      ELSE IF (Vtransform(ng).eq.2) THEN
+        hc(ng)=Tcline(ng)
+      END IF
+!
+!-----------------------------------------------------------------------
 !  Original vertical strectching function, Song and Haidvogel (1994).
 !-----------------------------------------------------------------------
 !
@@ -178,11 +198,6 @@
 !  If theta_b=1, the refinement is both bottom ans surface intensified
 !  as theta_s is increased.
 !
-# if defined WET_DRY
-        hc(ng)=MIN(MAX(hmin(ng),0.0_r8),Tcline(ng))
-# else
-        hc(ng)=MIN(hmin(ng),Tcline(ng))
-# endif
         IF (theta_s(ng).ne.0.0_r8) THEN
           cff1=1.0_r8/SINH(theta_s(ng))
           cff2=0.5_r8/TANH(0.5_r8*theta_s(ng))
@@ -247,61 +262,55 @@
 !  to allow near-bottom refinement.  This is done by blending it with
 !  another function.
 !
-        hc(ng)=Tcline(ng)
-        IF (hc(ng).le.hmin(ng)) THEN
-          Aweight=1.0_r8
-          Bweight=1.0_r8
-          ds=1.0_r8/REAL(N(ng),r8)
+        Aweight=1.0_r8
+        Bweight=1.0_r8
+        ds=1.0_r8/REAL(N(ng),r8)
 !
-          SCALARS(ng)%sc_w(N(ng))=0.0_r8
-          SCALARS(ng)%Cs_w(N(ng))=0.0_r8
-          DO k=N(ng)-1,1,-1
-            sc_w=ds*REAL(k-N(ng),r8)
-            SCALARS(ng)%sc_w(k)=sc_w
-            IF (theta_s(ng).gt.0.0_r8) THEN
-              Csur=(1.0_r8-COSH(theta_s(ng)*sc_w))/                     &
-     &             (COSH(theta_s(ng))-1.0_r8)
-              IF (theta_b(ng).gt.0.0_r8) THEN
-                Cbot=SINH(theta_b(ng)*(sc_w+1.0_r8))/                   &
-     &               SINH(theta_b(ng))-1.0_r8
-                Cweight=(sc_w+1.0_r8)**Aweight*                         &
-     &                  (1.0_r8+(Aweight/Bweight)*                      &
-     &                          (1.0_r8-(sc_w+1.0_r8)**Bweight))
-                SCALARS(ng)%Cs_w(k)=Cweight*Csur+(1.0_r8-Cweight)*Cbot
-              ELSE
-                SCALARS(ng)%Cs_w(k)=Csur
-              END IF
+        SCALARS(ng)%sc_w(N(ng))=0.0_r8
+        SCALARS(ng)%Cs_w(N(ng))=0.0_r8
+        DO k=N(ng)-1,1,-1
+          sc_w=ds*REAL(k-N(ng),r8)
+          SCALARS(ng)%sc_w(k)=sc_w
+          IF (theta_s(ng).gt.0.0_r8) THEN
+            Csur=(1.0_r8-COSH(theta_s(ng)*sc_w))/                       &
+     &           (COSH(theta_s(ng))-1.0_r8)
+            IF (theta_b(ng).gt.0.0_r8) THEN
+              Cbot=SINH(theta_b(ng)*(sc_w+1.0_r8))/                     &
+     &             SINH(theta_b(ng))-1.0_r8
+              Cweight=(sc_w+1.0_r8)**Aweight*                           &
+     &                (1.0_r8+(Aweight/Bweight)*                        &
+     &                        (1.0_r8-(sc_w+1.0_r8)**Bweight))
+              SCALARS(ng)%Cs_w(k)=Cweight*Csur+(1.0_r8-Cweight)*Cbot
             ELSE
-              SCALARS(ng)%Cs_w(k)=sc_w
+              SCALARS(ng)%Cs_w(k)=Csur
             END IF
-          END DO
-          SCALARS(ng)%sc_w(0)=-1.0_r8
-          SCALARS(ng)%Cs_w(0)=-1.0_r8
+          ELSE
+            SCALARS(ng)%Cs_w(k)=sc_w
+          END IF
+        END DO
+        SCALARS(ng)%sc_w(0)=-1.0_r8
+        SCALARS(ng)%Cs_w(0)=-1.0_r8
 !
-          DO k=1,N(ng)
-            sc_r=ds*(REAL(k-N(ng),r8)-0.5_r8)
-            SCALARS(ng)%sc_r(k)=sc_r
-            IF (theta_s(ng).gt.0.0_r8) THEN
-              Csur=(1.0_r8-COSH(theta_s(ng)*sc_r))/                     &
-     &             (COSH(theta_s(ng))-1.0_r8)
-              IF (theta_b(ng).gt.0.0_r8) THEN
-                Cbot=SINH(theta_b(ng)*(sc_r+1.0_r8))/                   &
-     &               SINH(theta_b(ng))-1.0_r8
-                Cweight=(sc_r+1.0_r8)**Aweight*                         &
-     &                  (1.0_r8+(Aweight/Bweight)*                      &
-     &                          (1.0_r8-(sc_r+1.0_r8)**Bweight))
-                SCALARS(ng)%Cs_r(k)=Cweight*Csur+(1.0_r8-Cweight)*Cbot
-              ELSE
-                SCALARS(ng)%Cs_r(k)=Csur
-              END IF
+        DO k=1,N(ng)
+          sc_r=ds*(REAL(k-N(ng),r8)-0.5_r8)
+          SCALARS(ng)%sc_r(k)=sc_r
+          IF (theta_s(ng).gt.0.0_r8) THEN
+            Csur=(1.0_r8-COSH(theta_s(ng)*sc_r))/                       &
+     &           (COSH(theta_s(ng))-1.0_r8)
+            IF (theta_b(ng).gt.0.0_r8) THEN
+              Cbot=SINH(theta_b(ng)*(sc_r+1.0_r8))/                     &
+     &             SINH(theta_b(ng))-1.0_r8
+              Cweight=(sc_r+1.0_r8)**Aweight*                           &
+     &                (1.0_r8+(Aweight/Bweight)*                        &
+     &                        (1.0_r8-(sc_r+1.0_r8)**Bweight))
+              SCALARS(ng)%Cs_r(k)=Cweight*Csur+(1.0_r8-Cweight)*Cbot
             ELSE
-              SCALARS(ng)%Cs_r(k)=sc_r
+              SCALARS(ng)%Cs_r(k)=Csur
             END IF
-          END DO
-        ELSE
-          WRITE (stdout,10) hc(ng), hmin(ng)
-          exit_flag=5
-        END IF
+          ELSE
+            SCALARS(ng)%Cs_r(k)=sc_r
+          END IF
+        END DO
 !
 !-----------------------------------------------------------------------
 !  R. Geyer stretching function for high bottom boundary layer
@@ -343,42 +352,36 @@
 !         alpha = theta_s
 !         beta  = theta_b
 !
-        hc(ng)=Tcline(ng)
-        IF (hc(ng).le.hmin(ng)) THEN
-          exp_sur=theta_s(ng)
-          exp_bot=theta_b(ng)
-          Hscale=3.0_r8
-          ds=1.0_r8/REAL(N(ng),r8)
+        exp_sur=theta_s(ng)
+        exp_bot=theta_b(ng)
+        Hscale=3.0_r8
+        ds=1.0_r8/REAL(N(ng),r8)
 !
-          SCALARS(ng)%sc_w(N(ng))=0.0_r8
-          SCALARS(ng)%Cs_w(N(ng))=0.0_r8
-          DO k=N(ng)-1,1,-1
-            sc_w=ds*REAL(k-N(ng),r8)
-            SCALARS(ng)%sc_w(k)=sc_w
-            Cbot= LOG(COSH(Hscale*(sc_w+1.0_r8)**exp_bot))/             &
-     &            LOG(COSH(Hscale))-1.0_r8
-            Csur=-LOG(COSH(Hscale*ABS(sc_w)**exp_sur))/                 &
-     &            LOG(COSH(Hscale))
-            Cweight=0.5_r8*(1.0_r8-TANH(Hscale*(sc_w+0.5_r8)))
-            SCALARS(ng)%Cs_w(k)=Cweight*Cbot+(1.0_r8-Cweight)*Csur
-          END DO
-          SCALARS(ng)%sc_w(0)=-1.0_r8
-          SCALARS(ng)%Cs_w(0)=-1.0_r8
+        SCALARS(ng)%sc_w(N(ng))=0.0_r8
+        SCALARS(ng)%Cs_w(N(ng))=0.0_r8
+        DO k=N(ng)-1,1,-1
+          sc_w=ds*REAL(k-N(ng),r8)
+          SCALARS(ng)%sc_w(k)=sc_w
+          Cbot= LOG(COSH(Hscale*(sc_w+1.0_r8)**exp_bot))/               &
+     &          LOG(COSH(Hscale))-1.0_r8
+          Csur=-LOG(COSH(Hscale*ABS(sc_w)**exp_sur))/                   &
+     &          LOG(COSH(Hscale))
+          Cweight=0.5_r8*(1.0_r8-TANH(Hscale*(sc_w+0.5_r8)))
+          SCALARS(ng)%Cs_w(k)=Cweight*Cbot+(1.0_r8-Cweight)*Csur
+        END DO
+        SCALARS(ng)%sc_w(0)=-1.0_r8
+        SCALARS(ng)%Cs_w(0)=-1.0_r8
 !
-          DO k=1,N(ng)
-            sc_r=ds*(REAL(k-N(ng),r8)-0.5_r8)
-            SCALARS(ng)%sc_r(k)=sc_r
-            Cbot= LOG(COSH(Hscale*(sc_r+1.0_r8)**exp_bot))/             &
-     &            LOG(COSH(Hscale))-1.0_r8
-            Csur=-LOG(COSH(Hscale*ABS(sc_r)**exp_sur))/                 &
-     &            LOG(COSH(Hscale))
-            Cweight=0.5_r8*(1.0_r8-TANH(Hscale*(sc_r+0.5_r8)))
-            SCALARS(ng)%Cs_r(k)=Cweight*Cbot+(1.0_r8-Cweight)*Csur
-          END DO
-        ELSE
-          WRITE (stdout,10) hc(ng), hmin(ng)
-          exit_flag=5
-        END IF
+        DO k=1,N(ng)
+          sc_r=ds*(REAL(k-N(ng),r8)-0.5_r8)
+          SCALARS(ng)%sc_r(k)=sc_r
+          Cbot= LOG(COSH(Hscale*(sc_r+1.0_r8)**exp_bot))/               &
+     &          LOG(COSH(Hscale))-1.0_r8
+          Csur=-LOG(COSH(Hscale*ABS(sc_r)**exp_sur))/                   &
+     &          LOG(COSH(Hscale))
+          Cweight=0.5_r8*(1.0_r8-TANH(Hscale*(sc_r+0.5_r8)))
+          SCALARS(ng)%Cs_r(k)=Cweight*Cbot+(1.0_r8-Cweight)*Csur
+        END DO
       END IF
 !
 !-----------------------------------------------------------------------
@@ -386,7 +389,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Master.and.LwrtInfo(ng)) THEN
-        WRITE (stdout,20)
+        WRITE (stdout,10)
         DO k=N(ng),0,-1
           IF (Vstretching(ng).eq.2) THEN
             cff=0.5_r8*(hmax(ng)+hmin(ng))
@@ -404,18 +407,15 @@
             cff3=SCALARS(ng)%sc_w(k)*hc(ng)+                            &
      &           (hmax(ng)-hc(ng))*SCALARS(ng)%Cs_w(k)
           END IF
-          WRITE (stdout,30) k, SCALARS(ng)%sc_w(k),                     &
+          WRITE (stdout,20) k, SCALARS(ng)%sc_w(k),                     &
      &                         SCALARS(ng)%Cs_w(k), cff1, cff2, cff3
         END DO
       END IF
 
-  10  FORMAT (/,' SET_SCOORD - Specified critical depth parameter,  ',  &
-     &        '  hc =',f7.3,/,14x,                                      &
-     &        'exceeds minimum unmasked bathymetry, hmin = ',f7.3)
-  20  FORMAT (/,' Vertical S-coordinate System: ',/,/,                  &
+  10  FORMAT (/,' Vertical S-coordinate System: ',/,/,                  &
      &          ' level   S-coord     Cs-curve',10x,                    &
      &          'at_hmin  over_slope     at_hmax',/)
-  30  FORMAT (i6,2f12.7,4x,3f12.3)
+  20  FORMAT (i6,2f12.7,4x,3f12.3)
 
       RETURN
       END SUBROUTINE set_scoord

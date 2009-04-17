@@ -207,7 +207,7 @@
               hwater=hwater-ABS(zice(i,j))
 #  endif
               tl_hwater=tl_h(i,j)
-              hinv=1.0_r8/(hc(ng)+hwater)
+              hinv=1.0_r8/hwater
               tl_hinv=-hinv*hinv*tl_hwater
 
               z_w0=cff_w+cff1_w*hwater
@@ -280,7 +280,7 @@
               hwater=hwater-ABS(zice(i,j))
 #  endif
               tl_hwater=tl_h(i,j)
-              hinv=1.0_r8/hwater
+              hinv=1.0_r8/(hc(ng)+hwater)
               tl_hinv=-hinv*hinv*tl_hwater
 
               cff2_w=(cff_w+cff1_w*hwater)*hinv

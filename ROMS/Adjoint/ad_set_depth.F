@@ -359,7 +359,7 @@
 # ifdef ICESHELF
               hwater=hwater-ABS(zice(i,j))
 # endif
-              hinv=1.0_r8/hwater
+              hinv=1.0_r8/(hc(ng)+hwater)
               cff2_r=(cff_r+cff1_r*hwater)*hinv
               cff2_w=(cff_w+cff1_w*hwater)*hinv
 !>            tl_Hz(i,j,k)=tl_z_w(i,j,k)-tl_z_w(i,j,k-1)

@@ -296,7 +296,7 @@
               hwater=hwater-ABS(zice(i,j))
 #  endif
               tl_hwater=tl_h(i,j)
-              hinv=1.0_r8/hwater
+              hinv=1.0_r8/(hc(ng)+hwater)
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_hinv=-hinv*hinv*tl_hwater+                             &
 #   ifdef TL_IOMS
