@@ -798,20 +798,22 @@
 !  Surface tracers flux contribution.
 !
       DO itrc=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              cff1=tl_tflux(i,j,ir,Lbck,itrc)+                            &
-     &             tl_tflux(i,j,ir,Lsum,itrc)
+        IF (Lstflux(itrc,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                cff1=tl_tflux(i,j,ir,Lbck,itrc)+                        &
+     &               tl_tflux(i,j,ir,Lsum,itrc)
 #   ifdef MASKING
-              cff1=cff1*rmask(i,j)
+                cff1=cff1*rmask(i,j)
 #   endif
-              cff2=0.5_r8*cff1*cff1
-              my_BackCost(0)=my_BackCost(0)+cff2
-              my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff2
+                cff2=0.5_r8*cff1*cff1
+                my_BackCost(0)=my_BackCost(0)+cff2
+                my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff2
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 #  endif
 # endif

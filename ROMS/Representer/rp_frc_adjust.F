@@ -182,13 +182,15 @@
 !  increments, if appropriate.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-             tl_stflx(i,j,itrc)=tl_stflx(i,j,itrc)+                     &
-     &                          fac1*tl_tflux(i,j,it1,Linp,itrc)+       &
-     &                          fac2*tl_tflux(i,j,it2,Linp,itrc)
+        IF (Lstflux(itrc,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+               tl_stflx(i,j,itrc)=tl_stflx(i,j,itrc)+                   &
+     &                            fac1*tl_tflux(i,j,it1,Linp,itrc)+     &
+     &                            fac2*tl_tflux(i,j,it2,Linp,itrc)
+            END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 

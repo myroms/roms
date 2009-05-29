@@ -103,7 +103,7 @@
       character (len=11) :: frcatt
       character (len=50) :: tiling
       character (len=80) :: type
-      character (len=80) :: Vinfo(Natt)
+      character (len=100) :: Vinfo(Natt)
 #ifdef BIOLOGY
       character (len=512) :: bio_file
 #endif
@@ -1579,8 +1579,30 @@
 
 #ifdef FOUR_DVAR
 !
-!  Incremental 4DVAR parameters.
+!  4DVAR assimilation parameters.
 !
+# ifdef ADJUST_STFLUX
+      Vinfo( 1)='Lstflux'
+      Vinfo( 2)='surface tracer fluxes adjustment switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      Vinfo( 1)='Lobc'
+      Vinfo( 2)='open boundary conditions adjustment switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               2, (/brydim, statedim/), Aval, Vinfo, ncname,      &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
       Vinfo( 1)='GradErr'
       Vinfo( 2)='Upper bound on relative error of the gradient'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -1621,19 +1643,71 @@
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Hgamma'
-      Vinfo( 2)='horizontal convolution time-step stability factor'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal convolution time-step stability factor '
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-# ifdef SOLVE3D
-      Vinfo( 1)='Vgamma'
-      Vinfo( 2)='vertical convolution time-step stability factor'
+# ifdef WEAK_CONSTRAINT
+      Vinfo( 1)='HgammaM'
+      Vinfo( 2)='model error covariance '//                             &
+     &          'horizontal convolution time-step stability factor '
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      Vinfo( 1)='HgammaB'
+      Vinfo( 2)='open boundary conditions error covariance '//          &
+     &          'horizontal convolution time-step stability factor '
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_STFLUX
+      Vinfo( 1)='HgammaF'
+      Vinfo( 2)='surface forcing error covariance '//                   &
+     &          'horizontal convolution time-step stability factor '
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef SOLVE3D
+      Vinfo( 1)='Vgamma'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'vertical convolution time-step stability factor'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef WEAK_CONSTRAINT
+      Vinfo( 1)='VgammaM'
+      Vinfo( 2)='model error covariance '//                             &
+     &          'vertical convolution time-step stability factor'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  ifdef ADJUST_BOUNDARY
+      Vinfo( 1)='VgammaB'
+      Vinfo( 2)='open boundary conditions error covariance '//          &
+     &          'vertical convolution time-step stability factor'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 
       Vinfo( 1)='Hdecay'

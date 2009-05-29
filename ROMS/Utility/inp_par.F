@@ -6715,9 +6715,16 @@
 # endif
 # if defined FOUR_DVAR || defined VERIFICATION
       logical, dimension(MT) :: Ltracer
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      logical, dimension(MT,Ngrids) :: Ltsur
+#  endif
 #  ifdef ADJUST_BOUNDARY
+      logical, dimension(4,Ngrids) :: Lbry
+#   ifdef SOLVE3D
+      logical, dimension(4,MT,Ngrids) :: Lbry_trc
       logical, dimension(MT,4) :: Lboundary
       real(r8), dimension(MT,4,Ngrids) :: Rboundary
+#   endif
 #  endif
       real(r8), dimension(MT,Ngrids) :: Rtracer
 # endif
@@ -7234,10 +7241,10 @@
           ELSE IF (TRIM(KeyWord).eq.'Nrandom') THEN
             Npts=load_i(Nval, Rval, 1, Nrandom)
           ELSE IF (TRIM(KeyWord).eq.'Hgamma') THEN
-            Npts=load_r(Nval, Rval, 1, Hgamma)
+            Npts=load_r(Nval, Rval, 4, Hgamma)
 #  ifdef SOLVE3D
           ELSE IF (TRIM(KeyWord).eq.'Vgamma') THEN
-            Npts=load_r(Nval, Rval, 1, Vgamma)
+            Npts=load_r(Nval, Rval, 4, Vgamma)
 #  endif
           ELSE IF (TRIM(KeyWord).eq.'HdecayM(isFsur)') THEN
             Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isFsur,:))
@@ -7350,6 +7357,64 @@
               END DO
             END DO
 #  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'Lstflux') THEN
+            Npts=load_l(Nval, Cval, MT*Ngrids, Ltsur)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Lstflux(itrc,ng)=Ltsur(itrc,ng)
+              END DO
+            END DO
+#  endif
+#  ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isFsur)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, Lbry)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                Lobc(ib,isFsur,ng)=Lbry(ib,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isUbar)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, Lbry)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                Lobc(ib,isUbar,ng)=Lbry(ib,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isVbar)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, Lbry)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                Lobc(ib,isVbar,ng)=Lbry(ib,ng)
+              END DO
+            END DO
+#   ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isUvel)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, Lbry)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                Lobc(ib,isUvel,ng)=Lbry(ib,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isVvel)') THEN
+            Npts=load_l(Nval, Cval, 4*Ngrids, Lbry)
+            DO ng=1,Ngrids
+              DO ib=1,4
+                Lobc(ib,isVvel,ng)=Lbry(ib,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Lobc(isTvar)') THEN
+            Npts=load_l(Nval, Cval, 4*MT*Ngrids, Lbry_trc)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                i=isTvar(itrc)
+                DO ib=1,4
+                  Lobc(ib,i,ng)=Lbry_trc(ib,itrc,ng)
+                END DO
+              END DO
+            END DO
+#   endif
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'STDnameI') THEN
             DO i=1,LEN(STDname(1,Nval))
               STDname(1,Nval)(i:i)=blank
@@ -7419,6 +7484,45 @@
       exit_flag=4
       RETURN
  20   CONTINUE
+
+#  ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  Check switches to adjust boundaries for consistency.
+!-----------------------------------------------------------------------
+!
+!  Make sure that both momentum components are activated for processing.
+!  If adjusting 2D momentum in 3D applications, make sure that the
+!  free-surface and 3D momentum switches are activated. This is because
+!  the 2D momentum adjustments are computed from the vertical integral
+!  of the 3D momentum increments.
+!
+      DO ng=1,Ngrids
+        DO ib=1,4
+          IF (.not.Lobc(ib,isUbar,ng).and.Lobc(ib,isVbar,ng)) THEN
+            Lobc(ib,isUbar,ng)=.TRUE.
+          END IF
+          IF (.not.Lobc(ib,isVbar,ng).and.Lobc(ib,isUbar,ng)) THEN
+            Lobc(ib,isVbar,ng)=.TRUE.
+          END IF
+#   ifdef SOLVE3D
+          IF (.not.Lobc(ib,isUvel,ng).and.Lobc(ib,isVvel,ng)) THEN
+            Lobc(ib,isUvel,ng)=.TRUE.
+          END IF
+          IF (.not.Lobc(ib,isVbar,ng).and.Lobc(ib,isUbar,ng)) THEN
+            Lobc(ib,isVvel,ng)=.TRUE.
+          END IF
+          IF (.not.Lobc(ib,isFsur,ng).and.Lobc(ib,isUbar,ng)) THEN
+            Lobc(ib,isFsur,ng)=.TRUE.
+          END IF
+          IF (.not.Lobc(ib,isUvel,ng).and.Lobc(ib,isUbar,ng)) THEN
+            Lobc(ib,isUvel,ng)=.TRUE.
+            Lobc(ib,isVvel,ng)=.TRUE.
+          END IF
+#   endif
+        END DO
+      END DO
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Report input parameters.
@@ -7485,12 +7589,6 @@
               WRITE (out,80) Nrandom, 'Nrandom',                        &
      &            'Number of iterations for randomization.'
             END IF
-          END IF
-          IF (ANY(LwrtNRM(:,ng))) THEN
-            DO i=1,NstateVar(ng)
-!!            Cnorm(1,i)=.TRUE.       ! force computation of all factors
-!!            Cnorm(2,i)=.TRUE.       ! force computation of all factors
-            END DO
           END IF
 #     if defined SENSITIVITY_4DVAR || \
          defined TL_W4DPSAS        || defined TL_W4DVAR || \
@@ -7573,11 +7671,31 @@
           END IF
 #     endif
 #    endif
-          WRITE (out,100) Hgamma, 'Hgamma',                             &
-     &            'Horizontal diffusion stability/accuracy factor.'
+          WRITE (out,100) Hgamma(1), 'Hgamma',                          &
+     &            'Horizontal diffusion factor, initial conditions.'
+#    ifdef WEAK_CONSTRAINT
+          WRITE (out,100) Hgamma(2), 'HgammaM',                         &
+     &            'Horizontal diffusion factor, model error.'
+#    endif
+#    ifdef ADJUST_BOUNDARY
+          WRITE (out,100) Hgamma(3), 'HgammaB',                         &
+     &            'Horizontal diffusion factor, boundary conditions.'
+#    endif
+#    ifdef ADJUST_STFLUX
+          WRITE (out,100) Hgamma(4), 'HgammaF',                         &
+     &            'Horizontal diffusion factor, surface forcing.'
+#    endif
 #    ifdef SOLVE3D
-          WRITE (out,100) Vgamma, 'Vgamma',                             &
-     &            'Vertical diffusion stability/accuracy factor.'
+          WRITE (out,100) Vgamma(1), 'Vgamma',                          &
+     &            'Vertical diffusion factor, initial conditions.'
+#     ifdef WEAK_CONSTRAINT
+          WRITE (out,100) Vgamma(2), 'VgammaM',                         &
+     &            'Vertical diffusion factor, model error.'
+#     endif
+#     ifdef ADJUST_BOUNDARY
+          WRITE (out,100) Vgamma(3), 'VgammaB',                         &
+     &            'Vertical diffusion factor, boundary conditions.'
+#     endif
 #    endif
 #    if defined SENSITIVITY_4DVAR || \
         defined TL_W4DPSAS        || defined TL_W4DVAR || \
@@ -7706,13 +7824,39 @@
           WRITE (out,120) Hdecay(1,isVstr,ng), 'HdecayF(isVstr)',       &
      &            'Forcing decorrelation H-scale (m), V-stress.'
 #    endif
-#    ifdef ADJUST_STFLUX
+#    if defined ADJUST_STFLUX && defined SOLVE3D
           DO itrc=1,NT(ng)
             WRITE (out,130) Hdecay(1,isTsur(itrc),ng),                  &
      &            'HdecayF(idTsur)',                                    &
      &            'Forcing decorrelation H-scale (m), ',                &
-     &            TRIM(Vname(1,idTsur(itrc)))
+     &            TRIM(Vname(1,idTvar(itrc)))
           END DO
+#    endif
+#    if defined ADJUST_STFLUX && defined SOLVE3D
+          DO itrc=1,NT(ng)
+            WRITE (out,110) Lstflux(itrc,ng), 'Lstflux(itrc)',          &
+     &            'Adjusting surface flux of tracer ', itrc,            &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+#    endif
+#    ifdef ADJUST_BOUNDARY
+          WRITE (out,170) Lobc(1:4,isFsur,ng), 'Lobc(isFsur)',          &
+     &            'Adjusting free-surface boundaries.'
+          WRITE (out,170) Lobc(1:4,isUbar,ng), 'Lobc(isUbar)',          &
+     &            'Adjusting 2D U-momentum boundaries.'
+          WRITE (out,170) Lobc(1:4,isVbar,ng), 'Lobc(isVbar)',          &
+     &            'Adjusting 2D V-momentum boundaries.'
+#     ifdef SOLVE3D
+          WRITE (out,170) Lobc(1:4,isUvel,ng), 'Lobc(isUvel)',          &
+     &            'Adjusting 3D U-momentum boundaries.'
+          WRITE (out,170) Lobc(1:4,isVvel,ng), 'Lobc(isVvel)',          &
+     &            'Adjusting 3D V-momentum boundaries.'
+          DO itrc=1,NT(ng)
+            WRITE (out,180) Lobc(1:4,isTvar(itrc),ng),'Lobc(isTvar)',   &
+     &            'Adjusting boundaries for tracer ', itrc,             &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+#     endif
 #    endif
 #   endif
 #  endif

@@ -572,8 +572,8 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               v_south(i,k)=v_south(i,k)+                                &
-     &                     fac1*tl_v_obc(j,k,isouth,it1,Linp)+          &
-     &                     fac2*tl_v_obc(j,k,isouth,it2,Linp)
+     &                     fac1*tl_v_obc(i,k,isouth,it1,Linp)+          &
+     &                     fac2*tl_v_obc(i,k,isouth,it2,Linp)
             END DO
           END DO
         END IF
@@ -583,8 +583,8 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               v_north(i,k)=v_north(i,k)+                                &
-     &                     fac1*tl_v_obc(j,k,inorth,it1,Linp)+          &
-     &                     fac2*tl_v_obc(j,k,inorth,it2,Linp)
+     &                     fac1*tl_v_obc(i,k,inorth,it1,Linp)+          &
+     &                     fac2*tl_v_obc(i,k,inorth,it2,Linp)
             END DO
           END DO
         END IF

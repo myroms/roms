@@ -59,6 +59,7 @@
       USE mod_param
       USE mod_boundary
       USE mod_grid
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -391,11 +392,17 @@
      &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
+          IF (Lobc(inorth,isFsur,ng)) THEN
+!>          tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
 !>
-          BOUNDARY(ng)%ad_zeta_north(i)=BOUNDARY(ng)%ad_zeta_north(i)+  &
-     &                                  ad_zeta(i,Jend+1,kout)
-          ad_zeta(i,Jend+1,kout)=0.0_r8
+            BOUNDARY(ng)%ad_zeta_north(i)=BOUNDARY(ng)%ad_zeta_north(i)+&
+     &                                    ad_zeta(i,Jend+1,kout)
+            ad_zeta(i,Jend+1,kout)=0.0_r8
+          ELSE
+!>          tl_zeta(i,Jend+1,kout)=0.0_r8
+!>
+            ad_zeta(i,Jend+1,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_zeta(i,Jend+1,kout)=0.0_r8
 !>
@@ -561,11 +568,17 @@
      &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
+          IF (Lobc(isouth,isFsur,ng)) THEN
+!>          tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
 !>
-          BOUNDARY(ng)%ad_zeta_south(i)=BOUNDARY(ng)%ad_zeta_south(i)+  &
-     &                                  ad_zeta(i,Jstr-1,kout)
-          ad_zeta(i,Jstr-1,kout)=0.0_r8
+            BOUNDARY(ng)%ad_zeta_south(i)=BOUNDARY(ng)%ad_zeta_south(i)+&
+     &                                    ad_zeta(i,Jstr-1,kout)
+            ad_zeta(i,Jstr-1,kout)=0.0_r8
+          ELSE
+!>          tl_zeta(i,Jstr-1,kout)=0.0_r8
+!>
+            ad_zeta(i,Jstr-1,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_zeta(i,Jstr-1,kout)=0.0_r8
 !>
@@ -734,11 +747,17 @@
      &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
+          IF (Lobc(ieast,isFsur,ng)) THEN
+!>          tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
 !>
-          BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)+    &
-     &                                 ad_zeta(Iend+1,j,kout)
-          ad_zeta(Iend+1,j,kout)=0.0_r8
+            BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)+  &
+     &                                   ad_zeta(Iend+1,j,kout)
+            ad_zeta(Iend+1,j,kout)=0.0_r8
+          ELSE
+!>          tl_zeta(Iend+1,j,kout)=0.0_r8
+!>
+            ad_zeta(Iend+1,j,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_zeta(Iend+1,j,kout)=0.0_r8
 !>
@@ -905,11 +924,17 @@
      &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
+          IF (Lobc(iwest,isFsur,ng)) THEN
+!>          tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
 !>
-          BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+    &
-                                       ad_zeta(Istr-1,j,kout)
-          ad_zeta(Istr-1,j,kout)=0.0_r8
+            BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+  &
+     &                                   ad_zeta(Istr-1,j,kout)
+            ad_zeta(Istr-1,j,kout)=0.0_r8
+          ELSE
+!>          tl_zeta(Istr-1,j,kout)=0.0_r8
+!>
+            ad_zeta(Istr-1,j,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_zeta(Istr-1,j,kout)=0.0_r8
 !>

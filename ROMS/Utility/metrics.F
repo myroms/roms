@@ -998,15 +998,27 @@
 !  its theoretical limit for stability and accurary.
 !
       cff=MIN(DXmin(ng),DYmin(ng))
-      DO is=1,NstateVar(ng)
-        DTsizeH(is)=Hgamma*cff*cff/(4.0_r8*KhMax(ng))
+      DO rec=1,2
+        DO is=1,NstateVar(ng)
+#  ifdef SOLVE3D
+          IF (is.le.(5+NT(ng))) THEN
+#  else
+          IF (is.le.3) THEN
+#  endif
+            DTsizeH(rec,is)=Hgamma(rec)*cff*cff/(4.0_r8*KhMax(ng))
+          ELSE              ! use stability factor for surface forcing
+            DTsizeH(rec,is)=Hgamma(4)*cff*cff/(4.0_r8*KhMax(ng))
+          END IF
 # ifdef SOLVE3D
 #  ifdef IMPLICIT_VCONV
-        DTsizeV(is)=Vgamma*DZmax(ng)*DZmax(ng)/(2.0_r8*KvMax(ng))
+          DTsizeV(rec,is)=Vgamma(rec)*DZmax(ng)*DZmax(ng)/              &
+     &                    (2.0_r8*KvMax(ng))
 #  else
-        DTsizeV(is)=Vgamma*DZmin(ng)*DZmin(ng)/(2.0_r8*KvMax(ng))
+          DTsizeV(rec,is)=Vgamma(rec)*DZmin(ng)*DZmin(ng)/              &
+     &                    (2.0_r8*KvMax(ng))
 #  endif
 # endif
+        END DO
       END DO
 
 # ifdef ADJUST_BOUNDARY
@@ -1017,17 +1029,19 @@
       DO bry=1,4
         DO is=1,NstateVar(ng)
           IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            DTsizeHB(bry,is)=Hgamma*DYmin(ng)*DYmin(ng)/                &
+            DTsizeHB(bry,is)=Hgamma(3)*DYmin(ng)*DYmin(ng)/             &
      &                       (2.0_r8*KhMax(ng))
           ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            DTsizeHB(bry,is)=Hgamma*DXmin(ng)*DXmin(ng)/                &
+            DTsizeHB(bry,is)=Hgamma(3)*DXmin(ng)*DXmin(ng)/             &
      &                       (2.0_r8*KhMax(ng))
           END IF
 #  ifdef SOLVE3D
 #   ifdef IMPLICIT_VCONV
-          DTsizeVB(bry,is)=Vgamma*DZmax(ng)*DZmax(ng)/(2.0_r8*KvMax(ng))
+          DTsizeVB(bry,is)=Vgamma(3)*DZmax(ng)*DZmax(ng)/               &
+     &                     (2.0_r8*KvMax(ng))
 #   else
-          DTsizeVB(bry,is)=Vgamma*DZmin(ng)*DZmin(ng)/(2.0_r8*KvMax(ng))
+          DTsizeVB(bry,is)=Vgamma(3)*DZmin(ng)*DZmin(ng)/               &
+     &                     (2.0_r8*KvMax(ng))
 #   endif
 #  endif
         END DO
@@ -1048,7 +1062,7 @@
           IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
             NHsteps(rec,is)=NINT(Hdecay(rec,is,ng)*                     &
      &                           Hdecay(rec,is,ng)/                     &
-     &                           (2.0_r8*KhMax(ng)*DTsizeH(is)))
+     &                           (2.0_r8*KhMax(ng)*DTsizeH(rec,is)))
             IF (MOD(NHsteps(rec,is),2).ne.0) THEN
               NHsteps(rec,is)=NHsteps(rec,is)+1
             END IF
@@ -1057,7 +1071,7 @@
           IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
             NVsteps(rec,is)=NINT(Vdecay(rec,is,ng)*                     &
      &                           Vdecay(rec,is,ng)/                     &
-     &                           (2.0_r8*KvMax(ng)*DTsizeV(is)))
+     &                           (2.0_r8*KvMax(ng)*DTsizeV(rec,is)))
 #  ifdef IMPLICIT_VCONV
             NVsteps(rec,is)=MAX(1,NVsteps(rec,is))
 #  endif
@@ -1119,7 +1133,8 @@
             END IF
             IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
               WRITE (stdout,70) TRIM(Text), NHsteps(rec,is),            &
-     &                          DTsizeH(is), TRIM(Vname(1,idSvar(is)))
+     &                          DTsizeH(rec,is),                        &
+     &                          TRIM(Vname(1,idSvar(is)))
             END IF
           END DO
           WRITE (stdout,80)
@@ -1140,7 +1155,8 @@
             END IF
             IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
               WRITE (stdout,70) TRIM(Text), NVsteps(rec,is),            &
-     &                          DTsizeV(is), TRIM(Vname(1,idSvar(is)))
+     &                          DTsizeV(rec,is),                        &
+     &                          TRIM(Vname(1,idSvar(is)))
              END IF
           END DO
           WRITE (stdout,80)
@@ -1173,7 +1189,6 @@
           DO bry=1,4
             IF (Lobc(bry,is,ng)) THEN
               IF (bry.eq.iwest) THEN
-
                 Text='West  bry Vconvolution, NVstepsB, DTsizeVB ='
               ELSE IF (bry.eq.isouth) THEN
                 Text='South bry Vconvolution, NVstepsB, DTsizeVB ='

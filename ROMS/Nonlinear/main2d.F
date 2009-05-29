@@ -29,7 +29,8 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : nl_dotproduct
 # endif
-# if defined W4DPSAS || defined NLM_OUTER
+# if defined W4DPSAS || defined NLM_OUTER || \
+     defined W4DPSAS_SENSITIVITY
       USE forcing_mod, ONLY : forcing
 # endif
 # ifdef ADJUST_WSTRESS
@@ -89,7 +90,8 @@
       tdays(ng)=time(ng)*sec2day
       CALL time_string (time(ng), time_code(ng))
 
-# if defined W4DPSAS || defined NLM_OUTER
+# if defined W4DPSAS || defined NLM_OUTER || \
+     defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to

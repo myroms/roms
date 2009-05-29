@@ -822,7 +822,7 @@
       IF (SOUTH_WEST_TEST) THEN
 #   ifdef WEST_FSOBC
         DO j=JLB,JUB
-          cff=Dcrit(ng)-GRID(ng)%h(0,j))
+          cff=Dcrit(ng)-GRID(ng)%h(0,j)
           IF (BOUNDARY(ng)%zeta_west(j).le.cff) THEN
             BOUNDARY(ng)%zeta_west(j)=cff
             BOUNDARY(ng)%tl_zeta_west(j)=cff

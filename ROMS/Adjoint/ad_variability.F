@@ -629,7 +629,7 @@
           IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
-                ad_u_obc(i,k,ib,ir,Linp)=ad_v_obc(i,k,ib,ir,Linp)*      &
+                ad_v_obc(i,k,ib,ir,Linp)=ad_v_obc(i,k,ib,ir,Linp)*      &
      &                                   v_obc_std(i,k,ib)
               END DO
             END DO
@@ -724,21 +724,23 @@
 !  Surface tracer flux.
 !
       DO it=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
-              ad_tflux(i,j,ir,Linp,it)=ad_tflux(i,j,ir,Linp,it)*        &
-     &                                 stflx_std(i,j,it)
+        IF (Lstflux(it,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+                ad_tflux(i,j,ir,Linp,it)=ad_tflux(i,j,ir,Linp,it)*      &
+     &                                   stflx_std(i,j,it)
+              END DO
             END DO
           END DO
-        END DO
-      END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
-     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,:,Linp,:))
+          CALL ad_mp_exchange3d (ng, tile, iADM, 1,                     &
+     &                           LBi, UBi, LBj, UBj, 1,Nfrec(ng),       &
+     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           ad_tflux(:,:,:,Linp,it))
 #   endif
+        END IF
+      END DO
 #  endif
 # endif
 

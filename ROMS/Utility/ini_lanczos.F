@@ -1160,27 +1160,29 @@
       gtype=r3dvar
       scale=1.0_r8
       DO itrc=1,NT(ng)
-        CALL netcdf_inq_varid (ng, model, ncname,                       &
-     &                         Vname(1,idTsur(itrc)), ncid, varid)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (Lstflux(itrc,ng)) THEN
+          CALL netcdf_inq_varid (ng, model, ncname,                     &
+     &                           Vname(1,idTsur(itrc)), ncid, varid)
+          IF (exit_flag.ne.NoError) RETURN
 
-        status=nf_fread3d(ng, model, ncname, ncid,                      &
-     &                    Vname(1,idTsur(itrc)), varid,                 &
-     &                    rec, gtype, Vsize,                            &
-     &                    LBi, UBi, LBj, UBj, 1,Nfrec(ng),              &
-     &                    scale, Fmin, Fmax,                            &
+          status=nf_fread3d(ng, model, ncname, ncid,                    &
+     &                      Vname(1,idTsur(itrc)), varid,               &
+     &                      rec, gtype, Vsize,                          &
+     &                      LBi, UBi, LBj, UBj, 1,Nfrec(ng),            &
+     &                      scale, Fmin, Fmax,                          &
 #   ifdef MASKING
-     &                    rmask,                                        &
+     &                      rmask,                                      &
 #   endif
-     &                    s_tflux(:,:,:,Lwrk,itrc))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
-     &                        TRIM(ncname)
+     &                      s_tflux(:,:,:,Lwrk,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,       &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
         END IF
       END DO
 #  endif

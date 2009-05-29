@@ -163,7 +163,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -402,10 +402,10 @@
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            DTsizeV*oHz(i,k)*                     &
 !>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
 !>
-                adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,k,Nnew)
+                adfac=DTsizeV*oHz(i,k)*ad_Awrk(i,k,Nnew)
                 ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
                 ad_DC(i,k  )=ad_DC(i,k  )+adfac
                 ad_Awrk(i,k,Nold)=ad_Awrk(i,k,Nold)+                    &
@@ -1059,7 +1059,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -1257,9 +1257,9 @@
             DO i=IstrU,Iend
               DO k=1,N(ng)-1
                 FC(i,k)=cff1*(Hz(i-1,j,k  )+Hz(i,j,k  ))-               &
-     &                  DTsizeV*Kv(i,j,k-1)*oHz(j,k  )
+     &                  DTsizeV*Kv(i,j,k-1)*oHz(i,k  )
                 CF(i,k)=cff1*(Hz(i-1,j,k+1)+Hz(i,j,k+1))-               &
-     &                  DTsizeV*Kv(i,j,k+1)*oHz(j,k+1)
+     &                  DTsizeV*Kv(i,j,k+1)*oHz(i,k+1)
               END DO
               CF(i,0)=0.0_r8
             END DO
@@ -1303,10 +1303,10 @@
             DO k=1,N(ng)
               DO i=IstrU,Iend
 !>              tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            DTsizeV*oHz(i,k)*                     &
 !>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
 !>
-                adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,k,Nnew)
+                adfac=DTsizeV*oHz(i,k)*ad_Awrk(i,k,Nnew)
                 ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
                 ad_DC(i,k  )=ad_DC(i,k  )+adfac
                 ad_Awrk(i,k,Nold)=ad_Awrk(i,k,Nold)+                    &
@@ -1961,7 +1961,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -2013,6 +2013,7 @@
 !  used for efficiency.
 !
       IF (Lconvolve(boundary)) THEN
+        cff=DTsizeH*0.25_r8
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=JstrV-1,Jend+1
@@ -2158,9 +2159,9 @@
             DO i=Istr,Iend
               DO k=1,N(ng)-1
                 FC(i,k)=cff1*(Hz(i,j-1,k  )+Hz(i,j,k  ))-               &
-     &                  DTsizeV*Kv(i,j,k-1)*oHz(j,k  )
+     &                  DTsizeV*Kv(i,j,k-1)*oHz(i,k  )
                 CF(i,k)=cff1*(Hz(i,j-1,k+1)+Hz(i,j,k+1))-               &
-     &                  DTsizeV*Kv(i,j,k+1)*oHz(j,k+1)
+     &                  DTsizeV*Kv(i,j,k+1)*oHz(i,k+1)
               END DO
               CF(i,0)=0.0_r8
             END DO
@@ -2204,10 +2205,10 @@
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            DTsizeV*oHz(i,k)*                     &
 !>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
 !>
-                adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,k,Nnew)
+                adfac=DTsizeV*oHz(i,k)*ad_Awrk(i,k,Nnew)
                 ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
                 ad_DC(i,k  )=ad_DC(i,k  )+adfac
                 ad_Awrk(i,k,Nold)=ad_Awrk(i,k,Nold)+                    &

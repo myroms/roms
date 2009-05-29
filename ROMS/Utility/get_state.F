@@ -342,19 +342,14 @@
 !  Set switch to process surface forcing and/or open boundaries during
 !  4DVar minimization.
 !
-#  if defined IS4DVAR
-        IF (inner.ne.0) THEN
-          get_adjust=.TRUE.
-        ELSE
-          get_adjust=.FALSE.
-        END IF
-#  else
-        IF (inner.ne.0) THEN
-          get_adjust=.TRUE.
-        ELSE
-          get_adjust=.FALSE.
-        END IF
-#  endif
+#   if !(defined W4DPSAS    || defined W4DPSAS_SENSITIVITY || \
+         defined TL_W4DPSAS)
+       IF (inner.ne.0) THEN
+         get_adjust=.TRUE.
+       ELSE
+         get_adjust=.FALSE.
+       END IF
+#   endif
 # endif
 # ifdef PERFECT_RESTART
 !
@@ -485,7 +480,8 @@
           END IF
         END IF
 
-# if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+# if !(defined W4DPSAS || defined TL_W4DPSAS || \
+       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in free-surface open boundaries.
 !
@@ -593,7 +589,8 @@
           END IF
         END IF
 
-# if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in 2D U-momentum component open boundaries.
 !
@@ -701,7 +698,8 @@
           END IF
         END IF
 
-# if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in 2D V-momentum component open boundaries.
 !
@@ -763,7 +761,8 @@
           END IF
         END IF
 
-# if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_WSTRESS
+# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+       defined W4DPSAS_SENSITIVITY) && defined ADJUST_WSTRESS
 !
 !  Read in surface U-momentum stress.
 !
@@ -798,7 +797,7 @@
 !
 !  Read in surface V-momentum stress.
 !
-        IF (get_var(idVsms)) THEN
+        IF (get_var(idVsms).and.get_adjust) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
@@ -871,7 +870,8 @@
           END IF
         END IF
 
-#  if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in 3D U-momentum component open boundaries.
 !
@@ -975,7 +975,8 @@
           END IF
         END IF
 
-#  if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in 3D V-momentum component open boundaries.
 !
@@ -1082,7 +1083,8 @@
           END IF
         END DO
 
-#  if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_BOUNDARY
+#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
 !
 !  Read in 3D tracers open boundaries.
 !
@@ -1115,12 +1117,14 @@
           END IF
         END DO
 #  endif
-#  if !(defined W4DPSAS || defined TL_W4DPSAS) && defined ADJUST_STFLUX
+#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
+        defined W4DPSAS_SENSITIVITY) && defined ADJUST_STFLUX
 !
 !  Read in surface tracers flux.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.get_adjust) THEN
+          IF (get_var(idTsur(itrc)).and.get_adjust.and.                 &
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
@@ -1634,14 +1638,13 @@
 !  Set switch to process surface forcing and/or open boundaries during
 !  4DVar minimization.
 !
-#  if defined IS4DVAR
-        get_adjust=.TRUE.        
-#  else
-        IF (inner.ne.0) THEN
-          get_adjust=.TRUE.
-        ELSE
-          get_adjust=.FALSE.
-        END IF
+       IF (inner.ne.0) THEN
+         get_adjust=.TRUE.
+       ELSE
+         get_adjust=.FALSE.
+       END IF
+#  ifdef SENSITIVITY_4DVAR
+       IF (LsenPSAS(ng)) get_adjust=.TRUE.
 #  endif
 # endif
 !
@@ -1862,7 +1865,7 @@
 !
 !  Read in tangent linear surface V-momentum stress.
 !
-        IF (get_var(idVsms)) THEN
+        IF (get_var(idVsms).and.get_adjust) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
@@ -2085,7 +2088,8 @@
 !  Read in tangent linear surface tracers flux.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.get_adjust) THEN
+          IF (get_var(idTsur(itrc)).and.get_adjust.and.                 &
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
@@ -2605,7 +2609,7 @@
 !
 !  Read in adjoint 3D U-momentum component open boundaries.
 !
-        IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
+        IF (get_var(idSbry(isUvel)).and.                                &
      &      ANY(Lobc(:,isUvel,ng))) THEN
           ifield=idSbry(isUvel)
           foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
@@ -2764,7 +2768,7 @@
 !  Read in adjoint surface tracers flux.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc))) THEN
+          IF (get_var(idTsur(itrc)).and.Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
@@ -3416,7 +3420,8 @@
 !  Read in surface tracer flux normalization factors.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.(model.eq.11)) THEN
+          IF (get_var(idTsur(itrc)).and.(model.eq.11).and.              &
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r2dvar
@@ -3957,7 +3962,8 @@
 !  Read in surface tracer flux standard deviations.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.(model.eq.9)) THEN
+          IF (get_var(idTsur(itrc)).and.(model.eq.9).and.               &
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r2dvar
@@ -4212,8 +4218,10 @@
       END IF FRC_STATE
 #endif
 
-#if (defined W4DPSAS || defined TL_W4DPSAS)     && \
-    (defined BOUNDARY || defined ADJUST_WSTRESS || defined ADJUST_STFLUX)
+#if (defined W4DPSAS || defined TL_W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY)          && \
+    (defined ADJUST_BOUNDARY || defined ADJUST_WSTRESS ||\
+     defined ADJUST_STFLUX)
 !
 !-----------------------------------------------------------------------
 !  Read in tangent linear forcing corrections.
@@ -4480,7 +4488,8 @@
 !  Read in tangent linear surface tracers flux.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.get_adjust) THEN
+          IF (get_var(idTsur(itrc)).and.get_adjust.and.                 &
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar

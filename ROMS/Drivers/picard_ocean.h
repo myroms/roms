@@ -153,6 +153,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
+      USE mod_netcdf
       USE mod_scalars
 !
 !  Imported variable declarations
@@ -222,7 +223,17 @@
 !
 !  Close IO and re-initialize NetCDF switches.
 !
-          CALL close_io
+          SourceFile='picard_ocean.h, ROMS_run'
+
+          IF (ncTLMid(ng).ne.-1) THEN
+            CALL netcdf_close (ng, iRPM, ncTLMid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+
+          IF (ncFWDid(ng).ne.-1) THEN
+            CALL netcdf_close (ng, iRPM, ncFWDid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
 
         END DO ITER_LOOP
 

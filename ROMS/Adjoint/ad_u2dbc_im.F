@@ -68,6 +68,7 @@
       USE mod_boundary
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -405,11 +406,17 @@
      &                           GRID(ng)%umask(i,Jend+1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_ubar(i,Jend+1,kout)=BOUNDARY(ng)%tl_ubar_north(i)
+          IF (Lobc(inorth,isUbar,ng)) THEN
+!>          tl_ubar(i,Jend+1,kout)=BOUNDARY(ng)%tl_ubar_north(i)
 !>
-          BOUNDARY(ng)%ad_ubar_north(i)=BOUNDARY(ng)%ad_ubar_north(i)+  &
-     &                                  ad_ubar(i,Jend+1,kout)
-          ad_ubar(i,Jend+1,kout)=0.0_r8
+            BOUNDARY(ng)%ad_ubar_north(i)=BOUNDARY(ng)%ad_ubar_north(i)+&
+     &                                    ad_ubar(i,Jend+1,kout)
+            ad_ubar(i,Jend+1,kout)=0.0_r8
+          ELSE
+!>          tl_ubar(i,Jend+1,kout)=0.0_r8
+!>
+            ad_ubar(i,Jend+1,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_ubar(i,Jend+1,kout)=0.0_r8
 !>
@@ -588,11 +595,17 @@
      &                           GRID(ng)%umask(i,Jstr-1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_ubar(i,Jstr-1,kout)=BOUNDARY(ng)%tl_ubar_south(i)
+          IF (Lobc(isouth,isUbar,ng)) THEN
+!>          tl_ubar(i,Jstr-1,kout)=BOUNDARY(ng)%tl_ubar_south(i)
 !>
-          BOUNDARY(ng)%ad_ubar_south(i)=BOUNDARY(ng)%ad_ubar_south(i)+  &
-     &                                  ad_ubar(i,Jstr-1,kout)
-          ad_ubar(i,Jstr-1,kout)=0.0_r8
+            BOUNDARY(ng)%ad_ubar_south(i)=BOUNDARY(ng)%ad_ubar_south(i)+&
+     &                                    ad_ubar(i,Jstr-1,kout)
+            ad_ubar(i,Jstr-1,kout)=0.0_r8
+          ELSE
+!>          tl_ubar(i,Jstr-1,kout)=0.0_r8
+!>
+            ad_ubar(i,Jstr-1,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_ubar(i,Jstr-1,kout)=0.0_r8
 !>
@@ -724,22 +737,24 @@
           ad_ubar(Iend+1,j,kout)=ad_ubar(Iend+1,j,kout)*                &
      &                           GRID(ng)%umask(Iend+1,j)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+          IF (Lobc(ieast,isUbar,ng)) THEN
+!>          tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)-              &
+!>   &                             Cx*BOUNDARY(ng)%tl_zeta_east(j)
+!>
+            BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-  &
+     &                                   Cx*ad_ubar(Iend+1,j,kout)
+
+          END IF
+#   endif
 !>        tl_ubar(Iend+1,j,kout)=tl_bry_val+                            &
 !>   &                           tl_Cx*(0.5_r8*(zeta(Iend  ,j,know)+    &
 !>   &                                          zeta(Iend+1,j,know))-   &
 !>   &                                  BOUNDARY(ng)%zeta_east(j))+     &
 !>   &                           Cx*(0.5_r8*(tl_zeta(Iend  ,j,know)+    &
-!>   &                                       tl_zeta(Iend+1,j,know))    &
-#   ifdef ADJUST_BOUNDARY
-!>   &                               -BOUNDARY(ng)%tl_zeta_east(j)      &
-#   endif
-!>   &                               )
+!>   &                                       tl_zeta(Iend+1,j,know)))
 !>
           adfac=Cx*0.5_r8*ad_ubar(Iend+1,j,kout)
-#   ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-    &
-     &                                 Cx*ad_ubar(Iend+1,j,kout)
-#   endif
           ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)+adfac
           ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           ad_Cx=ad_Cx+                                                  &
@@ -872,20 +887,22 @@
           ad_bry_cor=0.0_r8
 #    endif
 #    ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=g*(                                                &
-#      ifdef ADJUST_BOUNDARY
-!>   &                  -BOUNDARY(ng)%tl_zeta_east(j)+                  &
-#      endif
-!>   &                  tl_zeta(Iend,j,know))*                          &
+#     ifdef ADJUST_BOUNDARY
+          IF (Lobc(ieast,isUbar,ng)) THEN
+!>          tl_bry_pgr=tl_bry_pgr-                                      &
+!>   &                 g*BOUNDARY(ng)%tl_zeta_east(j)*                  &
+!>   &                 0.5_r8*GRID(ng)%pm(Iend,j)
+!>
+            BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-  &
+     &                                   g*0.5_r8*GRID(ng)%pm(Iend,j)*  &
+     &                                   ad_bry_pgr
+          END IF
+#     endif
+!>        tl_bry_pgr=g*tl_zeta(Iend,j,know)*                            &
 !>   &               0.5_r8*GRID(ng)%pm(Iend,j)
 !>
-       adfac=g*0.5_r8*GRID(ng)%pm(Iend,j)*ad_bry_pgr
-#      ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-    &
-     &                                 adfac
-#      endif
           ad_zeta(Iend,j,know)=ad_zeta(Iend,j,know)+                    &
-     &                         adfac
+     &                         g*0.5_r8*GRID(ng)%pm(Iend,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #    else
 !>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,know)-                        &
@@ -900,17 +917,23 @@
           ad_bry_pgr=0.0_r8
 #    endif
 #   else
-#     ifdef ADJUST_BOUNDARY
-!>        tl_bry_val=BOUNDARY(ng)%tl_ubar_east(j)
+#    ifdef ADJUST_BOUNDARY
+          IF (Lobc(ieast,isUbar,ng)) THEN
+!>          tl_bry_val=BOUNDARY(ng)%tl_ubar_east(j)
 !>
-          BOUNDARY(ng)%ad_ubar_east(j)=BOUNDARY(ng)%ad_ubar_east(j)+    &
-     &                                 ad_bry_val
-          ad_bry_val=0.0_r8
-#     else
+            BOUNDARY(ng)%ad_ubar_east(j)=BOUNDARY(ng)%ad_ubar_east(j)+  &
+     &                                   ad_bry_val
+            ad_bry_val=0.0_r8
+          ELSE
+!>          tl_bry_val=0.0_r8
+!>
+            ad_bry_val=0.0_r8
+          END IF
+#    else
 !>        tl_bry_val=0.0_r8
 !>
           ad_bry_val=0.0_r8
-#     endif
+#    endif
 #   endif
         END DO
 
@@ -927,11 +950,17 @@
      &                           GRID(ng)%umask(Iend+1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_ubar(Iend+1,j,kout)=BOUNDARY(ng)%tl_ubar_east(j)
+          IF (Lobc(ieast,isUbar,ng)) THEN
+!>          tl_ubar(Iend+1,j,kout)=BOUNDARY(ng)%tl_ubar_east(j)
 !>
-          BOUNDARY(ng)%ad_ubar_east(j)=BOUNDARY(ng)%ad_ubar_east(j)+    &
-     &                                 ad_ubar(Iend+1,j,kout)
-          ad_ubar(Iend+1,j,kout)=0.0_r8
+            BOUNDARY(ng)%ad_ubar_east(j)=BOUNDARY(ng)%ad_ubar_east(j)+  &
+     &                                   ad_ubar(Iend+1,j,kout)
+            ad_ubar(Iend+1,j,kout)=0.0_r8
+          ELSE
+!>          tl_ubar(Iend+1,j,kout)=0.0_r8
+!>
+            ad_ubar(Iend+1,j,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_ubar(Iend+1,j,kout)=0.0_r8
 !>
@@ -1020,20 +1049,22 @@
           ad_bry_cor=0.0_r8
 #  endif
 #  ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=g*(                                                &
 #    ifdef ADJUST_BOUNDARY
-!>   &                  -BOUNDARY(ng)%tl_zeta_east(j)+                  &
+          IF (Lobc(ieast,isUbar,ng)) THEN
+!>          tl_bry_pgr=tl_bry_pgr-                                      &
+!>   &                 g*BOUNDARY(ng)%tl_zeta_east(j)*                  &
+!>   &                 0.5_r8*GRID(ng)%pm(Iend,j)
+!>
+            BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-  &
+     &                                   g*0.5_r8*GRID(ng)%pm(Iend,j)*  &
+     &                                   ad_bry_pgr
+          END IF
 #    endif
-!>   &                  tl_zeta(Iend,j,know))*                          &
+!>        tl_bry_pgr=g*tl_zeta(Iend,j,know)*                            &
 !>   &               0.5_r8*GRID(ng)%pm(Iend,j)
 !>
-          adfac=g*0.5_r8*GRID(ng)%pm(Iend,j)*ad_bry_pgr
-#    ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_east(j)=BOUNDARY(ng)%ad_zeta_east(j)-    &
-     &                                 adfac 
-#    endif
           ad_zeta(Iend,j,know)=ad_zeta(Iend,j,know)+                    &
-     &                         adfac
+     &                         g*0.5_r8*GRID(ng)%pm(Iend,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #  else
 !>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,know)-                        &
@@ -1135,22 +1166,23 @@
           ad_ubar(Istr,j,kout)=ad_ubar(Istr,j,kout)*                    &
      &                         GRID(ng)%umask(Istr,j)
 #   endif
+#   ifdef ADJUST_BOUNDARY
+          IF (Lobc(iwest,isUbar,ng)) THEN
+!>          tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)+                  &
+!>   &                           Cx*BOUNDARY(ng)%tl_zeta_west(j)
+!>
+            BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+  &
+     &                                   Cx*ad_ubar(Istr,j,kout)
+          END IF
+#   endif
 !>        tl_ubar(Istr,j,kout)=tl_bry_val-                              &
 !>   &                         tl_Cx*(0.5_r8*(zeta(Istr-1,j,know)+      &
 !>   &                                        zeta(Istr  ,j,know))-     &
 !>   &                                BOUNDARY(ng)%zeta_west(j))-       &
 !>   &                         Cx*(0.5_r8*(tl_zeta(Istr-1,j,know)+      &
-!>   &                                     tl_zeta(Istr  ,j,know))      &
-#   ifdef ADJUST_BOUNDARY
-!>   &                             -BOUNDARY(ng)%tl_zeta_west(j)        &
-#   endif
-!>   &                             )
+!>   &                                     tl_zeta(Istr  ,j,know)))
 !>
           adfac=Cx*0.5_r8*ad_ubar(Istr,j,kout)
-#   ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+    &
-     &                                 Cx*ad_ubar(Istr,j,kout)
-#   endif
           ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)-adfac
           ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)-adfac
           ad_Cx=ad_Cx-                                                  &
@@ -1281,20 +1313,22 @@
           ad_bry_cor=0.0_r8
 #    endif
 #    ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=-g*(                                               &
-#    ifdef ADJUST_BOUNDARY
-!>   &                   -BOUNDARY(ng)%tl_zeta_west(j)+                 &
-#    endif
-!>   &                   tl_zeta(Istr,j,know))*                         &
+#     ifdef ADJUST_BOUNDARY
+          IF (Lobc(iwest,isUbar,ng)) THEN
+!>          tl_bry_pgr=tl_bry_pgr+                                      &
+!>   &                 g*BOUNDARY(ng)%tl_zeta_west(j)*                  &
+!>   &                 0.5_r8*GRID(ng)%pm(Istr,j)
+!>
+            BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+  &
+     &                                   g*0.5_r8*GRID(ng)%pm(Istr,j)*  &
+     &                                   ad_bry_pgr
+          END IF
+#     endif
+!>        tl_bry_pgr=-g*tl_zeta(Istr,j,know)*                           &
 !>   &               0.5_r8*GRID(ng)%pm(Istr,j)
 !>
-          adfac=g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
-#    ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+    &
-     &                                 adfac 
-#    endif
           ad_zeta(Istr,j,know)=ad_zeta(Istr,j,know)-                    &
-     &                         adfac
+     &                         g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #    else
 !>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,know)-                        &
@@ -1310,11 +1344,17 @@
 #    endif
 #   else
 #     ifdef ADJUST_BOUNDARY
-!>        tl_bry_val=BOUNDARY(ng)%tl_ubar_west(j)
+          IF (Lobc(iwest,isUbar,ng)) THEN
+!>          tl_bry_val=BOUNDARY(ng)%tl_ubar_west(j)
 !>
-          BOUNDARY(ng)%ad_ubar_west(j)=BOUNDARY(ng)%ad_ubar_west(j)+    &
+            BOUNDARY(ng)%ad_ubar_west(j)=BOUNDARY(ng)%ad_ubar_west(j)+  &
      &                                 ad_bry_val
-          ad_bry_val=0.0_r8
+            ad_bry_val=0.0_r8
+          ELSE
+!>          tl_bry_val=0.0_r8
+!>
+            ad_bry_val=0.0_r8
+          END IF
 #     else
 !>        tl_bry_val=0.0_r8
 !>
@@ -1336,11 +1376,17 @@
      &                         GRID(ng)%umask(Istr,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_ubar(Istr,j,kout)=BOUNDARY(ng)%tl_ubar_west(j)
+          IF (Lobc(iwest,isUbar,ng)) THEN
+!>          tl_ubar(Istr,j,kout)=BOUNDARY(ng)%tl_ubar_west(j)
 !>
-          BOUNDARY(ng)%ad_ubar_west(j)=BOUNDARY(ng)%ad_ubar_west(j)+    &
-     &                                 ad_ubar(Istr,j,kout)
-          ad_ubar(Istr,j,kout)=0.0_r8
+            BOUNDARY(ng)%ad_ubar_west(j)=BOUNDARY(ng)%ad_ubar_west(j)+  &
+     &                                   ad_ubar(Istr,j,kout)
+            ad_ubar(Istr,j,kout)=0.0_r8
+          ELSE
+!>          tl_ubar(Istr,j,kout)=0.0_r8
+!>
+            ad_ubar(Istr,j,kout)=0.0_r8
+          END IF
 #   else
 !>        tl_ubar(Istr,j,kout)=0.0_r8
 !>
@@ -1440,23 +1486,22 @@
           ad_bry_cor=0.0_r8
 #  endif
 #  ifdef FSOBC_REDUCED
+#   ifdef ADJUST_BOUNDARY
+          IF (Lobc(iwest,isUbar,ng)) THEN
+!>          tl_bry_pgr=tl_bry_pgr+                                      &
+!>   &                 g*BOUNDARY(ng)%tl_zeta_west(j)*                  &
+!>   &                 0.5_r8*GRID(ng)%pm(Istr,j)
+!>
+            BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+  &
+     &                                   g*0.5_r8*GRID(ng)%pm(Istr,j)*  &
+     &                                   ad_bry_pgr
+          END IF
+#   endif
 !>        tl_bry_pgr=-g*(zeta(Istr,j,know)*                             &
 !>   &               0.5_r8*GRID(ng)%pm(Istr,j)
 !>
-!>        tl_bry_pgr=-g*(                                               &
-#   ifdef ADJUST_BOUNDARY
-!>   &                   -BOUNDARY(ng)%tl_zeta_west(j)+                 &
-#   endif
-!>   &                   tl_zeta(Istr,j,know))*                         &
-!>   &               0.5_r8*GRID(ng)%pm(Istr,j)
-!>
-          adfac=g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
-#   ifdef ADJUST_BOUNDARY
-          BOUNDARY(ng)%ad_zeta_west(j)=BOUNDARY(ng)%ad_zeta_west(j)+    &
-     &                                 adfac 
-#   endif
           ad_zeta(Istr,j,know)=ad_zeta(Istr,j,know)-                    &
-     &                         adfac
+     &                         g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #  else
 !>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,know)-                        &

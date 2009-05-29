@@ -18,6 +18,9 @@
 # ifdef BBL_MODEL_NOT_YET
       USE mod_bbl
 # endif
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+# endif
 # ifdef SOLVE3D
       USE mod_coupling
 # endif
@@ -232,7 +235,8 @@
             CALL ana_mask (ng, TILE, iADM)
 #  endif
 #  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI
+      defined OPT_OBSERVATIONS || defined SO_SEMI         || \
+      defined SENSITIVITY_4DVAR 
             CALL ana_scope (ng, TILE, iADM)
 #  endif
           END DO
@@ -339,6 +343,9 @@
 #  endif
           CALL initialize_forces (ng, TILE, iADM)
           CALL initialize_grid (ng, TILE, iADM)
+#  ifdef ADJUST_BOUNDARY
+          CALL initialize_boundary (ng, TILE, iADM)
+#  endif
         END DO
       END DO
 !$OMF END PARALLEL DO
@@ -363,6 +370,9 @@
 #  endif
           CALL initialize_forces (ng, TILE, iADM)
           CALL initialize_grid (ng, TILE, iADM)
+#  ifdef ADJUST_BOUNDARY
+          CALL initialize_boundary (ng, TILE, iADM)
+#  endif
         END DO
       END DO
 !$OMF END PARALLEL DO

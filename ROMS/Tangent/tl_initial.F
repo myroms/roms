@@ -211,12 +211,12 @@
 !
       IniRec=tITLindx(ng)
 
-# ifdef ADJUST_BOUNDARY
+#   ifdef ADJUST_BOUNDARY
 !
 !  Initialize open boundary counter for storage arrays.
 !
       OBCcount(ng)=0
-# endif
+#   endif
 #   if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.

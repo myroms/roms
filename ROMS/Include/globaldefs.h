@@ -297,11 +297,12 @@
     defined FORCING_SV         || defined INNER_PRODUCT      || \
     defined IS4DVAR            || defined OBS_SENSITIVITY    || \
     defined OPT_PERTURBATION   || defined OPT_OBSERVATIONS   || \
-    defined R_SYMMETRY         || defined RPM_DRIVER         || \
-    defined SANITY_CHECK       || defined SENSITIVITY_4DVAR  || \
-    defined TLM_CHECK          || defined TLM_DRIVER         || \
-    defined TL_W4DPSAS         || defined TL_W4DVAR          || \
-    defined W4DPSAS            || defined W4DVAR
+    defined PICARD_TEST        || defined R_SYMMETRY         || \
+    defined RPM_DRIVER         || defined SANITY_CHECK       || \
+    defined SENSITIVITY_4DVAR  || defined TLM_CHECK          || \
+    defined TLM_DRIVER         || defined TL_W4DPSAS         || \
+    defined TL_W4DVAR          || defined W4DPSAS            || \
+    defined W4DVAR
 # define TANGENT
 #endif
 #if defined AD_SENSITIVITY     || defined ADM_DRIVER         || \

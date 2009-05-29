@@ -59,6 +59,7 @@
       USE mod_param
       USE mod_boundary
       USE mod_grid
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -226,11 +227,17 @@
      &                            GRID(ng)%umask(i,Jend+1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_u_north(i,k)
+            IF (Lobc(inorth,isUvel,ng)) THEN
+!>            tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_u_north(i,k)
 !>
-            BOUNDARY(ng)%ad_u_north(i,k)=BOUNDARY(ng)%ad_u_north(i,k)+  &
-     &                                   ad_u(i,Jend+1,k,nout)
-            ad_u(i,Jend+1,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_u_north(i,k)=BOUNDARY(ng)%ad_u_north(i,k)+&
+     &                                     ad_u(i,Jend+1,k,nout)
+              ad_u(i,Jend+1,k,nout)=0.0_r8
+            ELSE
+!>            tl_u(i,Jend+1,k,nout)=0.0_r8
+!>
+              ad_u(i,Jend+1,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_u(i,Jend+1,k,nout)=0.0_r8
 !>
@@ -367,11 +374,17 @@
      &                            GRID(ng)%umask(i,Jstr-1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%tl_u_south(i,k)
+            IF (Lobc(isouth,isUvel,ng)) THEN
+!>            tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%tl_u_south(i,k)
 !>
-            BOUNDARY(ng)%ad_u_south(i,k)=BOUNDARY(ng)%ad_u_south(i,k)+  &
-     &                                   ad_u(i,Jstr-1,k,nout)
-            ad_u(i,Jstr-1,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_u_south(i,k)=BOUNDARY(ng)%ad_u_south(i,k)+&
+     &                                     ad_u(i,Jstr-1,k,nout)
+              ad_u(i,Jstr-1,k,nout)=0.0_r8
+            ELSE
+!>            tl_u(i,Jstr-1,k,nout)=0.0_r8
+!>
+              ad_u(i,Jstr-1,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_u(i,Jstr-1,k,nout)=0.0_r8
 !>
@@ -503,18 +516,24 @@
       DO k=1,N(ng)
         DO j=Jstr,Jend
 #   ifdef MASKING
-!>          tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*                &
-!>   &                            GRID(ng)%umask(Iend+1,j)
+!>        tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*                  &
+!>   &                          GRID(ng)%umask(Iend+1,j)
 !>
-            ad_u(Iend+1,j,k,nout)=ad_u(Iend+1,j,k,nout)*                &
-     &                            GRID(ng)%umask(Iend+1,j)
+          ad_u(Iend+1,j,k,nout)=ad_u(Iend+1,j,k,nout)*                  &
+     &                          GRID(ng)%umask(Iend+1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>        tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_u_east(j,k)
+            IF (Lobc(ieast,isUvel,ng)) THEN
+!>            tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_u_east(j,k)
 !>
-          BOUNDARY(ng)%ad_u_east(j,k)=BOUNDARY(ng)%ad_u_east(j,k)+      &
-     &                                ad_u(Iend+1,j,k,nout)
-          ad_u(Iend+1,j,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_u_east(j,k)=BOUNDARY(ng)%ad_u_east(j,k)+  &
+     &                                    ad_u(Iend+1,j,k,nout)
+              ad_u(Iend+1,j,k,nout)=0.0_r8
+            ELSE
+!>            tl_u(Iend+1,j,k,nout)=0.0_r8
+!>
+              ad_u(Iend+1,j,k,nout)=0.0_r8
+            END IF
 #   else
 !>        tl_u(Iend+1,j,k,nout)=0.0_r8
 !>
@@ -635,11 +654,17 @@
      &                          GRID(ng)%umask(Istr,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_u(Istr,j,k,nout)=BOUNDARY(ng)%tl_u_west(j,k)
+            IF (Lobc(iwest,isUvel,ng)) THEN
+!>            tl_u(Istr,j,k,nout)=BOUNDARY(ng)%tl_u_west(j,k)
 !>
-            BOUNDARY(ng)%ad_u_west(j,k)=BOUNDARY(ng)%ad_u_west(j,k)+    &
-     &                                  ad_u(Istr,j,k,nout)
-            ad_u(Istr,j,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_u_west(j,k)=BOUNDARY(ng)%ad_u_west(j,k)+  &
+     &                                    ad_u(Istr,j,k,nout)
+              ad_u(Istr,j,k,nout)=0.0_r8
+            ELSE
+!>            tl_u(Istr,j,k,nout)=0.0_r8
+!>
+              ad_u(Istr,j,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_u(Istr,j,k,nout)=0.0_r8
 !>

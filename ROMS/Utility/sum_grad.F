@@ -463,7 +463,7 @@
             ib=inorth
             DO k=1,N(ng)
               DO i=Istr,Iend
-                tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Linp)+      &
+                tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Linp)+      &
      &                                   tl_v_obc(i,k,ib,ir,Lout)
               END DO
             END DO
@@ -541,14 +541,16 @@
 !  Surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO k=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)+      &
-     &                                  tl_tflux(i,j,k,Lout,itrc)
+        IF (Lstflux(itrc,ng)) THEN
+          DO k=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)+    &
+     &                                    tl_tflux(i,j,k,Lout,itrc)
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 #  endif
 # endif

@@ -643,7 +643,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isFsur,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JR_RANGE
@@ -672,7 +672,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUbar,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JU_RANGE
@@ -701,7 +701,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVbar,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JV_RANGE
@@ -732,7 +732,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUvel,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO k=1,N(ng)
@@ -765,7 +765,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVvel,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO k=1,N(ng)
@@ -799,7 +799,7 @@
       DO it=1,NT(ng)
         DO ir=1,Nbrec(ng)
           DO ib=1,4
-            IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+            IF (.not.Lweak.and.Lobc(ib,isTvar(it),ng)) THEN
               IF (Lconvolve(ib)) THEN
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   DO k=1,N(ng)
@@ -865,22 +865,24 @@
 !
       IF (.not.Lweak) THEN
         DO it=1,NT(ng)
-          DO k=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
-                ad_tflux(i,j,k,Linp,it)=ad_tflux(i,j,k,Linp,it)*        &
-     &                                  HnormSTF(i,j,it)
+          IF (Lstflux(it,ng)) THEN
+            DO k=1,Nfrec(ng)
+              DO j=JR_RANGE
+                DO i=IR_RANGE
+                  ad_tflux(i,j,k,Linp,it)=ad_tflux(i,j,k,Linp,it)*      &
+     &                                    HnormSTF(i,j,it)
+                END DO
               END DO
             END DO
-          END DO
-        END DO
 #  ifdef DISTRIBUTE
-        CALL ad_mp_exchange4d (ng, tile, iADM, 1,                       &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         1, Nfrec(ng), 1, NT(ng),                 &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
-     &                         ad_tflux(:,:,:,Linp,:))
+            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
+     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                             NghostPoints,                        &
+     &                             EWperiodic, NSperiodic,              &
+     &                             ad_tflux(:,:,:,Linp,it))
 #  endif
+          END IF
+        END DO
       END IF
 # endif
 !
@@ -898,7 +900,7 @@
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(rec,isFsur)/ifac,                  &
-     &                       DTsizeH(isFsur),                           &
+     &                       DTsizeH(rec,isFsur),                       &
      &                       Kh,                                        &
      &                       pm, pn, pmon_u, pnom_v,                    &
 # ifdef MASKING
@@ -913,7 +915,7 @@
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(rec,isUbar)/ifac,                  &
-     &                       DTsizeH(isUbar),                           &
+     &                       DTsizeH(rec,isUbar),                       &
      &                       Kh,                                        &
      &                       pm, pn, pmon_r, pnom_p,                    &
 # ifdef MASKING
@@ -926,7 +928,7 @@
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(rec,isVbar)/ifac,                  &
-     &                       DTsizeH(isVbar),                           &
+     &                       DTsizeH(rec,isVbar),                       &
      &                       Kh,                                        &
      &                       pm, pn, pmon_p, pnom_r,                    &
 # ifdef MASKING
@@ -943,8 +945,8 @@
      &                       NghostPoints,                              &
      &                       NHsteps(rec,isUvel)/ifac,                  &
      &                       NVsteps(rec,isUvel)/ifac,                  &
-     &                       DTsizeH(isUvel),                           &
-     &                       DTsizeV(isUvel),                           &
+     &                       DTsizeH(rec,isUvel),                       &
+     &                       DTsizeV(rec,isUvel),                       &
      &                       Kh, Kv,                                    &
      &                       pm, pn, pmon_r, pnom_p,                    &
 #  ifdef MASKING
@@ -959,8 +961,8 @@
      &                       NghostPoints,                              &
      &                       NHsteps(rec,isUvel)/ifac,                  &
      &                       NVsteps(rec,isUvel)/ifac,                  &
-     &                       DTsizeH(isUvel),                           &
-     &                       DTsizeV(isUvel),                           &
+     &                       DTsizeH(rec,isUvel),                       &
+     &                       DTsizeV(rec,isUvel),                       &
      &                       Kh, Kv,                                    &
      &                       pm, pn, pmon_p, pnom_r,                    &
 #  ifdef MASKING
@@ -979,8 +981,8 @@
      &                         NghostPoints,                            &
      &                         NHsteps(rec,is)/ifac,                    &
      &                         NVsteps(rec,is)/ifac,                    &
-     &                         DTsizeH(is),                             &
-     &                         DTsizeV(is),                             &
+     &                         DTsizeH(rec,is),                         &
+     &                         DTsizeV(rec,is),                         &
      &                         Kh, Kv,                                  &
      &                         pm, pn, pmon_u, pnom_v,                  &
 #  ifdef MASKING
@@ -1004,7 +1006,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isFsur,ng)) THEN
             CALL ad_conv_r2d_bry_tile (ng, tile, iADM, ib,              &
      &                                 BOUNDS(ng)%edge(:,r2dvar),       &
      &                                 LBij, UBij,                      &
@@ -1027,7 +1029,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUbar,ng)) THEN
             CALL ad_conv_u2d_bry_tile (ng, tile, iADM, ib,              &
      &                                 BOUNDS(ng)%edge(:,u2dvar),       &
      &                                 LBij, UBij,                      &
@@ -1050,7 +1052,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVbar,ng)) THEN
             CALL ad_conv_v2d_bry_tile (ng, tile, iADM, ib,              &
      &                                 BOUNDS(ng)%edge(:,v2dvar),       &
      &                                 LBij, UBij,                      &
@@ -1075,7 +1077,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUvel,ng)) THEN
             CALL ad_conv_u3d_bry_tile (ng, tile, iADM, ib,              &
      &                                 BOUNDS(ng)%edge(:,u2dvar),       &
      &                                 LBij, UBij,                      &
@@ -1101,7 +1103,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVvel,ng)) THEN
             CALL ad_conv_v3d_bry_tile (ng, tile, iADM, ib,              &
      &                                 BOUNDS(ng)%edge(:,v2dvar),       &
      &                                 LBij, UBij,                      &
@@ -1111,7 +1113,7 @@
      &                                 NHstepsB(ib,isVvel)/ifac,        &
      &                                 NVstepsB(ib,isVvel)/ifac,        &
      &                                 DTsizeHB(ib,isVvel),             &
-     &                                 DTsizeVB(ib,isUvel),             &
+     &                                 DTsizeVB(ib,isVvel),             &
      &                                 Kh, Kv,                          &
      &                                 pm, pn, pmon_p, pnom_r,          &
 #   ifdef MASKING
@@ -1126,9 +1128,10 @@
 !  Tangent linear tracers open boundaries.
 !
       DO it=1,NT(ng)
+        is=isTvar(it)
         DO ir=1,Nbrec(ng)
           DO ib=1,4
-            IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+            IF (.not.Lweak.and.Lobc(ib,is,ng)) THEN
               CALL ad_conv_r3d_bry_tile (ng, tile, iADM, ib,            &
      &                                   BOUNDS(ng)%edge(:,r2dvar),     &
      &                                   LBij, UBij,                    &
@@ -1173,7 +1176,7 @@
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           NghostPoints,                          &
      &                           NHsteps(rec,isUstr)/ifac,              &
-     &                           DTsizeH(isUstr),                       &
+     &                           DTsizeH(rec,isUstr),                   &
      &                           Kh,                                    &
      &                           pm, pn, pmon_r, pnom_p,                &
 #   ifdef MASKING
@@ -1186,7 +1189,7 @@
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           NghostPoints,                          &
      &                           NHsteps(rec,isVstr)/ifac,              &
-     &                           DTsizeH(isVstr),                       &
+     &                           DTsizeH(rec,isVstr),                   &
      &                           Kh,                                    &
      &                           pm, pn, pmon_p, pnom_r,                &
 #   ifdef MASKING
@@ -1202,21 +1205,23 @@
 !
       IF (.not.Lweak) THEN
         DO it=1,NT(ng)
-          is=isTsur(it)
-          DO k=1,Nfrec(ng)
-            CALL ad_conv_r2d_tile (ng, tile, iADM,                      &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             NghostPoints,                        &
-     &                             NHsteps(rec,is)/ifac,                &
-     &                             DTsizeH(is),                         &
-     &                             Kh,                                  &
-     &                             pm, pn, pmon_u, pnom_v,              &
+          IF (Lstflux(it,ng)) THEN
+            is=isTsur(it)
+            DO k=1,Nfrec(ng)
+              CALL ad_conv_r2d_tile (ng, tile, iADM,                    &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
+     &                               NghostPoints,                      &
+     &                               NHsteps(rec,is)/ifac,              &
+     &                               DTsizeH(rec,is),                   &
+     &                               Kh,                                &
+     &                               pm, pn, pmon_u, pnom_v,            &
 #   ifdef MASKING
-     &                             rmask, umask, vmask,                 &
+     &                               rmask, umask, vmask,               &
 #   endif
-     &                             ad_tflux(:,:,k,Linp,it))
-          END DO
+     &                               ad_tflux(:,:,k,Linp,it))
+            END DO
+          END IF
         END DO
       END IF
 #  endif
@@ -1315,7 +1320,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isFsur,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,r2dvar)
@@ -1346,7 +1351,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUbar,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
@@ -1377,7 +1382,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVbar,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVbar,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
@@ -1410,7 +1415,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isUvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isUvel,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
@@ -1451,7 +1456,7 @@
 !
       DO ir=1,Nbrec(ng)
         DO ib=1,4
-          IF (.not.Lweak.and.Lobc(iwest,isVvel,ng)) THEN
+          IF (.not.Lweak.and.Lobc(ib,isVvel,ng)) THEN
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
@@ -1493,7 +1498,7 @@
       DO it=1,NT(ng)
         DO ir=1,Nbrec(ng)
           DO ib=1,4
-            IF (.not.Lweak.and.Lobc(iwest,isFsur,ng)) THEN
+            IF (.not.Lweak.and.Lobc(ib,isTvar(it),ng)) THEN
               IF (Lconvolve(ib)) THEN
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   i=BOUNDS(ng)%edge(ib,r2dvar)
@@ -1569,18 +1574,24 @@
           DO i=IR_RANGE
             fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
             DO it=1,NT(ng)
-              DO k=1,Nfrec(ng)
-                ad_tflux(i,j,k,Linp,it)=fac*ad_tflux(i,j,k,Linp,it)
-              END DO
+              IF (Lstflux(it,ng)) THEN
+                DO k=1,Nfrec(ng)
+                  ad_tflux(i,j,k,Linp,it)=fac*ad_tflux(i,j,k,Linp,it)
+                END DO
+              END IF
             END DO
           END DO
         END DO
 #  ifdef DISTRIBUTE
-        CALL ad_mp_exchange4d (ng, tile, iADM, 1,                       &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         1, Nfrec(ng), 1, NT(ng),                 &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
-     &                         ad_tflux(:,:,:,Linp,:))
+        DO it=1,NT(ng)
+          IF (Lstflux(it,ng)) THEN
+            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
+     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                             NghostPoints,                        &
+     &                             EWperiodic, NSperiodic,              &
+     &                             ad_tflux(:,:,:,Linp,it))
+          END IF
+        END DO
 #  endif
       END IF
 # endif

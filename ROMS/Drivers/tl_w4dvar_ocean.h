@@ -1890,6 +1890,7 @@
 # ifdef BALANCE_OPERATOR_NOT_YET
               CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
+              CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1901,7 +1902,8 @@
 !
           CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
           IF (exit_flag.ne.NoError) RETURN
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
           IF (exit_flag.ne.NoError) RETURN
 # endif

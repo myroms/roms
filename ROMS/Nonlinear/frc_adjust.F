@@ -194,13 +194,15 @@
 !  increments, if appropriate.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            stflx(i,j,itrc)=stflx(i,j,itrc)+                            &
-     &                      fac1*tl_tflux(i,j,it1,Linp,itrc)+           &
-     &                      fac2*tl_tflux(i,j,it2,Linp,itrc)
+        IF (Lstflux(itrc,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              stflx(i,j,itrc)=stflx(i,j,itrc)+                          &
+     &                        fac1*tl_tflux(i,j,it1,Linp,itrc)+         &
+     &                        fac2*tl_tflux(i,j,it2,Linp,itrc)
+            END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 
@@ -352,11 +354,13 @@
 !  Load surface tracer fluxes.
 !
         DO itrc=1,NT(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              tflux(i,j,SFcount(ng),Lout,itrc)=stflx(i,j,itrc)
+          IF (Lstflux(itrc,ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                tflux(i,j,SFcount(ng),Lout,itrc)=stflx(i,j,itrc)
+              END DO
             END DO
-          END DO
+          END IF
         END DO
 # endif
       END IF

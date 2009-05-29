@@ -142,9 +142,11 @@
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
         DO itrc=1,NT(ng)
-          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
-            got_var(idTsur(itrc))=.TRUE.
-            irpVid(idTsur(itrc),ng)=var_id(i)
+          IF (Lstflux(itrc,ng)) THEN
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              irpVid(idTsur(itrc),ng)=var_id(i)
+            END IF
           END IF
         END DO
 #  endif
@@ -168,7 +170,9 @@
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
       DO itrc=1,NT(ng)
-        IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
+        IF (Lstflux(itrc,ng)) THEN
+          IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
+        END IF
       END DO
 #  endif
 !
@@ -472,7 +476,7 @@
 !  Define surface tracer flux.
 !
         DO itrc=1,NT(ng)
-          IF (.not.got_var(idTsur(itrc))) THEN
+          IF (.not.got_var(idTsur(itrc)).and.Lstflux(itrc,ng)) THEN
             Vinfo( 1)=Vname(1,idTsur(itrc))
             Vinfo( 2)=TRIM(Vname(2,idTsur(itrc)))
             Vinfo( 3)=Vname(3,idTsur(itrc))

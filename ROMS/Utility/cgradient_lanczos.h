@@ -2122,17 +2122,19 @@
 !  Surface tracers flux.
 !
         DO it=1,NT(ng)
-          DO ir=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                tl_tflux(i,j,ir,Lout,it)=d_stflx(i,j,ir,it)
+          IF (Lstflux(it,ng)) THEN
+            DO ir=1,Nfrec(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  tl_tflux(i,j,ir,Lout,it)=d_stflx(i,j,ir,it)
 #  ifdef MASKING
-                tl_tflux(i,j,ir,Lout,it)=tl_tflux(i,j,ir,Lout,it)*      &
-     &                                   rmask(i,j)
+                  tl_tflux(i,j,ir,Lout,it)=tl_tflux(i,j,ir,Lout,it)*    &
+     &                                     rmask(i,j)
 #  endif
+                END DO
               END DO
             END DO
-          END DO
+          END IF
         END DO
 # endif
 
@@ -2861,36 +2863,33 @@
       gtype=r3dvar
       scale=1.0_r8
       DO it=1,NT(ng)
-        CALL netcdf_inq_varid (ng, model, ncname, Vname(1,idTsur(it)),  &
-     &                         ncid, varid)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (Lstflux(it,ng)) THEN
+          CALL netcdf_inq_varid (ng, model, ncname,                     &
+     &                           Vname(1,idTsur(it)), ncid, varid)
+          IF (exit_flag.ne.NoError) RETURN
 
-        status=nf_fread3d(ng, model, ncname, ncid,                      &
-     &                    Vname(1,idTsur(it)), varid,                   &
-     &                    rec, gtype, Vsize,                            &
-     &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
-     &                    scale, Fmin, Fmax,                            &
+          status=nf_fread3d(ng, model, ncname, ncid,                    &
+     &                      Vname(1,idTsur(it)), varid,                 &
+     &                      rec, gtype, Vsize,                          &
+     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
-     &                    rmask,                                        &
+     &                      rmask,                                      &
 #  endif
-     &                    s_tflux(:,:,:,Lwrk,it))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTsur(it))), rec,           &
-     &                        TRIM(ncname)
+     &                      s_tflux(:,:,:,Lwrk,it))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idTsur(it))), rec,         &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
         END IF
       END DO
 # endif
 #endif
-
-
-
-
-
 !
 !  If multiple files, close current file.
 !
@@ -3542,16 +3541,18 @@
 !  Surface tracers flux.
 !
       DO it=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              d_stflx(i,j,ir,it)=ad_tflux(i,j,ir,Lnew,it)
+        IF (Lstflux(it,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                d_stflx(i,j,ir,it)=ad_tflux(i,j,ir,Lnew,it)
 #  ifdef MASKING
-              d_stflx(i,j,ir,it)=d_stflx(i,j,ir,it)*rmask(i,j)
+                d_stflx(i,j,ir,it)=d_stflx(i,j,ir,it)*rmask(i,j)
 #  endif
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 #endif
@@ -4280,19 +4281,21 @@
 !  Surface tracers flux.
 !
       DO it=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)-        &
-     &                                 ad_tflux(i,j,ir,Lold,it)*        &
-     &                                 cg_Gnorm(outLoop)
+        IF (Lstflux(it,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)-      &
+     &                                   ad_tflux(i,j,ir,Lold,it)*      &
+     &                                   cg_Gnorm(outLoop)
 #  ifdef MASKING
-              ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)*        &
-     &                                 rmask(i,j)
+                ad_tflux(i,j,ir,Lnew,it)=ad_tflux(i,j,ir,Lnew,it)*      &
+     &                                   rmask(i,j)
 #  endif
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 #endif

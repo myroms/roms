@@ -196,23 +196,25 @@
 !  allow 4DVAR adjustments at other times in addition to initial time.
 !
       DO itrc=1,NT(ng)
-        scale=1.0_r8                        ! Celsius m/s
-        gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iADM, ncADJid(ng),                       &
-     &                     adjVid(idTsur(itrc),ng),                     &
-     &                     tADJindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
+        IF (Lstflux(itrc,ng)) THEN
+          scale=1.0_r8                      ! kinematic flux units
+          gtype=gfactor*r3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng),                     &
+     &                       adjVid(idTsur(itrc),ng),                   &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                       GRID(ng) % rmask,                          &
 #  endif
-     &                     FORCES(ng) % ad_tflux(:,:,:,Lfout(ng),itrc))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+     &                       FORCES(ng)% ad_tflux(:,:,:,Lfout(ng),itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
         END IF
       END DO
 # endif

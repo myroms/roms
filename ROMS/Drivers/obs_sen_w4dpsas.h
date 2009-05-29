@@ -217,6 +217,9 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary, ONLY : initialize_boundary
+#endif
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
       USE ini_adjust_mod, ONLY : load_ADtoTL
@@ -486,6 +489,9 @@
 #endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
+#ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#endif
             END DO
           END DO
 !$OMP END PARALLEL DO 
@@ -1005,7 +1011,8 @@
 !
           CALL wrt_ini (ng, Lnew(ng))
           IF (exit_flag.ne.NoError) RETURN
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS ||\
+     defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
           IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -1507,6 +1514,9 @@
 #endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
+#ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#endif
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1573,6 +1583,9 @@
 #endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
+#ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#endif
             END DO
           END DO
 !$OMP END PARALLEL DO

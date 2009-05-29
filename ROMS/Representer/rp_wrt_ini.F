@@ -436,25 +436,26 @@
 !  at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
-!!      scale=rho0*Cp
-        scale=1.0_r8
-        gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iRPM, ncIRPid(ng),                       &
-     &                     irpVid(idTsur(itrc),ng),                     &
-     &                     OutRec, gtype,                               &
-     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
+        IF (Lstflux(itrc,ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*r3dvar
+          status=nf_fwrite3d(ng, iRPM, ncIRPid(ng),                     &
+     &                       irpVid(idTsur(itrc),ng),                   &
+     &                       OutRec, gtype,                             &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                       GRID(ng) % rmask,                          &
 #   endif
-     &                     FORCES(ng) % tl_tflux(:,:,:,Tindex,itrc))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),              &
-     &                        OutRec
+     &                       FORCES(ng) % tl_tflux(:,:,:,Tindex,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
+     &                          OutRec
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
         END IF
       END DO
 #  endif

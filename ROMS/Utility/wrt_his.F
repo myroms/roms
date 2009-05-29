@@ -162,27 +162,29 @@
 !  at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
-        IF (itrc.eq.itemp) THEN
-          scale=rho0*Cp                     ! Celsius m/s to W/m2
-        ELSE
-          scale=1.0_r8
-        END IF
-        gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iNLM, ncHISid(ng),                       &
-     &                     hisVid(idTsur(itrc),ng),                     &
-     &                     tHISindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % tflux(:,:,:,Lfout(ng),itrc))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+        IF (Lstflux(itrc,ng)) THEN
+          IF (itrc.eq.itemp) THEN
+            scale=rho0*Cp                   ! Celsius m/s to W/m2
+          ELSE
+            scale=1.0_r8
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+          gtype=gfactor*r3dvar
+          status=nf_fwrite3d(ng, iNLM, ncHISid(ng),                     &
+     &                       hisVid(idTsur(itrc),ng),                   &
+     &                       tHISindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
+# ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+# endif
+     &                       FORCES(ng) % tflux(:,:,:,Lfout(ng),itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
         END IF
       END DO
 #endif

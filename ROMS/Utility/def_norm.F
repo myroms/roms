@@ -658,20 +658,23 @@
 !  Define surface tracer fluxes.
 !
           DO itrc=1,NT(ng)
-            Vinfo( 1)=Vname(1,idTsur(itrc))
-            WRITE (Vinfo( 2),20) TRIM(Vname(2,idTsur(itrc))), TRIM(Text)
-            Vinfo( 3)='nondimensional'
-            Vinfo(14)=Vname(4,idTsur(itrc))
-            Vinfo(16)=Vname(1,idtime)
+            IF (Lstflux(itrc,ng)) THEN
+              Vinfo( 1)=Vname(1,idTsur(itrc))
+              WRITE (Vinfo( 2),20) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             TRIM(Text)
+              Vinfo( 3)='nondimensional'
+              Vinfo(14)=Vname(4,idTsur(itrc))
+              Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_rho'
+              Vinfo(20)='mask_rho'
 #   endif
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(r2dvar,r8)
-            status=def_var(ng, iTLM, ncNRMid(ifile,ng),                 &
-     &                     nrmVid(ifile,idTsur(itrc),ng), NF_FOUT,      &
-     &                     nvd3, t2dgrd, Aval, Vinfo, ncname)
-            IF (exit_flag.ne.NoError) RETURN
+              Vinfo(22)='coordinates'
+              Aval(5)=REAL(r2dvar,r8)
+              status=def_var(ng, iTLM, ncNRMid(ifile,ng),               &
+     &                       nrmVid(ifile,idTsur(itrc),ng), NF_FOUT,    &
+     &                       nvd3, t2dgrd, Aval, Vinfo, ncname)
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
           END DO
 #  endif
 # endif
@@ -798,7 +801,7 @@
             ELSE IF (TRIM(var_name(i)).eq.                              &
      &               TRIM(Vname(1,idTsur(itrc)))) THEN
               got_var(idTsur(itrc))=.TRUE.
-               nrmVid(ifile,idTsur(itrc),ng)=var_id(i)
+              nrmVid(ifile,idTsur(itrc),ng)=var_id(i)
 #  endif
             END IF
           END DO
@@ -912,7 +915,8 @@
           END IF
 #  endif
 #  ifdef ADJUST_STFLUX
-          IF (.not.got_var(idTsur(itrc)).and.(ifile.eq.4)) THEN
+          IF (.not.got_var(idTsur(itrc)).and.(ifile.eq.4).and.          &
+     &        Lstflux(itrc,ng)) THEN
             IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3

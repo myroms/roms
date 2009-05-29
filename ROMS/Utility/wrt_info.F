@@ -81,11 +81,7 @@
 #endif
 
       character (len=1) :: char1
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
-    defined SO_SEMI
       character (len=1), dimension(NT(ng)) :: char1_trc
-#endif
 !
       SourceFile='wrt_info.F'
 !
@@ -634,15 +630,29 @@
 
 #ifdef FOUR_DVAR
 !
-!  Incremental 4DVAR parameters.
+!  4DVAR assimilation parameters.
 !
+# ifdef ADJUST_STFLUX
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lstflux',               &
+     &                      Lstflux(:,ng), (/1/), (/NT(ng)/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lobc',                  &
+     &                      Lobc(:,:,ng), (/1,1/), (/4,NstateVar(ng)/), &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
       CALL netcdf_put_fvar (ng, model, ncname, 'GradErr',               &
-     &                      Hgamma, (/0/), (/0/),                       &
+     &                      GradErr, (/0/), (/0/),                      &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'HevecErr',              &
-     &                      Hgamma, (/0/), (/0/),                       &
+     &                      HevecErr, (/0/), (/0/),                     &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
@@ -662,15 +672,50 @@
       IF (exit_flag.ne.NoError) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Hgamma',                &
-     &                      Hgamma, (/0/), (/0/),                       &
+     &                      Hgamma(1), (/0/), (/0/),                    &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-# ifdef SOLVE3D
-      CALL netcdf_put_fvar (ng, model, ncname, 'Vgamma',                &
-     &                      Vgamma, (/0/), (/0/),                       &
+# ifdef WEAK_CONSTRAINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'HgammaM',               &
+     &                      Hgamma(2), (/0/), (/0/),                    &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_BOUNDARY
+      CALL netcdf_put_fvar (ng, model, ncname, 'HgammaB',               &
+     &                      Hgamma(3), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef ADJUST_STFLUX
+      CALL netcdf_put_fvar (ng, model, ncname, 'HgammaF',               &
+     &                      Hgamma(4), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef SOLVE3D
+      CALL netcdf_put_fvar (ng, model, ncname, 'Vgamma',                &
+     &                      Vgamma(1), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef WEAK_CONSTRAINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'VgammaM',               &
+     &                      Vgamma(2), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  ifdef ADJUST_BOUNDARY
+      CALL netcdf_put_fvar (ng, model, ncname, 'VgammaB',               &
+     &                      Vgamma(3), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Hdecay',                &

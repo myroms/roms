@@ -189,59 +189,66 @@
 !
 !  Adjoint of surface tracer fluxes adjustmenst.
 !
+      IF (Lstflux(itemp,ng)) THEN
 #  ifdef QCORRECTION
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!>        tl_stflx(i,j,itemp)= tl_stflx(i,j,itemp)+                     &
-!>   &                         fac1*tl_tflux(i,j,it1,Linp,itemp)+       &
-!>   &                         fac2*tl_tflux(i,j,it2,Linp,itemp)
-!>
-          ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+    &
-     &                                 fac1*ad_stflx(i,j,itemp)
-          ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+    &
-     &                                 fac2*ad_stflx(i,j,itemp)
-        END DO
-      END DO
-#  else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!>        tl_stflx(i,j,itemp)=fac1*tl_tflux(i,j,it1,Linp,itemp)+        &
-!>   &                        fac2*tl_tflux(i,j,it2,Linp,itemp)
-!>
-          ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+    &
-     &                                 fac1*ad_stflx(i,j,itemp)
-          ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+    &
-     &                                 fac2*ad_stflx(i,j,itemp)
-          ad_stflx(i,j,itemp)=0.0_r8
-        END DO
-      END DO
-#  endif
-
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!>        tl_stflx(i,j,isalt)= tl_stflx(i,j,isalt)+                     &
-!>   &                         fac1*tl_tflux(i,j,it1,Linp,isalt)+       &
-!>   &                         fac2*tl_tflux(i,j,it2,Linp,isalt)
-!>
-          ad_tflux(i,j,it1,Linp,isalt)=ad_tflux(i,j,it1,Linp,isalt)+    &
-     &                                 fac1*ad_stflx(i,j,isalt)
-          ad_tflux(i,j,it2,Linp,isalt)=ad_tflux(i,j,it2,Linp,isalt)+    &
-     &                                 fac2*ad_stflx(i,j,isalt)
-        END DO
-      END DO
-      DO itrc=NAT+1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-!>          tl_stflx(i,j,itrc)=fac1*tl_tflux(i,j,it1,Linp,itrc)+        &
-!>   &                         fac2*tl_tflux(i,j,it2,Linp,itrc)
+!>          tl_stflx(i,j,itemp)=tl_stflx(i,j,itemp)+                    &
+!>   &                          fac1*tl_tflux(i,j,it1,Linp,itemp)+      &
+!>   &                          fac2*tl_tflux(i,j,it2,Linp,itemp)
 !>
-            ad_tflux(i,j,it1,Linp,itrc)=ad_tflux(i,j,it1,Linp,itrc)+    &
-     &                                  fac1*ad_stflx(i,j,itrc)
-            ad_tflux(i,j,it2,Linp,itrc)=ad_tflux(i,j,it2,Linp,itrc)+    &
-     &                                  fac2*ad_stflx(i,j,itrc)
-            ad_stflx(i,j,itrc)=0.0_r8
+            ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+  &
+     &                                   fac1*ad_stflx(i,j,itemp)
+            ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+  &
+     &                                   fac2*ad_stflx(i,j,itemp)
           END DO
         END DO
+#  else
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+!>          tl_stflx(i,j,itemp)=fac1*tl_tflux(i,j,it1,Linp,itemp)+      &
+!>   &                          fac2*tl_tflux(i,j,it2,Linp,itemp)
+!>
+            ad_tflux(i,j,it1,Linp,itemp)=ad_tflux(i,j,it1,Linp,itemp)+  &
+     &                                   fac1*ad_stflx(i,j,itemp)
+            ad_tflux(i,j,it2,Linp,itemp)=ad_tflux(i,j,it2,Linp,itemp)+  &
+     &                                   fac2*ad_stflx(i,j,itemp)
+            ad_stflx(i,j,itemp)=0.0_r8
+          END DO
+        END DO
+#  endif
+      END IF
+
+      IF (Lstflux(isalt,ng)) THEN
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+!>          tl_stflx(i,j,isalt)=tl_stflx(i,j,isalt)+                    &
+!>   &                          fac1*tl_tflux(i,j,it1,Linp,isalt)+      &
+!>   &                          fac2*tl_tflux(i,j,it2,Linp,isalt)
+!>
+            ad_tflux(i,j,it1,Linp,isalt)=ad_tflux(i,j,it1,Linp,isalt)+  &
+     &                                   fac1*ad_stflx(i,j,isalt)
+            ad_tflux(i,j,it2,Linp,isalt)=ad_tflux(i,j,it2,Linp,isalt)+  &
+     &                                   fac2*ad_stflx(i,j,isalt)
+          END DO
+        END DO
+      END IF
+
+      DO itrc=NAT+1,NT(ng)
+        IF (Lstflux(itrc,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+!>            tl_stflx(i,j,itrc)=fac1*tl_tflux(i,j,it1,Linp,itrc)+      &
+!>   &                           fac2*tl_tflux(i,j,it2,Linp,itrc)
+!>
+              ad_tflux(i,j,it1,Linp,itrc)=ad_tflux(i,j,it1,Linp,itrc)+  &
+     &                                    fac1*ad_stflx(i,j,itrc)
+              ad_tflux(i,j,it2,Linp,itrc)=ad_tflux(i,j,it2,Linp,itrc)+  &
+     &                                  fac2*ad_stflx(i,j,itrc)
+              ad_stflx(i,j,itrc)=0.0_r8
+            END DO
+          END DO
+        END IF
       END DO
 # endif
 

@@ -323,8 +323,8 @@
 !  Horizontal and vertical diffusion operator time-step size for
 !  spatial convolutions.
 !
-        real(r8), allocatable :: DTsizeH(:)
-        real(r8), allocatable :: DTsizeV(:)
+        real(r8), allocatable :: DTsizeH(:,:)
+        real(r8), allocatable :: DTsizeV(:,:)
 !
 !  Boundary conditions error covariance: Horizontal and vertical
 !  diffusion operator time-step size for spatial convolutions.
@@ -836,10 +836,10 @@
       allocate ( NVsteps(2,MstateVar) )
       NVsteps = 0
 
-      allocate ( DTsizeH(MstateVar) )
+      allocate ( DTsizeH(2,MstateVar) )
       DTsizeH = IniVal
 
-      allocate ( DTsizeV(MstateVar) )
+      allocate ( DTsizeV(2,MstateVar) )
       DTsizeV = IniVal
 
       allocate ( NVstepsB(4,MstateVar) )

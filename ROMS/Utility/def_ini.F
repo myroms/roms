@@ -99,34 +99,34 @@
       DO i=1,n_var
 #  ifdef ADJUST_BOUNDARY
         IF (TRIM(var_name(i)).eq.                                       &
-     &      TRIM(Vname(1,idSvar(isFsur)))) THEN
-          got_var(idSvar(isFsur))=.TRUE.
-          iniVid(idSvar(isFsur),ng)=var_id(i)
+     &      TRIM(Vname(1,idSbry(isFsur)))) THEN
+          got_var(idSbry(isFsur))=.TRUE.
+          iniVid(idSbry(isFsur),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isUbar)))) THEN
-          got_var(idSvar(isUbar))=.TRUE.
-          iniVid(idSvar(isUbar),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isUbar)))) THEN
+          got_var(idSbry(isUbar))=.TRUE.
+          iniVid(idSbry(isUbar),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isVbar)))) THEN
-          got_var(idSvar(isVbar))=.TRUE.
-          iniVid(idSvar(isVbar),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isVbar)))) THEN
+          got_var(idSbry(isVbar))=.TRUE.
+          iniVid(idSbry(isVbar),ng)=var_id(i)
 #   ifdef SOLVE3D
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isUvel)))) THEN
-          got_var(idSvar(isUvel))=.TRUE.
-          iniVid(idSvar(isUvel),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isUvel)))) THEN
+          got_var(idSbry(isUvel))=.TRUE.
+          iniVid(idSbry(isUvel),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isVvel)))) THEN
-          got_var(idSvar(isVvel))=.TRUE.
-          iniVid(idSvar(isVvel),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isVvel)))) THEN
+          got_var(idSbry(isVvel))=.TRUE.
+          iniVid(idSbry(isVvel),ng)=var_id(i)
 #   endif
         END IF
 #   ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (TRIM(var_name(i)).eq.                                     &
-     &        TRIM(Vname(1,idSvar(isTvar(itrc))))) THEN
-            got_var(idSvar(isTvar(itrc)))=.TRUE.
-            iniVid(idSvar(isTvar(itrc)),ng)=var_id(i)
+     &        TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
+            got_var(idSbry(isTvar(itrc)))=.TRUE.
+            iniVid(idSbry(isTvar(itrc)),ng)=var_id(i)
           END IF
         END DO
 #   endif
@@ -142,9 +142,11 @@
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
         DO itrc=1,NT(ng)
-          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
-            got_var(idTsur(itrc))=.TRUE.
-            iniVid(idTsur(itrc),ng)=var_id(i)
+          IF (Lstflux(itrc,ng)) THEN
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              iniVid(idTsur(itrc),ng)=var_id(i)
+            END IF
           END IF
         END DO
 #  endif
@@ -168,7 +170,9 @@
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
       DO itrc=1,NT(ng)
-        IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
+        IF (Lstflux(itrc,ng)) THEN
+          IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
+        END IF
       END DO
 #  endif
 !
@@ -472,7 +476,7 @@
 !  Define surface tracer flux.
 !
         DO itrc=1,NT(ng)
-          IF (.not.got_var(idTsur(itrc))) THEN
+          IF (.not.got_var(idTsur(itrc)).and.Lstflux(itrc,ng)) THEN
             Vinfo( 1)=Vname(1,idTsur(itrc))
             Vinfo( 2)=Vname(2,idTsur(itrc))
             Vinfo( 3)=Vname(3,idTsur(itrc))

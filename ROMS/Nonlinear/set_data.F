@@ -726,7 +726,7 @@
       IF (SOUTH_WEST_TEST) THEN
 #   ifdef WEST_FSOBC
         DO j=JLB,JUB
-          cff=Dcrit(ng)-GRID(ng)%h(0,j))
+          cff=Dcrit(ng)-GRID(ng)%h(0,j)
           IF (BOUNDARY(ng)%zeta_west(j).le.cff) THEN
             BOUNDARY(ng)%zeta_west(j)=cff
           END IF
@@ -1244,7 +1244,8 @@
 #  endif
 # endif
 
-# if defined W4DPSAS || defined NLM_OUTER
+# if defined W4DPSAS || defined NLM_OUTER || \
+     defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Set weak contraint forcing.

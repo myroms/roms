@@ -59,6 +59,7 @@
       USE mod_param
       USE mod_boundary
       USE mod_grid
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -226,11 +227,17 @@
      &                            GRID(ng)%vmask(Iend+1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_v(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_v_east(j,k)
+            IF (Lobc(ieast,isVvel,ng)) THEN
+!>            tl_v(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_v_east(j,k)
 !>
-            BOUNDARY(ng)%ad_v_east(j,k)=BOUNDARY(ng)%ad_v_east(j,k)+    &
-     &                                  ad_v(Iend+1,j,k,nout)
-            ad_v(Iend+1,j,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_v_east(j,k)=BOUNDARY(ng)%ad_v_east(j,k)+  &
+     &                                    ad_v(Iend+1,j,k,nout)
+              ad_v(Iend+1,j,k,nout)=0.0_r8
+            ELSE
+!>            tl_v(Iend+1,j,k,nout)=0.0_r8
+!>
+              ad_v(Iend+1,j,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_v(Iend+1,j,k,nout)=0.0_r8
 !>
@@ -367,11 +374,17 @@
      &                            GRID(ng)%vmask(Istr-1,j)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_v(Istr-1,j,k,nout)=BOUNDARY(ng)%tl_v_west(j,k)
+            IF (Lobc(iwest,isVvel,ng)) THEN
+!>            tl_v(Istr-1,j,k,nout)=BOUNDARY(ng)%tl_v_west(j,k)
 !>
-            BOUNDARY(ng)%ad_v_west(j,k)=BOUNDARY(ng)%ad_v_west(j,k)+    &
-     &                                  ad_v(Istr-1,j,k,nout)
-            ad_v(Istr-1,j,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_v_west(j,k)=BOUNDARY(ng)%ad_v_west(j,k)+  &
+     &                                    ad_v(Istr-1,j,k,nout)
+              ad_v(Istr-1,j,k,nout)=0.0_r8
+            ELSE
+!>            tl_v(Istr-1,j,k,nout)=0.0_r8
+!>
+              ad_v(Istr-1,j,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_v(Istr-1,j,k,nout)=0.0_r8
 !>
@@ -511,11 +524,17 @@
      &                            GRID(ng)%vmask(i,Jend+1)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_v(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_v_north(i,k)
+            IF (Lobc(inorth,isVvel,ng)) THEN
+!>            tl_v(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_v_north(i,k)
 !>
-            BOUNDARY(ng)%ad_v_north(i,k)=BOUNDARY(ng)%ad_v_north(i,k)+  &
-     &                                   ad_v(i,Jend+1,k,nout)
-            ad_v(i,Jend+1,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_v_north(i,k)=BOUNDARY(ng)%ad_v_north(i,k)+&
+     &                                     ad_v(i,Jend+1,k,nout)
+              ad_v(i,Jend+1,k,nout)=0.0_r8
+            ELSE
+!>            tl_v(i,Jend+1,k,nout)=0.0_r8
+!>
+              ad_v(i,Jend+1,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_v(i,Jend+1,k,nout)=0.0_r8
 !>
@@ -636,11 +655,17 @@
      &                          GRID(ng)%vmask(i,Jstr)
 #   endif
 #   ifdef ADJUST_BOUNDARY
-!>          tl_v(i,Jstr,k,nout)=BOUNDARY(ng)%tl_v_south(i,k)
+            IF (Lobc(isouth,isVvel,ng)) THEN
+!>            tl_v(i,Jstr,k,nout)=BOUNDARY(ng)%tl_v_south(i,k)
 !>
-            BOUNDARY(ng)%ad_v_south(i,k)=BOUNDARY(ng)%ad_v_south(i,k)+  &
-     &                                   ad_v(i,Jstr,k,nout)
-            ad_v(i,Jstr,k,nout)=0.0_r8
+              BOUNDARY(ng)%ad_v_south(i,k)=BOUNDARY(ng)%ad_v_south(i,k)+&
+     &                                     ad_v(i,Jstr,k,nout)
+              ad_v(i,Jstr,k,nout)=0.0_r8
+            ELSE
+!>            tl_v(i,Jstr,k,nout)=0.0_r8
+!>
+              ad_v(i,Jstr,k,nout)=0.0_r8
+            END IF
 #   else
 !>          tl_v(i,Jstr,k,nout)=0.0_r8
 !>

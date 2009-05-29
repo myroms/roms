@@ -624,7 +624,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isFsur)/ifac,    &
-     &                                   DTsizeH(isFsur),               &
+     &                                   DTsizeH(ifile,isFsur),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_u, pnom_v,        &
 # ifdef MASKING
@@ -641,7 +641,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isFsur)/ifac,    &
-     &                                   DTsizeH(isFsur),               &
+     &                                   DTsizeH(ifile,isFsur),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_u, pnom_v,        &
 # ifdef MASKING
@@ -735,7 +735,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isUbar)/ifac,    &
-     &                                   DTsizeH(isUbar),               &
+     &                                   DTsizeH(ifile,isUbar),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_r, pnom_p,        &
 # ifdef MASKING
@@ -752,7 +752,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isUbar)/ifac,    &
-     &                                   DTsizeH(isUbar),               &
+     &                                   DTsizeH(ifile,isUbar),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_r, pnom_p,        &
 # ifdef MASKING
@@ -846,7 +846,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isVbar)/ifac,    &
-     &                                   DTsizeH(isVbar),               &
+     &                                   DTsizeH(ifile,isVbar),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_p, pnom_r,        &
 # ifdef MASKING
@@ -863,7 +863,7 @@
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   NghostPoints,                  &
      &                                   NHsteps(ifile,isVbar)/ifac,    &
-     &                                   DTsizeH(isVbar),               &
+     &                                   DTsizeH(ifile,isVbar),         &
      &                                   Kh,                            &
      &                                   pm, pn, pmon_p, pnom_r,        &
 # ifdef MASKING
@@ -967,8 +967,8 @@
      &                                     NghostPoints,                &
      &                                     NHsteps(ifile,isUvel)/ifac,  &
      &                                     NVsteps(ifile,isUvel)/ifac,  &
-     &                                     DTsizeH(isUvel),             &
-     &                                     DTsizeV(isUvel),             &
+     &                                     DTsizeH(ifile,isUvel),       &
+     &                                     DTsizeV(ifile,isUvel),       &
      &                                     Kh, Kv,                      &
      &                                     pm, pn, pmon_r, pnom_p,      &
 #  ifdef MASKING
@@ -990,8 +990,8 @@
      &                                     NghostPoints,                &
      &                                     NHsteps(ifile,isUvel)/ifac,  &
      &                                     NVsteps(ifile,isUvel)/ifac,  &
-     &                                     DTsizeH(isUvel),             &
-     &                                     DTsizeV(isUvel),             &
+     &                                     DTsizeH(ifile,isUvel),       &
+     &                                     DTsizeV(ifile,isUvel),       &
      &                                     Kh, Kv,                      &
      &                                     pm, pn, pmon_r, pnom_p,      &
 #  ifdef MASKING
@@ -1095,8 +1095,8 @@
      &                                     NghostPoints,                &
      &                                     NHsteps(ifile,isVvel)/ifac,  &
      &                                     NVsteps(ifile,isVvel)/ifac,  &
-     &                                     DTsizeH(isVvel),             &
-     &                                     DTsizeV(isVvel),             &
+     &                                     DTsizeH(ifile,isVvel),       &
+     &                                     DTsizeV(ifile,isVvel),       &
      &                                     Kh, Kv,                      &
      &                                     pm, pn, pmon_p, pnom_r,      &
 #  ifdef MASKING
@@ -1118,8 +1118,8 @@
      &                                     NghostPoints,                &
      &                                     NHsteps(ifile,isVvel)/ifac,  &
      &                                     NVsteps(ifile,isVvel)/ifac,  &
-     &                                     DTsizeH(isVvel),             &
-     &                                     DTsizeV(isVvel),             &
+     &                                     DTsizeH(ifile,isVvel),       &
+     &                                     DTsizeV(ifile,isVvel),       &
      &                                     Kh, Kv,                      &
      &                                     pm, pn, pmon_p, pnom_r,      &
 #  ifdef MASKING
@@ -1248,8 +1248,8 @@
      &                                       NghostPoints,              &
      &                                       NHsteps(ifile,is)/ifac,    &
      &                                       NVsteps(ifile,is)/ifac,    &
-     &                                       DTsizeH(is),               &
-     &                                       DTsizeV(is),               &
+     &                                       DTsizeH(ifile,is),         &
+     &                                       DTsizeV(ifile,is),         &
      &                                       Kh, Kv,                    &
      &                                       pm, pn, pmon_u, pnom_v,    &
 #  ifdef MASKING
@@ -1271,8 +1271,8 @@
      &                                       NghostPoints,              &
      &                                       NHsteps(ifile,is)/ifac,    &
      &                                       NVsteps(ifile,is)/ifac,    &
-     &                                       DTsizeH(is),               &
-     &                                       DTsizeV(is),               &
+     &                                       DTsizeH(ifile,is),         &
+     &                                       DTsizeV(ifile,is),         &
      &                                       Kh, Kv,                    &
      &                                       pm, pn, pmon_u, pnom_v,    &
 #  ifdef MASKING
@@ -2316,7 +2316,7 @@
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
      &                                 NHsteps(rec,isUstr)/ifac,        &
-     &                                 DTsizeH(isUstr),                 &
+     &                                 DTsizeH(rec,isUstr),             &
      &                                 Kh,                              &
      &                                 pm, pn, pmon_r, pnom_p,          &
 #   ifdef MASKING
@@ -2333,7 +2333,7 @@
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
      &                                 NHsteps(rec,isUstr)/ifac,        &
-     &                                 DTsizeH(isUstr),                 &
+     &                                 DTsizeH(rec,isUstr),             &
      &                                 Kh,                              &
      &                                 pm, pn, pmon_r, pnom_p,          &
 #   ifdef MASKING
@@ -2427,7 +2427,7 @@
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
      &                                 NHsteps(rec,isVstr)/ifac,        &
-     &                                 DTsizeH(isVstr),                 &
+     &                                 DTsizeH(rec,isVstr),             &
      &                                 Kh,                              &
      &                                 pm, pn, pmon_p, pnom_r,          &
 #   ifdef MASKING
@@ -2444,7 +2444,7 @@
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
      &                                 NHsteps(rec,isVstr)/ifac,        &
-     &                                 DTsizeH(isVstr),                 &
+     &                                 DTsizeH(rec,isVstr),             &
      &                                 Kh,                              &
      &                                 pm, pn, pmon_p, pnom_r,          &
 #   ifdef MASKING
@@ -2492,8 +2492,10 @@
         IF (Master) THEN
           Lsame=.FALSE.
           DO itrc=1,NT(ng)
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) Lsame=.TRUE.
+            IF (Lstflux(itrc,ng)) THEN
+              is=isTsur(itrc)
+              IF (Cnorm(rec,is)) Lsame=.TRUE.
+            END IF
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
@@ -2532,104 +2534,110 @@
           END DO
         END DO
         DO itrc=1,UBt
-          is=isTsur(itrc)
-          IF (Cnorm(rec,is)) THEN
-            DO jc=Jmin,Jmax
-              DO ic=Imin,Imax
+          IF (Lstflux(itrc,ng)) THEN
+            is=isTsur(itrc)
+            IF (Cnorm(rec,is)) THEN
+              DO jc=Jmin,Jmax
+                DO ic=Imin,Imax
 #   ifdef MASKING
-                compute=0.0_r8
-                IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
-     &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                  IF (rmask(ic,jc).gt.0) compute=1.0_r8
-                END IF
+                  compute=0.0_r8
+                  IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
+     &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                    IF (rmask(ic,jc).gt.0) compute=1.0_r8
+                  END IF
 #    ifdef DISTRIBUTE
-                CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
+                  CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
 #    endif
 #   else
-                compute=1.0_r8
+                  compute=1.0_r8
 #   endif
-                IF (compute.gt.0.0_r8) THEN
-                  DO j=LBj,UBj
-                    DO i=LBi,UBi
-                      A2d(i,j)=0.0_r8
+                  IF (compute.gt.0.0_r8) THEN
+                    DO j=LBj,UBj
+                      DO i=LBi,UBi
+                        A2d(i,j)=0.0_r8
+                      END DO
                     END DO
-                  END DO
-                  IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
-     &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                    A2d(ic,jc)=Hscale(ic,jc)
-                  END IF
-                  CALL ad_conv_r2d_tile (ng, tile, iADM,                &
-     &                                   LBi, UBi, LBj, UBj,            &
-     &                                   IminS, ImaxS, JminS, JmaxS,    &
-     &                                   NghostPoints,                  &
-     &                                   NHsteps(rec,is)/ifac,          &
-     &                                   DTsizeH(is),                   &
-     &                                   Kh,                            &
-     &                                   pm, pn, pmon_u, pnom_v,        &
+                    IF (((Jstr.le.jc).and.(jc.le.Jend)).and.            &
+     &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                      A2d(ic,jc)=Hscale(ic,jc)
+                    END IF
+                    CALL ad_conv_r2d_tile (ng, tile, iADM,              &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     NghostPoints,                &
+     &                                     NHsteps(rec,is)/ifac,        &
+     &                                     DTsizeH(rec,is),             &
+     &                                     Kh,                          &
+     &                                     pm, pn, pmon_u, pnom_v,      &
 #   ifdef MASKING
-     &                                   rmask, umask, vmask,           &
+     &                                     rmask, umask, vmask,         &
 #   endif
-     &                                   A2d)
-                  DO j=JR_RANGE
-                    DO i=IR_RANGE
-                      A2d(i,j)=A2d(i,j)*Hscale(i,j)
+     &                                     A2d)
+                    DO j=JR_RANGE
+                      DO i=IR_RANGE
+                        A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                      END DO
                     END DO
-                  END DO
-                  CALL tl_conv_r2d_tile (ng, tile, iTLM,                &
-     &                                   LBi, UBi, LBj, UBj,            &
-     &                                   IminS, ImaxS, JminS, JmaxS,    &
-     &                                   NghostPoints,                  &
-     &                                   NHsteps(rec,is)/ifac,          &
-     &                                   DTsizeH(is),                   &
-     &                                   Kh,                            &
-     &                                   pm, pn, pmon_u, pnom_v,        &
+                    CALL tl_conv_r2d_tile (ng, tile, iTLM,              &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     NghostPoints,                &
+     &                                     NHsteps(rec,is)/ifac,        &
+     &                                     DTsizeH(rec,is),             &
+     &                                     Kh,                          &
+     &                                     pm, pn, pmon_u, pnom_v,      &
 #   ifdef MASKING
-     &                                   rmask, umask, vmask,           &
+     &                                     rmask, umask, vmask,         &
 #   endif
-     &                                   A2d)
-                  IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
-     &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                    cff=1.0_r8/SQRT(A2d(ic,jc))
-                  END IF
-                ELSE
-                  cff=0.0_r8
-                END IF
-                IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
-     &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                  IF (Lsame) THEN
-                    DO ntrc=1,NT(ng)
-                      HnormSTF(ic,jc,ntrc)=cff
-                    END DO
+     &                                     A2d)
+                    IF (((Jstr.le.jc).and.(jc.le.Jend)).and.            &
+     &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                      cff=1.0_r8/SQRT(A2d(ic,jc))
+                    END IF
                   ELSE
-                    HnormSTF(ic,jc,itrc)=cff
+                    cff=0.0_r8
                   END IF
-                END IF
+                  IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
+     &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                    IF (Lsame) THEN
+                      DO ntrc=1,NT(ng)
+                        IF (Lstflux(ntrc,ng)) THEN
+                          HnormSTF(ic,jc,ntrc)=cff
+                        END IF
+                      END DO
+                    ELSE
+                      HnormSTF(ic,jc,itrc)=cff
+                    END IF
+                  END IF
+                END DO
               END DO
-            END DO
+            END IF
           END IF
         END DO
         DO itrc=1,NT(ng)
-          is=isTsur(itrc)
-          IF (Cnorm(rec,is)) THEN
-            CALL bc_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        HnormSTF(:,:,itrc))
-#   ifdef DISTRIBUTE
-            CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
+          IF (Lstflux(itrc,ng)) THEN
+            is=isTsur(itrc)
+            IF (Cnorm(rec,is)) THEN
+              CALL bc_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
      &                          HnormSTF(:,:,itrc))
+#   ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            HnormSTF(:,:,itrc))
 #   endif
-            CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
-     &                       LBi, UBi, LBj, UBj, idTsur(itrc),          &
-     &                       ncNRMid(ifile,ng),                         &
-     &                       nrmVid(ifile,idTsur(itrc),ng),             &
-     &                       tNRMindx(ifile,ng),                        &
+              CALL wrt_norm2d (ng, tile, iTLM, ncname,                  &
+     &                         LBi, UBi, LBj, UBj, idTsur(itrc),        &
+     &                         ncNRMid(ifile,ng),                       &
+     &                         nrmVid(ifile,idTsur(itrc),ng),           &
+     &                         tNRMindx(ifile,ng),                      &
 #   ifdef MASKING
-     &                       rmask,                                     &
+     &                         rmask,                                   &
 #   endif
-     &                       HnormSTF(:,:,itrc))
-            IF (exit_flag.ne.NoError) RETURN
+     &                         HnormSTF(:,:,itrc))
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
           END IF
         END DO
 #  endif
@@ -3029,7 +3037,7 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               NghostPoints,                      &
      &                               NHsteps(ifile,isFsur)/ifac,        &
-     &                               DTsizeH(isFsur),                   &
+     &                               DTsizeH(ifile,isFsur),             &
      &                               Kh,                                &
      &                               pm, pn, pmon_u, pnom_v,            &
 # ifdef MASKING
@@ -3109,7 +3117,7 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               NghostPoints,                      &
      &                               NHsteps(ifile,isUbar)/ifac,        &
-     &                               DTsizeH(isUbar),                   &
+     &                               DTsizeH(ifile,isUbar),             &
      &                               Kh,                                &
      &                               pm, pn, pmon_r, pnom_p,            &
 # ifdef MASKING
@@ -3189,7 +3197,7 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               NghostPoints,                      &
      &                               NHsteps(ifile,isVbar)/ifac,        &
-     &                               DTsizeH(isVbar),                   &
+     &                               DTsizeH(ifile,isVbar),             &
      &                               Kh,                                &
      &                               pm, pn, pmon_p, pnom_r,            &
 # ifdef MASKING
@@ -3277,8 +3285,8 @@
      &                               NghostPoints,                      &
      &                               NHsteps(ifile,isUvel)/ifac,        &
      &                               NVsteps(ifile,isUvel)/ifac,        &
-     &                               DTsizeH(isUvel),                   &
-     &                               DTsizeV(isUvel),                   &
+     &                               DTsizeH(ifile,isUvel),             &
+     &                               DTsizeV(ifile,isUvel),             &
      &                               Kh, Kv,                            &
      &                               pm, pn, pmon_r, pnom_p,            &
 #  ifdef MASKING
@@ -3371,8 +3379,8 @@
      &                               NghostPoints,                      &
      &                               NHsteps(ifile,isVvel)/ifac,        &
      &                               NVsteps(ifile,isVvel)/ifac,        &
-     &                               DTsizeH(isVvel),                   &
-     &                               DTsizeV(isVvel),                   &
+     &                               DTsizeH(ifile,isVvel),             &
+     &                               DTsizeV(ifile,isVvel),             &
      &                               Kh, Kv,                            &
      &                               pm, pn, pmon_p, pnom_r,            &
 #  ifdef MASKING
@@ -3503,8 +3511,8 @@
      &                                 NghostPoints,                    &
      &                                 NHsteps(ifile,is)/ifac,          &
      &                                 NVsteps(ifile,is)/ifac,          &
-     &                                 DTsizeH(is),                     &
-     &                                 DTsizeV(is),                     &
+     &                                 DTsizeH(ifile,is),               &
+     &                                 DTsizeV(ifile,is),               &
      &                                 Kh, Kv,                          &
      &                                 pm, pn, pmon_u, pnom_v,          &
 #  ifdef MASKING
@@ -4589,7 +4597,7 @@
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             NghostPoints,                        &
      &                             NHsteps(rec,isUstr)/ifac,            &
-     &                             DTsizeH(isUstr),                     &
+     &                             DTsizeH(rec,isUstr),                 &
      &                             Kh,                                  &
      &                             pm, pn, pmon_r, pnom_p,              &
 #   ifdef MASKING
@@ -4669,7 +4677,7 @@
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             NghostPoints,                        &
      &                             NHsteps(rec,isVstr)/ifac,            &
-     &                             DTsizeH(isVstr),                     &
+     &                             DTsizeH(rec,isVstr),                 &
      &                             Kh,                                  &
      &                             pm, pn, pmon_p, pnom_r,              &
 #   ifdef MASKING
@@ -4726,8 +4734,10 @@
         IF (Master) THEN
           Lsame=.FALSE.
           DO itrc=1,NT(ng)
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) Lsame=.TRUE.
+            IF (Lstflux(itrc,ng)) THEN
+              is=isTsur(itrc)
+              IF (Cnorm(rec,is)) Lsame=.TRUE.
+            END IF
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
@@ -4762,92 +4772,98 @@
           END DO
         END DO
         DO itrc=1,UBt
-          is=isTsur(itrc)
-          IF (Cnorm(rec,is)) THEN
-            DO j=JR_RANGE
-              DO i=IR_RANGE
-                A2davg(i,j)=0.0_r8
-                A2dsqr(i,j)=0.0_r8
-              END DO
-            END DO
-            DO iter=1,Nrandom
-              CALL white_noise2d (ng, iTLM, r2dvar, Rscheme(ng),        & 
-     &                            IstrR, IendR, JstrR, JendR,           &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            Amin, Amax, A2d)
+          IF (Lstflux(itrc,ng)) THEN
+            is=isTsur(itrc)
+            IF (Cnorm(rec,is)) THEN
               DO j=JR_RANGE
                 DO i=IR_RANGE
-                  A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                  A2davg(i,j)=0.0_r8
+                  A2dsqr(i,j)=0.0_r8
                 END DO
               END DO
-              CALL tl_conv_r2d_tile (ng, tile, iTLM,                    &
-     &                               LBi, UBi, LBj, UBj,                &
-     &                               IminS, ImaxS, JminS, JmaxS,        &
-     &                               NghostPoints,                      &
-     &                               NHsteps(rec,is)/ifac,              &
-     &                               DTsizeH(is),                       &
-     &                               Kh,                                &
-     &                               pm, pn, pmon_u, pnom_v,            &
+              DO iter=1,Nrandom
+                CALL white_noise2d (ng, iTLM, r2dvar, Rscheme(ng),      &
+     &                              IstrR, IendR, JstrR, JendR,         &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              Amin, Amax, A2d)
+                DO j=JR_RANGE
+                  DO i=IR_RANGE
+                    A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                  END DO
+                END DO
+                CALL tl_conv_r2d_tile (ng, tile, iTLM,                  &
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 IminS, ImaxS, JminS, JmaxS,      &
+     &                                 NghostPoints,                    &
+     &                                 NHsteps(rec,is)/ifac,            &
+     &                                 DTsizeH(rec,is),                 &
+     &                                 Kh,                              &
+     &                                 pm, pn, pmon_u, pnom_v,          &
 #   ifdef MASKING
-     &                               rmask, umask, vmask,               &
+     &                                 rmask, umask, vmask,             &
 #   endif
-     &                               A2d)
+     &                                 A2d)
+                DO j=Jstr,Jend
+                  DO i=Istr,Iend
+                    A2davg(i,j)=A2davg(i,j)+A2d(i,j)
+                    A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
+                  END DO
+                END DO
+              END DO
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  A2davg(i,j)=A2davg(i,j)+A2d(i,j)
-                  A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
+                  Aavg=FacAvg*A2davg(i,j)
+#   ifdef MASKING
+                  IF (rmask(i,j).gt.0.0_r8) THEN
+!!                  HnormSTF(i,j,itrc)=FacSqr/                          &
+!!   &                                 SQRT(A2dsqr(i,j)-Aavg*Aavg)
+                    HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
+                  ELSE
+                    HnormSTF(i,j,itrc)=0.0_r8
+                  END IF
+#   else
+!!                HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+                  HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
+#   endif
                 END DO
               END DO
-            END DO
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
-                Aavg=FacAvg*A2davg(i,j)
-#   ifdef MASKING
-                IF (rmask(i,j).gt.0.0_r8) THEN
-!!                HnormSTF(i,j,itrc)=FacSqr/                            &
-!!   &                               SQRT(A2dsqr(i,j)-Aavg*Aavg)
-                  HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
-                ELSE
-                  HnormSTF(i,j,itrc)=0.0_r8
-                END IF
-#   else
-!!              HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
-                HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
-#   endif
-              END DO
-            END DO
+            END IF
           END IF
         END DO
         IF (Lsame) THEN
           DO itrc=2,NT(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
-                HnormSTF(i,j,itrc)=HnormSTF(i,j,1)
+            IF (Lstflux(itrc,ng)) THEN
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  HnormSTF(i,j,itrc)=HnormSTF(i,j,1)
+                END DO
               END DO
-            END DO
+            END IF
           END DO
         END IF
         DO itrc=1,NT(ng)
-          is=isTsur(itrc)
-          IF (Cnorm(rec,is)) THEN
-            CALL bc_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        HnormSTF(:,:,itrc))
-#   ifdef DISTRIBUTE
-            CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
+          IF (Lstflux(itrc,ng)) THEN
+            is=isTsur(itrc)
+            IF (Cnorm(rec,is)) THEN
+              CALL bc_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
      &                          HnormSTF(:,:,itrc))
+#   ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            HnormSTF(:,:,itrc))
 #   endif
-            CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
-     &                       LBi, UBi, LBj, UBj, idTsur(itrc),          &
-     &                       ncNRMid(ifile,ng),                         &
-     &                       nrmVid(ifile,idTsur(itrc),ng),             &
-     &                       tNRMindx(ifile,ng),                        &
+              CALL wrt_norm2d (ng, tile, iTLM, ncname,                  &
+     &                         LBi, UBi, LBj, UBj, idTsur(itrc),        &
+     &                         ncNRMid(ifile,ng),                       &
+     &                         nrmVid(ifile,idTsur(itrc),ng),           &
+     &                         tNRMindx(ifile,ng),                      &
 #   ifdef MASKING
-     &                       rmask,                                     &
+     &                         rmask,                                   &
 #   endif
-     &                       HnormSTF(:,:,itrc))
+     &                         HnormSTF(:,:,itrc))
+            END IF
           END IF
         END DO
 #  endif

@@ -14,7 +14,8 @@
 !  Lbinp     Open boundary adjustment input  fields index.             !
 !  Lbout     Open boundary adjustment output fields index.             !
 #endif
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
 !  Lfinp     Surface forcing adjustment input  fields index.           !
 !  Lfout     Surface forcing adjustment output fields index.           !
 #endif
@@ -78,7 +79,8 @@
         integer, dimension(Ngrids) :: Lbinp = (/ (1, ig=1,Ngrids) /)
         integer, dimension(Ngrids) :: Lbout = (/ (1, ig=1,Ngrids) /)
 #endif
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
         integer, dimension(Ngrids) :: Lfinp = (/ (1, ig=1,Ngrids) /)
         integer, dimension(Ngrids) :: Lfout = (/ (1, ig=1,Ngrids) /)
 #endif

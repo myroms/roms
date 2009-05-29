@@ -270,7 +270,7 @@
       END IF
 # endif
 
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# ifdef ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
 !  Interpolate surface forcing increments and adjust surface forcing.

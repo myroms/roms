@@ -54,6 +54,12 @@
         MODULE PROCEDURE netcdf_put_ivar_2d
       END INTERFACE netcdf_put_ivar
 
+      INTERFACE netcdf_put_lvar
+        MODULE PROCEDURE netcdf_put_lvar_0d
+        MODULE PROCEDURE netcdf_put_lvar_1d
+        MODULE PROCEDURE netcdf_put_lvar_2d
+      END INTERFACE netcdf_put_lvar
+
       INTERFACE netcdf_put_svar
         MODULE PROCEDURE netcdf_put_svar_0d
         MODULE PROCEDURE netcdf_put_svar_1d
@@ -573,6 +579,11 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
+
+#ifdef FOUR_DVAR
+!
+      USE strings_mod, ONLY : find_string
+#endif
 !
 !  Imported variable declarations.
 !
@@ -587,7 +598,7 @@
 
       real(r8), parameter :: RoundOff = 1.0e-7_r8
 
-      real(r8) :: FvarS, FvarV(50)
+      real(r8) :: FvarS, FvarV(50), VarVal
 
       character (len=80) :: text
 !
@@ -691,33 +702,140 @@
 #ifdef FOUR_DVAR
           CASE ('Hgamma')
             IF ((model.eq.5).or.(model.eq.10).or.(model.eq.11)) THEN
+              IF (.not.find_string(var_name,n_var,'HgammaM',ic)         &
+     &            .and.(model.eq.5).and.(NSA.eq.2)) THEN
+                VarVal=Hgamma(2)
+# ifdef ADJUST_BOUNDARY
+              ELSE IF (.not.find_string(var_name,n_var,'HgammaB',ic)    &
+     &                 .and.(model.eq.10)) THEN
+                VarVal=Hgamma(3)
+# endif
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+              ELSE IF (.not.find_string(var_name,n_var,'HgammaF',ic)    &
+     &                 .and.(model.eq.11)) THEN
+                VarVal=Hgamma(4)
+# endif
+              ELSE                   ! Backward compatability logic
+                VarVal=Hgamma(1)     ! for a single Hgamma value
+              END IF 
               CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
 
-              IF (ABS(Hgamma-FvarS).gt.RoundOff) THEN
+              IF (ABS(VarVal-FvarS).gt.RoundOff) THEN
                 IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
-     &                                        FvarS, Hgamma,            &
+     &                                        FvarS, VarVal,            &
      &                                        TRIM(ncname)
                 exit_flag=5
                 EXIT
               END IF
             END IF
+# ifdef WEAK_CONSTRAINT
+          CASE ('HgammaM')
+            IF (model.eq.5) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (ABS(Hgamma(2)-FvarS).gt.RoundOff) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Hgamma(2),         &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+# endif
+# ifdef ADJUST_BOUNDARY
+          CASE ('HgammaB')
+            IF (model.eq.10) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (ABS(Hgamma(3)-FvarS).gt.RoundOff) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Hgamma(3),         &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+# endif
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+          CASE ('HgammaF')
+            IF (model.eq.11) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (ABS(Hgamma(4)-FvarS).gt.RoundOff) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Hgamma(4),         &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+# endif
 # ifdef SOLVE3D
           CASE ('Vgamma')
-            IF ((model.eq.5).or.(model.eq.10).or.(model.eq.11)) THEN
+            IF ((model.eq.5).or.(model.eq.10)) THEN
+              IF (.not.find_string(var_name,n_var,'VgammaM',ic)         &
+     &            .and.(model.eq.5).and.(NSA.eq.2)) THEN
+                VarVal=Vgamma(2)
+# ifdef ADJUST_BOUNDARY
+              ELSE IF (.not.find_string(var_name,n_var,'VgammaB',ic)    &
+     &                 .and.(model.eq.10)) THEN
+                VarVal=Vgamma(3)
+# endif
+              ELSE                   ! Backward compatability logic
+                VarVal=Vgamma(1)     ! for a single Vgamma value
+              END IF 
               CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
 
-              IF (ABS(FvarS-Vgamma).gt.RoundOff) THEN
+              IF (ABS(FvarS-VarVal).gt.RoundOff) THEN
                 IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
-     &                                        FvarS, Vgamma,            &
+     &                                        FvarS, VarVal,            &
      &                                        TRIM(ncname)
                 exit_flag=5
                 EXIT
               END IF
             END IF
+#  ifdef WEAK_CONSTRAINT
+          CASE ('VgammaM')
+            IF (model.eq.5) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (ABS(FvarS-Vgamma(2)).gt.RoundOff) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Vgamma(2),         &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+#  endif
+#  ifdef ADJUST_BOUNDARY
+          CASE ('VgammaB')
+            IF (model.eq.5) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+              IF (exit_flag.ne.NoError) RETURN
+
+              IF (ABS(FvarS-Vgamma(3)).gt.RoundOff) THEN
+                IF (Master) WRITE (stdout,20) TRIM(var_name(i)),        &
+     &                                        FvarS, Vgamma(3),         &
+     &                                        TRIM(ncname)
+                exit_flag=5
+                EXIT
+              END IF
+            END IF
+#  endif
 # endif
           CASE ('Hdecay')
             IF ((model.eq.5).or.(model.eq.11)) THEN
@@ -3999,6 +4117,453 @@
       RETURN
       END SUBROUTINE netcdf_put_ivar_2d
 
+      SUBROUTINE netcdf_put_lvar_0d (ng, model, ncname, myVarName, A,   &
+     &                               start, total, ncid, varid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes a logical scalar variable into a NetCDF file.   !
+!  If the NetCDF ID is not provided, it opens the file, writes data,   !
+!  and then closes the file.                                           !
+!                                                                      !
+!  The input logical data is converted to integer such that .FALSE.    !
+!  is interpreted as zero, and .TRUE. is interpreted as one.           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (logical)               !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+      USE netcdf
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in) :: start(:), total(:)
+
+      integer, intent(in), optional :: ncid, varid
+
+      logical, intent(in) :: A
+
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+!  Local variable declarations.
+!
+      integer :: my_ncid, my_varid, status
+
+      integer :: AI
+      integer, dimension(1) :: my_AI
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point scalar variable.
+!-----------------------------------------------------------------------
+!
+!  If file ID is not provided, open file for writing.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 1, my_ncid)
+        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  If variable ID is not provided, inquire its value.
+!
+      IF (OutThread) THEN
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_varid=varid
+        END IF
+!
+!  Convert logical data to integer: .FALSE. is interpreted as zero, and
+!  .TRUE. is interpreted as one.
+!
+        IF (A) THEN
+          AI=1
+        ELSE
+          AI=0
+        END IF 
+!
+!  Write out logical data as integers.
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
+            status=nf90_put_var(my_ncid, my_varid, AI)
+          ELSE
+            my_AI(1)=AI
+            status=nf90_put_var(my_ncid, my_varid, my_AI, start, total)
+          END IF
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
+     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while writing variable:',  &
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+
+      RETURN
+      END SUBROUTINE netcdf_put_lvar_0d
+
+      SUBROUTINE netcdf_put_lvar_1d (ng, model, ncname, myVarName, A,   &
+     &                               start, total, ncid, varid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes a logical 1D-array variable into a file. If     !
+!  the NetCDF ID is not provided, it opens the file,  writes data,     !
+!  and then closes the file.                                           !
+!                                                                      !
+!  The input logical data is converted to integer such that .FALSE.    !
+!  is interpreted as zero, and .TRUE. is interpreted as one.           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (logical)               !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+      USE netcdf
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in) :: start(:), total(:)
+
+      integer, intent(in), optional :: ncid, varid
+
+      logical, intent(in) :: A(:)
+
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+!  Local variable declarations.
+!
+      integer :: i, my_ncid, my_varid, status
+
+      integer, dimension(SIZE(A,1)) :: AI
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point scalar variable.
+!-----------------------------------------------------------------------
+!
+!  If file ID is not provided, open file for writing.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 1, my_ncid)
+        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  If variable ID is not provided, inquire its value.
+!
+      IF (OutThread) THEN
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_varid=varid
+        END IF
+!
+!  Convert logical data to integer: .FALSE. is interpreted as zero, and
+!  .TRUE. is interpreted as one.
+!
+        DO i=1,SIZE(A,1)
+          IF (A(i)) THEN
+            AI(i)=1
+          ELSE
+            AI(i)=0
+          END IF
+        END DO
+!
+!  Write out logical data as integers.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_var(my_ncid, my_varid, AI, start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
+     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while writing variable:',  &
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+
+      RETURN
+      END SUBROUTINE netcdf_put_lvar_1d
+
+      SUBROUTINE netcdf_put_lvar_2d (ng, model, ncname, myVarName, A,   &
+     &                               start, total, ncid, varid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes a logical 2D-array variable into a file. If     !
+!  the NetCDF ID is not provided, it opens the file,  writes data,     !
+!  and then closes the file.                                           !
+!                                                                      !
+!  The input logical data is converted to integer such that .FALSE.    !
+!  is interpreted as zero, and .TRUE. is interpreted as one.           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (logical)               !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+      USE netcdf
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in) :: start(:), total(:)
+
+      integer, intent(in), optional :: ncid, varid
+
+      logical, intent(in) :: A(:,:)
+
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+!  Local variable declarations.
+!
+      integer :: i, j, my_ncid, my_varid, status
+
+      integer, dimension(SIZE(A,1),SIZE(A,2)) :: AI
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point scalar variable.
+!-----------------------------------------------------------------------
+!
+!  If file ID is not provided, open file for writing.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 1, my_ncid)
+        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  If variable ID is not provided, inquire its value.
+!
+      IF (OutThread) THEN
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_varid=varid
+        END IF
+!
+!  Convert logical data to integer: .FALSE. is interpreted as zero, and
+!  .TRUE. is interpreted as one.
+!
+        DO j=1,SIZE(A,2)
+          DO i=1,SIZE(A,1)
+            IF (A(i,j)) THEN
+              AI(i,j)=1
+            ELSE
+              AI(i,j)=0
+            END IF
+          END DO
+        END DO
+!
+!  Write out logical data as integers.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_var(my_ncid, my_varid, AI, start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
+     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while writing variable:',  &
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+
+      RETURN
+      END SUBROUTINE netcdf_put_lvar_2d
+
       SUBROUTINE netcdf_put_svar_0d (ng, model, ncname, myVarName, A,   &
      &                               start, total, ncid, varid)
 !
@@ -4147,7 +4712,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
-!     A            Data value(s) to be written (string)                !
+!     A            Data value(s) to be written (1D string array)       !
 !     start        Starting index where the first of the data values   !
 !                    will be written along each dimension (integer)    !
 !     total        Number of data values to be written along each      !
@@ -4231,7 +4796,7 @@
           mystart(1)=1
           mytotal(1)=LEN_TRIM(A(1))
           mystart(2)=start(1)
-          mytotal(2)=total(1)         
+          mytotal(2)=total(1)
           status=nf90_put_var(my_ncid, my_varid, A, mystart, mytotal)
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &

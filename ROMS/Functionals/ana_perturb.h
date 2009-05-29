@@ -570,9 +570,9 @@
               IF ((ivarAD.eq.isUstr).and.                               &
      &            (i.eq.IperAD).and.(j.eq.JperAD).and.                  &
      &            (ir.eq.KperAD)) THEN
-                ad_ustr(i,j,k,knew)=1.0_r8
+                ad_ustr(i,j,ir,knew)=1.0_r8
               ELSE
-                ad_ustr(i,j,k,knew)=0.0_r8
+                ad_ustr(i,j,ir,knew)=0.0_r8
               END IF
             END DO
           END DO
@@ -581,9 +581,9 @@
               IF ((ivarAD.eq.isVstr).and.                               &
      &            (i.eq.IperAD).and.(j.eq.JperAD).and.                  &
      &            (ir.eq.KperAD)) THEN
-                ad_vstr(i,j,k,knew)=1.0_r8
+                ad_vstr(i,j,ir,knew)=1.0_r8
               ELSE
-                ad_vstr(i,j,k,knew)=0.0_r8
+                ad_vstr(i,j,ir,knew)=0.0_r8
               END IF
             END DO
           END DO

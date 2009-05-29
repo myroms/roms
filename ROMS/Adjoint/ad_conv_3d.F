@@ -754,7 +754,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -1358,7 +1358,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV

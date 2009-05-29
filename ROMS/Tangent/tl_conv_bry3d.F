@@ -163,7 +163,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -535,11 +535,11 @@
 !>
                 tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
 !>              Awrk(i,k,Nnew)=Awrk(i,k,Nold)+                          &
-!>   &                         DTsizeV*oHz(i,j,k)*                      &
+!>   &                         DTsizeV*oHz(i,k)*                        &
 !>   &                         (DC(i,k)-DC(i,k-1))
 !>
                 tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-     &                            DTsizeV*oHz(i,j,k)*                   &
+     &                            DTsizeV*oHz(i,k)*                     &
      &                            (tl_DC(i,k)-tl_DC(i,k-1))
               END DO
             END DO
@@ -950,7 +950,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -1223,9 +1223,9 @@
             DO i=IstrU,Iend
               DO k=1,N(ng)-1
                 FC(i,k)=cff1*(Hz(i-1,j,k  )+Hz(i,j,k  ))-               &
-     &                  DTsizeV*Kv(i,j,k-1)*oHz(j,k  )
+     &                  DTsizeV*Kv(i,j,k-1)*oHz(i,k  )
                 CF(i,k)=cff1*(Hz(i-1,j,k+1)+Hz(i,j,k+1))-               &
-     &                  DTsizeV*Kv(i,j,k+1)*oHz(j,k+1)
+     &                  DTsizeV*Kv(i,j,k+1)*oHz(i,k+1)
               END DO
               CF(i,0)=0.0_r8
 !>            DC(i,0)=0.0_r8
@@ -1264,7 +1264,7 @@
                 BC(i,k)=cff1*(Hz(i-1,j,k  )+Hz(i,j,k  )+                &
      &                        Hz(i-1,j,k+1)+Hz(i,j,k+1))+               &
      &                  DTsizeV*Kv(i,j,k)*                              &
-     &                  (oHz(j,k)+oHz(j,k+1))
+     &                  (oHz(i,k)+oHz(i,k+1))
                 cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
                 CF(i,k)=cff*CF(i,k)
 !>              DC(i,k)=cff*(Awrk(i,k+1,Nold)-                          &
@@ -1328,11 +1328,11 @@
 !>
                 tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
 !>              Awrk(i,k,Nnew)=Awrk(i,k,Nold)+                          &
-!>   &                         DTsizeV*oHz(i,j,k)*                      &
+!>   &                         DTsizeV*oHz(i,k)*                        &
 !>   &                         (DC(i,k)-DC(i,k-1))
 !>
                 tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-     &                            DTsizeV*oHz(i,j,k)*                   &
+     &                            DTsizeV*oHz(i,k)*                     &
      &                            (tl_DC(i,k)-tl_DC(i,k-1))
               END DO
             END DO
@@ -1744,7 +1744,7 @@
 #  ifndef SPLINES_VCONV
       real(r8), dimension(LBij:UBij,0:N(ng)) :: FC
 #  endif
-#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(LBij:UBij,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
@@ -1776,6 +1776,7 @@
 !  used for efficiency.
 !
       IF (Lconvolve(boundary)) THEN
+        cff=DTsizeH*0.25_r8
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=JstrV-1,Jend+1
@@ -2018,9 +2019,9 @@
             DO i=Istr,Iend
               DO k=1,N(ng)-1
                 FC(i,k)=cff1*(Hz(i,j-1,k  )+Hz(i,j,k  ))-               &
-     &                  DTsizeV*Kv(i,j,k-1)*oHz(j,k  )
+     &                  DTsizeV*Kv(i,j,k-1)*oHz(i,k  )
                 CF(i,k)=cff1*(Hz(i,j-1,k+1)+Hz(i,j,k+1))-               &
-     &                  DTsizeV*Kv(i,j,k+1)*oHz(j,k+1)
+     &                  DTsizeV*Kv(i,j,k+1)*oHz(i,k+1)
               END DO
               CF(i,0)=0.0_r8
 !>            DC(i,0)=0.0_r8
@@ -2123,11 +2124,11 @@
 !>
                 tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
 !>              Awrk(i,k,Nnew)=Awrk(i,k,Nold)+                          &
-!>   &                         DTsizeV*oHz(i,j,k)*                      &
+!>   &                         DTsizeV*oHz(i,k)*                        &
 !>   &                         (DC(i,k)-DC(i,k-1))
 !>
                 tl_Awrk(i,k,Nnew)=tl_Awrk(i,k,Nold)+                    &
-     &                            DTsizeV*oHz(i,j,k)*                   &
+     &                            DTsizeV*oHz(i,k)*                     &
      &                            (tl_DC(i,k)-tl_DC(i,k-1))
               END DO
             END DO

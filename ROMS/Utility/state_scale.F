@@ -586,17 +586,19 @@
 !  Surface tracers flux.
 !
       DO it=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              s_tflux(i,j,ir,Lout,it)=fac*s_tflux(i,j,ir,Linp,it)
+        IF (Lstflux(it,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                s_tflux(i,j,ir,Lout,it)=fac*s_tflux(i,j,ir,Linp,it)
 #  ifdef MASKING
-              s_tflux(i,j,ir,Lout,it)=s_tflux(i,j,ir,Lout,it)*          &
-     &                                rmask(i,j)
+                s_tflux(i,j,ir,Lout,it)=s_tflux(i,j,ir,Lout,it)*        &
+     &                                  rmask(i,j)
 #  endif
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 #endif

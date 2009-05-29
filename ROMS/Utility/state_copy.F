@@ -515,13 +515,15 @@
 !  Surface tracers flux.
 !
       DO it=1,NT(ng)
-        DO ir=1,Nfrec(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              s1_tflux(i,j,ir,Lout,it)=s2_tflux(i,j,ir,Linp,it)
+        IF (Lstflux(it,ng)) THEN
+          DO ir=1,Nfrec(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                s1_tflux(i,j,ir,Lout,it)=s2_tflux(i,j,ir,Linp,it)
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 # endif
 

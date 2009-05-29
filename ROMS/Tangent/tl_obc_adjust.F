@@ -35,6 +35,7 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_grid
 !
 !  Imported variable declarations.
 !
@@ -51,48 +52,78 @@
      &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp,                                    &
+# ifdef MASKING
+     &                         GRID(ng) % umask,                        &
+     &                         GRID(ng) % vmask,                        &
+# endif
+# ifdef SOLVE3D
+     &                         GRID(ng) % Hz,                           &
+     &                         GRID(ng) % Hz_bry,                       &
+     &                         GRID(ng) % tl_Hz,                        &
+     &                         GRID(ng) % tl_Hz_bry,                    &
+# endif
 # ifdef WEST_FSOBC
+     &                         BOUNDARY(ng) % zeta_west,                &
      &                         BOUNDARY(ng) % tl_zeta_west,             &
 # endif
 # ifdef EAST_FSOBC
+     &                         BOUNDARY(ng) % zeta_east,                &
      &                         BOUNDARY(ng) % tl_zeta_east,             &
 # endif
 # ifdef SOUTH_FSOBC
+     &                         BOUNDARY(ng) % zeta_south,               &
      &                         BOUNDARY(ng) % tl_zeta_south,            &
 # endif
 # ifdef NORTH_FSOBC
+     &                         BOUNDARY(ng) % zeta_north,               &
      &                         BOUNDARY(ng) % tl_zeta_north,            &
 # endif
 # ifdef WEST_M2OBC
+     &                         BOUNDARY(ng) % ubar_west,                &
+     &                         BOUNDARY(ng) % vbar_west,                &
      &                         BOUNDARY(ng) % tl_ubar_west,             &
      &                         BOUNDARY(ng) % tl_vbar_west,             &
 # endif
 # ifdef EAST_M2OBC
+     &                         BOUNDARY(ng) % ubar_east,                &
+     &                         BOUNDARY(ng) % vbar_east,                &
      &                         BOUNDARY(ng) % tl_ubar_east,             &
      &                         BOUNDARY(ng) % tl_vbar_east,             &
 # endif
 # ifdef SOUTH_M2OBC
+     &                         BOUNDARY(ng) % ubar_south,               &
+     &                         BOUNDARY(ng) % vbar_south,               &
      &                         BOUNDARY(ng) % tl_ubar_south,            &
      &                         BOUNDARY(ng) % tl_vbar_south,            &
 # endif
 # ifdef NORTH_M2OBC
+     &                         BOUNDARY(ng) % ubar_north,               &
+     &                         BOUNDARY(ng) % vbar_north,               &
      &                         BOUNDARY(ng) % tl_ubar_north,            &
      &                         BOUNDARY(ng) % tl_vbar_north,            &
 # endif
 # ifdef SOLVE3D
 #  ifdef WEST_M3OBC
+     &                         BOUNDARY(ng) % u_west,                   &
+     &                         BOUNDARY(ng) % v_west,                   &
      &                         BOUNDARY(ng) % tl_u_west,                &
      &                         BOUNDARY(ng) % tl_v_west,                &
 #  endif
 #  ifdef EAST_M3OBC
+     &                         BOUNDARY(ng) % u_east,                   &
+     &                         BOUNDARY(ng) % v_east,                   &
      &                         BOUNDARY(ng) % tl_u_east,                &
      &                         BOUNDARY(ng) % tl_v_east,                &
 #  endif
 #  ifdef SOUTH_M3OBC
+     &                         BOUNDARY(ng) % u_south,                  &
+     &                         BOUNDARY(ng) % v_south,                  &
      &                         BOUNDARY(ng) % tl_u_south,               &
      &                         BOUNDARY(ng) % tl_v_south,               &
 #  endif
 #  ifdef NORTH_M3OBC
+     &                         BOUNDARY(ng) % u_north,                  &
+     &                         BOUNDARY(ng) % v_north,                  &
      &                         BOUNDARY(ng) % tl_u_north,               &
      &                         BOUNDARY(ng) % tl_v_north,               &
 #  endif
@@ -128,41 +159,56 @@
      &                               LBi, UBi, LBj, UBj, LBij, UBij,    &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Linp,                              &
+# ifdef MASKING
+     &                               umask, vmask,                      &
+# endif
+# ifdef SOLVE3D
+     &                               Hz, Hz_bry,                        &
+     &                               tl_Hz, tl_Hz_bry,                  &
+# endif
 # ifdef WEST_FSOBC
-     &                               tl_zeta_west,                      &
+     &                               zeta_west, tl_zeta_west,           &
 # endif
 # ifdef EAST_FSOBC
-     &                               tl_zeta_east,                      &
+     &                               zeta_east, tl_zeta_east,           &
 # endif
 # ifdef SOUTH_FSOBC
-     &                               tl_zeta_south,                     &
+     &                               zeta_south, tl_zeta_south,         &
 # endif
 # ifdef NORTH_FSOBC
-     &                               tl_zeta_north,                     &
+     &                               zeta_north, tl_zeta_north,         &
 # endif
 # ifdef WEST_M2OBC
+     &                               ubar_west, vbar_west,              &
      &                               tl_ubar_west, tl_vbar_west,        &
 # endif
 # ifdef EAST_M2OBC
+     &                               ubar_east, vbar_east,              &
      &                               tl_ubar_east, tl_vbar_east,        &
 # endif
 # ifdef SOUTH_M2OBC
+     &                               ubar_south, vbar_south,            &
      &                               tl_ubar_south, tl_vbar_south,      &
 # endif
 # ifdef NORTH_M2OBC
+     &                               ubar_north, vbar_north,            &
      &                               tl_ubar_north, tl_vbar_north,      &
 # endif
 # ifdef SOLVE3D
 #  ifdef WEST_M3OBC
+     &                               u_west, v_west,                    &
      &                               tl_u_west, tl_v_west,              &
 #  endif
 #  ifdef EAST_M3OBC
+     &                               u_east, v_east,                    &
      &                               tl_u_east, tl_v_east,              &
 #  endif
 #  ifdef SOUTH_M3OBC
+     &                               u_south, v_south,                  &
      &                               tl_u_south, tl_v_south,            &
 #  endif
 #  ifdef NORTH_M3OBC
+     &                               u_north, v_north,                  &
      &                               tl_u_north, tl_v_north,            &
 #  endif
 #  ifdef WEST_TOBC
@@ -197,6 +243,16 @@
       integer, intent(in) :: Linp
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+      real(r8), intent(in) :: Hz_bry(LBij:,:,:)
+      real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_Hz_bry(LBij:,:,:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t_obc(LBij:,:,:,:,:,:)
       real(r8), intent(in) :: tl_u_obc(LBij:,:,:,:,:)
@@ -206,47 +262,67 @@
       real(r8), intent(in) :: tl_vbar_obc(LBij:,:,:,:)
       real(r8), intent(in) :: tl_zeta_obc(LBij:,:,:,:)
 #  ifdef WEST_FSOBC
+      real(r8), intent(in) :: zeta_west(LBj:)
       real(r8), intent(inout) :: tl_zeta_west(LBj:)
 #  endif
 #  ifdef EAST_FSOBC
+      real(r8), intent(in) :: zeta_east(LBj:)
       real(r8), intent(inout) :: tl_zeta_east(LBj:)
 #  endif
 #  ifdef SOUTH_FSOBC
+      real(r8), intent(in) :: zeta_south(LBi:)
       real(r8), intent(inout) :: tl_zeta_south(LBi:)
 #  endif
 #  ifdef NORTH_FSOBC
+      real(r8), intent(in) :: zeta_north(LBi:)
       real(r8), intent(inout) :: tl_zeta_north(LBi:)
 #  endif
 #  ifdef WEST_M2OBC
+      real(r8), intent(in) :: ubar_west(LBj:)
+      real(r8), intent(in) :: vbar_west(LBj:)
       real(r8), intent(inout) :: tl_ubar_west(LBj:)
       real(r8), intent(inout) :: tl_vbar_west(LBj:)
 #  endif
 #  ifdef EAST_M2OBC
+      real(r8), intent(in) :: ubar_east(LBj:)
+      real(r8), intent(in) :: vbar_east(LBj:)
       real(r8), intent(inout) :: tl_ubar_east(LBj:)
       real(r8), intent(inout) :: tl_vbar_east(LBj:)
 #  endif
 #  ifdef SOUTH_M2OBC
+      real(r8), intent(in) :: ubar_south(LBi:)
+      real(r8), intent(in) :: vbar_south(LBi:)
       real(r8), intent(inout) :: tl_ubar_south(LBi:)
       real(r8), intent(inout) :: tl_vbar_south(LBi:)
 #  endif
 #  ifdef NORTH_M2OBC
+      real(r8), intent(in) :: ubar_north(LBi:)
+      real(r8), intent(in) :: vbar_north(LBi:)
       real(r8), intent(inout) :: tl_ubar_north(LBi:)
       real(r8), intent(inout) :: tl_vbar_north(LBi:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
+      real(r8), intent(in) :: u_west(LBj:,:)
+      real(r8), intent(in) :: v_west(LBj:,:)
       real(r8), intent(inout) :: tl_u_west(LBj:,:)
       real(r8), intent(inout) :: tl_v_west(LBj:,:)
 #   endif
 #   ifdef EAST_M3OBC
+      real(r8), intent(in) :: u_east(LBj:,:)
+      real(r8), intent(in) :: v_east(LBj:,:)
       real(r8), intent(inout) :: tl_u_east(LBj:,:)
       real(r8), intent(inout) :: tl_v_east(LBj:,:)
 #   endif
 #   ifdef SOUTH_M3OBC
+      real(r8), intent(in) :: u_south(LBi:,:)
+      real(r8), intent(in) :: v_south(LBi:,:)
       real(r8), intent(inout) :: tl_u_south(LBi:,:)
       real(r8), intent(inout) :: tl_v_south(LBi:,:)
 #   endif
 #   ifdef NORTH_M3OBC
+      real(r8), intent(in) :: u_north(LBi:,:)
+      real(r8), intent(in) :: v_north(LBi:,:)
       real(r8), intent(inout) :: tl_u_north(LBi:,:)
       real(r8), intent(inout) :: tl_v_north(LBi:,:)
 #   endif
@@ -266,6 +342,16 @@
 
 # else
 
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Hz_bry(LBij:UBij,N(ng),4)
+      real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_Hz_bry(LBij:UBij,N(ng),4)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t_obc(LBij:UBij,N(ng),4,               &
      &                                 Nbrec(ng),2,NT(ng))
@@ -276,47 +362,67 @@
       real(r8), intent(in) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
       real(r8), intent(in) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 #  ifdef WEST_FSOBC
+      real(r8), intent(in) :: zeta_west(LBj:UBj)
       real(r8), intent(inout) :: tl_zeta_west(LBj:UBj)
 #  endif
 #  ifdef EAST_FSOBC
+      real(r8), intent(in) :: zeta_east(LBj:UBj)
       real(r8), intent(inout) :: tl_zeta_east(LBj:UBj)
 #  endif
 #  ifdef SOUTH_FSOBC
+      real(r8), intent(in) :: zeta_south(LBi:UBi)
       real(r8), intent(inout) :: tl_zeta_south(LBi:UBi)
 #  endif
 #  ifdef NORTH_FSOBC
+      real(r8), intent(in) :: zeta_north(LBi:UBi)
       real(r8), intent(inout) :: tl_zeta_north(LBi:UBi)
 #  endif
 #  ifdef WEST_M2OBC
+      real(r8), intent(in) :: ubar_west(LBj:UBj)
+      real(r8), intent(in) :: vbar_west(LBj:UBj)
       real(r8), intent(inout) :: tl_ubar_west(LBj:UBj)
       real(r8), intent(inout) :: tl_vbar_west(LBj:UBj)
 #  endif
 #  ifdef EAST_M2OBC
+      real(r8), intent(in) :: ubar_east(LBj:UBj)
+      real(r8), intent(in) :: vbar_east(LBj:UBj)
       real(r8), intent(inout) :: tl_ubar_east(LBj:UBj)
       real(r8), intent(inout) :: tl_vbar_east(LBj:UBj)
 #  endif
 #  ifdef SOUTH_M2OBC
+      real(r8), intent(in) :: ubar_south(LBi:UBi)
+      real(r8), intent(in) :: vbar_south(LBi:UBi)
       real(r8), intent(inout) :: tl_ubar_south(LBi:UBi)
       real(r8), intent(inout) :: tl_vbar_south(LBi:UBi)
 #  endif
 #  ifdef NORTH_M2OBC
+      real(r8), intent(in) :: ubar_north(LBi:UBi)
+      real(r8), intent(in) :: vbar_north(LBi:UBi)
       real(r8), intent(inout) :: tl_ubar_north(LBi:UBi)
       real(r8), intent(inout) :: tl_vbar_north(LBi:UBi)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
+      real(r8), intent(in) :: u_west(LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_west(LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_u_west(LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_v_west(LBj:UBj,N(ng))
 #   endif
 #   ifdef EAST_M3OBC
+      real(r8), intent(in) :: u_east(LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_east(LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_u_east(LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_v_east(LBj:UBj,N(ng))
 #   endif
 #   ifdef SOUTH_M3OBC
+      real(r8), intent(in) :: u_south(LBi:UBi,N(ng))
+      real(r8), intent(in) :: v_south(LBi:UBi,N(ng))
       real(r8), intent(inout) :: tl_u_south(LBi:UBi,N(ng))
       real(r8), intent(inout) :: tl_v_south(LBi:UBi,N(ng))
 #   endif
 #   ifdef NORTH_M3OBC
+      real(r8), intent(in) :: u_north(LBi:UBi,N(ng))
+      real(r8), intent(in) :: v_north(LBi:UBi,N(ng))
       real(r8), intent(inout) :: tl_u_north(LBi:UBi,N(ng))
       real(r8), intent(inout) :: tl_v_north(LBi:UBi,N(ng))
 #   endif
@@ -342,6 +448,15 @@
       integer :: it, k
 # endif
       real(r8) :: fac, fac1, fac2
+# ifdef SOLVE3D
+      real(r8) :: cff1, cff2, tl_cff1, tl_cff2
+
+      real(r8), dimension(0:N(ng)) :: CF
+      real(r8), dimension(0:N(ng)) :: DC
+
+      real(r8), dimension(0:N(ng)) :: tl_CF
+      real(r8), dimension(0:N(ng)) :: tl_DC
+# endif
 
 # include "set_bounds.h"
 !
@@ -364,117 +479,6 @@
         fac=1.0_r8/(fac1+fac2)
         fac1=fac*fac1
         fac2=fac*fac2
-      END IF
-!
-!  Free-surface open boundaries.
-!
-      IF (ANY(Lobc(:,isFsur,ng))) THEN
-# ifdef WEST_FSOBC
-        IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
-          DO j=Jstr,Jend
-            tl_zeta_west(j)=fac1*tl_zeta_obc(j,iwest,it1,Linp)+         &
-     &                      fac2*tl_zeta_obc(j,iwest,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef EAST_FSOBC
-        IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
-          DO j=Jstr,Jend
-            tl_zeta_east(j)=fac1*tl_zeta_obc(j,ieast,it1,Linp)+         &
-     &                      fac2*tl_zeta_obc(j,ieast,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef SOUTH_FSOBC
-        IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
-          DO i=Istr,Iend
-            tl_zeta_south(i)=fac1*tl_zeta_obc(i,isouth,it1,Linp)+       &
-     &                       fac2*tl_zeta_obc(i,isouth,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef NORTH_FSOBC
-        IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
-          DO i=Istr,Iend
-            tl_zeta_north(i)=fac1*tl_zeta_obc(i,inorth,it1,Linp)+       &
-     &                       fac2*tl_zeta_obc(i,inorth,it2,Linp)
-          END DO
-        END IF
-# endif
-      END IF
-!
-!  2D U-momentum open boundaries.
-!
-      IF (ANY(Lobc(:,isUbar,ng))) THEN
-# ifdef WEST_M2OBC
-        IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
-          DO j=Jstr,Jend
-            tl_ubar_west(j)=fac1*tl_ubar_obc(j,iwest,it1,Linp)+         &
-     &                      fac2*tl_ubar_obc(j,iwest,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef EAST_M2OBC
-        IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
-          DO j=Jstr,Jend
-            tl_ubar_east(j)=fac1*tl_ubar_obc(j,ieast,it1,Linp)+         &
-     &                      fac2*tl_ubar_obc(j,ieast,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef SOUTH_M2OBC
-        IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
-          DO i=IstrU,Iend
-            tl_ubar_south(i)=fac1*tl_ubar_obc(i,isouth,it1,Linp)+       &
-     &                       fac2*tl_ubar_obc(i,isouth,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef NORTH_M2OBC
-        IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
-          DO i=IstrU,Iend
-            tl_ubar_north(i)=fac1*tl_ubar_obc(i,inorth,it1,Linp)+       &
-     &                       fac2*tl_ubar_obc(i,inorth,it2,Linp)
-          END DO
-        END IF
-# endif
-      END IF
-!
-!  2D V-momentum open boundaries.
-!
-      IF (ANY(Lobc(:,isVbar,ng))) THEN
-# ifdef WEST_M2OBC
-        IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
-          DO j=JstrV,Jend
-            tl_vbar_west(j)=fac1*tl_vbar_obc(j,iwest,it1,Linp)+         &
-     &                      fac2*tl_vbar_obc(j,iwest,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef EAST_M2OBC
-        IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
-          DO j=JstrV,Jend
-            tl_vbar_east(j)=fac1*tl_vbar_obc(j,ieast,it1,Linp)+         &
-     &                      fac2*tl_vbar_obc(j,ieast,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef SOUTH_M2OBC
-        IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
-          DO i=Istr,Iend
-            tl_vbar_south(i)=fac1*tl_vbar_obc(i,isouth,it1,Linp)+       &
-     &                       fac2*tl_vbar_obc(i,isouth,it2,Linp)
-          END DO
-        END IF
-# endif
-# ifdef NORTH_M2OBC
-        IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
-          DO i=Istr,Iend
-            tl_vbar_north(i)=fac1*tl_vbar_obc(i,inorth,it1,Linp)+       &
-     &                       fac2*tl_vbar_obc(i,inorth,it2,Linp)
-          END DO
-        END IF
-# endif
       END IF
 
 # ifdef SOLVE3D
@@ -551,8 +555,8 @@
         IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              tl_v_south(i,k)=fac1*tl_v_obc(j,k,isouth,it1,Linp)+       &
-     &                        fac2*tl_v_obc(j,k,isouth,it2,Linp)
+              tl_v_south(i,k)=fac1*tl_v_obc(i,k,isouth,it1,Linp)+       &
+     &                        fac2*tl_v_obc(i,k,isouth,it2,Linp)
             END DO
           END DO
         END IF
@@ -561,8 +565,8 @@
         IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              tl_v_north(i,k)=fac1*tl_v_obc(j,k,inorth,it1,Linp)+       &
-     &                        fac2*tl_v_obc(j,k,inorth,it2,Linp)
+              tl_v_north(i,k)=fac1*tl_v_obc(i,k,inorth,it1,Linp)+       &
+     &                        fac2*tl_v_obc(i,k,inorth,it2,Linp)
             END DO
           END DO
         END IF
@@ -624,7 +628,379 @@
         END IF
       END DO
 # endif
+!
+!  Free-surface open boundaries.
+!
+      IF (ANY(Lobc(:,isFsur,ng))) THEN
+# ifdef WEST_FSOBC
+        IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+          DO j=Jstr,Jend
+            tl_zeta_west(j)=fac1*tl_zeta_obc(j,iwest,it1,Linp)+         &
+     &                      fac2*tl_zeta_obc(j,iwest,it2,Linp)
+          END DO
+        END IF
+# endif
+# ifdef EAST_FSOBC
+        IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+          DO j=Jstr,Jend
+            tl_zeta_east(j)=fac1*tl_zeta_obc(j,ieast,it1,Linp)+         &
+     &                      fac2*tl_zeta_obc(j,ieast,it2,Linp)
+          END DO
+        END IF
+# endif
+# ifdef SOUTH_FSOBC
+        IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+          DO i=Istr,Iend
+            tl_zeta_south(i)=fac1*tl_zeta_obc(i,isouth,it1,Linp)+       &
+     &                       fac2*tl_zeta_obc(i,isouth,it2,Linp)
+          END DO
+        END IF
+# endif
+# ifdef NORTH_FSOBC
+        IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+          DO i=Istr,Iend
+            tl_zeta_north(i)=fac1*tl_zeta_obc(i,inorth,it1,Linp)+       &
+     &                       fac2*tl_zeta_obc(i,inorth,it2,Linp)
+          END DO
+        END IF
+# endif
+      END IF
 
+# ifndef SOLVE3D
+!
+!  2D U-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+#  ifdef WEST_M2OBC
+        IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+          DO j=Jstr,Jend
+            tl_ubar_west(j)=fac1*tl_ubar_obc(j,iwest,it1,Linp)+         &
+     &                      fac2*tl_ubar_obc(j,iwest,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef EAST_M2OBC
+        IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+          DO j=Jstr,Jend
+            tl_ubar_east(j)=fac1*tl_ubar_obc(j,ieast,it1,Linp)+         &
+     &                      fac2*tl_ubar_obc(j,ieast,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef SOUTH_M2OBC
+        IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+          DO i=IstrU,Iend
+            tl_ubar_south(i)=fac1*tl_ubar_obc(i,isouth,it1,Linp)+       &
+     &                       fac2*tl_ubar_obc(i,isouth,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef NORTH_M2OBC
+        IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+          DO i=IstrU,Iend
+            tl_ubar_north(i)=fac1*tl_ubar_obc(i,inorth,it1,Linp)+       &
+     &                       fac2*tl_ubar_obc(i,inorth,it2,Linp)
+          END DO
+        END IF
+#  endif
+      END IF
+!
+!  2D V-momentum open boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+#  ifdef WEST_M2OBC
+        IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+          DO j=JstrV,Jend
+            tl_vbar_west(j)=fac1*tl_vbar_obc(j,iwest,it1,Linp)+         &
+     &                      fac2*tl_vbar_obc(j,iwest,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef EAST_M2OBC
+        IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+          DO j=JstrV,Jend
+            tl_vbar_east(j)=fac1*tl_vbar_obc(j,ieast,it1,Linp)+         &
+     &                      fac2*tl_vbar_obc(j,ieast,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef SOUTH_M2OBC
+        IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+          DO i=Istr,Iend
+            tl_vbar_south(i)=fac1*tl_vbar_obc(i,isouth,it1,Linp)+       &
+     &                       fac2*tl_vbar_obc(i,isouth,it2,Linp)
+          END DO
+        END IF
+#  endif
+#  ifdef NORTH_M2OBC
+        IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+          DO i=Istr,Iend
+            tl_vbar_north(i)=fac1*tl_vbar_obc(i,inorth,it1,Linp)+       &
+     &                       fac2*tl_vbar_obc(i,inorth,it2,Linp)
+          END DO
+        END IF
+#  endif
+      END IF
+# else
+!
+!  2D U-momentum open boundaries: integrate 3D U-momentum at the open
+!  boundaries.
+!
+      IF (ANY(Lobc(:,isUbar,ng))) THEN
+#  ifdef WEST_M2OBC
+        IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+          i=BOUNDS(ng)%edge(iwest,r2dvar)
+          DO j=Jstr,Jend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(j,k,iwest)+                          &
+     &                      Hz(i+1,j,k))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(j,k,iwest)+                    &
+     &                         tl_Hz(i+1,j,k))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*u_west(j,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*u_west(j,k)+                            &
+     &                 DC(k)*tl_u_west(j,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*umask(i,j)
+#   endif
+            tl_ubar_west(j)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef EAST_M2OBC
+        IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+          i=BOUNDS(ng)%edge(ieast,r2dvar)
+          DO j=Jstr,Jend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz(i-1,j,k)+                                &
+     &                      Hz_bry(j,k,ieast))
+              tl_DC(k)=0.5_r8*(tl_Hz(i-1,j,k)+                          &
+     &                         tl_Hz_bry(j,k,ieast))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*u_east(j,k)
+              tl_CF(0)=tl_CF(0)+
+     &                 tl_DC(k)*u_east(j,k)+                            &
+     &                 DC(k)*tl_u_east(j,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*umask(i,j)
+#   endif
+            tl_ubar_east(j)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef SOUTH_M2OBC
+        IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+          j=BOUNDS(ng)%edge(isouth,r2dvar)
+          DO i=Istr,Iend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(i-1,k,isouth)+                       &
+     &                      Hz_bry(i  ,k,isouth))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(i-1,k,isouth)+                 &
+     &                         tl_Hz_bry(i  ,k,isouth))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*u_south(i,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*u_south(i,k)+                           &
+     &                 DC(k)*tl_u_south(i,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*umask(i,j)
+#   endif
+            tl_ubar_south(i)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef NORTH_M2OBC
+        IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+          j=BOUNDS(ng)%edge(inorth,r2dvar)
+          DO i=Istr,Iend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(i-1,k,inorth)+                       &
+     &                      Hz_bry(i  ,k,inorth))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(i-1,k,inorth)+                 &
+     &                         tl_Hz_bry(i  ,k,inorth))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*u_north(i,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*u_north(i,k)+                           &
+     &                 DC(k)*tl_u_north(i,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*umask(i,j)
+#   endif
+            tl_ubar_north(i)=tl_cff2
+          END DO
+        END IF
+#  endif
+      END IF
+!
+!  2D V-momentum open boundaries: integrate 3D V-momentum at the open
+!  boundaries.
+!
+      IF (ANY(Lobc(:,isVbar,ng))) THEN
+#  ifdef WEST_M2OBC
+        IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+          i=BOUNDS(ng)%edge(iwest,r2dvar)
+          DO j=JstrV,Jend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(j-1,k,iwest)+                        &
+     &                      Hz_bry(j  ,k,iwest))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(j-1,k,iwest)+                  &
+     &                         tl_Hz_bry(j  ,k,iwest))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*v_west(j,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*v_west(j,k)+                            &
+     &                 DC(k)*tl_v_west(j,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*vmask(i,j)
+#   endif
+            tl_vbar_west(j)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef EAST_M2OBC
+        IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+          i=BOUNDS(ng)%edge(ieast,r2dvar)
+          DO j=JstrV,Jend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(j-1,k,ieast)+                        &
+     &                      Hz_bry(j  ,k,ieast))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(j-1,k,ieast)+                  &
+     &                         tl_Hz_bry(j  ,k,ieast))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*v_east(j,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*v_east(j,k)+                            &
+     &                 DC(k)*tl_v_east(j,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*vmask(i,j)
+#   endif
+            tl_vbar_east(j)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef SOUTH_M2OBC
+        IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+          j=BOUNDS(ng)%edge(isouth,r2dvar)
+          DO i=Istr,Iend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz_bry(i,k,isouth)+                         &
+     &                      Hz(i+1,j,k))
+              tl_DC(k)=0.5_r8*(tl_Hz_bry(i,k,isouth)+                   &
+     &                         tl_Hz(i+1,j,k))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*v_south(i,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*v_south(i,k)+                           &
+     &                 DC(k)*tl_v_south(i,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*vmask(i,j)
+#   endif
+            tl_vbar_south(i)=tl_cff2
+          END DO
+        END IF
+#  endif
+
+#  ifdef NORTH_M2OBC
+        IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+          j=BOUNDS(ng)%edge(inorth,r2dvar)
+          DO i=Istr,Iend
+            DC(0)=0.0_r8
+            tl_DC(0)=0.0_r8
+            CF(0)=0.0_r8
+            tl_CF(0)=0.0_r8
+            DO k=1,N(ng)
+              DC(k)=0.5_r8*(Hz(i,j-1,k)+                                &
+     &                      Hz_bry(i,k,inorth))
+              tl_DC(k)=0.5_r8*(tl_Hz(i,j-1,k)+                          &
+     &                         tl_Hz_bry(i,k,inorth))
+              DC(0)=DC(0)+DC(k)
+              tl_DC(0)=tl_DC(0)+tl_DC(k)
+              CF(0)=CF(0)+DC(k)*v_north(i,k)
+              tl_CF(0)=tl_CF(0)+                                        &
+     &                 tl_DC(k)*v_north(i,k)+                           &
+     &                 DC(k)*tl_v_north(i,k)
+            END DO
+            cff1=1.0_r8/DC(0)
+            tl_cff1=-cff1*cff1*tl_DC(0)
+            tl_cff2=tl_CF(0)*cff1+CF(0)*tl_cff1
+#   ifdef MASKING
+            tl_cff2=tl_cff2*vmask(i,j)
+#   endif
+            tl_vbar_north(i)=tl_cff2
+          END DO
+        END IF
+#  endif
+      END IF
+# endif
       RETURN
       END SUBROUTINE tl_obc_adjust_tile
 #endif

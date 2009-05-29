@@ -59,6 +59,7 @@
       USE mod_param
       USE mod_boundary
       USE mod_grid
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -210,7 +211,11 @@
 !>        zeta(Istr-1,j,kout)=BOUNDARY(ng)%zeta_west(j)
 !>
 #   ifdef ADJUST_BOUNDARY
-          tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
+          IF (Lobc(iwest,isFsur,ng)) THEN
+            tl_zeta(Istr-1,j,kout)=BOUNDARY(ng)%tl_zeta_west(j)
+          ELSE
+            tl_zeta(Istr-1,j,kout)=0.0_r8
+          END IF
 #   else
           tl_zeta(Istr-1,j,kout)=0.0_r8
 #   endif
@@ -361,7 +366,11 @@
 !>        zeta(Iend+1,j,kout)=BOUNDARY(ng)%zeta_east(j)
 !>
 #   ifdef ADJUST_BOUNDARY
-          tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
+          IF (Lobc(ieast,isFsur,ng)) THEN
+            tl_zeta(Iend+1,j,kout)=BOUNDARY(ng)%tl_zeta_east(j)
+          ELSE
+            tl_zeta(Iend+1,j,kout)=0.0_r8
+          END IF
 #   else
           tl_zeta(Iend+1,j,kout)=0.0_r8
 #   endif
@@ -515,7 +524,11 @@
 !>        zeta(i,Jstr-1,kout)=BOUNDARY(ng)%zeta_south(i)
 !>
 #   ifdef ADJUST_BOUNDARY
-          tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
+          IF (Lobc(isouth,isFsur,ng)) THEN
+            tl_zeta(i,Jstr-1,kout)=BOUNDARY(ng)%tl_zeta_south(i)
+          ELSE
+            tl_zeta(i,Jstr-1,kout)=0.0_r8
+          END IF
 #   else
           tl_zeta(i,Jstr-1,kout)=0.0_r8
 #   endif
@@ -665,7 +678,11 @@
 !>        zeta(i,Jend+1,kout)=BOUNDARY(ng)%zeta_north(i)
 !>
 #   ifdef ADJUST_BOUNDARY
-          tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
+          IF (Lobc(inorth,isFsur,ng)) THEN
+            tl_zeta(i,Jend+1,kout)=BOUNDARY(ng)%tl_zeta_north(i)
+          ELSE
+            tl_zeta(i,Jend+1,kout)=0.0_r8
+          END IF
 #   else
           tl_zeta(i,Jend+1,kout)=0.0_r8
 #   endif

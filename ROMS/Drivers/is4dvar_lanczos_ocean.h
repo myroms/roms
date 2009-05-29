@@ -272,7 +272,8 @@
 !
 !  Initialize relevant parameters.
 !
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
         Lfinp(ng)=1         ! forcing index for input
         Lfout(ng)=1         ! forcing index for output history files
 #endif
@@ -398,7 +399,8 @@
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
 
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
 !
 !  Write out initial and background surface forcing into initial
 !  INIname NetCDF file for latter use.

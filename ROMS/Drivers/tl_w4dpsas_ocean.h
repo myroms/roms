@@ -1019,7 +1019,8 @@
 !
           CALL wrt_ini (ng, Lnew(ng))
           IF (exit_flag.ne.NoError) RETURN
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
           IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -1793,7 +1794,8 @@
 !  
           CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
           IF (exit_flag.ne.NoError) RETURN
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
           IF (exit_flag.ne.NoError) RETURN
 # endif

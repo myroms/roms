@@ -501,25 +501,27 @@
 !  allow 4DVAR adjustments at other times in addition to initial time.
 !
         DO itrc=1,NT(ng)
-          Vinfo( 1)=Vname(1,idTsur(itrc))
-          Vinfo( 2)=Vname(2,idTsur(itrc))
-          Vinfo( 3)=Vname(3,idTsur(itrc))
-          IF (itrc.eq.itemp) THEN
-            Vinfo(11)='upward flux, cooling'
-            Vinfo(12)='downward flux, heating'
-          ELSE IF (itrc.eq.isalt) THEN
-            Vinfo(11)='upward flux, freshening (net precipitation)'
-            Vinfo(12)='downward flux, salting (net evaporation)'
-          END IF
+          IF (Lstflux(itrc,ng)) THEN
+            Vinfo( 1)=Vname(1,idTsur(itrc))
+            Vinfo( 2)=Vname(2,idTsur(itrc))
+            Vinfo( 3)=Vname(3,idTsur(itrc))
+            IF (itrc.eq.itemp) THEN
+              Vinfo(11)='upward flux, cooling'
+              Vinfo(12)='downward flux, heating'
+            ELSE IF (itrc.eq.isalt) THEN
+              Vinfo(11)='upward flux, freshening (net precipitation)'
+              Vinfo(12)='downward flux, salting (net evaporation)'
+            END IF
 # if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
+            Vinfo(20)='mask_rho'
 # endif
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
-          status=def_var(ng, iNLM, ncHISid(ng),                         &
-     &                   hisVid(idTsur(itrc),ng), NF_FOUT,              &
-     &                   nvd3, t3dfrc, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+            status=def_var(ng, iNLM, ncHISid(ng),                       &
+     &                     hisVid(idTsur(itrc),ng), NF_FOUT,            &
+     &                     nvd3, t3dfrc, Aval, Vinfo, ncname)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
         END DO
 #endif
 #if defined SEDIMENT && defined SED_MORPH

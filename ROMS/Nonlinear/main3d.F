@@ -43,7 +43,8 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : nl_dotproduct
 # endif
-# if defined W4DPSAS || defined NLM_OUTER
+# if defined W4DPSAS || defined NLM_OUTER || \
+     defined W4DPSAS_SENSITIVITY
       USE forcing_mod, ONLY : forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -159,7 +160,8 @@
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined W4DPSAS || defined NLM_OUTER
+# if defined W4DPSAS || defined NLM_OUTER || \
+     defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to

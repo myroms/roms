@@ -91,7 +91,7 @@
 ! that grid land/sea masking, and decorrelation scales remains
 ! the same. Notice that four values are needed (1=initial conditions,
 ! 2=model, 3=boundary conditions, 4=surface forcing) per each nested
-! grid, [4,1:Ngrids].
+! grid, [1:4,1:Ngrids].
 
         LdefNRM == F F F F                ! Create a new normalization files
         LwrtNRM == F F F F                ! Compute and write normalization
@@ -156,9 +156,14 @@
 
 ! Horizontal and vertical stability and accuracy factors (< 1) used to
 ! time-step discretized convolution operators below its theoretical limit.
+! Notice that four values [1:4] are needed for each factor to facilitate
+! the error covariance modeling: 1=initial conditions, 2=model,
+! 3=boundary conditions, and 4=surface forcing.
+!
+!                  IC       Model    OBC      Sur For
 
-         Hgamma =  0.5                             ! horizontal operator
-         Vgamma =  0.05                            ! vertical operator
+         Hgamma =  0.5      0.5      0.5      0.5       ! horizontal operator
+         Vgamma =  0.05     0.05     0.05     0.05      ! vertical operator
  
 ! Model error covariance: horizontal, isotropic decorrelation scales (m).
 ! This scales are only used in weak-constraint data assimilation.
@@ -220,6 +225,44 @@ VdecayB(isTvar) == 4*100.d0  4*100.d0                     ! 1:NT tracers
 HdecayF(isUstr) == 100.0d+3                       ! surface U-momentum stress
 HdecayF(isVstr) == 100.0d+3                       ! surface V-momentum stress
 HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
+
+! If applicable, set switches (T/F) used to adjust surface tracer flux,
+! [1:NT,1:Ngrids].
+
+        Lstflux ==  T T                   ! NT tracers
+
+! If applicable, set switches to adjust state variables at the open
+! boundaries. Notice that a value is expected for each boundary segment
+! per nested grid, [1:4,1:Ngrids].  The boundary order is: 1=west,
+! 2=south, 3=east, and 4=north. That is, anticlockwise starting at
+! the western boundary.
+!
+! When processing momentum, you need to activate both components. If
+! processing 2D momentum, you need to activate both free-surface and
+! 3D-momentum at the processing boundary.
+!
+!                  W   S   E   N           _____N_____
+!                  e   o   a   o          |     4     |
+!                  s   u   s   r          |           |
+!                  t   t   t   t        1 W           E 3
+!                      h       h          |           |
+!                                         |_____S_____|
+!                  1   2   3   4                2
+
+  Lobc(isFsur) ==  F   F   F   F          ! free-surface
+  Lobc(isUbar) ==  F   F   F   F          ! 2D U-momentum
+  Lobc(isVbar) ==  F   F   F   F          ! 2D V-momentum
+  Lobc(isUvel) ==  F   F   F   F          ! 3D U-momentum
+  Lobc(isVvel) ==  F   F   F   F          ! 3D V-momentum
+
+! If applicable, set switches to adjust state tracer variables at the
+! open boundaries.  Notice that a value is expected for each tracer at each
+! boundary segment per nested grid, [1:4,1:NT,1:Ngrids]. The boundary order
+! is the same as above. Notice that the first line has the values for
+! temperature boundaries, the second is salinity, and so on.
+
+  Lobc(isTvar) ==  F   F   F   F  \
+                   F   F   F   F
 
 ! Input model, initial conditions, boundary conditions, and surface forcing
 ! standard deviation file names, [1:Ngrids].
@@ -404,11 +447,17 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !  Hgamma         Horizontal stability and accuracy factor (< 1) used to
 !                 scale the time-step of the convolution operator below its
-!                 theoretical limit.
+!                 theoretical limit, [1:4].  Notice that four values are
+!                 needed for Hgamma to facilitate the error covariance
+!                 modeling for initial conditions (1), model (2), boundary
+!                 conditions (3), and surface forcing (4).
 !
 !  Vgamma         Vertical stability and accuracy factor (< 1) used to
 !                 scale the time-step of the convolution operator below its
-!                 theoretical limit.
+!                 theoretical limit,  [1:4].  Notice that four values are
+!                 needed for Vgamma to facilitate the error covariance
+!                 modeling for initial conditions (1), model (2), boundary
+!                 conditions (3), and surface forcing (4).
 !
 !  HdecayM        Model error covariance, [1:Ngrids],
 !                   horizontal, isotropic decorrelation scales (m):
@@ -471,6 +520,39 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   HdecayF(isTsur)               tracers flux (1:NT,1:Ngrids)
 !                   HdecayF(isUstr)               wind U-stress
 !                   HdecayF(isVstr)               wind V-stress
+!
+!------------------------------------------------------------------------------
+! 4DVAR adjustment switches
+!------------------------------------------------------------------------------
+!
+!  Lstflux        Logical switches (T/F) used to adjust surface tracer flux,
+!                 including active and passive tracers, [1:NT, 1:Ngrids].
+!                 These switches are used when ADJUST_STFLUX is activated.
+!
+!  Lobc           Logical switches (T/F) used to adjust state variables at
+!                 the open boundaries. A value is expected for each boundary
+!                 segment per nested grid, [1:4, 1:Ngrids].
+!
+!                 The boundary order is anticlockwise starting at the western
+!                 edge as follows:
+!
+!                    1 = western  edge
+!                    2 = southern edge
+!                    3 = eastern  edge
+!                    4 = northern edge
+!
+!                    Lobc(isFsur)               free-surface
+!                    Lobc(isUbar)               2D U-momentum
+!                    Lobc(isVbar)               2D V-momentum
+!                    Lobc(isUvel)               3D U-momentum
+!                    Lobc(isVvel)               3D V-momentum
+!                    Lobc(isTvar)               NT tracers (4,NT,Ngrids)
+!
+!                WARNING: When processing momentum, you need to activate both
+!                =======  components. If processing 2D momentum, you need to
+!                activate both free-surface and 3D-momentum at the processing
+!                boundary. The 2D momentum adjustment is computed by vertically
+!                integretating the 3D momentum increments.
 !
 !------------------------------------------------------------------------------
 !  Input/Output NetCDF files (a string with a maximum of eighty characters).
