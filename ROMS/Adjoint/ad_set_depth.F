@@ -173,18 +173,6 @@
       ad_z_w0=0.0_r8
       ad_hinv=0.0_r8
       ad_hwater=0.0_r8
-
-#  ifdef ADJUST_BOUNDARY
-!
-!-----------------------------------------------------------------------
-!  Compute level ticknesses at the open boundaries using the provided
-!  free-surface values (zeta_west, zeta_east, zeta_south, zeta_north).
-!-----------------------------------------------------------------------
-!
-!>    CALL tl_set_depth_bry (ng, tile)
-!>
-      CALL ad_set_depth_bry (ng, tile)
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Compute time evolving adjoint depths and vertical thicknesses.

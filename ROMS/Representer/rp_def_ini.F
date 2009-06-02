@@ -99,34 +99,34 @@
       DO i=1,n_var
 #  ifdef ADJUST_BOUNDARY
         IF (TRIM(var_name(i)).eq.                                       &
-     &      TRIM(Vname(1,idSvar(isFsur)))) THEN
-          got_var(idSvar(isFsur))=.TRUE.
-          irpVid(idSvar(isFsur),ng)=var_id(i)
+     &      TRIM(Vname(1,idSbry(isFsur)))) THEN
+          got_var(idSbry(isFsur))=.TRUE.
+          irpVid(idSbry(isFsur),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isUbar)))) THEN
-          got_var(idSvar(isUbar))=.TRUE.
-          irpVid(idSvar(isUbar),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isUbar)))) THEN
+          got_var(idSbry(isUbar))=.TRUE.
+          irpVid(idSbry(isUbar),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isVbar)))) THEN
-          got_var(idSvar(isVbar))=.TRUE.
-          irpVid(idSvar(isVbar),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isVbar)))) THEN
+          got_var(idSbry(isVbar))=.TRUE.
+          irpVid(idSbry(isVbar),ng)=var_id(i)
 #   ifdef SOLVE3D
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isUvel)))) THEN
-          got_var(idSvar(isUvel))=.TRUE.
-          irpVid(idSvar(isUvel),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isUvel)))) THEN
+          got_var(idSbry(isUvel))=.TRUE.
+          irpVid(idSbry(isUvel),ng)=var_id(i)
         ELSE IF (TRIM(var_name(i)).eq.                                  &
-     &           TRIM(Vname(1,idSvar(isVvel)))) THEN
-          got_var(idSvar(isVvel))=.TRUE.
-          irpVid(idSvar(isVvel),ng)=var_id(i)
+     &           TRIM(Vname(1,idSbry(isVvel)))) THEN
+          got_var(idSbry(isVvel))=.TRUE.
+          irpVid(idSbry(isVvel),ng)=var_id(i)
 #   endif
         END IF
 #   ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (TRIM(var_name(i)).eq.                                     &
-     &        TRIM(Vname(1,idSvar(isTvar(itrc))))) THEN
-            got_var(idSvar(isTvar(itrc)))=.TRUE.
-            irpVid(idSvar(isTvar(itrc)),ng)=var_id(i)
+     &        TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
+            got_var(idSbry(isTvar(itrc)))=.TRUE.
+            irpVid(idSbry(isTvar(itrc)),ng)=var_id(i)
           END IF
         END DO
 #   endif
@@ -153,14 +153,14 @@
       END DO
 
 #  ifdef ADJUST_BOUNDARY
-      IF (.not.got_var(idSvar(isFsur))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isUbar))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isVbar))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isFsur))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isUbar))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isVbar))) Ldefine=.TRUE.
 #   ifdef SOLVE3D
-      IF (.not.got_var(idSvar(isUvel))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isVvel))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isUvel))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isVvel))) Ldefine=.TRUE.
       DO itrc=1,NT(ng)
-        IF (.not.got_var(idSvar(isTvar(itrc)))) Ldefine=.TRUE.
+        IF (.not.got_var(idSbry(isTvar(itrc)))) Ldefine=.TRUE.
       END DO
 #   endif
 #  endif

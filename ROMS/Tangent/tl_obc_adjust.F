@@ -26,7 +26,9 @@
  
       PRIVATE
       PUBLIC :: tl_obc_adjust
-
+# ifdef SOLVE3D
+      PUBLIC :: tl_obc2d_adjust
+# endif
       CONTAINS
 !
 !***********************************************************************
@@ -741,7 +743,317 @@
         END IF
 #  endif
       END IF
-# else
+# endif
+
+      RETURN
+      END SUBROUTINE tl_obc_adjust_tile
+
+# ifdef SOLVE3D
+!
+!***********************************************************************
+      SUBROUTINE tl_obc2d_adjust (ng, tile, Linp)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_boundary
+      USE mod_grid
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Linp
+!
+!  Local variable declarations.
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, iTLM, 7)
+#  endif
+      CALL tl_obc2d_adjust_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
+     &                           Linp,                                  &
+#  ifdef MASKING
+     &                           GRID(ng) % umask,                      &
+     &                           GRID(ng) % vmask,                      &
+#  endif
+     &                           GRID(ng) % Hz,                         &
+     &                           GRID(ng) % Hz_bry,                     &
+     &                           GRID(ng) % tl_Hz,                      &
+     &                           GRID(ng) % tl_Hz_bry,                  &
+#  ifdef WEST_M2OBC
+     &                           BOUNDARY(ng) % ubar_west,              &
+     &                           BOUNDARY(ng) % vbar_west,              &
+     &                           BOUNDARY(ng) % tl_ubar_west,           &
+     &                           BOUNDARY(ng) % tl_vbar_west,           &
+#  endif
+#  ifdef EAST_M2OBC
+     &                           BOUNDARY(ng) % ubar_east,              &
+     &                           BOUNDARY(ng) % vbar_east,              &
+     &                           BOUNDARY(ng) % tl_ubar_east,           &
+     &                           BOUNDARY(ng) % tl_vbar_east,           &
+#  endif
+#  ifdef SOUTH_M2OBC
+     &                           BOUNDARY(ng) % ubar_south,             &
+     &                           BOUNDARY(ng) % vbar_south,             &
+     &                           BOUNDARY(ng) % tl_ubar_south,          &
+     &                           BOUNDARY(ng) % tl_vbar_south,          &
+#  endif
+#  ifdef NORTH_M2OBC
+     &                           BOUNDARY(ng) % ubar_north,             &
+     &                           BOUNDARY(ng) % vbar_north,             &
+     &                           BOUNDARY(ng) % tl_ubar_north,          &
+     &                           BOUNDARY(ng) % tl_vbar_north,          &
+#  endif
+#  ifdef WEST_M3OBC
+     &                           BOUNDARY(ng) % u_west,                 &
+     &                           BOUNDARY(ng) % v_west,                 &
+     &                           BOUNDARY(ng) % tl_u_west,              &
+     &                           BOUNDARY(ng) % tl_v_west,              &
+#  endif
+#  ifdef EAST_M3OBC
+     &                           BOUNDARY(ng) % u_east,                 &
+     &                           BOUNDARY(ng) % v_east,                 &
+     &                           BOUNDARY(ng) % tl_u_east,              &
+     &                           BOUNDARY(ng) % tl_v_east,              &
+#  endif
+#  ifdef SOUTH_M3OBC
+     &                           BOUNDARY(ng) % u_south,                &
+     &                           BOUNDARY(ng) % v_south,                &
+     &                           BOUNDARY(ng) % tl_u_south,             &
+     &                           BOUNDARY(ng) % tl_v_south,             &
+#  endif
+#  ifdef NORTH_M3OBC
+     &                           BOUNDARY(ng) % u_north,                &
+     &                           BOUNDARY(ng) % v_north,                &
+     &                           BOUNDARY(ng) % tl_u_north,             &
+     &                           BOUNDARY(ng) % tl_v_north,             &
+#  endif
+     &                           BOUNDARY(ng) % tl_u_obc,               &
+     &                           BOUNDARY(ng) % tl_v_obc)
+#  ifdef PROFILE
+      CALL wclock_off (ng, iTLM, 7)
+#  endif
+
+      RETURN
+      END SUBROUTINE tl_obc2d_adjust
+!
+!***********************************************************************
+      SUBROUTINE tl_obc2d_adjust_tile (ng, tile,                        &
+     &                                 LBi, UBi, LBj, UBj, LBij, UBij,  &
+     &                                 IminS, ImaxS, JminS, JmaxS,      &
+     &                                 Linp,                            &
+#  ifdef MASKING
+     &                                 umask, vmask,                    &
+#  endif
+     &                                 Hz, Hz_bry,                      &
+     &                                 tl_Hz, tl_Hz_bry,                &
+#  ifdef WEST_M2OBC
+     &                                 ubar_west, vbar_west,            &
+     &                                 tl_ubar_west, tl_vbar_west,      &
+#  endif
+#  ifdef EAST_M2OBC
+     &                                 ubar_east, vbar_east,            &
+     &                                 tl_ubar_east, tl_vbar_east,      &
+#  endif
+#  ifdef SOUTH_M2OBC
+     &                                 ubar_south, vbar_south,          &
+     &                                 tl_ubar_south, tl_vbar_south,    &
+#  endif
+#  ifdef NORTH_M2OBC
+     &                                 ubar_north, vbar_north,          &
+     &                                 tl_ubar_north, tl_vbar_north,    &
+#  endif
+#  ifdef WEST_M3OBC
+     &                                 u_west, v_west,                  &
+     &                                 tl_u_west, tl_v_west,            &
+#  endif
+#  ifdef EAST_M3OBC
+     &                                 u_east, v_east,                  &
+     &                                 tl_u_east, tl_v_east,            &
+#  endif
+#  ifdef SOUTH_M3OBC
+     &                                 u_south, v_south,                &
+     &                                 tl_u_south, tl_v_south,          &
+#  endif
+#  ifdef NORTH_M3OBC
+     &                                 u_north, v_north,                &
+     &                                 tl_u_north, tl_v_north,          &
+#  endif
+     &                                 tl_u_obc, tl_v_obc)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_ncparam
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: Linp
+!
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#   endif
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+      real(r8), intent(in) :: Hz_bry(LBij:,:,:)
+      real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_Hz_bry(LBij:,:,:)
+
+      real(r8), intent(in) :: tl_u_obc(LBij:,:,:,:,:)
+      real(r8), intent(in) :: tl_v_obc(LBij:,:,:,:,:)
+#   ifdef WEST_M2OBC
+      real(r8), intent(in) :: ubar_west(LBj:)
+      real(r8), intent(in) :: vbar_west(LBj:)
+      real(r8), intent(inout) :: tl_ubar_west(LBj:)
+      real(r8), intent(inout) :: tl_vbar_west(LBj:)
+#   endif
+#   ifdef EAST_M2OBC
+      real(r8), intent(in) :: ubar_east(LBj:)
+      real(r8), intent(in) :: vbar_east(LBj:)
+      real(r8), intent(inout) :: tl_ubar_east(LBj:)
+      real(r8), intent(inout) :: tl_vbar_east(LBj:)
+#   endif
+#   ifdef SOUTH_M2OBC
+      real(r8), intent(in) :: ubar_south(LBi:)
+      real(r8), intent(in) :: vbar_south(LBi:)
+      real(r8), intent(inout) :: tl_ubar_south(LBi:)
+      real(r8), intent(inout) :: tl_vbar_south(LBi:)
+#   endif
+#   ifdef NORTH_M2OBC
+      real(r8), intent(in) :: ubar_north(LBi:)
+      real(r8), intent(in) :: vbar_north(LBi:)
+      real(r8), intent(inout) :: tl_ubar_north(LBi:)
+      real(r8), intent(inout) :: tl_vbar_north(LBi:)
+#   endif
+#   ifdef WEST_M3OBC
+      real(r8), intent(in) :: u_west(LBj:,:)
+      real(r8), intent(in) :: v_west(LBj:,:)
+      real(r8), intent(inout) :: tl_u_west(LBj:,:)
+      real(r8), intent(inout) :: tl_v_west(LBj:,:)
+#   endif
+#   ifdef EAST_M3OBC
+      real(r8), intent(in) :: u_east(LBj:,:)
+      real(r8), intent(in) :: v_east(LBj:,:)
+      real(r8), intent(inout) :: tl_u_east(LBj:,:)
+      real(r8), intent(inout) :: tl_v_east(LBj:,:)
+#   endif
+#   ifdef SOUTH_M3OBC
+      real(r8), intent(in) :: u_south(LBi:,:)
+      real(r8), intent(in) :: v_south(LBi:,:)
+      real(r8), intent(inout) :: tl_u_south(LBi:,:)
+      real(r8), intent(inout) :: tl_v_south(LBi:,:)
+#   endif
+#   ifdef NORTH_M3OBC
+      real(r8), intent(in) :: u_north(LBi:,:)
+      real(r8), intent(in) :: v_north(LBi:,:)
+      real(r8), intent(inout) :: tl_u_north(LBi:,:)
+      real(r8), intent(inout) :: tl_v_north(LBi:,:)
+#   endif
+
+#  else
+
+#   ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#   endif
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Hz_bry(LBij:UBij,N(ng),4)
+      real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_Hz_bry(LBij:UBij,N(ng),4)
+
+      real(r8), intent(in) :: tl_u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+      real(r8), intent(in) :: tl_v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
+#   ifdef WEST_M2OBC
+      real(r8), intent(in) :: ubar_west(LBj:UBj)
+      real(r8), intent(in) :: vbar_west(LBj:UBj)
+      real(r8), intent(inout) :: tl_ubar_west(LBj:UBj)
+      real(r8), intent(inout) :: tl_vbar_west(LBj:UBj)
+#   endif
+#   ifdef EAST_M2OBC
+      real(r8), intent(in) :: ubar_east(LBj:UBj)
+      real(r8), intent(in) :: vbar_east(LBj:UBj)
+      real(r8), intent(inout) :: tl_ubar_east(LBj:UBj)
+      real(r8), intent(inout) :: tl_vbar_east(LBj:UBj)
+#   endif
+#   ifdef SOUTH_M2OBC
+      real(r8), intent(in) :: ubar_south(LBi:UBi)
+      real(r8), intent(in) :: vbar_south(LBi:UBi)
+      real(r8), intent(inout) :: tl_ubar_south(LBi:UBi)
+      real(r8), intent(inout) :: tl_vbar_south(LBi:UBi)
+#   endif
+#   ifdef NORTH_M2OBC
+      real(r8), intent(in) :: ubar_north(LBi:UBi)
+      real(r8), intent(in) :: vbar_north(LBi:UBi)
+      real(r8), intent(inout) :: tl_ubar_north(LBi:UBi)
+      real(r8), intent(inout) :: tl_vbar_north(LBi:UBi)
+#   endif
+#   ifdef WEST_M3OBC
+      real(r8), intent(in) :: u_west(LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_west(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_u_west(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_v_west(LBj:UBj,N(ng))
+#   endif
+#   ifdef EAST_M3OBC
+      real(r8), intent(in) :: u_east(LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_east(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_u_east(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_v_east(LBj:UBj,N(ng))
+#   endif
+#   ifdef SOUTH_M3OBC
+      real(r8), intent(in) :: u_south(LBi:UBi,N(ng))
+      real(r8), intent(in) :: v_south(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: tl_u_south(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: tl_v_south(LBi:UBi,N(ng))
+#   endif
+#   ifdef NORTH_M3OBC
+      real(r8), intent(in) :: u_north(LBi:UBi,N(ng))
+      real(r8), intent(in) :: v_north(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: tl_u_north(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: tl_v_north(LBi:UBi,N(ng))
+#   endif
+#  endif
+!
+!  Local variable declarations.
+!
+      integer :: i, it1, it2, j, k
+
+      real(r8) :: fac, fac1, fac2
+      real(r8) :: cff1, cff2, tl_cff1, tl_cff2
+
+      real(r8), dimension(0:N(ng)) :: CF
+      real(r8), dimension(0:N(ng)) :: DC
+
+      real(r8), dimension(0:N(ng)) :: tl_CF
+      real(r8), dimension(0:N(ng)) :: tl_DC
+
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Adjust tangent linear open boundary fields with 4DVar increments.
+!-----------------------------------------------------------------------
+!
+!  Set time records and interpolation factor, if any.
+!
+      IF (Nbrec(ng).eq.1) THEN
+        it1=1
+        it2=1
+        fac1=1.0_r8
+        fac2=0.0_r8
+      ELSE
+        it1=MAX(0,(iic(ng)-1)/nOBC(ng))+1
+        it2=MIN(it1+1,Nbrec(ng))
+        fac1=OBC_time(it2,ng)-(time(ng)+dt(ng))
+        fac2=(time(ng)+dt(ng))-OBC_time(it1,ng)
+        fac=1.0_r8/(fac1+fac2)
+        fac1=fac*fac1
+        fac2=fac*fac2
+      END IF
+
 !
 !  2D U-momentum open boundaries: integrate 3D U-momentum at the open
 !  boundaries.
@@ -1000,8 +1312,9 @@
         END IF
 #  endif
       END IF
-# endif
+
       RETURN
-      END SUBROUTINE tl_obc_adjust_tile
+      END SUBROUTINE tl_obc2d_adjust_tile
+# endif
 #endif
       END MODULE tl_obc_adjust_mod

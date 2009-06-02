@@ -153,14 +153,14 @@
       END DO
 
 #  ifdef ADJUST_BOUNDARY
-      IF (.not.got_var(idSvar(isFsur))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isUbar))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isVbar))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isFsur))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isUbar))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isVbar))) Ldefine=.TRUE.
 #   ifdef SOLVE3D
-      IF (.not.got_var(idSvar(isUvel))) Ldefine=.TRUE.
-      IF (.not.got_var(idSvar(isVvel))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isUvel))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isVvel))) Ldefine=.TRUE.
       DO itrc=1,NT(ng)
-        IF (.not.got_var(idSvar(isTvar(itrc)))) Ldefine=.TRUE.
+        IF (.not.got_var(idSbry(isTvar(itrc)))) Ldefine=.TRUE.
       END DO
 #   endif
 #  endif

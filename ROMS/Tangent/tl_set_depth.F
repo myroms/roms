@@ -387,18 +387,6 @@
 #   endif
 #  endif
 
-#  ifdef ADJUST_BOUNDARY
-!
-!-----------------------------------------------------------------------
-!  Compute level ticknesses at the open boundaries using the provided
-!  free-surface values (zeta_west, zeta_east, zeta_south, zeta_north).
-!-----------------------------------------------------------------------
-!
-!>    CALL set_depth_bry (ng, tile)
-!>
-      CALL tl_set_depth_bry (ng, tile)
-#  endif
-
       RETURN
       END SUBROUTINE tl_set_depth_tile
 

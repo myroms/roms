@@ -77,6 +77,8 @@
 # endif
 # ifdef ADJUST_BOUNDARY
       USE ad_obc_adjust_mod, ONLY : ad_obc_adjust
+      USE ad_obc_adjust_mod, ONLY : ad_obc2d_adjust
+      USE ad_set_depth_mod, ONLY : ad_set_depth_bry
 # endif
       USE ad_omega_mod, ONLY : ad_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -751,6 +753,8 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_obc2d_adjust (ng, TILE, Lbout(ng))
+            CALL ad_set_depth_bry (ng, TILE)
             CALL ad_obc_adjust (ng, TILE, Lbout(ng))
           END DO
         END DO

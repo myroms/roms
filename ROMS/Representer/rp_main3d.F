@@ -71,6 +71,8 @@
 # endif
 # ifdef ADJUST_BOUNDARY
       USE rp_obc_adjust_mod, ONLY : rp_obc_adjust
+      USE rp_obc_adjust_mod, ONLY : rp_obc2d_adjust
+      USE rp_set_depth_mod, ONLY : rp_set_depth_bry
 # endif
       USE rp_omega_mod, ONLY : rp_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -337,12 +339,14 @@
 !  Skip the last output timestep.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+      IF ((Nrun.ne.1).and.(iic(ng).lt.(ntend(ng)+1))) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL rp_obc_adjust (ng, TILE, Lbinp(ng))
+            CALL rp_set_depth_bry (ng, TILE)
+            CALL rp_obc2d_adjust (ng, TILE, Lbinp(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO

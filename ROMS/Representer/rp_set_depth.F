@@ -439,18 +439,6 @@
 #   endif
 #  endif
 
-#  ifdef ADJUST_BOUNDARY
-!
-!-----------------------------------------------------------------------
-!  Compute level ticknesses at the open boundaries using the provided
-!  free-surface values (zeta_west, zeta_east, zeta_south, zeta_north).
-!-----------------------------------------------------------------------
-!
-!>    CALL set_depth_bry (ng, tile)
-!>
-      CALL rp_set_depth_bry (ng, tile)
-#  endif
-
       RETURN
       END SUBROUTINE rp_set_depth_tile
 
@@ -610,6 +598,13 @@
 #   include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
+!  This routine is special and equivalent to "tl_set_bry_tile".  The
+!  additional terms that are added to RPM transformation are not needed
+!  here because of the way that the adjustments to the boundary are
+!  computed.
+!-----------------------------------------------------------------------
+!
+!-----------------------------------------------------------------------
 !  Original formulation: Compute vertical depths (meters, negative) at
 !                        RHO- and W-points, and vertical grid
 !  thicknesses. Various stretching functions are possible.
@@ -633,10 +628,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -646,10 +638,7 @@
               cff1_w=SCALARS(ng)%Cs_w(k)
               z_w0=cff_w+cff1_w*hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-              tl_z_w0=cff1_w*tl_hwater+                                 &
-#     ifdef TL_IOMS
-     &                cff_w
-#     endif
+              tl_z_w0=cff1_w*tl_hwate
 #    endif
 !>            Zw(k)=z_w0+zeta_west(j)*(1.0_r8+z_w0*hinv)
 !>
@@ -657,15 +646,9 @@
               tl_Zw(k)=tl_z_w0+                                         &
      &                 tl_zeta_west(j)*(1.0_r8+z_w0*hinv)+              &
      &                 zeta_west(j)*z_w0*tl_hinv+                       &
-     &                 zeta_west(j)*tl_z_w0*hinv-                       &
-#     ifdef TL_IOMS
-     &                 2.0_r8*zeta_west(j)*z_w0*hinv
-#     endif
+     &                 zeta_west(j)*tl_z_w0*hinv
 #    else
-              tl_Zw(k)=tl_zeta_west(j)*(1.0_r8+z_w0*hinv)+              &
-#     ifdef TL_IOMS
-     &                 z_w0
-#     endif
+              tl_Zw(k)=tl_zeta_west(j)*(1.0_r8+z_w0*hinv)
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -689,10 +672,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -702,10 +682,7 @@
               cff1_w=SCALARS(ng)%Cs_w(k)
               z_w0=cff_w+cff1_w*hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-              tl_z_w0=cff1_w*tl_hwater+                                 &
-#     ifdef TL_IOMS
-     &                cff_w
-#     endif
+              tl_z_w0=cff1_w*tl_hwater
 #    endif
 !>            Zw(k)=z_w0+zeta_east(j)*(1.0_r8+z_w0*hinv)
 !>
@@ -713,15 +690,9 @@
               tl_Zw(k)=tl_z_w0+                                         &
      &                 tl_zeta_east(j)*(1.0_r8+z_w0*hinv)+              &
      &                 zeta_east(j)*z_w0*tl_hinv+                       &
-     &                 zeta_east(j)*tl_z_w0*hinv-                       &
-#     ifdef TL_IOMS
-     &                 2.0_r8*zeta_east(j)*z_w0*hinv
-#     endif
+     &                 zeta_east(j)*tl_z_w0*hinv
 #    else
-              tl_Zw(k)=tl_zeta_east(j)*(1.0_r8+z_w0*hinv)+              &
-#     ifdef TL_IOMS
-     &                 z_w0
-#     endif
+              tl_Zw(k)=tl_zeta_east(j)*(1.0_r8+z_w0*hinv)
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -745,10 +716,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -758,10 +726,7 @@
               cff1_w=SCALARS(ng)%Cs_w(k)
               z_w0=cff_w+cff1_w*hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-              tl_z_w0=cff1_w*tl_hwater+                                 &
-#     ifdef TL_IOMS
-     &                cff_w
-#     endif
+              tl_z_w0=cff1_w*tl_hwater
 #    endif
 !>            Zw(k)=z_w0+zeta_south(i)*(1.0_r8+z_w0*hinv)
 !>
@@ -769,15 +734,9 @@
               tl_Zw(k)=tl_z_w0+                                         &
      &                 tl_zeta_south(i)*(1.0_r8+z_w0*hinv)+             &
      &                 zeta_south(i)*z_w0*tl_hinv+                      &
-     &                 zeta_south(i)*tl_z_w0*hinv-                      &
-#     ifdef TL_IOMS
-     &                 2.0_r8*zeta_south(i)*z_w0*hinv
-#     endif
+     &                 zeta_south(i)*tl_z_w0*hinv
 #    else
-              tl_Zw(k)=tl_zeta_south(i)*(1.0_r8+z_w0*hinv)+             &
-#     ifdef TL_IOMS
-     &                 z_w0
-#     endif
+              tl_Zw(k)=tl_zeta_south(i)*(1.0_r8+z_w0*hinv)
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -801,10 +760,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -814,10 +770,7 @@
               cff1_w=SCALARS(ng)%Cs_w(k)
               z_w0=cff_w+cff1_w*hwater
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-              tl_z_w0=cff1_w*tl_hwater+                                 &
-#     ifdef TL_IOMS
-     &                cff_w
-#     endif
+              tl_z_w0=cff1_w*tl_hwater
 #    endif
 !>            Zw(k)=z_w0+zeta_north(i)*(1.0_r8+z_w0*hinv)
 !>
@@ -825,15 +778,9 @@
               tl_Zw(k)=tl_z_w0+                                         &
      &                 tl_zeta_north(i)*(1.0_r8+z_w0*hinv)+             &
      &                 zeta_north(i)*z_w0*tl_hinv+                      &
-     &                 zeta_north(i)*tl_z_w0*hinv-                      &
-#     ifdef TL_IOMS
-     &                 2.0_r8*zeta_north(i)*z_w0*hinv
-#     endif
+     &                 zeta_north(i)*tl_z_w0*hinv
 #    else
-              tl_Zw(k)=tl_zeta_north(i)*(1.0_r8+z_w0*hinv)+             &
-#     ifdef TL_IOMS
-     &                 z_w0
-#     endif
+              tl_Zw(k)=tl_zeta_north(i)*(1.0_r8+z_w0*hinv)
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -870,10 +817,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/(hc(ng)+hwater)
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -884,26 +828,17 @@
               cff2_w=(cff_w+cff1_w*hwater)*hinv
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_cff2_w=cff1_w*tl_hwater*hinv+                          &
-     &                  (cff_w+cff1_w*hwater)*tl_hinv-                  &
-#     ifdef TL_IOMS
-     &                  cff1_w*hwater*hinv
-#     endif
+     &                  (cff_w+cff1_w*hwater)*tl_hinv
 #    endif
 !>            Zw(k)=zeta_west(j)+(zeta_west(j)+hwater)*cff2_w
 !>
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_Zw(k)=tl_zeta_west(j)+                                 &
      &                 (tl_zeta_west(j)+tl_hwater)*cff2_w+              &
-     &                 (zeta_west(j)+hwater)*tl_cff2_w-                 &
-#     ifdef TL_IOMS
-     &                 (zeta_west(j)+hwater)*cff2_w
-#     endif
+     &                 (zeta_west(j)+hwater)*tl_cff2_w
 #    else
               tl_Zw(k)=tl_zeta_west(j)+                                 &
-     &                 tl_zeta_west(j)*cff2_w+                          &
-#     ifdef TL_IOMS
-     &                 hwater*cff2_w
-#     endif
+     &                 tl_zeta_west(j)*cff2_w
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -927,10 +862,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/(hc(ng)+hwater)
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -941,26 +873,17 @@
               cff2_w=(cff_w+cff1_w*hwater)*hinv
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_cff2_w=cff1_w*tl_hwater*hinv+                          &
-     &                  (cff_w+cff1_w*hwater)*tl_hinv-                  &
-#     ifdef TL_IOMS
-     &                  cff1_w*hwater*hinv
-#     endif
+     &                  (cff_w+cff1_w*hwater)*tl_hinv
 #    endif
 !>            Zw(k)=zeta_east(j)+(zeta_east(j)+hwater)*cff2_w
 !>
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_Zw(k)=tl_zeta_east(j)+                                 &
      &                 (tl_zeta_east(j)+tl_hwater)*cff2_w+              &
-     &                 (zeta_east(j)+hwater)*tl_cff2_w-                 &
-#     ifdef TL_IOMS
-     &                 (zeta_east(j)+hwater)*cff2_w
-#     endif
+     &                 (zeta_east(j)+hwater)*tl_cff2_w
 #    else
               tl_Zw(k)=tl_zeta_east(j)+                                 &
-     &                 tl_zeta_east(j)*cff2_w+                          &
-#     ifdef TL_IOMS
-     &                 hwater*cff2_w
-#     endif
+     &                 tl_zeta_east(j)*cff2_w
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -984,10 +907,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/(hc(ng)+hwater)
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -998,26 +918,17 @@
               cff2_w=(cff_w+cff1_w*hwater)*hinv
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_cff2_w=cff1_w*tl_hwater*hinv+                          &
-     &                  (cff_w+cff1_w*hwater)*tl_hinv-                  &
-#     ifdef TL_IOMS
-     &                  cff1_w*hwater*hinv
-#     endif
+     &                  (cff_w+cff1_w*hwater)*tl_hinv
 #    endif
 !>            Zw(k)=zeta_south(i)+(zeta_south(i)+hwater)*cff2_w
 !>
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_Zw(k)=tl_zeta_south(i)+                                &
      &                 (tl_zeta_south(i)+tl_hwater)*cff2_w+             &
-     &                 (zeta_south(i)+hwater)*tl_cff2_w-                &
-#     ifdef TL_IOMS
-     &                 (zeta_south(i)+hwater)*cff2_w
-#     endif
+     &                 (zeta_south(i)+hwater)*tl_cff2_w
 #    else
               tl_Zw(k)=tl_zeta_south(i)+                                &
-     &                 tl_zeta_south(i)*cff2_w+                         &
-#     ifdef TL_IOMS
-     &                 hwater*cff2_w
-#     endif
+     &                 tl_zeta_south(i)*cff2_w
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))
@@ -1041,10 +952,7 @@
             tl_hwater=tl_h(i,j)
             hinv=1.0_r8/(hc(ng)+hwater)
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_hinv=-hinv*hinv*tl_hwater+                               &
-#     ifdef TL_IOMS
-     &              2.0_r8*hinv
-#     endif
+            tl_hinv=-hinv*hinv*tl_hwater
 #    endif
 !>          Zw(0)=-h(i,j)
 !>
@@ -1055,26 +963,17 @@
               cff2_w=(cff_w+cff1_w*hwater)*hinv
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_cff2_w=cff1_w*tl_hwater*hinv+                          &
-     &                  (cff_w+cff1_w*hwater)*tl_hinv-                  &
-#     ifdef TL_IOMS
-     &                  cff1_w*hwater*hinv
-#     endif
+     &                  (cff_w+cff1_w*hwater)*tl_hinv
 #    endif
 !>            Zw(k)=zeta_north(i)+(zeta_north(i)+hwater)*cff2_w
 !>
 #    if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
               tl_Zw(k)=tl_zeta_north(i)+                                &
      &                 (tl_zeta_north(i)+tl_hwater)*cff2_w+             &
-     &                 (zeta_north(i)+hwater)*tl_cff2_w-                &
-#     ifdef TL_IOMS
-     &                 (zeta_north(i)+hwater)*cff2_w
-#     endif
+     &                 (zeta_north(i)+hwater)*tl_cff2_w
 #    else
               tl_Zw(k)=tl_zeta_north(i)+                                &
-     &                 tl_zeta_north(i)*cff2_w+                         &
-#     ifdef TL_IOMS
-     &                 hwater*cff2_w
-#     endif
+     &                 tl_zeta_north(i)*cff2_w
 #    endif
 #    ifdef ICESHELF
 !>            Zw(k)=Zw(k)-ABS(zice(i,j))

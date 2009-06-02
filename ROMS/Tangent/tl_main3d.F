@@ -77,6 +77,8 @@
 # endif
 # ifdef ADJUST_BOUNDARY
       USE tl_obc_adjust_mod, ONLY : tl_obc_adjust
+      USE tl_obc_adjust_mod, ONLY : tl_obc2d_adjust
+      USE tl_set_depth_mod, ONLY : tl_set_depth_bry
 # endif
       USE tl_omega_mod, ONLY : tl_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -349,6 +351,8 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL tl_obc_adjust (ng, TILE, Lbinp(ng))
+            CALL tl_set_depth_bry (ng, TILE)
+            CALL tl_obc2d_adjust (ng, TILE, Lbinp(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO
