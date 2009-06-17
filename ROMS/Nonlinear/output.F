@@ -319,7 +319,8 @@
 !  If appropriate, process stations NetCDF file.
 !-----------------------------------------------------------------------
 !
-      IF ((Nstation(ng).gt.0).and.(nSTA(ng).gt.0)) THEN
+      IF (Lstations(ng).and.                                            &
+     &    (Nstation(ng).gt.0).and.(nSTA(ng).gt.0)) THEN
 !
 !  Create output station NetCDF file or prepare existing file to
 !  append new data to it.
@@ -344,7 +345,8 @@
 !  If appropriate, process floats NetCDF file.
 !-----------------------------------------------------------------------
 !
-      IF ((Nfloats(ng).gt.0).and.(nFLT(ng).gt.0)) THEN
+      IF (Lfloats(ng).and.                                              &
+     &    (Nfloats(ng).gt.0).and.(nFLT(ng).gt.0)) THEN
 !
 !  Create output floats NetCDF file or prepare existing file to
 !  append new data to it.

@@ -89,29 +89,31 @@
 !-----------------------------------------------------------------------
 !
       IF (spherical) THEN
-        mc=FLT(ng)%Findex(0)
-        IF (FLT(ng)%Findex(0).gt.0) THEN
-          CALL hindices (ng, LBi, UBi, LBj, UBj,                        &
-     &                   IstrR, Iend+1, JstrR, Jend+1,                  &
-     &                   GRID(ng)%angler,                               &
-     &                   GRID(ng)%lonr,                                 &
-     &                   GRID(ng)%latr,                                 &
-     &                   1, mc, 1, 1,                                   & 
-     &                   1, mc, 1, 1,                                   & 
-     &                   FLT(ng)%Flon,                                  &
-     &                   FLT(ng)%Flat,                                  &
-     &                   Iflt, Jflt, spv, .FALSE.)
+        IF (Lfloats(ng)) THEN
+          mc=FLT(ng)%Findex(0)
+          IF (FLT(ng)%Findex(0).gt.0) THEN
+            CALL hindices (ng, LBi, UBi, LBj, UBj,                      &
+     &                     IstrR, Iend+1, JstrR, Jend+1,                &
+     &                     GRID(ng)%angler,                             &
+     &                     GRID(ng)%lonr,                               &
+     &                     GRID(ng)%latr,                               &
+     &                     1, mc, 1, 1,                                 &
+     &                     1, mc, 1, 1,                                 &
+     &                     FLT(ng)%Flon,                                &
+     &                     FLT(ng)%Flat,                                &
+     &                     Iflt, Jflt, spv, .FALSE.)
 #  ifdef DISTRIBUTE
-          CALL mp_collect (ng, model, mc, spv, Iflt)
-          CALL mp_collect (ng, model, mc, spv, Jflt)
+            CALL mp_collect (ng, model, mc, spv, Iflt)
+            CALL mp_collect (ng, model, mc, spv, Jflt)
 #  endif
-          DO i=1,mc
-            l=FLT(ng)%Findex(i)
-            FLT(ng)%Tinfo(ixgrd,l)=MIN(MAX(0.5_r8,Iflt(i)),             &
-     &                             REAL(Lm(ng),r8)+0.5_r8)
-            FLT(ng)%Tinfo(iygrd,l)=MIN(MAX(0.5_r8,Jflt(i)),             &
-     &                             REAL(Mm(ng),r8)+0.5_r8)
-          END DO
+            DO i=1,mc
+              l=FLT(ng)%Findex(i)
+              FLT(ng)%Tinfo(ixgrd,l)=MIN(MAX(0.5_r8,Iflt(i)),           &
+     &                               REAL(Lm(ng),r8)+0.5_r8)
+              FLT(ng)%Tinfo(iygrd,l)=MIN(MAX(0.5_r8,Jflt(i)),           &
+     &                               REAL(Mm(ng),r8)+0.5_r8)
+            END DO
+          END IF
         END IF
       END IF
 #  ifdef SOLVE3D
@@ -119,16 +121,18 @@
 !  Determine which node bounds the initial float location.
 !
 #   ifdef DISTRIBUTE
-      DO l=1,Nfloats(ng)
-        IF ((Xstr.le.FLT(ng)%Tinfo(ixgrd,l)).and.                       &
-     &      (FLT(ng)%Tinfo(ixgrd,l).lt.Xend).and.                       &
-     &      (Ystr.le.FLT(ng)%Tinfo(iygrd,l)).and.                       &
-     &      (FLT(ng)%Tinfo(iygrd,l).lt.Yend)) THEN
-          MyThread(l)=.TRUE.
-        ELSE
-          MyThread(l)=.FALSE.
-        END IF
-      END DO
+      IF (Lfloats(ng)) THEN
+        DO l=1,Nfloats(ng)
+          IF ((Xstr.le.FLT(ng)%Tinfo(ixgrd,l)).and.                     &
+     &        (FLT(ng)%Tinfo(ixgrd,l).lt.Xend).and.                     &
+     &        (Ystr.le.FLT(ng)%Tinfo(iygrd,l)).and.                     &
+     &        (FLT(ng)%Tinfo(iygrd,l).lt.Yend)) THEN
+            MyThread(l)=.TRUE.
+          ELSE
+            MyThread(l)=.FALSE.
+          END IF
+        END DO
+      END IF
 #   else
       DO l=1,Nfloats(ng)
         MyThread(l)=.TRUE.
@@ -144,43 +148,47 @@
 !
       DO l=1,Nfloats(ng)
 #  ifdef SOLVE3D
-        FLT(ng)%Fz0(l)=spv
-        IF (MyThread(l)) THEN
-          zfloat=FLT(ng)%Tinfo(izgrd,l)
-          FLT(ng)%Fz0(l)=zfloat                 ! Save original value
-          Kflt(l)=zfloat
-          IF (zfloat.le.0.0_r8) THEN
-            i=INT(FLT(ng)%Tinfo(ixgrd,l))       ! Fractional positions
-            j=INT(FLT(ng)%Tinfo(iygrd,l))       ! are still in this cell
-            IF (zfloat.lt.GRID(ng)%z_w(i,j,0)) THEN
-              zfloat=GRID(ng)%z_w(i,j,0)+5.0_r8
-              FLT(ng)%Fz0(l)=zfloat
-            END IF
-            FLT(ng)%Tinfo(izgrd,l)=REAL(N(ng),r8)
-            DO k=N(ng),1,-1
-              IF ((GRID(ng)%z_w(i,j,k)-zfloat)*                         &
-     &            (zfloat-GRID(ng)%z_w(i,j,k-1)).ge.0.0_r8) THEN
-                Kflt(l)=REAL(k-1,r8)+                                   &
-     &                  (zfloat-GRID(ng)%z_w(i,j,k-1))/                 &
-     &                  GRID(ng)%Hz(i,j,k)
+        IF (Lfloats(ng)) THEN
+          FLT(ng)%Fz0(l)=spv
+          IF (MyThread(l)) THEN
+            zfloat=FLT(ng)%Tinfo(izgrd,l)
+            FLT(ng)%Fz0(l)=zfloat               ! Save original value
+            Kflt(l)=zfloat
+            IF (zfloat.le.0.0_r8) THEN
+              i=INT(FLT(ng)%Tinfo(ixgrd,l))     ! Fractional positions
+              j=INT(FLT(ng)%Tinfo(iygrd,l))     ! are still in this cell
+              IF (zfloat.lt.GRID(ng)%z_w(i,j,0)) THEN
+                zfloat=GRID(ng)%z_w(i,j,0)+5.0_r8
+                FLT(ng)%Fz0(l)=zfloat
               END IF
-            END DO
+              FLT(ng)%Tinfo(izgrd,l)=REAL(N(ng),r8)
+              DO k=N(ng),1,-1
+                IF ((GRID(ng)%z_w(i,j,k)-zfloat)*                       &
+     &              (zfloat-GRID(ng)%z_w(i,j,k-1)).ge.0.0_r8) THEN
+                  Kflt(l)=REAL(k-1,r8)+                                 &
+     &                    (zfloat-GRID(ng)%z_w(i,j,k-1))/               &
+     &                    GRID(ng)%Hz(i,j,k)
+                END IF
+              END DO
+            END IF
+          ELSE
+            Kflt(l)=spv
           END IF
-        ELSE
-          Kflt(l)=spv
-        END IF
 #  else
-        FLT(ng)%Tinfo(izgrd,l)=0.0_r8
+          FLT(ng)%Tinfo(izgrd,l)=0.0_r8
 #  endif
+        END IF
       END DO
 #  ifdef SOLVE3D
+      IF (Lfloats(ng)) THEN
 #   ifdef DISTRIBUTE
-      CALL mp_collect (ng, model, Nfloats(ng), spv, FLT(ng)%Fz0)
-      CALL mp_collect (ng, model, Nfloats(ng), spv, Kflt)
+        CALL mp_collect (ng, model, Nfloats(ng), spv, FLT(ng)%Fz0)
+        CALL mp_collect (ng, model, Nfloats(ng), spv, Kflt)
 #   endif
-      DO l=1,Nfloats(ng)
-        FLT(ng)%Tinfo(izgrd,l)=Kflt(l)
-      END DO 
+        DO l=1,Nfloats(ng)
+          FLT(ng)%Tinfo(izgrd,l)=Kflt(l)
+        END DO 
+      END IF
 #  endif
 # endif
 # ifdef STATIONS

@@ -8061,17 +8061,17 @@
           ELSE IF (TRIM(KeyWord).eq.'POS') THEN
             Npts=Nfloats(1)+1
             IF (Ngrids.gt.1) Npts=MAXVAL(Nfloats)+1
-            allocate ( Fcoor (Npts,Ngrids) )
-            allocate ( Fcount(Npts,Ngrids) )
-            allocate ( Ftype (Npts,Ngrids) )
-            allocate ( Ft0(Npts,Ngrids) )
-            allocate ( Fx0(Npts,Ngrids) )
-            allocate ( Fy0(Npts,Ngrids) )
-            allocate ( Fz0(Npts,Ngrids) )
-            allocate ( Fdt(Npts,Ngrids) )
-            allocate ( Fdx(Npts,Ngrids) )
-            allocate ( Fdy(Npts,Ngrids) )
-            allocate ( Fdz(Npts,Ngrids) )
+            IF (.not.allocated(Fcoor))  allocate ( Fcoor (Npts,Ngrids) )
+            IF (.not.allocated(Fcount)) allocate ( Fcount(Npts,Ngrids) )
+            IF (.not.allocated(Ftype))  allocate ( Ftype (Npts,Ngrids) )
+            IF (.not.allocated(Ft0))    allocate ( Ft0(Npts,Ngrids) )
+            IF (.not.allocated(Fx0))    allocate ( Fx0(Npts,Ngrids) )
+            IF (.not.allocated(Fy0))    allocate ( Fy0(Npts,Ngrids) )
+            IF (.not.allocated(Fz0))    allocate ( Fz0(Npts,Ngrids) )
+            IF (.not.allocated(Fdt))    allocate ( Fdt(Npts,Ngrids) )
+            IF (.not.allocated(Fdx))    allocate ( Fdx(Npts,Ngrids) )
+            IF (.not.allocated(Fdy))    allocate ( Fdy(Npts,Ngrids) )
+            IF (.not.allocated(Fdz))    allocate ( Fdz(Npts,Ngrids) )
             DO ng=1,Ngrids
               CALL allocate_floats (ng)
             END DO
@@ -8112,12 +8112,12 @@
 !
       IF (Lwrite) THEN
         DO ng=1,Ngrids
-          IF (ncount(ng).ne.Nfloats(ng)) THEN
-            WRITE (stdout,60) ncount(ng), Nfloats(ng)
-            exit_flag=4
-            RETURN
-          END IF
           IF (Lfloats(ng)) THEN
+            IF (ncount(ng).ne.Nfloats(ng)) THEN
+              WRITE (stdout,60) ncount(ng), Nfloats(ng)
+              exit_flag=4
+              RETURN
+            END IF
             WRITE (out,70) ng
             DO i=1,nentry(ng)
               IF (.not.spherical.and.(Fcoor(i,ng).eq.0)) THEN
@@ -8148,91 +8148,93 @@
       DO ng=1,Ngrids
         mc=0
         nc=0
-        DO i=1,nentry(ng)
-          IF (Fcount(i,ng).eq.1) THEN
-            nc=nc+1
-            FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
-            FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
-            FLT(ng)%Ftype(nc)=Ftype(i,ng)
-            IF (Fcoor(i,ng).eq.0) THEN
-              FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,Fx0(i,ng)),        &
-     &                                REAL(Lm(ng),r8)+0.5_r8)
-              FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,Fy0(i,ng)),        &
-     &                                REAL(Mm(ng),r8)+0.5_r8)
-            ELSE
-              mc=mc+1
-              FLT(ng)%Flon(mc)=Fx0(i,ng)
-              FLT(ng)%Flat(mc)=Fy0(i,ng)
-              FLT(ng)%Findex(mc)=nc
-            END IF
-          ELSE IF (Fcount(i,ng).gt.1) THEN
-            DO j=1,Fcount(i,ng)
+        IF (Lfloats(ng)) THEN
+          DO i=1,nentry(ng)
+            IF (Fcount(i,ng).eq.1) THEN
               nc=nc+1
-              IF (Fdt(i,ng).gt.0.0_r8) THEN
-                FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng)+              &
-     &                                   REAL(j-1,r8)*Fdt(i,ng))*       &
-     &                                  day2sec
-                FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
-                FLT(ng)%Ftype(nc)=Ftype(i,ng)
-                IF (Fcoor(i,ng).eq.0) THEN
-                  FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,Fx0(i,ng)),    &
-     &                                    REAL(Lm(ng),r8)+0.5_r8)
-                  FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,Fy0(i,ng)),    &
-     &                                    REAL(Mm(ng),r8)+0.5_r8)
-                ELSE
-                  mc=mc+1
-                  FLT(ng)%Flon(mc)=Fx0(i,ng)
-                  FLT(ng)%Flat(mc)=Fy0(i,ng)
-                  FLT(ng)%Findex(mc)=nc
-                END IF
+              FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
+              FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
+              FLT(ng)%Ftype(nc)=Ftype(i,ng)
+              IF (Fcoor(i,ng).eq.0) THEN
+                FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,Fx0(i,ng)),      &
+     &                                  REAL(Lm(ng),r8)+0.5_r8)
+                FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,Fy0(i,ng)),      &
+     &                                  REAL(Mm(ng),r8)+0.5_r8)
               ELSE
-                FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
-                IF (Fdz(i,ng).eq.0.0_r8) THEN
+                mc=mc+1
+                FLT(ng)%Flon(mc)=Fx0(i,ng)
+                FLT(ng)%Flat(mc)=Fy0(i,ng)
+                FLT(ng)%Findex(mc)=nc
+              END IF
+            ELSE IF (Fcount(i,ng).gt.1) THEN
+              DO j=1,Fcount(i,ng)
+                nc=nc+1
+                IF (Fdt(i,ng).gt.0.0_r8) THEN
+                  FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng)+            &
+     &                                     REAL(j-1,r8)*Fdt(i,ng))*     &
+     &                                    day2sec
                   FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
-                ELSE
-                  IF (Fz0(i,ng).gt.0.0_r8) THEN
-                    zfloat=Fz0(i,ng)+REAL(j-1,r8)*Fdz(i,ng)
-                    FLT(ng)%Tinfo(izgrd,nc)=MIN(MAX(0.0_r8,zfloat),     &
-     &                                      REAL(N(ng),r8))
+                  FLT(ng)%Ftype(nc)=Ftype(i,ng)
+                  IF (Fcoor(i,ng).eq.0) THEN
+                    FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,Fx0(i,ng)),  &
+     &                                      REAL(Lm(ng),r8)+0.5_r8)
+                    FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,Fy0(i,ng)),  &
+     &                                      REAL(Mm(ng),r8)+0.5_r8)
                   ELSE
-                    FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)+                  &
-     &                                      REAL(j-1,r8)*Fdz(i,ng)
+                    mc=mc+1
+                    FLT(ng)%Flon(mc)=Fx0(i,ng)
+                    FLT(ng)%Flat(mc)=Fy0(i,ng)
+                    FLT(ng)%Findex(mc)=nc
+                  END IF
+                ELSE
+                  FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
+                  IF (Fdz(i,ng).eq.0.0_r8) THEN
+                    FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
+                  ELSE
+                    IF (Fz0(i,ng).gt.0.0_r8) THEN
+                      zfloat=Fz0(i,ng)+REAL(j-1,r8)*Fdz(i,ng)
+                      FLT(ng)%Tinfo(izgrd,nc)=MIN(MAX(0.0_r8,zfloat),   &
+     &                                        REAL(N(ng),r8))
+                    ELSE
+                      FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)+                &
+     &                                        REAL(j-1,r8)*Fdz(i,ng)
+                    END IF
+                  END IF
+                  FLT(ng)%Ftype(nc)=Ftype(i,ng)
+                  IF (Fcoor(i,ng).eq.0) THEN
+                    xfloat=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
+                    FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,xfloat),     &
+     &                                      REAL(Lm(ng),r8)+0.5_r8)
+                    yfloat=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
+                    FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,yfloat),     &
+     &                                      REAL(Mm(ng),r8)+0.5_r8)
+                  ELSE
+                    mc=mc+1
+                    FLT(ng)%Flon(mc)=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
+                    FLT(ng)%Flat(mc)=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
+                    FLT(ng)%Findex(mc)=nc
                   END IF
                 END IF
-                FLT(ng)%Ftype(nc)=Ftype(i,ng)
-                IF (Fcoor(i,ng).eq.0) THEN
-                  xfloat=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
-                  FLT(ng)%Tinfo(ixgrd,nc)=MIN(MAX(0.5_r8,xfloat),       &
-     &                                    REAL(Lm(ng),r8)+0.5_r8)
-                  yfloat=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
-                  FLT(ng)%Tinfo(iygrd,nc)=MIN(MAX(0.5_r8,yfloat),       &
-     &                                    REAL(Mm(ng),r8)+0.5_r8)
-                ELSE
-                  mc=mc+1
-                  FLT(ng)%Flon(mc)=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
-                  FLT(ng)%Flat(mc)=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
-                  FLT(ng)%Findex(mc)=nc
-                END IF
-              END IF
-            END DO
-          END IF
-        END DO
-        FLT(ng)%Findex(0)=mc
+              END DO
+            END IF
+          END DO
+          FLT(ng)%Findex(0)=mc
+        END IF
       END DO
 !
 !  Deallocate local arrays.
 !
-      deallocate ( Fcoor )
-      deallocate ( Fcount )
-      deallocate ( Ftype )
-      deallocate ( Ft0 )
-      deallocate ( Fx0 )
-      deallocate ( Fy0 )
-      deallocate ( Fz0 )
-      deallocate ( Fdt )
-      deallocate ( Fdx )
-      deallocate ( Fdy )
-      deallocate ( Fdz )
+      IF (allocated(Fcoor))  deallocate ( Fcoor )
+      IF (allocated(Fcount)) deallocate ( Fcount )
+      IF (allocated(Ftype))  deallocate ( Ftype )
+      IF (allocated(Ft0))    deallocate ( Ft0 )
+      IF (allocated(Fx0))    deallocate ( Fx0 )
+      IF (allocated(Fy0))    deallocate ( Fy0 )
+      IF (allocated(Fz0))    deallocate ( Fz0 )
+      IF (allocated(Fdt))    deallocate ( Fdt )
+      IF (allocated(Fdx))    deallocate ( Fdx )
+      IF (allocated(Fdy))    deallocate ( Fdy )
+      IF (allocated(Fdz))    deallocate ( Fdz )
 !
   40  FORMAT (/,' READ_FloatsPar - Error while reading floats',         &
      &          ' locations in input script: ',a)
