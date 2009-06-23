@@ -603,6 +603,7 @@
       IF (.not.Lweak.and.(ANY(Lobc(:,isVvel,ng)))) THEN
         DO ir=1,Nbrec(ng)
           IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+            ib=iwest
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 ad_v_obc(j,k,ib,ir,Linp)=ad_v_obc(j,k,ib,ir,Linp)*      &
@@ -611,6 +612,7 @@
             END DO
           END IF
           IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+            ib=ieast
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 ad_v_obc(j,k,ib,ir,Linp)=ad_v_obc(j,k,ib,ir,Linp)*      &
@@ -619,6 +621,7 @@
             END DO
           END IF
           IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+            ib=isouth
             DO k=1,N(ng)
               DO i=Istr,Iend
                 ad_v_obc(i,k,ib,ir,Linp)=ad_v_obc(i,k,ib,ir,Linp)*      &
@@ -627,6 +630,7 @@
             END DO
           END IF
           IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+            ib=inorth
             DO k=1,N(ng)
               DO i=Istr,Iend
                 ad_v_obc(i,k,ib,ir,Linp)=ad_v_obc(i,k,ib,ir,Linp)*      &

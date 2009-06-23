@@ -6147,7 +6147,7 @@
 #endif
 #ifdef ADJUST_WSTRESS
      &                        ad_ustr(:,:,:,Lold), tl_ustr(:,:,:,Lwrk), &
-     &                        ad_vstr(:,:,:,Lold), ad_vstr(:,:,:,Lwrk), &
+     &                        ad_vstr(:,:,:,Lold), tl_vstr(:,:,:,Lwrk), &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX

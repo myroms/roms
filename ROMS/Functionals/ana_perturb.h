@@ -36,6 +36,9 @@
 !
       USE mod_param
       USE mod_ncparam
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary
+#endif
       USE mod_ocean
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces
@@ -49,7 +52,7 @@
 #include "tile.h"
 !
       CALL ana_perturb_tile (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       kstp(ng), krhs(ng), knew(ng),              &
 #ifdef SOLVE3D
@@ -121,7 +124,7 @@
 !
 !***********************************************************************
       SUBROUTINE ana_perturb_tile (ng, tile, model,                     &
-     &                             LBi, UBi, LBj, UBj,                  &
+     &                             LBi, UBi, LBj, UBj, LBij, UBij,      &
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             kstp, krhs, knew,                    &
 #ifdef SOLVE3D
@@ -174,7 +177,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 #ifdef SOLVE3D
@@ -778,7 +781,7 @@
 !
 !  Perturb free-surface open boundaries.
 !
-          IF (Lpertub.and.Lobc(ib,isFsur,ng)) THEN
+          IF (Lperturb.and.Lobc(ib,isFsur,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN      
                 DO j=Jstr,Jend
@@ -820,7 +823,7 @@
 !
 !  Perturb 2D U-momentum open boundaries.
 !
-          IF (Lpertub.and.Lobc(ib,isUbar,ng)) THEN
+          IF (Lperturb.and.Lobc(ib,isUbar,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isUbar)) THEN
                 DO j=Jstr,Jend
@@ -862,7 +865,7 @@
 !
 !  Perturb 2D V-momentum open boundaries.
 !
-          IF (Lpertub.and.Lobc(ib,isVbar,ng)) THEN
+          IF (Lperturb.and.Lobc(ib,isVbar,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isVbar)) THEN
                 DO j=JstrV,Jend
@@ -906,7 +909,7 @@
 !
 !  Perturb 3D U-momentum open boundaries.
 !
-          IF (Lpertub.and.Lobc(ib,isUvel,ng)) THEN
+          IF (Lperturb.and.Lobc(ib,isUvel,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isUvel)) THEN
                 DO k=1,N(ng)
@@ -956,7 +959,7 @@
 !
 !  Perturb 3D V-momentum open boundaries.
 !
-          IF (Lpertub.and.Lobc(ib,isVvel,ng)) THEN
+          IF (Lperturb.and.Lobc(ib,isVvel,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isVvel)) THEN
                 DO k=1,N(ng)
@@ -1007,7 +1010,7 @@
 !  Perturb tracers open boundaries.
 !
           DO itrc=1,NT(ng)
-            IF (Lpertub.and.Lobc(ib,isTvar(itrc),ng)) THEN
+            IF (Lperturb.and.Lobc(ib,isTvar(itrc),ng)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 IF (TLmodel.and.(ivarTL.eq.isTvar(itrc))) THEN
                   DO k=1,N(ng)
