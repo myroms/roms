@@ -147,8 +147,8 @@
 !-----------------------------------------------------------------------
 !
       DO l=1,Nfloats(ng)
-#  ifdef SOLVE3D
         IF (Lfloats(ng)) THEN
+#  ifdef SOLVE3D
           FLT(ng)%Fz0(l)=spv
           IF (MyThread(l)) THEN
             zfloat=FLT(ng)%Tinfo(izgrd,l)
