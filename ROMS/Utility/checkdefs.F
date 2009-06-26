@@ -295,6 +295,15 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ANA_RAIN,'
 #endif
+#if defined ANA_SCOPE && \
+   (defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+    defined SO_SEMI)
+      IF (Master) WRITE (stdout,20) 'ANA_SCOPE',                        &
+     &   'Analytical spatial scope masking arrays.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ANA_SCOPE,'
+#endif
 #if defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
       IF (Master) WRITE (stdout,20) 'ANA_SEDIMENT',                     &
      &   'Analytical sediment initial conditions.'

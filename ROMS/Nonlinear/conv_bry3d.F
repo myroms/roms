@@ -1392,8 +1392,8 @@
 # else
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_p(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pmon_p(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)

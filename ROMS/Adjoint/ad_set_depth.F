@@ -536,20 +536,20 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
 #   ifdef WEST_FSOBC
-      real(r8), intent(in) :: zeta_west(LBj:)
-      real(r8), intent(inout) :: ad_zeta_west(LBj:)
+      real(r8), intent(in) :: zeta_west(0:)
+      real(r8), intent(inout) :: ad_zeta_west(0:)
 #   endif
 #   ifdef EAST_FSOBC
-      real(r8), intent(in) :: zeta_east(LBj:)
-      real(r8), intent(inout) :: ad_zeta_east(LBj:)
+      real(r8), intent(in) :: zeta_east(0:)
+      real(r8), intent(inout) :: ad_zeta_east(0:)
 #   endif
 #   ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: zeta_south(LBi:)
-      real(r8), intent(inout) :: ad_zeta_south(LBi:)
+      real(r8), intent(in) :: zeta_south(0:)
+      real(r8), intent(inout) :: ad_zeta_south(0:)
 #   endif
 #   ifdef NORTH_FSOBC
-      real(r8), intent(in) :: zeta_north(LBi:)
-      real(r8), intent(inout) :: ad_zeta_north(LBi:)
+      real(r8), intent(in) :: zeta_north(0:)
+      real(r8), intent(inout) :: ad_zeta_north(0:)
 #   endif
       real(r8), intent(out) :: ad_Hz_bry(LBij:,:,:)
 #  else
@@ -559,20 +559,20 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   ifdef WEST_FSOBC
-      real(r8), intent(in) :: zeta_west(LBj:UBj)
-      real(r8), intent(inout) :: ad_zeta_west(LBj:UBj)
+      real(r8), intent(in) :: zeta_west(0:Jm(ng)+1)
+      real(r8), intent(inout) :: ad_zeta_west(0:Jm(ng)+1)
 #   endif
 #   ifdef EAST_FSOBC
-      real(r8), intent(in) :: zeta_east(LBj:UBj)
-      real(r8), intent(inout) :: ad_zeta_east(LBj:UBj)
+      real(r8), intent(in) :: zeta_east(0:Jm(ng)+1)
+      real(r8), intent(inout) :: ad_zeta_east(0:Jm(ng)+1)
 #   endif
 #   ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: zeta_south(LBi:UBi)
-      real(r8), intent(inout) :: ad_zeta_south(LBi:UBi)
+      real(r8), intent(in) :: zeta_south(0:Im(ng)+1)
+      real(r8), intent(inout) :: ad_zeta_south(0:Im(ng)+1)
 #   endif
 #   ifdef NORTH_FSOBC
-      real(r8), intent(in) :: zeta_north(LBi:UBi)
-      real(r8), intent(inout) :: ad_zeta_north(LBi:UBi)
+      real(r8), intent(in) :: zeta_north(0:Im(ng)+1)
+      real(r8), intent(inout) :: ad_zeta_north(0:Im(ng)+1)
 #   endif
       real(r8), intent(out) :: ad_Hz_bry(LBij:UBij,N(ng),4)
 #  endif

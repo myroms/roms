@@ -277,6 +277,10 @@
         Lfinp(ng)=1         ! forcing index for input
         Lfout(ng)=1         ! forcing index for output history files
 #endif
+#ifdef ADJUST_BOUNDARY
+        Lbinp(ng)=1         ! boundary index for input
+        Lbout(ng)=1         ! boundary index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         LTLM1=1             ! trial x-space TLM IC record in ITLname
@@ -782,6 +786,9 @@
 !
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
             Lfout(ng)=LADJ2
+#endif
+#ifdef ADJUST_BOUNDARY
+            Lbout(ng)=LADJ2
 #endif
             kstp(ng)=LADJ2
 #ifdef SOLVE3D

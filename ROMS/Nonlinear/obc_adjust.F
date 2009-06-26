@@ -208,61 +208,61 @@
       real(r8), intent(in) :: tl_vbar_obc(LBij:,:,:,:)
       real(r8), intent(in) :: tl_zeta_obc(LBij:,:,:,:)
 #  ifdef WEST_FSOBC
-      real(r8), intent(inout) :: zeta_west(LBj:)
+      real(r8), intent(inout) :: zeta_west(0:)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(inout) :: zeta_east(LBj:)
+      real(r8), intent(inout) :: zeta_east(0:)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(inout) :: zeta_south(LBi:)
+      real(r8), intent(inout) :: zeta_south(0:)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(inout) :: zeta_north(LBi:)
+      real(r8), intent(inout) :: zeta_north(0:)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(inout) :: ubar_west(LBj:)
-      real(r8), intent(inout) :: vbar_west(LBj:)
+      real(r8), intent(inout) :: ubar_west(0:)
+      real(r8), intent(inout) :: vbar_west(0:)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(inout) :: ubar_east(LBj:)
-      real(r8), intent(inout) :: vbar_east(LBj:)
+      real(r8), intent(inout) :: ubar_east(0:)
+      real(r8), intent(inout) :: vbar_east(0:)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(inout) :: ubar_south(LBi:)
-      real(r8), intent(inout) :: vbar_south(LBi:)
+      real(r8), intent(inout) :: ubar_south(0:)
+      real(r8), intent(inout) :: vbar_south(0:)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(inout) :: ubar_north(LBi:)
-      real(r8), intent(inout) :: vbar_north(LBi:)
+      real(r8), intent(inout) :: ubar_north(0:)
+      real(r8), intent(inout) :: vbar_north(0:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(inout) :: u_west(LBj:,:)
-      real(r8), intent(inout) :: v_west(LBj:,:)
+      real(r8), intent(inout) :: u_west(0:,:)
+      real(r8), intent(inout) :: v_west(0:,:)
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(inout) :: u_east(LBj:,:)
-      real(r8), intent(inout) :: v_east(LBj:,:)
+      real(r8), intent(inout) :: u_east(0:,:)
+      real(r8), intent(inout) :: v_east(0:,:)
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(inout) :: u_south(LBi:,:)
-      real(r8), intent(inout) :: v_south(LBi:,:)
+      real(r8), intent(inout) :: u_south(0:,:)
+      real(r8), intent(inout) :: v_south(0:,:)
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(inout) :: u_north(LBi:,:)
-      real(r8), intent(inout) :: v_north(LBi:,:)
+      real(r8), intent(inout) :: u_north(0:,:)
+      real(r8), intent(inout) :: v_north(0:,:)
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(inout) :: t_west(LBj:,:,:)
+      real(r8), intent(inout) :: t_west(0:,:,:)
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(inout) :: t_east(LBj:,:,:)
+      real(r8), intent(inout) :: t_east(0:,:,:)
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(inout) :: t_south(LBi:,:,:)
+      real(r8), intent(inout) :: t_south(0:,:,:)
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(inout) :: t_north(LBi:,:,:)
+      real(r8), intent(inout) :: t_north(0:,:,:)
 #   endif
 #  endif
 
@@ -278,61 +278,61 @@
       real(r8), intent(in) :: tl_vbar_obc(LBij:UBij,4,Nbrec(ng),2)
       real(r8), intent(in) :: tl_zeta_obc(LBij:UBij,4,Nbrec(ng),2)
 #  ifdef WEST_FSOBC
-      real(r8), intent(inout) :: zeta_west(LBj:UBj)
+      real(r8), intent(inout) :: zeta_west(0:Jm(ng)+1)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(inout) :: zeta_east(LBj:UBj)
+      real(r8), intent(inout) :: zeta_east(0:Jm(ng)+1)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(inout) :: zeta_south(LBi:UBi)
+      real(r8), intent(inout) :: zeta_south(0:Im(ng)+1)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(inout) :: zeta_north(LBi:UBi)
+      real(r8), intent(inout) :: zeta_north(0:Im(ng)+1)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(inout) :: ubar_west(LBj:UBj)
-      real(r8), intent(inout) :: vbar_west(LBj:UBj)
+      real(r8), intent(inout) :: ubar_west(0:Jm(ng)+1)
+      real(r8), intent(inout) :: vbar_west(0:Jm(ng)+1)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(inout) :: ubar_east(LBj:UBj)
-      real(r8), intent(inout) :: vbar_east(LBj:UBj)
+      real(r8), intent(inout) :: ubar_east(0:Jm(ng)+1)
+      real(r8), intent(inout) :: vbar_east(0:Jm(ng)+1)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(inout) :: ubar_south(LBi:UBi)
-      real(r8), intent(inout) :: vbar_south(LBi:UBi)
+      real(r8), intent(inout) :: ubar_south(0:Im(ng)+1)
+      real(r8), intent(inout) :: vbar_south(0:Im(ng)+1)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(inout) :: ubar_north(LBi:UBi)
-      real(r8), intent(inout) :: vbar_north(LBi:UBi)
+      real(r8), intent(inout) :: ubar_north(0:Im(ng)+1)
+      real(r8), intent(inout) :: vbar_north(0:Im(ng)+1)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(inout) :: u_west(LBj:UBj,N(ng))
-      real(r8), intent(inout) :: v_west(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: u_west(0:Jm(ng)+1,N(ng))
+      real(r8), intent(inout) :: v_west(0:Jm(ng)+1,N(ng))
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(inout) :: u_east(LBj:UBj,N(ng))
-      real(r8), intent(inout) :: v_east(LBj:UBj,N(ng))
+      real(r8), intent(inout) :: u_east(0:Jm(ng)+1,N(ng))
+      real(r8), intent(inout) :: v_east(0:Jm(ng)+1,N(ng))
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(inout) :: u_south(LBi:UBi,N(ng))
-      real(r8), intent(inout) :: v_south(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: u_south(0:Im(ng)+1,N(ng))
+      real(r8), intent(inout) :: v_south(0:Im(ng)+1,N(ng))
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(inout) :: u_north(LBi:UBi,N(ng))
-      real(r8), intent(inout) :: v_north(LBi:UBi,N(ng))
+      real(r8), intent(inout) :: u_north(0:Im(ng)+1,N(ng))
+      real(r8), intent(inout) :: v_north(0:Im(ng)+1,N(ng))
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(inout) :: t_west(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: t_west(0:Jm(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(inout) :: t_east(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: t_east(0:Jm(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(inout) :: t_south(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(inout) :: t_south(0:Im(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(inout) :: t_north(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(inout) :: t_north(0:Im(ng)+1,N(ng),NT(ng))
 #   endif
 #  endif
 # endif
@@ -829,61 +829,61 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef WEST_FSOBC
-      real(r8), intent(in) :: zeta_west(LBj:)
+      real(r8), intent(in) :: zeta_west(0:)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(in) :: zeta_east(LBj:)
+      real(r8), intent(in) :: zeta_east(0:)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: zeta_south(LBi:)
+      real(r8), intent(in) :: zeta_south(0:)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(in) :: zeta_north(LBi:)
+      real(r8), intent(in) :: zeta_north(0:)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(in) :: ubar_west(LBj:)
-      real(r8), intent(in) :: vbar_west(LBj:)
+      real(r8), intent(in) :: ubar_west(0:)
+      real(r8), intent(in) :: vbar_west(0:)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(in) :: ubar_east(LBj:)
-      real(r8), intent(in) :: vbar_east(LBj:)
+      real(r8), intent(in) :: ubar_east(0:)
+      real(r8), intent(in) :: vbar_east(0:)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(in) :: ubar_south(LBi:)
-      real(r8), intent(in) :: vbar_south(LBi:)
+      real(r8), intent(in) :: ubar_south(0:)
+      real(r8), intent(in) :: vbar_south(0:)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(in) :: ubar_north(LBi:)
-      real(r8), intent(in) :: vbar_north(LBi:)
+      real(r8), intent(in) :: ubar_north(0:)
+      real(r8), intent(in) :: vbar_north(0:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(in) :: u_west(LBj:,:)
-      real(r8), intent(in) :: v_west(LBj:,:)
+      real(r8), intent(in) :: u_west(0:,:)
+      real(r8), intent(in) :: v_west(0:,:)
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(in) :: u_east(LBj:,:)
-      real(r8), intent(in) :: v_east(LBj:,:)
+      real(r8), intent(in) :: u_east(0:,:)
+      real(r8), intent(in) :: v_east(0:,:)
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(in) :: u_south(LBi:,:)
-      real(r8), intent(in) :: v_south(LBi:,:)
+      real(r8), intent(in) :: u_south(0:,:)
+      real(r8), intent(in) :: v_south(0:,:)
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(in) :: u_north(LBi:,:)
-      real(r8), intent(in) :: v_north(LBi:,:)
+      real(r8), intent(in) :: u_north(0:,:)
+      real(r8), intent(in) :: v_north(0:,:)
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(in) :: t_west(LBj:,:,:)
+      real(r8), intent(in) :: t_west(0:,:,:)
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(in) :: t_east(LBj:,:,:)
+      real(r8), intent(in) :: t_east(0:,:,:)
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(in) :: t_south(LBi:,:,:)
+      real(r8), intent(in) :: t_south(0:,:,:)
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(in) :: t_north(LBi:,:,:)
+      real(r8), intent(in) :: t_north(0:,:,:)
 #   endif
 #  endif
 #  ifdef SOLVE3D
@@ -898,61 +898,61 @@
 # else
 
 #  ifdef WEST_FSOBC
-      real(r8), intent(in) :: zeta_west(LBj:UBj)
+      real(r8), intent(in) :: zeta_west(0:Jm(ng)+1)
 #  endif
 #  ifdef EAST_FSOBC
-      real(r8), intent(in) :: zeta_east(LBj:UBj)
+      real(r8), intent(in) :: zeta_east(0:Jm(ng)+1)
 #  endif
 #  ifdef SOUTH_FSOBC
-      real(r8), intent(in) :: zeta_south(LBi:UBi)
+      real(r8), intent(in) :: zeta_south(0:Im(ng)+1)
 #  endif
 #  ifdef NORTH_FSOBC
-      real(r8), intent(in) :: zeta_north(LBi:UBi)
+      real(r8), intent(in) :: zeta_north(0:Im(ng)+1)
 #  endif
 #  ifdef WEST_M2OBC
-      real(r8), intent(in) :: ubar_west(LBj:UBj)
-      real(r8), intent(in) :: vbar_west(LBj:UBj)
+      real(r8), intent(in) :: ubar_west(0:Jm(ng)+1)
+      real(r8), intent(in) :: vbar_west(0:Jm(ng)+1)
 #  endif
 #  ifdef EAST_M2OBC
-      real(r8), intent(in) :: ubar_east(LBj:UBj)
-      real(r8), intent(in) :: vbar_east(LBj:UBj)
+      real(r8), intent(in) :: ubar_east(0:Jm(ng)+1)
+      real(r8), intent(in) :: vbar_east(0:Jm(ng)+1)
 #  endif
 #  ifdef SOUTH_M2OBC
-      real(r8), intent(in) :: ubar_south(LBi:UBi)
-      real(r8), intent(in) :: vbar_south(LBi:UBi)
+      real(r8), intent(in) :: ubar_south(0:Im(ng)+1)
+      real(r8), intent(in) :: vbar_south(0:Im(ng)+1)
 #  endif
 #  ifdef NORTH_M2OBC
-      real(r8), intent(in) :: ubar_north(LBi:UBi)
-      real(r8), intent(in) :: vbar_north(LBi:UBi)
+      real(r8), intent(in) :: ubar_north(0:Im(ng)+1)
+      real(r8), intent(in) :: vbar_north(0:Im(ng)+1)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-      real(r8), intent(in) :: u_west(LBj:UBj,N(ng))
-      real(r8), intent(in) :: v_west(LBj:UBj,N(ng))
+      real(r8), intent(in) :: u_west(0:Jm(ng)+1,N(ng))
+      real(r8), intent(in) :: v_west(0:Jm(ng)+1,N(ng))
 #   endif
 #   ifdef EAST_M3OBC
-      real(r8), intent(in) :: u_east(LBj:UBj,N(ng))
-      real(r8), intent(in) :: v_east(LBj:UBj,N(ng))
+      real(r8), intent(in) :: u_east(0:Jm(ng)+1,N(ng))
+      real(r8), intent(in) :: v_east(0:Jm(ng)+1,N(ng))
 #   endif
 #   ifdef SOUTH_M3OBC
-      real(r8), intent(in) :: u_south(LBi:UBi,N(ng))
-      real(r8), intent(in) :: v_south(LBi:UBi,N(ng))
+      real(r8), intent(in) :: u_south(0:Im(ng)+1,N(ng))
+      real(r8), intent(in) :: v_south(0:Im(ng)+1,N(ng))
 #   endif
 #   ifdef NORTH_M3OBC
-      real(r8), intent(in) :: u_north(LBi:UBi,N(ng))
-      real(r8), intent(in) :: v_north(LBi:UBi,N(ng))
+      real(r8), intent(in) :: u_north(0:Im(ng)+1,N(ng))
+      real(r8), intent(in) :: v_north(0:Im(ng)+1,N(ng))
 #   endif
 #   ifdef WEST_TOBC
-      real(r8), intent(in) :: t_west(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: t_west(0:Jm(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef EAST_TOBC
-      real(r8), intent(in) :: t_east(LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: t_east(0:Jm(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef SOUTH_TOBC
-      real(r8), intent(in) :: t_south(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(in) :: t_south(0:Im(ng)+1,N(ng),NT(ng))
 #   endif
 #   ifdef NORTH_TOBC
-      real(r8), intent(in) :: t_north(LBi:UBi,N(ng),NT(ng))
+      real(r8), intent(in) :: t_north(0:Im(ng)+1,N(ng),NT(ng))
 #   endif
 #  endif
 #  ifdef SOLVE3D

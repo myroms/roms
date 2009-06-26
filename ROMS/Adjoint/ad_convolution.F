@@ -658,11 +658,11 @@
               END IF
             END IF
 #  ifdef DISTRIBUTE
-            CALL mp_exchange2d_bry (ng, tile, iADM, 1, ib,              &
-     &                              LBij, UBij,                         &
-     &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
-     &                              ad_zeta_obc(:,ib,ir,Linp))
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_zeta_obc(:,ib,ir,Linp))
 #  endif
           END IF
         END DO
