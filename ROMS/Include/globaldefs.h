@@ -439,7 +439,7 @@
 #if defined IS4DVAR
 # define BACKGROUND
 #endif
-#if !(defined W4DPSAS || defined W4DVAR) && POSTERIOR_EOFS
+#if !(defined W4DPSAS || defined W4DVAR) && defined POSTERIOR_EOFS
 # undef POSTERIOR_EOFS
 #endif
 
