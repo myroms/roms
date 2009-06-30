@@ -3271,6 +3271,23 @@
         END IF
       END IF
 
+#if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
+!
+!-----------------------------------------------------------------------
+!  If weak constraint and estimating posterior analysis error
+!  covariance matrix, stop it using Nouter > 1. Currently, the
+!  analysis is only possible for Nouter = 1.
+!-----------------------------------------------------------------------
+!
+        IF (Nouter.gt.1) THEN
+          exit_flag=5
+          IF (Master) THEN
+            WRITE (out,320) 'Nouter = ', Nouter,                        &
+     &        'Posterior analysis error available for Nouter=1 only.'
+          END IF
+        END IF
+#endif
+
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -3369,6 +3386,7 @@
  300  FORMAT (/,' READ_PHYPAR - Invalid dimension parameter, ',a,'(',   &
      &        i2.2,')',/,15x,a)
  310  FORMAT (2x,a,i2.2,a,a)
+ 320  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i4,/,15x,a)
 
       RETURN
       END SUBROUTINE read_PhyPar
@@ -7102,6 +7120,8 @@
             Npts=load_l(Nval, Cval, 1, Lritz)
           ELSE IF (TRIM(KeyWord).eq.'NritzEV') THEN
             Npts=load_i(Nval, Rval, 1, NritzEV)
+          ELSE IF (TRIM(KeyWord).eq.'NpostI') THEN
+            Npts=load_i(Nval, Rval, 1, NpostI)
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
             Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
           ELSE IF (TRIM(KeyWord).eq.'tl_M3diff') THEN
@@ -7561,15 +7581,19 @@
      &           'Switch for hot start of subsequent outer loops.'
 #    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
-     &           'Switch to preconditioning conjugate gradient.'
+     &           'Switch for conjugate gradient preconditioning.'
           WRITE (out,70) Lritz, 'Lritz',                                &
-     &           'Switch to Ritz limited-memory preconditioning.'
+     &           'Switch for Ritz limited-memory preconditioning.'
 #    if defined WEAK_CONSTRAINT || defined IOM
           IF (Lprecond.and.(NritzEV.gt.0)) THEN
             WRITE (out,80) NritzEV, 'NritzEV',                          &
      &           'Number of preconditioning eigenpairs to use.'
           END IF
 #    endif
+#   endif
+#   if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
+          WRITE (out,80) NpostI, 'NpostI',                              &
+     &           'Number of Lanczos iterations in posterior analysis.'
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
 #    ifndef OBS_SENSITIVITY

@@ -56,6 +56,9 @@
 !
       USE mod_param
       USE mod_parallel
+#ifdef FOUR_DVAR
+      USE mod_fourdvar
+#endif
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
@@ -1356,6 +1359,35 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Charnok_alpha'
+      Vinfo( 2)='Charnok factor for surface roughness'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Zos_hsig_alpha'
+      Vinfo( 2)='wave amplitude factor for surface roughness'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='sz_alpha'
+      Vinfo( 2)='surface flux from wave dissipation'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='CrgBan_cw'
+      Vinfo( 2)='surface flux due to Craig and Banner wave breaking'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
 #endif
 !
 !  Nudging inverse time scales used in various tasks.
@@ -1512,7 +1544,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#if defined SOLVE3D && (defined FOUR_DVAR || defined PROPAGATOR)
+#if defined SOLVE3D && defined PROPAGATOR
       Vinfo( 1)='bvf_bak'
       Vinfo( 2)='background Brunt-Vaisala frequency'
       Vinfo( 3)='second-2'
@@ -1591,7 +1623,6 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-
 # ifdef ADJUST_BOUNDARY
       Vinfo( 1)='Lobc'
       Vinfo( 2)='open boundary conditions adjustment switch'
@@ -1602,7 +1633,65 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
+# ifndef OBS_SENSITIVITY
+      Vinfo( 1)='LhessianEV'
+      Vinfo( 2)='switch to compute Hessian eigenvectors'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
 
+#  if defined WEAK_CONSTRAINT || defined IOM
+      Vinfo( 1)='LhotStart'
+      Vinfo( 2)='switch for hot start of subsequent outer loops'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+      Vinfo( 1)='Lprecond'
+      Vinfo( 2)='switch for conjugate gradient preconditioning'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Lritz'
+      Vinfo( 2)='switch for Ritz limited-memory preconditioning'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  if defined WEAK_CONSTRAINT || defined IOM
+      IF (Lprecond.and.(NritzEV.gt.0)) THEN
+        Vinfo( 1)='NritzEV'
+        Vinfo( 2)='number of preconditioning eigenpairs to use'
+        status=def_var(ng, model, ncid, varid, nf90_int,                &
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+# endif
+# if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
+      Vinfo( 1)='NpostI'
+      Vinfo( 2)='number of Lanczos iterations in posterior analysis'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+# ifndef OBS_SENSITIVITY
       Vinfo( 1)='GradErr'
       Vinfo( 2)='Upper bound on relative error of the gradient'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -1616,6 +1705,7 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+# endif
 
       Vinfo( 1)='Nmethod'
       Vinfo( 2)='background error covariance normalization method'

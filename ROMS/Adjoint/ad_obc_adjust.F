@@ -1546,7 +1546,6 @@
      &                      Hz_bry(j  ,k,ieast))
               DC(0)=DC(0)+DC(k)
               CF(0)=CF(0)+DC(k)*v_east(j,k)
-     &                            DC(k)*tl_v_east(j,k)
             END DO
             cff1=1.0_r8/DC(0)
 !>          tl_vbar_east(j)=tl_cff2

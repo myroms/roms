@@ -457,6 +457,26 @@
      &                      gls_Pmin(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Charnok_alpha',         &
+     &                      charnok_alpha(ng), (/0/), (/0/),            &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Zos_hsig_alpha',        &
+     &                      zos_hsig_alpha(ng), (/0/), (/0/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'sz_alpha',              &
+     &                      sz_alpha(ng), (/0/), (/0/),                 &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'CrgBan_cw',             &
+     &                      crgban_cw(ng), (/0/), (/0/),                &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !  Nudging inverse time scales used in various tasks.
@@ -580,7 +600,7 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-#if defined SOLVE3D && (defined FOUR_DVAR || defined PROPAGATOR)
+#if defined SOLVE3D && defined PROPAGATOR
       CALL netcdf_put_fvar (ng, model, ncname, 'bvf_bak',               &
      &                      bvf_bak, (/0/), (/0/),                      &
      &                      ncid = ncid)
@@ -638,14 +658,50 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-
 # ifdef ADJUST_BOUNDARY
       CALL netcdf_put_lvar (ng, model, ncname, 'Lobc',                  &
      &                      Lobc(:,:,ng), (/1,1/), (/4,NstateVar(ng)/), &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 # endif
+# ifndef OBS_SENSITIVITY
+      CALL netcdf_put_lvar (ng, model, ncname, 'LhessianEV',            &
+     &                      LhessianEV, (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
 
+#  if defined WEAK_CONSTRAINT || defined IOM
+      CALL netcdf_put_lvar (ng, model, ncname, 'LhotStart',             &
+     &                      LhotStart, (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lprecond',              &
+     &                      Lprecond, (/0/), (/0/),                     &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lritz',                 &
+     &                      Lritz, (/0/), (/0/),                        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#  if defined WEAK_CONSTRAINT || defined IOM
+      IF (Lprecond.and.(NritzEV.gt.0)) THEN
+        CALL netcdf_put_ivar (ng, model, ncname, 'NritzEV',             &
+     &                        NritzEV, (/0/), (/0/),                    &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+# endif
+# if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
+        CALL netcdf_put_ivar (ng, model, ncname, 'NpostI',              &
+     &                        NpostI, (/0/), (/0/),                     &
+     &                        ncid = ncid)
+# endif
+# ifndef OBS_SENSITIVITY
       CALL netcdf_put_fvar (ng, model, ncname, 'GradErr',               &
      &                      GradErr, (/0/), (/0/),                      &
      &                      ncid = ncid)
@@ -655,6 +711,7 @@
      &                      HevecErr, (/0/), (/0/),                     &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+# endif
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Nmethod',               &
      &                      Nmethod(ng), (/0/), (/0/),                  &

@@ -1106,7 +1106,7 @@
               DC(0)=DC(0)+DC(k)
               tl_DC(0)=tl_DC(0)+tl_DC(k)
               CF(0)=CF(0)+DC(k)*u_east(j,k)
-              tl_CF(0)=tl_CF(0)+
+              tl_CF(0)=tl_CF(0)+                                        &
      &                 tl_DC(k)*u_east(j,k)+                            &
      &                 DC(k)*tl_u_east(j,k)
             END DO

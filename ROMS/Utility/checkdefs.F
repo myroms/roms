@@ -1614,6 +1614,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' PJ_GRADPQ4,'
 #endif
+#if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'POSTERIOR_EOFS',                   &
+     &   'Estimating posterior analysis error covariace matrix.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' POSTERIOR_EOFS,'
+#endif
 #if defined POWER_LAW && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'POWER_LAW',                        &
      &   'Power-law shape time-averaging barotropic filter.'

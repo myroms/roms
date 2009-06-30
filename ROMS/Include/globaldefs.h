@@ -439,6 +439,9 @@
 #if defined IS4DVAR
 # define BACKGROUND
 #endif
+#if !(defined W4DPSAS || defined W4DVAR) && POSTERIOR_EOFS
+# undef POSTERIOR_EOFS
+#endif
 
 /*
 ** Activate internal switch to process 4DVAR observations.

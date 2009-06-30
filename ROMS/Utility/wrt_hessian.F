@@ -1,5 +1,6 @@
 #include "cppdefs.h"
-#if defined IS4DVAR
+#if defined IS4DVAR        || \
+   (defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT )
       SUBROUTINE wrt_hessian (ng, kout, nout)
 !
 !svn $Id$
@@ -129,7 +130,7 @@
      &                          tHSSindx(ng), r2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,   &
-     &                                                     Lbout(ng)))
+     &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))),            &
@@ -174,7 +175,7 @@
      &                          tHSSindx(ng), u2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ad_ubar_obc(LBij:,:,:,   &
-     &                                                     Lbout(ng)))
+     &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))),            &
@@ -219,7 +220,7 @@
      &                          tHSSindx(ng), v2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,   &
-     &                                                     Lbout(ng)))
+     &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))),            &
@@ -266,7 +267,7 @@
      &                          tHSSindx(ng), u3dvar,                   &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,    &
-     &                                                  Lbout(ng)))
+     &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))),            &
@@ -311,7 +312,7 @@
      &                          tHSSindx(ng), v3dvar,                   &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,    &
-     &                                                  Lbout(ng)))
+     &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))),            &
@@ -361,7 +362,7 @@
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
      &                            BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,  &
-     &                                                Lbout(ng),itrc))
+     &                                                    nout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
@@ -392,8 +393,7 @@
 #   ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #   endif
-     &                       FORCES(ng) % ad_tflux(:,:,:,Lfout(ng),     &
-     &                                             itrc))
+     &                       FORCES(ng) % ad_tflux(:,:,:,kout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
@@ -421,7 +421,7 @@
 #  ifdef MASKING
      &                   GRID(ng) % umask,                              &
 #  endif
-     &                   FORCES(ng) % ad_ustr(:,:,:,Lfout(ng)))
+     &                   FORCES(ng) % ad_ustr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUsms)), tHSSindx(ng)
@@ -441,7 +441,7 @@
 #  ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   FORCES(ng) % ad_vstr(:,:,:,Lfout(ng)))
+     &                   FORCES(ng) % ad_vstr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVsms)), tHSSindx(ng)

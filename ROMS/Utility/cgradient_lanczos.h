@@ -806,10 +806,11 @@
 !  Check for positive Hessian, J''.
 !
         IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
-          PRINT *, 'CG_DELTA not positive'
-          PRINT *, 'CG_DELTA = ', cg_delta(innLoop,outLoop),            &
+          PRINT *, ' CG_DELTA not positive.'
+          PRINT *, ' CG_DELTA = ', cg_delta(innLoop,outLoop),           &
      &             ', outer = ', outLoop, ', inner = ', innLoop
-          STOP
+          exit_flag=8
+          RETURN
         END IF
       END IF
 !
@@ -1061,8 +1062,9 @@
           CALL mp_bcasti (ng, model, info)
 #endif
           IF (info.ne.0) THEN
-            PRINT *,'Error in DSTEQR: info=',info
-            STOP
+            PRINT *, ' Error in DSTEQR: info=', info
+            exit_flag=8
+            RETURN
           END IF
 #ifdef DISTRIBUTE
           CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop))
@@ -1080,8 +1082,9 @@
 !
           DO i=1,innLoop
             IF (cg_Ritz(i,outLoop).lt.0.0_r8) THEN
-              PRINT *,'negative Ritz value found'
-              STOP
+              PRINT *, ' Negative Ritz value found.'
+              exit_flag=8
+              RETURN
             END IF
           END DO
 !
@@ -1165,7 +1168,7 @@
             IF (exit_flag.ne.NoError) RETURN
 
             IF (Master.and.(nConvRitz.eq.0)) THEN
-              PRINT *,' No converged Hesssian eigenvectors found.'
+              PRINT *, ' No converged Hesssian eigenvectors found.'
             END IF
           END IF
         END IF

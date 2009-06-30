@@ -540,6 +540,7 @@
 ** IOM                 use to activate IOM multiple executables              **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
+** POSTERIOR_EOFS      Use if estimating posterior analysis error covariace  **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
 ** SO_SEMI_WHITE       use to activate white/red noise processes             **
 ** SPLINES_VCONV       use to activate implicit splines vertical convolution **
