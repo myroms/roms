@@ -263,6 +263,10 @@
         Lfinp(ng)=1         ! forcing index for input
         Lfout(ng)=1         ! forcing index for output history files
 #endif
+#ifdef ADJUST_BOUNDARY
+        Lbinp(ng)=1         ! boundary index for input
+        Lbout(ng)=1         ! boundary index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         Lini=1              ! NLM initial conditions record in INIname
@@ -1239,7 +1243,11 @@
 !  Set basic state trajectory.
 !
           lstr=LEN_TRIM(FWDbase(ng))
+#  ifdef OBS_IMPACT
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+#  else
           WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer
+#  endif
 
           IF ((outer.eq.1).and.Master) THEN
             WRITE (stdout,60)
@@ -1566,6 +1574,13 @@
           END DO TL_LOOP2
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
+
+#ifdef OBS_IMPACT
+!
+!  Compute observation impact to the data assimilation system.
+!
+          CALL rep_matrix (ng, iTLM, outer, Ninner)
+#else
 !
 !  Set basic state trajectory for adjoint inner-loops.
 !
@@ -1576,16 +1591,16 @@
 !
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
-#if defined _OPENMP || defined DISTRIBUTE
+# if defined _OPENMP || defined DISTRIBUTE
             subs=NtileX(ng)*NtileE(ng)/numthreads
-#else
+# else
             subs=1
-#endif
+# endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
-#ifdef ADJUST_BOUNDARY
+# ifdef ADJUST_BOUNDARY
               CALL initialize_boundary (ng, TILE, iTLM)
-#endif
+# endif
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -1629,11 +1644,11 @@
             AD_LOOP4 : DO my_iic=ntstart(ng),ntend(ng),-1
 
               iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
               CALL ad_main3d (ng)
-#else
+# else
               CALL ad_main2d (ng)
-#endif
+# endif
               IF (exit_flag.ne.NoError) RETURN
 
             END DO AD_LOOP4
@@ -1651,7 +1666,7 @@
             WRTforce=.FALSE.
             CALL ad_wrt_his (ng)
 
-#ifdef CONVOLVE
+# ifdef CONVOLVE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Convolve adjoint trajectory with error covariances and convert
@@ -1709,9 +1724,9 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                 CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                 CALL initialize_ocean (ng, TILE, iTLM)
@@ -1736,9 +1751,9 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
                 CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                 CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -1788,9 +1803,9 @@
                   subs=NtileX(ng)*NtileE(ng)/numthreads
                   DO tile=subs*thread,subs*(thread+1)-1
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                     CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                     CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                     CALL ad_convolution (ng, TILE, Lold(ng), Lweak, 2)
                     CALL initialize_ocean (ng, TILE, iTLM)
@@ -1816,9 +1831,9 @@
                     CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                     CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
                     CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                     CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                   END DO
                 END DO
@@ -1828,15 +1843,15 @@
 !  solution.
 !
                 kstp(ng)=Lold(ng)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
                 nstp(ng)=Lold(ng)
-# endif
+#  endif
                 CALL ad_wrt_his (ng)
                 IF (exit_flag.ne.NoError) RETURN
               END DO
               LwrtState2d(ng)=.FALSE.
             END IF
-#endif
+# endif
 !
 !  Convert the current adjoint solution in ADJname to impulse forcing.
 !  Write out impulse forcing into TLFname NetCDF file. To facilitate 
@@ -1848,11 +1863,11 @@
               WRITE (stdout,50) outer, inner
             END IF
             tTLFindx(ng)=0
-#ifdef DISTRIBUTE 
+# ifdef DISTRIBUTE 
             tile=MyRank
-#else
+# else
             tile=-1
-#endif
+# endif
 !
 ! AMM: Don't know what to do in the weak constraint case yet.
 !
@@ -1903,11 +1918,11 @@
             TL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
               CALL tl_main3d (ng)
-#else
+# else
               CALL tl_main2d (ng)
-#endif
+# endif
               MyTime=time(ng)
 
               IF (exit_flag.ne.NoError) RETURN
@@ -1923,6 +1938,8 @@
           inner=0
           Lcgini=.TRUE.
           CALL ad_congrad (ng, iTLM, outer, inner, Ninner, Lcgini)
+
+#endif /* !OBS_IMPACT */
 !
 !  Write out observation sentivity.
 !

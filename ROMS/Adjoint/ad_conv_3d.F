@@ -321,7 +321,7 @@
               ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
             END DO
           END DO
-          DO k=N(ng)-1,1,-1
+          DO k=1,N(ng)-1
             DO i=Istr,Iend
 !>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
 !>
@@ -336,7 +336,7 @@
 !
 !  Adjoint LU decomposition and forward substitution.
 !
-          DO k=1,N(ng)-1
+          DO k=N(ng)-1,1,-1
             DO i=Istr,Iend
               cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &
@@ -929,7 +929,7 @@
               ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
             END DO
           END DO
-          DO k=N(ng)-1,1,-1
+          DO k=1,N(ng)-1
             DO i=IstrU,Iend
 !>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
 !>
@@ -944,7 +944,7 @@
 !
 !  Adjoint LU decomposition and forward substitution.
 !
-          DO k=1,N(ng)-1
+          DO k=N(ng)-1,1,-1
             DO i=IstrU,Iend
               cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &
@@ -1534,7 +1534,7 @@
               ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
             END DO
           END DO
-          DO k=N(ng)-1,1,-1
+          DO k=1,N(ng)-1
             DO i=Istr,Iend
 !>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
 !>
@@ -1549,7 +1549,7 @@
 !
 !  Adjoint LU decomposition and forward substitution.
 !
-          DO k=1,N(ng)-1
+          DO k=N(ng)-1,1,-1
             DO i=Istr,Iend
               cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &

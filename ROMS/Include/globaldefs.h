@@ -442,6 +442,10 @@
 #if !(defined W4DPSAS || defined W4DVAR) && defined POSTERIOR_EOFS
 # undef POSTERIOR_EOFS
 #endif
+#if !(defined WEAK_CONSTRAINT || defined OBS_SENSITIVITY) && \
+      defined OBS_IMPACT
+# undef OBS_IMPACT
+#endif
 
 /*
 ** Activate internal switch to process 4DVAR observations.

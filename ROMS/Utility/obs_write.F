@@ -352,7 +352,7 @@
      &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%tl_v(:,:,:,NOUT),               &
-     &                        GRID(ng)%z_r,                             &
+     &                        GRID(ng)%z_v,                             &
 #   ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #   endif
@@ -414,7 +414,7 @@
 !-----------------------------------------------------------------------
 !
         DO iobs=Mstr,Mend
-          TLmodVal(iobs)=TLmodVal(iobs)*ObsErr(iobs)
+          TLmodVal(iobs)=ObsScale(iobs)*TLmodVal(iobs)*ObsErr(iobs)
         END DO
 # endif
 

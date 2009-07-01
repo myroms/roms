@@ -306,7 +306,7 @@
         IF (exit_flag.ne.NoError) RETURN
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-        CALL get_state (ng, 11, 11, NRMname(3,ng), 1, 1)
+        CALL get_state (ng, 11, 11, NRMname(4,ng), 1, 1)
         IF (exit_flag.ne.NoError) RETURN
 #endif
       END DO
@@ -430,6 +430,7 @@
           WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng),               &
      &                      DendS(ng), DstrS(ng)
         END IF
+#ifndef OBS_IMPACT
         IF ((DstrS(ng).gt.str_day).or.(DstrS(ng).lt.end_day)) THEN
           IF (Master)  WRITE (stdout,30) 'DstrS = ', DstrS(ng),         &
      &                                   end_day, str_day
@@ -442,26 +443,35 @@
           exit_flag=7
           RETURN
         END IF
-
-        time(ng)=time(ng)+dt(ng)
-
-        AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
-
-          iic(ng)=my_iic
-#ifdef SOLVE3D
-          CALL ad_main3d (ng)
-#else
-          CALL ad_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) RETURN
 
-        END DO AD_LOOP
+!
+!   If DstrS=DendS=dstart, skip the adjoint model and read adjoint solution
+!   from ADS netcdf file, record 1.
+!
+        IF ((DstrS(ng).eq.DendS(ng)).and.(DstrS(ng).eq.dstart)) THEN
+          CALL get_state (ng, iADM, 4, ADSname(ng), 1, Lnew(ng))
+        ELSE
+          time(ng)=time(ng)+dt(ng)
+
+          AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
+
+            iic(ng)=my_iic
+#ifdef SOLVE3D
+            CALL ad_main3d (ng)
+#else
+            CALL ad_main2d (ng)
+#endif
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO AD_LOOP
 !
 !  Load full adjoint sensitivity vector, x(0), for t=t0 into adjoint
 !  state arrays at index Lnew.
 !
-        CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
-     &                  Lnew(ng))
+          CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),       &
+     &                    Lnew(ng))
+        END IF
 #ifdef BALANCE_OPERATOR
         CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
 #endif
@@ -491,6 +501,8 @@
         CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
      &                        ntimes(ng))
         IF (exit_flag.ne. NoError) RETURN
+
+#ifndef OBS_IMPACT
 !
 !  Initialize nonlinear model with the same initial conditions, xb(0),
 !  Lbck record in INIname. This is the first guess NLM initial
@@ -518,14 +530,15 @@
         NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
           CALL main3d (ng)
-#else
+# else
           CALL main2d (ng)
-#endif
+# endif
           IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP2
+#endif
 !
 !  Initialize tangent linear model with the weighted sum of the
 !  Lanczos vectors, steps (4) to (6) from the algorithm summary

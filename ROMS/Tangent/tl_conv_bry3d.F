@@ -424,7 +424,9 @@
      &                  DTsizeV*Kv(i,j,k+1)*oHz(j,k+1)
               END DO
               CF(j,0)=0.0_r8
-              DC(j,0)=0.0_r8
+!>            DC(j,0)=0.0_r8
+!>
+              tl_DC(j,0)=0.0_r8
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
             j=edge(boundary)

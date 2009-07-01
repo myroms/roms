@@ -83,7 +83,7 @@
      &                       BOUNDARY(ng) % ad_zeta_obc,                &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                       FORCES(ng) % ad_ustr                       &
+     &                       FORCES(ng) % ad_ustr,                      &
      &                       FORCES(ng) % ad_vstr,                      &
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
@@ -375,7 +375,7 @@
 !  Lanczos vectors into TANGENT LINEAR STATE ARRAYS at index Lwrk.
 !
         CALL read_state (ng, tile, iTLM,                                &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, inner,                                   &
      &                   ndefLCZ, ncLCZid(ng), TRIM(ncname),            &
 # ifdef MASKING
@@ -409,7 +409,7 @@
 !    DotProd(inner) = a_i = < x(0), q_i) >
 !
         CALL state_dotprod (ng, tile, iTLM,                             &
-     &                      LBi, UBi, LBj, UBj,                         &
+     &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      NstateVar(ng), dot(0:),                     &
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
@@ -473,7 +473,7 @@
 !
       zbeta=cg_delta(1,outLoop)
       bvector(1)=DotProd(1)/zbeta
-      DO i=2,Ninner
+      DO i=2,Ninner-1
         zgamma(i)=cg_beta(i,outLoop)/zbeta
         zbeta=cg_delta(i,outLoop)-cg_beta(i,outLoop)*zgamma(i)
         bvector(i)=(DotProd(i)-cg_beta(i,outLoop)*bvector(i-1))/zbeta
@@ -481,7 +481,7 @@
 !
 !  Back substitution.
 !
-      DO i=Ninner-1,1,-1
+      DO i=Ninner-2,1,-1
         bvector(i)=bvector(i)-zgamma(i+1)*bvector(i+1)
       END DO
 !
@@ -494,7 +494,7 @@
       fac=0.0_r8
 
       CALL state_initialize (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lini, fac,                                 &
 # ifdef MASKING
      &                       rmask, umask, vmask,                       &
@@ -528,7 +528,7 @@
       ELSE
         Lwrk=3-Ladj
       END IF
-      DO inner=1,Ninner                 ! last record ignored
+      DO inner=1,Ninner-1                 ! last 2 records ignored
         IF (ndefLCZ.gt.0) THEN
           lstr=LEN_TRIM(LCZname(ng))
           WRITE (ncname,10) LCZname(ng)(1:lstr-8), inner
@@ -536,7 +536,7 @@
           ncname=LCZname(ng)
         END IF
         CALL read_state (ng, tile, iTLM,                                &
-     &                   LBi, UBi, LBj, UBj,                            &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   Lwrk, inner,                                   &
      &                   ndefLCZ, ncLCZid(ng), ncname,                  &
 # ifdef MASKING
@@ -574,17 +574,20 @@
         fac2=bvector(inner)
 
         CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lini, Lwrk, Lini, fac1, fac2,              &
 # ifdef MASKING
      &                       rmask, umask, vmask,                       &
 # endif
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
-     &                       tl_t_obc, tl_u_obc, tl_v_obc,              &
+     &                       tl_t_obc, ad_t_obc,                        &
+     &                       tl_u_obc, ad_u_obc,                        &
+     &                       tl_v_obc, ad_v_obc,                        &
 #  endif
-     &                       tl_ubar_obc, tl_vbar_obc,                  &
-     &                       tl_zeta_obc,                               &
+     &                       tl_ubar_obc, ad_ubar_obc,                  &
+     &                       tl_vbar_obc, ad_vbar_obc,                  &
+     &                       tl_zeta_obc, ad_zeta_obc,                  &
 # endif
 # ifdef ADJUST_WSTRESS
      &                       tl_ustr, ad_ustr,                          &
@@ -609,7 +612,7 @@
 !
 !***********************************************************************
       SUBROUTINE read_state (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
+     &                       LBi, UBi, LBj, UBj, LBij, UBij,            &
      &                       Lwrk, rec,                                 &
      &                       ndef, ncfileid, ncname,                    &
 # ifdef MASKING
@@ -646,6 +649,12 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
+#ifdef ADJUST_BOUNDARY
+      USE nf_fread2d_bry_mod, ONLY : nf_fread2d_bry
+# ifdef SOLVE3D
+      USE nf_fread3d_bry_mod, ONLY : nf_fread3d_bry
+# endif
+#endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
 # ifdef SOLVE3D
       USE nf_fread3d_mod, ONLY : nf_fread3d
@@ -654,7 +663,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: Lwrk, rec, ndef
 
       integer, intent(inout) :: ncfileid
@@ -681,7 +690,7 @@
       real(r8), intent(inout) :: s_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: s_vstr(LBi:,LBj:,:,:)
 #  endif
-#  if defined ADJUST_STFLUX && definde SOLVE3D
+#  if defined ADJUST_STFLUX && defined SOLVE3D
       real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:,:)
 #  endif
 #  ifdef SOLVE3D
@@ -735,7 +744,7 @@
 # ifdef SOLVE3D
       integer :: itrc
 # endif
-      integer :: gtype, ncid, status
+      integer :: gtype, ncid, status, varid
 
       integer, dimension(4) :: Vsize
       integer, dimension(NV) :: vid

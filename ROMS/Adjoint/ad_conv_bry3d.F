@@ -364,6 +364,34 @@
             END DO
           END IF
 !
+!  LU decomposition and forward substitution.
+!
+          IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
+            i=edge(boundary)
+            cff1=1.0_r8/3.0_r8
+            DO k=1,N(ng)-1
+              DO j=Jstr,Jend
+                BC(j,k)=cff1*(Hz(i,j,k)+Hz(i,j,k+1))+                   &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(j,k)+oHz(j,k+1))
+                cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
+                CF(j,k)=cff*CF(j,k)
+              END DO
+            END DO
+          ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
+            j=edge(boundary)
+            cff1=1.0_r8/3.0_r8
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                BC(i,k)=cff1*(Hz(i,j,k)+Hz(i,j,k+1))+                   &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(i,k)+oHz(i,k+1))
+                cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+                CF(i,k)=cff*CF(i,k)
+              END DO
+            END DO
+          END IF
+!
 !  Adjoint backward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
@@ -385,7 +413,7 @@
                 ad_DC(j,k)=ad_DC(j,k)*Kv(i,j,k)
               END DO
             END DO
-            DO k=N(ng)-1,1,-1
+            DO k=1,N(ng)-1
               DO j=Jstr,Jend
 !>              tl_DC(j,k)=tl_DC(j,k)-CF(j,k)*tl_DC(j,k+1)
 !>
@@ -416,7 +444,7 @@
                 ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
               END DO
             END DO
-            DO k=N(ng)-1,1,-1
+            DO k=1,N(ng)-1
               DO i=Istr,Iend
 !>              tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
 !>
@@ -430,11 +458,11 @@
             END DO
           END IF
 !
-!  LU decomposition and forward substitution.
+!  Adjoint of LU decomposition and forward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
             i=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO j=Jstr,Jend
                 cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
 !>              tl_DC(j,k)=cff*(tl_Awrk(j,k+1,Nold)-                    &
@@ -444,7 +472,7 @@
                 adfac=cff*ad_DC(j,k)
                 ad_Awrk(j,k  ,Nold)=ad_Awrk(j,k  ,Nold)-adfac
                 ad_Awrk(j,k+1,Nold)=ad_Awrk(j,k+1,Nold)+adfac
-                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*ad_DC(j,k)
+                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*adfac
                 ad_DC(j,k)=0.0_r8
               END DO
             END DO
@@ -455,7 +483,7 @@
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
             j=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO i=Istr,Iend
                 cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>              tl_DC(i,k)=cff*(tl_Awrk(i,k+1,Nold)-                    &
@@ -465,7 +493,7 @@
                 adfac=cff*ad_DC(i,k)
                 ad_Awrk(i,k  ,Nold)=ad_Awrk(i,k  ,Nold)-adfac
                 ad_Awrk(i,k+1,Nold)=ad_Awrk(i,k+1,Nold)+adfac
-                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*ad_DC(i,k)
+                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
                 ad_DC(i,k)=0.0_r8
               END DO
             END DO
@@ -531,7 +559,7 @@
             END DO
           END IF
 !
-!  Compute new solution by back substitution.
+!  Adjoint of compute new solution by back substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
             i=edge(boundary)
@@ -1265,6 +1293,36 @@
             END DO
           END IF
 !
+!  LU decomposition and forward substitution.
+!
+          IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
+            i=edge(boundary)
+            cff1=0.5_r8*(1.0_r8/3.0_r8)
+            DO k=1,N(ng)-1
+              DO j=Jstr,Jend
+                BC(j,k)=cff1*(Hz(i-1,j,k  )+Hz(i,j,k  )+                &
+     &                        Hz(i-1,j,k+1)+Hz(i,j,k+1))+               &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(j,k)+oHz(j,k+1))
+                cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
+                CF(j,k)=cff*CF(j,k)
+              END DO
+            END DO
+          ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
+            j=edge(boundary)
+            cff1=0.5_r8*(1.0_r8/3.0_r8)
+            DO k=1,N(ng)-1
+              DO i=IstrU,Iend
+                BC(i,k)=cff1*(Hz(i-1,j,k  )+Hz(i,j,k  )+                &
+     &                        Hz(i-1,j,k+1)+Hz(i,j,k+1))+               &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(i,k)+oHz(i,k+1))
+                cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+                CF(i,k)=cff*CF(i,k)
+              END DO
+            END DO
+          END IF
+!
 !  Adjoint backward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
@@ -1331,11 +1389,11 @@
             END DO
           END IF
 !
-!  LU decomposition and forward substitution.
+!  Adjoint of LU decomposition and forward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
             i=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO j=Jstr,Jend
                 cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
 !>              tl_DC(j,k)=cff*(tl_Awrk(j,k+1,Nold)-                    &
@@ -1345,7 +1403,7 @@
                 adfac=cff*ad_DC(j,k)
                 ad_Awrk(j,k  ,Nold)=ad_Awrk(j,k  ,Nold)-adfac
                 ad_Awrk(j,k+1,Nold)=ad_Awrk(j,k+1,Nold)+adfac
-                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*ad_DC(j,k)
+                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*adfac
                 ad_DC(j,k)=0.0_r8
               END DO
             END DO
@@ -1356,7 +1414,7 @@
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
             j=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO i=IstrU,Iend
                 cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>              tl_DC(i,k)=cff*(tl_Awrk(i,k+1,Nold)-                    &
@@ -1366,7 +1424,7 @@
                 adfac=cff*ad_DC(i,k)
                 ad_Awrk(i,k  ,Nold)=ad_Awrk(i,k  ,Nold)-adfac
                 ad_Awrk(i,k+1,Nold)=ad_Awrk(i,k+1,Nold)+adfac
-                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*ad_DC(i,k)
+                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
                 ad_DC(i,k)=0.0_r8
               END DO
             END DO
@@ -1526,7 +1584,7 @@
             END DO
           END IF
 !
-!  Solve the tridiagonal system.
+!  Adjoint of solve the tridiagonal system.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
 !>          DO k=2,N(ng)-1
@@ -2167,6 +2225,36 @@
             END DO
           END IF
 !
+!  LU decomposition and forward substitution.
+!
+          IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
+            i=edge(boundary)
+            cff1=0.5_r8*(1.0_r8/3.0_r8)
+            DO k=1,N(ng)-1
+              DO j=JstrV,Jend
+                BC(j,k)=cff1*(Hz(i,j-1,k  )+Hz(i,j,k  )+                &
+     &                        Hz(i,j-1,k+1)+Hz(i,j,k+1))+               &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(j,k)+oHz(j,k+1))
+                cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
+                CF(j,k)=cff*CF(j,k)
+              END DO
+            END DO
+          ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
+            j=edge(boundary)
+            cff1=0.5_r8*(1.0_r8/3.0_r8)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                BC(i,k)=cff1*(Hz(i,j-1,k  )+Hz(i,j,k  )+                &
+     &                        Hz(i,j-1,k+1)+Hz(i,j,k+1))+               &
+     &                  DTsizeV*Kv(i,j,k)*                              &
+     &                  (oHz(i,k)+oHz(i,k+1))
+                cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+                CF(i,k)=cff*CF(i,k)
+              END DO
+            END DO
+          END IF
+!
 !  Adjoint backward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
@@ -2188,7 +2276,7 @@
                 ad_DC(j,k)=ad_DC(j,k)*Kv(i,j,k)
               END DO
             END DO
-            DO k=N(ng)-1,1,-1
+            DO k=1,N(ng)-1
               DO j=JstrV,Jend
 !>              tl_DC(j,k)=tl_DC(j,k)-CF(j,k)*tl_DC(j,k+1)
 !>
@@ -2219,7 +2307,7 @@
                 ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
               END DO
             END DO
-            DO k=N(ng)-1,1,-1
+            DO k=1,N(ng)-1
               DO i=Istr,Iend
 !>              tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
 !>
@@ -2233,11 +2321,11 @@
             END DO
           END IF
 !
-!  LU decomposition and forward substitution.
+!  Adjoint of LU decomposition and forward substitution.
 !
           IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
             i=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO j=JstrV,Jend
                 cff=1.0_r8/(BC(j,k)-FC(j,k)*CF(j,k-1))
 !>              tl_DC(j,k)=cff*(tl_Awrk(j,k+1,Nold)-                    &
@@ -2247,7 +2335,7 @@
                 adfac=cff*ad_DC(j,k)
                 ad_Awrk(j,k  ,Nold)=ad_Awrk(j,k  ,Nold)-adfac
                 ad_Awrk(j,k+1,Nold)=ad_Awrk(j,k+1,Nold)+adfac
-                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*ad_DC(j,k)
+                ad_DC(j,k-1)=ad_DC(j,k-1)-FC(j,k)*adfac
                 ad_DC(j,k)=0.0_r8
               END DO
             END DO
@@ -2258,7 +2346,7 @@
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
             j=edge(boundary)
-            DO k=1,N(ng)-1
+            DO k=N(ng)-1,1,-1
               DO i=Istr,Iend
                 cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
 !>              tl_DC(i,k)=cff*(tl_Awrk(i,k+1,Nold)-                    &
@@ -2268,7 +2356,7 @@
                 adfac=cff*ad_DC(i,k)
                 ad_Awrk(i,k  ,Nold)=ad_Awrk(i,k  ,Nold)-adfac
                 ad_Awrk(i,k+1,Nold)=ad_Awrk(i,k+1,Nold)+adfac
-                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*ad_DC(i,k)
+                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
                 ad_DC(i,k)=0.0_r8
               END DO
             END DO
@@ -2366,12 +2454,19 @@
               ad_Awrk(j,N(ng),Nnew)=ad_Awrk(j,N(ng),Nnew)*vmask(i,j)
 #    endif
 !>            tl_Awrk(j,N(ng),Nnew)=tl_DC(j,N(ng))
+              ad_DC(j,N(ng))=ad_DC(j,N(ng))+ad_Awrk(j,N(ng),Nnew)
+              ad_Awrk(j,N(ng),Nnew)=0.0_r8
 
 !>            tl_DC(j,N(ng))=(tl_DC(j,N(ng))-                           &
 !>   &                        FC(j,N(ng)-1)*tl_DC(j,N(ng)-1))/          &
 !>   &                       (BC(j,N(ng))-                              &
 !>   &                        FC(j,N(ng)-1)*CF(j,N(ng)-1))
 !>
+              adfac=ad_DC(j,N(ng))/                                     &
+     &                       (BC(j,N(ng))-                              &
+     &                        FC(j,N(ng)-1)*CF(j,N(ng)-1))
+              ad_DC(j,N(ng)-1)=ad_DC(j,N(ng)-1)-FC(j,N(ng)-1)*adfac
+              ad_DC(j,N(ng))=adfac
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
             j=edge(boundary)
