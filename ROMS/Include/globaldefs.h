@@ -534,13 +534,17 @@
 #if (defined  ZCLIMATOLOGY && !defined ANA_SSH)     || \
     (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
     (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
-    (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
+    (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA) || \
+    (defined CLIMA_TS_MIX  && defined SOLVE3D       && \
+     (defined TS_DIF2      || defined TS_DIF4))
 # define CLM_FILE
 #endif
 #if defined ZCLIMATOLOGY   || defined M2CLIMATOLOGY || \
     defined TCLIMATOLOGY   || defined M3CLIMATOLOGY || \
     defined ZCLM_NUDGING   || defined M2CLM_NUDGING || \
-    defined TCLM_NUDGING   || defined M3CLM_NUDGING
+    defined TCLM_NUDGING   || defined M3CLM_NUDGING || \
+    (defined CLIMA_TS_MIX  && defined SOLVE3D       && \
+     (defined TS_DIF2      || defined TS_DIF4))
 # define CLIMATOLOGY
 #endif
 

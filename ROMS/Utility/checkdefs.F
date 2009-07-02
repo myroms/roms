@@ -583,6 +583,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' CHECKPOINTING,'
 #endif
+#if defined CLIMA_TS_MIX && defined SOLVE3D && \
+   (defined TS_DIF2      || defined TS_DIF4)
+      IF (Master) WRITE (stdout,20) 'CLIMA_TS_MIX',                     &
+     &   'Horizontal diffusion of tracer perturbation (T-Tclm).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' CLIMA_TS_MIX,'
+#endif
 #if defined GLS_MIXING && defined CRAIG_BANNER
       IF (Master) WRITE (stdout,20) 'CRAIG_BANNER',                     &
      &   'Craig and Banner wave breaking surface flux.'

@@ -219,6 +219,7 @@
 **                                                                           **
 ** OPTIONS for horizontal mixing of tracers:                                 **
 **                                                                           **
+** CLIMA_TS_MIX        use if diffusion of tracer perturbation (t-tclm)      **
 ** DIFF_GRID           use to scale diffusion coefficients by grid size      **
 ** MIX_S_TS            use if mixing along constant S-surfaces               **
 ** MIX_GEO_TS          use if mixing on geopotential (constant Z) surfaces   **
