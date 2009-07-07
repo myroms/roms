@@ -273,7 +273,7 @@
 # ifdef SOLVE3D
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: A3d
 #  ifdef ADJUST_BOUNDARY
-      integer :: bry
+      integer :: ib
       real(r8), dimension(LBij:UBij,1:N(ng)) :: B3d
 #  endif
 # endif
@@ -496,55 +496,69 @@
 !  2D boundary random initialization at RHO-points.
 !
       DO ir=1,Nbrec(ng)
-        DO bry=1,4
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            i=BOUNDS(ng)%edge(bry,r2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              JstrR, JendR,                       &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO j=JR_RANGE
-                tl_zeta_obc(j,bry,ir,Lout)=B2d(j)
-#  ifdef MASKING
-                tl_zeta_obc(j,bry,ir,Lout)=tl_zeta_obc(j,bry,ir,Lout)*  &
-     &                                     rmask(i,j)
-#  endif
-              END DO
-            ELSE
-              DO j=JR_RANGE
-                tl_zeta_obc(j,bry,ir,Lout)=DSIGN(1.0_r8,B2d(j))
-#  ifdef MASKING
-                tl_zeta_obc(j,bry,ir,Lout)=tl_zeta_obc(j,bry,ir,Lout)*  &
-     &                                     rmask(i,j)
-#  endif
-              END DO
+        DO ib=1,4
+          IF (Lobc(ib,isFsur,ng)) THEN
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                JstrR, JendR,                     &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                IstrR, IendR,                     &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
             END IF
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            j=BOUNDS(ng)%edge(bry,r2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              IstrR, IendR,                       &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO i=IR_RANGE
-                tl_zeta_obc(i,bry,ir,Lout)=B2d(i)
+            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
+     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              i=BOUNDS(ng)%edge(ib,r2dvar)
+              IF (.not.Ltrace) THEN
+                DO j=JR_RANGE
+                  tl_zeta_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
-                tl_zeta_obc(i,bry,ir,Lout)=tl_zeta_obc(i,bry,ir,Lout)*  &
-     &                                     rmask(i,j)
+                  tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*  &
+     &                                      rmask(i,j)
 #  endif
-              END DO
-            ELSE
-              DO i=IR_RANGE
-                tl_zeta_obc(i,bry,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+                END DO
+              ELSE
+                DO j=JR_RANGE
+                  tl_zeta_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
-                tl_zeta_obc(i,bry,ir,Lout)=tl_zeta_obc(i,bry,ir,Lout)*  &
-     &                                     rmask(i,j)
+                  tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*  &
+     &                                      rmask(i,j)
 #  endif
-              END DO
+                END DO
+              END IF
+            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
+     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              j=BOUNDS(ng)%edge(ib,r2dvar)
+              IF (.not.Ltrace) THEN
+                DO i=IR_RANGE
+                  tl_zeta_obc(i,ib,ir,Lout)=B2d(i)
+#  ifdef MASKING
+                  tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*  &
+     &                                      rmask(i,j)
+#  endif
+                END DO
+              ELSE
+                DO i=IR_RANGE
+                  tl_zeta_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+#  ifdef MASKING
+                  tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*  &
+     &                                      rmask(i,j)
+#  endif
+                END DO
+              END IF
             END IF
+#  ifdef DISTRIBUTE
+            CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
+     &                              LBij, UBij,                         &
+     &                              NghostPoints,                       &
+     &                              EWperiodic, NSperiodic,             &
+     &                              tl_zeta_obc(:,ib,ir,Lout))
+#  endif
           END IF
         END DO
       END DO
@@ -552,55 +566,69 @@
 !  2D boundary random initialization at U-points.
 !
       DO ir=1,Nbrec(ng)
-        DO bry=1,4
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            i=BOUNDS(ng)%edge(bry,u2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              JstrR, JendR,                       &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO j=JU_RANGE
-                tl_ubar_obc(j,bry,ir,Lout)=B2d(j)
-#  ifdef MASKING
-                tl_ubar_obc(j,bry,ir,Lout)=tl_ubar_obc(j,bry,ir,Lout)*  &
-     &                                     umask(i,j)
-#  endif
-              END DO
-            ELSE
-              DO j=JU_RANGE
-                tl_ubar_obc(j,bry,ir,Lout)=DSIGN(1.0_r8,B2d(j))
-#  ifdef MASKING
-                tl_ubar_obc(j,bry,ir,Lout)=tl_ubar_obc(j,bry,ir,Lout)*  &
-     &                                     umask(i,j)
-#  endif
-              END DO
+        DO ib=1,4
+          IF (Lobc(ib,isUbar,ng)) THEN
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                JstrR, JendR,                     &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                Istr, IendR,                      &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
             END IF
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            j=BOUNDS(ng)%edge(bry,u2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              Istr, IendR,                        &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO i=IU_RANGE
-                tl_ubar_obc(i,bry,ir,Lout)=B2d(i)
+            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
+     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              i=BOUNDS(ng)%edge(ib,u2dvar)
+              IF (.not.Ltrace) THEN
+                DO j=JU_RANGE
+                  tl_ubar_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
-                tl_ubar_obc(i,bry,ir,Lout)=tl_ubar_obc(i,bry,ir,Lout)*  &
-     &                                     umask(i,j)
+                  tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*  &
+     &                                      umask(i,j)
 #  endif
-              END DO
-            ELSE
-              DO i=IU_RANGE
-                tl_ubar_obc(i,bry,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+                END DO
+              ELSE
+                DO j=JU_RANGE
+                  tl_ubar_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
-                tl_ubar_obc(i,bry,ir,Lout)=tl_ubar_obc(i,bry,ir,Lout)*  &
-     &                                     umask(i,j)
+                  tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*  &
+     &                                      umask(i,j)
+#  endif
+                END DO
+              END IF
+            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
+     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              j=BOUNDS(ng)%edge(ib,u2dvar)
+              IF (.not.Ltrace) THEN
+                DO i=IU_RANGE
+                  tl_ubar_obc(i,ib,ir,Lout)=B2d(i)
+#  ifdef MASKING
+                  tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*  &
+     &                                      umask(i,j)
+#  endif
+                END DO
+              ELSE
+                DO i=IU_RANGE
+                  tl_ubar_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+#  ifdef MASKING
+                  tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*  &
+     &                                      umask(i,j)
 #  endif 
-              END DO
+                END DO
+              END IF
             END IF
+#  ifdef DISTRIBUTE
+            CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
+     &                              LBij, UBij,                         &
+     &                              NghostPoints,                       &
+     &                              EWperiodic, NSperiodic,             &
+     &                              tl_ubar_obc(:,ib,ir,Lout))
+#  endif
           END IF
         END DO
       END DO
@@ -608,55 +636,69 @@
 !  2D boundary random initialization at V-points.
 !
       DO ir=1,Nbrec(ng)
-        DO bry=1,4
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            i=BOUNDS(ng)%edge(bry,v2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              Jstr, JendR,                        &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO j=JV_RANGE
-                tl_vbar_obc(j,bry,ir,Lout)=B2d(j)
-#  ifdef MASKING
-                tl_vbar_obc(j,bry,ir,Lout)=tl_vbar_obc(j,bry,ir,Lout)*  &
-     &                                     vmask(i,j)
-#  endif
-              END DO
-            ELSE
-              DO j=JV_RANGE
-                tl_vbar_obc(j,bry,ir,Lout)=DSIGN(1.0_r8,B2d(j))
-#  ifdef MASKING
-                tl_vbar_obc(j,bry,ir,Lout)=tl_vbar_obc(j,bry,ir,Lout)*  &
-     &                                     vmask(i,j)
-#  endif
-              END DO
+        DO ib=1,4
+          IF (Lobc(ib,isVbar,ng)) THEN
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                Jstr, JendR,                      &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+              CALL white_noise2d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                IstrR, IendR,                     &
+     &                                LBij, UBij,                       &
+     &                                Bmin, Bmax, B2d)
             END IF
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            j=BOUNDS(ng)%edge(bry,v2dvar)
-            CALL white_noise2d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              IstrR, IendR,                       &
-     &                              LBij, UBij,                         &
-     &                              Bmin, Bmax, B2d)
-            IF (.not.Ltrace) THEN
-              DO i=IV_RANGE
-                tl_vbar_obc(i,bry,ir,Lout)=B2d(i)
+            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
+     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              i=BOUNDS(ng)%edge(ib,v2dvar)
+              IF (.not.Ltrace) THEN
+                DO j=JV_RANGE
+                  tl_vbar_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
-                tl_vbar_obc(i,bry,ir,Lout)=tl_vbar_obc(i,bry,ir,Lout)*  &
-     &                                     vmask(i,j)
+                  tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*  &
+     &                                      vmask(i,j)
 #  endif
-              END DO
-            ELSE
-              DO i=IV_RANGE
-                tl_vbar_obc(i,bry,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+                END DO
+              ELSE
+                DO j=JV_RANGE
+                  tl_vbar_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
-                tl_vbar_obc(i,bry,ir,Lout)=tl_vbar_obc(i,bry,ir,Lout)*  &
-     &                                     vmask(i,j)
+                  tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*  &
+     &                                      vmask(i,j)
 #  endif
-              END DO
+                END DO
+              END IF
+            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
+     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              j=BOUNDS(ng)%edge(ib,v2dvar)
+              IF (.not.Ltrace) THEN
+                DO i=IV_RANGE
+                  tl_vbar_obc(i,ib,ir,Lout)=B2d(i)
+#  ifdef MASKING
+                  tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*  &
+     &                                      vmask(i,j)
+#  endif
+                END DO
+              ELSE
+                DO i=IV_RANGE
+                  tl_vbar_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
+#  ifdef MASKING
+                  tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*  &
+     &                                      vmask(i,j)
+#  endif
+                END DO
+              END IF
             END IF
+#  ifdef DISTRIBUTE
+            CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
+     &                              LBij, UBij,                         &
+     &                              NghostPoints,                       &
+     &                              EWperiodic, NSperiodic,             &
+     &                              tl_vbar_obc(:,ib,ir,Lout))
+#  endif
           END IF
         END DO
       END DO
@@ -666,63 +708,77 @@
 !  3D boundary norm at U-points.
 !
       DO ir=1,Nbrec(ng)
-        DO bry=1,4
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            i=BOUNDS(ng)%edge(bry,u2dvar)
-            CALL white_noise3d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              JstrR, JendR,                       &
-     &                              LBij, UBij, 1, N(ng),               &
-     &                              Bmin, Bmax, B3d)
-            IF (.not.Ltrace) THEN
-              DO k=1,N(ng)
-                DO j=JU_RANGE
-                  tl_u_obc(j,k,bry,ir,Lout)=B3d(j,k)
-#   ifdef MASKING
-                  tl_u_obc(j,k,bry,ir,Lout)=tl_u_obc(j,k,bry,ir,Lout)*  &
-     &                                      umask(i,j)
-#   endif
-                END DO
-              END DO
-            ELSE
-              DO k=1,N(ng)
-                DO j=JU_RANGE
-                  tl_u_obc(j,k,bry,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
-#   ifdef MASKING
-                  tl_u_obc(j,k,bry,ir,Lout)=tl_u_obc(j,k,bry,ir,Lout)*  &
-     &                                      umask(i,j)
-#   endif
-                END DO
-              END DO
+        DO ib=1,4
+          IF (Lobc(ib,isUvel,ng)) THEN
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                JstrR, JendR,                     &
+     &                                LBij, UBij, 1, N(ng),             &
+     &                                Bmin, Bmax, B3d)
+            ELSE IF ((bry.eq.isouth).or.(ib.eq.inorth)) THEN
+              CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                Istr, IendR,                      &
+     &                                LBij, UBij, 1, N(ng),             &
+     &                                Bmin, Bmax, B3d)
             END IF
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            j=BOUNDS(ng)%edge(bry,u2dvar)
-            CALL white_noise3d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              Istr, IendR,                        &
-     &                              LBij, UBij, 1, N(ng),               &
-     &                              Bmin, Bmax, B3d)
-            IF (.not.Ltrace) THEN
-              DO k=1,N(ng)
-                DO i=IU_RANGE
-                  tl_u_obc(i,k,bry,ir,Lout)=B3d(i,k)
+            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
+     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              i=BOUNDS(ng)%edge(ib,u2dvar)
+              IF (.not.Ltrace) THEN
+                DO k=1,N(ng)
+                  DO j=JU_RANGE
+                    tl_u_obc(j,k,ib,ir,Lout)=B3d(j,k)
 #   ifdef MASKING
-                  tl_u_obc(i,k,bry,ir,Lout)=tl_u_obc(i,k,bry,ir,Lout)*  &
-     &                                      umask(i,j)
+                    tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*  &
+     &                                       umask(i,j)
 #   endif
+                  END DO
                 END DO
-              END DO
-            ELSE
-              DO k=1,N(ng)
-                DO i=IU_RANGE
-                  tl_u_obc(i,k,bry,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
+              ELSE
+                DO k=1,N(ng)
+                  DO j=JU_RANGE
+                    tl_u_obc(j,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
-                  tl_u_obc(i,k,bry,ir,Lout)=tl_u_obc(i,k,bry,ir,Lout)*  &
-     &                                      umask(i,j)
+                    tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*  &
+     &                                       umask(i,j)
 #   endif
+                  END DO
                 END DO
-              END DO
+              END IF
+            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
+     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              j=BOUNDS(ng)%edge(ib,u2dvar)
+              IF (.not.Ltrace) THEN
+                DO k=1,N(ng)
+                  DO i=IU_RANGE
+                    tl_u_obc(i,k,ib,ir,Lout)=B3d(i,k)
+#   ifdef MASKING
+                    tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*  &
+     &                                       umask(i,j)
+#   endif
+                  END DO
+                END DO
+              ELSE
+                DO k=1,N(ng)
+                  DO i=IU_RANGE
+                    tl_u_obc(i,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
+#   ifdef MASKING
+                    tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*  &
+     &                                       umask(i,j)
+#   endif
+                  END DO
+                END DO
+              END IF
             END IF
+#   ifdef DISTRIBUTE
+            CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,              &
+     &                              LBij, UBij, 1, N(ng),               &
+     &                              NghostPoints,                       &
+     &                              EWperiodic, NSperiodic,             &
+     &                              tl_u_obc(:,:,ib,ir,Lout))
+#   endif
           END IF
         END DO
       END DO
@@ -730,63 +786,77 @@
 !  3D boundary random initialization at V-points.
 !
       DO ir=1,Nbrec(ng)
-        DO bry=1,4
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            i=BOUNDS(ng)%edge(bry,v2dvar)
-            CALL white_noise3d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              Jstr, JendR,                        &
-     &                              LBij, UBij, 1, N(ng),               &
-     &                              Bmin, Bmax, B3d)
-            IF (.not.Ltrace) THEN
-              DO k=1,N(ng)
-                DO j=JV_RANGE
-                  tl_v_obc(j,k,bry,ir,Lout)=B3d(j,k)
-#   ifdef MASKING
-                  tl_v_obc(j,k,bry,ir,Lout)=tl_v_obc(j,k,bry,ir,Lout)*  &
-     &                                      vmask(i,j)
-#   endif
-                END DO
-              END DO
-            ELSE
-              DO k=1,N(ng)
-                DO j=JV_RANGE
-                  tl_v_obc(j,k,bry,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
-#   ifdef MASKING
-                  tl_v_obc(j,k,bry,ir,Lout)=tl_v_obc(j,k,bry,ir,Lout)*  &
-     &                                      vmask(i,j)
-#   endif
-                END DO
-              END DO
+        DO ib=1,4
+          IF (Lobc(ib,isVvel,ng)) THEN
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                Jstr, JendR,                      &
+     &                                LBij, UBij, 1, N(ng),             &
+     &                                Bmin, Bmax, B3d)
+            ELSE IF ((bry.eq.isouth).or.(ib.eq.inorth)) THEN
+              CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
+     &                                Zscheme,                          &
+     &                                IstrR, IendR,                     &
+     &                                LBij, UBij, 1, N(ng),             &
+     &                                Bmin, Bmax, B3d)
             END IF
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            j=BOUNDS(ng)%edge(bry,v2dvar)
-            CALL white_noise3d_bry (ng, tile, iTLM, bry,                &
-     &                              Zscheme,                            &
-     &                              IstrR, IendR,                       &
-     &                              LBij, UBij, 1, N(ng),               &
-     &                              Bmin, Bmax, B3d)
-            IF (.not.Ltrace) THEN
-              DO k=1,N(ng)
-                DO i=IV_RANGE
-                  tl_v_obc(i,k,bry,ir,Lout)=B3d(i,k)
+            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
+     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              i=BOUNDS(ng)%edge(ib,v2dvar)
+              IF (.not.Ltrace) THEN
+                DO k=1,N(ng)
+                  DO j=JV_RANGE
+                    tl_v_obc(j,k,ib,ir,Lout)=B3d(j,k)
 #   ifdef MASKING
-                  tl_v_obc(i,k,bry,ir,Lout)=tl_v_obc(i,k,bry,ir,Lout)*  &
-     &                                      vmask(i,j)
+                    tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*  &
+     &                                       vmask(i,j)
 #   endif
+                  END DO
                 END DO
-              END DO
-            ELSE
-              DO k=1,N(ng)
-                DO i=IV_RANGE
-                  tl_v_obc(i,k,bry,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
+              ELSE
+                DO k=1,N(ng)
+                  DO j=JV_RANGE
+                    tl_v_obc(j,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
-                  tl_v_obc(i,k,bry,ir,Lout)=tl_v_obc(i,k,bry,ir,Lout)*  &
-     &                                      vmask(i,j)
+                    tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*  &
+     &                                       vmask(i,j)
 #   endif
+                  END DO
                 END DO
-              END DO
+              END IF
+            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
+     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              j=BOUNDS(ng)%edge(ib,v2dvar)
+              IF (.not.Ltrace) THEN
+                DO k=1,N(ng)
+                  DO i=IV_RANGE
+                    tl_v_obc(i,k,ib,ir,Lout)=B3d(i,k)
+#   ifdef MASKING
+                    tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*  &
+     &                                       vmask(i,j)
+#   endif
+                  END DO
+                END DO
+              ELSE
+                DO k=1,N(ng)
+                  DO i=IV_RANGE
+                    tl_v_obc(i,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
+#   ifdef MASKING
+                    tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*  &
+     &                                       vmask(i,j)
+#   endif
+                  END DO
+                END DO
+              END IF
             END IF
+#   ifdef DISTRIBUTE
+            CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,              &
+     &                              LBij, UBij, 1, N(ng),               &
+     &                              NghostPoints,                       &
+     &                              EWperiodic, NSperiodic,             &
+     &                              tl_v_obc(:,:,ib,ir,Lout))
+#   endif
           END IF
         END DO
       END DO
@@ -795,65 +865,81 @@
 !
       DO itrc=1,NT(ng)
         DO ir=1,Nbrec(ng)
-          DO bry=1,4
-            IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(bry,r2dvar)
-              CALL white_noise3d_bry (ng, tile, iTLM, bry,              &
-     &                                Zscheme,                          &
-     &                                JstrR, JendR,                     &
-     &                                LBij, UBij, 1, N(ng),             &
-     &                                Bmin, Bmax, B3d)
-              IF (.not.Ltrace) THEN
-                DO k=1,N(ng)
-                  DO j=JR_RANGE
-                    tl_t_obc(j,k,bry,ir,Lout,itrc)=B3d(j,k)
-#   ifdef MASKING
-                    tl_t_obc(j,k,bry,ir,Lout,itrc)=                     &
-     &                       tl_t_obc(j,k,bry,ir,Lout,itrc)*rmask(i,j)
-#   endif
-                  END DO
-                END DO
-              ELSE
-                DO k=1,N(ng)
-                  DO j=JR_RANGE
-                    tl_t_obc(j,k,bry,ir,Lout,itrc)=                     &
-     &                                       DSIGN(1.0_r8,B3d(j,k))
-#   ifdef MASKING
-                    tl_t_obc(j,k,bry,ir,Lout,itrc)=                     &
-     &                       tl_t_obc(j,k,bry,ir,Lout,itrc)*rmask(i,j)
-#   endif
-                  END DO
-                END DO
+          DO ib=1,4
+            IF (Lobc(ib,isTvar(itrc),ng)) THEN
+              IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+                i=BOUNDS(ng)%edge(ib,r2dvar)
+                CALL white_noise3d_bry (ng, tile, iTLM, ib,             &
+     &                                  Zscheme,                        &
+     &                                  JstrR, JendR,                   &
+     &                                  LBij, UBij, 1, N(ng),           &
+     &                                  Bmin, Bmax, B3d)
+              ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+                j=BOUNDS(ng)%edge(ib,r2dvar)
+                CALL white_noise3d_bry (ng, tile, iTLM, ib,             &
+     &                                  Zscheme,                        &
+     &                                  IstrR, IendR,                   &
+     &                                  LBij, UBij, 1, N(ng),           &
+     &                                  Bmin, Bmax, B3d)
               END IF
-            ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(bry,r2dvar)
-              CALL white_noise3d_bry (ng, tile, iTLM, bry,              &
-     &                                Zscheme,                          &
-     &                                IstrR, IendR,                     &
-     &                                LBij, UBij, 1, N(ng),             &
-     &                                Bmin, Bmax, B3d)
-              IF (.not.Ltrace) THEN
-                DO k=1,N(ng)
-                  DO i=IR_RANGE
-                    tl_t_obc(i,k,bry,ir,Lout,itrc)=B3d(i,k)
+              IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                  &
+     &            ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+                i=BOUNDS(ng)%edge(ib,r2dvar)
+                IF (.not.Ltrace) THEN
+                  DO k=1,N(ng)
+                    DO j=JR_RANGE
+                      tl_t_obc(j,k,ib,ir,Lout,itrc)=B3d(j,k)
 #   ifdef MASKING
-                    tl_t_obc(i,k,bry,ir,Lout,itrc)=                     &
-     &                       tl_t_obc(i,k,bry,ir,Lout,itrc)*rmask(i,j)
+                      tl_t_obc(j,k,ib,ir,Lout,itrc)=                    &
+     &                         tl_t_obc(j,k,ib,ir,Lout,itrc)*rmask(i,j)
 #   endif
+                    END DO
                   END DO
-                END DO
-              ELSE
-                DO k=1,N(ng)
-                  DO i=IR_RANGE
-                    tl_t_obc(i,k,bry,ir,Lout,itrc)=                     &
-     &                                       DSIGN(1.0_r8,B3d(i,k))
+                ELSE
+                  DO k=1,N(ng)
+                    DO j=JR_RANGE
+                      tl_t_obc(j,k,ib,ir,Lout,itrc)=                    &
+     &                                        DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
-                    tl_t_obc(i,k,bry,ir,Lout,itrc)=                     &
-     &                       tl_t_obc(i,k,bry,ir,Lout,itrc)*rmask(i,j)
+                      tl_t_obc(j,k,ib,ir,Lout,itrc)=                    &
+     &                         tl_t_obc(j,k,ib,ir,Lout,itrc)*rmask(i,j)
 #   endif
+                    END DO
                   END DO
-                END DO
+                END IF
+              ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.           &
+     &                 ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+                j=BOUNDS(ng)%edge(ib,r2dvar)
+                IF (.not.Ltrace) THEN
+                  DO k=1,N(ng)
+                    DO i=IR_RANGE
+                      tl_t_obc(i,k,ib,ir,Lout,itrc)=B3d(i,k)
+#   ifdef MASKING
+                      tl_t_obc(i,k,ib,ir,Lout,itrc)=                    &
+     &                         tl_t_obc(i,k,ib,ir,Lout,itrc)*rmask(i,j)
+#   endif
+                    END DO
+                  END DO
+                ELSE
+                  DO k=1,N(ng)
+                    DO i=IR_RANGE
+                      tl_t_obc(i,k,ib,ir,Lout,itrc)=                    &
+     &                                        DSIGN(1.0_r8,B3d(i,k))
+#   ifdef MASKING
+                      tl_t_obc(i,k,ib,ir,Lout,itrc)=                    &
+     &                         tl_t_obc(i,k,ib,ir,Lout,itrc)*rmask(i,j)
+#   endif
+                    END DO
+                  END DO
+                END IF
               END IF
+#   ifdef DISTRIBUTE
+              CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,            &
+     &                                LBij, UBij, 1, N(ng),             &
+     &                                NghostPoints,                     &
+     &                                EWperiodic, NSperiodic,           &
+     &                                tl_t_obc(:,:,ib,ir,Lout,itrc))
+#   endif
             END IF
           END DO
         END DO

@@ -480,18 +480,18 @@
      &                                  zeta_obc_std(i,ib)
             END DO
           END IF
-        END DO
 #  ifdef DISTRIBUTE
-        DO ir=1,Nbrec(ng)
           DO ib=1,4
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_zeta_obc(:,ib,ir,Linp))
+            IF (Lobc(ib,isFsur,ng)) THEN
+              CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij,                    &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_zeta_obc(:,ib,ir,Linp))
+            END IF
           END DO
-        END DO
 #  endif
+        END DO
       END IF
 !
 !  2D U-momentum open boundaries.
@@ -526,18 +526,18 @@
      &                                  ubar_obc_std(i,ib)
             END DO
           END IF
-        END DO
 #  ifdef DISTRIBUTE
-        DO ir=1,Nbrec(ng)
           DO ib=1,4
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_ubar_obc(:,ib,ir,Linp))
+            IF (Lobc(ib,isUbar,ng)) THEN
+              CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij,                    &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_ubar_obc(:,ib,ir,Linp))
+            END IF
           END DO
-        END DO
 #  endif
+        END DO
       END IF
 !
 !  2D V-momentum open boundaries.
@@ -572,18 +572,18 @@
      &                                  vbar_obc_std(i,ib)
             END DO
           END IF
-        END DO
 #  ifdef DISTRIBUTE
-        DO ir=1,Nbrec(ng)
           DO ib=1,4
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_vbar_obc(:,ib,ir,Linp))
+            IF (Lobc(ib,isVbar,ng)) THEN
+              CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij,                    &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_vbar_obc(:,ib,ir,Linp))
+            END IF
           END DO
-        END DO 
 #  endif
+        END DO
       END IF
 
 #  ifdef SOLVE3D
@@ -628,18 +628,18 @@
               END DO
             END DO
           END IF
-        END DO
 #   ifdef DISTRIBUTE
-        DO ir=1,Nbrec(ng)
           DO ib=1,4
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_u_obc(:,:,ib,ir,Linp))
+            IF (Lobc(ib,isUvel,ng)) THEN
+              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij, 1, N(ng),          &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_u_obc(:,:,ib,ir,Linp))
+            END IF
           END DO
-        END DO
 #   endif
+        END DO
       END IF
 !
 !  3D V-momentum open boundaries.
@@ -682,18 +682,18 @@
               END DO
             END DO
           END IF
-        END DO
 #   ifdef DISTRIBUTE
-        DO ir=1,Nbrec(ng)
           DO ib=1,4
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_v_obc(:,:,ib,ir,Linp))
+            IF (Lobc(ib,isVvel,ng)) THEN
+              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij, 1, N(ng),          &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_v_obc(:,:,ib,ir,Linp))
+            END IF
           END DO
-        END DO
 #   endif
+        END DO
       END IF
 !
 !  Tracers open boundaries.
@@ -741,18 +741,18 @@
                 END DO
               END DO
             END IF
-          END DO
 #   ifdef DISTRIBUTE
-          DO ir=1,Nbrec(ng)
             DO ib=1,4
-              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
-     &                                   LBij, UBij, 1, N(ng),          &
-     &                                   NghostPoints,                  &
-     &                                   EWperiodic, NSperiodic,        &
-     &                                   ad_t_obc(:,:,ib,ir,Linp,it))
+              IF (Lobc(ib,isTvar(it),ng)) THEN
+                CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,       &
+     &                                     LBij, UBij, 1, N(ng),        &
+     &                                     NghostPoints,                &
+     &                                     EWperiodic, NSperiodic,      &
+     &                                     ad_t_obc(:,:,ib,ir,Linp,it))
+              END IF
             END DO
-          END DO
 #   endif
+          END DO
         END IF
       END DO
 #  endif
