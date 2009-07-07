@@ -2714,6 +2714,24 @@
   'r3dvar'
   1.0d0
 
+'iron'                                             ! Input/Output
+  'available dissolved iron concentration'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron, scalar, series'
+  'ocean_time'
+  'idTvar(iFdis)'
+  'r3dvar'
+  1.0d0
+
+'iron'                                             ! Input
+  'available dissolved iron concentration functional'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron, scalar, series'
+  'ocean_time'
+  'idTads(iFdis)'
+  'r3dvar'
+  1.0d0
+
 'phytoplankton'                                    ! Input/Output
   'phytoplankton concentration'
   'millimole_nitrogen meter-3'                     ! [millimole/m3]
@@ -2729,6 +2747,24 @@
   'phytoplankton, scalar, series'
   'ocean_time'
   'idTads(iPhyt)'
+  'r3dvar'
+  1.0d0
+
+'phytoplanktonFe'                                  ! Input/Output
+  'phytoplankton, associated iron concentration'
+  'millimole_iron  meter-3'                        ! [millimole/m3]
+  'phytoplanktonFe, scalar, series'
+  'ocean_time'
+  'idTvar(iFphy)'
+  'r3dvar'
+  1.0d0
+
+'phytoplanktonFe'                                  ! Input
+  'phytoplankton, associated iron concentration functional'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'phytoplanktonFe, scalar, series'
+  'ocean_time'
+  'idTads(iFphy)'
   'r3dvar'
   1.0d0
 
@@ -3343,6 +3379,42 @@
   'nulvar'
   1.0d0
 
+'iron_east'                                        ! Input
+  'dissolved iron eastern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron_east, scalar, series'
+  'iron_time'
+  'idTbry(ieast,iFdis)'
+  'nulvar'
+  1.0d0
+
+'iron_west'                                        ! Input
+  'dissolved iron western boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron_west, scalar, series'
+  'iron_time'
+  'idTbry(iwest,iFdis)'
+  'nulvar'
+  1.0d0
+
+'iron_north'                                       ! Input
+  'dissolved iron northern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron_north, scalar, series'
+  'iron_time'
+  'idTbry(inorth,iFdis)'
+  'nulvar'
+  1.0d0
+
+'iron_south'                                       ! Input
+  'dissolved iron southern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'iron_south, scalar, series'
+  'iron_time'
+  'idTbry(isouth,iFdis)'
+  'nulvar'
+  1.0d0
+
 'phyt_east'                                        ! Input
   'phytoplankton eastern boundary condition'
   'millimole_nitrogen meter-3'                     ! [millimole/m3]
@@ -3376,6 +3448,42 @@
   'phyt_north, scalar, series'
   'phyt_time'
   'idTbry(inorth,iPhyt)'
+  'nulvar'
+  1.0d0
+
+'phytFe_east'                                      ! Input
+  'phytoplankton, iron concentration eastern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'phytFe_east, scalar, series'
+  'phytFe_time'
+  'idTbry(ieast,iFdis)'
+  'nulvar'
+  1.0d0
+
+'phytFe_west'                                      ! Input
+  'phytoplankton, iron concentration western boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'phytFe_west, scalar, series'
+  'phytFe_time'
+  'idTbry(iwest,iFphy)'
+  'nulvar'
+  1.0d0
+
+'phytFe_north'                                     ! Input
+  'phytoplankton, iron concentration northern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'phytFe_north, scalar, series'
+  'phytFe_time'
+  'idTbry(inorth,iFphy)'
+  'nulvar'
+  1.0d0
+
+'phytFe_south'                                     ! Input
+  'phytoplankton, iron concentration southern boundary condition'
+  'millimole_iron meter-3'                         ! [millimole/m3]
+  'phytFe_south, scalar, series'
+  'phytFe_time'
+  'idTbry(isouth,iFphy)'
   'nulvar'
   1.0d0
 

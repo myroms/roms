@@ -8,17 +8,17 @@
 !***********************************************************************
 !                                                                      !
 !  Nutrient-Phytoplankton-Zooplankton-Detritus Model.                  !
+!  including Iron Limitation on Phytoplankton Growth.                  !
 !                                                                      !
 !  This routine computes the biological sources and sinks and adds     !
 !  then the global biological fields.                                  !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
-!    Powell, T.M., C.V.W. Lewis, E. Curchitser, D. Haidvogel,          !
-!      Q. Hermann and E. Dobbins, 2006: Results from a three-          !
-!      dimensional,  nested biological-physical model of the           !
-!      California Current System: Comparisons with Statistics          !
-!      from Satellite Imagery, J. Geophys. Res.                        !
+!    Fiechter, J., A.M. Moore, C.A. Edwards, K.W. Bruland,             !
+!      E. Di Lorenzo, C.V.W. Lewis, T.M. Powell, E. Curchitser         !
+!      and K. Hedstrom, 2009: Modeling iron limitation of primary      !
+!      production in the coastal Gulf of Alaska, Deep Sea Res. II      !
 !                                                                      !
 !***********************************************************************
 !
@@ -58,6 +58,9 @@
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 #endif
+#ifdef IRON_LIMIT
+     &                      GRID(ng) % h,                               &
+#endif
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % ad_Hz,                           &
      &                      GRID(ng) % z_r,                             &
@@ -83,6 +86,9 @@
 #ifdef MASKING
      &                            rmask,                                &
 #endif
+#ifdef IRON_LIMIT
+     &                            h,                                    &
+#endif
      &                            Hz, ad_Hz, z_r, ad_z_r, z_w, ad_z_w,  &
      &                            srflx, ad_srflx,                      &
      &                            t, ad_t)
@@ -104,6 +110,9 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 # endif
+#ifdef IRON_LIMIT
+      real(r8), intent(in) :: h(LBi:,LBj:)
+# endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
@@ -118,6 +127,9 @@
 #else
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+# endif
+#ifdef IRON_LIMIT
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
@@ -145,12 +157,23 @@
 
       real(r8) :: Att, ExpAtt, Itop, PAR
       real(r8) :: ad_Att, ad_ExpAtt, ad_Itop, ad_PAR
-      real(r8) :: cff, cff1, cff2, cff3, cff4, dtdays
-      real(r8) :: ad_cff, ad_cff1, ad_cff4
+      real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, dtdays
+      real(r8) :: ad_cff, ad_cff1, ad_cff4, ad_cff5, ad_cff6
       real(r8) :: cffL, cffR, cu, dltL, dltR
       real(r8) :: ad_cffL, ad_cffR, ad_cu, ad_dltL, ad_dltR
-      real(r8) :: fac, adfac, adfac1, adfac2, adfac3
-
+      real(r8) :: fac, fac1, fac2
+      real(r8) :: ad_fac, ad_fac1, ad_fac2
+      real(r8) :: adfac, adfac1, adfac2, adfac3
+#ifdef IRON_LIMIT
+      real(r8) :: Nlimit, FNlim
+      real(r8) :: ad_Nlimit, ad_FNlim
+      real(r8) :: FNratio, FCratio, FCratioE, Flimit
+      real(r8) :: ad_FNratio, ad_FCratio, ad_FCratioE, ad_Flimit
+      real(r8) :: FeC2FeN, FeN2FeC
+# ifdef IRON_RELAX
+      real(r8) :: FeNudgCoef
+# endif
+#endif
       real(r8), dimension(Nsink) :: Wbio
       real(r8), dimension(Nsink) :: ad_Wbio
 
@@ -164,6 +187,7 @@
       real(r8), dimension(NT(ng),2) :: ad_BioTrc
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio1
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio2
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_bak
 
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: ad_Bio
@@ -203,6 +227,20 @@
 !  Set time-stepping size (days) according to the number of iterations.
 !
       dtdays=dt(ng)*sec2day/REAL(BioIter(ng),r8)
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Set nudging coefficient for dissolved iron over the shelf.
+!
+      FeNudgCoef=dt(ng)/(FeNudgTime(ng)*86400.0_r8)
+#endif
+#ifdef IRON_LIMIT
+!
+!  Set Fe:N and Fe:C conversion ratio and its inverse.
+!
+          FeN2FeC=(16.0_r8/106.0_r8)*1.0E3_r8
+          FeC2FeN=(106.0_r8/16.0_r8)*1.0E-3_r8
+#endif
 !
 !  Set vertical sinking indentification vector.
 !
@@ -224,22 +262,33 @@
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
-        ad_Att=0.0_r8
-        ad_ExpAtt=0.0_r8
-        ad_Itop=0.0_r8
         ad_PAR=0.0_r8
+        ad_Att=0.0_r8
         ad_dltL=0.0_r8
         ad_dltR=0.0_r8
         ad_cu=0.0_r8
         ad_cff=0.0_r8
         ad_cff1=0.0_r8
         ad_cff4=0.0_r8
+        ad_cff5=0.0_r8
+        ad_cff6=0.0_r8
+        ad_fac=0.0_r8
+        ad_fac1=0.0_r8
+        ad_fac2=0.0_r8
         ad_cffL=0.0_r8
         ad_cffR=0.0_r8
         adfac=0.0_r8
         adfac1=0.0_r8
         adfac2=0.0_r8
         adfac3=0.0_r8
+#ifdef IRON_LIMIT
+        ad_FNratio=0.0_r8
+        ad_FCratio=0.0_r8
+        ad_FCratioE=0.0_r8
+        ad_Flimit=0.0_r8
+        ad_FNlim=0.0_r8
+        ad_Nlimit=0.0_r8
+#endif
 !
         DO k=1,N(ng)
           DO i=IminS,ImaxS
@@ -276,6 +325,7 @@
             DO i=Istr,Iend
               Bio(i,k,ibio)=0.0_r8
               Bio1(i,k,ibio)=0.0_r8
+              Bio2(i,k,ibio)=0.0_r8
               ad_Bio(i,k,ibio)=0.0_r8
               ad_Bio_bak(i,k,ibio)=0.0_r8
             END DO
@@ -337,7 +387,11 @@
             DO itime=1,2
               cff1=0.0_r8
               iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+              DO itrc=1,NBT-2
+#else
               DO itrc=1,NBT
+#endif
                 ibio=idbio(itrc)
                 cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
                 IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
@@ -348,6 +402,12 @@
               IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
                 BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
               END IF
+#ifdef IRON_LIMIT
+              DO itrc=NBT-1,NBT
+                ibio=idbio(itrc)
+                BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+              END DO
+#endif
             END DO
 !
 !  Load biological tracers into local arrays.
@@ -357,6 +417,18 @@
               Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
               Bio(i,k,ibio)=BioTrc(ibio,nstp)
             END DO           
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Relax dissolved iron at coast (h <= FeHim) to a constant value
+!  (FeMax) over a time scale (FeNudgTime; days) to simulate sources
+!  at the shelf.
+!
+            IF (h(i,j).le.FeHmin(ng)) THEN
+              Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
+     &                       FeNudgCoef*(FeMax(ng)-Bio(i,k,iFdis))
+            END IF
+#endif
           END DO          
         END DO
 !
@@ -466,29 +538,73 @@
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
 !  phytoplankton nitrate uptake.  
+#ifdef IRON_LIMIT
 !
-#ifdef SPITZ
+!  Growth reduction factors due to iron limitation:
+!
+!    FNratio     current Fe:N ratio [umol-Fe/mmol-N]
+!    FCratio     current Fe:C ratio [umol-Fe/mol-C]
+!                  (umol-Fe/mmol-N)*(16 M-N/106 M-C)*(1E3 mmol-C/mol-C)
+!    FCratioE    empirical  Fe:C ratio
+!    Flimit      Phytoplankton growth reduction factor due to Fe
+!                  limitation based on Fe:C ratio
+!
+#endif
+!
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
           cff2=Vm_NO3(ng)*Vm_NO3(ng)
           cff3=PhyIS(ng)*PhyIS(ng)
-#else
-          cff1=dtdays*Vm_NO3(ng)
-#endif
           DO k=1,N(ng)
             DO i=Istr,Iend
-#ifdef SPITZ 
+#ifdef IRON_LIMIT
+              FNratio=Bio(i,k,iFphy)/MAX(MinVal,Bio(i,k,iPhyt))
+              FCratio=FNratio*FeN2FeC
+              FCratioE=B_Fe(ng)*Bio(i,k,iFdis)**A_Fe(ng)
+              Flimit=FCratio*FCratio/                                   &
+     &               (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+              FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+#endif
               cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
               cff=Bio(i,k,iPhyt)*                                       &
+#ifdef IRON_LIMIT
+     &            cff1*cff4*Light(i,k)*FNlim*Nlimit
+#else
+
      &            cff1*cff4*Light(i,k)/                                 &
      &            (K_NO3(ng)+Bio(i,k,iNO3_))
-#else
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*Light(i,k)/                                      &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
+
               Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
               Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                            &
      &                       Bio(i,k,iNO3_)*cff
+#ifdef IRON_LIMIT
+!
+!  Iron uptake proportional to growth.
+!
+              fac=cff*Bio(i,k,iNO3_)*FNratio/                           &
+     &            MAX(MinVal,Bio(i,k,iFdis))
+              Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
+              Bio(i,k,iFphy)=Bio(i,k,iFphy)+                            &
+     &                       Bio(i,k,iFdis)*fac
+!
+!  Iron uptake to reach appropriate Fe:C ratio.
+!
+              cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
+              cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
+              IF (cff6.ge.0.0_r8) THEN
+                cff=cff6/MAX(MinVal,Bio(i,k,iFdis))
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+cff)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)+                          &
+     &                         Bio(i,k,iFdis)*cff
+              ELSE
+                cff=-cff6/MAX(MinVal,Bio(i,k,iFphy))
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         Bio(i,k,iFphy)*cff
+              END IF
+#endif
             END DO
           END DO
 !
@@ -496,6 +612,10 @@
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
+#ifdef IRON_LIMIT
+!  The lost of phytoplankton to the dissolve iron pool is scale by the
+!  remineralization rate (FeRR).
+#endif
 !
           cff1=dtdays*ZooGR(ng)
           cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
@@ -511,11 +631,16 @@
      &                       Bio(i,k,iPhyt)*ZooEEN(ng)*cff
               Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
      &                       Bio(i,k,iPhyt)*ZooEED(ng)*cff
+#ifdef IRON_LIMIT
+              Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+              Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
+     &                       Bio(i,k,iFphy)*cff*FeRR(ng)
+#endif
             END DO
           END DO
 !
-!  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
-!  (PhyMRD rate).
+!  Phytoplankton mortality to nutrients (PhyMRNro rate), detritus
+!  (PhyMRD rate), and if applicable dissolved iron (FeRR rate).
 !
           cff3=dtdays*PhyMRD(ng)
           cff2=dtdays*PhyMRN(ng)
@@ -527,6 +652,11 @@
      &                       Bio(i,k,iPhyt)*cff2
               Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
      &                       Bio(i,k,iPhyt)*cff3
+#ifdef IRON_LIMIT
+              Bio(i,k,iFphy)=Bio(i,k,iFphy)*cff1
+              Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
+     &                       Bio(i,k,iFphy)*(cff2+cff3)*FeRR(ng)
+#endif
             END DO
           END DO
 !
@@ -832,7 +962,11 @@
               DO itime=1,2
                 cff1=0.0_r8
                 iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+                DO itrc=1,NBT-2
+#else
                 DO itrc=1,NBT
+#endif
                   ibio=idbio(itrc)
                   cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
                   IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
@@ -843,6 +977,12 @@
                 IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
                   BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
+#ifdef IRON_LIMIT
+                DO itrc=NBT-1,NBT
+                  ibio=idbio(itrc)
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+#endif
               END DO
 !
 !  Load biological tracers into local arrays.
@@ -852,6 +992,18 @@
                 Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
                 Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO           
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Relax dissolved iron at coast (h <= FeHim) to a constant value
+!  (FeMax) over a time scale (FeNudgTime; days) to simulate sources
+!  at the shelf.
+!
+              IF (h(i,j).le.FeHmin(ng)) THEN
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         FeNudgCoef*(FeMax(ng)-Bio(i,k,iFdis))
+              END IF
+#endif
             END DO          
           END DO
 !
@@ -912,29 +1064,82 @@
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
 !  phytoplankton nitrate uptake.  
+#ifdef IRON_LIMIT
 !
-#ifdef SPITZ
+!  Growth reduction factors due to iron limitation:
+!
+!    FNratio     current Fe:N ratio [umol-Fe/mmol-N]
+!    FCratio     current Fe:C ratio [umol-Fe/mol-C]
+!                  (umol-Fe/mmol-N)*(16 M-N/106 M-C)*(1E3 mmol-C/mol-C)
+!    FCratioE    empirical  Fe:C ratio
+!    Flimit      Phytoplankton growth reduction factor due to Fe
+!                  limitation based on Fe:C ratio
+!
+#endif
+!
             cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
             cff2=Vm_NO3(ng)*Vm_NO3(ng)
             cff3=PhyIS(ng)*PhyIS(ng)
-#else
-            cff1=dtdays*Vm_NO3(ng)
-#endif
             DO k=1,N(ng)
               DO i=Istr,Iend
-#ifdef SPITZ 
+#ifdef IRON_LIMIT
+!
+!  Calculate growth reduction factor due to iron limitation.
+!
+                FNratio=Bio(i,k,iFphy)/MAX(MinVal,Bio(i,k,iPhyt))
+                FCratio=FNratio*FeN2FeC
+                FCratioE=B_Fe(ng)*Bio(i,k,iFdis)**A_Fe(ng)
+                Flimit=FCratio*FCratio/                                 &
+     &                 (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+
+                Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+                FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+#endif
                 cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
                 cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*cff4*Light(i,k)/                               &
-     &              (K_NO3(ng)+Bio(i,k,iNO3_))
+#ifdef IRON_LIMIT
+     &              cff1*cff4*Light(i,k)*FNlim*Nlimit
 #else
-                cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*Light(i,k)/                                    &
+     &              cff1*cff4*Light(i,k)/                               &
      &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
                 Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
      &                         Bio(i,k,iNO3_)*cff
+#ifdef IRON_LIMIT
+!
+!  Iron uptake proportional to growth.
+!
+                fac=cff*Bio(i,k,iNO3_)*FNratio/                         &
+     &              MAX(MinVal,Bio(i,k,iFdis))
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)+                          &
+     &                         Bio(i,k,iFdis)*fac
+
+
+! Iron Uptake proportional to growth
+                cff=cff*Bio(i,k,iNO3_)*                                 &
+     &              FNratio/max(MinVal,Bio(i,k,iFdis))
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+cff)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)+                          &
+     &                         Bio(i,k,iFdis)*cff
+!
+!  Iron uptake to reach appropriate Fe:C ratio.
+!
+                cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
+                cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
+                IF (cff6.ge.0.0_r8) THEN
+                  cff=cff6/MAX(MinVal,Bio(i,k,iFdis))
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+cff)
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)+                        &
+     &                           Bio(i,k,iFdis)*cff
+                ELSE
+                  cff=-cff6/MAX(MinVal,Bio(i,k,iFphy))
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                        &
+     &                           Bio(i,k,iFphy)*cff
+                END IF
+#endif
               END DO
             END DO
 !
@@ -942,6 +1147,10 @@
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
+#ifdef IRON_LIMIT
+!  The lost of phytoplankton to the dissolve iron pool is scale by the
+!  remineralization rate (FeRR).
+#endif
 !
             cff1=dtdays*ZooGR(ng)
             cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
@@ -957,11 +1166,16 @@
      &                         Bio(i,k,iPhyt)*ZooEEN(ng)*cff
                 Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
      &                         Bio(i,k,iPhyt)*ZooEED(ng)*cff
+#ifdef IRON_LIMIT
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         Bio(i,k,iFphy)*cff*FeRR(ng)
+#endif
               END DO
             END DO
 !
-!  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
-!  (PhyMRD rate).
+!  Phytoplankton mortality to nutrients (PhyMRNro rate), detritus
+!  (PhyMRD rate), and if applicable dissolved iron (FeRR rate).
 !
             cff3=dtdays*PhyMRD(ng)
             cff2=dtdays*PhyMRN(ng)
@@ -973,6 +1187,11 @@
      &                         Bio(i,k,iPhyt)*cff2
                 Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
      &                         Bio(i,k,iPhyt)*cff3
+#ifdef IRON_LIMIT
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)*cff1
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         Bio(i,k,iFphy)*(cff2+cff3)*FeRR(ng)
+#endif
               END DO
             END DO
 !
@@ -1978,7 +2197,6 @@
             END DO
 
           END DO SINK_LOOP1
-
 !
 !  Compute appropriate basic state arrays II.
 !
@@ -2012,7 +2230,11 @@
               DO itime=1,2
                 cff1=0.0_r8
                 iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+                DO itrc=1,NBT-2
+#else
                 DO itrc=1,NBT
+#endif
                   ibio=idbio(itrc)
                   cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
                   IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
@@ -2023,6 +2245,12 @@
                 IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
                   BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
+#ifdef IRON_LIMIT
+                DO itrc=NBT-1,NBT
+                  ibio=idbio(itrc)
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+#endif
               END DO
 !
 !  Load biological tracers into local arrays.
@@ -2032,6 +2260,18 @@
                 Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
                 Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO           
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Relax dissolved iron at coast (h <= FeHim) to a constant value
+!  (FeMax) over a time scale (FeNudgTime; days) to simulate sources
+!  at the shelf.
+!
+              IF (h(i,j).le.FeHmin(ng)) THEN
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         FeNudgCoef*(FeMax(ng)-Bio(i,k,iFdis))
+              END IF
+#endif
             END DO          
           END DO
 !
@@ -2092,29 +2332,73 @@
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
 !  phytoplankton nitrate uptake.  
+#ifdef IRON_LIMIT
 !
-#ifdef SPITZ
+!  Growth reduction factors due to iron limitation:
+!
+!    FNratio     current Fe:N ratio [umol-Fe/mmol-N]
+!    FCratio     current Fe:C ratio [umol-Fe/mol-C]
+!                  (umol-Fe/mmol-N)*(16 M-N/106 M-C)*(1E3 mmol-C/mol-C)
+!    FCratioE    empirical  Fe:C ratio
+!    Flimit      Phytoplankton growth reduction factor due to Fe
+!                  limitation based on Fe:C ratio
+!
+#endif
+!
             cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
             cff2=Vm_NO3(ng)*Vm_NO3(ng)
             cff3=PhyIS(ng)*PhyIS(ng)
-#else
-            cff1=dtdays*Vm_NO3(ng)
-#endif
             DO k=1,N(ng)
               DO i=Istr,Iend
-#ifdef SPITZ 
+#ifdef IRON_LIMIT
+                FNratio=Bio(i,k,iFphy)/MAX(MinVal,Bio(i,k,iPhyt))
+                FCratio=FNratio*FeN2FeC
+                FCratioE=B_Fe(ng)*Bio(i,k,iFdis)**A_Fe(ng)
+                Flimit=FCratio*FCratio/                                 &
+     &                 (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+
+                Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+                FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+#endif
+!
                 cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
                 cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*cff4*Light(i,k)/                               &
-     &              (K_NO3(ng)+Bio(i,k,iNO3_))
+#ifdef IRON_LIMIT
+     &              cff1*cff4*Light(i,k)*FNlim*Nlimit
 #else
-                cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*Light(i,k)/                                    &
+     &              cff1*cff4*Light(i,k)/                               &
      &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
                 Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
      &                         Bio(i,k,iNO3_)*cff
+
+#ifdef IRON_LIMIT
+!
+!  Iron uptake proportional to growth.
+!
+                fac=cff*Bio(i,k,iNO3_)*FNratio/                         &
+     &              MAX(MinVal,Bio(i,k,iFdis))
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)+                          &
+     &                         Bio(i,k,iFdis)*fac
+!
+!  Iron uptake to reach appropriate Fe:C ratio.
+!
+                cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
+                cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
+                IF (cff6.ge.0.0_r8) THEN
+                  cff=cff6/MAX(MinVal,Bio(i,k,iFdis))
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+cff)
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)+                        &
+     &                           Bio(i,k,iFdis)*cff
+                ELSE
+                  cff=-cff6/MAX(MinVal,Bio(i,k,iFphy))
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                        &
+     &                           Bio(i,k,iFphy)*cff
+                END IF
+#endif
               END DO
             END DO
 !
@@ -2122,6 +2406,10 @@
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
+#ifdef IRON_LIMIT
+!  The lost of phytoplankton to the dissolve iron pool is scale by the
+!  remineralization rate (FeRR).
+#endif
 !
             cff1=dtdays*ZooGR(ng)
             cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
@@ -2139,26 +2427,37 @@
      &                         Bio(i,k,iPhyt)*ZooEEN(ng)*cff
                 Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
      &                         Bio(i,k,iPhyt)*ZooEED(ng)*cff
+#ifdef IRON_LIMIT
+                Bio1(i,k,iFphy)=Bio(i,k,iFphy)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         Bio(i,k,iFphy)*cff*FeRR(ng)
+#endif
+              END DO
+            END DO
+!
+!  Phytoplankton mortality to nutrients (PhyMRNro rate), detritus
+!  (PhyMRD rate), and if applicable dissolved iron (FeRR rate).
+!
+            cff3=dtdays*PhyMRD(ng)
+            cff2=dtdays*PhyMRN(ng)
+            cff1=1.0_r8/(1.0_r8+cff2+cff3)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iPhyt)*cff2
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
+     &                         Bio(i,k,iPhyt)*cff3
+#ifdef IRON_LIMIT
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)*cff1
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         Bio(i,k,iFphy)*(cff2+cff3)*FeRR(ng)
+#endif
               END DO
             END DO
 !
             IF (Iteradj.ne.Iter) THEN
-!
-!  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
-!  (PhyMRD rate).
-!
-              cff3=dtdays*PhyMRD(ng)
-              cff2=dtdays*PhyMRN(ng)
-              cff1=1.0_r8/(1.0_r8+cff2+cff3)
-              DO k=1,N(ng)
-                DO i=Istr,Iend
-                  Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
-                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
-     &                           Bio(i,k,iPhyt)*cff2
-                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
-     &                           Bio(i,k,iPhyt)*cff3
-                END DO
-              END DO
 !
 !  Zooplankton mortality to nutrients (ZooMRN rate) and Detritus
 !  (ZooMRD rate).
@@ -2415,13 +2714,24 @@
           END DO
 !
 !  Adjoint Phytoplankton mortality to nutrients (PhyMRN rate) and
-!  detritus (PhyMRD rate).
+!  detritus (PhyMRD rate), and if applicable dissolved iron
+!  (FeRR rate).
 !
           cff3=dtdays*PhyMRD(ng)
           cff2=dtdays*PhyMRN(ng)
           cff1=1.0_r8/(1.0_r8+cff2+cff3)
           DO k=1,N(ng)
             DO i=Istr,Iend
+#ifdef IRON_LIMIT
+!>            tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
+!>   &                          tl_Bio(i,k,iFphy)*(cff2+cff3)*FeRR(ng)
+!>
+              ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+                      &
+     &                          (cff2+cff3)*FeRR(ng)*ad_Bio(i,k,iFdis)
+!>            tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)*cff1
+!>
+              ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)*cff1
+#endif
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
 !>   &                          tl_Bio(i,k,iPhyt)*cff3
 !>
@@ -2442,6 +2752,10 @@
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
+#ifdef IRON_LIMIT
+!  The lost of phytoplankton to the dissolve iron pool is scale by the
+!  remineralization rate (FeRR).
+#endif
 !
           cff1=dtdays*ZooGR(ng)
           cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
@@ -2450,6 +2764,22 @@
               cff=Bio1(i,k,iZoop)*                                      &
      &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio1(i,k,iPhyt)))/        &
      &            Bio1(i,k,iPhyt)
+#ifdef IRON_LIMIT
+!>            tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
+!>   &                          (tl_Bio(i,k,iFphy)*cff+                 &
+!>   &                           Bio1(i,k,iFphy)*tl_cff)*FeRR(ng)
+!>
+              ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+cff*FeRR(ng)*         &
+     &                          ad_Bio(i,k,iFdis)
+              ad_cff=ad_cff+Bio1(i,k,iFphy)*FeRR(ng)*ad_Bio(i,k,iFdis)
+!>            tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
+!>   &                           tl_cff*Bio1(i,k,iFphy))/               &
+!>   &                          (1.0_r8+cff)
+!>
+              adfac=ad_Bio(i,k,iFphy)/(1.0_r8+cff)
+              ad_cff=ad_cff-Bio1(i,k,iFphy)*adfac
+              ad_Bio(i,k,iFphy)=adfac
+#endif
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
 !>   &                          ZooEED(ng)*(tl_Bio(i,k,iPhyt)*cff+      &
 !>   &                                      Bio(i,k,iPhyt)*tl_cff)
@@ -2531,7 +2861,11 @@
               DO itime=1,2
                 cff1=0.0_r8
                 iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+                DO itrc=1,NBT-2
+#else
                 DO itrc=1,NBT
+#endif
                   ibio=idbio(itrc)
                   cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
                   IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
@@ -2542,6 +2876,12 @@
                 IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
                   BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
+#ifdef IRON_LIMIT
+                DO itrc=NBT-1,NBT
+                  ibio=idbio(itrc)
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+#endif
               END DO
 !
 !  Load biological tracers into local arrays.
@@ -2551,6 +2891,18 @@
                 Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
                 Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO           
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Relax dissolved iron at coast (h <= FeHim) to a constant value
+!  (FeMax) over a time scale (FeNudgTime; days) to simulate sources
+!  at the shelf.
+!
+              IF (h(i,j).le.FeHmin(ng)) THEN
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
+     &                         FeNudgCoef*(FeMax(ng)-Bio(i,k,iFdis))
+              END IF
+#endif
             END DO          
           END DO
 !
@@ -2611,24 +2963,43 @@
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
 !  phytoplankton nitrate uptake.  
+#ifdef IRON_LIMIT
 !
-#ifdef SPITZ
+!  Growth reduction factors due to iron limitation:
+!
+!    FNratio     current Fe:N ratio [umol-Fe/mmol-N]
+!    FCratio     current Fe:C ratio [umol-Fe/mol-C]
+!                  (umol-Fe/mmol-N)*(16 M-N/106 M-C)*(1E3 mmol-C/mol-C)
+!    FCratioE    empirical  Fe:C ratio
+!    Flimit      Phytoplankton growth reduction factor due to Fe
+!                  limitation based on Fe:C ratio
+!
+#endif
+!
             cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
             cff2=Vm_NO3(ng)*Vm_NO3(ng)
             cff3=PhyIS(ng)*PhyIS(ng)
-#else
-            cff1=dtdays*Vm_NO3(ng)
-#endif
             DO k=1,N(ng)
               DO i=Istr,Iend
-#ifdef SPITZ 
+#ifdef IRON_LIMIT
+!
+!  Calculate growth reduction factor due to iron limitation.
+!
+                FNratio=Bio(i,k,iFphy)/MAX(MinVal,Bio(i,k,iPhyt))
+                FCratio=FNratio*FeN2FeC
+                FCratioE=B_Fe(ng)*Bio(i,k,iFdis)**A_Fe(ng)
+                Flimit=FCratio*FCratio/                                 &
+     &                 (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+
+                Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+                FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+#endif
                 cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
                 cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*cff4*Light(i,k)/                               &
-     &              (K_NO3(ng)+Bio(i,k,iNO3_))
+#ifdef IRON_LIMIT
+     &              cff1*cff4*Light(i,k)*FNlim*Nlimit
 #else
-                cff=Bio(i,k,iPhyt)*                                     &
-     &              cff1*Light(i,k)/                                    &
+     &              cff1*cff4*Light(i,k)/                               &
      &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
                 Bio1(i,k,iNO3_)=Bio(i,k,iNO3_)
@@ -2636,6 +3007,37 @@
                 Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
      &                         Bio(i,k,iNO3_)*cff
+
+#ifdef IRON_LIMIT
+!
+!  Iron uptake proportional to growth.
+!
+                fac=cff*Bio(i,k,iNO3_)*FNratio/                         &
+     &              MAX(MinVal,Bio(i,k,iFdis))
+                Bio1(i,k,iFdis)=Bio(i,k,iFdis)
+                Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
+                Bio2(i,k,iFdis)=Bio(i,k,iFdis)
+                Bio1(i,k,iFphy)=Bio(i,k,iFphy)
+                Bio(i,k,iFphy)=Bio(i,k,iFphy)+                          &
+     &                         Bio(i,k,iFdis)*fac
+                Bio2(i,k,iFphy)=Bio(i,k,iFphy)
+!
+!  Iron uptake to reach appropriate Fe:C ratio.
+!
+                cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
+                cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
+                IF (cff6.ge.0.0_r8) then
+                  cff=cff6/MAX(MinVal,Bio(i,k,iFdis))
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+cff)
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)+                        &
+     &                           Bio(i,k,iFdis)*cff
+                ELSE
+                  cff=-cff6/MAX(MinVal,Bio(i,k,iFphy))
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                        &
+     &                           Bio(i,k,iFphy)*cff
+                END IF
+#endif
               END DO
             END DO
 !
@@ -2645,6 +3047,10 @@
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
+#ifdef IRON_LIMIT
+!  The lost of phytoplankton to the dissolve iron pool is scale by the
+!  remineralization rate (FeRR).
+#endif
 !
               cff1=dtdays*ZooGR(ng)
               cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
@@ -2660,11 +3066,16 @@
      &                           Bio(i,k,iPhyt)*ZooEEN(ng)*cff
                   Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
      &                           Bio(i,k,iPhyt)*ZooEED(ng)*cff
+#ifdef IRON_LIMIT
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                         &
+     &                           Bio(i,k,iFphy)*cff*FeRR(ng)
+#endif
                 END DO
               END DO
 !
-!  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
-!  (PhyMRD rate).
+!  Phytoplankton mortality to nutrients (PhyMRNro rate), detritus
+!  (PhyMRD rate), and if applicable dissolved iron (FeRR rate).
 !
               cff3=dtdays*PhyMRD(ng)
               cff2=dtdays*PhyMRN(ng)
@@ -2676,6 +3087,11 @@
      &                           Bio(i,k,iPhyt)*cff2
                   Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
      &                           Bio(i,k,iPhyt)*cff3
+#ifdef IRON_LIMIT
+                  Bio(i,k,iFphy)=Bio(i,k,iFphy)*cff1
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                        &
+     &                           Bio(i,k,iFphy)*(cff2+cff3)*FeRR(ng)
+#endif
                 END DO
               END DO
 !
@@ -2896,26 +3312,177 @@
 !  change in uptake rate as a function of nitrate concentration.
 !  Here, PhyIS is the initial slope of the P-I curve and K_NO3 is the
 !  half saturation of phytoplankton nitrate uptake.
+#ifdef IRON_LIMIT
 !
-#ifdef SPITZ
+!  Growth reduction factors due to iron limitation:
+!
+!    FNratio     current Fe:N ratio [umol-Fe/mmol-N]
+!    FCratio     current Fe:C ratio [umol-Fe/mol-C]
+!                  (umol-Fe/mmol-N)*(16 M-N/106 M-C)*(1E3 mmol-C/mol-C)
+!    FCratioE    empirical  Fe:C ratio
+!    Flimit      Phytoplankton growth reduction factor due to Fe
+!                  limitation based on Fe:C ratio
+!
+#endif
+!
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
           cff2=Vm_NO3(ng)*Vm_NO3(ng)
           cff3=PhyIS(ng)*PhyIS(ng)
-#else
-          cff1=dtdays*Vm_NO3(ng)
-#endif
           DO k=1,N(ng)
             DO i=Istr,Iend
-#ifdef SPITZ
+#ifdef IRON_LIMIT
+!
+!  Adjoint of iron uptake to reach appropriate Fe:C ratio.
+!
+              FNratio=Bio1(i,k,iFphy)/MAX(MinVal,Bio1(i,k,iPhyt))
+              FCratio=FNratio*FeN2FeC
+              FCratioE=B_Fe(ng)*Bio1(i,k,iFdis)**A_Fe(ng)
+              Flimit=FCratio*FCratio/                                   &
+     &               (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+              FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+
+
+              cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
+              cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
+              IF (cff6.ge.0.0_r8) THEN
+                fac1=MAX(MinVal,Bio2(i,k,iFdis))
+                cff=cff6/fac1
+!>              tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                    &
+!>   &                            tl_Bio(i,k,iFdis)*cff+                &
+!>   &                            Bio(i,k,iFdis)*tl_cff
+!>
+                ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                    &
+     &                            cff*ad_Bio(i,k,iFphy)
+                ad_cff=ad_cff+Bio(i,k,iFdis)*ad_Bio(i,k,iFphy)
+!>              tl_Bio(i,k,iFdis)=(tl_Bio(i,k,iFdis)-                   &
+!>   &                             tl_cff*Bio(i,k,iFdis))/              &
+!>   &                            (1.0_r8+cff)
+!>
+                adfac=ad_Bio(i,k,iFdis)/(1.0_r8+cff)
+                ad_cff=ad_cff-Bio(i,k,iFdis)*adfac
+                ad_Bio(i,k,iFdis)=adfac
+!>              tl_cff=(tl_cff6-tl_fac1*cff)/fac1
+!>
+                adfac=ad_cff/fac1
+                ad_cff6=ad_cff6+adfac
+                ad_fac1=ad_fac1-cff*adfac
+                ad_cff=0.0_r8
+!>              tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFdis)))*   &
+!>   &                  tl_Bio(i,k,iFdis)
+!>
+                ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                    &
+     &                            (0.5_r8-                              &
+     &                             SIGN(0.5_r8,                         &
+     &                                  MinVal-Bio2(i,k,iFdis)))*ad_fac1
+                ad_fac1=0.0_r8
+              ELSE
+                fac1=MAX(MinVal,Bio2(i,k,iFphy))
+                cff=-cff6/fac1
+!>              tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                    &
+!>   &                            tl_Bio(i,k,iFphy)*cff+                &
+!>   &                            Bio(i,k,iFphy)*tl_cff
+!>
+                ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+                    &
+     &                            cff*ad_Bio(i,k,iFdis)
+                ad_cff=ad_cff+Bio(i,k,iFphy)*ad_Bio(i,k,iFdis)
+!>              tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                   &
+!>   &                             tl_cff*Bio(i,k,iFphy))/              &
+!>   &                            (1.0_r8+cff)
+!>
+                adfac=ad_Bio(i,k,iFphy)/(1.0_r8+cff)
+                ad_cff=ad_cff-Bio(i,k,iFphy)*adfac
+                ad_Bio(i,k,iFphy)=adfac
+!>              tl_cff=-(tl_cff6+tl_fac1*cff)/fac1
+!>
+                adfac=ad_cff/fac1
+                ad_cff6=ad_cff6-adfac
+                ad_fac1=ad_fac1-cff*adfac
+                ad_cff=0.0_r8
+!>              tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*   &
+!>   &                  tl_Bio(i,k,iFphy)
+!>
+                ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+                    &
+     &                            (0.5_r8-                              &
+     &                             SIGN(0.5_r8,                         &
+     &                                  MinVal-Bio2(i,k,iFphy)))*ad_fac1
+                ad_fac1=0.0_r8
+              END IF
+!>            tl_cff6=(tl_Bio(i,k,iPhyt)*cff5+                          &
+!>   &                 Bio(i,k,iPhyt)*tl_cff5)*FeC2FeN
+!>
+              adfac=ad_cff6*FeC2FeN
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+cff5*adfac
+              ad_cff5=ad_cff5+Bio(i,k,iPhyt)*adfac
+              ad_cff6=0.0_r8
+!>            tl_cff5=dtdays*(tl_FCratioE-tl_FCratio)/T_Fe(ng)
+!>
+              adfac=dtdays*ad_cff5/T_Fe(ng)
+              ad_FCratioE=ad_FCratioE+adfac
+              ad_FCratio=ad_FCratio-adfac
+              ad_cff5=0.0_r8
+#endif
               cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
               cff=Bio1(i,k,iPhyt)*                                      &
+#ifdef IRON_LIMIT
+     &            cff1*cff4*Light(i,k)*FNlim*Nlimit
+#else
      &            cff1*cff4*Light(i,k)/                                 &
      &            (K_NO3(ng)+Bio1(i,k,iNO3_))
-#else
-              cff=Bio1(i,k,iPhyt)*                                      &
-     &            cff1*Light(i,k)/                                      &
-     &            (K_NO3(ng)+Bio1(i,k,iNO3_))
 #endif
+#ifdef IRON_LIMIT
+!
+!  Iron uptake proportional to growth.
+!
+!! HGA missing code
+!!
+              fac1=MAX(MinVal,Bio1(i,k,iFdis))
+              fac2=1.0_r8/fac1
+              fac=cff*Bio1(i,k,iNO3_)*FNratio*fac2
+!>            tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
+!>   &                          tl_Bio(i,k,iFdis)*fac+                  &
+!>   &                          Bio2(i,k,iFdis)*tl_fac
+!>
+              ad_fac=ad_fac+Bio2(i,k,iFdis)*ad_Bio(i,k,iFphy)
+              ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                      &
+     &                          fac*ad_Bio(i,k,iFphy)
+!>            tl_Bio(i,k,iFdis)=(tl_Bio(i,k,iFdis)-                     &
+!>   &                           tl_fac*Bio2(i,k,iFdis))/               &
+!>   &                          (1.0_r8+fac)
+!>
+              ad_fac=ad_fac-                                            &
+     &               ad_Bio(i,k,iFdis)*Bio2(i,k,iFdis)/(1.0_r8+fac)
+!>            tl_fac=FNratio*fac2*(tl_cff*Bio(i,k,iNO3_)+               &
+!>   &                             cff*ad_Bio(i,k,iNO3_))+              &
+!>   &               cff*Bio(i,k,iNO3_)*(tl_FNratio*fac2+               &
+!>   &                                   FNratio*tl_fac2)
+!>
+              adfac1=FNratio*fac2*ad_fac
+              adfac2=cff*Bio(i,k,iNO3_)*ad_fac
+              ad_cff=ad_cff+Bio(i,k,iNO3_)*adfac1
+              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)+cff*adfac1
+              ad_FNratio=ad_FNratio+fac2*adfac2
+              ad_fac2=ad_fac2+FNratio*adfac2
+              ad_fac=0.0_r8
+!>            tl_fac2=-fac2*fac2*tl_fac1
+!>
+              ad_fac1=ad_fac1-fac2*fac2*ad_fac2
+              ad_fac2=0.0_r8
+!>            tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iFdis)))*     &
+!>   &                tl_Bio(i,k,iFdis)
+!>
+              ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                      &
+     &                          (0.5_r8-                                &
+     &                           SIGN(0.5_r8,MinVal-Bio1(i,k,iFdis)))*  &
+     &                          ad_fac1
+              ad_fac1=0.0_r8
+!!
+!! HGA end of missing code
+#endif
+!
+!  Adjoint of phytoplankton photosynthetic growth and nitrate uptake.
+!
 !>            tl_Bio(i,k,iPhyt)=tl_Bio(i,k,iPhyt)+                      &
 !>   &                          tl_Bio(i,k,iNO3_)*cff+                  &
 !>   &                          Bio(i,k,iNO3_)*tl_cff
@@ -2930,7 +3497,32 @@
               adfac=ad_Bio(i,k,iNO3_)/(1.0_r8+cff)
               ad_cff=ad_cff-Bio(i,k,iNO3_)*adfac
               ad_Bio(i,k,iNO3_)=adfac
-#ifdef SPITZ
+
+#ifdef IRON_LIMIT
+!>            tl_cff=tl_Bio(i,k,iPhyt)*                                 &
+!>   &               cff1*cff4*Light(i,k)*FNlim*Nlimit+                 &
+!>   &               Bio1(i,k,iPhyt)*cff1*cff4*                         &
+!>   &               (tl_Light(i,k)*FNlim*Nlimit+                       &
+!>   &                Light(i,k)*tl_FNlim*Nlimit+                       &
+!>   &                Light(i,k)*FNlim*tl_Nlimit)+                      &
+!>   &               Bio1(i,k,iPhyt)*cff1*tl_cff4*                      &
+!>   &               Light(i,k)*FNlim*Nlimit
+!>
+              adfac1=cff1*cff4*ad_cff
+              adfac2=adfac1*Bio1(i,k,iPhyt)
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          Light(i,k)*FNlim*Nlimit*adfac1
+              ad_Light(i,k)=ad_Light(i,k)+                              &
+     &                      FNlim*Nlimit*adfac2
+              ad_FNlim=ad_FNlim+                                        &
+     &                 Light(i,k)*Nlimit*adfac2
+              ad_Nlimit=ad_Nlimit+                                      &
+     &                  Light(i,k)*FNlim*adfac2
+              ad_cff4=ad_cff4+                                          &
+     &                Bio1(i,k,iPhyt)*cff1*Light(i,k)*FNlim*Nlimit*     &
+     &                ad_cff
+              ad_cff=0.0_r8
+#else
 !>            tl_cff=(tl_Bio(i,k,iPhyt)*cff1*cff4*Light(i,k)+           &
 !>   &                Bio1(i,k,iPhyt)*cff1*                             &
 !>   &                (tl_cff4*Light(i,k)+cff4*tl_Light(i,k))-          &
@@ -2947,26 +3539,79 @@
               ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-                      &
      &                          adfac*cff
               ad_cff=0.0_r8
+#endif
 !>            tl_cff4=-cff3*tl_Light(i,k)*Light(i,k)*cff4*cff4*cff4
 !>
               ad_Light(i,k)=ad_Light(i,k)-                              &
-     &                       cff3*Light(i,k)*                           &
-     &                       cff4*cff4*cff4*ad_cff4
+     &                      cff3*Light(i,k)*                            &
+     &                      cff4*cff4*cff4*ad_cff4
               ad_cff4=0.0_r8
-#else
-!>            tl_cff=(tl_Bio(i,k,iPhyt)*cff1*Light(i,k)+                &
-!>   &                Bio1(i,k,iPhyt)*cff1*tl_Light(i,k)-               &
-!>   &                tl_Bio(i,k,iNO3_)*cff)/                           &
-!>   &               (K_NO3(ng)+Bio1(i,k,iNO3_))
+
+#ifdef IRON_LIMIT
+!
+!  Adjoint of  calculate growth reduction factor due to iron limitation.
+!
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+              fac1=Flimit/(Bio(i,k,iNO3_)*Nlimit)
+!>            tl_FNlim=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*tl_fac1
 !>
-              adfac=ad_cff/(K_NO3(ng)+Bio1(i,k,iNO3_))
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
-     &                          adfac*cff1*Light(i,k)
-              ad_Light(i,k)=ad_Light(i,k)+                              &
-     &                      adfac*Bio1(i,k,iPhyt)*cff1
+              ad_fac1=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*ad_FNlim
+              ad_FNlim=0.0_r8
+!>            tl_fac1=tl_Flimit/(Bio(i,k,iNO3_)*Nlimit)-                &
+!>   &                (tl_Bio(i,k,iNO3_)*Nlimit+                        &
+!>   &                 Bio(i,k,iNO3_)*tl_Nlimit)*fac1/                  &
+!>   &                (Bio(i,k,iNO3_)*Nlimit)
+!>
+              adfac1=ad_fac1/(Bio(i,k,iNO3_)*Nlimit)
+              adfac2=adfac1*fac1
+              ad_Flimit=ad_Flimit+adfac1
+              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-Nlimit*adfac2
+              ad_Nlimit=ad_Nlimit-Bio(i,k,iNO3_)*adfac2
+              ad_fac1=0.0_r8
+!>            tl_Nlimit=-tl_Bio(i,k,iNO3_)*Nlimit*Nlimit
+!>
               ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-                      &
-     &                          cff*adfac
-              ad_cff=0.0_r8
+     &                          ad_Nlimit*Nlimit*Nlimit
+              ad_Nlimit=0.0_r8
+!>            tl_Flimit=2.0_r8*(tl_FCratio*FCratio-                     &
+!>   &                          tl_FCratio*FCratio*Flimit)/             &
+!>   &                  (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+!>
+              adfac=2.0_r8*ad_Flimit/                                   &
+     &              (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
+              ad_FCratio=ad_FCratio+                                    &
+     &                   FCratio*adfac-                                 &
+     &                   FCratio*Flimit*adfac
+              ad_Flimit=0.0_r8
+!>            tl_FCratioE=A_Fe(ng)*B_Fe(ng)*                            &
+!>   &                    Bio1(i,k,iFdis)**(A_Fe(ng)-1.0_r8)*           &
+!>   &                    tl_Bio(i,k,iFdis)
+!>
+              ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                      &
+     &                          A_Fe(ng)*B_Fe(ng)*                      &
+     &                          Bio1(i,k,iFdis)**(A_Fe(ng)-1.0_r8)*     &
+     &                          ad_FCratioE
+              ad_FCratioE=0.0_r8
+!>            tl_FCratio=tl_FNratio*FeN2FeC
+!>
+              ad_FNratio=ad_FNratio+FeN2FeC*ad_FCratio
+              ad_FCratio=0.0_r8
+
+              fac1=MAX(MinVal,Bio1(i,k,iPhyt))
+!>            tl_FNratio=(tl_Bio(i,k,iFphy)-tl_fac1*FNratio)/fac1
+!>
+              adfac=ad_FNratio/fac1
+              ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+adfac
+              ad_fac1=ad_fac1-ad_FNratio*FNratio/fac1
+              ad_FNratio=0.0_r8
+!>            tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*      &
+!>   &                tl_Bio(i,k,iPhyt)
+!>
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                       &
+     &                          (0.5_r8-                                 &
+     &                           SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*   &
+     &                          ad_fac1
+              ad_fac1=0.0_r8
 #endif
             END DO
           END DO
@@ -3092,6 +3737,21 @@
 !
         DO k=1,N(ng)
           DO i=Istr,Iend
+
+#if defined IRON_LIMIT && defined IRON_RELAX
+!
+!  Adjoint of relax dissolved iron at coast (h <= FeHim) to a constant
+!  value (FeMax) over a time scale (FeNudgTime; days) to simulate
+!  sources at the shelf.
+!
+            IF (h(i,j).le.FeHmin(ng)) THEN
+!>            tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)-                      &
+!>   &                          FeNudgCoef*tl_Bio(i,k,iFdis)
+!>
+              ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)-                      &
+     &                          FeNudgCoef*ad_Bio(i,k,iFdis)
+            END IF
+#endif
 !
 !  Adjoint load biological tracers into local arrays.
 !
@@ -3111,11 +3771,66 @@
 !
 !  Adjoint positive definite concentrations.
 !
+            DO itime=1,2
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+!
+!  The basic state (nstp and nnew indices) that is read from the
+!  forward file is in units of tracer. Since BioTrc(ibio,:) is in
+!  tracer units, we simply use t instead of t*Hz_inv.
+!
+                BioTrc(ibio,itime)=t(i,j,k,itime,ibio)
+                BioTrc1(ibio,itime)=BioTrc(ibio,itime)
+              END DO
+            END DO
+!
             cff2=0.0_r8
             DO itime=1,2
               cff1=0.0_r8
               iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+              DO itrc=1,NBT-2
+#else
               DO itrc=1,NBT
+#endif
+                ibio=idbio(itrc)
+                cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
+                IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
+                  iTrcMax=ibio
+                END IF
+                BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+              END DO
+              IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
+                BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
+              END IF
+
+#ifdef IRON_LIMIT  
+              DO itrc=NBT-1,NBT
+                ibio=idbio(itrc)
+                BioTrc(ibio,itime)=MAX(MinVal,BioTrc1(ibio,itime))
+!>              tl_BioTrc(ibio,itime)=(0.5_r8-                          &
+!>   &                                 SIGN(0.5_r8,                     &
+!>   &                                      MinVal-                     &
+!>   &                                      BioTrc1(ibio,itime)))*      &
+!>   &                                tl_BioTrc(ibio,itime)
+!>
+                ad_BioTrc(ibio,itime)=(0.5_r8-                          &
+     &                                 SIGN(0.5_r8,                     &
+     &                                      MinVal-                     &
+     &                                      BioTrc1(ibio,itime)))*      &
+     &                                ad_BioTrc(ibio,itime)
+              END DO
+#endif
+!
+!  Recompute BioTrc again because iTrcMax has changed.
+!
+              cff1=0.0_r8
+              iTrcMax=idbio(1)
+#ifdef IRON_LIMIT
+              DO itrc=1,NBT-2
+#else
+              DO itrc=1,NBT
+#endif
                 ibio=idbio(itrc)
 !
 !  The basic state (nstp and nnew indices) that is read from the
@@ -3138,7 +3853,11 @@
               END IF
 
               cff1=0.0_r8
+#ifdef IRON_LIMIT
+              DO itrc=1,NBT-2
+#else
               DO itrc=1,NBT
+#endif
                 ibio=idbio(itrc)
 !
 !  The basic state (nstp and nnew indices) that is read from the

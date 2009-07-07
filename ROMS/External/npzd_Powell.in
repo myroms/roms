@@ -86,15 +86,15 @@ BioIni(iSDet) == 1.0d0                           ! detritus
 
       PhyMRN == 0.0d0                            ! sigmaN
 
-! Half-saturation for phytoplankton nitrate uptake
+! Inverse half-saturation for phytoplankton nitrate uptake
 ! [millimole_N m-3)], {1.0d0}.
 
         K_NO3 == 1.0d0                           ! k_N
 
 ! Ivlev constant for zooplankton grazing parameterization
-! [Nondimensional], {0.06d0}
+! [Nondimensional], {14*0.06=0.84d0}
 
-        Ivlev == 0.06d0
+        Ivlev == 0.84d0
 
 ! Zooplankton grazing rate, [1/day], {0.52}.
 
@@ -156,7 +156,7 @@ BioIni(iSDet) == 1.0d0                           ! detritus
 !  =========
 !
 !------------------------------------------------------------------------------
-! NPZD (Powell et al, 2006) Nitrogen-based Biological Model Parameters.
+! NPZD (Powell et al, 2006) Biological Model Parameters.
 !------------------------------------------------------------------------------
 !
 !  Lbiology  Switch to control the computation of a particular module within
@@ -196,8 +196,8 @@ BioIni(iSDet) == 1.0d0                           ! detritus
 !
 !  PhyMRN    Phytoplankton mortality rate to Nitrogen, [1/day].
 !
-!  K_NO3     Half-saturation for phytoplankton nitrate uptake
-!              [millimole_N m-3].
+!  K_NO3     Inverse half-saturation for phytoplankton nitrate uptake
+!              [1/(millimole_N m-3)].
 !
 !  Ivlev     Ivlev constant for zooplankton grazing parameterization,
 !              [nondimensional].

@@ -291,7 +291,8 @@
       real(r8), parameter :: D7 = 0.06_r8
 #endif
 
-      real(r8) :: Att, AttFac, Epp, L_NH4, L_NO3, LTOT, PAR, Vp
+      real(r8) :: Att, AttFac, ExpAtt, Itop, PAR
+      real(r8) :: Epp, L_NH4, L_NO3, LTOT, Vp
       real(r8) :: Chl2C, dtdays, t_PPmax, inhNH4
 
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5
@@ -539,15 +540,17 @@
             IF (PARsur(i).gt.0.0_r8) THEN
               DO k=N(ng),1,-1
 !
-!  Attenuate the light to the center of the grid cell. To include other
-!  attenuation contributions like suspended sediment or CDOM modify
-!  AttFac.
+!  Compute average light attenuation for each grid cell. To include
+!  other attenuation contributions like suspended sediment or CDOM
+!  modify AttFac.
 !
-                Att=EXP(-0.5_r8*(AttSW(ng)+                             &
-     &                           AttChl(ng)*Bio(i,k,iChlo)+             &
-     &                           AttFac)*                               &
-     &                  (z_w(i,j,k)-z_w(i,j,k-1)))
-                PAR=PAR*Att
+                Att=(AttSW(ng)+                                         &
+     &               AttChl(ng)*Bio(i,k,iChlo)+                         &
+     &               AttFac)*                                           &
+     &               (z_w(i,j,k)-z_w(i,j,k-1))
+                ExpAtt=EXP(-Att)
+                Itop=PAR
+                PAR=Itop*(1.0_r8-ExpAtt)/Att    ! average at cell center
 !
 !  Compute Chlorophyll-a phytoplankton ratio, [mg Chla / (mg C)].
 !
@@ -627,7 +630,7 @@
 ! inhibited at low oxygen concentrations using a Michaelis-Menten term.
 !
 #ifdef OXYGEN
-                fac2=MAX(Bio(i,k,iOxyg),0.0_r8) ! O2 max 
+                fac2=MAX(Bio(i,k,iOxyg),0.0_r8)     ! O2 max 
                 fac3=MAX(fac2/(3.0_r8+fac2),0.0_r8) ! MM for O2 dependence 
                 fac1=dtdays*NitriR(ng)*fac3
 #else
@@ -647,9 +650,10 @@
                 Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-N_Flux_Nitrifi
 #endif
 !
-!  Attenuate the light to the bottom of the grid cell.
+!  Light attenuation at the bottom of the grid cell. It is the starting
+!  PAR value for the next (deeper) vertical grid cell.
 !
-                PAR=PAR*Att
+                PAR=Itop*ExpAtt
               END DO
 !
 !  If PARsur=0, nitrification occurs at the maximum rate (NitriR).

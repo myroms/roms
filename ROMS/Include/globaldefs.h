@@ -779,7 +779,7 @@
 
 #if defined BIO_FENNEL  || defined ECOSIM      || \
     defined NEMURO      || defined NPZD_FRANKS || \
-    defined NPZD_POWELL
+    defined NPZD_IRON   || defined NPZD_POWELL
 # define BIOLOGY
 #endif
 

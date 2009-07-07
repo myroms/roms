@@ -1007,6 +1007,18 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' IMPLICIT_VCONV,'
 #endif
+#if defined NPZD_IRON && defined IRON_LIMIT
+      IF (Master) WRITE (stdout,20) 'IRON_LIMIT',                       &
+     &   'Include dissolved iron limitation on phytoplankton growth.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' IRON_LIMIT,'
+#endif
+#if defined NPZD_IRON && defined IRON_LIMIT && defined IRON_RELAX
+      IF (Master) WRITE (stdout,20) 'IRON_RELAX',                       &
+     &   'Nudge dissolved iron over the shelf, h <= FeHmin.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' IRON_RELAX,'
+#endif
 #ifdef IOM
       IF (Master) WRITE (stdout,20) 'IOM',                              &
      &   'IOM Multiple Executable interface.'
@@ -1470,6 +1482,13 @@
      &   'NPZD Biological Model, Franks et al. fomulation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' NPZD_FRANKS,'
+      ibiology=ibiology+1
+#endif
+#ifdef NPZD_IRON 
+      IF (Master) WRITE (stdout,20) 'NPZD_IRON',                        &
+     &   'NPZD Biological Model (Powell et al.) with iron limitation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' NPZD_IRON,'
       ibiology=ibiology+1
 #endif
 #ifdef NPZD_POWELL

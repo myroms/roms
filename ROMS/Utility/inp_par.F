@@ -4186,7 +4186,7 @@
 # elif defined NEMURO
 !
 !-----------------------------------------------------------------------
-!  Read in Fennel et al. (2006) biological model parameters.
+!  Read in Nemuro biological model parameters.
 !-----------------------------------------------------------------------
 !
       DO WHILE (.TRUE.)
@@ -4756,11 +4756,10 @@
  120  FORMAT (/,' read_BioPar - variable info not yet loaded, ',        &
      &        a,i2.2,a)
 
-
 # elif defined NPZD_FRANKS
 !
 !-----------------------------------------------------------------------
-!  Read in NPZD biological model parameters.
+!  Read in NPZD biological model (Franks et al., 1986) parameters.
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_BIOLOGY
@@ -5002,7 +5001,7 @@
 # elif defined NPZD_POWELL
 !
 !-----------------------------------------------------------------------
-!  Read in NPZD biological model parameters.
+!  Read in NPZD biological model (Powell et al., 2006) parameters.
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_BIOLOGY
@@ -5012,9 +5011,9 @@
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'Lbiology') THEN 
+          IF (TRIM(KeyWord).eq.'Lbiology') THEN
             Npts=load_l(Nval, Cval, Ngrids, Lbiology)
-          ELSE IF (TRIM(KeyWord).eq.'BioIter') THEN 
+          ELSE IF (TRIM(KeyWord).eq.'BioIter') THEN
             Npts=load_i(Nval, Rval, Ngrids, BioIter)
 #  ifdef ANA_BIOLOGY
           ELSE IF (TRIM(KeyWord).eq.'BioIni(iNO3_)') THEN
@@ -5256,7 +5255,323 @@
 
   30  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
   40  FORMAT (/,/,' NPZD Model Parameters, Grid: ',i2.2,                &
-     &        /,  ' ===============================',/)  
+     &        /,  ' ===============================',/)
+  50  FORMAT (1x,i10,2x,a,t30,a)
+  60  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
+  90  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,/,t32,a,i2.2,':',1x,a)
+ 100  FORMAT (1p,e11.4,2x,a,t30,a)
+ 110  FORMAT (1p,e11.4,2x,a,t30,a,/,t32,a)
+ 120  FORMAT (/,' read_BioPar - variable info not yet loaded, ',        &
+     &        a,i2.2,a)
+
+# elif defined NPZD_IRON
+!
+!-----------------------------------------------------------------------
+!  Read in Fasham biological model parameters.
+!-----------------------------------------------------------------------
+!
+#  ifdef ANA_BIOLOGY
+      IF (.not.allocated(BioIni)) allocate ( BioIni(MT,Ngrids) )
+#  endif
+      DO WHILE (.TRUE.)
+        READ (inp,'(a)',ERR=10,END=20) line
+        status=decode_line(line, KeyWord, Nval, Cval, Rval)
+        IF (status.gt.0) THEN
+          IF (TRIM(KeyWord).eq.'Lbiology') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Lbiology)
+          ELSE IF (TRIM(KeyWord).eq.'BioIter') THEN
+            Npts=load_i(Nval, Rval, Ngrids, BioIter)
+#  ifdef ANA_BIOLOGY
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iNO3_)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iNO3_,1))
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iPhyt)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iPhyt,1))
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iZoop)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iZoop,1))
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iSDet)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iSDet,1))
+#   ifdef IRON_LIMIT
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iFphy)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iFphy,1))
+          ELSE IF (TRIM(KeyWord).eq.'BioIni(iFdis)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, BioIni(iFdis,1))
+#   endif
+#  endif
+          ELSE IF (TRIM(KeyWord).eq.'PARfrac') THEN
+            Npts=load_r(Nval, Rval, Ngrids, PARfrac)
+          ELSE IF (TRIM(KeyWord).eq.'AttSW') THEN
+            Npts=load_r(Nval, Rval, Ngrids, AttSW)
+          ELSE IF (TRIM(KeyWord).eq.'AttPhy') THEN
+            Npts=load_r(Nval, Rval, Ngrids, AttPhy)
+          ELSE IF (TRIM(KeyWord).eq.'PhyIS') THEN
+            Npts=load_r(Nval, Rval, Ngrids, PhyIS)
+          ELSE IF (TRIM(KeyWord).eq.'Vm_NO3') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Vm_NO3)
+          ELSE IF (TRIM(KeyWord).eq.'PhyMRD') THEN
+            Npts=load_r(Nval, Rval, Ngrids, PhyMRD)
+          ELSE IF (TRIM(KeyWord).eq.'PhyMRN') THEN
+            Npts=load_r(Nval, Rval, Ngrids, PhyMRN)
+          ELSE IF (TRIM(KeyWord).eq.'K_NO3') THEN
+            Npts=load_r(Nval, Rval, Ngrids, K_NO3)
+          ELSE IF (TRIM(KeyWord).eq.'Ivlev') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Ivlev)
+          ELSE IF (TRIM(KeyWord).eq.'ZooGR') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ZooGR)
+          ELSE IF (TRIM(KeyWord).eq.'ZooEED') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ZooEED)
+          ELSE IF (TRIM(KeyWord).eq.'ZooEEN') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ZooEEN)
+          ELSE IF (TRIM(KeyWord).eq.'ZooMRD') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ZooMRD)
+          ELSE IF (TRIM(KeyWord).eq.'ZooMRN') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ZooMRN)
+          ELSE IF (TRIM(KeyWord).eq.'DetRR') THEN
+            Npts=load_r(Nval, Rval, Ngrids, DetRR)
+          ELSE IF (TRIM(KeyWord).eq.'wPhy') THEN
+            Npts=load_r(Nval, Rval, Ngrids, wPhy)
+          ELSE IF (TRIM(KeyWord).eq.'wDet') THEN
+            Npts=load_r(Nval, Rval, Ngrids, wDet)
+#   ifdef IRON_LIMIT
+          ELSE IF (TRIM(KeyWord).eq.'T_Fe') THEN
+            Npts=load_r(Nval, Rval, Ngrids, T_Fe)
+          ELSE IF (TRIM(KeyWord).eq.'A_Fe') THEN
+            Npts=load_r(Nval, Rval, Ngrids, A_Fe)
+          ELSE IF (TRIM(KeyWord).eq.'B_Fe') THEN
+            Npts=load_r(Nval, Rval, Ngrids, B_Fe)
+          ELSE IF (TRIM(KeyWord).eq.'K_FeC') THEN
+            Npts=load_r(Nval, Rval, Ngrids, K_FeC)
+          ELSE IF (TRIM(KeyWord).eq.'FeRR') THEN
+            Npts=load_r(Nval, Rval, Ngrids, FeRR)
+#   endif
+          ELSE IF (TRIM(KeyWord).eq.'FeHmin') THEN
+            Npts=load_r(Nval, Rval, Ngrids, FeHmin)
+          ELSE IF (TRIM(KeyWord).eq.'FeNudgTime') THEN
+            Npts=load_r(Nval, Rval, Ngrids, FeNudgTime)
+          ELSE IF (TRIM(KeyWord).eq.'FeMax') THEN
+            Npts=load_r(Nval, Rval, Ngrids, FeMax)
+          ELSE IF (TRIM(KeyWord).eq.'TNU2') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                tnu2(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'TNU4') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                tnu4(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'AKT_BAK') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                Akt_bak(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'TNUDG') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                Tnudg(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTvar)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTvar(idbio(itrc))
+                IF (i.eq.0) THEN
+                  IF (Master) WRITE (out,120)                           &
+     &                        'idTvar(idbio(', itrc, '))'
+                  exit_flag=5
+                  RETURN
+                END IF
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  IF (Master) WRITE (out,120)                           &
+     &                              'idTsur(idbio(', itrc, '))'
+                  exit_flag=5
+                  RETURN
+                END IF
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+          END IF
+        END IF
+      END DO
+  10  IF (Master) WRITE (out,30) line
+      exit_flag=4
+      RETURN
+  20  CONTINUE
+!
+!-----------------------------------------------------------------------
+!  Report input parameters.
+!-----------------------------------------------------------------------
+!
+      IF (Lwrite) THEN
+        DO ng=1,Ngrids
+          IF (Lbiology(ng)) THEN
+            WRITE (out,40) ng
+            WRITE (out,50) BioIter(ng), 'BioIter',                      &
+     &            'Number of iterations for nonlinear convergence.'
+#  ifdef ANA_BIOLOGY
+            WRITE (out,100) BioIni(iNO3_,ng), 'BioIni(iNO3_)',          &
+     &            'Nitrate initial concentration (mmol/m3).'
+            WRITE (out,100) BioIni(iPhyt,ng), 'BioIni(iPhyt)',          &
+     &            'Phytoplankton initial concentration (mmol/m3).'
+            WRITE (out,100) BioIni(iZoop,ng), 'BioIni(iZoop)',          &
+     &            'Zooplankton initial concentration (mmol/m3).'
+            WRITE (out,100) BioIni(iSDet,ng), 'BioIni(iSDet)',          &
+     &            'Small detritus initial concentration (mmol/m3).'
+#   ifdef IRON_LIMIT
+            WRITE (out,100) BioIni(iFphy,ng), 'BioIni(iFphy)',          &
+     &            'Phyto-assoc. Fe initial concentration (mumol/m3).'
+            WRITE (out,100) BioIni(iFdis,ng), 'BioIni(iFdis)',          &
+     &            'DIssolved Fe initial concentration (mumol/m3).'
+#   endif
+#  endif
+            WRITE (out,110) PARfrac(ng), 'PARfrac',                     &
+     &            'Fraction of shortwave radiation that is',            &
+     &            'photosynthetically active (nondimensional).'
+            WRITE (out,100) AttSW(ng), 'AttSW',                         &
+     &            'Light attenuation of seawater (m-1).'
+            WRITE (out,100) AttPhy(ng), 'AttPhy',                       &
+     &            'Light attenuation by phytoplankton (m2/mmole_N).'
+            WRITE (out,110) PhyIS(ng), 'PhyIS',                         &
+     &            'Phytoplankton growth, initial slope of P-I curve',   &
+     &            '(m2/W).'
+            WRITE (out,100) Vm_NO3(ng), 'Vm_NO3',                       &
+     &            'Nitrate upatake rate (day-1).'
+            WRITE (out,100) PhyMRD(ng), 'PhyMRD',                       &
+     &            'Phytoplankton mortality rate to Detritus (day-1)'
+            WRITE (out,100) PhyMRN(ng), 'PhyMRN',                       &
+     &            'Phytoplankton mortality rate to Nitrogen (day-1)'
+            WRITE (out,110) K_NO3(ng), 'K_NO3',                         &
+     &            'Inverse half-saturation for phytoplankton NO3',      &
+     &            'uptake (1/(mmol m-3)).'
+            WRITE (out,110) Ivlev(ng), 'Ivlev',                         &
+     &            'Ivlev constant for zooplankton grazing',             &
+     &            '(nondimensional).'
+            WRITE (out,100) ZooGR(ng), 'ZooGR',                         &
+     &            'Zooplankton maximum growth rate (day-1).'
+            WRITE (out,110) ZooEED(ng), 'ZooEED',                       &
+     &            'Zooplankton excretion efficiency to Detritus',       &
+     &            'pool (nondimensional).'
+            WRITE (out,110) ZooEEN(ng), 'ZooEEN',                       &
+     &            'Zooplankton excretion efficiency to Nitrogen',       &
+     &            'pool (nondimensional).'
+            WRITE (out,100) ZooMRD(ng), 'ZooMRD',                       &
+     &            'Zooplankton mortality rate to Detritus (day-1).'
+            WRITE (out,100) ZooMRN(ng), 'ZooMRN',                       &
+     &            'Zooplankton mortality rate to Nitrogen (day-1).'
+            WRITE (out,100) DetRR(ng), 'DetRR',                         &
+     &            'Detritus remineralization rate (day-1).'
+            WRITE (out,100) wPhy(ng), 'wPhy',                           &
+     &            'Phytoplankton sinking rate (m/day).'
+            WRITE (out,100) wDet(ng), 'wDet',                           &
+     &            'Detrital sinking rate (m/day).'
+#  ifdef IRON_LIMIT
+            WRITE (out,100) T_Fe(ng), 'T_Fe',                           &
+     &            'Iron uptake time scale (day-1).'
+            WRITE (out,100) A_Fe(ng), 'A_Fe',                           &
+     &            'Empirical Fe:C power (-).'
+            WRITE (out,100) B_Fe(ng), 'B_Fe',                           &
+     &            'Empirical Fe:C coefficient (1/M-C).'
+            WRITE (out,100) K_FeC(ng), 'K_FeC',                         &
+     &            'Fe:C at F=0.5 (muM-Fe/M-C).'
+            WRITE (out,100) FeRR(ng), 'FeRR',                           &
+     &            'Fe remineralization rate (day-1).'
+#  endif
+#  if defined IRON_LIMIT && defined IRON_RELAX
+            WRITE (out,100) FeHmin(ng), 'FeHmin',                       &
+     &            'Minimum coastal bathymetry (m) for Fe nudging.'
+            WRITE (out,100) FeNudgTime(ng), 'FeNudgTime',               &
+     &            'Fe nudging time scale (days) at h <= FeHmin.'
+            WRITE (out,100) FeMax(ng), 'FeMax',                         &
+     &            'Fe value (mmoles/m3) used in coastal nudging.'
+#  endif
+#  ifdef TS_DIF2
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              WRITE (out,90) tnu2(i,ng), 'tnu2', i,                     &
+     &              'Horizontal, harmonic mixing coefficient (m2/s)',   &
+     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+#  endif
+#  ifdef TS_DIF4
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              WRITE (out,90) tnu4(i,ng), 'tnu4', i,                     &
+     &              'Horizontal, biharmonic mixing coefficient (m4/s)', &
+     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+#  endif
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              WRITE(out,90) Akt_bak(i,ng), 'Akt_bak', i,                &
+     &             'Background vertical mixing coefficient (m2/s)',     &
+     &             'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              WRITE (out,90) Tnudg(i,ng), 'Tnudg', i,                   &
+     &              'Nudging/relaxation time scale (days)',             &
+     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTvar(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
+     &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+          END IF
+        END DO
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Rescale biological tracer parameters
+!-----------------------------------------------------------------------
+!
+!  Take the square root of the biharmonic coefficients so it can
+!  be applied to each harmonic operator.
+!
+      DO ng=1,Ngrids
+        DO itrc=1,NBT
+          i=idbio(itrc)
+          tnu4(i,ng)=SQRT(ABS(tnu4(i,ng)))
+!
+!  Compute inverse nudging coefficients (1/s) used in various tasks.
+!
+          IF (Tnudg(i,ng).gt.0.0_r8) THEN
+            Tnudg(i,ng)=1.0_r8/(Tnudg(i,ng)*86400.0_r8)
+          ELSE
+            Tnudg(i,ng)=0.0_r8
+          END IF
+        END DO
+      END DO
+
+  30  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
+  40  FORMAT (/,/,' NPZD-IRON Model Parameters, Grid: ',i2.2,           &
+     &        /,  ' ====================================',/)
   50  FORMAT (1x,i10,2x,a,t30,a)
   60  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
   90  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,/,t32,a,i2.2,':',1x,a)
@@ -5836,7 +6151,7 @@
                 WRITE (out,90) WS(is,ng), TRIM(PhyName(is))
               END DO
             WRITE (out,80) 'HsGRZ',                                     &
-     &            'Phytoplankton grazing parameter (nondimensional):'    
+     &            'Phytoplankton grazing parameter (nondimensional):'
               DO is=1,Nphy
                 WRITE (out,90) HsGRZ(is,ng), TRIM(PhyName(is))
               END DO

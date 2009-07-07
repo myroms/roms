@@ -80,7 +80,7 @@
 #if defined BIO_FENNEL
 !
 !-----------------------------------------------------------------------
-!  Fennel et al. (2006) nitrogen-based biology model.
+!  Fennel et al. (2006), nitrogen-based biology model.
 !-----------------------------------------------------------------------
 !
       cff1=20.0_r8/3.0_r8
@@ -175,6 +175,28 @@
             t(i,j,k,1,iSDet)=BioIni(iSDet,ng)
           END DO
         END DO
+      END DO
+
+#elif defined NPZD_IRON
+!
+!-----------------------------------------------------------------------
+!  NPZD biology model with or without iron limitation on phytoplankton
+!  growth.
+!-----------------------------------------------------------------------
+!
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            t(i,j,k,1,iNO3_)=BioIni(iNO3_,ng)
+            t(i,j,k,1,iPhyt)=BioIni(iPhyt,ng)
+            t(i,j,k,1,iZoop)=BioIni(iZoop,ng)
+            t(i,j,k,1,iSDet)=BioIni(iSDet,ng)
+# ifdef IRON_LIMIT
+            t(i,j,k,1,iFphy)=BioIni(iFphy,ng) 
+            t(i,j,k,1,iFdis)=BioIni(iFdis,ng)
+# endif
+          END DO
+        END DO 
       END DO
 
 #elif defined ECOSIM

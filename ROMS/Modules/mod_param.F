@@ -321,6 +321,16 @@
 !  Number of tracers for NPZD model.
 !
         integer, parameter :: NBT = 4
+# elif defined NPZD_IRON
+!
+!  Number of tracers for NPZD model with or without iron limitation
+!  on phytoplankton growth.
+!
+#  ifdef IRON_LIMIT
+        integer, parameter :: NBT = 6
+#  else
+        integer, parameter :: NBT = 4
+#  endif
 # elif defined ECOSIM
 !
 !  Bio-optical EcoSim parameters.

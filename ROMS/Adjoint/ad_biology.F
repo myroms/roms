@@ -27,6 +27,8 @@
 !!#  include <ad_nemuro.h>
 # elif defined NPZD_FRANKS
 #  include <ad_npzd_Franks.h>
+# elif defined NPZD_IRON
+#  include <ad_npzd_iron.h>
 # elif defined NPZD_POWELL
 #  include <ad_npzd_Powell.h>
 # endif

@@ -85,6 +85,17 @@
         integer :: iZoop              ! Zooplankton concentration
         integer :: iSDet              ! Small detritus concentration
 #endif
+#ifdef NPZD_IRON
+        integer, pointer :: idbio(:)  ! Biological tracers
+        integer :: iNO3_              ! Nitrate concentration
+        integer :: iPhyt              ! Phytoplankton concentration
+        integer :: iZoop              ! Zooplankton concentration
+        integer :: iSDet              ! Small detritus concentration
+# ifdef IRON_LIMIT
+        integer :: iFphy              ! Phytoplankton-associated iron
+        integer :: iFdis              ! Available disolved iron
+# endif
+#endif
 #ifdef BIO_FENNEL
         integer, pointer :: idbio(:)  ! Biological tracers
         integer :: iNO3_              ! Nitrate concentration
@@ -1869,6 +1880,24 @@
       iZoop=ic+3
       iSDet=ic+4
       ic=ic+4
+#elif defined NPZD_IRON
+!
+!  Set NPZD with iron limitation biological tracer indices.
+!
+      DO i=1,NBT
+        idbio(i)=ic+i
+      END DO
+      iNO3_=ic+1
+      iPhyt=ic+2
+      iZoop=ic+3
+      iSDet=ic+4
+# ifdef IRON_LIMIT
+      iFphy=ic+5
+      iFdis=ic+6
+      ic=ic+6
+# else
+      ic=ic+4
+# endif
 #elif defined ECOSIM
 !
 !  Set bio-optical tracer indices.
