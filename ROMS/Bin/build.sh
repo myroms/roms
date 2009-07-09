@@ -104,6 +104,14 @@ setenv MY_PROJECT_DIR       ${PWD}
 
 setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 
+# Set path of the directory containing makefile configuration (*.mk) files.
+# The user has the option to specify a customized version of these files
+# in a different directory than the one distributed with the source code,
+# ${MY_ROMS_SCR}/Compilers. If this is the case, the you need to keep
+# these configurations files up-to-date.
+
+#setenv COMPILERS            ${MY_ROMS_SRC}/Compilers
+
 # Set tunable CPP options.
 #
 # Sometimes it is desirable to activate one or more CPP options to run
@@ -195,7 +203,6 @@ if ($?USE_MY_LIBS) then
   switch ($FORT)
 
     case "ifort"
-      setenv ARPACK_LIBDIR      /opt/intelsoft/PARPACK
       setenv ESMF_DIR           /opt/intelsoft/esmf
       setenv ESMF_OS            Linux
       setenv ESMF_COMPILER      ifort
@@ -205,6 +212,14 @@ if ($?USE_MY_LIBS) then
       setenv ESMF_SITE          default
       setenv MCT_INCDIR         /opt/intelsoft/mct/include
       setenv MCT_LIBDIR         /opt/intelsoft/mct/lib
+
+      setenv ARPACK_LIBDIR      /opt/intelsoft/serial/ARPACK
+      if ($?USE_MPI) then
+#       setenv PARPACK_LIBDIR   /opt/intelsoft/mpich/PARPACK
+        setenv PARPACK_LIBDIR   /opt/intelsoft/mpich2/PARPACK
+#       setenv PARPACK_LIBDIR   /opt/intelsoft/openmpi/PARPACK
+      endif
+
       if ($?USE_NETCDF4) then
         if ($?USE_MPI) then
 #         setenv NETCDF_INCDIR  /opt/intelsoft/mpich/netcdf4/include
@@ -227,11 +242,9 @@ if ($?USE_MY_LIBS) then
         setenv NETCDF_INCDIR    /opt/intelsoft/serial/netcdf3/include
         setenv NETCDF_LIBDIR    /opt/intelsoft/serial/netcdf3/lib
       endif
-      setenv PARPACK_LIBDIR     /opt/intelsoft/PARPACK
     breaksw
 
     case "pgi"
-      setenv ARPACK_LIBDIR      /opt/pgisoft/PARPACK
       setenv ESMF_DIR           /opt/pgisoft/esmf-3.1.0
       setenv ESMF_OS            Linux
       setenv ESMF_COMPILER      pgi
@@ -241,6 +254,14 @@ if ($?USE_MY_LIBS) then
       setenv ESMF_SITE          default
       setenv MCT_INCDIR         /opt/pgisoft/mct/include
       setenv MCT_LIBDIR         /opt/pgisoft/mct/lib
+
+      setenv ARPACK_LIBDIR      /opt/pgisoft/serial/ARPACK
+      if ($?USE_MPI) then
+        setenv PARPACK_LIBDIR   /opt/pgisoft/mpich/PARPACK
+#       setenv PARPACK_LIBDIR   /opt/pgisoft/mpich2/PARPACK
+#       setenv PARPACK_LIBDIR   /opt/pgisoft/openmpi/PARPACK
+      endif
+
       if ($?USE_NETCDF4) then
         if ($?USE_MPI) then
 #         setenv NETCDF_INCDIR  /opt/pgisoft/mpich/netcdf4/include
@@ -263,13 +284,19 @@ if ($?USE_MY_LIBS) then
         setenv NETCDF_INCDIR    /opt/pgisoft/serial/netcdf3/include
         setenv NETCDF_LIBDIR    /opt/pgisoft/serial/netcdf3/lib
       endif
-      setenv PARPACK_LIBDIR     /opt/pgisoft/PARPACK
     breaksw
 
     case "gfortran"
-      setenv ARPACK_LIBDIR      /opt/gfortransoft/PARPACK
       setenv MCT_INCDIR         /opt/gfortransoft/mct/include
       setenv MCT_LIBDIR         /opt/gfortransoft/mct/lib
+
+      setenv ARPACK_LIBDIR      /opt/gfortransoft/serial/ARPACK
+      if ($?USE_MPI) then
+#       setenv PARPACK_LIBDIR   /opt/gfortransoft/mpich/PARPACK
+        setenv PARPACK_LIBDIR   /opt/gfortransoft/mpich2/PARPACK
+#       setenv PARPACK_LIBDIR   /opt/gfortransoft/openmpi/PARPACK
+      endif
+
       if ($?USE_NETCDF4) then
         if ($?USE_MPI) then
 #         setenv NETCDF_INCDIR  /opt/gfortransoft/mpich/netcdf4/include
@@ -292,13 +319,18 @@ if ($?USE_MY_LIBS) then
         setenv NETCDF_INCDIR    /opt/gfortransoft/serial/netcdf/include
         setenv NETCDF_LIBDIR    /opt/gfortransoft/serial/netcdf/lib
       endif
-      setenv PARPACK_LIBDIR     /opt/gfortransoft/PARPACK
     breaksw
 
     case "g95"
-      setenv ARPACK_LIBDIR      /opt/g95soft/PARPACK
       setenv MCT_INCDIR         /opt/g95soft/mct/include
       setenv MCT_LIBDIR         /opt/g95soft/mct/lib
+
+      setenv ARPACK_LIBDIR      /opt/g95soft/serial/ARPACK
+      if ($?USE_MPI) then
+        setenv PARPACK_LIBDIR   /opt/g95soft/mpich2/PARPACK
+#       setenv PARPACK_LIBDIR   /opt/g95soft/openmpi/PARPACK
+      endif
+
       if ($?USE_NETCDF4) then
         if ($?USE_MPI) then
           setenv NETCDF_INCDIR  /opt/g95soft/mpich2/netcdf4/include
@@ -317,7 +349,6 @@ if ($?USE_MY_LIBS) then
         setenv NETCDF_INCDIR    /opt/g95soft/serial/netcdf3/include
         setenv NETCDF_LIBDIR    /opt/g95soft/serial/netcdf3/lib
       endif
-      setenv PARPACK_LIBDIR     /opt/g95soft/PARPACK
     breaksw
 
   endsw

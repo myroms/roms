@@ -24,7 +24,7 @@
 # First the defaults
 #
                FC := ifort
-           FFLAGS := -heap-arrays
+           FFLAGS := -heap-arrays -fp-model precise
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
           LDFLAGS := -Vaxlib

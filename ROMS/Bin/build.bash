@@ -105,6 +105,14 @@ export     MY_PROJECT_DIR=${PWD}
 
 export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 
+# Set path of the directory containing makefile configuration (*.mk) files.
+# The user has the option to specify a customized version of these files
+# in a different directory than the one distributed with the source code,
+# ${MY_ROMS_SCR}/Compilers. If this is the case, the you need to keep
+# these configurations files up-to-date.
+
+#export         COMPILERS=${MY_ROMS_SRC}/Compilers
+
 # Set tunable CPP options.
 #
 # Sometimes it is desirable to activate one or more CPP options to run
@@ -192,7 +200,6 @@ fi
 if [ -n "${USE_MY_LIBS:+1}" ]; then
   case "$FORT" in
     ifort )
-      export      ARPACK_LIBDIR=/opt/intelsoft/PARPACK
       export           ESMF_DIR=/opt/intelsoft/esmf-3.1.0
       export            ESMF_OS=Linux
       export      ESMF_COMPILER=ifort
@@ -202,6 +209,14 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export          ESMF_SITE=default
       export         MCT_INCDIR=/opt/intelsoft/mct/include
       export         MCT_LIBDIR=/opt/intelsoft/mct/lib
+
+      export      ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
+      if [ -n "${USE_MPI:+1}" ]; then
+#       export   PARPACK_LIBDIR=/opt/intelsoft/mpich/PARPACK
+        export   PARPACK_LIBDIR=/opt/intelsoft/mpich2/PARPACK
+#       export   PARPACK_LIBDIR=/opt/intelsoft/openmpi/PARPACK
+      fi
+
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
 #         export  NETCDF_INCDIR=/opt/intelsoft/mpich/netcdf4/include
@@ -224,11 +239,9 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
         export    NETCDF_INCDIR=/opt/intelsoft/serial/netcdf3/include
         export    NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf3/lib
       fi
-      export     PARPACK_LIBDIR=/opt/intelsoft/PARPACK
       ;;
 
     pgi )
-      export      ARPACK_LIBDIR=/opt/pgisoft/PARPACK
       export           ESMF_DIR=/opt/pgisoft/esmf-3.1.0
       export            ESMF_OS=Linux
       export      ESMF_COMPILER=pgi
@@ -238,6 +251,14 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export          ESMF_SITE=default
       export         MCT_INCDIR=/opt/pgisoft/mct/include
       export         MCT_LIBDIR=/opt/pgisoft/mct/lib
+
+      export      ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
+      if [ -n "${USE_MPI:+1}" ]; then
+        export   PARPACK_LIBDIR=/opt/pgisoft/mpich/PARPACK
+#       export   PARPACK_LIBDIR=/opt/pgisoft/mpich2/PARPACK
+#       export   PARPACK_LIBDIR=/opt/pgisoft/openmpi/PARPACK
+      fi
+
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
 #         export  NETCDF_INCDIR=/opt/pgisoft/mpich/netcdf4/include
@@ -260,13 +281,19 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
         export    NETCDF_INCDIR=/opt/pgisoft/serial/netcdf3/include
         export    NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf3/lib
       fi
-      export     PARPACK_LIBDIR=/opt/pgisoft/PARPACK
       ;;
 
     gfortran )
-      export      ARPACK_LIBDIR=/opt/gfortransoft/PARPACK
       export         MCT_INCDIR=/opt/gfortransoft/mct/include
       export         MCT_LIBDIR=/opt/gfortransoft/mct/lib
+
+      export      ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK
+      if [ -n "${USE_MPI:+1}" ]; then
+#       export   PARPACK_LIBDIR=/opt/gfortransoft/mpich/PARPACK
+        export   PARPACK_LIBDIR=/opt/gfortransoft/mpich2/PARPACK
+#       export   PARPACK_LIBDIR=/opt/gfortransoft/openmpi/PARPACK
+      fi
+
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
 #         export  NETCDF_INCDIR=/opt/gfortransoft/mpich/netcdf4/include
@@ -289,13 +316,19 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
           export  NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf3/include
           export  NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf3/lib
       fi
-        export   PARPACK_LIBDIR=/opt/gfortransoft/PARPACK
       ;;
 
     g95 )
-      export      ARPACK_LIBDIR=/opt/g95soft/PARPACK
       export         MCT_INCDIR=/opt/g95soft/mct/include
       export         MCT_LIBDIR=/opt/g95soft/mct/lib
+
+      export      ARPACK_LIBDIR=/opt/g95soft/serial/ARPACK
+      if [ -n "${USE_MPI:+1}" ]; then
+#       export   PARPACK_LIBDIR=/opt/g95soft/mpich/PARPACK
+        export   PARPACK_LIBDIR=/opt/g95soft/mpich2/PARPACK
+        export   PARPACK_LIBDIR=/opt/g95soft/openmpi/PARPACK
+      fi
+
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
           export  NETCDF_INCDIR=/opt/g95soft/mpich2/netcdf4/include
@@ -314,7 +347,6 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
         export    NETCDF_INCDIR=/opt/g95soft/serial/netcdf3/include
         export    NETCDF_LIBDIR=/opt/g95soft/serial/netcdf3/lib
       fi
-      export     PARPACK_LIBDIR=/opt/g95soft/PARPACK
       ;;
 
   esac
