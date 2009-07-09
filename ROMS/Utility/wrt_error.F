@@ -1,9 +1,7 @@
 #include "cppdefs.h"
-#if defined IS4DVAR              || \
-    (defined WEAK_CONSTRAINT     && \
-     (defined POSTERIOR_EOFS     || defined POSTERIOR_ERROR_I ||\
-      defined POSTERIOR_ERROR_F))
-      SUBROUTINE wrt_hessian (ng, kout, nout)
+#if defined WEAK_CONSTRAINT   && \
+   (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
+      SUBROUTINE wrt_error (ng, kout, nout)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -12,7 +10,8 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine writes Hessian eigenvectors into output NetCDF file.   !
+!  This routine writes full posterior error covariance (diagonal) x    !
+!  matrix for weak constraint 4DVar data assimilation.                 !
 !                                                                      !
 !=======================================================================
 !
@@ -22,6 +21,7 @@
       USE mod_boundary
 # endif
       USE mod_forces
+      USE mod_fourdvar
       USE mod_grid
       USE mod_iounits
       USE mod_mixing
@@ -72,7 +72,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out Hessian eigenvectors.
+!  Write out full posterior error covariance (diagonal) matrix.
 !-----------------------------------------------------------------------
 !
       IF (exit_flag.ne.NoError) RETURN
@@ -88,32 +88,49 @@
 !
 !  Set time record index.
 !
-      tHSSindx(ng)=tHSSindx(ng)+1
-      NrecHSS(ng)=NrecHSS(ng)+1
+      tERRindx(ng)=tERRindx(ng)+1
+      NrecERR(ng)=NrecERR(ng)+1
 !
 !  Write out model time (s).
 !
-      CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                      &
+      CALL netcdf_put_fvar (ng, iTLM, ERRname(ng),                      &
      &                      TRIM(Vname(1,idtime)), time(ng:),           &
-     &                      (/tHSSindx(ng)/), (/1/),                    &
-     &                      ncid = ncHSSid(ng),                         &
-     &                      varid = hssVid(idtime,ng))
+     &                      (/tERRindx(ng)/), (/1/),                    &
+     &                      ncid = ncERRid(ng),                         &
+     &                      varid = errVid(idtime,ng))
       IF (exit_flag.ne.NoError) RETURN
 !
-!  Write out free-surface.
+!  Write out inner-loop Lanczos vectors tridiagonal system.
+!
+      CALL netcdf_put_fvar (ng, iTLM, ERRname(ng), 'zLanczos_coef',     &
+     &                      zLanczos_coef, (/1,1/), (/Ninner,Ninner/),  &
+     &                      ncid = ncERRid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, iTLM, ERRname(ng), 'zLanczos_inv',      &
+     &                      zLanczos_inv, (/1,1/), (/Ninner,Ninner/),   &
+     &                      ncid = ncERRid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, iTLM, ERRname(ng), 'zLanczos_err',      &
+     &                      zLanczos_err, (/1,1/), (/Ninner,Ninner/),   &
+     &                      ncid = ncERRid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out free-surface error variance.
 !
       scale=1.0_r8
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iADM, ncHSSid(ng), hssVid(idFsur,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite2d(ng, iTLM, ncERRid(ng), errVid(idFsur,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-     &                   OCEAN(ng)% ad_zeta(:,:,kout))
+     &                   OCEAN(ng)% tl_zeta(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idFsur)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -122,21 +139,21 @@
 
 # ifdef ADJUST_BOUNDARY
 !
-!  Write out free-surface open boundaries.
+!  Write out free-surface open boundaries error variance.
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),     &
      &                          Vname(1,idSbry(isFsur)),                &
-     &                          hssVid(idSbry(isFsur),ng),              &
-     &                          tHSSindx(ng), r2dvar,                   &
+     &                          errVid(idSbry(isFsur),ng),              &
+     &                          tERRindx(ng), r2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))),            &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -145,20 +162,20 @@
       END IF
 # endif
 !
-!  Write out 2D U-momentum component.
+!  Write out 2D U-momentum component error variance.
 !
       scale=1.0_r8
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iADM, ncHSSid(ng), hssVid(idUbar,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite2d(ng, iTLM, ncERRid(ng), errVid(idUbar,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   GRID(ng) % umask,                              &
 # endif
-     &                   OCEAN(ng) % ad_ubar(:,:,kout))
+     &                   OCEAN(ng) % tl_ubar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbar)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idUbar)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -167,21 +184,21 @@
 
 # ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D U-momentum component open boundaries.
+!  Write out 2D U-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),     &
      &                          Vname(1,idSbry(isUbar)),                &
-     &                          hssVid(idSbry(isUbar),ng),              &
-     &                          tHSSindx(ng), u2dvar,                   &
+     &                          errVid(idSbry(isUbar),ng),              &
+     &                          tERRindx(ng), u2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_ubar_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))),            &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -190,20 +207,20 @@
       END IF
 # endif
 !
-!  Write out 2D V-momentum component.
+!  Write out 2D V-momentum component error variance.
 !
       scale=1.0_r8
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iADM, ncHSSid(ng), hssVid(idVbar,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite2d(ng, iTLM, ncERRid(ng), errVid(idVbar,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
       &                  GRID(ng) % vmask,                              &
 # endif
-     &                   OCEAN(ng) % ad_vbar(:,:,kout))
+     &                   OCEAN(ng) % tl_vbar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbar)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idVbar)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -212,21 +229,21 @@
 
 # ifdef ADJUST_BOUNDARY
 !
-!  Write out 2D V-momentum component open boundaries.
+!  Write out 2D V-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),     &
      &                          Vname(1,idSbry(isVbar)),                &
-     &                          hssVid(idSbry(isVbar),ng),              &
-     &                          tHSSindx(ng), v2dvar,                   &
+     &                          errVid(idSbry(isVbar),ng),              &
+     &                          tERRindx(ng), v2dvar,                   &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))),            &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -237,20 +254,20 @@
 
 # ifdef SOLVE3D
 !
-!  Write out 3D U-momentum component.
+!  Write out 3D U-momentum component error variance.
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idUvel,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite3d(ng, iTLM, ncERRid(ng), errVid(idUvel,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
      &                   GRID(ng) % umask,                              &
 #  endif
-     &                   OCEAN(ng) % ad_u(:,:,:,nout))
+     &                   OCEAN(ng) % tl_u(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUvel)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idUvel)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -259,21 +276,21 @@
 
 #  ifdef ADJUST_BOUNDARY
 !
-!  Write out 3D U-momentum component open boundaries.
+!  Write out 3D U-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),     &
+        status=nf_fwrite3d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),     &
      &                          Vname(1,idSbry(isUvel)),                &
-     &                          hssVid(idSbry(isUvel),ng),              &
-     &                          tHSSindx(ng), u3dvar,                   &
+     &                          errVid(idSbry(isUvel),ng),              &
+     &                          tERRindx(ng), u3dvar,                   &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
-     &                          BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,    &
+     &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
      &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))),            &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -282,20 +299,20 @@
       END IF
 #  endif
 !
-!  Write out 3D V-momentum component.
+!  Write out 3D V-momentum component error variance.
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idVvel,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite3d(ng, iTLM, ncERRid(ng), errVid(idVvel,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   OCEAN(ng) % ad_v(:,:,:,nout))
+     &                   OCEAN(ng) % tl_v(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVvel)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idVvel)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -304,21 +321,21 @@
 
 #  ifdef ADJUST_BOUNDARY
 !
-!  Write out 3D V-momentum component open boundaries.
+!  Write out 3D V-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),     &
+        status=nf_fwrite3d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),     &
      &                          Vname(1,idSbry(isVvel)),                &
-     &                          hssVid(idSbry(isVvel),ng),              &
-     &                          tHSSindx(ng), v3dvar,                   &
+     &                          errVid(idSbry(isVvel),ng),              &
+     &                          tERRindx(ng), v3dvar,                   &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
-     &                          BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,    &
+     &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
      &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))),            &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -327,22 +344,22 @@
       END IF
 #  endif
 !
-!  Write out tracer type variables.
+!  Write out tracer type variables error variance.
 !
       DO itrc=1,NT(ng)
         scale=1.0_r8
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssTid(itrc,ng),      &
-     &                     tHSSindx(ng), gtype,                         &
+        status=nf_fwrite3d(ng, iTLM, ncERRid(ng), errTid(itrc,ng),      &
+     &                     tERRindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     OCEAN(ng) % ad_t(:,:,:,nout,itrc))
+     &                     OCEAN(ng) % tl_t(:,:,:,nout,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
-     &                        tHSSindx(ng)
+     &                        tERRindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -352,23 +369,23 @@
 
 #  ifdef ADJUST_BOUNDARY
 !
-!  Write out tracers open boundaries.
+!  Write out tracers open boundaries error variance.
 !
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_r8
-          status=nf_fwrite3d_bry (ng, iADM, HSSname(ng), ncHSSid(ng),   &
+          status=nf_fwrite3d_bry (ng, iTLM, ERRname(ng), ncERRid(ng),   &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            hssVid(idSbry(isTvar(itrc)),ng),      &
-     &                            tHSSindx(ng), r3dvar,                 &
+     &                            errVid(idSbry(isTvar(itrc)),ng),      &
+     &                            tERRindx(ng), r3dvar,                 &
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
-     &                            BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,  &
+     &                            BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,  &
      &                                                    nout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
-     &                          tHSSindx(ng)
+     &                          tERRindx(ng)
             END IF
             exit_flag=3
             ioerror=status
@@ -380,26 +397,26 @@
 
 #  ifdef ADJUST_STFLUX
 !
-!  Write out surface net tracers fluxes. Notice that fluxes have their
-!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
-!  at other times in addition to initialization time.
+!  Write out surface net tracers fluxes error variance. Notice that
+!  fluxes have their own fixed time-dimension (of size Nfrec) to allow
+!  4DVar adjustments at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_r8
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iADM, ncHSSid(ng),                     &
-     &                       hssVid(idTsur(itrc),ng),                   &
-     &                       tHSSindx(ng), gtype,                       &
+          status=nf_fwrite3d(ng, iTLM, ncERRid(ng),                     &
+     &                       errVid(idTsur(itrc),ng),                   &
+     &                       tERRindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #   endif
-     &                       FORCES(ng) % ad_tflux(:,:,:,kout,itrc))
+     &                       FORCES(ng) % tl_tflux(:,:,:,kout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
-     &                          tHSSindx(ng)
+     &                          tERRindx(ng)
             END IF
             exit_flag=3
             ioerror=status
@@ -411,42 +428,42 @@
 # endif
 # ifdef ADJUST_WSTRESS
 !
-!  Write out surface U-momentum stress.  Notice that the stress has its
-!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
-!  at other times in addition to initialization time.
+!  Write out surface U-momentum stress error variance.  Notice that the
+!  stress has its own fixed time-dimension (of size Nfrec) to allow
+!  4DVar adjustments at other times in addition to initialization time.
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idUsms,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite3d(ng, iTLM, ncERRid(ng), errVid(idUsms,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
      &                   GRID(ng) % umask,                              &
 #  endif
-     &                   FORCES(ng) % ad_ustr(:,:,:,kout))
+     &                   FORCES(ng) % tl_ustr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUsms)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
         RETURN
       END IF
 !
-!  Write out surface V-momentum stress.
+!  Write out surface V-momentum stress error variance.
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idVsms,ng),      &
-     &                   tHSSindx(ng), gtype,                           &
+      status=nf_fwrite3d(ng, iTLM, ncERRid(ng), errVid(idVsms,ng),      &
+     &                   tERRindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   FORCES(ng) % ad_vstr(:,:,:,kout))
+     &                   FORCES(ng) % tl_vstr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVsms)), tHSSindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), tERRindx(ng)
         END IF
         exit_flag=3
         ioerror=status
@@ -455,32 +472,32 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize Hessian eigenvectors NetCDF file to disk to allow other
-!  processes to access data immediately after it is written.
+!  Synchronize posterior error covariance NetCDF file to disk to allow
+!  other processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iADM, HSSname(ng), ncHSSid(ng))
+      CALL netcdf_sync (ng, iTLM, ERRname(ng), ncERRid(ng))
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
-      IF (Master) WRITE (stdout,20) kout, nout, tHSSindx(ng)
+      IF (Master) WRITE (stdout,20) kout, nout, tERRindx(ng)
 # else
-      IF (Master) WRITE (stdout,20) kout, tHSSindx(ng)
+      IF (Master) WRITE (stdout,20) kout, tERRindx(ng)
 # endif
 !
-  10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
-     &        15x,'into Hessian NetCDF file for time record: ',i4)
+  10  FORMAT (/,' WRT_ERROR - error while writing variable: ',a,/,      &
+     &        15x,'into 4DVar error NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_ERROR    - wrote error    fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)
 # else
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_ERROR    - wrote error    fields (Index=', i1,    &
      &        ') into time record = ',i7.7)
 # endif
       RETURN
-      END SUBROUTINE wrt_hessian
+      END SUBROUTINE wrt_error
 #else
-      SUBROUTINE wrt_hessian
+      SUBROUTINE wrt_error
       RETURN
-      END SUBROUTINE wrt_hessian
+      END SUBROUTINE wrt_error
 #endif

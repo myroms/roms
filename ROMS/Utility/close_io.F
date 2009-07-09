@@ -73,9 +73,10 @@
           CALL netcdf_close (ng, iNLM, ncFLTid(ng))
         END IF
 #endif
-#ifdef STATIONS
-        IF (ncSTAid(ng).ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, ncSTAid(ng))
+#if defined WEAK_CONSTRAINT   && \
+   (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
+        IF (ncERRid(ng).ne.-1) THEN
+          CALL netcdf_close (ng, iTLM, ncERRid(ng))
         END IF
 #endif
 !
@@ -114,6 +115,12 @@
 #ifdef STATIONS
           IF (NrecSTA(ng).gt.0) THEN
             WRITE (stdout,20) 'STATION', NrecSTA(ng)
+          END IF
+#endif
+#if defined WEAK_CONSTRAINT   && \
+   (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
+          IF (NrecERR(ng).gt.0) THEN
+            WRITE (stdout,20) 'ERROR  ', NrecERR(ng)
           END IF
 #endif
         END IF

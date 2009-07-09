@@ -422,7 +422,8 @@
         real(r8), allocatable :: cg_Ritz(:,:)
         real(r8), allocatable :: cg_RitzErr(:,:)
 # endif
-# ifdef POSTERIOR_EOFS
+# if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+     defined POSTERIOR_ERROR_F
 !
 !-----------------------------------------------------------------------
 !  Posterior analysis error covariance matrix parameters.
@@ -450,6 +451,15 @@
         real(r8), allocatable :: ae_Ritz(:,:)
         real(r8), allocatable :: ae_RitzErr(:,:)
 
+#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_I
+!
+!  Initial or final full posterior error covariance Lanczos vectors
+!  tridiagonal system.
+!
+        real(r8), allocatable :: zLanczos_coef(:,:)    ! coefficients
+        real(r8), allocatable :: zLanczos_inv(:,:)     ! inverse
+        real(r8), allocatable :: zLanczos_err(:,:)     ! error, identity
+#  endif
 # endif
 # if defined OBS_SENSITIVITY
 !
@@ -934,7 +944,8 @@
       allocate ( Ritz(Ninner+1) )
       Ritz = IniVal
 
-# ifdef POSTERIOR_EOFS
+# if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+     defined POSTERIOR_ERROR_F
 
       allocate ( ae_beta(NpostI+1,Nouter) )
       ae_beta = IniVal
@@ -960,6 +971,16 @@
       allocate ( ae_RitzErr(NpostI,Nouter) )
       ae_RitzErr = IniVal
 
+#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_I
+      allocate ( zLanczos_coef(Ninner,Ninner) )
+      zLanczos_coef = IniVal
+
+      allocate ( zLanczos_inv(Ninner,Ninner) )
+      zLanczos_inv = IniVal
+
+      allocate ( zLanczos_err(Ninner,Ninner) )
+      zLanczos_err = IniVal
+#  endif
 # endif
 
 #  if defined WEAK_CONSTRAINT || defined IOM

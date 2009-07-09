@@ -414,6 +414,7 @@
         integer  :: ncCLMid(Ngrids)     ! input climatology
         integer  :: ncDIAid(Ngrids)     ! output diagnostics
         integer  :: ncFLTid(Ngrids)     ! output floats
+        integer  :: ncERRid(Ngrids)     ! output 4DVar posterior error
         integer  :: ncFRCid(NV,Ngrids)  ! input forcing
         integer  :: ncFWDid(Ngrids)     ! forward solution
         integer  :: ncGRDid(Ngrids)     ! input grid
@@ -425,7 +426,7 @@
         integer  :: ncITLid(Ngrids)     ! input/output TLM initial
         integer  :: ncLCZid(Ngrids)     ! input/output Lanczos vectors
         integer  :: ncMODid(Ngrids)     ! output 4DVAR fields
-        integer  :: ncNRMid(4,Ngrids)    ! input/output covariance norm
+        integer  :: ncNRMid(4,Ngrids)   ! input/output covariance norm
         integer  :: ncOBSid(Ngrids)     ! input/output observations
         integer  :: ncRSTid(Ngrids)     ! input/output restart
         integer  :: ncSSHid(Ngrids)     ! SSH observations
@@ -449,13 +450,14 @@
         integer, allocatable :: idTvar(:)     ! tracers variables
         integer, allocatable :: adjTid(:,:)   ! adjoint tracers IDs
         integer, allocatable :: avgTid(:,:)   ! averages tracers IDs
+        integer, allocatable :: errTid(:,:)   ! error tracer IDs
         integer, allocatable :: fltTid(:,:)   ! floats tracers IDs
         integer, allocatable :: hisTid(:,:)   ! history tracers IDs
-        integer, allocatable :: hssTid(:,:)   ! Hessian vectors IDs
+        integer, allocatable :: hssTid(:,:)   ! Hessian tracers IDs
         integer, allocatable :: iniTid(:,:)   ! initial NLM tracers IDs
         integer, allocatable :: irpTid(:,:)   ! initial RPM tracers IDs
         integer, allocatable :: itlTid(:,:)   ! initial TLM tracers IDs
-        integer, allocatable :: lczTid(:,:)   ! Lanczos vectors IDs
+        integer, allocatable :: lczTid(:,:)   ! Lanczos tracers IDs
         integer, allocatable :: obsTid(:,:)   ! observations tracers IDs
         integer, allocatable :: rstTid(:,:)   ! restart tracers IDs
         integer, allocatable :: staTid(:,:)   ! stations tracers IDs
@@ -465,6 +467,7 @@
         integer  :: adjVid(NV,Ngrids)    ! adjoint variables IDs
         integer  :: avgVid(NV,Ngrids)    ! averages variables IDs
         integer  :: diaVid(NV,Ngrids)    ! diagnostics variables IDs
+        integer  :: errVid(NV,Ngrids)    ! error variables IDs
         integer  :: fltVid(-6:NV,Ngrids) ! floats variables IDs
         integer  :: hisVid(NV,Ngrids)    ! history variables IDs
         integer  :: hssVid(NV,Ngrids)    ! Hessian variables IDs
@@ -484,6 +487,7 @@
         integer  :: tADJindx(Ngrids)     ! adjoint time record index
         integer  :: tAVGindx(Ngrids)     ! averages time record index
         integer  :: tDIAindx(Ngrids)     ! diagnostics time record index
+        integer  :: tERRindx(Ngrids)     ! error time record index
         integer  :: tFLTindx(Ngrids)     ! floats time record index
         integer  :: tHISindx(Ngrids)     ! history time record index
         integer  :: tHSSindx(Ngrids)     ! Hessian time record index
@@ -602,6 +606,7 @@
         allocate ( adjTid(MT,Ngrids) )
         allocate ( avgTid(MT,Ngrids) )
         allocate ( fltTid(MT,Ngrids) )
+        allocate ( errTid(MT,Ngrids) )
         allocate ( hisTid(MT,Ngrids) )
         allocate ( hssTid(MT,Ngrids) )
         allocate ( iniTid(MT,Ngrids) )
@@ -904,6 +909,7 @@
           ncBRYid(ng)=-1
           ncCLMid(ng)=-1
           ncDIAid(ng)=-1
+          ncERRid(ng)=-1
           ncFLTid(ng)=-1
           ncGSTid(ng)=-1
           ncFWDid(ng)=-1

@@ -17,6 +17,7 @@
 !  CLMname     Input climatology file name.                            !
 !  DIAbase     Output diagnostics base file name.                      !
 !  DIAname     Output diagnostics file name.                           !
+!  ERRname     Output 4DVar posterior error file name.                 !
 !  FLTname     Output floats file name.                                !
 !  FRCids      NetCDF ID descriptors associated with FRCname.          ! 
 !  FRCname     Input forcing fields file name(s).                      !
@@ -115,6 +116,7 @@
         character (len=80), dimension(Ngrids) :: CLMname
         character (len=80), dimension(Ngrids) :: DIAbase
         character (len=80), dimension(Ngrids) :: DIAname
+        character (len=80), dimension(Ngrids) :: ERRname
         character (len=80), dimension(Ngrids) :: FLTname
         character (len=80), dimension(Ngrids) :: FWDbase
         character (len=80), dimension(Ngrids) :: FWDname

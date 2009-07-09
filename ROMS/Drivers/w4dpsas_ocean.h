@@ -219,15 +219,22 @@
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE ini_adjust_mod, ONLY : ini_adjust
-      USE ini_fields_mod, ONLY : ini_fields
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
+      USE ini_fields_mod, ONLY : ini_fields
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary, ONLY : initialize_boundary
+#endif
       USE mod_forces, ONLY : initialize_forces
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
-#ifdef POSTERIOR_EOFS
+#if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F
       USE posterior_mod, ONLY : posterior
       USE random_ic_mod, ONLY : random_ic
+#endif
+#if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
+      USE posterior_var_mod, ONLY : posterior_var
 #endif
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
@@ -389,13 +396,24 @@
         CALL def_mod (ng)
         IF (exit_flag.ne.NoError) RETURN
 
-#ifdef POSTERIOR_EOFS
+#if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F
 !
 !  Define output Hessian NetCDF file that will eventually contain
-!  the posterior analysis error covariance matrix EOFs.
+!  the intermediate posterior analysis error covariance matrix
+!  fields or its EOFs.
 !
         LdefHSS(ng)=.TRUE.
         CALL def_hessian (ng)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
+!
+!  Define output initial or final full posterior error covariance
+!  (diagonal) matrix NetCDF.
+!
+        LdefERR (ng)=.TRUE.
+        CALL def_error (ng)
         IF (exit_flag.ne.NoError) RETURN
 #endif
 !
@@ -662,7 +680,7 @@
 !  background-error standard deviations. Since the convolved solution
 !  is in the adjoint state arrays, first copy to tangent linear state
 !  arrays including the ghosts points.
-# ifdef POSTERIOR_EOFS
+# ifdef POSTERIOR_ERROR_I
 !  If computing the analysis error covariance matrix, copy TLM back
 !  into ADM so that it can be written to Hessian NetCDF file.
 # endif
@@ -679,7 +697,7 @@
 # ifdef BALANCE_OPERATOR_NOT_YET
                   CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
-# ifdef POSTERIOR_EOFS
+# ifdef POSTERIOR_ERROR_I
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
 # endif
                 END DO
@@ -694,7 +712,7 @@
               CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
               IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef POSTERIOR_EOFS
+# ifdef POSTERIOR_ERROR_I
 !
 !  Write convolved adjoint solution into Hessian NetCDF file for use
 !  later.
@@ -703,7 +721,7 @@
                 CALL wrt_hessian (ng, Lold(ng), Lold(ng))
                 IF (exit_flag.ne.NoERRor) RETURN
               END IF
-#  endif
+# endif
 !
 !  If weak constraint, convolve records 2-Nrec in ADJname and
 !  impose model error covariance. NOTE: We will not use the
@@ -870,6 +888,31 @@
               END DO TL_LOOP
               wrtNLmod(ng)=.FALSE.
               wrtTLmod(ng)=.FALSE.
+
+#ifdef POSTERIOR_ERROR_F
+!
+!  Copy the final time tl_var(Lold) into ad_var(Lold) so that it can be
+!  written to the Hessian NetCDF file.
+!
+              add=.FALSE.
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,add,numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1,+1
+                  CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+!  Write evolved tangent solution into hessian netcdf file for use
+!  later.
+!
+              IF (inner.ne.0) THEN
+                CALL wrt_hessian (ng, Lold(ng), Lold(ng))
+                IF (exit_flag.ne.NoERRor) RETURN
+              END IF
+#endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Use conjugate gradient algorithm to find a better approximation
@@ -1236,6 +1279,77 @@
 
         END DO OUTER_LOOP
 
+#if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
+!
+!-----------------------------------------------------------------------
+!  Compute full (diagonal) posterior analysis error covariance matrix.
+!
+!  NOTE: Currently, this code only works for a single outer-loop.
+!-----------------------------------------------------------------------
+!
+!  Clear tangent and adjoint arrays because they are used as
+!  work arrays below.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+            CALL initialize_ocean (ng, TILE, iADM)
+            CALL initialize_ocean (ng, TILE, iTLM)
+            CALL initialize_forces (ng, TILE, iADM)
+            CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+            CALL initialize_boundary (ng, TILE, iADM)
+            CALL initialize_boundary (ng, TILE, iTLM)
+# endif
+          END DO
+        END DO
+!$OMF END PARALLEL DO
+!
+!  Compute the diagonal of the posterior/analysis error covariance
+!  matrix. The result is written to record 2 of the ITL netcdf file.
+!
+        VAR_OLOOP : DO my_outer=1,Nouter
+          outer=my_outer
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP&            SHARED(inner,outer,numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL posterior_var (ng, TILE, iTLM, outer)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+          IF (exit_flag.ne.NoError) RETURN
+        END DO VAR_OLOOP
+!
+!  Write out the diagonal of the posterior/analysis covariance matrix
+!  which is in tl_var(Rec1) to 4DVar error NetCDF file.
+!
+        CALL wrt_error (ng, Rec1, Rec1)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Clear tangent and adjoint arrays because they are used as
+!  work arrays below.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+            CALL initialize_ocean (ng, TILE, iADM)
+            CALL initialize_ocean (ng, TILE, iTLM)
+            CALL initialize_forces (ng, TILE, iADM)
+            CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+            CALL initialize_boundary (ng, TILE, iADM)
+            CALL initialize_boundary (ng, TILE, iTLM)
+# endif
+          END DO
+        END DO
+!$OMF END PARALLEL DO
+#endif
+
 #ifdef POSTERIOR_EOFS
 !
 !-----------------------------------------------------------------------
@@ -1258,7 +1372,7 @@
           outer=my_outer
           inner=0
 
-          TRACE_ILOOP : DO my_inner=0,NpostI
+          TRACE_ILOOP : DO my_inner=1,NpostI
             inner=my_inner
 !
 !  Initialize the tangent linear variables with a random vector

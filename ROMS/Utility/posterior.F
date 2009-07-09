@@ -1,7 +1,9 @@
 #include "cppdefs.h"
       MODULE posterior_mod
 
-#if defined WEAK_CONSTRAINT && defined POSTERIOR_EOFS
+#if defined WEAK_CONSTRAINT   && \
+   (defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F)
 # ifdef EW_PERIODIC
 #  define IR_RANGE Istr-1,Iend+1
 #  define IU_RANGE Istr,Iend
@@ -22,6 +24,7 @@
 # endif
 
 !
+!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -37,6 +40,7 @@
 
       PRIVATE
       PUBLIC :: posterior
+      PUBLIC :: read_state
 
       CONTAINS
 !

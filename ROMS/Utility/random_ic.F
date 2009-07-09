@@ -716,7 +716,7 @@
      &                                JstrR, JendR,                     &
      &                                LBij, UBij, 1, N(ng),             &
      &                                Bmin, Bmax, B3d)
-            ELSE IF ((bry.eq.isouth).or.(ib.eq.inorth)) THEN
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
               CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
      &                                Zscheme,                          &
      &                                Istr, IendR,                      &
@@ -794,7 +794,7 @@
      &                                Jstr, JendR,                      &
      &                                LBij, UBij, 1, N(ng),             &
      &                                Bmin, Bmax, B3d)
-            ELSE IF ((bry.eq.isouth).or.(ib.eq.inorth)) THEN
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
               CALL white_noise3d_bry (ng, tile, iTLM, ib,               &
      &                                Zscheme,                          &
      &                                IstrR, IendR,                     &

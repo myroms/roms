@@ -1651,9 +1651,21 @@
 #endif
 #if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
       IF (Master) WRITE (stdout,20) 'POSTERIOR_EOFS',                   &
-     &   'Estimating posterior analysis error covariace matrix.'
+     &   'Estimating posterior analysis error covariace matrix EOFs.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' POSTERIOR_EOFS,'
+#endif
+#if defined POSTERIOR_ERROR_F && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'POSTERIOR_ERROR_F',                &
+     &   'Estimating final posterior analysis error covariace matrix.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' POSTERIOR_ERROR_F,'
+#endif
+#if defined POSTERIOR_ERROR_I && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'POSTERIOR_ERROR_I',                &
+     &   'Estimating initial posterior analysis error covariace matrix.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' POSTERIOR_ERROR_F,'
 #endif
 #if defined POWER_LAW && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'POWER_LAW',                        &
@@ -2975,38 +2987,47 @@
         exit_flag=5
       END IF
 #endif
+#if defined POSTERIOR_ERROR_F && defined POSTERIOR_ERROR_I && \
+    defined WEAK_CONSTRAINT
+      IF (Master) THEN
+        WRITE (stdout,140)
+ 140    FORMAT (/,' CHECKDEFS - Both initial and final posterior',      &
+     &            ' error covariance analysis selected, choose one.')
+        exit_flag=5
+      END IF
+#endif    
 #ifdef UV_ADV
 !
 !  Stop if more than one advection scheme has been activated.
 !
       IF (Master.and.(ivelHadv.gt.1)) THEN
-        WRITE (stdout,140) 'horizontal','momentum','ivelHadv =',ivelHadv
+        WRITE (stdout,150) 'horizontal','momentum','ivelHadv =',ivelHadv
         exit_flag=5
       END IF
 # ifdef SOLVE3D
       IF (Master.and.(ivelVadv.gt.1)) THEN
-        WRITE (stdout,140) 'vertical','momentum','ivelVadv =',ivelVadv
+        WRITE (stdout,150) 'vertical','momentum','ivelVadv =',ivelVadv
         exit_flag=5
       END IF
 # endif
 #endif
 #ifdef SOLVE3D
       IF (Master.and.(itrcHadv.gt.1)) THEN
-        WRITE (stdout,140) 'horizontal','tracers','itrcHadv =',itrcHadv
+        WRITE (stdout,150) 'horizontal','tracers','itrcHadv =',itrcHadv
         exit_flag=5
       END IF
       IF (Master.and.(itrcVadv.gt.1)) THEN
-        WRITE (stdout,140) 'vertical','tracers','itrcVadv =',itrcVadv
+        WRITE (stdout,150) 'vertical','tracers','itrcVadv =',itrcVadv
         exit_flag=5
       END IF
 #endif
- 140  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
+ 150  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
      &        /,13x,'is allowed for ',a,', ',a,1x,i1)
 #if defined SOLVE3D && defined NEMURO
 # if !(defined IVLEV_EXPLICIT || defined HOLLING_GRAZING)
       IF (Master) THEN
-        WRITE (stdout,150)
- 150    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
+        WRITE (stdout,160)
+ 160    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
      &            ' option;',/,13x,'use either IVLEV_EXPLICIT or',      &
      &            ' implicit HOLLING_GRAZING.',/,13x,'The default',     &
      &            ' implicit IVLEV algorithm does not work well yet.')

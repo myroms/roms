@@ -44,14 +44,16 @@ SOBJ  = sgeqr2.o slabad.o slacon.o slacpy.o sladiv.o slae2.o slaev2.o\
         slanst.o slanv2.o slaptm.o slapy2.o slapy3.o slaran.o slarf.o\
         slarfg.o slarfx.o slarnd.o slarnv.o slartg.o slaruv.o slascl.o\
         slaset.o slasr.o  slasrt.o slassq.o slasy2.o sorm2r.o ssteqr.o\
-        strevc.o strexc.o strsen.o strsyl.o
+        strevc.o strexc.o strsen.o strsyl.o spotrf.o spotri.o spttrf.o\
+        spttrs.o spotf2.o slauum.o slauu2.o strtri.o strti2.o
 
 DOBJ  = dgeqr2.o dlabad.o dlacon.o dlacpy.o dladiv.o dlae2.o dlaev2.o\
         dlaexc.o dlagtm.o dlahqr.o dlaln2.o dlamch.o dlange.o dlanhs.o\
         dlanst.o dlanv2.o dlaptm.o dlapy2.o dlapy3.o dlaran.o dlarf.o\
         dlarfg.o dlarfx.o dlarnd.o dlarnv.o dlartg.o dlaruv.o dlascl.o\
         dlaset.o dlasr.o  dlasrt.o dlassq.o dlasy2.o dorm2r.o dsteqr.o\
-        dtrevc.o dtrexc.o dtrsen.o dtrsyl.o
+        dtrevc.o dtrexc.o dtrsen.o dtrsyl.o dpotrf.o dpotri.o dpttrf.o\
+        dpttrs.o dpotf2.o dlauum.o dlauu2.o dtrtri.o dtrti2.o
 
 IOBJ  = ilaenv.o lsame.o lsamen.o xerbla.o xlaenv.o
 
@@ -63,13 +65,15 @@ COBJ  = cgeqr2.o clacon.o clacpy.o cladiv.o clahqr.o clange.o clanhs.o\
         clarf.o  clarfg.o clarnv.o clartg.o clascl.o claset.o classq.o\
         clatrs.o cmach.o  crot.o   ctrevc.o ctrexc.o ctrsen.o ctrsyl.o\
         cunm2r.o\
-        scsum1.o slabad.o sladiv.o slamch.o slapy2.o slapy3.o slaruv.o
+        scsum1.o slabad.o sladiv.o slamch.o slapy2.o slapy3.o slaruv.o\
+        cpotrf.o cpotri.o cpotf2.o clauum.o clauu2.o ctrtri.o ctrti2.o
 
 ZOBJ  = zgeqr2.o zlacon.o zlacpy.o zladiv.o zlahqr.o zlange.o zlanhs.o\
         zlarf.o  zlarfg.o zlarnv.o zlartg.o zlascl.o zlaset.o zlassq.o\
         zlatrs.o zmach.o  zrot.o   ztrevc.o ztrexc.o ztrsen.o ztrsyl.o\
         zunm2r.o\
-        dzsum1.o dlabad.o dladiv.o dlamch.o dlapy2.o dlapy3.o dlaruv.o
+        dzsum1.o dlabad.o dladiv.o dlamch.o dlapy2.o dlapy3.o dlaruv.o\
+        zpotrf.o zpotri zpotf2.o zlauum.o zlauu2.o ztrtri.o ztrti2.o
 #
 # The following LAPACK routines are not needed by ARPACK
 # source code.  They are used by the drivers in EXAMPLES

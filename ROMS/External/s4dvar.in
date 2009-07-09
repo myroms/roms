@@ -302,6 +302,10 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 
         MODname == ocean_mod.nc
 
+! Output posterior error covariance matrix file name, [1:Ngrids].
+
+        ERRname == ocean_err.nc
+
 !
 !  GLOSSARY:
 !  =========
@@ -599,4 +603,6 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  LCZname        Input/output Lanczos vectors file name.
 !
 !  MODname        Output model data at observations locations file name.
+!
+!  ERRname        Output posterior error covariance matrix file name.
 !

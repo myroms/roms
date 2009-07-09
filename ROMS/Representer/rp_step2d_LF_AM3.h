@@ -1711,7 +1711,7 @@
 #   endif
      &                  vbar(i,j+1,krhs))+                              &
      &                 (DVom(i,j)+DVom(i,j+1))*                         &
-     &                 (tl_vbar(i,j  ,krhs)+ 
+     &                 (tl_vbar(i,j  ,krhs)+                            &
 #   ifdef NEARSHORE_MELLOR
      &                  tl_vbar_stokes(i,j  )+                          &
      &                  tl_vbar_stokes(i,j+1)+                          &
