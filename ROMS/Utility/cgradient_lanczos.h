@@ -7274,6 +7274,12 @@
             ingood=ingood+1
           END IF
         END DO
+        IF (NritzEV.gt.0) THEN
+          nConvRitz=NritzEV
+          ingood=nConvRitz
+        ELSE
+          nConvRitz=ingood
+        END IF
         IF (Master) THEN
           WRITE (stdout,40) outLoop, innLoop, ingood
         END IF

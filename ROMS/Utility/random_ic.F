@@ -1,7 +1,9 @@
 #include "cppdefs.h"
       MODULE random_ic_mod
 
-#if defined WEAK_CONSTRAINT && defined POSTERIOR_EOFS
+#if defined WEAK_CONSTRAINT   && \
+   (defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F)
 
 # ifdef EW_PERIODIC
 #  define IR_RANGE Istr-1,Iend+1

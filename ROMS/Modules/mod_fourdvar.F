@@ -451,7 +451,7 @@
         real(r8), allocatable :: ae_Ritz(:,:)
         real(r8), allocatable :: ae_RitzErr(:,:)
 
-#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_I
+#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
 !
 !  Initial or final full posterior error covariance Lanczos vectors
 !  tridiagonal system.
@@ -971,7 +971,7 @@
       allocate ( ae_RitzErr(NpostI,Nouter) )
       ae_RitzErr = IniVal
 
-#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_I
+#  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
       allocate ( zLanczos_coef(Ninner,Ninner) )
       zLanczos_coef = IniVal
 

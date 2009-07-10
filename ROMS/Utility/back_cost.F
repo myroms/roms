@@ -67,7 +67,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE back_cost (ng, tile, Lbck, Lsum)
+      SUBROUTINE back_cost (ng, tile, Lsum)
 !***********************************************************************
 !
       USE mod_param
@@ -84,7 +84,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Lbck, Lsum
+      integer, intent(in) :: ng, tile, Lsum
 !
 !  Local variable declarations.
 !
@@ -93,7 +93,7 @@
       CALL back_cost_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     Lbck, Lsum,                                  &
+     &                     Lsum,                                        &
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
@@ -133,7 +133,7 @@
       SUBROUTINE back_cost_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           Lbck, Lsum,                            &
+     &                           Lsum,                                  &
 # ifdef MASKING
      &                           rmask, umask, vmask,                   &
 # endif
@@ -178,7 +178,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Lbck, Lsum
+      integer, intent(in) :: Lsum
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -270,8 +270,8 @@
 !----------------------------------------------------------------------
 !  Compute v-space background cost function (Jb) as misfit between
 !  model and background states at initial time of the assimilation
-!  window. Add sum of all the previous outer-loop increments (Lsum)
-!  to current value (Lbck).
+!  window using the sum of all the previous outer-loop increments
+!  (Lsum).
 !
 !  Initially, the misfit innovation matrix (X-Xb) is zero. As the
 !  assimilation algorithm iterates, Jb becomes greater than zero.
@@ -285,7 +285,7 @@
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          cff1=tl_zeta(i,j,Lbck)+tl_zeta(i,j,Lsum)
+          cff1=tl_zeta(i,j,Lsum)
 # ifdef MASKING
           cff1=cff1*rmask(i,j)
 # endif
@@ -304,7 +304,7 @@
           IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
             ib=iwest
             DO j=Jstr,Jend
-              cff1=tl_zeta_obc(j,ib,ir,Lbck)+tl_zeta_obc(j,ib,ir,Lsum)
+              cff1=tl_zeta_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*rmask(Istr-1,j)
 #  endif
@@ -316,7 +316,7 @@
           IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
             ib=ieast
             DO j=Jstr,Jend
-              cff1=tl_zeta_obc(j,ib,ir,Lbck)+tl_zeta_obc(j,ib,ir,Lsum)
+              cff1=tl_zeta_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*rmask(Iend+1,j)
 #  endif
@@ -328,7 +328,7 @@
           IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
             ib=isouth
             DO i=Istr,Iend
-              cff1=tl_zeta_obc(i,ib,ir,Lbck)+tl_zeta_obc(i,ib,ir,Lsum)
+              cff1=tl_zeta_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*rmask(i,Jstr-1)
 #  endif
@@ -340,7 +340,7 @@
           IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
             ib=inorth
             DO i=Istr,Iend
-              cff1=tl_zeta_obc(i,ib,ir,Lbck)+tl_zeta_obc(i,ib,ir,Lsum)
+              cff1=tl_zeta_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*rmask(i,Jend+1)
 #  endif
@@ -359,7 +359,7 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          cff1=tl_ubar(i,j,Lbck)+tl_ubar(i,j,Lsum)
+          cff1=tl_ubar(i,j,Lsum)
 #  ifdef MASKING
           cff1=cff1*umask(i,j)
 #  endif
@@ -379,7 +379,7 @@
           IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
             ib=iwest
             DO j=Jstr,Jend
-              cff1=tl_ubar_obc(j,ib,ir,Lbck)+tl_ubar_obc(j,ib,ir,Lsum)
+              cff1=tl_ubar_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*umask(Istr,j)
 #  endif
@@ -391,7 +391,7 @@
           IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
             ib=ieast
             DO j=Jstr,Jend
-              cff1=tl_ubar_obc(j,ib,ir,Lbck)+tl_ubar_obc(j,ib,ir,Lsum)
+              cff1=tl_ubar_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*umask(Iend+1,j)
 #  endif
@@ -403,7 +403,7 @@
           IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
             ib=isouth
             DO i=IstrU,Iend
-              cff1=tl_ubar_obc(i,ib,ir,Lbck)+tl_ubar_obc(i,ib,ir,Lsum)
+              cff1=tl_ubar_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*umask(i,Jstr-1)
 #  endif
@@ -415,7 +415,7 @@
           IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
             ib=inorth
             DO i=IstrU,Iend
-              cff1=tl_ubar_obc(i,ib,ir,Lbck)+tl_ubar_obc(i,ib,ir,Lsum)
+              cff1=tl_ubar_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*umask(i,Jend+1)
 #  endif
@@ -434,7 +434,7 @@
 !
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          cff1=tl_vbar(i,j,Lbck)+tl_vbar(i,j,Lsum)
+          cff1=tl_vbar(i,j,Lsum)
 #  ifdef MASKING
           cff1=cff1*vmask(i,j)
 #  endif
@@ -454,7 +454,7 @@
           IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
             ib=iwest
             DO j=JstrV,Jend
-              cff1=tl_vbar_obc(j,ib,ir,Lbck)+tl_vbar_obc(j,ib,ir,Lsum)
+              cff1=tl_vbar_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*vmask(Istr-1,j)
 #  endif
@@ -466,7 +466,7 @@
           IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
             ib=ieast
             DO j=JstrV,Jend
-              cff1=tl_vbar_obc(j,ib,ir,Lbck)+tl_vbar_obc(j,ib,ir,Lsum)
+              cff1=tl_vbar_obc(j,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*vmask(Iend+1,j)
 #  endif
@@ -478,7 +478,7 @@
           IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
             ib=isouth
             DO i=Istr,Iend
-              cff1=tl_vbar_obc(i,ib,ir,Lbck)+tl_vbar_obc(i,ib,ir,Lsum)
+              cff1=tl_vbar_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*vmask(i,Jstr)
 #  endif
@@ -490,7 +490,7 @@
           IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
             ib=inorth
             DO i=Istr,Iend
-              cff1=tl_vbar_obc(i,ib,ir,Lbck)+tl_vbar_obc(i,ib,ir,Lsum)
+              cff1=tl_vbar_obc(i,ib,ir,Lsum)
 #  ifdef MASKING
               cff1=cff1*vmask(i,Jend+1)
 #  endif
@@ -510,7 +510,7 @@
       DO ir=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            cff1=tl_ustr(i,j,ir,Lbck)+tl_ustr(i,j,ir,Lsum)
+            cff1=tl_ustr(i,j,ir,Lsum)
 #  ifdef MASKING
             cff1=cff1*umask(i,j)
 #  endif
@@ -521,7 +521,7 @@
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            cff1=tl_vstr(i,j,ir,Lbck)+tl_vstr(i,j,ir,Lsum)
+            cff1=tl_vstr(i,j,ir,Lsum)
 #  ifdef MASKING
             cff1=cff1*vmask(i,j)
 #  endif
@@ -540,7 +540,7 @@
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            cff1=tl_u(i,j,k,Lbck)+tl_u(i,j,k,Lsum)
+            cff1=tl_u(i,j,k,Lsum)
 #  ifdef MASKING
             cff1=cff1*umask(i,j)
 #  endif
@@ -561,7 +561,7 @@
             ib=iwest
             DO k=1,N(ng)
               DO j=Jstr,Jend
-                cff1=tl_u_obc(j,k,ib,ir,Lbck)+tl_u_obc(j,k,ib,ir,Lsum)
+                cff1=tl_u_obc(j,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*umask(Istr,j)
 #   endif
@@ -575,7 +575,7 @@
             ib=ieast
             DO k=1,N(ng)
               DO j=Jstr,Jend
-                cff1=tl_u_obc(j,k,ib,ir,Lbck)+tl_u_obc(j,k,ib,ir,Lsum)
+                cff1=tl_u_obc(j,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*umask(Iend+1,j)
 #   endif
@@ -589,7 +589,7 @@
             ib=isouth
             DO k=1,N(ng)
               DO i=IstrU,Iend
-                cff1=tl_u_obc(i,k,ib,ir,Lbck)+tl_u_obc(i,k,ib,ir,Lsum)
+                cff1=tl_u_obc(i,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*umask(i,Jstr-1)
 #   endif
@@ -603,7 +603,7 @@
             ib=inorth
             DO k=1,N(ng)
               DO i=IstrU,Iend
-                cff1=tl_u_obc(i,k,ib,ir,Lbck)+tl_u_obc(i,k,ib,ir,Lsum)
+                cff1=tl_u_obc(i,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*umask(i,Jend+1)
 #   endif
@@ -622,7 +622,7 @@
       DO k=1,N(ng)
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            cff1=tl_v(i,j,k,Lbck)+tl_v(i,j,k,Lsum)
+            cff1=tl_v(i,j,k,Lsum)
 #  ifdef MASKING
             cff1=cff1*vmask(i,j)
 #  endif
@@ -643,7 +643,7 @@
             ib=iwest
             DO k=1,N(ng)
               DO j=JstrV,Jend
-                cff1=tl_v_obc(j,k,ib,ir,Lbck)+tl_v_obc(j,k,ib,ir,Lsum)
+                cff1=tl_v_obc(j,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*vmask(Istr-1,j)
 #   endif
@@ -657,7 +657,7 @@
             ib=ieast
             DO k=1,N(ng)
               DO j=JstrV,Jend
-                cff1=tl_v_obc(j,k,ib,ir,Lbck)+tl_v_obc(j,k,ib,ir,Lsum)
+                cff1=tl_v_obc(j,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*vmask(Iend+1,j)
 #   endif
@@ -671,7 +671,7 @@
             ib=isouth
             DO k=1,N(ng)
               DO i=Istr,Iend
-                cff1=tl_v_obc(i,k,ib,ir,Lbck)+tl_v_obc(i,k,ib,ir,Lsum)
+                cff1=tl_v_obc(i,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*vmask(i,Jstr)
 #   endif
@@ -685,7 +685,7 @@
             ib=inorth
             DO k=1,N(ng)
               DO i=Istr,Iend
-                cff1=tl_v_obc(i,k,ib,ir,Lbck)+tl_v_obc(i,k,ib,ir,Lsum)
+                cff1=tl_v_obc(i,k,ib,ir,Lsum)
 #   ifdef MASKING
                 cff1=cff1*vmask(i,Jend+1)
 #   endif
@@ -705,7 +705,7 @@
         DO k=1,N(ng)
           DO j=Jstr,Jend
             DO i=Istr,Iend
-              cff1=tl_t(i,j,k,Lbck,itrc)+tl_t(i,j,k,Lsum,itrc)
+              cff1=tl_t(i,j,k,Lsum,itrc)
 #  ifdef MASKING
               cff1=cff1*rmask(i,j)
 #  endif
@@ -728,8 +728,7 @@
               ib=iwest 
               DO k=1,N(ng)
                 DO j=Jstr,Jend
-                  cff1=tl_t_obc(j,k,ib,ir,itrc,Lbck)+                   &
-     &                 tl_t_obc(j,k,ib,ir,itrc,Lsum)
+                  cff1=tl_t_obc(j,k,ib,ir,Lsum,itrc)
 #   ifdef MASKING
                   cff1=cff1*rmask(Istr-1,j)
 #   endif
@@ -744,8 +743,7 @@
               ib=ieast
               DO k=1,N(ng)
                 DO j=Jstr,Jend
-                  cff1=tl_t_obc(j,k,ib,ir,itrc,Lbck)+                   &
-     &                 tl_t_obc(j,k,ib,ir,itrc,Lsum)
+                  cff1=tl_t_obc(j,k,ib,ir,Lsum,itrc)
 #   ifdef MASKING
                   cff1=cff1*rmask(Iend+1,j)
 #   endif
@@ -760,8 +758,7 @@
               ib=isouth
               DO k=1,N(ng)
                 DO i=Istr,Iend
-                  cff1=tl_t_obc(i,k,ib,ir,itrc,Lbck)+                   &
-     &                 tl_t_obc(i,k,ib,ir,itrc,Lsum)
+                  cff1=tl_t_obc(i,k,ib,ir,Lsum,itrc)
 #   ifdef MASKING
                   cff1=cff1*rmask(i,Jstr-1)
 #   endif
@@ -776,8 +773,7 @@
               ib=inorth
               DO k=1,N(ng)
                 DO i=Istr,Iend
-                  cff1=tl_t_obc(i,k,ib,ir,itrc,Lbck)+                   &
-     &                 tl_t_obc(i,k,ib,ir,itrc,Lsum)
+                  cff1=tl_t_obc(i,k,ib,ir,Lsum,itrc)
 #   ifdef MASKING
                   cff1=cff1*rmask(i,Jend+1)
 #   endif
@@ -802,8 +798,7 @@
           DO ir=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                cff1=tl_tflux(i,j,ir,Lbck,itrc)+                        &
-     &               tl_tflux(i,j,ir,Lsum,itrc)
+                cff1=tl_tflux(i,j,ir,Lsum,itrc)
 #   ifdef MASKING
                 cff1=cff1*rmask(i,j)
 #   endif

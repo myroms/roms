@@ -1634,18 +1634,11 @@
 
 # if defined ADJUST_BOUNDARY || \
     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
-!
-!  Set switch to process surface forcing and/or open boundaries during
-!  4DVar minimization.
-!
-       IF (inner.ne.0) THEN
-         get_adjust=.TRUE.
-       ELSE
-         get_adjust=.FALSE.
-       END IF
-#  ifdef SENSITIVITY_4DVAR
-       IF (LsenPSAS(ng)) get_adjust=.TRUE.
-#  endif
+        IF (inner.eq.0.and.model.eq.iRPM) THEN
+          get_adjust=.FALSE.
+        ELSE
+          get_adjust=.TRUE.
+        END IF
 # endif
 !
 !  Read in tangent linear free-surface (m).
@@ -4232,11 +4225,7 @@
 !  Set switch to process surface forcing and/or open boundaries during
 !  4DVar minimization.
 !
-        IF (inner.ne.0) THEN
-          get_adjust=.TRUE.
-        ELSE
-          get_adjust=.FALSE.
-        END IF
+        get_adjust=.TRUE.
 
 # ifdef ADJUST_BOUNDARY
 !
