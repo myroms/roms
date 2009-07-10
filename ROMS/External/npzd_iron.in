@@ -156,7 +156,7 @@ BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
 ! Fe source over the shelf (h <= FeHmin).
 
         FeHmin == 200.0d0                        ! minimum depth (m)
-    FeNugdTime == 5.0d0                          ! nudging time (days)
+    FeNudgTime == 5.0d0                          ! nudging time (days)
          FeMax == 2.0d0                          ! Fe value (mmole/m3) to nudge
 
 ! Lateral, constant, harmonic/biharmonic horizontal diffusion of biological
