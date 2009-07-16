@@ -190,7 +190,7 @@
 !  to see if the dimension contains the "time" string.
 !
             IF (got_time.and.(Nrec.eq.0)) THEN
-              DO i=1,n_dim
+              DO i=1,n_vdim
                 IF (INDEX(TRIM(var_Dname(i)),'time').ne.0) THEN
                   Nrec=var_Dsize(i)
                 END IF
