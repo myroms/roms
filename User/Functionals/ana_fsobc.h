@@ -66,14 +66,14 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-# ifdef WEST_FSOBC
+# ifdef EAST_FSOBC
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_east(j)=0.0_r8
         END DO
       END IF
 # endif
-# ifdef EAST_FSOBC
+# ifdef WEST_FSOBC
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=0.0_r8
