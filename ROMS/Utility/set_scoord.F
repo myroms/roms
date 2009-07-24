@@ -393,8 +393,8 @@
         DO k=N(ng),0,-1
           IF (Vstretching(ng).eq.2) THEN
             cff=0.5_r8*(hmax(ng)+hmin(ng))
-            cff1=hmim(ng)*(SCALARS(ng)%sc_w(k)*hc(ng)+                  &
-     &                     SCALARS(ng)%Cs_w(k)*hmin(ng))/
+            cff1=hmin(ng)*(SCALARS(ng)%sc_w(k)*hc(ng)+                  &
+     &                     SCALARS(ng)%Cs_w(k)*hmin(ng))/               &
      &                    (hc(ng)+hmin(ng))
             cff2=cff     *(SCALARS(ng)%sc_w(k)*hc(ng)+                  &
      &                     SCALARS(ng)%Cs_w(k)*cff)/                    &
