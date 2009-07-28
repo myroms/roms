@@ -824,9 +824,8 @@
                 Itop=PAR
                 tl_Itop=tl_PAR
                 PAR=Itop*(1.0_r8-ExpAtt)/Att    ! average at cell center
-                tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-     &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-     &                 (Att*Att)
+                tl_PAR=(-tl_Att*PAR+tl_Itop*(1.0_r8-ExpAtt)-            &
+     &                  Itop*tl_ExpAtt)/Att
 !>              Light(i,k)=PAR
 !>
                 tl_Light(i,k)=tl_PAR

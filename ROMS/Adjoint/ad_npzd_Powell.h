@@ -143,7 +143,7 @@
 
       real(r8), parameter :: MinVal = 1.0e-6_r8
 
-      real(r8) :: Att, ExpAtt, Itop, PAR
+      real(r8) :: Att, ExpAtt, Itop, PAR, PAR1
       real(r8) :: ad_Att, ad_ExpAtt, ad_Itop, ad_PAR
       real(r8) :: cff, cff1, cff2, cff3, cff4, dtdays
       real(r8) :: ad_cff, ad_cff1, ad_cff4
@@ -2992,6 +2992,7 @@
                   ExpAtt=EXP(-Att)
                   Itop=PAR
                   PAR=Itop*(1.0_r8-ExpAtt)/Att  ! average at cell center
+                  PAR1=PAR
 !
 !  Light attenuation at the bottom of the grid cell. It is the starting
 !  PAR value for the next (deeper) vertical grid cell.
@@ -3006,6 +3007,7 @@
 !>
                 ad_ExpAtt=ad_ExpAtt+Itop*ad_PAR
                 ad_Itop=ad_Itop+ExpAtt*ad_PAR
+                ad_PAR=0.0_r8
 !
 !  Adjoint of compute average light attenuation for each grid cell.
 !  Here, AttSW is the light attenuation due to seawater and AttPhy is
@@ -3015,15 +3017,13 @@
 !>
                 ad_PAR=ad_PAR+ad_Light(i,k)
                 ad_Light(i,k)=0.0_r8
-!>              tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-!>   &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-!>   &                 (Att*Att)
+!>              tl_PAR=(-tl_Att*PAR1+tl_Itop*(1.0_r8-ExpAtt)-           &
+!>   &                  Itop*tl_ExpAtt)/Att
 !>
-                adfac=ad_PAR/(Att*Att)
-                adfac1=adfac*Att
-                ad_Att=ad_Att+Itop*(1.0_r8-ExpAtt)*adfac
-                ad_ExpAtt=ad_ExpAtt+Itop*adfac1
-                ad_Itop=ad_Itop+(1.0_r8-ExpAtt)*adfac1
+                adfac=ad_PAR/Att
+                ad_Att=ad_Att-PAR1*adfac
+                ad_ExpAtt=ad_ExpAtt-Itop*adfac
+                ad_Itop=ad_Itop+(1.0_r8-ExpAtt)*adfac
                 ad_PAR=0.0_r8
 !>              tl_Itop=tl_PAR
 !>

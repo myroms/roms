@@ -861,17 +861,20 @@
      &                 (tl_z_w(i,j,k)-tl_z_w(i,j,k-1))-                 &
 # ifdef TL_IOMS
      &                 AttPhy(ng)*Bio1(i,k,iPhyt)*                      &
-     &                 (z_w(i,j,k)-z_w(i,j,k-1))      ! HGA check
+     &                 (z_w(i,j,k)-z_w(i,j,k-1))
 # endif
-                tl_ExpAtt=-ExpAtt*tl_Att
+                ExpAtt=EXP(-Att)
+                tl_ExpAtt=-ExpAtt*tl_Att+                               &
+# ifdef TL_IOMS
+     &                    (1.0_r8+Att)*ExpAtt
+# endif
                 Itop=PAR
                 tl_Itop=tl_PAR
                 PAR=Itop*(1.0_r8-ExpAtt)/Att    ! average at cell center
-                tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-     &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-     &                 (Att*Att)-
+                tl_PAR=(-tl_Att*PAR+tl_Itop*(1.0_r8-ExpAtt)-            &
+     &                  Itop*tl_ExpAtt)/Att+                            &
 # ifdef TL_IOMS
-     &                 PAR                            ! HGA check
+     &                 Itop/Att
 # endif
 !>              Light(i,k)=PAR
 !>
@@ -883,7 +886,7 @@
                 PAR=Itop*ExpAtt
                 tl_PAR=tl_Itop*ExpAtt+Itop*tl_ExpAtt-
 # ifdef TL_IOMS
-     &                 PAR                            ! HGA check
+     &                 PAR
 # endif
               END DO
             ELSE                                       ! night time

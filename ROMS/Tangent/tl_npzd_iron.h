@@ -58,7 +58,7 @@
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                      GRID(ng) % h,                               &
 #endif
      &                      GRID(ng) % Hz,                              &
@@ -86,7 +86,7 @@
 #ifdef MASKING
      &                            rmask,                                &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                            h,                                    &
 #endif
      &                            Hz, tl_Hz,                            &
@@ -112,7 +112,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 # endif
-# ifdef IRON_LIMIT
+# if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
@@ -130,7 +130,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 # endif
-# ifdef IRON_LIMIT
+# if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
@@ -539,8 +539,8 @@
 !
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-                Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-                Bio(i,k,ibio)=BioTrc(ibio,nnew)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO
 
 #if defined IRON_LIMIT && defined IRON_RELAX
@@ -981,9 +981,8 @@
                 Itop=PAR
                 tl_Itop=tl_PAR
                 PAR=Itop*(1.0_r8-ExpAtt)/Att    ! average at cell center
-                tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-     &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-     &                 (Att*Att)
+                tl_PAR=(-tl_Att*PAR+tl_Itop*(1.0_r8-ExpAtt)-            &
+     &                  Itop*tl_ExpAtt)/Att
 !>              Light(i,k)=PAR
 !>
                 tl_Light(i,k)=tl_PAR
@@ -1048,15 +1047,15 @@
               tl_Flimit=2.0_r8*(tl_FCratio*FCratio-                     &
      &                          tl_FCratio*FCratio*Flimit)/             &
      &                  (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
-              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio1(i,k,iNO3_))
               tl_Nlimit=-tl_Bio(i,k,iNO3_)*Nlimit*Nlimit
-!>            FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+!>            FNlim=MIN(1.0_r8,Flimit/(Bio1(i,k,iNO3_)*Nlimit))
 !>
-              fac1=Flimit/(Bio(i,k,iNO3_)*Nlimit)
-              tl_fac1=tl_Flimit/(Bio(i,k,iNO3_)*Nlimit)-                &
+              fac1=Flimit/(Bio1(i,k,iNO3_)*Nlimit)
+              tl_fac1=tl_Flimit/(Bio1(i,k,iNO3_)*Nlimit)-               &
      &                (tl_Bio(i,k,iNO3_)*Nlimit+                        &
-     &                 Bio(i,k,iNO3_)*tl_Nlimit)*fac1/                  &
-     &                (Bio(i,k,iNO3_)*Nlimit)
+     &                 Bio1(i,k,iNO3_)*tl_Nlimit)*fac1/                 &
+     &                (Bio1(i,k,iNO3_)*Nlimit)
               FNlim=MIN(1.0_r8,fac1)
               tl_FNlim=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*tl_fac1
 #endif
@@ -1103,8 +1102,6 @@
 !
 !>            fac=cff*Bio(i,k,iNO3_)*FNratio/MAX(MinVal,Bio1(i,k,iFdis))
 !>
-!!  HGA missing code
-!!
               fac1=MAX(MinVal,Bio1(i,k,iFdis))
               tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iFdis)))*     &
      &                tl_Bio(i,k,iFdis)
@@ -1126,8 +1123,6 @@
               tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
      &                          tl_Bio(i,k,iFdis)*fac+                  &
      &                          Bio2(i,k,iFdis)*tl_fac
-!!
-!!  HGA end of missing code
 !
 !  Iron uptake to reach appropriate Fe:C ratio.
 !
@@ -1158,11 +1153,11 @@
               ELSE
 !>              cff=-cff6/MAX(MinVal,Bio2(i,k,iFphy))
 !>
-                fac1=MAX(MinVal,Bio2(i,k,iFphy))
-                tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*   &
+                fac1=-MAX(MinVal,Bio2(i,k,iFphy))
+                tl_fac1=-(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*  &
      &                  tl_Bio(i,k,iFphy)
-                cff=-cff6/fac1
-                tl_cff=-(tl_cff6+tl_fac1*cff)/fac1
+                cff=cff6/fac1
+                tl_cff=(tl_cff6-tl_fac1*cff)/fac1
 !>              Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
 !>
                 tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                   &
@@ -1239,8 +1234,8 @@
 !
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-                Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-                Bio(i,k,ibio)=BioTrc(ibio,nnew)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO           
 
 #if defined IRON_LIMIT && defined IRON_RELAX
@@ -1414,6 +1409,7 @@
 #ifdef IRON_LIMIT
                 Bio1(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio2(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
      &                         Bio(i,k,iFphy)*cff*FeRR(ng)
 #endif
@@ -1705,14 +1701,14 @@
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
 !>
               tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-     &                           tl_cff*Bio1(i,k,iFphy))/               &
+     &                           tl_cff*Bio2(i,k,iFphy))/               &
      &                          (1.0_r8+cff)
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
 !>   &                       Bio(i,k,iFphy)*cff*FeRR(ng)
 !>
               tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
      &                          (tl_Bio(i,k,iFphy)*cff+                 &
-     &                           Bio1(i,k,iFphy)*tl_cff)*FeRR(ng)
+     &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)
 #endif
             END DO
           END DO

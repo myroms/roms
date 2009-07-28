@@ -58,7 +58,7 @@
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                      GRID(ng) % h,                               &
 #endif
      &                      GRID(ng) % Hz,                              &
@@ -86,7 +86,7 @@
 #ifdef MASKING
      &                            rmask,                                &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                            h,                                    &
 #endif
      &                            Hz, ad_Hz, z_r, ad_z_r, z_w, ad_z_w,  &
@@ -110,7 +110,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 # endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
@@ -128,7 +128,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 # endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
@@ -155,7 +155,7 @@
 
       real(r8), parameter :: MinVal = 1.0e-6_r8
 
-      real(r8) :: Att, ExpAtt, Itop, PAR
+      real(r8) :: Att, ExpAtt, Itop, PAR, PAR1
       real(r8) :: ad_Att, ad_ExpAtt, ad_Itop, ad_PAR
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, dtdays
       real(r8) :: ad_cff, ad_cff1, ad_cff4, ad_cff5, ad_cff6
@@ -2430,6 +2430,7 @@
 #ifdef IRON_LIMIT
                 Bio1(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio2(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
      &                         Bio(i,k,iFphy)*cff*FeRR(ng)
 #endif
@@ -2767,17 +2768,17 @@
 #ifdef IRON_LIMIT
 !>            tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
 !>   &                          (tl_Bio(i,k,iFphy)*cff+                 &
-!>   &                           Bio1(i,k,iFphy)*tl_cff)*FeRR(ng)
+!>   &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)
 !>
               ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+cff*FeRR(ng)*         &
      &                          ad_Bio(i,k,iFdis)
-              ad_cff=ad_cff+Bio1(i,k,iFphy)*FeRR(ng)*ad_Bio(i,k,iFdis)
+              ad_cff=ad_cff+Bio2(i,k,iFphy)*FeRR(ng)*ad_Bio(i,k,iFdis)
 !>            tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-!>   &                           tl_cff*Bio1(i,k,iFphy))/               &
+!>   &                           tl_cff*Bio2(i,k,iFphy))/               &
 !>   &                          (1.0_r8+cff)
 !>
               adfac=ad_Bio(i,k,iFphy)/(1.0_r8+cff)
-              ad_cff=ad_cff-Bio1(i,k,iFphy)*adfac
+              ad_cff=ad_cff-Bio2(i,k,iFphy)*adfac
               ad_Bio(i,k,iFphy)=adfac
 #endif
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
@@ -3340,9 +3341,8 @@
               Flimit=FCratio*FCratio/                                   &
      &               (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
 
-              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
-              FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
-
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio1(i,k,iNO3_))
+              FNlim=MIN(1.0_r8,Flimit/(Bio1(i,k,iNO3_)*Nlimit))
 
               cff5=dtdays*(FCratioE-FCratio)/T_Fe(ng)
               cff6=Bio(i,k,iPhyt)*cff5*FeC2FeN
@@ -3378,8 +3378,8 @@
      &                                  MinVal-Bio2(i,k,iFdis)))*ad_fac1
                 ad_fac1=0.0_r8
               ELSE
-                fac1=MAX(MinVal,Bio2(i,k,iFphy))
-                cff=-cff6/fac1
+                fac1=-MAX(MinVal,Bio2(i,k,iFphy))
+                cff=cff6/fac1
 !>              tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                    &
 !>   &                            tl_Bio(i,k,iFphy)*cff+                &
 !>   &                            Bio(i,k,iFphy)*tl_cff
@@ -3394,16 +3394,16 @@
                 adfac=ad_Bio(i,k,iFphy)/(1.0_r8+cff)
                 ad_cff=ad_cff-Bio(i,k,iFphy)*adfac
                 ad_Bio(i,k,iFphy)=adfac
-!>              tl_cff=-(tl_cff6+tl_fac1*cff)/fac1
+!>              tl_cff=(tl_cff6-tl_fac1*cff)/fac1
 !>
                 adfac=ad_cff/fac1
-                ad_cff6=ad_cff6-adfac
+                ad_cff6=ad_cff6+adfac
                 ad_fac1=ad_fac1-cff*adfac
                 ad_cff=0.0_r8
-!>              tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*   &
+!>              tl_fac1=-(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*  &
 !>   &                  tl_Bio(i,k,iFphy)
 !>
-                ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+                    &
+                ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)-                    &
      &                            (0.5_r8-                              &
      &                             SIGN(0.5_r8,                         &
      &                                  MinVal-Bio2(i,k,iFphy)))*ad_fac1
@@ -3435,11 +3435,9 @@
 !
 !  Iron uptake proportional to growth.
 !
-!! HGA missing code
-!!
               fac1=MAX(MinVal,Bio1(i,k,iFdis))
               fac2=1.0_r8/fac1
-              fac=cff*Bio1(i,k,iNO3_)*FNratio*fac2
+              fac=cff*Bio(i,k,iNO3_)*FNratio*fac2
 !>            tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
 !>   &                          tl_Bio(i,k,iFdis)*fac+                  &
 !>   &                          Bio2(i,k,iFdis)*tl_fac
@@ -3451,8 +3449,9 @@
 !>   &                           tl_fac*Bio2(i,k,iFdis))/               &
 !>   &                          (1.0_r8+fac)
 !>
-              ad_fac=ad_fac-                                            &
-     &               ad_Bio(i,k,iFdis)*Bio2(i,k,iFdis)/(1.0_r8+fac)
+              adfac=ad_Bio(i,k,iFdis)/(1.0_r8+fac)
+              ad_fac=ad_fac-Bio2(i,k,iFdis)*adfac
+              ad_Bio(i,k,iFdis)=adfac
 !>            tl_fac=FNratio*fac2*(tl_cff*Bio(i,k,iNO3_)+               &
 !>   &                             cff*ad_Bio(i,k,iNO3_))+              &
 !>   &               cff*Bio(i,k,iNO3_)*(tl_FNratio*fac2+               &
@@ -3477,8 +3476,6 @@
      &                           SIGN(0.5_r8,MinVal-Bio1(i,k,iFdis)))*  &
      &                          ad_fac1
               ad_fac1=0.0_r8
-!!
-!! HGA end of missing code
 #endif
 !
 !  Adjoint of phytoplankton photosynthetic growth and nitrate uptake.
@@ -3551,22 +3548,22 @@
 !
 !  Adjoint of  calculate growth reduction factor due to iron limitation.
 !
-              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
-              fac1=Flimit/(Bio(i,k,iNO3_)*Nlimit)
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio1(i,k,iNO3_))
+              fac1=Flimit/(Bio1(i,k,iNO3_)*Nlimit)
 !>            tl_FNlim=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*tl_fac1
 !>
               ad_fac1=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*ad_FNlim
               ad_FNlim=0.0_r8
-!>            tl_fac1=tl_Flimit/(Bio(i,k,iNO3_)*Nlimit)-                &
+!>            tl_fac1=tl_Flimit/(Bio1(i,k,iNO3_)*Nlimit)-               &
 !>   &                (tl_Bio(i,k,iNO3_)*Nlimit+                        &
-!>   &                 Bio(i,k,iNO3_)*tl_Nlimit)*fac1/                  &
-!>   &                (Bio(i,k,iNO3_)*Nlimit)
+!>   &                 Bio1(i,k,iNO3_)*tl_Nlimit)*fac1/                 &
+!>   &                (Bio1(i,k,iNO3_)*Nlimit)
 !>
-              adfac1=ad_fac1/(Bio(i,k,iNO3_)*Nlimit)
+              adfac1=ad_fac1/(Bio1(i,k,iNO3_)*Nlimit)
               adfac2=adfac1*fac1
               ad_Flimit=ad_Flimit+adfac1
               ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-Nlimit*adfac2
-              ad_Nlimit=ad_Nlimit-Bio(i,k,iNO3_)*adfac2
+              ad_Nlimit=ad_Nlimit-Bio1(i,k,iNO3_)*adfac2
               ad_fac1=0.0_r8
 !>            tl_Nlimit=-tl_Bio(i,k,iNO3_)*Nlimit*Nlimit
 !>
@@ -3637,6 +3634,7 @@
                   ExpAtt=EXP(-Att)
                   Itop=PAR
                   PAR=Itop*(1.0_r8-ExpAtt)/Att  ! average at cell center
+                  PAR1=PAR
 !
 !  Light attenuation at the bottom of the grid cell. It is the starting
 !  PAR value for the next (deeper) vertical grid cell.
@@ -3651,6 +3649,7 @@
 !>
                 ad_ExpAtt=ad_ExpAtt+Itop*ad_PAR
                 ad_Itop=ad_Itop+ExpAtt*ad_PAR
+                ad_PAR=0.0_r8
 !
 !  Adjoint of compute average light attenuation for each grid cell.
 !  Here, AttSW is the light attenuation due to seawater and AttPhy is
@@ -3660,15 +3659,13 @@
 !>
                 ad_PAR=ad_PAR+ad_Light(i,k)
                 ad_Light(i,k)=0.0_r8
-!>              tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-!>   &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-!>   &                 (Att*Att)
+!>              tl_PAR=(-tl_Att*PAR1+tl_Itop*(1.0_r8-ExpAtt)-           &
+!>   &                  Itop*tl_ExpAtt)/Att
 !>
-                adfac=ad_PAR/(Att*Att)
-                adfac1=adfac*Att
-                ad_Att=ad_Att+Itop*(1.0_r8-ExpAtt)*adfac
-                ad_ExpAtt=ad_ExpAtt+Itop*adfac1
-                ad_Itop=ad_Itop+(1.0_r8-ExpAtt)*adfac1
+                adfac=ad_PAR/Att
+                ad_Att=ad_Att-PAR1*adfac
+                ad_ExpAtt=ad_ExpAtt-Itop*adfac
+                ad_Itop=ad_Itop+(1.0_r8-ExpAtt)*adfac
                 ad_PAR=0.0_r8
 !>              tl_Itop=tl_PAR
 !>

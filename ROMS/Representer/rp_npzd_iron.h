@@ -58,7 +58,7 @@
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                      GRID(ng) % h,                               &
 #endif
      &                      GRID(ng) % Hz,                              &
@@ -86,7 +86,7 @@
 #ifdef MASKING
      &                            rmask,                                &
 #endif
-#ifdef IRON_LIMIT
+#if defined IRON_LIMIT && defined IRON_RELAX
      &                            h,                                    &
 #endif
      &                            Hz, tl_Hz,                            &
@@ -112,7 +112,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 # endif
-# ifdef IRON_LIMIT
+# if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
@@ -130,7 +130,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 # endif
-# ifdef IRON_LIMIT
+# if defined IRON_LIMIT && defined IRON_RELAX
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
@@ -585,8 +585,8 @@
 !
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-                Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-                Bio(i,k,ibio)=BioTrc(ibio,nnew)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO
 
 #if defined IRON_LIMIT && defined IRON_RELAX
@@ -1028,18 +1028,20 @@
      &                 (tl_z_w(i,j,k)-tl_z_w(i,j,k-1))-                 &
 # ifdef TL_IOMS
      &                 AttPhy(ng)*Bio1(i,k,iPhyt)*                      &
-     &                 (z_w(i,j,k)-z_w(i,j,k-1))      ! HGA check
+     &                 (z_w(i,j,k)-z_w(i,j,k-1))
 # endif
                 ExpAtt=EXP(-Att)
-                tl_ExpAtt=-ExpAtt*tl_Att
+                tl_ExpAtt=-ExpAtt*tl_Att+                               &
+# ifdef TL_IOMS
+     &                    (1.0_r8+Att)*ExpAtt
+# endif
                 Itop=PAR
                 tl_Itop=tl_PAR
                 PAR=Itop*(1.0_r8-ExpAtt)/Att    ! average at cell center
-                tl_PAR=(Itop*(1.0_r8-ExpAtt)*tl_Att-                    &
-     &                  Att*(tl_Itop*(1.0_r8-ExpAtt)-Itop*tl_ExpAtt))/  &
-     &                 (Att*Att)-                                       &
+                tl_PAR=(-tl_Att*PAR+tl_Itop*(1.0_r8-ExpAtt)-            &
+     &                  Itop*tl_ExpAtt)/Att+                            &
 # ifdef TL_IOMS
-     &                 PAR                            ! HGA check
+     &                 Itop/Att
 # endif
 !>              Light(i,k)=PAR
 !>
@@ -1051,7 +1053,7 @@
                 PAR=Itop*ExpAtt
                 tl_PAR=tl_Itop*ExpAtt+Itop*tl_ExpAtt-                   &
 # ifdef TL_IOMS
-     &                 PAR                            ! HGA check
+     &                 PAR
 # endif
               END DO
             ELSE                                       ! night time
@@ -1119,23 +1121,24 @@
      &                          tl_FCratio*FCratio*Flimit)/             &
      &                  (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))+          &
 # ifdef TL_IOMS
-     &                  Flimit               ! HGA, removed unity factor
+     &                  Flimit*(FCratio*FCratio-K_FeC(ng)*K_FeC(ng))/   &
+     &                         (FCratio*FCratio+K_FeC(ng)*K_FeC(ng))
 # endif
 !
-              Nlimit=1.0_r8/(K_NO3(ng)+Bio(i,k,iNO3_))
+              Nlimit=1.0_r8/(K_NO3(ng)+Bio1(i,k,iNO3_))
               tl_Nlimit=-tl_Bio(i,k,iNO3_)*Nlimit*Nlimit+               &
 # ifdef TL_IOMS
-     &                  (K_NO3(ng)+2.0_r8*Bio(i,k,iNO3_))*Nlimit*Nlimit
+     &                  (K_NO3(ng)+2.0_r8*Bio1(i,k,iNO3_))*Nlimit*Nlimit
 # endif
-!>            FNlim=MIN(1.0_r8,Flimit/(Bio(i,k,iNO3_)*Nlimit))
+!>            FNlim=MIN(1.0_r8,Flimit/(Bio1(i,k,iNO3_)*Nlimit))
 !>
-              fac1=Flimit/(Bio(i,k,iNO3_)*Nlimit)
-              tl_fac1=tl_Flimit/(Bio(i,k,iNO3_)*Nlimit)-                &
+              fac1=Flimit/(Bio1(i,k,iNO3_)*Nlimit)
+              tl_fac1=tl_Flimit/(Bio1(i,k,iNO3_)*Nlimit)-               &
      &                (tl_Bio(i,k,iNO3_)*Nlimit+                        &
-     &                 Bio(i,k,iNO3_)*tl_Nlimit)*fac1/                  &
-     &                (Bio(i,k,iNO3_)*Nlimit)+                          &
+     &                 Bio1(i,k,iNO3_)*tl_Nlimit)*fac1/                 &
+     &                (Bio1(i,k,iNO3_)*Nlimit)+                         &
 # ifdef TL_IOMS
-     &                4.0_r8*fac1 
+     &                2.0_r8*fac1 
 # endif
               FNlim=MIN(1.0_r8,fac1)
               tl_FNlim=(0.5_r8+SIGN(0.5_r8,1.0_r8-fac1))*tl_fac1+       &
@@ -1203,8 +1206,6 @@
 !
 !>            fac=cff*Bio(i,k,iNO3_)*FNratio/MAX(MinVal,Bio1(i,k,iFdis))
 !>
-!!  HGA missing code only in tl_npzd_iron.h (cut/paste problem?).
-!!
               fac1=MAX(MinVal,Bio1(i,k,iFdis))
               tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iFdis)))*     &
      &                tl_Bio(i,k,iFdis)+                                &
@@ -1213,7 +1214,7 @@
      &                MinVal
 # endif
               fac2=1.0_r8/fac1
-              tl_fac2=-fac2*fac2*tl_fac1-                               &
+              tl_fac2=-fac2*fac2*tl_fac1+                               &
 # ifdef TL_IOMS
      &                2.0_r8*fac2
 # endif
@@ -1223,7 +1224,7 @@
      &               cff*Bio(i,k,iNO3_)*(tl_FNratio*fac2+               &
      &                                   FNratio*tl_fac2)-              &
 # ifdef TL_IOMS
-     &               4.0_r8*fac
+     &               3.0_r8*fac
 # endif
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
 !>
@@ -1288,15 +1289,15 @@
               ELSE
 !>              cff=-cff6/MAX(MinVal,Bio2(i,k,iFphy))
 !>
-                fac1=MAX(MinVal,Bio2(i,k,iFphy))
-                tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*   &
-     &                  tl_Bio(i,k,iFphy)+                              &
+                fac1=-MAX(MinVal,Bio2(i,k,iFphy))
+                tl_fac1=-(0.5_r8-SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*  &
+     &                  tl_Bio(i,k,iFphy)-                              &
 # ifdef TL_IOMS
      &                  (0.5_r8+SIGN(0.5_r8,MinVal-Bio2(i,k,iFphy)))*   &
      &                  MinVal
 # endif
-                cff=-cff6/fac1
-                tl_cff=-(tl_cff6+tl_fac1*cff)/fac1+                     &
+                cff=cff6/fac1
+                tl_cff=(tl_cff6-tl_fac1*cff)/fac1+                      &
 # ifdef TL_IOMS
      &                 cff
 # endif
@@ -1382,8 +1383,8 @@
 !
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-                Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-                Bio(i,k,ibio)=BioTrc(ibio,nnew)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
               END DO           
 
 #if defined IRON_LIMIT && defined IRON_RELAX
@@ -1557,6 +1558,7 @@
 #ifdef IRON_LIMIT
                 Bio1(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
+                Bio2(i,k,iFphy)=Bio(i,k,iFphy)
                 Bio(i,k,iFdis)=Bio(i,k,iFdis)+                          &
      &                         Bio(i,k,iFphy)*cff*FeRR(ng)
 #endif
@@ -1868,19 +1870,19 @@
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
 !>
               tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-     &                           tl_cff*Bio1(i,k,iFphy))/               &
+     &                           tl_cff*Bio2(i,k,iFphy))/               &
      &                          (1.0_r8+cff)+                           &
 # ifdef TL_IOMS
-     &                          cff*Bio1(i,k,iFphy)/(1.0_r8+cff)
+     &                          cff*Bio2(i,k,iFphy)/(1.0_r8+cff)
 # endif
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
 !>   &                       Bio(i,k,iFphy)*cff*FeRR(ng)
 !>
               tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
      &                          (tl_Bio(i,k,iFphy)*cff+                 &
-     &                           Bio1(i,k,iFphy)*tl_cff)*FeRR(ng)-      &
+     &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)-      &
 # ifdef TL_IOMS
-     &                          Bio1(i,k,iFphy)*cff*FeRR(ng)
+     &                          Bio2(i,k,iFphy)*cff*FeRR(ng)
 # endif
 #endif
             END DO
