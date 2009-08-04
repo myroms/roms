@@ -236,6 +236,9 @@
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: balance_ref, biconj
+#endif
 !
 !  Imported variable declarations
 !
@@ -578,6 +581,26 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
+
+# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+!
+!  Compute the reference zeta and biconjugate gradient arrays
+!  required for the balance of free surface.
+!
+          CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+          IF (exit_flag.ne.NoError) RETURN
+
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL balance_ref (ng, TILE, Lini)
+              CALL biconj (ng, TILE, iNLM, Lini)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+          wrtZetaRef(ng)=.TRUE.
+# endif
 !
           INNER_LOOP : DO my_inner=0,Ninner
             inner=my_inner
@@ -705,6 +728,15 @@
               Lweak=.FALSE.
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
               IF (exit_flag.ne.NoError) RETURN
+#  ifdef BALANCE_OPERATOR
+!
+!  Read NL model initial condition in readiness for the balance
+!  operator.
+!
+              CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+              IF (exit_flag.ne.NoError) RETURN
+              nrhs(ng)=Lini
+#  endif
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -722,7 +754,7 @@
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                   CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -753,7 +785,7 @@
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                   CALL tl_balance (ng, TILE, Lini, Lold(ng))
 #  endif
 #  ifdef POSTERIOR_ERROR_I
@@ -819,7 +851,7 @@
                     DO tile=subs*thread,subs*(thread+1)-1
                       CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng),   &
      &                                  add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                       CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                       CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -848,7 +880,7 @@
      &                                  add)
                       CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
                       CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                       CALL tl_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                       CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng),   &
@@ -870,7 +902,7 @@
                 LwrtState2d(ng)=.FALSE.
                 LwrtTime(ng)=.TRUE.
               END IF
-# endif
+# endif /* CONVOLVE */
 !
 !  Convert the current adjoint solution in ADJname to impulse forcing.
 !  Write out impulse forcing into TLFname NetCDF file. To facilitate
@@ -955,7 +987,7 @@
               wrtNLmod(ng)=.FALSE.
               wrtTLmod(ng)=.FALSE.
 
-#  ifdef POSTERIOR_ERROR_F
+# ifdef POSTERIOR_ERROR_F
 !
 !  Copy the final time tl_var(Lold) into ad_var(Lold) so that it can be
 !  written to the Hessian NetCDF file.
@@ -978,7 +1010,7 @@
                 CALL wrt_hessian (ng, Lold(ng), Lold(ng))
                 IF (exit_flag.ne.NoERRor) RETURN
               END IF
-#  endif
+# endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Use conjugate gradient algorithm to find a better approximation
@@ -1102,6 +1134,16 @@
           Lweak=.FALSE.
           CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
           IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef BALANCE_OPERATOR
+!
+!  Read NL model initial condition in readiness for the balance
+!  operator.
+!
+          CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+          IF (exit_flag.ne.NoError) RETURN
+          nrhs(ng)=Lini
+#  endif
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -1119,7 +1161,7 @@
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
               CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -1152,7 +1194,7 @@
               CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
               CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
               CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
               CALL tl_balance (ng, TILE, Lini, Lold(ng))
 #  endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
@@ -1198,7 +1240,7 @@
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                   CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -1226,7 +1268,7 @@
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), Lweak, 2)
                   CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                   CALL tl_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
@@ -1247,7 +1289,7 @@
             LwrtState2d(ng)=.FALSE.
             LwrtTime(ng)=.TRUE.
           END IF
-# endif
+# endif /* CONVOLVE */
 !
 !  Convert the current adjoint solution in ADJname to impulse forcing.
 !  Write out impulse forcing into TLFname NetCDF file. To facilitate
@@ -1493,6 +1535,15 @@
 !
 !  Copy TLM into ADM state arrays and convolve.
 !
+#  ifdef BALANCE_OPERATOR
+!
+!  Read NL model initial condition in readiness for the balance
+!  operator.
+!
+            CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+            IF (exit_flag.ne.NoError) RETURN
+            nrhs(ng)=Lini
+#  endif
             add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,add,numthreads)
@@ -1500,7 +1551,7 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -1521,13 +1572,13 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lnew(ng), add)
                 CALL tl_convolution (ng, TILE, Lnew(ng), Lweak, 2)
                 CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lini, Lnew(ng))
 #  endif
               END DO
             END DO
 !$OMP END PARALLEL DO
-# endif
+# endif /* CONVOLVE */
 !
 !  Compute Lanczos vector and eigenvectors of the posterior analysis
 !  error covariance matrix.
@@ -1590,6 +1641,15 @@
 !
 !  Copy TLM into ADM state arrays and convolve.
 !
+#  ifdef BALANCE_OPERATOR
+!
+!  Read NL model initial condition in readiness for the balance
+!  operator.
+!
+            CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+            IF (exit_flag.ne.NoError) RETURN
+            nrhs(ng)=Lini
+#  endif
             add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,add,numthreads)
@@ -1597,7 +1657,7 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, Lini, Lold(ng))
 #  endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
@@ -1618,13 +1678,13 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lnew(ng), add)
                 CALL tl_convolution (ng, TILE, Lnew(ng), Lweak, 2)
                 CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
-#  ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lini, Lnew(ng))
 #  endif
               END DO
             END DO
 !$OMP END PARALLEL DO
-# endif
+# endif /* CONVOLVE */
 !
 !  Compute Lanczos vector and eigenvectors of the posterior analysis
 !  error covariance matrix.
@@ -1668,7 +1728,8 @@
           END DO POST_ILOOP
 
         END DO POST_OLOOP
-#endif
+
+#endif /* POSTERIOR_EOFS */
 !
 !  Done.  Set history file ID to closed state since we manipulated
 !  its indices with the forward file ID which was closed above.

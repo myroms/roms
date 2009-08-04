@@ -442,6 +442,25 @@
       END IF
 #endif
 
+#if (defined W4DPSAS || defined TL_W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY)          && \
+    (defined ADJUST_BOUNDARY || defined ADJUST_WSTRESS ||\
+     defined ADJUST_STFLUX)
+!
+!-----------------------------------------------------------------------
+!  Read in the surface forcing and/or obc increments for PSAS from
+!  record 1 of the TLM initial NetCDF file.
+!-----------------------------------------------------------------------
+!
+      IF (Nrun.gt.1) THEN
+        CALL get_state (ng, 12, 1, ITLname(ng), 1, Tindex)
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, exit_flag)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#endif
+
 #ifdef TLM_CHECK
 !
 !-----------------------------------------------------------------------

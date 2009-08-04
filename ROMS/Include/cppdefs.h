@@ -550,6 +550,7 @@
 ** SPLINES_VCONV       use to activate implicit splines vertical convolution **
 ** VCONVOLUTION        use to add vertical correlation to 3D convolution     **
 ** VERIFICATION        use if writing out solution at observation locations  **
+** ZETA_ELLIPTIC       use if SSH elliptic Equation in balance operator      **
 **                                                                           **
 ** OPTION for processing the full grid range (interior and boundary points)  **
 ** of the state vector in variational data assimilation and generalized      **

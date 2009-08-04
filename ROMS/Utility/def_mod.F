@@ -44,6 +44,9 @@
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
       integer :: MinnerDim, MouterDim, NinnerDim, NouterDim, threeDim
 # endif
+# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      integer :: RetaDim, RxiDim
+# endif
       integer :: i, j, status, varid
       integer :: CostDim(2), Vsize(4), vardim(3)
 # ifdef DISTRIBUTE
@@ -100,6 +103,16 @@
 !  Define dimensions.
 !-----------------------------------------------------------------------
 !
+# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+        status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'xi_rho',         &
+     &                 IOBOUNDS(ng)%xi_rho, RxiDim)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'eta_rho',        &
+     &                 IOBOUNDS(ng)%eta_rho, RetaDim)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'record',         &
      &                 2, recordDim)
         IF (exit_flag.ne.NoError) RETURN
@@ -532,7 +545,7 @@
 !
         Vinfo( 1)='cg_QG'
         Vinfo( 2)='Lanczos vector normalization factor'
-        vardim(1)=NinnerDim
+        vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
@@ -705,6 +718,39 @@
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
+!
+!  Define actual model penalty function.
+!
+        Vinfo( 1)='Jb'
+        Vinfo( 2)='actual model penalty function' 
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define actual data penalty function.
+!
+        Vinfo( 1)='Jobs'
+        Vinfo( 2)='actual data penalty function'   
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define actual data penalty function.
+!  
+        Vinfo( 1)='Jact'
+        Vinfo( 2)='actual total penalty function'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname,                  &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
 !
 !  Observations screening/normalization scale.
@@ -835,6 +881,40 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+!
+!  Define previous values of TLmodVal.
+!
+        Vinfo( 1)='TLmodVal_S'
+        Vinfo( 2)='tangent linear model at observation locations'
+        vardim(1)=datumDim
+        vardim(2)=NinnerDim
+        vardim(3)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 3, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined TL_W4DVAR          || defined W4DVAR             || \
+     defined W4DVAR_SENSITIVITY
+!  
+!  Define initial values of RPmodVal.
+!       
+        Vinfo( 1)='RPmodel_initial'
+        Vinfo( 2)='initial representer model at observation locations'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+!
+!  Define reference free-surface used in the balance operator.
+!
+        Vinfo( 1)='zeta_ref'
+        Vinfo( 2)='reference free-surface, balance operator'
+        Vinfo( 3)=Vname(3,idFsur)
+        status=def_var(ng, iNLM, ncMODid(ng), modVid(idFsur,ng),        &
+     &                 NF_FOUT, 2, (/RxiDim, RetaDim/), Aval, Vinfo,    &
+     &                 ncname)
 # endif
 !
 !-----------------------------------------------------------------------

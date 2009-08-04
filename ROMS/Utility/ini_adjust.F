@@ -47,7 +47,7 @@
 # ifdef TLM_CHECK
       PUBLIC :: ini_perturb
 # endif
-# if defined IOM    || defined TL_W4DVAR          || \ 
+# if defined IOM    || defined TL_W4DVAR          || \
      defined W4DVAR || defined W4DVAR_SENSITIVITY
       PUBLIC :: rp_ini_adjust
 # endif

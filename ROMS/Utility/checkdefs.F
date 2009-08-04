@@ -163,7 +163,7 @@
       Coptions(is:is+13)=' CONVOLUTION,'
       idriver=idriver+1
 #endif
-#if defined CONVOLVE && defined W4DVAR
+#if defined CONVOLVE && defined W4DVAR && defined W4DVAR_SENSITIVITY
       IF (Master) WRITE (stdout,20) 'CONVOLVE',                         &
      &   'Convolve Adjoint State Solution.'
       is=LEN_TRIM(Coptions)+1
@@ -2766,6 +2766,13 @@
      &   'Nudging toward sea surface height climatology.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ZCLM_NUDGING,'
+#endif
+#if defined ZETA_ELLIPTIC && defined BALANCE_OPERATOR && \
+    defined FOUR_DVAR
+      IF (Master) WRITE (stdout,20) 'ZETA_ELLIPTIC',                    &
+     &   'Solving SSH elliptic equation in balance operator.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' ZETA_ELLIPTIC,'
 #endif
 #ifdef ZOS_HSIG
       IF (Master) WRITE (stdout,20) 'ZOS_HSIG',                         &

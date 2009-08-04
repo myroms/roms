@@ -137,10 +137,12 @@
       integer :: i, ic, j, iobs, ivec, Lscale, info
 
       real(r8) :: zbet, eps, preducv, preducy
-      real(r8) :: Jopt, Jf, Jmod, Jdata
+      real(r8) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact
 
       real(r8), dimension(NinnLoop) :: zu, zgam
+      real(r8), dimension(NinnLoop) :: ztemp1, ztemp2, zu1, zu2
       real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw, zt
+      real(r8), dimension(Ndatum(ng)) :: zhv, zht, zd
       real(r8), dimension(Ninner,3) :: zwork
       real(r8), dimension(2*(NinnLoop-1)) :: work
       real(r8), dimension(Ninner,Ninner) :: zgv
@@ -174,6 +176,9 @@
         Jf=0.0_r8
         Jdata=0.0_r8
         Jmod=0.0_r8
+        Jb=0.0_r8
+        Jobs=0.0_r8
+        Jact=0.0_r8
         eps=0.0_r8
         preducv=0.0_r8
         preducy=0.0_r8
@@ -283,6 +288,15 @@
 
             preducv=1.0_r8
             preducy=1.0_r8
+!
+! Compute the actual penalty function terms.
+!
+            Jb=0.0_r8
+            Jobs=0.0_r8
+            DO iobs=1,Ndatum(ng)
+              Jobs=Jobs+vgrad0(iobs)*vgrad0(iobs)
+            END DO
+            Jact=Jb+Jobs
 
           ELSE
 
@@ -399,7 +413,8 @@
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
 # if defined SENSITIVITY_4DVAR || \
-     defined TL_W4DPSAS        || defined TL_W4DVAR
+     defined TL_W4DPSAS        || defined TL_W4DVAR || \
+     defined W4DPSAS           || defined W4DVAR
             TLmodVal_S(iobs,innLoop,outLoop)=TLmodVal(iobs)
 # endif
 !
@@ -578,6 +593,9 @@
 !     Jdata = data misfit for the state estimate
 !     Jmod  = the model penalty function (the sum of the
 !             dynamical, initial and boundary penalties)     
+!     Jb    = the ACTUAL model penalty function.
+!     Jobs  = the ACTUAL data penalty function.
+!     Jact  = the ACTUAL total penalty function.
 !
 !  NOTE:  Unlike IS4DVAR where we compute the actual cost function
 !         for each iteration that decreases with increasing 
@@ -610,7 +628,103 @@
      &              (px(iobs)+cg_pxsave(iobs))
             END DO
             Jmod=Jopt-Jdata
-          ENDIF
+          END IF
+!
+!  Compute the actual penalty function terms.
+!
+          DO iobs=1,Ndatum(ng)
+            zd(iobs)=-vgrad0(iobs)*SQRT(ObsErr(iobs))
+          END DO
+          DO iobs=1,Ndatum(ng)
+            IF (ObsErr(iobs).ne.0.0_r8) THEN
+              zhv(iobs)=zd(iobs)/SQRT(ObsErr(iobs))
+            END IF
+          END DO
+          DO ivec=1,innLoop
+            ztemp1(ivec)=0.0_r8
+            DO iobs=1,Ndatum(ng)
+              ztemp1(ivec)=ztemp1(ivec)+                                &
+     &                     zcglwk(iobs,ivec,outLoop)*zhv(iobs)
+            END DO
+          END DO
+          zbet=cg_delta(1,outLoop)
+          zu1(1)=ztemp1(1)/zbet
+          DO ivec=2,innLoop
+            zgam(ivec)=cg_beta(ivec,outLoop)/zbet
+            zbet=cg_delta(ivec,outLoop)-                                &
+     &           cg_beta(ivec,outLoop)*zgam(ivec)
+            zu1(ivec)=(ztemp1(ivec)-                                    &
+     &                 cg_beta(ivec,outLoop)*zu1(ivec-1))/zbet
+          END DO
+          ztemp2(innLoop)=zu1(innLoop)
+
+          DO ivec=innLoop-1,1,-1
+            zu1(ivec)=zu1(ivec)-zgam(ivec+1)*zu1(ivec+1)
+            ztemp2(ivec)=zu1(ivec)
+          END DO
+          DO iobs=1,Ndatum(ng)
+            zhv(iobs)=0.0_r8
+          END DO
+          DO iobs=1,Ndatum(ng)
+            DO ivec=1,innLoop
+              zhv(iobs)=zhv(iobs)+                                      &
+     &                  ztemp2(ivec)*TLmodVal_S(iobs,ivec,outLoop)
+            END DO
+          END DO
+! 
+!  Compute Jb.
+!
+          DO ivec=1,innLoop
+            ztemp1(ivec)=0.0_r8
+            DO iobs=1,Ndatum(ng)
+              IF (ObsErr(iobs).NE.0.0_r8) THEN
+                ztemp1(ivec)=ztemp1(ivec)+                              &
+     &                       zcglwk(iobs,ivec,outLoop)*zhv(iobs)/       &
+     &                       SQRT(ObsErr(iobs))
+              END IF
+            END DO
+          END DO
+          zbet=cg_delta(1,outLoop)
+          zu2(1)=ztemp1(1)/zbet
+          DO ivec=2,innLoop
+            zgam(ivec)=cg_beta(ivec,outLoop)/zbet
+            zbet=cg_delta(ivec,outLoop)-                                &
+     &           cg_beta(ivec,outLoop)*zgam(ivec)
+            zu2(ivec)=(ztemp1(ivec)-                                    &
+     &                 cg_beta(ivec,outLoop)*zu2(ivec-1))/zbet
+          END DO
+          ztemp2(innLoop)=zu2(innLoop)
+          DO ivec=innLoop-1,1,-1
+            zu2(ivec)=zu2(ivec)-zgam(ivec+1)*zu2(ivec+1)
+            ztemp2(ivec)=zu2(ivec)
+          END DO
+          DO iobs=1,Ndatum(ng)
+            zht(iobs)=0.0_r8
+          END DO
+          DO iobs=1,Ndatum(ng)
+            DO ivec=1,innLoop
+              IF (ObsErr(iobs).NE.0.0_r8) THEN
+                zht(iobs)=zht(iobs)+                                    &
+     &                    ztemp2(ivec)*zcglwk(iobs,ivec,outLoop)/       &
+     &                    SQRT(ObsErr(iobs))
+              END IF
+            END DO
+          END DO
+          Jb=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            Jb=Jb+zd(iobs)*zht(iobs)
+          END DO
+! 
+!  Compute Jobs.
+!
+          Jobs=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            IF (ObsErr(iobs).NE.0.0_r8) THEN
+              Jobs=Jobs+(zhv(iobs)-zd(iobs))*(zhv(iobs)-zd(iobs))/      &
+     &             ObsErr(iobs)
+            END IF
+          END DO
+          Jact=Jb+Jobs
 !
 !  Put the new trial solution into the adjoint vector for the next
 !  loop or put the final solution into the adjoint vector on the
@@ -669,6 +783,9 @@
      &                    outLoop, innLoop, Jdata,                      &
      &                    outLoop, innLoop, Jmod,                       &
      &                    outLoop, innLoop, Jopt,                       &
+     &                    outLoop, innLoop, Jb,                         &
+     &                    outLoop, innLoop, Jobs,                       &
+     &                    outLoop, innLoop, Jact,                       &
      &                    outLoop, innLoop
         DO ivec=1,innLoop
           WRITE (stdout,40) ivec, cg_delta(ivec,outLoop),               &
@@ -822,7 +939,8 @@
 !
       CALL mp_bcastf (ng, model, ADmodVal)
 #  if defined SENSITIVITY_4DVAR || \
-      defined TL_W4DPSAS        || defined TL_W4DVAR
+      defined TL_W4DPSAS        || defined TL_W4DVAR || \
+      defined W4DPSAS           || defined W4DVAR
       CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))
 #  endif
       CALL mp_bcasti (ng, model, info)
@@ -849,7 +967,8 @@
 !-----------------------------------------------------------------------
 !
       CALL cg_write (ng, model, innLoop, outLoop,                       &
-     &               Jf, Jdata, Jmod, Jopt, preducv, preducy)
+     &               Jf, Jdata, Jmod, Jopt, Jb, Jobs, Jact,             &
+     &               preducv, preducy)
 !
  20   FORMAT (/,' CONGRAD - Fatal error, not possitive definite',       &
      &        ' algorithm:',/,                                          &
@@ -870,6 +989,12 @@
      &        'Model penalty function,                Jmod = ',         &
      &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
      &        'Optimal penalty function,              Jopt = ',         &
+     &        1p,e14.7,/,/,1x,'(',i3.3,',',i3.3,'): ',                  &
+     &        'Actual Model penalty function,           Jb = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'Actual data penalty function,          Jobs = ',         &
+     &        1p,e14.7,/,/,1x,'(',i3.3,',',i3.3,'): ',                  &
+     &        'Actual total penalty function,         Jact = ',         &
      &        1p,e14.7,/,/,1x,'(',i3.3,',',i3.3,'): ',                  &
      &        'Lanczos vectors - cg_delta, cg_beta, zwork:',/)
  40   FORMAT (6x,i3.3,4x,3(1p,e15.8,5x))
@@ -1132,7 +1257,8 @@
       END SUBROUTINE rprecond
 
       SUBROUTINE cg_write (ng, model, innLoop, outLoop,                 &
-     &                     Jf, Jdata, Jmod, Jopt, preducv, preducy)
+     &                     Jf, Jdata, Jmod, Jopt, Jb, Jobs, Jact,       &
+     &                     preducv, preducy)
 !
 !=======================================================================
 !                                                                      !
@@ -1156,6 +1282,7 @@
       integer, intent(in) :: ng, model, innLoop, outLoop
 
       real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(r8), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
@@ -1317,6 +1444,27 @@
      &                      ncid = ncMODid(ng))
       IF (exit_flag.ne.NoError) RETURN
 !
+!  Actual model penalty function.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jb',               &
+     &                      Jb, (/innLoop+1,outLoop/), (/1,1/),         &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Actual data penalty function.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jobs',             &
+     &                      Jobs, (/innLoop+1,outLoop/), (/1,1/),       &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Actual total penalty function.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jact',             &
+     &                      Jact, (/innLoop+1,outLoop/), (/1,1/),       &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
 !  Initial gradient for minimization.
 !
       IF (innLoop.eq.0) THEN
@@ -1334,6 +1482,16 @@
      &                      (/1,innLoop+1,outLoop/), (/Ndatum(ng),1,1/),&
      &                      ncid = ncMODid(ng))
       IF (exit_flag.ne.NoError) RETURN
+!
+!  Saved TLmodVal_S.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'TLmodVal_S',     &
+     &                        TLmodVal_S(:,innLoop,outLoop),            &
+     &                        (/1,innLoop,outLoop/), (/Ndatum(ng),1,1/),&
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Synchronize model/observation NetCDF file to disk.

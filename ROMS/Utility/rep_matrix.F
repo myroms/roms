@@ -8,8 +8,8 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine computes the observation impact to the 4DVAR data      !
-!  assimilation system, weak constraint (observation space).           !
+!  This routine estimates the inverse of the stabilized representer    !
+!  matrix using the Lanczos vectors from the inner-loops.              !
 !                                                                      !
 !=======================================================================
 !

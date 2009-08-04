@@ -467,6 +467,13 @@
 !
         integer :: NSA
 #endif
+
+#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
+!
+!  Number of biconjugate gradient algorithm iteractions.
+!
+        integer, dimension(Ngrids) :: Nbico 
+#endif
 !
 !-----------------------------------------------------------------------
 !  Model state parameters.
@@ -670,6 +677,9 @@
 #endif
 #ifdef ADJUST_STFLUX
           NSV(ng)=NSV(ng)+NT(ng)
+#endif
+#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
+          Nbico(ng)=200
 #endif
         END DO
 !

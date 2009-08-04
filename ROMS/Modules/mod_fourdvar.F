@@ -146,7 +146,8 @@
 #  ifdef TLM_OBS
         real(r8), allocatable :: TLmodVal(:)
 #   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS || \
-       defined TL_W4DVAR
+       defined TL_W4DVAR            || defined W4DPSAS    || \
+       defined W4DVAR
         real(r8), allocatable :: TLmodVal_S(:,:,:)
 #   endif
 #   if defined TL_W4DPSAS           || defined W4DPSAS    || \
@@ -421,6 +422,16 @@
 !
         real(r8), allocatable :: cg_Ritz(:,:)
         real(r8), allocatable :: cg_RitzErr(:,:)
+# endif
+# if defined BALANCE_OPERATOR
+!
+!-----------------------------------------------------------------------
+!  Balance operator variables.
+!-----------------------------------------------------------------------
+!
+!  Logical switch to write balance operator reference free-surface.
+!
+        logical, dimension(Ngrids) :: wrtZetaRef
 # endif
 # if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
      defined POSTERIOR_ERROR_F
@@ -779,7 +790,8 @@
       allocate ( TLmodVal(Mobs) )
       TLmodVal = IniVal
 #   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS || \
-       defined TL_W4DVAR
+       defined TL_W4DVAR            || defined W4DPSAS    || \
+       defined W4DVAR
       allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
       TLmodVal_S = IniVal
 #   endif
@@ -1050,6 +1062,9 @@
         wrtNLmod(ng)=.FALSE.
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
+# ifdef BALANCE_OPERATOR
+        wrtZetaRef(ng)=.FALSE.
+# endif
         KhMin(ng)=1.0_r8
         KhMax(ng)=1.0_r8
         KvMin(ng)=1.0_r8

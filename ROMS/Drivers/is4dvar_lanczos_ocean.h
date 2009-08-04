@@ -241,6 +241,9 @@
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: balance_ref, biconj
+#endif
 !
 !  Imported variable declarations
 !
@@ -326,6 +329,23 @@
             CALL wrt_ini (ng, 1)
             IF (exit_flag.ne.NoError) RETURN
           END IF
+
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+!
+!  Compute the reference zeta and biconjugate gradient arrays
+!  required for the balance of free surface.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL balance_ref (ng, TILE, Lini)
+              CALL biconj (ng, TILE, iNLM, Lini)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+          wrtZetaRef(ng)=.TRUE.
+#endif
 !
 !  If first pass, compute or read in background-error covariance
 !  normalization factors. If computing, write out factors to
@@ -617,8 +637,9 @@
      &                      LADJ2)
             IF (exit_flag.ne.NoError) RETURN
 #ifdef BALANCE_OPERATOR
-            CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
+            CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
             IF (exit_flag.ne.NoError) RETURN
+            nrhs(ng)=Lini
 #endif
 !
 !  Convert observation cost function gradient, GRADx(Jo), from model
@@ -971,6 +992,11 @@
 !  by applying the convolution.
 !  Note that Lfinp=Lbinp so the the forcing and boundary
 !  adjustments are both processsed correctly.
+# ifdef BALANCE_OPERATOR
+!  Currently, We don't need the call to tl_balance below, but we
+!  might later if we impose a balance constraint on the wind stress
+!  corrections.
+# endif
 !
 !  AMM: CHECK WHAT HAPPENS WITH SECONDARY PRECONDITIONING.
 !
@@ -988,7 +1014,7 @@
               CALL tl_convolution (ng, TILE, Lcon, Lweak, 2)
               CALL tl_variability (ng, TILE, Lcon, Lweak)
 # ifdef BALANCE_OPERATOR
-              CALL tl_balance (ng, TILE, Lini, Lcon)
+!!            CALL tl_balance (ng, TILE, Lini, Lcon)
 # endif
             END DO
           END DO
