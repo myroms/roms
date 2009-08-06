@@ -438,7 +438,7 @@
       T_LOOP1 :DO itrc=1,NT(ng)
         K_LOOP: DO k=1,N(ng)
 
-#   if defined TS_C2HADVECTION
+#   if defined TS_C2HADVECTION_TL
 !
 !  Second-order, centered differences horizontal advective fluxes.
 !
@@ -474,9 +474,9 @@
           END DO
 #   else
 !
-#    if defined TS_U3HADVECTION
+#    if defined TS_U3HADVECTION_TL
 !  Third-order, uptream-biased horizontal advective fluxes.
-#    elif defined TS_A4HADVECTION
+#    elif defined TS_A4HADVECTION_TL
 !  Fourth-order, Akima horizontal advective fluxes.
 #    else
 !  Fourth-order, centered differences horizontal advective fluxes.
@@ -517,10 +517,10 @@
 !
           DO j=Jstr,Jend
             DO i=Istr-1,Iend+1
-#    if defined TS_U3HADVECTION
+#    if defined TS_U3HADVECTION_TL
               curv(i,j)=FX(i+1,j)-FX(i,j)
               tl_curv(i,j)=tl_FX(i+1,j)-tl_FX(i,j)
-#    elif defined TS_A4HADVECTION
+#    elif defined TS_A4HADVECTION_TL
               cff=2.0_r8*FX(i+1,j)*FX(i,j)
               tl_cff=2.0_r8*(tl_FX(i+1,j)*FX(i,j)+                      &
      &                       FX(i+1,j)*tl_FX(i,j))
@@ -544,7 +544,7 @@
           cff2=1.0_r8/3.0_r8
           DO j=Jstr,Jend
             DO i=Istr,Iend+1
-#    ifdef TS_U3HADVECTION
+#    ifdef TS_U3HADVECTION_TL
 !>            FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
 !>   &                (t(i-1,j,k,nstp,itrc)+                            &
 !>   &                 t(i  ,j,k,nstp,itrc))-                           &
@@ -624,10 +624,10 @@
 !
           DO j=Jstr-1,Jend+1
             DO i=Istr,Iend
-#    if defined TS_U3HADVECTION
+#    if defined TS_U3HADVECTION_TL
               curv(i,j)=FE(i,j+1)-FE(i,j)
               tl_curv(i,j)=tl_FE(i,j+1)-tl_FE(i,j)
-#    elif defined TS_A4HADVECTION
+#    elif defined TS_A4HADVECTION_TL
               cff=2.0_r8*FE(i,j+1)*FE(i,j)
               tl_cff=2.0_r8*(tl_FE(i,j+1)*FE(i,j)+                      &
      &                       FE(i,j+1)*tl_FE(i,j))
@@ -651,7 +651,7 @@
           cff2=1.0_r8/3.0_r8
           DO j=Jstr,Jend+1
             DO i=Istr,Iend
-#    ifdef TS_U3HADVECTION
+#    ifdef TS_U3HADVECTION_TL
 !>            FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
 !>   &                (t(i,j-1,k,nstp,itrc)+                            &
 !>   &                 t(i,j  ,k,nstp,itrc))-                           &
@@ -785,7 +785,7 @@
 !
         T_LOOP2: DO itrc=1,NT(ng)
 
-#   ifdef TS_SVADVECTION
+#   ifdef TS_SVADVECTION_TL
 !
 !  Build conservative parabolic splines for the BASIC STATE vertical
 !  derivatives "FC" of the tracer.
@@ -905,7 +905,7 @@
             FC(i,0)=0.0_r8
           END DO
 
-#  elif defined TS_A4VADVECTION
+#  elif defined TS_A4VADVECTION_TL
 !
 !  Fourth-order, Akima vertical advective flux.
 !
@@ -969,7 +969,7 @@
             FC(i,N(ng))=0.0_r8
             tl_FC(i,N(ng))=0.0_r8
           END DO
-#   elif defined TS_C2VADVECTION
+#   elif defined TS_C2VADVECTION_TL
 !
 !  Second-order, central differences vertical advective flux.
 !
