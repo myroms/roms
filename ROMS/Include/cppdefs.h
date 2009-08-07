@@ -192,6 +192,7 @@
 **                                                                           **
 ** FLOATS              use to activate simulated Lagrangian drifters         **
 ** FLOAT_VWALK         use if vertical random walk                           **
+** VWALK_FORWARD       use if foward time stepping vertical random walk      **
 **                                                                           **
 ** OPTION to activate conservative, parabolic spline reconstruction of       **
 ** vertical derivatives. Notice that there also options (see above) for      **

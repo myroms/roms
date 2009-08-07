@@ -1,16 +1,6 @@
 #include "cppdefs.h"
+      MODULE interp_floats_mod
 #if defined NONLINEAR && defined FLOATS
-      SUBROUTINE interp_floats (ng, LBi, UBi, LBj, UBj, LBk, UBk,       &
-     &                          Lstr, Lend, itime, ifield,              &
-     &                          gtype, maskit, nudg,                    &
-     &                          pm, pn,                                 &
-# ifdef SOLVE3D
-     &                          Hz,                                     &
-# endif
-# ifdef MASKING
-     &                          Amask,                                  &
-# endif
-     &                          A, MyThread, bounded, track)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -38,6 +28,7 @@
 !     gtype      Grid type. If negative, interpolate floats slopes.    !
 !     maskit     Should the field be masked? Ignored if Land/Sea       !
 !                 masking is not active.                               !
+!     Fspval     Special values for unbounded float.                   !
 !     nudg       Vertical random walk term to be added to the field.   !
 !     pm         Inverse grid spacing (1/m) in the XI-direction.       !
 !     pn         Inverse grid spacing (1/m) in the ETA-direction.      !
@@ -53,6 +44,27 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+
+      PRIVATE
+      PUBLIC  :: interp_floats
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE interp_floats (ng, LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                          Lstr, Lend, itime, ifield,              &
+     &                          gtype, maskit, Fspval, nudg,            &
+     &                          pm, pn,                                 &
+# ifdef SOLVE3D
+     &                          Hz,                                     &
+# endif
+# ifdef MASKING
+     &                          Amask,                                  &
+# endif
+     &                          A, MyThread, bounded, track)
+!***********************************************************************
+!
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
@@ -67,6 +79,8 @@
       logical, intent(in) :: maskit
       logical, intent(in) :: MyThread(Lstr:Lend)
       logical, intent(in) :: bounded(Nfloats(ng))
+
+      real(r8), intent(in) :: Fspval
 
       real(r8), intent(in) :: nudg(Lstr:Lend)
 
@@ -146,7 +160,7 @@
       DO l=Lstr,Lend
         IF (MyThread(l)) THEN
           IF (.not.bounded(l)) THEN
-            track(ifield,itime,l)=spval
+            track(ifield,itime,l)=Fspval
           ELSE
 !
 !  Calculate indices and weights for vertical interpolation, if any.
@@ -488,8 +502,8 @@
           END IF
         END IF
       END DO
-#else
-      SUBROUTINE interp_floats
-#endif
+
       RETURN
       END SUBROUTINE interp_floats
+#endif
+      END MODULE interp_floats_mod

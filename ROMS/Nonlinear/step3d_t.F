@@ -175,6 +175,9 @@
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
 # endif
 # ifdef DISTRIBUTE
+#  if defined FLOATS && defined FLOAT_VWALK
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+#  endif
       USE mp_exchange_mod, ONLY : mp_exchange4d
 # endif
 # ifdef TS_MPDATA
@@ -1302,13 +1305,27 @@
 !  floats random walk.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
           DO k=1,N(ng)
             dAktdz(i,j,k)=(Akt(i,j,k,1)-Akt(i,j,k-1,1))/Hz(i,j,k)
           END DO
         END DO
       END DO
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!  Apply periodic boundary conditions.
+!
+      CALL exchange_r3d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        dAktdz)
+#  endif
+#  ifdef DISTRIBUTE
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    dAktdz)
+#  endif
 # endif
       RETURN
       END SUBROUTINE step3d_t_tile

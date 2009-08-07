@@ -908,7 +908,7 @@
 #endif
 #if defined FLOATS && defined FLOAT_VWALK && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'FLOAT_VWALK',                      &
-     &   'Lagrangian drifter vertical diffusion.'
+     &   'Lagrangian drifters with vertical diffusion, random walk.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' FLOAT_VWALK,'
 #endif
@@ -2586,6 +2586,19 @@
      &   'Proccess model solution at observation locations.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' VERIFICATION,'
+#endif
+#if defined FLOATS && defined FLOAT_VWALK && defined SOLVE3D
+# ifdef VWALK_FORWARD
+      IF (Master) WRITE (stdout,20) 'VWALK_FORWARD',                    &
+     &   'Lagrangian drifters, forward stepping random walk.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' VWALK_FORWARD,'
+# else
+      IF (Master) WRITE (stdout,20) '!VWALK_FORWARD',                   &
+     &   'Lagrangian drifters, predictor/corrector random walk.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' !VWALK_FORWARD,'
+# endif
 #endif
 #if defined VISC_3DCOEF
       IF (Master) WRITE (stdout,20) 'VISC_3DCOEF',                      &
