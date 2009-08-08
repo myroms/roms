@@ -223,10 +223,10 @@
 */
 
 #ifdef DISTRIBUTE
-# define SOUTH_WEST_TEST .true.
-# define NORTH_WEST_TEST .true.
-# define SOUTH_EAST_TEST .true.
-# define NORTH_EAST_TEST .true.
+# define SOUTH_WEST_TEST .TRUE.
+# define NORTH_WEST_TEST .TRUE.
+# define SOUTH_EAST_TEST .TRUE.
+# define NORTH_EAST_TEST .TRUE.
 #else
 # define SOUTH_WEST_TEST (Istr.eq.1).and.(Jstr.eq.1)
 # define NORTH_WEST_TEST (Istr.eq.1).and.(Jend.eq.Mm(ng))
@@ -357,7 +357,7 @@
 
 # if !defined TS_A4VADVECTION_TL       && \
      !defined TS_C2VADVECTION_TL       && \
-     !defined TS_C4VADVEVTION_TL       && \
+     !defined TS_C4VADVECTION_TL       && \
      !defined TS_SVADVECTION_TL
 #  if defined TS_A4VADVECTION
 #   define TS_A4VADVECTION_TL

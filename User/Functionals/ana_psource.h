@@ -23,10 +23,10 @@
 
 #include "tile.h"
 !
-      CALL ana_psource_grid (ng, tile, model,                           &
+      CALL ana_psource_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       nnew(ng), knew(ng), Nsrc(ng),              &
+     &                       nnew(ng), knew(ng), Msrc, Nsrc(ng),        &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
      &                       OCEAN(ng) % vbar,                          &
@@ -67,10 +67,10 @@
       END SUBROUTINE ana_psource
 !
 !***********************************************************************
-      SUBROUTINE ana_psource_grid (ng, tile, model,                     &
+      SUBROUTINE ana_psource_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             nnew, knew, Nsrc,                    &
+     &                             nnew, knew, Msrc, Nsrc,              &
      &                             zeta, ubar, vbar,                    &
 #ifdef SOLVE3D
      &                             u, v, z_w,                           &
@@ -89,12 +89,15 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
       USE mod_scalars
 #ifdef SEDIMENT
       USE mod_sediment
 #endif
-#ifndef ASSUMED_SHAPE
-      USE mod_sources, ONLY : Msrc
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+      USE distribute_mod, ONLY : mp_collect, mp_reduce
 #endif
 !
 !  Imported variable declarations.
@@ -103,6 +106,7 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nnew, knew
+      integer, intent(in) :: Msrc
 
       integer, intent(out) :: Nsrc
 !
@@ -168,8 +172,19 @@
 !
 !  Local variable declarations.
 !
-      integer :: is, i, itrc, j, k, ised
-      real(r8) :: fac, my_area, ramp
+      integer :: Npts, NSUB, is, i, j, k, ised
+
+      real(r8) :: Pspv = 0.0_r8
+      real(r8) :: area, cff, fac, my_area, ramp
+
+#if defined DISTRIBUTE && defined SOLVE3D
+      real(r8), dimension(Msrc*N(ng)) :: Pwrk
+#endif
+#if defined DISTRIBUTE
+      real(r8), dimension(1) :: buffer
+
+      character (len=3), dimension(1) :: io_handle
+#endif
 
 #include "set_bounds.h"
 !
@@ -177,6 +192,10 @@
 !  Set tracer and/or mass point sources and/or sink.
 !-----------------------------------------------------------------------
 !
+!! WARNING:  This routine is extremely difficult in parallel
+!!           application.  See examples for how to do this in
+!!           source file:  "ROMS/Functionals/ana_psource.h".
+!!
       IF (iic(ng).eq.ntstart(ng)) THEN
 !
 !  Set-up point Sources/Sink number (Nsrc), direction (Dsrc), I- and
@@ -186,15 +205,29 @@
 !  located at U- or V-points so the grid locations should range from
 !  1 =< Isrc =< L  and  1 =< Jsrc =< M.
 !
+        Lsrc(:,:)=.FALSE.
 #if defined MY_APPLICATION
-        Lsrc=.FALSE.
-        Nsrc=???
-        Dsrc=???
-        Isrc=???
-        Jsrc=???
+        IF (Master.and.SOUTH_WEST_TEST) THEN
+          Nsrc=???
+          Dsrc(:)=???
+          Isrc(:)=???
+          Jsrc(:)=???
+          Lsrc(:,itemp)=???
+          Lsrc(:,isalt)=???
+        END IF
 #else
         ana_psource.h: No values provided for Lsrc, Nsrc, Dsrc,
                                               Isrc, Jsrc.
+#endif
+#ifdef DISTRIBUTE
+!
+!  Broadcast point sources/sinks information to all nodes.
+!
+        CALL mp_bcasti (ng, iNLM, Nsrc)
+        CALL mp_bcasti (ng, iNLM, Isrc)
+        CALL mp_bcasti (ng, iNLM, Jsrc)
+        CALL mp_bcastl (ng, iNLM, Lsrc)
+        CALL mp_bcastf (ng, iNLM, Dsrc)
 #endif
       END IF
 #if defined UV_PSOURCE || defined Q_PSOURCE
@@ -203,12 +236,25 @@
 !  If appropriate, set-up nondimensional shape function to distribute
 !  mass point sources/sinks vertically.  It must add to unity!!.
 !
+      Qshape=Pspv
+      Npts=Msrc*N(ng)
+
 #  if defined MY_APPLICATION
+!!
+!!  Notice that in the simple statement below there is not need for
+!!  distributed-memory communications since the computation below
+!!  does not have a parallel tile dependency. All the nodes are
+!!  computing this simple statement.  See original source routine
+!!  "ROMS/Functionals/ana_psource.h" for examples that has parallel
+!!  tile dependency.
+!!
+      IF (SOUTH_WEST_TEST) THEN
         DO k=1,N(ng)
           DO is=1,Nsrc
-            Qshape(is,k)=???
+            Qshape(is,k)=1.0_r8/REAL(N(ng),r8)
           END DO
         END DO
+      END IF
 #  else
         ana_psource.h: No values provided for Qshape.
 #  endif
@@ -218,10 +264,22 @@
 !  Sources/Sinks (positive in the positive U- or V-direction and
 !  viceversa).
 !
+      Qbar=Pspv
+
 # if defined MY_APPLICATION
-      DO is=1,Nsrc
-        Qbar(is)=???
-      END DO
+!!
+!!  Notice that in the simple statement below there is not need for
+!!  distributed-memory communications since the computation below
+!!  does not have a parallel tile dependency. All the nodes are
+!!  computing this simple statement.  See original source routine
+!!  "ROMS/Functional/ana_psource.h" for examples that has parallel
+!!  tile dependency.
+!!
+      IF (SOUTH_WEST_TEST) THEN
+        DO is=1,Nsrc
+          Qbar(is)=???
+        END DO
+      END IF
 # else
       ana_psource.h: No values provided for Qbar.
 # endif
@@ -230,11 +288,13 @@
 !
 !  Set-up mass transport profile (m3/s) of point Sources/Sinks.
 !
-      DO k=1,N(ng)
-        DO is=1,Nsrc
-          Qsrc(is,k)=Qbar(is)*Qshape(is,k)
+      IF (SOUTH_WEST_TEST) THEN
+        DO k=1,N(ng)
+          DO is=1,Nsrc
+            Qsrc(is,k)=Qbar(is)*Qshape(is,k)
+          END DO
         END DO
-      END DO
+      END IF
 # endif
 #endif
 
@@ -243,17 +303,20 @@
 !  Set-up tracer (tracer units) point Sources/Sinks.
 !
 # if defined MY_APPLICATION
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
-          DO is=1,Nsrc
-            Tsrc(is,k,itrc)=???
+      IF (SOUTH_WEST_TEST) THEN
+        DO itrc=1,NT(ng)
+          DO k=1,N(ng)
+            DO is=1,Nsrc
+              Tsrc(is,k,itemp)=???
+              Tsrc(is,k,isalt)=???
+            END DO
           END DO
         END DO
-      END DO
+      END IF
 # else
       ana_psource.h: No values provided for Tsrc.
 # endif
 #endif
 
       RETURN
-      END SUBROUTINE ana_psource_grid
+      END SUBROUTINE ana_psource_tile

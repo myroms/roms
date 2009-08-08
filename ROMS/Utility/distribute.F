@@ -53,6 +53,7 @@
       INTERFACE mp_bcastl
         MODULE PROCEDURE mp_bcastl_0d
         MODULE PROCEDURE mp_bcastl_1d
+        MODULE PROCEDURE mp_bcastl_2d
       END INTERFACE mp_bcastl
 
       INTERFACE mp_bcasti
@@ -904,6 +905,88 @@
 
       RETURN
       END SUBROUTINE mp_bcastl_1d
+
+      SUBROUTINE mp_bcastl_2d (ng, model, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 2D nontiled, logical array to all         !
+!  processors processors in the group. It is called by all the         !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          2D array to broadcast (logical).                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 2D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      logical, intent(inout) :: A(:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyError, Npts, Serror
+      integer :: Asize(2)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Npts=Asize(1)*Asize(2)
+
+# ifdef MPI
+      CALL mpi_bcast (A, Npts, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,   &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTL_2D - error during ',a,' call, Node = ',   &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcastl_2d
 
       SUBROUTINE mp_bcasts_0d (ng, model, A)
 !
