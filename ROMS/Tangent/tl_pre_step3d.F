@@ -72,7 +72,7 @@
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs(ng), nstp(ng), nnew(ng),            &
 # ifdef TS_PSOURCE
-     &                         Nsrc(ng),                                &
+     &                         Msrc(ng), Nsrc(ng),                      &
      &                         SOURCES(ng) % Lsrc,                      &
      &                         SOURCES(ng) % Isrc,                      &
      &                         SOURCES(ng) % Jsrc,                      &
@@ -143,7 +143,8 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nrhs, nstp, nnew,                  &
 # ifdef TS_PSOURCE
-     &                               Nsrc, Lsrc, Isrc, Jsrc, Dsrc,      &
+     &                               Msrc, Nsrc,                        &
+     &                               Lsrc, Isrc, Jsrc, Dsrc,            &
      &                               Tsrc,                              &
 # endif
 # ifdef MASKING
@@ -196,13 +197,17 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
+# ifdef TS_PSOURCE
+      integer, intent(in) :: Msrc, Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef TS_PSOURCE
-      integer, intent(in) :: Nsrc
       logical, intent(in) :: Lsrc(:,:)
+
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
+
       real(r8), intent(in) :: Dsrc(:)
       real(r8), intent(in) :: Tsrc(:,:,:)
 #  endif
@@ -280,12 +285,13 @@
 # else
 
 #  ifdef TS_PSOURCE
-      integer, intent(in) :: Nsrc
-      logical, intent(in) :: Lsrc(Nsrc,NT(ng))
-      integer, intent(in) :: Isrc(Nsrc)
-      integer, intent(in) :: Jsrc(Nsrc)
-      real(r8), intent(in) :: Dsrc(Nsrc)
-      real(r8), intent(in) :: Tsrc(Nsrc,N(ng),NT(ng))
+      logical, intent(in) :: Lsrc(Msrc,NT(ng))
+
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
+
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)

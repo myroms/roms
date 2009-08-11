@@ -26,7 +26,7 @@
       CALL ana_psource_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       nnew(ng), knew(ng), Msrc, Nsrc(ng),        &
+     &                       nnew(ng), knew(ng), Msrc(ng), Nsrc(ng),    &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
      &                       OCEAN(ng) % vbar,                          &
@@ -111,10 +111,10 @@
       integer, intent(out) :: Nsrc
 !
 #ifdef ASSUMED_SHAPE
-      logical, intent(out) :: Lsrc(:,:)
+      logical, intent(inout) :: Lsrc(:,:)
 
-      integer, intent(out) :: Isrc(:)
-      integer, intent(out) :: Jsrc(:)
+      integer, intent(inout) :: Isrc(:)
+      integer, intent(inout) :: Jsrc(:)
 
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
@@ -128,22 +128,22 @@
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
 
-      real(r8), intent(out) :: Dsrc(:)
-      real(r8), intent(out) :: Qbar(:)
+      real(r8), intent(inout) :: Dsrc(:)
+      real(r8), intent(inout) :: Qbar(:)
 # ifdef SOLVE3D
 #  if defined UV_PSOURCE || defined Q_PSOURCE
-      real(r8), intent(out) :: Qshape(:,:)
-      real(r8), intent(out) :: Qsrc(:,:)
+      real(r8), intent(inout) :: Qshape(:,:)
+      real(r8), intent(inout) :: Qsrc(:,:)
 #  endif
 #  ifdef TS_PSOURCE
-      real(r8), intent(out) :: Tsrc(:,:,:)
+      real(r8), intent(inout) :: Tsrc(:,:,:)
 #  endif
 # endif
 #else
-      logical, intent(out) :: Lsrc(Msrc,NT(ng))
+      logical, intent(inout) :: Lsrc(Msrc,NT(ng))
 
-      integer, intent(out) :: Isrc(Msrc)
-      integer, intent(out) :: Jsrc(Msrc)
+      integer, intent(inout) :: Isrc(Msrc)
+      integer, intent(inout) :: Jsrc(Msrc)
 
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
@@ -157,15 +157,15 @@
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(out) :: Dsrc(Msrc)
-      real(r8), intent(out) :: Qbar(Msrc)
+      real(r8), intent(inout) :: Dsrc(Msrc)
+      real(r8), intent(inout) :: Qbar(Msrc)
 # ifdef SOLVE3D
 #  if defined UV_PSOURCE || defined Q_PSOURCE
-      real(r8), intent(out) :: Qshape(Msrc,N(ng))
-      real(r8), intent(out) :: Qsrc(Msrc,N(ng))
+      real(r8), intent(inout) :: Qshape(Msrc,N(ng))
+      real(r8), intent(inout) :: Qsrc(Msrc,N(ng))
 #  endif
 #  ifdef TS_PSOURCE
-      real(r8), intent(out) :: Tsrc(Msrc,N(ng),NT(ng))
+      real(r8), intent(inout) :: Tsrc(Msrc,N(ng),NT(ng))
 #  endif
 # endif
 #endif
@@ -175,15 +175,15 @@
       integer :: Npts, NSUB, is, i, j, k, ised
 
       real(r8) :: Pspv = 0.0_r8
-      real(r8) :: area, cff, fac, my_area, ramp
+      real(r8) :: cff, fac
 
 #if defined DISTRIBUTE && defined SOLVE3D
       real(r8), dimension(Msrc*N(ng)) :: Pwrk
 #endif
 #if defined DISTRIBUTE
-      real(r8), dimension(1) :: buffer
+      real(r8), dimension(2) :: buffer
 
-      character (len=3), dimension(1) :: io_handle
+      character (len=3), dimension(2) :: io_handle
 #endif
 
 #include "set_bounds.h"
@@ -193,7 +193,7 @@
 !-----------------------------------------------------------------------
 !
 !! WARNING:  This routine is extremely difficult in parallel
-!!           application.  See examples for how to do this in
+!!           applications.  See examples for how to do this in
 !!           source file:  "ROMS/Functionals/ana_psource.h".
 !!
       IF (iic(ng).eq.ntstart(ng)) THEN
@@ -205,7 +205,6 @@
 !  located at U- or V-points so the grid locations should range from
 !  1 =< Isrc =< L  and  1 =< Jsrc =< M.
 !
-        Lsrc(:,:)=.FALSE.
 #if defined MY_APPLICATION
         IF (Master.and.SOUTH_WEST_TEST) THEN
           Nsrc=???
@@ -230,14 +229,19 @@
         CALL mp_bcastf (ng, iNLM, Dsrc)
 #endif
       END IF
+
 #if defined UV_PSOURCE || defined Q_PSOURCE
 # ifdef SOLVE3D
 !
 !  If appropriate, set-up nondimensional shape function to distribute
 !  mass point sources/sinks vertically.  It must add to unity!!.
 !
+#  ifdef DISTRIBUTE
       Qshape=Pspv
+#  endif
       Npts=Msrc*N(ng)
+
+!$OMP BARRRIER
 
 #  if defined MY_APPLICATION
 !!
@@ -248,7 +252,7 @@
 !!  "ROMS/Functionals/ana_psource.h" for examples that has parallel
 !!  tile dependency.
 !!
-      IF (SOUTH_WEST_TEST) THEN
+      IF (NORTH_EAST_TEST) THEN
         DO k=1,N(ng)
           DO is=1,Nsrc
             Qshape(is,k)=1.0_r8/REAL(N(ng),r8)
@@ -264,7 +268,11 @@
 !  Sources/Sinks (positive in the positive U- or V-direction and
 !  viceversa).
 !
+# ifdef DISTRIBUTE
       Qbar=Pspv
+# endif
+
+!$OMP BARRIER
 
 # if defined MY_APPLICATION
 !!
@@ -288,7 +296,9 @@
 !
 !  Set-up mass transport profile (m3/s) of point Sources/Sinks.
 !
-      IF (SOUTH_WEST_TEST) THEN
+!$OMP BARRIER
+
+      IF (NORTH_EAST_TEST) THEN
         DO k=1,N(ng)
           DO is=1,Nsrc
             Qsrc(is,k)=Qbar(is)*Qshape(is,k)
@@ -303,13 +313,11 @@
 !  Set-up tracer (tracer units) point Sources/Sinks.
 !
 # if defined MY_APPLICATION
-      IF (SOUTH_WEST_TEST) THEN
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO is=1,Nsrc
-              Tsrc(is,k,itemp)=???
-              Tsrc(is,k,isalt)=???
-            END DO
+      IF (NORTH_WEST_TEST) THEN
+        DO k=1,N(ng)
+          DO is=1,Nsrc
+            Tsrc(is,k,itemp)=???
+            Tsrc(is,k,isalt)=???
           END DO
         END DO
       END IF

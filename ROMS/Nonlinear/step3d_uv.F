@@ -56,7 +56,7 @@
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng), nstp(ng), nnew(ng),                &
 # ifdef UV_PSOURCE
-     &                     Nsrc(ng),                                    &
+     &                     Msrc(ng), Nsrc(ng),                          &
      &                     SOURCES(ng) % Isrc,                          &
      &                     SOURCES(ng) % Jsrc,                          &
      &                     SOURCES(ng) % Dsrc,                          &
@@ -118,7 +118,7 @@
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs, nstp, nnew,                      &
 # ifdef UV_PSOURCE
-     &                           Nsrc,                                  &
+     &                           Msrc, Nsrc,                            &
      &                           Isrc, Jsrc, Dsrc, Qsrc,                &
 # endif
 # ifdef MASKING
@@ -167,12 +167,15 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
+# ifdef UV_PSOURCE
+      integer, intent(in) :: Msrc, Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef UV_PSOURCE
-      integer, intent(in) :: Nsrc
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
+
       real(r8), intent(in) :: Dsrc(:)
       real(r8), intent(in) :: Qsrc(:,:)
 #  endif
@@ -222,13 +225,15 @@
       real(r8), intent(out) :: vbar(LBi:,LBj:,:)
       real(r8), intent(out) :: Huon(LBi:,LBj:,:)
       real(r8), intent(out) :: Hvom(LBi:,LBj:,:)
+
 # else
+
 #  ifdef UV_PSOURCE
-      integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Nsrc)
-      integer, intent(in) :: Jsrc(Nsrc)
-      real(r8), intent(in) :: Dsrc(Nsrc)
-      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
+
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)

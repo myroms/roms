@@ -9,9 +9,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-# ifdef ANA_PSOURCE
 !  Msrc       Maximum number of analytical point Sources/Sinks.        !
-# endif
 !  Nsrc       Number of point Sources/Sinks.                           !
 !  Dsrc       Direction of point Sources/Sinks:                        !
 !               Dsrc(:) = 0,  Along XI-direction.                      !
@@ -55,10 +53,8 @@
 
         implicit none
 
+        integer, dimension(Ngrids) :: Msrc
         integer, dimension(Ngrids) :: Nsrc
-# ifdef ANA_PSOURCE
-        integer, parameter :: Msrc = 200
-# endif
 
         TYPE T_SOURCES
 
@@ -145,6 +141,7 @@
 
             IF (foundit) THEN
               Nsrc(mg)=var_Dsize(1)         ! first dimension
+              Msrc(mg)=Nsrc(mg)
               EXIT QUERY
             END IF
           END DO QUERY
@@ -153,8 +150,10 @@
 # else
 !
 !  Set number of point sources to maximum number of analytical sources.
+!  Notice that a maximum of 200 analytical sources are set-up here. 
 !
-      Nsrc(ng)=Msrc
+      Msrc(ng)=200                          
+      Nsrc(ng)=Msrc(ng)
 # endif
 !
 !  Allocate structure.

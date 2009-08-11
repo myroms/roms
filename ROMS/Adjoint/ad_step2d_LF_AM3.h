@@ -50,7 +50,7 @@
      &                     nstp(ng), nnew(ng),                          &
 # endif
 # if defined UV_PSOURCE || defined Q_PSOURCE
-     &                     Nsrc(ng),                                    &
+     &                     Msrc(ng), Nsrc(ng),                          &
      &                     SOURCES(ng) % Isrc,     SOURCES(ng) % Jsrc,  &
      &                     SOURCES(ng) % Dsrc,     SOURCES(ng) % Qbar,  &
 # endif
@@ -173,7 +173,7 @@
      &                           nstp, nnew,                            &
 # endif
 # if defined UV_PSOURCE || defined Q_PSOURCE
-     &                           Nsrc, Isrc, Jsrc, Dsrc, Qbar,          &
+     &                           Msrc, Nsrc, Isrc, Jsrc, Dsrc, Qbar,    &
 # endif
 # ifdef MASKING
      &                           pmask, rmask, umask, vmask,            &
@@ -296,12 +296,15 @@
 # ifdef SOLVE3D
       integer, intent(in) :: nstp, nnew
 # endif
+# if defined UV_PSOURCE || defined Q_PSOURCE
+      integer, intent(in) :: Msrc, Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
 #  if defined UV_PSOURCE || defined Q_PSOURCE
-      integer, intent(in) :: Nsrc
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
+
       real(r8), intent(in) :: Dsrc(:)
       real(r8), intent(in) :: Qbar(:)
 #  endif
@@ -446,12 +449,11 @@
 # else
 
 #  if defined UV_PSOURCE || defined Q_PSOURCE
-      integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Nsrc)
-      integer, intent(in) :: Jsrc(Nsrc)
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
 
-      real(r8), intent(in) :: Dsrc(Nsrc)
-      real(r8), intent(in) :: Qbar(Nsrc)
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Qbar(Msrc)
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)

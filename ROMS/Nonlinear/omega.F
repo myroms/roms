@@ -56,7 +56,7 @@
      &                 nstp(ng), nnew(ng),                              &
 # endif
 # ifdef Q_PSOURCE
-     &                 Nsrc(ng),                                        &
+     &                 Msrc(ng), Nsrc(ng),                              &
      &                 SOURCES(ng) % Isrc,                              &
      &                 SOURCES(ng) % Jsrc,                              &
      &                 SOURCES(ng) % Dsrc,                              &
@@ -84,7 +84,8 @@
      &                       nstp, nnew,                                &
 # endif
 # ifdef Q_PSOURCE
-     &                       Nsrc, Isrc, Jsrc, Dsrc, Qsrc,              &
+     &                       Msrc, Nsrc,                                &
+     &                       Isrc, Jsrc, Dsrc, Qsrc,                    &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
      &                       omn, bed_thick,                            &
@@ -111,13 +112,14 @@
       integer, intent(in) :: nstp, nnew
 # endif
 # ifdef Q_PSOURCE
-      integer, intent(in) :: Nsrc
+      integer, intent(in) :: Msrc, Nsrc
 # endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef Q_PSOURCE
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
+
       real(r8), intent(in) :: Dsrc(:)
       real(r8), intent(in) :: Qsrc(:,:)
 #  endif
@@ -129,12 +131,15 @@
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(out) :: W(LBi:,LBj:,0:)
+
 # else
+
 #  ifdef Q_PSOURCE
-      integer, intent(in) :: Isrc(Nsrc)
-      integer, intent(in) :: Jsrc(Nsrc)
-      real(r8), intent(in) :: Dsrc(Nsrc)
-      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
+
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)

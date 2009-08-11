@@ -60,7 +60,7 @@
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nstp(ng), nnew(ng),              &
 # if defined TS_PSOURCE || defined Q_PSOURCE
-     &                       Nsrc(ng),                                  &
+     &                       Msrc(ng), Nsrc(ng),                        &
      &                       SOURCES(ng) % Isrc,                        &
      &                       SOURCES(ng) % Jsrc,                        &
      &                       SOURCES(ng) % Tsrc,                        &
@@ -137,7 +137,8 @@
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nstp, nnew,                    &
 # if defined TS_PSOURCE || defined Q_PSOURCE
-     &                             Nsrc, Isrc, Jsrc, Tsrc,              &
+     &                             Msrc, Nsrc,                          &
+     &                             Isrc, Jsrc, Tsrc,                    &
 # endif
 # ifdef TS_PSOURCE
      &                             Lsrc, Dsrc,                          &
@@ -201,13 +202,15 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
+# if defined TS_PSOURCE || defined Q_PSOURCE
+      integer, intent(in) :: Msrc, Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef TS_PSOURCE
       logical, intent(in) :: Lsrc(:,:)
 #  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
-      integer, intent(in) :: Nsrc
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
 
@@ -292,20 +295,19 @@
 # else
 
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Nsrc,NT(ng))
+      logical, intent(in) :: Lsrc(Msrc,NT(ng))
 #  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
-      integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Nsrc)
-      integer, intent(in) :: Jsrc(Nsrc)
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
 
-      real(r8), intent(in) :: Tsrc(Nsrc,N(ng),NT(ng))
+      real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
 #  endif
 #  ifdef TS_PSOURCE
-      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Dsrc(Msrc)
 #  endif
 #  ifdef Q_PSOURCE
-      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
