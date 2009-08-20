@@ -78,6 +78,9 @@
 #  endif
 # endif
 # ifdef DISTRIBUTE
+#  if defined WET_DRY
+      USE distribute_mod, ONLY : mp_boundary
+#  endif
       USE mp_exchange_mod, ONLY : mp_exchange2d
 #  ifdef SOLVE3D
       USE mp_exchange_mod, ONLY : mp_exchange3d
@@ -111,6 +114,9 @@
 #  endif
 # endif
       logical :: update = .FALSE.
+# if defined WET_DRY
+      logical :: bry_update
+# endif
 
 # ifdef OBC
       integer :: ILB, IUB, JLB, JUB
@@ -819,44 +825,93 @@
 !
 ! Ensure that water level on boundary cells is above bed elevation.
 !
-      IF (SOUTH_WEST_TEST) THEN
 #   ifdef WEST_FSOBC
-        DO j=JLB,JUB
+      bry_update=.FALSE.
+      IF (WESTERN_EDGE) THEN
+        DO j=JstrR,JendR
           cff=Dcrit(ng)-GRID(ng)%h(0,j)
           IF (BOUNDARY(ng)%zeta_west(j).le.cff) THEN
             BOUNDARY(ng)%zeta_west(j)=cff
             BOUNDARY(ng)%tl_zeta_west(j)=cff
           END IF
         END DO
+        bry_update=.TRUE.
+      END IF
+#    ifdef DISTRIBUTE
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%zeta_west)
+      CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%tl_zeta_west)
+#    endif
 #   endif
+
 #   ifdef EAST_FSOBC
-        DO j=JLB,JUB
+      bry_update=.FALSE.
+      IF (EASTERN_EDGE) THEN
+        DO j=JstrR,JendR
           cff=Dcrit(ng)-GRID(ng)%h(Lm(ng)+1,j)
           IF (BOUNDARY(ng)%zeta_east(j).le.cff) THEN
             BOUNDARY(ng)%zeta_east(j)=cff
             BOUNDARY(ng)%tl_zeta_east(j)=cff
           END IF
         END DO
+        bry_update=.TRUE.
+      END IF
+#    ifdef DISTRIBUTE
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%zeta_east)
+      CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%tl_zeta_east)
+#    endif
 #   endif
+
 #   ifdef SOUTH_FSOBC
-        DO i=ILB,IUB
+      bry_update=.FALSE.
+      IF (SOUTHERN_EDGE) THEN
+        DO i=IstrR,IendR
           cff=Dcrit(ng)-GRID(ng)%h(i,0)
           IF (BOUNDARY(ng)%zeta_south(i).le.cff) THEN
             BOUNDARY(ng)%zeta_south(i)=cff
             BOUNDARY(ng)%tl_zeta_south(i)=cff
           END IF
         END DO
+        bry_update=.TRUE.
+      END IF
+#    ifdef DISTRIBUTE
+      CALL mp_boundary (ng, iRPM, IstrR, IendR, ILB, IUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%zeta_south)
+      CALL mp_boundary (ng, iRPM, IstrR, IendR, ILB, IUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%tl_zeta_south)
+#    endif
 #   endif
+
 #   ifdef NORTH_FSOBC
-        DO i=ILB,IUB
+      bry_update=.FALSE.
+      IF (NORTHERN_EDGE) THEN
+        DO i=IstrR,IendR
           cff=Dcrit(ng)-GRID(ng)%h(i,Mm(ng)+1)
           IF (BOUNDARY(ng)%zeta_north(i).le.cff) THEN
             BOUNDARY(ng)%zeta_north(i)=cff
             BOUNDARY(ng)%tl_zeta_north(i)=cff
           END IF
         END DO
-#   endif
+        bry_update=.TRUE.
       END IF
+#    ifdef DISTRIBUTE
+      CALL mp_boundary (ng, iRPM, IstrR, IendR, ILB, IUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%zeta_north)
+      CALL mp_boundary (ng, iRPM, IstrR, IendR, ILB, IUB, 1, 1,         &
+     &                  bry_update,                                     &
+     &                  BOUNDARY(ng)%tl_zeta_north)
+#    endif
+#   endif
 #  endif
 
 #  ifdef ANA_M2OBC
