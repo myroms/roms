@@ -958,11 +958,11 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           DO k=1,N(ng)
-            IF (ABS(dTdz(i,j,k)).lt.dTdz_min) THEN
+            cff=0.5_r8*(dTdz(i,j,k-1)+dTdz(i,j,k)) 
+            IF (ABS(cff).lt.dTdz_min) THEN
               dzdT=0.0_r8
             ELSE
-              dzdT=1.0_r8/(0.5_r8*(dTdz(i,j,k-1)+                       &
-     &                             dTdz(i,j,k  )))
+              dzdT=1.0_r8/cff
             END IF
             dSdT(k)=(0.5_r8*(dSdz(i,j,k-1)+                             &
      &                       dSdz(i,j,k  )))*dzdT

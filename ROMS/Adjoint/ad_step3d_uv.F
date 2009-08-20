@@ -175,6 +175,9 @@
 !
       USE mod_param
       USE mod_scalars
+# ifdef UV_PSOURCE
+      USE mod_sources
+# endif
 !
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE ad_exchange_2d_mod

@@ -172,6 +172,9 @@
 !
       USE mod_param
       USE mod_scalars
+# ifdef UV_PSOURCE
+      USE mod_sources
+# endif
 !
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
@@ -194,6 +197,7 @@
 # endif
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef UV_PSOURCE
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
 
