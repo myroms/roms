@@ -186,6 +186,7 @@
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d, ad_mp_exchange3d
 # endif
 # ifdef ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: ad_r2d_bc, r2d_bc, u2d_bc, v2d_bc
       USE zeta_balance_mod, ONLY: ad_biconj_tile
 # endif
 !
@@ -445,13 +446,13 @@
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_rhs_r2d)
 #  endif
-!>    CALL bc_r2d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj,                             &
-!>   &                  tl_rhs_r2d)
+!>    CALL r2d_bc (ng, tile,                                            &
+!>   &             LBi, UBi, LBj, UBj,                                  &
+!>   &             tl_rhs_r2d)
 !>
-      CALL ad_bc_r2d_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     ad_rhs_r2d)
+      CALL ad_r2d_bc (ng, tile,                                         &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                ad_rhs_r2d)
 !
 !   Adjoint of compute the RHS term for the biconjugate gradient solver.
 !
@@ -462,34 +463,38 @@
 !>
           ad_rhs_r2d(i,j)=ad_rhs_r2d(i,j)*rmask(i,j)
 #  endif
-!>        tl_rhs_r2d(i,j)=-pm(i,j)*(tl_gradPx(i+1,j)-tl_gradPx(i,j))-   &
-!>   &                     pn(i,j)*(tl_gradPy(i,j+1)-tl_gradPy(i,j))
+!>        tl_rhs_r2d(i,j)=-pm(i,j)*pn(i,j)*                             &
+!>   &                    (pmon_u(i+1,j)*tl_gradPx(i+1,j)-              &
+!>   &                     pmon_u(i  ,j)*tl_gradPx(i  ,j)+              &
+!>   &                     pnom_v(i,j+1)*tl_gradPy(i,j+1)-              &
+!>   &                     pnom_v(i,j  )*tl_gradPy(i,j  ))
 !>
-!>
-          adfac1=pm(i,j)*ad_rhs_r2d(i,j)
-          adfac2=pn(i,j)*ad_rhs_r2d(i,j)
-          ad_gradPx(i  ,j)=ad_gradPx(i  ,j)+adfac1
-          ad_gradPx(i+1,j)=ad_gradPx(i+1,j)-adfac1
-          ad_gradPy(i,j  )=ad_gradPy(i,j  )+adfac2
-          ad_gradPy(i,j+1)=ad_gradPy(i,j+1)-adfac2
+          adfac=-pm(i,j)*pn(i,j)*ad_rhs_r2d(i,j)
+          ad_gradPx(i  ,j)=ad_gradPx(i  ,j)-pmon_u(i  ,j)*adfac
+          ad_gradPx(i+1,j)=ad_gradPx(i+1,j)+pmon_u(i+1,j)*adfac
+          ad_gradPy(i,j  )=ad_gradPy(i,j  )-pnom_v(i,j  )*adfac
+          ad_gradPy(i,j+1)=ad_gradPy(i,j+1)+pnom_v(i,j+1)*adfac
           ad_rhs_r2d(i,j)=0.0_r8
         END DO
       END DO
 
-!>    CALL bc_v2d_tile (ng, tile,                                       &
-!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
-!>   &                  tl_gradPy)
+!
+!  Use forward boundary routines here since they are self-adjoint.
+!
+!>    CALL v2d_bc (ng, tile,                                            &
+!>   &             IminS, ImaxS, JminS, JmaxS,                          &
+!>   &             tl_gradPy)
 !>
-      CALL ad_bc_v2d_tile (ng, tile,                                    &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     ad_gradPy)
-!>    CALL bc_u2d_tile (ng, tile,                                       &
-!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
-!>   &                  tl_gradPx)
+      CALL v2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             ad_gradPy)
+!>    CALL u2d_bc (ng, tile,                                            &
+!>   &             IminS, ImaxS, JminS, JmaxS,                          &
+!>   &             tl_gradPx)
 !>
-      CALL ad_bc_u2d_tile (ng, tile,                                    &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     ad_gradPx)
+      CALL u2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             ad_gradPx)
 
 # else
 !
@@ -597,9 +602,9 @@
       END DO
 
       DO j=Jstr-1,Jend
-!>      DO k=1,N(ng)-1
+!>      DO k=N(ng)-1,1,-1
 !>
-        DO k=N(ng)-1,1,-1
+        DO k=1,N(ng)-1
           DO i=Istr,Iend+1
             cff1=1.0_r8/((z_r(i  ,j,k+1)-z_r(i  ,j,k))*                 &
      &                   (z_r(i-1,j,k+1)-z_r(i-1,j,k)))
@@ -620,14 +625,10 @@
             ad_gradPx(i,j)=ad_gradPx(i,j)*umask(i,j)
 #  endif
 !>          tl_gradPx(i,j)=tl_gradPx(i,j)+                              &
-!>   &                     0.25_r8*(pm(i-1,j)+pm(i,j))*                 &
-!>   &                             (Hz(i-1,j,k)+Hz(i,j,k))*             &
-!>   &                     tl_phix(i)
+!>   &                     0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*tl_phix(i)
 !>
             ad_phix(i)=ad_phix(i)+                                      &
-     &                 0.25_r8*(pm(i-1,j)+pm(i,j))*                     &
-     &                         (Hz(i-1,j,k)+Hz(i,j,k))*                 &
-     &                 ad_gradPx(i,j)
+     &                 0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*ad_gradPx(i,j)
 # endif
 !>          tl_gradP(i,j,k)=0.5_r8*tl_phix(i)*(pm(i-1,j)+pm(i,j))/      &
 !>   &                      (f(i-1,j)+f(i,j))
@@ -664,14 +665,16 @@
           cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                        &
      &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
 # ifdef ZETA_ELLIPTIC
-!>        tl_gradPx(i,j)=0.25_r8*(pm(i-1,j)+pm(i,j))*                    &
-!>   &                           (Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*        &
+#  ifdef MASKING
+!>        tl_gradPx(i,j)=tl_gradPx(i,j)*umask(i,j)
+!>
+          ad_gradPx(i,j)=ad_gradPx(i,j)*umask(i,j)
+#  endif
+!>        tl_gradPx(i,j)=0.5_r8*(Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*         &
 !>   &                   tl_phix(i)
 !>
           ad_phix(i)=ad_phix(i)+                                         &
-     &               0.25_r8*(pm(i-1,j)+pm(i,j))*                        &
-     &                       (Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*            &
-     &               ad_gradPx(i,j)
+     &             0.5_r8*(Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*ad_gradPx(i,j)
           ad_gradPx(i,j)=0.0_r8
 # endif
 !>        tl_gradP(i,j,N(ng))=0.5_r8*tl_phix(i)*(pm(i-1,j)+pm(i,j))/     &
@@ -721,9 +724,9 @@
       END DO
 
       DO j=Jstr,Jend+1
-!>      DO k=1,N(ng)-1
+!>      DO k=N(ng)-1,1,-1
 !>
-        DO k=N(ng)-1,1,-1
+        DO k=1,N(ng)-1
           DO i=Istr-1,Iend
             cff1=1.0_r8/((z_r(i,j  ,k+1)-z_r(i,j  ,k))*                 &
      &                   (z_r(i,j-1,k+1)-z_r(i,j-1,k)))
@@ -744,14 +747,10 @@
             ad_gradPy(i,j)=ad_gradPy(i,j)*vmask(i,j)
 #  endif
 !>          tl_gradPy(i,j)=tl_gradPy(i,j)+                              &
-!>   &                     0.25_r8*(pn(i,j-1)+pn(i,j))*                 &
-!>   &                             (Hz(i,j-1,k)+Hz(i,j,k))*             &
-!>                         tl_phie(i)
+!>   &                     0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*tl_phie(i)
 !>
             ad_phie(i)=ad_phie(i)+                                      &
-     &                 0.25_r8*(pn(i,j-1)+pn(i,j))*                     &
-     &                         (Hz(i,j-1,k)+Hz(i,j,k))*                 &
-     &                 ad_gradPy(i,j)
+     &                 0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*ad_gradPy(i,j)
 # endif
 !>          tl_gradP(i,j,k)=0.5_r8*tl_phie(i)*(pn(i,j-1)+pn(i,j))/      &
 !>   &                      (f(i,j-1)+f(i,j))
@@ -788,14 +787,16 @@
           cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                       &
      &         z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
 # ifdef ZETA_ELLIPTIC
-!>        tl_gradPy(i,j)=0.25_r8*(pn(i,j-1)+pn(i,j))*                   &
-!>   &                           (Hz(i,j,N(ng))+Hz(i,j-1,N(ng)))*       &
+#  ifdef MASKING
+!>        tl_gradPy(i,j)=tl_gradPy(i,j)*vmask(i,j)
+!>
+          ad_gradPy(i,j)=ad_gradPy(i,j)*vmask(i,j)
+#  endif
+!>        tl_gradPy(i,j)=0.5_r8*(Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*        &
 !>   &                   tl_phie(i)
 !>
           ad_phie(i)=ad_phie(i)+                                        &
-     &               0.25_r8*(pn(i,j-1)+pn(i,j))*                       &
-     &                       (Hz(i,j,N(ng))+Hz(i,j-1,N(ng)))*           &
-     &               ad_gradPy(i,j)
+     &             0.5_r8*(Hz(i,j,N(ng))+Hz(i,j-1,N(ng)))*ad_gradPy(i,j)
           ad_gradPy(i,j)=0.0_r8
 # endif
 !>        tl_gradP(i,j,N(ng))=0.5_r8*tl_phie(i)*(pn(i,j-1)+pn(i,j))/    &

@@ -186,6 +186,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d
 # endif
 # ifdef ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: ad_r2d_bc, r2d_bc, u2d_bc, v2d_bc
       USE zeta_balance_mod, ONLY: tl_biconj_tile
 # endif
 !
@@ -535,16 +536,18 @@
           tl_gradP(i,j,N(ng))=0.5_r8*tl_phie(i)*(pn(i,j-1)+pn(i,j))/    &
      &                        (f(i,j-1)+f(i,j))
 # ifdef ZETA_ELLIPTIC
-          tl_gradPy(i,j)=0.25_r8*(pn(i,j-1)+pn(i,j))*                   &
-     &                           (Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*       &
+          tl_gradPy(i,j)=0.5_r8*(Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*       &
      &                   tl_phie(i)
+#  ifdef MASKING
+          tl_gradPy(i,j)=tl_gradPy(i,j)*vmask(i,j)
+#  endif
 # endif
         END DO
 !
 !  Compute balance, interior U-momemtum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
-        DO k=1,N(ng)-1
+        DO k=N(ng)-1,1,-1
           DO i=Istr-1,Iend
             cff1=1.0_r8/((z_r(i,j  ,k+1)-z_r(i,j  ,k))*                 &
      &                   (z_r(i,j-1,k+1)-z_r(i,j-1,k)))
@@ -568,9 +571,7 @@
      &                      (f(i,j-1)+f(i,j))
 # ifdef ZETA_ELLIPTIC
             tl_gradPy(i,j)=tl_gradPy(i,j)+                              &
-     &                     0.25_r8*(pn(i,j-1)+pn(i,j))*                 &
-     &                             (Hz(i,j-1,k)+Hz(i,j,k))*             &
-     &                     tl_phie(i)
+     &                     0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*tl_phie(i)
 #  ifdef MASKING
             tl_gradPy(i,j)=tl_gradPy(i,j)*vmask(i,j)
 #  endif
@@ -605,16 +606,18 @@
           tl_gradP(i,j,N(ng))=0.5_r8*tl_phix(i)*(pm(i-1,j)+pm(i,j))/     &
      &                        (f(i-1,j)+f(i,j))
 # ifdef ZETA_ELLIPTIC
-          tl_gradPx(i,j)=0.25_r8*(pm(i-1,j)+pm(i,j))*                    &
-     &                           (Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*        &
+          tl_gradPx(i,j)=0.5_r8*(Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*         &
      &                   tl_phix(i)
+#  ifdef MASKING
+          tl_gradPx(i,j)=tl_gradPx(i,j)*umask(i,j)
+#  endif
 # endif
         END DO
 !
 !  Compute balance, interior V-momemtum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
-        DO k=1,N(ng)-1
+        DO k=N(ng)-1,1,-1
           DO i=Istr,Iend+1
             cff1=1.0_r8/((z_r(i  ,j,k+1)-z_r(i  ,j,k))*                 &
      &                   (z_r(i-1,j,k+1)-z_r(i-1,j,k)))
@@ -638,9 +641,7 @@
      &                      (f(i-1,j)+f(i,j))
 # ifdef ZETA_ELLIPTIC
             tl_gradPx(i,j)=tl_gradPx(i,j)+                              &
-     &                     0.25_r8*(pm(i-1,j)+pm(i,j))*                 &
-     &                             (Hz(i-1,j,k)+Hz(i,j,k))*             &
-     &                     tl_phix(i)
+     &                     0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*tl_phix(i)
 #  ifdef MASKING
             tl_gradPx(i,j)=tl_gradPx(i,j)*umask(i,j)
 #  endif
@@ -687,28 +688,31 @@
 !
 !  Solve elliptic equation (Fukumori et al., 1998).
 !
-      CALL bc_u2d_tile (ng, tile,                                       &
-     &                  IminS, ImaxS, JminS, JmaxS,                     &
-     &                  tl_gradPx)
-      CALL bc_v2d_tile (ng, tile,                                       &
-     &                  IminS, ImaxS, JminS, JmaxS,                     &
-     &                  tl_gradPy)
+      CALL u2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             tl_gradPx)
+      CALL v2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             tl_gradPy)
 !
 !  Compute the RHS term for the biconjugate gradient solver.
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          tl_rhs_r2d(i,j)=-pm(i,j)*(tl_gradPx(i+1,j)-tl_gradPx(i,j))-   &
-     &                     pn(i,j)*(tl_gradPy(i,j+1)-tl_gradPy(i,j))
+          tl_rhs_r2d(i,j)=-pm(i,j)*pn(i,j)*                             &
+     &                    (pmon_u(i+1,j)*tl_gradPx(i+1,j)-              &
+     &                     pmon_u(i  ,j)*tl_gradPx(i  ,j)+              &
+     &                     pnom_v(i,j+1)*tl_gradPy(i,j+1)-              &
+     &                     pnom_v(i,j  )*tl_gradPy(i,j  ))
 #  ifdef MASKING
           tl_rhs_r2d(i,j)=tl_rhs_r2d(i,j)*rmask(i,j)
 #  endif
         END DO
       END DO
 
-      CALL bc_r2d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  tl_rhs_r2d)
+      CALL r2d_bc (ng, tile,                                            &
+     &             LBi, UBi, LBj, UBj,                                  &
+     &             tl_rhs_r2d)
 #  ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &

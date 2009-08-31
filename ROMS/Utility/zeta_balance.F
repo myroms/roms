@@ -40,6 +40,10 @@
       PUBLIC :: biconj
       PUBLIC :: ad_biconj_tile
       PUBLIC :: tl_biconj_tile
+      PUBLIC :: r2d_bc
+      PUBLIC :: ad_r2d_bc
+      PUBLIC :: u2d_bc
+      PUBLIC :: v2d_bc
 
       CONTAINS
 !
@@ -138,7 +142,6 @@
       USE mod_scalars
       USE mod_grid
 !
-      USE bc_2d_mod
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
       USE exchange_3d_mod
@@ -262,14 +265,17 @@
      &         z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
           phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1+          &
      &            fac2*(zeta(i,j,Lbck)-zeta(i,j-1,Lbck))
-          gradPy(i,j)=0.25_r8*(pn(i,j-1)+pn(i,j))*                      &
-     &                        (Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*phie(i)
+          gradPy(i,j)=0.5_r8*(Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*           &
+     &                phie(i)
+# ifdef MASKING
+          gradPy(i,j)=gradPy(i,j)*vmask(i,j)
+# endif
         END DO
 !
 !  Compute balance, interior U-momemtum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
-        DO k=1,N(ng)-1
+        DO k=N(ng)-1,1,-1
           DO i=Istr-1,Iend
             cff1=1.0_r8/((z_r(i,j  ,k+1)-z_r(i,j  ,k))*                 &
      &                   (z_r(i,j-1,k+1)-z_r(i,j-1,k)))
@@ -289,8 +295,8 @@
      &           (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i,j-1,k  ))
             phie(i)=phie(i)+fac3*(cff1*cff3-cff2*cff4)
             gradPy(i,j)=gradPy(i,j)+                                    &
-     &                  0.25_r8*(pn(i,j-1)+pn(i,j))*                    &
-     &                          (Hz(i,j-1,k)+Hz(i,j,k))*phie(i)
+     &                  0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*                 &
+     &                  phie(i)
 # ifdef MASKING
             gradPy(i,j)=gradPy(i,j)*vmask(i,j)
 # endif
@@ -307,14 +313,17 @@
      &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng)) 
           phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1+          &
      &            fac2*(zeta(i,j,Lbck)-zeta(i-1,j,Lbck))
-          gradPx(i,j)=0.25_r8*(pm(i-1,j)+pm(i,j))*                      &
-     &                        (Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*phix(i)
+          gradPx(i,j)=0.5_r8*(Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*           &
+     &                phix(i)
+# ifdef MASKING
+          gradPx(i,j)=gradPx(i,j)*umask(i,j)
+# endif
         END DO
 !
 !  Compute balance, interior V-momemtum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
-        DO k=1,N(ng)-1
+        DO k=N(ng)-1,1,-1
           DO i=Istr,Iend+1
             cff1=1.0_r8/((z_r(i  ,j,k+1)-z_r(i  ,j,k))*                 &
      &                   (z_r(i-1,j,k+1)-z_r(i-1,j,k)))
@@ -334,8 +343,8 @@
      &           (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i-1,j,k  ))
             phix(i)=phix(i)+fac3*(cff1*cff3-cff2*cff4)
             gradPx(i,j)=gradPx(i,j)+                                    &
-     &                  0.25_r8*(pm(i-1,j)+pm(i,j))*                    &
-     &                          (Hz(i-1,j,k)+Hz(i,j,k))*phix(i)
+     &                  0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*                 &
+     &                  phix(i)
 # ifdef MASKING
             gradPx(i,j)=gradPx(i,j)*umask(i,j)
 # endif
@@ -343,30 +352,34 @@
         END DO
       END DO
 !
-!  Impose no gradient conditions at open boundaries.
+!  Impose zero gradient conditions at open boundaries.
 !
-      CALL bc_u2d_tile (ng, tile,                                       &
-     &                  IminS, ImaxS, JminS, JmaxS,                     &
-     &                  gradPx)
-      CALL bc_v2d_tile (ng, tile,                                       &
-     &                  IminS, ImaxS, JminS, JmaxS,                     &
-     &                  gradPy)
+      CALL u2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             gradPx)
+      CALL v2d_bc (ng, tile,                                            &
+     &             IminS, ImaxS, JminS, JmaxS,                          &
+     &             gradPy)
 !
-!  Compute the RHS term for the biconjugate gradient solver.
+!  Compute the RHS term, -div(phi_bar), for the biconjugate gradient
+!  solver.
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          rhs_r2d(i,j)=-pm(i,j)*(gradPx(i+1,j)-gradPx(i,j))-            &
-     &                  pn(i,j)*(gradPy(i,j+1)-gradPy(i,j))
+          rhs_r2d(i,j)=-pm(i,j)*pn(i,j)*                                &
+     &                 (pmon_u(i+1,j)*gradPx(i+1,j)-                    &         
+     &                  pmon_u(i  ,j)*gradPx(i  ,j)+                    &
+     &                  pnom_v(i,j+1)*gradPy(i,j+1)-                    &
+     &                  pnom_v(i,j  )*gradPy(i,j  ))
 # ifdef MASKING
           rhs_r2d(i,j)=rhs_r2d(i,j)*rmask(i,j)
 # endif
         END DO
       END DO
 
-      CALL bc_r2d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  rhs_r2d)
+      CALL r2d_bc (ng, tile,                                            &
+     &             LBi, UBi, LBj, UBj,                                  &
+     &             rhs_r2d)
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -1161,6 +1174,224 @@
 
       RETURN
       END SUBROUTINE r2d_bc
+
+!
+!***********************************************************************
+      SUBROUTINE u2d_bc (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   A)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_scalars
+
+#if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_2d_mod, ONLY : exchange_u2d_tile
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+
+#ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:)
+#else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj)
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+
+#include "set_bounds.h"
+
+#ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West boundary conditions: Closed or gradient 
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          A(Iend+1,j)=0.0_r8
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          A(Istr,j)=0.0_r8
+        END DO
+      END IF
+#endif
+
+#ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South boundary conditions: Closed (free-slip/no-slip) or
+!  gradient.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO i=IstrU,Iend
+          A(i,Jend+1)=0.0_r8
+        END DO
+      END IF
+
+      IF (SOUTHERN_EDGE) THEN
+        DO i=IstrU,Iend
+          A(i,Jstr-1)=0.0_r8
+        END DO
+      END IF
+#endif
+
+#if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+                      &
+     &                           A(Istr  ,Jstr  ))
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
+     &                           A(Iend+1,Jstr  ))
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
+     &                           A(Istr+1,Jend+1)) 
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
+     &                           A(Iend  ,Jend+1))
+      END IF
+#endif
+
+#if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_u2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        A)
+#endif
+
+      RETURN
+      END SUBROUTINE u2d_bc
+
+!
+!***********************************************************************
+      SUBROUTINE v2d_bc (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   A)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_scalars
+
+#if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_2d_mod, ONLY : exchange_v2d_tile
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+
+#ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:)
+#else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj)
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+
+#include "set_bounds.h"
+
+#ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West boundary conditions: Closed (free-slip/no-slip) or
+!  gradient.
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO j=JstrV,Jend
+          A(Iend+1,j)=0.0_r8
+        END DO
+      END IF
+
+      IF (WESTERN_EDGE) THEN
+        DO j=JstrV,Jend
+          A(Istr-1,j)=0.0_r8
+        END DO
+      END IF
+#endif
+
+#ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South boundary conditions: Closed or Gradient.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          A(i,Jend+1)=0.0_r8
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          A(i,Jstr)=0.0_r8
+        END DO
+      END IF
+#endif
+
+#if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jstr  )=0.5_r8*(A(Istr  ,Jstr  )+                      &
+     &                           A(Istr-1,Jstr+1))
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jstr  )=0.5_r8*(A(Iend  ,Jstr  )+                      &
+     &                           A(Iend+1,Jstr+1))
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
+     &                           A(Istr  ,Jend+1))
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
+     &                           A(Iend  ,Jend+1))
+      END IF
+#endif
+
+#if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_v2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        A)
+#endif
+
+      RETURN
+      END SUBROUTINE v2d_bc
 
 !
 !***********************************************************************
