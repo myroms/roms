@@ -640,7 +640,7 @@
       END IF QUERY
 !
   10  FORMAT (6x,'DEF_FLOATS  - creating floats file: ',a)
-  20  FORMAT (6x,'DEF_FLOATS  - inquiring history file: ',a)
+  20  FORMAT (6x,'DEF_FLOATS  - inquiring floats file: ',a)
   30  FORMAT (/,' DEF_FLOATS - unable to create floats NetCDF',         &
      &        ' file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')

@@ -1114,8 +1114,8 @@
         JstrV=BOUNDS(ng)%JstrV(MyRank)
         LBi=BOUNDS(ng)%LBi(MyRank)
         UBi=BOUNDS(ng)%UBi(MyRank)
-        LBj=BOUNDS(ng)%LBi(MyRank)
-        UBj=BOUNDS(ng)%UBi(MyRank)
+        LBj=BOUNDS(ng)%LBj(MyRank)
+        UBj=BOUNDS(ng)%UBj(MyRank)
 
         DO ifield=1,Nimport(Iocean)
           id=ImportID(Iocean)%val(ifield)
