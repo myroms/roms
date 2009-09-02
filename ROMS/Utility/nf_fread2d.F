@@ -108,7 +108,7 @@
 
       integer :: nf_fread2d
        
-      real(r8) :: Aspval
+      real(r8) :: Aoffset, Aspval
 
       real(r8), parameter :: IniVal = 0.0_r8
 
@@ -181,7 +181,7 @@
 !
 !  Determine if interpolating from coarse gridded data to model grid
 !  is required.  This is only allowed for gridded 2D fields.  This is
-!  convinient for atmospheric forcing datasets that are usually on
+!  convenient for atmospheric forcing datasets that are usually on
 !  coarser grids. The user can provide coarser gridded data to avoid
 !  very large input files.
 !
@@ -204,6 +204,16 @@
         END IF
       ELSE
         Aspval=spval_check
+      END IF
+!
+!  If the add_offset attribute is present, this value is added to the
+!  data after reading.
+!
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
+     &                      Aoffset, foundit,                           &
+     &                      ncid = ncid)
+      IF (.not.foundit) THEN
+        Aoffset=0.0_r8
       END IF
 !
 !-----------------------------------------------------------------------
@@ -286,7 +296,7 @@
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
               wrk(i)=0.0_r8                     ! masked with _FillValue
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -411,7 +421,7 @@
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
               wrk(i)=0.0_r8                     ! masked with _FillValue
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -589,7 +599,7 @@
 
       real(r8), parameter :: Aspv = 0.0_r8
 
-      real(r8) :: Aspval
+      real(r8) :: Aoffset, Aspval
 
       real(r8), allocatable :: wrk(:)
 !
@@ -653,7 +663,7 @@
 !
 !  Determine if interpolating from coarse gridded data to model grid
 !  is required.  This is only allowed for gridded 2D fields.  This is
-!  convinient for atmospheric forcing datasets that are usually on
+!  convenient for atmospheric forcing datasets that are usually on
 !  coarser grids. The user can provide coarser gridded data to avoid
 !  very large input files.
 !
@@ -677,6 +687,16 @@
         END IF
       ELSE
         Aspval=spval_check
+      END IF
+!
+!  If the add_offset attribute is present, this value is added to the
+!  data after reading.
+!
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
+     &                      Aoffset, foundit,                           &
+     &                      ncid = ncid)
+      IF (.not.foundit) THEN
+        Aoffset=0.0_r8
       END IF
 
 # if defined READ_WATER && defined MASKING
@@ -750,9 +770,9 @@
           Amax=-spval
           DO i=1,Npts
             IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
-              wrk(i)=0.0_r8                     ! msaked with _FillValue
+              wrk(i)=0.0_r8                     ! masked with _FillValue
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF

@@ -83,6 +83,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       logical, dimension(4) :: bounded
 
       integer :: bc, ghost, i, ib, ic, ir, j, k, kc, rc, tile
@@ -91,6 +93,8 @@
       integer, dimension(5) :: start, total
 
       integer :: status
+
+      real(r8) :: Aoffset
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       real(r8), dimension(3) :: buffer
@@ -174,6 +178,16 @@
       start(5)=tindex
       total(5)=1
 !
+!  If the add_offset attribute is present, this value is added to the
+!  data after reading.
+!
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
+     &                      Aoffset, foundit,                           &
+     &                      ncid = ncid)
+      IF (.not.foundit) THEN
+        Aoffset=0.0_r8
+      END IF
+!
 !-----------------------------------------------------------------------
 !  Read in requested data and scale it.
 !-----------------------------------------------------------------------
@@ -188,7 +202,7 @@
             IF (wrk(i).ge.spval_check) THEN
               wrk(i)=0.0_r8
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF

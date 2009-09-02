@@ -658,7 +658,7 @@
 !    &    ((Xmin.le.Xobs(iobs)).and.(Xobs(iobs).lt.Xmax)).and.          &
 !    &    ((Ymin.le.Yobs(iobs)).and.(Yobs(iobs).lt.Ymax))) THEN
 !-----------------------------------------------------------------------
-!   
+!
 !  Allocate fractional grid lower and upper bounds structure.
 !
       IF (.not.allocated(DOMAIN)) THEN
@@ -1091,7 +1091,7 @@
           Lvar=LEN_TRIM(Vinfo(1))
 !
 !  Extract SVN Repository Root URL.
-!            
+!
           IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).eq.CHAR(36))) THEN
             is=INDEX(Vinfo(1),'https')
             ie=INDEX(Vinfo(1),'/ROMS')-1
@@ -1217,10 +1217,10 @@
                 idVvis=varid
               CASE ('idTdif')
                 idTdif=varid
-                idDiff(itemp)=idTdif 
+                idDiff(itemp)=idTdif
               CASE ('idSdif')
                 idSdif=varid
-                idDiff(isalt)=idSdif 
+                idDiff(isalt)=idSdif
               CASE ('idVmLS')
                 idVmLS=varid
               CASE ('idVmKK')
@@ -2553,7 +2553,7 @@
               END IF
               DO i=1,5
                 Vname(i,varid)=TRIM(ADJUSTL(Vinfo(i)))
-              END DO            
+              END DO
               DO ng=1,Ngrids
                 Iinfo(1,varid,ng)=gtype
                 Fscale(varid,ng)=scale
@@ -3454,7 +3454,7 @@
                   j=0
                   DO i=1,Nphy
                     IF (PHY(i).le.2) j=j+1
-                  END DO                
+                  END DO
                   IF (j.gt.0) varid=varid-1
                   DO i=1,Nphy
                     IF (PHY(i).le.2) THEN
@@ -3477,7 +3477,7 @@
                   END DO
                 CASE ('Pigs_XY')
                   varid=varid-1
-                  DO j=1,Npig 
+                  DO j=1,Npig
                     DO i=1,Nphy
                       IF (PIG(PHY(i),j).gt.0) THEN
                         varid=varid+1
@@ -3502,7 +3502,7 @@
 #endif
 #ifdef DIAGNOSTICS_TS
 !
-!  Adjust information for tracer diagnostic variables.  This needs to be 
+!  Adjust information for tracer diagnostic variables.  This needs to be
 !  done last because it needs all the tracers variable names.
 !
 
@@ -3685,7 +3685,7 @@
           idSvar(isTvar(i))=idTvar(i)
           ic=ic+1
         END DO
-#endif   
+#endif
 #ifdef ADJUST_WSTRESS
         idSvar(isUstr)=idUsms
         idSvar(isVstr)=idVsms

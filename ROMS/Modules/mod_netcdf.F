@@ -1854,12 +1854,15 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: my_ncid, status, varid
 
       integer, dimension(1) :: Asize
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
 #endif
+      real(r8) :: Aoffset
 !
 !-----------------------------------------------------------------------
 !  Read in a floating-point 1D-array variable.
@@ -1913,6 +1916,17 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+!
+!  If the "add_offset" attribute is present, add this value to the data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, varid, 'add_offset',   &
+     &                        Aoffset, foundit,                         &
+     &                        ncid = ncid)
+        IF (foundit.and.(exit_flag.eq.NoError)) THEN
+          A=A+Aoffset
+        END IF
+      END IF
 !
 !  Compute minimum and maximun values of read variable.
 !
@@ -2003,6 +2017,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: my_ncid, status, varid
 
       integer, dimension(2) :: Asize
@@ -2010,6 +2026,7 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
 #endif
+      real(r8) :: Aoffset
 !
 !-----------------------------------------------------------------------
 !  Read in a floating-point 2D-array variable.
@@ -2063,6 +2080,17 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+!
+!  If the "add_offset" attribute is present, add this value to the data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, varid, 'add_offset',   &
+     &                        Aoffset, foundit,                         &
+     &                        ncid = ncid)
+        IF (foundit.and.(exit_flag.eq.NoError)) THEN
+          A=A+Aoffset
+        END IF
+      END IF
 !
 !  Compute minimum and maximun values of read variable.
 !
@@ -2150,6 +2178,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: my_ncid, status, varid
 
       integer, dimension(3) :: Asize
@@ -2157,6 +2187,7 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
 #endif
+      real(r8) :: Aoffset
 !
 !-----------------------------------------------------------------------
 !  Read in a floating-point 2D-array variable.
@@ -2212,6 +2243,17 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+!
+!  If the "add_offset" attribute is present, add this value to the data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, varid, 'add_offset',   &
+     &                        Aoffset, foundit,                         &
+     &                        ncid = ncid)
+        IF (foundit.and.(exit_flag.eq.NoError)) THEN
+          A=A+Aoffset
+        END IF
+      END IF
 !
 !  Compute minimum and maximun values of read variable.
 !
@@ -2299,6 +2341,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: my_ncid, status, varid
 
       integer, dimension(4) :: Asize
@@ -2306,6 +2350,7 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
 #endif
+      real(r8) :: Aoffset
 !
 !-----------------------------------------------------------------------
 !  Read in a floating-point 2D-array variable.
@@ -2362,6 +2407,17 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+!
+!  If the "add_offset" attribute is present, add this value to the data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        CALL netcdf_get_fatt (ng, model, ncname, varid, 'add_offset',   &
+     &                        Aoffset, foundit,                         &
+     &                        ncid = ncid)
+        IF (foundit.and.(exit_flag.eq.NoError)) THEN
+          A=A+Aoffset
+        END IF
+      END IF
 !
 !  Compute minimum and maximun values of read variable.
 !

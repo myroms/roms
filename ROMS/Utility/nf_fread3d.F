@@ -99,6 +99,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: i, ic, ij, j, jc, k, kc, np, MyNpts, Npts
       integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize, IJsize
       integer :: Istr, Iend
@@ -109,6 +111,8 @@
       integer, dimension(4) :: start, total
 
       integer :: nf_fread3d
+
+      real(r8) :: Aoffset
 
       real(r8), parameter :: IniVal= 0.0_r8
 
@@ -179,6 +183,16 @@
       Jlen=Jmax-Jmin+1
       Klen=UBk-LBk+1
 !
+!  If the add_offset attribute is present, this value is added to the
+!  data after reading.
+!
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
+     &                      Aoffset, foundit,                           &
+     &                      ncid = ncid)
+      IF (.not.foundit) THEN
+        Aoffset=0.0_r8
+      END IF
+!
 !-----------------------------------------------------------------------
 !  Parallel I/O: Read in tile data from requested field and scale it.
 !                Processing both water and land points.
@@ -246,7 +260,7 @@
             IF (wrk(i).ge.spval_check) THEN
               wrk(i)=0.0_r8                   ! masked with _FillValue
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -367,7 +381,7 @@
             IF (wrk(i).ge.spval_check) THEN
               wrk(i)=0.0_r8             ! set _FillValue to zero
             ELSE
-              wrk(i)=Ascl*wrk(i)
+              wrk(i)=Ascl*wrk(i)+Aoffset
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -477,6 +491,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: foundit
+
       integer :: i, j, k, ic, Npts, NWpts, status, wtype
       integer :: Imin, Imax, Jmin, Jmax, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType
@@ -486,6 +502,8 @@
       integer, dimension(4) :: start, total
 
       integer :: nf_fread3d
+
+      real(r8) :: Aoffset
 
 # if defined INLINE_2DIO && defined DISTRIBUTE
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)) :: wrk
@@ -539,6 +557,16 @@
         Koff=0
       ELSE
         Koff=1
+      END IF
+!
+!  If the add_offset attribute is present, this value is added to the
+!  data after reading.
+!
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
+     &                      Aoffset, foundit,                           &
+     &                      ncid = ncid)
+      IF (.not.foundit) THEN
+        Aoffset=0.0_r8
       END IF
 
 # ifdef DISTRIBUTE
@@ -639,7 +667,7 @@
               IF (wrk(i).ge.spval_check) THEN
                 wrk(i)=0.0_r8                 ! masked with _FillValue
               ELSE
-                wrk(i)=Ascl*wrk(i)
+                wrk(i)=Ascl*wrk(i)+Aoffset
                 Amin=MIN(Amin,wrk(i))
                 Amax=MAX(Amax,wrk(i))
               END IF
