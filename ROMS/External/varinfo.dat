@@ -3105,7 +3105,7 @@
 
 'pCO2'                                             ! Input/Output
   'partial pressure of CO2'
-  'atm'                                            ! [atm]
+  'microatmophere'                                 ! [microatmosphere]
   'pCO2, scalar, series'
   'ocean_time'
   'iDbio2(ipCO2)'
