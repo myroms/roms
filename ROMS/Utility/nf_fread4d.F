@@ -101,7 +101,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: foundit
+      logical, dimension(3) :: foundit
 
       integer :: i, ic, ij, j, jc, k, kc, l, lc, np, Npts
       integer :: Imin, Imax, Isize, Jmin, Jmax, Jsize, IJsize
@@ -114,18 +114,20 @@
 
       integer :: nf_fread4d
 
-      real(r8) :: Aoffset
+      real(r8) :: Afactor, Aoffset, Aspval
 
       real(r8), parameter :: IniVal= 0.0_r8
 
       real(r8), dimension(2) :: buffer
+      real(r8), dimension(3) :: AttValue
 
 # if defined MASKING && defined READ_WATER
       real(r8), allocatable :: A2d(:)
 # endif
       real(r8), allocatable :: wrk(:)
 
-      character (len=3), dimension(2) :: op_handle
+      character (len= 3), dimension(2) :: op_handle
+      character (len=12), dimension(3) :: AttName
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -186,14 +188,47 @@
       Klen=UBk-LBk+1
       Llen=UBt-LBt+1
 !
-!  If the add_offset attribute is present, this value is added to the
-!  data after reading.
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
 !
-      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
-     &                      Aoffset, foundit,                           &
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  ' 
+
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
+     &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (.not.foundit) THEN
+      IF (exit_flag.ne.NoError) THEN
+        nf_fread4d=ioerror
+        RETURN
+      END IF
+
+      IF (.not.foundit(1)) THEN
+        Afactor=1.0_r8
+      ELSE
+        Afactor=AttValue(1)
+      END IF
+
+      IF (.not.foundit(2)) THEN
         Aoffset=0.0_r8
+      ELSE
+        Aoffset=AttValue(2)
+      END IF
+
+      IF (.not.foundit(3)) THEN
+        Aspval=spval_check
+      ELSE
+        Aspval=AttValue(3)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -268,10 +303,10 @@
           Amin=spval
           Amax=-spval
           DO i=1,Npts
-            IF (wrk(i).ge.spval_check) THEN
+            IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
               wrk(i)=0.0_r8                   ! masked with _FillValue
             ELSE
-              wrk(i)=Ascl*wrk(i)+Aoffset
+              wrk(i)=Ascl*(Afactor*wrk(i)+Aoffset)
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -397,10 +432,10 @@
           Amin=spval
           Amax=-spval
           DO i=1,Npts
-            IF (wrk(i).ge.spval_check) THEN
+            IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
               wrk(i)=0.0_r8             ! set _FillValue to zero
             ELSE
-              wrk(i)=Ascl*wrk(i)+Aoffset
+              wrk(i)=Ascl*(Afactor*wrk(i)+Aoffset)
               Amin=MIN(Amin,wrk(i))
               Amax=MAX(Amax,wrk(i))
             END IF
@@ -508,7 +543,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: foundit
+      logical, dimension(3) :: foundit
 
       integer :: i, j, k, ic, fourth, Npts, NWpts, status, wtype
       integer :: Imin, Imax, Jmin, Jmax, Loff
@@ -520,9 +555,13 @@
 
       integer :: nf_fread4d
 
-      real(r8) :: Aoffset
+      real(r8) :: Afactor, Aoffset, Aspval
+
+      real(r8), dimension(3) :: AttValue
 
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: wrk
+
+      character (len=12), dimension(3) :: AttName
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -572,14 +611,47 @@
         Loff=0
       END IF
 !
-!  If the add_offset attribute is present, this value is added to the
-!  data after reading.
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
 !
-      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, 'add_offset',   &
-     &                      Aoffset, foundit,                           &
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  ' 
+
+      CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
+     &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (.not.foundit) THEN
+      IF (exit_flag.ne.NoError) THEN
+        nf_fread4d=ioerror
+        RETURN
+      END IF
+
+      IF (.not.foundit(1)) THEN
+        Afactor=1.0_r8
+      ELSE
+        Afactor=AttValue(1)
+      END IF
+
+      IF (.not.foundit(2)) THEN
         Aoffset=0.0_r8
+      ELSE
+        Aoffset=AttValue(2)
+      END IF
+
+      IF (.not.foundit(3)) THEN
+        Aspval=spval_check
+      ELSE
+        Aspval=AttValue(3)
       END IF
 
 # ifdef DISTRIBUTE
@@ -665,10 +737,10 @@
           status=nf90_get_var(ncid, ncvarid, wrk, start, total)
           IF (status.eq.nf90_noerr) THEN
             DO i=1,Npts
-              IF (wrk(i).ge.spval_check) THEN
+              IF (ABS(wrk(i)).ge.ABS(Aspval)) THEN
                 wrk(i)=0.0_r8                 ! masked with _FillValue
               ELSE
-                wrk(i)=Ascl*wrk(i)+Aoffset
+                wrk(i)=Ascl*(Afactor*wrk(i)+Aoffset)
                 Amin=MIN(Amin,wrk(i))
                 Amax=MAX(Amax,wrk(i))
               END IF
