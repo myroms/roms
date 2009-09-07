@@ -202,7 +202,7 @@
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) THEN
-        nf_fread3d_bry=ioerror
+        status=ioerror
         RETURN
       END IF
 
@@ -301,8 +301,6 @@
         END DO
       END DO
 
-      nf_fread3d_bry=status
-  
       RETURN
       END FUNCTION nf_fread3d_bry
 
