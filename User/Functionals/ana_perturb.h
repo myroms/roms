@@ -781,7 +781,7 @@
 !
 !  Perturb free-surface open boundaries.
 !
-          IF (Lperturb.and.Lobc(ib,isFsur,ng)) THEN
+          IF (Lperturb(ib).and.Lobc(ib,isFsur,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN      
                 DO j=Jstr,Jend
@@ -823,7 +823,7 @@
 !
 !  Perturb 2D U-momentum open boundaries.
 !
-          IF (Lperturb.and.Lobc(ib,isUbar,ng)) THEN
+          IF (Lperturb(ib).and.Lobc(ib,isUbar,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isUbar)) THEN
                 DO j=Jstr,Jend
@@ -865,7 +865,7 @@
 !
 !  Perturb 2D V-momentum open boundaries.
 !
-          IF (Lperturb.and.Lobc(ib,isVbar,ng)) THEN
+          IF (Lperturb(ib).and.Lobc(ib,isVbar,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isVbar)) THEN
                 DO j=JstrV,Jend
@@ -909,7 +909,7 @@
 !
 !  Perturb 3D U-momentum open boundaries.
 !
-          IF (Lperturb.and.Lobc(ib,isUvel,ng)) THEN
+          IF (Lperturb(ib).and.Lobc(ib,isUvel,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isUvel)) THEN
                 DO k=1,N(ng)
@@ -959,7 +959,7 @@
 !
 !  Perturb 3D V-momentum open boundaries.
 !
-          IF (Lperturb.and.Lobc(ib,isVvel,ng)) THEN
+          IF (Lperturb(ib).and.Lobc(ib,isVvel,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
               IF (TLmodel.and.(ivarTL.eq.isVvel)) THEN
                 DO k=1,N(ng)
@@ -1010,7 +1010,7 @@
 !  Perturb tracers open boundaries.
 !
           DO itrc=1,NT(ng)
-            IF (Lperturb.and.Lobc(ib,isTvar(itrc),ng)) THEN
+            IF (Lperturb(ib).and.Lobc(ib,isTvar(itrc),ng)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 IF (TLmodel.and.(ivarTL.eq.isTvar(itrc))) THEN
                   DO k=1,N(ng)

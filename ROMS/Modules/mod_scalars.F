@@ -2155,7 +2155,7 @@
         END DO
         visc2(ng)=IniVal
         visc4(ng)=IniVal
-#ifdef BULK_FLUX
+#ifdef BULK_FLUXES
         blk_ZQ(ng)=10.0_r8
         blk_ZT(ng)=10.0_r8
         blk_ZW(ng)=10.0_r8
