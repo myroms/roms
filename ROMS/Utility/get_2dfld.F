@@ -451,6 +451,8 @@
      &                              start = (/Trec/),                   &
      &                              total = (/1/))
               Fpoint(Tindex,ifield,ng)=Fval*Fscale(ifield,ng)
+              Fmin=Fval
+              Fmax=Fval
             END IF
             IF (exit_flag.ne.NoError) THEN
               IF (Master) WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
