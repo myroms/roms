@@ -61,6 +61,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: TimeLess
+
       integer :: i, nvatt, nvdim
 
       real(r8) :: mday, tstart
@@ -77,10 +79,19 @@
 !  Initialize.
 !
       cycle=.FALSE.
+      TimeLess=.FALSE.
       Tindex=0
       clength=0.0_r8
       Tstr=0.0_r8
       Tscale=1.0_r8
+!
+!  Determine if the associated time variable is actually a time
+!  variable.
+!
+      IF ((INDEX(TRIM(TvarName),'period').gt.0).or.                     &
+     &    (TRIM(TvarName).eq.'river')) THEN
+        TimeLess=.TRUE.
+      END IF
 !
 !  Inquire input NetCDF file about the time variable.
 !
@@ -171,7 +182,7 @@
 !  available for current model time. Avoid check on tidal data
 !  since time is in terms of frequencies.
 !
-      IF (INDEX(TRIM(TvarName),'period').eq.0) THEN
+      IF (.not.TimeLess) THEN
         IF (.not.cycle.and.(ntime.gt.1)) THEN
           IF (smday.lt.Tmin) THEN
             IF (Master) WRITE (stdout,20) TRIM(TvarName), Tmin, smday
