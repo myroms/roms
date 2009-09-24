@@ -36,6 +36,19 @@
 !==============================================================================
 !
 
+! Number of iterations in the biconjugate gradient algorithm used to solve
+! the elliptic equation for sea surface height in the error covariance
+! balance operator, [1:Ngrids].
+
+          Nbico == 200
+
+! Parameters used to compute balanced salinity in terms of temperature using
+! empirical T-S relationships in the error covariance balance operator,
+! [1:Ngrids].
+
+       dTdz_min == 0.001d0                ! minimun dT/dz (Celsius/m)
+       ml_depth == 100.0d0                ! mixed-layer depth (m; positive)
+
 ! Upper bound on the relative error of the gradient for the Lanczos
 ! conjugate gradient algorithm.
 
@@ -309,6 +322,43 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !  GLOSSARY:
 !  =========
+!
+!------------------------------------------------------------------------------
+! Error covariance matrix balance operator parameters.  These parameters are
+! only used when BALANCE_OPERATOR and ZETA_ELLIPTIC are activated.
+!------------------------------------------------------------------------------
+!
+!  Nbico          Number of iterations in the biconjugate gradient algorithm
+!                 used to solve the elliptic equation for sea surface height
+!                 in the error covariance balance operator, [1:Ngrids]. We
+!                 need as many iterations are required to decrease the error
+!                 value of the reference free-surface to 1E-8 or smaller. In
+!                 some applications Nbico=200 will do the job.
+!
+!                   Warning: be aware that there are 4 arrays that are
+!                   -------  allocated with this parameter may and its
+!                            value maybe constrained by available memory:
+!
+!                   FOURDVAR(ng) % p_r2d (LBi:UBi,LBj:UBj,Nbico(ng))
+!                   FOURDVAR(ng) % r_r2d (LBi:UBi,LBj:UBj,Nbico(ng))
+!                   FOURDVAR(nd) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng))
+!                   FOURDVAR(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng))
+!
+!                   All the iterations values are needed in the backward
+!                   stepping of the adjoint.
+!
+!  dTdz_min       Minimum d(T)/d(z) above which the balanced salinity
+!                 (deltaS_b) is computed, [1:Ngrids]:
+!
+!                     deltaS_b = cff * dSdT * deltaT;    dSdT = dSdz / dTdz
+!
+!                   where cff is a coefficient that depends on the mixed-layer
+!                   depth (ml_depth):
+!
+!                     cff = 1.0 - EXP (z_r / ml_depth)
+!
+!  ml_depth       Mixed-layer depth (m; positive) used above in smoothing
+!                 coefficient (cff), [1:Ngrids].
 !
 !------------------------------------------------------------------------------
 ! Lanczos conjugate gradient algorithm parameters.

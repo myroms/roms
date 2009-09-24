@@ -120,6 +120,33 @@
           real(r8), pointer :: NLPenalty(:)
 #   endif
           real(r8), pointer :: NLobsCost(:)
+
+#   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+          real(r8), pointer :: bc_ak(:)
+          real(r8), pointer :: bc_bk(:)
+
+          real(r8), pointer :: zdf1(:)
+          real(r8), pointer :: zdf2(:)
+          real(r8), pointer :: zdf3(:)
+
+          real(r8), pointer :: pc_r2d(:,:)
+          real(r8), pointer :: rhs_r2d(:,:)
+          real(r8), pointer :: r2d_ref(:,:)
+          real(r8), pointer :: zeta_ref(:,:)
+
+          real(r8), pointer :: p_r2d(:,:,:)
+          real(r8), pointer :: r_r2d(:,:,:)
+          real(r8), pointer :: bp_r2d(:,:,:)
+          real(r8), pointer :: br_r2d(:,:,:)
+
+          real(r8), pointer :: tl_rhs_r2d(:,:)
+          real(r8), pointer :: tl_r2d_ref(:,:)
+          real(r8), pointer :: tl_zeta_ref(:,:)
+
+          real(r8), pointer :: ad_rhs_r2d(:,:)
+          real(r8), pointer :: ad_r2d_ref(:,:)
+          real(r8), pointer :: ad_zeta_ref(:,:)
+#   endif
 #  endif
           real(r8), pointer :: ObsVar(:)
           real(r8), pointer :: SurveyTime(:)
@@ -600,7 +627,11 @@
 !  Local variable declarations.
 !
       integer :: my_NstateVar, i, ng
+# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      integer :: LBi, UBi, LBj, UBj
 
+      integer, parameter :: tile = 0
+# endif
       real(r8), parameter :: IniVal = 0.0_r8
 !
       SourceFile='mod_fourdvar.F, initialize_fourdvar'
@@ -654,6 +685,12 @@
 !
       DO ng=1,Ngrids
 
+#  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+        LBi=BOUNDS(ng)%LBi(TILE)
+        UBi=BOUNDS(ng)%UBi(TILE)
+        LBj=BOUNDS(ng)%LBj(TILE)
+        UBj=BOUNDS(ng)%UBj(TILE)
+#  endif
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
 #   ifdef ADJUST_STFLUX
@@ -702,7 +739,67 @@
 
         allocate ( FOURDVAR(ng) % NLobsCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % NLobsCost = IniVal
+
+#   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+        allocate ( FOURDVAR(ng) % bc_ak(Nbico(ng)) )
+        FOURDVAR(ng) % bc_ak = IniVal
+
+        allocate ( FOURDVAR(ng) % bc_bk(Nbico(ng)) )
+        FOURDVAR(ng) % bc_bk = IniVal
+
+        allocate ( FOURDVAR(ng) % zdf1(Nbico(ng)) )
+        FOURDVAR(ng) % zdf1 = IniVal
+
+        allocate ( FOURDVAR(ng) % zdf2(Nbico(ng)) )
+        FOURDVAR(ng) % zdf2 = IniVal
+
+        allocate ( FOURDVAR(ng) % zdf3(Nbico(ng)) )
+        FOURDVAR(ng) % zdf3 = IniVal
+
+        allocate ( FOURDVAR(ng) % pc_r2d(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % pc_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % rhs_r2d(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % rhs_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % r2d_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % r2d_ref = IniVal
+
+        allocate ( FOURDVAR(ng) % zeta_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % zeta_ref = IniVal
+
+        allocate ( FOURDVAR(ng) % p_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        FOURDVAR(ng) % p_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % r_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        FOURDVAR(ng) % r_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        FOURDVAR(ng) % bp_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        FOURDVAR(ng) % br_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % tl_rhs_r2d(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % tl_rhs_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % tl_r2d_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % tl_r2d_ref = IniVal
+
+        allocate ( FOURDVAR(ng) % tl_zeta_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % tl_zeta_ref = IniVal
+
+        allocate ( FOURDVAR(ng) % ad_rhs_r2d(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % ad_rhs_r2d = IniVal
+
+        allocate ( FOURDVAR(ng) % ad_r2d_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % ad_r2d_ref = IniVal
+
+        allocate ( FOURDVAR(ng) % ad_zeta_ref(LBi:UBi,LBj:UBj) )
+        FOURDVAR(ng) % ad_zeta_ref = IniVal
+#   endif
 #  endif
+
         allocate ( FOURDVAR(ng) % ObsVar(NstateVar(ng)) )
         FOURDVAR(ng) % ObsVar = 1.0_r8
 

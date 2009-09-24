@@ -35,9 +35,11 @@
 !                                                                      !
 !  Configuration parameters:                                           !
 !                                                                      !
+!  Nbico      Number of balanced SSH elliptic equation iterations.     !
 !  Nfloats    Number of floats tracjectories.                          !
 !  Nstation   Number of output stations.                               !
 !  MTC        Maximum number of tidal components.                      !
+!  NSA        Number of state array for error covariance.              !
 !  NSV        Number of model state variables.                         !
 !                                                                      !
 !  Tracer parameters:                                                  !
@@ -468,7 +470,7 @@
         integer :: NSA
 #endif
 
-#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
 !
 !  Number of biconjugate gradient algorithm iteractions.
 !
@@ -677,9 +679,6 @@
 #endif
 #ifdef ADJUST_STFLUX
           NSV(ng)=NSV(ng)+NT(ng)
-#endif
-#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
-          Nbico(ng)=200
 #endif
         END DO
 !

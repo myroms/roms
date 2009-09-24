@@ -1303,6 +1303,8 @@
      &                       OCEAN(ng)%zetaG,                           &
      &                       OCEAN(ng)%f_zeta,                          &
      &                       update)
+
+#  ifndef SOLVE3D
 !
 !  Set 2D momentum forcing.
 !
@@ -1316,7 +1318,7 @@
      &                       OCEAN(ng)%vbarG,                           &
      &                       OCEAN(ng)%f_vbar,                          &
      &                       update)
-
+#  endif
 #  ifdef SOLVE3D
 !
 !  Set 3D momentum.

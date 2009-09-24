@@ -208,33 +208,6 @@
 # endif
 #endif
 
-#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
-          real(r8), pointer :: bc_ak(:)
-          real(r8), pointer :: bc_bk(:)
-
-          real(r8), pointer :: zdf1(:)
-          real(r8), pointer :: zdf2(:)
-          real(r8), pointer :: zdf3(:)
-
-          real(r8), pointer :: pc_r2d(:,:)
-          real(r8), pointer :: rhs_r2d(:,:)
-          real(r8), pointer :: r2d_ref(:,:)
-          real(r8), pointer :: zeta_ref(:,:)
-
-          real(r8), pointer :: p_r2d(:,:,:)
-          real(r8), pointer :: r_r2d(:,:,:)
-          real(r8), pointer :: bp_r2d(:,:,:)
-          real(r8), pointer :: br_r2d(:,:,:)
-
-          real(r8), pointer :: tl_rhs_r2d(:,:)
-          real(r8), pointer :: tl_r2d_ref(:,:)
-          real(r8), pointer :: tl_zeta_ref(:,:)
-
-          real(r8), pointer :: ad_rhs_r2d(:,:)
-          real(r8), pointer :: ad_r2d_ref(:,:)
-          real(r8), pointer :: ad_zeta_ref(:,:)
-#endif
-
 #if defined FOUR_DVAR || defined IMPULSE
 !
 !  Working arrays to store adjoint impulse forcing, error covariance,
@@ -485,33 +458,6 @@
       allocate ( OCEAN(ng) % ad_v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
 #  endif
 # endif
-#endif
-
-#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
-      allocate ( OCEAN(ng) % bc_ak(Nbico(ng)) )
-      allocate ( OCEAN(ng) % bc_bk(Nbico(ng)) )
-
-      allocate ( OCEAN(ng) % zdf1(Nbico(ng)) )
-      allocate ( OCEAN(ng) % zdf2(Nbico(ng)) )
-      allocate ( OCEAN(ng) % zdf3(Nbico(ng)) )
-
-      allocate ( OCEAN(ng) % pc_r2d(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % rhs_r2d(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % r2d_ref(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % zeta_ref(LBi:UBi,LBj:UBj) )
-
-      allocate ( OCEAN(ng) % p_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
-      allocate ( OCEAN(ng) % r_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
-      allocate ( OCEAN(ng) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
-      allocate ( OCEAN(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
-
-      allocate ( OCEAN(ng) % tl_rhs_r2d(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % tl_r2d_ref(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % tl_zeta_ref(LBi:UBi,LBj:UBj) )
-
-      allocate ( OCEAN(ng) % ad_rhs_r2d(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % ad_r2d_ref(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % ad_zeta_ref(LBi:UBi,LBj:UBj) )
 #endif
 
 #if defined FOUR_DVAR || defined IMPULSE
@@ -930,45 +876,6 @@
             END DO
           END DO
 # endif
-        END DO
-      END IF
-#endif
-
-#if defined BALANCE_OPERATOR || defined ZETA_ELLIPTIC
-      IF (model.eq.0) THEN
-        DO rec=1,Nbico(ng)
-          OCEAN(ng) % bc_ak(rec) = IniVal
-          OCEAN(ng) % bc_bk(rec) = IniVal
-
-          OCEAN(ng) % zdf1(rec) = IniVal
-          OCEAN(ng) % zdf2(rec) = IniVal
-          OCEAN(ng) % zdf3(rec) = IniVal
-        END DO
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            OCEAN(ng) % pc_r2d(i,j) = 1.0_r8
-            OCEAN(ng) % rhs_r2d(i,j) = IniVal
-            OCEAN(ng) % r2d_ref(i,j) = IniVal
-            OCEAN(ng) % zeta_ref(i,j) = IniVal
-
-            OCEAN(ng) % tl_rhs_r2d(i,j) = IniVal
-            OCEAN(ng) % tl_r2d_ref(i,j) = IniVal
-            OCEAN(ng) % tl_zeta_ref(i,j) = IniVal
-
-            OCEAN(ng) % ad_rhs_r2d(i,j) = IniVal
-            OCEAN(ng) % ad_r2d_ref(i,j) = IniVal
-            OCEAN(ng) % ad_zeta_ref(i,j) = IniVal
-          END DO
-        END DO
-        DO j=Jmin,Jmax
-          DO rec=1,Nbico(ng)
-            DO i=Imin,Imax
-              OCEAN(ng) % p_r2d(i,j,rec) = IniVal
-              OCEAN(ng) % r_r2d(i,j,rec) = IniVal
-              OCEAN(ng) % bp_r2d(i,j,rec) = IniVal
-              OCEAN(ng) % br_r2d(i,j,rec) = IniVal
-            END DO
-          END DO
         END DO
       END IF
 #endif

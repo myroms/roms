@@ -7420,7 +7420,16 @@
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'GradErr') THEN
+          IF (TRIM(KeyWord).eq.'Nbico') THEN
+            Npts=load_i(Nval, Rval, Ngrids, Nbico)
+          ELSE IF (TRIM(KeyWord).eq.'dTdz_min') THEN
+            Npts=load_r(Nval, Rval, Ngrids, dTdz_min)
+          ELSE IF (TRIM(KeyWord).eq.'ml_depth') THEN
+            Npts=load_r(Nval, Rval, Ngrids, ml_depth)
+            DO ng=1,Ngrids
+              ml_depth(ng)=ABS(ml_depth(ng))
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
             Npts=load_r(Nval, Rval, 1, GradErr)
           ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
             Npts=load_r(Nval, Rval, 1, HevecErr)
@@ -7902,22 +7911,32 @@
 #    endif
 #    if defined WEAK_CONSTRAINT || defined IOM
           WRITE (out,70) LhotStart, 'LhotStart',                        &
-     &           'Switch for hot start of subsequent outer loops.'
+     &            'Switch for hot start of subsequent outer loops.'
 #    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
-     &           'Switch for conjugate gradient preconditioning.'
+     &            'Switch for conjugate gradient preconditioning.'
           WRITE (out,70) Lritz, 'Lritz',                                &
-     &           'Switch for Ritz limited-memory preconditioning.'
+     &            'Switch for Ritz limited-memory preconditioning.'
 #    if defined WEAK_CONSTRAINT || defined IOM
           IF (Lprecond.and.(NritzEV.gt.0)) THEN
             WRITE (out,80) NritzEV, 'NritzEV',                          &
-     &           'Number of preconditioning eigenpairs to use.'
+     &            'Number of preconditioning eigenpairs to use.'
           END IF
 #    endif
 #   endif
+#   ifdef BALANCE_OPERATOR
+#     ifdef ZETA_ELLIPTIC
+          WRITE (out,80) Nbico(ng), 'Nbico',                            &
+     &            'Number of iterations in SSH elliptic equation.'
+#     endif
+          WRITE (out,100) dTdz_min(ng), 'dTdz_min',                     &
+     &            'Minimum dTdz (C/m) used in balanced salinity.'
+          WRITE (out,100) ml_depth(ng), 'ml_depth',                     &
+     &            'Mixed-layer depth (m) used in balanced salinity.'
+#   endif
 #   if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
           WRITE (out,80) NpostI, 'NpostI',                              &
-     &           'Number of Lanczos iterations in posterior analysis.'
+     &            'Number of Lanczos iterations in posterior analysis.'
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
 #    ifndef OBS_SENSITIVITY

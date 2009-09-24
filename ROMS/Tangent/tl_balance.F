@@ -64,6 +64,9 @@
       USE mod_coupling
       USE mod_mixing
 # endif
+# ifdef ZETA_ELLIPTIC
+      USE mod_fourdvar
+# endif
       USE mod_ocean
       USE mod_stepping
 # ifdef SOLVE3D
@@ -120,18 +123,18 @@
      &                      OCEAN(ng) % t,                              &
 # endif
 # ifdef ZETA_ELLIPTIC
-     &                      OCEAN(ng) % tl_zeta_ref,                    &
-     &                      OCEAN(ng) % tl_rhs_r2d,                     &
-     &                      OCEAN(ng) % pc_r2d,                         &
-     &                      OCEAN(ng) % r_r2d,                          &
-     &                      OCEAN(ng) % br_r2d,                         &
-     &                      OCEAN(ng) % p_r2d,                          &
-     &                      OCEAN(ng) % bp_r2d,                         &
-     &                      OCEAN(ng) % zdf1,                           &
-     &                      OCEAN(ng) % zdf2,                           &
-     &                      OCEAN(ng) % zdf3,                           &
-     &                      OCEAN(ng) % bc_ak,                          &
-     &                      OCEAN(ng) % bc_bk,                          &
+     &                      FOURDVAR(ng) % tl_zeta_ref,                 &
+     &                      FOURDVAR(ng) % tl_rhs_r2d,                  &
+     &                      FOURDVAR(ng) % pc_r2d,                      &
+     &                      FOURDVAR(ng) % r_r2d,                       &
+     &                      FOURDVAR(ng) % br_r2d,                      &
+     &                      FOURDVAR(ng) % p_r2d,                       &
+     &                      FOURDVAR(ng) % bp_r2d,                      &
+     &                      FOURDVAR(ng) % zdf1,                        &
+     &                      FOURDVAR(ng) % zdf2,                        &
+     &                      FOURDVAR(ng) % zdf3,                        &
+     &                      FOURDVAR(ng) % bc_ak,                       &
+     &                      FOURDVAR(ng) % bc_bk,                       &
 # endif
 # ifdef SOLVE3D
      &                      OCEAN(ng) % tl_rho,                         &
@@ -315,9 +318,6 @@
       real(r8) :: tl_cff1, tl_cff2
       real(r8) :: dzdT
 
-      real(r8) :: dTdz_min = 0.001_r8
-      real(r8) :: ml_depth = 100.0_r8       ! hack value for now
-
       real(r8), dimension(20) ::  filter_coef =                         &
      &   (/ 2.500000E-1_r8,    6.250000E-2_r8,     1.562500E-2_r8,      &
      &      3.906250E-3_r8,    9.765625E-4_r8,     2.44140625E-4_r8,    &
@@ -385,19 +385,6 @@
             dSdz(i,j,k)=dSdz(i,j,k)-FC(i,k)*dSdz(i,j,k+1)
           END DO
         END DO
-!!
-!! Compute depth of the mixed layer from temperature shear.
-!!
-!!      DO i=IstrR,IendR
-!!        dTdz_min=dTdz(i,j,N(ng))
-!!        DO k=N(ng)-1,1,-1
-!!          IF (ABS(dTdz(i,j,)).lt.dTdz_min) THEN
-!!            dTdz_min=dTdz(i,j,k)
-!!            ml_depth=ABS(z_w(i,j,k))
-!!            EXIT
-!!          END IF
-!!        END DO
-!!      END DO
       END DO
 !
 !  Add balanced salinity (deltaS_b) contribution to unbalanced salinity
@@ -417,7 +404,7 @@
         DO i=IstrR,IendR
           DO k=1,N(ng)
             cff=0.5_r8*(dTdz(i,j,k-1)+dTdz(i,j,k)) 
-            IF (ABS(cff).lt.dTdz_min) THEN
+            IF (ABS(cff).lt.dTdz_min(ng)) THEN
               dzdT=0.0_r8
             ELSE
               dzdT=1.0_r8/cff
@@ -445,7 +432,7 @@
           END DO
 
           DO k=1,N(ng)
-            cff=(1.0_r8-EXP(z_r(i,j,k)/ml_depth))*dSdT(k)
+            cff=(1.0_r8-EXP(z_r(i,j,k)/ml_depth(ng)))*dSdT(k)
             tl_t(i,j,k,Linp,isalt)=tl_t(i,j,k,Linp,isalt)+              &
      &                             cff*tl_t(i,j,k,Linp,itemp)
 #  ifdef MASKING

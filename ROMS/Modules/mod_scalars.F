@@ -1039,6 +1039,13 @@
         real(r8), dimension(4) :: Hgamma
         real(r8), dimension(4) :: Vgamma
 !
+!  Parameters used to compute balanced salinity in terms of temperature
+!  using empirical T-S relationships in error covariance balance
+!  operator.
+!
+        real(r8), dimension(Ngrids) :: dTdz_min  ! minimum dT/ds (C/m)
+        real(r8), dimension(Ngrids) :: ml_depth  ! mixed-layer depth (m)
+!
 !  Initial conditions, model and surface forcing error covariance
 !  horizontal decorrelation scales (m).
 !

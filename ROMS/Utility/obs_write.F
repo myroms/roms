@@ -629,7 +629,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #  endif
-     &                       OCEAN(ng) % zeta_ref)
+     &                       FOURDVAR(ng) % zeta_ref)
           IF (exit_flag.ne.NoError) RETURN
           wrtZetaRef(ng)=.FALSE.
         END IF

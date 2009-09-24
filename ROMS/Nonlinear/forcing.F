@@ -63,10 +63,9 @@
      &                   OCEAN(ng) % vbar,                              &
 # endif
 # ifdef SOLVE3D
-     &                   COUPLING(ng) % Zt_avg1)
-# else
-     &                   OCEAN(ng) % zeta)
+     &                   COUPLING(ng) % Zt_avg1,                        &
 # endif
+     &                   OCEAN(ng) % zeta)
 
       RETURN
       END SUBROUTINE forcing
@@ -88,10 +87,9 @@
      &                         ubar, vbar,                              &
 # endif
 # ifdef SOLVE3D
-     &                         Zt_avg1)
-# else
-     &                         zeta)
+     &                         Zt_avg1,                                 &
 # endif
+     &                         zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -127,9 +125,8 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: Zt_avg1(LBi:,LBj:)
-#  else
-      real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
 #  endif
+      real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
 # else
 #  ifdef SOLVE3D
       real(r8), intent(in) :: f_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -150,9 +147,8 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
-#  else
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
 #  endif
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
 !  Local variable declarations.
@@ -177,11 +173,19 @@
 !  Free-surface.
 !
 # ifdef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          Zt_avg1(i,j)=Zt_avg1(i,j)+f_zeta(i,j)
+      IF (iic(ng).eq.ntstart(ng)) THEN
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            zeta(i,j,Kfrc)=zeta(i,j,Kfrc)+f_zeta(i,j)
+          END DO
         END DO
-      END DO
+      ELSE
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            Zt_avg1(i,j)=Zt_avg1(i,j)+f_zeta(i,j)
+          END DO
+        END DO
+      END IF
 # else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
