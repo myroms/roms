@@ -177,19 +177,18 @@
         END DO
 !
         IF (innLoop.eq.0) THEN
+
+# ifdef W4DPSAS
+!  
+!  If this is the first inner-loop, save NLmodVal in BCKmodVal.
+!
+          DO iobs=1,Ndatum(ng)
+            BCKmodVal(iobs)=NLmodVal(iobs)
+          END DO
+# endif
 !
           IF ((outLoop.eq.1).or.(.not.LhotStart)) THEN
 !
-# ifdef W4DPSAS
-!
-!  If this is the first outer-loop, save NLmodVal in BCKmodVal.
-!
-            IF (outLoop.eq.1) THEN
-              DO iobs=1,Ndatum(ng)
-                BCKmodVal(iobs)=NLmodVal(iobs)
-              END DO
-            END IF
-# endif
             DO iobs=1,Ndatum(ng)
 !>            tl_cg_QG(1)=tl_cg_QG(1)+                                  &
 !>   &                    tl_zcglwk(iobs,1)*zgrad0(iobs,outLoop)+       &

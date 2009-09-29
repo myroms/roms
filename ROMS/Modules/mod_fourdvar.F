@@ -188,6 +188,8 @@
         real(r8), allocatable :: vcglev(:,:,:)
         real(r8), allocatable :: zgrad0(:,:)
         real(r8), allocatable :: vgrad0(:)
+        real(r8), allocatable :: vgrad0s(:)
+        real(r8), allocatable :: gdgw(:)
         real(r8), allocatable :: vgnorm(:)
         real(r8), allocatable :: cg_innov(:)
         real(r8), allocatable :: cg_pxsave(:)
@@ -949,6 +951,12 @@
 
       allocate ( vgrad0(Mobs) )
       vgrad0 = IniVal
+
+      allocate ( vgrad0s(Mobs) )
+      vgrad0s = IniVal
+
+      allocate ( gdgw(Mobs) )
+      gdgw = IniVal
 
       allocate ( vgnorm(Nouter) )
       vgnorm = IniVal

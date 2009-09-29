@@ -565,6 +565,15 @@
 !  Multiply adjoint state by its corresponding normalization factor.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_zeta(:,:,Linp),                         &
+     &                       ad_ubar(:,:,Linp),                         &
+     &                       ad_vbar(:,:,Linp))
+# endif
+!
 !  Adjoint free-surface.
 !
       DO j=JR_RANGE
@@ -585,18 +594,17 @@
           ad_vbar(i,j,Linp)=ad_vbar(i,j,Linp)*HnormV(i,j,rec)
         END DO
       END DO
-# ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_zeta(:,:,Linp),                         &
-     &                       ad_ubar(:,:,Linp),                         &
-     &                       ad_vbar(:,:,Linp))
-# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
 !
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_u(:,:,:,Linp),                          &
+     &                       ad_v(:,:,:,Linp))
+#  endif
       DO k=1,N(ng)
         DO j=JU_RANGE
           DO i=IU_RANGE
@@ -609,16 +617,15 @@
           END DO
         END DO
       END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_u(:,:,:,Linp),                          &
-     &                       ad_v(:,:,:,Linp))
-#  endif
 !
 !  Adjoint tracers.
 !
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_t(:,:,:,Linp,:))
+#  endif
       DO it=1,NT(ng)
         DO k=1,N(ng)
           DO j=JR_RANGE
@@ -629,12 +636,6 @@
           END DO
         END DO
       END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_t(:,:,:,Linp,:))
-#  endif
 # endif
 
 # ifdef ADJUST_BOUNDARY
@@ -644,6 +645,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isFsur,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_zeta_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JR_RANGE
@@ -657,13 +665,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_zeta_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -673,6 +674,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isUbar,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_ubar_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JU_RANGE
@@ -686,13 +694,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_ubar_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -702,6 +703,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isVbar,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_vbar_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO j=JV_RANGE
@@ -715,13 +723,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_vbar_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -733,6 +734,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isUvel,ng)) THEN
+#   ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij, 1, N(ng),            &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_u_obc(:,:,ib,ir,Linp))
+#   endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO k=1,N(ng)
@@ -750,13 +758,6 @@
                 END DO
               END IF
             END IF
-#   ifdef DISTRIBUTE
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_u_obc(:,:,ib,ir,Linp))
-#   endif
           END IF
         END DO
       END DO
@@ -766,6 +767,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isVvel,ng)) THEN
+#   ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij, 1, N(ng),            &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_v_obc(:,:,ib,ir,Linp))
+#   endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 DO k=1,N(ng)
@@ -783,13 +791,6 @@
                 END DO
               END IF
             END IF
-#   ifdef DISTRIBUTE
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_v_obc(:,:,ib,ir,Linp))
-#   endif
           END IF
         END DO
       END DO
@@ -800,6 +801,13 @@
         DO ir=1,Nbrec(ng)
           DO ib=1,4
             IF (.not.Lweak.and.Lobc(ib,isTvar(it),ng)) THEN
+#   ifdef DISTRIBUTE
+              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij, 1, N(ng),          &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_t_obc(:,:,ib,ir,Linp,it))
+#   endif
               IF (Lconvolve(ib)) THEN
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   DO k=1,N(ng)
@@ -819,13 +827,6 @@
                   END DO
                 END IF
               END IF
-#   ifdef DISTRIBUTE
-              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
-     &                                   LBij, UBij, 1, N(ng),          &
-     &                                   NghostPoints,                  &
-     &                                   EWperiodic, NSperiodic,        &
-     &                                   ad_t_obc(:,:,ib,ir,Linp,it))
-#   endif
             END IF
           END DO
         END DO
@@ -838,6 +839,13 @@
 !  Adjoint surface momentum stress.
 !
       IF (.not.Lweak) THEN
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
+     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_ustr(:,:,:,Linp),                     &
+     &                         ad_vstr(:,:,:,Linp))
+#  endif
         DO k=1,Nfrec(ng)
           DO j=JU_RANGE
             DO i=IU_RANGE
@@ -850,13 +858,6 @@
             END DO
           END DO
         END DO
-#  ifdef DISTRIBUTE
-        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
-     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
-     &                         ad_ustr(:,:,:,Linp),                     &
-     &                         ad_vstr(:,:,:,Linp))
-#  endif
       END IF
 # endif
 # ifdef ADJUST_STFLUX
@@ -866,6 +867,13 @@
       IF (.not.Lweak) THEN
         DO it=1,NT(ng)
           IF (Lstflux(it,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
+     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                             NghostPoints,                        &
+     &                             EWperiodic, NSperiodic,              &
+     &                             ad_tflux(:,:,:,Linp,it))
+#  endif
             DO k=1,Nfrec(ng)
               DO j=JR_RANGE
                 DO i=IR_RANGE
@@ -874,13 +882,6 @@
                 END DO
               END DO
             END DO
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
-     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                             NghostPoints,                        &
-     &                             EWperiodic, NSperiodic,              &
-     &                             ad_tflux(:,:,:,Linp,it))
-#  endif
           END IF
         END DO
       END IF
@@ -1234,6 +1235,14 @@
 !
 !  Adjoint free-surface.
 !
+# ifdef DISTRIBUTE
+      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_zeta(:,:,Linp),                         &
+     &                       ad_ubar(:,:,Linp),                         &
+     &                       ad_vbar(:,:,Linp))
+# endif
       DO j=JR_RANGE
         DO i=IR_RANGE
           ad_zeta(i,j,Linp)=ad_zeta(i,j,Linp)/                          &
@@ -1255,18 +1264,17 @@
      &                      SQRT(om_v(i,j)*on_v(i,j))
         END DO
       END DO
-# ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_zeta(:,:,Linp),                         &
-     &                       ad_ubar(:,:,Linp),                         &
-     &                       ad_vbar(:,:,Linp))
-# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
 !
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_u(:,:,:,Linp),                          &
+     &                       ad_v(:,:,:,Linp))
+#  endif
       DO j=JU_RANGE
         DO i=IU_RANGE
           cff=om_u(i,j)*on_u(i,j)*0.5_r8
@@ -1285,16 +1293,15 @@
           END DO
         END DO
       END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_u(:,:,:,Linp),                          &
-     &                       ad_v(:,:,:,Linp))
-#  endif
 !
 !  Adjoint tracers.
 !
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_t(:,:,:,Linp,:))
+#  endif
       DO j=JR_RANGE
         DO i=IR_RANGE
           cff=om_r(i,j)*on_r(i,j)
@@ -1306,12 +1313,6 @@
           END DO
         END DO
       END DO
-#  ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_t(:,:,:,Linp,:))
-#  endif
 # endif
 
 # ifdef ADJUST_BOUNDARY
@@ -1321,6 +1322,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isFsur,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_zeta_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,r2dvar)
@@ -1336,13 +1344,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_zeta_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -1352,6 +1353,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isUbar,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_ubar_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
@@ -1367,13 +1375,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_ubar_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -1383,6 +1384,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isVbar,ng)) THEN
+#  ifdef DISTRIBUTE
+            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij,                      &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_vbar_obc(:,ib,ir,Linp))
+#  endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
@@ -1398,13 +1406,6 @@
                 END DO
               END IF
             END IF
-#  ifdef DISTRIBUTE
-            CALL ad_mp_exchange2d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij,                      &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_vbar_obc(:,ib,ir,Linp))
-#  endif
           END IF
         END DO
       END DO
@@ -1416,6 +1417,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isUvel,ng)) THEN
+#   ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij, 1, N(ng),            &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_u_obc(:,:,ib,ir,Linp))
+#   endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
@@ -1441,13 +1449,6 @@
                 END DO
               END IF
             END IF
-#   ifdef DISTRIBUTE
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_u_obc(:,:,ib,ir,Linp))
-#   endif
           END IF
         END DO
       END DO
@@ -1457,6 +1458,13 @@
       DO ir=1,Nbrec(ng)
         DO ib=1,4
           IF (.not.Lweak.and.Lobc(ib,isVvel,ng)) THEN
+#   ifdef DISTRIBUTE
+            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
+     &                                 LBij, UBij, 1, N(ng),            &
+     &                                 NghostPoints,                    &
+     &                                 EWperiodic, NSperiodic,          &
+     &                                 ad_v_obc(:,:,ib,ir,Linp))
+#   endif
             IF (Lconvolve(ib)) THEN
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
@@ -1482,13 +1490,6 @@
                 END DO
               END IF
             END IF
-#   ifdef DISTRIBUTE
-            CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,           &
-     &                                 LBij, UBij, 1, N(ng),            &
-     &                                 NghostPoints,                    &
-     &                                 EWperiodic, NSperiodic,          &
-     &                                 ad_v_obc(:,:,ib,ir,Linp))
-#   endif
           END IF
         END DO
       END DO
@@ -1499,6 +1500,13 @@
         DO ir=1,Nbrec(ng)
           DO ib=1,4
             IF (.not.Lweak.and.Lobc(ib,isTvar(it),ng)) THEN
+#   ifdef DISTRIBUTE
+              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
+     &                                   LBij, UBij, 1, N(ng),          &
+     &                                   NghostPoints,                  &
+     &                                   EWperiodic, NSperiodic,        &
+     &                                   ad_t_obc(:,:,ib,ir,Linp,it))
+#   endif
               IF (Lconvolve(ib)) THEN
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   i=BOUNDS(ng)%edge(ib,r2dvar)
@@ -1522,13 +1530,6 @@
                   END DO
                 END IF
               END IF
-#   ifdef DISTRIBUTE
-              CALL ad_mp_exchange3d_bry (ng, tile, iADM, 1, ib,         &
-     &                                   LBij, UBij, 1, N(ng),          &
-     &                                   NghostPoints,                  &
-     &                                   EWperiodic, NSperiodic,        &
-     &                                   ad_t_obc(:,:,ib,ir,Linp,it))
-#   endif
             END IF
           END DO
         END DO
@@ -1541,6 +1542,13 @@
 !  Adjoint surface momentum stress.
 !
       IF (.not.Lweak) THEN
+#  ifdef DISTRIBUTE
+        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
+     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_ustr(:,:,:,Linp),                     &
+     &                         ad_vstr(:,:,:,Linp))
+#  endif
         DO k=1,Nfrec(ng)
           DO j=JU_RANGE
             DO i=IU_RANGE
@@ -1555,13 +1563,6 @@
             END DO
           END DO
         END DO
-#  ifdef DISTRIBUTE
-        CALL ad_mp_exchange3d (ng, tile, iADM, 2,                       &
-     &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
-     &                         ad_ustr(:,:,:,Linp),                     &
-     &                         ad_vstr(:,:,:,Linp))
-#  endif
       END IF
 # endif
 
@@ -1570,6 +1571,17 @@
 !  Adjoint surface tracers flux.
 !
       IF (.not.Lweak) THEN
+#  ifdef DISTRIBUTE
+        DO it=1,NT(ng)
+          IF (Lstflux(it,ng)) THEN
+            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
+     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                             NghostPoints,                        &
+     &                             EWperiodic, NSperiodic,              &
+     &                             ad_tflux(:,:,:,Linp,it))
+          END IF
+        END DO
+#  endif
         DO j=JR_RANGE
           DO i=IR_RANGE
             fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
@@ -1582,17 +1594,6 @@
             END DO
           END DO
         END DO
-#  ifdef DISTRIBUTE
-        DO it=1,NT(ng)
-          IF (Lstflux(it,ng)) THEN
-            CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
-     &                             LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                             NghostPoints,                        &
-     &                             EWperiodic, NSperiodic,              &
-     &                             ad_tflux(:,:,:,Linp,it))
-          END IF
-        END DO
-#  endif
       END IF
 # endif
 

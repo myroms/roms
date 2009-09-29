@@ -7420,15 +7420,17 @@
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'Nbico') THEN
-            Npts=load_i(Nval, Rval, Ngrids, Nbico)
-          ELSE IF (TRIM(KeyWord).eq.'dTdz_min') THEN
+          IF (TRIM(KeyWord).eq.'dTdz_min') THEN
             Npts=load_r(Nval, Rval, Ngrids, dTdz_min)
           ELSE IF (TRIM(KeyWord).eq.'ml_depth') THEN
             Npts=load_r(Nval, Rval, Ngrids, ml_depth)
             DO ng=1,Ngrids
               ml_depth(ng)=ABS(ml_depth(ng))
             END DO
+#  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+          ELSE IF (TRIM(KeyWord).eq.'Nbico') THEN
+            Npts=load_i(Nval, Rval, Ngrids, Nbico)
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
             Npts=load_r(Nval, Rval, 1, GradErr)
           ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
@@ -7862,7 +7864,7 @@
           IF (.not.Lobc(ib,isUvel,ng).and.Lobc(ib,isVvel,ng)) THEN
             Lobc(ib,isUvel,ng)=.TRUE.
           END IF
-          IF (.not.Lobc(ib,isVbar,ng).and.Lobc(ib,isUbar,ng)) THEN
+          IF (.not.Lobc(ib,isVvel,ng).and.Lobc(ib,isUvel,ng)) THEN
             Lobc(ib,isVvel,ng)=.TRUE.
           END IF
           IF (.not.Lobc(ib,isFsur,ng).and.Lobc(ib,isUbar,ng)) THEN

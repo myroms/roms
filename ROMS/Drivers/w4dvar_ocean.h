@@ -776,6 +776,7 @@
 !  into ADM so that it can be written to Hessian NetCDF file.
 #  endif
 !
+              Lweak=.FALSE.
               add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,add,numthreads)
@@ -1544,6 +1545,7 @@
             IF (exit_flag.ne.NoError) RETURN
             nrhs(ng)=Lini
 #  endif
+            Lweak=.FALSE.
             add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,add,numthreads)
