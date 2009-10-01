@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: twocmp.seqUnvn.F90,v 1.4 2004/04/23 21:39:34 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS twocmp.seqUnvn.F90,v 1.6 2007-12-19 17:13:17 rloy Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE:  twocomponentUneven.sequential
@@ -43,9 +43,10 @@
       integer,parameter :: ngy = 4   ! points in y-direction
 
       integer ier,world_group,model2_group,myrank2,myrank3
-      integer,dimension(:),pointer :: nprocs,peloc2
+      integer,dimension(:),pointer :: myids,mycomms,peloc2
       integer,dimension(:,:),pointer :: GlobalId
       integer :: comm1,comm2,asize,mysize,i,myproc
+      integer :: commsize
       integer,dimension(1) :: start1,length1,ranks
       integer,dimension(:),allocatable :: start2,length2
 !-----------------------------------------------------------------------
@@ -80,55 +81,25 @@
 ! define the group
       call mpi_group_incl(world_group,1,ranks,model2_group,ier)
 ! now define the communicator
+      ! first initialize it
+      comm2=MPI_COMM_NULL
       call mpi_comm_create(MPI_COMM_WORLD,model2_group,comm2,ier)
 
 ! don't need the groups anymore
       call mpi_group_free(world_group,ier)
       call mpi_group_free(model2_group,ier)
 
+!  allocate arrays for the ids and comms
+      allocate(myids(2),mycomms(2))
 
+! Set the arrays to their values.
+      myids(1)=1
+      myids(2)=2
+      mycomms(1)=comm1
+      mycomms(2)=comm2
 
-!!! Because this model-processor geometry is complex, We're going
-!  to use the version of MCTWorld_init that requires the
-!  user to define explicitly how the models are laid out.
-
-!  allocate arrays to hold the World information
-
-!  the nprocs array size is the same as the number of components
-      allocate(nprocs(2),   &
-
-!  for GlobalId, the first dimension is the number of components and
-!  the size of the second dimension is equal to the maximum of the number
-!  processors per component.  For this case, thats mysize.
-!  The second dimension is indexed starting at 0 to match the numbering MPI
-!  uses for processors.
-      GlobalId(2,0:mysize-1))
-!!!!done with allocation
-
-! Only need to set these arrays on root
-      if(myproc .eq. 0) then
-
-! the first model is on all the processors
-         nprocs(1)=mysize
-! the second model is only running on 1 processor
-         nprocs(2)=1
-
-! now set what the local ids are for each global id
-!   the first model is running on all processors and there
-!   is a 1-1 correspondence between its id on comm1 and its
-!   id on MPI_COMM_WORLD
-         do i=0,mysize-1
-           GlobalId(1,i)=i
-         enddo
-
-!   the second model has one process and its rank is the
-!   same as the MPI_COMM_WORLD rank for that process
-         GlobalId(2,0)=0
-
-      endif
-     
-! now call the root version of MCTWorld_init on all processors.
-      call MCTWorld_init(2,MPI_COMM_WORLD,nprocs,GlobalId)
+! now call the initm_ version of MCTWorld_init
+      call MCTWorld_init(2,MPI_COMM_WORLD,mycomms,myids)
 
 
 ! first gsmap is the grid decomposed in one dimension
@@ -191,6 +162,9 @@
 
 
 ! all done
+      call MPI_Barrier(MPI_COMM_WORLD,ier)
+      if (myproc==0) write(6,*) 'All Done'
+
       call mpi_finalize(ier)
 
       contains

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id: m_String.F90,v 1.7 2004/10/19 23:00:39 steder Exp $
-! CVS $Name: MCT_2_2_0 $  
+! CVS m_String.F90,v 1.8 2007-11-06 00:03:32 jacob Exp
+! CVS MCT_2_6_0  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_String - The String Datatype
@@ -138,7 +138,7 @@ contains
 
 ! !OUTPUT PARAMETERS: 
 !
-     character(len=size(str%c))            :: str2ch0_
+     character(len=size(str%c,1))            :: str2ch0_
 
 ! !REVISION HISTORY:
 ! 	23Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
@@ -179,7 +179,7 @@ contains
 
 ! !OUTPUT PARAMETERS: 
 !
-      character(len=size(ch1))                   :: ch12ch0_
+      character(len=size(ch1,1))                   :: ch12ch0_
 
 ! !REVISION HISTORY:
 ! 	22Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_GlobalSegMap.F90,v 1.42 2005/11/21 23:39:40 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_GlobalSegMap.F90,v 1.56 2009-03-17 16:51:49 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GlobalSegMap - a nontrivial 1-D decomposition of an array.
@@ -49,6 +49,7 @@
                                 ! size (incl. halos)
       public :: ngseg           ! Return global number of segments
       public :: nlseg           ! Return local number of segments
+      public :: max_nlseg       ! Return max local number of segments
       public :: active_pes      ! Return number of pes with at least 1 
                                 ! datum, and if requested, a list of them.
       public :: peLocs          ! Given an input list of point indices,
@@ -65,6 +66,9 @@
                                 ! re-order the GlobalSegMap components
                                 ! GlobalSegMap%start, GlobalSegMap%length,
                                 ! and GlobalSegMap%pe_loc
+      public :: increasing      ! Are the indices for each pe strictly
+                                ! increasing?
+      public :: copy            ! Copy the gsmap
 
 ! !PUBLIC TYPES:
 
@@ -104,6 +108,7 @@
     interface lsize ; module procedure lsize_ ; end interface
     interface ngseg ; module procedure ngseg_ ; end interface
     interface nlseg ; module procedure nlseg_ ; end interface
+    interface max_nlseg ; module procedure max_nlseg_ ; end interface
     interface active_pes ; module procedure active_pes_ ; end interface
     interface peLocs ; module procedure peLocs_ ; end interface
     interface haloed ; module procedure haloed_ ; end interface
@@ -118,6 +123,9 @@
     interface SortPermute ; module procedure &
 	SortPermuteInPlace_ 
     end interface
+    interface increasing ; module procedure increasing_ ; end interface
+    interface copy ; module procedure copy_ ; end interface
+
 
 ! !REVISION HISTORY:
 ! 	28Sep00 - J.W. Larson <larson@mcs.anl.gov> - initial prototype
@@ -175,6 +183,7 @@
       use m_mpif90
       use m_die
       use m_stdio
+      use m_FcComms, only : fc_gather_int, fc_gatherv_int
 
       implicit none
 
@@ -211,17 +220,21 @@
 !                 argument gsm_comm with required argument comp_id.
 !       23Sep02 - Add optional argument numel to allow start, length
 !                 arrays to be overdimensioned.
+!       31Jan09 - P.H. Worley <worleyph@ornl.gov> - replaced irecv/send/waitall 
+!                 logic with calls to flow controlled gather routines
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::initd_'
-  integer :: nPEs, myID, ier, l, i, ngseg
+  integer :: nPEs, myID, ier, l, i
+  integer :: ngseg  ! number of global segments
+  integer :: nlseg  ! number of local segments
+  integer :: nlseg_tmp(1) ! workaround for explicit interface expecting an array
 
         ! arrays allocated on the root to which data are gathered
   integer, dimension(:), allocatable :: root_start, root_length, root_pe_loc
         ! arrays allocated on the root to coordinate gathering of 
         ! data and non-blocking receives by the root
-  integer, dimension(:), allocatable :: counts, displs, reqs
-  integer, dimension(:,:), allocatable :: status
+  integer, dimension(:), allocatable :: counts, displs
         ! data and non-blocking receives by the root
   integer, dimension(:), pointer :: my_pe_loc
 
@@ -246,25 +259,25 @@
      endif
   endif
 
-        ! Store in the variable ngseg the local size 
+        ! Store in the variable nlseg the local size 
         ! array start(:)
 
   if(present(numel)) then
-    ngseg=numel
+    nlseg=numel
   else
-    ngseg = size(start)
+    nlseg = size(start)
   endif
 
         ! If the argument pe_loc is not present, then we are
         ! initializing the GlobalSegMap on the communicator 
         ! my_comm.  We will need pe_loc to be allocated and
-        ! with local size given by the input value of ngseg,
+        ! with local size given by the input value of nlseg,
         ! and then initialize it with the local process id myID.
 
   if(present(pe_loc)) then
      my_pe_loc => pe_loc
   else
-     allocate(my_pe_loc(ngseg), stat=ier)
+     allocate(my_pe_loc(nlseg), stat=ier)
      if(ier /= 0) call die(myname_,'allocate(my_pe_loc)',ier)
      my_pe_loc = myID
   endif
@@ -273,38 +286,25 @@
   if(ier /= 0) call MP_perr_die(myname_,'MPI_COMM_SIZE()',ier)
 
         ! Allocate an array of displacements (displs) and counts
-        ! to hold the local values of ngseg on the root
+        ! to hold the local values of nlseg on the root
 
   if(myID == root) then
-     allocate(counts(0:npes-1), displs(0:npes-1), reqs(0:npes-1), &
-	      status(MP_STATUS_SIZE,0:npes-1), stat=ier)
+     allocate(counts(0:npes-1), displs(0:npes-1), stat=ier)
+     if (ier /= 0) then  
+	call die(myname_, 'allocate(counts,...',ier)
+     endif
+  else
+     allocate(counts(1), displs(1), stat=ier)
      if (ier /= 0) then  
 	call die(myname_, 'allocate(counts,...',ier)
      endif
   endif
 
         ! Send local number of segments to the root.
-        ! Here, the root posts non-blocking receives,
-        ! and a barrier brings all the processes together
-        ! once the root has good data.
 
-  if(myID == root) then
-     do i=0,npes-1
-	call MPI_IRECV(counts(i), 1, MP_INTEGER, i, i, &
-	     my_comm, reqs(i), ier)
-     end do
-  endif
-
-  call MPI_SEND(ngseg, 1, MP_INTEGER, root, myID, my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_COMM_SIZE()',ier)
-
-  if(myID == root) then
-     call MPI_WAITALL(size(reqs), reqs, status, ier)
-     if(ier /= 0) call MP_perr_die(myname_,'MPI_WAITALL()',ier)
-  endif
-
-  call MPI_BARRIER(my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_WAITALL()',ier)
+  nlseg_tmp(1) = nlseg
+  call fc_gather_int(nlseg_tmp, 1, MP_INTEGER, counts, 1, MP_INTEGER, &
+                     root, my_comm)
 
         ! On the root compute the value of ngseg, along with
         ! the entries of counts and displs.
@@ -314,7 +314,7 @@
      do i=0,npes-1
 	ngseg = ngseg + counts(i)
         if(i == 0) then
-	   displs(i) = 1
+	   displs(i) = 0
 	else
 	   displs(i) = displs(i-1) + counts(i-1)
 	endif
@@ -353,75 +353,29 @@
   endif
 
         ! Now, each process sends its values of start(:) to fill in 
-        ! the appropriate portion of root_start(:y) on the root--post
-        ! non-blocking receives on the root first, then the individual
-        ! sends, followed by a call to MPI_WAITALL().
+        ! the appropriate portion of root_start(:y) on the root.
 
-  if(myID == root) then
-     do i=0,npes-1
-	call MPI_IRECV(root_start(displs(i)), counts(i), MP_INTEGER, &
-	     i, i, my_comm, reqs(i), ier)
-     end do
-  endif
-
-  call MPI_SEND(start, size(start), MP_INTEGER, root, myID, my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_COMM_SIZE()',ier)
-
-  if(myID == root) then
-     call MPI_WAITALL(size(reqs), reqs, status, ier)
-     if(ier /= 0) call MP_perr_die(myname_,'MPI_WAITALL()',ier)
-  endif
-
-  call MPI_BARRIER(my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_BARRIER()',ier)
+  call fc_gatherv_int(start, nlseg, MP_INTEGER, &
+                      root_start, counts, displs, MP_INTEGER, &
+                      root, my_comm)
 
         ! Next, each process sends its values of length(:) to fill in 
-        ! the appropriate portion of root_length(:) on the root--post
-        ! non-blocking receives on the root first, then the individual
-        ! sends, followed by a call to MPI_WAITALL().
+        ! the appropriate portion of root_length(:) on the root.
 
-  if(myID == root) then
-     do i=0,npes-1
-	call MPI_IRECV(root_length(displs(i)), counts(i), MP_INTEGER, &
-	     i, i, my_comm, reqs(i), ier)
-     end do
-  endif
-
-  call MPI_SEND(length, size(length), MP_INTEGER, root, myID, my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_COMM_SIZE()',ier)
-
-  if(myID == root) then
-     call MPI_WAITALL(size(reqs), reqs, status, ier)
-     if(ier /= 0) call MP_perr_die(myname_,'MPI_WAITALL()',ier)
-  endif
-
-  call MPI_BARRIER(my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_BARRIER()',ier)
+  call fc_gatherv_int(length, nlseg, MP_INTEGER, &
+                      root_length, counts, displs, MP_INTEGER, &
+                      root, my_comm)
 
         ! Finally, if the argument pe_loc is present, each process sends 
         ! its values of pe_loc(:) to fill in the appropriate portion of 
-        ! root_pe_loc(:) on the root--post non-blocking receives on the 
-        ! root first, then the individual sends, followed by a call to 
-        ! MPI_WAITALL().  
+        ! root_pe_loc(:) on the root.  
    
-  if(myID == root) then
-     do i=0,npes-1
-	call MPI_IRECV(root_pe_loc(displs(i)), counts(i), MP_INTEGER, &
-	     i, i, my_comm, reqs(i), ier)
-     end do
-  endif
-
-  call MPI_SEND(my_pe_loc, size(my_pe_loc), MP_INTEGER, root, myID, &
-       my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_COMM_SIZE()',ier)
-
-  if(myID == root) then
-     call MPI_WAITALL(size(reqs), reqs, status, ier)
-     if(ier /= 0) call MP_perr_die(myname_,'MPI_WAITALL()',ier)
-  endif
+  call fc_gatherv_int(my_pe_loc, nlseg, MP_INTEGER, &
+                      root_pe_loc, counts, displs, MP_INTEGER, &
+                      root, my_comm)
 
   call MPI_BARRIER(my_comm, ier)
-  if(ier /= 0) call MP_perr_die(myname_,'MPI_BARRIER()',ier)
+  if(ier /= 0) call MP_perr_die(myname_,'MPI_BARRIER my_pe_loc',ier)
 
         ! Now, we have everything on the root needed to call initr_().
 
@@ -450,18 +404,12 @@
      call die(myname_, 'deallocate(root_start,...)', ier)
   endif
 
-        ! Clean up arrays allocated on the root process:
-
-  if(myID == root) then
-
         ! Clean up the arrays counts(:) and displs(:)
 
-     deallocate(counts, displs, reqs, status, stat=ier)
-     if(ier /= 0) then
-	call die(myname_, 'deallocate(counts,...)', ier)
-     endif
-
-  endif
+   deallocate(counts, displs, stat=ier)
+   if(ier /= 0) then
+     call die(myname_, 'deallocate(counts,...)', ier)
+   endif
 
  end subroutine initd_
 
@@ -937,6 +885,8 @@
 !  use m_GlobalSegMap,only: MCT_GSMap_init => init
 
 !  use shr_sys_mod
+
+  use m_die
   implicit none
 
 ! !INPUT PARAMETERS: 
@@ -957,10 +907,14 @@
 !       30Jul02 - T. Craig - initial version in cpl6.
 !       17Nov05 - R. Loy <rloy@mcs.anl.gov> - install into MCT
 !       18Nov05 - R. Loy <rloy@mcs.anl.gov> - make lsize optional
+!       25Jul06 - R. Loy <rloy@mcs.anl.gov> - error check on lindex/alloc/dealloc
 !EOP ___________________________________________________________________
 
 
      !--- local ---
+
+     character(len=*),parameter :: myname_=myname//'::init_index_'
+
      integer             :: i,j,k,n      ! generic indicies
      integer             :: nseg         ! counts number of segments for GSMap
      integer,allocatable :: start(:)     ! used to init GSMap 
@@ -978,6 +932,19 @@
        mysize=size(lindx)
      endif
 
+     if (mysize<0) call die(myname_, &
+        'lindx size is negative (you may have run out of points)')
+
+!!
+!! Special case if this processor doesn't have any data indices
+!! 
+   if (mysize==0) then
+     allocate(start(0),count(0),stat=ierr)
+     if(ierr/=0) call die(myname_,'allocate(start,count)',ierr)
+    
+     nseg=0
+   else
+
      call MPI_COMM_RANK(my_comm,rank, ierr)
 
      ! compute segment's start indicies and length counts 
@@ -991,7 +958,8 @@
         if ( j-i /= 1) nseg=nseg+1
      end do
 
-     allocate(start(nseg),count(nseg))
+     allocate(start(nseg),count(nseg),stat=ierr)
+     if(ierr/=0) call die(myname_,'allocate(start,count)',ierr)
 
      ! second pass - determine how long each run is
 
@@ -1008,7 +976,9 @@
          else
             count(nseg) = count(nseg)+1
          end if
-      end do
+     end do
+
+   endif ! if mysize==0
 
 
      if (debug.ne.0) then
@@ -1029,7 +999,9 @@
       endif
 
 
-      deallocate(start, count)
+      deallocate(start, count, stat=ierr)
+      if(ierr/=0) call warn(myname_,'deallocate(start,count)',ierr)
+      
 
    end subroutine init_index_
 
@@ -1132,7 +1104,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: nlseg_ - Return the global number of segments from the map
+! !IROUTINE: nlseg_ - Return the local number of segments from the map
 !
 ! !DESCRIPTION:
 ! The function {\tt nlseg\_()} returns the number of vector segments 
@@ -1180,6 +1152,98 @@
   nlseg_ = nlocseg
 
  end function nlseg_
+
+
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: max_nlseg_ - Return the max number of segments over all procs
+!
+! !DESCRIPTION:
+! The function {\tt max\_nlseg\_()} returns the maximum number 
+! over all processors of the vector
+! segments in the {\tt GlobalSegMap} argument {\tt gsap} 
+! E.g. max\_p(nlseg(gsmap,p)) but computed more efficiently
+!
+! !INTERFACE:
+
+        integer function max_nlseg_(gsmap)
+
+! !USES:
+
+        use m_MCTWorld,      only :ThisMCTWorld
+        use m_mpif90
+        use m_die
+
+        use m_stdio    ! rml
+
+        implicit none
+
+! !INPUT PARAMETERS: 
+
+        type(GlobalSegMap), intent(in) :: gsmap
+
+
+! !REVISION HISTORY:
+! 	17Jan07 - R. Loy <rloy@mcs.anl.gov> - initial prototype
+!EOP ___________________________________________________________________
+
+
+
+! Local variables
+
+        character(len=*),parameter :: myname_=myname//'::max_local_segs'
+
+        integer i
+        integer this_comp_id
+        integer nprocs
+
+        integer, allocatable::  segcount(:)  ! segments on proc i
+        integer ier
+
+        integer this_ngseg
+        integer segment_pe
+        integer max_segcount
+
+
+! Start of routine
+
+        this_comp_id = comp_id(gsmap)
+        nprocs=ThisMCTWorld%nprocspid(this_comp_id)
+
+        allocate( segcount(nprocs), stat=ier )
+        if (ier/=0) call die(myname_,'allocate segcount')
+
+        segcount=0
+
+        this_ngseg=ngseg(gsmap)
+
+        do i=1,this_ngseg
+
+          segment_pe = gsmap%pe_loc(i) + 1     ! want value 1..nprocs
+
+          if (segment_pe < 1 .OR. segment_pe > nprocs) then
+            call die(myname_,'bad segment location',segment_pe)
+          endif
+
+          segcount(segment_pe) = segcount(segment_pe) + 1
+        enddo
+
+        max_segcount=0
+        do i=1,nprocs
+          max_segcount= max( max_segcount, segcount(i) )
+        enddo
+
+        deallocate(segcount, stat=ier)
+        if (ier/=0) call die(myname_,'deallocate segcount')
+
+
+        max_nlseg_=max_segcount
+
+        end function max_nlseg_
+
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -2260,6 +2324,111 @@
   if(ierr /= 0) call die(myname_,'deallocate(perm...)',ierr)
 
  end subroutine SortPermuteInPlace_
+
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: increasing_ - Return .TRUE. if GSMap has increasing indices
+!
+! !DESCRIPTION:
+! The function {\tt increasing\_()} returns .TRUE. if each proc's
+! indices in the {\tt GlobalSegMap} argument {\tt GSMap} have 
+! strictly increasing indices.  I.e. the proc's segments have indices
+! in ascending order and are non-overlapping.
+!
+! !INTERFACE:
+
+ logical function increasing_(gsmap)
+
+! !USES:
+      use m_MCTWorld, only: ThisMCTWorld
+      use m_die
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(GlobalSegMap),intent(in) :: gsmap
+
+! !REVISION HISTORY:
+! 	06Jun07 - R. Loy <rloy@mcs.anl.gov> - initial version
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::increasing_'
+
+  integer comp_id
+  integer nprocs
+  integer i
+  integer this_ngseg
+  integer ier
+  integer, allocatable:: last_index(:)
+  integer pe_loc
+
+  comp_id = gsmap%comp_id
+  nprocs=ThisMCTWorld%nprocspid(comp_id)
+
+  allocate( last_index(nprocs), stat=ier )
+  if (ier/=0) call die(myname_,'allocate last_index')
+
+  last_index= -1
+  increasing_ = .TRUE.
+  this_ngseg=ngseg(gsmap)
+
+  iloop: do i=1,this_ngseg
+    pe_loc=gsmap%pe_loc(i)+1  ! want value 1..nprocs
+    if (gsmap%start(i) <= last_index(pe_loc)) then
+      increasing_ = .FALSE.
+      exit iloop
+    endif
+    last_index(pe_loc)=gsmap%start(i)+gsmap%length(i)-1
+  enddo iloop
+
+  deallocate( last_index, stat=ier )
+  if (ier/=0) call die(myname_,'deallocate last_index')
+
+ end function increasing_
+
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: copy_ - Copy the gsmap to a new gsmap
+!
+! !DESCRIPTION:
+! Make a copy of a gsmap.
+! Note this is a deep copy of all arrays.
+!
+! !INTERFACE:
+
+  subroutine copy_(src,dest)
+
+! !USES:
+      use m_MCTWorld, only: ThisMCTWorld
+      use m_die
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(GlobalSegMap),intent(in) :: src
+
+! !OUTPUT PARAMETERS: 
+
+      type(GlobalSegMap),intent(out) :: dest
+
+
+! !REVISION HISTORY:
+! 	27Jul07 - R. Loy <rloy@mcs.anl.gov> - initial version
+!EOP ___________________________________________________________________
+
+
+    call initp_( dest, src%comp_id, src%ngseg, src%gsize, &
+                 src%start, src%length, src%pe_loc )
+
+  end subroutine copy_
 
  end module m_GlobalSegMap
 

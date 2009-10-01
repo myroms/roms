@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_SparseMatrixDecomp.F90,v 1.14 2004/04/21 22:16:35 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_SparseMatrixDecomp.F90,v 1.15 2008-05-12 01:59:32 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrixDecomp -- Parallel sparse matrix decomposition.
@@ -72,6 +72,7 @@
 
    use m_AttrVect, only: AttrVect
    use m_AttrVect, only: AttrVect_init => init
+   use m_AttrVect, only: AttrVect_zero => zero
    use m_AttrVect, only: AttrVect_lsize => lsize
    use m_AttrVect, only: AttrVect_indexIA => indexIA
    use m_AttrVect, only: AttrVect_copy => copy
@@ -245,6 +246,7 @@
 
   call AttrVect_init(aV=dist_element_pe_locs, iList="element_pe_locs", &
                      lsize=dist_gsize)
+  call AttrVect_zero(dist_element_pe_locs)
      
        ! Compute process ID destination for each matrix element,
        ! and store in the AttrVect element_pe_locs
@@ -353,6 +355,7 @@
    use m_AttrVect, only: AttrVect_indexIA => indexIA
    use m_AttrVect, only: AttrVect_copy => copy
    use m_AttrVect, only: AttrVect_clean => clean
+   use m_AttrVect, only: AttrVect_zero => zero
    
    use m_AttrVectComms, only: AttrVect_scatter => scatter
    use m_AttrVectComms, only: AttrVect_gather => gather
@@ -520,6 +523,7 @@
 
   call AttrVect_init(aV=dist_element_pe_locs, iList="element_pe_locs", &
                      lsize=dist_gsize)
+  call AttrVect_zero(dist_element_pe_locs)
      
        ! Compute process ID destination for each matrix element,
        ! and store in the AttrVect element_pe_locs

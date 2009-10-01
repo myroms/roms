@@ -1,8 +1,8 @@
 !-------------------------------------------------------------------------
 !         NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-------------------------------------------------------------------------
-! CVS $Id: m_inpak90.F90,v 1.6 2004/04/21 22:54:47 jacob Exp $
-! CVS $Name: MCT_2_2_0 $  
+! CVS m_inpak90.F90,v 1.8 2006-12-19 00:22:35 jacob Exp
+! CVS MCT_2_6_0  
 !-------------------------------------------------------------------------
 !BOI
 !
@@ -227,6 +227,7 @@
 
      module m_inpak90
      use m_stdio, only : stderr,stdout
+     use m_realkinds, only: FP, SP, DP,kind_r8
      implicit none
      private
      public :: I90_LoadF   ! loads a resource file into memory
@@ -328,7 +329,7 @@
 ! 	28Jul98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_='I90_allLoadF'
+  character(len=*),parameter :: myname_=myname//'::I90_allLoadF'
   integer :: myID,ier
 
   istat=0
@@ -622,13 +623,13 @@ end subroutine i90_fullRelease
 !-------------------------------------------------------------------------
       integer         lu, ios, loop, ls, ptr
       character*256   line
-      character(len=*), parameter :: myname = 'i90_loadf'
+      character(len=*), parameter :: myname_ = myname//'::i90_loadf'
 
 		! Check to make sure there is not too many levels
 		! of the stacked resource files
 
   if(i90_depth >= i90_MXDEP) then
-	call perr(myname,'(overflow)',i90_depth)
+	call perr(myname_,'(overflow)',i90_depth)
 	iret=1
 	return
   endif
@@ -648,7 +649,7 @@ end subroutine i90_fullRelease
 
       call opntext(lu,filen,'old',ios)
       if ( ios .ne. 0 ) then
-	 write(stderr,'(2a,i5)') myname,': opntext() error, ios =',ios
+	 write(stderr,'(2a,i5)') myname_,': opntext() error, ios =',ios
          iret = ios
          return
       end if
@@ -661,7 +662,7 @@ end subroutine i90_fullRelease
 
       call push_(ios)	! to create buffer space
       if ( ios .ne. 0 ) then
-	 write(stderr,'(2a,i5)') myname,': push_() error, ios =',ios
+	 write(stderr,'(2a,i5)') myname_,': push_() error, ios =',ios
          iret = ios
          return
       end if
@@ -1162,7 +1163,7 @@ end subroutine i90_fullRelease
 
 !...................................................................
 
-      real function i90_GFloat( iret )
+      real(FP) function i90_GFloat( iret )
 
       implicit NONE
 
@@ -1202,7 +1203,7 @@ end subroutine i90_fullRelease
 
       character*256 token
       integer       ios
-      real          x
+      real(FP)      x
 
 !	Make sure that a buffer is defined (JG)
 !	----------------------------------
@@ -1265,7 +1266,7 @@ end subroutine i90_fullRelease
 !-------------------------------------------------------------------------
 
       character*256 token
-      real*8        x
+      real(kind_r8) x
       integer       ios
 
 !	Make sure that a buffer is defined (JG)
@@ -1288,7 +1289,7 @@ end subroutine i90_fullRelease
       
 !...................................................................
 
-      real function i90_AtoF( string, iret )
+      real(FP) function i90_AtoF( string, iret )
 
       implicit NONE
 
@@ -1672,9 +1673,7 @@ end subroutine i90_fullRelease
       
 !...................................................................
 
-      real function fltgetsp ( default )
-
-      use m_realkinds, only : SP
+      real(SP) function fltgetsp ( default )
 
       implicit NONE
 
@@ -1710,7 +1709,7 @@ end subroutine i90_fullRelease
 !-------------------------------------------------------------------------
 
       character*256 token
-      real          x
+      real(FP)      x
       integer       iret
 
       call i90_gtoken ( token, iret )
@@ -1726,9 +1725,7 @@ end subroutine i90_fullRelease
       
 !...................................................................
 
-      real function fltgetdp ( default )
-
-      use m_realkinds, only : DP
+      real(DP) function fltgetdp ( default )
 
       implicit NONE
 
@@ -1765,7 +1762,7 @@ end subroutine i90_fullRelease
 !-------------------------------------------------------------------------
 
       character*256 token
-      real          x
+      real(FP)          x
       integer       iret
 
       call i90_gtoken ( token, iret )
@@ -1816,7 +1813,7 @@ end subroutine i90_fullRelease
 !-------------------------------------------------------------------------
 
       character*256 token
-      real          x
+      real(FP)      x
       integer       iret
 
       call i90_gtoken ( token, iret )
@@ -1985,7 +1982,7 @@ end subroutine i90_fullRelease
 
 !...................................................................
             
-      real function str2rn ( string, iret )
+      real(FP) function str2rn ( string, iret )
       implicit NONE
       character*(*) string
       integer iret

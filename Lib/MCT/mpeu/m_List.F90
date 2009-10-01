@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id: m_List.F90,v 1.34 2004/10/19 23:00:39 steder Exp $
-! CVS $Name: MCT_2_2_0 $  
+! CVS m_List.F90,v 1.36 2007-11-06 00:03:31 jacob Exp
+! CVS MCT_2_6_0  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_List - A List Manager
@@ -859,7 +859,7 @@
 
 ! ! OUTPUT PARAMETERS:
 
-      character(len=size(inList%bf)) :: exportToChar_
+      character(len=size(inList%bf,1)) :: exportToChar_
 
 ! !REVISION HISTORY:
 ! 13Feb02 - J. Larson <larson@mcs.anl.gov> - initial version.
@@ -1019,6 +1019,8 @@
 
 ! !REVISION HISTORY:
 ! 23Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
+! 14May07 - Larson, Jacob - add space to else case string so function
+!                           matches documentation.
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::get_'
@@ -1029,7 +1031,7 @@
     le=aList%lc(1,ith)
     call init(itemStr,toChar(aList%bf(lb:le)))
   else
-    call init(itemStr,'')
+    call init(itemStr,' ')
   endif
 
  end subroutine get_
@@ -2036,6 +2038,7 @@
        ! Allocate sufficient space for the matches we may find:
 
   allocate(Indices1(NumSharedMax), Indices2(NumSharedMax), stat=ierr)
+  if(ierr /= 0) call die(myname_,'allocate() Indices1 and 2',ierr)
 
        ! Initialize the counter for the number of matches found:
 

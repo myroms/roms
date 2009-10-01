@@ -2,8 +2,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: master.F90,v 1.4 2005/01/10 20:47:37 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS master.F90,v 1.5 2009-02-23 23:22:47 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !PROGRAM: master  -- driver for sequential coupled model example
@@ -97,5 +97,7 @@ program master
   call srcfin(srcImp,srcExp,srcGSMap)
   call dstfin(dstImp,dstExp,dstGSMap)
   call cplfin
+
+  call MPI_FINALIZE(ier)
 
 end program master

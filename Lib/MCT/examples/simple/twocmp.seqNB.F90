@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: twocmp.seqNB.F90,v 1.4 2004/06/24 21:07:01 eong Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS twocmp.seqNB.F90,v 1.4 2004-06-24 21:07:01 eong Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE:  twocmp.seqNB

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_GlobalMap.F90,v 1.11 2004/04/21 22:47:09 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_GlobalMap.F90,v 1.11 2004-04-21 22:47:09 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GlobalMap - One-Dimensional Domain Decomposition Descriptor

@@ -1,8 +1,8 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id: get_zeits.c,v 1.4 2003/08/12 23:24:54 eong Exp $
-! CVS $Name: MCT_2_2_0 $  
+! CVS get_zeits.c,v 1.10 2006-11-28 23:41:38 jacob Exp
+! CVS MCT_2_6_0
 !-----------------------------------------------------------------------
 !BOP
 !
@@ -17,35 +17,23 @@
 
 
 #include <sys/types.h>
+#ifndef SYSCATAMOUNT /* times is not implemented and will always fail on Catamount */ 
 #include <sys/times.h>
-
-#include <time.h>             /* CLK_TCK is usually here */
-
-#if !defined(CLK_TCK)
-#  include <limits.h>         /* if not, try here */
 #endif
 
+#include <time.h> /* POSIX standard says CLOCKS_PER_SEC is here */
+
 /*
-Kept the difference for reference.
-=======
-#if defined(__osf__) || defined(sysAIX)
-#  include <time.h>
-#else
-#  include <limits.h>
->>>>>>> 1.1.2.2
-*/
+ *  CLK_TCK is obsolete - replace with CLOCKS_PER_SEC
+ */
+
+#define ZCLK_TCK ((double)CLOCKS_PER_SEC)
+
+
 
  /*
   The default is FORTRAN_UNDERSCORE_, but not explicitly used.
  */
-
-#ifdef _UNICOS
-#  define FORTRAN_CAPS_
-#endif
-
-#ifdef CPRABSOFT
-#  define FORTRAN_CAPS_
-#endif
 
 #ifdef FORTRAN_CAPS_
 #  define	get_zeits_		GET_ZEITS
@@ -57,6 +45,10 @@ Kept the difference for reference.
 #  define	get_ztick_		get_ztick
 #endif
 
+#ifdef FORTRAN_GNUF2C
+#  define	get_zeits_		get_zeits__
+#  define	get_ztick_		get_ztick__
+#endif
 
  /*  Prototype: */
 
@@ -74,21 +66,29 @@ void get_zeits_(zts)
   double *zts;
 {
 
+#ifndef SYSCATAMOUNT
   struct tms tm;
   double secs;
-
-  secs=1./CLK_TCK;
+  secs=1./ZCLK_TCK;
 
   zts[0]=times(&tm)*secs;
   zts[1]=tm.tms_utime*secs;
   zts[2]=tm.tms_stime*secs;
   zts[3]=tm.tms_cutime*secs;
   zts[4]=tm.tms_cstime*secs;
+#else
+  zts[0]=0.;
+  zts[1]=0.;
+  zts[2]=0.;
+  zts[3]=0.;
+  zts[4]=0.;
+#endif
 
 }
 
 void get_ztick_(tic)
   double *tic;
 {
-  tic[0]=1./CLK_TCK;
+  tic[0]=1./ZCLK_TCK;
 }
+

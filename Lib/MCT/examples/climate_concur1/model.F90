@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: model.F90,v 1.8 2004/04/23 20:56:23 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS model.F90,v 1.8 2004-04-23 20:56:23 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE: model -- generic model for unit tester

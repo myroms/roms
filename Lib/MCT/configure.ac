@@ -63,6 +63,8 @@ AC_SUBST(PYTHONOPTS)
 # OS AND PLATFORM NAME
 test "$osname"=NONE && osname=`uname -s`
 test "$machinename"=NONE && machinename=`uname -m`
+fullhostname=`hostname -f`
+
 
 # HARDCODE SPECIFIC MACHINES FOR EXTRAORDINARY CIRCUMSTANCES
 
@@ -118,6 +120,20 @@ if test "$ac_hostname" = "user02"; then
       fi
    fi
 fi
+
+
+# Check if we are on the ANL BG/P
+
+if echo $fullhostname | egrep -q '.\.(surveyor|intrepid)\.alcf\.anl\.gov' 
+  then if test -z "$FC"; then
+         FC=mpixlf90_r
+       fi
+       if test -z "$CC"; then
+         CC=mpixlc_r
+       fi
+fi
+
+
 
 # START TESTS
 
@@ -220,6 +236,7 @@ OLDF90="$F90"
 F90="$FC" # use MPIF90, since differences may exist between MPIF90 and F90
 
 AC_F90_C_NAME_MANGLING
+
 case $ac_cv_f90_mangling in
   "lower case, underscore") 
 	 name_mangling="FORTRAN_UNDERSCORE_";;
@@ -227,6 +244,8 @@ case $ac_cv_f90_mangling in
 	 name_mangling="FORTRAN_SAME";;
   "upper case, no underscore")  
 	 name_mangling="FORTRAN_CAPS_";;
+  "lower case, double underscore") 
+	 name_mangling="FORTRAN_GNUF2C";;
   *) 
          name_mangling="FORTRAN_MANGLING_UNKNOWN" 
 	 AC_MSG_WARN([UNKNOWN FORTRAN 90 NAME-MANGLING SCHEME]);;
@@ -396,17 +415,35 @@ if echo $F90 | grep pgf90 >/dev/null 2>&1; then
 fi
 
 if echo $F90 | grep ftn >/dev/null 2>&1; then
+ if echo $f90_version | grep -i Portland >/dev/null 2>&1; then
+   echo "Fortran Compiler is Portland Group, XT3"
+   CPRDEF="PGI"
+   SYSDEF="CATAMOUNT"
+   if test -z "$REAL8"; then
+      REAL8="-r8"
+   fi
+   if test -z "$BIT64"; then
+      BIT64="-pc 64"
+   fi
+   if test -z "$ENDIAN"; then
+      ENDIAN="-byteswapio"
+   fi
+   if test -z "$OPT"; then
+      OPT="-O2"
+   fi
+ else
    echo "Fortran Compiler is Cray"
    CPRDEF="CRAY" 
    if test -z "$F90FLAGS"; then 
-      F90FLAGS="-em -dy -m0 -M1068,1132,399"
+      F90FLAGS="-c -em -dy -rm -Omsgs,negmsgs"
    fi
    if test -z "$INCLUDEFLAG"; then
       INCLUDEFLAG="-p"
    fi
    if test -z "$OPT"; then
-      OPT="-Oscalar3 -Ovector3 -Ostream3"
+      OPT="-Oscalar3 -Ovector1 -Ostream1"
    fi
+ fi
 fi
 
 if echo $F90 | grep frt >/dev/null 2>&1; then
@@ -496,6 +533,11 @@ if echo $F90 | grep pathf90 >/dev/null 2>&1; then
 fi
 
 if echo $F90 | grep g95 >/dev/null 2>&1; then
+   echo "Fortran Compiler is GNU"
+   CPRDEF="GNU"
+fi
+
+if echo $F90 | grep gfortran >/dev/null 2>&1; then
    echo "Fortran Compiler is GNU"
    CPRDEF="GNU"
 fi
@@ -625,7 +667,7 @@ if test -z "$MACHDEFS"; then
 fi
 
 if test -z "$ALLCFLAGS"; then # SET C COMPILE FLAGS
-   ALLCFLAGS="-D$name_mangling -O"
+   ALLCFLAGS="-D$name_mangling -DSYS$SYSDEF -DCPR$CPRDEF -O"
    if test -n "$EXTRACFLAGS"; then
       ALLCFLAGS="-D$name_mangling -O $EXTRACFLAGS"
    fi

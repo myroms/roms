@@ -11,6 +11,7 @@ SRCS_F90	= m_IndexBin_char.F90		\
 		  m_List.F90			\
 		  m_MergeSorts.F90		\
 		  m_Filename.F90		\
+		  m_FcComms.F90                 \
 		  m_Permuter.F90		\
 		  m_SortingTools.F90		\
 		  m_String.F90			\
@@ -34,8 +35,8 @@ SRCS_F90	= m_IndexBin_char.F90		\
 
 SRCS_C		= get_zeits.c
 
-OBJS_ALL	= $(SRCS_F90:.F90=.o)	\
-		  $(SRCS_C:.c=.o)
+OBJS_ALL	= $(SRCS_C:.c=.o)  \
+		  $(SRCS_F90:.F90=.o)
 
 # MACHINE AND COMPILER FLAGS
 
@@ -105,7 +106,7 @@ m_mpout.o: m_dropdead.o m_ioutil.o m_mpif90.o m_stdio.o
 m_rankMerge.o:
 m_realkinds.o:
 m_stdio.o:
-m_zeit.o: m_SortingTools.o m_die.o m_ioutil.o m_mpif90.o m_stdio.o
+m_zeit.o: m_SortingTools.o m_die.o m_ioutil.o m_mpif90.o m_stdio.o get_zeits.o
 get_zeits.o:
 m_FileResolv.o: m_die.o m_StrTemplate.o
 m_TraceBack.o:	m_die.o m_stdio.o m_String.o

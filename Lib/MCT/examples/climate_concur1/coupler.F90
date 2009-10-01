@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: coupler.F90,v 1.8 2004/04/23 20:57:10 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS coupler.F90,v 1.8 2004-04-23 20:57:10 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE: coupler -- coupler for unit tester

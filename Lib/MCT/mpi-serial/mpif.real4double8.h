@@ -1,10 +1,9 @@
 
 !!!
-!!! mpif.real4double8.h (real is 4 bytes, double precision 8)
-!!!
-!!!   NOTE: mpif.h is copied from either mpif.XXXX.h when the
-!!!   library is built.  Do not modify mpif.h, the changes will 
-!!!   get clobbered.
+!!!   NOTE: The files mpif.realXdoubleY.h are generated from
+!!!   mpif.master.h using make-mpif and later copied to mpif.h
+!!!   during the library make.  All modifications should be
+!!!   made to mpif.master.h
 !!!
 
 
@@ -14,6 +13,13 @@
 
 	INTEGER MPI_COMM_WORLD
         parameter (mpi_comm_world=1)
+
+!
+!
+!
+
+        integer MPI_BOTTOM
+        parameter (MPI_BOTTOM=0)
 
 
 !
@@ -32,6 +38,79 @@
 
         integer MPI_MAX_ERROR_STRING
         parameter (MPI_MAX_ERROR_STRING=128)
+
+        integer MPI_MAX_PROCESSOR_NAME
+        parameter (MPI_MAX_PROCESSOR_NAME=128)
+
+!
+! Return codes
+!
+
+        integer MPI_SUCCESS
+        parameter (MPI_SUCCESS=0)
+
+        integer MPI_ERR_BUFFER 
+        parameter (MPI_ERR_BUFFER= -1)
+
+        integer MPI_ERR_COUNT 
+        parameter (MPI_ERR_COUNT= -1)
+
+        integer MPI_ERR_TYPE 
+        parameter (MPI_ERR_TYPE= -1)
+
+        integer MPI_ERR_TAG
+        parameter (MPI_ERR_TAG= -1)
+
+        integer MPI_ERR_COMM 
+        parameter (MPI_ERR_COMM= -1)
+
+        integer MPI_ERR_RANK 
+        parameter (MPI_ERR_RANK= -1)
+
+        integer MPI_ERR_REQUEST 
+        parameter (MPI_ERR_REQUEST= -1)
+
+        integer MPI_ERR_ROOT 
+        parameter (MPI_ERR_ROOT= -1)
+
+        integer MPI_ERR_GROUP 
+        parameter (MPI_ERR_GROUP= -1)
+
+        integer MPI_ERR_OP 
+        parameter (MPI_ERR_OP= -1)
+
+        integer MPI_ERR_TOPOLOGY 
+        parameter (MPI_ERR_TOPOLOGY= -1)
+
+        integer MPI_ERR_DIMS 
+        parameter (MPI_ERR_DIMS= -1)
+
+        integer MPI_ERR_ARG 
+        parameter (MPI_ERR_ARG= -1)
+
+        integer MPI_ERR_UNKNOWN 
+        parameter (MPI_ERR_UNKNOWN= -1)
+
+        integer MPI_ERR_TRUNCATE 
+        parameter (MPI_ERR_TRUNCATE= -1)
+
+        integer MPI_ERR_OTHER 
+        parameter (MPI_ERR_OTHER= -1)
+
+        integer MPI_ERR_INTERN 
+        parameter (MPI_ERR_INTERN= -1)
+
+        integer MPI_PENDING 
+        parameter (MPI_PENDING= -1)
+
+        integer MPI_ERR_IN_STATUS 
+        parameter (MPI_ERR_IN_STATUS= -1)
+
+        integer MPI_ERR_LASTCODE 
+        parameter (MPI_ERR_LASTCODE= -1)
+
+!
+!
 
 
         integer MPI_UNDEFINED
@@ -71,12 +150,6 @@
 	INTEGER MPI_CHARACTER
 	PARAMETER (MPI_CHARACTER=1)
 
-	INTEGER MPI_REAL4
-	PARAMETER (MPI_REAL4=4)
-
-	INTEGER MPI_REAL8
-	PARAMETER (MPI_REAL8=8)
-
 	INTEGER MPI_INTEGER
 	PARAMETER (MPI_INTEGER=4)
 
@@ -103,6 +176,51 @@
         integer MPI_2INTEGER
         parameter (MPI_2INTEGER=2*MPI_INTEGER)
 
+        integer MPI_PACKED
+        parameter (MPI_PACKED=1)
+
+
+!
+! Size-specific types
+!
+
+	INTEGER MPI_REAL4
+	PARAMETER (MPI_REAL4=4)
+
+	INTEGER MPI_REAL8
+	PARAMETER (MPI_REAL8=8)
+
+	INTEGER MPI_REAL16
+	PARAMETER (MPI_REAL16=16)
+
+
+	integer MPI_COMPLEX8
+        parameter (MPI_COMPLEX8=8)
+
+	integer MPI_COMPLEX16
+        parameter (MPI_COMPLEX16=16)
+
+	integer MPI_COMPLEX32
+        parameter (MPI_COMPLEX32=32)
+
+
+	INTEGER MPI_INTEGER1
+	PARAMETER (MPI_INTEGER1=1)
+
+	INTEGER MPI_INTEGER2
+	PARAMETER (MPI_INTEGER2=2)
+
+	INTEGER MPI_INTEGER4
+	PARAMETER (MPI_INTEGER4=4)
+
+	INTEGER MPI_INTEGER8
+	PARAMETER (MPI_INTEGER8=8)
+
+	INTEGER MPI_INTEGER16
+	PARAMETER (MPI_INTEGER16=16)
+
+
+        
 !
 ! MPI_Op values
 !
@@ -120,3 +238,18 @@
 
         DOUBLE PRECISION MPI_WTIME
         EXTERNAL MPI_WTIME
+
+
+!
+! Kinds
+!
+
+        integer, parameter :: MPI_OFFSET_KIND=selected_int_kind(13)
+
+        integer, parameter :: MPI_INFO_NULL=0
+
+
+        integer, parameter :: MPI_MODE_RDONLY=0
+        integer, parameter :: MPI_MODE_CREATE=1
+        integer, parameter :: MPI_MODE_RDWR=2
+

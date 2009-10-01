@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: twocmp.con.F90,v 1.3 2004/04/23 21:38:23 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS twocmp.con.F90,v 1.4 2006-07-25 22:31:34 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE:  twocomponent.concurrent
@@ -57,6 +57,14 @@
 
       call mpi_comm_size(MPI_COMM_WORLD, nprocs,ier)
       call mpi_comm_rank(MPI_COMM_WORLD, myrank,ier)
+
+      if((nprocs .gt. 14).or.(nprocs .lt. 3)) then
+        write(6,*)"The small problem size in this example &
+        &requires between 3 and 14 processors."
+	write(6,*)"nprocs =",nprocs
+        stop
+      endif
+
 
 !  Force the model1 to run on the first 2 processors
       color =1

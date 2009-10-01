@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: srcmodel.F90,v 1.8 2005/11/18 23:15:38 rloy Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS srcmodel.F90,v 1.8 2005-11-18 23:15:38 rloy Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: srcmodel -- generic model for unit tester

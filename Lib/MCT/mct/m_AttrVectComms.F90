@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_AttrVectComms.F90,v 1.32 2005/11/26 06:01:02 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_AttrVectComms.F90,v 1.39 2009-03-05 16:41:47 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_AttrVectComms - MPI Communications Methods for the AttrVect
@@ -428,15 +428,18 @@
       use m_stdio
       use m_die
       use m_mpif90
+      use m_realkinds, only : FP
       use m_GlobalMap, only : GlobalMap
       use m_GlobalMap, only : GlobalMap_lsize => lsize
       use m_GlobalMap, only : GlobalMap_gsize => gsize
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero 
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nIAttr => nIAttr
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
       use m_AttrVect, only : AttrVect_clean => clean
+      use m_FcComms,  only : fc_gatherv_int, fc_gatherv_fp
 
       implicit none
 
@@ -460,12 +463,14 @@
 !  9May01 - J.W. Larson <larson@mcs.anl.gov> - tidied up prologue
 ! 18May01 - R.L. Jacob <jacob@mcs.anl.gov> - use MP_Type function
 !           to determine type for mpi_gatherv
+! 31Jan09 - P.H. Worley <worleyph@ornl.gov> - replaced call to
+!           MPI_gatherv with call to flow controlled gather routines
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::GM_gather_'
   integer :: nIA,nRA,niV,noV,ier
   integer :: myID
-  integer :: mp_Type_iV,mp_Type_oV
+  integer :: mp_type_Av
   type(AttrVect) :: nonRootAV
 
   if(present(stat)) stat=0
@@ -493,8 +498,10 @@
 
   if(myID == root) then
      call AttrVect_init(oV,iV,noV)
+     call AttrVect_zero(oV)
   else
      call AttrVect_init(nonRootAV,iV,1)
+     call AttrVect_zero(nonRootAV)
   endif
 
   niV=GlobalMap_lsize(GMap) ! the scattered local size, as for the input
@@ -502,25 +509,21 @@
   nIA=AttrVect_nIAttr(iV)	! number of INTEGER attributes
   nRA=AttrVect_nRAttr(iV)	! number of REAL attributes
 
+  mp_type_Av = MP_Type(1._FP)   ! set mpi type to same as AV%rAttr
+
   if(nIA > 0) then
      
      if(myID == root) then
 
-        call MPI_gatherv(iV%iAttr(1,1),niV*nIA,MP_INTEGER,		&
-             oV%iAttr(1,1),GMap%counts*nIA,GMap%displs*nIA,             &
-             MP_INTEGER,root,comm,ier)
-        if(ier /= 0) then
-           call MP_perr_die(myname_,':: MPI_gatherv(iAttr) on root',ier)
-        endif
+        call fc_gatherv_int(iV%iAttr,niV*nIA,MP_INTEGER,		&
+             oV%iAttr,GMap%counts*nIA,GMap%displs*nIA,             &
+             MP_INTEGER,root,comm)
 
      else
         
-        call MPI_gatherv(iV%iAttr(1,1),niV*nIA,MP_INTEGER,		&
-             nonRootAV%iAttr(1,1),GMap%counts*nIA,GMap%displs*nIA,      &
-             MP_INTEGER,root,comm,ier)
-        if(ier /= 0) then
-           call MP_perr_die(myname_,':: MPI_gatherv(iAttr) off root',ier)
-        endif
+        call fc_gatherv_int(iV%iAttr,niV*nIA,MP_INTEGER,		&
+             nonRootAV%iAttr,GMap%counts*nIA,GMap%displs*nIA,      &
+             MP_INTEGER,root,comm)
 
      endif  ! if(myID == root)
         
@@ -530,28 +533,15 @@
 
      if(myID == root) then
 
-        mp_Type_iV=MP_Type(iV%rAttr(1,1))
-        mp_Type_oV=MP_Type(oV%rAttr(1,1))
-
-        call MPI_gatherv(iV%rAttr(1,1),niV*nRA,mp_Type_iV,	        &
-             oV%rAttr(1,1),GMap%counts*nRA,GMap%displs*nRA,             & 
-             mp_Type_oV,root,comm,ier)
-        if(ier /= 0) then
-           call MP_perr_die(myname_,':: MPI_gatherv(rAttr) on root',ier)
-        endif
+        call fc_gatherv_fp(iV%rAttr,niV*nRA,mp_type_Av,	        &
+             oV%rAttr,GMap%counts*nRA,GMap%displs*nRA,             & 
+             mp_type_Av,root,comm)
 
      else
 
-        mp_Type_iV=MP_Type(iV%rAttr(1,1))
-        mp_Type_oV=MP_Type(nonRootAV%rAttr(1,1))
-
-        call MPI_gatherv(iV%rAttr(1,1),niV*nRA,mp_Type_iV,	        &
-             nonRootAV%rAttr(1,1),GMap%counts*nRA,GMap%displs*nRA,      &
-             mp_Type_oV,root,comm,ier)
-        if(ier /= 0) then
-           call MP_perr_die(myname_,':: MPI_gatherv(rAttr) off root',ier)
-        endif
-
+        call fc_gatherv_fp(iV%rAttr,niV*nRA,mp_type_Av,	        &
+             nonRootAV%rAttr,GMap%counts*nRA,GMap%displs*nRA,      &
+             mp_type_Av,root,comm)
 
      endif  ! if(myID == root)
 
@@ -606,7 +596,7 @@
 !
 ! !INTERFACE:
 
- subroutine GSM_gather_(iV, oV, GSMap, root, comm, stat)
+ subroutine GSM_gather_(iV, oV, GSMap, root, comm, stat, rdefault, idefault)
 !
 ! !USES:
 !
@@ -614,6 +604,7 @@
       use m_stdio
       use m_die
       use m_mpif90
+      use m_realkinds, only: FP
 ! GlobalSegMap and associated services:
       use m_GlobalSegMap, only : GlobalSegMap
       use m_GlobalSegMap, only : GlobalSegMap_comp_id => comp_id
@@ -621,7 +612,6 @@
       use m_GlobalSegMap, only : GlobalSegMap_lsize => lsize
       use m_GlobalSegMap, only : GlobalSegMap_gsize => gsize
       use m_GlobalSegMap, only : GlobalSegMap_haloed => haloed
-      use m_GlobalSegMap, only : GlobalSegMap_ProcessStorage => ProcessStorage
       use m_GlobalSegMap, only : GlobalSegMap_GlobalStorage => GlobalStorage
 ! AttrVect and associated services:
       use m_AttrVect, only : AttrVect
@@ -644,6 +634,8 @@
       type(GlobalSegMap),        intent(in)  :: GSMap
       integer,                   intent(in)  :: root
       integer,                   intent(in)  :: comm
+      real(FP), optional,        intent(in)  :: rdefault
+      integer, optional,         intent(in)  :: idefault
 
 ! !OUTPUT PARAMETERS:
 !
@@ -663,6 +655,10 @@
 !           current_pos assignment.
 ! 23Nov01 - R. Jacob <jacob@mcs.anl.gov> - zero the oV before copying in
 !           gathered data.
+! 27Jul07 - R. Loy <rloy@mcs.anl.gov> - add Tony's suggested improvement
+!           for a default value in the output AV
+! 11Aug08 - R. Jacob <jacob@mcs.anl.gov> - add Pat Worley's faster way
+!           to initialize lns
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::GSM_gather_'
@@ -670,7 +666,7 @@
 ! Temporary workspace AttrVect:
   type(AttrVect) :: workV
 ! Component ID and number of segments for GSMap:
-  integer :: comp_id, ngseg
+  integer :: comp_id, ngseg, iseg
 ! Total length of GSMap segments laid end-to-end:
   integer :: global_storage
 ! Error Flag
@@ -733,8 +729,10 @@
 
        ! And Load it...
 
-     do n=0,NumProcs-1
-        lns(n) = GlobalSegMap_ProcessStorage(GSMap, n)
+     lns(:)=0
+     do iseg=1,GSMap%ngseg
+        n = GSMap%pe_loc(iseg)
+	lns(n) = lns(n) + GSMap%length(iseg)
      end do
 
   else
@@ -770,6 +768,13 @@
 
      call AttrVect_init(oV,iV,global_storage)
      call AttrVect_zero(oV)
+
+     if (present(rdefault)) then
+       if (AttrVect_nRAttr(oV) > 0) oV%rAttr=rdefault
+     endif
+     if (present(idefault)) then
+       if (AttrVect_nIAttr(oV) > 0) oV%iAttr=idefault
+     endif
 
        ! On the root, allocate current position index for
        ! each process chunk:
@@ -891,6 +896,7 @@
       use m_stdio
       use m_die
       use m_mpif90
+      use m_realkinds, only : FP
 
       use m_List, only : List
       use m_List, only : List_copy => copy
@@ -905,6 +911,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nIAttr => nIAttr
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -947,7 +954,7 @@
   character(len=*),parameter :: myname_=myname//'::GM_scatter_'
   integer :: nIA,nRA,niV,noV,ier
   integer :: myID
-  integer :: mp_Type_iV,mp_Type_oV
+  integer :: mp_type_Av
   type(List) :: iList, rList
   type(AttrVect) :: nonRootAV
 
@@ -1017,10 +1024,15 @@
         ! On all processes, use List data and noV to initialize oV 
 
   call AttrVect_init(oV, iList, rList, noV)
+  call AttrVect_zero(oV)
 
         ! Initialize a dummy AttrVect for non-root MPI calls
 
-  if(myID/=root) call AttrVect_init(nonRootAV,oV,1)
+  if(myID/=root) then
+    call AttrVect_init(nonRootAV,oV,1)
+    call AttrVect_zero(nonRootAV)
+  endif
+
 
   if(nIA > 0) then
 
@@ -1048,28 +1060,26 @@
 
   endif   ! if(nIA > 0)
 
+  mp_type_Av = MP_Type(1._FP)   ! set mpi type to same as AV%rAttr
+
   if(nRA > 0) then
 
      if(myID == root) then
 
-        mp_Type_iV=MP_Type(iV%rAttr(1,1))
-        mp_Type_oV=MP_Type(oV%rAttr(1,1))
 
         call MPI_scatterv(iV%rAttr(1,1),GMap%counts*nRA,	&
-             GMap%displs*nRA,mp_Type_iV,oV%rAttr(1,1),          &
-             noV*nRA,mp_Type_oV,root,comm,ier )
+             GMap%displs*nRA,mp_type_Av,oV%rAttr(1,1),          &
+             noV*nRA,mp_type_Av,root,comm,ier )
         if(ier /= 0) then
            call MP_perr_die(myname_,'MPI_scatterv(rAttr) on root',ier)
         endif
 
      else
 
-        mp_Type_iV=MP_Type(nonRootAV%rAttr(1,1))
-        mp_Type_oV=MP_Type(oV%rAttr(1,1))
 
-        call MPI_scatterv(nonRootAV%rAttr(1,1),GMap%counts*nRA,	&
-             GMap%displs*nRA,mp_Type_iV,oV%rAttr(1,1),          &
-             noV*nRA,mp_Type_oV,root,comm,ier )
+        call MPI_scatterv(nonRootAV%rAttr,GMap%counts*nRA,	&
+             GMap%displs*nRA,mp_type_Av,oV%rAttr,          &
+             noV*nRA,mp_type_Av,root,comm,ier )
         if(ier /= 0) then
            call MP_perr_die(myname_,'MPI_scatterv(rAttr) off root',ier)
         endif
@@ -1151,10 +1161,10 @@
       use m_GlobalSegMap, only : GlobalSegMap_lsize => lsize
       use m_GlobalSegMap, only : GlobalSegMap_gsize => gsize
       use m_GlobalSegMap, only : GlobalSegMap_GlobalStorage => GlobalStorage
-      use m_GlobalSegMap, only : GlobalSegMap_ProcessStorage => ProcessStorage
 ! AttrVect and associated services:
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
       use m_AttrVect,  only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nIAttr => nIAttr
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -1204,6 +1214,8 @@
 ! 13Dec01 - E.T. Ong <eong@mcs.anl.gov> - got rid of restriction 
 !           GlobalStorage(GSMap)==AttrVect_lsize(AV) to allow for
 !           GSMap to be haloed.
+! 11Aug08 - R. Jacob <jacob@mcs.anl.gov> - remove call to ProcessStorage
+!           and replace with faster algorithm provided by Pat Worley
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::GSM_scatter_'
@@ -1211,7 +1223,7 @@
 ! Temporary workspace AttrVect:
   type(AttrVect) :: workV
 ! Component ID and number of segments for GSMap:
-  integer :: comp_id, ngseg
+  integer :: comp_id, ngseg, iseg
 ! Total length of GSMap segments laid end-to-end:
   integer :: global_storage
 ! Error Flag
@@ -1263,6 +1275,7 @@
 
      global_storage = GlobalSegMap_GlobalStorage(GSMap)
      call AttrVect_init(workV, iV, global_storage)
+     call AttrVect_zero(workV)
 
   else
        ! nullify workV just to be safe
@@ -1314,8 +1327,10 @@
 
        ! And Load it...
 
-     do n=0,NumProcs-1
-	lns(n) = GlobalSegMap_ProcessStorage(GSMap, n)
+     lns(:)=0
+     do iseg=1,GSMap%ngseg
+        n = GSMap%pe_loc(iseg)
+	lns(n) = lns(n) + GSMap%length(iseg)
      end do
 
   endif ! if(myID == root)
@@ -1498,6 +1513,7 @@
       use m_List, only : List_get => get
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nIAttr => nIAttr
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -1629,6 +1645,9 @@
 	   call die(myname_,'AV has not been initialized',-1)
 	endif
      endif ! if((nIA<= 0) .and. (nRA<=0))...
+
+     call AttrVect_zero(aV)
+
 
   endif ! if(myID /= root)...
 

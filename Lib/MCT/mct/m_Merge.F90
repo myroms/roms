@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_Merge.F90,v 1.9 2005/11/30 02:58:13 larson Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_Merge.F90,v 1.9 2005-11-30 02:58:13 larson Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Merge - Merge flux and state data from multiple sources.

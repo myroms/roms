@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_SpatialIntegral.F90,v 1.21 2004/04/21 22:16:35 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_SpatialIntegral.F90,v 1.22 2008-05-12 01:59:33 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SpatialIntegral - Spatial Integrals and Averages using a GeneralGrid
@@ -308,6 +308,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero 
       use m_AttrVect, only : AttrVect_clean => clean
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
       use m_AttrVect, only : AttrVect_indexRA => indexRA
@@ -369,6 +370,7 @@
 
   call List_nullify(nullIList)
   call AttrVect_init(outAv, iList=nullIList, rList=inAv%rList, lsize=1)
+  call AttrVect_zero(outAv)
 
        ! Divide by global weight sum to compute spatial averages from 
        ! spatial integrals.
@@ -971,6 +973,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero 
       use m_AttrVect, only : AttrVect_clean => clean
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_indexRA => indexRA
@@ -1114,6 +1117,7 @@
        ! Initialize output AttrVect outAv:
   call List_nullify(nullIList)
   call AttrVect_init(outAv, iList=nullIList, rList=inAv%rList, lsize=1)
+  call AttrVect_zero(outAv)
 
        ! Divide by global weight sum to compute spatial averages from 
        ! spatial integrals.
@@ -1189,7 +1193,6 @@
       use m_realkinds, only : FP
 
       use m_AttrVect, only : AttrVect
-      use m_AttrVect, only : AttrVect_init => init
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
 
@@ -1341,6 +1344,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero 
       use m_AttrVect, only : AttrVect_clean => clean
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -1415,7 +1419,9 @@
   call List_nullify(nullIList)
 
   call AttrVect_init(outAv1, iList=nullIList, rList=inAv1%rList, lsize=1)
+  call AttrVect_zero(outAv1)
   call AttrVect_init(outAv2, iList=nullIList, rList=InAv2%rList, lsize=1)
+  call AttrVect_zero(outAv2)
 
        ! Divide by global weight sum to compute spatial averages from 
        ! spatial integrals.
@@ -1511,7 +1517,6 @@
       use m_realkinds, only : FP
 
       use m_AttrVect, only : AttrVect
-      use m_AttrVect, only : AttrVect_init => init
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
 
@@ -1774,6 +1779,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero 
       use m_AttrVect, only : AttrVect_clean => clean
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -1963,7 +1969,9 @@
   call List_nullify(nullIList)
 
   call AttrVect_init(outAv1, iList=nullIList, rList=inAv1%rList, lsize=1)
+  call AttrVect_zero(outAv1)
   call AttrVect_init(outAv2, iList=nullIList, rList=inAv2%rList, lsize=1)
+  call AttrVect_zero(outAv2)
 
        ! Unload/rescale OutPairedBuffer into outAv1 and outAv2:
 

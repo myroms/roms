@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_GeneralGrid.F90,v 1.34 2004/10/19 23:00:39 steder Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_GeneralGrid.F90,v 1.36 2008-05-12 01:57:21 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GeneralGrid -- Physical Coordinate Grid Information Storage
@@ -98,6 +98,7 @@
       public :: initCartesian    !
       public :: initUnstructured !
       public :: clean            ! Destroy a GeneralGrid
+      public :: zero             ! Zero data in a GeneralGrid
 
                              ! Query functions-----------------
       public :: dims         ! Return dimensionality of the GeneralGrid
@@ -128,6 +129,7 @@
 	initUnstructuredDP_
     end interface
     interface clean ; module procedure clean_ ; end interface
+    interface zero ; module procedure zero_ ; end interface
 
     interface dims ; module procedure dims_ ; end interface
     interface indexIA ; module procedure indexIA_ ; end interface
@@ -939,6 +941,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
 
       implicit none
 
@@ -1159,6 +1162,7 @@
        ! Now we are prepared to create GGrid%data:
 
   call AttrVect_init(GGrid%data, IAList, RAList, NumGridPoints)
+  call AttrVect_zero(GGrid%data)
 
        ! Now, store Cartesian gridpoint data, in the order
        ! defined by how the user laid out AxisData(:,:)
@@ -1285,6 +1289,7 @@
 
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
 
       implicit none
 
@@ -1505,6 +1510,7 @@
        ! Now we are prepared to create GGrid%data:
 
   call AttrVect_init(GGrid%data, IAList, RAList, NumGridPoints)
+  call AttrVect_zero(GGrid%data)
 
        ! Now, store Cartesian gridpoint data, in the order
        ! defined by how the user laid out AxisData(:,:)
@@ -1681,6 +1687,7 @@
       use m_List,     only : List_shared => GetSharedListIndices
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
 
       implicit none
 
@@ -1858,6 +1865,7 @@
        ! Create Grid attribute data storage AttrVect GGrid%data:
 
   call AttrVect_init(GGrid%data, IAList, RAList, nPoints)
+  call AttrVect_zero(GGrid%data)
 
        ! Load up gridpoint coordinate data into GGrid%data.
        ! Given how we've set up the real attributes of GGrid%data,
@@ -1932,6 +1940,7 @@
       use m_List,     only : List_shared => GetSharedListIndices
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
 
       implicit none
 
@@ -2109,6 +2118,7 @@
        ! Create Grid attribute data storage AttrVect GGrid%data:
 
   call AttrVect_init(GGrid%data, IAList, RAList, nPoints)
+  call AttrVect_zero(GGrid%data)
 
        ! Load up gridpoint coordinate data into GGrid%data.
        ! Given how we've set up the real attributes of GGrid%data,
@@ -2260,6 +2270,64 @@
   endif
 
  end subroutine clean_
+
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: zero_ - Set GeneralGrid Data to Zero 
+!
+! !DESCRIPTION:
+! This routine sets all of the point values of the integer and real 
+! attributes of an the input/output {\tt GeneralGrid} argument {\tt GGrid}
+! to zero.  The default action is to set the values of all the real and  
+! integer attributes to zero.
+!
+! !INTERFACE:
+
+ subroutine zero_(GGrid, zeroReals, zeroInts)
+
+! !USES:
+
+
+     use m_die,only     : die
+     use m_stdio,only   : stderr
+
+     use m_AttrVect, only : AttrVect_zero => zero
+
+     implicit none
+! !INPUT/OUTPUT PARAMETERS:
+!
+     type(GeneralGrid),    intent(INOUT) :: GGrid
+
+! !INPUT PARAMETERS:
+
+     logical, optional, intent(IN)    :: zeroReals
+     logical, optional, intent(IN)    :: zeroInts
+
+
+! !REVISION HISTORY:
+! 11May08 - R. Jacob <jacob@mcs.anl.gov> - initial prototype/code
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::zero_'
+
+  logical myZeroReals, myZeroInts
+
+  if(present(zeroReals)) then
+     myZeroReals = zeroReals
+  else
+     myZeroReals = .TRUE.
+  endif
+
+  if(present(zeroInts)) then
+     myZeroInts = zeroInts
+  else
+     myZeroInts = .TRUE.
+  endif
+
+  call AttrVect_zero(GGrid%data,myZeroReals,myZeroInts)
+
+ end subroutine zero_
+
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -2617,7 +2685,7 @@
 ! !OUTPUT PARAMETERS: 
 
       integer,  dimension(:), pointer     :: outVect
-      integer,                intent(out) :: lsize
+      integer,  optional,     intent(out) :: lsize
 
 ! !REVISION HISTORY:
 ! 13Dec01 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
@@ -2626,8 +2694,11 @@
   character(len=*),parameter :: myname_=myname//'::exportIAttr_'
 
        ! Export the data (inheritance from AttrVect)
-
-  call AttrVect_exportIAttr(GGrid%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportIAttr(GGrid%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportIAttr(GGrid%data, AttrTag, outVect)
+  endif
 
  end subroutine exportIAttr_
 
@@ -2684,7 +2755,7 @@
 ! !OUTPUT PARAMETERS: 
 
       real(SP),  dimension(:),    pointer     :: outVect
-      integer,                    intent(out) :: lsize
+      integer,   optional,        intent(out) :: lsize
 
 ! !REVISION HISTORY:
 ! 13Dec01 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
@@ -2695,7 +2766,11 @@
 
        ! Export the data (inheritance from AttrVect)
 
-  call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect)
+  endif
 
  end subroutine exportRAttrSP_
 
@@ -2731,7 +2806,7 @@
 ! !OUTPUT PARAMETERS: 
 
       real(DP),  dimension(:),    pointer     :: outVect
-      integer,                    intent(out) :: lsize
+      integer,   optional,        intent(out) :: lsize
 
 ! !REVISION HISTORY:
 ! 13Dec01 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
@@ -2741,8 +2816,11 @@
   character(len=*),parameter :: myname_=myname//'::exportRAttrDP_'
 
        ! Export the data (inheritance from AttrVect)
-
-  call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportRAttr(GGrid%data, AttrTag, outVect)
+  endif
 
  end subroutine exportRAttrDP_
 

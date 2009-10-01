@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: mutils.F90,v 1.8 2005/11/18 23:15:38 rloy Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS mutils.F90,v 1.8 2005-11-18 23:15:38 rloy Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: mutils -- utilities for the sequential climate example

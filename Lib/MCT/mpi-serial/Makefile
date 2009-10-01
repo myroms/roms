@@ -15,7 +15,8 @@ SRCS_C		= mpi.c \
 		  handles.c \
                   comm.c \
                   group.c \
-                  time.c
+                  time.c \
+                  pack.c
 
 
 OBJS_ALL	= $(SRCS_C:.c=.o) \
@@ -54,11 +55,11 @@ fort.o: mpif.h
 
 lib:
 	@if [ ! "$(FORT_SIZE)" ] ; \
-           then echo "Please setenv FORT_SIZE (e.g. real4double8 or real8double16)"; \
+           then echo "Please set FORT_SIZE (e.g. real4double8 or real8double16) when you do the main MCT configure"; \
                 exit 1; fi
 	@if [ ! -r $(MPIFH) ] ; \
            then echo "Error: there is no $(MPIFH) -" \
-                      "check the environment value of FORT_SIZE" ; \
+                      "check the value of FORT_SIZE in the main MCT configure" ; \
                 exit 1; fi
 	cp -f $(MPIFH) mpif.h
 	chmod -w mpif.h
@@ -86,13 +87,13 @@ $(CRULE):
 	$(CC) -c $(ALLCFLAGS) $*.c
 
 $(F90RULE):
-	$(FC) -c $(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.F90
+	$(FC) -c $(INCFLAG). $(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.F90
 
 MYF90FLAGS=$(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS)
 
 $(F90RULECPP):
 	$(FPP) $(DEFS) $(FPPFLAGS) $*.F90 $*.f90 
-	$(FC) -c $(INCPATH) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.f90
+	$(FC) -c $(INCFLAG). $(INCPATH) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.f90
 	$(RM) $*.f90
 
 
@@ -105,6 +106,19 @@ install: lib
 	$(INSTALL) lib$(MODULE).a -m 644 $(libdir)
 	$(INSTALL) mpi.h -m 644 $(includedir)
 	$(INSTALL) mpif.h -m 644 $(includedir)
+
+
+
+###############################
+#
+# Create mpif.realXdoubleY.h filesfrom mpif.master.h template
+#
+
+mpif:
+	make-mpif 4 8
+	make-mpif 8 8
+	make-mpif 8 16
+
 
 ###############################
 

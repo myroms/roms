@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: dstmodel.F90,v 1.7 2005/11/18 23:15:38 rloy Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS dstmodel.F90,v 1.8 2006-10-17 21:47:56 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: dstmodel -- generic model for sequential climate model
@@ -222,7 +222,7 @@ subroutine dstfin(IMPORT,EXPORT,GSMap)
  ! clean up
   call AttrVect_clean(IMPORT)
   call AttrVect_clean(EXPORT)
-  call AttrVect_clean(GlobalD)
+  if(rank==0)call AttrVect_clean(GlobalD)
   call GlobalSegMap_clean(GSMap)
   if(rank==0) write(6,*) modelname,' fin done'
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

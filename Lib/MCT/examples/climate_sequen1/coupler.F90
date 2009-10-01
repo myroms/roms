@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: coupler.F90,v 1.5 2005/01/11 21:26:52 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS coupler.F90,v 1.6 2006-10-17 21:46:35 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE: coupler -- coupler for sequential model example
@@ -155,7 +155,7 @@ subroutine cplinit(SrcGSMap,DstGSMap,comm,compid)
        Xonly, root, comm, compid)
 
   ! no longer need the matrix defined on root
-  call SparseMatrix_clean(sMat)
+  if(rank==0) call SparseMatrix_clean(sMat)
   if(rank==0) write(6,*) cplname, ' init done'
 
 

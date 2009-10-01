@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_Accumulator.F90,v 1.31 2004/10/19 23:00:39 steder Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_Accumulator.F90,v 1.37 2008-05-15 13:20:10 larson Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Accumulator - Time Averaging/Accumlation Buffer
@@ -10,28 +10,31 @@
 ! !DESCRIPTION:
 !
 ! An {\em accumulator} is a data class used for computing running sums 
-! and/or time averages of {\tt AttrVect} class data.  The Fortran 
-! implementation of this concept is the {\tt Accumulator} class, 
-! which---along with its basic methods---is defined in this module.
+! and/or time averages of {\tt AttrVect} class data.
 ! The period of time over which data are accumulated/averaged is the 
-! {\em accumulation cycle}, which is defined by in terms of a number 
-! of time steps (the component {\tt Accumulator\%num\_steps}).  When
-! the accumulation routine is invoked (for example the MCT routine 
-! {\tt accumulate()} which is not defined in this module), the number 
+! {\em accumulation cycle}, which is defined by the total number 
+! of accumulation steps (the component {\tt Accumulator\%num\_steps}).  When
+! the accumulation routine {\tt accumulate\_} is invoked, the number
 ! of accumulation cycle steps (the component 
 ! {\tt Accumulator\%steps\_done})is incremented, and compared with 
 ! the number of steps in the accumulation cycle to determine if the 
 ! accumulation cycle has been completed.  The accumulation buffers 
 ! of the {\tt Accumulator} are stored in an {\tt AttrVect} (namely 
 ! the component {\tt Accumulator\%data}), which allows the user to 
-! define the number of variables and their names to be defined by 
-! the user at run-time.  Finally, one can define for each field 
+! define the number of variables and their names at run-time.
+! Finally, one can define for each field 
 ! being accumulated the specific accumulation {\em action}.  Currently,
 ! there are two options:  Time Averaging and Time Summation.  The 
 ! user chooses the specific action by setting an integer action 
 ! flag for each attribute being accumulated.  The supported options
 ! are defined by the public data member constants {\tt MCT\_SUM} and
 ! {\tt MCT\_AVG}.
+! \\
+! This module also supports a simple usage of accumulator where all
+! the actions are SUM ({\tt inits\_} and {\tt initavs\_}) and the user
+! must call {\tt average\_} to calculate the average from the current
+! value of {\tt Accumulator\%steps\_done}.  {\tt Accumulator\%num\_steps}
+! is ignored in this case.
 !
 ! !INTERFACE:
 
@@ -64,8 +67,8 @@
 
 ! !PUBLIC MEMBER FUNCTIONS:
 !
-      public :: init		! creation method
-      public :: initp		! partial creation method (MCT USE ONLY)
+      public :: init            ! creation method
+      public :: initp           ! partial creation method (MCT USE ONLY)
       public :: clean		! destruction method
       public :: initialized     ! check if initialized
       public :: lsize		! local length of the data arrays
@@ -90,12 +93,15 @@
 				    ! respective locations of these
 				    ! shared attributes
       public :: accumulate   ! Add AttrVect data into an Accumulator
+      public :: average      ! Calculate an average in an Accumulator
 
 ! Definition of interfaces for the methods for the Accumulator:
 
     interface init   ; module procedure	&
        init_,	&
-       initv_
+       inits_,	&
+       initv_,  &
+       initavs_
     end interface
     interface initp  ; module procedure	initp_ ; end interface
     interface clean  ; module procedure clean_  ; end interface
@@ -125,6 +131,7 @@
        aVaCSharedAttrIndexList_
     end interface
     interface accumulate ; module procedure accumulate_ ; end interface
+    interface average ; module procedure average_ ; end interface
 
 ! !PUBLIC DATA MEMBERS:
 !
@@ -144,6 +151,8 @@
 !            routines.
 !  26Aug02 - E.T. Ong <eong@mcs.anl.gov> - thourough code revision; 
 !            no added routines
+!  10Jan08 - R. Jacob <jacob@mcs.anl.gov> - add simple accumulator
+!            use support and check documentation.
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname='MCT::m_Accumulator'
@@ -171,7 +180,7 @@
 ! buffers will be allocated.  The accumulation action on each of the
 ! integer attributes can be defined by supplying the input {\tt INTEGER}
 ! array argument {\tt iAction(:)} (whose length must correspond to the
-! number of items in {\tt iList}.  The values of the elements of 
+! number of items in {\tt iList}).  The values of the elements of 
 ! {\tt iAction(:)} must be one of the values among the public data 
 ! members defined in the declaration section of this module.  If the
 ! integer attributes are to be accumulated (i.e. one supplies {\tt iList}),
@@ -192,9 +201,16 @@
 !
 ! !USES:
 !
-      use m_List, only : List_init => init
       use m_AttrVect, only : AttrVect_init => init
       use m_AttrVect, only : AttrVect_zero => zero
+
+      use m_List, only: List
+      use m_List, only: List_nullify => nullify
+      use m_List, only: List_init => init
+      use m_List, only: List_nitem => nitem
+      use m_List, only: List_clean => clean
+
+      use m_stdio
       use m_die
 
       implicit none
@@ -221,7 +237,246 @@
 !EOP ___________________________________________________________________
 !
   character(len=*),parameter :: myname_=myname//'::init_'
-  integer :: my_steps_done
+  integer :: my_steps_done, nIAttr, nRAttr, ierr
+  integer, dimension(:), pointer :: my_iAction, my_rAction
+  logical :: status
+  type(List) :: temp_iList, temp_rList
+
+  nullify(my_iAction)
+  nullify(my_rAction)
+
+  call List_nullify(temp_iList)
+  call List_nullify(temp_rList)
+
+        ! Argument consistency checks:  
+
+        ! 1) Terminate with error message if optional argument iAction (rAction) 
+        ! is supplied but optional argument iList (rList) is not.
+
+  if(present(iAction) .and. (.not. present(iList))) then
+     write(stderr,'(2a)') myname_,'::FATAL--Argument iAction supplied but action iList absent!'
+     call die(myname_)
+  endif
+
+  if(present(rAction) .and. (.not. present(rList))) then
+     write(stderr,'(2a)') myname_,'::FATAL--Argument rAction supplied but action rList absent!'
+     call die(myname_)
+  endif
+
+        ! 2) For iList and rList, generate temporary List data structures to facilitate
+        ! attribute counting.
+
+  if(present(iList)) then ! create temp_iList
+     call List_init(temp_iList, iList)
+     nIAttr = List_nitem(temp_iList)
+  endif
+
+  if(present(rList)) then ! create temp_iList
+     call List_init(temp_rList, rList)
+     nRAttr = List_nitem(temp_rList)
+  endif
+
+        ! 3) Terminate with error message if optional arguments iAction (rAction) 
+        ! and iList (rList) are supplied but the size of iAction (rAction) does not 
+        ! match the number of items in iList (rList).
+
+  if(present(iAction) .and.  present(iList)) then
+     if(size(iAction) /= nIAttr) then
+        write(stderr,'(2a,2(a,i8))') myname_, &
+             '::FATAL--Size mismatch between iAction and iList!  ', &
+             'size(iAction)=',size(iAction),', ','No. items in iList=',nIAttr
+        call die(myname_)
+     endif
+  endif
+
+  if(present(rAction) .and.  present(rList)) then
+     if(size(rAction) /= nRAttr) then
+        write(stderr,'(2a,2(a,i8))') myname_, &
+             '::FATAL--Size mismatch between rAction and rList!  ', &
+             'size(rAction)=',size(rAction),', ','No items in rList=',nRAttr
+        call die(myname_)
+     endif
+  endif
+
+        ! Initialize the Accumulator components.
+
+        ! steps_done:
+
+  if(present(steps_done)) then
+     my_steps_done = steps_done
+  else
+     my_steps_done = 0
+  endif
+
+        ! my_iAction (if iList is present)
+
+  if(present(iList)) then ! set up my_iAction
+
+     allocate(my_iAction(nIAttr), stat=ierr)
+     if(ierr /= 0) then
+        write(stderr,'(2a,i8)') myname_, &
+           '::FATAL: allocate(my_iAction) failed with ierr=',ierr
+        call die(myname_)
+     endif
+     
+     if(present(iAction)) then ! use its values
+        my_iAction = iAction
+     else ! go with default summation by assigning value MCT_SUM
+        my_iAction = MCT_SUM
+     endif
+
+  endif
+
+        ! my_rAction (if rList is present)
+
+  if(present(rList)) then ! set up my_rAction
+
+     allocate(my_rAction(nRAttr), stat=ierr)
+     if(ierr /= 0) then
+        write(stderr,'(2a,i8)') myname_, &
+           '::FATAL: allocate(my_rAction) failed with ierr=',ierr
+        call die(myname_)
+     endif
+     
+     if(present(rAction)) then ! use its values
+        my_rAction = rAction
+     else ! go with default summation by assigning value MCT_SUM
+        my_rAction = MCT_SUM
+     endif
+
+  endif
+  
+        ! Build the Accumulator aC minus its data component:
+
+  if(present(iList) .and. present(rList)) then ! Both REAL and INTEGER registers
+
+     call initp_(aC,my_iAction,my_rAction,num_steps,my_steps_done)
+
+     deallocate(my_iAction, my_rAction, stat=ierr)
+     if(ierr /= 0) then
+        write(stderr,'(2a,i8)') myname_, &
+           '::FATAL: deallocate(my_iAction, my_rAction) failed with ierr=',ierr
+        call die(myname_)
+     endif
+
+  else ! Either only REAL or only INTEGER registers in aC
+
+     if(present(iList)) then ! Only  INTEGER REGISTERS
+
+	call initp_(aC=aC, iAction=my_iAction, num_steps=num_steps, &
+	            steps_done=my_steps_done)
+
+        deallocate(my_iAction, stat=ierr)
+        if(ierr /= 0) then
+           write(stderr,'(2a,i8)') myname_, &
+                '::FATAL: deallocate(my_iAction) failed with ierr=',ierr
+           call die(myname_)
+        endif
+
+     endif
+
+     if(present(rList)) then ! Only  REAL REGISTERS
+
+	call initp_(aC=aC, rAction=my_rAction, num_steps=num_steps, &
+	            steps_done=my_steps_done)
+
+        deallocate(my_rAction, stat=ierr)
+        if(ierr /= 0) then
+           write(stderr,'(2a,i8)') myname_, &
+                '::FATAL: deallocate(my_rAction) failed with ierr=',ierr
+           call die(myname_)
+        endif
+
+     endif
+
+  endif
+
+        ! Initialize the AttrVect data component for aC:
+
+  if(present(iList) .and. present(rList)) then
+     call AttrVect_init(aC%data,iList,rList,lsize)
+  else
+     if(present(iList)) then
+	call AttrVect_init(aV=aC%data,iList=iList,lsize=lsize)
+     endif
+     if(present(rList)) then
+	call AttrVect_init(aV=aC%data,rList=rList,lsize=lsize)
+     endif
+  endif
+
+  call AttrVect_zero(aC%data)
+
+        ! Clean up
+
+  if(present(iList)) call List_clean(temp_iList)
+  if(present(rList)) call List_clean(temp_rList)
+
+        ! Check that aC has been properly initialized
+
+  status = initialized_(aC=aC,die_flag=.true.,source_name=myname_)
+
+ end subroutine init_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: inits_ - Initialize a simple Accumulator and its Registers
+!
+! !DESCRIPTION:
+! This routine allocates space for the output simple {\tt Accumulator} argument 
+! {\tt aC}, and sets the {\em length} of the {\tt Accumulator} 
+! register buffer (defined by the input {\tt INTEGER} argument {\tt 
+! lsize}).  If one wishes to accumulate integer fields, the list of
+! these fields is defined by the input {\tt CHARACTER} argument 
+! {\tt iList}, which is specified as a colon-delimited set of 
+! substrings (further information regarding this is available in the 
+! routine {\tt init\_()} of the module {\tt m\_AttrVect}).  If no 
+! value of {\tt iList} is supplied, no integer attribute accumulation 
+! buffers will be allocated.   The input argument {\tt rList} define
+! the names of the real variables  to be accumulated. Finally, the user can 
+! manually set the number of completed steps in an accumulation cycle
+! (e.g. for restart purposes) by supplying a value for the optional 
+! input {\tt INTEGER} argument {\tt steps\_done}.
+! Its default value is zero.
+!
+! In a simple accumulator, the action is always SUM.
+!
+!
+! !INTERFACE:
+
+ subroutine inits_(aC, iList, rList, lsize,steps_done)
+!
+! !USES:
+!
+      use m_List, only : List_init => init
+      use m_List, only : List_clean => clean
+      use m_List, only : List_nitem => nitem
+      use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
+      use m_die
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+!
+      character(len=*),      optional, intent(in)  :: iList
+      character(len=*),      optional, intent(in)  :: rList
+      integer,                         intent(in)  :: lsize
+      integer,               optional, intent(in)  :: steps_done
+
+! !OUTPUT PARAMETERS: 
+!
+      type(Accumulator),               intent(out) :: aC
+
+! !REVISION HISTORY:
+! 10Jan08 - R. Jacob <jacob@mcs.anlgov> - initial version based on init_
+!
+!EOP ___________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::inits_'
+  type(List) :: tmplist
+  integer :: my_steps_done,ier,i,actsize
   logical :: status
 
         ! Initialize the Accumulator components.
@@ -232,17 +487,31 @@
      my_steps_done = 0
   endif
 
-  if(present(iAction) .and. present(rAction)) then
-     call initp_(aC,iAction,rAction,num_steps,my_steps_done)
-  else
-     if(present(iAction)) then
-	call initp_(aC=aC, iAction=iAction, num_steps=num_steps, &
-	            steps_done=my_steps_done)
-     endif
-     if(present(rAction)) then
-	call initp_(aC=aC, rAction=rAction, num_steps=num_steps, &
-	            steps_done=my_steps_done)
-     endif
+  aC%num_steps = -1   ! special value for simple aC
+  aC%steps_done = my_steps_done
+
+  nullify(aC%iAction,aC%rAction)
+
+  if(present(iList)) then
+     call List_init(tmplist,iList)
+     actsize=List_nitem(tmplist)
+     allocate(aC%iAction(actsize),stat=ier)
+     if(ier /= 0) call die(myname_,"iAction allocate",ier)
+     do i=1,lsize
+       aC%iAction=MCT_SUM
+     enddo
+     call List_clean(tmplist)
+  endif
+
+  if(present(rList)) then
+     call List_init(tmplist,rList)
+     actsize=List_nitem(tmpList)
+     allocate(aC%rAction(actsize),stat=ier)
+     if(ier /= 0) call die(myname_,"rAction allocate",ier)
+     do i=1,lsize
+       aC%rAction=MCT_SUM
+     enddo
+     call List_clean(tmplist)
   endif
 
         ! Initialize the AttrVect component aC:
@@ -264,7 +533,8 @@
 
   status = initialized_(aC=aC,die_flag=.true.,source_name=myname_)
 
- end subroutine init_
+ end subroutine inits_
+
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -547,6 +817,99 @@
   status = initialized(aC=aC,die_flag=.true.,source_name=myname_)
 
  end subroutine initv_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: initavs_ - Initialize a simple Accumulator from an AttributeVector
+!
+! !DESCRIPTION:
+! This routine takes the integer and real attribute information (including
+! from a previously initialized {\tt AttributeVector} (the input argument {\tt aV}), and uses
+! it to create a simple (sum only) {\tt Accumulator} (the output argument {\tt aC}).
+! In the absence of the {\tt INTEGER} input argument {\tt lsize}, 
+! {\tt aC} will inherit from {\tt Av} its length.  In the absence of the
+! optional INTEGER argument, {\tt steps\_done} will be set to zero.
+!
+! !INTERFACE:
+
+ subroutine initavs_(aC, aV, acsize, steps_done)
+!
+! !USES:
+!
+      use m_AttrVect, only: AttrVect_lsize => lsize
+      use m_AttrVect, only: AttrVect_nIAttr => nIAttr
+      use m_AttrVect, only: AttrVect_nRAttr => nRAttr
+      use m_AttrVect, only: AttrVect_exIL2c => exportIListToChar
+      use m_AttrVect, only: AttrVect_exRL2c => exportRListToChar
+      use m_die
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+!
+      type(AttrVect),           intent(in)     :: aV
+      integer,           optional, intent(in)  :: acsize
+      integer,           optional, intent(in)  :: steps_done
+
+! !OUTPUT PARAMETERS: 
+!
+      type(Accumulator),           intent(out) :: aC
+
+! !REVISION HISTORY:
+! 10Jan08 - R. Jacob <jacob@mcs.anl.gov> - initial version based on initv_
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::initavs_'
+
+  integer :: myNumSteps, myStepsDone 
+  integer :: aC_lsize
+  integer :: i,ier
+  integer :: nIatt,nRatt
+  logical :: status
+
+
+        ! If the argument steps_done is present, set myStepsDone
+        ! to this value; otherwise, set it to zero
+
+  if(present(steps_done)) then ! set it manually
+     myStepsDone= steps_done 
+  else ! set it to zero
+     myStepsDone = 0
+  endif
+
+        ! If the argument acsize is present, 
+        ! set aC_lsize to this value; otherwise, set it to the lsize of bC
+ 
+  if(present(acsize)) then  ! set it manually
+     aC_lsize = acsize     
+  else ! inherit it from bC
+     aC_lsize = AttrVect_lsize(aV)
+  endif
+  nIatt=AttrVect_nIAttr(aV)
+  nRatt=AttrVect_nRAttr(aV)
+
+  if((nIAtt>0) .and. (nRatt>0)) then
+     call inits_(aC,AttrVect_exIL2c(aV),AttrVect_exRL2c(aV), &
+                  aC_lsize,myStepsDone)
+  else
+     if(nIatt>0) then
+        call inits_(aC,iList=AttrVect_exIL2c(aV),lsize=aC_lsize, &
+                    steps_done=myStepsDone)
+     endif
+     if(nRatt>0) then
+        call inits_(aC,rList=AttrVect_exRL2c(aV),lsize=aC_lsize, &
+                    steps_done=myStepsDone)
+     endif
+  endif
+
+
+  ! Check that aC as been properly initialized
+
+  status = initialized(aC=aC,die_flag=.true.,source_name=myname_)
+
+ end subroutine initavs_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -873,7 +1236,7 @@
 ! !IROUTINE: NumSteps_ - Number of Accumulation Cycle Time Steps
 !
 ! !DESCRIPTION:
-! This {\tt INTEGER} query function returns the of time steps in an 
+! This {\tt INTEGER} query function returns the number of time steps in an 
 ! accumulation cycle for the input {\tt Accumulator} argument {\tt aC}.
 !
 ! !INTERFACE:
@@ -1318,7 +1681,7 @@
 ! !OUTPUT PARAMETERS: 
 
       integer,  dimension(:), pointer     :: outVect
-      integer,                intent(out) :: lsize
+      integer,  optional,     intent(out) :: lsize
 
 ! !REVISION HISTORY:
 
@@ -1329,8 +1692,11 @@
   character(len=*),parameter :: myname_=myname//'::exportIAttr_'
 
        ! Export the data (inheritance from AttrVect)
-
-  call AttrVect_exportIAttr(aC%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportIAttr(aC%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportIAttr(aC%data, AttrTag, outVect)
+  endif
 
  end subroutine exportIAttr_
 
@@ -1385,7 +1751,7 @@
 ! !OUTPUT PARAMETERS: 
 
       real(SP), dimension(:), pointer     :: outVect
-      integer,                intent(out) :: lsize
+      integer,  optional,     intent(out) :: lsize
 
 ! !REVISION HISTORY:
 !  6May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
@@ -1396,7 +1762,11 @@
 
        ! Export the data (inheritance from AttrVect)
 
-  call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportRAttr(aC%data, AttrTag, outVect)
+  endif
 
  end subroutine exportRAttrSP_
 
@@ -1430,7 +1800,7 @@
 ! !OUTPUT PARAMETERS: 
 
       real(DP), dimension(:), pointer     :: outVect
-      integer,                intent(out) :: lsize
+      integer,  optional,    intent(out) :: lsize
 
 ! !REVISION HISTORY:
 !  6May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
@@ -1441,7 +1811,11 @@
 
        ! Export the data (inheritance from AttrVect)
 
-  call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
+  if(present(lsize)) then
+     call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
+  else
+     call AttrVect_exportRAttr(aC%data, AttrTag, outVect)
+  endif
 
  end subroutine exportRAttrDP_
 
@@ -1621,7 +1995,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: zero_ - Number of Completed Steps in the Current Cycle
+! !IROUTINE: zero_ - Zero an Accumulator
 !
 ! !DESCRIPTION:
 ! This subroutine clears the the {\tt Accumulator} argument {\tt aC}.  
@@ -1812,20 +2186,25 @@
 !
 ! !DESCRIPTION:
 ! This routine performs time {\em accumlation} of data present in an
-! MCT field data {\tt AttrVect} variable {\tt aV} (more information 
-! about the {\tt AttrVect} can be found in the MCT module 
-! {\tt m\_AttrVect}), and combines it with the running tallies stored 
-! in the MCT {\tt Accumulator} variable {\tt aC} (more information about 
-! the {\tt Accumulator} can be found in the MCT module 
-! {\tt m\_Accumulator}).  This routine automatically identifies which 
+! MCT field data {\tt AttrVect} variable {\tt aV} and combines it with
+! the running tallies stored in the MCT {\tt Accumulator} variable {\tt aC}.
+! This routine automatically identifies which 
 ! fields are held in common by {\tt aV} and {\tt aC} and uses the 
 ! accumulation action information stored in {\tt aC} to decide how
 ! each field in {\tt aV} is to be combined into its corresponding 
 ! running tally in {\tt aC}.  The accumulation operations currently 
-! supported correspond to those defined among the public data members
-! of the declaration section of the MCT module {\tt m\_Accumulator}.  
+! supported are:
+! \begin {itemize}
+! \item {\tt MCT\_SUM}:  Add the current values in the {\tt Av} to the current values in {\tt Ac}.  
+! \item {\tt MCT\_AVG}:  Same as {\tt MCT\_SUM} except when {\tt steps\_done} is equal
+! to {\tt num\_steps} then perform one more sum and replaced with average. 
+! \end {itemize}
+! 
 ! This routine also automatically increments the counter in {\tt aC} 
 ! signifying the number of steps completed in the accumulation cycle.
+!
+! NOTE:  The user must reset (zero) the {\tt Accumulator} after the average
+! has been formed or the next call to {\tt accumulate} will add to the average.
 !
 ! !INTERFACE:
 
@@ -2004,5 +2383,89 @@
   endif
 
  end subroutine accumulate_
+
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: average_ -- Force an average to be taken on an Accumulator
+!
+! !DESCRIPTION:
+! This routine will compute the average of the current values in an
+! {\tt Accumulator} using the current value of {\tt steps\_done}
+! in the {\tt Accumulator}
+!
+! !INTERFACE:
+
+ subroutine average_(aC)
+
+!
+! !USES:
+!
+      use m_stdio, only : stdout,stderr
+      use m_die,   only : die
+
+      use m_AttrVect, only : AttrVect
+      use m_AttrVect, only : AttrVect_lsize => lsize
+      use m_AttrVect, only : AttrVect_nIAttr => nIAttr
+      use m_AttrVect, only : AttrVect_nRAttr => nRAttr
+      use m_AttrVect, only : AttrVect_indexRA => indexRA
+      use m_AttrVect, only : AttrVect_indexIA => indexIA
+
+      implicit none
+
+! !INPUT/OUTPUT PARAMETERS: 
+!
+      type(Accumulator),  intent(inout) :: aC      ! Output Accumulator
+
+! !REVISION HISTORY:
+! 11Jan08 - R.Jacob <jacob@mcs.anl.gov> -- initial version based on accumulate_
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::average_'
+
+! Overlapping attribute index number
+  integer :: num_indices
+
+! Overlapping attribute index storage arrays:
+  integer, dimension(:), pointer :: aCindices, aVindices
+  integer :: aCindex, aVindex
+
+! Error flag and loop indices
+  integer :: ierr, l, n
+
+! Averaging time-weighting factor:
+  real(FP) :: step_weight
+  integer :: steps_done
+
+
+  if(aC%num_steps == 0) then
+     write(stderr,'(2a)') myname_,':: FATAL--Zero steps in accumulation cycle.'
+     call die(myname_)
+  endif
+
+  if(aC%steps_done == 0) then
+     write(stderr,'(2a)') myname_,':: FATAL--Zero steps completed in accumulation cycle.'
+     call die(myname_)
+  endif
+
+        ! Set num_steps from aC:
+
+  steps_done = aC%steps_done
+
+
+   step_weight = 1.0_FP / REAL(steps_done,FP)
+   do n=1,nRAttr_(aC)
+      do l=1,lsize_(aC)
+         aC%data%rAttr(n,l) = step_weight * aC%data%rAttr(n,l)
+      enddo
+   enddo
+     
+   do n=1,nIAttr_(aC)
+       do l=1,lsize_(aC)
+          aC%data%iAttr(n,l) = aC%data%iAttr(n,l) / steps_done
+       enddo
+   enddo
+
+
+ end subroutine average_
 
  end module m_Accumulator

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_TraceBack.F90,v 1.3 2004/04/21 22:54:46 jacob Exp $
-! CVS $Name: MCT_2_2_0 $  
+! CVS m_TraceBack.F90,v 1.3 2004-04-21 22:54:46 jacob Exp
+! CVS MCT_2_6_0  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_TraceBack - Generation of Traceback Information

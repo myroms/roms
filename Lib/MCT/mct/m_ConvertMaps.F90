@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_ConvertMaps.F90,v 1.10 2004/04/21 22:16:32 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_ConvertMaps.F90,v 1.10 2004-04-21 22:16:32 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_ConvertMaps - Conversion Between MCT Domain Decomposition Descriptors

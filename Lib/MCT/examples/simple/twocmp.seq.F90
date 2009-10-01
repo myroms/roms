@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: twocmp.seq.F90,v 1.5 2005/11/15 21:59:30 rloy Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS twocmp.seq.F90,v 1.6 2006-07-25 17:09:42 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE:  twocomponent.sequential
@@ -63,10 +63,11 @@
       call MPI_init(ier)
 
       call mpi_comm_size(MPI_COMM_WORLD, mysize,ier)
-!      if(mysize .ne. 2) then
-!        write(6,*)"Must run on 2 processors"
-!        stop
-!      endif
+      if(mysize .gt. 4) then
+        write(6,*)"The small problem size in this example &
+	&requires ", ngy,"or fewer processors."
+        stop
+      endif
       call mpi_comm_rank(MPI_COMM_WORLD, myproc,ier)
 
       call mpi_comm_dup(MPI_COMM_WORLD,comm1,ier)

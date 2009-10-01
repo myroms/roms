@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_SparseMatrixToMaps.F90,v 1.12 2004/04/21 22:16:35 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_SparseMatrixToMaps.F90,v 1.13 2007-05-11 02:09:48 rloy Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrixToMaps -- Maps from the Sparse Matrix 
@@ -425,7 +425,8 @@
      case(1)  ! bootstrap segment counting process
 	nsegs = 1
 	starts(nsegs) = indices(i)
-
+! rml patch
+        lengths(nsegs) = 1
      case default
 
 	if(i == num_indices) then ! last point

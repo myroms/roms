@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: m_SparseMatrixComms.F90,v 1.16 2004/05/18 00:07:49 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS m_SparseMatrixComms.F90,v 1.16 2004-05-18 00:07:49 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrixComms -- sparse matrix communications methods.

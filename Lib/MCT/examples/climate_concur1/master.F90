@@ -2,8 +2,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id: master.F90,v 1.7 2004/04/23 05:43:11 jacob Exp $
-! CVS $Name: MCT_2_2_0 $ 
+! CVS master.F90,v 1.7 2004-04-23 05:43:11 jacob Exp
+! CVS MCT_2_6_0 
 !BOP -------------------------------------------------------------------
 !
 ! !ROUTINE: master  -- driver for simple concurrent coupled model
