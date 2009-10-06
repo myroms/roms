@@ -93,7 +93,7 @@
 
 ! Input/Output parameters.
 
-       NRREC =  0
+       NRREC == 0
    LcycleRST == T
         NRST == MyNRST
         NSTA == 1
@@ -120,6 +120,8 @@
    LcycleADJ == F
         NADJ == 480
      NDEFADJ == 0
+        NSFF == 480
+        NOBC == 480
 
 ! Output check pointing GST restart parameters.
 
@@ -186,6 +188,12 @@
          Zob == 0.02d0                     ! m
          Zos == 0.02d0                     ! m
 
+! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
+
+      BLK_ZQ == 10.0d0                     ! air humidity
+      BLK_ZT == 10.0d0                     ! air temperature
+      BLK_ZW == 10.0d0                     ! winds
+
 ! Minimum depth for wetting and drying.
 
        DCRIT == 0.10d0                     ! m
@@ -202,7 +210,7 @@
   Vtransform == 1                          ! transformation equation
  Vstretching == 1                          ! stretching function
 
-! Vertical S-coordinates parameters, [1:Ngrids].
+! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 
      THETA_S == 5.0d0                      ! surface stretching parameter
      THETA_B == 0.4d0                      ! bottom  stretching parameter
@@ -216,8 +224,8 @@
 ! Time-stamp assigned for model initialization, reference time
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
-  
-      DSTART =  myDSTART                   ! days                 
+
+      DSTART =  myDSTART                   ! days
   TIDE_START =  0.0d0                      ! days, Jan 1 2006
     TIME_REF =  20060101.0                 ! yyyymmdd.dd
 
@@ -355,6 +363,7 @@ Hout(idLhea) == F                          ! latent heat flux
 Hout(idShea) == F                          ! sensible heat flux
 Hout(idLrad) == F                          ! longwave radiation flux
 Hout(idSrad) == F                          ! shortwave radiation flux
+Hout(idEmPf) == F                          ! E-P flux
 Hout(idevap) == F                          ! evaporation rate
 Hout(idrain) == F                          ! precipitation rate
 
@@ -404,8 +413,14 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
 ! Generic User parameters, [1:NUSER].
 
-       NUSER =  8
-        USER =  6 6 20 20 25 25 30 30
+       NUSER =  0
+        USER =  0.d0
+
+! NetCDF-4/HDF5 compression parameters for output files.
+
+  NC_SHUFFLE =  1                 ! if non-zero, turn on shuffle filter
+  NC_DEFLATE =  1                 ! if non-zero, turn on deflate filter
+   NC_DLEVEL =  1                 ! deflate level [0-9]
 
 ! Input NetCDF file names, [1:Ngrids].
 
@@ -462,7 +477,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  =========
 !
 !------------------------------------------------------------------------------
-! Application tile (string with a maximum of eighty characters) and 
+! Application tile (string with a maximum of eighty characters) and
 ! C-preprocessing flag.
 !------------------------------------------------------------------------------
 !
@@ -489,17 +504,17 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! WARNING: It is trivial and possible to change these dimension parameters in
 ! -------  idealized applications via analytical expressions.  However, in
 ! realistic applications any change to these parameters requires redoing all
-! input NetCDF files. 
+! input NetCDF files.
 !
 !  Lm          Number of INTERIOR grid RHO-points in the XI-direction for
 !                each nested grid, [1:Ngrids]. If using NetCDF files as
-!                input, Lm=xi_rho-2 where "xi_rho" is the NetCDF file 
+!                input, Lm=xi_rho-2 where "xi_rho" is the NetCDF file
 !                dimension of RHO-points. Recall that all RHO-point
 !                variables have a computational I-range of [0:Lm+1].
 !
 !  Mm          Number of INTERIOR grid RHO-points in the ETA-direction for
 !                each nested grid, [1:Ngrids]. If using NetCDF files as
-!                input, Mm=eta_rho-2 where "eta_rho" is the NetCDF file 
+!                input, Mm=eta_rho-2 where "eta_rho" is the NetCDF file
 !                dimension of RHO-points. Recall that all RHO-point
 !                variables have a computational J-range of [0:Mm+1].
 !
@@ -521,7 +536,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !                     |                   |              |_______|
 !                   0 |___________________|              |       |
 !                              Ir                        |       | 1
-!                     0  1            Lm  Lm+1    h(i,j) |_______| 
+!                     0  1            Lm  Lm+1    h(i,j) |_______|
 !                                                        ::::::::: 0
 !                                                        :::::::::
 !                                                        ::::::::: Nbed-1
@@ -910,7 +925,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !
 !  CHARNOK_ALPHA   Charnok surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
-!   
+!
 !  ZOS_HSIG_ALPHA  Roughness from wave amplitude,
 !                    Zos:   zos_hsig_alpha * Hsig
 !
@@ -1051,7 +1066,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !                  free-surface and C(-1)=-1 corresponding to the bathymetry.
 !
 !              These functions are coded in routine "Utility/set_scoord.F".
-!               
+!
 !  THETA_S     S-coordinate surface control parameter. The range of optimal
 !              values depends on the vertical stretching function, C(s).
 !
@@ -1152,7 +1167,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !              rho(:,:,:) = R0 - R0 * TCOEF * (t(:,:,:,:,itemp) - T0)
 !                              + R0 * SCOEF * (t(:,:,:,:,isalt) - S0)
 !
-!              Typical values:     R0 = 1027.0  kg/m3               
+!              Typical values:     R0 = 1027.0  kg/m3
 !                                  T0 = 10.0    Celsius
 !                                  S0 = 35.0    PSU
 !                               TCOEF = 1.7d-4  1/Celsius
@@ -1284,6 +1299,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Hout(idShea)  Write out sensible heat flux.
 !  Hout(idLrad)  Write out long-wave radiation flux.
 !  Hout(idSrad)  Write out short-wave radiation flux.
+!  Hout(idEmPf)  Write out E-P flux.
 !  Hout(idevap)  Write out evaporation rate.
 !  Hout(idrain)  Write out precipitation rate.
 !
@@ -1312,7 +1328,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !
 !                INT(user(1)):  tangent state variable to perturb
 !                INT(user(2)):  adjoint state variable to perturb
-!                               [isFsur=1] free-surface 
+!                               [isFsur=1] free-surface
 !                               [isUbar=2] 2D U-momentum
 !                               [isVbar=3] 2D V-momentum
 !                               [isUvel=4] 3D U-momentum

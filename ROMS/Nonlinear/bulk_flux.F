@@ -119,6 +119,7 @@
      &                     FORCES(ng) % srflx,                          &
      &                     FORCES(ng) % stflx,                          &
 # ifdef EMINUSP
+     &                     FORCES(ng) % EminusP,                        &
      &                     FORCES(ng) % evap,                           &
 # endif
      &                     FORCES(ng) % sustr,                          &
@@ -155,7 +156,7 @@
      &                           rain, lhflx, lrflx, shflx,             &
      &                           srflx, stflx,                          &
 # ifdef EMINUSP
-     &                           evap,                                  &
+     &                           EminusP, evap,                         &
 # endif
      &                           sustr, svstr)
 !***********************************************************************
@@ -214,6 +215,7 @@
       real(r8), intent(inout) :: stflx(LBi:,LBj:,:)
 
 #  ifdef EMINUSP
+      real(r8), intent(out) :: EminusP(LBi:,LBj:)
       real(r8), intent(out) :: evap(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: sustr(LBi:,LBj:)
@@ -255,6 +257,7 @@
       real(r8), intent(inout) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
 
 #  ifdef EMINUSP
+      real(r8), intent(out) :: EminusP(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: evap(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(out) :: sustr(LBi:UBi,LBj:UBj)
@@ -401,7 +404,7 @@
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
           e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
-          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar) 
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
@@ -416,7 +419,7 @@
 !
           LRad(i,j)=lrflx(i,j)*Hscale-                                  &
      &              emmiss*StefBo*TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
- 
+
 # else
           LRad(i,j)=lrflx(i,j)*Hscale
 # endif
@@ -431,7 +434,7 @@
 !                 Q(i) is the actual specific humidity
 !              Qsea(i) is the saturation specific humidity at Tsea
 !
-!          Saturation vapor pressure in mb is first computed and then 
+!          Saturation vapor pressure in mb is first computed and then
 !          converted to specific humidity in kg/kg
 !
 !          The saturation vapor pressure is computed from Teten formula
@@ -451,7 +454,7 @@
 !          Q = 0.622 E/(P + (0.622-1)e)
 !
 !          Q(kg/kg) = 0.62197_r8*(E(mb)/(PairM(mb)-0.378_r8*E(mb)))
-!          
+!
 !-----------------------------------------------------------------------
 !
 !  Compute air saturation vapor pressure (mb), using Teten formula.
@@ -551,7 +554,7 @@
      &                             bulk_psiu(blk_ZW(ng)/L10(i),pi))
           Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
      &             (LOG(blk_ZT(ng)/ZoT10(i))-                           &
-     &              bulk_psit(blk_ZT(ng)/L10(i),pi)) 
+     &              bulk_psit(blk_ZT(ng)/L10(i),pi))
           Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
      &             (LOG(blk_ZQ(ng)/ZoT10(i))-                           &
      &              bulk_psit(blk_ZQ(ng)/L10(i),pi))
@@ -761,8 +764,8 @@
 !  ocean.
 !
 !  For EMINUSP option,  EVAP = LHeat (W/m2) / Hlv (J/kg) = kg/m2/s
-!                       PREC = rain = kg/m2/s            
-!       
+!                       PREC = rain = kg/m2/s
+!
 !  To convert these rates to m/s divide by freshwater density, rhow.
 !
 !  Note that when the air is undersaturated in water vapor (Q < Qsea)
@@ -776,7 +779,8 @@
 !
 !  Note that fresh water flux is positive out of the ocean and the
 !  salt flux (stflx(isalt)) is positive into the ocean. It is converted
-!  to (psu m/s) for stflx(isalt) in "set_vbc.F".
+!  to (psu m/s) for stflx(isalt) in "set_vbc.F". The E-P value is
+!  saved in variable EminusP for I/O purposes.
 !
       Hscale=1.0_r8/(rho0*Cp)
       cff=1.0_r8/rhow
@@ -797,6 +801,9 @@
           evap(i,j)=evap(i,j)*rmask(i,j)
           stflx(i,j,isalt)=stflx(i,j,isalt)*rmask(i,j)
 #   endif
+# endif
+# ifdef EMINUSP
+          EminusP(i,j)=stflx(i,j,isalt)
 # endif
         END DO
       END DO
@@ -845,6 +852,9 @@
      &                        evap)
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        EminusP)
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
      &                        stflx(:,:,isalt))
 #   endif
       CALL exchange_u2d_tile (ng, tile,                                 &
@@ -861,10 +871,10 @@
      &                    lrflx, lhflx, shflx,                          &
      &                    stflx(:,:,itemp))
 #   ifdef EMINUSP
-      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
+      CALL mp_exchange2d (ng, tile, iNLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    evap,                                         &
+     &                    evap, EminusP,                                &
      &                    stflx(:,:,isalt))
 #   endif
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &

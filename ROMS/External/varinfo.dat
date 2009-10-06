@@ -525,6 +525,15 @@
   'r2dvar'
   1.157407d-7                                      ! 0.01/86400
 
+'EminusP'                                          ! Input/Output
+  'bulk_flux surface net freswater flux, (E-P)'
+  'meter second-1'                                 ! computed by NLM ROMS
+  'EminusP, scalar, series'                        ! bulk_flux.F and
+  'ocean_time'                                     ! needed in adjoint-based
+  'idEmPf'                                         ! applications
+  'r2dvar'
+  1.0d0
+
 'bhflux'                                           ! Input
   'bottom net heat flux'
   'watt meter-2'                                   ! Input:  [Watt/m2]
@@ -3083,7 +3092,7 @@
 
 !
 !  Diagnostic variables.
-! 
+!
 
 'CO2_airsea'                                       ! Input/Output
   'CO2 air-sea flux'
@@ -3141,7 +3150,7 @@
 
 !
 !  Boundary variables.
-! 
+!
 
 'NO3_east'                                         ! Input
   'nitrate eastern boundary condition'
@@ -4561,7 +4570,7 @@
 !
 !  3D momentum diagnostic terms.
 !
- 
+
 'u_accel'                                          ! Input/Output
   '3D u-momentum, acceleration term'
   'meter second-2'                                 ! [m/s2]

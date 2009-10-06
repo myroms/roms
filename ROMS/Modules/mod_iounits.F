@@ -13,13 +13,14 @@
 !  ADSname     Input adjoint sensitivity functional file.              !
 !  AVGbase     Output averages base file name.                         !
 !  AVGname     Output averages file name.                              !
+!  BLKname     Input bulk fluxes file name.                            !
 !  BRYname     Input boundary data file name.                          !
 !  CLMname     Input climatology file name.                            !
 !  DIAbase     Output diagnostics base file name.                      !
 !  DIAname     Output diagnostics file name.                           !
 !  ERRname     Output 4DVar posterior error file name.                 !
 !  FLTname     Output floats file name.                                !
-!  FRCids      NetCDF ID descriptors associated with FRCname.          ! 
+!  FRCids      NetCDF ID descriptors associated with FRCname.          !
 !  FRCname     Input forcing fields file name(s).                      !
 !  FWDbase     Input forward solution base file name.                  !
 !  FWDname     Input forward solution file name.                       !
@@ -112,6 +113,7 @@
         character (len=80), dimension(Ngrids) :: ADSname
         character (len=80), dimension(Ngrids) :: AVGbase
         character (len=80), dimension(Ngrids) :: AVGname
+        character (len=80), dimension(Ngrids) :: BLKname
         character (len=80), dimension(Ngrids) :: BRYname
         character (len=80), dimension(Ngrids) :: CLMname
         character (len=80), dimension(Ngrids) :: DIAbase

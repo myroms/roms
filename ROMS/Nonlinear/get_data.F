@@ -427,7 +427,21 @@
 # endif
 
 # ifdef SALINITY
-#  if !(defined ANA_SSFLUX || defined EMINUSP || defined SRELAXATION)
+#  if defined NL_BULK_FLUXES && !defined BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Surface net freshwater flux (E-P) from NLM bulk flux computation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, iRPM, idEmPf, ncFRCid(idEmPf,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % stflxG(LBi,LBj,1,isalt))
+
+#  elif !(defined ANA_SSFLUX || defined EMINUSP || defined SRELAXATION)
 !
 !-----------------------------------------------------------------------
 !  Surface net freshwater flux: E-P.

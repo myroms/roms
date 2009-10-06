@@ -498,7 +498,42 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 
-#   ifdef EMINUSP
+#  endif
+#  ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux.
+!
+      IF (Sout(idSrad,ng)) THEN
+        scale=rho0*Cp
+        CALL extract_sta2d (ng, iNLM, Cgrid, idSrad, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%srflx,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idSrad)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idSrad,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+#  if defined EMINUSP && defined BULK_FLUXES
+!
+!  Write out E-P (m/s).
+!
+      IF (Sout(idEmPf,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idEmPf, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%EminusP,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idEmPf)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idEmPf,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Write out evaportaion rate (kg/m2/s).
 !
@@ -529,26 +564,6 @@
      &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
      &                        ncid = ncSTAid(ng),                       &
      &                        varid = staVid(idrain,ng))
-        IF (exit_flag.ne.NoError) RETURN
-      END IF
-#   endif
-#  endif
-
-#  ifdef SHORTWAVE
-!
-!  Write out shortwave radiation flux.
-!
-      IF (Sout(idSrad,ng)) THEN
-        scale=rho0*Cp
-        CALL extract_sta2d (ng, iNLM, Cgrid, idSrad, r2dvar,            &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng)%srflx,                    &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
-     &                        TRIM(Vname(1,idSrad)), psta,              &
-     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
-     &                        ncid = ncSTAid(ng),                       &
-     &                        varid = staVid(idSrad,ng))
         IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
@@ -786,7 +801,7 @@
 !
 !  Write out sediment fraction of each size class in each bed layer.
 !
-      DO i=1,NST      
+      DO i=1,NST
         IF (Sout(idfrac(i),ng)) THEN
           scale=1.0_r8
           CALL extract_sta3d (ng, iNLM, Cgrid, idfrac(i), b3dvar,       &
@@ -823,7 +838,7 @@
 !
 !  Write out sediment properties in each bed layer.
 !
-      DO i=1,MBEDP      
+      DO i=1,MBEDP
         IF (Sout(idSbed(i),ng)) THEN
           scale=1.0_r8
           CALL extract_sta3d (ng, iNLM, Cgrid, idSbed(i), b3dvar,       &
@@ -845,7 +860,7 @@
 !
 !  Write out exposed sediment layer properties.
 !
-      DO i=1,MBEDP      
+      DO i=1,MBEDP
         IF (Sout(idBott(i),ng)) THEN
           scale=1.0_r8
           CALL extract_sta2d (ng, iNLM, Cgrid, idBott(i), r2dvar,       &

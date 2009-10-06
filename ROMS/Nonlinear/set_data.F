@@ -371,7 +371,13 @@
 #   ifdef ANA_SSFLUX
       CALL ana_stflux (ng, tile, iNLM, isalt)
 #   else
-#   if !(defined EMINUSP || defined SRELAXATION)
+#    if defined NL_BULK_FLUXES && !defined BULK_FLUXES
+      CALL set_2dfld_tile (ng, tile, iNLM, idEmPf,                      &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
+     &                     FORCES(ng)%stflx (:,:,isalt),                &
+     &                     update)
+#    elif !(defined EMINUSP || defined SRELAXATION)
       CALL set_2dfld_tile (ng, tile, iNLM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
@@ -619,7 +625,7 @@
 !-----------------------------------------------------------------------
 !
       CALL ana_specir (ng, tile, iNLM)
-# endif     
+# endif
 
 # ifdef ANA_SPINNING
 !

@@ -71,6 +71,7 @@ Sout(idLhea) == F                          ! latent heat flux
 Sout(idShea) == F                          ! sensible heat flux
 Sout(idLrad) == F                          ! longwave radiation flux
 Sout(idSrad) == F                          ! shortwave radiation flux
+Sout(idEmPf) == F                          ! E-P flux
 Sout(idevap) == F                          ! evaporation rate
 Sout(idrain) == F                          ! precipitation rate
 
@@ -193,6 +194,7 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !  Sout(idShea)  Write out sensible heat flux.
 !  Sout(idLrad)  Write out long-wave radiation flux.
 !  Sout(idSrad)  Write out short-wave radiation flux.
+!  Sout(idEmPf)  Write out E-P flux.
 !  Sout(idevap)  Write out evaporation rate.
 !  Sout(idrain)  Write out precipitation rate.
 !
@@ -208,14 +210,14 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !  Sout(idBott)  Write out exposed sediment layer properties, 1:MBOTP.
 !
 !------------------------------------------------------------------------------
-! Station positions KEYWORDS. 
+! Station positions KEYWORDS.
 !------------------------------------------------------------------------------
 !
 !  NSTATION      Number of stations to process in each nested grid. Ngrids
 !                  values are expected.  These values are essential because
 !                  the station arrays are dynamically allocated using these
 !                  values.
-!                
+!
 !  POS           Station locations for all grids in any desired order.  The
 !                  horizontal location for a particular station can be
 !                  specified in terms of fractional (I,J) grid pairs (FLAG=0)
@@ -242,5 +244,5 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !                Since there is no decoding during the reading of the stations
 !                locations, the POS keyword must be the last one to process.
 !                That is, it should be at the end of the input specification.
-!                
+!
 !
