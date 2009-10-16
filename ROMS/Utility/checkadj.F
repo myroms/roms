@@ -167,9 +167,8 @@
       string=uppercase('clima_ts_mix')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
-        ic=ic+1
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
-     &                               'not coded, FATAL ERROR'
+     &                               'not tested, WARNING'
       END IF
 
       string=uppercase('east_fsradiation')

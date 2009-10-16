@@ -236,7 +236,7 @@
 #  endif
 #  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
       defined OPT_OBSERVATIONS || defined SO_SEMI         || \
-      defined SENSITIVITY_4DVAR 
+      defined SENSITIVITY_4DVAR
             CALL ana_scope (ng, TILE, iADM)
 #  endif
           END DO
@@ -339,7 +339,7 @@
           CALL initialize_ocean (ng, TILE, iADM)
 #  if defined SOLVE3D
           CALL initialize_coupling (ng, TILE, iADM)
-          CALL initialize_mixing (ng, TILE, iADM)  
+          CALL initialize_mixing (ng, TILE, iADM)
 #  endif
           CALL initialize_forces (ng, TILE, iADM)
           CALL initialize_grid (ng, TILE, iADM)
@@ -366,7 +366,7 @@
           CALL initialize_ocean (ng, TILE, iADM)
 #  if defined SOLVE3D
           CALL initialize_coupling (ng, TILE, iADM)
-          CALL initialize_mixing (ng, TILE, iADM)  
+          CALL initialize_mixing (ng, TILE, iADM)
 #  endif
           CALL initialize_forces (ng, TILE, iADM)
           CALL initialize_grid (ng, TILE, iADM)
@@ -575,6 +575,7 @@
 #  ifdef SENSITIVITY_4DVAR
       IF (LsenPSAS(ng)) THEN
 #  endif
+#  if !defined AD_IMPULSE
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -583,6 +584,7 @@
           END DO
         END DO
 !$OMF END PARALLEL DO
+#  endif
 #  ifdef SENSITIVITY_4DVAR
       END IF
 #  endif

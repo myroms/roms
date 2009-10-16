@@ -12,7 +12,7 @@
 !  This subroutine is the main driver for adjoint  ROMS/TOMS  when     !
 !  configurated as shallow water (barotropic) ocean model only. It     !
 !  advances backward the vertically integrated primitive equations     !
-!  for a single time step.                                             !               
+!  for a single time step.                                             !
 !                                                                      !
 !=======================================================================
 !
@@ -221,7 +221,7 @@
           nfm1(ng)=MOD(nfm1(ng)+1,NFT+1)
           nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
           nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
-!    
+!
 !$OMP PARALLEL DO PRIVATE(thread,chunk_size,Lstr,Lend)                  &
 !$OMP&            SHARED(ng,numthreads,Nfloats)
           DO thread=0,numthreads-1
@@ -509,7 +509,9 @@
 #  ifdef SENS4DVAR
       IF (LsenPSAS(ng)) THEN
 #  endif
+#  if !defined AD_IMPULSE
         IF ((DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
+#  endif
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -518,7 +520,9 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
+#  if !defined AD_IMPULSE
         END IF
+#  endif
 #  ifdef SENSITIVITY_4DVAR
       END IF
 #  endif

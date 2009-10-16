@@ -557,6 +557,7 @@
 **                                                                           **
 ** OPTIONS associated with tangent linear, representer and adjoint models:   **
 **                                                                           **
+** AD_IMPULSE          use to force adjoint model with intermittent impulses **
 ** ADJUST_STFLUX       use if including surface tracer flux in 4DVar state   **
 ** ADJUST_WSTRESS      use if including wind-stress in 4DVar state           **
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **

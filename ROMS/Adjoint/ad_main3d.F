@@ -819,7 +819,9 @@
 #  ifdef SENSITIVITY_4DVAR
       IF (LsenPSAS(ng)) THEN
 #  endif
+#  if !defined AD_IMPULSE
         IF ((DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
+#  endif
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -828,7 +830,9 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
+#  if !defined AD_IMPULSE
         END IF
+#  endif
 #  ifdef SENSITIVITY_4DVAR
       END IF
 #  endif

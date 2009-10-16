@@ -119,6 +119,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' ADJUST_WSTRESS,'
 #endif
+#if defined AD_IMPULSE
+      IF (Master) WRITE (stdout,20) 'AD_IMPULSE',                       &
+     &   'Force adjoint model with intermittent impulses.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' AD_IMPULSE,'
+#endif
 #ifdef ADM_DRIVER
       IF (Master) WRITE (stdout,20) 'ADM_DRIVER',                       &
      &   'Generic adjoint model driver.'
