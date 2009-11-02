@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE ad_htobs_mod
-#if defined ADJOINT && defined OBSERVATIONS && \
-    (defined WEAK_CONSTRAINT || defined IOM)
+#if defined ADJOINT && defined OBSERVATIONS && defined WEAK_CONSTRAINT
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -480,7 +479,7 @@
      &              'records = ',i7.7,' - ',i7.7,', iic = ',i7.7,')')
           END IF
         END IF
-      END IF        
+      END IF
       RETURN
       END SUBROUTINE ad_htobs_tile
 #endif

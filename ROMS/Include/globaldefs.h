@@ -16,7 +16,7 @@
 */
 
 /*
-** Set assumed-shape array switch.  Imported arrays with dummy 
+** Set assumed-shape array switch.  Imported arrays with dummy
 ** arguments that takes the shape of the actual argument passed
 ** to it.  If off, all the arrays are explicit-shape.  In some
 ** computer explicit-shape arrays slow down performacnce because
@@ -37,7 +37,7 @@
 
 #if defined UNICOS_SN
 # define NO_4BYTE_REALS
-#endif 
+#endif
 
 /*
 ** If parallel I/O and applicable, turn on NetCDF-4 type files.
@@ -284,7 +284,7 @@
 */
 
 #if defined W4DPSAS_SENSITIVITY || \
-    defined W4DVAR_SENSITIVITY  
+    defined W4DVAR_SENSITIVITY
 # define SENSITIVITY_4DVAR
 #endif
 
@@ -398,7 +398,7 @@
     defined INNER_PRODUCT    || defined OPT_OBSERVATIONS || \
     defined OPT_PERTURBATION || defined PICARD_TEST      || \
     defined RPM_DRIVER       || defined SANITY_CHECK     || \
-    defined SO_SEMI          || defined TLM_DRIVER 
+    defined SO_SEMI          || defined TLM_DRIVER
 # undef NONLINEAR
 #endif
 
@@ -481,15 +481,13 @@
      defined W4DPSAS_SENSITIVITY || defined W4DVAR_SENSITIVITY)
 # define WEAK_CONSTRAINT
 #endif
-#if !(defined WEAK_CONSTRAINT    || defined IOM)               && \
-      defined RPM_RELAXATION
+#if !defined WEAK_CONSTRAINT     && defined RPM_RELAXATION
 # undef RPM_RELAXATION
 #endif
 #if defined CONVOLUTION          || defined CORRELATION        || \
-    defined GRADIENT_CHECK       || defined IOM                || \
-    defined IS4DVAR              || defined OBS_SENSITIVITY    || \
-    defined OPT_OBSERVATIONS     || defined TLM_CHECK          || \
-    defined WEAK_CONSTRAINT
+    defined GRADIENT_CHECK       || defined IS4DVAR            || \
+    defined OBS_SENSITIVITY      || defined OPT_OBSERVATIONS   || \
+    defined TLM_CHECK            || defined WEAK_CONSTRAINT
 # define FOUR_DVAR
 #endif
 #if !defined WEAK_CONSTRAINT && defined FOUR_DVAR
@@ -516,12 +514,11 @@
 ** Activate internal switch to process 4DVAR observations.
 */
 
-#if defined GRADIENT_CHECK     || defined IOM             || \
-    defined IS4DVAR            || defined OBS_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR  || defined TLM_CHECK       || \
-    defined TL_W4DPSAS         || defined TL_W4DVAR       || \
-    defined VERIFICATION       || defined W4DPSAS         || \
-    defined W4DVAR
+#if defined GRADIENT_CHECK     || defined IS4DVAR           || \
+    defined OBS_SENSITIVITY    || defined SENSITIVITY_4DVAR || \
+    defined TLM_CHECK          || defined TL_W4DPSAS        || \
+    defined TL_W4DVAR          || defined VERIFICATION      || \
+    defined W4DPSAS            || defined W4DVAR
 # define OBSERVATIONS
 #endif
 
@@ -556,7 +553,7 @@
 ** Set internal weak constraint switches.
 */
 
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
 # define IMPULSE
 #endif
 
@@ -622,7 +619,7 @@
 #endif
 
 /*
-** Activate internal switch for imposing REFDIF as a 
+** Activate internal switch for imposing REFDIF as a
 ** monochromatic wave driver.
 */
 
@@ -984,10 +981,10 @@
 #if defined ANA_BIOLOGY && !defined BIOLOGY
 # undef ANA_BIOLOGY
 #endif
-#if defined ANA_PASSIVE && !defined T_PASSIVE 
+#if defined ANA_PASSIVE && !defined T_PASSIVE
 # undef ANA_PASSIVE
 #endif
-#if defined ANA_SEDIMENT && !(defined SEDIMENT || defined BBL_MODEL) 
+#if defined ANA_SEDIMENT && !(defined SEDIMENT || defined BBL_MODEL)
 # undef ANA_SEDIMENT
 #endif
 #if  !defined ANA_INITIAL || \
@@ -1144,7 +1141,7 @@
 #endif
 
 /*
-** Define internal switch for Smagorinsky-like mixing. 
+** Define internal switch for Smagorinsky-like mixing.
 */
 
 #if !defined DIFF_3DCOEF && defined TS_SMAGORINSKY

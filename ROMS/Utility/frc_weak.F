@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE frc_weak_mod
 
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

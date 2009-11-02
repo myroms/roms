@@ -19,7 +19,7 @@
       USE mod_bbl
 # endif
 # ifdef SOLVE3D
-      USE mod_coupling      
+      USE mod_coupling
 # endif
 # ifdef FOUR_DVAR
       USE mod_fourdvar
@@ -153,7 +153,7 @@
 !$OMP END PARALLEL DO
 # endif
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If weak constraint variational data assimilation, reset several IO
@@ -304,7 +304,7 @@
 !  executed for each ensemble/perturbation/iteration pass.
 !=======================================================================
 
-# if defined PICARD_TEST || defined WEAK_CONSTRAINT || defined IOM
+# if defined PICARD_TEST || defined WEAK_CONSTRAINT
 !
 !  Clear nonlinear (background) and tangent linear state variables.
 !
@@ -515,23 +515,6 @@
 # endif
       CALL rp_get_data (ng)
       IF (exit_flag.ne.NoError) RETURN
-
-# if defined WEAK_CONSTRAINT_NOT || defined IOM_NOT
-!
-!-----------------------------------------------------------------------
-!  Read in convolved adjoint impulse forcing (first record) and its
-!  application time.
-!-----------------------------------------------------------------------
-!
-      IF (outer.ge.1) THEN
-        FrcRec(ng)=1
-        CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag)
-#  endif
-        IF (exit_flag.ne.NoError) RETURN
-      END IF
-# endif
 
 # ifdef SOLVE3D
 !-----------------------------------------------------------------------

@@ -73,7 +73,6 @@
 # define IMPLICIT_VCONV
 # define FORWARD_READ
 # undef  FORWARD_MIXING
-# undef  IOM_REPRESENTER
 #endif
 
 #ifdef MULTI_DOMAIN

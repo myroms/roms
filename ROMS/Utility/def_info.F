@@ -341,7 +341,7 @@
               exit_flag=3
               ioerror=status
             END IF
-          END IF 
+          END IF
         END IF
 
 #ifdef AVERAGES
@@ -470,8 +470,8 @@
 # endif
 #endif
 
-#if defined IS4DVAR          || defined IOM             || \
-    defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
+#if defined IS4DVAR         || defined OPT_OBSERVATIONS || \
+    defined WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'nrm_file',            &
      &                        TRIM(NRMname(1,ng)))
@@ -483,7 +483,7 @@
         END IF
 #endif
 
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'tlf_file',            &
      &                        TRIM(TLFname(ng)))
@@ -1658,7 +1658,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
       Vinfo( 1)='LhotStart'
       Vinfo( 2)='switch for hot start of subsequent outer loops'
       Vinfo( 9)='.FALSE.'
@@ -1687,7 +1687,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
       IF (Lprecond.and.(NritzEV.gt.0)) THEN
         Vinfo( 1)='NritzEV'
         Vinfo( 2)='number of preconditioning eigenpairs to use'
@@ -2844,7 +2844,7 @@
 
       Vinfo( 1)='mxPacEff'
       Vinfo( 2)='rate of change in package effect'
-      Vinfo( 3)='microgram_Chl microgram_C-1' 
+      Vinfo( 3)='microgram_Chl microgram_C-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/phydim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
@@ -2852,7 +2852,7 @@
 
       Vinfo( 1)='b_PacEff'
       Vinfo( 2)='maximum package effect'
-      Vinfo( 3)='microgram_Chl microgram_C-1' 
+      Vinfo( 3)='microgram_Chl microgram_C-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/phydim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)

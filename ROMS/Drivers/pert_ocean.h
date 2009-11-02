@@ -76,7 +76,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -260,7 +260,15 @@
 !
         IF (nTLM(ng).gt.0) LdefTLM(ng)=.TRUE.
         IF (nADJ(ng).gt.0) LdefADJ(ng)=.TRUE.
-        Lstiffness=.FALSE.        
+        Lstiffness=.FALSE.
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+        BLKname(ng)=FWDname(ng)
+#endif
 !
 !=======================================================================
 !  Perturbation loop.
@@ -317,29 +325,29 @@
           END DO
           IF (BOUNDED_TL) THEN
 # ifdef SOLVE3D
-            IF (ivarTL.eq.isUbar) THEN        
+            IF (ivarTL.eq.isUbar) THEN
               val(1)=OCEAN(ng)%tl_ubar(IperTL,JperTL,knew(ng))
-            ELSE IF (ivarTL.eq.isVbar) THEN        
+            ELSE IF (ivarTL.eq.isVbar) THEN
               val(1)=OCEAN(ng)%tl_vbar(IperTL,JperTL,knew(ng))
-            ELSE IF (ivarTL.eq.isFsur) THEN        
+            ELSE IF (ivarTL.eq.isFsur) THEN
               val(1)=OCEAN(ng)%tl_zeta(IperTL,JperTL,knew(ng))
-            ELSE IF (ivarTL.eq.isUvel) THEN        
+            ELSE IF (ivarTL.eq.isUvel) THEN
               val(1)=OCEAN(ng)%tl_u(IperTL,JperTL,KperTL,nstp(ng))
-            ELSE IF (ivarTL.eq.isVvel) THEN        
+            ELSE IF (ivarTL.eq.isVvel) THEN
               val(1)=OCEAN(ng)%tl_v(IperTL,JperTL,KperTL,nstp(ng))
             ELSE
               DO i=1,NT(ng)
-                IF (ivarTL.eq.isTvar(i)) THEN        
+                IF (ivarTL.eq.isTvar(i)) THEN
                   val(1)=OCEAN(ng)%tl_t(IperTL,JperTL,KperTL,nstp(ng),i)
                 END IF
               END DO
             END IF
 # else
-            IF (ivarTL.eq.isUbar) THEN        
+            IF (ivarTL.eq.isUbar) THEN
               val(1)=OCEAN(ng)%tl_ubar(IperTL,JperTL,knew(ng))
-            ELSE IF (ivarTL.eq.isVbar) THEN        
+            ELSE IF (ivarTL.eq.isVbar) THEN
               val(1)=OCEAN(ng)%tl_vbar(IperTL,JperTL,knew(ng))
-            ELSE IF (ivarTL.eq.isFsur) THEN        
+            ELSE IF (ivarTL.eq.isFsur) THEN
               val(1)=OCEAN(ng)%tl_zeta(IperTL,JperTL,knew(ng))
             END IF
 # endif
@@ -347,29 +355,29 @@
 
           IF (BOUNDED_AD) THEN
 # ifdef SOLVE3D
-            IF (ivarAD.eq.isUbar) THEN        
+            IF (ivarAD.eq.isUbar) THEN
               val(3)=OCEAN(ng)%tl_ubar(IperAD,JperAD,knew(ng))
-            ELSE IF (ivarAD.eq.isVbar) THEN        
+            ELSE IF (ivarAD.eq.isVbar) THEN
               val(3)=OCEAN(ng)%tl_vbar(IperAD,JperAD,knew(ng))
-            ELSE IF (ivarAD.eq.isFsur) THEN        
+            ELSE IF (ivarAD.eq.isFsur) THEN
               val(3)=OCEAN(ng)%tl_zeta(IperAD,JperAD,knew(ng))
-            ELSE IF (ivarAD.eq.isUvel) THEN        
+            ELSE IF (ivarAD.eq.isUvel) THEN
               val(3)=OCEAN(ng)%tl_u(IperAD,JperAD,KperAD,nstp(ng))
-            ELSE IF (ivarAD.eq.isVvel) THEN        
+            ELSE IF (ivarAD.eq.isVvel) THEN
               val(3)=OCEAN(ng)%tl_v(IperAD,JperAD,KperAD,nstp(ng))
             ELSE
               DO i=1,NT(ng)
-                IF (ivarAD.eq.isTvar(i)) THEN        
+                IF (ivarAD.eq.isTvar(i)) THEN
                   val(3)=OCEAN(ng)%tl_t(IperAD,JperAD,KperAD,nstp(ng),i)
                 END IF
               END DO
             END IF
 # else
-            IF (ivarAD.eq.isUbar) THEN        
+            IF (ivarAD.eq.isUbar) THEN
               val(3)=OCEAN(ng)%tl_ubar(IperAD,JperAD,knew(ng))
-            ELSE IF (ivarAD.eq.isVbar) THEN        
+            ELSE IF (ivarAD.eq.isVbar) THEN
               val(3)=OCEAN(ng)%tl_vbar(IperAD,JperAD,knew(ng))
-            ELSE IF (ivarAD.eq.isFsur) THEN        
+            ELSE IF (ivarAD.eq.isFsur) THEN
               val(3)=OCEAN(ng)%tl_zeta(IperAD,JperAD,knew(ng))
             END IF
 # endif
@@ -438,29 +446,29 @@
 # endif
           IF (BOUNDED_AD) THEN
 # ifdef SOLVE3D
-            IF (ivarAD.eq.isUbar) THEN        
+            IF (ivarAD.eq.isUbar) THEN
               val(2)=OCEAN(ng)%ad_ubar(IperAD,JperAD,kstp(ng))
-            ELSE IF (ivarAD.eq.isVbar) THEN        
+            ELSE IF (ivarAD.eq.isVbar) THEN
               val(2)=OCEAN(ng)%ad_vbar(IperAD,JperAD,kstp(ng))
-            ELSE IF (ivarAD.eq.isFsur) THEN        
+            ELSE IF (ivarAD.eq.isFsur) THEN
               val(2)=OCEAN(ng)%ad_zeta(IperAD,JperAD,kstp(ng))
-            ELSE IF (ivarAD.eq.isUvel) THEN        
+            ELSE IF (ivarAD.eq.isUvel) THEN
               val(2)=OCEAN(ng)%ad_u(IperAD,JperAD,KperAD,nstp(ng))
-            ELSE IF (ivarAD.eq.isVvel) THEN        
+            ELSE IF (ivarAD.eq.isVvel) THEN
               val(2)=OCEAN(ng)%ad_v(IperAD,JperAD,KperAD,nstp(ng))
             ELSE
               DO i=1,NT(ng)
-                IF (ivarAD.eq.isTvar(i)) THEN        
+                IF (ivarAD.eq.isTvar(i)) THEN
                   val(2)=OCEAN(ng)%ad_t(IperAD,JperAD,KperAD,nstp(ng),i)
                 END IF
               END DO
             END IF
 # else
-            IF (ivarAD.eq.isUbar) THEN        
+            IF (ivarAD.eq.isUbar) THEN
               val(2)=OCEAN(ng)%ad_ubar(IperAD,JperAD,kstp(ng))
-            ELSE IF (ivarAD.eq.isVbar) THEN        
+            ELSE IF (ivarAD.eq.isVbar) THEN
               val(2)=OCEAN(ng)%ad_vbar(IperAD,JperAD,kstp(ng))
-            ELSE IF (ivarAD.eq.isFsur) THEN        
+            ELSE IF (ivarAD.eq.isFsur) THEN
               val(2)=OCEAN(ng)%ad_zeta(IperAD,JperAD,kstp(ng))
             END IF
 # endif
@@ -468,29 +476,29 @@
 
           IF (BOUNDED_TL) THEN
 # ifdef SOLVE3D
-            IF (ivarTL.eq.isUbar) THEN        
+            IF (ivarTL.eq.isUbar) THEN
               val(4)=OCEAN(ng)%ad_ubar(IperTL,JperTL,kstp(ng))
-            ELSE IF (ivarTL.eq.isVbar) THEN        
+            ELSE IF (ivarTL.eq.isVbar) THEN
               val(4)=OCEAN(ng)%ad_vbar(IperTL,JperTL,kstp(ng))
-            ELSE IF (ivarTL.eq.isFsur) THEN        
+            ELSE IF (ivarTL.eq.isFsur) THEN
               val(4)=OCEAN(ng)%ad_zeta(IperTL,JperTL,kstp(ng))
-            ELSE IF (ivarTL.eq.isUvel) THEN        
+            ELSE IF (ivarTL.eq.isUvel) THEN
               val(4)=OCEAN(ng)%ad_u(IperTL,JperTL,KperTL,nstp(ng))
-            ELSE IF (ivarTL.eq.isVvel) THEN        
+            ELSE IF (ivarTL.eq.isVvel) THEN
               val(4)=OCEAN(ng)%ad_v(IperTL,JperTL,KperTL,nstp(ng))
             ELSE
               DO i=1,NT(ng)
-                IF (ivarTL.eq.isTvar(i)) THEN        
+                IF (ivarTL.eq.isTvar(i)) THEN
                   val(4)=OCEAN(ng)%ad_t(IperTL,JperTL,KperTL,nstp(ng),i)
                 END IF
               END DO
             END IF
 # else
-            IF (ivarTL.eq.isUbar) THEN        
+            IF (ivarTL.eq.isUbar) THEN
               val(4)=OCEAN(ng)%ad_ubar(IperTL,JperTL,kstp(ng))
-            ELSE IF (ivarTL.eq.isVbar) THEN        
+            ELSE IF (ivarTL.eq.isVbar) THEN
               val(4)=OCEAN(ng)%ad_vbar(IperTL,JperTL,kstp(ng))
-            ELSE IF (ivarTL.eq.isFsur) THEN        
+            ELSE IF (ivarTL.eq.isFsur) THEN
               val(4)=OCEAN(ng)%ad_zeta(IperTL,JperTL,kstp(ng))
             END IF
 # endif

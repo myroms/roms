@@ -25,7 +25,7 @@
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
-!  
+!
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY :  mp_collect
 # endif
@@ -80,7 +80,7 @@
 !  the observations for the current survey time are maintained
 !  (starting index is always one).
 !
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
         Mstr=NstrObs(ng)
         Mend=NendObs(ng)
 # else
@@ -109,10 +109,10 @@
         END IF
 #  endif
 # endif
-# if !(defined WEAK_CONSTRAINT || defined IOM)
+# ifndef WEAK_CONSTRAINT
 !
 !  Set observation scale (ObsScale). The scale factor is used
-!  for screenning of the observations. This scale is one for good 
+!  for screenning of the observations. This scale is one for good
 !  observations and zero for bad observations.
 !
         DO iobs=Mstr,Mend
@@ -293,7 +293,7 @@
      &                        uXmin(ng), uXmax(ng),                     &
      &                        uYmin(ng), uYmax(ng),                     &
      &                        time(ng), dt(ng),                         &
-     &                        ObsType, ObsScale,                        & 
+     &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%tl_u(:,:,:,NOUT),               &
      &                        GRID(ng)%z_v,                             &
@@ -434,7 +434,7 @@
 #  endif
 #  ifndef OBS_SENSITIVITY
 
-        IF (wrtNLmod(ng)) THEN 
+        IF (wrtNLmod(ng)) THEN
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
 #   if defined WEAK_CONSTRAINT
      &                     NLmodVal(Mstr:))
@@ -444,7 +444,7 @@
         END IF
 #  endif
 #  ifdef TLM_OBS
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
 #   if defined WEAK_CONSTRAINT
      &                     TLmodVal(Mstr:))
@@ -459,7 +459,7 @@
 #   ifdef WEAK_CONSTRAINT
      &                     Zobs(Mstr:))
 #   else
-     &                     Zobs) 
+     &                     Zobs)
 #   endif
         END IF
 #  endif
@@ -483,7 +483,7 @@
 #  if defined IS4DVAR
             misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
      &                   (NLmodVal(iobs)+TLmodVal(iobs)-ObsVal(iobs))
-#  elif defined WEAK_CONSTRAINT || defined IOM
+#  elif defined WEAK_CONSTRAINT
             misfit(iobs)=ObsScale(iobs)/SQRT(ObsErr(iobs))*             &
      &                   (TLmodVal(iobs)-ObsVal(iobs))
 #  endif
@@ -550,7 +550,7 @@
 !  Nonlinear model or first guess (background) state at observation
 !  locations.
 !
-        IF (wrtNLmod(ng)) THEN 
+        IF (wrtNLmod(ng)) THEN
           CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
      &                          Vname(1,idNLmo), NLmodVal(Mstr:),       &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
@@ -564,7 +564,7 @@
 !
 !  Tangent linear model state increments at observation locations.
 !
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
           CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
      &                          Vname(1,idTLmo), TLmodVal(Mstr:),       &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
@@ -595,7 +595,7 @@
 !  meters or grid coordinates.  Recall that since the model levels
 !  evolve in time, the fractional level coordinate is unknow during
 !  the processing of the observations.
-!  
+!
         IF (Load_Zobs(ng).and.                                          &
      &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
 
@@ -722,7 +722,7 @@
         IF (wrtNLmod(ng)) THEN
           string='Wrote NLM state at observation locations,         '
 # ifdef TLM_OBS
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
         ELSE IF (wrtTLmod(ng)) THEN
           string='Wrote TLM state at observation locations,         '
         ELSE IF (wrtRPmod(ng)) THEN

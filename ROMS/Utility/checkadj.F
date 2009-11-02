@@ -148,6 +148,7 @@
      &                               'not coded, FATAL ERROR'
       END IF
 
+# ifndef NL_BULK_FLUXES
       string=uppercase('bulk_fluxes')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -155,7 +156,9 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not working, WARNING'
       END IF
+# endif
 
+# ifndef FORWARD_MIXING
       string=uppercase('bvf_mixing')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -163,6 +166,7 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not coded, FATAL ERROR'
       END IF
+# endif
 
       string=uppercase('clima_ts_mix')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
@@ -211,6 +215,7 @@
      &                               'not coded, FATAL ERROR'
       END IF
 
+# ifndef FORWARD_MIXING
       string=uppercase('gls_mixing')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -218,7 +223,9 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not differentiable, WARNING'
       END IF
+# endif
 
+# ifndef FORWARD_MIXING
       string=uppercase('lmd_mixing')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -226,6 +233,7 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not differentiable, WARNING'
       END IF
+# endif
 
       string=uppercase('mb_bbl')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
@@ -235,6 +243,7 @@
      &                               'not coded, FATAL ERROR'
       END IF
 
+# ifndef FORWARD_MIXING
       string=uppercase('my25_mixing')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
@@ -242,6 +251,7 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not differentiable, WARNING'
       END IF
+# endif
 
       string=uppercase('nearshore_mellor')
       ifound=INDEX(TRIM(Coptions), TRIM(string))

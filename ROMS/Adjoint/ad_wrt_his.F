@@ -20,7 +20,7 @@
       USE mod_boundary
 # endif
       USE mod_forces
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE mod_fourdvar
 # endif
       USE mod_grid
@@ -60,7 +60,7 @@
 # endif
       integer :: i, j, gfactor, gtype, status
       integer :: kout
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       integer :: kfout
 # endif
 # ifdef SOLVE3D
@@ -102,7 +102,7 @@
 # else
       kout=kstp(ng)
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       kfout=2
 # endif
 # ifdef SOLVE3D
@@ -131,7 +131,7 @@
         IF (LwrtPER(ng)) THEN
           Tval(1)=REAL(Nrun,r8)*day2sec
         ELSE
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
           Tval(1)=ForceTime(ng)
 # else
           Tval(1)=time(ng)
@@ -151,7 +151,7 @@
 !  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
 !  at other times in addition to initialization time.
 !
-      scale=1.0_r8                          ! m2/s2 
+      scale=1.0_r8                          ! m2/s2
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),      &
      &                   tADJindx(ng), gtype,                           &
@@ -243,7 +243,7 @@
 !  Write out free-surface (m).
 !
       IF (Hout(idFsur,ng)) THEN
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
           scale=1.0_r8
           gtype=gfactor*r2dvar
@@ -301,7 +301,7 @@
             ioerror=status
             RETURN
           END IF
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
         END IF
 # endif
       END IF
@@ -334,7 +334,7 @@
 !  Write out 2D U-momentum component (m/s).
 !
       IF (Hout(idUbar,ng)) THEN
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 #  ifndef SOLVE3D
         IF (WRTforce(ng)) THEN
           scale=1.0_r8
@@ -384,7 +384,7 @@
             ioerror=status
             RETURN
           END IF
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 #  ifndef SOLVE3D
         END IF
 #  endif
@@ -419,7 +419,7 @@
 !  Write out 2D V-momentum component (m/s).
 !
       IF (Hout(idVbar,ng)) THEN
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 #  ifndef SOLVE3D
         IF (WRTforce(ng)) THEN
           scale=1.0_r8
@@ -469,7 +469,7 @@
             ioerror=status
             RETURN
           END IF
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 #  ifndef SOLVE3D
         END IF
 #  endif
@@ -506,7 +506,7 @@
 !  Write out 3D U-momentum component (m/s).
 !
       IF (Hout(idUvel,ng)) THEN
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
           scale=1.0_r8
           gtype=gfactor*u3dvar
@@ -544,7 +544,7 @@
             ioerror=status
             RETURN
           END IF
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
         END IF
 #  endif
       END IF
@@ -577,7 +577,7 @@
 !  Write out 3D V-momentum component (m/s).
 !
       IF (Hout(idVvel,ng)) THEN
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
           scale=1.0_r8
           gtype=gfactor*v3dvar
@@ -615,7 +615,7 @@
             ioerror=status
             RETURN
           END IF
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
         END IF
 #  endif
       END IF
@@ -649,7 +649,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Hout(idTvar(itrc),ng)) THEN
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
           IF (WRTforce(ng)) THEN
             scale=1.0_r8
             gtype=gfactor*r3dvar
@@ -689,7 +689,7 @@
               ioerror=status
               RETURN
             END IF
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
           END IF
 #  endif
         END IF

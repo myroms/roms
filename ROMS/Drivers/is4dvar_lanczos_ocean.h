@@ -74,7 +74,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -305,6 +305,24 @@
           outer=my_outer
           inner=0
 !
+!  Set nonlinear output history file name. Create a basic state file
+!  for each outher loop.
+!
+          LdefHIS(ng)=.TRUE.
+          LwrtHIS(ng)=.TRUE.
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+          IF (outer.eq.1) THEN
+            BLKname(ng)=HISname(ng)
+          END IF
+#endif
+!
 !  Initialize nonlinear model. If outer=1, the model is initialized
 !  with the background or reference state. Otherwise, the model is
 !  initialized with the estimated initial conditions from previous
@@ -351,7 +369,7 @@
 !  normalization factors. If computing, write out factors to
 !  NetCDF. This is an expensive computation that needs to be
 !  computed only once for a particular application grid.
-!  
+!
           IF (Nrun.eq.1) THEN
             IF (ANY(LwrtNRM(:,ng))) THEN
               CALL def_norm (ng, iNLM, 1)
@@ -404,7 +422,7 @@
 !  to boservation locations (compute and save H x).
 !
           IF (Master) THEN
-            WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
+            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -422,6 +440,16 @@
           END DO NL_LOOP1
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set nonlinear NetCDF ID containing the basic state surface fluxes to
+!  use.
+!
+          IF (outer.eq.1) THEN
+            ncBLKid(ng)=ncHISid(ng)
+          END IF
+#endif
 
 #if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
@@ -457,7 +485,7 @@
 !  solutions for each inner loop iteration.  They are used for
 !  orthogonalization in the conjugate gradient algorithm.  Thus,
 !  we need to reset adjoint file record indices.
-!  
+!
           tADJindx(ng)=0
           NrecADJ(ng)=0
 !
@@ -465,7 +493,7 @@
 !
           LdefADJ(ng)=.TRUE.
           lstr=LEN_TRIM(ADJbase(ng))
-          WRITE (ADJname(ng),20) ADJbase(ng)(1:lstr-3), outer
+          WRITE (ADJname(ng),10) ADJbase(ng)(1:lstr-3), outer
 !
 !  Define output Hessian NetCDF file containing the eigenvectors
 !  approximation to the Hessian matrix computed from the Lanczos
@@ -473,7 +501,7 @@
 !  outer loop. That is, a file is created for each outer loop.
 !
           lstr=LEN_TRIM(HSSbase(ng))
-          WRITE (HSSname(ng),20) HSSbase(ng)(1:lstr-3), outer
+          WRITE (HSSname(ng),10) HSSbase(ng)(1:lstr-3), outer
           LdefHSS(ng)=.TRUE.
           CALL def_hessian (ng)
           IF (exit_flag.ne.NoError) RETURN
@@ -494,7 +522,7 @@
 !  deltaX) from rest. Otherwise, use trial initial conditions estimated
 !  by the conjugate gradient algorithm in previous inner loop. The TLM
 !  initial conditions are read from ITLname, record 1.
-! 
+!
             tITLindx(ng)=1
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) RETURN
@@ -520,7 +548,7 @@
             LdefTLM(ng)=.TRUE.
             LwrtTLM(ng)=.TRUE.
             lstr=LEN_TRIM(TLMbase(ng))
-            WRITE (TLMname(ng),20) TLMbase(ng)(1:lstr-3), Nrun
+            WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3), Nrun
 #endif
 !
 !  Activate switch to write out initial and final misfit between
@@ -536,7 +564,7 @@
 !  Jo.
 !
             IF (Master) THEN
-              WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
@@ -578,7 +606,7 @@
 !  the adjoint of the observation misfit (Jo) term.
 !
             IF (Master) THEN
-              WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
@@ -645,7 +673,7 @@
 !  Convert observation cost function gradient, GRADx(Jo), from model
 !  space (x-space) to minimization space (v-space):
 !
-!     GRADv(Jo) = B^(T/2) GRADx(Jo),  operator: S G L^(T/2) W^(-1/2) 
+!     GRADv(Jo) = B^(T/2) GRADx(Jo),  operator: S G L^(T/2) W^(-1/2)
 !
 !  First, multiply the adjoint solution, GRADx(Jo), by the background-
 !  error standard deviations, S.  Second, convolve result with the
@@ -684,7 +712,7 @@
 !
 !  Prepare for background cost function (Jb) calculation:
 !
-!  Read the convolved gradient from inner=0 (which is permanently 
+!  Read the convolved gradient from inner=0 (which is permanently
 !  saved in record 1 of the adjoint file)  ALWAYS into record 1.
 !
             IF (inner.gt.0) THEN
@@ -695,7 +723,7 @@
 !
 !  Compute background cost function (Jb) for inner=0:
 !
-!  If first pass of inner loop, read in the sum of previous v-space 
+!  If first pass of inner loop, read in the sum of previous v-space
 !  gradients from record 4 of ITL file using the TLM model variables
 !  as temporary storage. Also add background cost function to Cost0.
 !
@@ -715,7 +743,7 @@
               FOURDVAR(ng)%Cost0(outer)=FOURDVAR(ng)%Cost0(outer)+      &
      &                                  FOURDVAR(ng)%BackCost(0)
             END IF
-!  
+!
 !  Compute current total cost function.
 !
             IF (Nrun.eq.1) THEN
@@ -843,7 +871,7 @@
 !  First, convolve estimated increment vector (v-space) by with the
 !  tangent linear diffusion operator, W^(1/2) L^(1/2) G.  Second,
 !  multiply result by the background-error standard deviation, S.
-! 
+!
             Lcon=LTLM2
 !
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
@@ -919,7 +947,7 @@
 !
 !-----------------------------------------------------------------------
 !
-!  Notice that "ini_fields" is called here for output purposes only. 
+!  Notice that "ini_fields" is called here for output purposes only.
 !  It computes the vertically integrated momentum in 3D applications.
 !  In order to use the correct fields, the model time indices are set
 !  to Lini.
@@ -1039,14 +1067,31 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
+!
+!  Close current forward NetCDF file.
+!
+          SourceFile='is4dvar_lanczos_ocean.h, ROMS_run'
+
+          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO OUTER_LOOP
 !
 !-----------------------------------------------------------------------
-!  Done with data assimilation. Initialize the nonlinear model with 
+!  Done with data assimilation. Initialize the nonlinear model with
 !  estimated initial conditions. Save nonlinear solution at observation
 !  points for posterior analysis.
 !-----------------------------------------------------------------------
+!
+!  Set nonlinear output history file name. Create a basic state file
+!  for each outher loop.
+!
+        LdefHIS(ng)=.TRUE.
+        LwrtHIS(ng)=.TRUE.
+        tHISindx(ng)=0
+        NrecHIS(ng)=0
+        lstr=LEN_TRIM(FWDbase(ng))
+        WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), Nouter
 !
 !  Initialize nonlinear model with estimated initial conditions.
 !
@@ -1068,7 +1113,7 @@
 !  locations.
 !
         IF (Master) THEN
-          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -1115,15 +1160,20 @@
           END DO
         END IF
 !
+!  Done.  Set history file ID to closed state since we manipulated
+!  its indices with the forward file ID which was closed above.
+!
+        ncHISid(ng)=-1
+!
 !  Compute and report model-observation comparison statistics.
 !
         CALL stats_modobs (ng)
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (a,'_',i3.3,'.nc')
+ 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 20   FORMAT (a,'_',i3.3,'.nc')
  30   FORMAT (/,' (',i3.3,',',i3.3,'): TLM Cost Jb, J  = ',             &
      &        1p,e16.10,0p,1x,1p,e16.10,0p,t68,1p,e10.4,' %')
  40   FORMAT (/,'>(',i3.3,',',i3.3,'): NLM Cost     J  = ',             &

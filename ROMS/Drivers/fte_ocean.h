@@ -52,7 +52,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -191,6 +191,16 @@
 !=======================================================================
 !  Run model for all nested grids, if any.
 !=======================================================================
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+      DO ng=1,Ngrids
+        BLKname(ng)=FWDname(ng)
+      END DO
+#endif
 !
 !  Initialize tangent linear for all grids first in order to compute
 !  the size of the state vector, Nstate.  This size is computed in
@@ -202,7 +212,7 @@
       END DO
 !
 !  Currently, only non-nested applications are considered.  Otherwise,
-!  a different structure for mod_storage is needed. 
+!  a different structure for mod_storage is needed.
 !
       NEST_LOOP : DO ng=1,Ngrids
 

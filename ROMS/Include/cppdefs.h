@@ -88,7 +88,7 @@
 **                                                                           **
 ** Tracer advection OPTIONS for adjoint-based algorithms:                    **
 **                                                                           **
-**   Some of the tracer advection alogorithms are highly nonlinear and       **
+**   Some of the tracer advection algorithms are highly nonlinear and        **
 **   may become unstable when running the tangent linear, representer,       **
 **   and adjoint models. This may affect the convergence of the 4DVar        **
 **   data assimilation algorithms. Therefore, it is possible to choose       **
@@ -101,7 +101,7 @@
 **   for example, TS_MPDATA.  Recall that basic state trajectory is          **
 **   computed by running the nonlinear model.                                **
 **                                                                           **
-**   The flags below are optional. By default, the same options choosed      **
+**   The flags below are optional. By default, the same options chosen       **
 **   for the nonlinear model are selected for the tangent linear,            **
 **   representer, and adjoint models.                                        **
 **                                                                           **
@@ -119,7 +119,7 @@
 **                                                                           **
 **   If no option is selected, the pressure gradient term is computed using  **
 **   standard density Jacobian algorithm. Notice that there are two quartic  **
-**   pressure Jacobian options. They differ on how the WENO reconsicliation  **
+**   pressure Jacobian options. They differ on how the WENO reconciliation   **
 **   step is done and in the monotonicity constraining algorithms.           **
 **                                                                           **
 ** DJ_GRADPS           use if splines density Jacobian (Shchepetkin, 2000)   **
@@ -130,7 +130,7 @@
 **                                                                           **
 ** ATM_PRESS           use to impose atmospheric pressure onto sea surface   **
 **                                                                           **
-** OPTIONS for surface fluxes formutalion using atmospheric boundary layer   **
+** OPTIONS for surface fluxes formulation using atmospheric boundary layer   **
 ** (Fairall et al, 1996):                                                    **
 **                                                                           **
 **   There are three ways to provide longwave radiation in the atmospheric   **
@@ -145,7 +145,7 @@
 ** NL_BULK_FLUXES      use bulk fluxes computed by nonlinear model           **
 ** COOL_SKIN           use if cool skin correction                           **
 ** LONGWAVE            use if computing net longwave radiation               **
-** LONGWAVE_OUT        use if computing ougoing longwave radiation           **
+** LONGWAVE_OUT        use if computing outgoing longwave radiation          **
 ** EMINUSP             use if computing E-P                                  **
 **                                                                           **
 ** OPTIONS for wave roughness formulation in bulk fluxes:                    **
@@ -193,7 +193,7 @@
 **                                                                           **
 ** FLOATS              use to activate simulated Lagrangian drifters         **
 ** FLOAT_VWALK         use if vertical random walk                           **
-** VWALK_FORWARD       use if foward time stepping vertical random walk      **
+** VWALK_FORWARD       use if forward time stepping vertical random walk     **
 **                                                                           **
 ** OPTION to activate conservative, parabolic spline reconstruction of       **
 ** vertical derivatives. Notice that there also options (see above) for      **
@@ -221,7 +221,7 @@
 ** ANA_M3OBC           use if analytical 3D momentum boundary conditions     **
 ** ANA_MASK            use if analytical Land/Sea masking                    **
 ** ANA_PAIR            use if analytical surface air pressure                **
-** ANA_PASSIVE         use if analytical initial condtions for inert tracers **
+** ANA_PASSIVE         use if analytical inert tracers initial conditions    **
 ** ANA_PERTURB         use if analytical perturbation of initial conditions  **
 ** ANA_PSOURCE         use if analytical point Sources/Sinks                 **
 ** ANA_RAIN            use if analytical rain fall rate                      **
@@ -339,7 +339,7 @@
 ** Lateral boundary conditions OPTIONS:                                      **
 **                                                                           **
 **   Select ONE option at each boundary edge for free-surface, 2D momentum,  **
-**   3D momentum, and tracers. The turbulent kineric energy (TKE) conditions **
+**   3D momentum, and tracers. The turbulent kinetic energy (TKE) conditions **
 **   are only activated for the Generic length scale or Mellor-Yamada 2.5    **
 **   vertical mixing closures. If open boundary radiation conditions, an     **
 **   additional option can be activated at each boundary edge to include     **
@@ -373,7 +373,7 @@
 **                                                                           **
 ** RADIATION_2D        use if tangential phase speed in radiation conditions **
 **                                                                           **
-** Eastern edge open boundary condtions OPTIONS:                             **
+** Eastern edge open boundary conditions OPTIONS:                            **
 **                                                                           **
 ** EAST_FSCHAPMAN      use if free-surface Chapman condition                 **
 ** EAST_FSGRADIENT     use if free-surface gradient condition                **
@@ -397,7 +397,7 @@
 ** EAST_TNUDGING       use if tracers passive/active nudging term            **
 ** EAST_TCLAMPED       use if tracers clamped condition                      **
 **                                                                           **
-** Western edge open boundary condtions OPTIONS:                             **
+** Western edge open boundary conditions OPTIONS:                            **
 **                                                                           **
 ** WEST_FSCHAPMAN      use if free-surface Chapman condition                 **
 ** WEST_FSGRADIENT     use if free-surface gradient condition                **
@@ -421,7 +421,7 @@
 ** WEST_TNUDGING       use if tracers passive/active nudging term            **
 ** WEST_TCLAMPED       use if tracers clamped condition                      **
 **                                                                           **
-** Northern edge open boundary condtions OPTIONS:                            **
+** Northern edge open boundary conditions OPTIONS:                           **
 **                                                                           **
 ** NORTH_FSCHAPMAN     use if free-surface Chapman condition                 **
 ** NORTH_FSGRADIENT    use if free-surface gradient condition                **
@@ -445,7 +445,7 @@
 ** NORTH_TNUDGING      use if tracers passive/active nudging term            **
 ** NORTH_TCLAMPED      use if tracers clamped condition                      **
 **                                                                           **
-** Southern edge open boundary condtions OPTIONS:                            **
+** Southern edge open boundary conditions OPTIONS:                           **
 **                                                                           **
 ** SOUTH_FSCHAPMAN     use if free-surface Chapman condition                 **
 ** SOUTH_FSGRADIENT    use if free-surface gradient condition                **
@@ -570,13 +570,12 @@
 ** FORWARD_RHS         use if processing forward right-hand-side terms       **
 ** IMPLICIT_VCONV      use if implicit vertical convolution algorithm        **
 ** IMPULSE             use if processing adjoint impulse forcing             **
-** IOM                 use to activate IOM multiple executables              **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** OBS_IMPACT          use if observation impact to 4DVAR data assimilation  **
-** POSTERIOR_EOFS      Use if posterior analysis error covariace EOFS        **
-** POSTERIOR_ERROR_F   Use if final posterior analysis error covariace       **
-** POSTERIOR_ERROR_I   Use if initial posterior analysis error covariace     **
+** POSTERIOR_EOFS      Use if posterior analysis error covariance EOFS       **
+** POSTERIOR_ERROR_F   Use if final posterior analysis error covariance      **
+** POSTERIOR_ERROR_I   Use if initial posterior analysis error covariance    **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
 ** SO_SEMI_WHITE       use to activate white/red noise processes             **
 ** SPLINES_VCONV       use to activate implicit splines vertical convolution **
@@ -604,7 +603,7 @@
 ** NPZD biology model OPTIONS:                                               **
 **                                                                           **
 ** NPZD_FRANKS         use if NPZD Biology model, Franks et al. (1986)       **
-** NPZD_IRON           use if NPZD Biology model wiht iron limitation        **
+** NPZD_IRON           use if NPZD Biology model with iron limitation        **
 ** NPZD_POWELL         use if NPZD Biology model, Powell et al. (2006)       **
 ** IRON_LIMIT          use if Fe limitation on phytoplankton growth          **
 ** IRON_RELAX          use if nudging Fe over the shelf, h <= FeHmin         **
@@ -663,7 +662,7 @@
 ** MCT_LIB             use Model Coupling Toolkit Library                    **
 **                                                                           **
 ** OPTION to process 3D data by levels (2D slabs) to reduce memory needs in  **
-** distributed-memory configurations. This option is convinient for large    **
+** distributed-memory configurations. This option is convenient for large    **
 ** problems on nodes with limited memory.                                    **
 **                                                                           **
 ** INLINE_2DIO         use if processing 3D IO level by level                **
@@ -687,19 +686,19 @@
 ** BENCHMARK           Benchmark Tests (small, Medium, big grids)            **
 ** BIO_TOY             One-dimension (vertical) Biology Toy                  **
 ** BL_TEST             Boundary Layers Test                                  **
-** CANYON              Costal form stress Canyon Test                        **
+** CANYON              Coastal form stress Canyon Test                       **
 ** CHANNEL_NECK        Channel with a Constriction                           **
 ** COUPLING_TEST       Two-way Atmosphere-Ocean Coupling Test                **
 ** DOUBLE_GYRE         Idealized Double-gyre Example                         **
 ** ESTUARY_TEST        Test Estuary for Sediment                             **
 ** FLT_TEST            Float Tracking Example                                **
-** GRAV_ADJ            Graviational Adjustment Example                       **
+** GRAV_ADJ            Gravitational Adjustment Example                      **
 ** INLET_TEST          Test Inlet Application                                **
 ** KELVIN              Kelvin wave test                                      **
 ** LAB_CANYON          Lab Canyon, Polar Coordinates Example                 **
 ** LAKE_SIGNELL        Lake Signell Sediment Test Case                       **
 ** LMD_TEST            Test for LMD and KPP                                  **
-** OVERFLOW            Graviational/Overflow Example                         **
+** OVERFLOW            Gravitational/Overflow Example                        **
 ** RIVERPLUME1         River Plume Example 1                                 **
 ** RIVERPLUME2         River plume Example 2 (Hyatt and Signell)             **
 ** SEAMOUNT            Seamount Example                                      **

@@ -106,8 +106,8 @@
 !
 !  Read in model values at observation locations.
 !
-# if defined IOMS   || defined TL_W4DVAR          || \
-     defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined TL_W4DVAR          || defined W4DVAR || \
+     defined W4DVAR_SENSITIVITY
       CALL netcdf_get_fvar (ng, iNLM, MODname(ng), Vname(1,idTLmo),     &
      &                      mod_value,                                  &
      &                      ncid = ncMODid(ng),                         &
@@ -193,7 +193,7 @@
           SDE(i)=mod_std(i)-obs_std(i)
           MSE(i)=MB(i)*MB(i)+                                           &
      &           SDE(i)*SDE(i)+                                         &
-     &           2.0_r8*mod_std(i)*obs_std(i)*(1.0_r8-CC(i))            
+     &           2.0_r8*mod_std(i)*obs_std(i)*(1.0_r8-CC(i))
         END IF
       END DO
 !

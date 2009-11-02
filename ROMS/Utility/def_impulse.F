@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
       SUBROUTINE def_impulse (ng)
 !
 !svn $Id$

@@ -508,7 +508,7 @@
      &        /,15x,'for variable: ',a,/,15x,'in file: ',a,             &
      &        /,15x,'file is not CF compliant...')
   20  FORMAT (/,' GET_2DFLDR  - unable to find requested variable: ',a, &
-     &        /,15x,'in input NetCDF ',a)
+     &        /,15x,'in ',a)
   30  FORMAT (/,' GET_2DFLDR  - unable to open input NetCDF file: ',a)
   40  FORMAT (/,' GET_2DFLDR  - error while reading variable: ',a,2x,   &
      &        ' at TIME index = ',i4)

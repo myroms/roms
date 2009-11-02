@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE ad_forcing_mod
 
-#if defined ADJOINT && (defined WEAK_CONSTRAINT || defined IOM)
+#if defined ADJOINT && defined WEAK_CONSTRAINT
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

@@ -96,14 +96,15 @@
 !=======================================================================
 !  Read in forcing data from FORCING NetCDF file.
 !=======================================================================
-!
 # endif
 
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                               defined TS_PSOURCE || defined Q_PSOURCE)
 !
 !-----------------------------------------------------------------------
-!  Point Sources/Sinks time dependent data.
+!  Point Sources/Sinks position, direction, special flag, and mass
+!  transport nondimensional shape profile.  Point sources are at U-
+!  and V-points.
 !-----------------------------------------------------------------------
 !
 #  if defined UV_PSOURCE || defined Q_PSOURCE
@@ -130,7 +131,9 @@
 #  endif
 # endif
 
-# if !defined ANA_WINDS && (defined BULK_FLUXES || defined ECOSIM)
+# if !defined ANA_WINDS    && \
+     ((defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM)
 !
 !-----------------------------------------------------------------------
 !  Surface wind components.
@@ -153,7 +156,8 @@
 # endif
 
 # ifndef AIR_OCEAN
-#  if !defined ANA_SMFLUX && !defined BULK_FLUXES
+#  if !defined ANA_SMFLUX  && \
+      !defined BULK_FLUXES && !defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Surface wind stress components.
@@ -174,9 +178,33 @@
 #   endif
      &                 FORCES(ng) % svstrG(LBi,LBj,1))
 #  endif
+
+#  ifdef NL_BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Surface wind stress components from NLM bulk flux computation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfldr (ng, iADM, idUsms, ncBLKid(ng), 1,                &
+     &                 BLKname(ng), update(1),                          &
+     &                 LBi, UBi, LBj, UBj, 2, 1,                        &
+#   ifdef MASKING
+     &                 GRID(ng) % umask(LBi,LBj),                       &
+#   endif
+     &                 FORCES(ng) % sustrG(LBi,LBj,1))
+      CALL get_2dfldr (ng, iADM, idVsms, ncBLKid(ng), 1,                &
+     &                 BLKname(ng), update(1),                          &
+     &                 LBi, UBi, LBj, UBj, 2, 1,                        &
+#   ifdef MASKING
+     &                 GRID(ng) % vmask(LBi,LBj),                       &
+#   endif
+     &                 FORCES(ng) % svstrG(LBi,LBj,1))
+#  endif
 # endif
 
-# if !defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM)
+# if !defined ANA_PAIR && \
+     ((defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM       || defined ATM_PRESS)
 !
 !-----------------------------------------------------------------------
 !  Surface air pressure.
@@ -303,7 +331,8 @@
      &                 FORCES(ng) % srflxG(LBi,LBj,1))
 #  endif
 
-#  if defined BULK_FLUXES && !defined LONGWAVE && !defined LONGWAVE_OUT
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) && \
+      !defined LONGWAVE    && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
 !  Surface net longwave radiation.
@@ -318,7 +347,8 @@
      &                 FORCES(ng) % lrflxG(LBi,LBj,1))
 #  endif
 
-#  if defined BULK_FLUXES && defined LONGWAVE_OUT
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) && \
+      defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation.
@@ -334,8 +364,9 @@
 #  endif
 
 #  if !defined ANA_TAIR && \
-     ( defined BULK_FLUXES || defined ECOSIM || \
-      (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO) )
+     ((defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM       || \
+      (defined SHORTWAVE   && defined ANA_SRFLUX && defined ALBEDO))
 !
 !-----------------------------------------------------------------------
 !  Surface air temperature.
@@ -350,7 +381,9 @@
      &                 FORCES(ng) % TairG(LBi,LBj,1))
 #  endif
 
-#  if !defined ANA_HUMIDITY && (defined BULK_FLUXES || defined ECOSIM)
+#  if !defined ANA_HUMIDITY && \
+      ((defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+       defined ECOSIM)
 !
 !-----------------------------------------------------------------------
 !  Surface air humidity.
@@ -365,7 +398,8 @@
      &                 FORCES(ng) % HairG(LBi,LBj,1))
 #  endif
 
-#  if !defined ANA_RAIN && defined BULK_FLUXES
+#  if !defined ANA_RAIN    && \
+      (defined BULK_FLUXES && !defined NL_BULK_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Rain fall rate.
@@ -389,6 +423,21 @@
       CALL get_2dfldr (ng, iADM, idTsur(itemp),                         &
      &                 ncFRCid(idTsur(itemp),ng),                       &
      &                 nFfiles(ng), FRCname(1,ng), update(1),           &
+     &                 LBi, UBi, LBj, UBj, 2, 1,                        &
+#   ifdef MASKING
+     &                 GRID(ng) % rmask(LBi,LBj),                       &
+#   endif
+     &                 FORCES(ng) % stflxG(LBi,LBj,1,itemp))
+#  endif
+
+#  ifdef NL_BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Surface net heat flux from NLM bulk flux computation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfldr (ng, iADM, idTsur(itemp), ncBLKid(ng), 1,         &
+     &                 BLKname(ng), update(1),                          &
      &                 LBi, UBi, LBj, UBj, 2, 1,                        &
 #   ifdef MASKING
      &                 GRID(ng) % rmask(LBi,LBj),                       &
@@ -444,6 +493,21 @@
 !
       CALL get_2dfldr (ng, iADM, idsfwf, ncFRCid(idsfwf,ng),            &
      &                 nFfiles(ng), FRCname(1,ng), update(1),           &
+     &                 LBi, UBi, LBj, UBj, 2, 1,                        &
+#    ifdef MASKING
+     &                 GRID(ng) % rmask(LBi,LBj),                       &
+#    endif
+     &                 FORCES(ng) % stflxG(LBi,LBj,1,isalt))
+#   endif
+
+#   if defined EMINUSP && defined NL_BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Surface net freshwater flux (E-P) from NLM bulk flux computation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfldr (ng, iADM, idEmPf, ncBLKid(ng), 1,                &
+     &                 BLKname(ng), update(1),                          &
      &                 LBi, UBi, LBj, UBj, 2, 1,                        &
 #    ifdef MASKING
      &                 GRID(ng) % rmask(LBi,LBj),                       &
@@ -1185,7 +1249,6 @@
 #    endif
      &                 MIXING(ng) % AkvG(LBi,LBj,0,1))
 #   endif
-
 
 #   if defined MY25_MIXING_NOT_YET || defined GLS_MIXING_NOT_YET
 !

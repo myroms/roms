@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine writes requested tangent linear model fields into      !
 !  into tangent history NetCDF file.                                   !
@@ -147,7 +147,7 @@
 !
 !  Write out surface V-momentum stress.
 !
-      scale=1.0                             ! m2/s2 
+      scale=1.0                             ! m2/s2
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ncTLMid(ng), tlmVid(idVsms,ng),      &
      &                   tTLMindx(ng), gtype,                           &
@@ -301,7 +301,7 @@
           ioerror=status
           RETURN
         END IF
-#  endif 
+#  endif
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
         status=nf_fwrite2d(ng, iTLM, ncTLMid(ng), tlmVid(idRuct,ng),    &
@@ -713,7 +713,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-#   if defined WEAK_CONSTRAINT || defined IOM
+#   ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akv)
 #   else
      &                     MIXING(ng) % tl_Akv)
@@ -739,7 +739,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-#   if defined WEAK_CONSTRAINT || defined IOM
+#   ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akt(:,:,:,itemp))
 #   else
      &                     MIXING(ng) % tl_Akt(:,:,:,itemp))
@@ -766,7 +766,7 @@
 #    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #    endif
-#    if defined WEAK_CONSTRAINT || defined IOM
+#    ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akt(:,:,:,isalt))
 #    else
      &                     MIXING(ng) % tl_Akt(:,:,:,isalt))

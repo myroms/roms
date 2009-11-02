@@ -125,8 +125,8 @@
 
       real(r8) :: Zr, cff, cff1, cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) ::  work1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) ::  work2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) ::  work1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) ::  work2
 
 # include "set_bounds.h"
 
@@ -407,7 +407,7 @@
      &                     update)
 #     endif
 #    endif
-#    if defined EMINUSP && defined NL_BULk_FLUXES
+#    if defined EMINUSP && defined NL_BULK_FLUXES
       CALL set_2dfld_tile (ng, tile, iRPM, idEmPf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
@@ -506,7 +506,7 @@
 # endif
 
 # ifndef AIR_OCEAN
-#  if !defined BULK_FLUXES && defined NL_BULK_FLUXES
+#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
@@ -858,7 +858,7 @@
         bry_update=.TRUE.
       END IF
 #    ifdef DISTRIBUTE
-      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1,         &
+      CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
      &                  bry_update,                                     &
      &                  BOUNDARY(ng)%zeta_west)
       CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
@@ -880,7 +880,7 @@
         bry_update=.TRUE.
       END IF
 #    ifdef DISTRIBUTE
-      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1,         &
+      CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
      &                  bry_update,                                     &
      &                  BOUNDARY(ng)%zeta_east)
       CALL mp_boundary (ng, iRPM, JstrR, JendR, JLB, JUB, 1, 1,         &
@@ -1798,7 +1798,7 @@
      &                       OCEAN(ng)%f_uG,                            &
      &                       OCEAN(ng)%f_u,                             &
      &                       update)
-        CALL set_3dfld_tile (ng, tile, iRPM, idVvel,                    &
+        CALL set_3dfld_tile (ng, tile, iRPM, idVtlf,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%f_vG,                            &
      &                       OCEAN(ng)%f_v,                             &

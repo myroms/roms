@@ -54,7 +54,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -320,7 +320,7 @@
         Lini=1              ! NLM initial conditions record in INIname
         Lbck=2              ! background record in INIname
         Rec1=1
-        Rec2=2 
+        Rec2=2
         Nrun=1
         outer=0
         inner=0
@@ -361,6 +361,14 @@
         LwrtHIS(ng)=.TRUE.
         lstr=LEN_TRIM(FWDbase(ng))
         WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), outer
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+        BLKname(ng)=HISname(ng)
+#endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Model-error covariance normalization and stardard deviation factors.
@@ -370,7 +378,7 @@
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation that needs to be computed only once for a particular
 !  application grid and decorrelation scales.
-!  
+!
         IF (ANY(LwrtNRM(:,ng))) THEN
           CALL def_norm (ng, iNLM, 1)
           IF (exit_flag.ne.NoError) RETURN
@@ -479,9 +487,17 @@
         wrtNLmod(ng)=.FALSE.
 !
 !  Set forward basic state NetCDF ID to nonlinear model trajectory to
-!  avoid the inquiring stage. 
+!  avoid the inquiring stage.
 !
         ncFWDid(ng)=ncHISid(ng)
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set nonlinear NetCDF ID containing the basic state surface fluxes to
+!  use.
+!
+        ncBLKid(ng)=ncFWDid(ng)
+#endif
 
 #ifdef RECOMPUTE_4DVAR
 !
@@ -532,7 +548,7 @@
 !
 !  Set representer model basic state trajectory file to previous outer
 !  loop file (outer-1). If outer=1, the basic state trajectory is the
-!  nonlinear model. 
+!  nonlinear model.
 !
           lstr=LEN_TRIM(FWDbase(ng))
           WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
@@ -686,7 +702,7 @@
 
 #  ifdef RPM_RELAXATION
 !
-!  Adjoint of representer relaxation is not applied during the 
+!  Adjoint of representer relaxation is not applied during the
 !  inner-loops.
 !
               LweakRelax(ng)=.FALSE.
@@ -762,8 +778,8 @@
 !$OMF END PARALLEL DO
 !
 !  Convolve initial conditions record and adjoint forcing
-!  (ADJname, record Nrec) with  initial conditions background error 
-!  covariance. Note that we only do this for the forcing in 
+!  (ADJname, record Nrec) with  initial conditions background error
+!  covariance. Note that we only do this for the forcing in
 !  record Nrec since this is the only record for which
 !  the adjoing forcing arrays are complete. Since routine
 !  "get_state" loads data into the ghost points, the adjoint
@@ -786,9 +802,9 @@
               nrhs(ng)=Lini
 #   endif
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose initial
 !  conditions background error covaraince. Notice that the spatial
 !  convolution is only done for half of the diffusion steps
@@ -841,7 +857,7 @@
 !  loop into ITLname (record Rec1). The tangent model initial
 !  conditions are set to the convolved adjoint solution.
 !
-              CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+              CALL tl_wrt_ini (ng, Lold(ng), Rec1)
               IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve records 2-Nrec in ADJname and
@@ -865,9 +881,9 @@
      &                            Lold(ng))
                   IF (exit_flag.ne.NoError) RETURN
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
 !  done for half of the diffusion steps (squared-root filter). Clear
@@ -969,7 +985,7 @@
                 FrequentImpulse=.TRUE.
               END IF
 !
-!  Initialize tangent linear model from ITLname, record Rec1. 
+!  Initialize tangent linear model from ITLname, record Rec1.
 !
               tITLindx(ng)=Rec1
               CALL tl_initial (ng)
@@ -1054,7 +1070,7 @@
 
 #  ifdef RPM_RELAXATION
 !
-!  Adjoint of representer relaxation is applied during the 
+!  Adjoint of representer relaxation is applied during the
 !  outer-loops.
 !
           LweakRelax(ng)=.TRUE.
@@ -1151,9 +1167,9 @@
           nrhs(ng)=Lini
 #   endif
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose initial
 !  conditions background error covaraince. Notice that the spatial
 !  convolution is only done for half of the diffusion steps
@@ -1212,7 +1228,7 @@
 !  Write out representer model initial conditions into IRPname, record
 !  Rec2.
 !
-          CALL rp_wrt_ini (ng, Lold(ng), Rec2) 
+          CALL rp_wrt_ini (ng, Lold(ng), Rec2)
           IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
@@ -1231,9 +1247,9 @@
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
               IF (exit_flag.ne.NoError) RETURN
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
 !  done for half of the diffusion steps (squared-root filter). Clear
@@ -1336,7 +1352,7 @@
 !  time-steps.
 !
           IF (FrcRec(ng).gt.3) THEN
-            FrequentImpulse=.TRUE. 
+            FrequentImpulse=.TRUE.
           END IF
 !
 !  Initialize representer model IRPname file, record Rec2.
@@ -1876,7 +1892,7 @@
 
 # ifdef RPM_RELAXATION
 !
-!  Adjoint of representer relaxation is not applied during the 
+!  Adjoint of representer relaxation is not applied during the
 !  inner-loops.
 !
             LweakRelax(ng)=.FALSE.
@@ -1923,7 +1939,7 @@
             WRTforce(ng)=.FALSE.
             CALL ad_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
- 
+
 # ifdef CONVOLVE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1952,8 +1968,8 @@
 !$OMF END PARALLEL DO
 !
 !  Convolve initial conditions record and adjoint forcing
-!  (ADJname, record Nrec) with  initial conditions background error 
-!  covariance. Note that we only do this for the forcing in 
+!  (ADJname, record Nrec) with  initial conditions background error
+!  covariance. Note that we only do this for the forcing in
 !  record Nrec since this is the only record for which
 !  the adjoing forcing arrays are complete. Since routine
 !  "get_state" loads data into the ghost points, the adjoint
@@ -1976,9 +1992,9 @@
             nrhs(ng)=Lini
 #  endif
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose initial
 !  conditions background error covaraince. Notice that the spatial
 !  convolution is only done for half of the diffusion steps
@@ -2031,7 +2047,7 @@
 !  loop into ITLname (record Rec1). The tangent model initial
 !  conditions are set to the convolved adjoint solution.
 !
-            CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+            CALL tl_wrt_ini (ng, Lold(ng), Rec1)
             IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve records 2-Nrec in ADJname and
@@ -2055,9 +2071,9 @@
      &                          Lold(ng))
                 IF (exit_flag.ne.NoError) RETURN
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
 !  done for half of the diffusion steps (squared-root filter). Clear
@@ -2159,7 +2175,7 @@
               FrequentImpulse=.TRUE.
             END IF
 !
-!  Initialize tangent linear model from ITLname, record Rec1. 
+!  Initialize tangent linear model from ITLname, record Rec1.
 !
             tITLindx(ng)=Rec1
             CALL tl_initial (ng)

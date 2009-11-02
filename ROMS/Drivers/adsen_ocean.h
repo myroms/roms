@@ -60,7 +60,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -182,6 +182,14 @@
 !=======================================================================
 !
       NEST_LOOP : DO ng=1,Ngrids
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+        BLKname(ng)=FWDname(ng)
+#endif
 !
 !  Initialize adjoint model and define sensitivity functional.
 !

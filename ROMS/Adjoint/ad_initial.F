@@ -177,7 +177,7 @@
 !
       LwrtADJ(ng)=.TRUE.
 
-#  if !(defined WEAK_CONSTRAINT || defined IOM)
+#  ifndef WEAK_CONSTRAINT
 !
 !  Insure that forward and history file names are the same. In 4DVar,
 !  the forward solution is computed by the nonlinear model and stored

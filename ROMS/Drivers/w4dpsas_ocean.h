@@ -54,7 +54,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -325,6 +325,14 @@
         LwrtHIS(ng)=.TRUE.
         lstr=LEN_TRIM(FWDbase(ng))
         WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), outer
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set file name containing the nonlinear model bulk fluxes to be read
+!  and processed by other algorithms.
+!
+        BLKname(ng)=HISname(ng)
+#endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Model-error covariance normalization and stardard deviation factors.
@@ -334,7 +342,7 @@
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation that needs to be computed only once for a particular
 !  application grid and decorrelation scales.
-!  
+!
         IF (ANY(LwrtNRM(:,ng))) THEN
           CALL def_norm (ng, iNLM, 1)
           IF (exit_flag.ne.NoError) RETURN
@@ -466,9 +474,17 @@
         FOURDVAR(ng)%NLPenalty=0.0_r8
 !
 !  Set forward basic state NetCDF ID to nonlinear model trajectory to
-!  avoid the inquiring stage. 
+!  avoid the inquiring stage.
 !
         ncFWDid(ng)=ncHISid(ng)
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set nonlinear NetCDF ID containing the basic state surface fluxes to
+!  use.
+!
+        ncBLKid(ng)=ncFWDid(ng)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Solve the system (following Courtier, 1997):
@@ -477,11 +493,11 @@
 !
 !              d_n = yo - H * X b_n
 !
-!  where M_n is the tangent linear model matrix, Cobs is the 
+!  where M_n is the tangent linear model matrix, Cobs is the
 !  observation-error covariance, B is the background error covariance
 !  and dx_n=B M' H' w_n is the analysis increment so that Xa=Xb+dx_n.
 !  d_n is the misfit between observations (yo) and model (H * Xb_n),
-!  and H is the linearized observation operator. 
+!  and H is the linearized observation operator.
 !
 !  Here, _n denotes a sequence of outer-loop estimates.
 !
@@ -680,9 +696,9 @@
               nrhs(ng)=Lini
 # endif
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose initial
 !  conditions background error covaraince. Notice that the spatial
 !  convolution is only done for half of the diffusion steps
@@ -743,7 +759,7 @@
 !  loop into ITLname (record Rec1). The tangent model initial
 !  conditions are set to the convolved adjoint solution.
 !
-              CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+              CALL tl_wrt_ini (ng, Lold(ng), Rec1)
               IF (exit_flag.ne.NoError) RETURN
 
 # ifdef POSTERIOR_ERROR_I
@@ -778,9 +794,9 @@
      &                            Lold(ng))
                   IF (exit_flag.ne.NoError) RETURN
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
 !  done for half of the diffusion steps (squared-root filter). Clear
@@ -883,7 +899,7 @@
                 FrequentImpulse=.TRUE.
               END IF
 !
-!  Initialize tangent linear model from ITLname, record Rec1. 
+!  Initialize tangent linear model from ITLname, record Rec1.
 !
               tITLindx(ng)=Rec1
               CALL tl_initial (ng)
@@ -1065,9 +1081,9 @@
           nrhs(ng)=Lini
 # endif
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose initial
 !  conditions background error covaraince. Notice that the spatial
 !  convolution is only done for half of the diffusion steps
@@ -1150,9 +1166,9 @@
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
               IF (exit_flag.ne.NoError) RETURN
 !
-!  Load interior solution, read above, into adjoint state arrays. 
+!  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
-!  deviations. Next, convolve resulting adjoint solution with the 
+!  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
 !  done for half of the diffusion steps (squared-root filter). Clear
@@ -1252,7 +1268,7 @@
 !  time-steps.
 !
           IF (FrcRec(ng).gt.3) THEN
-            FrequentImpulse=.TRUE. 
+            FrequentImpulse=.TRUE.
           END IF
 !
 !  Initialize nonlinear model INIname file, record outer+2. Notice that
@@ -1492,7 +1508,7 @@
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
-                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace) 
+                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace)
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -1527,7 +1543,7 @@
             IF (inner.ne.0) THEN
               CALL get_state (ng, iTLM, 1, ITLname(ng), 1, Lold(ng))
             ELSE
-!  
+!
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,outer,numthreads)
               DO thread=0,numthreads-1
@@ -1598,7 +1614,7 @@
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
-                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace) 
+                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace)
               END DO
             END DO
 !$OMP END PARALLEL DO

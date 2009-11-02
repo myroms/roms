@@ -293,7 +293,7 @@
         ELSE
           ntfirst(ng)=ntstart(ng)
         END IF
-#if defined WEAK_CONSTRAINT || defined IOM 
+#ifdef WEAK_CONSTRAINT
         IF (msg.eq.4) THEN
           ForceTime(ng)=time(ng)
         END IF
@@ -339,21 +339,6 @@
 !
       NLM_STATE: IF ((model.eq.iNLM).or.(model.eq.0)) THEN
 
-# if defined ADJUST_BOUNDARY || \
-     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
-!
-!  Set switch to process surface forcing and/or open boundaries during
-!  4DVar minimization.
-!
-#   if !(defined W4DPSAS    || defined W4DPSAS_SENSITIVITY || \
-         defined TL_W4DPSAS)
-       IF (inner.ne.0) THEN
-         get_adjust=.TRUE.
-       ELSE
-         get_adjust=.FALSE.
-       END IF
-#   endif
-# endif
 # ifdef PERFECT_RESTART
 !
 !  Read in time-stepping indices.
@@ -482,39 +467,6 @@
             END IF
           END IF
         END IF
-
-# if !(defined W4DPSAS || defined TL_W4DPSAS || \
-       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in free-surface open boundaries.
-!
-        IF (get_var(idSbry(isFsur)).and.get_adjust.and.                 &
-     &      ANY(Lobc(:,isFsur,ng))) THEN
-          ifield=idSbry(isFsur)
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
-     &                        varid)
-          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
-     &                           Vname(1,ifield), varid,                &
-     &                           InpRec, r2dvar,                        &
-     &                           LBij, UBij, Nbrec(ng),                 &
-     &                           Fscl, Fmin, Fmax,                      &
-     &                           BOUNDARY(ng) % zeta_obc(:,:,:,         &
-     &                                                   Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-# endif
 !
 !  Read in nonlinear RHS of free-surface.
 !
@@ -591,39 +543,6 @@
             END IF
           END IF
         END IF
-
-# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in 2D U-momentum component open boundaries.
-!
-        IF (get_var(idSbry(isUbar)).and.get_adjust.and.                 &
-     &        ANY(Lobc(:,isUbar,ng))) THEN
-          ifield=idSbry(isUbar)
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
-     &                        varid)
-          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
-     &                           Vname(1,ifield), varid,                &
-     &                           InpRec, u2dvar,                        &
-     &                           LBij, UBij, Nbrec(ng),                 &
-     &                           Fscl, Fmin, Fmax,                      &
-     &                           BOUNDARY(ng) % ubar_obc(:,:,:,         &
-     &                                                   Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-# endif
 !
 !  Read in nonlinear RHS of 2D U-momentum component.
 !
@@ -700,39 +619,6 @@
             END IF
           END IF
         END IF
-
-# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-       defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in 2D V-momentum component open boundaries.
-!
-        IF (get_var(idSbry(isVbar)).and.get_adjust.and.                 &
-     &      ANY(Lobc(:,isVbar,ng))) THEN
-          ifield=idSbry(isVbar)
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
-     &                        varid)
-          status=nf_fread2d_bry (ng, IDmod, ncname, ncINPid,            &
-     &                           Vname(1,ifield), varid,                &
-     &                           InpRec, v2dvar,                        &
-     &                           LBij, UBij, Nbrec(ng),                 &
-     &                           Fscl, Fmin, Fmax,                      &
-     &                           BOUNDARY(ng) % vbar_obc(:,:,:,         &
-     &                                                   Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-# endif
 !
 !  Read in nonlinear RHS 2D U-momentum component.
 !
@@ -764,71 +650,6 @@
           END IF
         END IF
 
-# if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-       defined W4DPSAS_SENSITIVITY) && defined ADJUST_WSTRESS
-!
-!  Read in surface U-momentum stress.
-!
-        IF (get_var(idUsms).and.get_adjust) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*u3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
-     &                      Vname(1,idUsms), varid,                     &
-     &                      InpRec, gtype, Vsize,                       &
-     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % umask,                           &
-#  endif
-     &                      FORCES(ng) % ustr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)),          &
-     &                          InpRec, TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-!
-!  Read in surface V-momentum stress.
-!
-        IF (get_var(idVsms).and.get_adjust) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*v3dvar
-          scale=1.0_r8/rho0                   ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
-     &                      Vname(1,idVsms), varid,                     &
-     &                      InpRec, gtype, Vsize,                       &
-     &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % vmask,                           &
-#  endif
-     &                      FORCES(ng) % vstr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)),          &
-     &                          InpRec, TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-# endif
 # ifdef SOLVE3D
 !
 !  Read in nonlinear 3D U-momentum component (m/s).
@@ -872,39 +693,6 @@
             END IF
           END IF
         END IF
-
-#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in 3D U-momentum component open boundaries.
-!
-        IF (get_var(idSbry(isUvel)).and.get_adjust.and.                 &
-     &      ANY(Lobc(:,isUvel,ng))) THEN
-          ifield=idSbry(isUvel)
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
-     &                        varid)
-          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
-     &                           Vname(1,ifield), varid,                &
-     &                           InpRec, u3dvar,                        &
-     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
-     &                           Fscl, Fmin, Fmax,                      &
-     &                           BOUNDARY(ng) % u_obc(:,:,:,:,          &
-     &                                                Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-#  endif
 !
 !  Read in nonlinear RHS of 3D U-momentum component.
 !
@@ -977,39 +765,6 @@
             END IF
           END IF
         END IF
-
-#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in 3D V-momentum component open boundaries.
-!
-        IF (get_var(idSbry(isVvel)).and.get_adjust.and.                 &
-     &      ANY(Lobc(:,isVvel,ng))) THEN
-          ifield=idSbry(isVvel)
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)),   &
-     &                        varid)
-          status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,            &
-     &                           Vname(1,ifield), varid,                &
-     &                           InpRec, v3dvar,                        &
-     &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
-     &                           Fscl, Fmin, Fmax,                      &
-     &                           BOUNDARY(ng) % v_obc(:,:,:,:,          &
-     &                                                Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,ifield)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-            END IF
-          END IF
-        END IF
-#  endif
 !
 !  Read in nonlinear RHS of 3D V-momentum component.
 !
@@ -1086,82 +841,6 @@
           END IF
         END DO
 
-#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-        defined W4DPSAS_SENSITIVITY) && defined ADJUST_BOUNDARY
-!
-!  Read in 3D tracers open boundaries.
-!
-        DO itrc=1,NT(ng)
-          IF (get_var(idSbry(isTvar(itrc))).and.get_adjust.and.         &
-     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
-            ifield=idSbry(isTvar(itrc))
-            foundit=find_string(var_name, n_var, TRIM(Vname(1,ifield)), &
-     &                          varid)
-            status=nf_fread3d_bry (ng, IDmod, ncname, ncINPid,          &
-     &                             Vname(1,ifield), varid,              &
-     &                             InpRec, r3dvar,                      &
-     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
-     &                             Fscl, Fmin, Fmax,                    &
-     &                             BOUNDARY(ng) % t_obc(:,:,:,:,        &
-     &                                                  Tindex,itrc))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) THEN
-                WRITE (stdout,30) string, TRIM(Vname(1,ifield)),        &
-     &                            InpRec, TRIM(ncname)
-              END IF
-              exit_flag=2
-              ioerror=status
-              RETURN
-            ELSE
-              IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,ifield)), Fmin, Fmax
-              END IF
-            END IF
-          END IF
-        END DO
-#  endif
-#  if !(defined W4DPSAS || defined TL_W4DPSAS  || \
-        defined W4DPSAS_SENSITIVITY) && defined ADJUST_STFLUX
-!
-!  Read in surface tracers flux.
-!
-        DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.get_adjust.and.                 &
-     &        Lstflux(itrc,ng)) THEN
-            foundit=find_string(var_name, n_var,                        &
-     &                          TRIM(Vname(1,idTsur(itrc))), varid)
-            gtype=var_flag(varid)*r3dvar
-            IF (itrc.eq.itemp) THEN
-              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
-            ELSE
-              scale=1.0_r8
-            END IF
-            status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
-     &                        Vname(1,idTsur(itrc)), varid,             &
-     &                        InpRec, gtype, Vsize,                     &
-     &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
-     &                        scale, Fmin, Fmax,                        &
-#    ifdef MASKING
-     &                        GRID(ng) % rmask,                         &
-#    endif
-     &                        FORCES(ng) % tflux(:,:,:,Tindex,itrc))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) THEN
-                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
-     &                            InpRec, TRIM(ncname)
-              END IF             
-              exit_flag=2
-              ioerror=status
-              RETURN
-            ELSE
-              IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
-     &                             Fmin, Fmax
-              END IF
-            END IF
-          END IF
-        END DO
-#  endif
 #  if defined GLS_MIXING || defined MY25_MIXING || defined LMD_MIXING
 !
 !  Read in vertical viscosity.
@@ -1854,7 +1533,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idUsms))//                &
+     &                           ', adjusted tl_ustr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -1885,7 +1565,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idVsms))//                &
+     &                           ', adjusted tl_vstr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -2034,7 +1715,7 @@
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
-              END IF             
+              END IF
               exit_flag=2
               ioerror=status
               RETURN
@@ -2103,14 +1784,14 @@
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
-              END IF             
+              END IF
               exit_flag=2
               ioerror=status
               RETURN
             ELSE
               IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
-     &                             Fmin, Fmax
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc)))//        &
+     &                             ', adjusted tl_tflux', Fmin, Fmax
               END IF
             END IF
           END IF
@@ -2534,7 +2215,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idUsms))//                &
+     &                           ', adjusted ad_ustr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -2565,7 +2247,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idVsms))//                &
+     &                           ', adjusted ad_vstr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -2782,14 +2465,14 @@
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
-              END IF             
+              END IF
               exit_flag=2
               ioerror=status
               RETURN
             ELSE
               IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
-     &                             Fmin, Fmax
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc)))//        &
+     &                             ', adjusted ad_tflux', Fmin, Fmax
               END IF
             END IF
           END IF
@@ -4439,7 +4122,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idUsms))//                &
+     &                           ', adjusted tl_ustr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -4470,7 +4154,8 @@
             RETURN
           ELSE
             IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              WRITE (stdout,100) TRIM(Vname(2,idVsms))//                &
+     &                           ', adjusted tl_vstr', Fmin, Fmax
             END IF
           END IF
         END IF
@@ -4505,8 +4190,8 @@
               RETURN
             ELSE
               IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
-     &                             Fmin, Fmax
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc)))//        &
+     &                             ', adjusted tl_tflux', Fmin, Fmax
               END IF
             END IF
           END IF

@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine is the main driver for tangent linear  ROMS/TOMS when  !
 !  configurated as shallow water  (barotropic ) ocean model only.  It  !
@@ -38,7 +38,7 @@
 !!    USE oi_update_mod, ONLY : oi_update
 # endif
       USE tl_diag_mod, ONLY : tl_diag
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
 # ifdef ADJUST_WSTRESS
@@ -75,7 +75,7 @@
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       real(r8) :: HalfDT
 # endif
 !
@@ -89,7 +89,7 @@
       tdays(ng)=time(ng)*sec2day
       CALL time_string (time(ng), time_code(ng))
 
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution as impulse forcing to

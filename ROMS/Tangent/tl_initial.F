@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine initializes all tangent linear model variables.        !
 !                                                                      !
@@ -198,7 +198,7 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 #   endif
-#   if !(defined WEAK_CONSTRAINT || defined IOM)
+#   ifndef WEAK_CONSTRAINT
 !
 !  Set switch to create tangent linear history file.
 !
@@ -223,7 +223,7 @@
 !
       SFcount(ng)=0
 #   endif
-#   ifndef WEAK_CONSTRAINT
+#   if !defined WEAK_CONSTRAINT
 !
 !  Reset tangent linear model history time record counters. These
 !  counters are reset in every iteration pass. This file is created
@@ -654,7 +654,7 @@
 # endif
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If available, read in first TLM impulse forcing and its application

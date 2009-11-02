@@ -36,7 +36,7 @@
 !  Configuration parameters:                                           !
 !                                                                      !
 !  Nbico      Number of balanced SSH elliptic equation iterations.     !
-!  Nfloats    Number of floats tracjectories.                          !
+!  Nfloats    Number of floats trajectories.                           !
 !  Nstation   Number of output stations.                               !
 !  MTC        Maximum number of tidal components.                      !
 !  NSA        Number of state array for error covariance.              !

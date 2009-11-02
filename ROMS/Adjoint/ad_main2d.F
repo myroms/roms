@@ -36,7 +36,7 @@
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE ad_forcing_mod, ONLY : ad_forcing
 # endif
 # ifdef ADJUST_WSTRESS
@@ -44,7 +44,7 @@
 # endif
       USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
 # if defined FOUR_DVAR && defined OBSERVATIONS
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
       USE ad_htobs_mod, ONLY : ad_htobs
 #  else
       USE ad_misfit_mod, ONLY : ad_misfit
@@ -67,7 +67,7 @@
 # ifdef FLOATS_NOT_YET
 !!    USE ad_step_floats_mod, ONLY : tl_step_floats
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
 # endif
 # ifdef AIR_OCEAN_NOT_YET
@@ -170,7 +170,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
             CALL ad_htobs (ng, TILE, iADM)
 #  else
             CALL ad_misfit (ng, TILE, iADM)
@@ -184,7 +184,7 @@
 #  endif
 # endif
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add representer coefficients (Beta hat) impulse
@@ -455,7 +455,7 @@
       END IF
 # endif
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  Gather weak constraint forcing to storage arrays.
@@ -480,7 +480,7 @@
       CALL ad_output (ng)
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  Copy storage arrays index 1 into index 2, and clear index 1.

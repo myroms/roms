@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 
-#if defined WEAK_CONSTRAINT || defined IOM
+#ifdef WEAK_CONSTRAINT
       SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
      &                    Lcgini)
 !
@@ -14,8 +14,7 @@
 !  Weak Constraint 4-Dimensional Variational (4DVar) Pre-conditioned   !
 !                     Conjugate Gradient Algorithm                     !
 
-# if defined IOM    || defined TL_W4DVAR          || \
-     defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
 !                                                                      !
 !  The indirect representer method solves the system:                  !
 !                                                                      !
@@ -61,7 +60,7 @@
 !                                                                      !
 !  Solve the system (following Courtier, 1997):                        !
 !                                                                      !
-!              (H M_n B (M_n)' H' + Cobs) * w_n = d_n                  !   
+!              (H M_n B (M_n)' H' + Cobs) * w_n = d_n                  !
 !                                                                      !
 !              d_n = yo - H * Xb_n                                     !
 !                                                                      !
@@ -191,7 +190,7 @@
 
 # if defined W4DPSAS             || defined TL_W4DPSAS || \
      defined W4DPSAS_SENSITIVITY
-!  
+!
 !  If this is the first inner-loop, save NLmodVal in BCKmodVal.
 !
           DO iobs=1,Ndatum(ng)
@@ -316,7 +315,7 @@
 # endif
               END DO
 !
-!  Convert ADmodVal from v-space to x-space and cg_innov (the 
+!  Convert ADmodVal from v-space to x-space and cg_innov (the
 !  contribution to the starting gradient) from x-space to v-space.
 !
               DO iobs=1,Ndatum(ng)
@@ -580,7 +579,7 @@
           END DO
           preducv=SQRT(preducv)/cg_Gnorm_v(outLoop)
 !
-!  Estimate the residual (in y-space) by: 
+!  Estimate the residual (in y-space) by:
 !
 !    ||Ax-b|| = cg_beta(k+1,outLoop)*zwork(innLoop,3)
 !
@@ -590,18 +589,18 @@
 !  Bennett (2002), page 22 and pages 42-44:
 !
 !     Jopt  = value of the penalty function when true px
-!             has been identified. 
+!             has been identified.
 !     Jf    = initial data misfit for the first-guess
 !     Jdata = data misfit for the state estimate
 !     Jmod  = the model penalty function (the sum of the
-!             dynamical, initial and boundary penalties)     
+!             dynamical, initial and boundary penalties)
 !     Jb    = the ACTUAL model penalty function.
 !     Jobs  = the ACTUAL data penalty function.
 !     Jact  = the ACTUAL total penalty function.
 !
 !  NOTE:  Unlike IS4DVAR where we compute the actual cost function
-!         for each iteration that decreases with increasing 
-!         number of iterations, the various penalty terms 
+!         for each iteration that decreases with increasing
+!         number of iterations, the various penalty terms
 !         represent the optimal values (i.e. the values when
 !         optimal state estimate has been identified). Therefore
 !         the various penalty terms will only be correct when the
@@ -673,7 +672,7 @@
      &                  ztemp2(ivec)*TLmodVal_S(iobs,ivec,outLoop)
             END DO
           END DO
-! 
+!
 !  Compute Jb.
 !
           DO ivec=1,innLoop
@@ -720,7 +719,7 @@
      &            cff*gdgw(iobs)
             END IF
           END DO
-! 
+!
 !  Compute Jobs.
 !
           Jobs=0.0_r8
@@ -809,7 +808,7 @@
         WRITE (stdout,50) innLoop+1, cg_beta(innLoop+1,outLoop)
 !
 !  If preconditioning, report the Ritz eigenvalues used.
-!  
+!
         IF ((LhessianEV.or.Lprecond).and.(outLoop.gt.1)) THEN
           IF (NritzEV.gt.0) THEN
             WRITE (stdout,60) outLoop, innLoop, nConvRitz
@@ -928,7 +927,7 @@
               END IF
             END DO
 !
-!  Calculate the converged eigenvectors (vcglev) of the [R_n + Cobs]. 
+!  Calculate the converged eigenvectors (vcglev) of the [R_n + Cobs].
 !
             CALL RPevecs (ng, outLoop, NinnLoop)
           END IF
@@ -945,7 +944,7 @@
       CALL mp_bcasti (ng, model, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
-   
+
 # ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -1214,7 +1213,7 @@
 
           END IF
 !
-!  Compute the dot-product of py with the Ritz vectors from previous 
+!  Compute the dot-product of py with the Ritz vectors from previous
 !  outer-loop.
 !
 !  Note that vcglev are arranged in order of descending Ritz values,

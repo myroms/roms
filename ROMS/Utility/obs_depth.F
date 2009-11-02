@@ -49,7 +49,7 @@
 !  only the observation for the current time window are loaded
 !  and started from vector index one.
 !
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       Mstr=NstrObs(ng)
       Mend=NendObs(ng)
 # else

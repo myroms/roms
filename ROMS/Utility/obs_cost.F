@@ -9,9 +9,8 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 
-# if defined WEAK_CONSTRAINT || defined IOM
-#  if defined IOM    || defined TL_W4DVAR          || \
-      defined W4DVAR || defined W4DVAR_SENSITIVITY
+# ifdef WEAK_CONSTRAINT
+#  if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
 !                                                                      !
 !  This routine computes the data penalty function directly in during  !
 !  runs of the representer model:                                      !
@@ -75,8 +74,7 @@
 
       real(r8), dimension(0:NstateVar(ng)) :: my_ObsCost
 # if defined DATALESS_LOOPS && \
-    (defined IOM            || defined TL_W4DVAR           || \
-     defined W4DVAR         || defined W4DVAR_SENSITIVITY)
+    (defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY)
       real(r8), dimension(0:NstateVar(ng)) :: my_ObsCost1
 # endif
 !
@@ -84,8 +82,7 @@
 !  Compute observation misfit cost function (ObsCost).
 !-----------------------------------------------------------------------
 
-# if defined IOM    || defined TL_W4DVAR          || \
-     defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
 !
 !  Compute data penalty function.
 !
@@ -177,8 +174,7 @@
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
-# if defined IOM    || defined TL_W4DVAR          || \
-     defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
         IF (model.eq.iRPM) THEN
           DO ivar=0,NstateVar(ng)
             FOURDVAR(ng)%DataPenalty(ivar)=my_ObsCost(ivar)+            &
@@ -213,7 +209,7 @@
       END IF
 !$OMP END CRITICAL (COST_FUN)
 
-# if !(defined WEAK_CONSTRAINT || defined IOM)
+# ifndef WEAK_CONSTRAINT
 !
 !  If start of minimization, set cost function scales used to report
 !  normalized values.

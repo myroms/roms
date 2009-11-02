@@ -56,7 +56,7 @@
 # ifdef FLOATS_NOT_YET
 !!    USE rp_step_floats_mod, ONLY : rp_step_floats
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
 !
@@ -83,11 +83,11 @@
       tdays(ng)=time(ng)*sec2day
       CALL time_string (time(ng), time_code(ng))
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
-!  the representer model solution. Notice that the forcing is only 
+!  the representer model solution. Notice that the forcing is only
 !  needed after finishing all inner loops. The forcing is continuous.
 !  That is, it is time interpolated at every time-step from available
 !  snapshots (FrequentImpulse=TRUE).

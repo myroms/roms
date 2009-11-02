@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This subroutine opens and reads in observations  NetCDF and sets    !
 !  various variables needed for processing of the state solution at    !
@@ -24,7 +24,7 @@
       USE mod_scalars
 !
       implicit none
-!    
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: backward
@@ -38,7 +38,7 @@
       integer :: Ifirst, i, nvd, recdim, status
       integer :: Vsize(4)
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       real(r8), parameter :: IniVal = 0.0_r8
 # endif
       real(r8) :: tend
@@ -191,18 +191,6 @@
         END IF
 
       END IF QUERY
-
-#  ifdef IOM
-!
-!  If multiple executables, open and inquire about the IDs of
-!  4DVAR output fields.
-!
-      IF (ncMODid(ng).eq.-1) THEN
-        LdefMOD(ng)=.FALSE.
-        CALL def_mod (ng)
-        IF (exit_flag.ne.NoError) RETURN
-      END IF
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Set observation processing variables.
@@ -218,7 +206,7 @@
           IF ((tend.le.FOURDVAR(ng)%SurveyTime(i)).and.                 &
      &        (FOURDVAR(ng)%SurveyTime(i).le.tdays(ng))) THEN
             Ifirst=MAX(Ifirst,i)
-          END IF            
+          END IF
         END DO
         IF (Ifirst.eq.0) THEN
           WRITE (stdout,30) tend, tdays(ng)
@@ -231,7 +219,7 @@
           IF ((tdays(ng).le.FOURDVAR(ng)%SurveyTime(i)).and.            &
      &        (FOURDVAR(ng)%SurveyTime(i).le.tend)) THEN
             Ifirst=MIN(Ifirst,i)
-          END IF            
+          END IF
         END DO
         IF (Ifirst.eq.0) THEN
           WRITE (stdout,30) tdays(ng), tend
@@ -296,7 +284,7 @@
       FOURDVAR(ng)%ObsCount(0)=0
       FOURDVAR(ng)%ObsReject(0)=0
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !  Initialize model values at observation locations.
 !
@@ -304,7 +292,7 @@
         NLmodVal(i)=IniVal
         TLmodVal(i)=IniVal
         ObsScale(i)=IniVal
-      END DO      
+      END DO
 # endif
 !
   10  FORMAT (/,' OBS_INITIAL - unable to find model variable: ',a,     &

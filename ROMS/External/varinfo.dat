@@ -1952,6 +1952,11 @@
 !
 !------------------------------------------------------------------------------
 !  Tangent linear model impulse forcing variables.
+!
+!  Notice that additional metadata is need here because with need different
+!  indices to avoid conflict with the forward basic state variables. They
+!  are used at the same time. The passive tracers (NAT+1:NT) are assigned
+!  internally to the same values as the basic state.
 !------------------------------------------------------------------------------
 !
 
@@ -2010,7 +2015,7 @@
   1.0d0
 
 'salt'                                             ! Input
-  'salinity functional'
+  'salinity impulse forcing'
   'nondimensional'                                 ! [PSU]
   'salt_time, scalar, series'
   'salt_time'

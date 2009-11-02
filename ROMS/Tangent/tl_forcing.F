@@ -1,14 +1,14 @@
 #include "cppdefs.h"
       MODULE tl_forcing_mod
 
-#if defined TANGENT && (defined WEAK_CONSTRAINT || defined IOM)
+#if defined TANGENT && defined WEAK_CONSTRAINT
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group   Emanuele Di Lorenzo   !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine is used to force the tangent linear state equations.   !
 !                                                                      !

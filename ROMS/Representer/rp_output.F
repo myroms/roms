@@ -146,10 +146,10 @@
         END IF
       END IF
 # ifdef FOUR_DVAR
-#  if !(defined WEAK_CONSTRAINT || defined IOM)
+#  ifndef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
-!  Create tangent linear model initial conditions file, if necessary. 
+!  Create tangent linear model initial conditions file, if necessary.
 !-----------------------------------------------------------------------
 !
 !  If start of descent algorithm iterations, create initial conditions
@@ -178,8 +178,7 @@
 #   endif
         CALL obs_read (ng, iRPM, .FALSE.)
         CALL obs_write (ng, tile, iRPM)
-#   if defined IOM || defined TL_W4DVAR || defined W4DVAR || \
-       defined W4DVAR_SENSITIVITY
+#   if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
         CALL obs_cost (ng, iRPM)
 #   endif
       ELSE

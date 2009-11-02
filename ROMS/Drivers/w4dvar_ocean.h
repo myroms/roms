@@ -325,7 +325,7 @@
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
 !  Set file name containing the nonlinear model bulk fluxes to be read
-!  and processed by the representer model.
+!  and processed by other algorithms.
 !
         BLKname(ng)=HISname(ng)
 #endif
@@ -450,6 +450,14 @@
 !  avoid the inquiring stage.
 !
         ncFWDid(ng)=ncHISid(ng)
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set nonlinear NetCDF ID containing the basic state surface fluxes to
+!  use.
+!
+        ncBLKid(ng)=ncFWDid(ng)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Solve the system:
@@ -1096,15 +1104,15 @@
 !  record into the adjoint history file.  Note that the weak-constraint
 !  forcing is delayed by nADJ time-steps.
 !
-            CALL ad_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+          CALL ad_wrt_his (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out adjoint initial condition record into the adjoint
 !  history file.
 !
-            WRTforce(ng)=.FALSE.
-            CALL ad_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+          WRTforce(ng)=.FALSE.
+          CALL ad_wrt_his (ng)
+          IF (exit_flag.ne.NoError) RETURN
 
 # ifdef CONVOLVE
 !
@@ -1471,7 +1479,7 @@
             END DO
           END DO
 !$OMP END PARALLEL DO
-            IF (exit_flag.ne.NoError) RETURN
+          IF (exit_flag.ne.NoError) RETURN
         END DO VAR_OLOOP
 !
 !  Write out the diagonal of the posterior/analysis covariance matrix

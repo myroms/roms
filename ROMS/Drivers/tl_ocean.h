@@ -39,13 +39,10 @@
 !
       USE mod_param
       USE mod_parallel
-#ifdef IOM
-      USE mod_fourdvar
-#endif
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -128,12 +125,6 @@
 !  Allocate and initialize modules variables.
 !
         CALL mod_arrays (allocate_vars)
-#ifdef IOM
-!
-!  Allocate and initialize observation arrays.
-!
-        CALL initialize_fourdvar
-#endif
       END IF
 !
 !-----------------------------------------------------------------------
@@ -159,9 +150,6 @@
 !
       USE mod_param
       USE mod_parallel
-#ifdef IOM
-      USE mod_fourdvar
-#endif
       USE mod_iounits
       USE mod_scalars
 !
@@ -186,9 +174,6 @@
 !
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
-#ifdef IOM
-        wrtTLmod(ng)=.TRUE.
-#endif
         LcycleTLM(ng)=.FALSE.
 !
 !  Time-step tangent linear model.
@@ -246,7 +231,7 @@
       DO ng=1,Ngrids
         IF (LwrtRST(ng).and.(exit_flag.eq.1)) THEN
           IF (Master) WRITE (stdout,10)
- 10       FORMAT (/,' Blowing-up: Saving latest model state into ',     & 
+ 10       FORMAT (/,' Blowing-up: Saving latest model state into ',     &
      &              ' RESTART file',/)
           IF (LcycleRST(ng).and.(NrecRST(ng).ge.2)) THEN
             tRSTindx(ng)=2

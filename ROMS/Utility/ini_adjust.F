@@ -47,8 +47,7 @@
 # ifdef TLM_CHECK
       PUBLIC :: ini_perturb
 # endif
-# if defined IOM    || defined TL_W4DVAR          || \
-     defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined TL_W4DVAR ||  defined W4DVAR || defined W4DVAR_SENSITIVITY
       PUBLIC :: rp_ini_adjust
 # endif
 # if defined GRADIENT_CHECK || defined TLM_CHECK
@@ -207,7 +206,7 @@
 #   endif
 
 #   include "set_bounds.h"
-!      
+!
 !-----------------------------------------------------------------------
 !  Adjust initial conditions for 2D state variables by adding tangent
 !  linear increments from data assimilation.
@@ -275,7 +274,7 @@
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)*rmask(i,j)
 #    endif
             END DO
-          END DO          
+          END DO
         END DO
       END DO
 #   endif
@@ -291,7 +290,7 @@
 !                                                                      !
 !  This routine adds convolved to adjoint solutions to nonlinear       !
 !  conditions.  The boundary condition and barotropic/baroclinic       !
-!  coupling, if any, are processed latter in routine "ini_fields"      ! 
+!  coupling, if any, are processed latter in routine "ini_fields"      !
 !  before time-stepping.                                               !
 !                                                                      !
 !  On Input:                                                           !
@@ -430,7 +429,7 @@
 #   endif
 
 #   include "set_bounds.h"
-!      
+!
 !-----------------------------------------------------------------------
 !  Adjust initial conditions for 2D state variables by adding tangent
 !  linear increments from data assimilation.
@@ -498,7 +497,7 @@
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)*rmask(i,j)
 #    endif
             END DO
-          END DO          
+          END DO
         END DO
       END DO
 #   endif
@@ -506,8 +505,7 @@
       END SUBROUTINE ini_adjust_tile
 #  endif
 
-#  if defined IOM    || defined TL_W4DVAR          || \
-      defined W4DVAR || defined W4DVAR_SENSITIVITY
+#  if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
       SUBROUTINE rp_ini_adjust (ng, tile, Linp, Lout)
 !
 !=======================================================================
@@ -696,7 +694,7 @@
 #   endif
 
 #   include "set_bounds.h"
-!      
+!
 !-----------------------------------------------------------------------
 !  Adjust initial conditions for 2D state variables by adding adjoint
 !  increments from weak constraint inner loop.
@@ -764,7 +762,7 @@
               tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
 #    endif
             END DO
-          END DO          
+          END DO
         END DO
       END DO
 #   endif
@@ -1070,7 +1068,7 @@
 !  Local variable declarations.
 !
       real(r8) :: fac1, fac2
-!      
+!
 !-----------------------------------------------------------------------
 !  Load or add adjoint state variables into tangent linear state
 !  variables.
@@ -1453,7 +1451,7 @@
 !  Local variable declarations.
 !
       real(r8) :: fac1, fac2
-!      
+!
 !-----------------------------------------------------------------------
 !  Load or add tangent linear state variables into adjoint state
 !  variables.
@@ -1540,7 +1538,7 @@
 
       RETURN
       END SUBROUTINE load_TLtoAD_tile
-# endif       
+# endif
 
 # if defined TLM_CHECK
       SUBROUTINE ini_perturb (ng, tile, Linp, Lout)

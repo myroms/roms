@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine is the main driver for tangent linear ROMS/TOMS when   !
 !  configurated as a full  3D baroclinic  ocean model.  It  advances   !
@@ -50,14 +50,14 @@
 # ifdef BBL_MODEL_NOT_YET
 !!    USE tl_bbl_mod, ONLY : tl_bblm
 # endif
-# ifdef BULK_FLUXES_NOT_YET
+# ifdef BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
 !!    USE tl_bulk_flux_mod, ONLY : tl_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
 !!    USE tl_bvf_mix_mod, ONLY : tl_bvf_mix
 # endif
       USE tl_diag_mod, ONLY : tl_diag
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -127,7 +127,7 @@
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       real(r8) :: HalfDT
 # endif
 !
@@ -184,7 +184,7 @@
       END DO
 !$OMP END PARALLEL DO
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
@@ -324,7 +324,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-# ifdef BULK_FLUXES_NOT_YET
+# ifdef BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
           CALL tl_bulk_flux (ng, TILE)
 # endif
 # ifdef BBL_MODEL_NOT_YET

@@ -1027,12 +1027,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' IRON_RELAX,'
 #endif
-#ifdef IOM
-      IF (Master) WRITE (stdout,20) 'IOM',                              &
-     &   'IOM Multiple Executable interface.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+5)=' IOM,'
-#endif
 #ifdef IMPULSE
       IF (Master) WRITE (stdout,20) 'IMPULSE',                          &
      &   'Processing Adjoint Impulse forcing.'
@@ -1297,7 +1291,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' NL_BULK_FLUXES,'
 #endif
-#if defined NLM_OUTER && (defined WEAK_CONSTRAINT || defined IOM)
+#if defined NLM_OUTER && defined WEAK_CONSTRAINT
       IF (Master) WRITE (stdout,20) 'NLM_OUTER',                        &
      &   'Using the Nonlinear model as Basic State in Outer Loop.'
       is=LEN_TRIM(Coptions)+1

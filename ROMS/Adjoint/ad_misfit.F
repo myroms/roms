@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE ad_misfit_mod
 #if  defined ADJOINT && defined FOUR_DVAR  && defined OBSERVATIONS && \
-   !(defined WEAK_CONSTRAINT || defined IOM)
+    !defined WEAK_CONSTRAINT
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -409,7 +409,7 @@
      &              'records = ',i7.7,' - ',i7.7,', iic = ',i7.7,')')
           END IF
         END IF
-      END IF        
+      END IF
       RETURN
       END SUBROUTINE ad_misfit_tile
 #endif

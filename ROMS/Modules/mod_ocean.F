@@ -239,7 +239,7 @@
           real(r8), pointer :: e_v(:,:,:,:)
 #  endif
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
           real(r8), pointer :: f_ubar(:,:)
           real(r8), pointer :: f_vbar(:,:)
           real(r8), pointer :: f_zeta(:,:)
@@ -274,7 +274,7 @@
           real(r8), pointer :: uG(:,:,:,:)
           real(r8), pointer :: vG(:,:,:,:)
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
           real(r8), pointer :: f_zetaG(:,:,:)
 #  ifdef SOLVE3D
           real(r8), pointer :: f_tG(:,:,:,:,:)
@@ -497,7 +497,7 @@
       allocate ( OCEAN(ng) % e_v(LBi:UBi,LBj:UBj,N(ng),NSA) )
 #  endif
 
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
       allocate ( OCEAN(ng) % f_ubar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % f_vbar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % f_zeta(LBi:UBi,LBj:UBj) )
@@ -535,7 +535,7 @@
       allocate ( OCEAN(ng) % uG(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % vG(LBi:UBi,LBj:UBj,N(ng),2) )
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
       allocate ( OCEAN(ng) % f_zetaG(LBi:UBi,LBj:UBj,2) )
 #  ifdef SOLVE3D
       allocate ( OCEAN(ng) % f_tG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
@@ -686,7 +686,7 @@
                 OCEAN(ng) % t(i,j,k,3,itrc) = IniVal
               END DO
             END DO
-          END DO 
+          END DO
 # ifdef SEDIMENT
           DO itrc=1,NST
             DO k=1,Nbed
@@ -906,7 +906,7 @@
             OCEAN(ng) % d_vbar(i,j) = IniVal
             OCEAN(ng) % d_zeta(i,j) = IniVal
 
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
             OCEAN(ng) % f_ubar(i,j) = IniVal
             OCEAN(ng) % f_vbar(i,j) = IniVal
             OCEAN(ng) % f_zeta(i,j) = IniVal
@@ -914,7 +914,7 @@
           END DO
 # endif
 # ifdef SOLVE3D
-          DO rec=1,NSA          
+          DO rec=1,NSA
             DO k=1,N(ng)
               DO i=Imin,Imax
                 OCEAN(ng) % b_u(i,j,k,rec) = IniVal
@@ -932,7 +932,7 @@
               OCEAN(ng) % d_u(i,j,k) = IniVal
               OCEAN(ng) % d_v(i,j,k) = IniVal
 
-#   if defined WEAK_CONSTRAINT || defined IOM
+#   ifdef WEAK_CONSTRAINT
               OCEAN(ng) % f_u(i,j,k) = IniVal
               OCEAN(ng) % f_v(i,j,k) = IniVal
 #   endif
@@ -955,7 +955,7 @@
               DO i=Imin,Imax
                 OCEAN(ng) % d_t(i,j,k,itrc) = IniVal
 
-#   if defined WEAK_CONSTRAINT || defined IOM
+#   ifdef WEAK_CONSTRAINT
                 OCEAN(ng) % f_t(i,j,k,itrc) = IniVal
 #   endif
               END DO
@@ -990,7 +990,7 @@
             OCEAN(ng) % vbarG(i,j,2) = IniVal
             OCEAN(ng) % zetaG(i,j,1) = IniVal
             OCEAN(ng) % zetaG(i,j,2) = IniVal
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
             OCEAN(ng) % f_zetaG(i,j,1) = IniVal
             OCEAN(ng) % f_zetaG(i,j,2) = IniVal
 #  ifndef SOLVE3D
@@ -1008,7 +1008,7 @@
               OCEAN(ng) % uG(i,j,k,2) = IniVal
               OCEAN(ng) % vG(i,j,k,1) = IniVal
               OCEAN(ng) % vG(i,j,k,2) = IniVal
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
               OCEAN(ng) % f_uG(i,j,k,1) = IniVal
               OCEAN(ng) % f_uG(i,j,k,2) = IniVal
               OCEAN(ng) % f_vG(i,j,k,1) = IniVal
@@ -1031,7 +1031,7 @@
               DO i=Imin,Imax
                 OCEAN(ng) % tG(i,j,k,1,itrc) = IniVal
                 OCEAN(ng) % tG(i,j,k,2,itrc) = IniVal
-#  if defined WEAK_CONSTRAINT || defined IOM
+#  ifdef WEAK_CONSTRAINT
                 OCEAN(ng) % f_tG(i,j,k,1,itrc) = IniVal
                 OCEAN(ng) % f_tG(i,j,k,2,itrc) = IniVal
 #  endif

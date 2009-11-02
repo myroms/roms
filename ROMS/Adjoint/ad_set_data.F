@@ -156,8 +156,9 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || \
-    (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM || \
+      (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
 !  Set surface air temperature (degC).
@@ -174,8 +175,9 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || \
-     (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM || \
+      (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
 !  Set surface air relative or specific humidity.
@@ -216,7 +218,8 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES && !defined LONGWAVE && !defined LONGWAVE_OUT
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) && \
+      !defined LONGWAVE    && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
 !  Surface net longwave radiation (degC m/s).
@@ -229,7 +232,8 @@
      &                      update)
 #  endif
 
-#  if defined LONGWAVE_OUT && defined BULK_FLUXES
+#  if defined LONGWAVE_OUT && \
+      (defined BULK_FLUXES && !defined NL_BULK_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation (degC m/s).
@@ -242,7 +246,8 @@
      &                      update)
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM
+#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+      defined ECOSIM
 !
 !-----------------------------------------------------------------------
 !  Set surface winds (m/s).
@@ -299,7 +304,7 @@
 #   endif
 #  endif
 
-#  ifdef BULK_FLUXES
+#  if defined BULK_FLUXES && !defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set rain fall rate (kg/m2/s).
@@ -316,7 +321,7 @@
 #   endif
 #  endif
 
-#  ifndef BULK_FLUXES
+#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface net heat flux (degC m/s).
@@ -386,6 +391,13 @@
      &                      FORCES(ng)%stflx (:,:,isalt),               &
      &                      update)
 #    endif
+#    if defined EMINUSP && defined NL_BULK_FLUXES
+      CALL set_2dfldr_tile (ng, tile, iADM, idEmPf,                     &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%stflxG(:,:,:,isalt),             &
+     &                      FORCES(ng)%stflx (:,:,isalt),               &
+     &                      update)
+#    endif
 #   endif
 
 #   if defined SCORRECTION || defined SRELAXATION
@@ -450,7 +462,7 @@
 # endif
 
 # ifndef AIR_OCEAN
-#  ifndef BULK_FLUXES
+#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
@@ -508,7 +520,8 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+# if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+     defined ECOSIM       || defined ATM_PRESS
 !
 !-----------------------------------------------------------------------
 !  Set surface air pressure (mb).
@@ -627,7 +640,7 @@
 !-----------------------------------------------------------------------
 !
       CALL ana_specir (ng, tile, iADM)
-# endif     
+# endif
 
 # ifdef ANA_SPINNING
 !
@@ -1525,7 +1538,7 @@
      &                        update)
       END DO
 #   endif
-#  endif   
+#  endif
 # endif
 
 # if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
@@ -1640,11 +1653,11 @@
 #   ifdef BULK_FLUXES
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-            FORCES(ng)%ad_lhflx(i,j)=0.0_r8
-            FORCES(ng)%ad_shflx(i,j)=0.0_r8
-            FORCES(ng)%ad_lrflx(i,j)=0.0_r8
+          FORCES(ng)%ad_lhflx(i,j)=0.0_r8
+          FORCES(ng)%ad_shflx(i,j)=0.0_r8
+          FORCES(ng)%ad_lrflx(i,j)=0.0_r8
 #    ifdef EMINUSP
-            FORCES(ng)%ad_evap(i,j)=0.0_r8
+          FORCES(ng)%ad_evap(i,j)=0.0_r8
 #    endif
         END DO
       END DO
