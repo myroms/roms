@@ -15,7 +15,6 @@
 
 #undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */
 #undef  CORRELATION             /* Background-error Correlation Check */
-#undef  GRADIENT_CHECK          /* TLM/ADM Gradient Check */
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #define IS4DVAR                 /* Incremental, strong constraint 4DVAR */
@@ -34,7 +33,7 @@
 **-----------------------------------------------------------------------------
 **  Nonlinear model or basic state tracjectory.
 **-----------------------------------------------------------------------------
-*/ 
+*/
 
 #if defined NLM_DRIVER
 # define UV_ADV
@@ -124,7 +123,7 @@
 **-----------------------------------------------------------------------------
 **  Adjoint-based drivers.
 **-----------------------------------------------------------------------------
-*/ 
+*/
 
 # define UV_ADV
 # define UV_COR

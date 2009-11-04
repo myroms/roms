@@ -300,7 +300,11 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
 # ifdef BULK_FLUXES
+#  if defined FOUR_DVAR && defined NL_BULK_FLUXES
+          IF (Nrun.eq.1) CALL bulk_flux (ng, TILE)
+#  else
           CALL bulk_flux (ng, TILE)
+#  endif
 # endif
 # ifdef BBL_MODEL
           CALL bblm (ng, TILE)

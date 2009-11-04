@@ -418,14 +418,6 @@
 !  avoid the inquiring stage.
 !
         ncFWDid(ng)=ncHISid(ng)
-
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!  Set nonlinear NetCDF ID containing the basic state surface fluxes to
-!  use.
-!
-        ncBLKid(ng)=ncFWDid(ng)
-#endif
 !
 !-----------------------------------------------------------------------
 !  Solve the system:

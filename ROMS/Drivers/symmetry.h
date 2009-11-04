@@ -115,10 +115,6 @@
 !
         CALL initialize_fourdvar
 !
-!  Read in background/model error standard deviation factors and
-!  spatial convolution diffusion coefficients.
-!
-!
 !  Read in standard deviation factors for initial conditions
 !  error covariance.  They are loaded in Tindex=1 of the
 !  e_var(...,Tindex) state variables.
@@ -281,7 +277,6 @@
 !  and processed by other algorithms.
 !
         BLKname(ng)=HISname(ng)
-        ncBLKid(ng)=ncHISid(ng)
 #endif
 !
 !-----------------------------------------------------------------------

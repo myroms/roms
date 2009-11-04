@@ -534,7 +534,6 @@
 ** ENSEMBLE            use if ensemble prediction driver                     **
 ** FORCING_SV          use if forcing singular vectors driver                **
 ** FT_EIGENMODES       use if finite time eingenmodes driver: normal modes   **
-** GRADIENT_CHECK      use if tangent linear and adjoint codes gradient test **
 ** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
 ** IS4DVAR             use if incremental 4DVar data assimilation            **
 ** OBS_SENSITIVITY     use if 4DVAR observations sensitivity driver          **

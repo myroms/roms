@@ -416,7 +416,6 @@
 !  and processed by other algorithms.
 !
         BLKname(ng)=HISname(ng)
-        ncBLKid(ng)=ncFWDid(ng)
 #endif
 !
 !  Activate adjoint output.

@@ -164,6 +164,31 @@
 #  endif
      &                FORCES(ng) % svstrG(LBi,LBj,1))
 # endif
+
+# if defined FOUR_DVAR && defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  If not first NLM run, get surface wind stress components from initial
+!  NLM run.
+!-----------------------------------------------------------------------
+!
+      IF (Nrun.gt.1) THEN
+        CALL get_2dfld (ng, iNLM, idUsms, ncBLKid(ng), 1,               &
+     &                  BLKname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % umask(LBi,LBj),                      &
+#  endif
+     &                  FORCES(ng) % sustrG(LBi,LBj,1))
+        CALL get_2dfld (ng, iNLM, idVsms, ncBLKid(ng), 1,               &
+     &                  BLKname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % vmask(LBi,LBj),                      &
+#  endif
+     &                  FORCES(ng) % svstrG(LBi,LBj,1))
+      END IF
+# endif
 #endif
 
 #if !defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM || \
@@ -387,6 +412,24 @@
      &                FORCES(ng) % stflxG(LBi,LBj,1,itemp))
 # endif
 
+# if !defined ANA_STFLUX  && defined FOUR_DVAR      && \
+      defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  If not first NLM run, get surface net heat flux from initial NLM run.
+!-----------------------------------------------------------------------
+!
+      IF (Nrun.gt.1) THEN
+        CALL get_2dfld (ng, iNLM, idTsur(itemp), ncBLKid(ng), 1,        &
+     &                  BLKname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+#  endif
+     &                  FORCES(ng) % stflxG(LBi,LBj,1,itemp))
+      END IF
+# endif
+
 # if !defined ANA_SST && defined QCORRECTION
 !
 !-----------------------------------------------------------------------
@@ -454,6 +497,25 @@
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
      &                FORCES(ng) % stflxG(LBi,LBj,1,isalt))
+#  endif
+
+#  if !defined ANA_STFLUX  && defined FOUR_DVAR      && \
+       defined BULK_FLUXES && defined NL_BULK_FLUXES && \
+       defined EMINUSP
+!
+!-----------------------------------------------------------------------
+!  If not first NLM run, get freshwater flux (E-P) from initial NLM run.
+!-----------------------------------------------------------------------
+!
+      IF (Nrun.gt.1) THEN
+        CALL get_2dfld (ng, iNLM, idEmPf, ncBLKid(ng), 1,               &
+     &                  BLKname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#   ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+#   endif
+     &                  FORCES(ng) % stflxG(LBi,LBj,1,isalt))
+      END IF
 #  endif
 
 #  if !defined ANA_SSS && (defined SCORRECTION || defined SRELAXATION)

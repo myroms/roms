@@ -506,7 +506,7 @@
 !  forcing depends on the functional whose sensitivity is required.
 !-----------------------------------------------------------------------
 !
-#  ifdef SENS4DVAR
+#  ifdef SENSITIVITY_4DVAR
       IF (LsenPSAS(ng)) THEN
 #  endif
 #  if !defined AD_IMPULSE

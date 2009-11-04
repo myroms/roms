@@ -5,7 +5,7 @@
 !! Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!====================================================================== 
+!!======================================================================
 !!                                                                     !
 !!  Regional Ocean Model System (ROMS) Drivers:                        !
 !!                                                                     !
@@ -16,8 +16,6 @@
 !!  correlation.h          Error covariance correlation driver         !
 !!  fte_ocean.h            Finite time eigenmodes driver               !
 !!  fsv_ocean.h            Forcing singular vectors driver             !
-!!  grad_ocean.h           Tangent linear and adjoint models gradient  !
-!!                           test driver                               !
 !!  is4dvar_ocean.h        Strong constraint, incremental 4DVar data   !
 !!                           assimilation driver                       !
 !!  nl_ocean.h             Nonlinear model driver (default)            !
@@ -61,8 +59,6 @@
 # include "fte_ocean.h"
 #elif defined FORCING_SV
 # include "fsv_ocean.h"
-#elif defined GRADIENT_CHECK
-# include "grad_ocean.h"
 #elif defined OBS_SENSITIVITY
 # include "obs_sen_ocean.h"
 #elif defined OPT_PERTURBATION
@@ -80,7 +76,7 @@
 #elif defined R_SYMMETRY
 # include "symmetry.h"
 #elif defined IS4DVAR
-#  include "is4dvar_lanczos_ocean.h"
+#  include "is4dvar_ocean.h"
 #elif defined W4DPSAS
 # include "w4dpsas_ocean.h"
 #elif defined W4DVAR

@@ -37,7 +37,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
-# if defined GRADIENT_CHECK || defined TLM_CHECK
+# ifdef TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
 # ifdef OBS_SENSITIVITY
@@ -173,7 +173,7 @@
 !
        IniRec=1
 
-# elif defined FOUR_DVAR || defined GRADIENT_CHECK || defined TLM_CHECK
+# elif defined FOUR_DVAR || defined TLM_CHECK
 !
 !-----------------------------------------------------------------------
 !  If variational data assimilation, reset several IO switches and
@@ -364,8 +364,8 @@
 !=======================================================================
 
 # if defined FOUR_DVAR && !defined OBS_SENSITIVITY
-#  if defined GRADIENT_CHECK || defined OPT_OBSERVATIONS || \
-      defined TLM_CHECK      || defined WEAK_CONSTRAINT
+#  if defined OPT_OBSERVATIONS || defined TLM_CHECK || \
+      defined WEAK_CONSTRAINT
 !
 !  Clear tangent linear state variables.
 !
@@ -573,7 +573,7 @@
 !$OMP END PARALLEL DO
 # endif
 
-# if defined GRADIENT_CHECK || defined TLM_CHECK
+# ifdef TLM_CHECK
 !
 !-----------------------------------------------------------------------
 !  Perturb tangent linear state variable according to the outer loop

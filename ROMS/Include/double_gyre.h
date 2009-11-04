@@ -17,7 +17,6 @@
 #undef  AD_SENSITIVITY          /* Adjoint Sensitivity */
 #undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */
 #undef  CORRELATION             /* Background-error Correlation Check */
-#undef  GRADIENT_CHECK          /* TLM/ADM Gradient Check */
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #define IS4DVAR                 /* Incremental, strong constraint 4DVAR */
@@ -234,10 +233,9 @@
 **-----------------------------------------------------------------------------
 */
 
-#if defined CORRELATION || defined GRADIENT_CHECK || \
-    defined IS4DVAR     || defined R_SYMMETRY     || \
-    defined TLM_CHECK   || defined W4DPSAS        || \
-    defined W4DVAR
+#if defined CORRELATION || defined IS4DVAR   || \
+    defined R_SYMMETRY  || defined TLM_CHECK || \
+    defined W4DPSAS     || defined W4DVAR
 # if defined SOLVE3D                   /* 3D Application */
 #  undef  UV_C2ADVECTION
 #  undef  UV_C4ADVECTION

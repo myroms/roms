@@ -3176,10 +3176,9 @@
      &                    TRIM(fname)
 # endif
 # if defined TANGENT && \
-    !(defined FOUR_DVAR       || defined GRADIENT_CHECK    || \
-      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS  || \
-      defined SANITY_CHECK    || defined SENSITIVITY_4DVAR || \
-      defined TLM_CHECK)
+    !(defined FOUR_DVAR         || defined OBS_SENSITIVITY || \
+      defined OPT_OBSERVATIONS  || defined SANITY_CHECK    || \
+      defined SENSITIVITY_4DVAR || defined TLM_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -7968,7 +7967,7 @@
           WRITE (out,80) NpostI, 'NpostI',                              &
      &            'Number of Lanczos iterations in posterior analysis.'
 #   endif
-#   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
+#   ifndef TLM_CHECK
 #    ifndef OBS_SENSITIVITY
           WRITE (out,170) LdefNRM(1:4,ng), 'LdefNRM',                   &
      &            'Switch to create a normalization NetCDF file.'

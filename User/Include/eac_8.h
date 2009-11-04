@@ -15,7 +15,6 @@
 
 #undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */
 #undef  CORRELATION             /* Background-error Correlation Check */
-#undef  GRADIENT_CHECK          /* TLM/ADM Gradient Check */
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #undef  IS4DVAR_OLD             /* Old Incremental, strong constraint 4DVAR */

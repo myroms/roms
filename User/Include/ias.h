@@ -15,7 +15,6 @@
 
 #undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */
 #undef  CORRELATION             /* Background-error Correlation Check */
-#undef  GRADIENT_CHECK          /* TLM/ADM Gradient Check */
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #undef  IS4DVAR                 /* Incremental, strong constraint 4DVAR */
@@ -139,11 +138,10 @@
 # undef  AVOID_ADJOINT
 # undef  W4DVAR
 # undef  R_SYMMETRY
-# define  CORRELATION
+# define CORRELATION
 # undef  CONVOLVE
-# define  VCONVOLUTION
-# define  IMPLICIT_VCONV
-# undef  GRADIENT_CHECK
+# define VCONVOLUTION
+# define IMPLICIT_VCONV
 # undef  TLM_CHECK
 # undef  BALANCE_OPERATOR
 # define FULL_GRID
@@ -161,9 +159,8 @@
 # undef  R_SYMMETRY
 # undef  CORRELATION
 # undef  CONVOLVE
-# define  VCONVOLUTION
-# define  IMPLICIT_VCONV
-# undef  GRADIENT_CHECK
+# define VCONVOLUTION
+# define IMPLICIT_VCONV
 # undef  TLM_CHECK
 # undef  BALANCE_OPERATOR
 # define FULL_GRID
@@ -179,11 +176,10 @@
 # undef  IS4DVAR
 # undef  R_SYMMETRY
 # undef  CORRELATION
-# define  CONVOLVE
-# define  VCONVOLUTION
-# define  IMPLICIT_VCONV
-# define  RPM_RELAXATION
-# undef  GRADIENT_CHECK
+# define CONVOLVE
+# define VCONVOLUTION
+# define IMPLICIT_VCONV
+# define RPM_RELAXATION
 # undef  TLM_CHECK
 # define FULL_GRID
 # define FORWARD_WRITE
@@ -198,10 +194,9 @@
 # undef  IS4DVAR
 # undef  R_SYMMETRY
 # undef  CORRELATION
-# define  CONVOLVE
-# define  VCONVOLUTION
-# define  IMPLICIT_VCONV
-# undef  GRADIENT_CHECK
+# define CONVOLVE
+# define VCONVOLUTION
+# define IMPLICIT_VCONV
 # undef  TLM_CHECK
 # define FULL_GRID
 # define FORWARD_WRITE
