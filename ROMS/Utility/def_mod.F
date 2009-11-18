@@ -906,12 +906,14 @@
 !
 !  Define reference free-surface used in the balance operator.
 !
-        Vinfo( 1)='zeta_ref'
-        Vinfo( 2)='reference free-surface, balance operator'
-        Vinfo( 3)=Vname(3,idFsur)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idFsur,ng),        &
-     &                 NF_FOUT, 2, (/RxiDim, RetaDim/), Aval, Vinfo,    &
-     &                 ncname)
+        IF (balance(isFsur)) THEN
+          Vinfo( 1)='zeta_ref'
+          Vinfo( 2)='reference free-surface, balance operator'
+          Vinfo( 3)=Vname(3,idFsur)
+          status=def_var(ng, iNLM, ncMODid(ng), modVid(idFsur,ng),      &
+     &                   NF_FOUT, 2, (/RxiDim, RetaDim/), Aval, Vinfo,  &
+     &                   ncname)
+        END IF
 # endif
 !
 !-----------------------------------------------------------------------

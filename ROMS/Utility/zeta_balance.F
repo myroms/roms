@@ -30,7 +30,7 @@
 !      A multivariate balance operator for variational data assimila-  !
 !      tion, Q. J. R. Meteorol. Soc., 131, 3605-3625.                  !
 !                                                                      !
-!======================================================================= 
+!=======================================================================
 !
       implicit none
 
@@ -83,7 +83,7 @@
 
       CALL set_depth (ng, tile)
       nrhs(ng)=Lbck
-      CALL rho_eos (ng, tile)     
+      CALL rho_eos (ng, tile)
 !
 # endif
       CALL balance_ref_tile (ng, tile,                                  &
@@ -228,13 +228,16 @@
 
       real(r8) :: fac, fac1, fac2, fac3, gamma
       real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: zphi, zphi1, zwbot, zwtop
 
       real(r8), dimension(IminS:ImaxS) :: phie
       real(r8), dimension(IminS:ImaxS) :: phix
 
+      real(r8), dimension(IminS:ImaxS,1:N(ng)) :: phi
+
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gradPx
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gradPy
-      
+
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -266,11 +269,7 @@
      &         z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
           phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1+          &
      &            fac2*(zeta(i,j,Lbck)-zeta(i,j-1,Lbck))
-          gradPy(i,j)=0.5_r8*(Hz(i,j-1,N(ng))+Hz(i,j,N(ng)))*           &
-     &                phie(i)
-# ifdef MASKING
-          gradPy(i,j)=gradPy(i,j)*vmask(i,j)
-# endif
+          phi(i,N(ng))=phie(i)
         END DO
 !
 !  Compute balance, interior U-momemtum from baroclinic pressure
@@ -295,14 +294,74 @@
             cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i,j-1,k+1))+          &
      &           (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i,j-1,k  ))
             phie(i)=phie(i)+fac3*(cff1*cff3-cff2*cff4)
-            gradPy(i,j)=gradPy(i,j)+                                    &
-     &                  0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*                 &
-     &                  phie(i)
-# ifdef MASKING
-            gradPy(i,j)=gradPy(i,j)*vmask(i,j)
-# endif
+            phi(i,k)=phie(i)
           END DO
         END DO
+!
+!  Integrate from bottom to surface.
+!
+        IF (LNM_flag.eq.0) THEN
+          DO k=1,N(ng)
+            DO i=Istr-1,Iend
+              cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
+# ifdef MASKING
+              cff=cff*vmask(i,j)
+# endif
+              gradPy(i,j)=gradPy(i,j)+cff
+            END DO
+          END DO
+!
+!  Integrate from level of no motion (LNM_depth) to surface or
+!  integrate from local bottom if shallower than LNM_depth.
+!  Notice that the level of motion depth is tested against the
+!  bottom of the grid cell (at W-points) and bracketed between
+!  W-points during the interpolation. Also positive depths are
+!  used for clarity.
+!
+        ELSE IF (LNM_flag.eq.1) THEN
+          DO i=Istr-1,Iend
+            DO k=1,N(ng)
+              zwtop=ABS(0.5_r8*(z_w(i,j-1,k  )+z_w(i,j,k  )))
+              zwbot=ABS(0.5_r8*(z_w(i,j-1,k-1)+z_w(i,j,k-1)))
+              IF (zwbot.lt.LNM_depth(ng)) THEN
+                cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
+#  ifdef MASKING
+                cff=cff*vmask(i,j)
+#  endif
+                gradPy(i,j)=gradPy(i,j)+cff
+              ELSE IF ((Zwbot.gt.LNM_depth(ng)).and.                    &
+     &                 (LNM_depth(ng).ge.Zwtop)) THEN      ! interpolate
+                zphi=ABS(0.5_r8*(z_r(i,j-1,k)+z_r(i,j,k)))
+                IF (zphi.ge.LNM_depth(ng)) THEN      ! above cell center
+                  IF (k.eq.N(ng)) THEN
+                    cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
+                  ELSE
+                    zphi1=ABS(0.5_r8*(z_r(i,j-1,k+1)+z_r(i,j,k+1)))
+                    fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
+                    cff=(phi(i,k+1)+fac*(phi(i,k)-phi(i,k+1)))*         &
+     &                  (LNM_depth(ng)-zwtop)
+                  END IF
+                ELSE                                 ! below cell center
+                  IF (k.eq.1) THEN
+                    cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
+                  ELSE
+                    zphi1=ABS(0.5_r8*(z_r(i,j-1,k-1)+z_r(i,j,k-1)))
+                    fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
+                    cff=(phi(i,k)+fac*(phi(i,k-1)-phi(i,k)))*           &
+     &                  (zwbot-LNM_depth(ng))
+                  END IF
+                END IF
+                IF ((zphi-zphi1).eq.0.0_r8) THEN
+                  cff=0.0_r8
+                END IF
+#  ifdef MASKING
+                cff=cff*vmask(i,j)
+#  endif
+                gradPy(i,j)=gradPy(i,j)+cff
+              END IF
+            END DO
+          END DO
+        END IF
       END DO
 !
 !  Compute balanced, surface V-momentum from baroclinic and barotropic
@@ -311,14 +370,10 @@
       DO j=Jstr-1,Jend
         DO i=Istr,Iend+1
           cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                       &
-     &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng)) 
+     &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
           phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1+          &
      &            fac2*(zeta(i,j,Lbck)-zeta(i-1,j,Lbck))
-          gradPx(i,j)=0.5_r8*(Hz(i-1,j,N(ng))+Hz(i,j,N(ng)))*           &
-     &                phix(i)
-# ifdef MASKING
-          gradPx(i,j)=gradPx(i,j)*umask(i,j)
-# endif
+          phi(i,N(ng))=phix(i)
         END DO
 !
 !  Compute balance, interior V-momemtum from baroclinic pressure
@@ -343,14 +398,74 @@
             cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i-1,j,k+1))+          &
      &           (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i-1,j,k  ))
             phix(i)=phix(i)+fac3*(cff1*cff3-cff2*cff4)
-            gradPx(i,j)=gradPx(i,j)+                                    &
-     &                  0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*                 &
-     &                  phix(i)
-# ifdef MASKING
-            gradPx(i,j)=gradPx(i,j)*umask(i,j)
-# endif
+            phi(i,k)=phix(i)
           END DO
         END DO
+!
+!  Integrate from bottom to surface.
+!
+        IF (LNM_flag.eq.0) THEN
+          DO k=1,N(ng)
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
+#  ifdef MASKING
+              cff=cff*umask(i,j)
+#  endif
+              gradPx(i,j)=gradPx(i,j)+cff
+            END DO
+          END DO
+!
+!  Integrate from level of no motion (LNM_depth) to surface or
+!  integrate from local bottom if shallower than LNM_depth.
+!  Notice that the level of motion depth is tested against the
+!  bottom of the grid cell (at W-points) and bracketed between
+!  W-points during the interpolation. Also positive depths are
+!  used for clarity.
+!
+        ELSE IF (LNM_flag.eq.1) THEN
+          DO i=Istr,Iend+1
+            DO k=1,N(ng)
+              zwtop=ABS(0.5_r8*(z_w(i-1,j,k  )+z_w(i,j,k  )))
+              zwbot=ABS(0.5_r8*(z_w(i-1,j,k-1)+z_w(i,j,k-1)))
+              IF (zwbot.lt.LNM_depth(ng)) THEN
+                cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
+#  ifdef MASKING
+                cff=cff*umask(i,j)
+#  endif
+                gradPx(i,j)=gradPx(i,j)+cff
+              ELSE IF ((Zwbot.gt.LNM_depth(ng)).and.                    &
+     &                 (LNM_depth(ng).ge.Zwtop)) THEN      ! interpolate
+                zphi=ABS(0.5_r8*(z_r(i-1,j,k)+z_r(i,j,k)))
+                IF (zphi.ge.LNM_depth(ng)) THEN      ! above cell center
+                  IF (k.eq.N(ng)) THEN
+                    cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
+                  ELSE
+                    zphi1=ABS(0.5_r8*(z_r(i-1,j,k+1)+z_r(i,j,k+1)))
+                    fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
+                    cff=(phi(i,k+1)+fac*(phi(i,k)-phi(i,k+1)))*         &
+     &                  (LNM_depth(ng)-zwtop)
+                  END IF
+                ELSE                                 ! below cell center
+                  IF (k.eq.1) THEN
+                    cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
+                  ELSE
+                    zphi1=ABS(0.5_r8*(z_r(i-1,j,k-1)+z_r(i,j,k-1)))
+                    fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
+                    cff=(phi(i,k)+fac*(phi(i,k-1)-phi(i,k)))*           &
+     &                  (zwbot-LNM_depth(ng))
+                  END IF
+                END IF
+                IF ((zphi-zphi1).eq.0.0_r8) THEN
+                  cff=0.0_r8
+                END IF
+#  ifdef MASKING
+                cff=cff*umask(i,j)
+#  endif
+                gradPx(i,j)=gradPx(i,j)+cff
+              END IF
+            END DO
+          END DO
+        END IF
       END DO
 !
 !  Impose zero gradient conditions at open boundaries.
@@ -368,7 +483,7 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           rhs_r2d(i,j)=-pm(i,j)*pn(i,j)*                                &
-     &                 (pmon_u(i+1,j)*gradPx(i+1,j)-                    &         
+     &                 (pmon_u(i+1,j)*gradPx(i+1,j)-                    &
      &                  pmon_u(i  ,j)*gradPx(i  ,j)+                    &
      &                  pnom_v(i,j+1)*gradPy(i,j+1)-                    &
      &                  pnom_v(i,j  )*gradPy(i,j  ))
@@ -471,7 +586,7 @@
       USE mod_grid
       USE mod_iounits
       USE mod_parallel
-!    
+!
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d
       USE mp_exchange_mod, ONLY : mp_exchange2d
@@ -601,7 +716,7 @@
      &                    r2d_ref)
 # endif
 !
-!  Compute starting value of divergence operator: 
+!  Compute starting value of divergence operator:
 !     z1_r2d = div[h grad(r2d_ref)].
 !
       Ltrans=.FALSE.
@@ -844,7 +959,7 @@
         bc_bk(it)=zdf3(it)/zdf1(it)
 !
 !  Use recurrence relationship to compute new direction vectors
-!  "p" and "bp". 
+!  "p" and "bp".
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -1213,7 +1328,7 @@
 #ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West boundary conditions: Closed or gradient 
+!  East-West boundary conditions: Closed or gradient
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
@@ -1264,7 +1379,7 @@
       END IF
       IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
-     &                           A(Istr+1,Jend+1)) 
+     &                           A(Istr+1,Jend+1))
       END IF
       IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
@@ -1877,7 +1992,7 @@
         tl_bc_bk=tl_zdf3/zdf1(it)-tl_zdf1*bc_bk(it)/zdf1(it)
 !
 !  Use recurrence relationship to compute new direction vectors
-!  "tl_p" and "tl_bp". 
+!  "tl_p" and "tl_bp".
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -2341,7 +2456,7 @@
      &                  bv_r2d)
 !
 !  Adjoint of use recurrence relationship to compute new direction
-!  vectors "tl_p" and "tl_bp". 
+!  vectors "tl_p" and "tl_bp".
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend

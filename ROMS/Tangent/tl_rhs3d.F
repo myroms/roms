@@ -174,9 +174,6 @@
      &                    OCEAN(ng) % tl_v,                             &
      &                    OCEAN(ng) % W,                                &
      &                    OCEAN(ng) % tl_W,                             &
-# ifndef SET_ZETA
-     &                    COUPLING(ng) % tl_Zt_avg1,                    &
-# endif
 # ifdef NEARSHORE_MELLOR
      &                    OCEAN(ng) % u_stokes,                         &
      &                    OCEAN(ng) % tl_u_stokes,                      &
@@ -196,12 +193,7 @@
 !!   &                    DIAGS(ng) % DiaRV,                            &
 # endif
      &                    OCEAN(ng) % tl_ru,                            &
-# ifdef SET_ZETA
      &                    OCEAN(ng) % tl_rv)
-# else
-     &                    OCEAN(ng) % tl_rv,                            &
-     &                    OCEAN(ng) % tl_zeta)
-# endif
 # ifdef PROFILE
       CALL wclock_off (ng, iTLM, 21)
 # endif
@@ -262,9 +254,6 @@
      &                          u, tl_u,                                &
      &                          v, tl_v,                                &
      &                          W, tl_W,                                &
-# ifndef SET_ZETA
-     &                          tl_Zt_avg1,                             &
-# endif
 # ifdef NEARSHORE_MELLOR
      &                          u_stokes, tl_u_stokes,                  &
      &                          v_stokes, tl_v_stokes,                  &
@@ -277,26 +266,11 @@
 !!   &                          DiaRUfrc, DiaRVfrc,                     &
 !!   &                          DiaRU, DiaRV,                           &
 # endif
-# ifdef SET_ZETA
      &                          tl_ru, tl_rv)
-# else
-     &                          tl_ru, tl_rv,                           &
-     &                          tl_zeta)
-# endif
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
-
-# ifndef SET_ZETA
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!
-      USE exchange_2d_mod, ONLY : exchange_r2d_tile
-#  endif
-#  ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-#  endif
-# endif
 !
 !  Imported variable declarations.
 !
@@ -348,9 +322,6 @@
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_W(LBi:,LBj:,0:)
-#  ifndef SET_ZETA
-      real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)
-#  endif
 #  ifdef NEARSHORE_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
@@ -372,9 +343,6 @@
 
       real(r8), intent(out) :: tl_rufrc(LBi:,LBj:)
       real(r8), intent(out) :: tl_rvfrc(LBi:,LBj:)
-#  ifndef SET_ZETA
-      real(r8), intent(out) :: tl_zeta(LBi:,LBj:,:)
-#  endif
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -418,9 +386,6 @@
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_W(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifndef SET_ZETA
-      real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
-#  endif
 #  ifdef NEARSHORE_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
@@ -442,9 +407,6 @@
 
       real(r8), intent(out) :: tl_rufrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: tl_rvfrc(LBi:UBi,LBj:UBj)
-#  ifndef SET_ZETA
-      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,3)
-#  endif
 # endif
 !
 !  Local variable declarations.
@@ -572,7 +534,7 @@
           tl_cff1=-cff1*cff1*cff*(tl_wrk(i,j-1)+tl_wrk(i,j))
           Vwrk(i,j)=svstr(i,j)*cff1
           tl_Vwrk(i,j)=tl_svstr(i,j)*cff1+                              &
-     &                 svstr(i,j)*tl_cff1 
+     &                 svstr(i,j)*tl_cff1
         END DO
       END DO
       DO k=levsfrc(ng),N(ng)
@@ -1665,7 +1627,7 @@
 !
 #  ifdef UV_SADVECTION
 !
-!  Apply spline code to BASIC STATE u-momentum which should be in 
+!  Apply spline code to BASIC STATE u-momentum which should be in
 !  units of m/s. CF will be used by the tangent linear spline code.
 !
         cff1=9.0_r8/16.0_r8
@@ -2272,7 +2234,7 @@
         IF (j.ge.JstrV) THEN
 #  ifdef UV_SADVECTION
 !
-!  Apply spline code to BASIC STATE v-momentum which should be in 
+!  Apply spline code to BASIC STATE v-momentum which should be in
 !  units of m/s. CF will be used by the tangent linear spline code.
 !
           cff1=9.0_r8/16.0_r8
@@ -3033,51 +2995,6 @@
 # endif
         END IF
       END DO J_LOOP
-# ifndef SET_ZETA
-!
-!  Prepare to time-step 2D equations:  set initial free-surface
-!  to its fast-time averaged values (which corresponds to the time
-!  step "n").
-!
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!>        zeta(i,j,1)=Zt_avg1(i,j)
-!>        zeta(i,j,2)=Zt_avg1(i,j)
-!>
-          tl_zeta(i,j,1)=tl_Zt_avg1(i,j)
-          tl_zeta(i,j,2)=tl_Zt_avg1(i,j)
-        END DO
-      END DO
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        zeta(:,:,1))
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_zeta(:,:,1))
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        zeta(:,:,2))
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_zeta(:,:,2))
-#  endif
-#  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    zeta(:,:,1),                                  &
-!>   &                    zeta(:,:,2))
-!>
-      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_zeta(:,:,1),                               &
-     &                    tl_zeta(:,:,2))
-#  endif
-# endif
 
       RETURN
       END SUBROUTINE tl_rhs3d_tile

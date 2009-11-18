@@ -835,6 +835,39 @@
       IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
+
+# ifdef BALANCE_OPERATOR
+#  ifdef ZETA_ELLIPTIC
+      CALL netcdf_put_ivar (ng, model, ncname, 'Nbico',                 &
+     &                      Nbico(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+#  endif
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lbalance',              &
+     &                      balance, (/1/), (/NstateVar(ng)/),          &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'LNM_flag',              &
+     &                      LNM_flag, (/0/), (/0/),                     &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'LNM_depth',             &
+     &                      LNM_depth(ng), (/0/), (/0/),                &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'dTdz_min',              &
+     &                      dTdz_min(ng), (/0/), (/0/),                 &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'ml_depth',              &
+     &                      ml_depth(ng), (/0/), (/0/),                 &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \

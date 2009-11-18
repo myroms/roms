@@ -1041,18 +1041,6 @@
 #endif
 
 /*
-** Activate switch to modify MAIN3D to allow perfect restart. To
-** achieve this, the call to OUTPUT needs to be before to RHS3D.
-** Therefore, and additional routine (set_zeta) is needed to set
-** the free-surface to its time-averaged value.  This strategy
-** needs to be tested in the TLM, RPM, and ADM.
-*/
-
-#if !(defined ADJOINT || defined TANGENT || defined TL_IOMS)
-# define SET_ZETA
-#endif
-
-/*
 ** Activate switch to modify MAIN3D to recompute depths and
 ** thicknesses using the new time filtered free-surface.  This
 ** call is moved from STEP2D to facilitate nesting.

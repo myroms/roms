@@ -620,9 +620,9 @@
 # endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
 !
-!  Define reference free-surface used in the balance operator.
+!  Write out reference free-surface used in the balance operator.
 !
-        IF (wrtZetaRef(ng)) THEN
+        IF (wrtZetaRef(ng).and.balance(isFsur)) THEN
           status=nf_fwrite2d(ng, model, ncMODid(ng), modVid(idFsur,ng), &
      &                       0, r2dvar,                                 &
      &                       LBi, UBi, LBj, UBj, 1.0_r8,                &

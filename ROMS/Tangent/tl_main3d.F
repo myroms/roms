@@ -102,9 +102,7 @@
 !!    USE tl_set_tides_mod, ONLY : tl_set_tides
 # endif
       USE tl_set_vbc_mod, ONLY : tl_set_vbc
-# ifdef SET_ZETA
       USE tl_set_zeta_mod, ONLY : tl_set_zeta
-# endif
       USE tl_step2d_mod, ONLY : tl_step2d
 # ifndef TS_FIXED
       USE tl_step3d_t_mod, ONLY : tl_step3d_t
@@ -400,8 +398,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
@@ -450,47 +446,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# else
-!
-!-----------------------------------------------------------------------
-!  Compute right-hand-side terms for 3D equations.  If applicable,
-!  accumulate time-averaged output data.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&         SHARED(ng,Lnew,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-#  ifdef DIAGNOSTICS
-!!        CALL set_diags (ng, TILE)
-#  endif
-          CALL tl_rhs3d (ng, TILE)
-#  ifdef MY25_MIXING_NOT_YET
-          CALL tl_my25_prestep (ng, TILE)
-#  elif defined GLS_MIXING_NOT_YET
-          CALL tl_gls_prestep (ng, TILE)
-#  endif
-#  ifdef AVERAGES
-!!        CALL tl_set_avg (ng, TILE)
-#  endif
-#  ifdef TLM_CHECK
-          CALL tl_dotproduct (ng, TILE, Lnew(ng))
-#  endif
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-!
-!-----------------------------------------------------------------------
-!  If appropriate, write out fields into output NetCDF files.  Notice
-!  that IO data is written in delayed and serial mode.  Exit if last
-!  time step.
-!-----------------------------------------------------------------------
-!
-      CALL tl_output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
-# endif
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the

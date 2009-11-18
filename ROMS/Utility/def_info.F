@@ -107,6 +107,9 @@
       character (len=50) :: tiling
       character (len=80) :: type
       character (len=100) :: Vinfo(Natt)
+#ifdef FOUR_DVAR
+      character (len=512) :: state_vector
+#endif
 #ifdef BIOLOGY
       character (len=512) :: bio_file
 #endif
@@ -281,6 +284,20 @@
             ioerror=status
           END IF
         END IF
+
+#ifdef FOUR_DVAR
+!
+!  Set state vector variables.
+!
+        is=1
+        state_vector=' '
+        DO i=1,NstateVar(ng)
+          lstr=LEN_TRIM(Vname(1,idSvar(i)))
+          ie=is+lstr
+          state_vector(is:ie)=TRIM(Vname(1,idSvar(i)))//', '
+          is=ie+2
+        END DO
+#endif
 !
 !  Define other global attributes to NetCDF file.
 !
@@ -294,15 +311,18 @@
           END IF
         END IF
 
+#ifdef FOUR_DVAR
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_att(ncid, nf90_global, 'var_info',            &
-     &                        TRIM(varname))
+          lstr=LEN_TRIM(state_vector)-1
+          status=nf90_put_att(ncid, nf90_global, 'state_vector',        &
+     &                        state_vector(1:lstr))
           IF (status.ne.nf90_noerr) THEN
-            IF (Master) WRITE (stdout,20) 'var_info', TRIM(ncname)
+            IF (Master) WRITE (stdout,20) 'state_vector', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
         END IF
+#endif
 
 #ifdef PROPAGATOR
         IF (exit_flag.eq.NoError) THEN
@@ -1903,6 +1923,60 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
+# endif
+
+# ifdef BALANCE_OPERATOR
+#  ifdef ZETA_ELLIPTIC
+      Vinfo( 1)='Nbico'
+      Vinfo( 2)='number of iterations in SSH elliptic equation'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+      Vinfo( 1)='Lbalance'
+      Vinfo( 2)='switches for state variables included as '//           &
+                'constraint in the error covariance balance operator'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/statedim/), Aval, Vinfo, ncname,              &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='LNM_flag'
+      Vinfo( 2)='balance operator level of no motion flag'
+      Vinfo( 9)='integrate from bottom to surface,'
+      Vinfo(10)='integrate from LNM_depth to surface'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='LNM_depth'
+      Vinfo( 2)='balance operator level of no motion depth'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='dTdz_min'
+      Vinfo( 2)='minimum dT/dz value used in balaced salinity'
+      Vinfo( 3)='Celsius meter-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='ml_depth'
+      Vinfo( 2)='mixed layer depth used in balanced salinity'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
 # endif
 #endif
 

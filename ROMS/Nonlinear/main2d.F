@@ -34,7 +34,7 @@
       USE forcing_mod, ONLY : forcing
 # endif
 # ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_adjust, load_forcing
+      USE frc_adjust_mod, ONLY : frc_adjust
 # endif
       USE ini_fields_mod, ONLY : ini_fields, ini_zeta
 # if defined ADJUST_BOUNDARY
@@ -244,7 +244,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL frc_adjust (ng, TILE, Lfinp(ng), Lfout(ng))
-            CALL load_forcing (ng, TILE, Lfout(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO

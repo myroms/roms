@@ -102,9 +102,7 @@
 !!    USE ad_set_tides_mod, ONLY : ad_set_tides
 # endif
       USE ad_set_vbc_mod, ONLY : ad_set_vbc
-# ifdef SET_ZETA
       USE ad_set_zeta_mod, ONLY : ad_set_zeta
-# endif
       USE ad_step2d_mod, ONLY : ad_step2d
 # ifndef TS_FIXED
       USE ad_step3d_t_mod, ONLY : ad_step3d_t
@@ -490,8 +488,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
 !  Set adjoint free-surface to it time-averaged value.
@@ -508,7 +504,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint vertical mixing coefficients for momentum and

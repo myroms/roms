@@ -2277,7 +2277,7 @@
 # if defined TS_A4HADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_A4HADVECTION_TL',               &
-     &   'TL/AD fourth-order Akima horizontal advection of tracers.'
+     &   'TL/AD fourth-order Akima horizontal tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_A4HADVECTION_TL,'
       itrcHadvtl=itrcHadvtl+1
@@ -2292,7 +2292,7 @@
 # if defined TS_C2HADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_C2HADVECTION_TL',               &
-     &   'TL/AD second-order centered horizontal advection of tracers.'
+     &   'TL/AD second-order centered horizontal tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_C2HADVECTION_TL,'
       itrcHadvtl=itrcHadvtl+1
@@ -2307,7 +2307,7 @@
 # if defined TS_C4HADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_C4HADVECTION_TL',               &
-     &   'TL/AD fourth-order centered horizontal advection of tracers.'
+     &   'TL/AD fourth-order centered horizontal tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_C4HADVECTION_TL,'
       itrcHadvtl=itrcHadvtl+1
@@ -2322,7 +2322,7 @@
 # if defined TS_U3HADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_U3HADVECTION_TL',               &
-     &   'TL/AD third-order upstream horizontal advection of tracers.'
+     &   'TL/AD third-order upstream horizontal tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_U3HADVECTION_TL,'
       itrcHadvtl=itrcHadvtl+1
@@ -2346,7 +2346,7 @@
 # if defined TS_A4VADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_A4VADVECTION_TL',               &
-     &   'TL/AD fourth-order Akima vertical advection of tracers.'
+     &   'TL/AD fourth-order Akima vertical tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_A4VADVECTION_TL,'
       itrcVadvtl=itrcVadvtl+1
@@ -2361,7 +2361,7 @@
 # if defined TS_C2VADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_C2VADVECTION_TL',               &
-     &   'TL/AD second-order centered vertical advection of tracers.'
+     &   'TL/AD second-order centered vertical tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_C2VADVECTION_TL,'
       itrcVadvtl=itrcVadvtl+1
@@ -2376,7 +2376,7 @@
 # if defined TS_C4VADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
       IF (Master) WRITE (stdout,20) 'TS_C4VADVECTION_TL',               &
-     &   'TL/AD fourth-order centered vertical advection of tracers.'
+     &   'TL/AD fourth-order centered vertical tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' TS_C4VADVECTION_TL,'
       itrcVadvtl=itrcVadvtl+1
@@ -2390,8 +2390,8 @@
 # endif
 # if defined TS_SVADVECTION_TL && \
     (defined TANGENT || defined ADJOINT || defined TL_IOMS)
-      IF (Master) WRITE (stdout,20) 'TS_SVADVECTION_TL',                   &
-     &   'TL/AD parabolic splines vertical advection of tracers.'
+      IF (Master) WRITE (stdout,20) 'TS_SVADVECTION_TL',                &
+     &   'TL/AD parabolic splines vertical tracer advection.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+19)=' TS_SVADVECTION_TL,'
       itrcVadvtl=itrcVadvtl+1

@@ -49,6 +49,29 @@
        dTdz_min == 0.001d0                ! minimun dT/dz (Celsius/m)
        ml_depth == 100.0d0                ! mixed-layer depth (m; positive)
 
+! Balance operator level of no motion depth (m) used when computing balanced
+! free-surface contribution, [1:Ngrids].
+
+      LNM_depth == 1000.0d0               ! meters, positive
+
+! Balance operator level of no motion flag used to compute balanced
+! free-surface contribution:
+!
+!      [0] Integrate from local bottom to the surface
+!      [1] Integrate from LNM_depth to surface or integrate from local bottom
+!          if shallower than LNM_depth
+!
+
+      LNM_flag  =  0
+
+! Balance operator logical switches for state variables to consider in the
+! error covariance multivariate constraints.
+
+balance(isSalt) =  T                      ! salinity
+balance(isFsur) =  T                      ! free-sruface
+balance(isVbar) =  F                      ! 2D momentum (ubar, vbar)
+balance(isVvel) =  T                      ! 3D momentum (u, v)
+
 ! Upper bound on the relative error of the gradient for the Lanczos
 ! conjugate gradient algorithm.
 
@@ -73,7 +96,7 @@
 ! Switch (T/F) to activate IS4DVAR conjugate gradient preconditioning.
 ! Two types of Limited-Memory Preconditioner (LMP) are available
 ! (Tshimanga et al., 2008): spectral LMP and Ritz LMP.
- 
+
        Lprecond = T
 
 ! Switch to activate either Ritz Limited-Memory Preconditioner (T)
@@ -183,7 +206,7 @@
 
          Hgamma =  0.5      0.5      0.5      0.5       ! horizontal operator
          Vgamma =  0.05     0.05     0.05     0.05      ! vertical operator
- 
+
 ! Model error covariance: horizontal, isotropic decorrelation scales (m).
 ! This scales are only used in weak-constraint data assimilation.
 
@@ -219,7 +242,7 @@ VdecayI(isTvar) == 100.0d0   100.0d0                      ! 1:NT tracers
 
 ! Boundary conditions error covariance: horizontal, isotropic decorrelation
 ! scales (m). A value is expected for each boundary edge in the following
-! order:             
+! order:
 !                  1: west  2: south  3: east  4: north
 
 HdecayB(isFsur) == 100.0d+3 100.0d+3 100.0d+3 100.0d+3    ! free-surface
@@ -231,7 +254,7 @@ HdecayB(isTvar) == 4*100.0d+3  4*100.0d+3                 ! 1:NT tracers
 
 ! Boundary conditions error covariance: vertical, isotropic decorrelation
 ! scales (m). A value is expected for each boundary edge in the following
-! order:             
+! order:
 !                 1: west  2: south  3: east  4: north
 
 VdecayB(isUvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D U-momentum
@@ -289,7 +312,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
        STDnameM == ocean_std_m.nc
        STDnameI == ocean_std_i.nc
        STDnameB == ocean_std_b.nc
-       STDnameF == ocean_std_f.nc  
+       STDnameF == ocean_std_f.nc
 
 ! Input/output model, initial conditions, boundary conditions, and surface
 ! forcing error covariance normalization factors file name, [1:Ngrids].
@@ -360,6 +383,46 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  ml_depth       Mixed-layer depth (m; positive) used above in smoothing
 !                 coefficient (cff), [1:Ngrids].
 !
+!  LNM_depth      Level of no motion depth (m; positive) used to compute the
+!                 balanced free-surface contribution in the error covariance
+!                 balance operator. It is only relevant when LNM_flag=1 and
+!                 balance(isFsur)=T.
+!
+!  LNM_flag       Level of no motion integration flag used to used to compute
+!                 the balanced free-surface contribution:
+!
+!                   LNM_flag = 0,  integrate from local bottom to the surface
+!
+!                   LNM_flag = 1,  integrate from LNM_depth to surface or
+!                                  integrate from local bottom if shallower
+!                                  than LNM_depth
+!
+!  balance        Balance operator logical switches for state variables to
+!                 consider in the error covariance off-diagonal multivariate
+!                 constraints:
+!
+!                   balance(isSalt) = T,         salinity
+!                   balance(isFsur) = T,         free-sruface
+!                   balance(isVbar) = F,         2D momentum (ubar, vbar)
+!                   balance(isVvel) = T,         3D momentum (u, v)
+!
+!                 Guidelines:
+!
+!                   1) The salinity contribution, balance(isSalt), depends
+!                      only on temperature. Notice that temperature is used
+!                      establish the balanced part of the other state
+!                      variables.
+!
+!                   2) The free-surface contribution, balance(isFsur), depends
+!                      on salinity since we need to compute balanced density
+!                      and integrate properly using LNM_flag and LNM_depth.
+!                      This implies that balance(isSalt) needs to be TRUE too.
+!                      It is independent the 2D or 3D balance velocity terms.
+!
+!                   3) The 3D momentum, balance(isVvel), depends on salinity
+!                      since we need to compute balanced density.  This
+!                      implies that balance(isSalt) needs to be TRUE too.
+!
 !------------------------------------------------------------------------------
 ! Lanczos conjugate gradient algorithm parameters.
 !------------------------------------------------------------------------------
@@ -405,7 +468,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! Diffusive relaxation coefficients.
 !------------------------------------------------------------------------------
 !
-! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this 
+! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this
 ! coefficients are use to relax the representer tangent lineas solution
 ! to previous outer loop linearized trajectory during the Picard
 ! iterations. The user may turn off relaxation on a particular variable
@@ -442,7 +505,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 using this approach, compute the normalization factors
 !                 with the CORRELATION CPP-option and not IS4DVAR, W4DPSAS
 !                 or W4DVAR.
-!            
+!
 !  LwrtNRM        Switch (T/F) to write out correlation normalization factors
 !                 for, [4,1:Ngrids]:
 !
