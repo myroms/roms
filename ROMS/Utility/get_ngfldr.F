@@ -96,7 +96,7 @@
 !  Intialize local variables.
 !
         Vid=-1
-        Tid=-1        
+        Tid=-1
         Nrec=0
         Liocycle=.FALSE.
         Lgridded=.FALSE.
@@ -145,7 +145,7 @@
             DO i=1,nvatt
               IF (TRIM(var_Aname(i)).eq.'scale_factor') THEN
                 scale=var_Afloat(i)
-                Fscale(ifield,ng)=Fscale(ifield,ng)*scale
+                Finfo(10,ifield,ng)=scale
               ELSE IF (TRIM(var_Aname(i)).eq.'water_points') THEN
                 Iinfo(1,ifield,ng)=-ABS(Iinfo(1,ifield,ng))
                 Vtype=Iinfo(1,ifield,ng)
@@ -326,7 +326,7 @@
         Linfo(3,ifield,ng)=Lonerec
         Tindex=Iinfo(8,ifield,ng)
         Vtime(Tindex,ifield,ng)=Finfo(4,ifield,ng)
-      END IF         
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Get requested field information from global storage.
@@ -393,7 +393,7 @@
             Vtime(Tindex,ifield,ng)=Tval
           END IF
 !
-!  Read in non-grided data. The conditional statement on Jrec is to 
+!  Read in non-grided data. The conditional statement on Jrec is to
 !  differentiate between reading a 3D and 2D array.
 !
           IF (Vid.ge.0) THEN
@@ -419,13 +419,13 @@
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
-            Fmin=A(1)*Fscale(ifield,ng)
-            Fmax=A(1)*Fscale(ifield,ng)
+            Fmin=A(1)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
+            Fmax=A(1)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
             ic=0
             DO j=1,Jrec
               DO i=Istr,Iend
                 ic=ic+1
-                Aval=A(ic)*Fscale(ifield,ng)
+                Aval=A(ic)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
                 Fmin=MIN(Fmin,Aval)
                 Fmax=MAX(Fmax,Aval)
                 Fout(i,j,Tindex)=Aval

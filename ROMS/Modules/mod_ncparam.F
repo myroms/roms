@@ -43,17 +43,18 @@
 !               Iinfo(9,*)  => latest processed time record .          !
 !                                                                      !
 !  Finfo      Input/output field floating-point information:           !
-!               Finfo(1,*)  => Starting time (days) of data.           !
-!               Finfo(2,*)  => Ending time (days) of data.             !
-!               Finfo(3,*)  => Data time lower bound (days) enclosing  !
+!               Finfo( 1,*) => Starting time (days) of data.           !
+!               Finfo( 2,*) => Ending time (days) of data.             !
+!               Finfo( 3,*) => Data time lower bound (days) enclosing  !
 !                                model starting time.                  !
-!               Finfo(4,*)  => Data time upper bound (days) enclosing  !
+!               Finfo( 4,*) => Data time upper bound (days) enclosing  !
 !                                model starting time.                  !
-!               Finfo(5,*)  => length (days) of time cycling.          !
-!               Finfo(6,*)  => Scale to convert time to day units.     !
-!               Finfo(7,*)  => latest monotonic time (sec).            !
-!               Finfo(8,*)  => minimum value for current data.         !
-!               Finfo(9,*)  => maximum value for current data.         !
+!               Finfo( 5,*) => length (days) of time cycling.          !
+!               Finfo( 6,*) => Scale to convert time to day units.     !
+!               Finfo( 7,*) => latest monotonic time (sec).            !
+!               Finfo( 8,*) => minimum value for current data.         !
+!               Finfo( 9,*) => maximum value for current data.         !
+!               Finfo(10,*) => value of scale_factor attribute if any. !
 !  Fscale     Scale to convert input data to model units.              !
 !  Fpoint     Latest two-time records of input point data.             !
 !  Tintrp     Time (sec) of latest field snapshots used for            !
@@ -505,7 +506,7 @@
 
         integer  :: Iinfo(9,NV,Ngrids)
 
-        real(r8) :: Finfo(9,NV,Ngrids)
+        real(r8) :: Finfo(10,NV,Ngrids)
         real(r8) :: Fpoint(2,NV,Ngrids)
         real(r8) :: Fscale(NV,Ngrids)
         real(r8) :: Tintrp(2,NV,Ngrids)
@@ -1046,6 +1047,7 @@
             Finfo(5,i,ng)=0.0_r8
             Finfo(6,i,ng)=0.0_r8
             Finfo(7,i,ng)=0.0_r8
+            Finfo(10,i,ng)=1.0_r8
             Fscale(i,ng)=1.0_r8
             Fpoint(1,i,ng)=0.0_r8
             Fpoint(2,i,ng)=0.0_r8
