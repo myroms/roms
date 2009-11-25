@@ -36,8 +36,8 @@
 !  NOTES to EcoSim:                                                    !
 !                                                                      !
 !  * This version uses a descending index for depth that is different  !
-!    than the original coding.					       !
-!							      	       !
+!    than the original coding.                                         !
+!                                                                      !
 !  * This version of the code has been modified by Bronwyn Cahill and  !
 !    includes a semi-Lagrangian vertical sinking flux algorithm for    !
 !    fecal material and bio_sediment subroutine which remineralizes    !
@@ -142,12 +142,13 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Nsink = 30
+      integer, parameter :: Msink = 30
 
       integer :: Iter, Tindex, i, isink, ibio, id, itrc, j, k, ic, ks
       integer :: ibac, iband, idom, ifec, iphy, ipig
+      integer :: Nsink
 
-      integer, dimension(Nsink) :: idsink
+      integer, dimension(Msink) :: idsink
       integer, dimension(IminS:ImaxS,N(ng)) :: ksource
 
       real(r8), parameter :: MinVal = 0.0_r8
@@ -162,7 +163,7 @@
       real(r8) :: N_quota, RelDOC1, RelDON1, RelDOP1, RelFe
       real(r8) :: cff, cff1, cffL, cffR, cu, dltL, dltR
 
-      real(r8), dimension(Nsink) :: Wbio
+      real(r8), dimension(Msink) :: Wbio
 
       real(r8), dimension(4) :: Bac_G
 
@@ -173,7 +174,7 @@
 
       real(r8), dimension(N(ng),Nphy) :: C2CHL, C2CHL_w
       real(r8), dimension(N(ng),Nphy) :: Gt_fl, Gt_ll, Gt_nl
-      real(r8), dimension(N(ng),Nphy) :: Gt_sl, Gt_pl 
+      real(r8), dimension(N(ng),Nphy) :: Gt_sl, Gt_pl
       real(r8), dimension(N(ng),Nphy) :: alfa
       real(r8), dimension(N(ng),Nphy) :: pac_eff
 
@@ -291,14 +292,17 @@
         ic=ic+1
         idsink(ic)=iPhyP(iphy)
         Wbio(ic)=WS(iphy,ng)
-        ic=ic+1
-        idsink(ic)=iPhyS(iphy)
-        Wbio(ic)=WS(iphy,ng)
+        IF (iPhyS(iphy).ne.0) THEN
+          ic=ic+1
+          idsink(ic)=iPhyS(iphy)
+          Wbio(ic)=WS(iphy,ng)
+        END IF
         ic=ic+1
         idsink(ic)=iPhyF(iphy)
         Wbio(ic)=WS(iphy,ng)
         ic=ic+1
       END DO
+      Nsink=ic-1
 !
 !-----------------------------------------------------------------------
 !  Compute inverse thickness to avoid repeated divisions.
@@ -310,12 +314,12 @@
             Hz_inv(i,k)=1.0_r8/Hz(i,j,k)
           END DO
         END DO
-        DO k=1,N(ng)
+        DO k=1,N(ng)-1
           DO i=Istr,Iend
             Hz_inv2(i,k)=1.0_r8/(Hz(i,j,k)+Hz(i,j,k+1))
           END DO
         END DO
-        DO k=1,N(ng)
+        DO k=2,N(ng)-1
           DO i=Istr,Iend
             Hz_inv3(i,k)=1.0_r8/(Hz(i,j,k-1)+Hz(i,j,k)+Hz(i,j,k+1))
           END DO
@@ -465,9 +469,9 @@
 !-----------------------------------------------------------------------
 !
         ITER_LOOP : DO Iter=1,BioIter(ng)
- 
+
           DO k=1,N(ng)
-            DO i=Istr,Iend           
+            DO i=Istr,Iend
               totNH4_d(i,k)=0.0_r8
               totNO3_d(i,k)=0.0_r8
               totPO4_d(i,k)=0.0_r8
@@ -507,14 +511,14 @@
                 IF (Bio(i,k,iPhyP(iphy)).gt.0.0_r8) THEN
                   C2pALG(i,k,iphy)=Bio(i,k,iPhyC(iphy))/                &
      &                             Bio(i,k,iPhyP(iphy))
-                END IF 
+                END IF
                 C2sALG(i,k,iphy)=0.0_r8
                 IF (iPhyS(iphy).gt.0) THEN
                   IF (Bio(i,k,iPhyS(iphy)).gt.0.0_r8) THEN
                     C2sALG(i,k,iphy)=Bio(i,k,iPhyC(iphy))/              &
      &                               Bio(i,k,iPhyS(iphy))
                   END IF
-                END IF 
+                END IF
                 C2fALG(i,k,iphy)=0.0_r8
                 IF (Bio(i,k,iPhyF(iphy)).gt.0.0_r8) THEN
                   C2fALG(i,k,iphy)=Bio(i,k,iPhyC(iphy))/                &
@@ -530,7 +534,7 @@
 !
 ! Initialize.
 !
-          DO i=Istr,Iend 
+          DO i=Istr,Iend
             Ed_nz(i,N(ng))=0.0_r8
             E0_nz(i,N(ng))=0.0_r8
             Keuphotic(i)=N(ng)+1
@@ -648,7 +652,7 @@
 !  Calculate scattering and backscattering (see equation 19 Morel, 1991,
 !  Prog. Ocean). Morel, 1988 puts spectral dependency in backscattering.
 !  Since Morel (1991) does not have a backscattering equation, use 1988
-!  paper. Morel 2001 has slight adjustment 0.01, rather than 0.02. 
+!  paper. Morel 2001 has slight adjustment 0.01, rather than 0.02.
 !  This was altered, but never tested in ROMS 1.8 on 03/08/03.
 !
                     par_b =0.3_r8*(tChl**0.62_r8)
@@ -1281,19 +1285,19 @@
 !
 !  Pigment growth calculations.
 !
- 		  DO ipig=1,Npig
-		    IF (iPigs(iphy,ipig).gt.0) THEN
+                  DO ipig=1,Npig
+                    IF (iPigs(iphy,ipig).gt.0) THEN
                       itrc=iPigs(iphy,ipig)
-                        IF (Bio(i,k,iPhyC(iphy)).gt.0.0_r8) THEN
-                          FV1=Bio(i,k,itrc)*GtALG_r(i,k,iphy)
-                          Bio_new(i,k,itrc)=Bio_new(i,k,itrc)+FV1
-                        END IF
-		      END IF
-		    END DO
-                  END IF
-                END DO
+                      IF (Bio(i,k,iPhyC(iphy)).gt.0.0_r8) THEN
+                        FV1=Bio(i,k,itrc)*GtALG_r(i,k,iphy)
+                        Bio_new(i,k,itrc)=Bio_new(i,k,itrc)+FV1
+                      END IF
+                    END IF
+                  END DO
+                END IF
               END DO
             END DO
+          END DO
 !
 !-----------------------------------------------------------------------
 !  Bacterioplankton carbon growth terms.
