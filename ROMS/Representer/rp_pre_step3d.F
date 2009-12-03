@@ -73,7 +73,6 @@
      &                         nrhs(ng), nstp(ng), nnew(ng),            &
 # ifdef TS_PSOURCE
      &                         Msrc(ng), Nsrc(ng),                      &
-     &                         SOURCES(ng) % Lsrc,                      &
      &                         SOURCES(ng) % Isrc,                      &
      &                         SOURCES(ng) % Jsrc,                      &
      &                         SOURCES(ng) % Dsrc,                      &
@@ -154,7 +153,7 @@
      &                               nrhs, nstp, nnew,                  &
 # ifdef TS_PSOURCE
      &                               Msrc, Nsrc,                        &
-     &                               Lsrc, Isrc, Jsrc, Dsrc,            &
+     &                               Isrc, Jsrc, Dsrc,                  &
      &                               Tsrc,                              &
 # endif
 # ifdef MASKING
@@ -219,8 +218,6 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(:,:)
-
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
 
@@ -309,8 +306,6 @@
 # else
 
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
-
       integer, intent(in) :: Isrc(Msrc)
       integer, intent(in) :: Jsrc(Msrc)
 
@@ -766,7 +761,7 @@
           DO is=1,Nsrc
             i=Isrc(is)
             j=Jsrc(is)
-            IF (Lsrc(is,itrc).and.                                      &
+            IF (LtracerSrc(itrc,ng).and.                                &
      &          ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
      &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
               IF (INT(Dsrc(is)).eq.0) THEN
@@ -950,7 +945,7 @@
             tl_FC(i,N(ng))=(3.0_r8*tl_t(i,j,N(ng),nstp,itrc)-           &
      &                      tl_FC(i,N(ng)-1))/                          &
      &                     (2.0_r8-CF(i,N(ng)))
-#    else 
+#    else
 !>          FC(i,N(ng))=(2.0_r8*t(i,j,N(ng),nstp,itrc)-                 &
 !>   &                   FC(i,N(ng)-1))/(1.0_r8-CF(i,N(ng)))
 !>

@@ -596,7 +596,6 @@
 ** DENITRIFICATION     use to add denitrification processes                  **
 ** OXYGEN              use to add oxygen dynamics                            **
 ** OCMIP_OXYGEN_SC     use if Schmidt number from Keeling et al. (1998)      **
-** RIVER_BIOLOGY       use to process river biology point-sources            **
 ** TALK_NONCONSERV     use if nonconservative computation of alkalinity      **
 **                                                                           **
 ** NPZD biology model OPTIONS:                                               **
@@ -627,7 +626,6 @@
 ** SEDIMENT            use to activate sediment transport model              **
 ** BEDLOAD_MPM         use to activate Meyer-Peter-Mueller bed load          **
 ** BEDLOAD_SOULSBY     use to activate Soulsby wave/current bed load         **
-** RIVER_SEDIMENT      use to process river sediment point-sources           **
 ** SED_DENS            use to activate sediment to affect equation of state  **
 ** SED_MORPH           use to allow bottom model elevation to evolve         **
 ** SUSPLOAD            use to activate suspended load transport              **

@@ -78,6 +78,7 @@
         Vsize(is)=0
       END DO
 # endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -86,6 +87,7 @@
 !
       CALL wclock_on (ng, iNLM, 3)
 # endif
+
 # if defined SSH_TIDES || defined UV_TIDES
 !
 !-----------------------------------------------------------------------
@@ -102,6 +104,7 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif
+
 # ifdef SSH_TIDES
 !
 !  Tidal elevation amplitude and phase. In order to read data as a
@@ -112,6 +115,7 @@
         time_save=time(ng)
         time(ng)=8640000.0_r8
         tdays(ng)=time(ng)*sec2day
+
         CALL get_2dfld (ng, iNLM, idTzam, ncFRCid(idTzam,ng),           &
      &                  nFfiles(ng), FRCname(1,ng), update(1),          &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
@@ -134,6 +138,7 @@
         tdays(ng)=time(ng)*sec2day
       END IF
 # endif
+
 # ifdef UV_TIDES
 !
 !  Tidal currents angle, phase, major and minor ellipse axis.
@@ -142,6 +147,7 @@
         time_save=time(ng)
         time(ng)=8640000.0_r8
         tdays(ng)=time(ng)*sec2day
+
         CALL get_2dfld (ng, iNLM, idTvan, ncFRCid(idTvan,ng),           &
      &                  nFfiles(ng), FRCname(1,ng), update(1),          &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
@@ -182,6 +188,7 @@
         tdays(ng)=time(ng)*sec2day
       END IF
 # endif
+
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !-----------------------------------------------------------------------
@@ -392,6 +399,7 @@
         END IF
       END IF
 # endif
+
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                               defined TS_PSOURCE || defined Q_PSOURCE)
 !
@@ -426,54 +434,6 @@
      &                  SOURCES(ng) % Qshape(1,1))
         IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef TS_PSOURCE
-        CALL get_ngfld (ng, iNLM, idRflg, ncFRCid(idRflg,ng),           &
-     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
-     &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
-     &                  SOURCES(ng) % Fsrc(1))
-        IF (exit_flag.ne.NoError) RETURN
-
-        IF (update(1)) THEN
-          DO itrc=1,NT(ng)
-            SOURCES(ng)%Ltracer(itrc)=.FALSE.
-            DO is=1,Nsrc(ng)
-              SOURCES(ng)%Lsrc(is,itrc)=.FALSE.
-            END DO
-          END DO
-          DO is=1,Nsrc(ng)
-            IF (SOURCES(ng)%Fsrc(is).eq.1.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,itemp)=.TRUE.
-              SOURCES(ng)%Ltracer(itemp)=.TRUE.
-            END IF
-            IF (SOURCES(ng)%Fsrc(is).eq.2.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,isalt)=.TRUE.
-              SOURCES(ng)%Ltracer(isalt)=.TRUE.
-            END IF
-            IF (SOURCES(ng)%Fsrc(is).ge.3.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,itemp)=.TRUE.
-              SOURCES(ng)%Lsrc(is,isalt)=.TRUE.
-              SOURCES(ng)%Ltracer(itemp)=.TRUE.
-              SOURCES(ng)%Ltracer(isalt)=.TRUE.
-            END IF
-#   if defined RIVER_SEDIMENT && defined SEDIMENT
-            IF (SOURCES(ng)%Fsrc(is).ge.4.0_r8) THEN
-              DO itrc=1,NST
-                SOURCES(ng)%Lsrc(is,idsed(itrc))=.TRUE.
-                SOURCES(ng)%Ltracer(idsed(itrc))=.TRUE.
-              END DO
-            END IF
-#   endif
-#   if defined RIVER_BIOLOGY && defined BIOLOGY
-            IF (SOURCES(ng)%Fsrc(is).ge.5.0_r8) THEN
-              DO itrc=1,NBT
-                SOURCES(ng)%Lsrc(is,idbio(itrc))=.TRUE.
-                SOURCES(ng)%Ltracer(idbio(itrc))=.TRUE.
-              END DO
-            END IF
-#   endif
-          END DO
-        END IF
-#  endif
         DO is=1,Nsrc(ng)
           SOURCES(ng)%Isrc(is)=                                         &
      &                MAX(1,MIN(NINT(SOURCES(ng)%Xsrc(is)),Lm(ng)+1))
@@ -482,6 +442,7 @@
         END DO
       END IF
 # endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -490,6 +451,7 @@
 !
       CALL wclock_off (ng, iNLM, 3)
 # endif
+
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
   10  FORMAT (/,' GET_IDATA - error while reading variable: ',a,        &
@@ -499,9 +461,10 @@
   30  FORMAT (16x,'- ',a,/,19x,'(Min = ',1p,e15.8,                      &
      &        ' Max = ',1p,e15.8,')')
 # endif
+
       RETURN
       END SUBROUTINE get_idata
-#else 
+#else
       SUBROUTINE get_idata
       RETURN
       END SUBROUTINE get_idata

@@ -65,7 +65,6 @@
      &                    SOURCES(ng) % Tsrc,                           &
 # endif
 # ifdef TS_PSOURCE
-     &                    SOURCES(ng) % Lsrc,                           &
      &                    SOURCES(ng) % Dsrc,                           &
 # endif
 # ifdef Q_PSOURCE
@@ -131,7 +130,7 @@
      &                          Isrc, Jsrc, Tsrc,                       &
 # endif
 # ifdef TS_PSOURCE
-     &                          Lsrc, Dsrc,                             &
+     &                          Dsrc,                                   &
 # endif
 # ifdef Q_PSOURCE
      &                          Qsrc,                                   &
@@ -197,9 +196,6 @@
 # endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(:,:)
-#  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
@@ -267,9 +263,6 @@
 
 # else
 
-#  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
-#  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Isrc(Msrc)
       integer, intent(in) :: Jsrc(Msrc)
@@ -503,7 +496,7 @@
 #  else
 !  Fourth-order, centered differences horizontal advective fluxes.
 #  endif
-!  
+!
 #  ifdef EW_PERIODIC
 #   define I_RANGE Istr-1,Iend+2
 #  else
@@ -649,7 +642,7 @@
               IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
      &            ((Jstr.le.j).and.(j.le.Jend))) THEN
 #  endif
-                IF (Lsrc(is,itrc)) THEN
+                IF (LtracerSrc(itrc,ng)) THEN
                   FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
 #  ifdef MASKING
                 ELSE
@@ -671,7 +664,7 @@
               IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
      &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
 #  endif
-                IF (Lsrc(is,itrc)) THEN
+                IF (LtracerSrc(itrc,ng)) THEN
                   FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
 #  ifdef MASKING
                 ELSE

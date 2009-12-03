@@ -77,7 +77,6 @@
      &                         nrhs(ng), nstp(ng), nnew(ng),            &
 # ifdef TS_PSOURCE
      &                         Msrc(ng), Nsrc(ng),                      &
-     &                         SOURCES(ng) % Lsrc,                      &
      &                         SOURCES(ng) % Isrc,                      &
      &                         SOURCES(ng) % Jsrc,                      &
      &                         SOURCES(ng) % Dsrc,                      &
@@ -159,7 +158,7 @@
      &                               nrhs, nstp, nnew,                  &
 # ifdef TS_PSOURCE
      &                               Msrc, Nsrc,                        &
-     &                               Lsrc, Isrc, Jsrc, Dsrc,            &
+     &                               Isrc, Jsrc, Dsrc,                  &
      &                               Tsrc,                              &
 # endif
 # ifdef MASKING
@@ -227,7 +226,6 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(:,:)
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
       real(r8), intent(in) :: Dsrc(:)
@@ -314,7 +312,6 @@
 # else
 
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
       integer, intent(in) :: Isrc(Msrc)
       integer, intent(in) :: Jsrc(Msrc)
       real(r8), intent(in) :: Dsrc(Msrc)
@@ -436,7 +433,7 @@
 !>                          ! nnew=3-nstp
 !>    indx=3-nrhs           ! nrhs=nstp
 !>
-      indx=nnew 
+      indx=nnew
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -450,7 +447,7 @@
       DO j=JminS,JmaxS
         DO i=IminS,ImaxS
           ad_FE(i,j)=0.0_r8
-          ad_FX(i,j)=0.0_r8 
+          ad_FX(i,j)=0.0_r8
           ad_curv(i,j)=0.0_r8
           ad_grad(i,j)=0.0_r8
         END DO
@@ -737,7 +734,7 @@
           DO k=1,N(ng)-1
             DO i=Istr,Iend
               cff=1.0_r8/(z_r(i,j,k+1)+z_r(i,j-1,k+1)-                  &
-     &                    z_r(i,j,k  )-z_r(i,j-1,k  )) 
+     &                    z_r(i,j,k  )-z_r(i,j-1,k  ))
 !>            tl_FC(i,k)=cff3*                                          &
 !>   &                   (cff*((tl_v(i,j,k+1,nstp)-tl_v(i,j,k,nstp))*   &
 !>   &                         (Akv(i,j,k)+Akv(i,j-1,k))+               &
@@ -1048,7 +1045,7 @@
 !>   &                           t(i,j,k,nnew,itrc)*tl_cff4
 !>
               ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+              &
-     &                              ad_t(i,j,k,3,itrc)*cff4       
+     &                              ad_t(i,j,k,3,itrc)*cff4
               ad_cff4=ad_cff4+                                          &
      &                t(i,j,k,nnew,itrc)*ad_t(i,j,k,3,itrc)
               ad_t(i,j,k,3,itrc)=0.0_r8
@@ -1438,7 +1435,7 @@
      &                                3.0_r8*adfac
             ad_FC(i,N(ng)-1)=ad_FC(i,N(ng)-1)-adfac
             ad_FC(i,N(ng))=0.0_r8
-#    else 
+#    else
 !>          tl_FC(i,N(ng))=(2.0_r8*tl_t(i,j,N(ng),nstp,itrc)-           &
 !>   &                      tl_FC(i,N(ng)-1))/                          &
 !>   &                     (1.0_r8-CF(i,N(ng)))
@@ -1481,7 +1478,7 @@
      &                       t(i,j,k  ,nstp,itrc)*adfac1-               &
      &                       FC(i,k-1)*adfac-                           &
      &                       FC(i,k  )*adfac2
-              ad_FC(i,k-1)=ad_FC(i,k-1)-Hz(i,j,k+1)*adfac 
+              ad_FC(i,k-1)=ad_FC(i,k-1)-Hz(i,j,k+1)*adfac
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
@@ -1858,7 +1855,7 @@
           DO is=1,Nsrc
             i=Isrc(is)
             j=Jsrc(is)
-            IF (Lsrc(is,itrc).and.                                      &
+            IF (LtracerSrc(itrc,ng).and.                                &
      &          ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
      &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
               IF (INT(Dsrc(is)).eq.0) THEN
@@ -1899,7 +1896,7 @@
      &                              t(i,j-1,k,nstp,itrc))
               ad_t(i,j-1,k,nstp,itrc)=ad_t(i,j-1,k,nstp,itrc)+adfac1
               ad_t(i,j  ,k,nstp,itrc)=ad_t(i,j  ,k,nstp,itrc)+adfac1
-              ad_FE(i,j)=0.0_r8 
+              ad_FE(i,j)=0.0_r8
             END DO
           END DO
           DO j=Jstr,Jend
@@ -2256,7 +2253,7 @@
                 adfac=ad_grad(i,j)/                                     &
      &                ((FX(i+1,j)+FX(i,j))*(FX(i+1,j)+FX(i,j)))
                 adfac1=adfac*cff
-                ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1        
+                ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1
                 ad_FX(i+1,j)=ad_FX(i+1,j)-adfac1
                 ad_cff=ad_cff+(FX(i+1,j)+FX(i,j))*adfac
                 ad_grad(i,j)=0.0_r8

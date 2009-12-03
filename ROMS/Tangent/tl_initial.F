@@ -40,6 +40,7 @@
 # ifdef TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
+      USE ini_hmixcoef_mod, ONLY : ini_hmixcoef
 # ifdef OBS_SENSITIVITY
       USE ini_lanczos_mod, ONLY : ini_lanczos
 # endif
@@ -323,24 +324,6 @@
         END DO
 !$OMP END PARALLEL DO
 
-# if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
-!
-!-----------------------------------------------------------------------
-!  Set horizontal mixing coefficients. Rescale according to the local
-!  grid size. If applicable, increases horizontal mixing in sponge
-!  areas.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL ana_hmixcoef (ng, TILE, iTLM)
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-# endif
-
 # ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
@@ -357,6 +340,37 @@
 !$OMP END PARALLEL DO
 # endif
       END IF
+!
+!-----------------------------------------------------------------------
+!  Initialize horizontal mixing coefficients.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ini_hmixcoef (ng, TILE, iTLM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+
+# if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
+!
+!-----------------------------------------------------------------------
+!  Set horizontal mixing coefficients. Rescale according to the local
+!  grid size. If applicable, increases horizontal mixing in sponge
+!  areas.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ana_hmixcoef (ng, TILE, iTLM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 !
 !=======================================================================
 !  Initialize model state variables and forcing.  This part is

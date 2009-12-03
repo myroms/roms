@@ -61,6 +61,10 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: i
 
+# ifdef FORWARD_MIXING
+      real(r8) :: scale
+# endif
+
 # ifdef OBC
 !
 !  Lower and upper bounds for nontiled boundary arrays.
@@ -1229,6 +1233,8 @@
 !  Read in vertical mixing variables.
 !
       DO i=1,NAT
+        scale=Fscale(idDiff(i),ng)                    ! save and rescale
+        Fscale(idDiff(i),ng)=tl_Akt_fac(i,ng)
         CALL get_3dfld (ng, iRPM, idDiff(i), ncFWDid(ng), 1,            &
      &                  FWDname(ng), update(1),                         &
      &                  LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,             &
@@ -1236,7 +1242,11 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #    endif
      &                  MIXING(ng) % AktG(LBi,LBj,0,1,i))
+        Fscale(idDiff(i),ng)=scale
       END DO
+
+      scale=Fscale(idVvis,ng)                         ! save and rescale
+      Fscale(idVvis,ng)=tl_Akv_fac(ng)
       CALL get_3dfld (ng, iRPM, idVvis, ncFWDid(ng), 1,                 &
      &                FWDname(ng), update(1),                           &
      &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
@@ -1244,6 +1254,7 @@
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #    endif
      &                MIXING(ng) % AkvG(LBi,LBj,0,1))
+      Fscale(idVvis,ng)=scale
 #   endif
 
 #   if defined MY25_MIXING_NOT_YET || defined GLS_MIXING_NOT_YET

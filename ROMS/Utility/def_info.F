@@ -1172,43 +1172,135 @@
 !  Horizontal mixing coefficients.
 !
 #if defined SOLVE3D && defined TS_DIF2
-      Vinfo( 1)='tnu2'
-      Vinfo( 2)='Laplacian mixing coefficient for tracers'
+      Vinfo( 1)='nl_tnu2'
+      Vinfo( 2)='nonlinear model Laplacian mixing coefficient '//       &
+     &          'for tracers'
       Vinfo( 3)='meter2 second-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      Vinfo( 1)='ad_tnu2'
+      Vinfo( 2)='adjoint model Laplacian mixing coefficient '//         &
+     &          'for tracers'
+      Vinfo( 3)='meter2 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_tnu2'
+      Vinfo( 2)='tangent linear model Laplacian mixing coefficient '//  &
+     &          'for tracers'
+      Vinfo( 3)='meter2 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #if defined SOLVE3D && defined TS_DIF4
-      Vinfo( 1)='tnu4'
-      Vinfo( 2)='biharmonic mixing coefficient for tracers'
+      Vinfo( 1)='nl_tnu4'
+      Vinfo( 2)='nonlinear model biharmonic mixing coefficient '//      &
+     &          'for tracers'
       Vinfo( 3)='meter4 second-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      Vinfo( 1)='ad_tnu4'
+      Vinfo( 2)='adjoint model biharmonic mixing coefficient '//        &
+     &          'for tracers'
+      Vinfo( 3)='meter4 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_tnu4'
+      Vinfo( 2)='tangent linear model biharmonic mixing coefficient '// &
+     &          'for tracers'
+      Vinfo( 3)='meter4 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #ifdef UV_VIS2
-      Vinfo( 1)='visc2'
-      Vinfo( 2)='Laplacian mixing coefficient for momentum'
+      Vinfo( 1)='nl_visc2'
+      Vinfo( 2)='nonlinear model Laplacian mixing coefficient '//       &
+     &          'for momentum'
       Vinfo( 3)='meter2 second-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      Vinfo( 1)='ad_visc2'
+      Vinfo( 2)='adjoint model Laplacian mixing coefficient '//         &
+     &          'for momentum'
+      Vinfo( 3)='meter2 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_visc2'
+      Vinfo( 2)='tangent linear model Laplacian mixing coefficient '//  &
+     &          'for momentum'
+      Vinfo( 3)='meter2 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #ifdef UV_VIS4
-      Vinfo( 1)='visc4'
-      Vinfo( 2)='biharmonic mixing coefficient for momentum'
+      Vinfo( 1)='nl_visc4'
+      Vinfo( 2)='nonlinear model biharmonic mixing coefficient '//      &
+     &          'for momentum'
       Vinfo( 3)='meter4 second-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      Vinfo( 1)='ad_visc4'
+      Vinfo( 2)='adjoint model biharmonic mixing coefficient '//        &
+     &          'for momentum'
+      Vinfo( 3)='meter4 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_visc4'
+      Vinfo( 2)='tangent linear model biharmonic mixing coefficient '// &
+     &          'for momentum'
+      Vinfo( 3)='meter4 second-1'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #if defined SOLVE3D && (defined MY25_MIXING || defined GLS_MIXING)
@@ -1270,6 +1362,51 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef FORWARD_MIXING
+!
+!  Basic state vertical mixing scale used in adjoint-based applications.
+!
+#  ifdef ADJOINT
+      Vinfo( 1)='ad_Akt_fac'
+      Vinfo( 2)='adjoint model basic state vertical mixing '//          &
+     &          'scale for tracers'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_Akt_fac'
+      Vinfo( 2)='tangent linear model basic state vertical mixing '//   &
+     &          'scale for tracers'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  ifdef ADJOINT
+      Vinfo( 1)='ad_Akv_fac'
+      Vinfo( 2)='adjoint model basic state vertical mixing '//          &
+     &          'scale for momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  if defined TANGENT || defined TL_IOMS
+      Vinfo( 1)='tl_Akv_fac'
+      Vinfo( 2)='tangent linear model basic state vertical mixing '//   &
+     &          'scale for momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 #endif
 !
@@ -1643,6 +1780,21 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+
+#if defined SOLVE3D && defined TS_PSOURCE
+!
+!  Logical switches indicating which tracer variables are processed
+!  during point Sources/Sinks.
+!
+      Vinfo( 1)='LtracerSrc'
+      Vinfo( 2)='tracer point sources and simck activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
 
 #ifdef FOUR_DVAR
 !

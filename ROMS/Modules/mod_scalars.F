@@ -172,7 +172,7 @@
      &            (/ 'chlorophyll-a                          ',         &
      &               'chlorophyll-b                          ',         &
      &               'chlorophyll-c                          ',         &
-     &               'photosythetic carotenoids              ',         &
+     &               'photosynthetic carotenoids             ',         &
      &               'photoprotective carotenoids            ',         &
      &               'low urobilin phycoeurythin carotenoids ',         &
      &               'high urobilin phycoeurythin carotenoids' /)
@@ -468,6 +468,11 @@
 !
         logical :: Lstiffness = .TRUE.
 !
+!  Switch indicating which tracer field need to be processed for
+!  Sources/Sinks terms.
+!
+        logical, allocatable :: LtracerSrc(:,:)
+!
 !  Execution termination flag.
 !
 !    exit_flag = 0   No error
@@ -724,30 +729,71 @@
 !                    momentum.
 !    Kdiff         Isopycnal mixing thickness diffusivity (m2/s) for
 !                    tracers.
-!    visc2         Lateral harmonic constant mixing coefficient
+!    ad_visc2      ADM lateral harmonic constant mixing coefficient
 !                    (m2/s) for momentum.
-!    visc4         Square root lateral biharmonic constant mixing
-!                    coefficient (m2 s^-1/2) for momentum.
+!    nl_visc2      NLM lateral harmonic constant mixing coefficient
+!                    (m2/s) for momentum.
+!    tl_visc2      TLM lateral harmonic constant mixing coefficient
+!                    (m2/s) for momentum.
+!    visc2         Current lateral harmonic constant mixing coefficient
+!                    (m2/s) for momentum.
+!    ad_visc4      ADM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for momentum.
+!    nl_visc4      NLM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for momentum.
+!    tl_visc4      TLM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for momentum.
+!    visc4         Current lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for momentum.
+!    ad_tnu2       ADM lateral harmonic constant mixing coefficient
+!                    (m2/s) for tracer type variables.
+!    nl_tnu2       NLM lateral harmonic constant mixing coefficient
+!                    (m2/s) for tracer type variables.
+!    tl_tnu2       TLM lateral harmonic constant mixing coefficient
+!                    (m2/s) for tracer type variables.
+!    tnu2          Current lateral harmonic constant mixing coefficient
+!                    (m2/s) for tracer type variables.
+!    ad_tnu4       ADM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for tracers.
+!    nl_tnu4       NLM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for tracers.
+!    tl_tnu4       TLM lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for tracers.
+!    tnu4          Current lateral biharmonic (squared root) constant
+!                     mixing coefficient (m2 s^-1/2) for tracers.
 !    tkenu2        Lateral harmonic constant mixing coefficient
 !                    (m2/s) for turbulent energy.
-!    tkenu4        Square root lateral biharmonic constant mixing
+!    tkenu4        Lateral biharmonic (squared root) constant mixing
 !                    coefficient (m2 s^-1/2) for turbulent energy.
-!    tnu2          Lateral harmonic constant mixing coefficient
-!                    (m2/s) for tracer type variables.
-!    tnu4          Square root lateral biharmonic constant mixing
-!                    coefficient (m2 s^-1/2) for tracer type variables.
 !
         real(r8), dimension(Ngrids) :: Akk_bak       ! m2/s
         real(r8), dimension(Ngrids) :: Akp_bak       ! m2/s
         real(r8), dimension(Ngrids) :: Akv_bak       ! m2/s
+
+        real(r8), dimension(Ngrids) :: ad_visc2      ! m2/s
+        real(r8), dimension(Ngrids) :: nl_visc2      ! m2/s
+        real(r8), dimension(Ngrids) :: tl_visc2      ! m2/s
         real(r8), dimension(Ngrids) :: visc2         ! m2/s
+
+        real(r8), dimension(Ngrids) :: ad_visc4      ! m2 s-1/2
+        real(r8), dimension(Ngrids) :: nl_visc4      ! m2 s-1/2
+        real(r8), dimension(Ngrids) :: tl_visc4      ! m2 s-1/2
         real(r8), dimension(Ngrids) :: visc4         ! m2 s-1/2
+
         real(r8), dimension(Ngrids) :: tkenu2        ! m2/s
         real(r8), dimension(Ngrids) :: tkenu4        ! m2 s-1/2
 
         real(r8), allocatable :: Akt_bak(:,:)        ! m2/s
         real(r8), allocatable :: Kdiff(:,:)          ! m2/s
+
+        real(r8), allocatable :: ad_tnu2(:,:)        ! m2/s
+        real(r8), allocatable :: nl_tnu2(:,:)        ! m2/s
+        real(r8), allocatable :: tl_tnu2(:,:)        ! m2/s
         real(r8), allocatable :: tnu2(:,:)           ! m2/s
+
+        real(r8), allocatable :: ad_tnu4(:,:)        ! m2 s-1/2
+        real(r8), allocatable :: nl_tnu4(:,:)        ! m2 s-1/2
+        real(r8), allocatable :: tl_tnu4(:,:)        ! m2 s-1/2
         real(r8), allocatable :: tnu4(:,:)           ! m2 s-1/2
 !
 !  Horizontal diffusive relaxation coefficients (m2/s) used to smooth
@@ -758,6 +804,16 @@
         real(r8), dimension(Ngrids) :: tl_M3diff     ! 3D momentum
 
         real(r8), allocatable :: tl_Tdiff(:,:)       ! tracers
+!
+!  Basic state vertical mixing coefficient scale factors for adjoint
+!  based algorithms. In some applications, a smaller/larger values of
+!  vertical mixing are necessary for stability.
+!
+        real(r8), dimension(Ngrids) :: ad_Akv_fac    ! ADM momentum
+        real(r8), dimension(Ngrids) :: tl_Akv_fac    ! TLM momentum
+
+        real(r8), allocatable :: ad_Akt_fac(:,:)     ! ADM tracers
+        real(r8), allocatable :: tl_Akt_fac(:,:)     ! TLM tracers
 !
 !-----------------------------------------------------------------------
 !  IO parameters.
@@ -1755,10 +1811,19 @@
 # endif
 !
 #endif
+      allocate ( LtracerSrc(MT,Ngrids) )
       allocate ( Akt_bak(MT,Ngrids) )
+      allocate ( ad_Akt_fac(MT,Ngrids) )
+      allocate ( tl_Akt_fac(MT,Ngrids) )
       allocate ( Kdiff(MT,Ngrids) )
       allocate ( SO_sdev(2+MT,Ngrids) )
+      allocate ( ad_tnu2(MT,Ngrids) )
+      allocate ( nl_tnu2(MT,Ngrids) )
+      allocate ( tl_tnu2(MT,Ngrids) )
       allocate ( tnu2(MT,Ngrids) )
+      allocate ( ad_tnu4(MT,Ngrids) )
+      allocate ( nl_tnu4(MT,Ngrids) )
+      allocate ( tl_tnu4(MT,Ngrids) )
       allocate ( tnu4(MT,Ngrids) )
       allocate ( tl_Tdiff(MT,Ngrids) )
 #ifdef SOLVE3D
@@ -2176,11 +2241,28 @@
         SFcount(ng)=0
 #endif
         first_time(ng)=0
-        DO itrc=1,NAT+NPT
+        DO itrc=1,MT
+          LtracerSrc(itrc,ng)=.FALSE.
+          ad_Akt_fac(itrc,ng)=1.0_r8
+          tl_Akt_fac(itrc,ng)=1.0_r8
+          ad_tnu2(itrc,ng)=IniVal
+          nl_tnu2(itrc,ng)=IniVal
+          tl_tnu2(itrc,ng)=IniVal
           tnu2(itrc,ng)=IniVal
+          ad_tnu4(itrc,ng)=IniVal
+          nl_tnu4(itrc,ng)=IniVal
+          tl_tnu4(itrc,ng)=IniVal
           tnu4(itrc,ng)=IniVal
         END DO
+        ad_Akv_fac(ng)=1.0_r8
+        tl_Akv_fac(ng)=1.0_r8
+        ad_visc2(ng)=IniVal
+        nl_visc2(ng)=IniVal
+        tl_visc2(ng)=IniVal
         visc2(ng)=IniVal
+        ad_visc4(ng)=IniVal
+        nl_visc4(ng)=IniVal
+        tl_visc4(ng)=IniVal
         visc4(ng)=IniVal
 #ifdef BULK_FLUXES
         blk_ZQ(ng)=10.0_r8

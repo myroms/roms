@@ -40,7 +40,6 @@
      &                       GRID(ng) % om_v,                           &
      &                       SOURCES(ng) % Isrc,                        &
      &                       SOURCES(ng) % Jsrc,                        &
-     &                       SOURCES(ng) % Lsrc,                        &
      &                       SOURCES(ng) % Dsrc,                        &
 #ifdef SOLVE3D
 # if defined UV_PSOURCE || defined Q_PSOURCE
@@ -76,7 +75,7 @@
      &                             u, v, z_w,                           &
 #endif
      &                             h, on_u, om_v,                       &
-     &                             Isrc, Jsrc, Lsrc, Dsrc,              &
+     &                             Isrc, Jsrc, Dsrc,                    &
 #ifdef SOLVE3D
 # if defined UV_PSOURCE || defined Q_PSOURCE
      &                             Qshape, Qsrc,                        &
@@ -96,7 +95,7 @@
 #endif
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
       USE distribute_mod, ONLY : mp_collect, mp_reduce
 #endif
 !
@@ -111,8 +110,6 @@
       integer, intent(out) :: Nsrc
 !
 #ifdef ASSUMED_SHAPE
-      logical, intent(inout) :: Lsrc(:,:)
-
       integer, intent(inout) :: Isrc(:)
       integer, intent(inout) :: Jsrc(:)
 
@@ -140,8 +137,6 @@
 #  endif
 # endif
 #else
-      logical, intent(inout) :: Lsrc(Msrc,NT(ng))
-
       integer, intent(inout) :: Isrc(Msrc)
       integer, intent(inout) :: Jsrc(Msrc)
 
@@ -197,10 +192,10 @@
 !
 !  Set-up point Sources/Sink number (Nsrc), direction (Dsrc), I- and
 !  J-grid locations (Isrc,Jsrc), and logical switch for type of tracer
-!  to apply (Lsrc). Currently, the direction can be along XI-direction
-!  (Dsrc = 0) or along ETA-direction (Dsrc > 0).  The mass sources are
-!  located at U- or V-points so the grid locations should range from
-!  1 =< Isrc =< L  and  1 =< Jsrc =< M.
+!  to apply (LtracerSrc).  Currently, the direction can be along
+!  XI-direction (Dsrc = 0) or along ETA-direction (Dsrc > 0).  The
+!  mass sources are located at U- or V-points so the grid locations
+!  should range from 1 =< Isrc =< L  and  1 =< Jsrc =< M.
 !
 #if defined RIVERPLUME1
         IF (Master.and.SOUTH_WEST_TEST) THEN
@@ -208,52 +203,46 @@
           Dsrc(Nsrc)=0.0_r8
           Isrc(Nsrc)=1
           Jsrc(Nsrc)=50
-          Lsrc(Nsrc,itemp)=.TRUE.
-          Lsrc(Nsrc,isalt)=.TRUE.
+          LtracerSrc(itemp,ng)=.TRUE.
+          LtracerSrc(isalt,ng)=.TRUE.
         END IF
 #elif defined RIVERPLUME2
         IF (Master.and.SOUTH_WEST_TEST) THEN
           Nsrc=1+Lm(ng)*2
+          LtracerSrc(itemp,ng)=.TRUE.
+          LtracerSrc(isalt,ng)=.TRUE.
           DO is=1,(Nsrc-1)/2
             Dsrc(is)=1.0_r8
             Isrc(is)=is
             Jsrc(is)=1
-            Lsrc(is,itemp)=.TRUE.
-            Lsrc(is,isalt)=.TRUE.
           END DO
           DO is=(Nsrc-1)/2+1,Nsrc-1
             Dsrc(is)=1.0_r8
             Isrc(is)=is-Lm(ng)
             Jsrc(is)=Mm(ng)+1
-            Lsrc(is,itemp)=.TRUE.
-            Lsrc(is,isalt)=.TRUE.
           END DO
           Dsrc(Nsrc)=0.0_r8
           Isrc(Nsrc)=1
           Jsrc(Nsrc)=60
-          Lsrc(Nsrc,itemp)=.TRUE.
-          Lsrc(Nsrc,isalt)=.TRUE.
         END IF
 #elif defined SED_TEST1
         IF (Master.and.SOUTH_WEST_TEST) THEN
           Nsrc=Mm(ng)*2
+          LtracerSrc(itemp,ng)=.TRUE.
+          LtracerSrc(isalt,ng)=.TRUE.
           DO is=1,Nsrc/2
             Dsrc(is)=0.0_r8
             Isrc(is)=1
             Jsrc(is)=is
-            Lsrc(is,itemp)=.TRUE.
-            Lsrc(is,isalt)=.TRUE.
           END DO
           DO is=Nsrc/2+1,Nsrc
             Dsrc(is)=0.0_r8
             Isrc(is)=Lm(ng)+1
             Jsrc(is)=is-Mm(ng)
-            Lsrc(is,itemp)=.TRUE.
-            Lsrc(is,isalt)=.TRUE.
           END DO
         END IF
 #else
-        ana_psource.h: No values provided for Lsrc, Nsrc, Dsrc,
+        ana_psource.h: No values provided for LtracerSrc, Nsrc, Dsrc,
                                               Isrc, Jsrc.
 #endif
 #ifdef DISTRIBUTE
@@ -263,7 +252,6 @@
         CALL mp_bcasti (ng, iNLM, Nsrc)
         CALL mp_bcasti (ng, iNLM, Isrc)
         CALL mp_bcasti (ng, iNLM, Jsrc)
-        CALL mp_bcastl (ng, iNLM, Lsrc)
         CALL mp_bcastf (ng, iNLM, Dsrc)
 #endif
       END IF
@@ -445,7 +433,7 @@
         tile_count=0
 #  ifdef DISTRIBUTE
         buffer(1)=area_west
-        buffer(2)=area_east 
+        buffer(2)=area_east
         io_handle(1)='SUM'
         io_handle(2)='SUM'
         CALL mp_reduce (ng, iNLM, 2, buffer, io_handle)

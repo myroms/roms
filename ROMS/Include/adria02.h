@@ -44,13 +44,11 @@
 # undef SUSPLOAD
 # define ANA_SEDIMENT
 # undef  ANA_WWAVE
-# undef RIVER_SEDIMENT
 #else
 # define SEDIMENT
 # define SUSPLOAD
 # undef  ANA_SEDIMENT
 # undef  ANA_WWAVE
-# define RIVER_SEDIMENT
 #endif
 
 #undef  UV_LOGDRAG

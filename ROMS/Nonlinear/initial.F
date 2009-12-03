@@ -36,6 +36,7 @@
 #ifdef TLM_CHECK
       USE ini_adjust_mod, ONLY : ini_perturb
 #endif
+      USE ini_hmixcoef_mod, ONLY : ini_hmixcoef
       USE metrics_mod, ONLY : metrics
 #ifdef SOLVE3D
       USE set_depth_mod, ONLY : set_depth
@@ -159,7 +160,7 @@
 # ifdef ANA_INITIAL
         LdefINI(ng)=.TRUE.
 # endif
-        LdefHIS(ng)=.TRUE.    
+        LdefHIS(ng)=.TRUE.
         CALL def_ini (ng)
 # ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, exit_flag)
@@ -280,24 +281,6 @@
         END DO
 !$OMP END PARALLEL DO
 
-#if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
-!
-!-----------------------------------------------------------------------
-!  Set horizontal mixing coefficients. Rescale according to the local
-!  grid size. If applicable, increases horizontal mixing in sponge
-!  areas.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL ana_hmixcoef (ng, TILE, iNLM)
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-#endif
-
 #ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
@@ -314,6 +297,37 @@
 !$OMP END PARALLEL DO
 #endif
       END IF
+!
+!-----------------------------------------------------------------------
+!  Initialize horizontal mixing coefficients.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ini_hmixcoef (ng, TILE, iNLM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+
+#if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
+!
+!-----------------------------------------------------------------------
+!  Rescale horizontal mixing coefficients according to the local
+!  grid size. If applicable, increases horizontal mixing in sponge
+!  areas.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+            CALL ana_hmixcoef (ng, TILE, iNLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+#endif
 !
 !=======================================================================
 !  Initialize model state variables and forcing.  This part is

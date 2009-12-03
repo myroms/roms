@@ -147,7 +147,7 @@
             DO ng=1,Ngrids
               DO itrc=1,NCS
                 i=idsed(itrc)
-                tnu2(i,ng)=Rmud(itrc,ng)
+                nl_tnu2(i,ng)=Rmud(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'MUD_TNU4') THEN
@@ -155,7 +155,25 @@
             DO ng=1,Ngrids
               DO itrc=1,NCS
                 i=idsed(itrc)
-                tnu4(i,ng)=Rmud(itrc,ng)
+                nl_tnu4(i,ng)=Rmud(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_MUD_TNU2') THEN
+            Npts=load_r(Nval, Rval, NCS*Ngrids, Rmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idsed(itrc)
+                ad_tnu2(i,ng)=Rmud(itrc,ng)
+                tl_tnu2(i,ng)=Rmud(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_MUD_TNU4') THEN
+            Npts=load_r(Nval, Rval, NCS*Ngrids, Rmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idsed(itrc)
+                ad_tnu4(i,ng)=Rmud(itrc,ng)
+                nl_tnu4(i,ng)=Rmud(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'MUD_AKT_BAK') THEN
@@ -164,6 +182,15 @@
               DO itrc=1,NCS
                 i=idsed(itrc)
                 Akt_bak(i,ng)=Rmud(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'MUD_AKT_fac') THEN
+            Npts=load_r(Nval, Rval, NCS*Ngrids, Rmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idsed(itrc)
+                ad_Akt_fac(i,ng)=Rmud(itrc,ng)
+                tl_Akt_fac(i,ng)=Rmud(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'MUD_TNUDG') THEN
@@ -210,6 +237,16 @@
             DO ng=1,Ngrids
               tcr_tim(ng)=Rbed(ng)
           END DO
+#endif
+#ifdef TS_PSOURCE
+          ELSE IF (TRIM(KeyWord).eq.'MUD_Ltracer') THEN
+            Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idsed(itrc)
+                LtracerSrc(i,ng)=Lmud(itrc,ng)
+              END DO
+            END DO
 #endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idmud)') THEN
             Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
@@ -348,7 +385,7 @@
             DO ng=1,Ngrids
               DO itrc=1,NNS
                 i=idsed(NCS+itrc)
-                tnu2(i,ng)=Rsand(itrc,ng)
+                nl_tnu2(i,ng)=Rsand(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'SAND_TNU4') THEN
@@ -356,7 +393,25 @@
             DO ng=1,Ngrids
               DO itrc=1,NNS
                 i=idsed(NCS+itrc)
-                tnu4(i,ng)=Rsand(itrc,ng)
+                nl_tnu4(i,ng)=Rsand(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_SAND_TNU2') THEN
+            Npts=load_r(Nval, Rval, NNS*Ngrids, Rsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idsed(NCS+itrc)
+                ad_tnu2(i,ng)=Rsand(itrc,ng)
+                tl_tnu2(i,ng)=Rsand(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_SAND_TNU4') THEN
+            Npts=load_r(Nval, Rval, NNS*Ngrids, Rsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idsed(NCS+itrc)
+                ad_tnu4(i,ng)=Rsand(itrc,ng)
+                tl_tnu4(i,ng)=Rsand(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'SAND_AKT_BAK') THEN
@@ -365,6 +420,15 @@
               DO itrc=1,NNS
                 i=idsed(NCS+itrc)
                 Akt_bak(i,ng)=Rsand(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'SAND_AKT_fac') THEN
+            Npts=load_r(Nval, Rval, NNS*Ngrids, Rsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idsed(NCS+itrc)
+                ad_Akt_fac(i,ng)=Rsand(itrc,ng)
+                tl_Akt_fac(i,ng)=Rsand(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'SAND_TNUDG') THEN
@@ -386,6 +450,16 @@
                 morph_fac(i,ng)=Rsand(itrc,ng)
               END DO
             END DO
+#ifdef TS_PSOURCE
+          ELSE IF (TRIM(KeyWord).eq.'SAND_Ltracer') THEN
+            Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idsed(NCS+itrc)
+                LtracerSrc(i,ng)=Lsand(itrc,ng)
+              END DO
+            END DO
+#endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idsand)') THEN
             Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
             DO ng=1,Ngrids
@@ -504,8 +578,8 @@
             DO itrc=1,NST
               i=idsed(itrc)
               WRITE (out,70) itrc, tau_ce(itrc,ng), tau_cd(itrc,ng),    &
-     &                       tnu2(i,ng), tnu4(i,ng), Akt_bak(i,ng),     &
-     &                       Tnudg(i,ng)
+     &                       nl_tnu2(i,ng), nl_tnu4(i,ng),              &
+     &                       Akt_bak(i,ng), Tnudg(i,ng)
             END DO
             WRITE (out,90)
             DO itrc=1,NST
@@ -518,22 +592,30 @@
             WRITE (out,130) transC(ng)
             WRITE (out,140) transN(ng)
 #endif
+#ifdef TS_PSOURCE
+            DO itrc=1,NST
+              i=idsed(itrc)
+              WRITE (out,150) LtracerSrc(i,ng), 'LtracerSrc',           &
+     &              i, 'Processing point sources/Sink on tracer ', i,   &
+     &              TRIM(Vname(1,idTvar(i)))
+            END DO
+#endif
             DO itrc=1,NST
               i=idTvar(idsed(itrc))
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idTvar)',                                       &
      &            'Write out sediment', itrc, TRIM(Vname(1,i))
             END DO
             DO itrc=1,NST
               i=idfrac(itrc)
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idfrac)',                                       &
      &            'Write out bed fraction, sediment ', itrc,            &
      &            TRIM(Vname(1,i))
             END DO
             DO itrc=1,NST
               i=idBmas(itrc)
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idfrac)',                                       &
      &            'Write out mass, sediment ', itrc,                    &
      &            TRIM(Vname(1,i))
@@ -541,12 +623,12 @@
 #ifdef BEDLOAD
             DO itrc=1,NST
               i=idUbld(itrc)
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idUbld)',                                       &
      &            'Write out bed load at U-points, sediment ', itrc,    &
      &            TRIM(Vname(1,i))
               i=idVbld(itrc)
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idVbld)',                                       &
      &            'Write out bed load at V-points, sediment ', itrc,    &
      &            TRIM(Vname(1,i))
@@ -554,7 +636,7 @@
 #endif
             DO itrc=1,MBEDP
               i=idSbed(itrc)
-              IF (Hout(i,ng)) WRITE (out,150) Hout(i,ng),               &
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idSbed)',                                       &
      &            'Write out BED property ', itrc, TRIM(Vname(1,i))
             END DO
@@ -572,7 +654,13 @@
           Wsed(i,ng)=Wsed(i,ng)*0.001_r8
           tau_ce(i,ng)=tau_ce(i,ng)/rho0
           tau_cd(i,ng)=tau_cd(i,ng)/rho0
-          tnu4(idsed(i),ng)=SQRT(ABS(tnu4(idsed(i),ng)))
+          nl_tnu4(idsed(i),ng)=SQRT(ABS(nl_tnu4(idsed(i),ng)))
+#ifdef ADJOINT
+          ad_tnu4(idsed(i),ng)=SQRT(ABS(ad_tnu4(idsed(i),ng)))
+#endif
+#if defined TANGENT || defined TL_IOMS
+          tl_tnu4(idsed(i),ng)=SQRT(ABS(tl_tnu4(idsed(i),ng)))
+#endif
           IF (Tnudg(idsed(i),ng).gt.0.0_r8) THEN
             Tnudg(idsed(i),ng)=1.0_r8/(Tnudg(idsed(i),ng)*86400.0_r8)
           ELSE
@@ -590,7 +678,7 @@
      &        '(kg/m3)',5x,'(kg/m3)',5x,'(mm/s)',5x,'(kg/m2/s)',4x,     &
      &        '(nondim)',/)
   70  FORMAT (2x,i2,2x,6(1x,1p,e11.4))
-  80  FORMAT (/,9x,'tau_ce',6x,'tau_cd',7x,'tnu2',8x,'tnu4',7x,         &
+  80  FORMAT (/,9x,'tau_ce',6x,'tau_cd',6x,'nl_tnu2',5x,'nl_tnu4',5x,   &
      &        'Akt_bak',6x,'Tnudg',/,9x,'(N/m2)',6x,'(N/m2)',6x,        &
      &        '(m2/s)',6x,'(m4/s)',7x,'(m2/s)',6x,'(day)',/)
   90  FORMAT (/,9x,'morph_fac',/,9x,'(nondim)',/)
@@ -601,7 +689,8 @@
  120  FORMAT (' Rate coefficient for bed load transport = ',e11.5,/)
  130  FORMAT (' Transition for mixed sediment =',e11.5,/)
  140  FORMAT (' Transition for cohesive sediment =',e11.5,/)
- 150  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
+ 150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
+ 160  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
 
       RETURN
       END SUBROUTINE read_SedPar

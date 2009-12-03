@@ -28,13 +28,6 @@ variables:
 	double river_direction(river) ;
 		river_direction:long_name = "river runoff direction" ;
 		river_direction:units = "nondimensional" ;
-	double river_flag(river) ;
-		river_flag:long_name = "river runoff tracer flag" ;
-		river_flag:option_0 = "all tracers are off" ;
-		river_flag:option_1 = "only temperature is on" ;
-		river_flag:option_2 = "only salinity is on" ;
-		river_flag:option_3 = "both temperature and salinity are on" ;
-		river_flag:units = "nondimensional" ;
 	double river_Vshape(s_rho, river) ;
 		river_Vshape:long_name = "river runoff mass transport vertical profile" ;
 		river_Vshape:units = "nondimensional" ;
@@ -58,5 +51,5 @@ variables:
 		:type = "ROMS FORCING file" ;
 		:title = "NENA River Forcing" ;
 		:grd_file = "roms_nena_grid_3.nc" ;
-		:rivers = "(1)MISSISSIPPI RIVER AT VICKSBURG, MS,(2)SUSQUEHANNA RIVER AT CONOWINGO, MD,(3)TOMBIGBEE R AT COFFEEVILLE L&D NR COFFEEVILLE,,(4)APALACHICOLA RIVER NR SUMATRA,FLA.,(5)CONNECTICUT R AT HARTFORD,CT.,(6)HUDSON RIVER AT GREEN ISLAND NY,(7)Penobscot River at Eddington, Maine,(8)DELAWARE RIVER AT TRENTON NJ,(9)ALTAMAHA RIVER AT DOCTORTOWN, GA,(10)POTOMAC RIVER NEAR WASH, DC LITTLE FALLS PUMP,(11)SAVANNAH RIVER NEAR CLYO, GA,(12)ROANOKE RIVER AT ROANOKE RAPIDS, NC,(13)PEE DEE RIVER AT PEEDEE, SC,(14)PEARL R NR BOGALUSA, LA,(15) SUWANNEE RIVER NEAR WILCOX, FLA.,(16)Kennebec River at North Sidney, ME,(17)ESCAMBIA RIVER NR MOLINO, FLA.,(18)JAMES RIVER NEAR RICHMOND, VA" ;
+		:rivers = "(1) Mississippi River at Vicksburg, MS, (2) Susquehanna River at Conowingo, MD, (3) Tombigbee River at Coffeeville L&D near Coffeeville, (4) Apalachicola River near Sumatra, FL, (5) Connecticut River at Hartford, CT, (6) Hudson River at Green Island NY, (7) Penobscot River at Eddington, ME, (8) Delaware River at Trenton NJ, (9) Altamaha River at Doctortown, GA, (10) Potomac River near Wash, DC Little Falls Pump, (11) Savannah River near Clyo, GA, (12) Roanoke River at Roanoke Rapids, NC, (13) Pee Dee River at Peedee, SC, (14) Pearl River near Bogalusa, LA, (15) Suwannee River near Wilcox, FL, (16) Kennebec River at North Sidney, ME,(17) Escambia River near Molino, FL, (18) James River near Richmond, VA" ;
 }

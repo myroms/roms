@@ -1760,18 +1760,6 @@
       Coptions(is:is+12)=' REP_MATRIX,'
       idriver=idriver+1
 #endif
-#if defined RIVER_BIOLOGY && defined BIOLOGY
-      IF (Master) WRITE (stdout,20) 'RIVER_BIOLOGY',                    &
-     &   'River biology point sources.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' RIVER_BIOLOGY,'
-#endif
-#if defined RIVER_SEDIMENT && defined SEDIMENT
-      IF (Master) WRITE (stdout,20) 'RIVER_SEDIMENT',                   &
-     &   'River sediment point sources.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' RIVER_SEDIMENT,'
-#endif
 #if defined LMD_MIXING
 # ifdef RI_HORAVG
       IF (Master) WRITE (stdout,20) 'RI_HORAVG',                        &

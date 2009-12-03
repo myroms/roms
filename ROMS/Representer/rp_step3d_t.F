@@ -66,7 +66,6 @@
      &                       SOURCES(ng) % Tsrc,                        &
 # endif
 # ifdef TS_PSOURCE
-     &                       SOURCES(ng) % Lsrc,                        &
      &                       SOURCES(ng) % Dsrc,                        &
 # endif
 # ifdef Q_PSOURCE
@@ -141,7 +140,7 @@
      &                             Isrc, Jsrc, Tsrc,                    &
 # endif
 # ifdef TS_PSOURCE
-     &                             Lsrc, Dsrc,                          &
+     &                             Dsrc,                                &
 # endif
 # ifdef Q_PSOURCE
      &                             Qsrc,                                &
@@ -207,9 +206,6 @@
 # endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(:,:)
-#  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
@@ -294,9 +290,6 @@
 
 # else
 
-#  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
-#  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Isrc(Msrc)
       integer, intent(in) :: Jsrc(Msrc)
@@ -607,7 +600,7 @@
 #  else
 !  Fourth-order, centered differences horizontal advective fluxes.
 #  endif
-!  
+!
 #  ifdef EW_PERIODIC
 #   define I_RANGE Istr-1,Iend+2
 #  else
@@ -857,7 +850,7 @@
               IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
      &            ((Jstr.le.j).and.(j.le.Jend))) THEN
 #  endif
-                IF (Lsrc(is,itrc)) THEN
+                IF (LtracerSrc(itrc,ng)) THEN
 !>                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
 !>
                   tl_FX(i,j)=tl_Huon(i,j,k)*Tsrc(is,k,itrc)
@@ -891,7 +884,7 @@
               IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
      &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
 #  endif
-                IF (Lsrc(is,itrc)) THEN
+                IF (LtracerSrc(itrc,ng)) THEN
 !>                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
 !>
                   tl_FE(i,j)=tl_Hvom(i,j,k)*Tsrc(is,k,itrc)
@@ -1085,7 +1078,7 @@
             tl_FC(i,N(ng))=(2.0_r8*tl_t(i,j,N(ng),3,itrc)-              &
      &                      tl_FC(i,N(ng)-1))/                          &
      &                     (1.0_r8-CF(i,N(ng)))
-#  endif     
+#  endif
           END DO
           DO k=N(ng)-1,0,-1
             DO i=Istr,Iend
@@ -1948,7 +1941,7 @@
      &                              tl_t(i,j,k,nnew,itrc)+              &
 #  ifdef TL_IOMS
      &                              dt(ng)*Tnudgcof(i,j,itrc)*          &
-     &                              tclm(i,j,k,itrc)     
+     &                              tclm(i,j,k,itrc)
 #  endif
             END DO
           END DO

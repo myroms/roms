@@ -38,6 +38,9 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+#if defined SOLVE3D && defined TS_PSOURCE
+      USE mod_sources
+#endif
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
@@ -297,34 +300,97 @@
 !  Horizontal mixing coefficients.
 !
 #if defined SOLVE3D && defined TS_DIF2
-      CALL netcdf_put_fvar (ng, model, ncname, 'tnu2',                  &
-     &                      tnu2(:,ng), (/1/), (/NT(ng)/),              &
+      CALL netcdf_put_fvar (ng, model, ncname, 'nl_tnu2',               &
+     &                      nl_tnu2(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_tnu2',               &
+     &                      ad_tnu2(:,ng), (/1/), (/NT(ng)/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_tnu2',               &
+     &                      tl_tnu2(:,ng), (/1/), (/NT(ng)/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
 #endif
 
 #if defined SOLVE3D && defined TS_DIF4
       DO itrc=1,NT(ng)
-        diff(itrc)=tnu4(itrc,ng)*tnu4(itrc,ng)
+        diff(itrc)=nl_tnu4(itrc,ng)*nl_tnu4(itrc,ng)
       END DO
-      CALL netcdf_put_fvar (ng, model, ncname, 'tnu4',                  &
+      CALL netcdf_put_fvar (ng, model, ncname, 'nl_tnu4',               &
      &                      diff, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      DO itrc=1,NT(ng)
+        diff(itrc)=ad_tnu4(itrc,ng)*ad_tnu4(itrc,ng)
+      END DO
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_tnu4',               &
+     &                      diff, (/1/), (/NT(ng)/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      DO itrc=1,NT(ng)
+        diff(itrc)=tl_tnu4(itrc,ng)*tl_tnu4(itrc,ng)
+      END DO
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_tnu4',               &
+     &                      diff, (/1/), (/NT(ng)/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #ifdef UV_VIS2
-      CALL netcdf_put_fvar (ng, model, ncname, 'visc2',                 &
-     &                      visc2(ng), (/0/), (/0/),                    &
+      CALL netcdf_put_fvar (ng, model, ncname, 'nl_visc2',              &
+     &                      nl_visc2(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_visc2',              &
+     &                      ad_visc2(ng), (/0/), (/0/),                 &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_visc2',              &
+     &                      tl_visc2(ng), (/0/), (/0/),                 &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #ifdef UV_VIS4
-      CALL netcdf_put_fvar (ng, model, ncname, 'visc4',                 &
-     &                      visc4(ng)**2, (/0/), (/0/),                 &
+      CALL netcdf_put_fvar (ng, model, ncname, 'nl_visc4',              &
+     &                      nl_visc4(ng)**2, (/0/), (/0/),              &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef ADJOINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_visc4',              &
+     &                      ad_visc4(ng)**2, (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_visc4',              &
+     &                      tl_visc4(ng)**2, (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 #endif
 
 #if defined SOLVE3D && (defined MY25_MIXING || defined GLS_MIXING)
@@ -367,6 +433,39 @@
      &                      Akp_bak(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef FORWARD_MIXING
+!
+!  Basic state vertical mixing scale used in adjoint-based applications.
+!
+#  ifdef ADJOINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_Akt_fac',            &
+     &                      ad_Akt_fac(:,ng), (/1/), (/NT(ng)/),        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  if defined TANGENT || defined TL_IOMS
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_Akt_fac',            &
+     &                      tl_Akt_fac(:,ng), (/1/), (/NT(ng)/),        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  ifdef ADJOINT
+      CALL netcdf_put_fvar (ng, model, ncname, 'ad_Akv_fac',            &
+     &                      ad_Akv_fac(ng), (/0/), (/0/),               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+
+#  if defined TANGENT || defined TL_IOMS
+      CALL netcdf_put_fvar (ng, model, ncname, 'tl_Akv_fac',            &
+     &                      tl_Akv_fac(ng), (/0/), (/0/),               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 #endif
 !
@@ -647,6 +746,17 @@
      &                      gamma2(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
+
+#if defined SOLVE3D && defined TS_PSOURCE
+!
+!  Logical switches indicating which tracer variables are processed
+!  during point Sources/Sinks.
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSrc',            &
+     &                      LtracerSrc(:,ng), (/1/), (/NT(ng)/),        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
 
 #ifdef FOUR_DVAR
 !

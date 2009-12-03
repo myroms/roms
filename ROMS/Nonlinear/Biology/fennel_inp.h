@@ -125,7 +125,7 @@
             DO ng=1,Ngrids
               DO itrc=1,NBT
                 i=idbio(itrc)
-                tnu2(i,ng)=Rbio(itrc,ng)
+                nl_tnu2(i,ng)=Rbio(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'TNU4') THEN
@@ -133,7 +133,25 @@
             DO ng=1,Ngrids
               DO itrc=1,NBT
                 i=idbio(itrc)
-                tnu4(i,ng)=Rbio(itrc,ng)
+                nl_tnu4(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_TNU2') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                ad_tnu2(i,ng)=Rbio(itrc,ng)
+                tl_tnu2(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_TNU4') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                ad_tnu4(i,ng)=Rbio(itrc,ng)
+                ad_tnu4(i,ng)=Rbio(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'AKT_BAK') THEN
@@ -144,6 +162,15 @@
                 Akt_bak(i,ng)=Rbio(itrc,ng)
               END DO
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'ad_AKT_fac') THEN
+            Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                ad_Akt_fac(i,ng)=Rbio(itrc,ng)
+                tl_Akt_fac(i,ng)=Rbio(itrc,ng)
+              END DO
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'TNUDG') THEN
             Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
             DO ng=1,Ngrids
@@ -152,6 +179,16 @@
                 Tnudg(i,ng)=Rbio(itrc,ng)
               END DO
             END DO
+#ifdef TS_PSOURCE
+          ELSE IF (TRIM(KeyWord).eq.'LtracerSrc') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                LtracerSrc(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+#endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTvar)') THEN
             Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
             DO ng=1,Ngrids
@@ -348,17 +385,37 @@
 #ifdef TS_DIF2
             DO itrc=1,NBT
               i=idbio(itrc)
-              WRITE (out,100) tnu2(i,ng), 'tnu2', i,                    &
-     &              'Horizontal, harmonic mixing coefficient (m2/s)',   &
-     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+              WRITE (out,100) nl_tnu2(i,ng), 'nl_tnu2', i,              &
+     &              'NLM Horizontal, harmonic mixing coefficient',      &
+     &              '(m2/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# ifdef ADJOINT
+              WRITE (out,100) ad_tnu2(i,ng), 'ad_tnu2', i,              &
+     &              'ADM Horizontal, harmonic mixing coefficient',      &
+     &              '(m2/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
+# if defined TANGENT || defined TL_IOMS
+              WRITE (out,100) tl_tnu2(i,ng), 'tl_tnu2', i,              &
+     &              'TLM Horizontal, harmonic mixing coefficient',      &
+     &              '(m2/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
             END DO
 #endif
 #ifdef TS_DIF4
             DO itrc=1,NBT
               i=idbio(itrc)
-              WRITE (out,100) tnu4(i,ng), 'tnu4', i,                    &
-     &              'Horizontal, biharmonic mixing coefficient (m4/s)', &
-     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+              WRITE (out,100) nl_tnu4(i,ng), 'nl_tnu4', i,              &
+     &              'NLM Horizontal, biharmonic mixing coefficient',    &
+     &              '(m4/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# ifdef ADJOINT
+              WRITE (out,100) ad_tnu4(i,ng), 'ad_tnu4', i,              &
+     &              'ADM Horizontal, biharmonic mixing coefficient',    &
+     &              '(m4/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
+# if defined TANGENT || defined TL_IOMS
+              WRITE (out,100) tl_tnu4(i,ng), 'tl_tnu4', i,              &
+     &              'TLM Horizontal, biharmonic mixing coefficient',    &
+     &              '(m4/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
             END DO
 #endif
             DO itrc=1,NBT
@@ -367,21 +424,44 @@
      &             'Background vertical mixing coefficient (m2/s)',     &
      &             'for tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+#ifdef FORWARD_MIXING
+            DO itrc=1,NBT
+              i=idbio(itrc)
+# ifdef ADJOINT
+              WRITE (out,100) ad_Akt_fac(i,ng), 'ad_Akt_fac', i,        &
+     &              'ADM basic state vertical mixing scale factor',     &
+     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
+# if defined TANGENT || defined TL_IOMS
+              WRITE (out,100) tl_Akt_fac(i,ng), 'tl_Akt_fac', i,        &
+     &              'TLM basic state vertical mixing scale factor',     &
+     &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
+# endif
+            END DO
+#endif
             DO itrc=1,NBT
               i=idbio(itrc)
               WRITE (out,100) Tnudg(i,ng), 'Tnudg', i,                  &
      &              'Nudging/relaxation time scale (days)',             &
      &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+#ifdef TS_PSOURCE
             DO itrc=1,NBT
               i=idbio(itrc)
-              IF (Hout(idTvar(i),ng)) WRITE (out,110)                   &
+              WRITE (out,110) LtracerSrc(i,ng), 'LtracerSrc',           &
+     &              i, 'Processing point sources/Sink on tracer ', i,   &
+     &              TRIM(Vname(1,idTvar(i)))
+            END DO
+#endif
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTvar(i),ng)) WRITE (out,120)                   &
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
             DO itrc=1,NBT
               i=idbio(itrc)
-              IF (Hout(idTsur(i),ng)) WRITE (out,110)                   &
+              IF (Hout(idTsur(i),ng)) WRITE (out,120)                   &
      &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
      &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
@@ -389,14 +469,14 @@
 # if !(defined CARBON || defined OXYGEN || defined DENITRIFICATION)
             DO itrc=1,NDbio2d
               i=iDbio2(itrc)
-              IF (Hout(i,ng)) WRITE (out,120)                           &
+              IF (Hout(i,ng)) WRITE (out,130)                           &
      &            Hout(i,ng), 'Hout(iDbio2)', 'Diagnostics for',        &
      &            TRIM(Vname(1,i))
             END DO
 # endif
             DO itrc=1,NDbio3d
               i=iDbio3(itrc)
-              IF (Hout(i,ng)) WRITE (out,120)                           &
+              IF (Hout(i,ng)) WRITE (out,130)                           &
      &            Hout(i,ng), 'Hout(iDbio3)', 'Diagnostics for',        &
      &            TRIM(Vname(1,i))
             END DO
@@ -406,7 +486,7 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Rescale biological tracer parameters
+!  Rescale biological tracer parameters.
 !-----------------------------------------------------------------------
 !
 !  Take the square root of the biharmonic coefficients so it can
@@ -415,7 +495,13 @@
       DO ng=1,Ngrids
         DO itrc=1,NBT
           i=idbio(itrc)
-          tnu4(i,ng)=SQRT(ABS(tnu4(i,ng)))
+          nl_tnu4(i,ng)=SQRT(ABS(nl_tnu4(i,ng)))
+#ifdef ADJOINT
+          ad_tnu4(i,ng)=SQRT(ABS(ad_tnu4(i,ng)))
+#endif
+#if defined TANGENT || defined TL_IOMS
+          tl_tnu4(i,ng)=SQRT(ABS(tl_tnu4(i,ng)))
+#endif
 !
 !  Compute inverse nudging coefficients (1/s) used in various tasks.
 !
@@ -437,8 +523,9 @@
   80  FORMAT (1p,e11.4,2x,a,t30,a)
   90  FORMAT (1p,e11.4,2x,a,t30,a,/,t32,a)
  100  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,/,t32,a,i2.2,':',1x,a)
- 110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
- 120  FORMAT (10x,l1,2x,a,t30,a,1x,a)
+ 110  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
+ 120  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
+ 130  FORMAT (10x,l1,2x,a,t30,a,1x,a)
 
       RETURN
       END SUBROUTINE read_BioPar

@@ -133,23 +133,37 @@
 
     Ritz_tol =  1.0d-15
 
-! Harmonic/biharmonic horizontal diffusion of tracer: [1:NAT+NPT,Ngrids].
+! Harmonic/biharmonic horizontal diffusion of tracer for nonlinear model
+! and adjoint-based algorithms: [1:NAT+NPT,Ngrids].
 
         TNU2 == 0.0d0  0.0d0                    ! m2/s
         TNU4 == 0.0d0  0.0d0                    ! m4/s
 
-! Harmononic/biharmonic, horizontal viscosity coefficient: [Ngrids].
+     ad_TNU2 == 0.0d0  0.0d0                    ! m2/s
+     ad_TNU4 == 0.0d0  0.0d0                    ! m4/s
+
+! Harmononic/biharmonic, horizontal viscosity coefficient for nonlinear model
+! and adjoint-based algorithms: [Ngrids].
 
        VISC2 == 0.0d0                           ! m2/s
        VISC4 == 0.0d0                           ! m4/s
 
-! Vertical mixing coefficients for active tracers: [1:NAT+NPT,Ngrids]
+    ad_VISC2 == 0.0d0                           ! m2/s
+    ad_VISC4 == 0.0d0                           ! m4/s
+
+! Vertical mixing coefficients for tracers in nonlinear model and
+! basic state scale factor in adjoint-based algorithms: [1:NAT+NPT,Ngrids]
 
      AKT_BAK == 5.0d-6  5.0d-6                  ! m2/s
 
-! Vertical mixing coefficient for momentum: [Ngrids].
+  ad_AKT_fac == 1.0d0  1.0d0                    ! nondimensional
+
+! Vertical mixing coefficient for momentum for nonlinear model and
+! basic state scale factor in adjoint-based algorithms: [Ngrids].
 
      AKV_BAK == 5.0d-6                          ! m2/s
+
+  ad_AKV_fac == 1.0d0                           ! nondimensional
 
 ! Turbulent closure parameters.
 
@@ -254,6 +268,12 @@
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
       GAMMA2 == -1.0d0
+
+! Logical switches (TRUE/FALSE) to specify which variables to consider on
+! tracers point Sources/Sinks (like river runoff): [1:NAT+NPT,Ngrids].
+! See glossary below for details.
+
+  LtracerSrc == T T                        ! temperature, salinity, inert
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their
@@ -813,29 +833,61 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Harmonic/Biharmonic horizontal diffusion for active tracers.
 !------------------------------------------------------------------------------
 !
-!  TNU2        Lateral, harmonic, constant, mixing coefficient (m2/s) for
-!              active (NAT) and inert (NPT) tracer variables.  If variable
-!              horizontal diffusion is activated, TNU2 is the mixing
-!              coefficient for the largest grid-cell in the domain.
+!  TNU2        Nonlinear model lateral, harmonic, constant, mixing
+!              coefficient (m2/s) for active (NAT) and inert (NPT) tracer
+!              variables. If variable horizontal diffusion is activated,
+!              TNU2 is the mixing coefficient for the largest grid-cell
+!              in the domain.
 !
-!  TNU4        Lateral, biharmonic, constant, mixing coefficient (m4/s) for
-!              active (NAT) and inert (NPT) tracer variables.  If variable
-!              horizontal diffusion is activated, TNU4 is the mixing
-!              coefficient for the largest grid-cell in the domain.
+!  TNU4        Nonlinear model lateral, biharmonic, constant, mixing
+!              coefficient (m4/s) for active (NAT) and inert (NPT) tracer
+!              variables. If variable horizontal diffusion is activated,
+!              TNU4 is the mixing coefficient for the largest grid-cell
+!              in the domain.
+!
+!  ad_TNU2     Adjoint-based algorithms lateral, harmonic, constant, mixing
+!              coefficient (m2/s) for active (NAT) and inert (NPT) tracer
+!              variables. If variable horizontal diffusion is activated,
+!              ad_TNU2 is the mixing coefficient for the largest grid-cell
+!              in the domain. In some applications, a larger value than
+!              that used in the nonlinear model (basic state) is necessary
+!              for stability.
+!
+!  ad_TNU4     Adjoint-based algorithms lateral, biharmonic, constant, mixing
+!              coefficient (m4/s) for active (NAT) and inert (NPT) tracer
+!              variables. If variable horizontal diffusion is activated,
+!              ad_TNU4 is the mixing coefficient for the largest grid-cell
+!              in the domain. In some applications, a larger value than
+!              that used in the nonlinear model (basic state) is necessary
+!              for stability.
 !
 !------------------------------------------------------------------------------
 ! Harmonic/biharmonic horizontal viscosity coefficients.
 !------------------------------------------------------------------------------
 !
-!  VISC2       Lateral, harmonic, constant, mixing coefficient (m2/s) for
-!              momentum.  If variable horizontal viscosity is activated, UVNU2
-!              is the mixing coefficient for the largest grid-cell in the
-!              domain.
+!  VISC2       Nonlinear model lateral, harmonic, constant, mixing
+!              coefficient (m2/s) for momentum. If variable horizontal
+!              viscosity is activated, UVNU2 is the mixing coefficient
+!              for the largest grid-cell in the domain.
 !
-!  VISC4       Lateral, biharmonic, constant mixing coefficient (m4/s) for
-!              momentum. If variable horizontal viscosity is activated, UVNU4
-!              is the mixing coefficient for the largest grid-cell in the
-!              domain.
+!  VISC4       Nonlinear model lateral, biharmonic, constant mixing
+!              coefficient (m4/s) for momentum. If variable horizontal
+!              viscosity is activated, UVNU4 is the mixing coefficient
+!              for the largest grid-cell in the domain.
+!
+!  ad_VISC2    Adjoint-based algorithms lateral, harmonic, constant, mixing
+!              coefficient (m2/s) for momentum. If variable horizontal
+!              viscosity is activated, ad_UVNU2 is the mixing coefficient
+!              for the largest grid-cell in the domain. In some applications,
+!              a larger value than that used in the nonlinear model (basic
+!              state) is necessary for stability.
+!
+!  ad_VISC4    Adjoint-based algorithms lateral, biharmonic, constant mixing
+!              coefficient (m4/s) for momentum. If variable horizontal
+!              viscosity is activated, ad_UVNU4 is the mixing coefficient
+!              for the largest grid-cell in the domain. In some applications,
+!              a larger value than that used in the nonlinear model (basic
+!              state) is necessary for stability.
 !
 !------------------------------------------------------------------------------
 ! Vertical mixing coefficients for active tracers.
@@ -844,11 +896,22 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  AKT_BAK     Background vertical mixing coefficient (m2/s) for active
 !              (NAT) and inert (NPT) tracer variables.
 !
+!  ad_AKT_fac  Adjoint-based algorithms vertical mixing, basic state, scale
+!              factor (nondimensional) for active (NAT) and inert (NPT)
+!              tracer variables. In some applications, a smaller/larger
+!              values of vertical mixing are necessary for stability. It
+!              is only used when FORWARD_MIXING is activated.
+!
 !------------------------------------------------------------------------------
 ! Vertical mixing coefficient for momentum.
 !------------------------------------------------------------------------------
 !
 !  AKV_BAK     Background vertical mixing coefficient (m2/s) for momentum.
+!
+!  ad_AKV_fac  Adjoint-based algorithms vertical mixing, basic state, scale
+!              factor (nondimensional) for momentum. In some applications,
+!              a smaller/larger values of vertical mixing are necessary for
+!              stability. It is only used when FORWARD_MIXING is activated.
 !
 !------------------------------------------------------------------------------
 ! Turbulent closure parameters.
@@ -1187,6 +1250,55 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !------------------------------------------------------------------------------
 !
 !  GAMMA2      Slipperiness variable, either 1.0 (free slip) or -1.0 (no slip).
+!
+!------------------------------------------------------------------------------
+!  Tracer point Sources/Sink sources switches.
+!------------------------------------------------------------------------------
+!
+!  LtracerSrc  Logical switches (T/F) to specify which tracer variables
+!              to consider when the option TS_PSOURCE is activated. Only
+!              NAT active tracers (temperature, salinity) and NPT inert
+!              tracers need to be specified here:
+!
+!                LtracerSrc(itemp,ng)     for temperature (itemp=1)
+!                LtracerSrc(isalt,ng)     for salinity    (isalt=2)
+!                LtracerSrc(NAT+1,ng)     for inert tracer 1
+!                ...                      ...
+!                LtracerSrc(:,NAT+NPT)    for inert tracer NPT
+!
+!              Other biological and sediment tracers switches are specified in
+!              their respective input scrips.
+!
+!              Recall that TS_PSOURCE is usually activated to add river runoff
+!              as a point source. At minimum, it is necessary to specify both
+!              temperature and salinity for all rivers.  The other tracers are
+!              optional.
+!
+!              This logical switch REPLACES and ELIMINATES the need to have
+!              or read the variable "river_flag(river)" in the input rivers
+!              forcing NetCDF file:
+!
+!                double river_flag(river)
+!                        river_flag:long_name = "river runoff tracer flag"
+!                        river_flag:option_0 = "all tracers are off"
+!                        river_flag:option_1 = "only temperature"
+!                        river_flag:option_2 = "only salinity"
+!                        river_flag:option_3 = "both temperature and salinity"
+!                        river_flag:units = "nondimensional"
+!
+!              This logic was too cumbersome and complicated when additional
+!              tracers are considered. However, this change is backward
+!              compatible.
+!
+!              The LtracerSrc switch will be used to activate the reading of
+!              respective tracer variable from input river forcing NetCDF
+!              file. If you want to add other tracer variables (other than
+!              temperature and salinity) as a source for a particular river(s),
+!              you just need to specify such values on those river(s). Then,
+!              set the values to ZERO on the other river(s) that do NOT
+!              require such river forcing for that tracer. Recall that you
+!              need to specify the tracer values for all rivers, even if
+!              their values are zero.
 !
 !------------------------------------------------------------------------------
 !  Adjoint sensitivity parameters.

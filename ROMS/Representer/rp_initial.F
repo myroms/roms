@@ -44,6 +44,7 @@
 # ifdef TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
+      USE ini_hmixcoef_mod, ONLY : ini_hmixcoef
       USE metrics_mod, ONLY : metrics
 # if !(defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET)
       USE rp_set_depth_mod, ONLY : rp_bath
@@ -247,24 +248,6 @@
         CALL set_weights (ng)
 # endif
 
-# if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
-!
-!-----------------------------------------------------------------------
-!  Set horizontal mixing coefficients. Rescale according to the local
-!  grid size. If applicable, increases horizontal mixing in sponge
-!  areas.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL ana_hmixcoef (ng, TILE, iRPM)
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-# endif
-
 # ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
@@ -281,6 +264,37 @@
 !$OMP END PARALLEL DO
 # endif
       END IF
+!
+!-----------------------------------------------------------------------
+!  Initialize horizontal mixing coefficients.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ini_hmixcoef (ng, TILE, iRPM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+
+# if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
+!
+!-----------------------------------------------------------------------
+!  Set horizontal mixing coefficients. Rescale according to the local
+!  grid size. If applicable, increases horizontal mixing in sponge
+!  areas.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ana_hmixcoef (ng, TILE, iRPM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute various metric term combinations.
