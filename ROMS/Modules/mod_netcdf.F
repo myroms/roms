@@ -76,7 +76,7 @@
 !  all variables.
 !
       integer :: n_dim                  ! number of dimensions
-      integer :: n_var                  ! number of variables 
+      integer :: n_var                  ! number of variables
       integer :: n_gatt                 ! number of global attributes
       integer :: ncformat               ! file format number (version)
       integer :: rec_id                 ! unlimited dimension ID
@@ -259,7 +259,7 @@
         status=nf90_inquire(ncid, n_dim, n_var, n_gatt, rec_id)
         ncformat=-1
 #endif
-        IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN   
+        IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
           ibuffer(1)=n_dim
           ibuffer(2)=n_var
@@ -288,7 +288,7 @@
 #endif
             END IF
           END DO
-        ELSE      
+        ELSE
           IF (n_dim.gt.Mdims) THEN
             WRITE (stdout,20) ' Mdims = ', Mdims, n_dim
             exit_flag=2
@@ -717,7 +717,7 @@
 # endif
               ELSE                   ! Backward compatability logic
                 VarVal=Hgamma(1)     ! for a single Hgamma value
-              END IF 
+              END IF
               CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
@@ -791,7 +791,7 @@
 # endif
               ELSE                   ! Backward compatability logic
                 VarVal=Vgamma(1)     ! for a single Vgamma value
-              END IF 
+              END IF
               CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
      &                              FvarS)
               IF (exit_flag.ne.NoError) RETURN
@@ -1237,7 +1237,7 @@
               var_kind=var_type(i)
             END IF
           END DO
-          IF (foundit) THEN        
+          IF (foundit) THEN
             IF (PRESENT(VarID)) THEN
               VarID=my_id
             END IF
@@ -1889,7 +1889,11 @@
 !  Read in a floating-point 1D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -2095,8 +2099,12 @@
 !  Read in a floating-point 2D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
-      Asize(2)=UBOUND(A, DIM=2)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -2300,9 +2308,13 @@
 !  Read in a floating-point 2D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
-      Asize(2)=UBOUND(A, DIM=2)
-      Asize(3)=UBOUND(A, DIM=3)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -2509,10 +2521,14 @@
 !  Read in a floating-point 2D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
-      Asize(2)=UBOUND(A, DIM=2)
-      Asize(3)=UBOUND(A, DIM=3)
-      Asize(4)=UBOUND(A, DIM=4)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+        Asize(4)=UBOUND(A, DIM=4)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -2842,7 +2858,11 @@
 !  Read in an integer 1D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -2977,8 +2997,12 @@
 !  Read in an integer 2D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
-      Asize(2)=UBOUND(A, DIM=2)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -3241,7 +3265,11 @@
 !  Read in a string 1D-array variable.
 !-----------------------------------------------------------------------
 !
-      Asize(1)=UBOUND(A, DIM=1)
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize=total
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+      END IF
 !
 !  If NetCDF file ID is not provided, open NetCDF for reading.
 !
@@ -4475,7 +4503,7 @@
           AI=1
         ELSE
           AI=0
-        END IF 
+        END IF
 !
 !  Write out logical data as integers.
 !
@@ -4995,7 +5023,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
- 
+
       integer, intent(in) :: start(:), total(:)
 
       integer, intent(in), optional :: ncid, varid
