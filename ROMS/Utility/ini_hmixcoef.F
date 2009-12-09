@@ -153,6 +153,8 @@
 #ifdef SOLVE3D
       integer :: itrc
 #endif
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Set horizontal, constant, mixing coefficient according to model flag.
