@@ -95,7 +95,7 @@ endif
 
 ifdef USE_MCT
          CPPFLAGS += -traditional-cpp
-           FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
+           FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR)
            FFLAGS += /noextend_source -assume:byterecl
        LIBS_WIN32 += "$(MCT_LIBDIR)\libmct.a" "$(MPEU_LIBDIR)\libmpeu.a"
 endif
@@ -135,6 +135,20 @@ endif
 
 %.o: %.f90
 	cd $(SCRATCH_DIR); $(FC) -c $(FFLAGS) $(notdir $<) /object:$(notdir $@)
+
+#
+# Override rule for object files. Use .o instead of .obj
+#
+
+define one-compile-rule
+  $1: $2 $3
+	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2) /object:$(notdir $1)
+
+  $2: $3
+	$$(CPP) $$(CPPFLAGS) $$(MY_CPP_FLAGS) $$< > $$@
+	$$(CLEAN) $$@
+
+endef
 
 #
 # Set free form format in source files to allow long string for
