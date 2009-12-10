@@ -36,7 +36,7 @@ $(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
 #  Initialize some things.
 #--------------------------------------------------------------------------
 
-  sources    := 
+  sources    :=
   libraries  :=
 
 #==========================================================================
@@ -57,7 +57,7 @@ $(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
 #  The only constrain is that the application CPP option must be unique
 #  and header file name is the lowercase value of ROMS_APPLICATION with
 #  the .h extension. For example, the upwelling application includes the
-#  "upwelling.h" header file.  
+#  "upwelling.h" header file.
 
 ROMS_APPLICATION ?= UPWELLING
 
@@ -218,7 +218,7 @@ endif
 
   COMPILERS ?= $(CURDIR)/Compilers
 
-MAKE_MACROS := $(COMPILERS)/make_macros.mk
+MAKE_MACROS := $(shell echo ${HOME} | sed 's| |\\ |g')/make_macros.mk
 
 ifneq "$(MAKECMDGOALS)" "clean"
  MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
@@ -276,7 +276,7 @@ endef
 # $(call one-compile-rule, binary-file, f90-file, source-files)
 define one-compile-rule
   $1: $2 $3
-	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2)
+	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2) /object:$(notdir $1)
 
   $2: $3
 	$$(CPP) $$(CPPFLAGS) $$(MY_CPP_FLAGS) $$< > $$@
@@ -373,7 +373,7 @@ ifdef SVNREV
 else
   SVNREV := $(shell grep Revision ./ROMS/Version | sed 's/.* \([0-9]*\) .*/\1/')
   CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
-endif  
+endif
 
 #--------------------------------------------------------------------------
 #  Build target directories.
@@ -517,7 +517,7 @@ $(SCRATCH_DIR)/MakeDepend: makefile \
 SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 
 depend: $(SCRATCH_DIR)
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
 
 ifneq "$(MAKECMDGOALS)" "clean"
   -include $(SCRATCH_DIR)/MakeDepend
