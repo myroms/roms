@@ -3744,21 +3744,18 @@
 !  Apply mass point sources.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr-1,Jend+1
-        DO i=Istr-1,Iend+1
-          Dnew(i,j)=zeta(i,j,knew)+h(i,j)
-          tl_Dnew(i,j)=tl_zeta(i,j,knew)+tl_h(i,j)
-        END DO
-      END DO
       DO is=1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
         IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
      &      ((JstrR.le.j).and.(j.le.JendR))) THEN
           IF (INT(Dsrc(is)).eq.0) THEN
-            cff=1.0_r8/(on_u(i,j)*0.5_r8*(Dnew(i-1,j)+Dnew(i,j)))
-            tl_cff=-cff*cff*on_u(i,j)*                                  &
-     &             0.5_r8*(tl_Dnew(i-1,j)+tl_Dnew(i,j))
+            cff=1.0_r8/(on_u(i,j)*                                      &
+     &                  0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
+     &                          zeta(i  ,j,knew)+h(i  ,j)))
+            tl_cff=-cff*cff*                                            &
+     &             on_u(i,j)*0.5_r8*(tl_zeta(i-1,j,knew)+tl_h(i-1,j)+   &
+     &                               tl_zeta(i  ,j,knew)+tl_h(i  ,j))
 !>          ubar(i,j,knew)=Qbar(is)*cff
 !>
             tl_ubar(i,j,knew)=Qbar(is)*tl_cff
@@ -3768,9 +3765,12 @@
             tl_DU_avg1(i,j)=0.0_r8
 #  endif
           ELSE
-            cff=1.0_r8/(om_v(i,j)*0.5_r8*(Dnew(i,j-1)+Dnew(i,j)))
-            tl_cff=-cff*cff*om_v(i,j)*                                  &
-     &             0.5_r8*(tl_Dnew(i,j-1)+tl_Dnew(i,j))
+            cff=1.0_r8/(om_v(i,j)*                                      &
+     &                  0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+              &
+     &                          zeta(i,j  ,knew)+h(i,j  )))
+            tl_cff=-cff*cff*                                            &
+     &             om_v(i,j)*0.5_r8*(tl_zeta(i,j-1,knew)+tl_h(i,j-1)+   &
+     &                               tl_zeta(i,j  ,knew)+tl_h(i,j  ))
 !>          vbar(i,j,knew)=Qbar(is)*cff
 !>
             tl_vbar(i,j,knew)=Qbar(is)*tl_cff

@@ -83,7 +83,7 @@
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_check_var (ng, model, ncname)        
+      CALL netcdf_check_var (ng, model, ncname)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Initialize logical switches.
@@ -186,7 +186,7 @@
           get_var(idbath)=.TRUE.
         END IF
 #  endif
-# endif 
+# endif
 # if defined SEDIMENT || defined BBL_MODEL
 #  ifndef ANA_SEDIMENT
         DO itrc=1,MBOTP
@@ -199,7 +199,7 @@
 !
 !  Determine perfect restart fields to read from input NetCDF file.
 !
-        IF ((model.eq.0).and.(nrrec(ng).ne.0)) THEN
+        IF (((model.eq.0).or.(model.eq.iNLM)).and.(nrrec(ng).ne.0)) THEN
 # ifdef SOLVE3D
           get_var(idRu3d)=.TRUE.
           get_var(idRv3d)=.TRUE.
@@ -440,7 +440,7 @@
      &                                  TRIM(ncname)
           exit_flag=2
           RETURN
-        END IF 
+        END IF
         IF (.not.have_var(idSbry(isUbar)).and.                          &
      &      ANY(Lobc(:,isUbar,ng)).and.get_var(idSbry(isUbar))) THEN
           IF (Master) WRITE (stdout,10) string,                         &

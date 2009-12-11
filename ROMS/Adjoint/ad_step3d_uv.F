@@ -148,7 +148,7 @@
      &                              z_r, ad_z_r,                        &
      &                              z_w, ad_z_w,                        &
      &                              Akv, ad_Akv,                        &
-     &                              DU_avg1, ad_DU_avg1,                & 
+     &                              DU_avg1, ad_DU_avg1,                &
      &                              DV_avg1, ad_DV_avg1,                &
      &                              DU_avg2, ad_DU_avg2,                &
      &                              DV_avg2, ad_DV_avg2,                &
@@ -1089,7 +1089,7 @@
 !>   &                              tl_CFs(Iend+1,0)
 !>
             ad_CFs(Iend+1,0)=ad_CFs(Iend+1,0)-ad_u_stokes(Iend+1,j,k)
-     &                              
+     &
 #  endif
 #  ifdef MASKING
 !>          tl_u(Iend+1,j,k,nnew)=tl_u(Iend+1,j,k,nnew)*                &
@@ -1268,8 +1268,6 @@
 !-----------------------------------------------------------------------
 !  Apply mass point sources.
 !-----------------------------------------------------------------------
-!
-!  ADJOINT NOT REQUIRED SINCE Qsrc is specified.  HGA?
 !
       DO is=1,Nsrc
         i=Isrc(is)
@@ -1479,7 +1477,7 @@
 !>   &                 (DC1(i,0)*om_v(i,j)-DV_avg1(i,j))*tl_cff1
 !>
             adfac=cff1*ad_DC(i,0)
-            ad_DV_avg1(i,j)=ad_DV_avg1(i,j)-adfac       
+            ad_DV_avg1(i,j)=ad_DV_avg1(i,j)-adfac
             ad_cff1=ad_cff1+                                            &
      &              (DC1(i,0)*om_v(i,j)-DV_avg1(i,j))*ad_DC(i,0)
             ad_DC(i,0)=om_v(i,j)*adfac
@@ -1643,8 +1641,8 @@
               ad_DC(i,k-1)=ad_DC(i,k-1)-adfac1
               ad_DC(i,k  )=ad_DC(i,k  )+adfac1
               ad_oHz(i,k)=ad_oHz(i,k)+(DC1(i,k)-DC1(i,k-1))*adfac
-              ad_cff=0.0_r8              
-!>            tl_DC(i,k)=tl_DC(i,k)*AK(i,k)+DC(i,k)*tl_AK(i,k)  
+              ad_cff=0.0_r8
+!>            tl_DC(i,k)=tl_DC(i,k)*AK(i,k)+DC(i,k)*tl_AK(i,k)
 !>                                                               use DC
               ad_AK(i,k)=ad_AK(i,k)+DC(i,k)*ad_DC(i,k)
               ad_DC(i,k)=AK(i,k)*ad_DC(i,k)
@@ -1934,7 +1932,7 @@
             DC(i,0)=cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
           END DO
 !
-!  The BASIC STATE "v" used below must be in transport units, but "v" 
+!  The BASIC STATE "v" used below must be in transport units, but "v"
 !  retrived is in m/s so we multiply by "Hzk".
 !
           DO k=1,N(ng)
@@ -2608,7 +2606,7 @@
           DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
         END DO
 !
-!  The BASIC STATE "u" used below must be in transport units, but "u" 
+!  The BASIC STATE "u" used below must be in transport units, but "u"
 !  retrived is in m/s so we multiply by "Hzk".
 !
         DO k=1,N(ng)

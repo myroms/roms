@@ -176,7 +176,7 @@
       Perfect2D=.FALSE.
       Perfect3D=.FALSE.
 #ifdef PERFECT_RESTART
-      IF ((model.eq.0).and.(nrrec(ng).ne.0)) THEN
+      IF (((model.eq.0).or.(model.eq.iNLM)).and.(nrrec(ng).ne.0)) THEN
         Perfect2D=.TRUE.
         Perfect3D=.TRUE.
       END IF

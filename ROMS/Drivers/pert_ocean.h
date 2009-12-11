@@ -177,6 +177,7 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
@@ -262,7 +263,7 @@
         IF (nADJ(ng).gt.0) LdefADJ(ng)=.TRUE.
         Lstiffness=.FALSE.
 
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#if defined BULK_FLUXES || defined NL_BULK_FLUXES
 
 !  Set file name containing the nonlinear model bulk fluxes to be read
 !  and processed by other algorithms.
@@ -590,6 +591,13 @@
 !$OMP END PARALLEL DO
 
         END DO PERT_LOOP
+!
+!  Close current forward NetCDF file.
+!
+        SourceFile='pert_ocean.h, ROMS_run'
+
+        CALL netcdf_close (ng, iTLM, ncFWDid(ng), Lupdate = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
       END DO NEST_LOOP
 !

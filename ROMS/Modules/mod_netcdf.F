@@ -349,7 +349,7 @@
 !
 !  Close input NetCDF file.
 !
-      CALL netcdf_close (ng, model, ncid, ncname)
+      CALL netcdf_close (ng, model, ncid, ncname, .FALSE.)
 !
   10  FORMAT (/,' NETCDF_GET_DIM - error while reading dimension ID:',  &
      &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
@@ -1380,7 +1380,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring attribute ',   &
@@ -1643,7 +1643,7 @@
 !  If applicable, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FATT - error while reading attribute:',    &
@@ -1795,7 +1795,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_0D - error while reading variable:',  &
@@ -2003,7 +2003,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_1D - error while reading variable:',  &
@@ -2215,7 +2215,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_2D - error while reading variable:',  &
@@ -2428,7 +2428,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_3D - error while reading variable:',  &
@@ -2644,7 +2644,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_4D - error while reading variable:',  &
@@ -2776,7 +2776,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_0D - error while reading variable:',  &
@@ -2914,7 +2914,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_1D - error while reading variable:',  &
@@ -3054,7 +3054,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_2D - error while reading variable:',  &
@@ -3183,7 +3183,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_0D - error while reading variable:',  &
@@ -3321,7 +3321,7 @@
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_1D - error while reading variable:',  &
@@ -3458,7 +3458,7 @@
 !  Close input file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring ID for ',  &
@@ -3589,7 +3589,7 @@
 !  Close input file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_1D - unable to open NetCDF file:',    &
@@ -3724,7 +3724,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring ID for ',  &
@@ -3855,7 +3855,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring ID for ',  &
@@ -3986,7 +3986,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring ID for ',  &
@@ -4124,7 +4124,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring ID for ',  &
@@ -4255,7 +4255,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring ID for ',  &
@@ -4386,7 +4386,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring ID for ',  &
@@ -4537,7 +4537,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
@@ -4684,7 +4684,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
@@ -4833,7 +4833,7 @@
 !  Close file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
@@ -4966,7 +4966,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring ID for ',  &
@@ -5102,7 +5102,7 @@
 !  Close input NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
-        CALL netcdf_close (ng, model, my_ncid, ncname)
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring ID for ',  &
@@ -5114,7 +5114,7 @@
       RETURN
       END SUBROUTINE netcdf_put_svar_1d
 
-      SUBROUTINE netcdf_close (ng, model, ncid, ncname)
+      SUBROUTINE netcdf_close (ng, model, ncid, ncname, Lupdate)
 !
 !=======================================================================
 !                                                                      !
@@ -5128,6 +5128,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncid         NetCDF file ID (integer)                            !
 !     ncname       NetCDF file name (string, OPTIONAL)                 !
+!     Lupdate      Update global attribute (logical, OPTIONAl)         !
 !                                                                      !
 !=======================================================================
 !
@@ -5148,10 +5149,15 @@
 
       integer, intent(inout) :: ncid
 
+      logical, intent(in), optional :: Lupdate
+
       character (len=*), intent(in), optional :: ncname
 !
 !  Local variable declarations.
 !
+#ifdef BIOLOGY
+      logical :: my_Lupdate
+#endif
       integer :: i, status
 #ifdef BIOLOGY
       integer :: AttLen, is, ie, lstr
@@ -5186,34 +5192,47 @@
 
 #ifdef BIOLOGY
 !
+!  Determine updating value of biology header files global attribute.
+!  This is only possible in output files. An error occurs in input
+!  files open for reading only. This allows to use ROMS input files
+!  with the "bio_file" attribute.
+!
+        IF (.not.PRESENT(Lupdate)) THEN
+          my_Lupdate=.TRUE.
+        ELSE
+          my_Lupdate=Lupdate
+        END IF
+!
 !  Update global attribute with the biology header files used.
 !
-        is=1
-        status=nf90_inquire_attribute(ncid, nf90_global, 'bio_file',    &
-     &                                len = AttLen)
-        IF (status.eq.nf90_noerr) THEN
-          DO i=1,512
-            bio_file(i:i)=' '
-          END DO
-          DO i=1,4
-            lstr=LEN_TRIM(BIONAME(i))
+        IF (my_Lupdate) THEN
+          is=1
+          status=nf90_inquire_attribute(ncid, nf90_global, 'bio_file',  &
+     &                                  len = AttLen)
+          IF (status.eq.nf90_noerr) THEN
+            DO i=1,512
+              bio_file(i:i)=' '
+            END DO
+            DO i=1,4
+              lstr=LEN_TRIM(BIONAME(i))
+              IF (lstr.gt.0) THEN
+                ie=is+lstr-1
+                bio_file(is:ie)=TRIM(BIONAME(i))
+                is=ie+1
+                bio_file(is:is)=','
+                is=is+2
+              END IF
+            END DO
+            lstr=LEN_TRIM(bio_file)-1
             IF (lstr.gt.0) THEN
-              ie=is+lstr-1
-              bio_file(is:ie)=TRIM(BIONAME(i))
-              is=ie+1
-              bio_file(is:is)=','
-              is=is+2
-            END IF
-          END DO
-          lstr=LEN_TRIM(bio_file)-1
-          IF (lstr.gt.0) THEN
-            status=nf90_put_att(ncid, nf90_global, 'bio_file',          &
-     &                          bio_file(1:lstr))
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) 'bio_file', TRIM(my_ncname),            &
-     &                          TRIM(SourceFile)
-              exit_flag=3
-              ioerror=status
+              status=nf90_put_att(ncid, nf90_global, 'bio_file',        &
+     &                            bio_file(1:lstr))
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,10) 'bio_file', TRIM(my_ncname),          &
+     &                            TRIM(SourceFile)
+                exit_flag=3
+                ioerror=status
+              END IF
             END IF
           END IF
         END IF
