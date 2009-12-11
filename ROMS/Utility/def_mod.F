@@ -902,6 +902,53 @@
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
+# if defined OBS_IMPACT         && \
+#    defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY
+!
+!  Define total obs impact.
+!
+        Vinfo( 1)='ObsImpact_total'
+        Vinfo( 2)='total observation impact'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+
+#  ifdef OBS_IMPACT_SPLIT
+!
+!  Define observation impact due to initial condition increments.
+!
+        Vinfo( 1)='ObsImpact_IC'
+        Vinfo( 2)='observation impact due to initial conditions'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+
+#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Define observation impact due to surface forcing increments.
+!
+        Vinfo( 1)='ObsImpact_FC'
+        Vinfo( 2)='observation impact due to surface forcing'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#   endif
+#   if defined ADJUST_BOUNDARY
+!
+!  Define observation impact due to boundary condition increments.
+!
+        Vinfo( 1)='ObsImpact_BC'
+        Vinfo( 2)='observation impact due to open boundary conditions'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#   endif
+#  endif
+# endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
 !
 !  Define reference free-surface used in the balance operator.

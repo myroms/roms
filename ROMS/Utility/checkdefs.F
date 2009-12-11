@@ -1563,6 +1563,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' OBS_IMPACT,'
 #endif
+#if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
+      IF (Master) WRITE (stdout,20) 'OBS_IMPACT_SPLIT',                 &
+     &   'Separate impact due to IC, surface forcing, and OBC'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' OBS_IMPACT_SPLIT,'
+#endif
 #ifdef OBS_SENSITIVITY
       IF (Master) WRITE (stdout,20) 'OBS_SENSITIVITY',                  &
      &   '4DVAR Observations Sensitivity Analysis.'

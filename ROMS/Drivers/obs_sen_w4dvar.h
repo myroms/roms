@@ -1745,11 +1745,11 @@
 #else
           tile=-1
 #endif
-!
-! AMM: Don't know what to do yet in the weak constraint case.
-!
-!         CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
-          IF (exit_flag.ne.NoError) RETURN
+!!
+!! AMM: Don't know what to do yet in the weak constraint case.
+!!
+!!        CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+!!        IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -2150,11 +2150,11 @@
 # else
             tile=-1
 # endif
-!
-! AMM: Don't know what to do yet in the weak constraint case.
-!
-!           CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
-            IF (exit_flag.ne.NoError) RETURN
+!!
+!! AMM: Don't know what to do yet in the weak constraint case.
+!!
+!!          CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+!!          IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model.
@@ -2235,6 +2235,8 @@
           CALL ad_congrad (ng, iTLM, outer, inner, Ninner, Lcgini)
 
 #endif /* !OBS_IMPACT */
+
+#ifdef OBS_IMPACT
 !
 !  Write out observation sentivity.
 !
@@ -2242,15 +2244,15 @@
             SourceFile='obs_sen_w4dvar.h, ROMS_run'
 
             CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
-     &                            Vname(1,idTLmo), ad_ObsVal,           &
+     &                            'ObsImpact_total', ad_ObsVal,         &
      &                            (/1/), (/Mobs/),                      &
-     &                            ncid = ncMODid(ng),                   &
-     &                            varid = modVid(idTLmo,ng))
+     &                            ncid = ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN
 
             CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN
           END IF
+#endif
 !
 !  Close tangent linear NetCDF file.
 !
@@ -2258,6 +2260,376 @@
 
           CALL netcdf_close (ng, iTLM, ncTLMid(ng))
           ncTLMid(ng)=-1
+
+#if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with initial condition increments
+!  only to compute the observation impact associated with the initial
+!  conditions.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.TRUE.
+          LwrtTLM(ng)=.FALSE.
+!
+!  Clear tangent linear forcing arrays before entering inner-loop.
+!  This is very important since these arrays are non-zero after
+!  running the representer model and must be zero when running the
+!  tangent linear model.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+# if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+# else
+            subs=1
+# endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+# endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+!  Set basic state trajectory.
+!
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+          IF (FrcRec(ng).gt.3) THEN
+            FrequentImpulse=.TRUE.
+          END IF
+!
+!  Initialize tangent linear model from ITLname, record 1.
+!
+          tITLindx(ng)=Rec1
+          CALL tl_initial (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clear tangent linear forcing arrays and boundary arrays
+!  before the obs impact initial condition calculation.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+# if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+# else
+            subs=1
+# endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+# endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+
+# ifdef RPM_RELAXATION
+!
+!  Activate the tangent linear relaxation terms if used.
+!
+          LweakRelax(ng)=.TRUE.
+# endif
+!
+!  Run tangent linear model forward and force with convolved adjoint
+!  trajectory impulses. Compute (HMBM'H')_n * PSI at observation points
+!  which are used in the conjugate gradient algorithm.
+!
+          IF (Master) THEN
+            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+          END IF
+
+          MyTime=time(ng)
+          time(ng)=time(ng)-dt(ng)
+
+          TL_LOOP4 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+            iic(ng)=my_iic
+# ifdef SOLVE3D
+            CALL tl_main3d (ng)
+# else
+            CALL tl_main2d (ng)
+# endif
+            MyTime=time(ng)
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO TL_LOOP4
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.FALSE.
+
+!
+!  Compute observation impact to the data assimilation system.
+!
+          CALL rep_matrix (ng, iTLM, outer, Ninner)
+!
+!  Write out observation sentivity.
+!
+          IF (outer.eq.1) THEN
+            SourceFile='obs_sen_w4dvar.h, ROMS_run'
+
+            CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
+     &                            'ObsimpactIC', ad_ObsVal,             &
+     &                            (/1/), (/Mobs/),                      &
+     &                            ncid = ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+
+            CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with surface forcing increments
+!  only to compute the observations impact associated with the
+!  surface forcing.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.TRUE.
+          LwrtTLM(ng)=.FALSE.
+!
+!  Clear tangent linear forcing arrays before entering inner-loop.
+!  This is very important since these arrays are non-zero after
+!  running the representer model and must be zero when running the
+!  tangent linear model.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#  if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#  else
+            subs=1
+#  endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+#  ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#  endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+!  Set basic state trajectory.
+!
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+          IF (FrcRec(ng).gt.3) THEN
+            FrequentImpulse=.TRUE.
+          END IF
+!
+!  Initialize tangent linear model from ITLname, record 1.
+!
+          tITLindx(ng)=Rec1
+          CALL tl_initial (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clear tangent initial condition arrays and boundary arrays
+!  before the obs impact initial condition calculation.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#  if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#  else
+            subs=1
+#  endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_ocean (ng, TILE, iTLM)
+#  ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#  endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+
+#  ifdef RPM_RELAXATION
+!
+!  Activate the tangent linear relaxation terms if used.
+!
+          LweakRelax(ng)=.TRUE.
+#  endif
+!
+!  Run tangent linear model forward and force with convolved adjoint
+!  trajectory impulses. Compute (HMBM'H')_n * PSI at observation points
+!  which are used in the conjugate gradient algorithm.
+!
+          IF (Master) THEN
+            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+          END IF
+
+          MyTime=time(ng)
+          time(ng)=time(ng)-dt(ng)
+
+          TL_LOOP5 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+            iic(ng)=my_iic
+#  ifdef SOLVE3D
+            CALL tl_main3d (ng)
+#  else
+            CALL tl_main2d (ng)
+#  endif
+            MyTime=time(ng)
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO TL_LOOP5
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.FALSE.
+
+!
+!  Compute observation impact to the data assimilation system.
+!
+          CALL rep_matrix (ng, iTLM, outer, Ninner)
+!
+!  Write out observation sentivity.
+!
+          IF (outer.eq.1) THEN
+            SourceFile='obs_sen_w4dvar.h, ROMS_run'
+
+            CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
+     &                            'ObsimpactFC', ad_ObsVal,             &
+     &                            (/1/), (/Mobs/),                      &
+     &                            ncid = ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+
+            CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+# endif
+
+# if defined ADJUST_BOUNDARY
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with boundary condition increments
+!  only to compute the observation impact associated with the boundary
+!  conditions.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.TRUE.
+          LwrtTLM(ng)=.FALSE.
+!
+!  Clear tangent linear forcing arrays before entering inner-loop.
+!  This is very important since these arrays are non-zero after
+!  running the representer model and must be zero when running the
+!  tangent linear model.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#  if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#  else
+            subs=1
+#  endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+#  ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+#  endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+!  Set basic state trajectory.
+!
+          lstr=LEN_TRIM(FWDbase(ng))
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+          IF (FrcRec(ng).gt.3) THEN
+            FrequentImpulse=.TRUE.
+          END IF
+!
+!  Initialize tangent linear model from ITLname, record 1.
+!
+          tITLindx(ng)=Rec1
+          CALL tl_initial (ng)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clear tangent linear initial condition and forcing arrays
+!  before the obs impact initial condition calculation.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#  if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#  else
+            subs=1
+#  endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_ocean (ng, TILE, iTLM)
+              CALL initialize_forces (ng, TILE, iTLM)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+
+#  ifdef RPM_RELAXATION
+!
+!  Activate the tangent linear relaxation terms if used.
+!
+          LweakRelax(ng)=.TRUE.
+#  endif
+!
+!  Run tangent linear model forward and force with convolved adjoint
+!  trajectory impulses. Compute (HMBM'H')_n * PSI at observation points
+!  which are used in the conjugate gradient algorithm.
+!
+          IF (Master) THEN
+            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+          END IF
+
+          MyTime=time(ng)
+          time(ng)=time(ng)-dt(ng)
+
+          TL_LOOP6 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+            iic(ng)=my_iic
+#  ifdef SOLVE3D
+            CALL tl_main3d (ng)
+#  else
+            CALL tl_main2d (ng)
+#  endif
+            MyTime=time(ng)
+            IF (exit_flag.ne.NoError) RETURN
+
+          END DO TL_LOOP6
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.FALSE.
+
+!
+!  Compute observation impact to the data assimilation system.
+!
+          CALL rep_matrix (ng, iTLM, outer, Ninner)
+!
+!  Write out observation sentivity.
+!
+          IF (outer.eq.1) THEN
+            SourceFile='obs_sen_w4dvar.h, ROMS_run'
+
+            CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
+     &                            'ObsimpactBC', ad_ObsVal,             &
+     &                            (/1/), (/Mobs/),                      &
+     &                            ncid = ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+
+            CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+# endif
+#endif /* OBS_IMPACT_SPLIT */
 !
 !  Close current forward NetCDF file.
 !
