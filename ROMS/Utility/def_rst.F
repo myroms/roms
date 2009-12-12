@@ -61,7 +61,7 @@
       integer :: itrc
 
       integer :: k3dgrd(5), t3dgrd(5)
-      integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5) 
+      integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5)
       integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
 #endif
 
@@ -452,16 +452,27 @@
         k3dgrd(5)=DimIDs(12)
 #  endif
 # endif
+#endif
 !
 !  Define dimension vector for sediment, radiation stress variables.
 !
-# if !defined PERFECT_RESTART && \
-     (defined WRITE_WATER && defined MASKING)
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         su2dgrd(1)=DimIDs(18)
         su2dgrd(2)=DimIDs(12)
         sv2dgrd(1)=DimIDs(19)
         sv2dgrd(2)=DimIDs(12)
-
+#else
+        su2dgrd(1)=DimIDs( 2)
+        su2dgrd(2)=DimIDs( 6)
+        su2dgrd(3)=DimIDs(12)
+        sv2dgrd(1)=DimIDs( 3)
+        sv2dgrd(2)=DimIDs( 7)
+        sv2dgrd(3)=DimIDs(12)
+#endif
+#ifdef SOLVE3D
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         sr3dgrd(1)=DimIDs(24)
         sr3dgrd(2)=DimIDs(12)
         su3dgrd(1)=DimIDs(21)
@@ -469,13 +480,6 @@
         sv3dgrd(1)=DimIDs(22)
         sv3dgrd(2)=DimIDs(12)
 # else
-        su2dgrd(1)=DimIDs( 2)
-        su2dgrd(2)=DimIDs( 6)
-        su2dgrd(3)=DimIDs(12)
-        sv2dgrd(1)=DimIDs( 3)
-        sv2dgrd(2)=DimIDs( 7)
-        sv2dgrd(3)=DimIDs(12)
-
         sr3dgrd(1)=DimIDs( 1)
         sr3dgrd(2)=DimIDs( 5)
         sr3dgrd(3)=DimIDs(16)
@@ -1327,7 +1331,7 @@
 !
 !  define exposed sediment layer properties. Notice that only the
 !  first four properties (mean grain diameter, mean grain density,
-!  mean settling velocity, mean critical erosion stress, 
+!  mean settling velocity, mean critical erosion stress,
 !  ripple length and ripple height) are written.
 !
         DO i=1,6
