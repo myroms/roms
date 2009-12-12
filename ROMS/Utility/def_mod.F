@@ -903,7 +903,7 @@
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined OBS_IMPACT         && \
-#    defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY
+     defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY
 !
 !  Define total obs impact.
 !

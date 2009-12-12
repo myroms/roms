@@ -984,6 +984,33 @@
 !  conditions to time averaged fields.
 !
       IF ((iif(ng).eq.(nfast(ng)+1)).and.PREDICTOR_2D_STEP(ng)) THEN
+
+#  ifdef UV_PSOURCE
+        DO is=1,Nsrc
+          i=Isrc(is)
+          j=Jsrc(is)
+          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
+     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+            IF (INT(Dsrc(is)).eq.0) THEN
+!>            DU_avg1(i,j)=Qbar(is)
+!>
+#   ifdef TL_IOMS
+              tl_DU_avg1(i,j)=Qbar(is)
+#   else
+              tl_DU_avg1(i,j)=0.0_r8
+#   endif
+            ELSE
+!>            DV_avg1(i,j)=Qbar(is)
+!>
+#   ifdef TL_IOMS
+              tl_DV_avg1(i,j)=Qbar(is)
+#   else
+              tl_DV_avg1(i,j)=0.0_r8
+#   endif
+            END IF
+          END IF
+        END DO
+#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>      CALL exchange_r2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
@@ -4144,21 +4171,12 @@
             tl_cff=-cff*cff*                                            &
      &             on_u(i,j)*0.5_r8*(tl_zeta(i-1,j,knew)+tl_h(i-1,j)+   &
      &                               tl_zeta(i  ,j,knew)+tl_h(i  ,j))+  &
-# ifdef TL_IOMS
+#  ifdef TL_IOMS
      &             2.0_r8*cff
-# endif
+#  endif
 !>          ubar(i,j,knew)=Qbar(is)*cff
 !>
             tl_ubar(i,j,knew)=Qbar(is)*tl_cff
-#  ifdef SOLVE3D
-!>          DU_avg1(i,j)=Qbar(is)
-!>
-#   ifdef TL_IOMS
-            tl_DU_avg1(i,j)=Qbar(is)
-#   else
-            tl_DU_avg1(i,j)=0.0_r8
-#   endif
-#  endif
           ELSE
             cff=1.0_r8/(om_v(i,j)*                                      &
      &                  0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+              &
@@ -4166,21 +4184,12 @@
             tl_cff=-cff*cff*                                            &
      &             om_v(i,j)*0.5_r8*(tl_zeta(i,j-1,knew)+tl_h(i,j-1)+   &
      &                               tl_zeta(i,j  ,knew)+tl_h(i,j  ))+  &
-# ifdef TL_IOMS
+#  ifdef TL_IOMS
      &             2.0_r8*cff
-# endif
+#  endif
 !>          vbar(i,j,knew)=Qbar(is)*cff
 !>
             tl_vbar(i,j,knew)=Qbar(is)*tl_cff
-#  ifdef SOLVE3D
-!>          DV_avg1(i,j)=Qbar(is)
-!>
-#   ifdef TL_IOMS
-            tl_DV_avg1(i,j)=Qbar(is)
-#   else
-            tl_DV_avg1(i,j)=0.0_r8
-#   endif
-#  endif
           END IF
         END IF
       END DO

@@ -976,11 +976,6 @@
               cff=1.0_r8/(on_u(i,j)*                                    &
      &                    0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+            &
      &                            zeta(i  ,j,knew)+h(i  ,j)))
-#  ifdef SOLVE3D
-!>            tl_DU_avg1(i,j)=0.0_r8
-!>
-              ad_DU_avg1(i,j)=0.0_r8
-#  endif
 !>            tl_ubar(i,j,knew)=Qbar(is)*tl_cff
 !>
               ad_cff=ad_cff+Qbar(is)*ad_ubar(i,j,knew)
@@ -999,11 +994,6 @@
               cff=1.0_r8/(om_v(i,j)*                                    &
      &                    0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+            &
      &                            zeta(i,j  ,knew)+h(i,j  )))
-#  ifdef SOLVE3D
-!>            tl_DV_avg1(i,j)=0.08
-!>
-              ad_DV_avg1(i,j)=0.08
-#  endif
 !>            tl_vbar(i,j,knew)=Qbar(is)*tl_cff
 !>
               ad_cff=ad_cff+Qbar(is)*ad_vbar(i,j,knew)
@@ -4947,6 +4937,24 @@
         CALL ad_exchange_r2d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_Zt_avg1)
+#  endif
+#  ifdef UV_PSOURCE
+        DO is=1,Nsrc
+          i=Isrc(is)
+          j=Jsrc(is)
+          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
+     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+            IF (INT(Dsrc(is)).eq.0) THEN
+!>            tl_DU_avg1(i,j)=0.0_r8
+!>
+              ad_DU_avg1(i,j)=0.0_r8
+            ELSE
+!>            tl_DV_avg1(i,j)=0.0_r8
+!>
+              ad_DV_avg1(i,j)=0.0_r8
+            END IF
+          END IF
+        END DO
 #  endif
       END IF
 !

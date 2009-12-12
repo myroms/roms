@@ -937,6 +937,25 @@
 !  conditions to time averaged fields.
 !
       IF ((iif(ng).eq.(nfast(ng)+1)).and.PREDICTOR_2D_STEP(ng)) THEN
+
+#  ifdef UV_PSOURCE
+        DO is=1,Nsrc
+          i=Isrc(is)
+          j=Jsrc(is)
+          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
+     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+            IF (INT(Dsrc(is)).eq.0) THEN
+!>            DU_avg1(i,j)=Qbar(is)
+!>
+              tl_DU_avg1(i,j)=0.0_r8
+            ELSE
+!>            DV_avg1(i,j)=Qbar(is)
+!>
+              tl_DV_avg1(i,j)=0.0_r8
+            END IF
+          END IF
+        END DO
+#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>      CALL exchange_r2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
@@ -3759,11 +3778,6 @@
 !>          ubar(i,j,knew)=Qbar(is)*cff
 !>
             tl_ubar(i,j,knew)=Qbar(is)*tl_cff
-#  ifdef SOLVE3D
-!>          DU_avg1(i,j)=Qbar(is)
-!>
-            tl_DU_avg1(i,j)=0.0_r8
-#  endif
           ELSE
             cff=1.0_r8/(om_v(i,j)*                                      &
      &                  0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+              &
@@ -3774,11 +3788,6 @@
 !>          vbar(i,j,knew)=Qbar(is)*cff
 !>
             tl_vbar(i,j,knew)=Qbar(is)*tl_cff
-#  ifdef SOLVE3D
-!>          DV_avg1(i,j)=Qbar(is)
-!>
-            tl_DV_avg1(i,j)=0.0_r8
-#  endif
           END IF
         END IF
       END DO

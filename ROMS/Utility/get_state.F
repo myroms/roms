@@ -299,7 +299,9 @@
         END IF
 #endif
       ELSE IF (model.eq.iADM) THEN
-        IF (msg.ne.1) THEN
+        IF ((msg.eq.1).and.(INPtime.eq.0.0_r8)) THEN
+          INPtime=time(ng)
+        ELSE IF (msg.ne.1) THEN
           time(ng)=INPtime
           tdays(ng)=time(ng)*sec2day
         END IF
