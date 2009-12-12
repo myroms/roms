@@ -5818,10 +5818,19 @@
         string(i:i)=blank
       END DO
 !
-!  Get length of "line", remove leading and trailing blanks.
+!  Get length of "line". Remove comment after the KEYWORD, if any.
+!  Then, remove leading and trailing blanks.
 !
-      line=TRIM(ADJUSTL(line_text))
-      Linp=LEN_TRIM(line)
+      Linp=LEN(line_text)
+      IF ((Linp.gt.0).and.(line_text(1:1).ne.CHAR(33))) THEN
+        Icmm=INDEX(line_text,CHAR(33),BACK=.FALSE.)
+        IF (Icmm.gt.0) Linp=Icmm-1
+        line=TRIM(ADJUSTL(line_text(1:Linp)))
+        Linp=LEN_TRIM(line)
+      ELSE
+        line=TRIM(ADJUSTL(line_text))
+        Linp=LEN_TRIM(line)
+      END IF
 !
 !  If not a blank or comment line [char(33)=!], decode and extract input
 !  values.  Find equal sign [char(61)].
@@ -5853,13 +5862,10 @@
           Kextract=.TRUE.
         END IF
 !
-! Extract parameter values string.  Remove comments [char(33)=!] or
-! continuation symbol [char(92)=\], if any.  Trim leading trailing
-! blanks.
+! Extract parameter values string.  Remove continuation symbol
+! [char(92)=\], if any.  Trim leading trailing blanks.
 !
         IF (Kextract) THEN
-          Icmm=INDEX(line,CHAR(33),BACK=.FALSE.)
-          IF (Icmm.gt.0) Lend=Icmm-1
           Icmm=INDEX(line,CHAR(92),BACK=.FALSE.)
           IF (Icmm.gt.0) Lend=Icmm-1
           Vstring=ADJUSTL(line(Lstr:Lend))
