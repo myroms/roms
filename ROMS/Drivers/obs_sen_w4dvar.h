@@ -2375,7 +2375,7 @@
             SourceFile='obs_sen_w4dvar.h, ROMS_run'
 
             CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
-     &                            'ObsimpactIC', ad_ObsVal,             &
+     &                            'ObsImpact_IC', ad_ObsVal,            &
      &                            (/1/), (/Mobs/),                      &
      &                            ncid = ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN
@@ -2498,7 +2498,7 @@
             SourceFile='obs_sen_w4dvar.h, ROMS_run'
 
             CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
-     &                            'ObsimpactFC', ad_ObsVal,             &
+     &                            'ObsImpact_FC', ad_ObsVal,            &
      &                            (/1/), (/Mobs/),                      &
      &                            ncid = ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN
@@ -2620,7 +2620,7 @@
             SourceFile='obs_sen_w4dvar.h, ROMS_run'
 
             CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
-     &                            'ObsimpactBC', ad_ObsVal,             &
+     &                            'ObsImpact_BC', ad_ObsVal,            &
      &                            (/1/), (/Mobs/),                      &
      &                            ncid = ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN
