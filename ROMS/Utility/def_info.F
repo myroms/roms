@@ -46,6 +46,9 @@
 !                DimIDs(27) => Number of EcoSim DOM groups.            !
 !                DimIDs(28) => Number of EcoSim fecal groups.          !
 !                DimIDs(29) => Number of state variables.              !
+!                DimIDs(30) => Number of 3D variables time levels (2). !
+!                DimIDs(31) => Number of 2D variables time levels (3). !
+!                DimIDs(32) => Number of sediment tracers.             !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -76,7 +79,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, ncid
-      integer, intent(in) :: DimIDs(31)
+      integer, intent(in) :: DimIDs(32)
       character (*), intent(in) :: ncname
 !
 !  Local variable declarations.
@@ -85,6 +88,9 @@
 
       integer :: brydim, i, ie, is, j, lstr, varid
       integer :: srdim, stadim, status, swdim, trcdim, usrdim
+#ifdef SEDIMENT
+      integer :: seddim
+#endif
 #ifdef FOUR_DVAR
       integer :: statedim
 #endif
@@ -130,6 +136,9 @@
       srdim=DimIDs(9)
       swdim=DimIDs(10)
       trcdim=DimIDs(11)
+#ifdef SEDIMENT
+      seddim=DimIDs(32)
+#endif
       stadim=DimIDs(13)
       brydim=DimIDs(14)
 #ifdef FOUR_DVAR
@@ -2296,6 +2305,10 @@
 # elif defined NPZD_POWELL
 #  include <npzd_Powell_def.h>
 # endif
+#endif
+
+#ifdef SEDIMENT
+# include <sediment_def.h>
 #endif
 !
 !-----------------------------------------------------------------------

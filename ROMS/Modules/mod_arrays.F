@@ -40,6 +40,9 @@
       USE mod_obs, ONLY : allocate_obs, initialize_obs
 #endif
       USE mod_ocean, ONLY : allocate_ocean, initialize_ocean
+#if defined SEDIMENT || defined BBL_MODEL
+      USE mod_sedbed, ONLY : allocate_sedbed, initialize_sedbed
+#endif
 #if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources, ONLY : allocate_sources
 #endif
@@ -103,7 +106,10 @@
 #if defined ASSIMILATION || defined NUDGING
           CALL allocate_obs (ng, LBi, UBi, LBj, UBj)
 #endif
-          CALL allocate_ocean  (ng, LBi, UBi, LBj, UBj)
+          CALL allocate_ocean (ng, LBi, UBi, LBj, UBj)
+#if defined SEDIMENT || defined BBL_MODEL
+          CALL allocate_sedbed (ng, LBi, UBi, LBj, UBj)
+#endif
 #if defined SSH_TIDES || defined UV_TIDES
           CALL allocate_tides (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -153,6 +159,9 @@
             CALL initialize_obs (ng, TILE)
 #endif
             CALL initialize_ocean (ng, TILE, model)
+#if defined SEDIMENT || defined BBL_MODEL
+            CALL initialize_sedbed (ng, TILE, model)
+#endif
 #if defined SSH_TIDES || defined UV_TIDES
             CALL initialize_tides (ng, TILE)
 #endif

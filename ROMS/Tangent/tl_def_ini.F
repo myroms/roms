@@ -45,7 +45,7 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-      integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 # ifdef ADJUST_BOUNDARY
       integer :: t2dobc(4)
 # endif
@@ -192,7 +192,11 @@
      &                 NT(ng), DimIDs(11))
         IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef SEDIMENT_NOT_YET
+#  ifdef SEDIMENT
+        status=def_dim(ng, iTLM, ncITLid(ng), ncname, 'NST',            &
+     &                 NST, DimIDs(32))
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, iTLM, ncITLid(ng), ncname, 'Nbed',           &
      &                 Nbed, DimIDs(16))
         IF (exit_flag.ne.NoError) RETURN

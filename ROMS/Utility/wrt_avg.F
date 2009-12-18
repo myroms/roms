@@ -24,6 +24,7 @@
       USE mod_netcdf
       USE mod_scalars
 # if defined SEDIMENT || defined BBL_MODEL
+      USE mod_sedbed
       USE mod_sediment
 # endif
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
@@ -1419,7 +1420,7 @@
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSrad)), tAVGindx(ng)
-          END IF          
+          END IF
           exit_flag=3
           ioerror=status
           RETURN
@@ -1454,7 +1455,7 @@
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUsms)), tAVGindx(ng)
-          END IF                    
+          END IF
           exit_flag=3
           ioerror=status
           RETURN
@@ -1516,7 +1517,7 @@
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbms)), tAVGindx(ng)
-          END IF                    
+          END IF
           exit_flag=3
           ioerror=status
           RETURN
@@ -1569,7 +1570,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % umask,                          &
 #  endif
-     &                       AVERAGE(ng) % avgbedldu(:,:,itrc))
+     &                       SEDBED(ng) % avgbedldu(:,:,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idUbld(itrc))),            &
@@ -1593,7 +1594,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % vmask,                          &
 #  endif
-     &                       AVERAGE(ng) % avgbedldv(:,:,itrc))
+     &                       SEDBED(ng) % avgbedldv(:,:,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idVbld(itrc))),            &

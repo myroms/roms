@@ -91,6 +91,9 @@
       USE mod_fourdvar
       USE mod_mixing
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -135,7 +138,7 @@
      &                           GRID(ng) % zice,                       &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                           GRID(ng) % bed_thick,                  &
+     &                           SEDBED(ng) % bed_thick,                &
 #  endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % z_r,                        &
@@ -205,7 +208,7 @@
      &                           GRID(ng) % zice,                       &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                           GRID(ng) % bed_thick,                  &
+     &                           SEDBED(ng) % bed_thick,                &
 #  endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % z_r,                        &
@@ -496,7 +499,7 @@
       real(r8), dimension(LBi:UBi,LBj:UBj) :: A2d
       real(r8), dimension(LBi:UBi,LBj:UBj) :: Hscale
 # ifdef SOLVE3D
-      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: A3d 
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: A3d
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: Vscale
 # endif
 # ifdef ADJUST_BOUNDARY
@@ -548,14 +551,14 @@
 !  computing the filter variance (convolution) at each point
 !  independenly.  That is, each point is perturbed with a delta
 !  function, scaled by the inverse squared root of the area (2D)
-!  or volume (3D), and then convoluted.  
+!  or volume (3D), and then convoluted.
 !-----------------------------------------------------------------------
 !
       IF (Master) WRITE (stdout,10)
 
       FILE_LOOP : DO ifile=1,NSA
 
-        IF (LwrtNRM(ifile,ng)) THEN        
+        IF (LwrtNRM(ifile,ng)) THEN
           IF (ifile.eq.1) THEN
             Text='initial conditions'
           ELSE IF (ifile.eq.2) THEN
@@ -1382,7 +1385,7 @@
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,r2dvar)
               Bmin=1
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
               IF (Lconvolve(bry)) THEN
                 DO j=JR_RANGE
                   HscaleB(j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
@@ -1391,7 +1394,7 @@
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,r2dvar)
               Bmin=1
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
               IF (Lconvolve(bry)) THEN
                 DO i=IR_RANGE
                   HscaleB(i)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
@@ -1508,7 +1511,7 @@
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,u2dvar)
               Bmin=1
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
               IF (Lconvolve(bry)) THEN
                 DO j=JU_RANGE
                   HscaleB(j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
@@ -1518,10 +1521,10 @@
               j=BOUNDS(ng)%edge(bry,u2dvar)
 #  ifdef EW_PERIODIC
               Bmin=1
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
 #  else
               Bmin=2
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
 #  endif
               IF (Lconvolve(bry)) THEN
                 DO i=IU_RANGE
@@ -1591,7 +1594,7 @@
      &                                     pm, pn, pmon_r, pnom_p,      &
 #  ifdef MASKING
      &                                     umask, pmask,                &
-#  endif 
+#  endif
      &                                     B2d)
                 IF (bounded) THEN
                   cff=1.0_r8/SQRT(B2d(ib))
@@ -1640,10 +1643,10 @@
               i=BOUNDS(ng)%edge(bry,v2dvar)
 #  ifdef NS_PERIODIC
               Bmin=1
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
 #  else
               Bmin=2
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
 #  endif
               IF (Lconvolve(bry)) THEN
                 DO j=JR_RANGE
@@ -1653,7 +1656,7 @@
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,v2dvar)
               Bmin=1
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
               IF (Lconvolve(bry)) THEN
                 DO i=IR_RANGE
                   HscaleB(i)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
@@ -1772,7 +1775,7 @@
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,u2dvar)
               Bmin=1
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
               IF (Lconvolve(bry)) THEN
                 DO j=JU_RANGE
                   cff=om_u(i,j)*on_u(i,j)*0.5_r8
@@ -1786,10 +1789,10 @@
               j=BOUNDS(ng)%edge(bry,u2dvar)
 #   ifdef EW_PERIODIC
               Bmin=1
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
 #   else
               Bmin=2
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
 #   endif
               IF (Lconvolve(bry)) THEN
                 DO i=IU_RANGE
@@ -1926,10 +1929,10 @@
               i=BOUNDS(ng)%edge(bry,v2dvar)
 #   ifdef NS_PERIODIC
               Bmin=1
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
 #   else
               Bmin=2
-              Bmax=Mm(ng) 
+              Bmax=Mm(ng)
 #   endif
               IF (Lconvolve(bry)) THEN
                 DO j=JV_RANGE
@@ -1943,7 +1946,7 @@
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,v2dvar)
               Bmin=1
-              Bmax=Lm(ng) 
+              Bmax=Lm(ng)
               IF (Lconvolve(bry)) THEN
                 DO i=IV_RANGE
                   cff=om_v(i,j)*on_v(i,j)*0.5_r8
@@ -2072,13 +2075,13 @@
               EXIT
             END IF
           END DO
-          IF (Lsame) THEN                
+          IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '3D normalization factors at RHO-points'
             CALL my_flush (stdout)
           END IF
         END IF
- 
+
         DO itrc=1,NT(ng)
           VnormRobc=Aspv
           is=isTvar(itrc)
@@ -2088,7 +2091,7 @@
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(bry,r2dvar)
                 Bmin=2
-                Bmax=Mm(ng) 
+                Bmax=Mm(ng)
                 IF (Lconvolve(bry)) THEN
                   DO j=JR_RANGE
                     cff=om_r(i,j)*on_r(i,j)
@@ -2100,7 +2103,7 @@
               ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(bry,r2dvar)
                 Bmin=1
-                Bmax=Lm(ng) 
+                Bmax=Lm(ng)
                 IF (Lconvolve(bry)) THEN
                   DO i=IR_RANGE
                     cff=om_r(i,j)*on_r(i,j)
@@ -3103,7 +3106,7 @@
               END DO
             END DO
             DO iter=1,Nrandom
-              CALL white_noise2d (ng, iTLM, u2dvar, Rscheme(ng),        & 
+              CALL white_noise2d (ng, iTLM, u2dvar, Rscheme(ng),        &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
@@ -3183,7 +3186,7 @@
               END DO
             END DO
             DO iter=1,Nrandom
-              CALL white_noise2d (ng, iTLM, v2dvar, Rscheme(ng),        & 
+              CALL white_noise2d (ng, iTLM, v2dvar, Rscheme(ng),        &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
@@ -3268,7 +3271,7 @@
               END DO
             END DO
             DO iter=1,Nrandom
-              CALL white_noise3d (ng, iTLM, u3dvar, Rscheme(ng),        & 
+              CALL white_noise3d (ng, iTLM, u3dvar, Rscheme(ng),        &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            Amin, Amax, A3d)
@@ -3698,7 +3701,7 @@
      &                                   rmask, umask, vmask,           &
 #  endif
      &                                   B2d)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO j=Jstr,Jend
                     B2davg(j)=B2davg(j)+B2d(j)
@@ -3712,7 +3715,7 @@
                 END IF
               END IF
             END DO
-            IF (Lconvolve(bry)) THEN 
+            IF (Lconvolve(bry)) THEN
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 DO j=Jstr,Jend
                   Bavg=FacAvg*B2davg(j)
@@ -3783,14 +3786,14 @@
             B2d=0.0_r8
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,u2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO j=JU_RANGE
                   HscaleB(j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,u2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO i=IU_RANGE
                   HscaleB(i)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
@@ -3830,7 +3833,7 @@
      &                                   umask, pmask,                  &
 #  endif
      &                                   B2d)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO j=Jstr,Jend
                     B2davg(j)=B2davg(j)+B2d(j)
@@ -3844,7 +3847,7 @@
                 END IF
               END IF
             END DO
-            IF (Lconvolve(bry)) THEN 
+            IF (Lconvolve(bry)) THEN
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 DO j=Jstr,Jend
                   Bavg=FacAvg*B2davg(j)
@@ -3915,14 +3918,14 @@
             B2d=0.0_r8
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,v2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO j=JV_RANGE
                   HscaleB(j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,v2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO i=IV_RANGE
                   HscaleB(i)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
@@ -3962,7 +3965,7 @@
      &                                   vmask, pmask,                  &
 #  endif
      &                                   B2d)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO j=JstrV,Jend
                     B2davg(j)=B2davg(j)+B2d(j)
@@ -3976,7 +3979,7 @@
                 END IF
               END IF
             END DO
-            IF (Lconvolve(bry)) THEN 
+            IF (Lconvolve(bry)) THEN
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 DO j=JstrV,Jend
                   Bavg=FacAvg*B2davg(j)
@@ -4049,7 +4052,7 @@
             B3d=0.0_r8
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,u2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO j=JU_RANGE
                   val=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
@@ -4060,7 +4063,7 @@
               END IF
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,u2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO i=IU_RANGE
                   val=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
@@ -4111,7 +4114,7 @@
 #  endif
      &                                   Hz, z_r,                       &
      &                                   B3d)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO k=1,N(ng)
                     DO j=Jstr,Jend
@@ -4129,7 +4132,7 @@
                 END IF
               END IF
             END DO
-            IF (Lconvolve(bry)) THEN 
+            IF (Lconvolve(bry)) THEN
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 DO k=1,N(ng)
                   DO j=Jstr,Jend
@@ -4208,7 +4211,7 @@
             B3d=0.0_r8
             IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(bry,v2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO j=JV_RANGE
                   val=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
@@ -4219,7 +4222,7 @@
               END IF
             ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(bry,v2dvar)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 DO i=IV_RANGE
                   val=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
@@ -4270,7 +4273,7 @@
 #  endif
      &                                   Hz, z_r,                       &
      &                                   B3d)
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO k=1,N(ng)
                     DO j=JstrV,Jend
@@ -4288,7 +4291,7 @@
                 END IF
               END IF
             END DO
-            IF (Lconvolve(bry)) THEN 
+            IF (Lconvolve(bry)) THEN
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 DO k=1,N(ng)
                   DO j=JstrV,Jend
@@ -4377,7 +4380,7 @@
               B3d=0.0_r8
               IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(bry,r2dvar)
-                IF (Lconvolve(bry)) THEN 
+                IF (Lconvolve(bry)) THEN
                   DO j=JR_RANGE
                     val=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
@@ -4387,7 +4390,7 @@
                 END IF
               ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(bry,r2dvar)
-                IF (Lconvolve(bry)) THEN 
+                IF (Lconvolve(bry)) THEN
                   DO i=IR_RANGE
                     val=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
@@ -4438,7 +4441,7 @@
 #  endif
      &                                     Hz, z_r,                     &
      &                                     B3d)
-                IF (Lconvolve(bry)) THEN 
+                IF (Lconvolve(bry)) THEN
                   IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                     DO k=1,N(ng)
                       DO j=Jstr,Jend
@@ -4456,7 +4459,7 @@
                   END IF
                 END IF
               END DO
-              IF (Lconvolve(bry)) THEN 
+              IF (Lconvolve(bry)) THEN
                 IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
                   DO k=1,N(ng)
                     DO j=Jstr,Jend

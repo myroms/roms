@@ -40,47 +40,102 @@
 !                                                                      !
 !=======================================================================
 !
-        USE mod_param
+      USE mod_param
 !
-        implicit none
+      implicit none
 !
-        integer, dimension(Ngrids) :: BioIter
+!  Set biological tracer identification indices.
+!
+      integer, pointer :: idbio(:)    ! Biological tracers
+      integer :: iNO3_                ! Nitrate concentration
+      integer :: iPhyt                ! Phytoplankton concentration
+      integer :: iZoop                ! Zooplankton concentration
+      integer :: iSDet                ! Small detritus concentration
+!
+!  Biological parameters.
+!
+      integer, dimension(Ngrids) :: BioIter
 
 #ifdef ANA_BIOLOGY
-        real(r8), allocatable :: BioIni(:,:)
+      real(r8), allocatable :: BioIni(:,:)
 #endif
-        real(r8), dimension(Ngrids) :: AttPhy        ! m2/mmole
-        real(r8), dimension(Ngrids) :: AttSW         ! 1/m
-        real(r8), dimension(Ngrids) :: DetRR         ! 1/day
-        real(r8), dimension(Ngrids) :: K_NO3         ! mmol/m3
-        real(r8), dimension(Ngrids) :: Ivlev         ! nondimensional
-        real(r8), dimension(Ngrids) :: PARfrac       ! nondimensional
+      real(r8), dimension(Ngrids) :: AttPhy          ! m2/mmole
+      real(r8), dimension(Ngrids) :: AttSW           ! 1/m
+      real(r8), dimension(Ngrids) :: DetRR           ! 1/day
+      real(r8), dimension(Ngrids) :: K_NO3           ! mmol/m3
+      real(r8), dimension(Ngrids) :: Ivlev           ! nondimensional
+      real(r8), dimension(Ngrids) :: PARfrac         ! nondimensional
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_PARfrac
+      real(r8), dimension(Ngrids) :: tl_PARfrac
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_PARfrac
+      real(r8), dimension(Ngrids) :: ad_PARfrac
 #endif
-        real(r8), dimension(Ngrids) :: PhyIS         ! m2/W
-        real(r8), dimension(Ngrids) :: PhyMRD        ! 1/day
-        real(r8), dimension(Ngrids) :: PhyMRN        ! 1/day
-        real(r8), dimension(Ngrids) :: Vm_NO3        ! 1/day
-        real(r8), dimension(Ngrids) :: wDet          ! m/day
+      real(r8), dimension(Ngrids) :: PhyIS           ! m2/W
+      real(r8), dimension(Ngrids) :: PhyMRD          ! 1/day
+      real(r8), dimension(Ngrids) :: PhyMRN          ! 1/day
+      real(r8), dimension(Ngrids) :: Vm_NO3          ! 1/day
+      real(r8), dimension(Ngrids) :: wDet            ! m/day
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_wDet
+      real(r8), dimension(Ngrids) :: tl_wDet
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_wDet
+      real(r8), dimension(Ngrids) :: ad_wDet
 #endif
-        real(r8), dimension(Ngrids) :: wPhy          ! m/day
+      real(r8), dimension(Ngrids) :: wPhy            ! m/day
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_wPhy
+      real(r8), dimension(Ngrids) :: tl_wPhy
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_wPhy
+      real(r8), dimension(Ngrids) :: ad_wPhy
 #endif
-        real(r8), dimension(Ngrids) :: ZooEED        ! nondimensional
-        real(r8), dimension(Ngrids) :: ZooEEN        ! nondimensional
-        real(r8), dimension(Ngrids) :: ZooGR         ! 1/day
-        real(r8), dimension(Ngrids) :: ZooMRD        ! 1/day
-        real(r8), dimension(Ngrids) :: ZooMRN        ! 1/day
+      real(r8), dimension(Ngrids) :: ZooEED          ! nondimensional
+      real(r8), dimension(Ngrids) :: ZooEEN          ! nondimensional
+      real(r8), dimension(Ngrids) :: ZooGR           ! 1/day
+      real(r8), dimension(Ngrids) :: ZooMRD          ! 1/day
+      real(r8), dimension(Ngrids) :: ZooMRN          ! 1/day
+
+      CONTAINS
+
+      SUBROUTINE initialize_biology
+!
+!=======================================================================
+!                                                                      !
+!  This routine sets several variables needed by the biology model.    !
+!  It allocates and assigns biological tracers indices.                !
+!                                                                      !
+!=======================================================================
+!
+!  Local variable declarations
+!
+      integer :: i, ic
+!
+!-----------------------------------------------------------------------
+!  Set number of biological tracers.
+!-----------------------------------------------------------------------
+!
+      NBT=4
+!
+!-----------------------------------------------------------------------
+!  Initialize tracer identification indices.
+!-----------------------------------------------------------------------
+!
+!  Allocate biological tracer vector.
+!
+      IF (.not.allocated(idbio)) THEN
+        allocate ( idbio(NBT) )
+      END IF
+!
+!  Set identification indices.
+!
+      ic=NAT+NPT+NCS+NNS
+      DO i=1,NBT
+        idbio(i)=ic+i
+      END DO
+      iNO3_=ic+1
+      iPhyt=ic+2
+      iZoop=ic+3
+      iSDet=ic+4
+
+      RETURN
+      END SUBROUTINE initialize_biology

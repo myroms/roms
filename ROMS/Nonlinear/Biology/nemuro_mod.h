@@ -167,92 +167,161 @@
 !                                                                      !
 !=======================================================================
 !
-        USE mod_param
+      USE mod_param
+!
+      implicit none
+!
+!  Set biological tracer identification indices.
+!
+      integer, pointer :: idbio(:)    ! Biological tracers
+      integer :: iLphy                ! Large Phytoplankton biomass
+      integer :: iSphy                ! Small Phytoplankton biomass
+      integer :: iLzoo                ! Large Zooplankton biomass
+      integer :: iSzoo                ! Small Zooplankton biomass
+      integer :: iPzoo                ! Predator Zooplankton biomass
+      integer :: iNO3_                ! Nitrate concentration
+      integer :: iNH4_                ! Ammonium concentration
+      integer :: iPON_                ! Particulate Organic Nitrogen
+      integer :: iDON_                ! Dissolved Organic Nitrogen
+      integer :: iSiOH                ! Silicate concentration
+      integer :: iopal                ! Particulate organic silica
+!
+!  Biological parameters.
+!
+      integer, dimension(Ngrids) :: BioIter
 
-        implicit none
+      real(r8), dimension(Ngrids) :: AlphaPL         ! 1/(W/m2) 1/day
+      real(r8), dimension(Ngrids) :: AlphaPS         ! 1/(W/m2) 1/day
+      real(r8), dimension(Ngrids) :: AlphaZL         ! nondimensional
+      real(r8), dimension(Ngrids) :: AlphaZP         ! nondimensional
+      real(r8), dimension(Ngrids) :: AlphaZS         ! nondimensional
+      real(r8), dimension(Ngrids) :: AttPL           ! m2/mmole_N
+      real(r8), dimension(Ngrids) :: AttPS           ! m2/mmole_N
+      real(r8), dimension(Ngrids) :: AttSW           ! 1/m
+      real(r8), dimension(Ngrids) :: BetaPL          ! 1/(W/m2) 1/day
+      real(r8), dimension(Ngrids) :: BetaPS          ! 1/(W/m2) 1/day
+      real(r8), dimension(Ngrids) :: BetaZS          ! nondimensional
+      real(r8), dimension(Ngrids) :: BetaZL          ! nondimensional
+      real(r8), dimension(Ngrids) :: BetaZP          ! nondimensional
+      real(r8), dimension(Ngrids) :: GammaL          ! nondimensional
+      real(r8), dimension(Ngrids) :: GammaS          ! nondimensional
+      real(r8), dimension(Ngrids) :: GRmaxLpl        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxLps        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxLzs        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxPpl        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxPzl        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxPzs        ! 1/day
+      real(r8), dimension(Ngrids) :: GRmaxSps        ! 1/day
+      real(r8), dimension(Ngrids) :: KD2N            ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KGppL           ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KGppS           ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KGraL           ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KGraP           ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KGraS           ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KMorPL          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KMorPS          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KMorZL          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KMorZP          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KMorZS          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KNH4L           ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KNH4S           ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KNit            ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KNO3L           ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KNO3S           ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KO2S            ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KP2D            ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KP2N            ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KPL2ZL          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KPS2ZL          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KPS2ZS          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KPL2ZP          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KResPL          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KResPS          ! 1/Celsius
+      real(r8), dimension(Ngrids) :: KSiL            ! mmole_Si/m3
+      real(r8), dimension(Ngrids) :: KZL2ZP          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KZS2ZL          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: KZS2ZP          ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: LamL            ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: LamP            ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: LamS            ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: MorPL0          ! m3/mmole_N/day
+      real(r8), dimension(Ngrids) :: MorPS0          ! m3/mmole_N/day
+      real(r8), dimension(Ngrids) :: MorZL0          ! m3/mmole_N 1/day
+      real(r8), dimension(Ngrids) :: MorZP0          ! m3/mmole_N 1/day
+      real(r8), dimension(Ngrids) :: MorZS0          ! m3/mmole_N 1/day
+      real(r8), dimension(Ngrids) :: Nit0            ! 1/day
+      real(r8), dimension(Ngrids) :: PARfrac         ! nondimensional
+      real(r8), dimension(Ngrids) :: PusaiL          ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: PusaiPL         ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: PusaiS          ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: PusaiZS         ! m3/mmole_N
+      real(r8), dimension(Ngrids) :: PL2ZLstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: PL2ZPstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: PS2ZLstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: PS2ZSstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: ResPL0          ! 1/day
+      real(r8), dimension(Ngrids) :: ResPS0          ! 1/day
+      real(r8), dimension(Ngrids) :: RSiN            ! mmole_Si/mmole_N
+      real(r8), dimension(Ngrids) :: setVOpal        ! m/day
+      real(r8), dimension(Ngrids) :: setVPON         ! m/day
+      real(r8), dimension(Ngrids) :: VD2N0           ! 1/day
+      real(r8), dimension(Ngrids) :: VmaxL           ! 1/day
+      real(r8), dimension(Ngrids) :: VmaxS           ! 1/day
+      real(r8), dimension(Ngrids) :: VO2S0           ! 1/day
+      real(r8), dimension(Ngrids) :: VP2D0           ! 1/day
+      real(r8), dimension(Ngrids) :: VP2N0           ! 1/day
+      real(r8), dimension(Ngrids) :: ZL2ZPstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: ZS2ZLstar       ! mmole_N/m3
+      real(r8), dimension(Ngrids) :: ZS2ZPstar       ! mmole_N/m3
 
-        integer, dimension(Ngrids) :: BioIter
+      CONTAINS
 
-        real(r8), dimension(Ngrids) :: AlphaPL       ! 1/(W/m2) 1/day
-        real(r8), dimension(Ngrids) :: AlphaPS       ! 1/(W/m2) 1/day
-        real(r8), dimension(Ngrids) :: AlphaZL       ! nondimensional
-        real(r8), dimension(Ngrids) :: AlphaZP       ! nondimensional
-        real(r8), dimension(Ngrids) :: AlphaZS       ! nondimensional
-        real(r8), dimension(Ngrids) :: AttPL         ! m2/mmole_N
-        real(r8), dimension(Ngrids) :: AttPS         ! m2/mmole_N
-        real(r8), dimension(Ngrids) :: AttSW         ! 1/m
-        real(r8), dimension(Ngrids) :: BetaPL        ! 1/(W/m2) 1/day
-        real(r8), dimension(Ngrids) :: BetaPS        ! 1/(W/m2) 1/day
-        real(r8), dimension(Ngrids) :: BetaZS        ! nondimensional
-        real(r8), dimension(Ngrids) :: BetaZL        ! nondimensional
-        real(r8), dimension(Ngrids) :: BetaZP        ! nondimensional
-        real(r8), dimension(Ngrids) :: GammaL        ! nondimensional
-        real(r8), dimension(Ngrids) :: GammaS        ! nondimensional
-        real(r8), dimension(Ngrids) :: GRmaxLpl      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxLps      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxLzs      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxPpl      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxPzl      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxPzs      ! 1/day
-        real(r8), dimension(Ngrids) :: GRmaxSps      ! 1/day
-        real(r8), dimension(Ngrids) :: KD2N          ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KGppL         ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KGppS         ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KGraL         ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KGraP         ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KGraS         ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KMorPL        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KMorPS        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KMorZL        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KMorZP        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KMorZS        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KNH4L         ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KNH4S         ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KNit          ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KNO3L         ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KNO3S         ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KO2S          ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KP2D          ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KP2N          ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KPL2ZL        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KPS2ZL        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KPS2ZS        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KPL2ZP        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KResPL        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KResPS        ! 1/Celsius
-        real(r8), dimension(Ngrids) :: KSiL          ! mmole_Si/m3
-        real(r8), dimension(Ngrids) :: KZL2ZP        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KZS2ZL        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: KZS2ZP        ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: LamL          ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: LamP          ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: LamS          ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: MorPL0        ! m3/mmole_N/day
-        real(r8), dimension(Ngrids) :: MorPS0        ! m3/mmole_N/day
-        real(r8), dimension(Ngrids) :: MorZL0        ! m3/mmole_N 1/day
-        real(r8), dimension(Ngrids) :: MorZP0        ! m3/mmole_N 1/day
-        real(r8), dimension(Ngrids) :: MorZS0        ! m3/mmole_N 1/day
-        real(r8), dimension(Ngrids) :: Nit0          ! 1/day
-        real(r8), dimension(Ngrids) :: PARfrac       ! nondimensional
-        real(r8), dimension(Ngrids) :: PusaiL        ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: PusaiPL       ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: PusaiS        ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: PusaiZS       ! m3/mmole_N
-        real(r8), dimension(Ngrids) :: PL2ZLstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: PL2ZPstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: PS2ZLstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: PS2ZSstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: ResPL0        ! 1/day
-        real(r8), dimension(Ngrids) :: ResPS0        ! 1/day
-        real(r8), dimension(Ngrids) :: RSiN          ! mmole_Si/mmole_N
-        real(r8), dimension(Ngrids) :: setVOpal      ! m/day
-        real(r8), dimension(Ngrids) :: setVPON       ! m/day
-        real(r8), dimension(Ngrids) :: VD2N0         ! 1/day
-        real(r8), dimension(Ngrids) :: VmaxL         ! 1/day
-        real(r8), dimension(Ngrids) :: VmaxS         ! 1/day
-        real(r8), dimension(Ngrids) :: VO2S0         ! 1/day
-        real(r8), dimension(Ngrids) :: VP2D0         ! 1/day
-        real(r8), dimension(Ngrids) :: VP2N0         ! 1/day
-        real(r8), dimension(Ngrids) :: ZL2ZPstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: ZS2ZLstar     ! mmole_N/m3
-        real(r8), dimension(Ngrids) :: ZS2ZPstar     ! mmole_N/m3
+      SUBROUTINE initialize_biology
+!
+!=======================================================================
+!                                                                      !
+!  This routine sets several variables needed by the biology model.    !
+!  It allocates and assigns biological tracers indices.                !
+!                                                                      !
+!=======================================================================
+!
+!  Local variable declarations
+!
+      integer :: i, ic
+!
+!-----------------------------------------------------------------------
+!  Set number of biological tracers.
+!-----------------------------------------------------------------------
+!
+      NBT=11
+!
+!-----------------------------------------------------------------------
+!  Initialize tracer identification indices.
+!-----------------------------------------------------------------------
+!
+!  Allocate biological tracer vector.
+!
+      IF (.not.allocated(idbio)) THEN
+        allocate ( idbio(NBT) )
+      END IF
+!
+!  Set identification indices.
+!
+      ic=NAT+NPT+NCS+NNS
+      DO i=1,NBT
+        idbio(i)=ic+i
+      END DO
+      iSphy=ic+1
+      iLphy=ic+2
+      iSzoo=ic+3
+      iLzoo=ic+4
+      iPzoo=ic+5
+      iNO3_=ic+6
+      iNH4_=ic+7
+      iPON_=ic+8
+      iDON_=ic+9
+      iSiOH=ic+10
+      iopal=ic+11
+
+      RETURN
+      END SUBROUTINE initialize_biology

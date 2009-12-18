@@ -33,7 +33,7 @@
 !
       integer, intent(in) :: ng, tile
 !
-!  Local variable declarations.  
+!  Local variable declarations.
 !
       integer :: Istr, Iend, Jstr, Jend
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
@@ -208,6 +208,9 @@
       USE mod_scalars
       USE mod_stepping
       USE mod_iounits
+#ifdef BBL_MODEL
+      USE mod_sedbed
+#endif
       USE mod_sediment
 !
       USE distribute_mod, ONLY : mp_reduce
@@ -550,7 +553,7 @@
               DO i=IstrR,IendR
 #ifdef BBL_MODEL
                 Awrk(i,j)=MAX(0.0001_r8,                                &
-     &                        OCEAN(ng)%bottom(i,j,izNik)*30.0_r8)
+     &                        SEDBED(ng)%bottom(i,j,izNik)*30.0_r8)
 #else
                 Awrk(i,j)=MAX(0.0001_r8,rdrg2(ng))
 #endif

@@ -607,16 +607,16 @@
 #ifdef BIOLOGY
 # if defined BIO_FENNEL
 #  include <fennel_inp.h>
+# elif defined ECOSIM
+#  include <ecosim_inp.h>
 # elif defined NEMURO
 #  include <nemuro_inp.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_inp.h>
-# elif defined NPZD_POWELL
-#  include <npzd_Powell_inp.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_inp.h>
-# elif defined ECOSIM
-#  include <ecosim_inp.h>
+# elif defined NPZD_POWELL
+#  include <npzd_Powell_inp.h>
 # endif
 #endif
 
@@ -772,7 +772,7 @@
             IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
               Npts=load_i(Nval, Rval, 1, Nthreads(Iwaves))
             END IF
-          ELSE IF (TRIM(KeyWord).eq.'Nthreads(waves)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Nthreads(atmos)') THEN
             IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
               Npts=load_i(Nval, Rval, 1, Nthreads(Iatmos))
             END IF
@@ -929,6 +929,9 @@
 !
       USE mod_param
       USE mod_parallel
+#ifdef BIOLOGY
+      USE mod_biology
+#endif
 #ifdef MODEL_COUPLING
       USE mod_coupler
 #endif
@@ -1127,6 +1130,12 @@
             NtileE(1:Ngrids)=1
 #else
             NtileE(1:Ngrids)=NtileJ(1:Ngrids)
+#endif
+#ifdef BIOLOGY
+            CALL initialize_biology
+#endif
+#if defined SEDIMENT || defined BBL_MODEL
+            CALL initialize_sediment
 #endif
             CALL initialize_param
             CALL initialize_scalars

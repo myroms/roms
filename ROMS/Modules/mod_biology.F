@@ -14,7 +14,7 @@
 ** The current design allows the user to have a lot of latitude for   **
 ** customizing or adding any particular ecosystem model.              **
 **                                                                    **
-** Each ecosystem model is composed of six files:                     **
+** Each ecosystem model is composed of seven files:                   **
 **                                                                    **
 **   (1) Model source and sink discretized equations:                 **
 **                                                                    **
@@ -52,8 +52,18 @@
 **         npzd_iron_inp.h                                            **
 **         npzd_Powell_inp.h                                          **
 **                                                                    **
-**   (5) code to define input model parameters in all output NetCDF   **
-**       files:                                                       **
+**   (5) Code to assign indices to model variables during the         **
+**       reading of metadata information from "varinfo.dat":          **
+**                                                                    **
+**         ecosim_var.h                                               **
+**         fennel_var.h                                               **
+**         nemuro_var.h                                               **
+**         npzd_Franks_var.h                                          **
+**         npzd_iron_var.h                                            **
+**         npzd_Powell_var.h                                          **
+**                                                                    **
+**   (6) Code to define input model parameters in all output          **
+**       NetCDF files:                                                **
 **                                                                    **
 **         ecosim_def.h                                               **
 **         fennel_def.h                                               **
@@ -62,8 +72,8 @@
 **         npzd_iron_def.h                                            **
 **         npzd_Powell_def.h                                          **
 **                                                                    **
-**   (6) code to define input model parameters in all output NetCDF   **
-**       files:                                                       **
+**   (7) Code to write out input model parameters in all output       **
+**       NetCDF files:                                                **
 **                                                                    **
 **         ecosim_wrt.h                                               **
 **         fennel_wrt.h                                               **
@@ -74,7 +84,7 @@
 **                                                                    **
 **                                                                    **
 ** Note that all the *.h files are located in ROMS/Nonlinear/Biology  **
-** and included within  <...>  to allow the user to cuztomize any of  **
+** and included within  <...>  to allow the user to customize any of  **
 ** them in the project directory  while keeping the distributed code  **
 ** intact (check the build script for details).                       **
 **                                                                    **

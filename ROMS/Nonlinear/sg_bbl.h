@@ -25,6 +25,7 @@
       USE mod_forces
       USE mod_grid
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -56,7 +57,7 @@
      &                OCEAN(ng) % rho,                                  &
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
-     &                OCEAN(ng) % bottom,                               &
+     &                SEDBED(ng) % bottom,                              &
      &                BBL(ng) % Iconv,                                  &
      &                BBL(ng) % Ubot,                                   &
      &                BBL(ng) % Vbot,                                   &
@@ -152,7 +153,7 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
 #  if defined SG_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 #  else
@@ -630,7 +631,7 @@
      &                  Ur)
       CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  Vr)      
+     &                  Vr)
       CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  bottom(:,:,ibwav))

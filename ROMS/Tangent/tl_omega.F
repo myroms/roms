@@ -37,6 +37,9 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
 # ifdef Q_PSOURCE
       USE mod_sources
 # endif
@@ -70,8 +73,8 @@
 # endif
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    GRID(ng) % omn,                               &
-     &                    GRID(ng) % bed_thick,                         &
-     &                    GRID(ng) % tl_bed_thick,                      &
+     &                    SEDBED(ng) % bed_thick,                       &
+     &                    SEDBED(ng) % tl_bed_thick,                   &
 # endif
      &                    GRID(ng) % Huon,                              &
      &                    GRID(ng) % Hvom,                              &
@@ -282,7 +285,7 @@
      &               wrk(i)*(z_w(i,j,k)-z_w(i,j,0))
             tl_W(i,j,k)=tl_W(i,j,k)-                                    &
      &                  tl_wrk(i)*(z_w(i,j,k)-z_w(i,j,0))-              &
-     &	                wrk(i)*(tl_z_w(i,j,k)-tl_z_w(i,j,0))
+     &                  wrk(i)*(tl_z_w(i,j,k)-tl_z_w(i,j,0))
           END DO
         END DO
         DO i=Istr,Iend

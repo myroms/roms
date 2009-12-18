@@ -48,6 +48,7 @@
       USE mod_forces
       USE mod_grid
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -67,7 +68,7 @@
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % Hz,                            &
      &                        GRID(ng) % z_w,                           &
-     &                        OCEAN(ng) % settling_flux,                &
+     &                        SEDBED(ng) % settling_flux,                &
      &                        OCEAN(ng) % t)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
@@ -100,8 +101,8 @@
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: settling_flux(LBi:,LBj:,:) 
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:) 
+      real(r8), intent(inout) :: settling_flux(LBi:,LBj:,:)
+      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
@@ -216,7 +217,7 @@
               END IF
 !
 !  Compute right and left side values (qR,qL) of parabolic segments
-!  within grid box Hz(k); (WR,WL) are measures of quadratic variations. 
+!  within grid box Hz(k); (WR,WL) are measures of quadratic variations.
 !
 !  NOTE: Although each parabolic segment is monotonic within its grid
 !        box, monotonicity of the whole profile is not guaranteed,
@@ -255,13 +256,13 @@
             qL(i,N(ng))=qc(i,N(ng))         ! conditions
             qR(i,N(ng)-1)=qc(i,N(ng))
 # endif
-# if defined LINEAR_CONTINUATION 
+# if defined LINEAR_CONTINUATION
             qR(i,1)=qL(i,2)
             qL(i,1)=2.0_r8*qc(i,1)-qR(i,1)
 # elif defined NEUMANN
             qR(i,1)=qL(i,2)
             qL(i,1)=1.5_r8*qc(i,1)-0.5_r8*qR(i,1)
-# else  
+# else
             qL(i,2)=qc(i,1)                 ! bottom grid boxes are
             qR(i,1)=qc(i,1)                 ! re-assumed to be
             qL(i,1)=qc(i,1)                 ! piecewise constant.
@@ -301,7 +302,7 @@
 !  In the two code segments below, WL is the z-coordinate of the
 !  departure point for grid box interface z_w with the same indices;
 !  FC is the finite volume flux; ksource(:,k) is index of vertical
-!  grid box which contains the departure point (restricted by N(ng)). 
+!  grid box which contains the departure point (restricted by N(ng)).
 !  During the search: also add in content of whole grid boxes
 !  participating in FC.
 !

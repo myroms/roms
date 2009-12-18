@@ -50,6 +50,7 @@
       USE mod_forces
       USE mod_grid
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
 # ifdef BBL_MODEL
       USE mod_bbl
@@ -100,7 +101,7 @@
      &                   GRID(ng) % angler,                             &
 # endif
 # if defined SED_MORPH
-     &                   GRID(ng) % bed_thick,                          &
+     &                   SEDBED(ng) % bed_thick,                        &
 # endif
 # if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
      &                   GRID(ng) % h,                                  &
@@ -108,13 +109,13 @@
      &                   GRID(ng) % om_u,                               &
      &                   GRID(ng) % on_r,                               &
      &                   GRID(ng) % on_v,                               &
-     &                   OCEAN(ng) % bedldu,                            &
-     &                   OCEAN(ng) % bedldv,                            &
+     &                   SEDBED(ng) % bedldu,                           &
+     &                   SEDBED(ng) % bedldv,                           &
 # endif
-     &                   OCEAN(ng) % bed,                               &
-     &                   OCEAN(ng) % bed_frac,                          &
-     &                   OCEAN(ng) % bed_mass,                          &
-     &                   OCEAN(ng) % bottom)
+     &                   SEDBED(ng) % bed,                              &
+     &                   SEDBED(ng) % bed_frac,                         &
+     &                   SEDBED(ng) % bed_mass,                         &
+     &                   SEDBED(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
 # endif
@@ -222,7 +223,7 @@
       real(r8), intent(inout) :: bedldu(LBi:,LBj:,:)
       real(r8), intent(inout) :: bedldv(LBi:,LBj:,:)
 #  endif
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:) 
+      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: bed(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: bed_frac(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:,:)
@@ -325,7 +326,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phicw
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_wav
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_mean
-      real(r8), parameter :: kdmax = 100.0_r8      
+      real(r8), parameter :: kdmax = 100.0_r8
 # endif
 
 # include "set_bounds.h"
@@ -448,7 +449,7 @@
 !
       DO ised=NCS+1,NST
         smgd=(Srho(ised,ng)/rho0-1.0_r8)*g*Sd50(ised,ng)
-        osmgd=1.0_r8/smgd 
+        osmgd=1.0_r8/smgd
         smgdr=SQRT(smgd)*Sd50(ised,ng)*Srho(ised,ng)
 !
         DO j=J_RANGE
@@ -521,7 +522,7 @@
 #   ifdef BSTRESS_UPWIND
 !
 ! Magnitude of bed load at rho points. Meyer-Peter Muller formulation.
-! bedld has dimensions of kg m-1 s-1. Use partitions of stress 
+! bedld has dimensions of kg m-1 s-1. Use partitions of stress
 ! from upwind direction, still at rho points.
 ! (FX_r and FE_r have dimensions of kg).
 !

@@ -32,39 +32,6 @@
 !                                                                      !
 !  pH           Surface concentration of hydrogen ions.                !
 !                                                                      !
-!  Sediment Variables.                                                 !
-!                                                                      !
-!  bed          Sediment properties in each bed layer:                 !
-!                 bed(:,:,:,ithck) => layer thickness                  !
-!                 bed(:,:,:,iaged) => layer age                        !
-!                 bed(:,:,:,iporo) => layer porosity                   !
-!                 bed(:,:,:,idiff) => layer bio-diffusivity            !
-!  bedldu         Bed load u-transport (kg/m/s)                        !
-!  bedldv         Bed load v-transport (kg/m/s)                        !
-!  bed_frac     Sediment fraction of each size class in each bed layer !
-!                 (nondimensional: 0-1.0).  Sum of bed_frac = 1.0      !
-!  bed_mass     Sediment mass of each size class in each bed layer     !
-!                 (kg/m2).                                             !
-!  bottom       Exposed sediment layer properties:                     !
-!                 bottom(:,:,isd50) => mean grain diameter             !
-!                 bottom(:,:,idens) => mean grain density              !
-!                 bottom(:,:,iwsed) => mean settling velocity          !
-!                 bottom(:,:,itauc) => mean critical erosion stress    !
-!                 bottom(:,:,irlen) => ripple length                   !
-!                 bottom(:,:,irhgt) => ripple height                   !
-!                 bottom(:,:,ibwav) => bed wave excursion amplitude    !
-!                 bottom(:,:,izNik) => Nikuradse bottom roughness      !
-!                 bottom(:,:,izbio) => biological bottom roughness     !
-!                 bottom(:,:,izbfm) => bed form bottom roughness       !
-!                 bottom(:,:,izbld) => bed load bottom roughness       !
-!                 bottom(:,:,izapp) => apparent bottom roughness       !
-!                 bottom(:,:,izwbl) => wave bottom roughness           !
-!                 bottom(:,:,izdef) => default bottom roughness        !
-!                 bottom(:,:,iactv) => active layer thickness          !
-!                 bottom(:,:,ishgt) => saltation height                !
-!  ero_flux       Flux from erosion.                                   !
-!  settling_flux  Flux from settling.                                  !
-!                                                                      !
 #ifdef NEARSHORE_MELLOR
 !  Nearshore radiation stresses:                                       !
 !                                                                      !
@@ -118,22 +85,6 @@
 # endif
 # if defined BIO_FENNEL && defined CARBON
           real(r8), pointer :: pH(:,:)
-# endif
-# if defined SEDIMENT
-          real(r8), pointer :: bed(:,:,:,:)
-          real(r8), pointer :: bed_frac(:,:,:,:)
-          real(r8), pointer :: bed_mass(:,:,:,:,:)
-#  ifdef SUSPLOAD
-          real(r8), pointer :: ero_flux(:,:,:)
-          real(r8), pointer :: settling_flux(:,:,:)
-#  endif
-# endif
-# if defined SEDIMENT || defined BBL_MODEL
-          real(r8), pointer :: bottom(:,:,:)
-#  ifdef BEDLOAD
-          real(r8), pointer :: bedldu(:,:,:)
-          real(r8), pointer :: bedldv(:,:,:)
-#  endif
 # endif
 #endif
 
@@ -303,9 +254,6 @@
 !=======================================================================
 !
       USE mod_param
-#if defined SEDIMENT || defined BBL_MODEL
-      USE mod_sediment
-#endif
 !
 !  Imported variable declarations.
 !
@@ -358,22 +306,6 @@
       allocate ( OCEAN(ng) % pH(LBi:UBi,LBj:UBj) )
 # endif
 
-# if defined SEDIMENT
-      allocate ( OCEAN(ng) % bed(LBi:UBi,LBj:UBj,Nbed,MBEDP) )
-      allocate ( OCEAN(ng) % bed_frac(LBi:UBi,LBj:UBj,Nbed,NST) )
-      allocate ( OCEAN(ng) % bed_mass(LBi:UBi,LBj:UBj,Nbed,2,NST) )
-#  ifdef SUSPLOAD
-      allocate ( OCEAN(ng) % ero_flux(LBi:UBi,LBj:UBj,NST) )
-      allocate ( OCEAN(ng) % settling_flux(LBi:UBi,LBj:UBj,NST) )
-#  endif
-# endif
-# if defined SEDIMENT || defined BBL_MODEL
-      allocate ( OCEAN(ng) % bottom(LBi:UBi,LBj:UBj,MBOTP) )
-#  ifdef BEDLOAD
-      allocate ( OCEAN(ng) % bedldu(LBi:UBi,LBj:UBj,NST) )
-      allocate ( OCEAN(ng) % bedldv(LBi:UBi,LBj:UBj,NST) )
-#  endif
-# endif
 #endif
 
 #if defined TANGENT || defined TL_IOMS
@@ -564,9 +496,6 @@
 !=======================================================================
 !
       USE mod_param
-#if defined SEDIMENT || defined BBL_MODEL
-      USE mod_sediment
-#endif
 !
 !  Imported variable declarations.
 !
@@ -687,47 +616,6 @@
               END DO
             END DO
           END DO
-# ifdef SEDIMENT
-          DO itrc=1,NST
-            DO k=1,Nbed
-              DO i=Imin,Imax
-                OCEAN(ng) % bed_frac(i,j,k,itrc) = IniVal
-                OCEAN(ng) % bed_mass(i,j,k,1,itrc) = IniVal
-                OCEAN(ng) % bed_mass(i,j,k,2,itrc) = IniVal
-              END DO
-            END DO
-          END DO
-          DO itrc=1,MBEDP
-            DO k=1,Nbed
-              DO i=Imin,Imax
-                OCEAN(ng) % bed(i,j,k,itrc) = IniVal
-              END DO
-            END DO
-          END DO
-#  ifdef SUSPLOAD
-          DO itrc=1,NST
-            DO i=Imin,Imax
-              OCEAN(ng) % ero_flux(i,j,itrc) = IniVal
-              OCEAN(ng) % settling_flux(i,j,itrc) = IniVal
-            END DO
-          END DO
-#  endif
-# endif
-# if defined SEDIMENT || defined BBL_MODEL
-          DO itrc=1,MBOTP
-            DO i=Imin,Imax
-              OCEAN(ng) % bottom(i,j,itrc) = IniVal
-            END DO
-          END DO
-#  ifdef BEDLOAD
-          DO itrc=1,NST
-            DO i=Imin,Imax
-              OCEAN(ng) % bedldu(i,j,itrc) = IniVal
-              OCEAN(ng) % bedldv(i,j,itrc) = IniVal
-            END DO
-          END DO
-#  endif
-# endif
 #endif
         END DO
       END IF

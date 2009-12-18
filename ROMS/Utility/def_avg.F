@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef BIOLOGY
+      USE mod_biology
+# endif
 # ifdef FOUR_DVAR
       USE mod_fourdvar
 # endif
@@ -46,7 +49,7 @@
       integer :: i, itrc, j, model, nvd3, nvd4
       integer :: recdim, status
 
-      integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
       integer :: def_dim
@@ -186,6 +189,10 @@
         IF (exit_flag.ne.NoError) RETURN
 
 #  ifdef SEDIMENT
+        status=def_dim(ng, iNLM, ncAVGid(ng), ncname, 'NST',            &
+     &                 NST, DimIDs(32))
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, model, ncAVGid(ng), ncname, 'Nbed',          &
      &                 Nbed, DimIDs(16))
         IF (exit_flag.ne.NoError) RETURN
@@ -1918,7 +1925,7 @@
              got_var(idTvar(itrc))=.TRUE.
              avgTid(itrc,ng)=var_id(i)
             END IF
-          END DO 
+          END DO
 #  ifdef AVERAGES_QUADRATIC
           DO itrc=1,NAT
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,iHUTav(itrc)))) THEN

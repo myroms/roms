@@ -29,6 +29,9 @@
       USE mod_mixing
 #endif
       USE mod_ocean
+#if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+#endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -61,7 +64,7 @@
      &                   GRID(ng) % zice,                               &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                   GRID(ng) % bed_thick,                          &
+     &                   SEDBED(ng) % bed_thick,                        &
 # endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
@@ -70,7 +73,7 @@
 #if defined DIFF_GRID || defined DIFF_3DCOEF || \
     defined VISC_GRID || defined VISC_3DCOEF
      &                   GRID(ng) % grdscl,                             &
-#endif 
+#endif
 #if defined DIFF_3DCOEF
      &                   MIXING(ng) % Hdiffusion,                       &
 #endif
@@ -516,58 +519,58 @@
 !-----------------------------------------------------------------------
 !
 ! Set no-slip boundary conditions on land-mask boundaries regardless of
-! supplied value of gamma2. 
-! 
-      cff1=1.0_r8       ! computation of off-diagonal nonlinear terms 
+! supplied value of gamma2.
+!
+      cff1=1.0_r8       ! computation of off-diagonal nonlinear terms
       cff2=2.0_r8
       DO j=Jstr,Jend
         DO i=Istr,Iend
           IF ((rmask(i-1,j  ).gt.0.5_r8).and.                           &
      &        (rmask(i  ,j  ).gt.0.5_r8).and.                           &
      &        (rmask(i-1,j-1).gt.0.5_r8).and.                           &
-     &        (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+     &        (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=1.0_r8
           ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=cff1
           ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=cff1
           ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=cff1
           ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN
             pmask(i,j)=cff1
           ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN
             pmask(i,j)=cff2
           ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=cff2
           ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
-     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN
             pmask(i,j)=cff2
           ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
      &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
      &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
             pmask(i,j)=cff2
-          ELSE 
+          ELSE
             pmask(i,j)=0.0_r8
           END IF
         END DO
@@ -1112,7 +1115,7 @@
           END IF
         END DO
       END DO
-# endif      
+# endif
 !
 !  Report convolution parameters.
 !
@@ -1206,7 +1209,7 @@
           END DO
         END DO
 #  endif
-# endif 
+# endif
       END IF
 
   70  FORMAT (1X,a,i5,1x,1pe15.8,' s',2x,a)

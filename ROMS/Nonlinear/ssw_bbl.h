@@ -29,6 +29,7 @@
       USE mod_forces
       USE mod_grid
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -58,10 +59,10 @@
      &                FORCES(ng) % Dwave,                               &
      &                FORCES(ng) % Pwave_bot,                           &
 #ifdef BEDLOAD
-     &                OCEAN(ng) % bedldu,                               &
-     &                OCEAN(ng) % bedldv,                               &
+     &                SEDBED(ng) % bedldu,                              &
+     &                SEDBED(ng) % bedldv,                              &
 #endif
-     &                OCEAN(ng) % bottom,                               &
+     &                SEDBED(ng) % bottom,                              &
      &                OCEAN(ng) % rho,                                  &
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
@@ -166,7 +167,7 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
 # if defined SSW_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 # else
@@ -364,7 +365,7 @@
           phicw(i,j)=1.5_r8*pi-Dwave(i,j)-phic(i,j)-angler(i,j)
         END DO
       END DO
-! 
+!
 !  Loop over RHO points.
 !
       DO j=JstrV-1,Jend
@@ -384,7 +385,7 @@
           rheight(i,j)=bottom(i,j,irhgt)
           rlength(i,j)=bottom(i,j,irlen)
           zoMAX=0.9_r8*Zr(i,j)
-          zoMIN=MAX(absolute_zoMIN,2.5_r8*d50/30.0_r8) 
+          zoMIN=MAX(absolute_zoMIN,2.5_r8*d50/30.0_r8)
 !
 !  Initialize arrays.
 !
@@ -410,7 +411,7 @@
 !  Threshold of motion exceeded - calculate new zoST and zoBF
 !  Calculate saltation roughness according to Wiberg & Rubin (1989)
 !  (Eqn. 11 in Harris & Wiberg, 2001)
-!  (d50 is in m, but this formula needs cm)  
+!  (d50 is in m, but this formula needs cm)
 !
              coef_st=0.0204_r8*LOG(100.0_r8*d50)**2+                    &
      &               0.0220_r8*LOG(100.0_r8*d50)+0.0709_r8
@@ -433,7 +434,7 @@
              IF ((d0/d50).gt.13000.0_r8) THEN              ! sheet flow
                rheight(i,j)=0.0_r8
                rlength(i,j)=535.0_r8*d50        ! does not matter since
-             ELSE                               ! rheight=0 
+             ELSE                               ! rheight=0
                dolam1=d0/(535.0_r8*d50)
                doeta1=EXP(coef_b2-SQRT(coef_b3-coef_b1*LOG(dolam1)))
                lamorb=0.62_r8*d0
@@ -1304,7 +1305,7 @@
       phicwc=phiwc
 
       zo = kN/30.0_r8
-  
+
       IF (ubr.le.0.01_r8) THEN
         IF (ucr.le. 0.01_r8) THEN          ! no waves or currents
           ustrc=0.0_r8

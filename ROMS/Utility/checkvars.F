@@ -34,6 +34,9 @@
 !
       USE mod_param
       USE mod_parallel
+#ifdef BIOLOGY
+      USE mod_biology
+#endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf

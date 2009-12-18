@@ -34,6 +34,9 @@
       USE mod_coupling
 # endif
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -58,9 +61,9 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                         OCEAN(ng) %  ad_bed,                     &
-     &                         GRID(ng) % ad_bed_thick0,                &
-     &                         GRID(ng) % ad_bed_thick,                 &
+     &                         SEDBED(ng) % ad_bed,                     &
+     &                         SEDBED(ng) % ad_bed_thick0,              &
+     &                         SEDBED(ng) % ad_bed_thick,               &
 #  endif
      &                         GRID(ng) % Hz,                           &
      &                         GRID(ng) % ad_Hz,                        &
@@ -584,7 +587,7 @@
             DO i=Istr,Iend
 !>            tl_CF(i,0)=tl_CF(i,0)+tl_DC(i,k)*v(i,j,k,nstp)+           &
 !>   &                              DC(i,k)*tl_v(i,j,k,nstp)
-!>        
+!>
               ad_DC(i,k)=ad_DC(i,k)+v(i,j,k,nstp)*ad_CF(i,0)
               ad_v(i,j,k,nstp)=ad_v(i,j,k,nstp)+DC(i,k)*ad_CF(i,0)
 !>            tl_DC(i,0)=tl_DC(i,0)+tl_DC(i,k)
@@ -606,7 +609,7 @@
 !>
             ad_DC(i,0)=0.0_r8
           END DO
-        END IF   
+        END IF
 !
 !  Compute adjoint 2D velocity component in the XI-direction.  Here
 !  DC(i,1:N) are the thicknesses of U-boxes, DC(i,0) is total depth of
@@ -766,7 +769,7 @@
      &                      ad_t)
 !
 !  Adjoint of tracers initialization.
-!  
+!
         DO k=1,N(ng)
           DO j=Jstr,Jend
             DO i=Istr,Iend
@@ -923,7 +926,7 @@
 !>
             ad_cff1=ad_cff1+ad_u(i,j,k,nstp)
 !!    &                     +ad_u(i,j,k,nnew)
-            ad_u(i,j,k,nstp)=0.0_r8 
+            ad_u(i,j,k,nstp)=0.0_r8
 !!          ad_u(i,j,k,nnew)=0.0_r8
 # ifdef MASKING
 !>          tl_cff1=tl_cff1*umask(i,j)

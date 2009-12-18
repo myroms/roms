@@ -47,7 +47,7 @@
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='PhyIS'
-      Vinfo( 2)='phytoplankton initial slopw of the P-I cureve'
+      Vinfo( 2)='phytoplankton initial slope of the P-I curve'
       Vinfo( 3)='meter2 watt-1'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &

@@ -7,7 +7,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine reads in Nemuro ecosystem model input parameters.      !
+!  This routine reads in EcoSim bio-optical model input parameters.    !
 !  They are specified in input script "ecosim.in".                     !
 !                                                                      !
 !=======================================================================
@@ -15,6 +15,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_biology
+      USE mod_eclight
       USE mod_ncparam
       USE mod_scalars
 !
@@ -28,6 +29,7 @@
 !  Local variable declarations.
 !
       integer :: Npts, Nval, i, is, itrc, ng, status
+      integer :: ibac, iband, ifec, iphy
 
       integer :: decode_line, load_i, load_l, load_r
 
@@ -333,10 +335,127 @@
   20  CONTINUE
 !
 !-----------------------------------------------------------------------
-!  Initialize secondary EcoSim parameters.
+!  Initialize secondary parameters.
 !-----------------------------------------------------------------------
 !
-      CALL initialize_biology
+!  Convert rates from day-1 to second-1.
+!
+      DO ng=1,Ngrids
+        DO iphy=1,Nphy
+          GtALG_max(iphy,ng)=GtALG_max(iphy,ng)*sec2day
+          ExALG(iphy,ng)=ExALG(iphy,ng)*sec2day
+          HsGRZ(iphy,ng)=HsGRZ(iphy,ng)*sec2day
+          WS(iphy,ng)=WS(iphy,ng)*sec2day
+        END DO
+        DO ibac=1,Nbac
+          GtBAC_max(ibac,ng)=GtBAC_max(ibac,ng)*sec2day
+        END DO
+        DO ifec=1,Nfec
+          WF(ifec,ng)=WF(ifec,ng)*sec2day
+        END DO
+        RtNIT(ng)=RtNIT(ng)*sec2day
+      END DO
+!
+!  Calculated reciprocal phytoplankton parameters.
+!
+      DO ng=1,Ngrids
+        DO iphy=1,Nphy
+          IF (maxC2nALG(iphy,ng).gt.SMALL) THEN
+            ImaxC2nALG(iphy,ng)=1.0_r8/maxC2nALG(iphy,ng)
+          ELSE
+            ImaxC2nALG(iphy,ng)=0.0_r8
+          END IF
+          IF (maxC2SiALG(iphy,ng).gt.SMALL) THEN
+            ImaxC2SiALG(iphy,ng)=1.0_r8/maxC2SiALG(iphy,ng)
+          ELSE
+            ImaxC2SiALG(iphy,ng)=0.0_r8
+          END IF
+          IF (maxC2pALG(iphy,ng).gt.SMALL) THEN
+            ImaxC2pALG(iphy,ng)=1.0_r8/maxC2pALG(iphy,ng)
+          ELSE
+            ImaxC2pALG(iphy,ng)=0.0_r8
+          END IF
+          IF (maxC2FeALG(iphy,ng).gt.SMALL) THEN
+            ImaxC2FeALG(iphy,ng)=1.0_r8/maxC2FeALG(iphy,ng)
+          ELSE
+            ImaxC2FeALG(iphy,ng)=0.0_r8
+          END IF
+        END DO
+      END DO
+!
+!  Calculated bacterial parameters.
+!
+      DO ng=1,Ngrids
+        DO ibac=1,Nbac
+          HsNH4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2nBAC(ng)
+          HsPO4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2pBAC(ng)
+          HsFe_ba (ibac,ng)=HsDOC_ba(ibac,ng)/C2FeBAC(ng)
+        END DO
+      END DO
+!
+!  Inverse parameters for computational efficiency.
+!
+      DO ng=1,Ngrids
+        N2cBAC(ng)=1.0_r8/C2nBAC(ng)
+        P2cBAC(ng)=1.0_r8/C2pBAC(ng)
+        Fe2cBAC(ng)=1.0_r8/C2FeBAC(ng)
+        I_Bac_Ceff(ng)=1.0_r8/Bac_Ceff(ng)
+      END DO
+!
+!  Reciprocal of non baterial recalcitran carbon excretion.
+!
+      DO ng=1,Ngrids
+        R_ExBAC_c(ng)=1.0_r8/(1.0_r8-ExBAC_c(ng))
+      END DO
+!
+!  Bacterial recalcitrant nitrogen excretion as a function of uptake.
+!
+      DO ng=1,Ngrids
+        ExBAC_n(ng)=ExBAC_c(ng)*C2nBAC(ng)/ExBacC2N(ng)
+        Frac_ExBAC_n(ng)=1.0_r8-ExBAC_n(ng)
+      END DO
+!
+!  Scale UV degradation parameters.
+!
+      DO ng=1,Ngrids
+        RtUVR_DIC(ng)=RtUVR_DIC(ng)/3600.0_r8
+        RtUVR_DOC(ng)=RtUVR_DOC(ng)/3600.0_r8
+      END DO
+!
+!  If applicable, zero-out fecal regeneration parameters.
+!
+      DO ng=1,Ngrids
+        IF (Regen_flag(ng)) THEN
+          DO ifec=1,Nfec
+            RegCR(ifec,ng)=RegCR(ifec,ng)*sec2day
+            RegNR(ifec,ng)=RegNR(ifec,ng)*sec2day
+            RegPR(ifec,ng)=RegPR(ifec,ng)*sec2day
+            RegFR(ifec,ng)=RegFR(ifec,ng)*sec2day
+            RegSR(ifec,ng)=RegSR(ifec,ng)*sec2day
+          END DO
+        ELSE
+          DO ifec=1,Nfec
+            RegCR(ifec,ng)=0.0_r8
+            RegNR(ifec,ng)=0.0_r8
+            RegPR(ifec,ng)=0.0_r8
+            RegFR(ifec,ng)=0.0_r8
+            RegSR(ifec,ng)=0.0_r8
+          END DO
+        END IF
+      END DO
+!
+!  Spectral dependency for scattering and backscattering.
+!
+      DO iband=1,NBands
+        wavedp(iband)=(550.0_r8/(397.0_r8+REAL(iband,r8)*DLAM))
+      END DO
+!
+!  Calculated IOP parameter values.
+!
+      aDOC410(ilab)=aDOC(ilab,1)*EXP(0.014_r8*(ec_wave_ab(1)-410.0_r8))
+      aDOC410(irct)=aDOC(irct,1)*EXP(0.025_r8*(ec_wave_ab(1)-410.0_r8))
+      aDOC300(ilab)=EXP(0.0145_r8*(410.0_r8-300.0_r8))
+      aDOC300(irct)=EXP(0.0145_r8*(410.0_r8-300.0_r8))
 !
 !-----------------------------------------------------------------------
 !  Report input parameters.

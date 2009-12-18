@@ -50,7 +50,7 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-      integer :: DimIDs(31), Vsize(4)
+      integer :: DimIDs(32), Vsize(4)
 # ifdef ADJUST_BOUNDARY
       integer :: t2dobc(4)
 #  ifdef SOLVE3D

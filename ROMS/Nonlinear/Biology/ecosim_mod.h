@@ -6,8 +6,18 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  EcoSim Model Phytoplaknton Parameters:                              !
+!  Ecosim tracer parameters:                                           !
 !                                                                      !
+!  NBands         Number of spectral irradiance bands.                 !
+!  Nbac           Number of bacteria constituents.                     !
+!  Ndom           Number of dissolved matter constituents.             !
+!  Nfec           Number of fecal matter constituents.                 !
+!  Nphy           Number of phytoplankton constituents.                !
+!  Npig           Number of pigment constituents.                      !
+!  PHY            Indices of phytoplankton species considered.         !
+!  PIG            Phytoplankton-pigment matrix.                        !
+!                                                                      !
+!  EcoSim Model Phytoplaknton Parameters:                              !
 !                                                                      !
 !  HsNO3          Half-saturation for phytoplankton NO3 uptake         !
 !                   (micromole_NO3/liter).                             !
@@ -175,10 +185,108 @@
 !======================================================================!
 !
       USE mod_param
-      USE mod_eclight
       USE mod_scalars
 !
       implicit none
+!
+!-----------------------------------------------------------------------
+!  Bio-optical EcoSim parameters.
+!-----------------------------------------------------------------------
+!
+      integer, parameter :: NBands = 60      ! spectral bands
+      integer, parameter :: Nbac = 1         ! bacteria constituents
+      integer, parameter :: Ndom = 2         ! DOM constituents
+      integer, parameter :: Nfec = 2         ! Fecal constituents
+      integer, parameter :: Nphy = 4         ! Phytoplankton groups
+      integer, parameter :: Npig = 7         ! Pigments
+!
+!  Determine number of EcoSim biological tracer. Currently, there is a
+!  maximum of seven phytoplankton species and seven different pigments:
+!
+! [1] small diatom           [1] chlorophyll-a
+! [2] large diatom           [2] chlorophyll-b
+! [3] small dinoflagellate   [3] chlorophyll-c
+! [4] large dinoflagellate   [4] photosythetic carotenoids
+! [5] synechococcus          [5] photoprotective carotenoids
+! [6] small prochlorococcus  [6] low  urobilin phycoeurythin carotenoids
+! [7] large prochlorococcus  [7] high urobilin phycoeurythin carotenoids
+!
+!  The phytoplankton/pigment matrix is as follows:
+!
+!               P h y t o p l a n k t o n
+!              [1]   [2]   [3]   [4]   [5]   [6]   [7]
+!
+!       t [7]   0     0     0     0     1     0     0
+!       n [6]   0     0     0     0     0     0     0
+!       e [5]   1     1     1     1     1     1     1
+!       m [4]   1     1     1     1     0     0     0
+!       g [3]   1     1     1     1     0     0     0
+!       i [2]   0     0     0     0     0     1     1
+!       P [1]   1     1     1     1     1     1     1
+!
+      integer, parameter, dimension(7,7) :: PIG = reshape (             &
+     &                                      (/ 1, 1, 1, 1, 1, 1, 1,     &
+     &                                         0, 0, 0, 0, 0, 1, 1,     &
+     &                                         1, 1, 1, 1, 0, 0, 0,     &
+     &                                         1, 1, 1, 1, 0, 0, 0,     &
+     &                                         1, 1, 1, 1, 1, 1, 1,     &
+     &                                         0, 0, 0, 0, 0, 0, 0,     &
+     &                                         0, 0, 0, 0, 1, 0, 0 /),  &
+     &                                      (/ 7, 7 /) )
+!
+!  Set phytoplankton species to consider (see above classification):
+!
+      integer, parameter, dimension(Nphy) :: PHY = (/ 1, 2, 4, 5 /)
+!
+!-----------------------------------------------------------------------
+!  Set biological tracer identification indices.
+!-----------------------------------------------------------------------
+!
+      integer, pointer :: idbio(:)    ! Biological tracers
+      integer :: iBacC(Nbac)        ! Bacteria, Carbon group
+      integer :: iBacN(Nbac)        ! Bacteria, Nitrogen group
+      integer :: iBacP(Nbac)        ! Bacteria, Phosphorous group
+      integer :: iBacF(Nbac)        ! Bacteria, Iron group
+      integer :: iCDMC(Ndom)        ! Color degradational matter
+      integer :: iDOMC(Ndom)        ! DOM, Carbon group
+      integer :: iDOMN(Ndom)        ! DOM, Nitrogen group
+      integer :: iDOMP(Ndom)        ! DOM, Phosphorous group
+      integer :: iFecC(Nfec)        ! Fecal matter, Carbon group
+      integer :: iFecN(Nfec)        ! Fecal matter, Nitrogen group
+      integer :: iFecP(Nfec)        ! Fecal matter, Phosphorous group
+      integer :: iFecF(Nfec)        ! Fecal matter, Iron group
+      integer :: iFecS(Nfec)        ! Fecal matter, Silica group
+      integer :: iPhyC(Nphy)        ! Phytoplankton, Carbon group
+      integer :: iPhyN(Nphy)        ! Phytoplankton, Nitrogen group
+      integer :: iPhyP(Nphy)        ! Phytoplankton, Phosphorous group
+      integer :: iPhyF(Nphy)        ! Phytoplankton, Iron group
+      integer :: iPhyS(Nphy)        ! Phytoplankton, Silica group
+      integer :: iPigs(Nphy,Npig)   ! Phytoplankton, pigment group
+      integer :: iNO3_              ! Nitrate concentration
+      integer :: iNH4_              ! Ammonium concentration
+      integer :: iPO4_              ! Phosphate concentration
+      integer :: iFeO_              ! Iron concentration
+      integer :: iSiO_              ! Silica concentration
+      integer :: iDIC_              ! Dissolved inorganic Carbon
+      integer :: FirstPig           ! Index of first tracer pigment
+!
+!-----------------------------------------------------------------------
+!  EcoSim group names used on standard output.
+!-----------------------------------------------------------------------
+!
+      character (len=16), dimension(Nbac) :: BacName
+      character (len=11), dimension(Ndom) :: DomName
+      character (len=13), dimension(Nfec) :: FecName
+      character (len=21), dimension(Nphy) :: PhyName
+
+      character (len=39), dimension(7) :: PigName =                     &
+     &          (/ 'chlorophyll-a                          ',           &
+     &             'chlorophyll-b                          ',           &
+     &             'chlorophyll-c                          ',           &
+     &             'photosynthetic carotenoids             ',           &
+     &             'photoprotective carotenoids            ',           &
+     &             'low urobilin phycoeurythin carotenoids ',           &
+     &             'high urobilin phycoeurythin carotenoids' /)
 !
 !-----------------------------------------------------------------------
 !  Standard input parameters.
@@ -345,137 +453,137 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine initializes several parameters in module "mod_biology" !
-!  for all nested grids.                                               !
+!  This routine sets several variables needed by the biology model.    !
+!  It allocates and assigns biological tracers indices.                !
 !                                                                      !
 !=======================================================================
 !
 !  Local variable declarations
 !
-      integer :: ibac, iband, ifec, iphy, ng
+      integer :: i, ic, j, ng
+
+      character (len=21), dimension(7) :: PhyGroups =                   &
+     &                                 (/ 'small diatom         ',      &
+     &                                    'large diatom         ',      &
+     &                                    'small dinoflagellate ',      &
+     &                                    'large dinoflagellate ',      &
+     &                                    'synechococcus        ',      &
+     &                                    'small prochlorococcus',      &
+     &                                    'large prochlorococcus' /)
 !
 !-----------------------------------------------------------------------
-!  Derived parameters.
+!  Determine number of biological tracers.
 !-----------------------------------------------------------------------
 !
-!  Convert rates from day-1 to second-1.
+!       Nutrients: NO3, NO4, PO4, FeO, SiO, DIC  (6)
+!        Bacteria: C, Fe, N, P                   (Nbac*4)
+!             DOM: CDM, C, N, P                  (Ndom*4)
+!           Fecal: C, Fe, N, P, Si               (Nfec*5)
+!    Phytoplakton: C, Fe, N, P                   (Nfec*4 + Si)
+!        Pigments: look table
 !
-      DO ng=1,Ngrids
-        DO iphy=1,Nphy
-          GtALG_max(iphy,ng)=GtALG_max(iphy,ng)*sec2day
-          ExALG(iphy,ng)=ExALG(iphy,ng)*sec2day
-          HsGRZ(iphy,ng)=HsGRZ(iphy,ng)*sec2day
-          WS(iphy,ng)=WS(iphy,ng)*sec2day
-        END DO
-        DO ibac=1,Nbac
-          GtBAC_max(ibac,ng)=GtBAC_max(ibac,ng)*sec2day
-        END DO
-        DO ifec=1,Nfec
-          WF(ifec,ng)=WF(ifec,ng)*sec2day
-        END DO
-        RtNIT(ng)=RtNIT(ng)*sec2day
+      NBT=6+(Nbac*4)+(Ndom*4)+(Nfec*5)+(Nphy*4)
+!
+!  Add phytoplankton silica constituents.
+!
+      DO i=1,Nphy
+        IF (PHY(i).le.2) NBT=NBT+1
       END DO
 !
-!  Calculated reciprocal phytoplankton parameters.
+!  Add pigments.  Check phytoplankton-pigment table for values greater
+!  than zero.
 !
-      DO ng=1,Ngrids
-        DO iphy=1,Nphy
-          IF (maxC2nALG(iphy,ng).gt.SMALL) THEN
-            ImaxC2nALG(iphy,ng)=1.0_r8/maxC2nALG(iphy,ng)
-          ELSE
-            ImaxC2nALG(iphy,ng)=0.0_r8
-          END IF
-          IF (maxC2SiALG(iphy,ng).gt.SMALL) THEN
-            ImaxC2SiALG(iphy,ng)=1.0_r8/maxC2SiALG(iphy,ng)
-          ELSE
-            ImaxC2SiALG(iphy,ng)=0.0_r8
-          END IF
-          IF (maxC2pALG(iphy,ng).gt.SMALL) THEN
-            ImaxC2pALG(iphy,ng)=1.0_r8/maxC2pALG(iphy,ng)
-          ELSE
-            ImaxC2pALG(iphy,ng)=0.0_r8
-          END IF
-          IF (maxC2FeALG(iphy,ng).gt.SMALL) THEN
-            ImaxC2FeALG(iphy,ng)=1.0_r8/maxC2FeALG(iphy,ng)
-          ELSE
-            ImaxC2FeALG(iphy,ng)=0.0_r8
-          END IF
+      DO j=1,Npig
+        DO i=1,Nphy
+          IF (PIG(PHY(i),j).eq.1) NBT=NBT+1
         END DO
       END DO
 !
-!  Calculated bacterial parameters.
+!-----------------------------------------------------------------------
+!  Initialize tracer identification indices.
+!-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
-        DO ibac=1,Nbac
-          HsNH4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2nBAC(ng)
-          HsPO4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2pBAC(ng)
-          HsFe_ba (ibac,ng)=HsDOC_ba(ibac,ng)/C2FeBAC(ng)
-        END DO
+!  Allocate biological tracer vector.
+!
+      IF (.not.allocated(idbio)) THEN
+        allocate ( idbio(NBT) )
+      END IF
+!
+!  Set identification indices.
+!
+      ic=NAT+NPT+NCS+NNS
+      DO i=1,NBT
+        idbio(i)=ic+i
       END DO
-!
-!  Inverse parameters for computational efficiency.
-!
-      DO ng=1,Ngrids
-        N2cBAC(ng)=1.0_r8/C2nBAC(ng)
-        P2cBAC(ng)=1.0_r8/C2pBAC(ng)
-        Fe2cBAC(ng)=1.0_r8/C2FeBAC(ng)
-        I_Bac_Ceff(ng)=1.0_r8/Bac_Ceff(ng)
+      iDIC_=ic+1
+      iFeO_=ic+2
+      iNH4_=ic+3
+      iNO3_=ic+4
+      iPO4_=ic+5
+      iSiO_=ic+6
+      ic=ic+6
+      DO i=1,Nbac
+        iBacC(i)=ic+1
+        iBacF(i)=ic+2
+        iBacN(i)=ic+3
+        iBacP(i)=ic+4
+        ic=ic+4
       END DO
-!
-!  Reciprocal of non baterial recalcitran carbon excretion.
-!
-      DO ng=1,Ngrids
-        R_ExBAC_c(ng)=1.0_r8/(1.0_r8-ExBAC_c(ng))
+      DO i=1,Ndom
+        iCDMC(i)=ic+1
+        iDOMC(i)=ic+2
+        iDOMN(i)=ic+3
+        iDOMP(i)=ic+4
+        ic=ic+4
       END DO
-!
-!  Bacterial recalcitrant nitrogen excretion as a function of uptake.
-!
-      DO ng=1,Ngrids
-        ExBAC_n(ng)=ExBAC_c(ng)*C2nBAC(ng)/ExBacC2N(ng)
-        Frac_ExBAC_n(ng)=1.0_r8-ExBAC_n(ng)
+      DO i=1,Nfec
+        iFecC(i)=ic+1
+        iFecF(i)=ic+2
+        iFecN(i)=ic+3
+        iFecP(i)=ic+4
+        iFecS(i)=ic+5
+        ic=ic+5
       END DO
-!
-!  Scale UV degradation parameters.
-!
-      DO ng=1,Ngrids
-        RtUVR_DIC(ng)=RtUVR_DIC(ng)/3600.0_r8
-        RtUVR_DOC(ng)=RtUVR_DOC(ng)/3600.0_r8
+      DO i=1,Nphy
+        iPhyC(i)=ic+1
+        iPhyF(i)=ic+2
+        iPhyN(i)=ic+3
+        iPhyP(i)=ic+4
+        ic=ic+4
       END DO
-!
-!  If applicable, zero-out fecal regeneration parameters.
-!
-      DO ng=1,Ngrids
-        IF (Regen_flag(ng)) THEN
-          DO ifec=1,Nfec
-            RegCR(ifec,ng)=RegCR(ifec,ng)*sec2day
-            RegNR(ifec,ng)=RegNR(ifec,ng)*sec2day
-            RegPR(ifec,ng)=RegPR(ifec,ng)*sec2day
-            RegFR(ifec,ng)=RegFR(ifec,ng)*sec2day
-            RegSR(ifec,ng)=RegSR(ifec,ng)*sec2day
-          END DO
+      DO i=1,Nphy
+        IF (PHY(i).le.2) THEN
+          ic=ic+1
+          iPhyS(i)=ic
         ELSE
-          DO ifec=1,Nfec
-            RegCR(ifec,ng)=0.0_r8
-            RegNR(ifec,ng)=0.0_r8
-            RegPR(ifec,ng)=0.0_r8
-            RegFR(ifec,ng)=0.0_r8
-            RegSR(ifec,ng)=0.0_r8
-          END DO
+          iPhyS(i)=0
         END IF
       END DO
-!
-!  Spectral dependency for scattering and backscattering.
-!
-      DO iband=1,NBands
-        wavedp(iband)=(550.0_r8/(397.0_r8+REAL(iband,r8)*DLAM))
+      FirstPig=ic+1
+      DO j=1,Npig
+        DO i=1,Nphy
+          iPigs(i,j)=0
+          IF (PIG(PHY(i),j).eq.1) THEN
+            ic=ic+1
+            iPigs(i,j)=ic
+          END IF
+        END DO
       END DO
 !
-!  Calculated IOP parameter values.
+!  Set EcoSim group variable names.
 !
-      aDOC410(ilab)=aDOC(ilab,1)*EXP(0.014_r8*(ec_wave_ab(1)-410.0_r8))
-      aDOC410(irct)=aDOC(irct,1)*EXP(0.025_r8*(ec_wave_ab(1)-410.0_r8))
-      aDOC300(ilab)=EXP(0.0145_r8*(410.0_r8-300.0_r8))
-      aDOC300(irct)=EXP(0.0145_r8*(410.0_r8-300.0_r8))
+      DO i=1,Nphy
+        PhyName(i)=PhyGroups(PHY(i))
+      END DO
+      DO i=1,Nbac
+        WRITE (BacName(i),'(a,1x,i1)') 'Bacteria Group', i
+      END DO
+      DO i=1,Ndom
+        WRITE (DomName(i),'(a,1x,i1)') 'DOM Group', i
+      END DO
+      DO i=1,Nfec
+        WRITE (FecName(i),'(a,1x,i1)') 'Fecal Group', i
+      END DO
 
       RETURN
       END SUBROUTINE initialize_biology

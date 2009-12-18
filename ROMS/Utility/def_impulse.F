@@ -17,6 +17,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef BIOLOGY
+      USE mod_biology
+# endif
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
@@ -43,7 +46,7 @@
       integer :: i, j, nvd3, nvd4
       integer :: recdim, status, varid
 
-      integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
       integer :: def_dim
@@ -159,6 +162,10 @@
         IF (exit_flag.ne.NoError) RETURN
 
 #  ifdef SEDIMENT
+        status=def_dim(ng, iTLM, ncTLFid(ng), ncname, 'NST',            &
+     &                 NST, DimIDs(32))
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, iTLM, ncTLFid(ng), ncname, 'Nbed',           &
      &                 Nbed, DimIDs(16))
         IF (exit_flag.ne.NoError) RETURN

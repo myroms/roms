@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef BIOLOGY
+      USE mod_biology
+# endif
       USE mod_diags
       USE mod_grid
       USE mod_iounits
@@ -264,4 +267,4 @@
 #endif
       RETURN
       END SUBROUTINE wrt_diags
-      
+

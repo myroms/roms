@@ -33,6 +33,9 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
 # ifdef Q_PSOURCE
       USE mod_sources
 # endif
@@ -66,8 +69,8 @@
 # endif
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    GRID(ng) % omn,                               &
-     &                    GRID(ng) % bed_thick,                         &
-     &                    GRID(ng) % ad_bed_thick,                      &
+     &                    SEDBED(ng) % bed_thick,                       &
+     &                    SEDBED(ng) % ad_bed_thick,                    &
 # endif
      &                    GRID(ng) % Huon,                              &
      &                    GRID(ng) % Hvom,                              &
@@ -206,10 +209,10 @@
 !-----------------------------------------------------------------------
 !
       ad_cff=0.0_r8
-      DO i=IminS,ImaxS    
+      DO i=IminS,ImaxS
         ad_wrk(i)=0.0_r8
       END DO
-!  
+!
 !-----------------------------------------------------------------------
 !  Vertically integrage horizontal mass flux divergence.
 !-----------------------------------------------------------------------
@@ -312,7 +315,7 @@
           cff=1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,0))
 !>        tl_wrk(i)=tl_cff*W(i,j,N(ng))+cff*tl_W(i,j,N(ng))
 !>
-          ad_W(i,j,N(ng))=ad_W(i,j,N(ng))+cff*ad_wrk(i)          
+          ad_W(i,j,N(ng))=ad_W(i,j,N(ng))+cff*ad_wrk(i)
           ad_cff=ad_cff+W(i,j,N(ng))*ad_wrk(i)
           ad_wrk(i)=0.0_r8
 !>        tl_cff=-cff*cff*(tl_z_w(i,j,N(ng))-tl_z_w(i,j,0))

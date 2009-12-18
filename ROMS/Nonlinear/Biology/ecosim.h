@@ -108,6 +108,7 @@
 !
       USE mod_param
       USE mod_biology
+      USE mod_eclight
       USE mod_scalars
       USE mod_iounits
 !

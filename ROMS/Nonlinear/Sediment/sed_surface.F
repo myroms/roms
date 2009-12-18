@@ -36,6 +36,7 @@
 !
       USE mod_param
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -53,8 +54,8 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nstp(ng), nnew(ng),                        &
-     &                       OCEAN(ng) % bed_frac,                      &
-     &                       OCEAN(ng) % bottom)
+     &                       SEDBED(ng) % bed_frac,                     &
+     &                       SEDBED(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
 # endif

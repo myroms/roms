@@ -34,6 +34,9 @@
 # ifdef Q_PSOURCE
       USE mod_sources
 # endif
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
 # if defined Q_PSOURCE || (defined SEDIMENT && defined SED_MORPH)
       USE mod_stepping
 # endif
@@ -64,7 +67,7 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
      &                 GRID(ng) % omn,                                  &
-     &                 GRID(ng) % bed_thick,                            &
+     &                 SEDBED(ng) % bed_thick,                          &
 # endif
      &                 GRID(ng) % Huon,                                 &
      &                 GRID(ng) % Hvom,                                 &

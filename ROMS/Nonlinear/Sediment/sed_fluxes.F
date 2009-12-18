@@ -38,6 +38,7 @@
       USE mod_forces
       USE mod_grid
       USE mod_ocean
+      USE mod_sedbed
       USE mod_stepping
       USE mod_bbl
 !
@@ -71,15 +72,15 @@
      &                      FORCES(ng) % bustr,                         &
      &                      FORCES(ng) % bvstr,                         &
      &                      OCEAN(ng) % t,                              &
-     &                      OCEAN(ng) % ero_flux,                       &
-     &                      OCEAN(ng) % settling_flux,                  &
+     &                      SEDBED(ng) % ero_flux,                      &
+     &                      SEDBED(ng) % settling_flux,                 &
 # if defined SED_MORPH
-     &                      GRID(ng) % bed_thick,                       &
+     &                      SEDBED(ng) % bed_thick,                     &
 # endif
-     &                      OCEAN(ng) % bed,                            &
-     &                      OCEAN(ng) % bed_frac,                       &
-     &                      OCEAN(ng) % bed_mass,                       &
-     &                      OCEAN(ng) % bottom)
+     &                      SEDBED(ng) % bed,                           &
+     &                      SEDBED(ng) % bed_frac,                      &
+     &                      SEDBED(ng) % bed_mass,                      &
+     &                      SEDBED(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
 # endif
@@ -140,9 +141,9 @@
 #  if defined SED_MORPH
       real(r8), intent(inout):: bed_thick(LBi:,LBj:,:)
 #  endif
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:) 
-      real(r8), intent(inout) :: ero_flux(LBi:,LBj:,:) 
-      real(r8), intent(inout) :: settling_flux(LBi:,LBj:,:) 
+      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: ero_flux(LBi:,LBj:,:)
+      real(r8), intent(inout) :: settling_flux(LBi:,LBj:,:)
       real(r8), intent(inout) :: bed(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: bed_frac(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:,:)
@@ -166,8 +167,8 @@
       real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: ero_flux(LBi:UBi,LBj:UBj,NST) 
-      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST) 
+      real(r8), intent(inout) :: ero_flux(LBi:UBi,LBj:UBj,NST)
+      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST)
       real(r8), intent(inout) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(inout) :: bed_frac(LBi:UBi,LBj:UBj,Nbed,NST)
       real(r8), intent(inout) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,1:2,NST)

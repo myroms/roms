@@ -11,12 +11,15 @@
 !                                                                      !
 !  This routine creates error covariance normalization factors NetCDF  !
 !  file used for variational data assimilation.  Four different files  !
-!  can 
+!  can
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
       USE mod_parallel
+# ifdef BIOLOGY
+      USE mod_biology
+# endif
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
@@ -45,7 +48,7 @@
 # ifdef ADJUST_BOUNDARY
       integer :: IorJdim, ifield
 # endif
-      integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 # ifdef ADJUST_BOUNDARY
       integer :: t2dobc(3)
 # endif
@@ -176,6 +179,10 @@
         IF (exit_flag.ne.NoError) RETURN
 
 #  ifdef SEDIMENT
+        status=def_dim(ng, iTLM, ncNRMid(ng), ncname, 'NST',            &
+     &                 NST, DimIDs(32))
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, iTLM, ncNRMid(ifile,ng), ncname, 'Nbed',     &
      &                 Nbed, DimIDs(16))
         IF (exit_flag.ne.NoError) RETURN

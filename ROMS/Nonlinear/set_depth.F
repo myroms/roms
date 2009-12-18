@@ -36,6 +36,9 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -55,7 +58,7 @@
      &                     GRID(ng) % zice,                             &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                     GRID(ng) % bed_thick,                        &
+     &                     SEDBED(ng) % bed_thick,                      &
 # endif
      &                     COUPLING(ng) % Zt_avg1,                      &
      &                     GRID(ng) % Hz,                               &

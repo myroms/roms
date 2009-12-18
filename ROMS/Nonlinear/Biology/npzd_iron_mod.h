@@ -52,57 +52,124 @@
 !                                                                      !
 !=======================================================================
 !
-        USE mod_param
-
-        implicit none
-
-        integer, dimension(Ngrids) :: BioIter
-
-        real(r8), allocatable :: BioIni(:,:)
-        real(r8), dimension(Ngrids) :: AttPhy        ! m2/mmole
-        real(r8), dimension(Ngrids) :: AttSW         ! 1/m
-        real(r8), dimension(Ngrids) :: DetRR         ! 1/day
-        real(r8), dimension(Ngrids) :: K_NO3         ! 1/(mmol/m3)
-        real(r8), dimension(Ngrids) :: Ivlev         ! nondimensional
-        real(r8), dimension(Ngrids) :: PARfrac       ! nondimensional
+      USE mod_param
+!
+      implicit none
+!
+!  Set biological tracer identification indices.
+!
+      integer, pointer :: idbio(:)    ! Biological tracers
+      integer :: iNO3_                ! Nitrate concentration
+      integer :: iPhyt                ! Phytoplankton concentration
+      integer :: iZoop                ! Zooplankton concentration
+      integer :: iSDet                ! Small detritus concentration
 #ifdef IRON_LIMIT
-        real(r8), dimension(Ngrids) :: A_Fe          ! nondimensional
-        real(r8), dimension(Ngrids) :: B_Fe          ! 1/M-C
-        real(r8), dimension(Ngrids) :: FeRR          ! 1/day
+      integer :: iFphy                ! Phytoplankton-associated iron
+      integer :: iFdis                ! Available disolved iron
+#endif
+!
+!  Biological parameters.
+!
+      integer, dimension(Ngrids) :: BioIter
+
+      real(r8), allocatable :: BioIni(:,:)
+      real(r8), dimension(Ngrids) :: AttPhy          ! m2/mmole
+      real(r8), dimension(Ngrids) :: AttSW           ! 1/m
+      real(r8), dimension(Ngrids) :: DetRR           ! 1/day
+      real(r8), dimension(Ngrids) :: K_NO3           ! 1/(mmol/m3)
+      real(r8), dimension(Ngrids) :: Ivlev           ! nondimensional
+      real(r8), dimension(Ngrids) :: PARfrac         ! nondimensional
+#ifdef IRON_LIMIT
+      real(r8), dimension(Ngrids) :: A_Fe            ! nondimensional
+      real(r8), dimension(Ngrids) :: B_Fe            ! 1/M-C
+      real(r8), dimension(Ngrids) :: FeRR            ! 1/day
 # ifdef IRON_RELAX
-        real(r8), dimension(Ngrids) :: FeHmin        ! m
-        real(r8), dimension(Ngrids) :: FeMax         ! mmole/m3
-        real(r8), dimension(Ngrids) :: FeNudgTime    ! day
+      real(r8), dimension(Ngrids) :: FeHmin          ! m
+      real(r8), dimension(Ngrids) :: FeMax           ! mmole/m3
+      real(r8), dimension(Ngrids) :: FeNudgTime      ! day
 # endif
-        real(r8), dimension(Ngrids) :: K_FeC         ! muM-Fe/M-C
-        real(r8), dimension(Ngrids) :: T_Fe          ! day
+      real(r8), dimension(Ngrids) :: K_FeC           ! muM-Fe/M-C
+      real(r8), dimension(Ngrids) :: T_Fe            ! day
 #endif
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_PARfrac    ! nondimensional
+      real(r8), dimension(Ngrids) :: tl_PARfrac      ! nondimensional
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_PARfrac    ! nondimensional
+      real(r8), dimension(Ngrids) :: ad_PARfrac      ! nondimensional
 #endif
-        real(r8), dimension(Ngrids) :: PhyIS         ! m2/W
-        real(r8), dimension(Ngrids) :: PhyMRD        ! 1/day
-        real(r8), dimension(Ngrids) :: PhyMRN        ! 1/day
-        real(r8), dimension(Ngrids) :: Vm_NO3        ! 1/day
-        real(r8), dimension(Ngrids) :: wDet          ! m/day
+      real(r8), dimension(Ngrids) :: PhyIS           ! m2/W
+      real(r8), dimension(Ngrids) :: PhyMRD          ! 1/day
+      real(r8), dimension(Ngrids) :: PhyMRN          ! 1/day
+      real(r8), dimension(Ngrids) :: Vm_NO3          ! 1/day
+      real(r8), dimension(Ngrids) :: wDet            ! m/day
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_wDet       ! m/day
+      real(r8), dimension(Ngrids) :: tl_wDet         ! m/day
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_wDet       ! m/day
+      real(r8), dimension(Ngrids) :: ad_wDet         ! m/day
 #endif
-        real(r8), dimension(Ngrids) :: wPhy          ! m/day
+      real(r8), dimension(Ngrids) :: wPhy            ! m/day
 #ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_wPhy       ! m/day
+      real(r8), dimension(Ngrids) :: tl_wPhy         ! m/day
 #endif
 #ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_wPhy       ! m/day
+      real(r8), dimension(Ngrids) :: ad_wPhy         ! m/day
 #endif
-        real(r8), dimension(Ngrids) :: ZooEED        ! nondimensional
-        real(r8), dimension(Ngrids) :: ZooEEN        ! nondimensional
-        real(r8), dimension(Ngrids) :: ZooGR         ! 1/day
-        real(r8), dimension(Ngrids) :: ZooMRD        ! 1/day
-        real(r8), dimension(Ngrids) :: ZooMRN        ! 1/day
+      real(r8), dimension(Ngrids) :: ZooEED          ! nondimensional
+      real(r8), dimension(Ngrids) :: ZooEEN          ! nondimensional
+      real(r8), dimension(Ngrids) :: ZooGR           ! 1/day
+      real(r8), dimension(Ngrids) :: ZooMRD          ! 1/day
+      real(r8), dimension(Ngrids) :: ZooMRN          ! 1/day
+
+      CONTAINS
+
+      SUBROUTINE initialize_biology
+!
+!=======================================================================
+!                                                                      !
+!  This routine sets several variables needed by the biology model.    !
+!  It allocates and assigns biological tracers indices.                !
+!                                                                      !
+!=======================================================================
+!
+!  Local variable declarations
+!
+      integer :: i, ic
+!
+!-----------------------------------------------------------------------
+!  Set number of biological tracers.
+!-----------------------------------------------------------------------
+!
+#ifdef IRON_LIMIT
+      NBT=6
+#else
+      NBT=4
+#endif
+!
+!-----------------------------------------------------------------------
+!  Initialize tracer identification indices.
+!-----------------------------------------------------------------------
+!
+!  Allocate biological tracer vector.
+!
+      IF (.not.allocated(idbio)) THEN
+        allocate ( idbio(NBT) )
+      END IF
+!
+!  Set identification indices.
+!
+      ic=NAT+NPT+NCS+NNS
+      DO i=1,NBT
+        idbio(i)=ic+i
+      END DO
+      iNO3_=ic+1
+      iPhyt=ic+2
+      iZoop=ic+3
+      iSDet=ic+4
+#ifdef IRON_LIMIT
+      iFphy=ic+5
+      iFdis=ic+6
+#endif
+
+      RETURN
+      END SUBROUTINE initialize_biology

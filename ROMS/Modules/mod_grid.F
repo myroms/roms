@@ -12,7 +12,7 @@
 !  IJwaterU   Water points IJ couter for   U-points masked variables.  !
 !  IJwaterV   Water points IJ couter for   V-points masked variables.  !
 !  Hz         Thicknesses (m) of vertical RHO-points.                  !
-# ifdef ADJUST_BOUNDARY 
+# ifdef ADJUST_BOUNDARY
 !  Hz_bry     Thicknesses (m) at the open boundaries; used only for    !
 !               4DVAR adjustments.                                     !
 # endif
@@ -29,8 +29,6 @@
 !               RHO-points.                                            !
 !  CosAngler  Cosine of curvilinear angle, angler.                     !
 !  SinAngler  Sine of curvilinear angle, angler.                       !
-!  bed_thick0 Sum all initial bed layer thicknesses (m)                !
-!  bed_thick  Instantaneous total bed thickness, 2 time levels (m)     !
 !  dmde       ETA-derivative of inverse metric factor pm,              !
 !               d(1/pm)/d(ETA).                                        !
 !  dndx       XI-derivative  of inverse metric factor pn,              !
@@ -159,10 +157,6 @@
           real(r8), pointer :: yu(:,:)
           real(r8), pointer :: yv(:,:)
 #ifdef SOLVE3D
-# if defined SEDIMENT && defined SED_MORPH
-          real(r8), pointer :: bed_thick0(:,:)
-          real(r8), pointer :: bed_thick(:,:,:)
-# endif
           real(r8), pointer :: Hz(:,:,:)
 # ifdef ADJUST_BOUNDARY
           real(r8), pointer :: Hz_bry(:,:,:)
@@ -209,10 +203,6 @@
 !
           real(r8), pointer :: tl_h(:,:)
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-          real(r8), pointer :: tl_bed_thick0(:,:)
-          real(r8), pointer :: tl_bed_thick(:,:,:)
-#  endif
           real(r8), pointer :: tl_Hz(:,:,:)
 #  ifdef ADJUST_BOUNDARY
           real(r8), pointer :: tl_Hz_bry(:,:,:)
@@ -230,10 +220,6 @@
 !
           real(r8), pointer :: ad_h(:,:)
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-          real(r8), pointer :: ad_bed_thick0(:,:)
-          real(r8), pointer :: ad_bed_thick(:,:,:)
-#  endif
           real(r8), pointer :: ad_Hz(:,:,:)
 #  ifdef ADJUST_BOUNDARY
           real(r8), pointer :: ad_Hz_bry(:,:,:)
@@ -331,10 +317,6 @@
       allocate ( GRID(ng) % yv(LBi:UBi,LBj:UBj) )
 
 #ifdef SOLVE3D
-# if defined SEDIMENT && defined SED_MORPH
-      allocate ( GRID(ng) % bed_thick0(LBi:UBi,LBj:UBj) )
-      allocate ( GRID(ng) % bed_thick(LBi:UBi,LBj:UBj,1:2) )
-# endif
       allocate ( GRID(ng) % Hz(LBi:UBi,LBj:UBj,N(ng)) )
 # ifdef ADJUST_BOUNDARY
       allocate ( GRID(ng) % Hz_bry(LBij:UBij,N(ng),4) )
@@ -387,10 +369,6 @@
 !
       allocate ( GRID(ng) % tl_h(LBi:UBi,LBj:UBj) )
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-      allocate ( GRID(ng) % tl_bed_thick0(LBi:UBi,LBj:UBj) )
-      allocate ( GRID(ng) % tl_bed_thick(LBi:UBi,LBj:UBj,1:2) )
-#  endif
       allocate ( GRID(ng) % tl_Hz(LBi:UBi,LBj:UBj,N(ng)) )
 #  ifdef ADJUST_BOUNDARY
       allocate ( GRID(ng) % tl_Hz_bry(LBij:UBij,N(ng),4) )
@@ -446,7 +424,7 @@
       integer :: i, j
 #ifdef SOLVE3D
       integer :: k
-#endif 
+#endif
 
       real(r8), parameter :: IniVal = 0.0_r8
 
@@ -585,13 +563,6 @@
           END DO
 
 #ifdef SOLVE3D
-# if defined SEDIMENT && defined SED_MORPH
-          DO i=Imin,Imax
-            GRID(ng) % bed_thick0(i,j) = IniVal
-            GRID(ng) % bed_thick(i,j,1) = IniVal
-            GRID(ng) % bed_thick(i,j,2) = IniVal
-          END DO
-# endif
           DO k=1,N(ng)
             DO i=Imin,Imax
               GRID(ng) % Hz(i,j,k) = IniVal
@@ -625,13 +596,6 @@
             GRID(ng) % tl_h(i,j) = IniVal
           END DO
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-          DO i=Imin,Imax
-            GRID(ng) % tl_bed_thick0(i,j) = IniVal
-            GRID(ng) % tl_bed_thick(i,j,1) = IniVal
-            GRID(ng) % tl_bed_thick(i,j,2) = IniVal
-          END DO
-#  endif
           DO k=1,N(ng)
             DO i=Imin,Imax
               GRID(ng) % tl_Hz(i,j,k) = IniVal
@@ -644,7 +608,7 @@
             DO i=Imin,Imax
               GRID(ng) % tl_z_w(i,j,k) = IniVal
             END DO
-          END DO          
+          END DO
 # endif
         END DO
 # if defined ADJUST_BOUNDARY && defined SOLVE3D
@@ -663,13 +627,6 @@
             GRID(ng) % ad_h(i,j) = IniVal
           END DO
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-          DO i=Imin,Imax
-            GRID(ng) % ad_bed_thick0(i,j) = IniVal
-            GRID(ng) % ad_bed_thick(i,j,1) = IniVal
-            GRID(ng) % ad_bed_thick(i,j,2) = IniVal
-          END DO
-#  endif
           DO k=1,N(ng)
             DO i=Imin,Imax
               GRID(ng) % ad_Hz(i,j,k) = IniVal

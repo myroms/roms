@@ -25,6 +25,9 @@
       USE mod_mixing
 # endif
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+# endif
 # if defined UV_PSOURCE || defined Q_PSOURCE
       USE mod_sources
 # endif
@@ -70,7 +73,7 @@
      &                  GRID(ng) % zice,                                &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                  GRID(ng) % bed_thick,                           &
+     &                  SEDBED(ng) % bed_thick,                         &
 #  endif
      &                  GRID(ng) % Hz,                                  &
      &                  GRID(ng) % z_r,         GRID(ng) % z_w,         &

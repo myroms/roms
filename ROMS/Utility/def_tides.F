@@ -45,7 +45,7 @@
       integer :: i, j, nvd3, nvd4
       integer :: status, varid
 
-      integer :: DimIDs(31), tharm(2), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(32), tharm(2), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 # ifdef SOLVE3D
       integer :: u3dgrd(4), v3dgrd(4)
 # endif
@@ -200,7 +200,7 @@
      &                     2*NTC(ng)+1, DimIDs(12))
             IF (exit_flag.ne.NoError) RETURN
           END IF
-        END IF        
+        END IF
 !
 !  Set number of dimensions for output variables.
 !
@@ -265,7 +265,7 @@
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-!  
+!
 !  Define model time for accumulated tide harmonic fields.
 !
         Vinfo( 1)=Vname(1,idtime)

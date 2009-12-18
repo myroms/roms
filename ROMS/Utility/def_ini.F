@@ -50,7 +50,7 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-      integer :: DimIDs(31), Vsize(4)
+      integer :: DimIDs(32), Vsize(4)
 # ifdef ADJUST_BOUNDARY
       integer :: t2dobc(4)
 #  ifdef SOLVE3D
@@ -234,7 +234,7 @@
               got_boundary=.TRUE.
             CASE ('IorJ')
               IorJdim=dim_id(i)
-              got_IorJ=.TRUE.             
+              got_IorJ=.TRUE.
 #  endif
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
             CASE ('frc_adjust')

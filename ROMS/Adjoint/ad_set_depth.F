@@ -39,6 +39,9 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sediment
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -59,8 +62,8 @@
      &                        GRID(ng) % zice,                          &
 # endif
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        OCEAN(ng) % ad_bed,                       &
-     &                        GRID(ng) % ad_bed_thick0,                 &
+     &                        SEDIMENTS(ng) % ad_bed,                   &
+     &                        SEDIMEMTS(ng) % ad_bed_thick0,            &
 # endif
      &                        COUPLING(ng) % Zt_avg1,                   &
      &                        COUPLING(ng) % ad_Zt_avg1,                &
@@ -624,7 +627,7 @@
 !>   &                          LBij, UBij, 1, N(ng),                   &
 !>   &                          NghostPoints, EWperiodic, NSperiodic,   &
 !>   &                          tl_Hz_bry(:,:,ibry))
-!> 
+!>
         CALL ad_mp_exchange3d_bry (ng, tile, iTLM, 1, ibry,             &
      &                             LBij, UBij, 1, N(ng),                &
      &                             NghostPoints, EWperiodic, NSperiodic,&

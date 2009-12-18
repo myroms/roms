@@ -1558,6 +1558,9 @@
 #  endif
       USE mod_grid
       USE mod_ocean
+#  if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+#  endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -1582,7 +1585,7 @@
 #  endif
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
-     &                       GRID(ng) % bed_thick,                      &
+     &                       SEDBED(ng) % bed_thick,                    &
 #   endif
      &                       GRID(ng) % Hz,                             &
      &                       GRID(ng) % h,                              &
@@ -2366,6 +2369,9 @@
 #  endif
       USE mod_grid
       USE mod_ocean
+#  if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+#  endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -2385,7 +2391,7 @@
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
-     &                          GRID(ng) % tl_bed_thick,                &
+     &                          SEDBED(ng) % tl_bed_thick,              &
 #   endif
      &                          GRID(ng) % tl_Hz,                       &
      &                          GRID(ng) % h,                           &

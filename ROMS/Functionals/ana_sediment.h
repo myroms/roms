@@ -18,6 +18,7 @@
       USE mod_grid
       USE mod_ncparam
       USE mod_ocean
+      USE mod_sedbed
 !
 ! Imported variable declarations.
 !
@@ -37,11 +38,11 @@
 #endif
 #ifdef SEDIMENT
      &                        OCEAN(ng) % t,                            &
-     &                        OCEAN(ng) % bed,                          &
-     &                        OCEAN(ng) % bed_frac,                     &
-     &                        OCEAN(ng) % bed_mass,                     &
+     &                        SEDBED(ng) % bed,                         &
+     &                        SEDBED(ng) % bed_frac,                    &
+     &                        SEDBED(ng) % bed_mass,                    &
 #endif
-     &                        OCEAN(ng) % bottom)
+     &                        SEDBED(ng) % bottom)
 !
 ! Set analytical header file name used.
 !
@@ -157,7 +158,7 @@
           bottom(i,j,idens)=2650.0_r8
         END DO
       END DO
-# elif defined LAKE_SIGNELL || defined ADRIA02 
+# elif defined LAKE_SIGNELL || defined ADRIA02
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           bottom(i,j,isd50)=0.000150_r8    ! 150 microns
@@ -198,7 +199,7 @@
 !!        D=bottom(i,j,isd50)*g*                                        &
 !!   &      ((bottom(i,j,idens)/rho0-1.0_r8)/Kvisk)**(1.0_r8/3.0_r8)
 !!        theta_cr=0.3_r8./(1.0_r8+1.2_r8*D)+                           &
-!!   &             0.055_r8*(1.0_r8-EXP(-0.02_r8*D))          
+!!   &             0.055_r8*(1.0_r8-EXP(-0.02_r8*D))
           IF (cff.lt.100.0_r8) THEN
             theta_cb=0.041_r8*(LOG(cff)**2)-0.356_r8*LOG(cff)-0.977_r8
 !!          theta_cb=10**theta_cr
