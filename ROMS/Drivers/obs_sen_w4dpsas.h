@@ -2098,13 +2098,29 @@
 
 #ifdef OBS_IMPACT
 !
-!  Write out observation sentivity.
+!  Write out total observation impact.
 !
           IF (outer.eq.1) THEN
             SourceFile='obs_sen_w4dpsas.h, ROMS_run'
 
             CALL netcdf_put_fvar (ng, iNLM, MODname(ng),                &
      &                            'ObsImpact_total', ad_ObsVal,         &
+     &                            (/1/), (/Mobs/),                      &
+     &                            ncid = ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+
+            CALL netcdf_sync (ng, iNLM, MODname(ng), ncMODid(ng))
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+#else
+!
+!  Write out observation sensitivity.
+!
+          IF (outer.eq.1) THEN
+            SourceFile='obs_sen_w4dvar.h, ROMS_run'
+
+            CALL netcdf_put_fvar (ng, iTLM, MODname(ng),                &
+     &                            'ObsSens_total', ad_ObsVal,           &
      &                            (/1/), (/Mobs/),                      &
      &                            ncid = ncMODid(ng))
             IF (exit_flag.ne.NoError) RETURN

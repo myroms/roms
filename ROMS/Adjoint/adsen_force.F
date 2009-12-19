@@ -192,8 +192,13 @@
 !  arbitrarily defined.
 !
       adFac=0.0_r8
+#  ifdef OBS_SENSITIVITY
+      IF ((mod(iic(ng)-1,nHIS(ng)).eq.0).and.                           &
+     &    (DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
+#  else
       IF ((mod(iic(ng)-1,nTLM(ng)).eq.0).and.                           &
      &    (DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
+#  endif
           adFac=1.0_r8
           IF (Master) THEN
             WRITE (stdout,10) iic(ng)-1

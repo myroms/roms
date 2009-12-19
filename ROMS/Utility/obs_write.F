@@ -573,6 +573,56 @@
           IF (exit_flag.ne.NoError) RETURN
           haveTLmod(ng)=.TRUE.
         END IF
+#  ifdef OBS_SENSITIVITY
+#   ifdef OBS_IMPACT
+!
+!  Write the total observation impact.
+!
+        IF (wrtIMPACT_TOT(ng)) THEN
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          'ObsImpact_total', TLmodVal(Mstr:),     &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#   endif
+#   ifdef OBS_IMPACT_SPLIT
+!
+!  Write the observation impact of initial conditions.
+!
+        IF (wrtIMPACT_IC(ng)) THEN
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          'ObsImpact_IC', TLmodVal(Mstr:),        &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Write the observation impact of surface forcing.
+!
+        IF (wrtIMPACT_FC(ng)) THEN
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          'ObsImpact_FC', TLmodVal(Mstr:),        &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#    endif
+#    if defined ADJUST_BOUNDARY
+!
+!  Write the observation impact of boundary conditions.
+!
+        IF (wrtIMPACT_BC(ng)) THEN
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          'ObsImpact_BC', TLmodVal(Mstr:),        &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#    endif
+#   endif
+#  endif
 # endif
 # if defined TL_W4DVAR          || defined W4DVAR             || \
      defined W4DVAR_SENSITIVITY

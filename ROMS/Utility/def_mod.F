@@ -902,10 +902,11 @@
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined OBS_IMPACT         && \
-     defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY
+# if defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
+     defined OBS_SENSITIVITY
+#  ifdef OBS_IMPACT
 !
-!  Define total obs impact.
+!  Define total observations impact.
 !
         Vinfo( 1)='ObsImpact_total'
         Vinfo( 2)='total observation impact'
@@ -913,8 +914,21 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
-#  ifdef OBS_IMPACT_SPLIT
+#  else
+!
+!  Define total observation sensitivity.
+!
+        Vinfo( 1)='ObsSens_total'
+        Vinfo( 2)='total observation sensitivity'
+        vardim(1)=datumDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#  endif
+# endif
+# if defined OBS_IMPACT_SPLIT         && \
+     (defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
+      defined OBS_SENSITIVITY)
 !
 !  Define observation impact due to initial condition increments.
 !
@@ -925,7 +939,7 @@
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
-#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
 !  Define observation impact due to surface forcing increments.
 !
@@ -935,8 +949,8 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-#   endif
-#   if defined ADJUST_BOUNDARY
+#  endif
+#  if defined ADJUST_BOUNDARY
 !
 !  Define observation impact due to boundary condition increments.
 !
@@ -946,7 +960,6 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-#   endif
 #  endif
 # endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC

@@ -339,11 +339,21 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
+#ifdef ADJUST_BOUNDARY
+      USE mod_boundary, ONLY : initialize_boundary
+#endif
+#if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
+      USE mod_forces, ONLY : initialize_forces
+      USE mod_ocean, ONLY : initialize ocean
+#endif
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: balance_ref, biconj
+#endif
 !
 !  Imported variable declarations
 !
@@ -381,6 +391,25 @@
         NrecRST(ng)=0
         CALL initial (ng)
         IF (exit_flag.ne.NoError) RETURN
+
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+!
+!  Compute the reference zeta and biconjugate gradient arrays
+!  required for the balance of free surface.
+!
+          IF (balance(isFsur)) THEN
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1
+                CALL balance_ref (ng, TILE, Lini)
+                CALL biconj (ng, TILE, iNLM, Lini)
+              END DO
+            END DO
+!$OMP END PARALLEL DO
+            wrtZetaRef(ng)=.TRUE.
+          END IF
+#endif
 !
 !  Run nonlinear model for the combined assimilation plus forecast
 !  period, t=t0 to t2. Save nonlinear (basic state) tracjectory, xb(t),
@@ -481,7 +510,9 @@
      &                    Lnew(ng))
         END IF
 #ifdef BALANCE_OPERATOR
-        CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
+        CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+        IF (exit_flag.ne.NoError) RETURN
+        nrhs(ng)=Lini
 #endif
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
@@ -567,7 +598,7 @@
             CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
             CALL tl_variability (ng, TILE, Litl, Lweak)
 #ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lini, Litls)
+            CALL tl_balance (ng, TILE, Lini, Litl)
 #endif
           END DO
         END DO
@@ -579,6 +610,10 @@
         LdefMOD(ng)=.TRUE.
         CALL def_mod (ng)
         IF (exit_flag.ne.NoError) RETURN
+        wrtIMPACT_TOT(ng)=.TRUE.
+#ifdef OBS_IMPACT_SPLIT
+        wrtIMPACT_IC(ng)=.FALSE.
+#endif
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
 !  Read and process the 4DVAR observations.
@@ -589,7 +624,7 @@
 
         time(ng)=time(ng)-dt(ng)
 
-        TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
+        TL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -599,7 +634,343 @@
 #endif
           IF (exit_flag.ne.NoError) RETURN
 
-        END DO TL_LOOP
+        END DO TL_LOOP1
+
+#if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with initial condition increments
+!  only to compute the observation impact associated with the initial
+!  conditions.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  Load full adjoint sensitivity vector, x(0), for t=t0 into adjoint
+!  state arrays at index Lnew.
+!
+        CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
+     &                    Lnew(ng))
+# ifdef BALANCE_OPERATOR
+        CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+        IF (exit_flag.ne.NoError) RETURN
+        nrhs(ng)=Lini
+# endif
+!
+!  Clear the adjoint forcing and boundary condition increment arrays.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_forces (ng, TILE, iADM)
+# ifdef ADJUST_BOUNDARY
+            CALL initialize_boundary (ng, TILE, iADM)
+# endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Convert adjoint solution to v-space since the Lanczos vectors
+!  are in v-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+# ifdef BALANCE_OPERATOR
+            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+# endif
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
+            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Check Lanczos vector input file and determine t=t1. That is, the
+!  time to run the tangent linear model.  This time must be the same
+!  as the IS4DVAR Lanczos algorithm.
+!
+        SourceFile='obs_sen_ocean.h, ROMS_run'
+
+        CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
+     &                        ntimes(ng))
+        IF (exit_flag.ne. NoError) RETURN
+!
+!  Initialize tangent linear model with the weighted sum of the
+!  Lanczos vectors, steps (4) to (6) from the algorithm summary
+!  above.
+!
+        CALL tl_initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
+        wrtTLmod(ng)=.TRUE.
+        wrtIMPACT_TOT(ng)=.FALSE.
+        wrtIMPACT_IC(ng)=.TRUE.
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+        wrtIMPACT_FC(ng)=.FALSE.
+# endif
+# if defined ADJUST_BOUNDARY
+        wrtIMPACT_BC(ng)=.FALSE.
+# endif
+!
+!  Convert TL initial condition from v-space to x-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
+            CALL tl_variability (ng, TILE, Litl, Lweak)
+# ifdef BALANCE_OPERATOR
+            CALL tl_balance (ng, TILE, Lini, Litl)
+# endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Run tangent linear model for the assimilation period, t=t0 to t1.
+!  Read and process the 4DVAR observations.
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
+        END IF
+
+        time(ng)=time(ng)-dt(ng)
+
+        TL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+          iic(ng)=my_iic
+# ifdef SOLVE3D
+          CALL tl_main3d (ng)
+# else
+          CALL tl_main2d (ng)
+# endif
+          IF (exit_flag.ne.NoError) RETURN
+
+        END DO TL_LOOP2
+
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with surface forcing increments only
+!  to compute the observation impact associated with the surface forcing.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  Load full adjoint sensitivity vector, x(0), for t=t0 into adjoint
+!  state arrays at index Lnew.
+!
+        CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
+     &                    Lnew(ng))
+#  ifdef BALANCE_OPERATOR
+        CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+        IF (exit_flag.ne.NoError) RETURN
+        nrhs(ng)=Lini
+#  endif
+!
+!  Clear the adjoint initial condition and boundary condition increment
+!  arrays.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_ocean (ng, TILE, iADM)
+#  ifdef ADJUST_BOUNDARY
+            CALL initialize_boundary (ng, TILE, iADM)
+#  endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Convert adjoint solution to v-space since the Lanczos vectors
+!  are in v-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+#  ifdef BALANCE_OPERATOR
+            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+#  endif
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
+            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Check Lanczos vector input file and determine t=t1. That is, the
+!  time to run the tangent linear model.  This time must be the same
+!  as the IS4DVAR Lanczos algorithm.
+!
+        SourceFile='obs_sen_ocean.h, ROMS_run'
+
+        CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
+     &                        ntimes(ng))
+        IF (exit_flag.ne. NoError) RETURN
+!
+!  Initialize tangent linear model with the weighted sum of the
+!  Lanczos vectors, steps (4) to (6) from the algorithm summary
+!  above.
+!
+        CALL tl_initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
+        wrtTLmod(ng)=.TRUE.
+        wrtIMPACT_TOT(ng)=.FALSE.
+        wrtIMPACT_IC(ng)=.FALSE.
+        wrtIMPACT_FC(ng)=.TRUE.
+#  if defined ADJUST_BOUNDARY
+        wrtIMPACT_BC(ng)=.FALSE.
+#  endif
+!
+!  Convert TL initial condition from v-space to x-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
+            CALL tl_variability (ng, TILE, Litl, Lweak)
+#  ifdef BALANCE_OPERATOR
+            CALL tl_balance (ng, TILE, Lini, Litl)
+#  endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Run tangent linear model for the assimilation period, t=t0 to t1.
+!  Read and process the 4DVAR observations.
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
+        END IF
+
+        time(ng)=time(ng)-dt(ng)
+
+        TL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+          iic(ng)=my_iic
+#  ifdef SOLVE3D
+          CALL tl_main3d (ng)
+#  else
+          CALL tl_main2d (ng)
+#  endif
+          IF (exit_flag.ne.NoError) RETURN
+
+        END DO TL_LOOP3
+# endif
+
+# if defined ADJUST_BOUNDARY
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Integrate tangent linear model with boundary increments only
+!  to compute the observation impact associated with the boundaries.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  Load full adjoint sensitivity vector, x(0), for t=t0 into adjoint
+!  state arrays at index Lnew.
+!
+        CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
+     &                    Lnew(ng))
+#  ifdef BALANCE_OPERATOR
+        CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+        IF (exit_flag.ne.NoError) RETURN
+        nrhs(ng)=Lini
+#  endif
+!
+!  Clear the adjoint increment initial condition and forcing arrays.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_ocean (ng, TILE, iADM)
+            CALL initialize_forces (ng, TILE, iADM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Convert adjoint solution to v-space since the Lanczos vectors
+!  are in v-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+#  ifdef BALANCE_OPERATOR
+            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+#  endif
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
+            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Check Lanczos vector input file and determine t=t1. That is, the
+!  time to run the tangent linear model.  This time must be the same
+!  as the IS4DVAR Lanczos algorithm.
+!
+        SourceFile='obs_sen_ocean.h, ROMS_run'
+
+        CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
+     &                        ntimes(ng))
+        IF (exit_flag.ne. NoError) RETURN
+!
+!  Initialize tangent linear model with the weighted sum of the
+!  Lanczos vectors, steps (4) to (6) from the algorithm summary
+!  above.
+!
+        CALL tl_initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
+        wrtTLmod(ng)=.TRUE.
+        wrtIMPACT_TOT(ng)=.FALSE.
+        wrtIMPACT_IC(ng)=.FALSE.
+#  if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+        wrtIMPACT_FC(ng)=.FALSE.
+#  endif
+        wrtIMPACT_BC(ng)=.TRUE.
+!
+!  Convert TL initial condition from v-space to x-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
+            CALL tl_variability (ng, TILE, Litl, Lweak)
+#  ifdef BALANCE_OPERATOR
+            CALL tl_balance (ng, TILE, Lini, Litl)
+#  endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Run tangent linear model for the assimilation period, t=t0 to t1.
+!  Read and process the 4DVAR observations.
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
+        END IF
+
+        time(ng)=time(ng)-dt(ng)
+
+        TL_LOOP4 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+          iic(ng)=my_iic
+#  ifdef SOLVE3D
+          CALL tl_main3d (ng)
+#  else
+          CALL tl_main2d (ng)
+#  endif
+          IF (exit_flag.ne.NoError) RETURN
+
+        END DO TL_LOOP4
+# endif
+
+#endif
 
       END DO NEST_LOOP
 !

@@ -329,6 +329,37 @@
 !  misfit (innovation) vector into 4DVAR output NetCDF file.
 !
         logical, dimension(Ngrids) :: wrtMisfit
+
+# if defined OBS_SENSITIVITY
+#  ifdef OBS_IMPACT
+!
+!  Switch to control the writing of the total observation impact for
+!  incremental 4D-Var.
+!
+        logical, dimension(Ngrids) :: wrtIMPACT_TOT
+#  endif
+#  ifdef OBS_IMPACT_SPLIT
+!
+!  Switch to control the writing of the observation impact for initial
+!  conditions for incremental 4D-Var.
+!
+        logical, dimension(Ngrids) :: wrtIMPACT_IC
+#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Switch to control the writing of the observation impact for surface
+!  forcing for incremental 4D-Var.
+!
+        logical, dimension(Ngrids) :: wrtIMPACT_FC
+#   endif
+#   if defined ADJUST_BOUNDARY
+!
+!  Switch to control the writing of the observation impact for surface
+!  forcing for incremental 4D-Var.
+!
+        logical, dimension(Ngrids) :: wrtIMPACT_BC
+#   endif
+#  endif
+# endif
 !
 !  Swiches indicating that there is representer coeffiecients,
 !  nonlinear, and tangent linear model data available to process
@@ -1169,6 +1200,20 @@
         wrtTLmod(ng)=.FALSE.
 # ifdef BALANCE_OPERATOR
         wrtZetaRef(ng)=.FALSE.
+# endif
+# ifdef OBS_SENSITIVITY
+#  ifdef OBS_IMPACT
+        wrtIMPACT_TOT(ng)=.FALSE.
+#  endif
+#  ifdef OBS_IMPACT_SPLIT
+        wrtIMPACT_IC(ng)=.FALSE.
+#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+        wrtIMPACT_FC(ng)=.FALSE.
+#   endif
+#   if defined ADJUST_BOUNDARY
+        wrtIMPACT_BC(ng)=.FALSE.
+#   endif
+#  endif
 # endif
         KhMin(ng)=1.0_r8
         KhMax(ng)=1.0_r8
