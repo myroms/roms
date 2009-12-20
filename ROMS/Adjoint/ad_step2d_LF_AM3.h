@@ -4941,24 +4941,6 @@
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_Zt_avg1)
 #  endif
-#  ifdef UV_PSOURCE
-        DO is=1,Nsrc
-          i=Isrc(is)
-          j=Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            IF (INT(Dsrc(is)).eq.0) THEN
-!>            tl_DU_avg1(i,j)=0.0_r8
-!>
-              ad_DU_avg1(i,j)=0.0_r8
-            ELSE
-!>            tl_DV_avg1(i,j)=0.0_r8
-!>
-              ad_DV_avg1(i,j)=0.0_r8
-            END IF
-          END IF
-        END DO
-#  endif
       END IF
 !
 !  Compute time-averaged fields.

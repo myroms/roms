@@ -764,20 +764,6 @@
 !
       IF ((iif(ng).eq.(nfast(ng)+1)).and.PREDICTOR_2D_STEP(ng)) THEN
 
-#  ifdef UV_PSOURCE
-        DO is=1,Nsrc
-          i=Isrc(is)
-          j=Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            IF (INT(Dsrc(is)).eq.0) THEN
-              DU_avg1(i,j)=Qbar(is)
-            ELSE
-              DV_avg1(i,j)=Qbar(is)
-            END IF
-          END IF
-        END DO
-#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
