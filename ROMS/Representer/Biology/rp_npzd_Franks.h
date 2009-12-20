@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -217,7 +217,7 @@
             Hz_inv2(i,k)=1.0_r8/(Hz(i,j,k)+Hz(i,j,k+1))
             tl_Hz_inv2(i,k)=-Hz_inv2(i,k)*Hz_inv2(i,k)*                 &
      &                      (tl_Hz(i,j,k)+tl_Hz(i,j,k+1))+              &
-#ifdef TL_IOMS 
+#ifdef TL_IOMS
      &                      2.0_r8*Hz_inv2(i,k)
 #endif
           END DO
@@ -228,7 +228,7 @@
             tl_Hz_inv3(i,k)=-Hz_inv3(i,k)*Hz_inv3(i,k)*                 &
      &                      (tl_Hz(i,j,k-1)+tl_Hz(i,j,k)+               &
      &                       tl_Hz(i,j,k+1))+                           &
-#ifdef TL_IOMS 
+#ifdef TL_IOMS
      &                      2.0_r8*Hz_inv3(i,k)
 #endif
           END DO
@@ -363,9 +363,9 @@
 !                                         consuming, divide by (1 + cff)
 !  and
 !
-!     P(new) = P(old) + cff * N(new)  (2) when adding a source term, 
+!     P(new) = P(old) + cff * N(new)  (2) when adding a source term,
 !                                         growing, add (cff * source)
-!  
+!
 !  Notice that if you substitute (1) in (2), you will get:
 !
 !     P(new) = P(old) + cff * N(old) / (1 + cff)    (3)
@@ -465,7 +465,7 @@
                 DO i=Istr,Iend
                   cff=Bio(i,k,iZoop)*Bio(i,k,iPhyt)*cff1/               &
      &                (cff3+Bio(i,k,iPhyt)*Bio(i,k,iPhyt))
-                  Bio1(i,k,iPhyt)=Bio(i,k,iPhyt) 
+                  Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
                   Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/                        &
      &                           (1.0_r8+cff+cff2)
                   Bio1(i,k,iZoop)=Bio(i,k,iZoop)
@@ -684,7 +684,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !
@@ -806,7 +806,7 @@
               DO i=Istr,Iend
                 cff=Bio(i,k,iZoop)*Bio(i,k,iPhyt)*cff1/                 &
      &              (cff3+Bio(i,k,iPhyt)*Bio(i,k,iPhyt))
-                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt) 
+                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/                          &
      &                         (1.0_r8+cff+cff2)
                 Bio1(i,k,iZoop)=Bio(i,k,iZoop)
@@ -1027,7 +1027,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !
@@ -1212,7 +1212,7 @@
               DO i=Istr,Iend
                 cff=Bio(i,k,iZoop)*Bio(i,k,iPhyt)*cff1/                 &
      &              (cff3+Bio(i,k,iPhyt)*Bio(i,k,iPhyt))
-                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt) 
+                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/                          &
      &                         (1.0_r8+cff+cff2)
                 Bio1(i,k,iZoop)=Bio(i,k,iZoop)
@@ -1433,7 +1433,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !

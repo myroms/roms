@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -1272,7 +1272,7 @@
 !>
               ad_DC(k)=ad_DC(k)+u_west(j,k)*ad_CF(0)
               ad_u_west(j,k)=ad_u_west(j,k)+DC(k)*ad_CF(0)
-!>            tl_DC(0)=tl_DC(0)+tl_DC(k) 
+!>            tl_DC(0)=tl_DC(0)+tl_DC(k)
 !>
               ad_DC(k)=ad_DC(k)+ad_DC(0)
 !>            tl_DC(k)=0.5_r8*(tl_Hz_bry(j,k,iwest)+                    &

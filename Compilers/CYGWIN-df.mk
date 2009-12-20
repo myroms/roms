@@ -1,6 +1,6 @@
 # svn $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2009 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2010 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -30,7 +30,7 @@
            FFLAGS := /stand:f95
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN
-          LDFLAGS := /link /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864 
+          LDFLAGS := /link /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864
                AR := ar
           ARFLAGS := r
             MKDIR := mkdir -p
@@ -75,7 +75,7 @@ endif
 ifdef USE_MPI
        MPI_INCDIR ?= c:\\work\\models\\MPICH2\\include
        MPI_LIBDIR ?= c:\\work\\models\\MPICH2\\lib
-       LIBS_WIN32 += $(MPI_LIBDIR)\\fmpich2s.lib 
+       LIBS_WIN32 += $(MPI_LIBDIR)\\fmpich2s.lib
            FFLAGS += -I$(MPI_INCDIR)
          CPPFLAGS += -DMPI -I$(MPI_INCDIR)
 endif
@@ -85,7 +85,7 @@ ifdef USE_MCT
       MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
        LIBS_WIN32 += $(MCT_LIBDIR)\\libmct.a $(MPEU_LIBDIR)\\libmpeu.a
          CPPFLAGS += -traditional-cpp
-           FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
+           FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR)
            FFLAGS += /noextend_source -assume:byterecl
 endif
 

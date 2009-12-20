@@ -17,7 +17,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -479,7 +479,7 @@
      &                               dUdz(i,j  ,k1)))))
 #ifdef MASKING
               cff=cff*pmask(i,j)
-#endif 
+#endif
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
               Uvis_p=0.25_r8*(Uvis3d_r(i-1,j-1,k)+Uvis3d_r(i-1,j,k)+    &

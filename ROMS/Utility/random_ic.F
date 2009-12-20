@@ -26,7 +26,7 @@
 
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -620,7 +620,7 @@
 #  ifdef MASKING
                   tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*  &
      &                                      umask(i,j)
-#  endif 
+#  endif
                 END DO
               END IF
             END IF

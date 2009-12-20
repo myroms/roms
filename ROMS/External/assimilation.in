@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -59,7 +59,7 @@
     assi_SST == F                          ! sea surface temperature
   assi_UVsur == T                          ! surface U- and V-momentum
      assi_UV == F                          ! 3D U- and V-momentum
-                       
+
 ! Logical switches (T/F) to activate assimilation of active tracers,
 ! temperature and salinity, [1:NAT,1:Ngrids].
 
@@ -102,7 +102,7 @@
 ! Extension parameters for surface velocity observations, [1:Ngrids].
 
    extend_UV == T                          ! logical switch
-        ZmUV == -23.0d0                    ! maximum valid depth 
+        ZmUV == -23.0d0                    ! maximum valid depth
         ZoUV == 8.0d0                      ! E-folding depth
         npUV == 5                          ! polynomial order.
 
@@ -119,7 +119,7 @@
                   1      2     -4.005785294917267d+00
                   1      3     -1.102345420327383d+01
                   1      4     -1.312535632420359d+01
-                  1      5     -5.176398126804888d+00 
+                  1      5     -5.176398126804888d+00
 
      Pcoef_V ==  GRID  ORDER        COEFFICIENT
 
@@ -197,7 +197,7 @@
 !
 !  M3nudass    Nudging time scale (days) for 3D momentum.
 !
-!  Tnudass     Nudging time scale (days) for active tracer variables, 
+!  Tnudass     Nudging time scale (days) for active tracer variables,
 !                (1:NAT,1:Ngrids) tracer values are expected.
 !
 !------------------------------------------------------------------------------
@@ -205,7 +205,7 @@
 !------------------------------------------------------------------------------
 !
 ! The extension is usually in term of EOF functions fitted to a polynomial
-! of order npUV which is used to project vertically sea surface temperature 
+! of order npUV which is used to project vertically sea surface temperature
 ! observations ant its associated error variance. The polynomial is a
 ! function of nondimensional depth z_r(:,:,k)/h(:,:), npSST+1 values are
 ! expected corresponding to ascending  powers of z_r/h (meters/meters;
@@ -234,7 +234,7 @@
 !------------------------------------------------------------------------------
 !
 ! The extension is usually in terms of EOF functions fitted to a polynomial
-! of order npUV which is used to project vertically surface velocity 
+! of order npUV which is used to project vertically surface velocity
 ! observations ant its associated error variance. The polynomial is a
 ! function of nondimensional depth z_r(:,:,k)/h(:,:), npUV+1 values are
 ! expected corresponding to ascending  powers of z_r/h (meters/meters;

@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -199,7 +199,7 @@
           END DO
 !
 ! Time-step diffusive relaxation term.  Notice that momentum at this
-! stage is HzU and HzV and has m2/s units. 
+! stage is HzU and HzV and has m2/s units.
 !
           cff=dt(ng)*0.25_r8
           DO j=Jstr,Jend

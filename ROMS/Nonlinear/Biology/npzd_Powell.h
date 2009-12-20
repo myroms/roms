@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group        Craig V. Lewis   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group        Craig V. Lewis   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -211,7 +211,7 @@
               ibio=idbio(itrc)
               BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
               BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
-            END DO           
+            END DO
 !
 !  Impose positive definite concentrations.
 !
@@ -238,8 +238,8 @@
               ibio=idbio(itrc)
               Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
               Bio(i,k,ibio)=BioTrc(ibio,nstp)
-            END DO           
-          END DO          
+            END DO
+          END DO
         END DO
 !
 !  Calculate surface Photosynthetically Available Radiation (PAR).  The
@@ -289,9 +289,9 @@
 !                                         consuming, divide by (1 + cff)
 !  and
 !
-!     P(new) = P(old) + cff * N(new)  (2) when adding a source term, 
+!     P(new) = P(old) + cff * N(new)  (2) when adding a source term,
 !                                         growing, add (cff * source)
-!  
+!
 !  Notice that if you substitute (1) in (2), you will get:
 !
 !     P(new) = P(old) + cff * N(old) / (1 + cff)    (3)
@@ -347,7 +347,7 @@
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
-!  phytoplankton nitrate uptake.  
+!  phytoplankton nitrate uptake.
 !
 #ifdef SPITZ
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
@@ -358,7 +358,7 @@
 #endif
           DO k=1,N(ng)
             DO i=Istr,Iend
-#ifdef SPITZ 
+#ifdef SPITZ
               cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
               cff=Bio(i,k,iPhyt)*                                       &
      &            cff1*cff4*Light(i,k)/                                 &

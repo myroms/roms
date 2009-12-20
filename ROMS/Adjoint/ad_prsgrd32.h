@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -226,7 +226,7 @@
             ad_P(i,j,k)=0.0_r8
           END DO
         END DO
-      END DO          
+      END DO
       DO k=0,N(ng)
         DO i=IminS,ImaxS
           ad_dR(i,k)=0.0_r8
@@ -714,7 +714,7 @@
 !>
             ad_aux(i,j)=ad_aux(i,j)*umask(i,j)
 #endif
-!>          tl_aux(i,j)=tl_z_r(i,j,k)-tl_z_r(i-1,j,k)            
+!>          tl_aux(i,j)=tl_z_r(i,j,k)-tl_z_r(i-1,j,k)
 !>
             ad_z_r(i-1,j,k)=ad_z_r(i-1,j,k)-ad_aux(i,j)
             ad_z_r(i  ,j,k)=ad_z_r(i  ,j,k)+ad_aux(i,j)
@@ -762,7 +762,7 @@
           DO i=IstrU-1,Iend
 !>          tl_P(i,j,k)=tl_P(i,j,k+1)+tl_cff
 !>
- 	    ad_cff=ad_cff+ad_P(i,j,k)
+            ad_cff=ad_cff+ad_P(i,j,k)
 !>          tl_cff=HalfGRho*((tl_rho(i,j,k+1)+tl_rho(i,j,k))*           &
 !>   &                       (z_r(i,j,k+1)-z_r(i,j,k))+                 &
 !>   &                       (rho(i,j,k+1)+rho(i,j,k))*                 &

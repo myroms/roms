@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -107,7 +107,7 @@
           adfac=0.5_r8*ad_v(Iend+1,Jend+1,k,nout)
           ad_v(Iend+1,Jend  ,k,nout)=ad_v(Iend+1,Jend  ,k,nout)+adfac
           ad_v(Iend  ,Jend+1,k,nout)=ad_v(Iend  ,Jend+1,k,nout)+adfac
-          ad_v(Iend+1,Jend+1,k,nout)=0.0_r8 
+          ad_v(Iend+1,Jend+1,k,nout)=0.0_r8
         END DO
       END IF
       IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
@@ -199,7 +199,7 @@
 !>   &                                  tl_grad(Iend+1,j-1)-            &
 !>   &                               MIN(Ce,0.0_r8)*                    &
 !>   &                                  tl_grad(Iend+1,j  ))/           &
-!>   &                              (cff+Cx) 
+!>   &                              (cff+Cx)
 !>
               adfac=ad_v(Iend+1,j,k,nout)/(cff+Cx)
               ad_grad(Iend+1,j-1)=ad_grad(Iend+1,j-1)-                  &
@@ -346,7 +346,7 @@
 !>   &                                  tl_grad(Istr-1,j-1)-            &
 !>   &                               MIN(Ce,0.0_r8)*                    &
 !>   &                                  tl_grad(Istr-1,j  ))/           &
-!>   &                              (cff+Cx) 
+!>   &                              (cff+Cx)
 !>
               adfac=ad_v(Istr-1,j,k,nout)/(cff+Cx)
               ad_grad(Istr-1,j-1)=ad_grad(Istr-1,j-1)-                  &
@@ -496,7 +496,7 @@
 !>   &                                  tl_grad(i  ,Jend+1)-            &
 !>   &                               MIN(Cx,0.0_r8)*                    &
 !>   &                                  tl_grad(i+1,Jend+1))/           &
-!>   &                              (cff+Ce) 
+!>   &                              (cff+Ce)
 !>
               adfac=ad_v(i,Jend+1,k,nout)/(cff+Ce)
               ad_grad(i  ,Jend+1)=ad_grad(i  ,Jend+1)-                  &

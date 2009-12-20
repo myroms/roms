@@ -4,10 +4,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This subroutine sets tangent linear lateral boundary conditions for !
 !  vertically integrated  U-velocity.  It updates the specified "kout" !
@@ -502,7 +502,7 @@
      &                              Cx *tl_ubar(Iend  ,j,kout)-         &
      &                              MAX(Ce,0.0_r8)*tl_grad(Iend+1,j  )- &
      &                              MIN(Ce,0.0_r8)*tl_grad(Iend+1,j+1))/&
-     &                             (cff+Cx) 
+     &                             (cff+Cx)
 #   ifdef EAST_M2NUDGING
 !>          ubar(Iend+1,j,kout)=ubar(Iend+1,j,kout)+                    &
 !>   &                          tau*(BOUNDARY(ng)%ubar_east(j)-         &
@@ -835,7 +835,7 @@
      &                              Ce *tl_ubar(i,Jstr  ,kout)-         &
      &                              MAX(Cx,0.0_r8)*tl_grad(i-1,Jstr-1)- &
      &                              MIN(Cx,0.0_r8)*tl_grad(i  ,Jstr-1))/&
-     &                             (cff+Ce) 
+     &                             (cff+Ce)
 #   ifdef SOUTH_M2NUDGING
 !>          ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)+                    &
 !>   &                          tau*(BOUNDARY(ng)%ubar_south(i)-        &
@@ -1002,7 +1002,7 @@
      &                              Ce *tl_ubar(i,Jend  ,kout)-         &
      &                              MAX(Cx,0.0_r8)*tl_grad(i-1,Jend+1)- &
      &                              MIN(Cx,0.0_r8)*tl_grad(i  ,Jend+1))/&
-     &                             (cff+Ce) 
+     &                             (cff+Ce)
 #   ifdef NORTH_M2NUDGING
 !>          ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)+                    &
 !>   &                          tau*(BOUNDARY(ng)%ubar_north(i)-        &

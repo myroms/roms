@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -43,7 +43,7 @@
 !  This logical function scans an array of type character for an       !
 !  specific string.                                                    !
 !                                                                      !
-!  On Input:                                                           ! 
+!  On Input:                                                           !
 !                                                                      !
 !     A            Array of strings (character)                        !
 !     Asize        Size of A (integer)                                 !
@@ -96,7 +96,7 @@
 !  This character function converts input string elements to           !
 !  lowercase.                                                          !
 !                                                                      !
-!  On Input:                                                           ! 
+!  On Input:                                                           !
 !                                                                      !
 !     Ainp       String with uppercase elements (character)            !
 !                                                                      !
@@ -127,7 +127,7 @@
 !-----------------------------------------------------------------------
 !  Convert input string to lowercase.
 !-----------------------------------------------------------------------
-! 
+!
       lstr=LEN(Ainp)
       Aout=Ainp
       DO i=1,lstr
@@ -147,7 +147,7 @@
 !  This character function converts input string elements to           !
 !  uppercase.                                                          !
 !                                                                      !
-!  On Input:                                                           ! 
+!  On Input:                                                           !
 !                                                                      !
 !     Ainp       String with lowercase characters (character)          !
 !                                                                      !

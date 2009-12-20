@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -138,13 +138,13 @@
             wsum=w111+w211+w121+w221
             IF (wsum.gt.0.0_r8) THEN
               wsum=1.0_r8/wsum
-              w111=w111*wsum 
+              w111=w111*wsum
               w211=w211*wsum
               w121=w121*wsum
               w221=w221*wsum
             ELSE
               bounded(np)=0.0_r8
-            ENDIF          
+            ENDIF
 #endif
             Apos(np)=Ascl*(w111*A(i1,j1)+                               &
      &                     w211*A(i2,j1)+                               &
@@ -212,7 +212,7 @@
               w221=w221*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 #endif
             Apos(np)=Ascl*(w111*A(i1,j1)+                               &
      &                     w211*A(i2,j1)+                               &
@@ -280,7 +280,7 @@
               w221=w221*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 #endif
             Apos(np)=Ascl*(w111*A(i1,j1)+                               &
      &                     w211*A(i2,j1)+                               &
@@ -421,7 +421,7 @@
                 r1=1.0_r8                    ! level
                 r2=0.0_r8
               ELSE
-                DO k=N(ng),2,-1         
+                DO k=N(ng),2,-1
                   Ztop=GRID(ng)%z_r(i1,j1,k)
                   Zbot=GRID(ng)%z_r(i1,j1,k-1)
                   IF ((Ztop.gt.Zgrd).and.(Zgrd.ge.Zbot)) THEN
@@ -464,7 +464,7 @@
               w222=w222*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 # endif
             Apos(np)=Ascl*(w111*A(i1,j1,k1)+                            &
      &                     w211*A(i2,j1,k1)+                            &
@@ -548,7 +548,7 @@
                 r1=1.0_r8                    ! level
                 r2=0.0_r8
               ELSE
-                DO k=N(ng),2,-1         
+                DO k=N(ng),2,-1
                   Ztop=0.5_r8*(GRID(ng)%z_r(i1-1,j1,k)+                 &
      &                         GRID(ng)%z_r(i1  ,j1,k))
                   Zbot=0.5_r8*(GRID(ng)%z_r(i1-1,j1,k-1)+               &
@@ -597,7 +597,7 @@
               w222=w222*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 # endif
             Apos(np)=Ascl*(w111*A(i1,j1,k1)+                            &
      &                     w211*A(i2,j1,k1)+                            &
@@ -681,7 +681,7 @@
                 r1=1.0_r8                    ! level
                 r2=0.0_r8
               ELSE
-                DO k=N(ng),2,-1         
+                DO k=N(ng),2,-1
                   Ztop=0.5_r8*(GRID(ng)%z_r(i1,j1-1,k)+                 &
      &                         GRID(ng)%z_r(i1,j1  ,k))
                   Zbot=0.5_r8*(GRID(ng)%z_r(i1,j1-1,k-1)+               &
@@ -730,7 +730,7 @@
               w222=w222*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 # endif
             Apos(np)=Ascl*(w111*A(i1,j1,k1)+                            &
      &                     w211*A(i2,j1,k1)+                            &
@@ -803,7 +803,7 @@
                 r1=1.0_r8                    ! level
                 r2=0.0_r8
               ELSE
-                DO k=N(ng),2,-1         
+                DO k=N(ng),2,-1
                   Ztop=GRID(ng)%z_w(i1,j1,k)
                   Zbot=GRID(ng)%z_w(i1,j1,k-1)
                   IF ((Ztop.gt.Zgrd).and.(Zgrd.ge.Zbot)) THEN
@@ -846,7 +846,7 @@
               w222=w222*wsum
             ELSE
               bounded(np)=0.0_r8
-            END IF          
+            END IF
 # endif
             Apos(np)=Ascl*(w111*A(i1,j1,k1)+                            &
      &                     w211*A(i2,j1,k1)+                            &

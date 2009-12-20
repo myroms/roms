@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -22,7 +22,7 @@
       implicit none
 
       CONTAINS
-! 
+!
 !***********************************************************************
       SUBROUTINE bc_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -163,7 +163,7 @@
 #ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West boundary conditions: Closed or gradient 
+!  East-West boundary conditions: Closed or gradient
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
@@ -252,7 +252,7 @@
       END IF
       IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
-     &                           A(Istr+1,Jend+1)) 
+     &                           A(Istr+1,Jend+1))
       END IF
       IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &

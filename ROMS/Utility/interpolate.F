@@ -6,7 +6,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
@@ -211,7 +211,7 @@
       real(r8) :: a11, a12, a21, a22
       real(r8) :: e11, e12, e21, e22
       real(r8) :: cff, d1, d2, dfc, dx, dy, eta, xi, xy, yx
-      real(r8) :: f0, fx, fxx, fxxx, fxxy, fxy, fxyy, fy, fyy, fyyy   
+      real(r8) :: f0, fx, fxx, fxxx, fxxy, fxy, fxyy, fy, fyy, fyyy
 
       real(r8), parameter :: C01 = 1.0_r8/48.0_r8
       real(r8), parameter :: C02 = 1.0_r8/32.0_r8

@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -84,7 +84,7 @@
       Yend=REAL(BOUNDS(ng)%Jend(MyRank),r8)+0.5_r8
 !
 !-----------------------------------------------------------------------
-!  If applicable, convert initial floats locations (Flon,Flat) to 
+!  If applicable, convert initial floats locations (Flon,Flat) to
 !  fractional grid coordinates.
 !-----------------------------------------------------------------------
 !
@@ -187,7 +187,7 @@
 #   endif
         DO l=1,Nfloats(ng)
           FLT(ng)%Tinfo(izgrd,l)=Kflt(l)
-        END DO 
+        END DO
       END IF
 #  endif
 # endif
@@ -213,8 +213,8 @@
      &                   GRID(ng)%angler,                               &
      &                   GRID(ng)%lonr,                                 &
      &                   GRID(ng)%latr,                                 &
-     &                   1, mc, 1, 1,                                   & 
-     &                   1, mc, 1, 1,                                   & 
+     &                   1, mc, 1, 1,                                   &
+     &                   1, mc, 1, 1,                                   &
      &                   Slon, Slat,                                    &
      &                   Ista, Jsta,                                    &
      &                   spv, .FALSE.)

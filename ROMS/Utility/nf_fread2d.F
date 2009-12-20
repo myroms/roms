@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -131,12 +131,12 @@
 !-----------------------------------------------------------------------
 !
 !  Set first and last grid point according to staggered C-grid
-!  classification. Set the offsets for variables with starting 
+!  classification. Set the offsets for variables with starting
 !  zero-index.  Recall the NetCDF does not support a zero-index.
 !
 !  Notice that (Imin,Jmin) and (Imax,Jmax) are the corner of the
 !  computational tile. If ghost=0, ghost points are not processed.
-!  They will be processed elsewhere by the appropriate call to any 
+!  They will be processed elsewhere by the appropriate call to any
 !  of the routines in "mp_exchange.F".  If ghost=1, the ghost points
 !  are read.
 !
@@ -212,7 +212,7 @@
 !
       AttName(1)='scale_factor'
       AttName(2)='add_offset  '
-      AttName(3)='_FillValue  ' 
+      AttName(3)='_FillValue  '
 
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
@@ -676,7 +676,7 @@
 !
 !  Set the number of tile ghost points, Nghost, to scatter in
 !  distributed-memory applications. If Nghost=0, the ghost points
-!  are not processed.  They will be processed elsewhere by the 
+!  are not processed.  They will be processed elsewhere by the
 !  appropriate call to any of the routines in "mp_exchange.F".
 !
 #  ifdef NO_READ_GHOST
@@ -720,7 +720,7 @@
 !
       AttName(1)='scale_factor'
       AttName(2)='add_offset  '
-      AttName(3)='_FillValue  ' 
+      AttName(3)='_FillValue  '
 
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
@@ -792,7 +792,7 @@
 # endif
       END IF
 !
-!  Allocate scratch work vector. The dimension of this vector is 
+!  Allocate scratch work vector. The dimension of this vector is
 !  unknown when interpolating input data to model grid. Notice
 !  that the array length is increased by two because the minimum
 !  and maximum values are appended in distributed-memory

@@ -17,7 +17,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -545,7 +545,7 @@
 !>          tl_VFe(i,j)=om_r(i,j)*om_r(i,j)*tl_cff
 !>
             ad_cff=ad_cff+om_r(i,j)*om_r(i,j)*ad_VFe(i,j)
-            ad_VFe(i,j)=0.0_r8  
+            ad_VFe(i,j)=0.0_r8
 !>          tl_UFx(i,j)=on_r(i,j)*on_r(i,j)*tl_cff
 !>
             ad_cff=ad_cff+on_r(i,j)*on_r(i,j)*ad_UFx(i,j)

@@ -23,10 +23,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine converts tangent error correlations, C, to background  !
 !  error covariances,  B,  by multiplying by the standard deviations,  !
@@ -383,10 +383,10 @@
       DO j=JU_RANGE
         DO i=IU_RANGE
           tl_ubar(i,j,Linp)=tl_ubar(i,j,Linp)*ubar_std(i,j,rec)
-        END DO                                                          
-      END DO                                                            
-      DO j=JV_RANGE                                                     
-        DO i=IV_RANGE                                                   
+        END DO
+      END DO
+      DO j=JV_RANGE
+        DO i=IV_RANGE
           tl_vbar(i,j,Linp)=tl_vbar(i,j,Linp)*vbar_std(i,j,rec)
         END DO
       END DO
@@ -400,7 +400,7 @@
 # endif
 # ifdef SOLVE3D
 !
-!  3D U-momentum. 
+!  3D U-momentum.
 !
       DO k=1,N(ng)
         DO j=JU_RANGE

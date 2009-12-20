@@ -10,7 +10,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -29,7 +29,7 @@
 !  mp_gather2d       collect a 2D tiled array for output purposes      !
 !  mp_gather3d       collect a 3D tiled array for output purposes      !
 !  mp_gather_state   collect state vector for unpacking of variables   !
-!  mp_ncread         read in state vector/matrix from NetCDF file      ! 
+!  mp_ncread         read in state vector/matrix from NetCDF file      !
 !  mp_ncwrite        write out state vector/matrix into NetCDF file    !
 !  mp_reduce         global reduction operations                       !
 !  mp_scatter2d      scatter input data to a 2D tiled array            !
@@ -551,7 +551,7 @@
       integer :: Lstr, MyError, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
-      
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -627,7 +627,7 @@
       integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
-      
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -1180,7 +1180,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -1293,7 +1293,7 @@
           A(i,k)=Arecv(ik)
         END DO
       END DO
-# else 
+# else
       Nnodes=NtileI(ng)*NtileJ(ng)-1
       ik=0
       DO k=LBk,UBk
@@ -1344,7 +1344,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -1551,7 +1551,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !
@@ -1669,7 +1669,7 @@
         CASE (p2dvar, p3dvar)
           Cgrid=1
         CASE (r2dvar, r3dvar)
-          Cgrid=2 
+          Cgrid=2
         CASE (u2dvar, u3dvar)
           Cgrid=3
         CASE (v2dvar, v3dvar)
@@ -1699,7 +1699,7 @@
       Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Collect requested array data. 
+!  Collect requested array data.
 !-----------------------------------------------------------------------
 !
 !  Pack and scale input data.
@@ -1880,7 +1880,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !
@@ -2006,7 +2006,7 @@
         CASE (p2dvar, p3dvar)
           Cgrid=1
         CASE (r2dvar, r3dvar)
-          Cgrid=2 
+          Cgrid=2
         CASE (u2dvar, u3dvar)
           Cgrid=3
         CASE (v2dvar, v3dvar)
@@ -2037,7 +2037,7 @@
       Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Collect requested array data. 
+!  Collect requested array data.
 !-----------------------------------------------------------------------
 !
 !  Pack and scale input data.
@@ -2213,7 +2213,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !
@@ -2457,7 +2457,7 @@
         END IF
 !
 !  Scale recieved (read) data.
-!        
+!
         DO j=LB2,UB2
           DO i=LB1,UB1
             A(i,j)=A(i,j)*Ascale
@@ -2837,7 +2837,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -3020,7 +3020,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -3234,7 +3234,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !
@@ -3379,11 +3379,11 @@
       Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Scatter requested array data. 
+!  Scatter requested array data.
 !-----------------------------------------------------------------------
 !
 !  If master processor, append minimum and maximum values to the end of
-!  the buffer. 
+!  the buffer.
 !
       IF (MyRank.eq.MyMaster) Then
         A(MySize+1)=Amin
@@ -3503,7 +3503,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !
@@ -3655,11 +3655,11 @@
       Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Scatter requested array data. 
+!  Scatter requested array data.
 !-----------------------------------------------------------------------
 !
 !  If master processor, append minimum and maximum values to the end of
-!  the buffer. 
+!  the buffer.
 !
       IF (MyRank.eq.MyMaster) Then
         A(MySize+1)=Amin
@@ -3767,7 +3767,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
 !

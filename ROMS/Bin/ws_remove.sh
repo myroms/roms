@@ -2,7 +2,7 @@
 #
 # svn $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2009 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2010 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
@@ -15,7 +15,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./ws_remove.csh [options]                                          :::
+#    ws_remove.sh [options]                                          :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -86,7 +86,7 @@ while ( ($#argv) > 0 )
       set all = 0
       while ( `echo $1 | grep -c '^-'` == 0 && $1 != "" )
         set special_files = "${special_files}${1} "
-        @ c++ 
+        @ c++
         shift
       end
       if ( $c == 0 ) then

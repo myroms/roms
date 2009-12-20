@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -48,14 +48,14 @@
 !  Parallel nodes assined to the atmosphere model.
 !
         integer :: peATM_frst          ! first atmosphere parallel node
-        integer :: peATM_last          ! last  atmosphere parallel node 
+        integer :: peATM_last          ! last  atmosphere parallel node
 #endif
 #ifdef WAVES_OCEAN
 !
 !  Parallel nodes assined to the wave model.
 !
         integer :: peWAV_frst          ! first atmosphere parallel node
-        integer :: peWAV_last          ! last  atmosphere parallel node 
+        integer :: peWAV_last          ! last  atmosphere parallel node
 #endif
 !
 !  Parallel nodes assined to the ocean model.

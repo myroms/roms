@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!================================================= Hernan G. Arango ===
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !!======================================================================
@@ -179,7 +179,7 @@
 !
 !! WARNING:  This section is generic for all applications. Please do not
 !!           change the code below.
-!!            
+!!
 # ifdef UV_VIS2
       cff=visc2(ng)/grdmax(ng)
       DO j=JstrR,JendR
@@ -219,7 +219,7 @@
 !
 !! WARNING:  This section is generic for all applications. Please do not
 !!           change the code below.
-!!            
+!!
 # ifdef TS_DIF2
       DO itrc=1,NT(ng)
         cff=tnu2(itrc,ng)/grdmax(ng)
@@ -249,7 +249,7 @@
 !
 !! User modifiable section.  Please specify the appropiate sponge area
 !! by increasing its horizontal mixing coefficients.
-!!            
+!!
 
 # if defined SCB
 !
@@ -257,7 +257,7 @@
 
 #  if defined UV_VIS2
 !
-!  Increase harmonic vicosity linearly (up to a factor of four, fac=4) 
+!  Increase harmonic vicosity linearly (up to a factor of four, fac=4)
 !  from the interior to the open boundary with a sponge area of 6 grid
 !  points. Notice that the sponge area is only applied at the southern,
 !  northern and eastern edges and the maximum viscosity occurs at the
@@ -289,7 +289,7 @@
 #  endif
 #  if defined TS_DIF2
 !
-!  Increase harmonic diffusion linearly (up to a factor of four, fac=4) 
+!  Increase harmonic diffusion linearly (up to a factor of four, fac=4)
 !  from the interior to the open boundary with a sponge area of 6 grid
 !  points. Notice that the sponge area is only applied at the southern,
 !  northern and eastern edges and the maximum diffusion occurs at the
@@ -412,7 +412,7 @@
 !
 !! WARNING:  This section is generic for all applications. Please do not
 !!           change the code below.
-!!            
+!!
 # if defined EW_PERIODIC || defined NS_PERIODIC
 #  ifdef UV_VIS2
       CALL exchange_r2d_tile (ng, tile,                                 &

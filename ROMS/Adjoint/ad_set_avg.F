@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -148,7 +148,7 @@
      &                      AVERAGE(ng) % avgUT,                        &
      &                      AVERAGE(ng) % avgVT,                        &
      &                      AVERAGE(ng) % avgTT,                        &
-#  endif     
+#  endif
      &                      AVERAGE(ng) % avgU2,                        &
      &                      AVERAGE(ng) % avgV2,                        &
      &                      AVERAGE(ng) % avgZZ,                        &
@@ -243,7 +243,7 @@
 #  ifdef SOLVE3D
      &                            avgUU, avgUV, avgVV,                  &
      &                            avgUT, avgVT, avgTT,                  &
-#  endif     
+#  endif
      &                            avgU2, avgV2, avgZZ,                  &
 # endif
      &                            avgu2d, avgv2d, avgzeta)
@@ -361,7 +361,7 @@
       real(r8), intent(inout) :: avgUT(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: avgVT(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: avgTT(LBi:,LBj:,:,:)
-#   endif     
+#   endif
       real(r8), intent(inout) :: avgU2(LBi:,LBj:)
       real(r8), intent(inout) :: avgV2(LBi:,LBj:)
       real(r8), intent(inout) :: avgZZ(LBi:,LBj:)
@@ -469,7 +469,7 @@
       real(r8), intent(inout) :: avgUT(LBi:UBi,LBj:UBj,N(ng),NAT)
       real(r8), intent(inout) :: avgVT(LBi:UBi,LBj:UBj,N(ng),NAT)
       real(r8), intent(inout) :: avgTT(LBi:UBi,LBj:UBj,N(ng),NAT)
-#   endif     
+#   endif
       real(r8), intent(inout) :: avgU2(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgV2(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgZZ(LBi:UBi,LBj:UBj)

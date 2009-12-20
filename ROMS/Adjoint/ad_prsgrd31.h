@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -669,7 +669,7 @@
 !>          tl_cff2=tl_z_r(i  ,j,k  )-tl_z_r(i-1,j,k  )+                &
 !>   &              tl_z_r(i  ,j,k+1)-tl_z_r(i-1,j,k+1)
 !>
-            ad_z_r(i-1,j,k  )=ad_z_r(i-1,j,k  )-ad_cff2+ad_cff3             
+            ad_z_r(i-1,j,k  )=ad_z_r(i-1,j,k  )-ad_cff2+ad_cff3
             ad_z_r(i  ,j,k  )=ad_z_r(i  ,j,k  )+ad_cff2-ad_cff3
             ad_z_r(i-1,j,k+1)=ad_z_r(i-1,j,k+1)-ad_cff2-ad_cff3
             ad_z_r(i  ,j,k+1)=ad_z_r(i  ,j,k+1)+ad_cff2+ad_cff3

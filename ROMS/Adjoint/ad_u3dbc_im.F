@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -199,7 +199,7 @@
 !>   &                                  tl_grad(i-1,Jend+1)-            &
 !>   &                               MIN(Cx,0.0_r8)*                    &
 !>   &                                  tl_grad(i  ,Jend+1))/           &
-!>   &                              (cff+Ce) 
+!>   &                              (cff+Ce)
 !>
               adfac=ad_u(i,Jend+1,k,nout)/(cff+Ce)
               ad_grad(i-1,Jend+1)=ad_grad(i-1,Jend+1)-                  &
@@ -308,7 +308,7 @@
         IF (iic(ng).ne.0) THEN
 !
 !  Southern edge, implicit upstream radiation condition.
-!             
+!
           DO k=1,N(ng)
             DO i=IstrU,Iend
 #   ifdef SOUTH_M3NUDGING
@@ -346,7 +346,7 @@
 !>   &                                  tl_grad(i-1,Jstr-1)-            &
 !>   &                               MIN(Cx,0.0_r8)*                    &
 !>   &                                  tl_grad(i  ,Jstr-1))/           &
-!>   &                              (cff+Ce) 
+!>   &                              (cff+Ce)
 !>
               adfac=ad_u(i,Jstr-1,k,nout)/(cff+Ce)
               ad_grad(i-1,Jstr-1)=ad_grad(i-1,Jstr-1)-                  &
@@ -457,7 +457,7 @@
         IF (iic(ng).ne.0) THEN
 !
 !  Eastern edge, implicit upstream radiation condition.
-! 
+!
           DO k=1,N(ng)
             DO j=Jstr,Jend
 #   ifdef EAST_M3NUDGING
@@ -495,7 +495,7 @@
 !>   &                                  tl_grad(Iend+1,j  )-            &
 !>   &                               MIN(Ce,0.0_r8)*                    &
 !>   &                                  tl_grad(Iend+1,j+1))/           &
-!>   &                              (cff+Cx) 
+!>   &                              (cff+Cx)
 !>
               adfac=ad_u(Iend+1,j,k,nout)/(cff+Cx)
               ad_grad(Iend+1,j  )=ad_grad(Iend+1,j  )-                  &
@@ -626,7 +626,7 @@
 !>   &                                tl_grad(Istr,j  )-                &
 !>   &                             MIN(Ce,0.0_r8)*                      &
 !>   &                                tl_grad(Istr,j+1))/               &
-!>   &                            (cff+Cx) 
+!>   &                            (cff+Cx)
 !>
               adfac=ad_u(Istr,j,k,nout)/(cff+Cx)
               ad_grad(Istr,j  )=ad_grad(Istr,j  )-                      &
@@ -706,7 +706,7 @@
           END DO
         END DO
 #  endif
-      END IF 
+      END IF
 # endif
       RETURN
       END SUBROUTINE ad_u3dbc_tile

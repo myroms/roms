@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -81,7 +81,7 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 ! Control Switches.
 !------------------------------------------------------------------------------
 !
-! Lfloats   Switch to control the computation of floats trajectories within 
+! Lfloats   Switch to control the computation of floats trajectories within
 !             nested and/or multiple connected grids. Ngrids values are
 !             expected. By default this switch is set to TRUE in "mod_scalars"
 !             for all grids when the CPP option FLOATS is activated. The
@@ -136,7 +136,7 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !              centered at (Fx0,Fy0,Fz0) is activated.
 !
 !              NOTE:  The total number of floats trajectories to compute
-!              ====   must add to NFLOATS. 
+!              ====   must add to NFLOATS.
 !
 !  Ft0       Time (days) of float release after model initialization (real).
 !

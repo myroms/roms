@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !=======================================================================
@@ -74,7 +74,7 @@
 !
 #if defined MY_APPLICATION
       DO ip=1,NPT
-        itrc=inert(ip)        
+        itrc=inert(ip)
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR

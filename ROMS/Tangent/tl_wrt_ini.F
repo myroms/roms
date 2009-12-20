@@ -4,10 +4,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine writes tangent linear initial conditions into tangent  !
 !  linear initial NetCDF file.                                         !
@@ -249,7 +249,7 @@
 !  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
 !  at other times in addition to initialization time.
 !
-      scale=1.0_r8                          ! m2/s2 
+      scale=1.0_r8                          ! m2/s2
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idUsms,ng),      &
      &                   OutRec, gtype,                                 &
@@ -269,7 +269,7 @@
 !
 !  Write out surface V-momentum stress.
 !
-      scale=1.0_r8                          ! m2/s2 
+      scale=1.0_r8                          ! m2/s2
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idVsms,ng),      &
      &                   OutRec, gtype,                                 &

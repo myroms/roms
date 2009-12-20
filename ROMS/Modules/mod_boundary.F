@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -399,13 +399,13 @@
           real(r8), pointer :: zetaG_west(:,:)
 #  endif
 # endif
- 
+
 # ifdef EAST_FSOBC
           real(r8), pointer :: zeta_east(:)
 #  if defined CELERITY_READ || defined CELERITY_WRITE
           real(r8), pointer :: zeta_east_C2(:)
           real(r8), pointer :: zeta_east_Ce(:)
-          real(r8), pointer :: zeta_east_Cx(:) 
+          real(r8), pointer :: zeta_east_Cx(:)
 #  endif
 #  ifndef ANA_FSOBC
           real(r8), pointer :: zetaG_east(:,:)
@@ -469,7 +469,7 @@
           real(r8), pointer :: vbarG_east(:,:)
 #  endif
 # endif
- 
+
 # ifdef SOUTH_M2OBC
           real(r8), pointer :: ubar_south(:)
           real(r8), pointer :: vbar_south(:)
@@ -857,7 +857,7 @@
       allocate ( BOUNDARY(ng) % zetaG_west(ETA_DIM,2) )
 #  endif
 # endif
- 
+
 # ifdef EAST_FSOBC
       allocate ( BOUNDARY(ng) % zeta_east(ETA_DIM) )
 #  if defined CELERITY_READ || defined CELERITY_WRITE
@@ -927,7 +927,7 @@
       allocate ( BOUNDARY(ng) % vbarG_east(ETA_DIM,2) )
 #  endif
 # endif
- 
+
 # ifdef SOUTH_M2OBC
       allocate ( BOUNDARY(ng) % ubar_south(XI_DIM) )
       allocate ( BOUNDARY(ng) % vbar_south(XI_DIM) )
@@ -1324,7 +1324,7 @@
 #  endif
         END IF
 # endif
- 
+
 # ifdef EAST_FSOBC
         IF (SOUTH_EAST_TEST) THEN
           BOUNDARY(ng) % zeta_east = IniVal
@@ -1404,7 +1404,7 @@
 #  endif
         END IF
 # endif
- 
+
 # ifdef SOUTH_M2OBC
         IF (SOUTH_WEST_TEST) THEN
           BOUNDARY(ng) % ubar_south = IniVal

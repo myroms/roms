@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !================================================== John C. Warner ====!
@@ -925,7 +925,7 @@
             cff5=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))
             ubar_stokes(i,j)=ubar_stokes(i,j)+cff5*u_stokes(i,j,k)
             rustr2d(i,j)=rustr2d(i,j)+cff5*rustr3d(i,j,k)
-            rulag2d(i,j)=rulag2d(i,j)+cff5*rulag3d(i,j,k) 
+            rulag2d(i,j)=rulag2d(i,j)+cff5*rulag3d(i,j,k)
           END DO
           cff3=0.25_r8*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
           cff4=2.0_r8/(Dstp(i-1,j)+Dstp(i,j))
@@ -944,7 +944,7 @@
             cff5=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))
             vbar_stokes(i,j)=vbar_stokes(i,j)+cff5*v_stokes(i,j,k)
             rvstr2d(i,j)=rvstr2d(i,j)+cff5*rvstr3d(i,j,k)
-            rvlag2d(i,j)=rvlag2d(i,j)+cff5*rvlag3d(i,j,k) 
+            rvlag2d(i,j)=rvlag2d(i,j)+cff5*rvlag3d(i,j,k)
           END DO
           cff3=0.25_r8*(pm(i,j-1)+pm(i,j))*(pn(i,j-1)+pn(i,j))
           cff4=2.0_r8/(Dstp(i,j-1)+Dstp(i,j))
@@ -955,11 +955,11 @@
       END DO
 # else
 !
-!   Compute the 2D fields of [Sxx_bar,Syy_bar] and 
-!   off-diagonal [Sxy_bar,Syx_bar] components of 
+!   Compute the 2D fields of [Sxx_bar,Syy_bar] and
+!   off-diagonal [Sxy_bar,Syx_bar] components of
 !   radiation stresses, and 2D stokes veolicities. These terms
 !   are only computed from the forcings for non-3D applications.
-!   For a 3D application, these 2D fileds are computed as the 
+!   For a 3D application, these 2D fileds are computed as the
 !   vertical integrals of the 3D fields (see above).
 !
       DO j=Jstr-1,Jend+1
@@ -1029,7 +1029,7 @@
         END DO
       END DO
 !
-!  Compute Radiation Stress contribution to ubar. These stresses 
+!  Compute Radiation Stress contribution to ubar. These stresses
 !  have dimensions of m4/s2.
 !
       DO j=Jstr,Jend
@@ -1084,7 +1084,7 @@
         END DO
       END DO
 !
-!  Compute Radiation Stress contribution to vbar. These stresses 
+!  Compute Radiation Stress contribution to vbar. These stresses
 !  have dimensions of m4/s2.
 !
       DO j=JstrV,Jend

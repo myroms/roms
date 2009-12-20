@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -139,7 +139,7 @@
      &                      max_val = Tmax)
 !
 !  Scale time variable to days.  Determine the minimum and maximun time
-!  values available 
+!  values available
 !
       DO i=1,ntime
         Tval(i)=Tval(i)*Tscale
@@ -176,7 +176,7 @@
       ELSE
         i=MIN(ntime,Tindex+1)
         Tend=Tval(i)
-      END IF        
+      END IF
 !
 !  If not cycling, stop execution if there is not field data
 !  available for current model time. Avoid check on tidal data

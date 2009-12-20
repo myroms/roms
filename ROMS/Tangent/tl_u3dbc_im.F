@@ -4,10 +4,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This subroutine sets tangent linear lateral boundary conditions for !
 !  total 3D U-velocity. It updates the specified "nout" time index.    !
@@ -134,7 +134,7 @@
      &                                tl_grad(Istr,j  )-                &
      &                             MIN(Ce,0.0_r8)*                      &
      &                                tl_grad(Istr,j+1))/               &
-     &                            (cff+Cx) 
+     &                            (cff+Cx)
 #   ifdef WEST_M3NUDGING
 !>            u(Istr,j,k,nout)=u(Istr,j,k,nout)+                        &
 !>   &                         tau*(BOUNDARY(ng)%u_west(j,k)-           &
@@ -262,7 +262,7 @@
      &                                  tl_grad(Iend+1,j  )-            &
      &                               MIN(Ce,0.0_r8)*                    &
      &                                  tl_grad(Iend+1,j+1))/           &
-     &                              (cff+Cx) 
+     &                              (cff+Cx)
 #   ifdef EAST_M3NUDGING
 !>            u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%u_east(j,k)-         &
@@ -392,7 +392,7 @@
      &                                  tl_grad(i-1,Jstr-1)-            &
      &                               MIN(Cx,0.0_r8)*                    &
      &                                  tl_grad(i  ,Jstr-1))/           &
-     &                              (cff+Ce) 
+     &                              (cff+Ce)
 #   ifdef SOUTH_M3NUDGING
 !>            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%u_south(i,k)-        &
@@ -534,7 +534,7 @@
      &                                  tl_grad(i-1,Jend+1)-            &
      &                               MIN(Cx,0.0_r8)*                    &
      &                                  tl_grad(i  ,Jend+1))/           &
-     &                              (cff+Ce) 
+     &                              (cff+Ce)
 #   ifdef NORTH_M3NUDGING
 !>            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%u_north(i,k)-        &
@@ -593,7 +593,7 @@
 #   ifdef MASKING
 !>          u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
 !>   &                         GRID(ng)%umask(i,Jend+1)
-!>          
+!>
             tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*                &
      &                            GRID(ng)%umask(i,Jend+1)
 #   endif

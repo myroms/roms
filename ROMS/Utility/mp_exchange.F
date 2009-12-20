@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -295,7 +295,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -406,7 +406,7 @@
 !  Pack Western and Eastern tile boundary data including ghost-points.
 !-----------------------------------------------------------------------
 !
-      IF (Wexchange) THEN      
+      IF (Wexchange) THEN
         sizeW=0
         DO m=1,GsendW
           mc=(m-1)*Jlen
@@ -455,7 +455,7 @@
         END IF
       END IF
 !
-      IF (Eexchange) THEN     
+      IF (Eexchange) THEN
         sizeE=0
         DO m=1,GsendE
           mc=(m-1)*Jlen
@@ -785,7 +785,7 @@
         END IF
 # endif
         DO m=GrecvS,1,-1
-          mc=(GrecvS-m)*Ilen     
+          mc=(GrecvS-m)*Ilen
           j=Jstr-m
           DO i=Imin,Imax
             icS=1+(i-Imin)+mc
@@ -795,7 +795,7 @@
         IF (PRESENT(B)) THEN
           ioff=icS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*Ilen     
+            mc=(GrecvS-m)*Ilen
             j=Jstr-m
             DO i=Imin,Imax
               icS=ioff+1+(i-Imin)+mc
@@ -806,7 +806,7 @@
         IF (PRESENT(C)) THEN
           ioff=icS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*Ilen     
+            mc=(GrecvS-m)*Ilen
             j=Jstr-m
             DO i=Imin,Imax
               icS=ioff+1+(i-Imin)+mc
@@ -817,7 +817,7 @@
         IF (PRESENT(D)) THEN
           ioff=icS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*Ilen     
+            mc=(GrecvS-m)*Ilen
             j=Jstr-m
             DO i=Imin,Imax
               icS=ioff+1+(i-Imin)+mc
@@ -902,7 +902,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -1018,7 +1018,7 @@
 !  Pack Western and Eastern tile boundary data including ghost-points.
 !-----------------------------------------------------------------------
 !
-      IF (Wexchange) THEN      
+      IF (Wexchange) THEN
         jcW=0
         sizeW=0
         DO m=1,GsendW
@@ -1053,7 +1053,7 @@
         END IF
       END IF
 !
-      IF (Eexchange) THEN     
+      IF (Eexchange) THEN
         jcE=0
         sizeE=0
         DO m=1,GsendE
@@ -1403,7 +1403,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -1435,7 +1435,7 @@
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
 
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen
-      integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen 
+      integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen
       integer :: k, kc,  m, mc, Ierror, Klen, Lstr
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
@@ -1641,7 +1641,7 @@
             END DO
           END DO
         END IF
-      END IF        
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Send and receive Western and Eastern segments.
@@ -1972,7 +1972,7 @@
         END IF
 # endif
         DO m=GrecvS,1,-1
-          mc=(GrecvS-m)*IKlen     
+          mc=(GrecvS-m)*IKlen
           j=Jstr-m
           DO k=LBk,UBk
             kc=(k-LBk)*Ilen+mc
@@ -1985,7 +1985,7 @@
         IF (PRESENT(B)) THEN
           ioff=ikS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*IKlen     
+            mc=(GrecvS-m)*IKlen
             j=Jstr-m
             DO k=LBk,UBk
               kc=(k-LBk)*Ilen+mc
@@ -1999,7 +1999,7 @@
         IF (PRESENT(C)) THEN
           ioff=ikS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*IKlen     
+            mc=(GrecvS-m)*IKlen
             j=Jstr-m
             DO k=LBk,UBk
               kc=(k-LBk)*Ilen+mc
@@ -2013,7 +2013,7 @@
         IF (PRESENT(D)) THEN
           ioff=ikS
           DO m=GrecvS,1,-1
-            mc=(GrecvS-m)*IKlen     
+            mc=(GrecvS-m)*IKlen
             j=Jstr-m
             DO k=LBk,UBk
               kc=(k-LBk)*Ilen+mc
@@ -2114,7 +2114,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -2326,7 +2326,7 @@
             END DO
           END DO
         END IF
-      END IF        
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Send and receive Western and Eastern segments.
@@ -2728,7 +2728,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -2919,7 +2919,7 @@
             END DO
           END DO
         END IF
-      END IF        
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Send and receive Western and Eastern segments.
@@ -3257,7 +3257,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -3442,7 +3442,7 @@
         sizeS=0
         DO m=GrecvS,1,-1
           mc=(GrecvS-m)*Ilen
-          j=Jstr-m          
+          j=Jstr-m
           DO i=Imin,Imax
             sizeS=sizeS+1
             icS=1+(i-Imin)+mc
@@ -3456,7 +3456,7 @@
           ioff=icS
           DO m=GrecvS,1,-1
             mc=(GrecvS-m)*Ilen
-            j=Jstr-m          
+            j=Jstr-m
             DO i=Imin,Imax
               sizeS=sizeS+1
               icS=ioff+1+(i-Imin)+mc
@@ -3471,7 +3471,7 @@
           ioff=icS
           DO m=GrecvS,1,-1
             mc=(GrecvS-m)*Ilen
-            j=Jstr-m          
+            j=Jstr-m
             DO i=Imin,Imax
               sizeS=sizeS+1
               icS=ioff+1+(i-Imin)+mc
@@ -3486,7 +3486,7 @@
           ioff=icS
           DO m=GrecvS,1,-1
             mc=(GrecvS-m)*Ilen
-            j=Jstr-m          
+            j=Jstr-m
             DO i=Imin,Imax
               sizeS=sizeS+1
               icS=ioff+1+(i-Imin)+mc
@@ -3536,7 +3536,7 @@
 !
 !  Adjoint of packing tile boundary data including ghost-points.
 !
-      IF (Sexchange) THEN            
+      IF (Sexchange) THEN
 #  ifdef MPI
         CALL mpi_wait (Srequest, status(1,2), Serror)
         IF (Serror.ne.MPI_SUCCESS) THEN
@@ -3998,7 +3998,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -4174,7 +4174,7 @@
         icS=0
         sizeS=0
         DO m=GrecvS,1,-1
-          j=Jstr-m          
+          j=Jstr-m
           sizeS=sizeS+1
           icS=icS+1
 !>        A(j)=recvS(icS)
@@ -4184,7 +4184,7 @@
         END DO
         IF (PRESENT(ad_B)) THEN
           DO m=GrecvS,1,-1
-            j=Jstr-m          
+            j=Jstr-m
             sizeS=sizeS+1
             icS=icS+1
 !>          B(j)=recvS(icS)
@@ -4195,7 +4195,7 @@
         END IF
         IF (PRESENT(ad_C)) THEN
           DO m=GrecvS,1,-1
-            j=Jstr-m          
+            j=Jstr-m
             sizeS=sizeS+1
             icS=icS+1
 !>          C(j)=recvS(icS)
@@ -4206,7 +4206,7 @@
         END IF
         IF (PRESENT(ad_D)) THEN
           DO m=GrecvS,1,-1
-            j=Jstr-m          
+            j=Jstr-m
             sizeS=sizeS+1
             icS=icS+1
 !>          D(j)=recvS(icS)
@@ -4254,7 +4254,7 @@
 !
 !  Adjoint of packing tile boundary data including ghost-points.
 !
-      IF (Sexchange) THEN            
+      IF (Sexchange) THEN
 #  ifdef MPI
         CALL mpi_wait (Srequest, status(1,2), Serror)
         IF (Serror.ne.MPI_SUCCESS) THEN
@@ -4633,7 +4633,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -4943,7 +4943,7 @@
 !
 !  Adjoint of packing tile boundary data including ghost-points.
 !
-      IF (Sexchange) THEN            
+      IF (Sexchange) THEN
 #  ifdef MPI
         CALL mpi_wait (Srequest, status(1,2), Serror)
         IF (Serror.ne.MPI_SUCCESS) THEN
@@ -5476,7 +5476,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -5761,7 +5761,7 @@
 !
 !  Adjoint of packing tile boundary data including ghost-points.
 !
-      IF (Sexchange) THEN            
+      IF (Sexchange) THEN
 #  ifdef MPI
         CALL mpi_wait (Srequest, status(1,2), Serror)
         IF (Serror.ne.MPI_SUCCESS) THEN
@@ -6224,7 +6224,7 @@
 !
       USE mod_param
       USE mod_parallel
-      USE mod_iounits 
+      USE mod_iounits
       USE mod_scalars
 !
       implicit none
@@ -6475,7 +6475,7 @@
 !
 !  Adjoint of packing tile boundary data including ghost-points.
 !
-      IF (Sexchange) THEN            
+      IF (Sexchange) THEN
 #  ifdef MPI
         CALL mpi_wait (Srequest, status(1,2), Serror)
         IF (Serror.ne.MPI_SUCCESS) THEN

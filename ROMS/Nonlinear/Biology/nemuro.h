@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -281,9 +281,9 @@
 !                                         consuming, divide by (1 + cff)
 !  and
 !
-!     P(new) = P(old) + cff * N(new)  (2) when adding a source term, 
+!     P(new) = P(old) + cff * N(new)  (2) when adding a source term,
 !                                         growing, add (cff * source)
-!  
+!
 !  Notice that if you substitute (1) in (2), you will get:
 !
 !     P(new) = P(old) + cff * N(old) / (1 + cff)    (3)
@@ -315,7 +315,7 @@
             IF (PARsur(i).gt.0.0_r8) THEN              ! day time
               DO k=N(ng),1,-1
 !
-!  Attenuate the light to the center of the grid cell using the 
+!  Attenuate the light to the center of the grid cell using the
 !  Platt et al. (1980) photoinhibition formulation. Here, AttSW is
 !  the light attenuation due to seawater and AttPS and AttPL is the
 !  attenuation due to Small and Large Phytoplankton (self-shading
@@ -467,7 +467,7 @@
               cff2=fac2*Bio(i,k,iLphy)*EXP(KMorPL(ng)*Bio(i,k,itemp))
               Bio(i,k,iSphy)=Bio(i,k,iSphy)/(1.0_r8+cff1)
               Bio(i,k,iLphy)=Bio(i,k,iLphy)/(1.0_r8+cff2)
-              MorPS=Bio(i,k,iSphy)*cff1     
+              MorPS=Bio(i,k,iSphy)*cff1
               MorPL=Bio(i,k,iLphy)*cff2
               Bio(i,k,iPON_)=Bio(i,k,iPON_)+MorPS+MorPL
               Bio(i,k,iopal)=Bio(i,k,iopal)+MorPL*RSiN(ng)
@@ -479,7 +479,7 @@
 !-----------------------------------------------------------------------
 
 #if defined IVLEV_EXPLICIT
-!  
+!
 !  The rate of grazing by the zooplankton is modeled using an Ivlev
 !  equation with a feeding threshold using an explicit (non-conserving)
 !  algorithm to the original formulation. Notice that term is forced to
@@ -991,7 +991,7 @@
 !       The code below is an interpretation in terms of the semi-
 !       Lagrangian algorithm. What is the correct nutrient path from
 !       the benthos to the water column?  NH4 to NO3?
-!       
+!
             IF (ibio.eq.iPON_) THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)

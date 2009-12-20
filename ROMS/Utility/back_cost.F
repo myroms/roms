@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -725,7 +725,7 @@
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           DO ir=1,Nbrec(ng)
             IF ((Lobc(iwest,isTvar(itrc),ng)).and.WESTERN_EDGE) THEN
-              ib=iwest 
+              ib=iwest
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   cff1=tl_t_obc(j,k,ib,ir,Lsum,itrc)
@@ -754,7 +754,7 @@
                 END DO
               END DO
             END IF
-            IF ((Lobc(isouth,isTvar(itrc),ng)).and.SOUTHERN_EDGE) THEN 
+            IF ((Lobc(isouth,isTvar(itrc),ng)).and.SOUTHERN_EDGE) THEN
               ib=isouth
               DO k=1,N(ng)
                 DO i=Istr,Iend
@@ -840,7 +840,7 @@
 # ifdef DISTRIBUTE
         DO i=0,NstateVar(ng)
           op_handle(i)='SUM'
-        END DO 
+        END DO
         CALL mp_reduce (ng, iNLM, NstateVar(ng)+1,                      &
      &                  FOURDVAR(ng)%BackCost(0:),  op_handle(0:))
 # endif

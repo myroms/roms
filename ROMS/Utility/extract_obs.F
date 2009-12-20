@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -54,7 +54,7 @@
 !  On Output:                                                          !
 !                                                                      !
 !     ObsScale   Observation screenning flag.                          !
-!     Aobs       Extracted model values at observation positions.      ! 
+!     Aobs       Extracted model values at observation positions.      !
 !     Zobs       Observations Z-locations (grid coordinates).          !
 !                                                                      !
 !  The interpolation weights matrix, Hmat(1:8), is as follows:         !
@@ -230,10 +230,10 @@
           END DO
           IF (wsum.gt.0.0_r8) THEN
             wsum=1.0_r8/wsum
-            DO ic=1,4 
-              Hmat(ic)=Hmat(ic)*wsum 
+            DO ic=1,4
+              Hmat(ic)=Hmat(ic)*wsum
             END DO
-          END IF          
+          END IF
 # endif
           Aobs(iobs)=Hmat(1)*A(i1,j1)+                                  &
      &               Hmat(2)*A(i2,j1)+                                  &
@@ -356,13 +356,13 @@
           w22=p2*q2
           w12=p1*q2
           IF (Zobs(iobs).gt.0.0_r8) THEN
-            k1=INT(Zobs(iobs))                 ! Positions in fractional 
+            k1=INT(Zobs(iobs))                 ! Positions in fractional
             k2=MIN(k1+1,N(ng))                 ! levels
             r2=REAL(k2-k1,r8)*(Zobs(iobs)-REAL(k1,r8))
             r1=1.0_r8-r2
           ELSE
             Ztop=Adepth(i1,j1,N(ng))
-            Zbot=Adepth(i1,j1,1    )              
+            Zbot=Adepth(i1,j1,1    )
             IF (Zobs(iobs).ge.Ztop) THEN
               r1=0.0_r8                        ! If shallower, ignore.
               r2=0.0_r8
@@ -371,7 +371,7 @@
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
               ObsScale(iobs)=0.0_r8
-            ELSE                    
+            ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=Adepth(i1,j1,k  )         ! to fractional level
                 Zbot=Adepth(i1,j1,k-1)
@@ -413,7 +413,7 @@
               DO ic=1,8
                 Hmat(ic)=Hmat(ic)*wsum
               END DO
-            END IF          
+            END IF
 #  endif
             Aobs(iobs)=Hmat(1)*A(i1,j1,k1)+                             &
      &                 Hmat(2)*A(i2,j1,k1)+                             &

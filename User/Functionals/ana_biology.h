@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !=======================================================================
@@ -192,11 +192,11 @@
             t(i,j,k,1,iZoop)=BioIni(iZoop,ng)
             t(i,j,k,1,iSDet)=BioIni(iSDet,ng)
 # ifdef IRON_LIMIT
-            t(i,j,k,1,iFphy)=BioIni(iFphy,ng) 
+            t(i,j,k,1,iFphy)=BioIni(iFphy,ng)
             t(i,j,k,1,iFdis)=BioIni(iFdis,ng)
 # endif
           END DO
-        END DO 
+        END DO
       END DO
 
 #elif defined ECOSIM
@@ -290,7 +290,7 @@
               IF (iPigs(is,3).gt.0) THEN
                  t(i,j,k,1,iPigs(is,3))=t(i,j,k,1,iPigs(is,1))*         &
      &                                  (b_ChlC(is,ng)+                 &
-     &                                   mxChlC(is,ng)*cff6) 
+     &                                   mxChlC(is,ng)*cff6)
               END IF
 !
 !  Photosynthetic Carotenoids.
@@ -306,7 +306,7 @@
               IF (iPigs(is,5).gt.0) THEN
                  t(i,j,k,1,iPigs(is,5))=t(i,j,k,1,iPigs(is,1))*         &
      &                                  (b_PPC(is,ng)+                  &
-     &                                   mxPPC(is,ng)*cff6) 
+     &                                   mxPPC(is,ng)*cff6)
               END IF
 !
 !  Low Urobilin Phycoeurythin Carotenoids.
@@ -314,7 +314,7 @@
               IF (iPigs(is,6).gt.0) THEN
                  t(i,j,k,1,iPigs(is,6))=t(i,j,k,1,iPigs(is,1))*         &
      &                                  (b_LPUb(is,ng)+                 &
-     &                                   mxLPUb(is,ng)*cff6) 
+     &                                   mxLPUb(is,ng)*cff6)
               END IF
 !
 !  High Urobilin Phycoeurythin Carotenoids.
@@ -322,7 +322,7 @@
               IF (iPigs(is,7).gt.0) THEN
                  t(i,j,k,1,iPigs(is,7))=t(i,j,k,1,iPigs(is,1))*         &
      &                                  (b_HPUb(is,ng)+                 &
-     &                                   mxHPUb(is,ng)*cff6) 
+     &                                   mxHPUb(is,ng)*cff6)
               END IF
             END DO
 !

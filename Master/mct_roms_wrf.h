@@ -1,7 +1,7 @@
 /*
 ** svn $Id$
 ***************************************************** John C. Warner ***
-** Copyright (c) 2002-2009 The ROMS/TOMS Group      Hernan G. Arango  **
+** Copyright (c) 2002-2010 The ROMS/TOMS Group      Hernan G. Arango  **
 **   Licensed under a MIT/X style license                             **
 **   See License_ROMS.txt                                             **
 ************************************************************************
@@ -33,7 +33,7 @@
 !
       integer, intent(in) :: ng, tile
 !
-!  Local variable declarations.  
+!  Local variable declarations.
 !
       integer :: Istr, Iend, Jstr, Jend
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV

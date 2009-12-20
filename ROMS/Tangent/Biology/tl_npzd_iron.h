@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -328,7 +328,7 @@
      &                             Hz_inv(i,k)+                         &
      &                             t(i,j,k,nnew,ibio)*Hz(i,j,k)*        &
      &                             tl_Hz_inv(i,k)
-            END DO           
+            END DO
 !
 !  Impose positive definite concentrations.
 !
@@ -364,7 +364,7 @@
                 tl_BioTrc(iTrcMax,itime)=tl_BioTrc(iTrcMax,itime)-      &
      &                                   tl_cff1
               END IF
-#ifdef IRON_LIMIT  
+#ifdef IRON_LIMIT
               DO itrc=NBT-1,NBT
                 ibio=idbio(itrc)
                 BioTrc1(ibio,itime)=BioTrc(ibio,itime)
@@ -455,9 +455,9 @@
 !                                         consuming, divide by (1 + cff)
 !  and
 !
-!     P(new) = P(old) + cff * N(new)  (2) when adding a source term, 
+!     P(new) = P(old) + cff * N(new)  (2) when adding a source term,
 !                                         growing, add (cff * source)
-!  
+!
 !  Notice that if you substitute (1) in (2), you will get:
 !
 !     P(new) = P(old) + cff * N(old) / (1 + cff)    (3)
@@ -613,7 +613,7 @@
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
-!  phytoplankton nitrate uptake.  
+!  phytoplankton nitrate uptake.
 #ifdef IRON_LIMIT
 !
 !  Growth reduction factors due to iron limitation:
@@ -952,7 +952,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !
@@ -1006,7 +1006,7 @@
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
-!  phytoplankton nitrate uptake.  
+!  phytoplankton nitrate uptake.
 #ifdef IRON_LIMIT
 !
 !  Growth reduction factors due to iron limitation:
@@ -1198,7 +1198,7 @@
 !>              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
 !>
                 BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
-              END DO           
+              END DO
 !
 !  Impose positive definite concentrations.
 !
@@ -1236,7 +1236,7 @@
                 ibio=idbio(itrc)
                 Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
                 Bio(i,k,ibio)=BioTrc(ibio,nstp)
-              END DO           
+              END DO
 
 #if defined IRON_LIMIT && defined IRON_RELAX
 !
@@ -1249,7 +1249,7 @@
      &                         FeNudgCoef*(FeMax(ng)-Bio(i,k,iFdis))
               END IF
 #endif
-            END DO          
+            END DO
           END DO
 !
 !  Calculate surface Photosynthetically Available Radiation (PAR).  The
@@ -1308,7 +1308,7 @@
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
-!  phytoplankton nitrate uptake.  
+!  phytoplankton nitrate uptake.
 #ifdef IRON_LIMIT
 !
 !  Growth reduction factors due to iron limitation:
@@ -1645,7 +1645,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !
@@ -1813,7 +1813,7 @@
 !>              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
 !>
                 BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
-              END DO           
+              END DO
 !
 !  Impose positive definite concentrations.
 !
@@ -1923,7 +1923,7 @@
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
 !  initial slope of the P-I curve and K_NO3 is the half saturation of
-!  phytoplankton nitrate uptake.  
+!  phytoplankton nitrate uptake.
 #ifdef IRON_LIMIT
 !
 !  Growth reduction factors due to iron limitation:
@@ -2253,7 +2253,7 @@
      &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                   END DO
                 END DO
-              END DO 
+              END DO
             END IF
           END DO
 !

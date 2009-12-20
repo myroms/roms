@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -69,7 +69,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -274,7 +274,7 @@
 !  Compute or read in background-error covariance normalization factors.
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation and needs to be computed once for an application grid.
-!  
+!
         IF (ANY(LwrtNRM(:,ng))) THEN
           CALL def_norm (ng, iNLM, 1)
           IF (exit_flag.ne.NoError) RETURN
@@ -337,7 +337,7 @@
 !  point. Use USER parameters from standard input to perturb solution
 !  in routine "ana_perturb". Then, convolve solution with the adjoint
 !  diffusion operator.
-! 
+!
         ADmodel=.TRUE.
         Lweak=.FALSE.
         Lnew(ng)=1
@@ -392,7 +392,7 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.TRUE.
 #endif
-        CALL ad_wrt_his (ng)    
+        CALL ad_wrt_his (ng)
         IF (exit_flag.ne.NoError) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.FALSE.

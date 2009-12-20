@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -73,7 +73,7 @@
 ! Switch (T/F) to activate IS4DVAR conjugate gradient preconditioning.
 ! Two types of Limited-Memory Preconditioner (LMP) are available
 ! (Tshimanga et al., 2008): spectral LMP and Ritz LMP.
- 
+
        Lprecond = T
 
 ! Switch to activate either Ritz Limited-Memory Preconditioner (T)
@@ -183,7 +183,7 @@
 
          Hgamma =  0.5      0.5      0.5      0.5       ! horizontal operator
          Vgamma =  0.05     0.05     0.05     0.05      ! vertical operator
- 
+
 ! Model error covariance: horizontal, isotropic decorrelation scales (m).
 ! This scales are only used in weak-constraint data assimilation.
 
@@ -219,7 +219,7 @@ VdecayI(isTvar) == 100.0d0   100.0d0                      ! 1:NT tracers
 
 ! Boundary conditions error covariance: horizontal, isotropic decorrelation
 ! scales (m). A value is expected for each boundary edge in the following
-! order:             
+! order:
 !                  1: west  2: south  3: east  4: north
 
 HdecayB(isFsur) == 100.0d+3 100.0d+3 100.0d+3 100.0d+3    ! free-surface
@@ -231,7 +231,7 @@ HdecayB(isTvar) == 4*100.0d+3  4*100.0d+3                 ! 1:NT tracers
 
 ! Boundary conditions error covariance: vertical, isotropic decorrelation
 ! scales (m). A value is expected for each boundary edge in the following
-! order:             
+! order:
 !                 1: west  2: south  3: east  4: north
 
 VdecayB(isUvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D U-momentum
@@ -289,7 +289,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
        STDnameM == ocean_std_m.nc
        STDnameI == ocean_std_i.nc
        STDnameB == ocean_std_b.nc
-       STDnameF == ocean_std_f.nc  
+       STDnameF == ocean_std_f.nc
 
 ! Input/output model, initial conditions, boundary conditions, and surface
 ! forcing error covariance normalization factors file name, [1:Ngrids].
@@ -405,7 +405,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! Diffusive relaxation coefficients.
 !------------------------------------------------------------------------------
 !
-! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this 
+! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this
 ! coefficients are use to relax the representer tangent lineas solution
 ! to previous outer loop linearized trajectory during the Picard
 ! iterations. The user may turn off relaxation on a particular variable
@@ -442,7 +442,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 using this approach, compute the normalization factors
 !                 with the CORRELATION CPP-option and not IS4DVAR, W4DPSAS
 !                 or W4DVAR.
-!            
+!
 !  LwrtNRM        Switch (T/F) to write out correlation normalization factors
 !                 for, [4,1:Ngrids]:
 !

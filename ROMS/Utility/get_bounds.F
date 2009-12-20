@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -80,7 +80,7 @@
      &      (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jmin=1
       END IF
 !
-!  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0) 
+!  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0)
 !  grid bounds according to tile rank.
 !
       CALL get_tile (ng, tile, Itile, Jtile,                            &
@@ -181,7 +181,7 @@
 !-----------------------------------------------------------------------
 !  Computes tile minimum and maximum fractional-grid coordinates.
 !-----------------------------------------------------------------------
-! 
+!
       CALL get_bounds (ng, tile, gtype, Nghost, Itile, Jtile,           &
      &                 Imin, Imax, Jmin, Jmax)
 !
@@ -272,7 +272,7 @@
         Ymax=Ymax+epsilon
       END IF
 
-      RETURN     
+      RETURN
 
       END SUBROUTINE get_domain
 
@@ -291,7 +291,7 @@
 !  On Output, the horizontal lower/upper bounds and grid size for      !
 !  each variable type and nested grid number  are loaded into the      !
 !  IOBOUNDS structure which is declared in module MOD_PARAM:           !
-!                                                                      ! 
+!                                                                      !
 !   IOBOUNDS(ng) % ILB_psi     I-direction lower bound (PSI)           !
 !   IOBOUNDS(ng) % IUB_psi     I-direction upper bound (PSI)           !
 !   IOBOUNDS(ng) % JLB_psi     J-direction lower bound (PSI)           !
@@ -389,7 +389,7 @@
      &                         IOBOUNDS(ng) % JLB_u   + 1
       IOBOUNDS(ng) % eta_v   = IOBOUNDS(ng) % JUB_v   -                 &
      &                         IOBOUNDS(ng) % JLB_v   + 1
-      
+
       RETURN
       END SUBROUTINE get_iobounds
 
@@ -716,12 +716,12 @@
 !      :                                                           :
 !  0   r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r
 !         1     2                                        Lm     L
-!      0     1     2                                         Lm    L 
+!      0     1     2                                         Lm    L
 !
 !                           interior       Boundary Conditions
 !                         computations     W     E     S     N
 !
-!    RH0-type variables:  [1:Lm, 1:Mm]   [0,:] [L,:] [:,0] [:,M] 
+!    RH0-type variables:  [1:Lm, 1:Mm]   [0,:] [L,:] [:,0] [:,M]
 !    PSI-type variables:  [2:Lm, 2:Mm]   [1,:] [L,:] [:,1] [:,M]
 !      U-type variables:  [2:Lm, 1:Mm]   [1,:] [L,:] [:,0] [:,M]
 !      V-type variables:  [1:Lm, 2:Mm]   [0,:] [L,:] [:,1] [:,M]
@@ -807,7 +807,7 @@
 !  Conversely, for an internal subdomain which does not include a
 !  segments of the physical boundary, all bounds with suffixes R,U,V
 !  are set to the same values of corresponding non-suffixed bounds.
-! 
+!
 !  Notice that the indices IstrT, IendT, JstrT, JendT are used during
 !  nesting and include the overlap contact points between refined,
 !  mosaic, or composed grids.  If not nesting, they are set to the

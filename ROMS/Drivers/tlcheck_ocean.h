@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -46,7 +46,7 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef AIR_OCEAN 
+#ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
 #endif
 #ifdef WAVES_OCEAN
@@ -237,7 +237,7 @@
         DO i=0,NstateVar(ng)
           FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
         END DO
-        IF (Master) THEN        
+        IF (Master) THEN
           WRITE (stdout,30) FOURDVAR(ng)%CostFunOld(0)
           DO i=1,NstateVar(ng)
             IF (FOURDVAR(ng)%CostFunOld(i).gt.0.0_r8) THEN
@@ -323,7 +323,7 @@
 !
 !  INNER LOOP: scale perturbation amplitude by selecting "p" scalar,
 !  ==========  such that:
-!                              p = 10 ** FLOAT(-inner) 
+!                              p = 10 ** FLOAT(-inner)
 !
           INNER_LOOP : DO inner=1,Ninner
 !
@@ -375,7 +375,7 @@
 !
 !  Initialize tangent linear with the steepest decent direction
 !  (adjoint state, GRAD(J)) times the perturbation amplitude "p".
-! 
+!
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) RETURN
 

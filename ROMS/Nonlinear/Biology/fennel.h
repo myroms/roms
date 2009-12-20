@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !***********************************************************************
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                               Katja Fennel   !
 !****************************************** Alexander F. Shchepetkin ***
@@ -283,7 +283,7 @@
 
       real(r8), parameter :: D0 = 282.6_r8          ! coefficients
       real(r8), parameter :: D1 = 0.125_r8          ! to calculate
-      real(r8), parameter :: D2 =-7.18_r8           ! secular trend in 
+      real(r8), parameter :: D2 =-7.18_r8           ! secular trend in
       real(r8), parameter :: D3 = 0.86_r8           ! atmospheric pCO2
       real(r8), parameter :: D4 =-0.99_r8
       real(r8), parameter :: D5 = 0.28_r8
@@ -626,12 +626,12 @@
 ! Note that the entire process has a total loss of two moles of O2 per
 ! mole of NH4. If we were to resolve NO2 profiles, this is where we
 ! would change the code to split out the differential effects of the
-! two different bacteria types. If OXYGEN is defined, nitrification is 
+! two different bacteria types. If OXYGEN is defined, nitrification is
 ! inhibited at low oxygen concentrations using a Michaelis-Menten term.
 !
 #ifdef OXYGEN
-                fac2=MAX(Bio(i,k,iOxyg),0.0_r8)     ! O2 max 
-                fac3=MAX(fac2/(3.0_r8+fac2),0.0_r8) ! MM for O2 dependence 
+                fac2=MAX(Bio(i,k,iOxyg),0.0_r8)     ! O2 max
+                fac3=MAX(fac2/(3.0_r8+fac2),0.0_r8) ! MM for O2 dependence
                 fac1=dtdays*NitriR(ng)*fac3
 #else
                 fac1=dtdays*NitriR(ng)
@@ -1358,7 +1358,7 @@
 
       real(r8) :: Tk, centiTk, invTk, logTk
       real(r8) :: scl, sqrtS
-      real(r8) :: borate, alk, dic 
+      real(r8) :: borate, alk, dic
       real(r8) :: ff, K1, K2, K12, Kb, Kw
       real(r8) :: p5, p4, p3, p2, p1, p0
       real(r8) :: df, fn, fni(3), ftest
@@ -1465,7 +1465,7 @@
 !    (2) bracket and bisection
 !=======================================================================
 !
-!  Solve for h in fifth-order polynomial. First calculate 
+!  Solve for h in fifth-order polynomial. First calculate
 !  polynomial coefficients.
 !
         K12 = K1*K2
@@ -1532,7 +1532,7 @@
           BRACK_IT: DO Ibrack=1,IbrackMax
             DO Hstep=1,3
               IF (Hstep.eq.1) X=X_hi
-              IF (Hstep.eq.2) X=X_lo 
+              IF (Hstep.eq.2) X=X_lo
               IF (Hstep.eq.3) X=X_mid
 !
 !  Evaluate f([H+]) for bracketing and mid-value cases.

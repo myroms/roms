@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -773,7 +773,7 @@
 !>   &                             tl_zeta(Iend+1,j,know)))
 !>
           adfac=-cff*cff*0.5_r8*ad_cff
-          GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac 
+          GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac
           GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
           ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)+adfac
           ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
@@ -1291,7 +1291,7 @@
           ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)+adfac
           GRID(ng)%ad_h(Istr  ,j)=GRID(ng)%ad_h(Istr  ,j)+adfac
-          ad_cff1=0.0_r8         
+          ad_cff1=0.0_r8
 #    ifdef UV_COR
 !>        tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,know)+                &
 !>   &                         tl_vbar(Istr-1,j+1,know)+                &

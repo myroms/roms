@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !=======================================================================
@@ -53,7 +53,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            lonr, latr,                           &
-#ifdef ALBEDO 
+#ifdef ALBEDO
      &                            cloud, Hair, Tair,                    &
 #endif
      &                            srflx)
@@ -168,8 +168,8 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
 !
-!  Local daylight is a function of the declination (Dangle) and hour 
-!  angle adjusted for the local meridian (Hangle-lonr(i,j)/15.0). 
+!  Local daylight is a function of the declination (Dangle) and hour
+!  angle adjusted for the local meridian (Hangle-lonr(i,j)/15.0).
 !  The 15.0 factor is because the sun moves 15 degrees every hour.
 !
           LatRad=latr(i,j)*deg2rad
@@ -191,7 +191,7 @@
             cff=(0.7859_r8+0.03477_r8*Tair(i,j))/                       &
      &          (1.0_r8+0.00412_r8*Tair(i,j))
             e_sat=10.0_r8**cff    ! saturation vapor pressure (hPa=mbar)
-            vap_p=e_sat*Hair(i,j) ! water vapor pressure (hPa=mbar) 
+            vap_p=e_sat*Hair(i,j) ! water vapor pressure (hPa=mbar)
             srflx(i,j)=Rsolar*zenith*zenith*                            &
      &                 (1.0_r8-0.6_r8*cloud(i,j)**3)/                   &
      &                 ((zenith+2.7_r8)*vap_p*1.0E-3_r8+                &
@@ -199,17 +199,17 @@
           END IF
 # elif defined DIURNAL_SRFLUX
 !
-!  SRFLX is reset on each time step in subroutine SET_DATA which 
+!  SRFLX is reset on each time step in subroutine SET_DATA which
 !  interpolates values in the forcing file to the current date.
 !  This DIURNAL_SRFLUX option is provided so that SRFLX values
 !  corresponding to a greater or equal daily average can be modulated
-!  by the local length of day to produce a diurnal cycle with the 
-!  same daily average as the original data.  This approach assumes 
-!  the net effect of clouds is incorporated into the SRFLX data. 
+!  by the local length of day to produce a diurnal cycle with the
+!  same daily average as the original data.  This approach assumes
+!  the net effect of clouds is incorporated into the SRFLX data.
 !
 !  Normalization = (1/2*pi)*INTEGRAL{ABS(a+b*COS(t)) dt}  from 0 to 2*pi
 !                = (a*ARCCOS(-a/b)+SQRT(b**2-a**2))/pi    for |a| < |b|
-!  
+!
           IF (ABS(cff1).gt.ABS(cff2)) THEN
             IF (cff1*cff2.gt.0.0_r8) THEN
               cff=cff1                                 ! All day case

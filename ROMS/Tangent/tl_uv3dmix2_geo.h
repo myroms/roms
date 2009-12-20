@@ -17,7 +17,7 @@
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !***********************************************************************
@@ -468,7 +468,7 @@
               cff3=MIN(dZde_r(i,j,k1),0.0_r8)
               cff4=MAX(dZde_r(i,j,k1),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8,-dZdx_r(i,j,k1)))*            &
-     &                tl_dZdx_r(i,j,k1) 
+     &                tl_dZdx_r(i,j,k1)
               tl_cff2=(0.5_r8+SIGN(0.5_r8, dZdx_r(i,j,k1)))*            &
      &                tl_dZdx_r(i,j,k1)
               tl_cff3=(0.5_r8+SIGN(0.5_r8,-dZde_r(i,j,k1)))*            &

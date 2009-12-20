@@ -2,7 +2,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !==================================================== John C. Warner ===
@@ -61,7 +61,7 @@
 !-----------------------------------------------------------------------
 !
 !  Initialize MPI execution environment.
-! 
+!
       CALL mpi_init (MyError)
 !
 !  Get rank of the local process in the group associated with the
@@ -77,14 +77,14 @@
       OCN_COMM_WORLD=MPI_COMM_WORLD
 !
 !  Read in coupled model parameters from standard input.
-!    
+!
       CALL read_CouplePar (iNLM)
 !
 !  Allocate several coupling variables.
 !
       CALL allocate_coupler (Nnodes)
 !
-!  Split the communicator into coupled models sub-groups based 
+!  Split the communicator into coupled models sub-groups based
 !  on color and key.
 !
       MyKey=0

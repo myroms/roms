@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -412,7 +412,7 @@
           tl_cff=-cff*cff*0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+              &
      &                            tl_zeta(i,Jstr-1,know)+               &
      &                            GRID(ng)%tl_h(i,Jstr  )+              &
-     &                            tl_zeta(i,Jstr  ,know))+              & 
+     &                            tl_zeta(i,Jstr  ,know))+              &
 #  ifdef TL_IOMS
      &           2.0_r8*cff
 #  endif

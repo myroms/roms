@@ -26,7 +26,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -811,7 +811,7 @@
         END DO
 !
 !  Use the LAPACK routine DSTEQR to compute the eigenvectors and
-!  eigenvalues of the tridiagonal matrix. If applicable, the 
+!  eigenvalues of the tridiagonal matrix. If applicable, the
 !  eigenpairs is computed by master thread only. Notice that on
 !  exit, the matrix ae_Tmatrix is destroyed.
 !
@@ -1040,11 +1040,11 @@
  50           FORMAT(5x,i3.3,2x,1p,e14.7,2x,1p,e14.7,2x,a)
             END IF
           END DO
-          WRITE (stdout,'(/)') 
+          WRITE (stdout,'(/)')
         END IF
       END IF
 
-      RETURN 
+      RETURN
       END SUBROUTINE posterior_tile
 
 !
@@ -3412,7 +3412,7 @@
         DotProd(ivec)=dot(0)
       END DO
 !
-!   Now multiply the result by the inverse tridiagonal matrix of 
+!   Now multiply the result by the inverse tridiagonal matrix of
 !   stabilized representer matrix Lanczos vector coefficients.
 !
       zbet=cg_delta(1,outLoop)
@@ -3429,7 +3429,7 @@
       END DO
 !
 !   Now form the weighted sum of the evolved and convolved Lanczos vector
-!   of the stabilized representer matrix. Use nl_var(2) as temporary 
+!   of the stabilized representer matrix. Use nl_var(2) as temporary
 !   storage.
 !
 !  Initialize nonl-linear state arrays: nl_var(Ltmp2) = fac
@@ -4338,7 +4338,7 @@
 !  Compute new Lanczos vector:
 !
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
-!     
+!
         fac1=1.0_r8
         fac2=-ae_delta(innLoop,outLoop)
 
@@ -4417,7 +4417,7 @@
 !  Substract previous orthonormal Lanczos vector:
 !
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
-!     
+!
         fac1=1.0_r8
         fac2=-ae_beta(innLoop,outLoop)
 
@@ -4550,7 +4550,7 @@
 !  Gramm-Schmidt orthonormalization, free-surface.
 !
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
-!     
+!
         fac1=1.0_r8
         fac2=-DotProd(rec)
 
@@ -4683,7 +4683,7 @@
       DO rec=innLoop,1,-1
 !
 !  Read in each previous gradient state solutions, q(0) to q(k), and
-!  compute its associated dot angaint orthogonalized q(k+1). Again, 
+!  compute its associated dot angaint orthogonalized q(k+1). Again,
 !  each gradient solution is loaded into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
@@ -5084,7 +5084,7 @@
       nConvRitz=ingood
 !
 !  Write out number of converged eigenvalues.
-!      
+!
       CALL netcdf_put_ivar (ng, model, HSSname(ng), 'nConvRitz',        &
      &                      nConvRitz, (/0/), (/0/),                    &
      &                      ncid = ncHSSid(ng))
@@ -5173,7 +5173,7 @@
 !  Compute Hessian eigenvectors:
 !
 !    ad_var(Lold) = fac1 * ad_var(Lold) + fac2 * tl_var(Lwrk)
-!     
+!
           fac1=1.0_r8
           fac2=ae_zv(rec,nvec)
 
@@ -5214,7 +5214,7 @@
 !  Write eigenvectors into Hessian NetCDF.
 !
         LwrtState2d(ng)=.TRUE.
-        CALL wrt_hessian (ng, Lold, Lold) 
+        CALL wrt_hessian (ng, Lold, Lold)
         LwrtState2d(ng)=.FALSE.
         IF (exit_flag.ne.NoERRor) RETURN
 
@@ -5226,7 +5226,7 @@
 !  storage.
 !-----------------------------------------------------------------------
 !
-!  Use nl_var(1) as temporary storage since we need to preserve 
+!  Use nl_var(1) as temporary storage since we need to preserve
 !  ad_var(Lnew).
 !
       ncname=HSSname(ng)

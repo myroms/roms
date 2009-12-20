@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -174,7 +174,7 @@
       IF (gtype.gt.0) THEN
 !
 !  Set offsets due the NetCDF dimensions. Recall that some output
-!  variables not always start at one.  
+!  variables not always start at one.
 !
         SELECT CASE (ABS(MyType))
           CASE (p2dvar, p3dvar)
@@ -225,7 +225,7 @@
         total(2)=Jlen
         start(3)=tindex
         total(3)=1
- 
+
         status=nf90_put_var(ncid, ncvarid, Aout, start, total)
         nf_fwrite2d=status
       END IF
@@ -294,7 +294,7 @@
             Aout(ic)=Aout(i)
           END IF
         END DO
-        Npts=ic 
+        Npts=ic
 !
 !  Write out data: all parallel nodes write a section of the packed
 !                  data.
@@ -445,7 +445,7 @@
 !  nodes and store it into a global scratch 1D array, packed in column-
 !  major order.
 #  ifdef MASKING
-#   ifdef WRiTE_WATER 
+#   ifdef WRiTE_WATER
 !  Remove land points and pack water points into 1D-array.
 #   else
 !  Overwrite masked points with special value.
@@ -465,7 +465,7 @@
 !  If serial or shared-memory applications and serial output, pack data
 !  into a global 1D array in column-major order.
 #  ifdef MASKING
-#   ifdef WRiTE_WATER 
+#   ifdef WRiTE_WATER
 !  Remove land points and pack water points into 1D-array.
 #   else
 !  Overwrite masked points with special value.

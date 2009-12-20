@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -171,7 +171,7 @@
 !>   &                         (UFx(i,j)-UFx(i-1,j)+                    &
 !>   &                          UFe(i,j+1)-UFe(i,j))
 !>
-              adfac=cff*(pm(i-1,j)+pm(i,j))*                            & 
+              adfac=cff*(pm(i-1,j)+pm(i,j))*                            &
      &              (pn(i-1,j)+pn(i,j))*ad_u(i,j,k,nnew)
               ad_UFx(i,j)=ad_UFx(i,j)+adfac
               ad_UFx(i-1,j)=ad_UFx(i-1,j)-adfac
@@ -225,8 +225,8 @@
 !>   &                 (tl_v(i  ,j,k,nrhs)-v(i  ,j,k,nrhs)-             &
 !>   &                  tl_v(i-1,j,k,nrhs)+v(i-1,j,k,nrhs))
 !>
-              adfac=tl_M3diff(ng)*pmon_p(i,j)*                          & 
-     &                 0.25_r8*(Hz(i,j  ,k)+Hz(i-1,j  ,k)+              & 
+              adfac=tl_M3diff(ng)*pmon_p(i,j)*                          &
+     &                 0.25_r8*(Hz(i,j  ,k)+Hz(i-1,j  ,k)+              &
      &                          Hz(i,j-1,k)+Hz(i-1,j-1,k))*ad_VFx(i,j)
               ad_v(i  ,j,k,nrhs)=ad_v(i  ,j,k,nrhs)+adfac
               ad_v(i-1,j,k,nrhs)=ad_v(i-1,j,k,nrhs)-adfac

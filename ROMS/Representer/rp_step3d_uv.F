@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -428,7 +428,7 @@
           DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
         END DO
 !
-!  The BASIC STATE "u" used below must be in transport units, but "u" 
+!  The BASIC STATE "u" used below must be in transport units, but "u"
 !  retrived is in m/s so we multiply by "Hzk".
 !
         DO k=1,N(ng)
@@ -982,7 +982,7 @@
             DC(i,0)=cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
           END DO
 !
-!  The BASIC STATE "v" used below must be in transport units, but "v" 
+!  The BASIC STATE "v" used below must be in transport units, but "v"
 !  retrived is in m/s so we multiply by "Hzk".
 !
           DO k=1,N(ng)
@@ -1139,7 +1139,7 @@
             END DO
           END DO
 !
-!  Tangent linear backward substitution.  
+!  Tangent linear backward substitution.
 !
           DO i=Istr,Iend
             tl_DC(i,N(ng))=0.0_r8
@@ -1969,7 +1969,7 @@
 !         will not affect the nonlinear code.  However, the adjoint
 !         code is wrong because the interior solution is corrected
 !         twice.
-!  
+!
 # ifndef EW_PERIODIC
           IF (Istr.eq.1) THEN
             DO k=1,N(ng)
@@ -2023,7 +2023,7 @@
 #  endif
             END DO
           END IF
-# endif 
+# endif
 # ifndef NS_PERIODIC
           IF (j.eq.1) THEN
             DO k=1,N(ng)

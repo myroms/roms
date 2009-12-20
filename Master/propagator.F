@@ -4,10 +4,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !   These drivers are part of the Generalized Stability Theory (GST)   !
 !   package to study the dynamics, sensitivity, and stability of the   !
@@ -37,7 +37,7 @@
       PUBLIC
 
       CONTAINS
-             
+
 # if defined AFT_EIGENMODES
 #  include "propagator_afte.h"
 # elif defined FT_EIGENMODES

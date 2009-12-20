@@ -6,7 +6,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group        John C. Warner   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group        John C. Warner   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -226,7 +226,7 @@
 !
 !  Compute inverse vertical grid spacing at W-points.
 !
-# ifdef EW_PERIODIC 
+# ifdef EW_PERIODIC
 #  define I_RANGE Istr-2,Iend+2
 # else
 #  define I_RANGE MAX(Istr-2,1),MIN(Iend+2,Lm(ng))

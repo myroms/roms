@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -192,7 +192,7 @@
         CALL netcdf_get_svar (ng, model, ncname, 'spherical',           &
      &                        char1,                                    &
      &                         ncid = ncGRDid(ng))
-        IF (exit_flag.eq.NoError) THEN 
+        IF (exit_flag.eq.NoError) THEN
           IF ((char1.eq.'t').or.(char1.eq.'T')) THEN
             spherical=.TRUE.
           END IF

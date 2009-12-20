@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -272,7 +272,7 @@
 !
 !  Check temperature and salinity lower values. Assign depth to the
 !  pressure.
-!  
+!
             Tt=MAX(-2.0_r8,t(i,j,k,nrhs,itemp))
 #  ifdef SALINITY
             Ts=MAX(0.0_r8,t(i,j,k,nrhs,isalt))
@@ -297,7 +297,7 @@
      &                      Tt*5.0_r8*Q05)))
             dCdT(1)=U01+Tt*(2.0_r8*U02+Tt*(3.0_r8*U03+Tt*4.0_r8*U04))
             dCdT(2)=V01+Tt*2.0_r8*V02
-#  endif  
+#  endif
 !
             den1(i,k)=C(0)+Ts*(C(1)+sqrtTs*C(2)+Ts*W00)
 
@@ -528,7 +528,7 @@
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        beta)
-#    endif    
+#    endif
 #    ifdef VAR_RHO_2D
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -567,7 +567,7 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    alpha, beta)
-#    endif    
+#    endif
 #    ifdef VAR_RHO_2D
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -864,7 +864,7 @@
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        beta)
-#    endif    
+#    endif
 #    ifdef VAR_RHO_2D
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -903,7 +903,7 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    alpha, beta)
-#    endif    
+#    endif
 #    ifdef VAR_RHO_2D
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &

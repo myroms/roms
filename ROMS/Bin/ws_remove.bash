@@ -15,7 +15,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./ws_remove.sh [options]                                           :::
+#    ws_remove.bash [options]                                           :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -97,7 +97,7 @@ do
         exit 1
       fi
     ;;
-    
+
     * )
       cmd=`basename $0`
       echo ""

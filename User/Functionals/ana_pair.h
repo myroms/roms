@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !=======================================================================
@@ -98,7 +98,7 @@
         END DO
       END DO
 #else
-      ana_pair.h: No values provided for Pair.      
+      ana_pair.h: No values provided for Pair.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

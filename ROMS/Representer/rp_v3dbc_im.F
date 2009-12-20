@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -253,7 +253,7 @@
      &                                  tl_grad(i  ,Jend+1)-            &
      &                               MIN(Cx,0.0_r8)*                    &
      &                                  tl_grad(i+1,Jend+1))/           &
-     &                              (cff+Ce) 
+     &                              (cff+Ce)
 #   ifdef NORTH_M3NUDGING
 !>            v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%v_north(i,k)-        &
@@ -374,7 +374,7 @@
      &                                  tl_grad(Istr-1,j-1)-            &
      &                               MIN(Ce,0.0_r8)*                    &
      &                                  tl_grad(Istr-1,j  ))/           &
-     &                              (cff+Cx) 
+     &                              (cff+Cx)
 #   ifdef WEST_M3NUDGING
 !>            v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%v_west(j,k)-         &
@@ -507,7 +507,7 @@
      &                                  tl_grad(Iend+1,j-1)-            &
      &                               MIN(Ce,0.0_r8)*                    &
      &                                  tl_grad(Iend+1,j  ))/           &
-     &                              (cff+Cx) 
+     &                              (cff+Cx)
 #   ifdef EAST_M3NUDGING
 !>            v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)+                    &
 !>   &                           tau*(BOUNDARY(ng)%v_east(j,k)-         &

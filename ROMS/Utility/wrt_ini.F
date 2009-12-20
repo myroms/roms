@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -222,7 +222,7 @@
 !
 !  If defined, write out vertical viscosity coefficient.
 !
-      IF (iniVid(idVvis,ng).gt.0) THEN    
+      IF (iniVid(idVvis,ng).gt.0) THEN
         scale=1.0_r8
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iNLM, ncINIid(ng), iniVid(idVvis,ng),    &
@@ -245,7 +245,7 @@
 !  If defined, write out vertical diffusion coefficient for potential
 !  temperature.
 !
-      IF (iniVid(idTdif,ng).gt.0) THEN    
+      IF (iniVid(idTdif,ng).gt.0) THEN
         scale=1.0_r8
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iNLM, ncINIid(ng), iniVid(idTdif,ng),    &
@@ -269,7 +269,7 @@
 !
 !  If defined, write out vertical diffusion coefficient for salinity.
 !
-      IF (iniVid(idSdif,ng).gt.0) THEN    
+      IF (iniVid(idSdif,ng).gt.0) THEN
         scale=1.0_r8
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iNLM, ncINIid(ng), iniVid(idSdif,ng),    &
@@ -585,7 +585,7 @@
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVsms)), OutRec
-        END IF 
+        END IF
         exit_flag=3
         ioerror=status
         RETURN
@@ -910,7 +910,7 @@
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVsms)), OutRec
-        END IF 
+        END IF
         exit_flag=3
         ioerror=status
         RETURN

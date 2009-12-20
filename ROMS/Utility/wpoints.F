@@ -18,7 +18,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -170,7 +170,7 @@
 # if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
 !
 !-----------------------------------------------------------------------
-!  Determine number of water points. 
+!  Determine number of water points.
 !-----------------------------------------------------------------------
 !
 !  Determine interior and boundary points for IO purposes.
@@ -191,7 +191,7 @@
           END IF
         END DO
       END DO
-      DO j=Jstr,MIN(JendR,Mm(ng)+1) 
+      DO j=Jstr,MIN(JendR,Mm(ng)+1)
         DO i=Istr,MIN(IendR,Lm(ng)+1)
           IF (pmask(i,j).eq.1.0_r8) THEN
             my_Nxyp=my_Nxyp+1
@@ -386,7 +386,7 @@
            j=MIN(Mstate(ng),i+block_size-1)
            WRITE (stdout,20) ic, i, j, j-i+1
  20        FORMAT (11x, i2, 3(1x,i10))
-        END DO          
+        END DO
         WRITE (stdout,'(/)')
       END IF
       Nstr(ng)=1+MyRank*block_size
@@ -449,7 +449,7 @@
 !
 !  Determine water points for the propagator state vector at RHO-points.
 !
-      ic=0      
+      ic=0
       ij=0
 #   ifdef FULL_GRID
       Imin=0

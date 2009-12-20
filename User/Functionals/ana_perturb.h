@@ -2,7 +2,7 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
 !=======================================================================
@@ -783,7 +783,7 @@
 !
           IF (Lperturb(ib).and.Lobc(ib,isFsur,ng)) THEN
             IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
-              IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN      
+              IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN
                 DO j=Jstr,Jend
                   IF (j.eq.JperTL) THEN
                     tl_zeta_obc(j,ib,ir,1)=1.0_r8
@@ -801,7 +801,7 @@
                 END DO
               END IF
             ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
-              IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN      
+              IF (TLmodel.and.(ivarTL.eq.isFsur)) THEN
                 DO i=Istr,Iend
                   IF (i.eq.IperTL) THEN
                     tl_zeta_obc(i,ib,ir,1)=1.0_r8

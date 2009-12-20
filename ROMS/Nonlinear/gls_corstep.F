@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==================================================== John C. Warner ===
@@ -1053,8 +1053,8 @@
 
 # if defined CRAIG_BANNER || defined TKE_WAVEDISS
 !
-!  If wave breaking, modify surface boundary condition for 
-!  gls diffusivity Schmidt number. 
+!  If wave breaking, modify surface boundary condition for
+!  gls diffusivity Schmidt number.
 !
             Pprod=gls_c1(ng)*shear2(i,j,k)*Akv(i,j,k)
             cff=cmu_fac2*tke(i,j,k,nnew)**(1.5_r8+tke_exp1)*            &

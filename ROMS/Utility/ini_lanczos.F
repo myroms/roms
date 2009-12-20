@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -351,13 +351,13 @@
       CALL netcdf_get_ivar (ng, iADM, TRIM(LCZname(ng)), 'ndefADJ',      &
      &                      ndefLCZ)
       IF (exit_flag.ne.NoError) RETURN
-! 
+!
       Lwrk=1
       DO inner=1,Ninner                 ! last record ignored
 !
 !  Determine Lanczos vector file to read.  The Lanczos vectors are
 !  written into the adjoint NetCDF in the IS4DVAR Lanczos algorithm.
-!  The Lanczos vector for each inner loop is accumulated in the 
+!  The Lanczos vector for each inner loop is accumulated in the
 !  unlimited dimension. The name of this file is provided here in
 !  the LCZname variable since the ADJname value will be use in the
 !  adjoint sensitivity part.
@@ -456,7 +456,7 @@
 !-----------------------------------------------------------------------
 !  Invert tri-diagonal matrix, T, associated with the Lanczos vectors.
 !
-!    T * b_i = a_i,       where i = 1,2,...k 
+!    T * b_i = a_i,       where i = 1,2,...k
 !
 !  Here T is (k,k) matrix computed from the IS4DVAR Lanczos algorithm
 !  and b_i is the solution to the tri-diagonal system.  The Lanczos
@@ -566,7 +566,7 @@
 !  Sum over all Lanczos vectors:
 !
 !    tl_var(Lini) = fac1 * tl_var(Lini) + fac2 * ad_var(Lwrk)
-!     
+!
 !  This will become the tangent linear model initial conditions at
 !  time index Lnew.
 !

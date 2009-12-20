@@ -4,10 +4,10 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This subroutine sets tangent linear lateral boundary conditions     !
 !  for the ITRC-th tracer field.  It updates the specified  "nout"     !
@@ -565,7 +565,7 @@
      &                                   (cff+Ce)
 #   ifdef NORTH_TNUDGING
 !>            t(i,Jend+1,k,nout,itrc)=t(i,Jend+1,k,nout,itrc)+          &
-!>   &                                tau*                              & 
+!>   &                                tau*                              &
 !>   &                                (BOUNDARY(ng)%t_north(i,k,itrc)-  &
 !>   &                                 t(i,Jend+1,k,nstp,itrc))
 !>

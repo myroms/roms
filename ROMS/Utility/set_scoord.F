@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
@@ -183,11 +183,11 @@
       IF (Vstretching(ng).eq.1) THEN
 !
 !  This vertical stretching function is defined as:
-!      
+!
 !      C(s) = (1 - b) * [SINH(s * a) / SINH(a)] +
 !
 !             b * [-0.5 + 0.5 * TANH(a * (s + 0.5)) / TANH(0.5 * a)]
-!           
+!
 !  where the stretching parameters (a, b) are specify at input:
 !
 !         a = theta_s               0 < theta_s  <= 8

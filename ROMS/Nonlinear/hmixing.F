@@ -6,7 +6,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2009 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2010 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -274,7 +274,7 @@
 !  The harmonic viscosity coefficient is computed as:
 !
 !     Asmag = SmagorCoef * dx * dy * DefRate
-!  
+!
 !  The biharmonic viscosity coefficient follows Griffies and Hallberg
 !  (2000) formulation:
 !
@@ -353,7 +353,7 @@
 #   ifdef MASKING
             Uvis3d_r(i,j,k)=Uvis3d_r(i,j,k)*rmask(i,j)
 #   endif
-!          
+!
             cff=0.5_r8*pn(i,j)*                                         &
      &          ABS(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
             Vvis3d_r(i,j,k)=Hviscosity(i,j)+                            &
