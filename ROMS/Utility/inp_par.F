@@ -1662,36 +1662,6 @@
             END DO
 # endif
 #endif
-#if defined SEDIMENT && defined SED_MORPH
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idBath)') THEN
-            IF (idbath.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idbath'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idBath,:))
-#endif
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idFsur)') THEN
-            IF (idFsur.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idFsur'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idFsur,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idUbar)') THEN
-            IF (idUbar.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idUbar'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbar,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idVbar)') THEN
-            IF (idVbar.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idVbar'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbar,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUvel)') THEN
             IF (idUvel.eq.0) THEN
               IF (Master) WRITE (out,280) 'idUvel'
@@ -1720,6 +1690,36 @@
               RETURN
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idOvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idUbar)') THEN
+            IF (idUbar.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idUbar'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idVbar)') THEN
+            IF (idVbar.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idVbar'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idFsur)') THEN
+            IF (idFsur.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idFsur'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idFsur,:))
+#if defined SEDIMENT && defined SED_MORPH
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idBath)') THEN
+            IF (idbath.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idbath'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idBath,:))
+#endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTvar)') THEN
             IF (MAXVAL(idTvar).eq.0) THEN
               IF (Master) WRITE (out,280) 'idTvar'
@@ -1852,6 +1852,34 @@
               RETURN
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idW2yy,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idU2rs)') THEN
+            IF (idU2rs.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idU2rs'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2rs,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idV2rs)') THEN
+            IF (idV2rs.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idV2rs'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2rs,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idU2Sd)') THEN
+            IF (idU2Sd.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idU2Sd'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2Sd,:))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idV2Sd)') THEN
+            IF (idV2Sd.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idV2Sd'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3xx)') THEN
             IF (idW3xx.eq.0) THEN
               IF (Master) WRITE (out,280) 'idW3xx'
@@ -1887,34 +1915,6 @@
               RETURN
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idW3zy,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idU2rs)') THEN
-            IF (idU2rs.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idU2rs'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2rs,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idV2rs)') THEN
-            IF (idV2rs.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idV2rs'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2rs,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idU2Sd)') THEN
-            IF (idU2Sd.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idU2Sd'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2Sd,:))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idV2Sd)') THEN
-            IF (idV2Sd.eq.0) THEN
-              IF (Master) WRITE (out,280) 'idV2Sd'
-              exit_flag=5
-              RETURN
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idU3rs)') THEN
             IF (idU3rs.eq.0) THEN
               IF (Master) WRITE (out,280) 'idU3rs'
@@ -1964,6 +1964,42 @@
               RETURN
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idWdir,:))
+#ifdef WAVES_TOP_PERIOD
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idWptp)') THEN
+            IF (idWptp.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idWptp'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWptp,:))
+#endif
+#ifdef WAVES_BOT_PERIOD
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idWpbt)') THEN
+            IF (idWpbt.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idWpbt'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWpbt,:))
+#endif
+#ifdef WAVES_UB
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idWorb)') THEN
+            IF (idWorb.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idWorb'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWorb,:))
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idWdis)') THEN
+            IF (idWdis.eq.0) THEN
+              IF (Master) WRITE (out,280) 'idWdis'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWdis,:))
+#endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
             IF (idTsur(itemp).eq.0) THEN
               IF (Master) WRITE (out,280) 'idTsur'
@@ -3143,33 +3179,47 @@
      &       'Write out 3D v-momentum stokes velocity.'
 # endif
 #endif
+#ifdef WAVES_HEIGHT
           IF (Hout(idWamp,ng)) WRITE (out,170) Hout(idWamp,ng),         &
      &       'Hout(idWamp)',                                            &
      &       'Write out wave height.'
+#endif
+#ifdef WAVES_LENGTH
           IF (Hout(idWlen,ng)) WRITE (out,170) Hout(idWlen,ng),         &
      &       'Hout(idWlen)',                                            &
-     &       'Write out wave length.'
+     &       'Write out wavelength.'
+#endif
+#ifdef WAVES_DIR
           IF (Hout(idWdir,ng)) WRITE (out,170) Hout(idWdir,ng),         &
      &       'Hout(idWdir)',                                            &
      &       'Write out wave direction.'
+#endif
+#ifdef WAVES_TOP_PERIOD
+          IF (Hout(idWptp,ng)) WRITE (out,170) Hout(idWptp,ng),         &
+     &       'Hout(idWptp)',                                            &
+     &       'Write out wave surface period.'
+#endif
+#ifdef WAVES_BOT_PERIOD
+          IF (Hout(idWpbt,ng)) WRITE (out,170) Hout(idWpbt,ng),         &
+     &       'Hout(idWpbt)',                                            &
+     &       'Write out wave bottom period.'
+#endif
+#ifdef WAVES_UB
+          IF (Hout(idWorb,ng)) WRITE (out,170) Hout(idWorb,ng),         &
+     &       'Hout(idWorb)',                                            &
+     &       'Write out wave bottom orbital velocity.'
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          IF (Hout(idWdis,ng)) WRITE (out,170) Hout(idWdis,ng),         &
+     &       'Hout(idWdis)',                                            &
+     &       'Write out wave dissipation.'
+#endif
 #if defined SOLVE3D && defined T_PASSIVE
           DO itrc=1,NPT
             IF (Hout(idTvar(inert(itrc)),ng)) WRITE (out,180)           &
      &          Hout(idTvar(inert(itrc)),ng), 'Hout(inert)',            &
      &          'Write out inert passive tracer ', itrc,                &
      &          TRIM(Vname(1,idTvar(inert(itrc))))
-          END DO
-#endif
-#if defined SEDIMENT && defined BEDLOAD
-          DO itrc=1,NST
-            IF (Hout(idUbld(itrc),ng)) WRITE (out,180)                  &
-     &          Hout(idUbld(itrc),ng), 'Hout(idUbld)',                  &
-     &          'Write out bed load u-direction ', itrc,                &
-     &          TRIM(Vname(1,idUbld(itrc)))
-            IF (Hout(idVbld(itrc),ng)) WRITE (out,180)                  &
-     &          Hout(idVbld(itrc),ng), 'Hout(idVbld)',                  &
-     &          'Write out bed load v-direction ', itrc,                &
-     &          TRIM(Vname(1,idVbld(itrc)))
           END DO
 #endif
 #if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
@@ -5344,24 +5394,24 @@
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'Lstations') THEN
             Npts=load_l(Nval, Cval, Ngrids, Lstations)
-#if defined SEDIMENT && defined SED_MORPH
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idbath)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idbath,1))
-#endif
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idFsur)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idFsur,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbar)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbar,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbar)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbar,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUvel)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVvel)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idWvel)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idWvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idOvel)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idOvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idOvel,:))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbar)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbar)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbar,:))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idFsur)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idFsur,:))
+# if defined SEDIMENT && defined SED_MORPH
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idBath)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idBath,:))
+# endif
           ELSE IF (TRIM(KeyWord).eq.'Sout(idTvar)') THEN
             Npts=load_l(Nval, Cval, MT*Ngrids, Lsta)
             DO ng=1,Ngrids
@@ -5370,71 +5420,87 @@
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUsms)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUsms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUsms,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVsms)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVsms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVsms,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbms)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbms,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbms)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbms,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbrs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbrs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbrs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbrs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbrs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbrs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbws)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbws,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbws,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbws)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbws,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbws,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbcs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbcs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbcs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbcs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbcs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbcs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbot)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbot,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbot,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbot)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbot,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbot,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbur)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbur,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbur,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbvr)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbvr,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbvr,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW2xx)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2xx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2xx,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW2xy)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2xy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2xy,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW2yy)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2yy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW2yy,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idU2rs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idU2rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idU2rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idV2rs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idV2rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idV2rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idU2Sd)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idU2Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idU2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idV2Sd)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idV2Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idV2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW3xx)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3xx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3xx,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW3xy)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3xy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3xy,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW3yy)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3yy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3yy,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW3zx)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3zx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3zx,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idW3zy)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3zy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idW3zy,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idU3rs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idU3rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idU3rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idV3rs)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idV3rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idV3rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idU3Sd)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idU3Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idU3Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idV3Sd)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idV3Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idV3Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idWamp)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idWamp,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWamp,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idWlen)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idWlen,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWlen,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idWdir)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idWdir,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWdir,:))
+# ifdef WAVES_TOP_PERIOD
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idWptp)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWptp,:))
+# endif
+# ifdef WAVES_BOT_PERIOD
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idWpbt)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWpbt,:))
+# endif
+# ifdef WAVES_UB
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idWorb)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWorb,:))
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idWdis)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idWdis,:))
+# endif
           ELSE IF (TRIM(KeyWord).eq.'Sout(idTsur)') THEN
             Npts=load_l(Nval, Cval, NAT*Ngrids, Lsta)
             DO ng=1,Ngrids
@@ -5443,42 +5509,37 @@
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'Sout(idLhea)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idLhea,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idLhea,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idShea)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idShea,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idShea,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idLrad)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idLrad,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idLrad,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idSrad)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idSrad,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idSrad,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idEmPf)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idEmPf,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idEmPf,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idevap)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idevap,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idevap,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idrain)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idrain,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idrain,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idDano)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idDano,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idDano,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVvis)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVvis,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVvis,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idTdif)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idTdif,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idTdif,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idSdif)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idSdif,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idSdif,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idHsbl)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idHsbl,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idHsbl,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idHbbl)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idHbbl,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idHbbl,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idMtke)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idMtke,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idMtke,:))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idMtls)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idMtls,1))
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idMtls,:))
 # if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
           ELSE IF (TRIM(KeyWord).eq.'Sout(idBott)') THEN
-            IF (MAXVAL(idBott).eq.0) THEN
-              IF (Master) WRITE (out,110) 'idBott'
-              exit_flag=5
-              RETURN
-            END IF
             Npts=load_l(Nval, Cval, MBOTP*Ngrids, Lbottom)
             DO ng=1,Ngrids
               DO itrc=1,MBOTP
@@ -5668,15 +5729,41 @@
      &         'Write out 3D v-momentum stokes velocity.'
 #  endif
 # endif
+# ifdef WAVES_HEIGHT
             IF (Sout(idWamp,ng)) WRITE (out,80) Sout(idWamp,ng),        &
      &         'Sout(idWamp)',                                          &
      &         'Write out wave height.'
+# endif
+# ifdef WAVES_LENGTH
             IF (Sout(idWlen,ng)) WRITE (out,80) Sout(idWlen,ng),        &
      &         'Sout(idWlen)',                                          &
      &         'Write out wave length.'
+# endif
+# ifdef WAVES_DIR
             IF (Sout(idWdir,ng)) WRITE (out,80) Sout(idWdir,ng),        &
      &         'Sout(idWdir)',                                          &
      &         'Write out wave direction.'
+# endif
+# ifdef WAVES_TOP_PERIOD
+            IF (Sout(idWptp,ng)) WRITE (out,80) Sout(idWptp,ng),        &
+     &         'Sout(idWptp)',                                          &
+     &         'Write out wave surface period.'
+# endif
+# ifdef WAVES_BOT_PERIOD
+            IF (Sout(idWpbt,ng)) WRITE (out,80) Sout(idWpbt,ng),        &
+     &         'Sout(idWpbt)',                                          &
+     &         'Write out wave bottom period.'
+# endif
+# ifdef WAVES_UB
+            IF (Sout(idWorb,ng)) WRITE (out,80) Sout(idWorb,ng),        &
+     &         'Sout(idWorb)',                                          &
+     &         'Write out wave bottom orbital velocity.'
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+            IF (Sout(idWdis,ng)) WRITE (out,80) Sout(idWdis,ng),        &
+     &         'Sout(idWdis)',                                          &
+     &         'Write out wave dissipation.'
+# endif
 # if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
             DO itrc=1,MBOTP
               IF (Sout(idBott(itrc),ng)) WRITE (out,80)                 &

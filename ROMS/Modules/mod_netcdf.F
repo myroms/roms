@@ -3592,15 +3592,11 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_1D - unable to open NetCDF file:',    &
-     &        2x,a,/,22x,'call from:',2x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a)
-  30  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
+  20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
-  40  FORMAT (/,' NETCDF_PUT_FVAR_1D - unable to close NetCDF file:',   &
-     &        2x,a,/,22x,'call from:',2x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_1d

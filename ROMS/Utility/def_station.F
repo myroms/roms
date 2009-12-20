@@ -250,6 +250,23 @@
      &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
+# if defined SEDIMENT && defined SED_MORPH
+!
+!  Define time-varying bathymetry.
+!
+        IF (Sout(idbath,ng)) THEN
+          Vinfo( 1)=Vname(1,idbath)
+          Vinfo( 2)=Vname(2,idbath)
+          Vinfo( 3)=Vname(3,idbath)
+          Vinfo(14)=Vname(4,idbath)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idbath,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -277,6 +294,7 @@
      &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
 # ifdef SOLVE3D
 !
 !  Define 3D momentum component in the XI-direction.
@@ -897,6 +915,349 @@
         END DO
 #  endif
 # endif
+# ifdef NEARSHORE_MELLOR
+!
+!  Define 2D radiation stress, Sxx-component.
+!
+        IF (Sout(idW2xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xx)
+          Vinfo( 2)=Vname(2,idW2xx)
+          Vinfo( 3)=Vname(3,idW2xx)
+          Vinfo(14)=Vname(4,idW2xx)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW2xx,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D radiation stress, Sxy-component.
+!
+        IF (Sout(idW2xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xy)
+          Vinfo( 2)=Vname(2,idW2xy)
+          Vinfo( 3)=Vname(3,idW2xy)
+          Vinfo(14)=Vname(4,idW2xy)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW2xy,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D radiation stress, Syy-component.
+!
+        IF (Sout(idW2yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2yy)
+          Vinfo( 2)=Vname(2,idW2yy)
+          Vinfo( 3)=Vname(3,idW2yy)
+          Vinfo(14)=Vname(4,idW2yy)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW2yy,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D total u-radiation stress.
+!
+        IF (Sout(idU2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2rs)
+          Vinfo( 2)=Vname(2,idU2rs)
+          Vinfo( 3)=Vname(3,idU2rs)
+          Vinfo(14)=Vname(4,idU2rs)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idU2rs,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D total v-radiation stress.
+!
+        IF (Sout(idV2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2rs)
+          Vinfo( 2)=Vname(2,idV2rs)
+          Vinfo( 3)=Vname(3,idV2rs)
+          Vinfo(14)=Vname(4,idV2rs)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idV2rs,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D u-Stokes drift velocity.
+!
+        IF (Sout(idU2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2Sd)
+          Vinfo( 2)=Vname(2,idU2Sd)
+          Vinfo( 3)=Vname(3,idU2Sd)
+          Vinfo(14)=Vname(4,idU2Sd)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idU2Sd,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 2D v-Stokes drift velocity.
+!
+        IF (Sout(idV2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2Sd)
+          Vinfo( 2)=Vname(2,idV2Sd)
+          Vinfo( 3)=Vname(3,idV2Sd)
+          Vinfo(14)=Vname(4,idV2Sd)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idV2Sd,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+#  ifdef SOLVE3D
+!
+!  Define 3D radiation stress, Sxx-component.
+!
+        IF (Sout(idW3xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xx)
+          Vinfo( 2)=Vname(2,idW3xx)
+          Vinfo( 3)=Vname(3,idW3xx)
+          Vinfo(14)=Vname(4,idW3xx)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW3xx,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D radiation stress, Sxy-component.
+!
+        IF (Sout(idW3xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xy)
+          Vinfo( 2)=Vname(2,idW3xy)
+          Vinfo( 3)=Vname(3,idW3xy)
+          Vinfo(14)=Vname(4,idW3xy)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW3xy,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D radiation stress, Syy-component.
+!
+        IF (Sout(idW3yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3yy)
+          Vinfo( 2)=Vname(2,idW3yy)
+          Vinfo( 3)=Vname(3,idW3yy)
+          Vinfo(14)=Vname(4,idW3yy)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW3yy,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D radiation stress, Spx-component.
+!
+        IF (Sout(idW3zx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zx)
+          Vinfo( 2)=Vname(2,idW3zx)
+          Vinfo( 3)=Vname(3,idW3zx)
+          Vinfo(14)=Vname(4,idW3zx)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW3zx,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D radiation stress, Spy-component.
+!
+        IF (Sout(idW3zy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zy)
+          Vinfo( 2)=Vname(2,idW3zy)
+          Vinfo( 3)=Vname(3,idW3zy)
+          Vinfo(14)=Vname(4,idW3zy)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idW3zy,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D total u-radiation stress.
+!
+        IF (Sout(idU3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3rs)
+          Vinfo( 2)=Vname(2,idU3rs)
+          Vinfo( 3)=Vname(3,idU3rs)
+          Vinfo(14)=Vname(4,idU3rs)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idU3rs,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D total v-radiation stress.
+!
+        IF (Sout(idV3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3rs)
+          Vinfo( 2)=Vname(2,idV3rs)
+          Vinfo( 3)=Vname(3,idV3rs)
+          Vinfo(14)=Vname(4,idV3rs)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idV3rs,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D u-Stokes velocity.
+!
+        IF (Sout(idU3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3Sd)
+          Vinfo( 2)=Vname(2,idU3Sd)
+          Vinfo( 3)=Vname(3,idU3Sd)
+          Vinfo(14)=Vname(4,idU3Sd)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idU3Sd,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define 3D v-Stokes velocity.
+!
+        IF (Sout(idV3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3Sd)
+          Vinfo( 2)=Vname(2,idV3Sd)
+          Vinfo( 3)=Vname(3,idV3Sd)
+          Vinfo(14)=Vname(4,idV3Sd)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idV3Sd,ng),      &
+     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#  endif
+# endif
+# ifdef WAVES_HEIGHT
+!
+!  Define wind-induced significant wave height.
+!
+        IF (Sout(idWamp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWamp)
+          Vinfo( 2)=Vname(2,idWamp)
+          Vinfo( 3)=Vname(3,idWamp)
+          Vinfo(14)=Vname(4,idWamp)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWamp,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+# ifdef WAVES_LENGTH
+!
+!  Define wind-induced mean wavelenght.
+!
+        IF (Sout(idWlen,ng)) THEN
+          Vinfo( 1)=Vname(1,idWlen)
+          Vinfo( 2)=Vname(2,idWlen)
+          Vinfo( 3)=Vname(3,idWlen)
+          Vinfo(14)=Vname(4,idWlen)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWlen,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+# ifdef WAVES_DIR
+!
+!  Define wind-induced wave direction.
+!
+        IF (Sout(idWdir,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdir)
+          Vinfo( 2)=Vname(2,idWdir)
+          Vinfo( 3)=Vname(3,idWdir)
+          Vinfo(14)=Vname(4,idWdir)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWdir,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+# ifdef WAVES_TOP_PERIOD
+!
+!  Define wind-induced surface wave period.
+!
+        IF (Sout(idWptp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWptp)
+          Vinfo( 2)=Vname(2,idWptp)
+          Vinfo( 3)=Vname(3,idWptp)
+          Vinfo(14)=Vname(4,idWptp)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWptp,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+# endif
+# ifdef WAVES_BOT_PERIOD
+!
+!  Define wind-induced bottom wave period.
+!
+        IF (Sout(idWpbt,ng)) THEN
+          Vinfo( 1)=Vname(1,idWpbt)
+          Vinfo( 2)=Vname(2,idWpbt)
+          Vinfo( 3)=Vname(3,idWpbt)
+          Vinfo(14)=Vname(4,idWpbt)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWpbt,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+# endif
+# ifdef WAVES_UB
+!
+!  Define wind-induced wave bottom orbital velocity.
+!
+        IF (Sout(idWorb,ng)) THEN
+          Vinfo( 1)=Vname(1,idWorb)
+          Vinfo( 2)=Vname(2,idWorb)
+          Vinfo( 3)=Vname(3,idWorb)
+          Vinfo(14)=Vname(4,idWorb)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWorb,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+!
+!  Define wave dissipation.
+!
+        IF (Sout(idWdis,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdis)
+          Vinfo( 2)=Vname(2,idWdis)
+          Vinfo( 3)=Vname(3,idWdis)
+          Vinfo(14)=Vname(4,idWdis)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, iNLM, ncSTAid(ng), staVid(idWdis,ng),      &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetParAccess = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
@@ -1086,6 +1447,93 @@
             got_var(idVbvr)=.TRUE.
             staVid(idVbvr,ng)=var_id(i)
 #  endif
+# endif
+# ifdef NEARSHORE_MELLOR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xx))) THEN
+            got_var(idW2xx)=.TRUE.
+            staVid(idW2xx,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xy))) THEN
+            got_var(idW2xy)=.TRUE.
+            staVid(idW2xy,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2yy))) THEN
+            got_var(idW2yy)=.TRUE.
+            staVid(idW2yy,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2rs))) THEN
+            got_var(idU2rs)=.TRUE.
+            staVid(idU2rs,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2rs))) THEN
+            got_var(idV2rs)=.TRUE.
+            staVid(idV2rs,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
+            got_var(idU2Sd)=.TRUE.
+            staVid(idU2Sd,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
+            got_var(idV2Sd)=.TRUE.
+            staVid(idV2Sd,ng)=var_id(i)
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xx))) THEN
+            got_var(idW3xx)=.TRUE.
+            staVid(idW3xx,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xy))) THEN
+            got_var(idW3xy)=.TRUE.
+            staVid(idW3xy,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
+            got_var(idW3yy)=.TRUE.
+            staVid(idW3yy,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
+            got_var(idW3zx)=.TRUE.
+            staVid(idW3zx,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
+            got_var(idW3zy)=.TRUE.
+            staVid(idW3zy,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
+            got_var(idU3rs)=.TRUE.
+            staVid(idU3rs,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3rs))) THEN
+            got_var(idV3rs)=.TRUE.
+            staVid(idV3rs,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
+            got_var(idU3Sd)=.TRUE.
+            staVid(idU3Sd,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
+            got_var(idV3Sd)=.TRUE.
+            staVid(idV3Sd,ng)=var_id(i)
+#  endif
+# endif
+# ifdef WAVES_HEIGHT
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
+            got_var(idWamp)=.TRUE.
+            staVid(idWamp,ng)=var_id(i)
+# endif
+# ifdef WAVES_LENGTH
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
+            got_var(idWlen)=.TRUE.
+            staVid(idWlen,ng)=var_id(i)
+# endif
+# ifdef WAVES_DIR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
+            got_var(idWdir)=.TRUE.
+            staVid(idWdir,ng)=var_id(i)
+# endif
+# ifdef WAVES_TOP_PERIOD
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
+            got_var(idWptp)=.TRUE.
+            staVid(idWptp,ng)=var_id(i)
+# endif
+# ifdef WAVES_BOT_PERIOD
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
+            got_var(idWpbt)=.TRUE.
+            staVid(idWpbt,ng)=var_id(i)
+# endif
+# ifdef WAVES_UB
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
+            got_var(idWorb)=.TRUE.
+            staVid(idWorb,ng)=var_id(i)
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdis))) THEN
+            got_var(idWdis)=.TRUE.
+            staVid(idWdis,ng)=var_id(i)
 # endif
           END IF
 # ifdef SOLVE3D
@@ -1379,6 +1827,162 @@
           RETURN
         END IF
 #  endif
+# endif
+# ifdef NEARSHORE_MELLOR
+        IF (.not.got_var(idW2xx).and.Sout(idW2xx,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xx)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2xy).and.Sout(idW2xy,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xy)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2yy).and.Sout(idW2yy,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2yy)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2rs).and.Sout(idU2rs,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2rs)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2rs).and.Sout(idV2rs,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2rs)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2Sd).and.Sout(idU2Sd,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2Sd)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2Sd).and.Sout(idV2Sd,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2Sd)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  ifdef SOLVE3D
+        IF (.not.got_var(idW3xx).and.Sout(idW3xx,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xx)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3xy).and.Sout(idW3xy,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xy)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3yy).and.Sout(idW3yy,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3yy)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zx).and.Sout(idW3zx,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zy).and.Sout(idW3zy,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zy)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3Sd).and.Sout(idU3rs,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3rs).and.Sout(idV3rs,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3rs)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3Sd).and.Sout(idU3Sd,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3Sd)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3Sd).and.Sout(idV3Sd,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3Sd)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+# endif
+# ifdef WAVES_HEIGHT
+        IF (.not.got_var(idWamp).and.Sout(idWamp,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_LENGTH
+        IF (.not.got_var(idWlen).and.Sout(idWlen,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_DIR
+        IF (.not.got_var(idWdir).and.Sout(idWdir,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_TOP_PERIOD
+        IF (.not.got_var(idWptp).and.Sout(idWptp,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_BOT_PERIOD
+        IF (.not.got_var(idWpbt).and.Sout(idWpbt,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_UB
+        IF (.not.got_var(idWorb).and.Sout(idWorb,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+        IF (.not.got_var(idWdis).and.Sout(idWdis,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdis)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 # endif
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)

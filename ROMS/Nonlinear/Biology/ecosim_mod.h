@@ -242,7 +242,8 @@
 !  Set biological tracer identification indices.
 !-----------------------------------------------------------------------
 !
-      integer, pointer :: idbio(:)    ! Biological tracers
+      integer, allocatable :: idbio(:)  ! Biological tracers
+
       integer :: iBacC(Nbac)        ! Bacteria, Carbon group
       integer :: iBacN(Nbac)        ! Bacteria, Nitrogen group
       integer :: iBacP(Nbac)        ! Bacteria, Phosphorous group

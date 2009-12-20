@@ -84,9 +84,9 @@
 !  Tracer identification indices.
 !-----------------------------------------------------------------------
 !
-      integer, pointer :: idsed(:)    ! Cohesive and non-cohesive
-      integer, pointer :: idmud(:)    ! Cohesive sediment
-      integer, pointer :: isand(:)    ! Non-cohesive sediment
+      integer, allocatable :: idsed(:)    ! Cohesive and non-cohesive
+      integer, allocatable :: idmud(:)    ! Cohesive sediment
+      integer, allocatable :: isand(:)    ! Non-cohesive sediment
 !
 !-----------------------------------------------------------------------
 !  Bed and bottom properties indices.

@@ -148,6 +148,25 @@
      &                        varid = staVid(idFsur,ng))
         IF (exit_flag.ne.NoError) RETURN
       END IF
+
+# if defined SEDIMENT && defined SED_MORPH
+!
+!  Define time-varying bathymetry.
+!
+      IF (Sout(idbath,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idbath, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, GRID(ng)%h,                          &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idbath)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idbath,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
@@ -634,8 +653,8 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 
-#ifdef SOLVE3D
-# ifdef BBL_MODEL
+# ifdef SOLVE3D
+#  ifdef BBL_MODEL
 !
 !  Write out current-induced, bottom U-stress.
 !
@@ -796,9 +815,9 @@
      &                        varid = staVid(idVbvr,ng))
         IF (exit_flag.ne.NoError) RETURN
       END IF
-# endif
+#  endif
 
-# ifdef SEDIMENT
+#  ifdef SEDIMENT
 !
 !  Write out sediment fraction of each size class in each bed layer.
 !
@@ -824,7 +843,8 @@
           scale=1.0_r8
           CALL extract_sta3d (ng, iNLM, Cgrid, idBmas(i), b3dvar,       &
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale, SEDBED(ng)%bed_mass(:,:,:,NOUT,i), &
+     &                        scale,                                    &
+     &                        SEDBED(ng)%bed_mass(:,:,:,NOUT,i),        &
      &                        NposB, XposB, YposB, ZposB, bsta)
           CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
      &                          TRIM(Vname(1,idBmas(i))), rsta,         &
@@ -854,9 +874,9 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
-# endif
+#  endif
 
-# if defined SEDIMENT || defined BBL_MODEL
+#  if defined SEDIMENT || defined BBL_MODEL
 !
 !  Write out exposed sediment layer properties.
 !
@@ -876,8 +896,404 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
+#  endif
 # endif
-#endif
+# ifdef NEARSHORE_MELLOR
+!
+!  Write out 2D radiation stress, Sxx-component.
+!
+      IF (Sout(idW2xx,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idW2xx, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng) % Sxx_bar,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW2xx)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW2xx,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D radiation stress, Sxy-component.
+!
+      IF (Sout(idW2xy,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idW2xy, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng) % Sxy_bar,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW2xy)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW2xy,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D radiation stress, Syy-component.
+!
+      IF (Sout(idW2yy,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idW2yy, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng) % Syy_bar,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW2yy)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW2yy,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out total 2D U-radiation stress.
+!
+      IF (Sout(idU2rs,ng)) THEN
+        scale=rho0
+        CALL extract_sta2d (ng, iNLM, Cgrid, idU2rs, u2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng) % rustr2d,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idU2rs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idU2rs,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out total 2D V-radiation stress.
+!
+      IF (Sout(idV2rs,ng)) THEN
+        scale=rho0
+        CALL extract_sta2d (ng, iNLM, Cgrid, idV2rs, v2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng) % rvstr2d,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idV2rs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idV2rs,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D U-momentum Stokes drift velocity.
+!
+      IF (Sout(idU2Sd,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idU2Sd, u2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng) % ubar_stokes,             &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idU2Sd)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idU2Sd,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 2D V-momentum Stokes drift velocity.
+!
+      IF (Sout(idV2Sd,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idV2Sd, v2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng) % ubar_stokes,             &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idV2Sd)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idV2Sd,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+
+#  ifdef SOLVE3D
+!
+!  Write out 3D radiation stress, Sxx-horizontal component.
+!
+      IF (Sout(idW3xx,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idW3xx, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % Sxx,                    &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW3xx)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW3xx,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D radiation stress, Sxy-horizontal component.
+!
+      IF (Sout(idW3xy,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idW3xy, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % Sxy,                    &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW3xy)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW3xy,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D radiation stress, Syy-horizontal component.
+!
+      IF (Sout(idW3yy,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idW3yy, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % Syy,                    &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW3yy)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW3yy,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D radiation stress, Szx-vertical component.
+!
+      IF (Sout(idW3zx,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idW3zx, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%rho,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW3zx)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW3zx,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D radiation stress, Szy-vertical component.
+!
+      IF (Sout(idW3zy,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idW3zy, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % Szx,                    &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idW3zy)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idW3zy,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D total U-radiation stress.
+!
+      IF (Sout(idU3rs,ng)) THEN
+        scale=rho0
+        CALL extract_sta3d (ng, iNLM, Cgrid, idU3rs, u3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % rustr3d,                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idU3rs)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idU3rs,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D total V-radiation stress.
+!
+      IF (Sout(idV3rs,ng)) THEN
+        scale=rho0
+        CALL extract_sta3d (ng, iNLM, Cgrid, idV3rs, v3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng) % rvstr3d,                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idV3rs)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idV3rs,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D U-momentum Stokes drift velocity.
+!
+      IF (Sout(idU3Sd,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idU3Sd, u3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng) % u_stokes,                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idU3Sd)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idU3Sd,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D V-momentum stokes velocity.
+!
+      IF (Sout(idV3Sd,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idV3Sd, v3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng) % v_stokes,                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idV3Sd)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idV3Sd,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+# endif
+# ifdef WAVES_HEIGHT
+!
+!  Write out wind-induced wave height.
+!
+      IF (Sout(idWamp,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWamp, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Hwave,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWamp)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWamp,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef WAVES_LENGTH
+!
+!  Write out wind-induced wave length.
+!
+      IF (Sout(idWlen,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWlen, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Lwave,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWlen)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWlen,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef WAVES_DIR
+!
+!  Write out wind-induced wave direction.
+!
+      IF (Sout(idWdir,ng)) THEN
+        scale=rad2deg
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWdir, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Dwave,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWdir)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWdir,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef WAVES_TOP_PERIOD
+!
+!  Write out wind-induced surface wave period.
+!
+      IF (Sout(idWptp,ng)) THEN
+        scale=rad2deg
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWptp, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Pwave_top,              &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWptp)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWptp,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef WAVES_BOT_PERIOD
+!
+!  Write out wind-induced bottom wave period.
+!
+      IF (Sout(idWpbt,ng)) THEN
+        scale=rad2deg
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWpbt, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Pwave_bot,              &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWpbt)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWpbt,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef WAVES_UB
+!
+!  Write out wind-induced wave bottom orbital velocity.
+!
+      IF (Sout(idWorb,ng)) THEN
+        scale=rad2deg
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWorb, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % Ub_swan,                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWorb)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWorb,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+!
+!  Write out wave dissipation.
+!
+      IF (Sout(idWdis,ng)) THEN
+        scale=rad2deg
+        CALL extract_sta2d (ng, iNLM, Cgrid, idWdis, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng) % wave_dissip,            &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWdis)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWdis,ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize stations NetCDF file to disk.

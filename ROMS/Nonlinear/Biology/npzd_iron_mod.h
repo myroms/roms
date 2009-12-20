@@ -58,14 +58,14 @@
 !
 !  Set biological tracer identification indices.
 !
-      integer, pointer :: idbio(:)    ! Biological tracers
-      integer :: iNO3_                ! Nitrate concentration
-      integer :: iPhyt                ! Phytoplankton concentration
-      integer :: iZoop                ! Zooplankton concentration
-      integer :: iSDet                ! Small detritus concentration
+      integer, allocatable :: idbio(:)  ! Biological tracers
+      integer :: iNO3_                  ! Nitrate concentration
+      integer :: iPhyt                  ! Phytoplankton concentration
+      integer :: iZoop                  ! Zooplankton concentration
+      integer :: iSDet                  ! Small detritus concentration
 #ifdef IRON_LIMIT
-      integer :: iFphy                ! Phytoplankton-associated iron
-      integer :: iFdis                ! Available disolved iron
+      integer :: iFphy                  ! Phytoplankton-associated iron
+      integer :: iFdis                  ! Available disolved iron
 #endif
 !
 !  Biological parameters.

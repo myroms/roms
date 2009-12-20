@@ -2036,7 +2036,7 @@
 #endif
 #ifdef WAVES_HEIGHT
 !
-!  Define Hwave.
+!  Define wind-induced significat wave height.
 !
         IF (Hout(idWamp,ng)) THEN
           Vinfo( 1)=Vname(1,idWamp)
@@ -2056,7 +2056,7 @@
 #endif
 #ifdef WAVES_LENGTH
 !
-!  Define Lwave.
+!  Define wind-induced mean wavelenght.
 !
         IF (Hout(idWlen,ng)) THEN
           Vinfo( 1)=Vname(1,idWlen)
@@ -2076,7 +2076,7 @@
 #endif
 #ifdef WAVES_DIR
 !
-!  Define Dwave.
+!  Define wind-induced wave direction.
 !
         IF (Hout(idWdir,ng)) THEN
           Vinfo( 1)=Vname(1,idWdir)
@@ -2090,6 +2090,88 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idWdir,ng),r8)
           status=def_var(ng, iNLM, ncHISid(ng), hisVid(idWdir,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
+#ifdef WAVES_TOP_PERIOD
+!
+!  Define wind-induced surface wave period.
+!
+        IF (Hout(idWptp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWptp)
+          Vinfo( 2)=Vname(2,idWptp)
+          Vinfo( 3)=Vname(3,idWptp)
+          Vinfo(14)=Vname(4,idWptp)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWptp,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idWptp,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+#endif
+#ifdef WAVES_BOT_PERIOD
+!
+!  Define wind-induced bottom wave period.
+!
+        IF (Hout(idWpbt,ng)) THEN
+          Vinfo( 1)=Vname(1,idWpbt)
+          Vinfo( 2)=Vname(2,idWpbt)
+          Vinfo( 3)=Vname(3,idWpbt)
+          Vinfo(14)=Vname(4,idWpbt)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWpbt,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idWpbt,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+#endif
+#ifdef WAVES_UB
+!
+!  Define wind-induced bottom orbital velocity.
+!
+        IF (Hout(idWorb,ng)) THEN
+          Vinfo( 1)=Vname(1,idWorb)
+          Vinfo( 2)=Vname(2,idWorb)
+          Vinfo( 3)=Vname(3,idWorb)
+          Vinfo(14)=Vname(4,idWorb)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWorb,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idWorb,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+!
+!  Define wave dissipation.
+!
+        IF (Hout(idWdis,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdis)
+          Vinfo( 2)=Vname(2,idWdis)
+          Vinfo( 3)=Vname(3,idWdis)
+          Vinfo(14)=Vname(4,idWdis)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWdis,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idWdis,ng),      &
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
@@ -2430,6 +2512,26 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
             got_var(idWdir)=.TRUE.
             hisVid(idWdir,ng)=var_id(i)
+#endif
+#ifdef WAVES_TOP_PERIOD
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
+            got_var(idWptp)=.TRUE.
+            hisVid(idWptp,ng)=var_id(i)
+#endif
+#ifdef WAVES_BOT_PERIOD
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
+            got_var(idWpbt)=.TRUE.
+            hisVid(idWpbt,ng)=var_id(i)
+#endif
+#ifdef WAVES_UB
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
+            got_var(idWorb)=.TRUE.
+            hisVid(idWorb,ng)=var_id(i)
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdis))) THEN
+            got_var(idWdis)=.TRUE.
+            hisVid(idWdis,ng)=var_id(i)
 #endif
           END IF
 #ifdef SOLVE3D
@@ -2928,6 +3030,38 @@
 #ifdef WAVES_DIR
         IF (.not.got_var(idWdir).and.Hout(idWdir,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef WAVES_TOP_PERIOD
+        IF (.not.got_var(idWptp).and.Hout(idWptp,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef WAVES_BOT_PERIOD
+        IF (.not.got_var(idWpbt).and.Hout(idWpbt,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef WAVES_UB
+        IF (.not.got_var(idWorb).and.Hout(idWorb,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+        IF (.not.got_var(idWdis).and.Hout(idWdis,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdis)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN

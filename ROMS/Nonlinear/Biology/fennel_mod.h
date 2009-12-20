@@ -66,22 +66,22 @@
 !
 !  Set biological tracer identification indices.
 !
-      integer, pointer :: idbio(:)    ! Biological tracers
-      integer :: iNO3_                ! Nitrate concentration
-      integer :: iNH4_                ! Ammonium concentration
-      integer :: iChlo                ! Chlorophyll concentration
-      integer :: iPhyt                ! Phytoplankton concentration
-      integer :: iZoop                ! Zooplankton concentration
-      integer :: iLDeN                ! Large detritus N-concentration
-      integer :: iSDeN                ! Small detritus N-concentration
+      integer, allocatable :: idbio(:)  ! Biological tracers
+      integer :: iNO3_                  ! Nitrate concentration
+      integer :: iNH4_                  ! Ammonium concentration
+      integer :: iChlo                  ! Chlorophyll concentration
+      integer :: iPhyt                  ! Phytoplankton concentration
+      integer :: iZoop                  ! Zooplankton concentration
+      integer :: iLDeN                  ! Large detritus N-concentration
+      integer :: iSDeN                  ! Small detritus N-concentration
 #ifdef CARBON
-      integer :: iLDeC                ! Large detritus C-concentration
-      integer :: iSDeC                ! Small detritus C-concentration
-      integer :: iTIC_                ! Total inorganic carbon
-      integer :: iTAlk                ! Total alkalinity
+      integer :: iLDeC                  ! Large detritus C-concentration
+      integer :: iSDeC                  ! Small detritus C-concentration
+      integer :: iTIC_                  ! Total inorganic carbon
+      integer :: iTAlk                  ! Total alkalinity
 #endif
 #ifdef OXYGEN
-      integer :: iOxyg                ! Dissolved oxygen concentration
+      integer :: iOxyg                  ! Dissolved oxygen concentration
 #endif
 
 #if defined DIAGNOSTICS && defined DIAGNOSTICS_BIO

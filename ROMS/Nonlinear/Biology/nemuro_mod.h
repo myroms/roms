@@ -173,18 +173,18 @@
 !
 !  Set biological tracer identification indices.
 !
-      integer, pointer :: idbio(:)    ! Biological tracers
-      integer :: iLphy                ! Large Phytoplankton biomass
-      integer :: iSphy                ! Small Phytoplankton biomass
-      integer :: iLzoo                ! Large Zooplankton biomass
-      integer :: iSzoo                ! Small Zooplankton biomass
-      integer :: iPzoo                ! Predator Zooplankton biomass
-      integer :: iNO3_                ! Nitrate concentration
-      integer :: iNH4_                ! Ammonium concentration
-      integer :: iPON_                ! Particulate Organic Nitrogen
-      integer :: iDON_                ! Dissolved Organic Nitrogen
-      integer :: iSiOH                ! Silicate concentration
-      integer :: iopal                ! Particulate organic silica
+      integer, allocatable :: idbio(:)  ! Biological tracers
+      integer :: iLphy                  ! Large Phytoplankton biomass
+      integer :: iSphy                  ! Small Phytoplankton biomass
+      integer :: iLzoo                  ! Large Zooplankton biomass
+      integer :: iSzoo                  ! Small Zooplankton biomass
+      integer :: iPzoo                  ! Predator Zooplankton biomass
+      integer :: iNO3_                  ! Nitrate concentration
+      integer :: iNH4_                  ! Ammonium concentration
+      integer :: iPON_                  ! Particulate Organic Nitrogen
+      integer :: iDON_                  ! Dissolved Organic Nitrogen
+      integer :: iSiOH                  ! Silicate concentration
+      integer :: iopal                  ! Particulate organic silica
 !
 !  Biological parameters.
 !
