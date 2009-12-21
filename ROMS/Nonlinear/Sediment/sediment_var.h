@@ -91,6 +91,7 @@
                 idBott(idprp)=varid
 #endif
               CASE ('idTvar(idmud(i))')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -111,8 +112,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTvar(isand(i))')
+                load=.FALSE.
                 IF (NNS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NNS
@@ -133,8 +136,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idfrac')
+                load=.FALSE.
                 IF ((NCS.gt.0).and.                                     &
      &              (Vinfo(1)(1:8).eq.'mudfrac_')) THEN
                   varid=varid-1
@@ -156,6 +161,7 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
                 IF ((NNS.gt.0).and.                                     &
      &              (Vinfo(1)(1:9).eq.'sandfrac_')) THEN
@@ -178,8 +184,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idBmas')
+                load=.FALSE.
                 IF ((NCS.gt.0).and.                                     &
      &              (Vinfo(1)(1:8).eq.'mudmass_')) THEN
                   varid=varid-1
@@ -201,6 +209,7 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
                 IF ((NNS.gt.0).and.                                     &
      &              (Vinfo(1)(1:9).eq.'sandmass_')) THEN
@@ -223,9 +232,11 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
 #ifdef BEDLOAD
               CASE ('idUbld')
+                load=.FALSE.
                 IF ((NCS.gt.0).and.                                     &
      &              (Vinfo(1)(1:13).eq.'bedload_Umud_')) THEN
                   varid=varid-1
@@ -247,6 +258,7 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
                 IF ((NNS.gt.0).and.                                     &
      &              (Vinfo(1)(1:14).eq.'bedload_Usand_')) THEN
@@ -269,8 +281,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idVbld')
+                load=.FALSE.
                 IF ((NCS.gt.0).and.                                     &
      &              (Vinfo(1)(1:13).eq.'bedload_Vmud_')) THEN
                   varid=varid-1
@@ -292,6 +306,7 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
                 IF ((NNS.gt.0).and.                                     &
      &              (Vinfo(1)(1:14).eq.'bedload_Vsand_')) THEN
@@ -314,6 +329,7 @@
                     WRITE (Vname(5,varid),'(a)')                      &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
 #endif
 
@@ -322,6 +338,7 @@
 */
 
               CASE ('idTbry(iwest,idmud(i))')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -342,8 +359,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(ieast,idmud(i))')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -364,8 +383,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(isouth,idmud(i))')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -385,9 +406,11 @@
      &                    TRIM(Vname(1,varid)), ', scalar, series'
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
-                    END DO
-                  END IF
+                  END DO
+                  varid=varid+1
+                END IF
               CASE ('idTbry(inorth,idmud(i))')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -408,8 +431,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(iwest,isand(i))')
+                load=.FALSE.
                 IF (NNS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NNS
@@ -430,8 +455,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(ieast,isand(i))')
+                load=.FALSE.
                 IF (NNS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NNS
@@ -452,8 +479,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(isouth,isand(i))')
+                load=.FALSE.
                 IF (NNS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NNS
@@ -474,8 +503,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idTbry(inorth,isand(i))')
+                load=.FALSE.
                 IF (NNS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NNS
@@ -496,6 +527,7 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
 
 
@@ -506,6 +538,7 @@
 */
 
               CASE ('idRtrc(idmud)')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -526,8 +559,10 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
               CASE ('idRtrc(isand)')
+                load=.FALSE.
                 IF (NCS.gt.0) THEN
                   varid=varid-1
                   DO i=1,NCS
@@ -548,5 +583,6 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                  varid=varid+1
                 END IF
 #endif

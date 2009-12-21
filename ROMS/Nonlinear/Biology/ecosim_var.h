@@ -33,6 +33,7 @@
               CASE ('idTvar(iDIC_)')
                 idTvar(iDIC_)=varid
               CASE ('idTvar(iBacC)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nbac
                   varid=varid+1
@@ -51,7 +52,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iBacF)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nbac
                   varid=varid+1
@@ -70,7 +73,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iBacN)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nbac
                   varid=varid+1
@@ -89,7 +94,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iBacP)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nbac
                   varid=varid+1
@@ -108,7 +115,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iCDMC)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Ndom
                   varid=varid+1
@@ -127,7 +136,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iDOMC)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Ndom
                   varid=varid+1
@@ -146,7 +157,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iDOMN)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Ndom
                   varid=varid+1
@@ -165,7 +178,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iDOMP)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Ndom
                   varid=varid+1
@@ -184,7 +199,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iFecC)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nfec
                   varid=varid+1
@@ -203,7 +220,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iFecF)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nfec
                   varid=varid+1
@@ -222,7 +241,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iFecN)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nfec
                   varid=varid+1
@@ -241,7 +262,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iFecP)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nfec
                   varid=varid+1
@@ -260,7 +283,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iFecS)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nfec
                   varid=varid+1
@@ -279,7 +304,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPhyC)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nphy
                   varid=varid+1
@@ -298,7 +325,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPhyF)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nphy
                   varid=varid+1
@@ -317,7 +346,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPhyN)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nphy
                   varid=varid+1
@@ -336,7 +367,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPhyP)')
+                load=.FALSE.
                 varid=varid-1
                 DO i=1,Nphy
                   varid=varid+1
@@ -355,7 +388,9 @@
                   WRITE (Vname(5,varid),'(a)')                          &
      &                  TRIM(ADJUSTL(Vinfo(5)))
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPhyS)')
+                load=.FALSE.
                 j=0
                 DO i=1,Nphy
                   IF (PHY(i).le.2) j=j+1
@@ -380,7 +415,9 @@
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END IF
                 END DO
+                varid=varid+1
               CASE ('idTvar(iPigs)')
+                load=.FALSE.
                 varid=varid-1
                 DO j=1,Npig
                   DO i=1,Nphy
@@ -403,3 +440,4 @@
                     END IF
                   END DO
                 END DO
+                varid=varid+1
