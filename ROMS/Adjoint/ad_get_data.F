@@ -24,9 +24,9 @@
 # if defined FORWARD_READ && defined SOLVE3D
       USE mod_coupling
 # endif
-# if defined AD_SENSITIVITY    || defined CLIMATOLOGY      || \
-     defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
-     defined SENSITIVITY_4DVAR || defined SO_SEMI
+# if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
+     defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+     defined SENSITIVITY_4DVAR   || defined SO_SEMI
       USE mod_clima
 # endif
       USE mod_forces
@@ -1357,8 +1357,8 @@
 #  endif
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
 !
 !-----------------------------------------------------------------------

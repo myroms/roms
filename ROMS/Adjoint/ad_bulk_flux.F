@@ -641,8 +641,8 @@
           adfac=cff*ad_sustr(i,j)
           ad_Taux(i-1,j)=ad_Taux(i-1,j)+adfac
           ad_Taux(i  ,j)=ad_Taux(i  ,j)+adfac
-# if !(defined AD_SENSITIVITY  || defined ADJUST_WSTRESS   || \
-       defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+# if !(defined AD_SENSITIVITY      || defined ADJUST_WSTRESS   || \
+       defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
        defined SO_SEMI)
           ad_sustr(i,j)=0.0_r8
 # endif
@@ -658,8 +658,8 @@
           adfac=cff*ad_svstr(i,j)
           ad_Tauy(i,j-1)=ad_Tauy(i,j-1)+adfac
           ad_Tauy(i,j  )=ad_Tauy(i,j  )+adfac
-# if !(defined AD_SENSITIVITY  || defined ADJUST_WSTRESS   || \
-       defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+# if !(defined AD_SENSITIVITY      || defined ADJUST_WSTRESS   || \
+       defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
        defined SO_SEMI)
           ad_svstr(i,j)=0.0_r8
 # endif
@@ -693,8 +693,8 @@
 # ifdef EMINUSP
 !>        tl_stflx(i,j,isalt)=cff*tl_evap(i,j)
           ad_evap(i,j)=ad_evap(i,j)+cff*ad_stflx(i,j,isalt)
-#  if !(defined AD_SENSITIVITY  || defined ADJUST_STFLUX    || \
-        defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+#  if !(defined AD_SENSITIVITY      || defined ADJUST_STFLUX    || \
+        defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
         defined SO_SEMI)
           ad_stflx(i,j,isalt)=0.0_r8
 #  endif
@@ -703,7 +703,7 @@
           adfac=ad_evap(i,j)/Hlv(i,j)
           ad_LHeat(i,j)=ad_LHeat(i,j)+adfac
           ad_Hlv(i,j)=ad_Hlv(i,j)-adfac*evap(i,j)
-#  if !(defined AD_SENSITIVITY   || defind OBS_SENSITIVITY || \
+#  if !(defined AD_SENSITIVITY   || defind IS4DVAR_SENSITIVITY || \
         defined OPT_OBSERVATIONS || defined SO_SEMI)
           ad_evap(i,j)=0.0_r8
 #  endif
@@ -713,19 +713,19 @@
           ad_lrflx(i,j)=ad_lrflx(i,j)+ad_stflx(i,j,itemp)
           ad_lhflx(i,j)=ad_lhflx(i,j)+ad_stflx(i,j,itemp)
           ad_shflx(i,j)=ad_shflx(i,j)+ad_stflx(i,j,itemp)
-# if !(defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+# if !(defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
        defined OPT_OBSERVATIONS || defined SO_SEMI)
           ad_stflx(i,j,itemp)=0.0_r8
 # endif
 !>        tl_shflx(i,j)=-tl_SHeat(i,j)*Hscale
           ad_SHeat(i,j)=ad_SHeat(i,j)-ad_shflx(i,j)*Hscale
-# if !(defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+# if !(defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
        defined OPT_OBSERVATIONS || defined SO_SEMI)
           ad_shflx(i,j)=0.0_r8
 # endif
 !>        tl_lhflx(i,j)=-tl_LHeat(i,j)*Hscale
           ad_LHeat(i,j)=ad_LHeat(i,j)-ad_lhflx(i,j)*Hscale
-# if !(defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+# if !(defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
        defined OPT_OBSERVATIONS || defined SO_SEMI)
           ad_lhflx(i,j)=0.0_r8
 # endif

@@ -913,10 +913,11 @@
 !  Integrate hydrostatic equation from bottom to surface.
 !
         IF (LNM_flag.eq.0) THEN
+          cff1=1.0_r8/rho0
           DO k=1,N(ng)
             DO j=Jstr,Jend
               DO i=Istr,Iend
-                tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+                tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 #  ifdef MASKING
                 tl_cff=tl_cff*rmask(i,j)
 #  endif
@@ -933,13 +934,14 @@
 !  used for clarity.
 !
         ELSE IF (LNM_flag.eq.1) THEN
+          cff1=1.0_r8/rho0
           DO j=Jstr,Jend
             DO i=Istr,Iend
               DO k=1,N(ng)
                 zwtop=ABS(z_w(i,j,k  ))
                 zwbot=ABS(z_w(i,j,k-1))
                 IF (zwbot.lt.LNM_depth(ng)) THEN
-                  tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+                  tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 #  ifdef MASKING
                   tl_cff=tl_cff*rmask(i,j)
 #  endif
@@ -949,22 +951,22 @@
                   zphi=ABS(z_r(i,j,k))
                   IF (zphi.ge.LNM_depth(ng)) THEN    ! above cell center
                     IF (k.eq.N(ng)) THEN
-                      tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+                      tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
                     ELSE
                       zphi1=ABS(z_r(i,j,k+1))
                       fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
-                      tl_cff=-gorho0*                                   &
+                      tl_cff=-cff1*                                     &
      &                       (tl_rho(i,j,k+1)+                          &
      &                        fac*(tl_rho(i,j,k)-tl_rho(i,j,k+1)))*     &
      &                       (LNM_depth(ng)-zwtop)
                     END IF
                   ELSE                               ! below cell center
                     IF (k.eq.1) THEN
-                      tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+                      tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
                     ELSE
                       zphi1=ABS(z_r(i,j,k-1))
                       fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
-                      tl_cff=-gorho0*                                   &
+                      tl_cff=-cff1*                                     &
      &                       (tl_rho(i,j,k)+                            &
      &                        fac*(tl_rho(i,j,k-1)-tl_rho(i,j,k)))*     &
      &                       (zwbot-LNM_depth(ng))

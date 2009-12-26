@@ -44,8 +44,8 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
       USE adsen_initial_mod, ONLY : adsen_initial
 # endif
@@ -159,8 +159,8 @@
 !$OMP END PARALLEL DO
 # endif
 
-# if defined FOUR_DVAR && \
-    !(defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS)
+# if defined FOUR_DVAR            && \
+    !(defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS)
 !
 !-----------------------------------------------------------------------
 !  If variational data assimilation, reset several IO switches and
@@ -235,8 +235,8 @@
 #  ifdef MASKING
             CALL ana_mask (ng, TILE, iADM)
 #  endif
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI         || \
+#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+      defined OPT_OBSERVATIONS || defined SO_SEMI             || \
       defined SENSITIVITY_4DVAR
             CALL ana_scope (ng, TILE, iADM)
 #  endif
@@ -339,7 +339,7 @@
 !  executed for each ensemble/perturbation/iteration pass.
 !=======================================================================
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !-----------------------------------------------------------------------
@@ -364,7 +364,7 @@
       END DO
 !$OMF END PARALLEL DO
 
-# elif defined FOUR_DVAR && !defined OBS_SENSITIVITY
+# elif defined FOUR_DVAR && !defined IS4DVAR_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Clear all adjoint variables.  In variational data assimilation the
@@ -577,8 +577,8 @@
 #  endif
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
 !
 !-----------------------------------------------------------------------

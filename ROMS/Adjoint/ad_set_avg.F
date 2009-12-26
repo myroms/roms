@@ -781,8 +781,8 @@
       IF ((iic(ng).lt.ntsAVG(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
         fac=1.0_r8
 # else

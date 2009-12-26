@@ -41,7 +41,7 @@
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
       USE ini_hmixcoef_mod, ONLY : ini_hmixcoef
-# ifdef OBS_SENSITIVITY
+# ifdef IS4DVAR_SENSITIVITY
       USE ini_lanczos_mod, ONLY : ini_lanczos
 # endif
       USE metrics_mod, ONLY : metrics
@@ -181,7 +181,7 @@
 !  variables.
 !-----------------------------------------------------------------------
 
-#  ifndef OBS_SENSITIVITY
+#  ifndef IS4DVAR_SENSITIVITY
 #   ifdef IS4DVAR
 !
 !  Set switch to create (TRUE) tangent linear initial conditions and
@@ -377,7 +377,7 @@
 !  executed for each ensemble/perturbation/iteration pass.
 !=======================================================================
 
-# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
+# if defined FOUR_DVAR && !defined IS4DVAR_SENSITIVITY
 #  if defined OPT_OBSERVATIONS || defined TLM_CHECK || \
       defined WEAK_CONSTRAINT
 !
@@ -540,7 +540,7 @@
       END IF
 # endif
 
-# ifdef OBS_SENSITIVITY
+# ifdef IS4DVAR_SENSITIVITY
 !
 !  Initialize with the weighted sum of all Lanczos vectors computed
 !  from the first outer loop of the IS4DVAR Lanczos algorithm.

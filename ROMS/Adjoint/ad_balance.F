@@ -528,6 +528,7 @@
 !  Integrate hydrostatic equation from bottom to surface.
 !
         IF (LNM_flag.eq.0) THEN
+          cff1=1.0_r8/rho0
           DO k=1,N(ng)
             DO j=Jstr,Jend
               DO i=Istr,Iend
@@ -539,10 +540,10 @@
 !>
                 ad_cff=ad_cff*rmask(i,j)
 #  endif
-!>              tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+!>              tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 !>
                 ad_rho(i,j,k)=ad_rho(i,j,k)-                            &
-     &                        gorho0*Hz(i,j,k)*ad_cff
+     &                        cff1*Hz(i,j,k)*ad_cff
                 ad_cff=0.0_r8
               END DO
             END DO
@@ -556,6 +557,7 @@
 !  used for clarity.
 !
         ELSE IF (LNM_flag.eq.1) THEN
+          cff1=1.0_r8/rho0
           DO j=Jstr,Jend
             DO i=Istr,Iend
               DO k=1,N(ng)
@@ -570,10 +572,10 @@
 !>
                   ad_cff=ad_cff*rmask(i,j)
 #  endif
-!>                tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+!>                tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 !>
                   ad_rho(i,j,k)=ad_rho(i,j,k)-                          &
-     &                          gorho0*Hz(i,j,k)*ad_cff
+     &                          cff1*Hz(i,j,k)*ad_cff
                   ad_cff=0.0_r8
                 ELSE IF ((Zwbot.gt.LNM_depth(ng)).and.                  &
      &                   (LNM_depth(ng).ge.Zwtop)) THEN    ! interpolate
@@ -588,20 +590,20 @@
                   zphi=ABS(z_r(i,j,k))
                   IF (zphi.ge.LNM_depth(ng)) THEN    ! above cell center
                     IF (k.eq.N(ng)) THEN
-!>                    tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+!>                    tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 !>
                       ad_rho(i,j,k)=ad_rho(i,j,k)-                      &
-     &                              gorho0*Hz(i,j,k)*ad_cff
+     &                              cff1*Hz(i,j,k)*ad_cff
                       ad_cff=0.0_r8
                     ELSE
                       zphi1=ABS(z_r(i,j,k+1))
                       fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
-!>                    tl_cff=-gorho0*                                   &
+!>                    tl_cff=-cff1*                                     &
 !>   &                       (tl_rho(i,j,k+1)+                          &
 !>   &                        fac*(tl_rho(i,j,k)-tl_rho(i,j,k+1)))*     &
 !>   &                       (LNM_depth(ng)-zwtop)
 !>
-                      adfac=gorho0*(LNM_depth(ng)-zwtop)*ad_cff
+                      adfac=cff1*(LNM_depth(ng)-zwtop)*ad_cff
                       adfac1=fac*adfac
                       ad_rho(i,j,k  )=ad_rho(i,j,k  )-adfac1
                       ad_rho(i,j,k+1)=ad_rho(i,j,k+1)-adfac+adfac1
@@ -609,20 +611,20 @@
                     END IF
                   ELSE                               ! below cell center
                     IF (k.eq.1) THEN
-!>                    tl_cff=-gorho0*tl_rho(i,j,k)*Hz(i,j,k)
+!>                    tl_cff=-cff1*tl_rho(i,j,k)*Hz(i,j,k)
 !>
                       ad_rho(i,j,k)=ad_rho(i,j,k)-                      &
-     &                              gorho0*Hz(i,j,k)*ad_cff
+     &                              cff1*Hz(i,j,k)*ad_cff
                       ad_cff=0.0_r8
                     ELSE
                       zphi1=ABS(z_r(i,j,k-1))
                       fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
-!>                    tl_cff=-gorho0*                                   &
+!>                    tl_cff=-cff1*                                     &
 !>   &                       (tl_rho(i,j,k)+                            &
 !>   &                        fac*(tl_rho(i,j,k-1)-tl_rho(i,j,k)))*     &
 !>   &                       (zwbot-LNM_depth(ng))
 !>
-                      adfac=gorho0*(zwbot-LNM_depth(ng))*ad_cff
+                      adfac=cff1*(zwbot-LNM_depth(ng))*ad_cff
                       adfac1=fac*adfac
                       ad_rho(i,j,k-1)=ad_rho(i,j,k-1)-adfac1
                       ad_rho(i,j,k  )=ad_rho(i,j,k  )-adfac+adfac1

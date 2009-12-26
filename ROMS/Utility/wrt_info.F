@@ -777,7 +777,7 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
       CALL netcdf_put_lvar (ng, model, ncname, 'LhessianEV',            &
      &                      LhessianEV, (/0/), (/0/),                   &
      &                      ncid = ncid)
@@ -814,7 +814,7 @@
      &                        NpostI, (/0/), (/0/),                     &
      &                        ncid = ncid)
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
       CALL netcdf_put_fvar (ng, model, ncname, 'GradErr',               &
      &                      GradErr, (/0/), (/0/),                      &
      &                      ncid = ncid)
@@ -983,8 +983,8 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
@@ -1938,8 +1938,8 @@
         END IF
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.

@@ -30,7 +30,7 @@
       USE mod_storage
 # endif
 !
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
       USE adsen_force_mod, ONLY : adsen_force
 # endif
@@ -413,7 +413,7 @@
         END DO LOOP_2D
       END IF
 
-# if (defined FOUR_DVAR && !defined OBS_SENSITIVITY) && \
+# if (defined FOUR_DVAR    && !defined IS4DVAR_SENSITIVITY) && \
       defined OBSERVATIONS
 !
 !-----------------------------------------------------------------------
@@ -803,7 +803,7 @@
       END IF
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
 !
 !-----------------------------------------------------------------------

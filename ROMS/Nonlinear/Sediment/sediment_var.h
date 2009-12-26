@@ -6,7 +6,7 @@
 **   See License_ROMS.txt                                             **
 ************************************************************************
 **                                                                    **
-**  Assigns metadata indices for the sedimen model variables that     **
+**  Assigns metadata indices for the sediment model variables that    **
 **  are used in input and output NetCDF files.  The metadata          **
 **  information is read from "varinfo.dat".                           **
 **                                                                    **
@@ -17,7 +17,7 @@
 */
 
 /*
-**  Model state biological tracers.
+**  Model state sediment tracers.
 */
 
               CASE ('idSbed(ithck)')
@@ -334,7 +334,7 @@
 #endif
 
 /*
-**  Biological tracers open boundary conditions.
+**  Sediment tracers open boundary conditions.
 */
 
               CASE ('idTbry(iwest,idmud(i))')
@@ -534,7 +534,7 @@
 #ifdef TS_PSOURCE
 
 /*
-**  Biological tracers point Source/Sinks (river runoff).
+**  Sediment tracers point Source/Sinks (river runoff).
 */
 
               CASE ('idRtrc(idmud)')

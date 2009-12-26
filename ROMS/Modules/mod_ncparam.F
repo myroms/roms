@@ -1399,8 +1399,8 @@
                 idTclm(itemp)=varid
               CASE ('idTclm(isalt)')
                 idTclm(isalt)=varid
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
               CASE ('idZads')
                 idZads=varid

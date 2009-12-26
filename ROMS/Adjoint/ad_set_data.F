@@ -44,9 +44,9 @@
 !
       USE mod_param
       USE mod_boundary
-# if defined AD_SENSITIVITY    || defined CLIMATOLOGY      || \
-     defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
-     defined SENSITIVITY_4DVAR || defined SO_SEMI
+# if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
+     defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+     defined SENSITIVITY_4DVAR   || defined SO_SEMI
       USE mod_clima
 # endif
 # if defined FORWARD_READ && defined SOLVE3D
@@ -1535,8 +1535,8 @@
 #  endif
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
 !
 !-----------------------------------------------------------------------
@@ -1611,9 +1611,9 @@
 #  endif
 # endif
 
-# if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS    || \
-     defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS      || \
+     defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
 !
 !-----------------------------------------------------------------------

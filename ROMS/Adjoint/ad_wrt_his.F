@@ -818,7 +818,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Hout(idTsur(itrc),ng)) THEN
-#   if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+#   if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
        defined OPT_OBSERVATIONS
           IF (itrc.eq.itemp) THEN
 !!          scale=rho0*Cp
@@ -856,7 +856,7 @@
 !  Write out surface U-momentum stress.
 !
       IF (Hout(idUsms,ng)) THEN
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
       defined OPT_OBSERVATIONS
 !!      scale=rho0
         scale=1.0_r8/rho0
@@ -885,7 +885,7 @@
 !
       IF (Hout(idVsms,ng)) THEN
 !!      scale=rho0
-#  if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #  else

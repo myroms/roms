@@ -171,9 +171,9 @@
 #  include <ana_rain.h>
 # endif
 
-# if defined ANA_GRID       && \
-   (defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined ANA_GRID        && \
+   (defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI)
 #  include <ana_scope.h>
 # endif

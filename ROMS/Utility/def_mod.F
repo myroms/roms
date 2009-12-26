@@ -353,7 +353,7 @@
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
 !
 !  Define model-observation comparison statistics.
 !
@@ -759,7 +759,7 @@
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
-# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
+# if defined FOUR_DVAR && !defined IS4DVAR_SENSITIVITY
 !
 !  Initial nonlinear model at observation locations.
 !
@@ -769,7 +769,7 @@
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
 !
 !  Nonlinear model at observation points.
 !
@@ -780,14 +780,14 @@
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined IS4DVAR         || defined OBS_SENSITIVITY || \
+# if defined IS4DVAR         || defined IS4DVAR_SENSITIVITY || \
      defined WEAK_CONSTRAINT
 !
 !  Tangent linear or representer model at observation points.
 !
         haveTLmod(ng)=.FALSE.
         Vinfo( 1)=Vname(1,idTLmo)
-#  ifdef OBS_SENSITIVITY
+#  ifdef IS4DVAR_SENSITIVITY
         Vinfo( 2)='4DVAR sensitivity analysis at observations location'
 #  else
         Vinfo( 2)=Vname(2,idTLmo)
@@ -902,8 +902,8 @@
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
-     defined OBS_SENSITIVITY
+# if defined W4DVAR_SENSITIVITY  || defined W4DPSAS_SENSITIVITY || \
+     defined IS4DVAR_SENSITIVITY
 #  ifdef OBS_IMPACT
 !
 !  Define total observations impact.
@@ -926,9 +926,9 @@
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
-# if defined OBS_IMPACT_SPLIT         && \
-     (defined W4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
-      defined OBS_SENSITIVITY)
+# if defined OBS_IMPACT_SPLIT     && \
+     (defined W4DVAR_SENSITIVITY  || defined W4DPSAS_SENSITIVITY || \
+      defined IS4DVAR_SENSITIVITY)
 !
 !  Define observation impact due to initial condition increments.
 !

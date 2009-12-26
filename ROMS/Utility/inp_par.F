@@ -972,8 +972,8 @@
       logical, dimension(MBOTP,Ngrids) :: Lbottom
 #endif
       logical, allocatable :: Ltracer(:,:)
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
       logical, allocatable :: Ladsen(:)
 #endif
@@ -1140,8 +1140,8 @@
             CALL initialize_param
             CALL initialize_scalars
             CALL initialize_ncparam
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
             IF (.not.allocated(Ladsen)) THEN
               allocate (Ladsen(MT*Ngrids))
@@ -1504,8 +1504,8 @@
             END DO
           ELSE IF (TRIM(KeyWord).eq.'GAMMA2') THEN
             Npts=load_r(Nval, Rval, Ngrids, gamma2)
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
           ELSE IF (TRIM(KeyWord).eq.'DstrS') THEN
             Npts=load_r(Nval, Rval, Ngrids, DstrS)
@@ -2507,9 +2507,9 @@
           WRITE (out,120) Nouter, 'Nouter',                             &
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
-#if defined IS4DVAR           || defined OBS_SENSITIVITY || \
+#if defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
     defined SENSITIVITY_4DVAR || \
-    defined TL_W4DPSAS        || defined TL_W4DVAR       || \
+    defined TL_W4DPSAS        || defined TL_W4DVAR           || \
     defined W4DPSAS           || defined W4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximun number of 4DVAR inner loop iterations.'
@@ -2942,8 +2942,8 @@
           WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
           WRITE (out,140) DstrS(ng), 'DstrS',                           &
      &          'Starting day for ADM sensitivity forcing.'
@@ -3401,8 +3401,8 @@
      &                    TRIM(fname)
 # endif
 # if defined TANGENT && \
-    !(defined FOUR_DVAR         || defined OBS_SENSITIVITY || \
-      defined OPT_OBSERVATIONS  || defined SANITY_CHECK    || \
+    !(defined FOUR_DVAR         || defined IS4DVAR_SENSITIVITY || \
+      defined OPT_OBSERVATIONS  || defined SANITY_CHECK        || \
       defined SENSITIVITY_4DVAR || defined TLM_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
@@ -3419,9 +3419,9 @@
      &                    TRIM(fname)
 # endif
 # if defined ADJOINT && \
-    !(defined AD_SENSITIVITY  || defined FOUR_DVAR         || \
-      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS  || \
-      defined SANITY_CHECK    || defined SENSITIVITY_4DVAR || \
+    !(defined AD_SENSITIVITY      || defined FOUR_DVAR         || \
+      defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS  || \
+      defined SANITY_CHECK        || defined SENSITIVITY_4DVAR || \
       defined SO_SEMI)
           fname=IADname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
@@ -3453,8 +3453,8 @@
           WRITE (out,230) '      Input Forward State File:  ',          &
      &                    TRIM(fname)
 #endif
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
           fname=ADSname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
@@ -4588,7 +4588,7 @@
 #     endif
 #    endif
 #   endif
-#   ifndef OBS_SENSITIVITY
+#   ifndef IS4DVAR_SENSITIVITY
 #    ifdef IS4DVAR
           WRITE (out,100) GradErr, 'GradErr',                           &
      &            'Upper bound on relative error of the gradient.'
@@ -4644,7 +4644,7 @@
      &            'Number of Lanczos iterations in posterior analysis.'
 #   endif
 #   ifndef TLM_CHECK
-#    ifndef OBS_SENSITIVITY
+#    ifndef IS4DVAR_SENSITIVITY
           WRITE (out,170) LdefNRM(1:4,ng), 'LdefNRM',                   &
      &            'Switch to create a normalization NetCDF file.'
           WRITE (out,170) LwrtNRM(1:4,ng), 'LwrtNRM',                   &
@@ -5024,7 +5024,7 @@
 #  endif
           WRITE (out,160) '    Input/Output Lanczos File:  ',           &
      &                    TRIM(LCZname(ng))
-#  ifndef OBS_SENSITIVITY
+#  ifndef IS4DVAR_SENSITIVITY
           WRITE (out,160) '    Input/Output Hessian File:  ',           &
      &                    TRIM(HSSname(ng))
 #  endif

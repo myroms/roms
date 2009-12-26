@@ -484,9 +484,9 @@
 # endif
 
 # if defined ADJOINT && \
-    !(defined AD_SENSITIVITY    || defined FOUR_DVAR        || \
-      defined OBS_SENSITIVITY   || defined OPT_OBSERVATIONS || \
-      defined SENSITIVITY_4DVAR || defined SO_SEMI)
+    !(defined AD_SENSITIVITY      || defined FOUR_DVAR        || \
+      defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SENSITIVITY_4DVAR   || defined SO_SEMI)
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'iad_file',            &
      &                        TRIM(IADname(ng)))
@@ -591,8 +591,8 @@
         END IF
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'ads_file',            &
@@ -1829,7 +1829,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
       Vinfo( 1)='LhessianEV'
       Vinfo( 2)='switch to compute Hessian eigenvectors'
       Vinfo( 9)='.FALSE.'
@@ -1887,7 +1887,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifndef OBS_SENSITIVITY
+# ifndef IS4DVAR_SENSITIVITY
       Vinfo( 1)='GradErr'
       Vinfo( 2)='Upper bound on relative error of the gradient'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -2141,8 +2141,8 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
@@ -2831,8 +2831,8 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.

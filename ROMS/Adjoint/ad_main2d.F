@@ -31,7 +31,7 @@
       USE mod_storage
 # endif
 !
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
       USE adsen_force_mod, ONLY : adsen_force
 # endif
@@ -145,7 +145,7 @@
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
 
-# if (defined FOUR_DVAR && !defined OBS_SENSITIVITY) && \
+# if (defined FOUR_DVAR    && !defined IS4DVAR_SENSITIVITY) && \
       defined OBSERVATIONS
 !
 !-----------------------------------------------------------------------
@@ -498,7 +498,7 @@
       END IF
 # endif
 
-# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY   || \
+# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
 !
 !-----------------------------------------------------------------------

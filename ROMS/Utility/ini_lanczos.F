@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE ini_lanczos_mod
 
-#ifdef OBS_SENSITIVITY
+#ifdef IS4DVAR_SENSITIVITY
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
