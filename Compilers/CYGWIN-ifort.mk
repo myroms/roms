@@ -113,7 +113,6 @@ endif
 # file names needed when linking. Use of the "=" sign means that
 # variables will be evaluated only when needed.
 #
-
          BIN_WIN32 = "$$(cygpath --windows $(BIN))"
         LIBS_WIN32 += "$$(cygpath --windows $(NETCDF_LIB))"
         LIBS_WIN32 += "c:\cygwin\lib\gcc\i686-pc-mingw32\3.4.4\libgcc.a"
@@ -124,9 +123,17 @@ endif
         LD_WINDOWS := on
 
 #
-# Use full path of compiler.
+# Use full path of compiler. Notice that a very special editing is
+# done for the FC defintion to allow blank spaces and parenthesis in the
+# compiler path. For example, we can have:
 #
-               FC := "$(shell which ${FC})"
+#      c:\\Software\\My Compilers (64 bit)
+# or
+#      /cygdrive/c/Program Files (x86)/Intel/Compiler/11.1/051/bin/ia32/ifort
+# or
+#      /cygdrive/c/Program Files/Intel/Compiler/11.1/051/bin/ia32/ifort
+#
+               FC := $(shell which ${FC} | sed 's|\([ |(|)]\)|\\\1|g')
                LD := $(FC)
 
 #
