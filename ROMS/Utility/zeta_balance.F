@@ -228,7 +228,6 @@
 
       real(r8) :: fac, fac1, fac2, fac3, gamma
       real(r8) :: cff, cff1, cff2, cff3, cff4
-      real(r8) :: zphi, zphi1, zwbot, zwtop
 
       real(r8), dimension(IminS:ImaxS) :: phie
       real(r8), dimension(IminS:ImaxS) :: phix
@@ -300,68 +299,15 @@
 !
 !  Integrate from bottom to surface.
 !
-        IF (LNM_flag.eq.0) THEN
-          DO k=1,N(ng)
-            DO i=Istr-1,Iend
-              cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
-# ifdef MASKING
-              cff=cff*vmask(i,j)
-# endif
-              gradPy(i,j)=gradPy(i,j)+cff
-            END DO
-          END DO
-!
-!  Integrate from level of no motion (LNM_depth) to surface or
-!  integrate from local bottom if shallower than LNM_depth.
-!  Notice that the level of motion depth is tested against the
-!  bottom of the grid cell (at W-points) and bracketed between
-!  W-points during the interpolation. Also positive depths are
-!  used for clarity.
-!
-        ELSE IF (LNM_flag.eq.1) THEN
+        DO k=1,N(ng)
           DO i=Istr-1,Iend
-            DO k=1,N(ng)
-              zwtop=ABS(0.5_r8*(z_w(i,j-1,k  )+z_w(i,j,k  )))
-              zwbot=ABS(0.5_r8*(z_w(i,j-1,k-1)+z_w(i,j,k-1)))
-              IF (zwbot.lt.LNM_depth(ng)) THEN
-                cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
-#  ifdef MASKING
-                cff=cff*vmask(i,j)
-#  endif
-                gradPy(i,j)=gradPy(i,j)+cff
-              ELSE IF ((Zwbot.gt.LNM_depth(ng)).and.                    &
-     &                 (LNM_depth(ng).ge.Zwtop)) THEN      ! interpolate
-                zphi=ABS(0.5_r8*(z_r(i,j-1,k)+z_r(i,j,k)))
-                IF (zphi.ge.LNM_depth(ng)) THEN      ! above cell center
-                  IF (k.eq.N(ng)) THEN
-                    cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
-                  ELSE
-                    zphi1=ABS(0.5_r8*(z_r(i,j-1,k+1)+z_r(i,j,k+1)))
-                    fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
-                    cff=(phi(i,k+1)+fac*(phi(i,k)-phi(i,k+1)))*         &
-     &                  (LNM_depth(ng)-zwtop)
-                  END IF
-                ELSE                                 ! below cell center
-                  IF (k.eq.1) THEN
-                    cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
-                  ELSE
-                    zphi1=ABS(0.5_r8*(z_r(i,j-1,k-1)+z_r(i,j,k-1)))
-                    fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
-                    cff=(phi(i,k)+fac*(phi(i,k-1)-phi(i,k)))*           &
-     &                  (zwbot-LNM_depth(ng))
-                  END IF
-                END IF
-                IF ((zphi-zphi1).eq.0.0_r8) THEN
-                  cff=0.0_r8
-                END IF
-#  ifdef MASKING
-                cff=cff*vmask(i,j)
-#  endif
-                gradPy(i,j)=gradPy(i,j)+cff
-              END IF
-            END DO
+            cff=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*phi(i,k)
+# ifdef MASKING
+            cff=cff*vmask(i,j)
+# endif
+            gradPy(i,j)=gradPy(i,j)+cff
           END DO
-        END IF
+        END DO
       END DO
 !
 !  Compute balanced, surface V-momentum from baroclinic and barotropic
@@ -404,68 +350,15 @@
 !
 !  Integrate from bottom to surface.
 !
-        IF (LNM_flag.eq.0) THEN
-          DO k=1,N(ng)
-            DO i=Istr,Iend+1
-              cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
-#  ifdef MASKING
-              cff=cff*umask(i,j)
-#  endif
-              gradPx(i,j)=gradPx(i,j)+cff
-            END DO
-          END DO
-!
-!  Integrate from level of no motion (LNM_depth) to surface or
-!  integrate from local bottom if shallower than LNM_depth.
-!  Notice that the level of motion depth is tested against the
-!  bottom of the grid cell (at W-points) and bracketed between
-!  W-points during the interpolation. Also positive depths are
-!  used for clarity.
-!
-        ELSE IF (LNM_flag.eq.1) THEN
+        DO k=1,N(ng)
           DO i=Istr,Iend+1
-            DO k=1,N(ng)
-              zwtop=ABS(0.5_r8*(z_w(i-1,j,k  )+z_w(i,j,k  )))
-              zwbot=ABS(0.5_r8*(z_w(i-1,j,k-1)+z_w(i,j,k-1)))
-              IF (zwbot.lt.LNM_depth(ng)) THEN
-                cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
+            cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
 #  ifdef MASKING
-                cff=cff*umask(i,j)
+            cff=cff*umask(i,j)
 #  endif
-                gradPx(i,j)=gradPx(i,j)+cff
-              ELSE IF ((Zwbot.gt.LNM_depth(ng)).and.                    &
-     &                 (LNM_depth(ng).ge.Zwtop)) THEN      ! interpolate
-                zphi=ABS(0.5_r8*(z_r(i-1,j,k)+z_r(i,j,k)))
-                IF (zphi.ge.LNM_depth(ng)) THEN      ! above cell center
-                  IF (k.eq.N(ng)) THEN
-                    cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
-                  ELSE
-                    zphi1=ABS(0.5_r8*(z_r(i-1,j,k+1)+z_r(i,j,k+1)))
-                    fac=(LNM_depth(ng)-zphi1)/(zphi-zphi1)
-                    cff=(phi(i,k+1)+fac*(phi(i,k)-phi(i,k+1)))*         &
-     &                  (LNM_depth(ng)-zwtop)
-                  END IF
-                ELSE                                 ! below cell center
-                  IF (k.eq.1) THEN
-                    cff=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))*phi(i,k)
-                  ELSE
-                    zphi1=ABS(0.5_r8*(z_r(i-1,j,k-1)+z_r(i,j,k-1)))
-                    fac=(LNM_depth(ng)-zphi)/(zphi1-zphi)
-                    cff=(phi(i,k)+fac*(phi(i,k-1)-phi(i,k)))*           &
-     &                  (zwbot-LNM_depth(ng))
-                  END IF
-                END IF
-                IF ((zphi-zphi1).eq.0.0_r8) THEN
-                  cff=0.0_r8
-                END IF
-#  ifdef MASKING
-                cff=cff*umask(i,j)
-#  endif
-                gradPx(i,j)=gradPx(i,j)+cff
-              END IF
-            END DO
+            gradPx(i,j)=gradPx(i,j)+cff
           END DO
-        END IF
+        END DO
       END DO
 !
 !  Impose zero gradient conditions at open boundaries.

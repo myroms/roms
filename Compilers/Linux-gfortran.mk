@@ -101,10 +101,19 @@ endif
                FC := $(shell which ${FC})
                LD := $(FC)
 
+#
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
+#
 
 $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
+
+#
+# Allow integer overflow in ran_state.F.  This is not allowed
+# during -O3 optimization.
+#
+
+$(SCRATCH_DIR)/ran_state.o: FFLAGS += -fno-strict-overflow
 
 #
 # Set free form format in source files to allow long string for
