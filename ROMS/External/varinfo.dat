@@ -2319,7 +2319,7 @@
   'kilogram meter-3'                               ! [kg/m3]
   'sand_north_, scalar, series'
   'sand_time'
-  'idTbry(inorth,idmud(i))'
+  'idTbry(inorth,isand(i))'
   'nulvar'
   1.0d0
 
