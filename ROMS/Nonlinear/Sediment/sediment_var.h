@@ -563,11 +563,11 @@
                 END IF
               CASE ('idRtrc(isand)')
                 load=.FALSE.
-                IF (NCS.gt.0) THEN
+                IF (NNS.gt.0) THEN
                   varid=varid-1
-                  DO i=1,NCS
+                  DO i=1,NNS
                     varid=varid+1
-                    idRtrc(idmud(i))=varid
+                    idRtrc(isand(i))=varid
                     DO ng=1,Ngrids
                       Fscale(varid,ng)=scale
                       Iinfo(1,varid,ng)=gtype
