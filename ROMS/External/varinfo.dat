@@ -1189,13 +1189,13 @@
   1.0d0
 
 'Qair'                                             ! Input
-  'surface air relative humidity'
-  'percentage'                                     ! [percentage]
+  'surface air relative humidity'                  !  relative    or  specific
+  'percentage'                                     ! [percentage  or  g/kg    ]
   'Qair, scalar, series'
   'qair_time'
   'idQair'
-  'r2dvar'
-  0.01d0                                           ! 1/100
+  'r2dvar'                                         ! relative        specific
+  0.01d0                                           ! 1/100      or   1.0
 
 'cloud'                                            ! Input
   'cloud fraction'

@@ -61,7 +61,7 @@ while ( ($#argv) > 0 )
 
     case "-*":
       echo ""
-      echo "$0 : Unknonw option [ $1 ]"
+      echo "$0 : Unknown option [ $1 ]"
       echo ""
       echo "Available Options:"
       echo ""

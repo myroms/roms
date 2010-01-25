@@ -448,8 +448,11 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == biotoy_grd.nc
-     ININAME == biotoy_ini_ecosim.nc
+     GRDNAME == Data/ROMS/Grid/bio_toy_grd.nc
+     ININAME == Data/ROMS/Initial/bio_toy_ini_fennel.nc
+!    ININAME == Data/ROMS/Initial/bio_toy_ini_ecosim.nc
+!    ININAME == Data/ROMS/Initial/bio_toy_ini_nemuro.nc
+!    ININAME == Data/ROMS/Initial/bio_toy_ini_npzd.nc
      ITLNAME == /dev/null
      IRPNAME == /dev/null
      IADNAME == /dev/null
@@ -470,7 +473,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
      NFFILES == 1                          ! number of forcing files
 
-     FRCNAME == biotoy_frc.nc              ! forcing file 1, grid 1
+     FRCNAME == Data/ROMS/Forcing/bio_toy_frc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -492,6 +495,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
      FPOSNAM =  ROMS/External/floats.in
      BPARNAM =  ROMS/External/bio_Fennel.in
 !    BPARNAM =  ROMS/External/ecosim.in
+!    BPARNAM =  ROMS/External/nemuro.in
 !    BPARNAM =  ROMS/External/npzd_Franks.in
 !    BPARNAM =  ROMS/External/npzd_Powell.in
      SPARNAM =  ROMS/External/sediment.in

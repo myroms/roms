@@ -29,10 +29,8 @@ variables:
                 Vstretching:long_name = "vertical terrain-following stretching function" ;
 	double theta_s ;
 		theta_s:long_name = "S-coordinate surface control parameter" ;
-		theta_s:units = "nondimensional" ;
 	double theta_b ;
 		theta_b:long_name = "S-coordinate bottom control parameter" ;
-		theta_b:units = "nondimensional" ;
 	double Tcline ;
 		Tcline:long_name = "S-coordinate surface/bottom layer width" ;
 		Tcline:units = "meter" ;

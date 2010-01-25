@@ -20,8 +20,7 @@
 !!                       tracers.                                      !
 !! ana_btflux.h        Analytical kinematic bottom flux of tracer      !
 !!                       type variables.                               !
-!! ana_bmflux.h        Analytical bottom momentm flux - so can have    !
-!!                       spatially varying zo                          !
+!! ana_bmflux.h        Analytical spatially varying bottom roughness   !
 !! ana_cloud.h         Analytical cloud fraction.                      !
 !! ana_diag.h          Customized diagnostics.                         !
 !! ana_fsobc.h         Analytical free-surface boundary conditions.    !

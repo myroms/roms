@@ -14,23 +14,18 @@ dimensions:
 variables:
 	double river(river) ;
 		river:long_name = "river runoff identification number" ;
-		river:units = "nondimensional" ;
 	double river_Xposition(river) ;
 		river_Xposition:long_name = "river XI-position at RHO-points" ;
-		river_Xposition:units = "nondimensional" ;
 		river_Xposition:valid_min = 1. ;
 		river_Xposition:valid_max = 385. ;
 	double river_Eposition(river) ;
 		river_Eposition:long_name = "river ETA-position at RHO-points" ;
-		river_Eposition:units = "nondimensional" ;
 		river_Eposition:valid_min = 1. ;
 		river_Eposition:valid_max = 129. ;
 	double river_direction(river) ;
 		river_direction:long_name = "river runoff direction" ;
-		river_direction:units = "nondimensional" ;
 	double river_Vshape(s_rho, river) ;
 		river_Vshape:long_name = "river runoff mass transport vertical profile" ;
-		river_Vshape:units = "nondimensional" ;
 	double river_time(river_time) ;
 		river_time:long_name = "river runoff time" ;
 		river_time:units = "days since 1992-01-01 00:00:00" ;

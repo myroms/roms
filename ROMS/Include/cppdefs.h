@@ -206,6 +206,7 @@
 **    Any of the analytical expressions are coded in "analytical.F".         **
 **                                                                           **
 ** ANA_BIOLOGY         use if analytical biology initial conditions          **
+** ANA_BMFLUX          use if analytical spatially varying bottom roughness  **
 ** ANA_BPFLUX          use if analytical bottom passive tracers fluxes       **
 ** ANA_BSFLUX          use if analytical bottom salinity flux                **
 ** ANA_BTFLUX          use if analytical bottom temperature flux             **

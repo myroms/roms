@@ -445,7 +445,7 @@
 !  nodes and store it into a global scratch 1D array, packed in column-
 !  major order.
 #  ifdef MASKING
-#   ifdef WRiTE_WATER
+#   ifdef WRITE_WATER
 !  Remove land points and pack water points into 1D-array.
 #   else
 !  Overwrite masked points with special value.
@@ -465,7 +465,7 @@
 !  If serial or shared-memory applications and serial output, pack data
 !  into a global 1D array in column-major order.
 #  ifdef MASKING
-#   ifdef WRiTE_WATER
+#   ifdef WRITE_WATER
 !  Remove land points and pack water points into 1D-array.
 #   else
 !  Overwrite masked points with special value.

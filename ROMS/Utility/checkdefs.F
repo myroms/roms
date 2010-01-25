@@ -190,6 +190,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' ANA_BIOLOGY,'
 #endif
+#if defined SEDIMENT && !defined ANA_SEDIMENT
+# ifdef ANA_BMFLUX
+      IF (Master) WRITE (stdout,20) 'ANA_BMFLUX',                       &
+     &   'Analytical spatially varying bottom roughness.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ANA_BMFLUX,'
+# endif
+#endif
 #if defined SEDIMENT || defined BIOLOGY
 # ifdef ANA_BPFLUX
       IF (Master) WRITE (stdout,20) 'ANA_BPFLUX',                       &

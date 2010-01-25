@@ -26,10 +26,8 @@ variables:
                 Vstretching:long_name = "vertical terrain-following stretching function" ;
 	double theta_s ;
 		theta_s:long_name = "S-coordinate surface control parameter" ;
-		theta_s:units = "nondimensional" ;
 	double theta_b ;
 		theta_b:long_name = "S-coordinate bottom control parameter" ;
-		theta_b:units = "nondimensional" ;
 	double Tcline ;
 		Tcline:long_name = "S-coordinate surface/bottom layer width" ;
 		Tcline:units = "meter" ;
@@ -134,7 +132,6 @@ variables:
 	float mudfrac_01(time, Nbed, eta_rho, xi_rho) ;
 		mudfrac_01:long_name = "cohesive sediment fraction, size class 01" ;
 		mudfrac_01:size_class = " 1.0000E-02 millimeter" ;
-		mudfrac_01:units = "nondimensional" ;
 		mudfrac_01:time = "ocean_time" ;
 		mudfrac_01:coordinates = "lon_rho lat_rho ocean_time" ;
 	float mudmass_01(time, Nbed, eta_rho, xi_rho) ;
@@ -155,7 +152,6 @@ variables:
 		bed_age:coordinates = "lon_rho lat_rho ocean_time" ;
 	float bed_porosity(time, Nbed, eta_rho, xi_rho) ;
 		bed_porosity:long_name = "sediment layer porosity" ;
-		bed_porosity:units = "nondimensional" ;
 		bed_porosity:time = "ocean_time" ;
 		bed_porosity:coordinates = "lon_rho lat_rho ocean_time" ;
 	float grain_size(time, eta_rho, xi_rho) ;

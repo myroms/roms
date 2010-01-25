@@ -303,9 +303,6 @@
 #  define NORTHERN_WALL
 #  define SOUTHERN_WALL
 #  define ANA_SMFLUX
-#  undef  ENERGY1_NORM
-#  undef  ENERGY2_NORM
-#  undef  ENERGY3_NORM
 #  define FORWARD_WRITE
 #  define FORWARD_READ
 #  define OUT_DOUBLE

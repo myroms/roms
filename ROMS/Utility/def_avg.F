@@ -1085,7 +1085,7 @@
           Vinfo(20)='mask_rho'
 #   endif
           Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
+          Aval(5)=REAL(Iinfo(1,idTsur(isalt),ng),r8)
           status=def_var(ng, model, ncAVGid(ng),                        &
      &                   avgVid(idTsur(isalt),ng), NF_FOUT,             &
      &                   nvd3, t2dgrd, Aval, Vinfo, ncname)

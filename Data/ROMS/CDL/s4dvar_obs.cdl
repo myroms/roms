@@ -35,17 +35,14 @@ variables:
 		obs_depth:negative = "downwards" ;
 	double obs_Xgrid(datum) ;
 		obs_Xgrid:long_name = "x-grid observation location" ;
-		obs_Xgrid:units = "nondimensional" ;
 		obs_Xgrid:left = "INT(obs_Xgrid(datum))" ;
 		obs_Xgrid:right = "INT(obs_Xgrid(datum))+1" ;
 	double obs_Ygrid(datum) ;
 		obs_Ygrid:long_name = "y-grid observation location" ;
-		obs_Ygrid:units = "nondimensional" ;
 		obs_Ygrid:top = "INT(obs_Ygrid(datum))+1" ;
 		obs_Ygrid:bottom = "INT(obs_Ygrid(datum))" ;
 	double obs_Zgrid(datum) ;
 		obs_Zgrid:long_name = "z-grid observation location" ;
-		obs_Zgrid:units = "nondimensional" ;
 		obs_Zgrid:up = "INT(obs_Zgrid(datum))+1" ;
 		obs_Zgrid:down = "INT(obs_Zgrid(datum))" ;
 	double obs_error(datum) ;
