@@ -242,7 +242,7 @@
       END DO
 #endif
 #ifdef SOLVE3D
-# ifdef TS_DIFF2
+# ifdef TS_DIF2
       DO itrc=1,NT(ng)
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -251,7 +251,7 @@
         END DO
       END DO
 # endif
-# ifdef TS_DIFF4
+# ifdef TS_DIF4
       DO itrc=1,NT(ng)
         DO j=Jmin,Jmax
           DO i=Imin,Imax
