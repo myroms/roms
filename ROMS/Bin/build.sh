@@ -316,8 +316,8 @@ if ($?USE_MY_LIBS) then
           setenv HDF5_LIBDIR    /opt/gfortransoft/serial/hdf5/lib
         endif
       else
-        setenv NETCDF_INCDIR    /opt/gfortransoft/serial/netcdf/include
-        setenv NETCDF_LIBDIR    /opt/gfortransoft/serial/netcdf/lib
+        setenv NETCDF_INCDIR    /opt/gfortransoft/serial/netcdf3/include
+        setenv NETCDF_LIBDIR    /opt/gfortransoft/serial/netcdf3/lib
       endif
     breaksw
 

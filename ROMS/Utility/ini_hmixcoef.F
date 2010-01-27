@@ -41,6 +41,11 @@
 !
 !  Local variable declarations.
 !
+#ifdef SOLVE3D
+      real(r8) :: diffusion2(MT), diffusion4(MT)
+#endif
+      real(r8) :: viscosity2, viscosity4
+!
 #include "tile.h"
 
       CALL ini_hmixcoef_tile (ng, tile, model,                          &
@@ -63,9 +68,9 @@
      &                        MIXING(ng) % visc4_r,                     &
 #endif
 #ifdef SOLVE3D
-     &                        tnu2(:,ng), tnu4(:,ng),                   &
+     &                        diffusion2, diffusion4,                   &
 #endif
-     &                        visc2(ng), visc4(ng))
+     &                        viscosity2, viscosity4)
 
       RETURN
       END SUBROUTINE ini_hmixcoef
@@ -106,7 +111,7 @@
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef SOLVE3D
-      real(r8), intent(out) :: diffusion2(:), diffusion4(:)
+      real(r8), intent(out) :: diffusion2(MT), diffusion4(MT)
 #endif
       real(r8), intent(out) :: viscosity2, viscosity4
 !
@@ -190,6 +195,19 @@
           diffusion4(itrc)=ad_tnu4(itrc,ng)
         END DO
 # endif
+#endif
+      END IF
+!
+!  Update generic values.
+!
+      IF (SOUTH_WEST_TEST) THEN
+        visc2(ng)=viscosity2
+        visc4(ng)=viscosity4
+#ifdef SOLVE3D
+        DO itrc=1,NT(ng)
+          tnu2(itrc,ng)=diffusion2(itrc)
+          tnu4(itrc,ng)=diffusion4(itrc)
+        END DO
 #endif
       END IF
 !
