@@ -79,6 +79,46 @@
      &                      ncid = ncDIAid(ng),                         &
      &                      varid = diaVid(idtime,ng))
       IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out 2D potential vorticity.
+!
+      scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+      gtype=gfactor*p2dvar
+      status=nf_fwrite2d(ng, iNLM, ncDIAid(ng), diaVid(id2dPV,ng),      &
+     &                   tDIAindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % pmask,                              &
+#  endif
+     &                   DIAGS(ng) % pvor_bar)
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,id2dPV)), tDIAindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out 2D relative vorticity.
+!
+      scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+      gtype=gfactor*p2dvar
+      status=nf_fwrite2d(ng, iNLM, ncDIAid(ng), diaVid(id2dRV,ng),      &
+     &                   tDIAindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % pmask,                              &
+#  endif
+     &                   DIAGS(ng) % rvor_bar)
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,id2dRV)), tDIAindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
 
 # ifdef DIAGNOSTICS_UV
 !
@@ -123,6 +163,7 @@
           RETURN
         END IF
       END DO
+
 #  ifdef SOLVE3D
 !
 !  Write out 3D momentum diagnostic fields.
@@ -168,7 +209,48 @@
       END DO
 #  endif
 # endif
-
+# ifdef SOLVE3D
+!
+!  Write out 3D potential vorticity.
+!
+      scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+      gtype=gfactor*p3dvar
+      status=nf_fwrite3d(ng, iNLM, ncDIAid(ng), diaVid(id3dPV,ng),      &
+     &                   tDIAindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % pmask,                              &
+#  endif
+     &                   DIAGS(ng) % pvor)
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,id3dPV)), tDIAindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out 3D relative vorticity.
+!
+      scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+      gtype=gfactor*p3dvar
+      status=nf_fwrite3d(ng, iNLM, ncDIAid(ng), diaVid(id3dRV,ng),      &
+     &                   tDIAindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % pmask,                              &
+#  endif
+     &                   DIAGS(ng) % rvor)
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,id3dRV)), tDIAindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 # ifdef DIAGNOSTICS_TS
 !
 !  Write out tracer diagnostic fields.
@@ -258,7 +340,7 @@
 
       IF (Master) WRITE (stdout,20) tDIAindx(ng)
 !
-  10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,11x,  &
+  10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,13x,  &
      &        'into diagnostics NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_DIAGS - wrote diagnostics fields into time ',     &
      &        'record = ',t72,i7.7)

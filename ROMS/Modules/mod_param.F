@@ -444,9 +444,12 @@
 !
 !  Tracer diagnostics.
 !
-        NDT=4          ! Acceleration, advection, vertical diffusion
+        NDT=6          ! Acceleration, advection, vertical diffusion
 #  if defined TS_DIF2 || defined TS_DIF4
-        NDT=NDT+1      ! Horizontal diffusion
+        NDT=NDT+3      ! Horizontal (total, X-, Y-) diffusion
+#   if defined MIX_GEO_TS || defined MIX_ISO_TS
+        NDT=NDT+1      ! Horizontal S-diffusion due to rotated tensor
+#   endif
 #  endif
 # else
         NDT=0          ! No tracer diagnostics
@@ -457,7 +460,7 @@
 !
         NDM2d=4        ! Acceleration, 2D P-Gradient, stresses
 #   ifdef UV_ADV
-        NDM2d=NDM2d+1  ! Horizontal advection
+        NDM2d=NDM2d+3  ! Horizontal total-, X-, and Y-advection
 #   endif
 #   ifdef NEARSHORE_MELLOR
         NDM2d=NDM2d+1  ! Horizontal radiation stresses
@@ -466,7 +469,7 @@
         NDM2d=NDM2d+1  ! Coriolis
 #   endif
 #   if defined UV_VIS2 || defined UV_VIS4
-        NDM2d=NDM2d+1  ! Horizontal viscosity
+        NDM2d=NDM2d+3  ! Horizontal total-, X-, and Y-viscosity
 #   endif
 #  ifdef SOLVE3D
 !
@@ -475,8 +478,8 @@
         NDM3d=3        ! Acceleration, 3D P-Gradient, vertical viscosity
         NDrhs=1        ! 3D P-Gradient
 #   ifdef UV_ADV
-        NDM3d=NDM3d+2  ! Horizontal and vertical advection
-        NDrhs=NDrhs+2
+        NDM3d=NDM3d+4  ! Horizontal (total, X, Y) and vertical advection
+        NDrhs=NDrhs+4
 #   endif
 #   ifdef NEARSHORE_MELLOR
         NDM3d=NDM3d+2  ! Horizontal and vertical radiation stresses
@@ -487,7 +490,7 @@
         NDrhs=NDrhs+1
 #   endif
 #   if defined UV_VIS2 || defined UV_VIS4
-        NDM3d=NDM3d+1  ! Horizontal viscosity
+        NDM3d=NDM3d+3  ! Horizontal (total, X, Y) viscosity
 #   endif
 #   ifdef BODYFORCE
         NDrhs=NDrhs+1  ! Vertical viscosity

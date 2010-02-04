@@ -93,7 +93,7 @@
      &                   MIXING(ng) % alfaobeta,                        &
 #  endif
 # endif
-# if defined LMD_SKPP || defined LMD_BKPP
+# if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                   OCEAN(ng) % pden,                              &
 # endif
      &                   OCEAN(ng) % rho)
@@ -129,7 +129,7 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                         pden,                                    &
 #  endif
      &                         rho)
@@ -182,7 +182,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
 #   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
@@ -211,7 +211,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
@@ -490,7 +490,7 @@
         DO k=1,N(ng)
           DO i=IstrR,IendR
             rho(i,j,k)=den(i,k)
-#  if defined LMD_SKPP || defined LMD_BKPP
+#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
             pden(i,j,k)=(den1(i,k)-1000.0_r8)
 #   ifdef MASKING
             pden(i,j,k)=pden(i,j,k)*rmask(i,j)
@@ -509,7 +509,7 @@
       CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        rho)
-#    if defined LMD_SKPP || defined LMD_BKPP
+#    if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        pden)
@@ -549,7 +549,7 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rho)
-#    if defined LMD_SKPP || defined LMD_BKPP
+#    if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
@@ -614,7 +614,7 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                         pden,                                    &
 #  endif
      &                         rho)
@@ -667,7 +667,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
 #   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
@@ -696,7 +696,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
@@ -754,7 +754,7 @@
 #  ifdef MASKING
             rho(i,j,k)=rho(i,j,k)*rmask(i,j)
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
             pden(i,j,k)=rho(i,j,k)
 #  endif
           END DO
@@ -846,7 +846,7 @@
       CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        rho)
-#    if defined LMD_SKPP || defined LMD_BKPP
+#    if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        pden)
@@ -885,7 +885,7 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rho)
-#    if defined LMD_SKPP || defined LMD_BKPP
+#    if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &

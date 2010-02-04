@@ -1309,52 +1309,40 @@
 #  endif
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          fac=(UFx(i,j)-UFx(i-1,j))+                                    &
-     &        (UFe(i,j+1)-UFe(i,j))
+          cff1=UFx(i,j)-UFx(i-1,j)
+          cff2=UFe(i,j+1)-UFe(i,j)
+          fac=cff1+cff2
           rhs_ubar(i,j)=rhs_ubar(i,j)-fac
 #  if defined DIAGNOSTICS_UV
+          DiaU2rhs(i,j,M2xadv)=-cff1
+          DiaU2rhs(i,j,M2yadv)=-cff2
           DiaU2rhs(i,j,M2hadv)=-fac
 #  endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          fac=(VFx(i+1,j)-VFx(i,j))+                                    &
-     &        (VFe(i,j)-VFe(i,j-1))
+          cff1=VFx(i+1,j)-VFx(i,j)
+          cff2=VFe(i,j)-VFe(i,j-1)
+          fac=cff1+cff2
           rhs_vbar(i,j)=rhs_vbar(i,j)-fac
 #  if defined DIAGNOSTICS_UV
+          DiaV2rhs(i,j,M2xadv)=-cff1
+          DiaV2rhs(i,j,M2yadv)=-cff2
           DiaV2rhs(i,j,M2hadv)=-fac
 #  endif
         END DO
       END DO
 # endif
-# if defined UV_COR || (defined CURVGRID && defined UV_ADV)
+# ifdef UV_COR
 !
 !-----------------------------------------------------------------------
-!  Add in Coriolis and curvilinear transformation terms, if any.
+!  Add in Coriolis term.
 !-----------------------------------------------------------------------
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
-          cff=0.5_r8*Drhs(i,j)*(                                        &
-#  ifdef UV_COR
-     &        fomn(i,j)                                                 &
-#  endif
-#  if (defined CURVGRID && defined UV_ADV)
-     &       +0.5_r8*((vbar(i,j  ,krhs)+                                &
-#   ifdef NEARSHORE_MELLOR
-     &                 vbar_stokes(i,j  )+                              &
-     &                 vbar_stokes(i,j+1)+                              &
-#   endif
-     &                 vbar(i,j+1,krhs))*dndx(i,j)-                     &
-     &                (ubar(i  ,j,krhs)+                                &
-#   ifdef NEARSHORE_MELLOR
-     &                 ubar_stokes(i  ,j)+                              &
-     &                 ubar_stokes(i+1,j)+                              &
-#   endif
-     &                 ubar(i+1,j,krhs))*dmde(i,j))                     &
-#  endif
-     &        )
+          cff=0.5_r8*Drhs(i,j)*fomn(i,j)
           UFx(i,j)=cff*(vbar(i,j  ,krhs)+                               &
 #  ifdef NEARSHORE_MELLOR
      &                  vbar_stokes(i,j  )+                             &
@@ -1367,26 +1355,56 @@
      &                  ubar_stokes(i+1,j)+                             &
 #  endif
      &                  ubar(i+1,j,krhs))
+        END DO
+      END DO
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          fac1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
+          rhs_ubar(i,j)=rhs_ubar(i,j)+fac1
 #  if defined DIAGNOSTICS_UV
-#   ifdef UV_COR
-          Uwrk(i,j)=0.5_r8*Drhs(i,j)*fomn(i,j)*                         &
-     &              (vbar(i,j  ,krhs)+                                  &
-#    ifdef NEARHSORE_MELLOR
-     &               vbar_stokes(i,j  )+                                &
-     &               vbar_stokes(i,j+1)+                                &
-#    endif
-     &               vbar(i,j+1,krhs))
-          Vwrk(i,j)=0.5_r8*Drhs(i,j)*fomn(i,j)*                         &
-     &              (ubar(i  ,j,krhs)+                                  &
-#    ifdef NEARSHORE_MELLOR
-     &               ubar_stokes(i  ,j)+                                &
-     &               ubar_stokes(i+1,j)+                                &
-#    endif
-     &               ubar(i+1,j,krhs))
-#   else
-          Uwrk(i,j)=0.0_r8
-          Vwrk(i,j)=0.0_r8
-#   endif
+          DiaU2rhs(i,j,M2fcor)=fac1
+#  endif
+        END DO
+      END DO
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+          fac1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
+          rhs_vbar(i,j)=rhs_vbar(i,j)-fac1
+#  if defined DIAGNOSTICS_UV
+          DiaV2rhs(i,j,M2fcor)=-fac1
+#  endif
+        END DO
+      END DO
+# endif
+# if defined CURVGRID && defined UV_ADV
+!
+!-----------------------------------------------------------------------
+!  Add in curvilinear transformation terms.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrV-1,Jend
+        DO i=IstrU-1,Iend
+          cff1=0.5_r8*(vbar(i,j  ,krhs)+                                &
+#  ifdef NEARSHORE_MELLOR
+     &                 vbar_stokes(i,j  )+                              &
+     &                 vbar_stokes(i,j+1)+                              &
+#  endif
+     &                 vbar(i,j+1,krhs))
+          cff2=0.5_r8*(ubar(i  ,j,krhs)+                                &
+#  ifdef NEARSHORE_MELLOR
+     &                 ubar_stokes(i  ,j)+                              &
+     &                 ubar_stokes(i+1,j)+                              &
+#  endif
+     &                 ubar(i+1,j,krhs))
+          cff3=cff1*dndx(i,j)
+          cff4=cff2*dmde(i,j)
+          cff=Drhs(i,j)*(cff3-cff4)
+          UFx(i,j)=cff*cff1
+          VFe(i,j)=cff*cff2
+#  if defined DIAGNOSTICS_UV
+          cff=Drhs(i,j)*cff4
+          Uwrk(i,j)=-cff*cff1                  ! ubar equation, ETA-term
+          Vwrk(i,j)=-cff*cff2                  ! vbar equation, ETA-term
 #  endif
         END DO
       END DO
@@ -1396,12 +1414,9 @@
           rhs_ubar(i,j)=rhs_ubar(i,j)+fac1
 #  if defined DIAGNOSTICS_UV
           fac2=0.5_r8*(Uwrk(i,j)+Uwrk(i-1,j))
-#   ifdef UV_COR
-          DiaU2rhs(i,j,M2fcor)=fac2
-#   endif
-#   if (defined CURVGRID && defined UV_ADV)
-          DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+fac1-fac2
-#   endif
+          DiaU2rhs(i,j,M2xadv)=DiaU2rhs(i,j,M2xadv)+fac1-fac2
+          DiaU2rhs(i,j,M2yadv)=DiaU2rhs(i,j,M2yadv)+fac2
+          DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2yadv)+fac1
 #  endif
         END DO
       END DO
@@ -1411,12 +1426,9 @@
           rhs_vbar(i,j)=rhs_vbar(i,j)-fac1
 #  if defined DIAGNOSTICS_UV
           fac2=0.5_r8*(Vwrk(i,j)+Vwrk(i,j-1))
-#   ifdef UV_COR
-          DiaV2rhs(i,j,M2fcor)=-fac2
-#   endif
-#   if (defined CURVGRID && defined UV_ADV)
-          DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)-fac1+fac2
-#   endif
+          DiaV2rhs(i,j,M2xadv)=DiaV2rhs(i,j,M2xadv)-fac1+fac2
+          DiaV2rhs(i,j,M2yadv)=DiaV2rhs(i,j,M2yadv)-fac2
+          DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)-fac1
 #  endif
         END DO
       END DO
@@ -1426,7 +1438,7 @@
 !-----------------------------------------------------------------------
 !  If horizontal mixing, compute total depth at PSI-points.
 !-----------------------------------------------------------------------
-!
+
 #  ifdef UV_VIS4
 #   ifdef EW_PERIODIC
 #    define IV_RANGE Istr-1,Iend+1
@@ -1497,25 +1509,27 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          fac=0.5_r8*((pn(i-1,j)+pn(i,j))*                              &
-     &                (UFx(i,j  )-UFx(i-1,j))+                          &
-     &                (pm(i-1,j)+pm(i,j))*                              &
-     &                (UFe(i,j+1)-UFe(i  ,j)))
+          cff1=0.5_r8*(pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))
+          cff2=0.5_r8*(pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j))
+          fac=cff1+cff2
           rhs_ubar(i,j)=rhs_ubar(i,j)+fac
 #  if defined DIAGNOSTICS_UV
           DiaU2rhs(i,j,M2hvis)=fac
+          DiaU2rhs(i,j,M2xvis)=cff1
+          DiaU2rhs(i,j,M2yvis)=cff2
 #  endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          fac=0.5_r8*((pn(i,j-1)+pn(i,j))*                              &
-     &                (VFx(i+1,j)-VFx(i,j  ))-                          &
-     &                (pm(i,j-1)+pm(i,j))*                              &
-     &                (VFe(i  ,j)-VFe(i,j-1)))
+          cff1=0.5_r8*(pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))
+          cff2=0.5_r8*(pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1))
+          fac=cff1-cff2
           rhs_vbar(i,j)=rhs_vbar(i,j)+fac
 #  if defined DIAGNOSTICS_UV
           DiaV2rhs(i,j,M2hvis)=fac
+          DiaV2rhs(i,j,M2xvis)= cff1
+          DiaV2rhs(i,j,M2yvis)=-cff2
 #  endif
         END DO
       END DO
@@ -1727,21 +1741,27 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          fac=0.5_r8*((pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))+      &
-     &                (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j)))
+          cff1=0.5_r8*(pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))
+          cff2=0.5_r8*(pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j))
+          fac=cff1+cff2
           rhs_ubar(i,j)=rhs_ubar(i,j)-fac
 #  if defined DIAGNOSTICS_UV
           DiaU2rhs(i,j,M2hvis)=-fac
+          DiaU2rhs(i,j,M2xvis)=-cff1
+          DiaU2rhs(i,j,M2yvis)=-cff2
 #  endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          fac=0.5_r8*((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))-      &
-     &                (pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1)))
+          cff1=0.5_r8*(pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))
+          cff2=0.5_r8*(pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1))
+          fac=cff1-cff2
           rhs_vbar(i,j)=rhs_vbar(i,j)-fac
 #  if defined DIAGNOSTICS_UV
           DiaV2rhs(i,j,M2hvis)=-fac
+          DiaV2rhs(i,j,M2xvis)=-cff1
+          DiaV2rhs(i,j,M2yvis)= cff2
 #  endif
         END DO
       END DO
@@ -1871,43 +1891,17 @@
               rhs_ubar(i,j)=rhs_ubar(i,j)+rufrc(i,j)
               ru(i,j,0,nstp)=rufrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRUfrc(i,j,3,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)-            &
-     &                               DiaU2rhs(i,j,M2pgrd)
-              DiaU2rhs(i,j,M2pgrd)=DiaU2rhs(i,j,M2pgrd)+                &
-     &                             DiaRUfrc(i,j,3,M2pgrd)
-              DiaRUfrc(i,j,nstp,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)
-              DiaU2rhs(i,j,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
-              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRUfrc(i,j,3,idiag)=DiaRUfrc(i,j,3,idiag)-            &
+     &                                DiaU2rhs(i,j,idiag)
+                DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)+                &
+     &                              DiaRUfrc(i,j,3,idiag)
+                DiaRUfrc(i,j,nstp,idiag)=DiaRUfrc(i,j,3,idiag)
+              END DO
               DiaU2rhs(i,j,M2sstr)=DiaRUfrc(i,j,3,M2sstr)
               DiaRUfrc(i,j,nstp,M2sstr)=DiaRUfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRUfrc(i,j,3,M2fcor)=DiaRUfrc(i,j,3,M2fcor)-            &
-     &                               DiaU2rhs(i,j,M2fcor)
-              DiaU2rhs(i,j,M2fcor)=DiaU2rhs(i,j,M2fcor)+                &
-     &                             DiaRUfrc(i,j,3,M2fcor)
-              DiaRUfrc(i,j,nstp,M2fcor)=DiaRUfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)-            &
-     &                               DiaU2rhs(i,j,M2hvis)
-              DiaU2rhs(i,j,M2hvis)=DiaU2rhs(i,j,M2hvis)+                &
-     &                             DiaRUfrc(i,j,3,M2hvis)
-              DiaRUfrc(i,j,nstp,M2hvis)=DiaRUfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)-            &
-     &                               DiaU2rhs(i,j,M2hadv)
-              DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+                &
-     &                             DiaRUfrc(i,j,3,M2hadv)
-              DiaRUfrc(i,j,nstp,M2hadv)=DiaRUfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRUfrc(i,j,3,M2hrad)=DiaRUfrc(i,j,3,M2hrad)-            &
-     &                               DiaU2rhs(i,j,M2hrad)
-              DiaU2rhs(i,j,M2hrad)=DiaU2rhs(i,j,M2hrad)+                &
-     &                             DiaRUfrc(i,j,3,M2hrad)
-              DiaRUfrc(i,j,nstp,M2hrad)=DiaRUfrc(i,j,3,M2hrad)
-#   endif
+              DiaU2rhs(i,j,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
+              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -1917,43 +1911,17 @@
               rhs_vbar(i,j)=rhs_vbar(i,j)+rvfrc(i,j)
               rv(i,j,0,nstp)=rvfrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRVfrc(i,j,3,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)-            &
-     &                               DiaV2rhs(i,j,M2pgrd)
-              DiaV2rhs(i,j,M2pgrd)=DiaV2rhs(i,j,M2pgrd)+                &
-     &                             DiaRVfrc(i,j,3,M2pgrd)
-              DiaRVfrc(i,j,nstp,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)
-              DiaV2rhs(i,j,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
-              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRVfrc(i,j,3,idiag)=DiaRVfrc(i,j,3,idiag)-            &
+     &                                DiaV2rhs(i,j,idiag)
+                DiaV2rhs(i,j,idiag)=DiaV2rhs(i,j,idiag)+                &
+     &                              DiaRVfrc(i,j,3,idiag)
+                DiaRVfrc(i,j,nstp,idiag)=DiaRVfrc(i,j,3,idiag)
+              END DO
               DiaV2rhs(i,j,M2sstr)=DiaRVfrc(i,j,3,M2sstr)
               DiaRVfrc(i,j,nstp,M2sstr)=DiaRVfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRVfrc(i,j,3,M2fcor)=DiaRVfrc(i,j,3,M2fcor)-            &
-     &                               DiaV2rhs(i,j,M2fcor)
-              DiaV2rhs(i,j,M2fcor)=DiaV2rhs(i,j,M2fcor)+                &
-     &                             DiaRVfrc(i,j,3,M2fcor)
-              DiaRVfrc(i,j,nstp,M2fcor)=DiaRVfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)-            &
-     &                               DiaV2rhs(i,j,M2hvis)
-              DiaV2rhs(i,j,M2hvis)=DiaV2rhs(i,j,M2hvis)+                &
-     &                             DiaRVfrc(i,j,3,M2hvis)
-              DiaRVfrc(i,j,nstp,M2hvis)=DiaRVfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)-            &
-     &                               DiaV2rhs(i,j,M2hadv)
-              DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)+                &
-     &                             DiaRVfrc(i,j,3,M2hadv)
-              DiaRVfrc(i,j,nstp,M2hadv)=DiaRVfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRVfrc(i,j,3,M2hrad)=DiaRVfrc(i,j,3,M2hrad)-            &
-     &                               DiaV2rhs(i,j,M2hrad)
-              DiaV2rhs(i,j,M2hrad)=DiaV2rhs(i,j,M2hrad)+                &
-     &                             DiaRVfrc(i,j,3,M2hrad)
-              DiaRVfrc(i,j,nstp,M2hrad)=DiaRVfrc(i,j,3,M2hrad)
-#   endif
+              DiaV2rhs(i,j,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
+              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -1965,50 +1933,20 @@
      &                      1.5_r8*rufrc(i,j)-0.5_r8*ru(i,j,0,nnew)
               ru(i,j,0,nstp)=rufrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRUfrc(i,j,3,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)-            &
-     &                               DiaU2rhs(i,j,M2pgrd)
-              DiaU2rhs(i,j,M2pgrd)=DiaU2rhs(i,j,M2pgrd)+                &
-     &                             1.5_r8*DiaRUfrc(i,j,3,M2pgrd)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2pgrd)
-              DiaRUfrc(i,j,nstp,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)
-              DiaU2rhs(i,j,M2bstr)=1.5_r8*DiaRUfrc(i,j,3,M2bstr)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2bstr)
-              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRUfrc(i,j,3,idiag)=DiaRUfrc(i,j,3,idiag)-            &
+     &                                DiaU2rhs(i,j,idiag)
+                DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)+                &
+     &                              1.5_r8*DiaRUfrc(i,j,3,idiag)-       &
+     &                              0.5_r8*DiaRUfrc(i,j,nnew,idiag)
+                DiaRUfrc(i,j,nstp,idiag)=DiaRUfrc(i,j,3,idiag)
+              END DO
               DiaU2rhs(i,j,M2sstr)=1.5_r8*DiaRUfrc(i,j,3,M2sstr)-       &
      &                             0.5_r8*DiaRUfrc(i,j,nnew,M2sstr)
               DiaRUfrc(i,j,nstp,M2sstr)=DiaRUfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRUfrc(i,j,3,M2fcor)=DiaRUfrc(i,j,3,M2fcor)-            &
-     &                               DiaU2rhs(i,j,M2fcor)
-              DiaU2rhs(i,j,M2fcor)=DiaU2rhs(i,j,M2fcor)+                &
-     &                             1.5_r8*DiaRUfrc(i,j,3,M2fcor)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2fcor)
-              DiaRUfrc(i,j,nstp,M2fcor)=DiaRUfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)-            &
-     &                               DiaU2rhs(i,j,M2hvis)
-              DiaU2rhs(i,j,M2hvis)=DiaU2rhs(i,j,M2hvis)+                &
-     &                             1.5_r8*DiaRUfrc(i,j,3,M2hvis)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2hvis)
-              DiaRUfrc(i,j,nstp,M2hvis)=DiaRUfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)-            &
-     &                               DiaU2rhs(i,j,M2hadv)
-              DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+                &
-     &                             1.5_r8*DiaRUfrc(i,j,3,M2hadv)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2hadv)
-              DiaRUfrc(i,j,nstp,M2hadv)=DiaRUfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRUfrc(i,j,3,M2hrad)=DiaRUfrc(i,j,3,M2hrad)-            &
-     &                               DiaU2rhs(i,j,M2hrad)
-              DiaU2rhs(i,j,M2hrad)=DiaU2rhs(i,j,M2hrad)+                &
-     &                             1.5_r8*DiaRUfrc(i,j,3,M2hrad)-       &
-     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2hrad)
-              DiaRUfrc(i,j,nstp,M2hrad)=DiaRUfrc(i,j,3,M2hrad)
-#   endif
+              DiaU2rhs(i,j,M2bstr)=1.5_r8*DiaRUfrc(i,j,3,M2bstr)-       &
+     &                             0.5_r8*DiaRUfrc(i,j,nnew,M2bstr)
+              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -2019,50 +1957,20 @@
      &                      1.5_r8*rvfrc(i,j)-0.5_r8*rv(i,j,0,nnew)
               rv(i,j,0,nstp)=rvfrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRVfrc(i,j,3,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)-            &
-     &                               DiaV2rhs(i,j,M2pgrd)
-              DiaV2rhs(i,j,M2pgrd)=DiaV2rhs(i,j,M2pgrd)+                &
-     &                             1.5_r8*DiaRVfrc(i,j,3,M2pgrd)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2pgrd)
-              DiaRVfrc(i,j,nstp,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)
-              DiaV2rhs(i,j,M2bstr)=1.5_r8*DiaRVfrc(i,j,3,M2bstr)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2bstr)
-              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRVfrc(i,j,3,idiag)=DiaRVfrc(i,j,3,idiag)-            &
+     &                                DiaV2rhs(i,j,idiag)
+                DiaV2rhs(i,j,idiag)=DiaV2rhs(i,j,idiag)+                &
+     &                              1.5_r8*DiaRVfrc(i,j,3,idiag)-       &
+     &                              0.5_r8*DiaRVfrc(i,j,nnew,idiag)
+                DiaRVfrc(i,j,nstp,idiag)=DiaRVfrc(i,j,3,idiag)
+              END DO
               DiaV2rhs(i,j,M2sstr)=1.5_r8*DiaRVfrc(i,j,3,M2sstr)-       &
      &                             0.5_r8*DiaRVfrc(i,j,nnew,M2sstr)
               DiaRVfrc(i,j,nstp,M2sstr)=DiaRVfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRVfrc(i,j,3,M2fcor)=DiaRVfrc(i,j,3,M2fcor)-            &
-     &                               DiaV2rhs(i,j,M2fcor)
-              DiaV2rhs(i,j,M2fcor)=DiaV2rhs(i,j,M2fcor)+                &
-     &                             1.5_r8*DiaRVfrc(i,j,3,M2fcor)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2fcor)
-              DiaRVfrc(i,j,nstp,M2fcor)=DiaRVfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)-            &
-     &                               DiaV2rhs(i,j,M2hvis)
-              DiaV2rhs(i,j,M2hvis)=DiaV2rhs(i,j,M2hvis)+                &
-     &                             1.5_r8*DiaRVfrc(i,j,3,M2hvis)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2hvis)
-              DiaRVfrc(i,j,nstp,M2hvis)=DiaRVfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)-            &
-     &                               DiaV2rhs(i,j,M2hadv)
-              DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)+                &
-     &                             1.5_r8*DiaRVfrc(i,j,3,M2hadv)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2hadv)
-              DiaRVfrc(i,j,nstp,M2hadv)=DiaRVfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRVfrc(i,j,3,M2hrad)=DiaRVfrc(i,j,3,M2hrad)-            &
-     &                               DiaV2rhs(i,j,M2hrad)
-              DiaV2rhs(i,j,M2hrad)=DiaV2rhs(i,j,M2hrad)+                &
-     &                             1.5_r8*DiaRVfrc(i,j,3,M2hrad)-       &
-     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2hrad)
-              DiaRVfrc(i,j,nstp,M2hrad)=DiaRVfrc(i,j,3,M2hrad)
-#   endif
+              DiaV2rhs(i,j,M2bstr)=1.5_r8*DiaRVfrc(i,j,3,M2bstr)-       &
+     &                             0.5_r8*DiaRVfrc(i,j,nnew,M2bstr)
+              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -2079,57 +1987,23 @@
      &                      cff3*ru(i,j,0,nstp)
               ru(i,j,0,nstp)=rufrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRUfrc(i,j,3,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)-            &
-     &                               DiaU2rhs(i,j,M2pgrd)
-              DiaU2rhs(i,j,M2pgrd)=DiaU2rhs(i,j,M2pgrd)+                &
-     &                             cff1*DiaRUfrc(i,j,3,M2pgrd)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2pgrd)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2pgrd)
-              DiaRUfrc(i,j,nstp,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)
-              DiaU2rhs(i,j,M2bstr)=cff1*DiaRUfrc(i,j,3,M2bstr)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2bstr)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2bstr)
-              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRUfrc(i,j,3,idiag)=DiaRUfrc(i,j,3,idiag)-            &
+     &                                DiaU2rhs(i,j,idiag)
+                DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)+                &
+     &                              cff1*DiaRUfrc(i,j,3,idiag)-         &
+     &                              cff2*DiaRUfrc(i,j,nnew,idiag)+      &
+     &                              cff3*DiaRUfrc(i,j,nstp,idiag)
+                DiaRUfrc(i,j,nstp,idiag)=DiaRUfrc(i,j,3,idiag)
+              END DO
               DiaU2rhs(i,j,M2sstr)=cff1*DiaRUfrc(i,j,3,M2sstr)-         &
      &                             cff2*DiaRUfrc(i,j,nnew,M2sstr)+      &
      &                             cff3*DiaRUfrc(i,j,nstp,M2sstr)
               DiaRUfrc(i,j,nstp,M2sstr)=DiaRUfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRUfrc(i,j,3,M2fcor)=DiaRUfrc(i,j,3,M2fcor)-            &
-     &                               DiaU2rhs(i,j,M2fcor)
-              DiaU2rhs(i,j,M2fcor)=DiaU2rhs(i,j,M2fcor)+                &
-     &                             cff1*DiaRUfrc(i,j,3,M2fcor)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2fcor)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2fcor)
-              DiaRUfrc(i,j,nstp,M2fcor)=DiaRUfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)-            &
-     &                               DiaU2rhs(i,j,M2hvis)
-              DiaU2rhs(i,j,M2hvis)=DiaU2rhs(i,j,M2hvis)+                &
-     &                             cff1*DiaRUfrc(i,j,3,M2hvis)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2hvis)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2hvis)
-              DiaRUfrc(i,j,nstp,M2hvis)=DiaRUfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)-            &
-     &                               DiaU2rhs(i,j,M2hadv)
-              DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+                &
-     &                             cff1*DiaRUfrc(i,j,3,M2hadv)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2hadv)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2hadv)
-              DiaRUfrc(i,j,nstp,M2hadv)=DiaRUfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRUfrc(i,j,3,M2hrad)=DiaRUfrc(i,j,3,M2hrad)-            &
-     &                               DiaU2rhs(i,j,M2hrad)
-              DiaU2rhs(i,j,M2hrad)=DiaU2rhs(i,j,M2hrad)+                &
-     &                             cff1*DiaRUfrc(i,j,3,M2hrad)-         &
-     &                             cff2*DiaRUfrc(i,j,nnew,M2hrad)+      &
-     &                             cff3*DiaRUfrc(i,j,nstp,M2hrad)
-              DiaRUfrc(i,j,nstp,M2hrad)=DiaRUfrc(i,j,3,M2hrad)
-#   endif
+              DiaU2rhs(i,j,M2bstr)=cff1*DiaRUfrc(i,j,3,M2bstr)-         &
+     &                             cff2*DiaRUfrc(i,j,nnew,M2bstr)+      &
+     &                             cff3*DiaRUfrc(i,j,nstp,M2bstr)
+              DiaRUfrc(i,j,nstp,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -2142,57 +2016,23 @@
      &                      cff3*rv(i,j,0,nstp)
               rv(i,j,0,nstp)=rvfrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-              DiaRVfrc(i,j,3,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)-            &
-     &                               DiaV2rhs(i,j,M2pgrd)
-              DiaV2rhs(i,j,M2pgrd)=DiaV2rhs(i,j,M2pgrd)+                &
-     &                             cff1*DiaRVfrc(i,j,3,M2pgrd)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2pgrd)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2pgrd)
-              DiaRVfrc(i,j,nstp,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)
-              DiaV2rhs(i,j,M2bstr)=cff1*DiaRVfrc(i,j,3,M2bstr)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2bstr)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2bstr)
-              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
+              DO idiag=1,M2pgrd
+                DiaRVfrc(i,j,3,idiag)=DiaRVfrc(i,j,3,idiag)-            &
+     &                                DiaV2rhs(i,j,idiag)
+                DiaV2rhs(i,j,idiag)=DiaV2rhs(i,j,idiag)+                &
+     &                              cff1*DiaRVfrc(i,j,3,idiag)-         &
+     &                              cff2*DiaRVfrc(i,j,nnew,idiag)+      &
+     &                              cff3*DiaRVfrc(i,j,nstp,idiag)
+                DiaRVfrc(i,j,nstp,idiag)=DiaRVfrc(i,j,3,idiag)
+              END DO
               DiaV2rhs(i,j,M2sstr)=cff1*DiaRVfrc(i,j,3,M2sstr)-         &
      &                             cff2*DiaRVfrc(i,j,nnew,M2sstr)+      &
      &                             cff3*DiaRVfrc(i,j,nstp,M2sstr)
               DiaRVfrc(i,j,nstp,M2sstr)=DiaRVfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-              DiaRVfrc(i,j,3,M2fcor)=DiaRVfrc(i,j,3,M2fcor)-            &
-     &                               DiaV2rhs(i,j,M2fcor)
-              DiaV2rhs(i,j,M2fcor)=DiaV2rhs(i,j,M2fcor)+                &
-     &                             cff1*DiaRVfrc(i,j,3,M2fcor)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2fcor)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2fcor)
-              DiaRVfrc(i,j,nstp,M2fcor)=DiaRVfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-              DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)-            &
-     &                               DiaV2rhs(i,j,M2hvis)
-              DiaV2rhs(i,j,M2hvis)=DiaV2rhs(i,j,M2hvis)+                &
-     &                             cff1*DiaRVfrc(i,j,3,M2hvis)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2hvis)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2hvis)
-              DiaRVfrc(i,j,nstp,M2hvis)=DiaRVfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-              DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)-            &
-     &                               DiaV2rhs(i,j,M2hadv)
-              DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)+                &
-     &                             cff1*DiaRVfrc(i,j,3,M2hadv)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2hadv)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2hadv)
-              DiaRVfrc(i,j,nstp,M2hadv)=DiaRVfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-              DiaRVfrc(i,j,3,M2hrad)=DiaRVfrc(i,j,3,M2hrad)-            &
-     &                               DiaV2rhs(i,j,M2hrad)
-              DiaV2rhs(i,j,M2hrad)=DiaV2rhs(i,j,M2hrad)+                &
-     &                             cff1*DiaRVfrc(i,j,3,M2hrad)-         &
-     &                             cff2*DiaRVfrc(i,j,nnew,M2hrad)+      &
-     &                             cff3*DiaRVfrc(i,j,nstp,M2hrad)
-              DiaRVfrc(i,j,nstp,M2hrad)=DiaRVfrc(i,j,3,M2hrad)
-#   endif
+              DiaV2rhs(i,j,M2bstr)=cff1*DiaRVfrc(i,j,3,M2bstr)-         &
+     &                             cff2*DiaRVfrc(i,j,nnew,M2bstr)+      &
+     &                             cff3*DiaRVfrc(i,j,nstp,M2bstr)
+              DiaRVfrc(i,j,nstp,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
 #  endif
             END DO
           END DO
@@ -2202,26 +2042,12 @@
           DO i=IstrU,Iend
             rhs_ubar(i,j)=rhs_ubar(i,j)+rufrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-            DiaU2rhs(i,j,M2pgrd)=DiaU2rhs(i,j,M2pgrd)+                  &
-     &                           DiaRUfrc(i,j,3,M2pgrd)
-            DiaU2rhs(i,j,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
+            DO idiag=1,M2pgrd
+              DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)+                  &
+     &                            DiaRUfrc(i,j,3,idiag)
+            END DO
             DiaU2rhs(i,j,M2sstr)=DiaRUfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-            DiaU2rhs(i,j,M2fcor)=DiaU2rhs(i,j,M2fcor)+                  &
-     &                           DiaRUfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-            DiaU2rhs(i,j,M2hvis)=DiaU2rhs(i,j,M2hvis)+                  &
-     &                           DiaRUfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-            DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+                  &
-     &                           DiaRUfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-            DiaU2rhs(i,j,M2hrad)=DiaU2rhs(i,j,M2hrad)+                  &
-     &                           DiaRUfrc(i,j,3,M2hrad)
-#   endif
+            DiaU2rhs(i,j,M2bstr)=DiaRUfrc(i,j,3,M2bstr)
 #  endif
           END DO
         END DO
@@ -2229,26 +2055,12 @@
           DO i=Istr,Iend
             rhs_vbar(i,j)=rhs_vbar(i,j)+rvfrc(i,j)
 #  ifdef DIAGNOSTICS_UV
-            DiaV2rhs(i,j,M2pgrd)=DiaV2rhs(i,j,M2pgrd)+                  &
-     &                           DiaRVfrc(i,j,3,M2pgrd)
-            DiaV2rhs(i,j,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
+            DO idiag=1,M2pgrd
+              DiaV2rhs(i,j,idiag)=DiaV2rhs(i,j,idiag)+                  &
+     &                            DiaRVfrc(i,j,3,idiag)
+            END DO
             DiaV2rhs(i,j,M2sstr)=DiaRVfrc(i,j,3,M2sstr)
-#   ifdef UV_COR
-            DiaV2rhs(i,j,M2fcor)=DiaV2rhs(i,j,M2fcor)+                  &
-     &                           DiaRVfrc(i,j,3,M2fcor)
-#   endif
-#   if defined UV_VIS2 || defined UV_VIS4
-            DiaV2rhs(i,j,M2hvis)=DiaV2rhs(i,j,M2hvis)+                  &
-     &                           DiaRVfrc(i,j,3,M2hvis)
-#   endif
-#   ifdef UV_ADV
-            DiaV2rhs(i,j,M2hadv)=DiaV2rhs(i,j,M2hadv)+                  &
-     &                           DiaRVfrc(i,j,3,M2hadv)
-#   endif
-#   ifdef NEARSHORE_MELLOR
-            DiaV2rhs(i,j,M2hrad)=DiaV2rhs(i,j,M2hrad)+                  &
-     &                           DiaRVfrc(i,j,3,M2hrad)
-#   endif
+            DiaV2rhs(i,j,M2bstr)=DiaRVfrc(i,j,3,M2bstr)
 #  endif
           END DO
         END DO
@@ -2458,7 +2270,24 @@
 !-----------------------------------------------------------------------
 !  Time step 2D momentum diagnostic terms.
 !-----------------------------------------------------------------------
+
+#  ifdef MASKING
 !
+!  Apply land/sea mask.
+!
+      DO idiag=1,NDM2d
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)*umask(i,j)
+          END DO
+        END DO
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+            DiaV2rhs(i,j,idiag)=DiaV2rhs(i,j,idiag)*vmask(i,j)
+          END DO
+        END DO
+      END DO
+#  endif
 #  ifdef SOLVE3D
 !
 !  The arrays "DiaU2rhs" and "DiaV2rhs" contain the contributions of

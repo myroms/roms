@@ -194,7 +194,7 @@
 !
       integer :: i, j, k
 
-      real(r8) :: cff, cff1, cff2
+      real(r8) :: cff, cff1, cff2, cff3
 #ifdef VISC_3DCOEF
       real(r8) :: visc_p
 #endif
@@ -263,33 +263,37 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            cff=0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
-            cff1=0.5_r8*((pn(i-1,j)+pn(i,j))*                           &
-     &                   (UFx(i,j  )-UFx(i-1,j))+                       &
-     &                   (pm(i-1,j)+pm(i,j))*                           &
-     &                   (UFe(i,j+1)-UFe(i  ,j)))
-            cff2=dt(ng)*cff*cff1
-            rufrc(i,j)=rufrc(i,j)+cff1
-            u(i,j,k,nnew)=u(i,j,k,nnew)+cff2
+            cff=dt(ng)*0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+            cff1=0.5_r8*(pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))
+            cff2=0.5_r8*(pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j))
+            cff3=cff*(cff1+cff2)
+            rufrc(i,j)=rufrc(i,j)+cff1+cff2
+            u(i,j,k,nnew)=u(i,j,k,nnew)+cff3
 #ifdef DIAGNOSTICS_UV
-            DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)+cff1
-            DiaU3wrk(i,j,k,M3hvis)=cff2
+            DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)+cff1+cff2
+            DiaRUfrc(i,j,3,M2xvis)=DiaRUfrc(i,j,3,M2xvis)+cff1
+            DiaRUfrc(i,j,3,M2yvis)=DiaRUfrc(i,j,3,M2yvis)+cff2
+            DiaU3wrk(i,j,k,M3hvis)=cff3
+            DiaU3wrk(i,j,k,M3xvis)=cff*cff1
+            DiaU3wrk(i,j,k,M3yvis)=cff*cff2
 #endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            cff=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
-            cff1=0.5_r8*((pn(i,j-1)+pn(i,j))*                           &
-     &                   (VFx(i+1,j)-VFx(i,j  ))-                       &
-     &                   (pm(i,j-1)+pm(i,j))*                           &
-     &                   (VFe(i  ,j)-VFe(i,j-1)))
-            cff2=dt(ng)*cff*cff1
-            rvfrc(i,j)=rvfrc(i,j)+cff1
-            v(i,j,k,nnew)=v(i,j,k,nnew)+cff2
+            cff=dt(ng)*0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
+            cff1=0.5_r8*(pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))
+            cff2=0.5_r8*(pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1))
+            cff3=cff*(cff1-cff2)
+            rvfrc(i,j)=rvfrc(i,j)+cff1-cff2
+            v(i,j,k,nnew)=v(i,j,k,nnew)+cff3
 #ifdef DIAGNOSTICS_UV
-            DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)+cff1
-            DiaV3wrk(i,j,k,M3hvis)=cff2
+            DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)+cff1-cff2
+            DiaRVfrc(i,j,3,M2xvis)=DiaRVfrc(i,j,3,M2xvis)+cff1
+            DiaRVfrc(i,j,3,M2yvis)=DiaRVfrc(i,j,3,M2yvis)-cff2
+            DiaV3wrk(i,j,k,M3hvis)=cff3
+            DiaV3wrk(i,j,k,M3xvis)= cff*cff1
+            DiaV3wrk(i,j,k,M3yvis)=-cff*cff2
 #endif
           END DO
         END DO

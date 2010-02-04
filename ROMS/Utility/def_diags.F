@@ -48,8 +48,10 @@
 
       integer :: i, ifield, itrc, ivar, j, nvd3, nvd4
       integer :: recdim, status
-
-      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+# if defined WRITE_WATER && defined MASKING
+      integer :: xy_pdim, xyz_pdim
+# endif
+      integer :: DimIDs(32), p2dgrd(3), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
       integer :: def_dim
@@ -58,7 +60,7 @@
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
 #  endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+      integer :: t3dgrd(4), p3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 # endif
 
       real(r8) :: Aval(6)
@@ -133,6 +135,10 @@
         IF (exit_flag.ne.NoError) RETURN
 
 # if defined WRITE_WATER && defined MASKING
+        status=def_dim(ng, iNLM, ncDIAid(ng), ncname, 'xy_psi',         &
+     &                 IOBOUNDS(ng)%xy_psi, xy_pdim)
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, iNLM, ncDIAid(ng), ncname, 'xy_rho',         &
      &                 IOBOUNDS(ng)%xy_rho, DimIDs(17))
         IF (exit_flag.ne.NoError) RETURN
@@ -148,6 +154,10 @@
 
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
+        status=def_dim(ng, iNLM, ncDIAid(ng), ncname, 'xyz_psi',        &
+     &                 IOBOUNDS(ng)%xy_psi*N(ng), xyz_pdim)
+        IF (exit_flag.ne.NoError) RETURN
+
         status=def_dim(ng, iNLM, ncDIAid(ng), ncname, 'xyz_rho',        &
      &                 IOBOUNDS(ng)%xy_rho*N(ng), DimIDs(20))
         IF (exit_flag.ne.NoError) RETURN
@@ -301,6 +311,27 @@
         v3dgrd(4)=DimIDs(12)
 #  endif
 # endif
+!
+!  Define dimension vectors for staggered variables at PSI-points.
+!
+# if defined WRITE_WATER && defined MASKING
+        p2dgrd(1)=xy_pdim
+        p2dgrd(2)=DimIDs(12)
+#  ifdef SOLVE3D
+        p2dgrd(1)=xyz_pdim
+        p2dgrd(2)=DimIDs(12)
+#  endif
+# else
+        p2dgrd(1)=DimIDs( 4)
+        p2dgrd(2)=DimIDs( 8)
+        p2dgrd(3)=DimIDs(12)
+#  ifdef SOLVE3D
+        p3dgrd(1)=DimIDs( 4)
+        p3dgrd(2)=DimIDs( 8)
+        p3dgrd(3)=DimIDs( 9)
+        p3dgrd(4)=DimIDs(12)
+#  endif
+# endif
 # ifdef SOLVE3D
 !
 !  Define dimension vector for staggered w-momemtum type variables.
@@ -378,6 +409,40 @@
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
+!
+!  Define 2D potential vorticity.
+!
+        ifield=id2dPV
+        Vinfo( 1)=Vname(1,ifield)
+        Vinfo( 2)=Vname(2,ifield)
+        Vinfo( 3)=Vname(3,ifield)
+        Vinfo(14)=Vname(4,ifield)
+        Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_psi'
+# endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(p2dvar,r8)
+        status=def_var(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),        &
+     &                 NF_FOUT, nvd3, p2dgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define 2D relative vorticity.
+!
+        ifield=id2dRV
+        Vinfo( 1)=Vname(1,ifield)
+        Vinfo( 2)=Vname(2,ifield)
+        Vinfo( 3)=Vname(3,ifield)
+        Vinfo(14)=Vname(4,ifield)
+        Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_psi'
+# endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(p2dvar,r8)
+        status=def_var(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),        &
+     &                 NF_FOUT, nvd3, p2dgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 
 # ifdef DIAGNOSTICS_UV
 !
@@ -452,7 +517,42 @@
         END DO
 #  endif
 # endif
-
+# ifdef SOLVE3D
+!
+!  Define 3D potential vorticity.
+!
+        ifield=id3dPV
+        Vinfo( 1)=Vname(1,ifield)
+        Vinfo( 2)=Vname(2,ifield)
+        Vinfo( 3)=Vname(3,ifield)
+        Vinfo(14)=Vname(4,ifield)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_psi'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(p3dvar,r8)
+        status=def_var(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),        &
+     &                 NF_FOUT, nvd4, p3dgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define 3D relative vorticity.
+!
+        ifield=id3dRV
+        Vinfo( 1)=Vname(1,ifield)
+        Vinfo( 2)=Vname(2,ifield)
+        Vinfo( 3)=Vname(3,ifield)
+        Vinfo(14)=Vname(4,ifield)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_psi'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(p3dvar,r8)
+        status=def_var(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),        &
+     &                 NF_FOUT, nvd4, p3dgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
 # ifdef DIAGNOSTICS_TS
 !
 !  Define tracer diagnostic fields.
@@ -578,6 +678,20 @@
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
             diaVid(idtime,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,id2dPV))) THEN
+            got_var(id2dPV)=.TRUE.
+            diaVid(id2dPV,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,id2dRV))) THEN
+            got_var(id2dRV)=.TRUE.
+            diaVid(id2dRV,ng)=var_id(i)
+# ifdef SOLVE3D
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,id3dPV))) THEN
+            got_var(id3dPV)=.TRUE.
+            diaVid(id3dPV,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,id3dRV))) THEN
+            got_var(id3dRV)=.TRUE.
+            diaVid(id3dRV,ng)=var_id(i)
+# endif
           END IF
 # ifdef DIAGNOSTICS_UV
           DO ivar=1,NDM2d
@@ -641,6 +755,28 @@
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
+        ELSE IF (.not.got_var(id2dPV)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,id2dPV)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        ELSE IF (.not.got_var(id2dRV)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,id2dRV)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+# ifdef SOLVE3D
+        ELSE IF (.not.got_var(id3dPV)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,id3dPV)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        ELSE IF (.not.got_var(id3dRV)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,id3dRV)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+# endif
         END IF
 # ifdef DIAGNOSTICS_UV
         DO ivar=1,NDM2d

@@ -80,35 +80,48 @@
 !-----------------------------------------------------------------------
 !
 # ifdef DIAGNOSTICS_TS
-        integer :: iTrate            ! Tracer, time rate of change
-        integer :: iThadv            ! Tracer, horizontal advection
-        integer :: iThdif            ! Tracer, horizontal diffusion
-        integer :: iTvadv            ! Tracer, vertical advection
-        integer :: iTvdif            ! Tracer, vertical diffusion
+        integer :: iTrate          ! Tracer, time rate of change
+        integer :: iTvadv          ! Tracer, vertical advection
+        integer :: iThadv          ! Tracer, horizontal advection
+        integer :: iTxadv          ! Tracer, horizontal X-advection
+        integer :: iTyadv          ! Tracer, horizontal Y-advection
+        integer :: iTvdif          ! Tracer, vertical diffusion
+        integer :: iThdif          ! Tracer, horizontal diffusion
+        integer :: iTxdif          ! Tracer, horizontal X-diffusion
+        integer :: iTydif          ! Tracer, horizontal Y-diffusion
+        integer :: iTsdif          ! Tracer, horizontal S-diffusion
 # endif
 # ifdef DIAGNOSTICS_UV
-        integer :: M2pgrd            ! 2D momentum, pressure gradient
-        integer :: M2fcor            ! 2D momentum, Coriolis
-        integer :: M2rate            ! 2D momentum, time rate of change
-        integer :: M2hadv            ! 2D momentum, horizontal advection
+        integer :: M2fcor          ! 2D momentum, Coriolis
+        integer :: M2hadv          ! 2D momentum, horizontal advection
+        integer :: M2xadv          ! 2D momentum, horizontal X-advection
+        integer :: M2yadv          ! 2D momentum, horizontal Y-advection
 #  ifdef NEARSHORE_MELLOR
-        integer :: M2hrad            ! 2D momentum, horizontal stresses
+        integer :: M2hrad          ! 2D momentum, horizontal stresses
 #  endif
-        integer :: M2hvis            ! 2D momentum, horizontal viscosity
-        integer :: M2sstr            ! 2D momentum, surface stress
-        integer :: M2bstr            ! 2D momentum, bottom stress
+        integer :: M2pgrd          ! 2D momentum, pressure gradient
+        integer :: M2hvis          ! 2D momentum, horizontal viscosity
+        integer :: M2xvis          ! 2D momentum, horizontal X-viscosity
+        integer :: M2yvis          ! 2D momentum, horizontal Y-viscosity
+        integer :: M2sstr          ! 2D momentum, surface stress
+        integer :: M2bstr          ! 2D momentum, bottom stress
+        integer :: M2rate          ! 2D momentum, time rate of change
 #  ifdef SOLVE3D
-        integer :: M3fcor            ! 3D momentum, Coriolis
-        integer :: M3rate            ! 3D momentum, time rate of change
-        integer :: M3hadv            ! 3D momentum, horizontal advection
+        integer :: M3fcor          ! 3D momentum, Coriolis
+        integer :: M3vadv          ! 3D momentum, vertical advection
+        integer :: M3hadv          ! 3D momentum, horizontal advection
+        integer :: M3xadv          ! 3D momentum, horizontal X-advection
+        integer :: M3yadv          ! 3D momentum, horizontal Y-advection
 #   ifdef NEARSHORE_MELLOR
-        integer :: M3hrad            ! 3D momentum, horizontal stresses
-        integer :: M3vrad            ! 3D momentum, vertical stresses
+        integer :: M3hrad          ! 3D momentum, horizontal stresses
+        integer :: M3vrad          ! 3D momentum, vertical stresses
 #   endif
-        integer :: M3hvis            ! 3D momentum, horizontal viscosity
-        integer :: M3pgrd            ! 3D momentum, pressure gradient
-        integer :: M3vadv            ! 3D momentum, vertical advection
-        integer :: M3vvis            ! 3D momentum, vertical viscosity
+        integer :: M3pgrd          ! 3D momentum, pressure gradient
+        integer :: M3vvis          ! 3D momentum, vertical viscosity
+        integer :: M3hvis          ! 3D momentum, horizontal viscosity
+        integer :: M3xvis          ! 3D momentum, horizontal X-viscosity
+        integer :: M3yvis          ! 3D momentum, horizontal Y-viscosity
+        integer :: M3rate          ! 3D momentum, time rate of change
 #  endif
 # endif
 #endif
@@ -1779,68 +1792,93 @@
 !---------------------------------------------------------------------
 !  Set diagnostic fields identification indices.
 !---------------------------------------------------------------------
-!
+
 # ifdef DIAGNOSTICS_TS
+!
+!  Indices for tracer diagnostic variables.
+!
       iThadv=1
-      iTvadv=2
-      ic=2
+      iTxadv=2
+      iTyadv=3
+      iTvadv=4
+      ic=4
 #  if defined TS_DIF2 || defined TS_DIF4
       iThdif=ic+1
+      iTxdif=ic+2
+      iTydif=ic+3
+      ic=ic+3
+#   if defined MIX_GEO_TS || defined MIX_ISO_TS
+      iTsdif=ic+1
       ic=ic+1
+#   endif
 #  endif
       iTvdif=ic+1
       iTrate=ic+2
 # endif
 # ifdef DIAGNOSTICS_UV
 !
-!  Indices for 2D momentum diagnostic variables.
-!  Order is important!
+!  Indices for 2D momentum diagnostic variables.  In some places in
+!  the code a compact DO-loop (idiag=1:M2pgrd) is used to improve
+!  flexibility. Therefore, the order of indices is very important.
+!  Only those fields that require special treatment are set below
+!  the M2pgrd index.
 !
-      M2pgrd=1
-      ic=1
+      ic=0
 #  if defined UV_COR
       M2fcor=ic+1
       ic=ic+1
 #  endif
 #  if defined UV_ADV
       M2hadv=ic+1
-      ic=ic+1
+      M2xadv=ic+2
+      M2yadv=ic+3
+      ic=ic+3
 #  endif
 #  if defined NEARSHORE_MELLOR
       M2hrad=ic+1
       ic=ic+1
 #  endif
-      M2sstr=ic+1
-      ic=ic+1
-      M2bstr=ic+1
 #  if defined UV_VIS2 || defined UV_VIS4
-      M2hvis=ic+2
+      M2hvis=ic+1
+      M2xvis=ic+2
+      M2yvis=ic+3
+      ic=ic+3
 #  endif
-      M2rate=NDM2d
+      M2pgrd=ic+1
+      M2sstr=ic+2             ! These indices need to be
+      M2bstr=ic+3             ! specified last to allow a
+      M2rate=NDM2d            ! compact DO-loop structure
 #  ifdef SOLVE3D
 !
-!  Indices for 3D momentum diagnostic variables.
-!  Order is important!
+!  Indices for 3D momentum diagnostic variables.  In some places in
+!  the code a compact DO-loop (idiag=1:M3pgrd) is used to improve
+!  flexibility. Therefore, the order of indices is very important.
+!  Only those fields that require special treatment are set below
+!  the M3pgrd index.
 !
-      M3pgrd=1
-      ic=1
+      ic=0
 #   if defined UV_COR
       M3fcor=ic+1
       ic=ic+1
 #   endif
 #   if defined UV_ADV
-      M3hadv=ic+1
-      M3vadv=ic+2
-      ic=ic+2
+      M3vadv=ic+1
+      M3hadv=ic+2
+      M3xadv=ic+3
+      M3yadv=ic+4
+      ic=ic+4
 #   endif
 #   if defined NEARSHORE_MELLOR
       M3hrad=ic+1
       M3vrad=ic+2
       ic=ic+2
 #   endif
-      M3vvis=ic+1
+      M3pgrd=ic+1             ! needs to be here, indices below
+      M3vvis=ic+2             ! require special treatment
 #   if defined UV_VIS2 || defined UV_VIS4
-      M3hvis=ic+2
+      M3hvis=ic+3
+      M3xvis=ic+4
+      M3yvis=ic+5
 #   endif
       M3rate=NDM3d
 #  endif

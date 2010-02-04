@@ -329,6 +329,10 @@
         integer  :: idWvel        ! true vertical velocity
         integer  :: idZads        ! Free-surface adjoint sensitivity
         integer  :: idZtlf        ! Free-surface impulse forcing
+        integer  :: id2dPV        ! 2D potential vorticity
+        integer  :: id2dRV        ! 2D relative vorticity
+        integer  :: id3dPV        ! 3D potential vorticity
+        integer  :: id3dRV        ! 3D relative vorticity
 !
 !  Input/output identification tracer indices.
 !
@@ -1554,6 +1558,18 @@
               CASE ('idTbry(inorth,inert(i))')
                 load=.TRUE.
 #endif
+#ifdef DIAGNOSTICS
+              CASE ('id2dPV')
+                id2dPV=varid
+              CASE ('id2dRV')
+                id2dRV=varid
+# ifdef SOLVE3D
+              CASE ('id3dPV')
+                id3dPV=varid
+              CASE ('id3dRV')
+                id3dRV=varid
+# endif
+#endif
 #ifdef DIAGNOSTICS_UV
               CASE ('idDu2d(M2pgrd)')
                 idDu2d(M2pgrd)=varid
@@ -1572,8 +1588,16 @@
               CASE ('idDv2d(M2rate)')
                 idDv2d(M2rate)=varid
 # ifdef UV_ADV
+              CASE ('idDu2d(M2xadv)')
+                idDu2d(M2xadv)=varid
+              CASE ('idDu2d(M2yadv)')
+                idDu2d(M2yadv)=varid
               CASE ('idDu2d(M2hadv)')
                 idDu2d(M2hadv)=varid
+              CASE ('idDv2d(M2xadv)')
+                idDv2d(M2xadv)=varid
+              CASE ('idDv2d(M2yadv)')
+                idDv2d(M2yadv)=varid
               CASE ('idDv2d(M2hadv)')
                 idDv2d(M2hadv)=varid
 # endif
@@ -1592,8 +1616,16 @@
 # if defined UV_VIS2 || defined UV_VIS4
               CASE ('idDu2d(M2hvis)')
                 idDu2d(M2hvis)=varid
+              CASE ('idDu2d(M2xvis)')
+                idDu2d(M2xvis)=varid
+              CASE ('idDu2d(M2yvis)')
+                idDu2d(M2yvis)=varid
               CASE ('idDv2d(M2hvis)')
                 idDv2d(M2hvis)=varid
+              CASE ('idDv2d(M2xvis)')
+                idDv2d(M2xvis)=varid
+              CASE ('idDv2d(M2yvis)')
+                idDv2d(M2yvis)=varid
 # endif
 # ifdef SOLVE3D
               CASE ('idDu3d(M3pgrd)')
@@ -1609,8 +1641,16 @@
               CASE ('idDv3d(M3rate)')
                 idDv3d(M3rate)=varid
 #  ifdef UV_ADV
+              CASE ('idDu3d(M3xadv)')
+                idDu3d(M3xadv)=varid
+              CASE ('idDu3d(M3yadv)')
+                idDu3d(M3yadv)=varid
               CASE ('idDu3d(M3hadv)')
                 idDu3d(M3hadv)=varid
+              CASE ('idDv3d(M3xadv)')
+                idDv3d(M3xadv)=varid
+              CASE ('idDv3d(M3yadv)')
+                idDv3d(M3yadv)=varid
               CASE ('idDv3d(M3hadv)')
                 idDv3d(M3hadv)=varid
               CASE ('idDu3d(M3vadv)')
@@ -1637,8 +1677,16 @@
 #  if defined UV_VIS2 || defined UV_VIS4
               CASE ('idDu3d(M3hvis)')
                 idDu3d(M3hvis)=varid
+              CASE ('idDu3d(M3xvis)')
+                idDu3d(M3xvis)=varid
+              CASE ('idDu3d(M3yvis)')
+                idDu3d(M3yvis)=varid
               CASE ('idDv3d(M3hvis)')
                 idDv3d(M3hvis)=varid
+              CASE ('idDv3d(M3xvis)')
+                idDv3d(M3xvis)=varid
+              CASE ('idDv3d(M3yvis)')
+                idDv3d(M3yvis)=varid
 #  endif
 # endif
 #endif
@@ -1647,11 +1695,23 @@
                 load=.TRUE.
               CASE ('idDtrc(iThadv)')
                 load=.TRUE.
+              CASE ('idDtrc(iTxadv)')
+                load=.TRUE.
+              CASE ('idDtrc(iTyadv)')
+                load=.TRUE.
               CASE ('idDtrc(iTvadv)')
                 load=.TRUE.
 # if defined TS_DIF2 || defined TS_DIF4
               CASE ('idDtrc(iThdif)')
                 load=.TRUE.
+              CASE ('idDtrc(iTxdif)')
+                load=.TRUE.
+              CASE ('idDtrc(iTydif)')
+                load=.TRUE.
+#  if defined MIX_GEO_TS || defined MIX_ISO_TS
+              CASE ('idDtrc(iTsdif)')
+                load=.TRUE.
+#  endif
 # endif
               CASE ('idDtrc(iTvdif)')
                 load=.TRUE.
@@ -1921,6 +1981,52 @@
                     WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                CASE ('_xadv')
+                  varid=varid-1
+                  DO i=1,MT
+                    varid=varid+1
+                    idDtrc(i,iTxadv)=varid
+                    DO ng=1,Ngrids
+                      Fscale(varid,ng)=scale
+                      Iinfo(1,varid,ng)=gtype
+                    END DO
+                    WRITE (Vname(1,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(1,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(1)))
+                    WRITE (Vname(2,varid),'(a,", ",a)')                 &
+     &                    TRIM(ADJUSTL(Vname(2,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(2)))
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(3)))
+                    WRITE (Vname(4,varid),'(a,a)')                      &
+     &                    TRIM(Vname(1,varid)), ', scalar, series'
+                    WRITE (Vname(5,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  END DO
+                CASE ('_yadv')
+                  varid=varid-1
+                  DO i=1,MT
+                    varid=varid+1
+                    idDtrc(i,iTyadv)=varid
+                    DO ng=1,Ngrids
+                      Fscale(varid,ng)=scale
+                      Iinfo(1,varid,ng)=gtype
+                    END DO
+                    WRITE (Vname(1,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(1,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(1)))
+                    WRITE (Vname(2,varid),'(a,", ",a)')                 &
+     &                    TRIM(ADJUSTL(Vname(2,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(2)))
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(3)))
+                    WRITE (Vname(4,varid),'(a,a)')                      &
+     &                    TRIM(Vname(1,varid)), ', scalar, series'
+                    WRITE (Vname(5,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  END DO
                 CASE ('_vadv')
                   varid=varid-1
                   DO i=1,MT
@@ -1965,9 +2071,80 @@
      &                    TRIM(ADJUSTL(Vinfo(3)))
                     WRITE (Vname(4,varid),'(a,a)')                      &
      &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                      &
+                    WRITE (Vname(5,varid),'(a)')                        &
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
+                CASE ('_xdiff')
+                  varid=varid-1
+                  DO i=1,MT
+                    varid=varid+1
+                    idDtrc(i,iTxdif)=varid
+                    DO ng=1,Ngrids
+                      Fscale(varid,ng)=scale
+                      Iinfo(1,varid,ng)=gtype
+                    END DO
+                    WRITE (Vname(1,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(1,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(1)))
+                    WRITE (Vname(2,varid),'(a,", ",a)')                 &
+     &                    TRIM(ADJUSTL(Vname(2,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(2)))
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(3)))
+                    WRITE (Vname(4,varid),'(a,a)')                      &
+     &                    TRIM(Vname(1,varid)), ', scalar, series'
+                    WRITE (Vname(5,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  END DO
+                CASE ('_ydiff')
+                  varid=varid-1
+                  DO i=1,MT
+                    varid=varid+1
+                    idDtrc(i,iTydif)=varid
+                    DO ng=1,Ngrids
+                      Fscale(varid,ng)=scale
+                      Iinfo(1,varid,ng)=gtype
+                    END DO
+                    WRITE (Vname(1,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(1,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(1)))
+                    WRITE (Vname(2,varid),'(a,", ",a)')                 &
+     &                    TRIM(ADJUSTL(Vname(2,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(2)))
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(3)))
+                    WRITE (Vname(4,varid),'(a,a)')                      &
+     &                    TRIM(Vname(1,varid)), ', scalar, series'
+                    WRITE (Vname(5,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  END DO
+#  if defined MIX_GEO_TS || defined MIX_ISO_TS
+                CASE ('_sdiff')
+                  varid=varid-1
+                  DO i=1,MT
+                    varid=varid+1
+                    idDtrc(i,iTsdif)=varid
+                    DO ng=1,Ngrids
+                      Fscale(varid,ng)=scale
+                      Iinfo(1,varid,ng)=gtype
+                    END DO
+                    WRITE (Vname(1,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(1,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(1)))
+                    WRITE (Vname(2,varid),'(a,", ",a)')                 &
+     &                    TRIM(ADJUSTL(Vname(2,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(2)))
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))),            &
+     &                    TRIM(ADJUSTL(Vinfo(3)))
+                    WRITE (Vname(4,varid),'(a,a)')                      &
+     &                    TRIM(Vname(1,varid)), ', scalar, series'
+                    WRITE (Vname(5,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  END DO
+#  endif
 # endif
                 CASE ('_vdiff')
                   varid=varid-1

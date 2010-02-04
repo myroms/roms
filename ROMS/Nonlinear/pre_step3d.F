@@ -305,7 +305,9 @@
 #  endif
 # endif
       integer :: i, indx, is, itrc, j, k, ltrc
-
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+      integer :: idiag
+# endif
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
       real(r8), parameter :: eps = 1.0E-16_r8
 
@@ -865,20 +867,11 @@
               cff2=FC(i,k)-FC(i,k-1)
               u(i,j,k,nnew)=cff1+cff2
 # ifdef DIAGNOSTICS_UV
-              DiaU3wrk(i,j,k,M3rate)=cff1
+              DO idiag=1,M3pgrd
+                DiaU3wrk(i,j,k,idiag)=0.0_r8
+              END DO
               DiaU3wrk(i,j,k,M3vvis)=cff2
-              DiaU3wrk(i,j,k,M3pgrd)=0.0_r8
-#  ifdef UV_ADV
-              DiaU3wrk(i,j,k,M3hadv)=0.0_r8
-              DiaU3wrk(i,j,k,M3vadv)=0.0_r8
-#  endif
-#  ifdef NEARSHORE_MELLOR
-              DiaU3wrk(i,j,k,M3hrad)=0.0_r8
-              DiaU3wrk(i,j,k,M3vrad)=0.0_r8
-#  endif
-#  ifdef UV_COR
-              DiaU3wrk(i,j,k,M3fcor)=0.0_r8
-#  endif
+              DiaU3wrk(i,j,k,M3rate)=cff1
 # endif
             END DO
           END DO
@@ -887,35 +880,20 @@
             DO i=IstrU,Iend
               cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
               cff2=FC(i,k)-FC(i,k-1)
+              cff3=0.5_r8*DC(i,0)
               u(i,j,k,nnew)=cff1-                                       &
-     &                      0.5_r8*DC(i,0)*ru(i,j,k,indx)+              &
+     &                      cff3*ru(i,j,k,indx)+                        &
      &                      cff2
 # ifdef DIAGNOSTICS_UV
-              DiaU3wrk(i,j,k,M3rate)=cff1
+              DO idiag=1,M3pgrd
+                DiaU3wrk(i,j,k,idiag)=-cff3*DiaRU(i,j,k,indx,idiag)
+              END DO
               DiaU3wrk(i,j,k,M3vvis)=cff2
-              DiaU3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3pgrd)
-#  ifdef UV_ADV
-              DiaU3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3hadv)
-              DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3vadv)
-#  endif
-#  ifdef NEARSHORE_MELLOR
-              DiaU3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3hrad)
-              DiaU3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3vrad)
-#  endif
-#  ifdef UV_COR
-              DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                   &
-     &                               DiaRU(i,j,k,indx,M3fcor)
-#  endif
 #  ifdef BODYFORCE
               DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-            &
-     &                               0.5_r8*DC(i,0)*                    &
-     &                               DiaRU(i,j,k,indx,M3vvis)
+     &                               cff3*DiaRU(i,j,k,indx,M3vvis)
 #  endif
+              DiaU3wrk(i,j,k,M3rate)=cff1
 # endif
             END DO
           END DO
@@ -931,38 +909,19 @@
      &                               cff2*ru(i,j,k,indx))+              &
      &                      cff4
 # ifdef DIAGNOSTICS_UV
-              DiaU3wrk(i,j,k,M3rate)=cff3
+              DO idiag=1,M3pgrd
+                DiaU3wrk(i,j,k,idiag)=DC(i,0)*                          &
+     &                                (cff1*DiaRU(i,j,k,nrhs,idiag)-    &
+     &                                 cff2*DiaRU(i,j,k,indx,idiag))
+              END DO
               DiaU3wrk(i,j,k,M3vvis)=cff4
-              DiaU3wrk(i,j,k,M3pgrd)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3pgrd)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3pgrd))
-#  ifdef UV_ADV
-              DiaU3wrk(i,j,k,M3hadv)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3hadv)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3hadv))
-              DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3vadv)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3vadv))
-#  endif
-#  ifdef NEARSHORE_MELLOR
-              DiaU3wrk(i,j,k,M3hrad)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3hrad)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3hrad))
-              DiaU3wrk(i,j,k,M3vrad)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3vrad)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3vrad))
-#  endif
-#  ifdef UV_COR
-              DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                           &
-     &                               (cff1*DiaRU(i,j,k,nrhs,M3fcor)-    &
-     &                                cff2*DiaRU(i,j,k,indx,M3fcor))
-#  endif
 #  ifdef BODYFORCE
               DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+            &
      &                               DC(i,0)*                           &
      &                               (cff1*DiaRU(i,j,k,nrhs,M3vvis)-    &
      &                                cff2*DiaRU(i,j,k,indx,M3vvis))
 #  endif
+              DiaU3wrk(i,j,k,M3rate)=cff3
 # endif
             END DO
           END DO
@@ -1012,20 +971,11 @@
                 cff2=FC(i,k)-FC(i,k-1)
                 v(i,j,k,nnew)=cff1+cff2
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=cff1
+                DO idiag=1,M3pgrd
+                  DiaV3wrk(i,j,k,idiag)=0.0_r8
+                END DO
                 DiaV3wrk(i,j,k,M3vvis)=cff2
-                DiaV3wrk(i,j,k,M3pgrd)=0.0_r8
-#  ifdef UV_ADV
-                DiaV3wrk(i,j,k,M3hadv)=0.0_r8
-                DiaV3wrk(i,j,k,M3vadv)=0.0_r8
-#  endif
-#  ifdef NEARSHORE_MELLOR
-                DiaV3wrk(i,j,k,M3hrad)=0.0_r8
-                DiaV3wrk(i,j,k,M3vrad)=0.0_r8
-#  endif
-#  ifdef UV_COR
-                DiaV3wrk(i,j,k,M3fcor)=0.0_r8
-#  endif
+                DiaV3wrk(i,j,k,M3rate)=cff1
 # endif
               END DO
             END DO
@@ -1034,35 +984,20 @@
               DO i=Istr,Iend
                 cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
                 cff2=FC(i,k)-FC(i,k-1)
+                cff3=0.5_r8*DC(i,0)
                 v(i,j,k,nnew)=cff1-                                     &
-     &                        0.5_r8*DC(i,0)*rv(i,j,k,indx)+            &
+     &                        cff3*rv(i,j,k,indx)+                      &
      &                        cff2
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=cff1
+                DO idiag=1,M3pgrd
+                  DiaV3wrk(i,j,k,idiag)=-cff3*DiaRV(i,j,k,indx,idiag)
+                END DO
                 DiaV3wrk(i,j,k,M3vvis)=cff2
-                DiaV3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3pgrd)
-#  ifdef UV_ADV
-                DiaV3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3hadv)
-                DiaV3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3vadv)
-#  endif
-#  ifdef NEARSHORE_MELLOR
-                DiaV3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3hrad)
-                DiaV3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3vrad)
-#  endif
-#  ifdef UV_COR
-                DiaV3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
-     &                                  DiaRV(i,j,k,indx,M3fcor)
-#  endif
 #  ifdef BODYFORCE
                 DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)-          &
-     &                                 0.5_r8*DC(i,0)*                  &
-     &                                 DiaRV(i,j,k,indx,M3vvis)
+     &                                 cff3*DiaRV(i,j,k,indx,M3vvis)
 #  endif
+                DiaV3wrk(i,j,k,M3rate)=cff1
 # endif
               END DO
             END DO
@@ -1078,38 +1013,19 @@
      &                                 cff2*rv(i,j,k,indx))+            &
      &                        cff4
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=cff3
+                DO idiag=1,M3pgrd
+                  DiaV3wrk(i,j,k,idiag)=DC(i,0)*                        &
+     &                                  (cff1*DiaRV(i,j,k,nrhs,idiag)-  &
+     &                                   cff2*DiaRV(i,j,k,indx,idiag))
+                END DO
                 DiaV3wrk(i,j,k,M3vvis)=cff4
-                DiaV3wrk(i,j,k,M3pgrd)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3pgrd)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3pgrd))
-#  ifdef UV_ADV
-                DiaV3wrk(i,j,k,M3hadv)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3hadv)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3hadv))
-                DiaV3wrk(i,j,k,M3vadv)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3vadv)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3vadv))
-#  endif
-#  ifdef NEARSHORE_MELLOR
-                DiaV3wrk(i,j,k,M3hrad)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3hrad)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3hrad))
-                DiaV3wrk(i,j,k,M3vrad)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3vrad)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3vrad))
-#  endif
-#  ifdef UV_COR
-                DiaV3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
-     &                                 (cff1*DiaRV(i,j,k,nrhs,M3fcor)-  &
-     &                                  cff2*DiaRV(i,j,k,indx,M3fcor))
-#  endif
 #  ifdef BODYFORCE
                 DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+          &
      &                                 DC(i,0)*                         &
      &                                 (cff1*DiaRV(i,j,k,nrhs,M3vvis)-  &
      &                                  cff2*DiaRV(i,j,k,indx,M3vvis))
 #  endif
+                DiaV3wrk(i,j,k,M3rate)=cff3
 # endif
               END DO
             END DO
