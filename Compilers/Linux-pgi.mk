@@ -13,7 +13,6 @@
 # FFLAGS         Flags to the fortran compiler
 # CPP            Name of the C-preprocessor
 # CPPFLAGS       Flags to the C-preprocessor
-# CLEAN          Name of cleaning executable after C-preprocessing
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF libary directory
 # LD             Program to load the objects into an executable
@@ -99,8 +98,8 @@ ifdef USE_DEBUG
 #          FFLAGS += -gopt -C
 #          FFLAGS += -g
 else
-#          FFLAGS += -Bstatic -fastsse -Mipa=fast -tp k8-64
-           FFLAGS += -O3 -tp k8-64
+#          FFLAGS += -Bstatic -fastsse -Mipa=fast
+           FFLAGS += -O3
 endif
 
 # Save compiler flags without the MCT or ESMF libraries additions

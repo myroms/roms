@@ -2228,7 +2228,7 @@
 !  Write out wind-induced bottom wave period.
 !
       IF (Hout(idWpbt,ng)) THEN
-        scale=rad2deg
+        scale=1.0_r8
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWpbt,ng),    &
      &                     tHISindx(ng), gtype,                         &
@@ -2252,7 +2252,7 @@
 !  Write out wind-induced wave bottom orbital velocity.
 !
       IF (Hout(idWorb,ng)) THEN
-        scale=rad2deg
+        scale=1.0_r8
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWorb,ng),    &
      &                     tHISindx(ng), gtype,                         &
@@ -2276,7 +2276,7 @@
 !  Write out wave dissipation.
 !
       IF (Hout(idWdis,ng)) THEN
-        scale=rad2deg
+        scale=1.0_r8
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWdis,ng),    &
      &                     tHISindx(ng), gtype,                         &
