@@ -397,8 +397,7 @@
 !
           waven (i,j)=2.0_r8*pi/MAX(Lwave(i,j),Lwave_min)
           owaven(i,j)=1.0_r8/waven(i,j)
-!!        cff=1.5_r8*pi-Dwave(i,j)-angler(i,j)
-          cff=Dwave(i,j)-angler(i,j)
+          cff=1.5_r8*pi-Dwave(i,j)-angler(i,j)
           wavenx(i,j)=waven(i,j)*COS(cff)
           waveny(i,j)=waven(i,j)*SIN(cff)
           waveE(i,j)=0.0625_r8*g*Hwave(i,j)*Hwave(i,j)
@@ -974,8 +973,7 @@
 !
           waven(i,j)=2.0_r8*pi/MAX(Lwave(i,j),Lwave_min)
           owaven(i,j)=1.0_r8/waven(i,j)
-!!        cff=1.5_r8*pi-Dwave(i,j)-angler(i,j)
-          cff=Dwave(i,j)-angler(i,j)
+          cff=1.5_r8*pi-Dwave(i,j)-angler(i,j)
           wavenx(i,j)=waven(i,j)*DCOS(cff)
           waveny(i,j)=waven(i,j)*DSIN(cff)
 !
