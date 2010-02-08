@@ -2275,7 +2275,7 @@
 !
 !  Apply land/sea mask.
 !
-      DO idiag=1,NDM2d
+      DO idiag=1,NDM2d-1
         DO j=Jstr,Jend
           DO i=IstrU,Iend
             DiaU2rhs(i,j,idiag)=DiaU2rhs(i,j,idiag)*umask(i,j)
