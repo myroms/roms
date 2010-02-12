@@ -407,13 +407,13 @@
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
-            Fmin=A(1)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
-            Fmax=A(1)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
+            Fmin=A(1)*Fscale(ifield,ng)
+            Fmax=A(1)*Fscale(ifield,ng)
             ic=0
             DO j=1,Jrec
               DO i=Istr,Iend
                 ic=ic+1
-                Aval=A(ic)*Finfo(10,ifield,ng)*Fscale(ifield,ng)
+                Aval=A(ic)*Fscale(ifield,ng)
                 Fmin=MIN(Fmin,Aval)
                 Fmax=MAX(Fmax,Aval)
                 Fout(i,j,Tindex)=Aval
