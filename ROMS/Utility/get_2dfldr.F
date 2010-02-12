@@ -460,7 +460,7 @@
      &                              ncid = ncid,                        &
      &                              start = (/Trec/),                   &
      &                              total = (/1/))
-              Fval=Fval*Finfo(10,ifield,ng)*Fscale(ifield,ng)
+              Fval=Fval*Fscale(ifield,ng)
               Fpoint(Tindex,ifield,ng)=Fval
               Fmin=Fval
               Fmax=Fval
