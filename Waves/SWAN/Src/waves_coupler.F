@@ -292,9 +292,9 @@
 !  Allocate attribute vector array used to export/import data.
 !
       allocate ( avdata(gsmsize),stat=ierr )
-      allocate ( points(gsmsize),stat=ierr )
+!!    allocate ( points(gsmsize),stat=ierr )
       avdata=0.0_r8
-      points=0
+!!    points=0
 !
 !  Ask for points in this tile.
 !
