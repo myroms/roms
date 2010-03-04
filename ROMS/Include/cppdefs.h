@@ -519,7 +519,6 @@
 ** ASSIMILATION_UVsur  use if assimilating surface current observations      **
 ** ASSIMILATION_UV     use if assimilating horizontal current observations   **
 ** UV_BAROCLINIC       use if assimilating baroclinic currents only          **
-** NUDGING_SSH         use if nudging SSH observations                       **
 ** NUDGING_SST         use if nudging SST observations                       **
 ** NUDGING_T           use if nudging tracers observations                   **
 ** NUDGING_UVsur       use if nudging surface current observations           **

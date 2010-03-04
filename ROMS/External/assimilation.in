@@ -68,7 +68,6 @@
 ! Nudging assimilation time (days) scales. Inverse scales are computed
 ! internally, [1:Ngrids].
 
-     Znudass == 0.0d0                      ! sea surface height
     M2nudass == 0.0d0                      ! 2D momentum
     M3nudass == 0.5d0                      ! 3D momentum
 
@@ -190,8 +189,6 @@
 ! Nudging assimilation time (days) scales (inverse scales will be computed
 ! internally).
 !------------------------------------------------------------------------------
-!
-!  Znudass     Nudging time scale (days) for free-surface.
 !
 !  M2nudass    Nudging time scale (days) for 2D momentum.
 !

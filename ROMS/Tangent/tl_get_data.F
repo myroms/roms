@@ -806,43 +806,26 @@
 !  Read in assimilation data from ASSIMILATION NetCDF files.
 !=======================================================================
 !
-#  if defined NUDGING_SSH || defined ASSIMILATION_SSH
+#  ifdef ASSIMILATION_SSH
 !
 !-----------------------------------------------------------------------
 !  Read in sea surface height observations and error variance.
 !-----------------------------------------------------------------------
 !
       IF (assi_SSH(ng)) THEN
-#   ifdef NUDGING_SSH
-        CALL get_2dfld (ng, iTLM, idSSHo, ncSSHid(ng), 1,               &
-     &                  SSHname(ng), update(1),                         &
-     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#    ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
-#    endif
-     &                  OBS(ng) % SSHdat(LBi,LBj,1))
-        CALL get_2dfld (ng, iTLM, idSSHe, ncSSHid(ng), 1,               &
-     &                  SSHname(ng), update(2),                         &
-     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#    ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
-#    endif
-     &                  OBS(ng) % EdatSSH(LBi,LBj,1))
-        IF (update(1).and.update(2)) update_SSH(ng)=.TRUE.
-#   else
         CALL get_2dfld (ng, iTLM, idSSHo, ncSSHid(ng), 1,               &
      &                  SSHname(ng), update(1),                         &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-#    ifdef MASKING
+#   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
-#    endif
+#   endif
      &                  OBS(ng) % SSHobs(LBi,LBj))
         CALL get_2dfld (ng, iTLM, idSSHe, ncSSHid(ng), 1,               &
      &                  SSHname(ng), update(2),                         &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-#    ifdef MASKING
+#   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
-#    endif
+#   endif
      &                  OBS(ng) % EobsSSH(LBi,LBj))
         IF (update(1).and.update(2)) THEN
           update_SSH(ng)=.TRUE.
@@ -853,7 +836,6 @@
           EobsSSHmin(ng)=Finfo(8,idSSHe,ng)
           EobsSSHmax(ng)=Finfo(9,idSSHe,ng)
         END IF
-#   endif
       END IF
 #  endif
 

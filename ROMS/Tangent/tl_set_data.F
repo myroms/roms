@@ -1040,30 +1040,6 @@
 #  endif
 # endif
 
-# if defined NUDGING_SSH
-!
-!-----------------------------------------------------------------------
-!  Set sea surface height observations and error variance.
-!-----------------------------------------------------------------------
-!
-      IF (assi_SSH(ng)) THEN
-        CALL set_2dfld_tile (ng, tile, iTLM, idSSHo,                    &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       OBS(ng)%SSHdat,                            &
-     &                       OBS(ng)%SSHobs,                            &
-     &                       update)
-        CALL set_2dfld_tile (ng, tile, iTLM, idSSHe,                    &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       OBS(ng)%EdatSSH,                           &
-     &                       OBS(ng)%EobsSSH,                           &
-     &                       update)
-        IF (.not.update.and.SOUTH_WEST_TEST) THEN
-          update_SSH(ng)=.FALSE.
-          exit_flag=0
-        END IF
-      END IF
-# endif
-
 # ifdef SOLVE3D
 #  if defined NUDGING_SST || defined ASSIMILATION_SST
 !

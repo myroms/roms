@@ -1514,12 +1514,6 @@
       Coptions(is:is+13)=' NPZD_POWELL,'
       ibiology=ibiology+1
 #endif
-#ifdef NUDGING_SSH
-      IF (Master) WRITE (stdout,20) 'NUDGING_SSH',                      &
-     &   'Nudging SSH observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' NUDGING_SSH,'
-#endif
 #ifdef NUDGING_SST
       IF (Master) WRITE (stdout,20) 'NUDGING_SST',                      &
      &   'Nudging SST observations.'
