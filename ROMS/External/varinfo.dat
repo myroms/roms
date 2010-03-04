@@ -1650,6 +1650,15 @@
   'nulvar'
   1.0d0
 
+'river_dye_'                                       ! Input
+  'river runoff dye concentration'
+  'kilogram meter-3'                               ! [kg/m3]
+  'river_dye, scalar, series'
+  'ocean_time'
+  'idRtrc(inert(i))'
+  'nulvar'
+  1.0d0
+
 'river_mud_'                                       ! Input
   'river runoff suspended sediment concentration'
   'kilogram meter-3'                               ! [kg/m3]

@@ -162,11 +162,15 @@ if ( !( $cray || $parasoft) ) {
     foreach $modname (sort keys(%main::mod_files)) {
         my ($name, $path, $suffix) = fileparse(
 	    $sources{$main::mod_files{$modname}}->{'filepath'}, @suffixes);
-	my $object = $name . "." . $obj_ext;
-	if (!( $drop_circ && lc($modname) eq lc($name)) ) {
-	    $object =~ s#^\./##;
-	    print "$modname.$mod_ext: $object\n";
-	}
+        my $object = $name . "." . $obj_ext;
+        if (!( $drop_circ && lc($modname) eq lc($name)) ) {
+            $object =~ s#^\./##;
+            my $modfile = "$modname.$mod_ext";
+            my $objfile = $object;
+            $modfile = $mod_dir . '/' . $modfile if $mod_dir;
+            $objfile = $obj_dir . '/' . $objfile if $obj_dir;
+            print "$modfile: $objfile\n";
+        }
     }
 }
 
