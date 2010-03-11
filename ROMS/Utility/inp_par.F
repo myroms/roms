@@ -1657,7 +1657,7 @@
             DO ng=1,Ngrids
               DO itrc=1,NPT
                 i=inert(itrc)
-                LtracerSrc(i,ng)=Ltracer(itrc,ng)
+                LtracerSrc(i,ng)=Ltracer(i,ng)
               END DO
             END DO
 # endif

@@ -235,7 +235,7 @@
 #  endif
       Npts=Msrc*N(ng)
 
-!$OMP BARRRIER
+!$OMP BARRIER
 
 #  if defined MY_APPLICATION
 !!

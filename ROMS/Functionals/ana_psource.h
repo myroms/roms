@@ -267,7 +267,7 @@
 #  endif
       Npts=Msrc*N(ng)
 
-!$OMP BARRRIER
+!$OMP BARRIER
 
 #  if defined SED_TEST1
       DO k=1,N(ng)
