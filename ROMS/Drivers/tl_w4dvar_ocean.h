@@ -243,6 +243,7 @@
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
+      integer :: NRMrec
 
       real(r8) :: MyTime, LB_time, UB_time
 
@@ -355,19 +356,20 @@
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
         ELSE
-          CALL get_state (ng, 5, 5, NRMname(1,ng), 1, 1)
+          NRMrec=1
+          CALL get_state (ng, 5, 5, NRMname(1,ng), NRMrec, 1)
           IF (exit_flag.ne.NoError) RETURN
 
           IF (NSA.eq.2) THEN
-            CALL get_state (ng, 5, 5, NRMname(2,ng), 1, 2)
+            CALL get_state (ng, 5, 5, NRMname(2,ng), NRMrec, 2)
             IF (exit_flag.ne.NoError) RETURN
           END IF
 #ifdef ADJUST_BOUNDARY
-          CALL get_state (ng, 10, 10, NRMname(3,ng), 1, 1)
+          CALL get_state (ng, 10, 10, NRMname(3,ng), NRMrec, 1)
           IF (exit_flag.ne.NoError) RETURN
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          CALL get_state (ng, 11, 11, NRMname(4,ng), 1, 1)
+          CALL get_state (ng, 11, 11, NRMname(4,ng), NRMrec, 1)
           IF (exit_flag.ne.NoError) RETURN
 #endif
         END IF

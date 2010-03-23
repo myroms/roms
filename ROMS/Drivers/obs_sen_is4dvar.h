@@ -145,7 +145,7 @@
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: STDrec, Tindex, ng, thread
+      integer :: NRMrec, STDrec, Tindex, ng, thread
 
 #ifdef DISTRIBUTE
 !
@@ -293,20 +293,21 @@
 !  forcing error covariance covariance normalization factors.
 !-----------------------------------------------------------------------
 !
+      NRMrec=1
       DO ng=1,Ngrids
-        CALL get_state (ng, 5, 5, NRMname(1,ng), 1, 1)
+        CALL get_state (ng, 5, 5, NRMname(1,ng), NRMrec, 1)
         IF (exit_flag.ne.NoError) RETURN
 
         IF (NSA.eq.2) THEN
-          CALL get_state (ng, 5, 5, NRMname(2,ng), 1, 2)
+          CALL get_state (ng, 5, 5, NRMname(2,ng), NRMrec, 2)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #ifdef ADJUST_BOUNDARY
-        CALL get_state (ng, 10, 10, NRMname(3,ng), 1, 1)
+        CALL get_state (ng, 10, 10, NRMname(3,ng), NRMrec, 1)
         IF (exit_flag.ne.NoError) RETURN
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-        CALL get_state (ng, 11, 11, NRMname(4,ng), 1, 1)
+        CALL get_state (ng, 11, 11, NRMname(4,ng), NRMrec, 1)
         IF (exit_flag.ne.NoError) RETURN
 #endif
       END DO
@@ -365,7 +366,7 @@
       logical :: Lweak = .FALSE.
 
       integer :: i, my_iic, ng,  subs, tile, thread
-      integer :: Lbck, Lini, Litl
+      integer :: Lbck, Lini, Litl, Rec
 
       real (r8) :: str_day, end_day
 !
@@ -487,7 +488,8 @@
 !   from ADS netcdf file, record 1.
 !
         IF ((DstrS(ng).eq.DendS(ng)).and.(DstrS(ng).eq.dstart)) THEN
-          CALL get_state (ng, iADM, 4, ADSname(ng), 1, Lnew(ng))
+          Rec=1
+          CALL get_state (ng, iADM, 4, ADSname(ng), Rec, Lnew(ng))
         ELSE
           time(ng)=time(ng)+dt(ng)
 

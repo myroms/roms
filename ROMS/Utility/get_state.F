@@ -4207,7 +4207,7 @@
 !  Close input NetCDF file.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_close (ng, IDmod, ncINPid, ncname)
+      CALL netcdf_close (ng, IDmod, ncINPid, ncname, .FALSE.)
 !
   20  FORMAT (/,a,'GET_STATE - unable to open input NetCDF file: ',a)
   30  FORMAT (/,a,'GET_STATE - error while reading variable: ',a,2x,    &

@@ -2375,7 +2375,7 @@
 !  If multiple files, close current file.
 !
       IF (ndef.gt.0) THEN
-        CALL netcdf_close (ng, model, ncid)
+        CALL netcdf_close (ng, model, ncid, ncname, .FALSE.)
       END IF
 !
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)

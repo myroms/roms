@@ -1127,7 +1127,7 @@
 !
 ! Close GRID NetCDF file.
 !
-      CALL netcdf_close (ng, model, ncGRDid(ng), ncname)
+      CALL netcdf_close (ng, model, ncGRDid(ng), ncname, .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
 # if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
