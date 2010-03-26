@@ -1416,7 +1416,7 @@
           fac2=0.5_r8*(Uwrk(i,j)+Uwrk(i-1,j))
           DiaU2rhs(i,j,M2xadv)=DiaU2rhs(i,j,M2xadv)+fac1-fac2
           DiaU2rhs(i,j,M2yadv)=DiaU2rhs(i,j,M2yadv)+fac2
-          DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2yadv)+fac1
+          DiaU2rhs(i,j,M2hadv)=DiaU2rhs(i,j,M2hadv)+fac1
 #  endif
         END DO
       END DO

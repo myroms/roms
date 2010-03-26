@@ -558,7 +558,7 @@
 #  ifdef UV_ADV
             Dwrk(i,M2xadv)=Dwrk(i,M2xadv)+                              &
      &                     DiaU3wrk(i,j,k,M3xadv)*Hzk(i,k)
-            Dwrk(i,M2yadv)=Dwrk(i,M2hadv)+                              &
+            Dwrk(i,M2yadv)=Dwrk(i,M2yadv)+                              &
      &                     DiaU3wrk(i,j,k,M3yadv)*Hzk(i,k)
             Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
      &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
