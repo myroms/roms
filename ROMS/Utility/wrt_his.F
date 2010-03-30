@@ -2204,7 +2204,7 @@
 !  Write out wind-induced surface wave period.
 !
       IF (Hout(idWptp,ng)) THEN
-        scale=rad2deg
+        scale=1.0_r8
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWptp,ng),    &
      &                     tHISindx(ng), gtype,                         &
