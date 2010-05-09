@@ -2768,17 +2768,17 @@
 #ifdef IRON_LIMIT
 !>            tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
 !>   &                          (tl_Bio(i,k,iFphy)*cff+                 &
-!>   &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)
+!>   &                           Bio(i,k,iFphy)*tl_cff)*FeRR(ng)
 !>
               ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+cff*FeRR(ng)*         &
      &                          ad_Bio(i,k,iFdis)
-              ad_cff=ad_cff+Bio2(i,k,iFphy)*FeRR(ng)*ad_Bio(i,k,iFdis)
+              ad_cff=ad_cff+Bio(i,k,iFphy)*FeRR(ng)*ad_Bio(i,k,iFdis)
 !>            tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-!>   &                           tl_cff*Bio2(i,k,iFphy))/               &
+!>   &                           tl_cff*Bio(i,k,iFphy))/                &
 !>   &                          (1.0_r8+cff)
 !>
               adfac=ad_Bio(i,k,iFphy)/(1.0_r8+cff)
-              ad_cff=ad_cff-Bio2(i,k,iFphy)*adfac
+              ad_cff=ad_cff-Bio(i,k,iFphy)*adfac
               ad_Bio(i,k,iFphy)=adfac
 #endif
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
@@ -3440,17 +3440,17 @@
               fac=cff*Bio(i,k,iNO3_)*FNratio*fac2
 !>            tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
 !>   &                          tl_Bio(i,k,iFdis)*fac+                  &
-!>   &                          Bio2(i,k,iFdis)*tl_fac
+!>   &                          Bio(i,k,iFdis)*tl_fac
 !>
-              ad_fac=ad_fac+Bio2(i,k,iFdis)*ad_Bio(i,k,iFphy)
+              ad_fac=ad_fac+Bio(i,k,iFdis)*ad_Bio(i,k,iFphy)
               ad_Bio(i,k,iFdis)=ad_Bio(i,k,iFdis)+                      &
      &                          fac*ad_Bio(i,k,iFphy)
 !>            tl_Bio(i,k,iFdis)=(tl_Bio(i,k,iFdis)-                     &
-!>   &                           tl_fac*Bio2(i,k,iFdis))/               &
+!>   &                           tl_fac*Bio(i,k,iFdis))/                &
 !>   &                          (1.0_r8+fac)
 !>
               adfac=ad_Bio(i,k,iFdis)/(1.0_r8+fac)
-              ad_fac=ad_fac-Bio2(i,k,iFdis)*adfac
+              ad_fac=ad_fac-Bio(i,k,iFdis)*adfac
               ad_Bio(i,k,iFdis)=adfac
 !>            tl_fac=FNratio*fac2*(tl_cff*Bio(i,k,iNO3_)+               &
 !>   &                             cff*ad_Bio(i,k,iNO3_))+              &

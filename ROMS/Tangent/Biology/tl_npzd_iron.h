@@ -1115,14 +1115,14 @@
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
 !>
               tl_Bio(i,k,iFdis)=(tl_Bio(i,k,iFdis)-                     &
-     &                           tl_fac*Bio2(i,k,iFdis))/               &
+     &                           tl_fac*Bio(i,k,iFdis))/                &
      &                          (1.0_r8+fac)
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)+                            &
 !>   &                       Bio(i,k,iFdis)*fac
 !>
               tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
      &                          tl_Bio(i,k,iFdis)*fac+                  &
-     &                          Bio2(i,k,iFdis)*tl_fac
+     &                          Bio(i,k,iFdis)*tl_fac
 !
 !  Iron uptake to reach appropriate Fe:C ratio.
 !
@@ -1701,14 +1701,14 @@
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
 !>
               tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-     &                           tl_cff*Bio2(i,k,iFphy))/               &
+     &                           tl_cff*Bio(i,k,iFphy))/                &
      &                          (1.0_r8+cff)
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
 !>   &                       Bio(i,k,iFphy)*cff*FeRR(ng)
 !>
               tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
      &                          (tl_Bio(i,k,iFphy)*cff+                 &
-     &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)
+     &                           Bio(i,k,iFphy)*tl_cff)*FeRR(ng)
 #endif
             END DO
           END DO

@@ -253,7 +253,7 @@
 #endif
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec, Rec1, Rec2
-      integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
+      integer :: i, irec, lstr, my_iic, ng, status, subs, tile, thread
       integer :: NRMrec
 
       real(r8) :: MyTime, LB_time, UB_time
@@ -837,14 +837,14 @@
 !
               IF (Nrec.gt.3) THEN
                 LwrtTime(ng)=.TRUE.
-                DO rec=1,Nrec-1
+                DO irec=1,Nrec-1
                   Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
 !  state arrays by using iTLM instead of iADM in the calling arguments.
 !
-                  ADrec=rec
+                  ADrec=irec
                   CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec,      &
      &                            Lold(ng))
                   IF (exit_flag.ne.NoError) RETURN
@@ -1228,14 +1228,14 @@
 !
           IF (Nrec.gt.3) THEN
             LwrtTime(ng)=.TRUE.
-            DO rec=1,Nrec-1
+            DO irec=1,Nrec-1
               Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
 !  state arrays by using iTLM instead of iADM in the calling arguments.
 !
-              ADrec=rec
+              ADrec=irec
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
               IF (exit_flag.ne.NoError) RETURN
 !

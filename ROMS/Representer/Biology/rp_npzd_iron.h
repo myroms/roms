@@ -1229,19 +1229,19 @@
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)/(1.0_r8+fac)
 !>
               tl_Bio(i,k,iFdis)=(tl_Bio(i,k,iFdis)-                     &
-     &                           tl_fac*Bio2(i,k,iFdis))/               &
+     &                           tl_fac*Bio(i,k,iFdis))/                &
      &                          (1.0_r8+fac)+                           &
 # ifdef TL_IOMS
-     &                          fac*Bio2(i,k,iFdis)/(1.0_r8+fac)
+     &                          fac*Bio(i,k,iFdis)/(1.0_r8+fac)
 # endif
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)+                            &
 !>   &                       Bio(i,k,iFdis)*fac
 !>
               tl_Bio(i,k,iFphy)=tl_Bio(i,k,iFphy)+                      &
      &                          tl_Bio(i,k,iFdis)*fac+                  &
-     &                          Bio2(i,k,iFdis)*tl_fac-                 &
+     &                          Bio(i,k,iFdis)*tl_fac-                  &
 # ifdef TL_IOMS
-     &                          Bio2(i,k,iFdis)*fac
+     &                          Bio(i,k,iFdis)*fac
 # endif
 !
 !  Iron uptake to reach appropriate Fe:C ratio.
@@ -1870,19 +1870,19 @@
 !>            Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
 !>
               tl_Bio(i,k,iFphy)=(tl_Bio(i,k,iFphy)-                     &
-     &                           tl_cff*Bio2(i,k,iFphy))/               &
+     &                           tl_cff*Bio(i,k,iFphy))/                &
      &                          (1.0_r8+cff)+                           &
 # ifdef TL_IOMS
-     &                          cff*Bio2(i,k,iFphy)/(1.0_r8+cff)
+     &                          cff*Bio(i,k,iFphy)/(1.0_r8+cff)
 # endif
 !>            Bio(i,k,iFdis)=Bio(i,k,iFdis)+                            &
 !>   &                       Bio(i,k,iFphy)*cff*FeRR(ng)
 !>
               tl_Bio(i,k,iFdis)=tl_Bio(i,k,iFdis)+                      &
      &                          (tl_Bio(i,k,iFphy)*cff+                 &
-     &                           Bio2(i,k,iFphy)*tl_cff)*FeRR(ng)-      &
+     &                           Bio(i,k,iFphy)*tl_cff)*FeRR(ng)-       &
 # ifdef TL_IOMS
-     &                          Bio2(i,k,iFphy)*cff*FeRR(ng)
+     &                          Bio(i,k,iFphy)*cff*FeRR(ng)
 # endif
 #endif
             END DO
