@@ -345,7 +345,7 @@
 #endif
 #if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
       USE mod_forces, ONLY : initialize_forces
-      USE mod_ocean, ONLY : initialize ocean
+      USE mod_ocean, ONLY : initialize_ocean
 #endif
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
@@ -433,12 +433,6 @@
           IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP1
-!
-!  Initialize adjoint model and define sensitivity functional.
-!
-        Lstiffness=.FALSE.
-        CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) RETURN
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
@@ -447,6 +441,12 @@
 !
         BLKname(ng)=HISname(ng)
 #endif
+!
+!  Initialize adjoint model and define sensitivity functional.
+!
+        Lstiffness=.FALSE.
+        CALL ad_initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate adjoint output.
 !
