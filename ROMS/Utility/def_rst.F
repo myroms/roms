@@ -67,11 +67,10 @@
       integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5)
       integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
 #endif
-
       real(r8) :: Aval(6)
 
-      character (len=80) :: Vinfo(Natt)
-      character (len=80) :: fname, ncname
+      character (len=120) :: Vinfo(Natt)
+      character (len=256) :: ncname
 !
       SourceFile='def_rst.F'
 !

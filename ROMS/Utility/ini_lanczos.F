@@ -335,7 +335,7 @@
       real(r8), dimension(Ninner) :: bvector
       real(r8), dimension(Ninner) :: zgamma
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !

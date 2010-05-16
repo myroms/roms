@@ -68,8 +68,8 @@
 
       real(r8) :: Aval(6)
 
-      character (len=80) :: fname, ncname
       character (len=120) :: Vinfo(Natt)
+      character (len=256) :: ncname
 !
       SourceFile='tl_def_ini.F'
 !

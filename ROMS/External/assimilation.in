@@ -260,8 +260,7 @@
 !                (0:npUV,1:Ngrids) values are expected.
 !
 !------------------------------------------------------------------------------
-!  Input observations NetCDF files (a string with a maximum of eighty
-!  characters).
+!  Input observations NetCDF files (a string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
 !  SSHname      Sea surface height observations file name, if any.

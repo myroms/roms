@@ -1623,9 +1623,9 @@
 #endif
 #if defined PARALLEL_IO && defined DISTRIBUTE
       IF (Master) WRITE (stdout,20) 'PARALLEL_IO',                      &
-     &   'Parallel I/O processing with NetCDF-4/HDF5 libraries.'
+     &   'Parallel I/O processing.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+17)=' PERFECT_RESTART,'
+      Coptions(is:is+13)=' PARALLEL_IO,'
 #endif
 #ifdef PERFECT_RESTART
       IF (Master) WRITE (stdout,20) 'PERFECT_RESTART',                  &
@@ -3124,6 +3124,26 @@
      &            ' option;',/,13x,'use either IVLEV_EXPLICIT or',      &
      &            ' implicit HOLLING_GRAZING.',/,13x,'The default',     &
      &            ' implicit IVLEV algorithm does not work well yet.')
+        exit_flag=5
+      END IF
+# endif
+#endif
+#ifdef PARALLEL_IO
+# if !(defined HDF5 || defined PNETCDF)
+      IF (Master) THEN
+        WRITE (stdout,170)
+ 170    FORMAT (/,' CHECKDEFS - Need to activate either HDF5 or',       &
+     &            ' PNETCDF options',/,13x,'for parallel I/O',          &
+     &            ' processing.')
+        exit_flag=5
+      END IF
+# endif
+# if defined HDF5 && defined PNETCDF
+      IF (Master) THEN
+        WRITE (stdout,180)
+ 180    FORMAT (/,' CHECKDEFS - Both HDF5 and PNETCDF options',         &
+     &            ' selected',/,13x,'for parallel I/O processing.',     &
+     &          /,13x,'Choose only one.')
         exit_flag=5
       END IF
 # endif

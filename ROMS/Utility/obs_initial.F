@@ -42,8 +42,6 @@
       real(r8), parameter :: IniVal = 0.0_r8
 # endif
       real(r8) :: tend
-
-      character (len=80) :: fname
 !
       SourceFile='obs_initial.F'
 !

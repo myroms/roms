@@ -44,9 +44,9 @@
 # endif
       real(r8) :: rval
 
-      character (len=1 ) :: char1, lchar(5)
-      character (len=2 ) :: char2
-      character (len=80) :: ncname
+      character (len=1  ) :: char1, lchar(5)
+      character (len=2  ) :: char2
+      character (len=256) :: ncname
 !
       SourceFile='get_gst.F'
 !

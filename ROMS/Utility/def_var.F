@@ -144,7 +144,7 @@
           END IF
         END IF
 
-#if !defined PARALLEL_IO && (defined NETCDF4 && defined DEFLATE)
+#if !defined PARALLEL_IO && (defined HDF5 && defined DEFLATE)
 !
 !  Define deflate (file compresion) parameters. Notice that deflation
 !  cannot be used in parallel I/O for writing data. This is because

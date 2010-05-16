@@ -46,8 +46,8 @@
 
       real(r8) :: Aval(6)
 
-      character (len=80) :: Vinfo(Natt)
-      character (len=80) :: ncname
+      character (len=120) :: Vinfo(Natt)
+      character (len=256) :: ncname
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.

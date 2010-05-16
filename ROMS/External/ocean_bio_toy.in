@@ -506,7 +506,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  =========
 !
 !------------------------------------------------------------------------------
-! Application tile (string with a maximum of eighty characters) and
+! Application title (string with a maximum of eighty characters) and
 ! C-preprocessing flag.
 !------------------------------------------------------------------------------
 !
@@ -515,7 +515,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  MyAppCPP    Application C-preprocessing option.
 !
 !------------------------------------------------------------------------------
-! Variable information file name (string with a maximum of eighty characters).
+! Variable information file name (string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
 !  VARNAME     Input/Output variable information file name.  This file needs to
@@ -1477,7 +1477,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !------------------------------------------------------------------------------
 !
 ! NetCDF-4/HDF5 compression parameters for output files. This capability
-! is used when both NETCDF4 and DEFLATE C-preprocessing options are
+! is used when both HDF5 and DEFLATE C-preprocessing options are
 ! activated. The user needs to compile with the NetCDF-4/HDF5 and MPI
 ! libraries. File deflation cannot be used in parallel I/O for writing
 ! because the compression makes it imposible for the HDF5 library
@@ -1495,7 +1495,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !                 between 0 and 9.
 !
 !------------------------------------------------------------------------------
-! Input/output NetCDF file names (string with a maximum of eighty characters).
+! Input/output NetCDF file names (string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
 !  GRDNAME     Input grid file name.

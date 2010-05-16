@@ -141,6 +141,16 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv USE_LARGE           on
 #setenv USE_NETCDF4         on
 
+# Activate Data Access Protocol (like OPeNDAP) support for input
+# NetCDF files.  This is only possible for NetCDF library version
+# 4.1.1 or higher. Also, add the path of the "curl-config" script
+# that includes all linking libraries for DAP support.
+
+if ($?USE_NETCDF4) then
+#setenv USE_DAP             on
+ setenv PATH                /usr/bin:$PATH
+endif
+
 # There are several MPI libraries out there. The user can select here the
 # appropriate "mpif90" script to compile, provided that the makefile
 # macro definition file (say, Compilers/Linux-pgi.mk) has:

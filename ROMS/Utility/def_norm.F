@@ -68,8 +68,8 @@
       real(r8) :: Aval(6)
 
       character (len=60 ) :: Text
-      character (len=80 ) :: ncname
       character (len=120) :: Vinfo(Natt)
+      character (len=256) :: ncname
 !
       SourceFile='def_norm.F'
 !

@@ -127,7 +127,7 @@
 !
 !  Netcdf file creation mode flag.
 !
-#ifdef NETCDF4
+#if defined HDF5
       integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
 #else
       integer :: CMODE = nf90_clobber      ! NetCDF classic format file
@@ -252,7 +252,7 @@
 !  Inquire file.
 !
       IF (InpThread) THEN
-#ifdef NETCDF4
+#ifdef HDF5
         status=nf90_inquire(ncid, n_dim, n_var, n_gatt, rec_id,         &
      &                      ncformat)
 #else

@@ -544,7 +544,7 @@
 
       logical :: Lweak
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !

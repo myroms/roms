@@ -109,10 +109,10 @@
 
       real(r8) :: Aval(6)
 
-      character (len=11) :: frcatt
-      character (len=50) :: tiling
-      character (len=80) :: type
-      character (len=100) :: Vinfo(Natt)
+      character (len=11 ) :: frcatt
+      character (len=50 ) :: tiling
+      character (len=80 ) :: type
+      character (len=120) :: Vinfo(Natt)
 #ifdef FOUR_DVAR
       character (len=512) :: state_vector
 #endif
@@ -211,7 +211,7 @@
 !  Define NetCDF format type.
 !
         IF (exit_flag.eq.NoError) THEN
-# ifdef NETCDF4
+# ifdef HDF5
           status=nf90_put_att(ncid, nf90_global, 'format',              &
      &                        'netCDF-4/HDF5 file')
 # else
@@ -944,7 +944,7 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#if defined NETCDF4 && defined DEFLATE
+#if defined HDF5 && defined DEFLATE
       Vinfo( 1)='shuffle'
       Vinfo( 2)='NetCDF-4/HDF5 file format shuffle filer flag'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &

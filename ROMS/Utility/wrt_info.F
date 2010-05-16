@@ -132,7 +132,7 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-#if defined NETCDF4 && defined DEFLATE
+#if defined HDF5 && defined DEFLATE
       CALL netcdf_put_ivar (ng, model, ncname, 'shuffle',               &
      &                      shuffle, (/0/), (/0/),                      &
      &                      ncid = ncid)

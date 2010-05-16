@@ -40,14 +40,6 @@
 #endif
 
 /*
-** If parallel I/O and applicable, turn on NetCDF-4 type files.
-*/
-
-#if !defined NETCDF4 && defined PARALLEL_IO
-# define NETCDF4
-#endif
-
-/*
 ** Set internal distributed-memory switch.
 */
 

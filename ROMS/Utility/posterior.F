@@ -1319,8 +1319,6 @@
 
       real(r8) :: fac, fac1, fac2
 
-      character (len=80) :: ncname
-
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -3318,7 +3316,7 @@
 
       real(r8), dimension(Ninner) :: zu, zgam
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -4316,7 +4314,7 @@
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(0:NpostI) :: DotProd, dot_new, dot_old
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -5063,7 +5061,7 @@
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !

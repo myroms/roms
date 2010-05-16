@@ -1683,7 +1683,7 @@
 
       real(r8) :: fac, fac1, fac2
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -3766,7 +3766,7 @@
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -4603,7 +4603,7 @@
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -5378,7 +5378,7 @@
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -5847,7 +5847,7 @@
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -6668,7 +6668,7 @@
 
       logical :: Ltrans
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # include "set_bounds.h"
 !
@@ -7206,7 +7206,7 @@
       real(r8), dimension(1:Ninner+1,Nouter) :: beta_lcz
       real(r8), dimension(Ninner,Ninner) :: zv_lcz
 
-      character (len=80) :: ncname
+      character (len=256) :: ncname
 
 # ifdef DISTRIBUTE
       character (len=3) :: op_handle

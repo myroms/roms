@@ -64,8 +64,8 @@
 
       real(r8) :: Fmax, Fmin
 
-      character (len=1 ) :: char1
-      character (len=80) :: ncname
+      character (len=1  ) :: char1
+      character (len=256) :: ncname
 !
       SourceFile='get_grid.F'
 !
