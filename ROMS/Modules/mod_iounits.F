@@ -94,7 +94,6 @@
 
         integer, allocatable :: FRCids(:,:)
 
-
         character (len=50), dimension(8) :: Rerror =                    &
      &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
      &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &

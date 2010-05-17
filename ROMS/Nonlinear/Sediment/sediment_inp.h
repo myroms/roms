@@ -37,9 +37,9 @@
 
       real(r8), dimension(100) :: Rval
 
-      character (len=40) :: KeyWord
-      character (len=160) :: line
-      character (len=160), dimension(100) :: Cval
+      character (len=40 ) :: KeyWord
+      character (len=256) :: line
+      character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in cohesive and non-cohesive model parameters.

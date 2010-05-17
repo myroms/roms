@@ -663,9 +663,9 @@
       real(r8), allocatable :: MyRval(:)
 
       character (len=40) :: KeyWord
-      character (len=160) :: line
+      character (len=256) :: line
       character (len=256) :: Cname
-      character (len=160), dimension(100) :: Cval
+      character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Determine coupling standard input file name.  In distributed-memory,
@@ -986,8 +986,8 @@
       character (len=1 ), parameter :: blank = ' '
       character (len=19) :: ref_att
       character (len=40) :: KeyWord
-      character (len=160) :: fname, line
-      character (len=160), dimension(100) :: Cval
+      character (len=256) :: fname, line
+      character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in physical model parameters. Then, load input data into module.
@@ -3697,9 +3697,9 @@
 # ifdef ADJUST_BOUNDARY
       character (len=7) :: Text
 # endif
-      character (len=40) :: KeyWord
-      character (len=160) :: fname, line
-      character (len=160), dimension(100) :: Cval
+      character (len=40 ) :: KeyWord
+      character (len=256) :: fname, line
+      character (len=256), dimension(100) :: Cval
 
 # if defined ASSIMILATION || defined NUDGING
 !
@@ -5069,10 +5069,10 @@
       real(r8), allocatable :: Ft0(:,:), Fx0(:,:), Fy0(:,:), Fz0(:,:)
       real(r8), allocatable :: Fdt(:,:), Fdx(:,:), Fdy(:,:), Fdz(:,:)
 
-      character (len=35) :: frmt
-      character (len=40) :: KeyWord
-      character (len=160) :: line
-      character (len=160), dimension(100) :: Cval
+      character (len=35 ) :: frmt
+      character (len=40 ) :: KeyWord
+      character (len=256) :: line
+      character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.
@@ -5338,9 +5338,9 @@
 
       real(r8), dimension(100) :: Rval
 
-      character (len=40) :: KeyWord
-      character (len=160) :: line
-      character (len=160), dimension(100) :: Cval
+      character (len=40 ) :: KeyWord
+      character (len=256) :: line
+      character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in stations parameters.
@@ -5842,7 +5842,7 @@
 
       integer, intent(inout) :: Nval
 
-      character (len=160), dimension(100), intent(inout) :: Cval
+      character (len=256), dimension(100), intent(inout) :: Cval
 
       real(r8), dimension(100), intent(inout) :: Rval
 !
@@ -5858,7 +5858,7 @@
       integer :: decode_line
 
       character (len=1 ), parameter :: blank = ' '
-      character (len=160) :: Vstring, line, string
+      character (len=256) :: Vstring, line, string
 !
 !------------------------------------------------------------------------
 !  Decode input line.
@@ -6034,7 +6034,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng
+!     ng         Nested grid number.                                   !
 !     fname      File name (path and name).                            !
 !                                                                      !
 !  On Output:                                                          !
