@@ -84,7 +84,6 @@
 #  define SUSPLOAD
 #  define BEDLOAD_MPM
 #  undef  BEDLOAD_SOULSBY
-#  define AVERAGES_BEDLOAD
 # endif
 # if defined SEDIMENT || defined SG_BBL || defined MB_BBL || defined SSW_BBL
 #  undef ANA_SEDIMENT

@@ -14,6 +14,12 @@
 !  computed in delayed mode. All averages are accumulated at the       !
 !  beggining of the next time-step.                                    !
 !                                                                      !
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!  It computes leas-squares coefficients to detide time-averaged       !
+!  fields. Notice that "set_detide" is called last since we need       !
+!  the regular time-averages for those fields to detide.               !
+!                                                                      !
+# endif
 !=======================================================================
 !
       implicit none
@@ -28,16 +34,6 @@
 !***********************************************************************
 !
       USE mod_param
-      USE mod_average
-# if defined FORWARD_WRITE && defined SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_forces
-# ifdef SOLVE3D
-      USE mod_grid
-      USE mod_mixing
-# endif
-      USE mod_ocean
       USE mod_stepping
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       USE mod_tides
@@ -57,198 +53,29 @@
       CALL set_avg_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                   NTC(ng),                                       &
-# endif
-     &                   KOUT,                                          &
 # ifdef SOLVE3D
      &                   NOUT,                                          &
-     &                   GRID(ng) % pm,                                 &
-     &                   GRID(ng) % pn,                                 &
-#  ifdef AVERAGES_QUADRATIC
-     &                   GRID(ng) % Huon,                               &
-     &                   GRID(ng) % Hvom,                               &
-#  endif
-#  ifdef FORWARD_WRITE
-     &                   COUPLING(ng) % DU_avg1,                        &
-     &                   COUPLING(ng) % DU_avg2,                        &
-     &                   COUPLING(ng) % DV_avg1,                        &
-     &                   COUPLING(ng) % DV_avg2,                        &
-#  endif
-     &                   OCEAN(ng) % u,                                 &
-     &                   OCEAN(ng) % v,                                 &
-     &                   OCEAN(ng) % W,                                 &
-     &                   OCEAN(ng) % wvel,                              &
-     &                   OCEAN(ng) % t,                                 &
-     &                   OCEAN(ng) % rho,                               &
-#  ifdef AVERAGES_NEARSHORE
-     &                   OCEAN(ng) % u_stokes,                          &
-     &                   OCEAN(ng) % v_stokes,                          &
-     &                   MIXING(ng) % rustr3d,                          &
-     &                   MIXING(ng) % rvstr3d,                          &
-     &                   MIXING(ng) % Sxx,                              &
-     &                   MIXING(ng) % Sxy,                              &
-     &                   MIXING(ng) % Syy,                              &
-     &                   MIXING(ng) % Szx,                              &
-     &                   MIXING(ng) % Szy,                              &
-#  endif
-#  ifdef LMD_SKPP
-     &                   MIXING(ng) % hsbl,                             &
-#  endif
-#  ifdef LMD_BKPP
-     &                   MIXING(ng) % hbbl,                             &
-#  endif
-#  ifdef AVERAGES_AKV
-     &                   MIXING(ng) % Akv,                              &
-#  endif
-#  if defined AVERAGES_AKT || defined AVERAGES_AKS
-     &                   MIXING(ng) % Akt,                              &
-#  endif
-#  ifdef AVERAGES_FLUXES
-     &                   FORCES(ng) % stflx,                            &
-#   ifdef BULK_FLUXES
-     &                   FORCES(ng) % lhflx,                            &
-     &                   FORCES(ng) % shflx,                            &
-     &                   FORCES(ng) % lrflx,                            &
-#    ifdef EMINUSP
-     &                   FORCES(ng) % evap,                             &
-     &                   FORCES(ng) % rain,                             &
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-     &                   FORCES(ng) % srflx,                            &
-#   endif
-#  endif
 # endif
-# ifdef AVERAGES_FLUXES
-     &                   FORCES(ng) % sustr,                            &
-     &                   FORCES(ng) % svstr,                            &
-     &                   FORCES(ng) % bustr,                            &
-     &                   FORCES(ng) % bvstr,                            &
-# endif
-     &                   OCEAN(ng) % ubar,                              &
-     &                   OCEAN(ng) % vbar,                              &
-     &                   OCEAN(ng) % zeta,                              &
-# ifdef AVERAGES_NEARSHORE
-     &                   OCEAN(ng) % ubar_stokes,                       &
-     &                   OCEAN(ng) % vbar_stokes,                       &
-     &                   MIXING(ng) % rustr2d,                          &
-     &                   MIXING(ng) % rvstr2d,                          &
-     &                   MIXING(ng) % Sxx_bar,                          &
-     &                   MIXING(ng) % Sxy_bar,                          &
-     &                   MIXING(ng) % Syy_bar,                          &
-# endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                   TIDES(ng) % CosOmega, TIDES(ng) % SinOmega,    &
-     &                   TIDES(ng) % CosW_avg, TIDES(ng) % CosW_sum,    &
-     &                   TIDES(ng) % SinW_avg, TIDES(ng) % SinW_sum,    &
-     &                   TIDES(ng) % CosWCosW, TIDES(ng) % SinWSinW,    &
-     &                   TIDES(ng) % SinWCosW,                          &
-     &                   TIDES(ng) % ubar_tide,                         &
-     &                   TIDES(ng) % ubar_detided,                      &
-     &                   TIDES(ng) % vbar_tide,                         &
-     &                   TIDES(ng) % vbar_detided,                      &
-     &                   TIDES(ng) % zeta_tide,                         &
-     &                   TIDES(ng) % zeta_detided,                      &
-# endif
-# ifdef SOLVE3D
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                   TIDES(ng) % u_tide,                            &
-     &                   TIDES(ng) % u_detided,                         &
-     &                   TIDES(ng) % v_tide,                            &
-     &                   TIDES(ng) % v_detided,                         &
-#  endif
-#  ifdef FORWARD_WRITE
-     &                   AVERAGE(ng) % avgDU_avg1,                      &
-     &                   AVERAGE(ng) % avgDU_avg2,                      &
-     &                   AVERAGE(ng) % avgDV_avg1,                      &
-     &                   AVERAGE(ng) % avgDV_avg2,                      &
-#  endif
-     &                   AVERAGE(ng) % avgu3d,                          &
-     &                   AVERAGE(ng) % avgv3d,                          &
-     &                   AVERAGE(ng) % avgw3d,                          &
-     &                   AVERAGE(ng) % avgwvel,                         &
-     &                   AVERAGE(ng) % avgt,                            &
-     &                   AVERAGE(ng) % avgrho,                          &
-#  ifdef AVERAGES_NEARSHORE
-     &                   AVERAGE(ng) % avgu3Sd,                         &
-     &                   AVERAGE(ng) % avgv3Sd,                         &
-     &                   AVERAGE(ng) % avgu3RS,                         &
-     &                   AVERAGE(ng) % avgv3RS,                         &
-     &                   AVERAGE(ng) % avgSxx3d,                        &
-     &                   AVERAGE(ng) % avgSxy3d,                        &
-     &                   AVERAGE(ng) % avgSyy3d,                        &
-     &                   AVERAGE(ng) % avgSzx3d,                        &
-     &                   AVERAGE(ng) % avgSzy3d,                        &
-#  endif
-#  ifdef LMD_SKPP
-     &                   AVERAGE(ng) % avghsbl,                         &
-#  endif
-#  ifdef LMD_BKPP
-     &                   AVERAGE(ng) % avghbbl,                         &
-#  endif
-#  ifdef AVERAGES_AKV
-     &                   AVERAGE(ng) % avgAKv,                          &
-#  endif
-#  ifdef AVERAGES_AKT
-     &                   AVERAGE(ng) % avgAKt,                          &
-#  endif
-#  ifdef AVERAGES_AKS
-     &                   AVERAGE(ng) % avgAKs,                          &
-#  endif
-#  ifdef AVERAGES_FLUXES
-     &                   AVERAGE(ng) % avgstf,                          &
-     &                   AVERAGE(ng) % avgswf,                          &
-#   ifdef BULK_FLUXES
-     &                   AVERAGE(ng) % avglhf,                          &
-     &                   AVERAGE(ng) % avgshf,                          &
-     &                   AVERAGE(ng) % avglrf,                          &
-#    ifdef EMINUSP
-     &                   AVERAGE(ng) % avgevap,                         &
-     &                   AVERAGE(ng) % avgrain,                         &
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-     &                   AVERAGE(ng) % avgsrf,                          &
-#   endif
-#  endif
-# endif
-# ifdef AVERAGES_FLUXES
-     &                   AVERAGE(ng) % avgsus,                          &
-     &                   AVERAGE(ng) % avgsvs,                          &
-     &                   AVERAGE(ng) % avgbus,                          &
-     &                   AVERAGE(ng) % avgbvs,                          &
-# endif
-# ifdef AVERAGES_QUADRATIC
-#  ifdef SOLVE3D
-     &                   AVERAGE(ng) % avgHuon,                         &
-     &                   AVERAGE(ng) % avgHvom,                         &
-     &                   AVERAGE(ng) % avgUU,                           &
-     &                   AVERAGE(ng) % avgUV,                           &
-     &                   AVERAGE(ng) % avgVV,                           &
-     &                   AVERAGE(ng) % avgHuonT,                        &
-     &                   AVERAGE(ng) % avgHvomT,                        &
-     &                   AVERAGE(ng) % avgUT,                           &
-     &                   AVERAGE(ng) % avgVT,                           &
-     &                   AVERAGE(ng) % avgTT,                           &
-#  endif
-     &                   AVERAGE(ng) % avgU2,                           &
-     &                   AVERAGE(ng) % avgV2,                           &
-     &                   AVERAGE(ng) % avgZZ,                           &
-# endif
-# ifdef AVERAGES_NEARSHORE
-     &                   AVERAGE(ng) % avgu2Sd,                         &
-     &                   AVERAGE(ng) % avgv2Sd,                         &
-     &                   AVERAGE(ng) % avgu2RS,                         &
-     &                   AVERAGE(ng) % avgv2RS,                         &
-     &                   AVERAGE(ng) % avgSxx2d,                        &
-     &                   AVERAGE(ng) % avgSxy2d,                        &
-     &                   AVERAGE(ng) % avgSyy2d,                        &
-# endif
-     &                   AVERAGE(ng) % avgu2d,                          &
-     &                   AVERAGE(ng) % avgv2d,                          &
-     &                   AVERAGE(ng) % avgzeta)
+     &                   KOUT)
 
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      CALL set_detide_tile (ng, tile,                                   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
+     &                      NTC(ng), KOUT,                              &
+#  ifdef SOLVE3D
+     &                      NOUT,                                       &
+#  endif
+     &                      TIDES(ng) % CosOmega,                       &
+     &                      TIDES(ng) % SinOmega,                       &
+     &                      TIDES(ng) % CosW_avg,                       &
+     &                      TIDES(ng) % CosW_sum,                       &
+     &                      TIDES(ng) % SinW_avg,                       &
+     &                      TIDES(ng) % SinW_sum,                       &
+     &                      TIDES(ng) % CosWCosW,                       &
+     &                      TIDES(ng) % SinWSinW,                       &
+     &                      TIDES(ng) % SinWCosW)
+# endif
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 5)
 # endif
@@ -259,140 +86,27 @@
       SUBROUTINE set_avg_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         IminS, ImaxS, JminS, JmaxS,              &
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                         NTC,                                     &
-# endif
-     &                         Kout,                                    &
 # ifdef SOLVE3D
      &                         Nout,                                    &
-     &                         pm, pn,                                  &
-#  ifdef AVERAGES_QUADRATIC
-     &                         Huon, Hvom,                              &
-#  endif
-#  ifdef FORWARD_WRITE
-     &                         DU_avg1, DU_avg2,                        &
-     &                         DV_avg1, DV_avg2,                        &
-#  endif
-     &                         u, v,                                    &
-     &                         W, wvel, t, rho,                         &
-#  ifdef AVERAGES_NEARSHORE
-     &                         u_stokes, v_stokes,                      &
-     &                         rustr3d, rvstr3d,                        &
-     &                         Sxx, Sxy, Syy, Szx, Szy,                 &
-#  endif
-#  ifdef LMD_SKPP
-     &                         hsbl,                                    &
-#  endif
-#  ifdef LMD_BKPP
-     &                         hbbl,                                    &
-#  endif
-#  ifdef AVERAGES_AKV
-     &                         Akv,                                     &
-#  endif
-#  if defined AVERAGES_AKT || defined AVERAGES_AKS
-     &                         Akt,                                     &
-#  endif
-#  ifdef AVERAGES_FLUXES
-     &                         stflx,                                   &
-#   ifdef BULK_FLUXES
-     &                         lhflx, shflx, lrflx,                     &
-#    ifdef EMINUSP
-     &                         evap, rain,                              &
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-     &                         srflx,                                   &
-#   endif
-#  endif
 # endif
-# ifdef AVERAGES_FLUXES
-     &                         sustr, svstr, bustr, bvstr,              &
-# endif
-     &                         ubar, vbar,                              &
-     &                         zeta,                                    &
-# ifdef AVERAGES_NEARSHORE
-     &                         ubar_stokes, vbar_stokes,                &
-     &                         rustr2d, rvstr2d,                        &
-     &                         Sxx_bar, Sxy_bar, Syy_bar,               &
-# endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                         CosOmega, SinOmega,                      &
-     &                         CosW_avg, CosW_sum,                      &
-     &                         SinW_avg, SinW_sum,                      &
-     &                         CosWCosW, SinWSinW, SinWCosW,            &
-     &                         ubar_tide, ubar_detided,                 &
-     &                         vbar_tide, vbar_detided,                 &
-     &                         zeta_tide, zeta_detided,                 &
-# endif
-# ifdef SOLVE3D
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-     &                         u_tide, u_detided,                       &
-     &                         v_tide, v_detided,                       &
-#  endif
-#  ifdef FORWARD_WRITE
-     &                         avgDU_avg1, avgDU_avg2,                  &
-     &                         avgDV_avg1, avgDV_avg2,                  &
-#  endif
-     &                         avgu3d, avgv3d,                          &
-     &                         avgw3d, avgwvel,                         &
-     &                         avgt, avgrho,                            &
-#  ifdef AVERAGES_NEARSHORE
-     &                         avgu3Sd, avgv3Sd,                        &
-     &                         avgu3RS, avgv3RS,                        &
-     &                         avgSxx3d, avgSxy3d, avgSyy3d,            &
-     &                         avgSzx3d, avgSzy3d,                      &
-#  endif
-#  ifdef LMD_SKPP
-     &                         avghsbl,                                 &
-#  endif
-#  ifdef LMD_BKPP
-     &                         avghbbl,                                 &
-#  endif
-#  ifdef AVERAGES_AKV
-     &                         avgAKv,                                  &
-#  endif
-#  ifdef AVERAGES_AKT
-     &                         avgAKt,                                  &
-#  endif
-#  ifdef AVERAGES_AKS
-     &                         avgAKs,                                  &
-#  endif
-#  ifdef AVERAGES_FLUXES
-     &                         avgstf, avgswf,                          &
-#   ifdef BULK_FLUXES
-     &                         avglhf, avgshf, avglrf,                  &
-#    ifdef EMINUSP
-     &                         avgevap, avgrain,                        &
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-     &                         avgsrf,                                  &
-#   endif
-#  endif
-# endif
-# ifdef AVERAGES_FLUXES
-     &                         avgsus, avgsvs, avgbus, avgbvs,          &
-# endif
-# ifdef AVERAGES_QUADRATIC
-#  ifdef SOLVE3D
-     &                         avgHuon, avgHvom,                        &
-     &                         avgUU, avgUV, avgVV,                     &
-     &                         avgHuonT, avgHvomT,                      &
-     &                         avgUT, avgVT, avgTT,                     &
-#  endif
-     &                         avgU2, avgV2, avgZZ,                     &
-# endif
-# ifdef AVERAGES_NEARSHORE
-     &                         avgu2Sd, avgv2Sd,                        &
-     &                         avgu2RS, avgv2RS,                        &
-     &                         avgSxx2d, avgSxy2d, avgSyy2d,            &
-# endif
-     &                         avgu2d, avgv2d,                          &
-     &                         avgzeta)
+     &                         Kout)
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
+      USE mod_average
+# if defined FORWARD_WRITE && defined SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_forces
+# ifdef SOLVE3D
+      USE mod_grid
+      USE mod_mixing
+# endif
+      USE mod_ocean
       USE mod_scalars
+!
+      USE vorticity_mod, ONLY : vorticity_tile
 !
       implicit none
 !
@@ -405,88 +119,2003 @@
 # ifdef SOLVE3D
       integer, intent(in) :: Nout
 # endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-      integer, intent(in) :: NTC
+!
+!
+!  Local variable declarations.
+!
+      integer :: i, it, j, k
+
+      real(r8) :: fac
+# ifdef SOLVE3D
+      real(r8) :: potvor(LBi:UBi,LBj:UBj,N(ng))
+      real(r8) :: relvor(LBi:UBi,LBj:UBj,N(ng))
+# endif
+      real(r8) :: potvor_bar(LBi:UBi,LBj:UBj)
+      real(r8) :: relvor_bar(LBi:UBi,LBj:UBj)
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Return if time-averaging window is zero.
+!-----------------------------------------------------------------------
+!
+      IF (nAVG(ng).eq.0) RETURN
+!
+!-----------------------------------------------------------------------
+!  Compute vorticity fields.
+!-----------------------------------------------------------------------
+!
+      IF (Aout(id2dPV,ng).or.Aout(id2dRV,ng).or.                        &
+     &    Aout(id3dPV,ng).or.Aout(id3dRV,ng)) THEN
+        CALL vorticity_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+# ifdef SOLVE3D
+     &                       Kout, Nout,                                &
+# else
+     &                       Kout,                                      &
+# endif
+# ifdef MASKING
+     &                       GRID(ng) % pmask,                          &
+     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % vmask,                          &
+# endif
+     &                       GRID(ng) % fomn,                           &
+     &                       GRID(ng) % h,                              &
+     &                       GRID(ng) % om_u,                           &
+     &                       GRID(ng) % on_v,                           &
+     &                       GRID(ng) % pm,                             &
+     &                       GRID(ng) % pn,                             &
+# ifdef SOLVE3D
+     &                       GRID(ng) % z_r,                            &
+     &                       OCEAN(ng) % pden,                          &
+     &                       OCEAN(ng) % u,                             &
+     &                       OCEAN(ng) % v,                             &
+# endif
+     &                       OCEAN(ng) % ubar,                          &
+     &                       OCEAN(ng) % vbar,                          &
+     &                       OCEAN(ng) % zeta,                          &
+# ifdef SOLVE3D
+     &                       potvor, relvor,                            &
+# endif
+     &                       potvor_bar, relvor_bar)
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Initialize time-averaged arrays when appropriate.  Notice that
+!  fields are initilized twice during re-start.  However, the time-
+!  averaged fields are computed correctly.
+!-----------------------------------------------------------------------
+!
+      IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
+     &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
+     &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+!
+!  Initialize state variables.
+!
+        IF (Aout(idFsur,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgzeta(i,j)=OCEAN(ng)%zeta(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUbar,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2d(i,j)=OCEAN(ng)%ubar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbar,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2d(i,j)=OCEAN(ng)%vbar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3d(i,j,k)=OCEAN(ng)%u(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3d(i,j,k)=OCEAN(ng)%v(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idOvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgw3d(i,j,k)=OCEAN(ng)%W(i,j,k)*           &
+     &                                    GRID(ng)%pm(i,j)*             &
+     &                                    GRID(ng)%pn(i,j)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idWvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgwvel(i,j,k)=OCEAN(ng)%wvel(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idDano,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgrho(i,j,k)=OCEAN(ng)%rho(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        DO it=1,NT(ng)
+          IF (Aout(idTvar(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgt(i,j,k,it)=OCEAN(ng)%t(i,j,k,Nout,it)
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+
+#  if defined LMD_MIXING || defined MY25_MIXING || defined GLS_MIXING
+        IF (Aout(idVvis,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKv(i,j,k)=MIXING(ng)%Akv(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKt(i,j,k)=MIXING(ng)%Akt(i,j,k,itemp)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idSdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKs(i,j,k)=MIXING(ng)%Akt(i,j,k,isalt)
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef LMD_SKPP
+        IF (Aout(idHsbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghsbl(i,j)=MIXING(ng)%hsbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef LMD_BKPP
+        IF (Aout(idHbbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghbbl(i,j)=MIXING(ng)%hbbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+# endif
+
+# if defined FORWARD_WRITE && defined SOLVE3D
+!
+!  Initialize 2D/3D coupling terms.
+!
+        IF (Aout(idUfx1,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg1(i,j)=COUPLING(ng)%DU_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUfx2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg2(i,j)=COUPLING(ng)%DU_avg2(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idVfx1,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg1(i,j)=COUPLING(ng)%DV_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVfx2,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg2(i,j)=COUPLING(ng)%DV_avg2(i,j)
+            END DO
+          END DO
+        END IF
 # endif
 !
-# ifdef ASSUMED_SHAPE
+!  Initialize surface and bottom fluxes.
+!
+        IF (Aout(idUsms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgsus(i,j)=FORCES(ng)%sustr(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVsms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsvs(i,j)=FORCES(ng)%svstr(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idUbms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgbus(i,j)=FORCES(ng)%bustr(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgbvs(i,j)=FORCES(ng)%bvstr(i,j)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idTsur(itemp),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgstf(i,j)=FORCES(ng)%stflx(i,j,itemp)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTsur(isalt),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgswf(i,j)=FORCES(ng)%stflx(i,j,isalt)
+            END DO
+          END DO
+        END IF
+#  ifdef SHORTWAVE
+        IF (Aout(idSrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrf(i,j)=FORCES(ng)%srflx(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef BULK_FLUXES
+        IF (Aout(idLhea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglhf(i,j)=FORCES(ng)%lhflx(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idLrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglrf(i,j)=FORCES(ng)%lrflx(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idShea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgshf(i,j)=FORCES(ng)%shflx(i,j)
+            END DO
+          END DO
+        END IF
+#   ifdef EMINUSP
+        IF (Aout(idevap,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgevap(i,j)=FORCES(ng)%evap(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idrain,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgrain(i,j)=FORCES(ng)%rain(i,j)
+            END DO
+          END DO
+        END IF
+#   endif
+#  endif
+# endif
+
+# ifdef NEARSHORE_MELLOR
+!
+!  Initialize radiation stresses.
+!
+        IF (Aout(idU2Sd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2Sd(i,j)=OCEAN(ng)%ubar_stokes(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2Sd,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2Sd(i,j)=OCEAN(ng)%vbar_stokes(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU2rs,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2RS(i,j)=MIXING(ng)%rustr2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2rs,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2RS(i,j)=MIXING(ng)%rvstr2d(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW2xx,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxx2d(i,j)=MIXING(ng)%Sxx_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2xy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxy2d(i,j)=MIXING(ng)%Sxy_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2yy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSyy2d(i,j)=MIXING(ng)%Syy_bar(i,j)
+            END DO
+          END DO
+        END IF
+
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: pm(LBi:,LBj:)
-      real(r8), intent(in) :: pn(LBi:,LBj:)
-#   ifdef AVERAGES_QUADRATIC
-      real(r8), intent(in) :: Huon(LBi:,LBj:,:)
-      real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
-#   endif
-#   ifdef FORWARD_WRITE
-      real(r8), intent(in) :: DU_avg1(LBi:,LBj:)
-      real(r8), intent(in) :: DU_avg2(LBi:,LBj:)
-      real(r8), intent(in) :: DV_avg1(LBi:,LBj:)
-      real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
-#   endif
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: W(LBi:,LBj:,0:)
-      real(r8), intent(in) :: wvel(LBi:,LBj:,0:)
-      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: rho(LBi:,LBj:,:)
-#   ifdef AVERAGES_NEARSHORE
-      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
-      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
-      real(r8), intent(in) :: rustr3d(LBi:,LBj:,:)
-      real(r8), intent(in) :: rvstr3d(LBi:,LBj:,:)
-      real(r8), intent(in) :: Sxx(LBi:,LBj:,:)
-      real(r8), intent(in) :: Sxy(LBi:,LBj:,:)
-      real(r8), intent(in) :: Syy(LBi:,LBj:,:)
-      real(r8), intent(in) :: Szx(LBi:,LBj:,:)
-      real(r8), intent(in) :: Szy(LBi:,LBj:,:)
-#   endif
-#   ifdef LMD_SKPP
-      real(r8), intent(in) :: hsbl(LBi:,LBj:)
-#   endif
-#   ifdef LMD_BKPP
-      real(r8), intent(in) :: hbbl(LBi:,LBj:)
-#   endif
-#   ifdef AVERAGES_AKV
-      real(r8), intent(in) :: Akv(LBi:,LBj:,0:)
-#   endif
-#   if defined AVERAGES_AKT || defined AVERAGES_AKS
-      real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
-#   endif
-#   ifdef AVERAGES_FLUXES
-      real(r8), intent(in) :: stflx(LBi:,LBj:,:)
-#    ifdef BULK_FLUXES
-      real(r8), intent(in) :: lhflx(LBi:,LBj:)
-      real(r8), intent(in) :: shflx(LBi:,LBj:)
-      real(r8), intent(in) :: lrflx(LBi:,LBj:)
-#     ifdef EMINUSP
-      real(r8), intent(in) :: evap(LBi:,LBj:)
-      real(r8), intent(in) :: rain(LBi:,LBj:)
-#     endif
-#    endif
-#    ifdef SHORTWAVE
-      real(r8), intent(in) :: srflx(LBi:,LBj:)
-#    endif
+        IF (Aout(idU3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3Sd(i,j,k)=OCEAN(ng)%u_stokes(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3Sd(i,j,k)=OCEAN(ng)%v_stokes(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3RS(i,j,k)=MIXING(ng)%rustr3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3RS(i,j,k)=MIXING(ng)%rvstr3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW3xx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxx3d(i,j,k)=MIXING(ng)%Sxx(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3xy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxy3d(i,j,k)=MIXING(ng)%Sxy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3yy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSyy3d(i,j,k)=MIXING(ng)%Syy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzx3d(i,j,k)=MIXING(ng)%Szx(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzy3d(i,j,k)=MIXING(ng)%Szy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+# endif
+!
+!  Initialize vorticity fields.
+!
+        IF (Aout(id2dPV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgpvor2d(i,j)=potvor_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(id2dRV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgrvor2d(i,j)=relvor_bar(i,j)
+            END DO
+          END DO
+        END IF
+# ifdef SOLVE3D
+        IF (Aout(id3dPV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgpvor3d(i,j,k)=potvor(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(id3dRV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgrvor3d(i,j,k)=relvor(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+# endif
+!
+!  Initialize quadratic fields.
+!
+        IF (Aout(idZZav,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgZZ(i,j)=OCEAN(ng)%zeta(i,j,Kout)*          &
+     &                               OCEAN(ng)%zeta(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idU2av,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgU2(i,j)=OCEAN(ng)%ubar(i,j,Kout)*          &
+     &                               OCEAN(ng)%ubar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2av,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgV2(i,j)=OCEAN(ng)%vbar(i,j,Kout)*          &
+     &                               OCEAN(ng)%vbar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgUU(i,j,k)=OCEAN(ng)%u(i,j,k,Nout)*       &
+     &                                   OCEAN(ng)%u(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVV(i,j,k)=OCEAN(ng)%v(i,j,k,Nout)*       &
+     &                                   OCEAN(ng)%v(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUV(i,j,k)=0.25_r8*                       &
+     &                                   (OCEAN(ng)%u(i  ,j  ,k,Nout)+  &
+     &                                    OCEAN(ng)%u(i+1,j  ,k,Nout))* &
+     &                                   (OCEAN(ng)%v(i  ,j  ,k,Nout)+  &
+     &                                    OCEAN(ng)%v(i  ,j+1,k,Nout))
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idHUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgHuon(i,j,k)=GRID(ng)%Huon(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idHVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgHvom(i,j,k)=GRID(ng)%Hvom(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgTT(i,j,k,it)=OCEAN(ng)%t(i,j,k,        &
+     &                                                    Nout,it)*     &
+     &                                        OCEAN(ng)%t(i,j,k,        &
+     &                                                    Nout,it)
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgUT(i,j,k,it)=0.5_r8*                   &
+     &                                        OCEAN(ng)%u(i,j,k,Nout)*  &
+     &                                        (OCEAN(ng)%t(i-1,j,k,     &
+     &                                                     Nout,it)+    &
+     &                                         OCEAN(ng)%t(i  ,j,k,     &
+     &                                                     Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgVT(i,j,k,it)=0.5_r8*                   &
+     &                                        OCEAN(ng)%v(i,j,k,Nout)*  &
+     &                                        (OCEAN(ng)%t(i,j-1,k,     &
+     &                                                     Nout,it)+    &
+     &                                         OCEAN(ng)%t(i,j  ,k,     &
+     &                                                     Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+
+          IF (Aout(iHUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgHuonT(i,j,k,it)=0.5_r8*                &
+     &                                           GRID(ng)%Huon(i,j,k)*  &
+     &                                           (OCEAN(ng)%t(i-1,j,k,  &
+     &                                                        Nout,it)+ &
+     &                                            OCEAN(ng)%t(i  ,j,k,  &
+     &                                                        Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(iHVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgHvomT(i,j,k,it)=0.5_r8*                &
+     &                                           GRID(ng)%Hvom(i,j,k)*  &
+     &                                           (OCEAN(ng)%t(i,j-1,k,  &
+     &                                                        Nout,it)+ &
+     &                                            OCEAN(ng)%t(i,j  ,k,  &
+     &                                                        Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+!
+!-----------------------------------------------------------------------
+!  Accumulate time-averaged fields.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (iic(ng).gt.ntsAVG(ng)) THEN
+!
+!  Accumulate state variables.
+!
+        IF (Aout(idFsur,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgzeta(i,j)=AVERAGE(ng)%avgzeta(i,j)+        &
+     &                                 OCEAN(ng)%zeta(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUbar,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2d(i,j)=AVERAGE(ng)%avgu2d(i,j)+          &
+     &                                OCEAN(ng)%ubar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbar,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2d(i,j)=AVERAGE(ng)%avgv2d(i,j)+          &
+     &                                OCEAN(ng)%vbar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3d(i,j,k)=AVERAGE(ng)%avgu3d(i,j,k)+    &
+     &                                    OCEAN(ng)%u(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3d(i,j,k)=AVERAGE(ng)%avgv3d(i,j,k)+    &
+     &                                    OCEAN(ng)%v(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idOvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgw3d(i,j,k)=AVERAGE(ng)%avgw3d(i,j,k)+    &
+     &                                    OCEAN(ng)%W(i,j,k)*           &
+     &                                    GRID(ng)%pm(i,j)*             &
+     &                                    GRID(ng)%pn(i,j)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idWvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgwvel(i,j,k)=AVERAGE(ng)%avgwvel(i,j,k)+  &
+     &                                     OCEAN(ng)%wvel(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idDano,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgrho(i,j,k)=AVERAGE(ng)%avgrho(i,j,k)+    &
+     &                                    OCEAN(ng)%rho(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        DO it=1,NT(ng)
+          IF (Aout(idTvar(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgt(i,j,k,it)=AVERAGE(ng)%avgt(i,j,k,it)+&
+     &                                       OCEAN(ng)%t(i,j,k,Nout,it)
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+
+#  if defined LMD_MIXING || defined MY25_MIXING || defined GLS_MIXING
+        IF (Aout(idVvis,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKv(i,j,k)=AVERAGE(ng)%avgAKv(i,j,k)+    &
+     &                                    MIXING(ng)%Akv(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKt(i,j,k)=AVERAGE(ng)%avgAKt(i,j,k)+    &
+     &                                    MIXING(ng)%Akt(i,j,k,itemp)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idSdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKs(i,j,k)=AVERAGE(ng)%avgAKs(i,j,k)+    &
+     &                                    MIXING(ng)%Akt(i,j,k,isalt)
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef LMD_SKPP
+        IF (Aout(idHsbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghsbl(i,j)=AVERAGE(ng)%avghsbl(i,j)+        &
+     &                                 MIXING(ng)%hsbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef LMD_BKPP
+        IF (Aout(idHbbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghbbl(i,j)=AVERAGE(ng)%avghbbl(i,j)+        &
+     &                                 MIXING(ng)%hbbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+# endif
+
+# if defined FORWARD_WRITE && defined SOLVE3D
+!
+!  Accumulate 2D/3D coupling terms.
+!
+        IF (Aout(idUfx1,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg1(i,j)=AVERAGE(ng)%avgDU_avg1(i,j)+  &
+     &                                    COUPLING(ng)%DU_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUfx2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg2(i,j)=AVERAGE(ng)%avgDU_avg2(i,j)+  &
+     &                                    COUPLING(ng)%DU_avg2(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idVfx1,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg1(i,j)=AVERAGE(ng)%avgDV_avg1(i,j)+  &
+     &                                    COUPLING(ng)%DV_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVfx2,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg2(i,j)=AVERAGE(ng)%avgDV_avg2(i,j)+  &
+     &                                    COUPLING(ng)%DV_avg2(i,j)
+            END DO
+          END DO
+        END IF
+# endif
+!
+!  Accumulate surface and bottom fluxes.
+!
+        IF (Aout(idUsms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgsus(i,j)=AVERAGE(ng)%avgsus(i,j)+          &
+     &                                FORCES(ng)%sustr(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVsms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsvs(i,j)=AVERAGE(ng)%avgsvs(i,j)+          &
+     &                                FORCES(ng)%svstr(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idUbms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgbus(i,j)=AVERAGE(ng)%avgbus(i,j)+          &
+     &                                FORCES(ng)%bustr(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgbvs(i,j)=AVERAGE(ng)%avgbvs(i,j)+          &
+     &                                FORCES(ng)%bvstr(i,j)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idTsur(itemp),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgstf(i,j)=AVERAGE(ng)%avgstf(i,j)+          &
+     &                                FORCES(ng)%stflx(i,j,itemp)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTsur(isalt),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgswf(i,j)=AVERAGE(ng)%avgswf(i,j)+          &
+     &                                FORCES(ng)%stflx(i,j,isalt)
+            END DO
+          END DO
+        END IF
+#  ifdef SHORTWAVE
+        IF (Aout(idSrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrf(i,j)=AVERAGE(ng)%avgsrf(i,j)+          &
+     &                                FORCES(ng)%srflx(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef BULK_FLUXES
+        IF (Aout(idLhea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglhf(i,j)=AVERAGE(ng)%avglhf(i,j)+          &
+     &                                FORCES(ng)%lhflx(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idShea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgshf(i,j)=AVERAGE(ng)%avgshf(i,j)+          &
+     &                                FORCES(ng)%shflx(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idLrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglrf(i,j)=AVERAGE(ng)%avglrf(i,j)+          &
+     &                                FORCES(ng)%lrflx(i,j)
+            END DO
+          END DO
+        END IF
+#   ifdef EMINUSP
+        IF (Aout(idevap,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgevap(i,j)=AVERAGE(ng)%avgevap(i,j)+        &
+     &                                 FORCES(ng)%evap(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idrain,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgrain(i,j)=AVERAGE(ng)%avgrain(i,j)+        &
+     &                                 FORCES(ng)%rain(i,j)
+            END DO
+          END DO
+        END IF
 #   endif
 #  endif
-#  ifdef AVERAGES_FLUXES
-      real(r8), intent(in) :: sustr(LBi:,LBj:)
-      real(r8), intent(in) :: svstr(LBi:,LBj:)
-      real(r8), intent(in) :: bustr(LBi:,LBj:)
-      real(r8), intent(in) :: bvstr(LBi:,LBj:)
+# endif
+
+# ifdef NEARSHORE_MELLOR
+!
+!  Accumulate radiation stresses.
+!
+        IF (Aout(idU2Sd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2Sd(i,j)=AVERAGE(ng)%avgu2Sd(i,j)+        &
+     &                                 OCEAN(ng)%ubar_stokes(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2Sd,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2Sd(i,j)=AVERAGE(ng)%avgv2Sd(i,j)+        &
+     &                                 OCEAN(ng)%vbar_stokes(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU2rs,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2RS(i,j)=AVERAGE(ng)%avgu2RS(i,j)+        &
+     &                                 MIXING(ng)%rustr2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2rs,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2RS(i,j)=AVERAGE(ng)%avgv2RS(i,j)+        &
+     &                                 MIXING(ng)%rvstr2d(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW2xx,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxx2d(i,j)=AVERAGE(ng)%avgSxx2d(i,j)+      &
+     &                                  MIXING(ng)%Sxx_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2xy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxy2d(i,j)=AVERAGE(ng)%avgSxy2d(i,j)+      &
+     &                                  MIXING(ng)%Sxy_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2yy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSyy2d(i,j)=AVERAGE(ng)%avgSyy2d(i,j)+      &
+     &                                  MIXING(ng)%Syy_bar(i,j)
+            END DO
+          END DO
+        END IF
+
+#  ifdef SOLVE3D
+        IF (Aout(idU3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3Sd(i,j,k)=AVERAGE(ng)%avgu3Sd(i,j,k)+  &
+     &                                     OCEAN(ng)%u_stokes(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3Sd(i,j,k)=AVERAGE(ng)%avgv3Sd(i,j,k)+  &
+     &                                     OCEAN(ng)%v_stokes(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3RS(i,j,k)=AVERAGE(ng)%avgu3RS(i,j,k)+  &
+     &                                     MIXING(ng)%rustr3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3RS(i,j,k)=AVERAGE(ng)%avgv3RS(i,j,k)+  &
+     &                                     MIXING(ng)%rvstr3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW3xx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxx3d(i,j,k)=AVERAGE(ng)%avgSxx3d(i,j,k)+&
+     &                                      MIXING(ng)%Sxx(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3xy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxy3d(i,j,k)=AVERAGE(ng)%avgSxy3d(i,j,k)+&
+     &                                      MIXING(ng)%Sxy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3yy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSyy3d(i,j,k)=AVERAGE(ng)%avgSyy3d(i,j,k)+&
+     &                                      MIXING(ng)%Syy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzx3d(i,j,k)=AVERAGE(ng)%avgSzx3d(i,j,k)+&
+     &                                      MIXING(ng)%Szx(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzy3d(i,j,k)=AVERAGE(ng)%avgSzy3d(i,j,k)+&
+     &                                      MIXING(ng)%Szy(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
 #  endif
-      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
-#  ifdef AVERAGES_NEARSHORE
-      real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
-      real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
-      real(r8), intent(in) :: rustr2d(LBi:,LBj:)
-      real(r8), intent(in) :: rvstr2d(LBi:,LBj:)
-      real(r8), intent(in) :: Sxx_bar(LBi:,LBj:)
-      real(r8), intent(in) :: Sxy_bar(LBi:,LBj:)
-      real(r8), intent(in) :: Syy_bar(LBi:,LBj:)
+# endif
+!
+!  Accumulate vorticity fields.
+!
+        IF (Aout(id2dPV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgpvor2d(i,j)=AVERAGE(ng)%avgpvor2d(i,j)+    &
+     &                                   potvor_bar(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(id2dRV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgrvor2d(i,j)=AVERAGE(ng)%avgrvor2d(i,j)+    &
+     &                                   relvor_bar(i,j)
+            END DO
+          END DO
+        END IF
+# ifdef SOLVE3D
+        IF (Aout(id3dPV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgpvor3d(i,j,k)=AVERAGE(ng)%avgpvor3d(i,j, &
+     &                                                             k)+  &
+     &                                       potvor(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(id3dRV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgrvor3d(i,j,k)=AVERAGE(ng)%avgrvor3d(i,j, &
+     &                                                             k)+  &
+     &                                       relvor(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+# endif
+!
+!  Accumulate quadratic fields.
+!
+        IF (Aout(idZZav,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgZZ(i,j)=AVERAGE(ng)%avgZZ(i,j)+            &
+     &                               OCEAN(ng)%zeta(i,j,Kout)*          &
+     &                               OCEAN(ng)%zeta(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idU2av,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgU2(i,j)=AVERAGE(ng)%avgU2(i,j)+            &
+     &                               OCEAN(ng)%ubar(i,j,Kout)*          &
+     &                               OCEAN(ng)%ubar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2av,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgV2(i,j)=AVERAGE(ng)%avgV2(i,j)+            &
+     &                               OCEAN(ng)%vbar(i,j,Kout)*          &
+     &                               OCEAN(ng)%vbar(i,j,Kout)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgUU(i,j,k)=AVERAGE(ng)%avgUU(i,j,k)+      &
+     &                                   OCEAN(ng)%u(i,j,k,Nout)*       &
+     &                                   OCEAN(ng)%u(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVV(i,j,k)=AVERAGE(ng)%avgVV(i,j,k)+      &
+     &                                   OCEAN(ng)%v(i,j,k,Nout)*       &
+     &                                   OCEAN(ng)%v(i,j,k,Nout)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUV(i,j,k)=AVERAGE(ng)%avgUV(i,j,k)+      &
+     &                                   0.25_r8*                       &
+     &                                   (OCEAN(ng)%u(i  ,j  ,k,Nout)+  &
+     &                                    OCEAN(ng)%u(i+1,j  ,k,Nout))* &
+     &                                   (OCEAN(ng)%v(i  ,j  ,k,Nout)+  &
+     &                                    OCEAN(ng)%v(i  ,j+1,k,Nout))
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idHUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgHuon(i,j,k)=AVERAGE(ng)%avgHuon(i,j,k)+  &
+     &                                     GRID(ng)%Huon(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idHVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgHvom(i,j,k)=AVERAGE(ng)%avgHvom(i,j,k)+  &
+     &                                     GRID(ng)%Hvom(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgTT(i,j,k,it)=AVERAGE(ng)%avgTT(i,j,k,  &
+     &                                                          it)+    &
+     &                                        OCEAN(ng)%t(i,j,k,        &
+     &                                                    Nout,it)*     &
+     &                                        OCEAN(ng)%t(i,j,k,        &
+     &                                                    Nout,it)
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgUT(i,j,k,it)=AVERAGE(ng)%avgUT(i,j,k,  &
+     &                                                          it)+    &
+     &                                        0.5_r8*                   &
+     &                                        OCEAN(ng)%u(i,j,k,Nout)*  &
+     &                                        (OCEAN(ng)%t(i-1,j,k,     &
+     &                                                     Nout,it)+    &
+     &                                         OCEAN(ng)%t(i  ,j,k,     &
+     &                                                     Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgVT(i,j,k,it)=AVERAGE(ng)%avgVT(i,j,k,  &
+     &                                                          it)+    &
+     &                                        0.5_r8*                   &
+     &                                        OCEAN(ng)%v(i,j,k,Nout)*  &
+     &                                        (OCEAN(ng)%t(i,j-1,k,     &
+     &                                                     Nout,it)+    &
+     &                                         OCEAN(ng)%t(i,j  ,k,     &
+     &                                                     Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+
+          IF (Aout(iHUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgHuonT(i,j,k,it)=AVERAGE(ng)%avgHuonT(i,&
+     &                                                       j,k,it)+   &
+     &                                           0.5_r8*                &
+     &                                           GRID(ng)%Huon(i,j,k)*  &
+     &                                           (OCEAN(ng)%t(i-1,j,k,  &
+     &                                                        Nout,it)+ &
+     &                                            OCEAN(ng)%t(i  ,j,k,  &
+     &                                                        Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(iHVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgHvomT(i,j,k,it)=AVERAGE(ng)%avgHvomT(i,&
+     &                                                       j,k,it)+   &
+     &                                           0.5_r8*                &
+     &                                           GRID(ng)%Hvom(i,j,k)*  &
+     &                                           (OCEAN(ng)%t(i,j-1,k,  &
+     &                                                        Nout,it)+ &
+     &                                            OCEAN(ng)%t(i,j  ,k,  &
+     &                                                        Nout,it))
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Convert accumulated sums into time-averages, if appropriate.
+!-----------------------------------------------------------------------
+!
+      IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
+     &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
+     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
+        fac=1.0_r8/REAL(nAVG(ng),r8)
+        IF (SOUTH_WEST_TEST) THEN
+          AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
+        END IF
+!
+!  Process state variables.
+!
+        IF (Aout(idFsur,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgzeta(i,j)=fac*AVERAGE(ng)%avgzeta(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUbar,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2d(i,j)=fac*AVERAGE(ng)%avgu2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbar,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2d(i,j)=fac*AVERAGE(ng)%avgv2d(i,j)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3d(i,j,k)=fac*AVERAGE(ng)%avgu3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVvel,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3d(i,j,k)=fac*AVERAGE(ng)%avgv3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idOvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgw3d(i,j,k)=fac*AVERAGE(ng)%avgw3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idWvel,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgwvel(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgwvel(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idDano,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgrho(i,j,k)=fac*AVERAGE(ng)%avgrho(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        DO it=1,NT(ng)
+          IF (Aout(idTvar(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgt(i,j,k,it)=fac*                       &
+     &                                       AVERAGE(ng)%avgt(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+
+#  if defined LMD_MIXING || defined MY25_MIXING || defined GLS_MIXING
+        IF (Aout(idVvis,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKv(i,j,k)=fac*AVERAGE(ng)%avgAKv(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKt(i,j,k)=fac*AVERAGE(ng)%avgAKt(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idSdif,ng)) THEN
+          DO k=0,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgAKs(i,j,k)=fac*AVERAGE(ng)%avgAKs(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
 #  endif
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#  ifdef LMD_SKPP
+        IF (Aout(idHsbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghsbl(i,j)=fac*AVERAGE(ng)%avghsbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef LMD_BKPP
+        IF (Aout(idHbbl,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avghbbl(i,j)=fac*AVERAGE(ng)%avghbbl(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+# endif
+
+# if defined FORWARD_WRITE && defined SOLVE3D
+!
+!  Process 2D/3D coupling terms.
+!
+        IF (Aout(idUfx1,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg1(i,j)=fac*                          &
+     &                                    AVERAGE(ng)%avgDU_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUfx2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgDU_avg2(i,j)=fac*                          &
+     &                                    AVERAGE(ng)%avgDU_avg2(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idVfx1,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg1(i,j)=fac*                          &
+     &                                    AVERAGE(ng)%avgDV_avg1(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVfx2,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgDV_avg2(i,j)=fac*                          &
+     &                                    AVERAGE(ng)%avgDV_avg2(i,j)
+            END DO
+          END DO
+        END IF
+# endif
+!
+!  Process surface and bottom fluxes.
+!
+        IF (Aout(idUsms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgsus(i,j)=fac*AVERAGE(ng)%avgsus(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVsms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsvs(i,j)=fac*AVERAGE(ng)%avgsvs(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idUbms,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgbus(i,j)=fac*AVERAGE(ng)%avgbus(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVbms,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgbvs(i,j)=fac*AVERAGE(ng)%avgbvs(i,j)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idTsur(itemp),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgstf(i,j)=fac*AVERAGE(ng)%avgstf(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idTsur(isalt),ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgswf(i,j)=fac*AVERAGE(ng)%avgswf(i,j)
+            END DO
+          END DO
+        END IF
+#  ifdef SHORTWAVE
+        IF (Aout(idSrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrf(i,j)=fac*AVERAGE(ng)%avgsrf(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef BULK_FLUXES
+        IF (Aout(idLhea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglhf(i,j)=fac*AVERAGE(ng)%avglhf(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idShea,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgshf(i,j)=fac*AVERAGE(ng)%avgshf(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idLrad,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avglrf(i,j)=fac*AVERAGE(ng)%avglrf(i,j)
+            END DO
+          END DO
+        END IF
+#   ifdef EMINUSP
+        IF (Aout(idevap,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgevap(i,j)=fac*AVERAGE(ng)%avgevap(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idrain,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgrain(i,j)=fac*AVERAGE(ng)%avgrain(i,j)
+            END DO
+          END DO
+        END IF
+#   endif
+#  endif
+# endif
+
+# ifdef NEARSHORE_MELLOR
+!
+!  Process radiation stresses.
+!
+        IF (Aout(idU2Sd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2Sd(i,j)=fac*AVERAGE(ng)%avgu2Sd(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2Sd,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2Sd(i,j)=fac*AVERAGE(ng)%avgv2Sd(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU2rs,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgu2RS(i,j)=fac*AVERAGE(ng)%avgu2RS(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2rs,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgv2RS(i,j)=fac*AVERAGE(ng)%avgv2RS(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW2xx,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxx2d(i,j)=fac*AVERAGE(ng)%avgSxx2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2xy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSxy2d(i,j)=fac*AVERAGE(ng)%avgSxy2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW2yy,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgSyy2d(i,j)=fac*AVERAGE(ng)%avgSyy2d(i,j)
+            END DO
+          END DO
+        END IF
+
+#  ifdef SOLVE3D
+        IF (Aout(idU3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3Sd(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgu3Sd(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3Sd,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3Sd(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgv3Sd(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idU3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgu3RS(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgu3RS(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV3rs,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3RS(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgv3RS(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idW3xx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxx3d(i,j,k)=fac*                        &
+     &                                      AVERAGE(ng)%avgSxx3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3xy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSxy3d(i,j,k)=fac*                        &
+     &                                      AVERAGE(ng)%avgSxy3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3yy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSyy3d(i,j,k)=fac*                        &
+     &                                      AVERAGE(ng)%avgSyy3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zx,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzx3d(i,j,k)=fac*                        &
+     &                                      AVERAGE(ng)%avgSzx3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idW3zy,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgSzy3d(i,j,k)=fac*                        &
+     &                                      AVERAGE(ng)%avgSzy3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+# endif
+!
+!  Process vorticity fields.
+!
+        IF (Aout(id2dPV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgpvor2d(i,j)=fac*                           &
+     &                                   AVERAGE(ng)%avgpvor2d(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(id2dRV,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgrvor2d(i,j)=fac*                           &
+     &                                   AVERAGE(ng)%avgrvor2d(i,j)
+            END DO
+          END DO
+        END IF
+# ifdef SOLVE3D
+        IF (Aout(id3dPV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgpvor3d(i,j,k)=fac*                       &
+     &                                      AVERAGE(ng)%avgpvor3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(id3dRV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgrvor3d(i,j,k)=fac*                       &
+     &                                      AVERAGE(ng)%avgrvor3d(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+# endif
+!
+!  Process quadratic fields.
+!
+        IF (Aout(idZZav,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgZZ(i,j)=fac*AVERAGE(ng)%avgZZ(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idU2av,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              AVERAGE(ng)%avgU2(i,j)=fac*AVERAGE(ng)%avgU2(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idV2av,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgV2(i,j)=fac*AVERAGE(ng)%avgV2(i,j)
+            END DO
+          END DO
+        END IF
+
+# ifdef SOLVE3D
+        IF (Aout(idUUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgUU(i,j,k)=fac*AVERAGE(ng)%avgUU(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idVVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVV(i,j,k)=fac*AVERAGE(ng)%avgVV(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idUVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUV(i,j,k)=fac*AVERAGE(ng)%avgUV(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idHUav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                AVERAGE(ng)%avgHuon(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgHuon(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idHVav,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgHvom(i,j,k)=fac*                         &
+     &                                     AVERAGE(ng)%avgHvom(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgTT(i,j,k,it)=fac*                      &
+     &                                       AVERAGE(ng)%avgTT(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgUT(i,j,k,it)=fac*                      &
+     &                                       AVERAGE(ng)%avgUT(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(idVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgVT(i,j,k,it)=fac*                      &
+     &                                       AVERAGE(ng)%avgVT(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+
+          IF (Aout(iHUTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=Istr,Iend
+                  AVERAGE(ng)%avgHuonT(i,j,k,it)=fac*                   &
+     &                                    AVERAGE(ng)%avgHuonT(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+          IF (Aout(iHVTav(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgHvomT(i,j,k,it)=fac*                   &
+     &                                    AVERAGE(ng)%avgHvomT(i,j,k,it)
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+      END IF
+
+      RETURN
+      END SUBROUTINE set_avg_tile
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!***********************************************************************
+      SUBROUTINE set_detide_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
+     &                            NTC, Kout,                            &
+#  ifdef SOLVE3D
+     &                            Nout,                                 &
+#  endif
+     &                            CosOmega, SinOmega,                   &
+     &                            CosW_avg, CosW_sum,                   &
+     &                            SinW_avg, SinW_sum,                   &
+     &                            CosWCosW, SinWSinW, SinWCosW)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_ncparam
+      USE mod_average
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_tides
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: Kout
+#  ifdef SOLVE3D
+      integer, intent(in) :: Nout
+#  endif
+      integer, intent(in) :: NTC
+!
+#  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: CosOmega(:)
       real(r8), intent(in) :: SinOmega(:)
       real(r8), intent(inout) :: CosW_avg(:)
@@ -496,190 +2125,7 @@
       real(r8), intent(inout) :: CosWCosW(:,:)
       real(r8), intent(inout) :: SinWSinW(:,:)
       real(r8), intent(inout) :: SinWCosW(:,:)
-      real(r8), intent(inout) :: ubar_tide(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: ubar_detided(LBi:,LBj:)
-      real(r8), intent(inout) :: vbar_tide(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: vbar_detided(LBi:,LBj:)
-      real(r8), intent(inout) :: zeta_tide(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: zeta_detided(LBi:,LBj:)
-#  endif
-#  ifdef SOLVE3D
-#   if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-      real(r8), intent(inout) :: u_tide(LBi:,LBj:,:,0:)
-      real(r8), intent(inout) :: u_detided(LBi:,LBj:,:)
-      real(r8), intent(inout) :: v_tide(LBi:,LBj:,:,0:)
-      real(r8), intent(inout) :: v_detided(LBi:,LBj:,:)
-#   endif
-#   ifdef FORWARD_WRITE
-      real(r8), intent(inout) :: avgDU_avg1(LBi:,LBj:)
-      real(r8), intent(inout) :: avgDU_avg2(LBi:,LBj:)
-      real(r8), intent(inout) :: avgDV_avg1(LBi:,LBj:)
-      real(r8), intent(inout) :: avgDV_avg2(LBi:,LBj:)
-#   endif
-      real(r8), intent(inout) :: avgu3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgv3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgw3d(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: avgwvel(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: avgt(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: avgrho(LBi:,LBj:,:)
-#   ifdef AVERAGES_NEARSHORE
-      real(r8), intent(inout) :: avgu3Sd(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgv3Sd(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgu3RS(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgv3RS(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgSxx3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgSxy3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgSyy3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgSzx3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgSzy3d(LBi:,LBj:,:)
-#   endif
-#   ifdef LMD_SKPP
-      real(r8), intent(inout) :: avghsbl(LBi:,LBj:)
-#   endif
-#   ifdef LMD_BKPP
-      real(r8), intent(inout) :: avghbbl(LBi:,LBj:)
-#   endif
-#   ifdef AVERAGES_AKV
-      real(r8), intent(inout) :: avgAKv(LBi:,LBj:,0:)
-#   endif
-#   ifdef AVERAGES_AKT
-      real(r8), intent(inout) :: avgAKt(LBi:,LBj:,0:)
-#   endif
-#   ifdef AVERAGES_AKS
-      real(r8), intent(inout) :: avgAKs(LBi:,LBj:,0:)
-#   endif
-#   ifdef AVERAGES_FLUXES
-      real(r8), intent(inout) :: avgstf(LBi:,LBj:)
-      real(r8), intent(inout) :: avgswf(LBi:,LBj:)
-#    ifdef BULK_FLUXES
-      real(r8), intent(inout) :: avglhf(LBi:,LBj:)
-      real(r8), intent(inout) :: avgshf(LBi:,LBj:)
-      real(r8), intent(inout) :: avglrf(LBi:,LBj:)
-#     ifdef EMINUSP
-      real(r8), intent(inout) :: avgevap(LBi:,LBj:)
-      real(r8), intent(inout) :: avgrain(LBi:,LBj:)
-#     endif
-#    endif
-#    ifdef SHORTWAVE
-      real(r8), intent(inout) :: avgsrf(LBi:,LBj:)
-#    endif
-#   endif
-#  endif
-#  ifdef AVERAGES_FLUXES
-      real(r8), intent(inout) :: avgsus(LBi:,LBj:)
-      real(r8), intent(inout) :: avgsvs(LBi:,LBj:)
-      real(r8), intent(inout) :: avgbus(LBi:,LBj:)
-      real(r8), intent(inout) :: avgbvs(LBi:,LBj:)
-#  endif
-#  ifdef AVERAGES_QUADRATIC
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: avgHuon(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgHvom(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgUU(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgUV(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgVV(LBi:,LBj:,:)
-      real(r8), intent(inout) :: avgHuonT(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: avgHvomT(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: avgUT(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: avgVT(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: avgTT(LBi:,LBj:,:,:)
-#   endif
-      real(r8), intent(inout) :: avgU2(LBi:,LBj:)
-      real(r8), intent(inout) :: avgV2(LBi:,LBj:)
-      real(r8), intent(inout) :: avgZZ(LBi:,LBj:)
-#  endif
-#  ifdef AVERAGES_NEARSHORE
-      real(r8), intent(inout) :: avgu2Sd(LBi:,LBj:)
-      real(r8), intent(inout) :: avgv2Sd(LBi:,LBj:)
-      real(r8), intent(inout) :: avgu2RS(LBi:,LBj:)
-      real(r8), intent(inout) :: avgv2RS(LBi:,LBj:)
-      real(r8), intent(inout) :: avgSxx2d(LBi:,LBj:)
-      real(r8), intent(inout) :: avgSxy2d(LBi:,LBj:)
-      real(r8), intent(inout) :: avgSyy2d(LBi:,LBj:)
-#  endif
-      real(r8), intent(inout) :: avgu2d(LBi:,LBj:)
-      real(r8), intent(inout) :: avgv2d(LBi:,LBj:)
-      real(r8), intent(inout) :: avgzeta(LBi:,LBj:)
-
-# else
-
-#  ifdef SOLVE3D
-      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-#   ifdef AVERAGES_QUADRATIC
-      real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
-#   endif
-#   ifdef FORWARD_WRITE
-      real(r8), intent(in) :: DU_avg1(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: DU_avg2(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: DV_avg1(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
-#   endif
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(in) :: wvel(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-#   ifdef AVERAGES_NEARSHORE
-      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: rustr3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: rvstr3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Sxx(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Sxy(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Syy(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Szx(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Szy(LBi:UBi,LBj:UBj,N(ng))
-#   endif
-#   ifdef LMD_SKPP
-      real(r8), intent(in) :: hsbl(LBi:UBi,LBj:UBj)
-#   endif
-#   ifdef LMD_BKPP
-      real(r8), intent(in) :: hbbl(LBi:UBi,LBj:UBj)
-#   endif
-#   ifdef AVERAGES_AKV
-      real(r8), intent(in) :: Akv(LBi:UBi,LBj:UBj,0:N(ng))
-#   endif
-#   if defined AVERAGES_AKT || defined AVERAGES_AKS
-      real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
-#   endif
-#   ifdef AVERAGES_FLUXES
-      real(r8), intent(in) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
-#    ifdef BULK_FLUXES
-      real(r8), intent(in) :: lhflx(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: shflx(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: lrflx(LBi:UBi,LBj:UBj)
-#     ifdef EMINUSP
-      real(r8), intent(in) :: evap(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rain(LBi:UBi,LBj:UBj)
-#     endif
-#    endif
-#    ifdef SHORTWAVE
-      real(r8), intent(in) :: srflx(LBi:UBi,LBj:UBj)
-#    endif
-#   endif
-#  endif
-#  ifdef AVERAGES_FLUXES
-      real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: svstr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
-#  endif
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-#  ifdef AVERAGES_NEARSHORE
-      real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rustr2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rvstr2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Sxx_bar(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Sxy_bar(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Syy_bar(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#  else
       real(r8), intent(in) :: CosOmega(NTC)
       real(r8), intent(in) :: SinOmega(NTC)
       real(r8), intent(inout) :: CosW_avg(NTC)
@@ -689,138 +2135,23 @@
       real(r8), intent(inout) :: CosWCosW(NTC,NTC)
       real(r8), intent(inout) :: SinWSinW(NTC,NTC)
       real(r8), intent(inout) :: SinWCosW(NTC,NTC)
-      real(r8), intent(inout) :: ubar_tide(LBi:UBi,LBj:UBj,0:2*NTC)
-      real(r8), intent(inout) :: ubar_detided(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: vbar_tide(LBi:UBi,LBj:UBj,0:2*NTC)
-      real(r8), intent(inout) :: vbar_detided(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: zeta_tide(LBi:UBi,LBj:UBj,0:2*NTC)
-      real(r8), intent(inout) :: zeta_detided(LBi:UBi,LBj:UBj)
 #  endif
-#  ifdef SOLVE3D
-#   if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-      real(r8), intent(inout) :: u_tide(LBi:UBi,LBj:UBj,N(ng),0:2*NTC)
-      real(r8), intent(inout) :: u_detided(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: v_tide(LBi:UBi,LBj:UBj,N(ng),0:2*NTC)
-      real(r8), intent(inout) :: v_detided(LBi:UBi,LBj:UBj,N(ng))
-#   endif
-#   ifdef FORWARD_WRITE
-      real(r8), intent(inout) :: avgDU_avg1(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgDU_avg2(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgDV_avg1(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgDV_avg2(LBi:UBi,LBj:UBj)
-#   endif
-      real(r8), intent(inout) :: avgu3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgv3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgw3d(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(inout) :: avgwvel(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(inout) :: avgt(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(inout) :: avgrho(LBi:UBi,LBj:UBj,N(ng))
-#   ifdef AVERAGES_NEARSHORE
-      real(r8), intent(inout) :: avgu3Sd(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgv3Sd(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgu3RS(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgv3RS(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgSxx3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgSxy3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgSyy3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgSzx3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgSzy3d(LBi:UBi,LBj:UBj,N(ng))
-#   endif
-#   ifdef LMD_SKPP
-      real(r8), intent(inout) :: avghsbl(LBi:UBi,LBj:UBj)
-#   endif
-#   ifdef LMD_BKPP
-      real(r8), intent(inout) :: avghbbl(LBi:UBi,LBj:UBj)
-#   endif
-#   ifdef AVERAGES_AKV
-      real(r8), intent(inout) :: avgAKv(LBi:UBi,LBj:UBj,0:N(ng))
-#   endif
-#   ifdef AVERAGES_AKT
-      real(r8), intent(inout) :: avgAKt(LBi:UBi,LBj:UBj,0:N(ng))
-#   endif
-#   ifdef AVERAGES_AKS
-      real(r8), intent(inout) :: avgAKs(LBi:UBi,LBj:UBj,0:N(ng))
-#   endif
-#   ifdef AVERAGES_FLUXES
-      real(r8), intent(inout) :: avgstf(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgswf(LBi:UBi,LBj:UBj)
-#    ifdef BULK_FLUXES
-      real(r8), intent(inout) :: avglhf(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgshf(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avglrf(LBi:UBi,LBj:UBj)
-#     ifdef EMINUSP
-      real(r8), intent(inout) :: avgevap(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgrain(LBi:UBi,LBj:UBj)
-#     endif
-#    endif
-#    ifdef SHORTWAVE
-      real(r8), intent(inout) :: avgsrf(LBi:UBi,LBj:UBj)
-#    endif
-#   endif
-#  endif
-#  ifdef AVERAGES_FLUXES
-      real(r8), intent(inout) :: avgsus(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgsvs(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgbus(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgbvs(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef AVERAGES_QUADRATIC
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: avgHuon(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgHvom(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgUU(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgUV(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgVV(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: avgHuonT(LBi:UBi,LBj:UBj,N(ng),NAT)
-      real(r8), intent(inout) :: avgHvomT(LBi:UBi,LBj:UBj,N(ng),NAT)
-      real(r8), intent(inout) :: avgUT(LBi:UBi,LBj:UBj,N(ng),NAT)
-      real(r8), intent(inout) :: avgVT(LBi:UBi,LBj:UBj,N(ng),NAT)
-      real(r8), intent(inout) :: avgTT(LBi:UBi,LBj:UBj,N(ng),NAT)
-#   endif
-      real(r8), intent(inout) :: avgU2(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgV2(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgZZ(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef AVERAGES_NEARSHORE
-      real(r8), intent(inout) :: avgu2Sd(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgv2Sd(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgu2RS(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgv2RS(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgSxx2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgSxy2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgSyy2d(LBi:UBi,LBj:UBj)
-#  endif
-      real(r8), intent(inout) :: avgu2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgv2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: avgzeta(LBi:UBi,LBj:UBj)
-# endif
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-      integer :: mk, nk
+      integer :: i, it, j, k
+      integer :: NTC2, mk, nk
+
       integer, dimension(2*NTC+1) :: indx
-# endif
 
       real(r8) :: fac, fac1
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-      real(r8) :: d, ubar_sum, vbar_sum, zeta_sum
-#  ifdef SOLVE3D
-      real(r8) :: u_sum, v_sum
-#  endif
-      real(r8), dimension(0:2*NTC) :: Ak_zeta
-      real(r8), dimension(0:2*NTC) :: Ak_ubar
-      real(r8), dimension(0:2*NTC) :: Ak_vbar
-#  ifdef SOLVE3D
-      real(r8), dimension(0:2*NTC) :: Ak_u
-      real(r8), dimension(0:2*NTC) :: Ak_v
-#  endif
+      real(r8) :: Hsum, d
+
+      real(r8), dimension(0:2*NTC) :: Ak
       real(r8), dimension(0:2*NTC) :: tide_harmonics
       real(r8), dimension(0:2*NTC,0:2*NTC) :: C, Y
-# endif
 
-# include "set_bounds.h"
+#  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Return if time-averaging window is zero.
@@ -834,11 +2165,11 @@
 !  averaged fields are computed correctly.
 !-----------------------------------------------------------------------
 !
+      NTC2=2*NTC
+
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
-
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !  Compute least-squares coefficients to detide time-averaged fields.
 !  Notice that the coefficients are always accumulated and not
@@ -864,200 +2195,106 @@
             tide_harmonics(nk+NTC)=CosOmega(nk)
           END DO
         END IF
-# endif
 !
-!  Initialize 2D fields.
+!  Initialize.
 !
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-            DO nk=0,2*NTC
-              zeta_tide(i,j,nk)=zeta_tide(i,j,nk)+                      &
-     &                          zeta(i,j,Kout)*tide_harmonics(nk)
-              ubar_tide(i,j,nk)=ubar_tide(i,j,nk)+                      &
-     &                          ubar(i,j,Kout)*tide_harmonics(nk)
-              vbar_tide(i,j,nk)=vbar_tide(i,j,nk)+                      &
-     &                          vbar(i,j,Kout)*tide_harmonics(nk)
-            END DO
-# endif
-            avgzeta(i,j)=zeta(i,j,Kout)
-            avgu2d (i,j)=ubar(i,j,Kout)
-            avgv2d (i,j)=vbar(i,j,Kout)
-# if defined FORWARD_WRITE && defined SOLVE3D
-            avgDU_avg1(i,j)=DU_avg1(i,j)
-            avgDU_avg2(i,j)=DU_avg2(i,j)
-            avgDV_avg1(i,j)=DV_avg1(i,j)
-            avgDV_avg2(i,j)=DV_avg2(i,j)
-# endif
-# ifdef AVERAGES_NEARSHORE
-            avgu2Sd(i,j)=ubar_stokes(i,j)
-            avgv2Sd(i,j)=vbar_stokes(i,j)
-            avgu2RS(i,j)=rustr2d(i,j)
-            avgv2RS(i,j)=rvstr2d(i,j)
-            avgSxx2d(i,j)=Sxx_bar(i,j)
-            avgSxy2d(i,j)=Sxy_bar(i,j)
-            avgSyy2d(i,j)=Syy_bar(i,j)
-# endif
-# ifdef AVERAGES_QUADRATIC
-            avgZZ(i,j)=zeta(i,j,Kout)*zeta(i,j,Kout)
-            avgU2(i,j)=ubar(i,j,Kout)*ubar(i,j,Kout)
-            avgV2(i,j)=vbar(i,j,Kout)*vbar(i,j,Kout)
-# endif
-# ifdef SOLVE3D
-#  ifdef LMD_SKPP
-            avghsbl(i,j)=hsbl(i,j)
-#  endif
-#  ifdef LMD_BKPP
-            avghbbl(i,j)=hbbl(i,j)
-#  endif
-#  ifdef AVERAGES_FLUXES
-            avgstf(i,j)=stflx(i,j,itemp)
-            avgswf(i,j)=stflx(i,j,isalt)
-#   ifdef BULK_FLUXES
-            avglhf(i,j)=lhflx(i,j)
-            avgshf(i,j)=shflx(i,j)
-            avglrf(i,j)=lrflx(i,j)
-#    ifdef EMINUSP
-            avgevap(i,j)=evap(i,j)
-            avgrain(i,j)=rain(i,j)
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-            avgsrf(i,j)=srflx(i,j)
-#   endif
-#  endif
-# endif
-# ifdef AVERAGES_FLUXES
-            avgsus(i,j)=sustr(i,j)
-            avgsvs(i,j)=svstr(i,j)
-            avgbus(i,j)=bustr(i,j)
-            avgbvs(i,j)=bvstr(i,j)
-# endif
-          END DO
-        END DO
-
-# ifdef SOLVE3D
-!
-!  Initialize fields associated with 3D horizontal momentum.
-!
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-              DO nk=0,2*NTC
-                u_tide(i,j,k,nk)=u_tide(i,j,k,nk)+                      &
-     &                           u(i,j,k,Nout)*tide_harmonics(nk)
-                v_tide(i,j,k,nk)=v_tide(i,j,k,nk)+                      &
-     &                           v(i,j,k,Nout)*tide_harmonics(nk)
-              END DO
-#  endif
-              avgu3d(i,j,k)=u(i,j,k,Nout)
-              avgv3d(i,j,k)=v(i,j,k,Nout)
-              avgrho(i,j,k)=rho(i,j,k)
-#  ifdef AVERAGES_NEARSHORE
-              avgu3Sd(i,j,k)=u_stokes(i,j,k)
-              avgv3Sd(i,j,k)=v_stokes(i,j,k)
-              avgu3RS(i,j,k)=rustr3d(i,j,k)
-              avgv3RS(i,j,k)=rvstr3d(i,j,k)
-              avgSxx3d(i,j,k)=Sxx(i,j,k)
-              avgSxy3d(i,j,k)=Sxy(i,j,k)
-              avgSyy3d(i,j,k)=Syy(i,j,k)
-              avgSzx3d(i,j,k)=Szx(i,j,k)
-              avgSzy3d(i,j,k)=Szy(i,j,k)
-#  endif
-#  ifdef AVERAGES_QUADRATIC
-              avgHuon(i,j,k)=Huon(i,j,k)
-              avgHvom(i,j,k)=Hvom(i,j,k)
-              avgUU(i,j,k)=u(i,j,k,Nout)*u(i,j,k,Nout)
-              avgVV(i,j,k)=v(i,j,k,Nout)*v(i,j,k,Nout)
-#  endif
-            END DO
-          END DO
-#  ifdef AVERAGES_QUADRATIC
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-              avgUV(i,j,k)=0.25_r8*(u(i  ,j  ,k,Nout)+                  &
-     &                              u(i+1,j  ,k,Nout))*                 &
-     &                             (v(i  ,j  ,k,Nout)+                  &
-     &                              v(i  ,j+1,k,Nout))
-            END DO
-          END DO
-#  endif
-        END DO
-!
-!  Initialized fields associated with tracers.
-!
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
+        IF (Aout(idFsuD,ng)) THEN
+          DO nk=0,NTC2
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                avgt(i,j,k,itrc)=t(i,j,k,Nout,itrc)
+                TIDES(ng)%zeta_tide(i,j,nk)=TIDES(ng)%zeta_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
               END DO
             END DO
           END DO
-#  ifdef AVERAGES_QUADRATIC
-          IF (itrc.le.NAT) THEN
+        END IF
+
+        IF (Aout(idu2dD,ng)) THEN
+          DO nk=0,NTC2
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                TIDES(ng)%ubar_tide(i,j,nk)=TIDES(ng)%ubar_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%ubar(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idv2dD,ng)) THEN
+          DO nk=0,NTC2
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                TIDES(ng)%vbar_tide(i,j,nk)=TIDES(ng)%vbar_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
+              END DO
+            END DO
+          END DO
+        END IF
+
+#  ifdef SOLVE3D
+        IF (Aout(idu3dD,ng)) THEN
+          DO nk=0,NTC2
             DO k=1,N(ng)
               DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  avgTT(i,j,k,itrc)=t(i,j,k,Nout,itrc)*                 &
-     &                              t(i,j,k,Nout,itrc)
-                END DO
-                DO i=Istr,Iend
-                  avgUT(i,j,k,itrc)=0.5_r8*u(i,j,k,Nout)*               &
-     &                              (t(i-1,j,k,Nout,itrc)+              &
-     &                               t(i  ,j,k,Nout,itrc))
-                  avgHuonT(i,j,k,itrc)=0.5_r8*Huon(i,j,k)*              &
-     &                                 (t(i-1,j,k,Nout,itrc)+           &
-     &                                  t(i  ,j,k,Nout,itrc))
+                DO i=Istr,IendR
+                  TIDES(ng)%u_tide(i,j,k,nk)=TIDES(ng)%u_tide(i,j,k,    &
+     &                                                        nk)+      &
+     &                                       OCEAN(ng)%u(i,j,k,Nout)*   &
+     &                                       tide_harmonics(nk)
                 END DO
               END DO
-              DO j=Jstr,Jend
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idv3dD,ng)) THEN
+          DO nk=0,NTC2
+            DO k=1,N(ng)
+              DO j=Jstr,JendR
                 DO i=IstrR,IendR
-                  avgVT(i,j,k,itrc)=0.5_r8*v(i,j,k,Nout)*               &
-     &                              (t(i,j-1,k,Nout,itrc)+              &
-     &                               t(i,j  ,k,Nout,itrc))
-                  avgHvomT(i,j,k,itrc)=0.5_r8*Hvom(i,j,k)*              &
-     &                                 (t(i,j-1,k,Nout,itrc)+           &
-     &                                  t(i,j  ,k,Nout,itrc))
+                  TIDES(ng)%v_tide(i,j,k,nk)=TIDES(ng)%v_tide(i,j,k,    &
+     &                                                        nk)+      &
+     &                                       OCEAN(ng)%v(i,j,k,Nout)*   &
+     &                                       tide_harmonics(nk)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTrcD(it),ng)) THEN
+            DO nk=0,NTC2
+              DO k=1,N(ng)
+                DO j=Jstr,JendR
+                  DO i=IstrR,IendR
+                    TIDES(ng)%t_tide(i,j,k,nk,it)=TIDES(ng)%t_tide(i,j, &
+     &                                                        k,nk,it)+ &
+     &                                            OCEAN(ng)%t(i,j,k,    &
+     &                                                        Nout,it)* &
+     &                                            tide_harmonics(nk)
+                  END DO
                 END DO
               END DO
             END DO
           END IF
-#  endif
         END DO
-!
-!  Initialize fields at W-points.
-!
-        DO k=0,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              avgw3d(i,j,k)=W(i,j,k)*pm(i,j)*pn(i,j)
-              avgwvel(i,j,k)=wvel(i,j,k)
-#  ifdef AVERAGES_AKV
-              avgAKv(i,j,k)=Akv(i,j,k)
 #  endif
-#  ifdef AVERAGES_AKT
-              avgAKt(i,j,k)=Akt(i,j,k,itemp)
-#  endif
-#  ifdef AVERAGES_AKS
-              avgAKs(i,j,k)=Akt(i,j,k,isalt)
-#  endif
-            END DO
-          END DO
-        END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Accumulate time-averaged fields.
 !-----------------------------------------------------------------------
 !
       ELSE IF (iic(ng).gt.ntsAVG(ng)) THEN
-
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !  Accumukate Detide least-squares coefficients. They only vary in time
-!  since omega (as computed in set_tides) used model time coordinate.
+!  since omega (as computed in set_tides) uses model time coordinate.
 !
         IF (SOUTH_WEST_TEST) THEN
           Hcount(ng)=Hcount(ng)+1
@@ -1078,195 +2315,97 @@
             tide_harmonics(nk+NTC)=CosOmega(nk)
           END DO
         END IF
-# endif
 !
-!  Accumulate 2D fields.
+!  Accumulate.
 !
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-            DO nk=0,2*NTC
-              zeta_tide(i,j,nk)=zeta_tide(i,j,nk)+                      &
-     &                          zeta(i,j,Kout)*tide_harmonics(nk)
-              ubar_tide(i,j,nk)=ubar_tide(i,j,nk)+                      &
-     &                          ubar(i,j,Kout)*tide_harmonics(nk)
-              vbar_tide(i,j,nk)=vbar_tide(i,j,nk)+                      &
-     &                          vbar(i,j,Kout)*tide_harmonics(nk)
-            END DO
-# endif
-            avgzeta(i,j)=avgzeta(i,j)+zeta(i,j,Kout)
-            avgu2d (i,j)=avgu2d (i,j)+ubar(i,j,Kout)
-            avgv2d (i,j)=avgv2d (i,j)+vbar(i,j,Kout)
-# if defined FORWARD_WRITE && defined SOLVE3D
-            avgDU_avg1(i,j)=avgDU_avg1(i,j)+DU_avg1(i,j)
-            avgDU_avg2(i,j)=avgDU_avg2(i,j)+DU_avg2(i,j)
-            avgDV_avg1(i,j)=avgDV_avg1(i,j)+DV_avg1(i,j)
-            avgDV_avg2(i,j)=avgDV_avg2(i,j)+DV_avg2(i,j)
-# endif
-# ifdef AVERAGES_NEARSHORE
-            avgu2Sd(i,j)=avgu2Sd(i,j)+ubar_stokes(i,j)
-            avgv2Sd(i,j)=avgv2Sd(i,j)+vbar_stokes(i,j)
-            avgu2RS(i,j)=avgu2RS(i,j)+rustr2d(i,j)
-            avgv2RS(i,j)=avgv2RS(i,j)+rvstr2d(i,j)
-            avgSxx2d(i,j)=avgSxx2d(i,j)+Sxx_bar(i,j)
-            avgSxy2d(i,j)=avgSxy2d(i,j)+Sxy_bar(i,j)
-            avgSyy2d(i,j)=avgSyy2d(i,j)+Syy_bar(i,j)
-# endif
-# ifdef AVERAGES_QUADRATIC
-            avgZZ(i,j)=avgZZ(i,j)+zeta(i,j,Kout)*zeta(i,j,Kout)
-            avgU2(i,j)=avgU2(i,j)+ubar(i,j,Kout)*ubar(i,j,Kout)
-            avgV2(i,j)=avgU2(i,j)+vbar(i,j,Kout)*vbar(i,j,Kout)
-# endif
-# ifdef SOLVE3D
-#  ifdef LMD_SKPP
-            avghsbl(i,j)=avghsbl(i,j)+hsbl(i,j)
-#  endif
-#  ifdef LMD_BKPP
-            avghbbl(i,j)=avghbbl(i,j)+hbbl(i,j)
-#  endif
-#  ifdef AVERAGES_FLUXES
-            avgstf(i,j)=avgstf(i,j)+stflx(i,j,itemp)
-            avgswf(i,j)=avgswf(i,j)+stflx(i,j,isalt)
-#   ifdef BULK_FLUXES
-            avglhf(i,j)=avglhf(i,j)+lhflx(i,j)
-            avgshf(i,j)=avgshf(i,j)+shflx(i,j)
-            avglrf(i,j)=avglrf(i,j)+lrflx(i,j)
-#    ifdef EMINUSP
-            avgevap(i,j)=avgevap(i,j)+evap(i,j)
-            avgrain(i,j)=avgrain(i,j)+rain(i,j)
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-            avgsrf(i,j)=avgsrf(i,j)+srflx(i,j)
-#   endif
-#  endif
-# endif
-# ifdef AVERAGES_FLUXES
-            avgsus(i,j)=avgsus(i,j)+sustr(i,j)
-            avgsvs(i,j)=avgsvs(i,j)+svstr(i,j)
-            avgbus(i,j)=avgbus(i,j)+bustr(i,j)
-            avgbvs(i,j)=avgbvs(i,j)+bvstr(i,j)
-# endif
-          END DO
-        END DO
-
-# ifdef SOLVE3D
-!
-!  Accumulate fields associated with 3D horizontal momentum.
-!
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-              DO nk=0,2*NTC
-                u_tide(i,j,k,nk)=u_tide(i,j,k,nk)+                      &
-     &                           u(i,j,k,Nout)*tide_harmonics(nk)
-                v_tide(i,j,k,nk)=v_tide(i,j,k,nk)+                      &
-     &                           v(i,j,k,Nout)*tide_harmonics(nk)
-              END DO
-#  endif
-              avgu3d(i,j,k)=avgu3d(i,j,k)+u(i,j,k,Nout)
-              avgv3d(i,j,k)=avgv3d(i,j,k)+v(i,j,k,Nout)
-              avgrho(i,j,k)=avgrho(i,j,k)+rho(i,j,k)
-#  ifdef AVERAGES_NEARSHORE
-              avgu3Sd(i,j,k)=avgu3Sd(i,j,k)+u_stokes(i,j,k)
-              avgv3Sd(i,j,k)=avgv3Sd(i,j,k)+v_stokes(i,j,k)
-              avgu3RS(i,j,k)=avgu3RS(i,j,k)+rustr3d(i,j,k)
-              avgv3RS(i,j,k)=avgv3RS(i,j,k)+rvstr3d(i,j,k)
-              avgSxx3d(i,j,k)=avgSxx3d(i,j,k)+Sxx(i,j,k)
-              avgSxy3d(i,j,k)=avgSxy3d(i,j,k)+Sxy(i,j,k)
-              avgSyy3d(i,j,k)=avgSyy3d(i,j,k)+Syy(i,j,k)
-              avgSzx3d(i,j,k)=avgSzx3d(i,j,k)+Szx(i,j,k)
-              avgSzy3d(i,j,k)=avgSzy3d(i,j,k)+Szy(i,j,k)
-#  endif
-#  ifdef AVERAGES_QUADRATIC
-              avgHuon(i,j,k)=avgHuon(i,j,k)+Huon(i,j,k)
-              avgHvom(i,j,k)=avgHvom(i,j,k)+Hvom(i,j,k)
-              avgUU(i,j,k)=avgUU(i,j,k)+u(i,j,k,Nout)*u(i,j,k,Nout)
-              avgVV(i,j,k)=avgVV(i,j,k)+v(i,j,k,Nout)*v(i,j,k,Nout)
-#  endif
-            END DO
-          END DO
-#  ifdef AVERAGES_QUADRATIC
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-              avgUV(i,j,k)=avgUV(i,j,k)+                                &
-     &                     0.25_r8*(u(i  ,j  ,k,Nout)+                  &
-     &                              u(i+1,j  ,k,Nout))*                 &
-     &                             (v(i  ,j  ,k,Nout)+                  &
-     &                              v(i  ,j+1,k,Nout))
-            END DO
-          END DO
-#  endif
-        END DO
-!
-!  Accumulate fields associated with tracers.
-!
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
+        IF (Aout(idFsuD,ng)) THEN
+          DO nk=0,NTC2
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                avgt(i,j,k,itrc)=avgt(i,j,k,itrc)+t(i,j,k,Nout,itrc)
+                TIDES(ng)%zeta_tide(i,j,nk)=TIDES(ng)%zeta_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
               END DO
             END DO
           END DO
-#  ifdef AVERAGES_QUADRATIC
-          IF (itrc.le.NAT) THEN
+        END IF
+
+        IF (Aout(idu2dD,ng)) THEN
+          DO nk=0,NTC2
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+               TIDES(ng)%ubar_tide(i,j,nk)=TIDES(ng)%ubar_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%ubar(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idv2dD,ng)) THEN
+          DO nk=0,NTC2
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                TIDES(ng)%vbar_tide(i,j,nk)=TIDES(ng)%vbar_tide(i,j,    &
+     &                                                          nk)+    &
+     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      tide_harmonics(nk)
+              END DO
+            END DO
+          END DO
+        END IF
+
+#  ifdef SOLVE3D
+        IF (Aout(idu3dD,ng)) THEN
+          DO nk=0,NTC2
             DO k=1,N(ng)
               DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  avgTT(i,j,k,itrc)=avgTT(i,j,k,itrc)+                  &
-     &                              t(i,j,k,Nout,itrc)*                 &
-     &                              t(i,j,k,Nout,itrc)
-                END DO
-                DO i=Istr,Iend
-                  avgUT(i,j,k,itrc)=avgUT(i,j,k,itrc)+                  &
-     &                              0.5_r8*u(i,j,k,Nout)*               &
-     &                              (t(i-1,j,k,Nout,itrc)+              &
-     &                               t(i  ,j,k,Nout,itrc))
-                  avgHuonT(i,j,k,itrc)=avgHuonT(i,j,k,itrc)+            &
-     &                                 0.5_r8*Huon(i,j,k)*              &
-     &                                 (t(i-1,j,k,Nout,itrc)+           &
-     &                                  t(i  ,j,k,Nout,itrc))
+                DO i=Istr,IendR
+                  TIDES(ng)%u_tide(i,j,k,nk)=TIDES(ng)%u_tide(i,j,k,    &
+     &                                                        nk)+      &
+     &                                       OCEAN(ng)%u(i,j,k,Nout)*   &
+     &                                       tide_harmonics(nk)
                 END DO
               END DO
-              DO j=Jstr,Jend
+            END DO
+          END DO
+        END IF
+
+        IF (Aout(idv3dD,ng)) THEN
+          DO nk=0,NTC2
+            DO k=1,N(ng)
+              DO j=Jstr,JendR
                 DO i=IstrR,IendR
-                  avgVT(i,j,k,itrc)=avgVT(i,j,k,itrc)+                  &
-     &                              0.5_r8*v(i,j,k,Nout)*               &
-     &                              (t(i,j-1,k,Nout,itrc)+              &
-     &                               t(i,j  ,k,Nout,itrc))
-                  avgHvomT(i,j,k,itrc)=avgVT(i,j,k,itrc)+               &
-     &                                 0.5_r8*Hvom(i,j,k)*              &
-     &                                 (t(i,j-1,k,Nout,itrc)+           &
-     &                                  t(i,j  ,k,Nout,itrc))
+                  TIDES(ng)%v_tide(i,j,k,nk)=TIDES(ng)%v_tide(i,j,k,    &
+     &                                                        nk)+      &
+     &                                       OCEAN(ng)%v(i,j,k,Nout)*   &
+     &                                       tide_harmonics(nk)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTrcD(it),ng)) THEN
+            DO nk=0,NTC2
+              DO k=1,N(ng)
+                DO j=Jstr,JendR
+                  DO i=IstrR,IendR
+                    TIDES(ng)%t_tide(i,j,k,nk,it)=TIDES(ng)%t_tide(i,j, &
+     &                                                        k,nk,it)+ &
+     &                                            OCEAN(ng)%t(i,j,k,    &
+     &                                                        Nout,it)* &
+     &                                            tide_harmonics(nk)
+                  END DO
                 END DO
               END DO
             END DO
           END IF
-#  endif
         END DO
-!
-!  Accumulate fields at W-points.
-!
-        DO k=0,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              avgw3d(i,j,k)=avgw3d(i,j,k)+W(i,j,k)*pm(i,j)*pn(i,j)
-              avgwvel(i,j,k)=avgwvel(i,j,k)+wvel(i,j,k)
-#  ifdef AVERAGES_AKV
-              avgAKv(i,j,k)=avgAKv(i,j,k)+Akv(i,j,k)
 #  endif
-#  ifdef AVERAGES_AKT
-              avgAKt(i,j,k)=avgAKt(i,j,k)+Akt(i,j,k,itemp)
-#  endif
-#  ifdef AVERAGES_AKS
-              avgAKs(i,j,k)=avgAKs(i,j,k)+Akt(i,j,k,isalt)
-#  endif
-            END DO
-          END DO
-        END DO
-# endif
       END IF
 !
 !-----------------------------------------------------------------------
@@ -1277,11 +2416,6 @@
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
         fac=1.0_r8/REAL(nAVG(ng),r8)
-        IF (SOUTH_WEST_TEST) THEN
-          AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
-        END IF
-
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !  Compute detide least-squares coefficients.  Build coefficient squared
 !  matrix C(0:2*NTC,0:2*NTC) to invert. It is 2*NTC because we are
@@ -1313,28 +2447,28 @@
               C(mk+NTC,nk+NTC)=fac1*CosWCosW(mk,nk)
             END DO
           END DO
-          DO nk=0,2*NTC
-            DO mk=0,2*NTC
+          DO nk=0,NTC2
+            DO mk=0,NTC2
               C(nk,mk)=C(mk,nk)
             END DO
           END DO
 !
 !  Invert least-squares coefficient matrix by LU decomposition.
 !
-          DO mk=0,2*NTC
-            DO nk=0,2*NTC
+          DO mk=0,NTC2
+            DO nk=0,NTC2
               Y(mk,nk)=0.0_r8
             END DO
             Y(mk,mk)=1.0_r8                ! identity matrix
           END DO
-          CALL ludcmp (C(0,0), 2*NTC+1, 2*NTC+1, indx, d)
+          CALL ludcmp (C(0,0), NTC2+1, NTC2+1, indx, d)
 !
 !  Find inverse by columns. The matrix Y will now contain the inverse
 !  of the least-squares coefficient matrix C, which will have been
 !  destroyed.
 !
-          DO nk=0,2*NTC
-            CALL lubksb (C(0,0), 2*NTC+1, 2*NTC+1, indx, Y(0,nk))
+          DO nk=0,NTC2
+            CALL lubksb (C(0,0), NTC2+1, NTC2+1, indx, Y(0,nk))
           END DO
 !
 !  Compute time-averaged harmonics for current field average window.
@@ -1347,228 +2481,141 @@
 !
 !  Scale inverse by the global summation factor.
 !
-          DO nk=0,2*NTC
-            DO mk=0,2*NTC
+          DO nk=0,NTC2
+            DO mk=0,NTC2
               Y(nk,mk)=fac1*Y(nk,mk)
             END DO
           END DO
         END IF
-# endif
 !
-!  Process 2D fields.
+!  Process accumulated detided averages. Notice that the regular
+!  time-averaged field values used here are the ones computed in
+!  routine "set_avg".
 !
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-            zeta_sum=0.0_r8
-            ubar_sum=0.0_r8
-            vbar_sum=0.0_r8
-            DO nk=0,2*NTC
-              Ak_zeta(nk)=0.0_r8
-              Ak_ubar(nk)=0.0_r8
-              Ak_vbar(nk)=0.0_r8
-              DO mk=0,2*NTC
-!!              Ak_zeta(nk)=Ak_zeta(nk)+Y(nk,mk)*zeta_tide(i,j,mk)
-!!              Ak_ubar(nk)=Ak_ubar(nk)+Y(nk,mk)*ubar_tide(i,j,mk)
-!!              Ak_vbar(nk)=Ak_vbar(nk)+Y(nk,mk)*vbar_tide(i,j,mk)
-                Ak_zeta(nk)=Ak_zeta(nk)+Y(mk,nk)*zeta_tide(i,j,mk)
-                Ak_ubar(nk)=Ak_ubar(nk)+Y(mk,nk)*ubar_tide(i,j,mk)
-                Ak_vbar(nk)=Ak_vbar(nk)+Y(mk,nk)*vbar_tide(i,j,mk)
-              END DO
-              zeta_sum=zeta_sum+Ak_zeta(nk)*tide_harmonics(nk)
-              ubar_sum=ubar_sum+Ak_ubar(nk)*tide_harmonics(nk)
-              vbar_sum=vbar_sum+Ak_vbar(nk)*tide_harmonics(nk)
-            END DO
-            avgzeta(i,j)=fac*avgzeta(i,j)
-            avgu2d (i,j)=fac*avgu2d (i,j)
-            avgv2d (i,j)=fac*avgv2d (i,j)
-            IF (.TRUE.) THEN
-              zeta_detided(i,j)=avgzeta(i,j)-zeta_sum
-              ubar_detided(i,j)=avgu2d (i,j)-ubar_sum
-              vbar_detided(i,j)=avgv2d (i,j)-vbar_sum
-            ELSE
-              zeta_detided(i,j)=avgzeta(i,j)
-              ubar_detided(i,j)=avgu2d (i,j)
-              vbar_detided(i,j)=avgv2d (i,j)
-            END IF
-# else
-            avgzeta(i,j)=fac*avgzeta(i,j)
-            avgu2d (i,j)=fac*avgu2d (i,j)
-            avgv2d (i,j)=fac*avgv2d (i,j)
-# endif
-# if defined FORWARD_WRITE && defined SOLVE3D
-            avgDU_avg1(i,j)=fac*avgDU_avg1(i,j)
-            avgDU_avg2(i,j)=fac*avgDU_avg2(i,j)
-            avgDV_avg1(i,j)=fac*avgDV_avg1(i,j)
-            avgDV_avg2(i,j)=fac*avgDV_avg2(i,j)
-# endif
-# ifdef AVERAGES_NEARSHORE
-            avgu2Sd(i,j)=fac*avgu2Sd(i,j)
-            avgv2Sd(i,j)=fac*avgv2Sd(i,j)
-            avgu2RS(i,j)=fac*avgu2RS(i,j)
-            avgv2RS(i,j)=fac*avgv2RS(i,j)
-            avgSxx2d(i,j)=fac*avgSxx2d(i,j)
-            avgSxy2d(i,j)=fac*avgSxy2d(i,j)
-            avgSyy2d(i,j)=fac*avgSyy2d(i,j)
-# endif
-# ifdef AVERAGES_QUADRATIC
-            avgZZ(i,j)=fac*avgZZ(i,j)
-            avgU2(i,j)=fac*avgU2(i,j)
-            avgV2(i,j)=fac*avgU2(i,j)
-# endif
-# ifdef SOLVE3D
-#  ifdef LMD_SKPP
-            avghsbl(i,j)=fac*avghsbl(i,j)
-#  endif
-#  ifdef LMD_BKPP
-            avghbbl(i,j)=fac*avghbbl(i,j)
-#  endif
-#  ifdef AVERAGES_FLUXES
-            avgstf(i,j)=fac*avgstf(i,j)
-            avgswf(i,j)=fac*avgswf(i,j)
-#   ifdef BULK_FLUXES
-            avglhf(i,j)=fac*avglhf(i,j)
-            avgshf(i,j)=fac*avgshf(i,j)
-            avglrf(i,j)=fac*avglrf(i,j)
-#    ifdef EMINUSP
-            avgevap(i,j)=fac*avgevap(i,j)
-            avgrain(i,j)=fac*avgrain(i,j)
-#    endif
-#   endif
-#   ifdef SHORTWAVE
-            avgsrf(i,j)=fac*avgsrf(i,j)
-#   endif
-#  endif
-# endif
-# ifdef AVERAGES_FLUXES
-            avgsus(i,j)=fac*avgsus(i,j)
-            avgsvs(i,j)=fac*avgsvs(i,j)
-            avgbus(i,j)=fac*avgbus(i,j)
-            avgbvs(i,j)=fac*avgbvs(i,j)
-# endif
-          END DO
-        END DO
-
-# ifdef SOLVE3D
-!
-!  Process fields associated with 3D horizontal momentum.
-!
-        DO k=1,N(ng)
+        IF (Aout(idFsuD,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-              u_sum=0.0_r8
-              v_sum=0.0_r8
-              DO nk=0,2*NTC
-                Ak_u(nk)=0.0_r8
-                Ak_v(nk)=0.0_r8
-                DO mk=0,2*NTC
-!!                Ak_u(nk)=Ak_u(nk)+Y(nk,mk)*u_tide(i,j,k,mk)
-!!                Ak_v(nk)=Ak_v(nk)+Y(nk,mk)*v_tide(i,j,k,mk)
-                  Ak_u(nk)=Ak_u(nk)+Y(mk,nk)*u_tide(i,j,k,mk)
-                  Ak_v(nk)=Ak_v(nk)+Y(mk,nk)*v_tide(i,j,k,mk)
+              Hsum=0.0_r8
+              DO nk=0,NTC2
+                Ak(nk)=0.0_r8
+                DO mk=0,NTC2
+!!                Ak(nk)=Ak(nk)+Y(nk,mk)*TIDES(ng)%zeta_tide(i,j,mk)
+                  Ak(nk)=Ak(nk)+Y(mk,nk)*TIDES(ng)%zeta_tide(i,j,mk)
                 END DO
-                u_sum=u_sum+Ak_u(nk)*tide_harmonics(nk)
-                v_sum=v_sum+Ak_v(nk)*tide_harmonics(nk)
+                Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
               END DO
-              avgu3d(i,j,k)=fac*avgu3d(i,j,k)
-              avgv3d(i,j,k)=fac*avgv3d(i,j,k)
-              IF (.TRUE.) THEN
-                u_detided(i,j,k)=avgu3d(i,j,k)-u_sum
-                v_detided(i,j,k)=avgv3d(i,j,k)-v_sum
-              ELSE
-                u_detided(i,j,k)=avgu3d(i,j,k)
-                v_detided(i,j,k)=avgv3d(i,j,k)
-              END IF
-#  else
-              avgu3d(i,j,k)=fac*avgu3d(i,j,k)
-              avgv3d(i,j,k)=fac*avgv3d(i,j,k)
-#  endif
-              avgrho(i,j,k)=fac*avgrho(i,j,k)
-#  ifdef AVERAGES_NEARSHORE
-              avgu3Sd(i,j,k)=fac*avgu3Sd(i,j,k)
-              avgv3Sd(i,j,k)=fac*avgv3Sd(i,j,k)
-              avgu3RS(i,j,k)=fac*avgu3RS(i,j,k)
-              avgv3RS(i,j,k)=fac*avgv3RS(i,j,k)
-              avgSxx3d(i,j,k)=fac*avgSxx3d(i,j,k)
-              avgSxy3d(i,j,k)=fac*avgSxy3d(i,j,k)
-              avgSyy3d(i,j,k)=fac*avgSyy3d(i,j,k)
-              avgSzx3d(i,j,k)=fac*avgSzx3d(i,j,k)
-              avgSzy3d(i,j,k)=fac*avgSzy3d(i,j,k)
-#  endif
-#  ifdef AVERAGES_QUADRATIC
-              avgHuon(i,j,k)=fac*avgHuon(i,j,k)
-              avgHvom(i,j,k)=fac*avgHvom(i,j,k)
-              avgUU(i,j,k)=fac*avgUU(i,j,k)
-              avgVV(i,j,k)=fac*avgVV(i,j,k)
-#  endif
+              TIDES(ng)%zeta_detided(i,j)=AVERAGE(ng)%avgzeta(i,j)-     &
+     &                                    Hsum
             END DO
           END DO
-#  ifdef AVERAGES_QUADRATIC
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-              avgUV(i,j,k)=fac*avgUV(i,j,k)
+        END IF
+
+        IF (Aout(idu2dD,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              Hsum=0.0_r8
+              DO nk=0,NTC2
+                Ak(nk)=0.0_r8
+                DO mk=0,NTC2
+!!                Ak(nk)=Ak(nk)+Y(nk,mk)*TIDES(ng)%ubar_tide(i,j,mk)
+                  Ak(nk)=Ak(nk)+Y(mk,nk)*TIDES(ng)%ubar_tide(i,j,mk)
+                END DO
+                Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
+              END DO
+              TIDES(ng)%ubar_detided(i,j)=AVERAGE(ng)%avgu2d(i,j)-      &
+     &                                    Hsum
             END DO
           END DO
-#  endif
-        END DO
-!
-!  Process fields associated with tracers.
-!
-        DO itrc=1,NT(ng)
+        END IF
+
+        IF (Aout(idv2dD,ng)) THEN
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              Hsum=0.0_r8
+              DO nk=0,NTC2
+                Ak(nk)=0.0_r8
+                DO mk=0,NTC2
+!!                Ak(nk)=Ak(nk)+Y(nk,mk)*TIDES(ng)%vbar_tide(i,j,mk)
+                  Ak(nk)=Ak(nk)+Y(mk,nk)*TIDES(ng)%vbar_tide(i,j,mk)
+                END DO
+                Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
+              END DO
+              TIDES(ng)%vbar_detided(i,j)=AVERAGE(ng)%avgv2d(i,j)-      &
+     &                                    Hsum
+            END DO
+          END DO
+        END IF
+
+#  ifdef SOLVE3D
+        IF (Aout(idu3dD,ng)) THEN
           DO k=1,N(ng)
             DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                avgt(i,j,k,itrc)=fac*avgt(i,j,k,itrc)
+              DO i=Istr,IendR
+                Hsum=0.0_r8
+                DO nk=0,NTC2
+                  Ak(nk)=0.0_r8
+                  DO mk=0,NTC2
+!!                  Ak(nk)=Ak(nk)+Y(nk,mk)*TIDES(ng)%u_tide(i,j,k,mk)
+                    Ak(nk)=Ak(nk)+Y(mk,nk)*TIDES(ng)%u_tide(i,j,k,mk)
+                  END DO
+                  Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
+                END DO
+                TIDES(ng)%u_detided(i,j,k)=AVERAGE(ng)%avgu3d(i,j,k)-   &
+     &                                     Hsum
               END DO
             END DO
           END DO
-#  ifdef AVERAGES_QUADRATIC
-          IF (itrc.le.NAT) THEN
-            DO k=1,N(ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  avgTT(i,j,k,itrc)=fac*avgTT(i,j,k,itrc)
+        END IF
+
+        IF (Aout(idv3dD,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                Hsum=0.0_r8
+                DO nk=0,NTC2
+                  Ak(nk)=0.0_r8
+                  DO mk=0,NTC2
+!!                  Ak(nk)=Ak(nk)+Y(nk,mk)*TIDES(ng)%v_tide(i,j,k,mk)
+                    Ak(nk)=Ak(nk)+Y(mk,nk)*TIDES(ng)%v_tide(i,j,k,mk)
+                  END DO
+                  Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
                 END DO
-                DO i=Istr,Iend
-                  avgUT(i,j,k,itrc)=fac*avgUT(i,j,k,itrc)
-                  avgHuonT(i,j,k,itrc)=fac*avgHuonT(i,j,k,itrc)
-                END DO
+                TIDES(ng)%v_detided(i,j,k)=AVERAGE(ng)%avgv3d(i,j,k)-   &
+     &                                     Hsum
               END DO
-              DO j=Jstr,Jend
+            END DO
+          END DO
+        END IF
+
+        DO it=1,NAT
+          IF (Aout(idTrcD(it),ng)) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,JendR
                 DO i=IstrR,IendR
-                  avgVT(i,j,k,itrc)=fac*avgVT(i,j,k,itrc)
-                  avgHvomT(i,j,k,itrc)=fac*avgHvomT(i,j,k,itrc)
+                  Hsum=0.0_r8
+                  DO nk=0,NTC2
+                    Ak(nk)=0.0_r8
+                    DO mk=0,NTC2
+!!                    Ak(nk)=Ak(nk)+                                    &
+!!   &                       Y(nk,mk)*TIDES(ng)%t_tide(i,j,k,mk,it)
+                      Ak(nk)=Ak(nk)+                                    &
+     &                       Y(mk,nk)*TIDES(ng)%t_tide(i,j,k,mk,it)
+                    END DO
+                    Hsum=Hsum+Ak(nk)*tide_harmonics(nk)
+                  END DO
+                  TIDES(ng)%t_detided(i,j,k,it)=AVERAGE(ng)%avgt(i,j,k, &
+     &                                                           it)-   &
+     &                                          Hsum
                 END DO
               END DO
             END DO
           END IF
-#  endif
         END DO
-!
-!  Process fields at W-points.
-!
-        DO k=0,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              avgw3d(i,j,k)=fac*avgw3d(i,j,k)
-              avgwvel(i,j,k)=fac*avgwvel(i,j,k)
-#  ifdef AVERAGES_AKV
-              avgAKv(i,j,k)=fac*avgAKv(i,j,k)
-#  endif
-#  ifdef AVERAGES_AKT
-              avgAKt(i,j,k)=fac*avgAKt(i,j,k)
-#  endif
-#  ifdef AVERAGES_AKS
-              avgAKs(i,j,k)=fac*avgAKs(i,j,k)
-#  endif
-            END DO
-          END DO
-        END DO
-# endif
-      END IF
 
+      END IF
+#  endif
       RETURN
-      END SUBROUTINE set_avg_tile
+      END SUBROUTINE set_detide_tile
+# endif
 #endif
       END MODULE set_avg_mod

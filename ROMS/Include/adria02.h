@@ -34,9 +34,6 @@
 #define CURVGRID
 #define FLOATS
 #define AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKT
-#define AVERAGES_AKS
 
 #undef NOSEDBBL
 #ifdef NOSEDBBL

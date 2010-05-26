@@ -409,10 +409,6 @@
 #  define NONLIN_EOS
 #  undef  SPLINES
 #  define AVERAGES
-#  define AVERAGES_FLUXES
-#  define AVERAGES_AKV
-#  define AVERAGES_AKT
-#  define AVERAGES_QUADRATIC
 #  define WESTERN_WALL
 #  define EASTERN_WALL
 #  define NORTHERN_WALL

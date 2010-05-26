@@ -197,6 +197,16 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+#ifdef AVERAGES
+          ELSE IF (TRIM(KeyWord).eq.'Aout(idTvar)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTvar(idbio(itrc))
+                Aout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+#endif
           END IF
         END IF
       END DO
@@ -348,6 +358,16 @@
      &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
      &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+#ifdef AVERAGES
+            WRITE (out,'(1x)')
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Aout(idTvar(i),ng)) WRITE (out,110)                   &
+     &            Aout(idTvar(i),ng), 'Aout(idTvar)',                   &
+     &            'Write out averaged tracer ', i,                      &
+     &            TRIM(Vname(1,idTvar(i)))
+            END DO
+#endif
           END IF
         END DO
       END IF

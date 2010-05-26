@@ -24,8 +24,6 @@
 # define SUSPLOAD
 #endif
 #define AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKS
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
 #define EAST_FSGRADIENT

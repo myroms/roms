@@ -25,9 +25,6 @@
 #define SALINITY
 #define SPLINES
 #define AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKT
-#define AVERAGES_AKS
 #define SOLVE3D
 #define EW_PERIODIC
 #define NS_PERIODIC

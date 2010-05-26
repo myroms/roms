@@ -23,9 +23,6 @@
 #define NONLIN_EOS
 #define SALINITY
 #define AVERAGES
-#define AVERAGES_AKS
-#define AVERAGES_AKT
-#define AVERAGES_AKV
 #define STATIONS
 #define SOLVE3D
 #define SPLINES

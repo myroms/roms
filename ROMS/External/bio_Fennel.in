@@ -217,21 +217,41 @@
 
   LtracerSrc == 12*F
 
-! Logical switches (TRUE/FALSE) to activate writing of biological tracers
+! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
 Hout(idTvar) == 12*T                  ! biological tracer
 Hout(idTsur) == 12*F                  ! surface tracer flux
 
-! Logical switches (TRUE/FALSE) to activate writing of diagnostics terms
-! into diagnostic output file [Ngrids].
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
+! into AVERAGE output file: [1:NBT,Ngrids].
 
-Hout(iCOfx) == T                      ! air-sea CO2 flux
-Hout(iDNIT) == T                      ! denitrification flux
-Hout(ipCO2) == T                      ! CO2 partial pressure
-Hout(iO2fx) == T                      ! air-sea O2 flux
-Hout(iPPro) == T                      ! primary production
-Hout(iNO3u) == T                      ! NO3 uptake
+Aout(idTvar) == 12*T                  ! biological tracer
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! biological tracer diagnostic terms into DIAGNOSTIC output file:
+! [1:NBT,Ngrids].
+
+Dout(iTrate) == 12*T                  ! time rate of change
+Dout(iThadv) == 12*T                  ! horizontal total advection
+Dout(iTxadv) == 12*T                  ! horizontal XI-advection
+Dout(iTyadv) == 12*T                  ! horizontal ETA-advection
+Dout(iTvadv) == 12*T                  ! vertical advection
+Dout(iThdif) == 12*T                  ! horizontal total diffusion
+Dout(iTxdif) == 12*T                  ! horizontal XI-diffusion
+Dout(iTydif) == 12*T                  ! horizontal ETA-diffusion
+Dout(iTsdif) == 12*T                  ! horizontal S-diffusion
+Dout(iTvdif) == 12*T                  ! vertical diffusion
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! biological processes diagnostics terms into DIAGNOSTIC output file [Ngrids].
+
+ Dout(iCOfx) == T                     ! air-sea CO2 flux
+ Dout(iDNIT) == T                     ! denitrification flux
+ Dout(ipCO2) == T                     ! CO2 partial pressure
+ Dout(iO2fx) == T                     ! air-sea O2 flux
+ Dout(iPPro) == T                     ! primary production
+ Dout(iNO3u) == T                     ! NO3 uptake
 
 !
 !  GLOSSARY:
@@ -447,13 +467,12 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !                   values for all rivers, even if their values are zero.
 !
 !------------------------------------------------------------------------------
-! Logical switches (T/F) to activate writing of fields into output files.
+! Logical switches (T/F) to activate writing of fields into HISTORY file.
 !------------------------------------------------------------------------------
 !
-!  Hout           Logical switches (T/F) to write out biological data into
-!                   output NetCDF files:
-!
-!                 History/Average file, [1:NBT,1:Ngrids] values are expected:
+!  Hout           Logical switches to write out biological fields into
+!                   output HISTORY NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
 !
 !                   Hout(idTvar)               biological tracers
 !                   Hout(idTsur)               biological tracers surface flux
@@ -471,12 +490,49 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !                   idTvar(idbio(11))=iTAlk    Alkalinity
 !                   idTvar(idbio(12))=iOxyg    Oxygen concentration
 !
-!                Diagnostics file, [Ngrids] values are expected:
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into AVERAGE file.
+!------------------------------------------------------------------------------
 !
-!                  Hout(iCOfx)      air-sea CO2 flux
-!                  Hout(iDNIT)      denitrification flux
-!                  Hout(ipCO2)      CO2 partial pressure
-!                  Hout(iO2fx)      air-sea O2 flux
-!                  Hout(iPPro)      primary production
-!                  Hout(iNO3u)      NO3 uptake
+!  Aout           Logical switches to write out biological fields into
+!                   output AVERAGE NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
+!
+!                   Aout(idTvar)               biological tracers
+!
+!                   The idTvar(idbio(:)) are the same to those in the HISTORY
+!                   file.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged fields into
+! DIAGNOSTIC file.
+!------------------------------------------------------------------------------
+!
+!  Time-averaged, biological tracers  diagnostic terms, [1:NBT,Ngrids] values
+!  expected: (if DIAGNOSTICS_TS)
+!
+!                 Dout(idDtrc(idbio(1:NBT),iT....),1:Ngrids)
+!
+!  Dout(iTrate)   Write out time rate of change.
+!  Dout(iThadv)   Write out horizontal total advection.
+!  Dout(iTxadv)   Write out horizontal  XI-advection.
+!  Dout(iTyadv)   Write out horizontal ETA-advection.
+!  Dout(iTvadv)   Write out vertical advection.
+!  Dout(iThdif)   Write out horizontal total diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTxdif)   Write out horizonta1  XI-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTydif)   Write out horizontal ETA-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTsdif)   Write out horizontal   S-diffusion, if TS_DIF2 or TS_DIF4 and
+!                   rotated tensor (MIX_GEO_TS or MIX_ISO_TS).
+!  Dout(iTvdif)   Write out vertical diffusion.
+!
+!
+!  Time-accumulated biological processes diagnostics fields, [Ngrids] values
+!  are expected:
+!
+!  Dout(iCOfx)    Write out air-sea CO2 flux.
+!  Dout(iDNIT)    Write out denitrification flux.
+!  Dout(ipCO2)    Write out CO2 partial pressure.
+!  Dout(iO2fx)    Write out air-sea O2 flux.
+!  Dout(iPPro)    Write out primary production.
+!  Dout(iNO3u)    Write out NO3 uptake.
 !

@@ -28,9 +28,6 @@
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKT
-#define AVERAGES_AKS
 
 #define NS_PERIODIC
 #define WESTERN_WALL

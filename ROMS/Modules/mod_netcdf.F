@@ -68,7 +68,7 @@
 !  Local dimension parameters.
 !
       integer, parameter :: Mdims = 50  ! maximun number of dimensions
-      integer, parameter :: Mvars = 500 ! maximun number of variables
+      integer, parameter :: Mvars = 700 ! maximun number of variables
       integer, parameter :: NvarD = 5   ! number of variable dimensions
       integer, parameter :: NvarA = 50  ! number of variable attributes
 !
@@ -354,7 +354,7 @@
   10  FORMAT (/,' NETCDF_GET_DIM - error while reading dimension ID:',  &
      &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
   20  FORMAT (/,' NETCDF_GET_DIM - too small dimension parameter,',a,   &
-     &        2i5,/,18x,'change file  nc_util.F  and recompile')
+     &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
   30  FORMAT (/,' NETCDF_GET_DIM - unable to inquire about contents',   &
      &          ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a)
   40  FORMAT (/,' NETCDF_GET_DIM - requested dimension: ',a,/18x,       &
@@ -1440,7 +1440,7 @@
   20  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring variable ID:', &
      &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
   30  FORMAT (/,' NETCDF_INQ_VAR - too small dimension parameter,',a,   &
-     &        2i5,/,18x,'change file  nc_util.F  and recompile')
+     &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
   40  FORMAT (/,' NETCDF_INQ_VAR - unable to inquire about contents',   &
      &          ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a)
   50  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring dimension ',   &

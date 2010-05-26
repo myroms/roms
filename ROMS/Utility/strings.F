@@ -89,7 +89,7 @@
       RETURN
       END FUNCTION find_string
 
-      FUNCTION lowercase (Ainp) RESULT (Aout)
+      FUNCTION lowercase (Sinp) RESULT (Sout)
 !
 !=======================================================================
 !                                                                      !
@@ -98,11 +98,11 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     Ainp       String with uppercase elements (character)            !
+!     Sinp       String with uppercase elements (character)            !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout       Lowercase string (character)                          !
+!     Sout       Lowercase string (character)                          !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -113,13 +113,13 @@
 !
 !  Imported variable declarations.
 !
-      character (*), intent(in) :: Ainp
+      character (*), intent(in) :: Sinp
 !
 !  Local variable definitions.
 !
       integer :: i, j, lstr
 
-      character (LEN(Ainp)) :: Aout
+      character (LEN(Sinp)) :: Sout
 
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -128,19 +128,19 @@
 !  Convert input string to lowercase.
 !-----------------------------------------------------------------------
 !
-      lstr=LEN(Ainp)
-      Aout=Ainp
+      lstr=LEN(Sinp)
+      Sout=Sinp
       DO i=1,lstr
-        j=INDEX(Ucase, Aout(i:i))
+        j=INDEX(Ucase, Sout(i:i))
         IF (j.ne.0) THEN
-          Aout(i:i)=Lcase(j:j)
+          Sout(i:i)=Lcase(j:j)
         END IF
       END DO
 
       RETURN
       END FUNCTION lowercase
 
-      FUNCTION uppercase (Ainp) RESULT (Aout)
+      FUNCTION uppercase (Sinp) RESULT (Sout)
 !
 !=======================================================================
 !                                                                      !
@@ -149,11 +149,11 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     Ainp       String with lowercase characters (character)          !
+!     Sinp       String with lowercase characters (character)          !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout       Uppercase string (character)                          !
+!     Sout       Uppercase string (character)                          !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -164,13 +164,13 @@
 !
 !  Imported variable declarations.
 !
-      character (*), intent(in) :: Ainp
+      character (*), intent(in) :: Sinp
 !
 !  Local variable definitions.
 !
       integer :: i, j, lstr
 
-      character (LEN(Ainp)) :: Aout
+      character (LEN(Sinp)) :: Sout
 
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -179,12 +179,12 @@
 !  Convert input string to uppercase.
 !-----------------------------------------------------------------------
 !
-      lstr=LEN(Ainp)
-      Aout=Ainp
+      lstr=LEN(Sinp)
+      Sout=Sinp
       DO i=1,lstr
-        j=INDEX(Lcase, Aout(i:i))
+        j=INDEX(Lcase, Sout(i:i))
         IF (j.ne.0) THEN
-          Aout(i:i)=Ucase(j:j)
+          Sout(i:i)=Ucase(j:j)
         END IF
       END DO
 

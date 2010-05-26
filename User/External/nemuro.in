@@ -255,11 +255,31 @@
 
   LtracerSrc == 11*F
 
-! Logical switches (TRUE/FALSE) to activate writing of biological tracers
+! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
 Hout(idTvar) == 11*T                       ! biological tracers
 Hout(idTsur) == 11*F                       ! surface tracer flux
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
+! into AVERAGE output file: [1;NBT,Ngrids].
+
+Aout(idTvar) == 11*T                       ! biological tracer
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! biological tracer diagnostic terms into DIAGNOSTIC output file:
+! [1:NBT,Ngrids].
+
+Dout(iTrate) == 11*T                       ! time rate of change
+Dout(iThadv) == 11*T                       ! horizontal total advection
+Dout(iTxadv) == 11*T                       ! horizontal XI-advection
+Dout(iTyadv) == 11*T                       ! horizontal ETA-advection
+Dout(iTvadv) == 11*T                       ! vertical advection
+Dout(iThdif) == 11*T                       ! horizontal total diffusion
+Dout(iTxdif) == 11*T                       ! horizontal XI-diffusion
+Dout(iTydif) == 11*T                       ! horizontal ETA-diffusion
+Dout(iTsdif) == 11*T                       ! horizontal S-diffusion
+Dout(iTvdif) == 11*T                       ! vertical diffusion
 
 !
 !  GLOSSARY:
@@ -648,12 +668,12 @@ Hout(idTsur) == 11*F                       ! surface tracer flux
 !                   values for all rivers, even if their values are zero.
 !
 !------------------------------------------------------------------------------
-! Logical switches (T/F) to activate writing of fields into output files.
+! Logical switches (T/F) to activate writing of fields into HISTORY files.
 !------------------------------------------------------------------------------
 !
-!  Hout           Logical switches (T/F) to write out biological data into
-!                   output History/Average NetCDF files. Currently, NEMURO
-!                   has NBT=11 ecosystem compartments.
+!  Hout           Logical switches to write out biological fields into
+!                   output History NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
 !
 !                   Hout(idTvar)               biological tracers
 !                   Hout(idTsur)               biological tracers surface flux
@@ -669,4 +689,39 @@ Hout(idTsur) == 11*F                       ! surface tracer flux
 !                   idTvar(idbio( 9))=iDON_    Dissolved Organic Nitrogen
 !                   idTvar(idbio(10))=iSiOH    Silicate concentration
 !                   idTvar(idbio(11))=iopal    Particulate organic silica
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into AVERAGE file.
+!------------------------------------------------------------------------------
+!
+!  Aout           Logical switches to write out biological fields into
+!                   output AVERAGE NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
+!
+!                   Aout(idTvar)               biological tracers
+!
+!                   The idTvar(idbio(:)) are the same to those in the HISTORY
+!                   file.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged fields into
+! DIAGNOSTIC file.
+!------------------------------------------------------------------------------
+!
+!  Time-averaged, biological tracers  diagnostic terms, [1:NBT,Ngrids] values
+!  expected: (if DIAGNOSTICS_TS)
+!
+!                 Dout(idDtrc(idbio(1:NBT),iT....),1:Ngrids)
+!
+!  Dout(iTrate)   Write out time rate of change.
+!  Dout(iThadv)   Write out horizontal total advection.
+!  Dout(iTxadv)   Write out horizontal  XI-advection.
+!  Dout(iTyadv)   Write out horizontal ETA-advection.
+!  Dout(iTvadv)   Write out vertical advection.
+!  Dout(iThdif)   Write out horizontal total diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTxdif)   Write out horizonta1  XI-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTydif)   Write out horizontal ETA-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTsdif)   Write out horizontal   S-diffusion, if TS_DIF2 or TS_DIF4 and
+!                   rotated tensor (MIX_GEO_TS or MIX_ISO_TS).
+!  Dout(iTvdif)   Write out vertical diffusion.
 !

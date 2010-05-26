@@ -27,9 +27,6 @@
 #define SRELAXATION
 #define CURVGRID
 #define AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKT
-#define AVERAGES_AKS
 #define EASTERN_WALL
 #define WESTERN_WALL
 #define SOUTHERN_WALL

@@ -316,6 +316,102 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+#ifdef AVERAGES
+          ELSE IF (TRIM(KeyWord).eq.'Aout(idTvar)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTvar(idbio(itrc))
+                Aout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+#endif
+#ifdef DIAGNOSTICS_TS
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTrate)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTrate),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iThadv)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iThadv),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTxadv)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTxadv),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTyadv)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTyadv),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvadv') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTvadv),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+# if defined TS_DIF2 || defined TS_DIF4
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iThdif)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iThdif),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTxdif)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTxdif),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTydif)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTydif),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+#  if defined MIX_GEO_TS || defined MIX_ISO_TS
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTsdif)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTsdif),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+#  endif
+# endif
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvdif)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO i=1,NBT
+                itrc=idbio(i)
+                Dout(idDtrc(itrc,iTvdif),ng)=Ltrc(i,ng)
+              END DO
+            END DO
+#endif
           END IF
         END IF
       END DO
@@ -338,10 +434,10 @@
      &            'Light attenuation due to seawater (m-1)'
             WRITE (out,80) AttPS(ng), 'AttPS',                          &
      &            'Light attenuation due to small phytoplankton',       &
-     &            '(m2/millimole_N).'
+     &            '(m2/mmole_N).'
             WRITE (out,80) AttPL(ng), 'AttPL',                          &
      &            'Light attenuation due to large phytoplankton',       &
-     &            '(m2/millimole_N).'
+     &            '(m2/mmole_N).'
             WRITE (out,80) PARfrac(ng), 'PARfrac',                      &
      &            'Fraction of shortwave radiation that is',            &
      &            'photosynthetically active (nondimensional).'
@@ -365,25 +461,25 @@
      &            '(1/day).'
             WRITE (out,80) KNO3S(ng), 'KNO3S',                          &
      &            'Small phytoplankton NO3 half saturation constant',   &
-     &            '(millimole_N/m3).'
+     &            '(mmole_N/m3).'
             WRITE (out,80) KNO3L(ng), 'KNO3L',                          &
      &            'Large phytoplankton NO3 half saturation constant',   &
-     &            '(millimole_N/m3).'
+     &            '(mmole_N/m3).'
             WRITE (out,80) KNH4S(ng), 'KNH4S',                          &
      &            'Small phytoplankton NH4 half saturation constant',   &
-     &            '(millimole_N/m3).'
+     &            '(mmole_N/m3).'
             WRITE (out,80) KNH4L(ng), 'KNH4L',                          &
      &            'Large phytoplankton NH4 half saturation constant',   &
-     &            '(millimole_N/m3).'
+     &            '(mmole_N/m3).'
             WRITE (out,80) KSiL(ng), 'KSiL',                            &
      &            'Small phytoplankton SiOH4 half saturation constant', &
-     &            '(millimole_Si/m3).'
+     &            '(mmole_Si/m3).'
             WRITE (out,80) PusaiS(ng), 'PusaiS',                        &
      &            'Small phytoplankton NH4 inhibition coefficient',     &
-     &            '(m3/millimole_N).'
+     &            '(m3/mmole_N).'
             WRITE (out,80) PusaiL(ng), 'PusaiL',                        &
      &            'Large phytoplankton NH4 inhibition coefficient',     &
-     &            '(m3/millimole_N).'
+     &            '(m3/mmole_N).'
             WRITE (out,80) KGppS(ng), 'KGppS',                          &
      &            'Small phytoplankton temperature coefficient for',    &
      &            'photosynthetic rate (1/Celsius).'
@@ -408,10 +504,10 @@
      &            'excretion to photosynthesis (nondimensional).'
             WRITE (out,80) MorPS0(ng), 'MorPS0',                        &
      &            'Small phytoplankton mortality rate',                 &
-     &            '(m3/millimole_N/day).'
+     &            '(m3/mmole_N/day).'
             WRITE (out,80) MorPS0(ng), 'MorPL0',                        &
      &            'Large phytoplankton mortality rate',                 &
-     &            '(m3/millimole_N/day).'
+     &            '(m3/mmole_N/day).'
             WRITE (out,80) KMorPS(ng), 'KMorPS',                        &
      &            'Small phytoplankton temperature coefficient for',    &
      &            'mortality (1/Celsius).'
@@ -450,70 +546,70 @@
      &            'grazing (1/Celsius).'
             WRITE (out,80) LamS(ng), 'LamS',                            &
      &            'Small zooplankton grazing Ivlev constant',           &
-     &            '(m3/millimole_N).'
+     &            '(m3/mmole_N).'
             WRITE (out,80) LamL(ng), 'LamL',                            &
      &            'Large zooplankton grazing Ivlev constant',           &
-     &            '(m3/millimole_N).'
+     &            '(m3/mmole_N).'
             WRITE (out,80) LamP(ng), 'LamP',                            &
      &            'Preditor zooplankton grazing Ivlev constant',        &
-     &            '(m3/millimole_N).'
+     &            '(m3/mmole_N).'
 #ifdef HOLLING_GRAZING
             WRITE (out,80) KPS2ZS(ng), 'KPS2ZS',                        &
      &            'Half-saturation constant for small zooplankton',     &
-     &            'grazing on small phytoplankton (millimole_N/m3)^2.'
+     &            'grazing on small phytoplankton (mmole_N/m3)^2.'
             WRITE (out,80) KPS2ZL(ng), 'KPS2ZL',                        &
      &            'Half-saturation constant for large zooplankton',     &
-     &            'grazing on small phytoplankton (millimole_N/m3)^2.'
+     &            'grazing on small phytoplankton (mmole_N/m3)^2.'
             WRITE (out,80) KPL2ZL(ng), 'KPL2ZL',                        &
      &            'Half-saturation constant for large zooplankton',     &
-     &            'grazing on large phytoplankton (millimole_N/m3)^2.'
+     &            'grazing on large phytoplankton (mmole_N/m3)^2.'
             WRITE (out,80) KPL2ZP(ng), 'KPL2ZP',                        &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on large phytoplankton (millimole_N/m3)^2.'
+     &            'grazing on large phytoplankton (mmole_N/m3)^2.'
             WRITE (out,80) KZS2ZP(ng), 'KZS2ZP',                        &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on small zooplankton (millimole_N/m3)^2.'
+     &            'grazing on small zooplankton (mmole_N/m3)^2.'
             WRITE (out,80) KZL2ZP(ng), 'KZL2ZP',                        &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on large zooplankton (millimole_N/m3)^2.'
+     &            'grazing on large zooplankton (mmole_N/m3)^2.'
 #else
             WRITE (out,80) PS2ZSstar(ng), 'PS2ZSstar',                  &
      &            'Small zooplankton threshold for grazing on small',   &
-     &            'phytoplankton (millimole_N/m3).'
+     &            'phytoplankton (mmole_N/m3).'
             WRITE (out,80) PS2ZLstar(ng), 'PS2ZLstar',                  &
      &            'Large zooplankton threshold for grazing on small',   &
-     &            'phytoplankton (millimole_N/m3).'
+     &            'phytoplankton (mmole_N/m3).'
             WRITE (out,80) PL2ZLstar(ng), 'PL2ZLstar',                  &
      &            'Large zooplankton threshold for grazing on large',   &
-     &            'phytoplankton (millimole_N/m3).'
+     &            'phytoplankton (mmole_N/m3).'
             WRITE (out,80) PL2ZLstar(ng), 'PL2ZLstar',                  &
      &            'Large zooplankton threshold for grazing on small',   &
-     &            'zooplankton (millimole_N/m3).'
+     &            'zooplankton (mmole_N/m3).'
             WRITE (out,80) PL2ZPstar(ng), 'PL2ZPstar',                  &
      &            'Predator zooplankton threshold for grazing on large',&
-     &            'phytoplankton (millimole_N/m3).'
+     &            'phytoplankton (mmole_N/m3).'
             WRITE (out,80) ZS2ZPstar(ng), 'ZS2ZPstar',                  &
      &            'Predator zooplankton threshold for grazing on small',&
-     &            'zooplankton (millimole_N/m3).'
+     &            'zooplankton (mmole_N/m3).'
             WRITE (out,80) ZL2ZPstar(ng), 'ZL2ZPstar',                  &
      &            'Predator zooplankton threshold for grazing on large',&
-     &            'zooplankton (millimole_N/m3).'
+     &            'zooplankton (mmole_N/m3).'
 #endif
             WRITE (out,80) PusaiPL(ng), 'PusauPL',                      &
      &            'Predator zooplankton grazing inhibition on large',   &
-     &            'phytoplankton (millimole_N/m3).'
+     &            'phytoplankton (mmole_N/m3).'
             WRITE (out,80) PusaiZS(ng), 'PusauZS',                      &
      &            'Predator zooplankton grazing inhibition on small',   &
-     &            'zootoplankton (millimole_N/m3).'
+     &            'zootoplankton (mmole_N/m3).'
             WRITE (out,80) MorZS0(ng), 'MorZS0',                        &
      &            'Small zooplankton mortality rate at 0 Celsius',      &
-     &            '(m3/millimole_N/day).'
+     &            '(m3/mmole_N/day).'
             WRITE (out,80) MorZL0(ng), 'MorZL0',                        &
      &            'Large zooplankton mortality rate at 0 Celsius',      &
-     &            '(m3/millimole_N/day).'
+     &            '(m3/mmole_N/day).'
             WRITE (out,80) MorZP0(ng), 'MorZP0',                        &
      &            'Predator zooplankton mortality rate at 0 Celsius',   &
-     &            '(m3/millimole_N/day).'
+     &            '(m3/mmole_N/day).'
             WRITE (out,80) KMorZS(ng), 'KMorZS',                        &
      &            'Small zooplankton temperature coefficient for',      &
      &            'mortality (1/Celsius).'
@@ -567,7 +663,7 @@
      &            'Temperature coefficient for Opal to SiOH4',          &
      &            'decomposition (1/Celsius).'
             WRITE (out,70) RSiN(ng), 'RSiN',                            &
-     &            'Si:N ratio (millimole_Si/millimole_N)'
+     &            'Si:N ratio (mmole_Si/mmole_N)'
             WRITE (out,70) setVPON(ng), 'setVPON',                      &
      &            'PON sinking velocity (m/day).'
             WRITE (out,70) setVOpal(ng), 'setVOpal',                    &
@@ -655,6 +751,93 @@
      &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
      &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+#ifdef AVERAGES
+            WRITE (out,'(1x)')
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Aout(idTvar(i),ng)) WRITE (out,110)                   &
+     &            Aout(idTvar(i),ng), 'Aout(idTvar)',                   &
+     &            'Write out averaged tracer ', i,                      &
+     &            TRIM(Vname(1,idTvar(i)))
+            END DO
+#endif
+#ifdef DIAGNOSTICS_TS
+            WRITE (out,'(1x)')
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTrate),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTrate)',                 &
+     &            'Write out rate of change of tracer ', itrc,          &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iThadv),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iThadv)',                 &
+     &            'Write out horizontal advection, tracer ', itrc,      &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTxadv),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTxadv)',                 &
+     &            'Write out horizontal X-advection, tracer ', itrc,    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTyadv),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTyadv)',                 &
+     &            'Write out horizontal Y-advection, tracer ', itrc,    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTvadv),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTvadv)',                 &
+     &            'Write out vertical advection, tracer ', itrc,        &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+# if defined TS_DIF2 || defined TS_DIF4
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iThdif),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iThdif)',                 &
+     &            'Write out horizontal diffusion, tracer ', itrc,      &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(i,iTxdif),ng))                            &
+     &          WRITE (out,110) .TRUE., 'Dout(iTxdif)',                 &
+     &            'Write out horizontal X-diffusion, tracer ', itrc,    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTydif),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTydif)',                 &
+     &            'Write out horizontal Y-diffusion, tracer ', itrc,    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#  if defined MIX_GEO_TS || defined MIX_ISO_TS
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTsdif),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTsdif)',                 &
+     &            'Write out horizontal S-diffusion, tracer ', itrc,    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#  endif
+# endif
+            DO i=1,NBT
+              itrc=idbio(i)
+              IF (Dout(idDtrc(itrc,iTvdif),ng))                         &
+     &          WRITE (out,110) .TRUE., 'Dout(iTvdif)',                 &
+     &            'Write out vertical diffusion, tracer ', itrc,        &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#endif
           END IF
         END DO
       END IF
@@ -691,7 +874,7 @@
      &        a,i2.2,a)
   40  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
   50  FORMAT (/,/,' Nemuro Model Parameters, Grid: ',i2.2,              &
-     &        /,  ' =============================',/)
+     &        /,  ' =================================',/)
   60  FORMAT (1x,i10,2x,a,t30,a)
   70  FORMAT (1p,e11.4,2x,a,t30,a)
   80  FORMAT (1p,e11.4,2x,a,t30,a,/,t32,a)

@@ -23,9 +23,6 @@
 #define SPLINES
 #define MASKING
 #define AVERAGES
-#if defined AVERAGES && defined BEDLOAD
-# define AVERAGES_BEDLOAD
-#endif
 #define FLOATS
 #define NORTHERN_WALL
 #define SOUTHERN_WALL

@@ -173,14 +173,7 @@
 ** BODYFORCE           use if applying stresses as bodyforces                **
 ** PROFILE             use if time profiling                                 **
 ** AVERAGES            use if writing out time-averaged data                 **
-** AVERAGES_AKV        use if writing out time-averaged AKv                  **
-** AVERAGES_AKT        use if writing out time-averaged AKt                  **
-** AVERAGES_AKS        use if writing out time-averaged AKs                  **
 ** AVERAGES_DETIDE     use if writing out time-averaged detided fields       **
-** AVERAGES_FLUXES     use if writing out time-averaged fluxes               **
-** AVERAGES_NEARSHORE  use if writing out time-averaged nearshore stresses   **
-** AVERAGES_QUADRATIC  use if writing out quadratic terms                    **
-** AVERAGES_BEDLOAD    use if writing out time-averaged bed load             **
 ** DIAGNOSTICS_BIO     use if writing out biological diagnostics             **
 ** DIAGNOSTICS_UV      use if writing out momentum diagnostics               **
 ** DIAGNOSTICS_TS      use if writing out tracer diagnostics                 **

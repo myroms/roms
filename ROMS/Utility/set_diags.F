@@ -65,19 +65,12 @@
 # ifdef SOLVE3D
       USE bc_3d_mod
 # endif
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      USE exchange_2d_mod, ONLY : exchange_p2d_tile
-#  ifdef SOLVE3D
-      USE exchange_3d_mod, ONLY : exchange_p3d_tile
-#  endif
-# endif
 # ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d
+      USE mp_exchange_mod, ONLY : mp_exchange3d
 #  ifdef SOLVE3D
       USE mp_exchange_mod, ONLY : mp_exchange4d
 #  endif
 # endif
-      USE vorticity_mod, ONLY : vorticity_tile
 !
       implicit none
 !
@@ -106,12 +99,6 @@
       integer :: idiag
 
       real(r8) :: fac
-# ifdef SOLVE3D
-      real(r8) :: potvor(LBi:UBi,LBj:UBj,N(ng))
-      real(r8) :: relvor(LBi:UBi,LBj:UBj,N(ng))
-# endif
-      real(r8) :: potvor_bar(LBi:UBi,LBj:UBj)
-      real(r8) :: relvor_bar(LBi:UBi,LBj:UBj)
 
 # include "set_bounds.h"
 !
@@ -120,43 +107,6 @@
 !-----------------------------------------------------------------------
 !
       IF (nDIA(ng).eq.0) RETURN
-!
-!-----------------------------------------------------------------------
-!  Compute vorticity diagnostics.
-!-----------------------------------------------------------------------
-!
-        CALL vorticity_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-# ifdef SOLVE3D
-     &                       kout, nrhs,                                &
-# else
-     &                       kout,                                      &
-# endif
-# ifdef MASKING
-     &                       GRID(ng) % pmask,                          &
-     &                       GRID(ng) % umask,                          &
-     &                       GRID(ng) % vmask,                          &
-# endif
-     &                       GRID(ng) % fomn,                           &
-     &                       GRID(ng) % h,                              &
-     &                       GRID(ng) % om_u,                           &
-     &                       GRID(ng) % on_v,                           &
-     &                       GRID(ng) % pm,                             &
-     &                       GRID(ng) % pn,                             &
-# ifdef SOLVE3D
-     &                       GRID(ng) % z_r,                            &
-     &                       OCEAN(ng) % pden,                          &
-     &                       OCEAN(ng) % u,                             &
-     &                       OCEAN(ng) % v,                             &
-# endif
-     &                       OCEAN(ng) % ubar,                          &
-     &                       OCEAN(ng) % vbar,                          &
-     &                       OCEAN(ng) % zeta,                          &
-# ifdef SOLVE3D
-     &                       potvor, relvor,                            &
-# endif
-                             potvor_bar, relvor_bar)
 
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !
@@ -169,22 +119,6 @@
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nDIA(ng)).eq.1)).or.                          &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
-        DO j=Jstr,JendR
-          DO i=Istr,IendR
-            DIAGS(ng)%pvor_bar(i,j)=potvor_bar(i,j)
-            DIAGS(ng)%rvor_bar(i,j)=relvor_bar(i,j)
-          END DO
-        END DO
-#  ifdef SOLVE3D
-        DO k=1,N(ng)
-          DO j=Jstr,JendR
-            DO i=Istr,IendR
-              DIAGS(ng)%pvor(i,j,k)=potvor(i,j,k)
-              DIAGS(ng)%rvor(i,j,k)=relvor(i,j,k)
-            END DO
-          END DO
-        END DO
-#  endif
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -227,26 +161,6 @@
 !-----------------------------------------------------------------------
 !
       ELSE IF (iic(ng).gt.ntsDIA(ng)) THEN
-        DO j=Jstr,JendR
-          DO i=Istr,IendR
-            DIAGS(ng)%pvor_bar(i,j)=DIAGS(ng)%pvor_bar(i,j)+            &
-     &                              potvor_bar(i,j)
-            DIAGS(ng)%rvor_bar(i,j)=DIAGS(ng)%rvor_bar(i,j)+            &
-     &                              relvor_bar(i,j)
-          END DO
-        END DO
-#  ifdef SOLVE3D
-        DO k=1,N(ng)
-          DO j=Jstr,JendR
-            DO i=Istr,IendR
-              DIAGS(ng)%pvor(i,j,k)=DIAGS(ng)%pvor(i,j,k)+              &
-     &                              potvor(i,j,k)
-              DIAGS(ng)%rvor(i,j,k)=DIAGS(ng)%rvor(i,j,k)+              &
-     &                              relvor(i,j,k)
-            END DO
-          END DO
-        END DO
-#  endif
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -309,60 +223,6 @@
 !  for output purposes.
 !-----------------------------------------------------------------------
 !
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_p2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          DIAGS(ng)%pvor_bar)
-        CALL exchange_p2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          DIAGS(ng)%rvor_bar)
-#  endif
-#  ifdef MASKING
-        DO j=Jstr,JendR
-          DO i=Istr,IendR
-            DIAGS(ng)%pvor_bar(i,j)=DIAGS(ng)%pvor_bar(i,j)*            &
-     &                              GRID(ng)%pmask(i,j)
-            DIAGS(ng)%rvor_bar(i,j)=DIAGS(ng)%rvor_bar(i,j)*            &
-     &                              GRID(ng)%pmask(i,j)
-          END DO
-        END DO
-#  endif
-#  ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
-     &                      DIAGS(ng)%pvor_bar,                         &
-     &                      DIAGS(ng)%rvor_bar)
-#  endif
-#  ifdef SOLVE3D
-#   if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_p3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          DIAGS(ng)%pvor)
-        CALL exchange_p3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          DIAGS(ng)%rvor)
-#   endif
-#   ifdef MASKING
-        DO k=1,N(ng)
-          DO j=Jstr,JendR
-            DO i=Istr,IendR
-              DIAGS(ng)%pvor(i,j,k)=DIAGS(ng)%pvor(i,j,k)*              &
-     &                              GRID(ng)%pmask(i,j)
-              DIAGS(ng)%rvor(i,j,k)=DIAGS(ng)%rvor(i,j,k)*              &
-     &                              GRID(ng)%pmask(i,j)
-            END DO
-          END DO
-        END DO
-#   endif
-#   ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, tile, iNLM, 2,                          &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
-     &                      DIAGS(ng)%pvor,                             &
-     &                      DIAGS(ng)%rvor)
-#   endif
-#  endif
 #  ifdef DIAGNOSTICS_TS
 !
 !  3D diagnostics.

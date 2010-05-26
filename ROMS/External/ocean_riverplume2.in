@@ -224,7 +224,7 @@
   Vtransform == 1                          ! transformation equation
  Vstretching == 1                          ! stretching function
 
-! Vertical S-coordinates parameters, [1:Ngrids].
+! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 
      THETA_S == 3.0d0                      ! surface stretching parameter
      THETA_B == 0.4d0                      ! bottom  stretching parameter
@@ -434,6 +434,138 @@ Hout(idMtls) == T                          ! turbulent length scale
 !               1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
 
 Hout(idBott) == T T T T T T T T T F F F F F F F
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged
+! fields into AVERAGE output file.
+
+Aout(idUvel) == T                          ! 3D U-velocity
+Aout(idVvel) == T                          ! 3D V-velocity
+Aout(idWvel) == T                          ! 3D W-velocity
+Aout(idOvel) == T                          ! omega vertical velocity
+Aout(idUbar) == T                          ! 2D U-velocity
+Aout(idVbar) == T                          ! 2D V-velocity
+Aout(idFsur) == T                          ! free-surface
+
+Aout(idTvar) == T T                        ! temperature and salinity
+
+Aout(idUsms) == F                          ! surface U-stress
+Aout(idVsms) == F                          ! surface V-stress
+Aout(idUbms) == F                          ! bottom U-stress
+Aout(idVbms) == F                          ! bottom V-stress
+
+Aout(idW2xx) == F                          ! 2D radiation stress, Sxx component
+Aout(idW2xy) == F                          ! 2D radiation stress, Sxy component
+Aout(idW2yy) == F                          ! 2D radiation stress, Syy component
+Aout(idU2rs) == F                          ! 2D radiation U-stress
+Aout(idV2rs) == F                          ! 2D radiation V-stress
+Aout(idU2Sd) == F                          ! 2D U-Stokes velocity
+Aout(idV2Sd) == F                          ! 2D V-Stokes velocity
+
+Aout(idW3xx) == F                          ! 3D radiation stress, Sxx component
+Aout(idW3xy) == F                          ! 3D radiation stress, Sxy component
+Aout(idW3yy) == F                          ! 3D radiation stress, Syy component
+Aout(idW3zx) == F                          ! 3D radiation stress, Szx component
+Aout(idW3zy) == F                          ! 3D radiation stress, Szy component
+Aout(idU3rs) == F                          ! 3D U-radiation stress
+Aout(idV3rs) == F                          ! 3D V-radiation stress
+Aout(idU3Sd) == F                          ! 3D U-Stokes velocity
+Aout(idV3Sd) == F                          ! 3D V-Stokes velocity
+
+Aout(idTsur) == F F                        ! surface net heat and salt flux
+Aout(idLhea) == F                          ! latent heat flux
+Aout(idShea) == F                          ! sensible heat flux
+Aout(idLrad) == F                          ! longwave radiation flux
+Aout(idSrad) == F                          ! shortwave radiation flux
+Aout(idevap) == F                          ! evaporation rate
+Aout(idrain) == F                          ! precipitation rate
+
+Aout(idDano) == F                          ! density anomaly
+Aout(idVvis) == F                          ! vertical viscosity
+Aout(idTdif) == F                          ! vertical T-diffusion
+Aout(idSdif) == F                          ! vertical Salinity diffusion
+Aout(idHsbl) == F                          ! depth of surface boundary layer
+Aout(idHbbl) == F                          ! depth of bottom boundary layer
+
+Aout(id2dRV) == F                          ! 2D relative vorticity
+Aout(id3dRV) == F                          ! 3D relative vorticity
+Aout(id2dPV) == F                          ! 2D potential vorticity
+Aout(id3dPV) == F                          ! 3D potential vorticity
+
+Aout(idu3dD) == F                          ! detided 3D U-velocity
+Aout(idv3dD) == F                          ! detided 3D V-velocity
+Aout(idu2dD) == F                          ! detided 2D U-velocity
+Aout(idv2dD) == F                          ! detided 2D V-velocity
+Aout(idFsuD) == F                          ! detided free-surface
+
+Aout(idTrcD) == F F                        ! detided temperature and salinity
+
+Aout(idHUav) == F                          ! u-volume flux, Huon
+Aout(idHVav) == F                          ! v-volume flux, Hvom
+Aout(idUUav) == F                          ! quadratic <u*u> term
+Aout(idUVav) == F                          ! quadratic <u*v> term
+Aout(idVVav) == F                          ! quadratic <v*v> term
+Aout(idU2av) == F                          ! quadratic <ubar*ubar> term
+Aout(idV2av) == F                          ! quadratic <vbar*vbar> term
+Aout(idZZav) == F                          ! quadratic <zeta*zeta> term
+
+Aout(idTTav) == F F                        ! quadratic <t*t> T/S terms
+Aout(idUTav) == F F                        ! quadratic <u*t> T/S terms
+Aout(idVTav) == F F                        ! quadratic <v*t> T/S terms
+Aout(iHUTav) == F F                        ! T/S volume flux, <Huon*t>
+Aout(iHVTav) == F F                        ! T/S volume flux, <Hvom*t>
+
+! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
+! tracers other than biological and sediment tracers into the AVERAGE file.
+
+ Aout(inert) == T                          ! inert passive tracers
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! 2D momentum (ubar,vbar) diagnostic terms into DIAGNOSTIC output file.
+
+Dout(M2rate) == T                          ! acceleration
+Dout(M2pgrd) == T                          ! pressure gradient
+Dout(M2fcor) == T                          ! Coriolis force
+Dout(M2hadv) == T                          ! horizontal total advection
+Dout(M2xadv) == T                          ! horizontal XI-advection
+Dout(M2yadv) == T                          ! horizontal ETA-advection
+Dout(M2hrad) == T                          ! horizontal total radiation stress
+Dout(M2hvis) == T                          ! horizontal total viscosity
+Dout(M2xvis) == T                          ! horizontal XI-viscosity
+Dout(M2yvis) == T                          ! horizontal ETA-viscosity
+Dout(M2sstr) == T                          ! surface stress
+Dout(M2bstr) == T                          ! bottom stress
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! 3D momentum (u,v) diagnostic terms into DIAGNOSTIC output file.
+
+Dout(M3rate) == T                          ! acceleration
+Dout(M3pgrd) == T                          ! pressure gradient
+Dout(M3fcor) == T                          ! Coriolis force
+Dout(M3hadv) == T                          ! horizontal total advection
+Dout(M3xadv) == T                          ! horizontal XI-advection
+Dout(M3yadv) == T                          ! horizontal ETA-advection
+Dout(M3vadv) == T                          ! vertical advection
+Dout(M3hrad) == T                          ! horizontal total radiation stress
+Dout(M3vrad) == T                          ! vertical radiation stress
+Dout(M3hvis) == T                          ! horizontal total viscosity
+Dout(M3xvis) == T                          ! horizontal XI-viscosity
+Dout(M3yvis) == T                          ! horizontal ETA-viscosity
+Dout(M3vvis) == T                          ! vertical viscosity
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! active (temperature and salinity) and passive (inert) tracer diagnostic
+! terms into DIAGNOSTIC output file: [1:NAT+NPT,Ngrids].
+
+Dout(iTrate) == T T                        ! time rate of change
+Dout(iThadv) == T T                        ! horizontal total advection
+Dout(iTxadv) == T T                        ! horizontal XI-advection
+Dout(iTyadv) == T T                        ! horizontal ETA-advection
+Dout(iTvadv) == T T                        ! vertical advection
+Dout(iThdif) == T T                        ! horizontal total diffusion
+Dout(iTxdif) == T T                        ! horizontal XI-diffusion
+Dout(iTydif) == T T                        ! horizontal ETA-diffusion
+Dout(iTsdif) == T T                        ! horizontal S-diffusion
+Dout(iTvdif) == T T                        ! vertical diffusion
 
 ! Generic User parameters, [1:NUSER].
 
@@ -1122,7 +1254,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !
 !                * C(s) is a dimensionless, nonlinear, monotonic function.
 !                * C(s) is a continuous differentiable function, or
-!                  a diffentiable piecewise function with smooth transition.
+!                  a differentiable piecewise function with smooth transition.
 !                * The stretching vertical coordinate ,s, is constrained
 !                  between -1 <= s <= 0, with s=0 corresponding to the
 !                  free-surface and s=-1 corresponding to the bathymetry.
@@ -1138,7 +1270,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  THETA_B     S-coordinate bottom  control parameter. The range of optimal
 !              values depends on the vertical stretching function, C(s).
 !
-!  TCLINE      Critical depth (hc) in meters (positive) contolling the
+!  TCLINE      Critical depth (hc) in meters (positive) controlling the
 !              stretching. It can be interpreted as the width of surface or
 !              bottom boundary layer in which higher vertical resolution
 !              (levels) is required during stretching.
@@ -1355,7 +1487,8 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !                SO_sdev(isTsur):  surface tracer flux (NT values expected)
 !
 !------------------------------------------------------------------------------
-! Logical switches (T/F) to activate writing of fields into HISTORY file.
+! Logical switches (T/F) to activate writing of instantaneous fields into
+! HISTORY file.
 !------------------------------------------------------------------------------
 !
 !  Hout(idUvel)  Write out 3D U-velocity component.
@@ -1435,6 +1568,143 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Hout(idBott)  Write out exposed sediment layer properties, 1:MBOTP.
 !
 !------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged fields into
+! AVERAGE file.
+!------------------------------------------------------------------------------
+!
+!  Aout(idUvel)  Write out 3D U-velocity component.
+!  Aout(idVvel)  Write out 3D V-velocity component.
+!  Aout(idWvel)  Write out 3D W-velocity component.
+!  Aout(idOvel)  Write out 3D omega vertical velocity.
+!  Aout(idUbar)  Write out 2D U-velocity component.
+!  Aout(idVbar)  Write out 2D V-velocity component.
+!  Aout(idFsur)  Write out free-surface.
+!
+!  Aout(idTvar)  Write out active (NAT) tracers: temperature and salinity.
+!
+!  Aout(idUsms)  Write out surface U-momentum stress.
+!  Aout(idVsms)  Write out surface V-momentum stress.
+!  Aout(idUbms)  Write out bottom  U-momentum stress.
+!  Aout(idVbms)  Write out bottom  V-momentum stress.
+!
+!  Aout(idW2xx)  Write out 2D radiation stress, Sxx component.
+!  Aout(idW2xy)  Write out 2D radiation stress, Sxy component.
+!  Aout(idW2yy)  Write out 2D radiation stress, Syy component.
+!  Aout(idU2rs)  Write out 2D U-radiation stress.
+!  Aout(idV2rs)  Write out 2D V-radiation stress.
+!  Aout(idU2Sd)  Write out 2D U-Stokes velocity.
+!  Aout(idV2Sd)  Write out 2D V-Stokes velocity.
+!
+!  Aout(idW3xx)  Write out 3D radiation stress, Sxx component.
+!  Aout(idW3xy)  Write out 3D radiation stress, Sxy component.
+!  Aout(idW3yy)  Write out 3D radiation stress, Syy component.
+!  Aout(idW3zx)  Write out 3D radiation stress, Szx component.
+!  Aout(idW3zy)  Write out 3D radiation stress, Szy component.
+!  Aout(idU3rs)  Write out 3D U-radiation stress.
+!  Aout(idV3rs)  Write out 3D V-radiation stress.
+!  Aout(idU3Sd)  Write out 3D U-Stokes velocity.
+!  Aout(idV3Sd)  Write out 3D V-Stokes velocity.
+!
+!  Aout(idTsur)  Write out surface net heat and salt flux
+!  Aout(idLhea)  Write out latent heat flux.
+!  Aout(idShea)  Write out sensible heat flux.
+!  Aout(idLrad)  Write out long-wave radiation flux.
+!  Aout(idSrad)  Write out short-wave radiation flux.
+!  Aout(idevap)  Write out evaporation rate.
+!  Aout(idrain)  Write out precipitation rate.
+!
+!  Aout(idDano)  Write out density anomaly.
+!  Aout(idVvis)  Write out vertical viscosity coefficient.
+!  Aout(idTdif)  Write out vertical diffusion coefficient of temperature.
+!  Aout(idSdif)  Write out vertical diffusion coefficient of salinity.
+!  Aout(idHsbl)  Write out depth of oceanic surface boundary layer.
+!  Aout(idHbbl)  Write out depth of oceanic bottom boundary layer.
+!
+!  Aout(id2dRV)  Write out 2D relative vorticity (vertically integrated).
+!  Aout(id3dRV)  Write out 3D relative vorticity.
+!  Aout(id2dPV)  Write out 2D potential vorticity (shallow water).
+!  Aout(id3dPV)  Write out 3D potential vorticity.
+!
+!  Aout(idu3dD)  Write out detided 3D U-velocity.
+!  Aout(idv3dD)  Write out detided 3D V-velocity.
+!  Aout(idu2dD)  Write out detided 2D U-velocity.
+!  Aout(idv2dD)  Write out detided 2D V-velocity.
+!  Aout(idFsuD)  Write out detided free-surface
+!
+!  Aout(idTrcD)  Write out detided temperature and salinity.
+!
+!  Aout(idHUav)  Write out u-volume flux, Huon.
+!  Aout(idHVav)  Write out v-volume flux, Hvom.
+!  Aout(idUUav)  Write out quadratic <u*u> term.
+!  Aout(idUVav)  Write out quadratic <u*v> term.
+!  Aout(idVVav)  Write out quadratic <v*v> term.
+!  Aout(idU2av)  Write out quadratic <ubar*ubar> term.
+!  Aout(idV2av)  Write out quadratic <vbar*vbar> term.
+!  Aout(idZZav)  Write out quadratic <zeta*zeta> term.
+!
+!  Aout(idTTav)  Write out quadratic <t*t> temperature and salinity terms.
+!  Aout(idUTav)  Write out quadratic <u*t> temperature and salinity terms.
+!  Aout(idVTav)  Write out quadratic <v*t> temperature and salinity terms.
+!  Aout(iHUTav)  Write out temperature and salinity volume flux, <Huon*t>.
+!  Aout(iHVTav)  Write out temperature and salinity volume flux, <Hvom*t>.
+!
+!  Aout(inert)   Write out extra inert passive tracers.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged fields into
+! DIAGNOSTIC file.
+!------------------------------------------------------------------------------
+!
+! Time-averaged, 2D momentum (ubar,vbar) diagnostic terms:
+! (if DIAGNOSTICS_UV)
+!
+! Dout(M2rate)   Write out acceleration.
+! Dout(M2pgrd)   Write out pressure gradient.
+! Dout(M2fcor)   Write out Coriolis force, if UV_COR.
+! Dout(M2hadv)   Write out horizontal total advection, if UV_ADV.
+! Dout(M2xadv)   Write out horizontal  XI-advection, if UV_ADV.
+! Dout(M2yadv)   Write out horizontal ETA-advection, if UV_ADV.
+! Dout(M2hrad)   Write out horizontal total radiation stress, NEARSHORE_MELLOR.
+! Dout(M2hvis)   Write out horizontal total viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M2xvis)   Write out horizontal  XI-viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M2yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M2sstr)   Write out surface stress.
+! Dout(M2bstr)   Write out bottom stress
+!
+! Time-averaged, 3D momentum (u,v) diagnostic terms:
+! (if SOLVE3D and DIAGNOSTICS_UV)
+!
+! Dout(M3rate)   Write out acceleration.
+! Dout(M3pgrd)   Write out pressure gradient.
+! Dout(M3fcor)   Write out Coriolis force, if UV_COR.
+! Dout(M3hadv)   Write out horizontal total advection, if UV_ADV.
+! Dout(M3xadv)   Write out horizontal  XI-advection, if UV_ADV.
+! Dout(M3yadv)   Write out horizontal ETA-advection, if UV_ADV.
+! Dout(M3hrad)   Write out horizontal total radiation stress, NEARSHORE_MELLOR.
+! Dout(M3vrad)   Write out vertical radiation stress, if NEARSHORE_MELLOR.
+! Dout(M3hvis)   Write out horizontal total viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M3xvis)   Write out horizontal  XI-viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M3yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M3yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
+! Dout(M3vvis)   Write out vertical viscosity.
+!
+! Time-averaged, active (temperature and salinity) and passive (inert) tracer
+! diagnostic terms, [1:NAT+NPT,Ngrids] values expected:
+! (if SOLVE3D and DIAGNOSTICS_TS)
+!
+! Dout(iTrate)   Write out time rate of change.
+! Dout(iThadv)   Write out horizontal total advection.
+! Dout(iTxadv)   Write out horizontal  XI-advection.
+! Dout(iTyadv)   Write out horizontal ETA-advection.
+! Dout(iTvadv)   Write out vertical advection.
+! Dout(iThdif)   Write out horizontal total diffusion, if TS_DIF2 or TS_DIF4.
+! Dout(iTxdif)   Write out horizonta1  XI-diffusion, if TS_DIF2 or TS_DIF4.
+! Dout(iTydif)   Write out horizontal ETA-diffusion, if TS_DIF2 or TS_DIF4.
+! Dout(iTsdif)   Write out horizontal   S-diffusion, if TS_DIF2 or TS_DIF4 and
+!                  rotated tensor (MIX_GEO_TS or MIX_ISO_TS).
+! Dout(iTvdif)   Write out vertical diffusion.
+!
+!------------------------------------------------------------------------------
 ! Generic User parameters.
 !------------------------------------------------------------------------------
 !
@@ -1473,7 +1743,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! is used when both HDF5 and DEFLATE C-preprocessing options are
 ! activated. The user needs to compile with the NetCDF-4/HDF5 and MPI
 ! libraries. File deflation cannot be used in parallel I/O for writing
-! because the compression makes it imposible for the HDF5 library
+! because the compression makes it impossible for the HDF5 library
 ! to exactly map the data to the disk location.  For more information,
 ! check NetCDF official website: www.unidata.ucar.edu/software/netcdf.
 !

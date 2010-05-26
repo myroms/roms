@@ -19,11 +19,6 @@
 !  DiaU3d    Diagnostics for 3D U-momentum terms.                      !
 !  DiaV3d    Diagnostics for 3D V-momentum terms.                      !
 !                                                                      !
-!  pvor_bar  2D, vertically integrated, potential vorticity.           !
-!  rvor_bar  2D, vertically integrated, relative vorticity.            !
-!  pvor      3D potential vorticity.                                   !
-!  rvor      3D relative vorticity.                                    !
-!                                                                      !
 !  Diagnostics fields work arrays.                                     !
 !                                                                      !
 !  DiaTwrk    Diagnostics work array for tracer terms.                 !
@@ -80,13 +75,6 @@
           real(r8), pointer :: DiaRU(:,:,:,:,:)
           real(r8), pointer :: DiaRV(:,:,:,:,:)
 #  endif
-
-# endif
-          real(r8), pointer :: pvor_bar(:,:)
-          real(r8), pointer :: rvor_bar(:,:)
-# ifdef SOLVE3D
-          real(r8), pointer :: pvor(:,:,:)
-          real(r8), pointer :: rvor(:,:,:)
 # endif
 
         END TYPE T_DIAGS
@@ -147,13 +135,6 @@
       allocate ( DIAGS(ng) % DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs) )
 #  endif
 
-# endif
-
-      allocate ( DIAGS(ng) % pvor_bar(LBi:UBi,LBj:UBj) )
-      allocate ( DIAGS(ng) % rvor_bar(LBi:UBi,LBj:UBj) )
-# ifdef SOLVE3D
-      allocate ( DIAGS(ng) % pvor(LBi:UBi,LBj:UBj,N(ng)) )
-      allocate ( DIAGS(ng) % rvor(LBi:UBi,LBj:UBj,N(ng)) )
 # endif
 
       RETURN
@@ -301,18 +282,6 @@
           END DO
         END DO
 #  endif
-# endif
-        DO i=Imin,Imax
-          DIAGS(ng) % pvor_bar(i,j) = IniVal
-          DIAGS(ng) % rvor_bar(i,j) = IniVal
-        END DO
-# ifdef SOLVE3D
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            DIAGS(ng) % pvor(i,j,k) = IniVal
-            DIAGS(ng) % rvor(i,j,k) = IniVal
-          END DO
-        END DO
 # endif
       END DO
 

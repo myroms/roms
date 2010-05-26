@@ -802,28 +802,6 @@
 #endif
 
 /*
-** Check if it is meaningful to write out time-averaged vertical
-** mixing coefficients.
-*/
-
-#if !defined LMD_MIXING && !defined MY25_MIXING && !defined GLS_MIXING
-# if defined AVERAGES
-#  if defined AVERAGES_AKV
-#    undef AVERAGES_AKV
-#  endif
-#  if defined AVERAGES_AKT
-#    undef AVERAGES_AKT
-#  endif
-#  if defined AVERAGES_AKS && !defined SALINITY
-#    undef AVERAGES_AKS
-#  endif
-# endif
-#endif
-#if defined AVERAGES_NEARSHORE && !defined NEARSHORE_MELLOR
-# undef AVERAGES_NEARSHORE
-#endif
-
-/*
 ** Activate internal biology option when using any type of biological
 ** module.
 */
