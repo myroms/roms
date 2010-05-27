@@ -359,7 +359,7 @@
                 Dout(idDtrc(itrc,iTyadv),ng)=Ltrc(i,ng)
               END DO
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvadv') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvadv)') THEN
             Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
             DO ng=1,Ngrids
               DO i=1,NBT

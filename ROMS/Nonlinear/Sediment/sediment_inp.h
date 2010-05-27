@@ -369,7 +369,7 @@
                 Dout(idDtrc(itrc,iTyadv),ng)=Lmud(i,ng)
               END DO
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'Dout(MTvadv') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Dout(MTvadv)') THEN
             Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
             DO ng=1,Ngrids
               DO i=1,NCS
@@ -695,7 +695,7 @@
                 Dout(idDtrc(itrc,iTyadv),ng)=Lsand(i,ng)
               END DO
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'Dout(STvadv') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Dout(STvadv)') THEN
             Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
             DO ng=1,Ngrids
               DO i=1,NNS

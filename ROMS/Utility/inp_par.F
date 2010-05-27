@@ -2707,6 +2707,17 @@
               Dout(idDu3d(M3yadv),ng)=Ldiag(ng)
               Dout(idDv3d(M3yadv),ng)=Ldiag(ng)
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'Dout(M3vadv)') THEN
+            IF (M3vadv.le.0) THEN
+              IF (Master) WRITE (out,280) 'M3vadv'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ldiag)
+            DO ng=1,Ngrids
+              Dout(idDu3d(M3vadv),ng)=Ldiag(ng)
+              Dout(idDv3d(M3vadv),ng)=Ldiag(ng)
+            END DO
 #  endif
 #  ifdef NEARSHORE_MELLOR
           ELSE IF (TRIM(KeyWord).eq.'Dout(M3hrad)') THEN
@@ -2831,7 +2842,7 @@
               END DO
 # endif
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvadv') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Dout(iTvadv)') THEN
             IF (iTvadv.le.0) THEN
               IF (Master) WRITE (out,280) 'iTvadv'
               exit_flag=5
@@ -4470,7 +4481,6 @@
           IF (Dout(idDu3d(M3yadv),ng).or.Dout(idDv3d(M3yadv),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3yadv)',                    &
      &       'Write out 3D momentum horizontal Y-advection.'
-
           IF (Dout(idDu3d(M3vadv),ng).or.Dout(idDv3d(M3vadv),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3vadv)',                    &
      &       'Write out 3D momentum vertical advection.'
