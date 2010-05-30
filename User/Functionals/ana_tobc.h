@@ -57,6 +57,9 @@
       USE mod_scalars
       USE mod_boundary
       USE mod_ocean
+#ifdef SEDIMENT
+      USE mod_sediment
+#endif
 !
 !  Imported variable declarations.
 !

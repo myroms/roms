@@ -8,7 +8,7 @@
 !                                                                      !
 !  Sediment Model Kernel Variables:                                    !
 !                                                                      !
-#ifdef BEDLOAD
+#if BEDLOAD && defined AVERAGES
 ! avgbedldu       Time-averaged Bed load u-transport (kg/m/s).         !
 ! avgbedldv       Time-averaged Bed load v-transport (kg/m/s).         !
 #endif
@@ -64,7 +64,7 @@
 !
 !  Nonlinear model state.
 !
-#ifdef BEDLOAD
+#if defined BEDLOAD && defined AVERAGES
         real(r8), pointer :: avgbedldu(:,:,:)
         real(r8), pointer :: avgbedldv(:,:,:)
 #endif
@@ -166,7 +166,7 @@
 !
 !  Nonlinear model state.
 !
-#ifdef BEDLOAD
+#if defined BEDLOAD && defined AVERAGES
       IF (ANY(Aout(idUbld(:),ng))) THEN
         allocate ( SEDBED(ng) % avgbedldu(LBi:UBi,LBj:UBj,NST) )
       END IF
@@ -311,7 +311,7 @@
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
 
-#ifdef SEDIMENT && defined BEDLOAD
+#if defined BEDLOAD && defined AVERAGES
         IF (ANY(Aout(idUbld(:),ng))) THEN
           DO itrc=1,NST
             DO j=Jmin, Jmax
