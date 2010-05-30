@@ -8,7 +8,7 @@
 !                                                                      !
 !  Sediment Model Kernel Variables:                                    !
 !                                                                      !
-#if BEDLOAD && defined AVERAGES
+#if defined BEDLOAD && defined AVERAGES
 ! avgbedldu       Time-averaged Bed load u-transport (kg/m/s).         !
 ! avgbedldv       Time-averaged Bed load v-transport (kg/m/s).         !
 #endif

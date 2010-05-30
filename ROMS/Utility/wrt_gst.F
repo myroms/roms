@@ -45,8 +45,6 @@
 
       character (len=6) :: var
 # endif
-      character (len=1) :: lchar(5)
-!
       SourceFile='wrt_gst.F'
 !
 !-----------------------------------------------------------------------
@@ -172,29 +170,15 @@
 !
 !  Write ARPACK internal logical parameters to _aitr routines.
 !
-      DO i=1,SIZE(laitr)
-        IF (laitr(i)) THEN
-          lchar(i)='T'
-        ELSE
-          lchar(i)='F'
-        END IF
-      END DO
-      CALL netcdf_put_svar (ng, model, GSTname(ng), 'laitr',            &
-     &                      lchar, (/1/), (/SIZE(laitr)/),              &
+      CALL netcdf_put_lvar (ng, model, GSTname(ng), 'laitr',            &
+     &                      laitr, (/1/), (/SIZE(laitr)/),              &
      &                      ncid = ncGSTid(ng))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write ARPACK internal logical parameters to _aupd routines.
 !
-      DO i=1,SIZE(laup2)
-        IF (laup2(i)) THEN
-          lchar(i)='T'
-        ELSE
-          lchar(i)='F'
-        END IF
-      END DO
-      CALL netcdf_put_svar (ng, model, GSTname(ng), 'laup2',            &
-     &                      lchar, (/1/), (/SIZE(laup2)/),              &
+      CALL netcdf_put_lvar (ng, model, GSTname(ng), 'laup2',            &
+     &                      laup2, (/1/), (/SIZE(laup2)/),              &
      &                      ncid = ncGSTid(ng))
       IF (exit_flag.ne.NoError) RETURN
 !

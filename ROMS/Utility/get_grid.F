@@ -64,7 +64,6 @@
 
       real(r8) :: Fmax, Fmin
 
-      character (len=1  ) :: char1
       character (len=256) :: ncname
 !
       SourceFile='get_grid.F'
@@ -189,16 +188,10 @@
 !
       spherical=.FALSE.
       IF (find_string(var_name,n_var,'spherical',vindex)) THEN
-        CALL netcdf_get_svar (ng, model, ncname, 'spherical',           &
-     &                        char1,                                    &
-     &                         ncid = ncGRDid(ng))
-        IF (exit_flag.eq.NoError) THEN
-          IF ((char1.eq.'t').or.(char1.eq.'T')) THEN
-            spherical=.TRUE.
-          END IF
-        ELSE
-          WRITE (stdout,30) 'spherical', TRIM(ncname)
-        END IF
+        CALL netcdf_get_lvar (ng, model, ncname, 'spherical',           &
+     &                        spherical,                                &
+     &                        ncid = ncGRDid(ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !-----------------------------------------------------------------------

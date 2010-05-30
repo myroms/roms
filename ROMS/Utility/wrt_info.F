@@ -85,9 +85,6 @@
 #ifdef STATIONS
       real(r8), dimension(Nstation(ng)) :: Zpos, wrk
 #endif
-
-      character (len=1) :: char1
-      character (len=1), dimension(NT(ng)) :: char1_trc
 !
       SourceFile='wrt_info.F'
 !
@@ -220,9 +217,8 @@
 #endif
 
 #ifdef PROPAGATOR
-      WRITE (char1,'(l1)') LrstGST
-      CALL netcdf_put_svar (ng, model, ncname, 'LrstGST',               &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'LrstGST',               &
+     &                      LrstGST, (/0/), (/0/),                      &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
@@ -989,42 +985,40 @@
 !
 !  Adjoint sensitivity parameters.
 !
-      WRITE (char1,'(l1)') SCALARS(ng)%Lstate(isFsur)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lzeta',                 &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lzeta',                 &
+     &                      SCALARS(ng)%Lstate(isFsur),                 &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') SCALARS(ng)%Lstate(isUbar)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lubar',                 &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lubar',                 &
+     &                      SCALARS(ng)%Lstate(isUbar),                 &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') SCALARS(ng)%Lstate(isVbar)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lvbar',                 &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lvbar',                 &
+     &                      SCALARS(ng)%Lstate(isVbar),                 &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
-      WRITE (char1,'(l1)') SCALARS(ng)%Lstate(isUvel)
-      CALL netcdf_put_svar (ng, model, ncname, 'Luvel',                 &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Luvel',                 &
+     &                      SCALARS(ng)%Lstate(isUvel),                 &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') SCALARS(ng)%Lstate(isVvel)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lvvel',                 &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lvvel',                 &
+     &                      SCALARS(ng)%Lstate(isVvel),                 &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      DO i=1,NT(ng)
-        WRITE (char1_trc(i),'(l1)') SCALARS(ng)%Lstate(isTvar(i))
-      END DO
-      CALL netcdf_put_svar (ng, model, ncname, 'Ltracer',               &
-     &                      char1_trc, (/1/), (/NT(ng)/),               &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Ltracer',               &
+     &                      SCALARS(ng)%Lstate(isTvar(:)),              &
+     &                      (/1/), (/NT(ng)/),                          &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
@@ -1052,24 +1046,22 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') SCALARS(ng)%SOstate(isUstr)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lso_Ustr',              &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_Ustr',              &
+     &                      SCALARS(ng)%SOstate(isUstr),                &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') SCALARS(ng)%SOstate(isVstr)
-      CALL netcdf_put_svar (ng, model, ncname, 'Lso_Vstr',              &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_Vstr',              &
+     &                      SCALARS(ng)%SOstate(isVstr),                &
+     &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 #  ifdef SOLVE3D
-      DO i=1,NT(ng)
-        WRITE (char1_trc(i),'(l1)') SCALARS(ng)%SOstate(isTsur(i))
-      END DO
-      CALL netcdf_put_svar (ng, model, ncname, 'Lso_tracer',            &
-     &                      char1_trc, (/1/), (/NT(ng)/),               &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_tracer',            &
+     &                      SCALARS(ng)%SOstate(isTsur(:)),             &
+     &                      (/1/), (/NT(ng)/),                          &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
@@ -1121,11 +1113,12 @@
 !  Write out grid variables.
 !-----------------------------------------------------------------------
 !
-!  Grid type switch.
+!  Grid type switch. Writing characters in parallel I/O is extremely
+!  inefficient.  It is better to write this as an integer switch:
+!  0=Cartesian, 1=spherical.
 !
-      WRITE (char1,'(l1)') spherical
-      CALL netcdf_put_svar (ng, model, ncname, 'spherical',             &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'spherical',             &
+     &                      spherical, (/0/), (/0/),                    &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 !

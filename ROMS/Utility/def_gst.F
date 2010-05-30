@@ -137,10 +137,6 @@
      &                 SIZE(raup2), raup2dim)
         IF (exit_flag.ne.NoError) RETURN
 
-        status=def_dim(ng, model, ncGSTid(ng), ncname, 'char1',         &
-     &                 1, char1dim)
-        IF (exit_flag.ne.NoError) RETURN
-
         status=def_dim(ng, model, ncGSTid(ng), ncname, 'char2',         &
      &                 2, char2dim)
         IF (exit_flag.ne.NoError) RETURN
@@ -320,10 +316,10 @@
 !
         Vinfo( 1)='laitr'
         Vinfo( 2)='ARPACK internal logical parameters to _aitr routines'
-        vardim(1)=char1dim
-        vardim(2)=laitrdim
-        status=def_var(ng, model, ncGSTid(ng), varid, nf90_char,        &
-     &                 2, vardim, Aval, Vinfo, ncname,                  &
+        Vinfo( 9)='.FALSE.'
+        Vinfo(10)='.TRUE.'
+        status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
+     &                 1, (/laitrdim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -331,10 +327,10 @@
 !
         Vinfo( 1)='laup2'
         Vinfo( 2)='ARPACK internal logical parameters to _aup2 routines'
-        vardim(1)=char1dim
-        vardim(2)=laup2dim
-        status=def_var(ng, model, ncGSTid(ng), varid, nf90_char,        &
-     &                 2, vardim, Aval, Vinfo, ncname,                  &
+        Vinfo( 9)='.FALSE.'
+        Vinfo(10)='.TRUE.'
+        status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
+     &                 1, (/laup2dim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !

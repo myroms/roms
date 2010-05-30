@@ -1074,7 +1074,9 @@
 #ifdef PROPAGATOR
       Vinfo( 1)='LrstGST'
       Vinfo( 2)='Switch to restart GST analysis'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
@@ -1796,7 +1798,7 @@
 !  during point Sources/Sinks.
 !
       Vinfo( 1)='LtracerSrc'
-      Vinfo( 2)='tracer point sources and simck activation switch'
+      Vinfo( 2)='tracer point sources and sink activation switch'
       Vinfo( 9)='.FALSE.'
       Vinfo(10)='.TRUE.'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
@@ -2149,27 +2151,27 @@
 !
       Vinfo( 1)='Lzeta'
       Vinfo( 2)='adjoint sensitivity on free-surface'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Lubar'
       Vinfo( 2)='adjoint sensitivity on 2D U-momentum'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Lvbar'
       Vinfo( 2)='adjoint sensitivity on 2D V-momentum'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
@@ -2177,27 +2179,27 @@
 # ifdef SOLVE3D
       Vinfo( 1)='Luvel'
       Vinfo( 2)='adjoint sensitivity on 3D U-momentum'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Lvvel'
       Vinfo( 2)='adjoint sensitivity on 3D V-momentum'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Ltracer'
       Vinfo( 2)='adjoint sensitivity on tracer variables'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
@@ -2239,18 +2241,18 @@
 
       Vinfo( 1)='Lso_Ustr'
       Vinfo( 2)='Stochastic optimats on surface u-stress'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Lso_Vstr'
       Vinfo( 2)='Stochastic optimats on surface v-stress'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
@@ -2258,9 +2260,9 @@
 #  ifdef SOLVE3D
       Vinfo( 1)='Lso_tracer'
       Vinfo( 2)='Stochastic optimats on surface flux of tracer'
-      Vinfo( 7)='on'
-      Vinfo( 8)='off'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
@@ -2315,13 +2317,15 @@
 !  Define grid variables.
 !-----------------------------------------------------------------------
 !
-!  Grid type switch: Spherical or Cartesian.
+!  Grid type switch: Spherical or Cartesian. Writing characters in
+!  parallel I/O is extremely inefficient.  It is better to write
+!  this as an integer switch: 0=Cartesian, 1=spherical.
 !
       Vinfo( 1)='spherical'
       Vinfo( 2)='grid type logical switch'
-      Vinfo( 7)='spherical'
-      Vinfo( 8)='Cartesian'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='Cartesian'
+      Vinfo(10)='spherical'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
