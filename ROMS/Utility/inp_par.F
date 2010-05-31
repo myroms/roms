@@ -3907,7 +3907,7 @@
             itrc=inert(i)
             WRITE (out,185) LtracerSrc(i,ng), 'LtracerSrc', itrc,       &
      &            'Processing point sources/Sink on tracer ', itrc,     &
-     &            TRIM(Vname(1,idTvar(trc)))
+     &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 # endif
 #endif
