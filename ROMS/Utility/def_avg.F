@@ -2242,26 +2242,26 @@
           RETURN
 #  endif
 # endif
-        IF (.not.got_var(id2dPV)) THEN
+        IF (.not.got_var(id2dPV).and.Aout(id2dPV,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,id2dPV)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(id2dRV)) THEN
+        IF (.not.got_var(id2dRV).and.Aout(id2dRV,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,id2dRV)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
-        IF (.not.got_var(id3dPV)) THEN
+        IF (.not.got_var(id3dPV).and.Aout(id3dPV,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,id3dPV)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(id3dRV)) THEN
+        IF (.not.got_var(id3dRV).and.Aout(id3dRV,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,id3dRV)),          &
      &                                  TRIM(ncname)
           exit_flag=3
