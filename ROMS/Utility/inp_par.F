@@ -2767,6 +2767,17 @@
               Dout(idDv3d(M3yvis),ng)=Ldiag(ng)
             END DO
 #  endif
+          ELSE IF (TRIM(KeyWord).eq.'Dout(M3vvis)') THEN
+            IF (M3vvis.le.0) THEN
+              IF (Master) WRITE (out,280) 'M3vvis'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ldiag)
+            DO ng=1,Ngrids
+              Dout(idDu3d(M3vvis),ng)=Ldiag(ng)
+              Dout(idDv3d(M3vvis),ng)=Ldiag(ng)
+            END DO
 # endif
 #endif
 #if defined DIAGNOSTICS_TS && defined SOLVE3D
@@ -4500,6 +4511,9 @@
           IF (Dout(idDu3d(M3xvis),ng).or.Dout(idDv3d(M3xvis),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3xvis)',                    &
      &       'Write out 3D momentum horizontal X-viscosity.'
+          IF (Dout(idDu3d(M3yvis),ng).or.Dout(idDv3d(M3yvis),ng))       &
+     &       WRITE (out,170) .TRUE., 'Dout(M3yvis)',                    &
+     &       'Write out 3D momentum horizontal Y-viscosity.'
 #  endif
           IF (Dout(idDu3d(M3vvis),ng).or.Dout(idDv3d(M3vvis),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3vvis)',                    &
