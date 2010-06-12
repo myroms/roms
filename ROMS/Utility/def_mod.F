@@ -661,7 +661,9 @@
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined ARRAY_MODES        || defined CLIPPING || \
+     defined TL_W4DVAR          || defined W4DVAR   || \
+     defined W4DVAR_SENSITIVITY
 !
 !  Define RPM data penalty function.
 !

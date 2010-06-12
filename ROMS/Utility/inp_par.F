@@ -5433,6 +5433,11 @@
             END DO
           ELSE IF (TRIM(KeyWord).eq.'LNM_flag') THEN
             Npts=load_i(Nval, Rval, 1, LNM_flag)
+#  if defined WEAK_CONSTRAINT && \
+     (defined ARRAY_MODES     || defined CLIPPING)
+          ELSE IF (TRIM(KeyWord).eq.'Nvct') THEN
+            Npts=load_i(Nval, Rval, 1, Nvct)
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
             Npts=load_r(Nval, Rval, 1, GradErr)
           ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
@@ -5888,7 +5893,25 @@
         END DO
       END DO
 #  endif
-
+#  if defined WEAK_CONSTRAINT && \
+     (defined ARRAY_MODES     || defined CLIPPING)
+!
+!-----------------------------------------------------------------------
+!  Check array modes parameter
+!-----------------------------------------------------------------------
+!
+!  Array modes parameter must be greater than zero and less or equal
+!  to Ninner.
+!
+      IF ((Nvct.lt.1).or.(Nvct.gt.Ninner)) THEN
+        IF (Lwrite) THEN
+          WRITE (out,55) 'Illegal parameter for array modes, Nvct = ',  &
+     &                   Nvct, Ninner, '1 =< Nvct =< Ninner.'
+        END IF
+        exit_flag=6
+        RETURN
+      END IF
+#  endif
 #  ifdef BALANCE_OPERATOR
 !
 !-----------------------------------------------------------------------
@@ -5990,6 +6013,15 @@
 #    else
           WRITE (out,70) balance(isVbar), 'balance(isVbar)',            &
                   'Switch to include 2D momentum in balance operator.'
+#    endif
+#   endif
+#   ifdef WEAK_CONSTRAINT
+#    if defined ARRAY_MODES
+          WRITE (out,80) Nvct, 'Nvct',                                  &
+     &            'Representer array mode eigenvector to process.'
+#    elif defined CLIPPING
+          WRITE (out,80) Nvct, 'Nvct',                                  &
+     &            'Representer cut-off eigenvector to process.'
 #    endif
 #   endif
 #   if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
@@ -6393,6 +6425,7 @@
       END IF
 
   50  FORMAT (/,' READ_AssPar - Error while processing line: ',/,a)
+  55  FORMAT (/,' READ_AssPar - ',a,i4,2x,i4,/,15x,a)
   60  FORMAT (/,/,' Assimilation Parameters, Grid: ',i2.2,              &
      &        /,  ' =================================',/)
   70  FORMAT (10x,l1,2x,a,t30,a)

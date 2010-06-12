@@ -89,10 +89,11 @@
 ** Determine if the ARPACK library is needed.
 */
 
-#if defined PROPAGATOR || defined W4DPSAS ||  defined W4DVAR || \
-    defined IS4DVAR    || defined W4DPSAS_SENSITIVITY        || \
-    defined TL_W4DPSAS || defined W4DVAR_SENSITIVITY         || \
-    defined TL_W4DVAR
+#if defined ARRAY_MODES         || defined CLIPPING           || \
+    defined PROPAGATOR          || defined IS4DVAR            || \
+    defined TL_W4DPSAS          || defined TL_W4DVAR          || \
+    defined W4DPSAS             || defined W4DVAR             || \
+    defined W4DPSAS_SENSITIVITY || defined W4DVAR_SENSITIVITY
   USE_ARPACK := on
 #else
   USE_ARPACK :=

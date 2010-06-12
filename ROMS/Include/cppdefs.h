@@ -522,6 +522,8 @@
 ** ADM_DRIVER          use if generic adjoint model driver                   **
 ** AD_SENSITIVITY      use if adjoint sensitivity driver                     **
 ** AFT_EIGENMODES      use if adjoint finite time eingenmodes driver         **
+** ARRAY_MODES         use if W4DVAR representer matrix array modes          **
+** CLIPPING            use if W4DVAR representer matrix clipping analysis    **
 ** CONVOLUTION         use if adjoint convolution driver                     **
 ** CORRELATION         use if background-error correlation model driver      **
 ** ENSEMBLE            use if ensemble prediction driver                     **
@@ -552,8 +554,10 @@
 ** AD_IMPULSE          use to force adjoint model with intermittent impulses **
 ** ADJUST_STFLUX       use if including surface tracer flux in 4DVar state   **
 ** ADJUST_WSTRESS      use if including wind-stress in 4DVar state           **
+** ARRAY_MODES_SPLIT   use to separate analysis due to IC, forcing, and OBC  **
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
+** CLIPPING_SPLIT      use to separate analysis due to IC, forcing, and OBC  **
 ** CONVOLVE            use if convolving solution with diffusion operators   **
 ** DATALESS_LOOPS      use if testing convergence of Picard iterations       **
 ** FORWARD_MIXING      use if processing forward vertical mixing coefficient **
@@ -566,9 +570,10 @@
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** OBS_IMPACT          use if observation impact to 4DVAR data assimilation  **
 ** OBS_IMPACT_SPLIT    use to separate impact due to IC, forcing, and OBC    **
-** POSTERIOR_EOFS      Use if posterior analysis error covariance EOFS       **
-** POSTERIOR_ERROR_F   Use if final posterior analysis error covariance      **
-** POSTERIOR_ERROR_I   Use if initial posterior analysis error covariance    **
+** POSTERIOR_EOFS      use if posterior analysis error covariance EOFS       **
+** POSTERIOR_ERROR_F   use if final posterior analysis error covariance      **
+** POSTERIOR_ERROR_I   use if initial posterior analysis error covariance    **
+** RECOMPUTE_4DVAR     use if recomputing 4DVar in analysis algorithms       **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
 ** SO_SEMI_WHITE       use to activate white/red noise processes             **
 ** SPLINES_VCONV       use to activate implicit splines vertical convolution **

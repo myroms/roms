@@ -172,9 +172,10 @@
         real(r8), allocatable :: NLmodVal(:)
 #  ifdef TLM_OBS
         real(r8), allocatable :: TLmodVal(:)
-#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS || \
-       defined TL_W4DVAR            || defined W4DPSAS    || \
-       defined W4DVAR
+#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS  || \
+       defined TL_W4DVAR            || defined W4DPSAS     || \
+       defined W4DVAR               || defined ARRAY_MODES || \
+       defined CLIPPING
         real(r8), allocatable :: TLmodVal_S(:,:,:)
 #   endif
 #   if defined TL_W4DPSAS           || defined W4DPSAS    || \
@@ -296,6 +297,15 @@
 !  error covariance matrix estimation.
 !
         integer :: NpostI
+!
+!  Parameter to either process the eigenvector of the stabilized
+!  representer matrix to whe computing array modes (Nvct=1 less
+!  important eigenvector, Nvct=Ninner most important eigenvector)
+!  or cut-off eigenvector for the clipped analysis when (only
+!  eigenvector Nvct:Ninner to will be processed, others will be
+!  disgarded).
+!
+        integer :: Nvct
 !
 !  Optimal, normalized cost funtion minimum.  If the statistical
 !  hypotheses between the background and observations errors
@@ -919,9 +929,10 @@
 #  ifdef TLM_OBS
       allocate ( TLmodVal(Mobs) )
       TLmodVal = IniVal
-#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS || \
-       defined TL_W4DVAR            || defined W4DPSAS    || \
-       defined W4DVAR
+#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS  || \
+       defined TL_W4DVAR            || defined W4DPSAS     || \
+       defined W4DVAR               || defined ARRAY_MODES || \
+       defined CLIPPING
       allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
       TLmodVal_S = IniVal
 #   endif

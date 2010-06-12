@@ -72,6 +72,14 @@ balance(isFsur) =  T                      ! free-sruface
 balance(isVbar) =  F                      ! 2D momentum (ubar, vbar)
 balance(isVvel) =  T                      ! 3D momentum (u, v)
 
+! Parameter to process the Nvct eigenvector of the stabilized representer
+! matrix when computing array modes (here, Nvct=Ninner is the most important
+! while Nvct=1 is the less important) OR cut-off parameter for the clipped
+! analysis to disregard potentially unphysical array modes (that is, all
+! the eigenvectors < Nctv are disgarded).
+
+           Nvct =  50
+
 ! Upper bound on the relative error of the gradient for the Lanczos
 ! conjugate gradient algorithm.
 
@@ -423,6 +431,24 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   3) The 3D momentum, balance(isVvel), depends on salinity
 !                      since we need to compute balanced density.  This
 !                      implies that balance(isSalt) needs to be TRUE too.
+!
+!------------------------------------------------------------------------------
+!  Array modes parameter.
+!------------------------------------------------------------------------------
+!
+!  Nvct           Either eigenvector of the stabilized representer matrix to
+!                 process to computing array modes when option ARRAY_MODES is
+!                 activated. In this case, Nvct =< Ninner,
+!
+!                   Nvct=1         less important eigenvector
+!                   Nvct=Ninner    most important eigenvector
+!
+!                 or cut-off eigenvector for the clipped analysis when
+!                 the option CLIPPING is activated to remove potentially
+!                 unphysical array modes.  In this case, Nvct =< Ninner,
+!
+!                   Nvct:Ninner    eigenvector will be processed
+!                   1:Nvct-1       eigenvector will be disgarded
 !
 !------------------------------------------------------------------------------
 ! Lanczos conjugate gradient algorithm parameters.
