@@ -2240,6 +2240,7 @@
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
+        END IF
 #  endif
 # endif
         IF (.not.got_var(id2dPV).and.Aout(id2dPV,ng)) THEN
