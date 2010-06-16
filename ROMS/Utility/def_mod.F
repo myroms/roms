@@ -149,13 +149,14 @@
         IF (exit_flag.ne.NoError) RETURN
 #   endif
 #  endif
-
+#  if defined IS4DVAR || defined BACKGROUND
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'iteration',      &
      &                 nf90_unlimited, iterDim)
         IF (exit_flag.ne.NoError) RETURN
 !
         CostDim(1)=stateDim
         CostDim(2)=iterDim
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -346,7 +347,7 @@
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='inner'
         Vinfo( 2)='inner loop counter'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
@@ -364,56 +365,56 @@
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='obs_mean'
         Vinfo( 2)='observations mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='obs_std'
         Vinfo( 2)='observations standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='model_mean'
         Vinfo( 2)='model mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='model_std'
         Vinfo( 2)='model standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='model_bias'
         Vinfo( 2)='model bias'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo,ncname,             &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='SDE'
         Vinfo( 2)='model-observations standard deviation error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='CC'
         Vinfo( 2)='model-observations cross-correlation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='MSE'
         Vinfo( 2)='model-observations mean squared error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
@@ -426,7 +427,7 @@
 !  Number of converged Ritz eigenvalues.
 !
         Vinfo( 1)='nConvRitz'
-        Vinfo( 2)='Number of converged Ritz eigenvalues'
+        Vinfo( 2)='number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
@@ -436,9 +437,26 @@
 !  Number of converged Ritz eigenvalues.
 !
         Vinfo( 1)='nConvRitz'
-        Vinfo( 2)='Number of converged Ritz eigenvalues'
+        Vinfo( 2)='number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
      &                 1, (/Nouterdim/), Aval, Vinfo, ncname,           &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined WEAK_CONSTRAINT && \
+    (defined ARRAY_MODES     || defined CLIPPING)
+!
+!  Number of converged Ritz eigenvalues.
+!
+        Vinfo( 1)='Nvct'
+#  if defined ARRAY_MODES
+        Vinfo( 2)='representer matrix array mode eigenvector '//        &
+     &            'processed'
+#  elif defined CLIPPING
+        Vinfo( 2)='representer matric cut-off eigenvectors'
+#  endif
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -490,7 +508,9 @@
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
+
 #  ifdef WEAK_CONSTRAINT
+!
         Vinfo( 1)='cg_dla'
         Vinfo( 2)='normalization coefficients for Lanczos vectors'
         vardim(1)=NinnerDim
@@ -501,6 +521,7 @@
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 #  ifdef IS4DVAR
+!
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='Lanczos algorithm gamma coefficient'
         vardim(1)=NinnerDim
@@ -531,7 +552,7 @@
      &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='cg_Gnorm_y'
         Vinfo( 2)='initial gradient normalization factor, y-space'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
@@ -576,7 +597,7 @@
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
+!
         Vinfo( 1)='cg_Greduc_y'
         Vinfo( 2)='reduction in the gradient norm, y-space'
         vardim(1)=NinnerDim
@@ -661,16 +682,43 @@
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined ARRAY_MODES        || defined CLIPPING || \
-     defined TL_W4DVAR          || defined W4DVAR   || \
+# if defined TL_W4DPSAS          || defined W4DPSAS || \
+     defined W4DPSAS_SENSITIVITY
+!
+!  Define NLM initial and final data penalty function.
+!
+        Vinfo( 1)='NL_iDataPenalty'
+        Vinfo( 2)='nonlinear model initial data penalty function'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, (/stateDim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        Vinfo( 1)='NL_fDataPenalty'
+        Vinfo( 2)='nonlinear model final data penalty function'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, (/stateDim,NouterDim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if (defined RECOMPUTE_4DVAR   && \
+     (defined ARRAY_MODES       || defined CLIPPING)) || \
+     defined TL_W4DVAR          || defined W4DVAR     || \
      defined W4DVAR_SENSITIVITY
 !
-!  Define RPM data penalty function.
+!  Define RPM initial and final data penalty function.
 !
-        Vinfo( 1)='RPcost_function'
-        Vinfo( 2)='representer model data penalty function'
+        Vinfo( 1)='RP_iDataPenalty'
+        Vinfo( 2)='representer model initial data penalty function'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/NouterDim/), Aval, Vinfo, ncname,           &
+     &                 2, (/stateDim,NouterDim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        Vinfo( 1)='RP_fDataPenalty'
+        Vinfo( 2)='representer model final data penalty function'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, (/stateDim,NouterDim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif

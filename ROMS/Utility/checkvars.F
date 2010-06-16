@@ -227,7 +227,8 @@
 !  Determine 4DVar surface forcing variables to adjust.
 !
       IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.     &
-     &    (model.eq.iRPM).or.(model.eq.8).or.(model.eq.10)) THEN
+     &    (model.eq.iRPM).or.(model.eq.8).or.(model.eq.10).or.          &
+     &    (model.eq.12)) THEN
         IF (ANY(Lobc(:,isFsur,ng))) THEN
           get_var(idSbry(isFsur))=.TRUE.
         END IF
@@ -257,7 +258,8 @@
 !  Determine 4DVar surface forcing variables to adjust.
 !
       IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.     &
-     &    (model.eq.iRPM).or.(model.eq.9).or.(model.eq.11)) THEN
+     &    (model.eq.iRPM).or.(model.eq.9).or.(model.eq.11).or.          &
+     &    (model.eq.12)) THEN
 # ifdef ADJUST_STFLUX
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN

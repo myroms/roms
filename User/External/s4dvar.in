@@ -445,10 +445,12 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !                 or cut-off eigenvector for the clipped analysis when
 !                 the option CLIPPING is activated to remove potentially
-!                 unphysical array modes.  In this case, Nvct =< Ninner,
+!                 unphysical array modes.  In this case, Nvct =< Ninner. All
+!                 the eigenvectors are ordered according to their significance,
+!                 Nvct=Ninner is the most important.
 !
-!                   Nvct:Ninner    eigenvector will be processed
-!                   1:Nvct-1       eigenvector will be disgarded
+!                   Nvct:Ninner    eigenvectors will be processed
+!                   1:Nvct-1       eigenvectors will be disgarded
 !
 !------------------------------------------------------------------------------
 ! Lanczos conjugate gradient algorithm parameters.

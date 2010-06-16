@@ -594,8 +594,7 @@
 
           END DO RP_LOOP1
 !
-!  Report data penalty function. Then, clean array before next run of
-!  RP model.
+!  Report data penalty function.
 !
           IF (Master) THEN
             DO i=0,NstateVar(ng)
@@ -611,6 +610,20 @@
               END IF
             END DO
           END IF
+!
+!  Write out initial data penalty function to NetCDF file.
+!
+          SourceFile='obs_sen_w4dvar.h, ROMS_run'
+
+          CALL netcdf_put_fvar (ng, iRPM, MODname(ng),                  &
+     &                          'RP_iDataPenalty',                      &
+     &                          FOURDVAR(ng)%DataPenalty(0:),           &
+     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clean penalty array before next run of RP model.
+!
           FOURDVAR(ng)%DataPenalty=0.0_r8
 !
 !  Turn off IO switches.
@@ -1413,14 +1426,14 @@
             END DO
           END IF
 !
-!  Write data penalty function to NetCDF file.
+!  Write out final data penalty function to NetCDF file.
 !
-          SourceFile='w4dvar_ocean.F, ROMS_run'
+          SourceFile='obs_sen_w4dvar.h, ROMS_run'
 
           CALL netcdf_put_fvar (ng, iRPM, MODname(ng),                  &
-     &                          'RPcost_function',                      &
-     &                          FOURDVAR(ng)%DataPenalty(0),            &
-     &                          (/outer/), (/1/),                       &
+     &                          'RP_fDataPenalty',                      &
+     &                          FOURDVAR(ng)%DataPenalty(0:),           &
+     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
      &                          ncid = ncMODid(ng))
           IF (exit_flag.ne.NoError) RETURN
 !

@@ -254,7 +254,7 @@
 !
       logical :: Lcgini, Linner, Lweak, add
 #ifdef POSTERIOR_EOFS
-      Logical :: Ltrace
+      logical :: Ltrace
 #endif
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec, Rec1, Rec2, indxSave
@@ -456,8 +456,7 @@
         END DO NL_LOOP1
         wrtNLmod(ng)=.FALSE.
 !
-!  Report data penalty function. Then, clean array before next run of
-!  RP model.
+!  Report data penalty function.
 !
         IF (Master) THEN
           DO i=0,NstateVar(ng)
@@ -473,6 +472,20 @@
             END IF
           END DO
         END IF
+!
+!  Write out initial data penalty function to NetCDF file.
+!
+        SourceFile='w4dpsas_ocean.h, ROMS_run'
+
+        CALL netcdf_put_fvar (ng, iNLM, MODname(ng),                    &
+     &                        'NL_iDataPenalty',                        &
+     &                        FOURDVAR(ng)%NLPenalty(0:),               &
+     &                        (/1/), (/NstateVar(ng)+1/),               &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Clean penalty array before next run of NL model.
+!
         FOURDVAR(ng)%NLPenalty=0.0_r8
 !
 !  Set forward basic state NetCDF ID to nonlinear model trajectory to
@@ -1267,6 +1280,21 @@
             FrequentImpulse=.TRUE.
           END IF
 !
+!  Clear tangent arrays before running nonlinear model (important).
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_ocean (ng, TILE, iTLM)
+              CALL initialize_forces (ng, TILE, iTLM)
+# ifdef ADJUST_BOUNDARY
+              CALL initialize_boundary (ng, TILE, iTLM)
+# endif
+            END DO
+          END DO
+!$OMF END PARALLEL DO
+!
 !  Initialize nonlinear model INIname file, record outer+2. Notice that
 !  NetCDF record index counter is saved because this counter is used
 !  to write initial conditions.
@@ -1307,8 +1335,7 @@
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
 !
-!  Report data penalty function. Then, clean array before next run of
-!  RP model.
+!  Report data penalty function.
 !
           IF (Master) THEN
             DO i=0,NstateVar(ng)
@@ -1324,12 +1351,24 @@
               END IF
             END DO
           END IF
+!
+!  Write out final data penalty function to NetCDF file.
+!
+          SourceFile='w4dpsas_ocean.h, ROMS_run'
+
+          CALL netcdf_put_fvar (ng, iNLM, MODname(ng),                  &
+     &                          'NL_fDataPenalty',                      &
+     &                          FOURDVAR(ng)%NLPenalty(0:),             &
+     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clean penalty array before next run of NL model.
+!
           FOURDVAR(ng)%NLPenalty=0.0_r8
 !
 !  Close current forward NetCDF file.
 !
-          SourceFile='w4dpsas_ocean.h, ROMS_run'
-
           CALL netcdf_close (ng, iNLM, ncFWDid(ng))
           IF (exit_flag.ne.NoError) RETURN
 
