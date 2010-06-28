@@ -462,12 +462,13 @@
      defined ADJUST_STFLUX)
 !
 !-----------------------------------------------------------------------
-!  Read in the surface forcing and/or obc increments for PSAS from
-!  record 1 of the TLM initial NetCDF file.
+!  Read in the surface forcing and/or open boundary conditions
+!  increments for PSAS from record IniRec of the NLM initial NetCDF
+!  file.
 !-----------------------------------------------------------------------
 !
       IF (Nrun.gt.1) THEN
-        CALL get_state (ng, 12, 1, ITLname(ng), 1, Tindex)
+        CALL get_state (ng, 12, 1, INIname(ng), IniRec, Tindex)
 # ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
