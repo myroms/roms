@@ -99,8 +99,8 @@
       USE mod_coupling
 # endif
       USE mod_forces
-# ifdef SOLVE3D
       USE mod_grid
+# ifdef SOLVE3D
       USE mod_mixing
 # endif
       USE mod_ocean
