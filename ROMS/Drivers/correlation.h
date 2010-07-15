@@ -161,57 +161,55 @@
 !  error covariance.  They are loaded in Tindex=1 of the
 !  e_var(...,Tindex) state variables.
 !
-        IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
-          STDrec=1
-          Tindex=1
-          DO ng=1,Ngrids
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
             CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
             IF (exit_flag.ne.NoError) RETURN
-          END DO
-        END IF
+          END IF
+        END DO
 !
 !  Read in standard deviation factors for model error covariance.
 !  They are loaded in Tindex=2 of the e_var(...,Tindex) state
 !  variables.
 !
-        IF (LdefNRM(2,ng).or.LwrtNRM(2,ng)) THEN
-          STDrec=1
-          Tindex=2
-          DO ng=1,Ngrids
-            IF (NSA.eq.2) THEN
-              CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
-              IF (exit_flag.ne.NoError) RETURN
-            END IF
-          END DO
-        END IF
+        STDrec=1
+        Tindex=2
+        DO ng=1,Ngrids
+          IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
+            CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+        END DO
 
 #ifdef ADJUST_BOUNDARY
 !
 !  Read in standard deviation factors for boundary conditions
 !  error covariance.
 !
-        IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
-          STDrec=1
-          Tindex=1
-          DO ng=1,Ngrids
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
             CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
             IF (exit_flag.ne.NoError) RETURN
-          END DO
-        END IF
+          END IF
+        END DO
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
 !  Read in standard deviation factors for surface forcing
 !  error covariance.
 !
-        IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
-          STDrec=1
-          Tindex=1
-          DO ng=1,Ngrids
+        STDrec=1
+        Tindex=1
+        DO ng=1,Ngrids
+          IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
             CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, Tindex)
             IF (exit_flag.ne.NoError) RETURN
-          END DO
-        END IF
+          END IF
+        END DO
 #endif
       END IF
 
