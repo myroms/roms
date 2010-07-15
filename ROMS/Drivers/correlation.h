@@ -161,49 +161,57 @@
 !  error covariance.  They are loaded in Tindex=1 of the
 !  e_var(...,Tindex) state variables.
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
-          IF (exit_flag.ne.NoError) RETURN
-        END DO
+        IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
+          STDrec=1
+          Tindex=1
+          DO ng=1,Ngrids
+            CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
+            IF (exit_flag.ne.NoError) RETURN
+          END DO
+        END IF
 !
 !  Read in standard deviation factors for model error covariance.
 !  They are loaded in Tindex=2 of the e_var(...,Tindex) state
 !  variables.
 !
-        STDrec=1
-        Tindex=2
-        DO ng=1,Ngrids
-          IF (NSA.eq.2) THEN
-            CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-        END DO
+        IF (LdefNRM(2,ng).or.LwrtNRM(2,ng)) THEN
+          STDrec=1
+          Tindex=2
+          DO ng=1,Ngrids
+            IF (NSA.eq.2) THEN
+              CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
+          END DO
+        END IF
 
 #ifdef ADJUST_BOUNDARY
 !
 !  Read in standard deviation factors for boundary conditions
 !  error covariance.
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
-          IF (exit_flag.ne.NoError) RETURN
-        END DO
+        IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
+          STDrec=1
+          Tindex=1
+          DO ng=1,Ngrids
+            CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
+            IF (exit_flag.ne.NoError) RETURN
+          END DO
+        END IF
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
 !  Read in standard deviation factors for surface forcing
 !  error covariance.
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, Tindex)
-          IF (exit_flag.ne.NoError) RETURN
-        END DO
+        IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
+          STDrec=1
+          Tindex=1
+          DO ng=1,Ngrids
+            CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, Tindex)
+            IF (exit_flag.ne.NoError) RETURN
+          END DO
+        END IF
 #endif
       END IF
 
@@ -277,20 +285,26 @@
 !  computation and needs to be computed once for an application grid.
 !
         IF (ANY(LwrtNRM(:,ng))) THEN
-          CALL def_norm (ng, iNLM, 1)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
+            CALL def_norm (ng, iNLM, 1)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
 
-          IF (NSA.eq.2) THEN
+          IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
             CALL def_norm (ng, iNLM, 2)
           IF (exit_flag.ne.NoError) RETURN
           END IF
 #ifdef ADJUST_BOUNDARY
-          CALL def_norm (ng, iNLM, 3)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
+            CALL def_norm (ng, iNLM, 3)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          CALL def_norm (ng, iNLM, 4)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
+            CALL def_norm (ng, iNLM, 4)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
 #endif
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
@@ -302,23 +316,6 @@
 !$OMP END PARALLEL DO
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
-        ELSE
-          NRMrec=1
-          CALL get_state (ng, 5, 5, NRMname(1,ng), NRMrec, 1)
-          IF (exit_flag.ne.NoError) RETURN
-
-          IF (NSA.eq.2) THEN
-            CALL get_state (ng, 5, 5, NRMname(2,ng), NRMrec, 2)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-#ifdef ADJUST_BOUNDARY
-          CALL get_state (ng, 10, 10, NRMname(3,ng), NRMrec, 1)
-          IF (exit_flag.ne.NoError) RETURN
-#endif
-#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          CALL get_state (ng, 11, 11, NRMname(4,ng), NRMrec, 1)
-          IF (exit_flag.ne.NoError) RETURN
-#endif
         END IF
 
 #ifdef BALANCE_OPERATOR

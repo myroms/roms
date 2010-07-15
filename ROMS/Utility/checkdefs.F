@@ -92,28 +92,28 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' ADJOINT,'
 #endif
-#if defined ADJUST_BOUNDARY   && \
-   (defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR || defined W4DPSAS             || \
-    defined W4DVAR)
+#if defined ADJUST_BOUNDARY     && \
+   (defined CORRELATION         || defined IS4DVAR           || \
+    defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
+    defined W4DPSAS             || defined W4DVAR)
       IF (Master) WRITE (stdout,20) 'ADJUST_BOUNDARY',                  &
      &   'Including boundary conditions in 4DVar state estimation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' ADJUST_BOUNDARY,'
 #endif
-#if defined ADJUST_STFLUX     && \
-   (defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR || defined W4DPSAS             || \
-    defined W4DVAR)
+#if defined ADJUST_STFLUX       && \
+   (defined CORRELATION         || defined IS4DVAR           || \
+    defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
+    defined W4DPSAS             || defined W4DVAR)
       IF (Master) WRITE (stdout,20) 'ADJUST_STFLUX',                    &
      &   'Including surface tracer flux in 4DVar state estimation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' ADJUST_STFLUX,'
 #endif
-#if defined ADJUST_WSTRESS    && \
-   (defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR || defined W4DPSAS             || \
-    defined W4DVAR)
+#if defined ADJUST_WSTRESS      && \
+   (defined CORRELATION         || defined IS4DVAR           || \
+    defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
+    defined W4DPSAS             || defined W4DVAR)
       IF (Master) WRITE (stdout,20) 'ADJUST_WSTRESS',                   &
      &   'Including surface wind stress in 4DVar state estimation.'
       is=LEN_TRIM(Coptions)+1
