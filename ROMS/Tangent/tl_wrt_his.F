@@ -714,10 +714,11 @@
      &                     GRID(ng) % rmask,                            &
 #   endif
 #   ifdef WEAK_CONSTRAINT
-     &                     MIXING(ng) % Akv)
+     &                     MIXING(ng) % Akv,                            &
 #   else
-     &                     MIXING(ng) % tl_Akv)
+     &                     MIXING(ng) % tl_Akv,                         &
 #   endif
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvis)), tTLMindx(ng)
@@ -740,10 +741,11 @@
      &                     GRID(ng) % rmask,                            &
 #   endif
 #   ifdef WEAK_CONSTRAINT
-     &                     MIXING(ng) % Akt(:,:,:,itemp))
+     &                     MIXING(ng) % Akt(:,:,:,itemp),               &
 #   else
-     &                     MIXING(ng) % tl_Akt(:,:,:,itemp))
+     &                     MIXING(ng) % tl_Akt(:,:,:,itemp),            &
 #   endif
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTdif)), tTLMindx(ng)
@@ -767,10 +769,11 @@
      &                     GRID(ng) % rmask,                            &
 #    endif
 #    ifdef WEAK_CONSTRAINT
-     &                     MIXING(ng) % Akt(:,:,:,isalt))
+     &                     MIXING(ng) % Akt(:,:,:,isalt),               &
 #    else
-     &                     MIXING(ng) % tl_Akt(:,:,:,isalt))
+     &                     MIXING(ng) % tl_Akt(:,:,:,isalt),            &
 #    endif
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSdif)), tTLMindx(ng)
@@ -794,7 +797,8 @@
 #    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #    endif
-     &                     MIXING(ng) % tl_tke(:,:,:,NOUT))
+     &                     MIXING(ng) % tl_tke(:,:,:,NOUT),             &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtke)), tTLMindx(ng)
@@ -834,7 +838,8 @@
 #    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #    endif
-     &                     MIXING(ng) % tl_gls(:,:,:,NOUT))
+     &                     MIXING(ng) % tl_gls(:,:,:,NOUT),             &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtls)), tTLMindx(ng)

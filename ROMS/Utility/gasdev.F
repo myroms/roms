@@ -139,7 +139,8 @@
 !
           rsq(ng:n)=v1(ng:n)**2+v2(ng:n)**2
           mask(ng:n)=((rsq(ng:n).gt.0.0_r8).and.(rsq(ng:n).lt.1.0_r8))
-          CALL array_copy (PACK(v1(ng:n), mask(ng:n)), v1(ng:), nn, m)
+          CALL array_copy (REAL(PACK(v1(ng:n), mask(ng:n)),r8),        &
+     &                     v1(ng:), nn, m)
           v2(ng:ng+nn-1)=PACK(v2(ng:n), mask(ng:n))
           rsq(ng:ng+nn-1)=PACK(rsq(ng:n), mask(ng:n))
           ng=ng+nn

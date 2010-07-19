@@ -605,7 +605,8 @@
 #  ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #  endif
-     &                   MIXING(ng) % Akv)
+     &                   MIXING(ng) % Akv,                              &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVvis)), tRSTindx(ng)
@@ -625,7 +626,9 @@
 #  ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #  endif
-     &                   MIXING(ng) % Akt(:,:,:,itemp))
+     &                   MIXING(ng) % Akt(:,:,:,itemp),                 &
+     &                   SetFillVal = .FALSE.)
+
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idTdif)), tRSTindx(ng)
@@ -646,7 +649,8 @@
 #   ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #   endif
-     &                   MIXING(ng) % Akt(:,:,:,isalt))
+     &                   MIXING(ng) % Akt(:,:,:,isalt),                 &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idSdif)), tRSTindx(ng)
@@ -670,7 +674,9 @@
 #  ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #  endif
-     &                   MIXING(ng) % tke)
+     &                   MIXING(ng) % tke,                              &
+     &                   SetFillVal = .FALSE.)
+
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idMtke)), tRSTindx(ng)
@@ -690,7 +696,8 @@
 #  ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #  endif
-     &                   MIXING(ng) % gls)
+     &                   MIXING(ng) % gls,                              &
+     &                   SetFillVal = .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idMtls)), tRSTindx(ng)

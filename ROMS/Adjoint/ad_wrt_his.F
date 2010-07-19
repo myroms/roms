@@ -756,7 +756,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     MIXING(ng) % ad_Akv)
+     &                     MIXING(ng) % ad_Akv,                         &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvis)), tADJindx(ng)
@@ -778,7 +779,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     MIXING(ng) % ad_Akt(:,:,:,itemp))
+     &                     MIXING(ng) % ad_Akt(:,:,:,itemp),            &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTdif)), tADJindx(ng)
@@ -801,7 +803,8 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-     &                     MIXING(ng) % ad_Akt(:,:,:,isalt))
+     &                     MIXING(ng) % ad_Akt(:,:,:,isalt),            &
+     &                     SetFillVal = .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSdif)), tADJindx(ng)

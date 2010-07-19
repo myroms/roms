@@ -657,10 +657,6 @@
         Vinfo( 3)=Vname(3,idbath)
         Vinfo(14)=Vname(4,idbath)
         Vinfo(16)=Vname(1,idtime)
-# if !defined PERFECT_RESTART && \
-     (defined WRITE_WATER && defined MASKING)
-        Vinfo(20)='mask_rho'
-# endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idbath,ng),        &
@@ -677,7 +673,7 @@
         Vinfo(14)=Vname(4,idFsur)
         Vinfo(16)=Vname(1,idtime)
 #if defined WRITE_WATER && defined MASKING
-# if defined PERFECT_RESTART
+# if !defined WET_DRY && defined PERFECT_RESTART
         Vinfo(24)='_FillValue'
         Aval(6)=spval
 # else
@@ -1044,18 +1040,11 @@
         Vinfo( 3)=Vname(3,idVvis)
         Vinfo(14)=Vname(4,idVvis)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-#   if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
-#   else
-        Vinfo(20)='mask_rho'
-#   endif
-#  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVvis,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idVvis,ng),        &
-     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define vertical diffusion coefficient for potential temperature.
@@ -1065,18 +1054,12 @@
         Vinfo( 3)=Vname(3,idTdif)
         Vinfo(14)=Vname(4,idTdif)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-#   if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
-#   else
-        Vinfo(20)='mask_rho'
-#   endif
-#  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idTdif,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idTdif,ng),        &
-     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
+
         IF (exit_flag.ne.NoError) RETURN
 
 #  ifdef SALINITY
@@ -1088,18 +1071,11 @@
         Vinfo( 3)=Vname(3,idSdif)
         Vinfo(14)=Vname(4,idSdif)
         Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-#    if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
-#    else
-        Vinfo(20)='mask_rho'
-#    endif
-#   endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idSdif,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idSdif,ng),        &
-     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
@@ -1113,18 +1089,12 @@
         Vinfo( 3)=Vname(3,idMtke)
         Vinfo(14)=Vname(4,idMtke)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-#   if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
-#   else
-        Vinfo(20)='mask_rho'
-#   endif
-#  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idMtke,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idMtke,ng),        &
-     &                 NF_FRST, nvd5, k3dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd5, k3dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
+
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define turbulent kinetic energy time length scale.
@@ -1134,18 +1104,11 @@
         Vinfo( 3)=Vname(3,idMtls)
         Vinfo(14)=Vname(4,idMtls)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-#   if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
-#   else
-        Vinfo(20)='mask_rho'
-#   endif
-#  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idMtls,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idMtls,ng),        &
-     &                 NF_FRST, nvd5, k3dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd5, k3dgrd, Aval, Vinfo, ncname,      &
+     &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define vertical mixing turbulent length scale.
