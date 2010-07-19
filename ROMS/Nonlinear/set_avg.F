@@ -2230,7 +2230,7 @@
               DO i=IstrR,IendR
                 TIDES(ng)%vbar_tide(i,j,nk)=TIDES(ng)%vbar_tide(i,j,    &
      &                                                          nk)+    &
-     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      OCEAN(ng)%vbar(i,j,Kout)*   &
      &                                      tide_harmonics(nk)
               END DO
             END DO
@@ -2350,7 +2350,7 @@
               DO i=IstrR,IendR
                 TIDES(ng)%vbar_tide(i,j,nk)=TIDES(ng)%vbar_tide(i,j,    &
      &                                                          nk)+    &
-     &                                      OCEAN(ng)%zeta(i,j,Kout)*   &
+     &                                      OCEAN(ng)%vbar(i,j,Kout)*   &
      &                                      tide_harmonics(nk)
               END DO
             END DO

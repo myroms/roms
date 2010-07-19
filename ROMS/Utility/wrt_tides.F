@@ -167,7 +167,7 @@
 !
 !  Write out 2D v-momentum time-accumulated tide harmonics (m/s).
 !
-      IF (Aout(idu3dD,ng)) THEN
+      IF (Aout(idv2dD,ng)) THEN
         scale=1.0_r8
         gtype=v3dvar
         status=nf_fwrite3d(ng, iNLM, ncTIDEid(ng), tideVid(idv2dH,ng),  &
