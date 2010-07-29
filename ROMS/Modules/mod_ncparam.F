@@ -516,9 +516,9 @@
         character (len=40 ) :: varnam(MV)
         character (len=44 ) :: date_str
         character (len=46 ) :: Tname(0:NV)
-        character (len=80 ) :: Cinfo(NV,Ngrids)
         character (len=100) :: Vname(5,0:NV)
         character (len=120) :: history
+        character (len=256) :: Cinfo(NV,Ngrids)
 !
 !  Source code root directory, cpp header file and directory, and
 !  analytical expression directory.

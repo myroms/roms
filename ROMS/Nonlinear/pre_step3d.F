@@ -759,7 +759,8 @@
 !
 !  Compute vertical diffusive fluxes "FC" of the tracer fields at
 !  current time step n, and at horizontal RHO-points and vertical
-!  W-points.
+!  W-points. Notice that the vertical diffusion coefficients for
+!  passive tracers is the same as that for salinity (ltrc=NAT).
 !
       DO j=Jstr,Jend
         cff3=dt(ng)*(1.0_r8-lambda)
@@ -768,19 +769,28 @@
           DO k=1,N(ng)-1
             DO i=Istr,Iend
               cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-              FC(i,k)=cff3*cff*Akt(i,j,k,ltrc)*                          &
-     &                (t(i,j,k+1,nstp,itrc)-                             &
+              FC(i,k)=cff3*cff*Akt(i,j,k,ltrc)*                         &
+     &                (t(i,j,k+1,nstp,itrc)-                            &
      &                 t(i,j,k  ,nstp,itrc))
+            END DO
+          END DO
+
 #  ifdef LMD_NONLOCAL
 !
 !  Add in the nonlocal transport flux for unstable (convective)
 !  forcing conditions into matrix FC when using the Large et al.
-!  KPP scheme.
+!  KPP scheme. The nonlocal transport is only applied to active
+!  tracers.
 !
-              FC(i,k)=FC(i,k)-dt(ng)*Akt(i,j,k,ltrc)*ghats(i,j,k,ltrc)
-#  endif
+          IF (itrc.le.NAT) THEN
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                FC(i,k)=FC(i,k)-                                        &
+     &                  dt(ng)*Akt(i,j,k,itrc)*ghats(i,j,k,itrc)
+              END DO
             END DO
-          END DO
+          END IF
+#  endif
 #  ifdef SOLAR_SOURCE
 !
 !  Add in incoming solar radiation at interior W-points using decay

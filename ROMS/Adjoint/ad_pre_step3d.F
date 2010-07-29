@@ -1103,31 +1103,41 @@
             END DO
           END IF
 #  endif
+#  ifdef LMD_NONLOCAL_NOT_YET
+!
+!  Add in the nonlocal transport flux for unstable (convective)
+!  forcing conditions into matrix FC when using the Large et al.
+!  KPP scheme. The nonlocal transport is only applied to active
+!  tracers.
+!
+          IF (itrc.le.NAT) THEN
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+!>              tl_FC(i,k)=tl_FC(i,k)-                                  &
+!>   &                     dt(ng)*(tl_Akt(i,j,k,itrc)*                  &
+!>   &                             ghats(i,j,k,itrc)+                   &
+!>   &                             Akt(i,j,k,itrc)*                     &
+!>   &                             tl_ghats(i,j,k,itrc))
+!>
+                adfac=dt(ng)*ad_FC(i,k)
+                ad_ghats(i,j,k,itrc)=ad_ghats(i,j,k,itrc)-              &
+     &                               Akt(i,j,k,itrc)*adfac
+                ad_Akt(i,j,k,itrc)=ad_Akt(i,j,k,itrc)-                  &
+     &                             ghats(i,j,k,itrc)*adfac
+              END DO
+            END DO
+          END IF
+#  endif
 !
 !  Compute adjoint vertical diffusive fluxes "FC" of the tracer fields
 !  at current time step n, and at horizontal RHO-points and vertical
-!  W-points.
+!  W-points. Notice that the vertical diffusion coefficients for
+!  passive tracers is the same as that for salinity (ltrc=NAT).
 !
           cff3=dt(ng)*(1.0_r8-lambda)
           ltrc=MIN(NAT,itrc)
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-#  ifdef LMD_NONLOCAL_NOT_YET
-!
-!  Add in the nonlocal transport flux for unstable (convective)
-!  forcing conditions into matrix FC when using the Large et al.
-!  KPP scheme.
-!
-!>            tl_FC(i,k)=tl_FC(i,k)-                                    &
-!>   &                   dt(ng)*(tl_Akt(i,j,k,ltrc)*ghats(i,j,k,ltrc)+  &
-!>   &                           Akt(i,j,k,ltrc)*tl_ghats(i,j,k,ltrc))
-!>
-              adfac=dt(ng)*ad_FC(i,k)
-              ad_ghats(i,j,k,ltrc)=ad_ghats(i,j,k,ltrc)-                &
-     &                             Akt(i,j,k,ltrc)*adfac
-              ad_Akt(i,j,k,ltrc)=ad_Akt(i,j,k,ltrc)-                    &
-     &                           ghats(i,j,k,ltrc)*adfac
-#  endif
               cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
 !>            tl_FC(i,k)=cff3*                                          &
 !>   &                   (cff*(tl_Akt(i,j,k,ltrc)*                      &
