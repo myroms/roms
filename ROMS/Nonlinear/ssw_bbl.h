@@ -94,7 +94,7 @@
 #if defined SSW_CALC_UB
      &                      Hwave,                                      &
 #else
-     &                      UB_swan,                                    &
+     &                      Ub_swan,                                    &
 #endif
      &                      Dwave, Pwave_bot,                           &
 #ifdef BEDLOAD
@@ -137,7 +137,7 @@
 # if defined SSW_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:,LBj:)
 # else
-      real(r8), intent(in) :: UB_swan(LBi:,LBj:)
+      real(r8), intent(in) :: Ub_swan(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: Dwave(LBi:,LBj:)
       real(r8), intent(in) :: Pwave_bot(LBi:,LBj:)
@@ -171,7 +171,7 @@
 # if defined SSW_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 # else
-      real(r8), intent(in) :: UB_swan(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Ub_swan(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Pwave_bot(LBi:UBi,LBj:UBj)
