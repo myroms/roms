@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 #define SASHA
       MODULE lmd_bkpp_mod
-#if defined NONLINEAR && defined LMD_BKPP
+#if defined NONLINEAR && defined LMD_BKPP && defined SOLVE3D
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

@@ -446,7 +446,7 @@ Aout(idUbar) == T                          ! 2D U-velocity
 Aout(idVbar) == T                          ! 2D V-velocity
 Aout(idFsur) == T                          ! free-surface
 
-Aout(idTvar) == T T                        ! temperature and salinity
+Aout(idTvar) == T F                        ! temperature and salinity
 
 Aout(idUsms) == F                          ! surface U-stress
 Aout(idVsms) == F                          ! surface V-stress

@@ -210,7 +210,7 @@
 !
       CALL netcdf_open (ng, IDmod, ncname, 0, ncINPid)
       IF (exit_flag.ne.NoError) THEN
-        WRITE (stdout,20) TRIM(ncname)
+        IF (Master) WRITE (stdout,20) TRIM(ncname)
         RETURN
       END IF
 !

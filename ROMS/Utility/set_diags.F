@@ -134,26 +134,36 @@
         END DO
 #  endif
 #  ifdef DIAGNOSTICS_UV
-        DO j=JstrR,JendR
-          DO idiag=1,NDM2d
-            DO i=IstrR,IendR
+        DO idiag=1,NDM2d
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
               DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2wrk(i,j,idiag)
+            END DO
+          END DO
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
               DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
+        END DO
 #   ifdef SOLVE3D
-          DO idiag=1,NDM3d
-            DO k=1,N(ng)
-              DO i=IstrR,IendR
+        DO idiag=1,NDM3d
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
                 DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaU3wrk(i,j,k,idiag)
+              END DO
+            END DO
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
                 DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaV3wrk(i,j,k,idiag)
               END DO
             END DO
           END DO
-#   endif
         END DO
+#   endif
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -177,30 +187,40 @@
         END DO
 #  endif
 #  ifdef DIAGNOSTICS_UV
-        DO j=JstrR,JendR
-          DO idiag=1,NDM2d
-            DO i=IstrR,IendR
+        DO idiag=1,NDM2d
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
               DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2d(i,j,idiag)+  &
      &                                    DIAGS(ng)%DiaU2wrk(i,j,idiag)
+            END DO
+          END DO
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
               DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2d(i,j,idiag)+  &
      &                                    DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
+        END DO
 #   ifdef SOLVE3D
-          DO idiag=1,NDM3d
-            DO k=1,N(ng)
-              DO i=IstrR,IendR
+        DO idiag=1,NDM3d
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
                 DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaU3d(i,j,k,idiag)+                &
      &                    DIAGS(ng)%DiaU3wrk(i,j,k,idiag)
+              END DO
+            END DO
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
                 DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaV3d(i,j,k,idiag)+                &
      &                    DIAGS(ng)%DiaV3wrk(i,j,k,idiag)
               END DO
             END DO
           END DO
-#   endif
         END DO
+#   endif
 #  endif
       END IF
 # endif
@@ -225,7 +245,7 @@
 !
 #  ifdef DIAGNOSTICS_TS
 !
-!  3D diagnostics.
+!  3D tracer diagnostics.
 !
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -254,7 +274,7 @@
 #  endif
 #  ifdef DIAGNOSTICS_UV
 !
-!  2D diagnostics.
+!  2D momentum diagnostics.
 !
         DO idiag=1,NDM2d
           CALL bc_u2d_tile (ng, tile,                                   &
@@ -272,6 +292,9 @@
      &                      DIAGS(ng)%DiaV2d)
 #   endif
 #   ifdef SOLVE3D
+!
+!  3D momentum diagnostics.
+!
         DO idiag=1,NDM3d
           CALL bc_u3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
@@ -289,30 +312,41 @@
 #    endif
 #   endif
 #   ifdef MASKING
-        DO j=JstrR,JendR
-          DO idiag=1,NDM2d
-            DO i=IstrR,IendR
+        DO idiag=1,NDM2d
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
               DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2d(i,j,idiag)*  &
      &                                    GRID(ng)%umask(i,j)
+            END DO
+          END DO
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
               DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2d(i,j,idiag)*  &
      &                                    GRID(ng)%vmask(i,j)
             END DO
           END DO
+        END DO
 #    ifdef SOLVE3D
-          DO idiag=1,NDM3d
-            DO k=1,N(ng)
-              DO i=IstrR,IendR
+        DO idiag=1,NDM3d
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
                 DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
      &                                 DIAGS(ng)%DiaU3d(i,j,k,idiag)*   &
      &                                 GRID(ng)%umask(i,j)
+              END DO
+            END DO
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+
                 DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
      &                                 DIAGS(ng)%DiaV3d(i,j,k,idiag)*   &
      &                                 GRID(ng)%vmask(i,j)
               END DO
             END DO
           END DO
-#    endif
         END DO
+#    endif
 #   endif
 #  endif
 # endif

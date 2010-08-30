@@ -195,7 +195,7 @@
               i1=MIN(MAX(Ir  ,0),Lm(ng)+1)
               i2=MIN(MAX(Ir+1,1),Lm(ng)+1)
               j1=MIN(MAX(Jr  ,0),Mm(ng)+1)
-              j2=MIN(MAX(Jr+1,0),Mm(ng)+1)
+              j2=MIN(MAX(Jr+1,1),Mm(ng)+1)
 !
               p2=REAL(i2-i1,r8)*(track(ixgrd,itime,l)-REAL(i1,r8))
               q2=REAL(j2-j1,r8)*(track(iygrd,itime,l)-REAL(j1,r8))

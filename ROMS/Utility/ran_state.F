@@ -179,8 +179,6 @@
       SUBROUTINE ran_deallocate
 !
 !=======================================================================
-!  Copyright (c) 2006 ROMS/TOMS Group                                  !
-!=======================================================================
 !                                                                      !
 !  User interface to release the workspace used by random number       !
 !  routines.                                                           !

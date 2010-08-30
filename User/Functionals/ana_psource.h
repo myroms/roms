@@ -194,8 +194,7 @@
       IF (iic(ng).eq.ntstart(ng)) THEN
 !
 !  Set-up point Sources/Sink number (Nsrc), direction (Dsrc), I- and
-!  J-grid locations (Isrc,Jsrc), and logical switch for type of tracer
-!  to apply (LtraceSrc).  Currently, the direction can be along
+!  J-grid locations (Isrc,Jsrc). Currently, the direction can be along
 !  XI-direction (Dsrc = 0) or along ETA-direction (Dsrc > 0).  The
 !  mass sources are located at U- or V-points so the grid locations
 !  should range from 1 =< Isrc =< L  and  1 =< Jsrc =< M.
@@ -203,15 +202,12 @@
 #if defined MY_APPLICATION
         IF (Master.and.SOUTH_WEST_TEST) THEN
           Nsrc=???
-          LtracerSrc(itemp,ng)=.TRUE.
-          LtracerSrc(isalt,ng)=.TRUE.
           Dsrc(:)=???
           Isrc(:)=???
           Jsrc(:)=???
         END IF
 #else
-        ana_psource.h: No values provided for LtracerSrc, Nsrc, Dsrc,
-                                              Isrc, Jsrc.
+        ana_psource.h: No values provided for Nsrc, Dsrc, Isrc, Jsrc.
 #endif
 #ifdef DISTRIBUTE
 !

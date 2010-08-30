@@ -212,7 +212,7 @@
           Awrk=IniVal
         END IF
 !
-!  Pack ans scale tile data.
+!  Pack and scale tile data.
 !
         ic=0
         DO k=LBk,UBk
