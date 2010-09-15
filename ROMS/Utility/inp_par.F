@@ -1367,7 +1367,7 @@
             DO ng=1,Ngrids
               tl_visc2(ng)=ad_visc2(ng)
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'VISC4') THEN
+          ELSE IF (TRIM(KeyWord).eq.'ad_VISC4') THEN
             Npts=load_r(Nval, Rval, Ngrids, ad_visc4)
             DO ng=1,Ngrids
               tl_visc4(ng)=ad_visc4(ng)

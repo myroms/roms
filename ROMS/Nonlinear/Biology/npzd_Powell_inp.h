@@ -427,7 +427,7 @@
 #ifdef TS_PSOURCE
             DO itrc=1,NBT
               i=idbio(itrc)
-              WRITE (out,100) LtracerSrc(i), 'LtracerSrc',              &
+              WRITE (out,100) LtracerSrc(i,ng), 'LtracerSrc',           &
      &              i, 'Processing point sources/Sink on tracer ', i,   &
      &              TRIM(Vname(1,idTvar(i)))
             END DO

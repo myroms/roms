@@ -318,7 +318,6 @@
      &                         tl_z_r(i-1,j,k+1))
             END DO
           END DO
-
           DO j=JstrV-1,Jend+1
             DO i=Istr-1,Iend+1
               cff=0.5_r8*(pn(i,j-1)+pn(i,j))
@@ -344,15 +343,12 @@
      &                                  tl_VFe(i  ,j))
             END DO
           END DO
-
           DO j=JstrV-1,Jend
-            DO i=IstrU-1,Iend+1
+            DO i=IstrU-1,Iend
               dZdx_r(i,j,k2)=0.5_r8*(UFx(i  ,j)+                        &
      &                               UFx(i+1,j))
               tl_dZdx_r(i,j,k2)=0.5_r8*(tl_UFx(i  ,j)+                  &
      &                                  tl_UFx(i+1,j))
-            END DO
-            DO i=IstrU-1,Iend
               dZde_r(i,j,k2)=0.5_r8*(VFe(i,j  )+                        &
      &                               VFe(i,j+1))
               tl_dZde_r(i,j,k2)=0.5_r8*(tl_VFe(i,j  )+                  &
@@ -376,23 +372,11 @@
      &                              tl_u(i+1,j,k+1,nrhs)-               &
      &                              (pn(i-1,j)+pn(i  ,j))*              &
      &                              tl_u(i  ,j,k+1,nrhs))
-              cff=0.5_r8*pn(i,j)
-#ifdef MASKING
-              cff=cff*rmask(i,j)
-#endif
-              dmVde(i,j,k2)=cff*((pm(i,j  )+pm(i,j+1))*                 &
-     &                           v(i,j+1,k+1,nrhs)-                     &
-     &                           (pm(i,j-1)+pm(i,j  ))*                 &
-     &                           v(i,j  ,k+1,nrhs))
-              tl_dmVde(i,j,k2)=cff*((pm(i,j  )+pm(i,j+1))*              &
-     &                              tl_v(i,j+1,k+1,nrhs)-               &
-     &                              (pm(i,j-1)+pm(i,j  ))*              &
-     &                              tl_v(i,j  ,k+1,nrhs))
             END DO
           END DO
 
           DO j=Jstr,Jend+1
-            DO i=IstrU-1,Iend+1
+            DO i=Istr,Iend+1
               cff=0.125_r8*(pn(i-1,j  )+pn(i,j  )+                      &
      &                      pn(i-1,j-1)+pn(i,j-1))
 #ifdef MASKING
@@ -406,6 +390,11 @@
      &                              tl_u(i,j  ,k+1,nrhs)-               &
      &                              (pm(i-1,j-1)+pm(i,j-1))*            &
      &                              tl_u(i,j-1,k+1,nrhs))
+            END DO
+          END DO
+
+          DO j=Jstr,Jend+1
+            DO i=Istr,Iend+1
               cff=0.125_r8*(pm(i-1,j  )+pm(i,j  )+                      &
      &                      pm(i-1,j-1)+pm(i,j-1))
 #ifdef MASKING
@@ -421,6 +410,23 @@
      &                              tl_v(i-1,j,k+1,nrhs))
             END DO
           END DO
+
+          DO j=JstrV-1,Jend
+            DO i=IstrU-1,Iend
+              cff=0.5_r8*pn(i,j)
+#ifdef MASKING
+              cff=cff*rmask(i,j)
+#endif
+              dmVde(i,j,k2)=cff*((pm(i,j  )+pm(i,j+1))*                 &
+     &                           v(i,j+1,k+1,nrhs)-                     &
+     &                           (pm(i,j-1)+pm(i,j  ))*                 &
+     &                           v(i,j  ,k+1,nrhs))
+              tl_dmVde(i,j,k2)=cff*((pm(i,j  )+pm(i,j+1))*              &
+     &                              tl_v(i,j+1,k+1,nrhs)-               &
+     &                              (pm(i,j-1)+pm(i,j  ))*              &
+     &                              tl_v(i,j  ,k+1,nrhs))
+            END DO
+          END DO
         END IF
 
         IF ((k.eq.0).or.(k.eq.N(ng))) THEN
@@ -428,6 +434,17 @@
             DO i=IstrU-1,Iend+1
               dUdz(i,j,k2)=0.0_r8
               tl_dUdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+              dVdz(i,j,k2)=0.0_r8
+              tl_dVdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
 !>            UFsx(i,j,k2)=0.0_r8
 !>
               tl_UFsx(i,j,k2)=0.0_r8
@@ -436,11 +453,8 @@
               tl_UFse(i,j,k2)=0.0_r8
             END DO
           END DO
-
-          DO j=JstrV-1,Jend+1
-            DO i=Istr-1,Iend+1
-              dVdz(i,j,k2)=0.0_r8
-              tl_dVdz(i,j,k2)=0.0_r8
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
 !>            VFsx(i,j,k2)=0.0_r8
 !>
               tl_VFsx(i,j,k2)=0.0_r8
