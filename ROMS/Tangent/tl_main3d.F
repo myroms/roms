@@ -94,9 +94,7 @@
 # ifdef AVERAGES
 !!    USE tl_set_avg_mod, ONLY : tl_set_avg
 # endif
-# ifdef MOVE_SET_DEPTH
       USE tl_set_depth_mod, ONLY : tl_set_depth
-# endif
       USE tl_set_massflux_mod, ONLY : tl_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE tl_set_tides_mod, ONLY : tl_set_tides
@@ -211,13 +209,15 @@
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
 !
-!  Initialize free-surface.
+!  Initialize free-surface and compute initial level thicknesses and
+!  depths.
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL tl_ini_zeta (ng, TILE, iTLM)
+            CALL tl_set_depth (ng, TILE)
           END DO
         END DO
 !$OMP END PARALLEL DO

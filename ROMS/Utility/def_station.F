@@ -1058,8 +1058,10 @@
      &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
+#   ifdef NEARSHORE_MELLOR05
 !
-!  Define 3D radiation stress, Spx-component.
+!  Define 3D radiation stress, Szx-component.
 !
         IF (Sout(idW3zx,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zx)
@@ -1073,7 +1075,7 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
-!  Define 3D radiation stress, Spy-component.
+!  Define 3D radiation stress, Szy-component.
 !
         IF (Sout(idW3zy,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zy)
@@ -1086,6 +1088,7 @@
      &                   SetParAccess = .FALSE.)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+#   endif
 !
 !  Define 3D total u-radiation stress.
 !
@@ -1480,12 +1483,14 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
             got_var(idW3yy)=.TRUE.
             staVid(idW3yy,ng)=var_id(i)
+#   ifdef NEARSHORE_MELLOR05
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
             got_var(idW3zx)=.TRUE.
             staVid(idW3zx,ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
             got_var(idW3zy)=.TRUE.
             staVid(idW3zy,ng)=var_id(i)
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
             got_var(idU3rs)=.TRUE.
             staVid(idU3rs,ng)=var_id(i)
@@ -1890,6 +1895,7 @@
           exit_flag=3
           RETURN
         END IF
+#   ifdef NEARSHORE_MELLOR05
         IF (.not.got_var(idW3zx).and.Sout(idW3zx,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
      &                                  TRIM(ncname)
@@ -1902,6 +1908,7 @@
           exit_flag=3
           RETURN
         END IF
+#   endif
         IF (.not.got_var(idU3Sd).and.Sout(idU3rs,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
      &                                  TRIM(ncname)

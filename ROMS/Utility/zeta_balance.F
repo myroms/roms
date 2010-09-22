@@ -179,7 +179,7 @@
 #  ifdef SOLVE3D
       real(r8), intent(in) :: alpha(LBi:,LBj:)
       real(r8), intent(in) :: beta(LBi:,LBj:)
-      real(r8), intent(out) :: rho(LBi:,LBj:,:)
+      real(r8), intent(in) :: rho(LBi:,LBj:,:)
 #  endif
       real(r8), intent(inout) :: rhs_r2d(LBi:,LBj:)
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
@@ -204,7 +204,7 @@
 #  ifdef SOLVE3D
       real(r8), intent(in) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: beta(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
       real(r8), intent(inout) :: rhs_r2d(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
@@ -287,7 +287,7 @@
             cff1=(1.0_r8+gamma)*(rho(i,j,k+1)-rho(i,j-1,k+1))+ &
      &              (1.0_r8-gamma)*(rho(i,j,k  )-rho(i,j-1,k  ))
             cff2=rho(i,j,k+1)+rho(i,j-1,k+1)-                           &
-     &              rho(i,j,k  )-rho(i,j-1,k  )
+     &           rho(i,j,k  )-rho(i,j-1,k  )
             cff3=z_r(i,j,k+1)+z_r(i,j-1,k+1)-                           &
      &           z_r(i,j,k  )-z_r(i,j-1,k  )
             cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i,j-1,k+1))+          &
@@ -336,9 +336,9 @@
             gamma=0.125_r8*cff1*cff2*cff3
 !
             cff1=(1.0_r8+gamma)*(rho(i,j,k+1)-rho(i-1,j,k+1))+          &
-     &              (1.0_r8-gamma)*(rho(i,j,k  )-rho(i-1,j,k  ))
+     &           (1.0_r8-gamma)*(rho(i,j,k  )-rho(i-1,j,k  ))
             cff2=rho(i,j,k+1)+rho(i-1,j,k+1)-                           &
-     &              rho(i,j,k  )-rho(i-1,j,k  )
+     &           rho(i,j,k  )-rho(i-1,j,k  )
             cff3=z_r(i,j,k+1)+z_r(i-1,j,k+1)-                           &
      &           z_r(i,j,k  )-z_r(i-1,j,k  )
             cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i-1,j,k+1))+          &
@@ -2374,7 +2374,7 @@
 !  Perform parallel global reduction operation on "my_ad_bc_bk".
 !
         IF (SOUTH_WEST_CORNER.and.                                      &
-     &    NORTH_EAST_CORNER) THEN
+     &      NORTH_EAST_CORNER) THEN
           NSUB=1                            ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)        ! tiled application

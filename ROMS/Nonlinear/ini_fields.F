@@ -53,7 +53,6 @@
 # ifdef SOLVE3D
      &                      nstp(ng), nnew(ng),                         &
 # endif
-     &                      GRID(ng) % h,                               &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
@@ -77,18 +76,8 @@
      &                      SEDBED(ng) % bed,                           &
      &                      SEDBED(ng) % bed_frac,                      &
      &                      SEDBED(ng) % bed_mass,                      &
-#   ifdef SED_MORPH
-     &                      SEDBED(ng) % bed_thick0,                    &
-     &                      SEDBED(ng) % bed_thick,                     &
-#   endif
 #  endif
      &                      GRID(ng) % Hz,                              &
-#  ifdef ICESHELF
-     &                      GRID(ng) % zice,                            &
-#  endif
-     &                      GRID(ng) % z_r,                             &
-     &                      GRID(ng) % z_w,                             &
-     &                      COUPLING(ng) % Zt_avg1,                     &
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % u,                              &
      &                      OCEAN(ng) % v,                              &
@@ -108,7 +97,6 @@
 # ifdef SOLVE3D
      &                            nstp, nnew,                           &
 # endif
-     &                            h,                                    &
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
 # endif
@@ -125,16 +113,8 @@
 #  endif
 #  if defined SEDIMENT
      &                            bed, bed_frac, bed_mass,              &
-#   ifdef SED_MORPH
-     &                            bed_thick0, bed_thick,                &
-#   endif
 #  endif
      &                            Hz,                                   &
-#  ifdef ICESHELF
-     &                            zice,                                 &
-#  endif
-     &                            z_r, z_w,                             &
-     &                            Zt_avg1,                              &
      &                            t, u, v,                              &
 # endif
      &                            ubar, vbar, zeta)
@@ -158,13 +138,12 @@
       USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
 #  else
 #   if defined PERFECT_RESTART && \
-      (defined EW_PERIODIC || defined NS_PERIODIC)
+      (defined EW_PERIODIC     || defined NS_PERIODIC)
       USE mp_exchange_mod, ONLY : mp_exchange3d
 #   endif
 #  endif
 # endif
 # ifdef SOLVE3D
-      USE set_depth_mod, ONLY : set_depth_tile
       USE t3dbc_mod, ONLY : t3dbc_tile
       USE u3dbc_mod, ONLY : u3dbc_tile
       USE v3dbc_mod, ONLY : v3dbc_tile
@@ -176,18 +155,6 @@
 !
 !  Imported variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
@@ -202,12 +169,11 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#  endif
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
-#   ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:,LBj:)
-#   endif
 #   if defined SEDIMENT || defined BBL_MODEL
       real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 #   endif
@@ -217,9 +183,8 @@
       real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:,:)
 #   endif
 #  endif
-      real(r8), intent(inout) :: h(LBi:,LBj:)
 #  if defined PERFECT_RESTART && \
-     (defined EW_PERIODIC || defined NS_PERIODIC)
+     (defined EW_PERIODIC     || defined NS_PERIODIC)
 #   ifdef SOLVE3D
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
@@ -229,17 +194,9 @@
       real(r8), intent(inout) :: rzeta(LBi:,LBj:,:)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(inout) :: bed_thick0(LBi:,LBj:)
-      real(r8), intent(inout) :: bed_thick(LBi:,LBj:,:)
-#   endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
-
-      real(r8), intent(inout) :: Hz(LBi:,LBj:,:)
-      real(r8), intent(inout) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(inout) :: z_w(LBi:,LBj:,0:)
 #  endif
       real(r8), intent(inout) :: ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: vbar(LBi:,LBj:,:)
@@ -251,12 +208,11 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
-#   ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#   endif
 #   if defined SEDIMENT || defined BBL_MODEL
       real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
 #   endif
@@ -266,9 +222,8 @@
       real(r8), intent(inout) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,2,NST)
 #   endif
 #  endif
-      real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  if defined PERFECT_RESTART && \
-     (defined EW_PERIODIC || defined NS_PERIODIC)
+     (defined EW_PERIODIC     || defined NS_PERIODIC)
 #   ifdef SOLVE3D
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
@@ -278,17 +233,9 @@
       real(r8), intent(inout) :: rzeta(LBi:UBi,LBj:UBj,2)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(inout) :: bed_thick0(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: bed_thick(LBi:UBi,LBj:UBj,2)
-#   endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-
-      real(r8), intent(inout) :: Hz(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #  endif
       real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
@@ -296,7 +243,19 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k, kbed
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: i, itrc, j, k
 # if defined SEDIMENT || defined BBL_MODEL
       integer :: ised
 # endif
@@ -310,141 +269,9 @@
 # include "set_bounds.h"
 
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
 !
 !-----------------------------------------------------------------------
-!  Compute initial total thickness for all sediment bed layers.
-!-----------------------------------------------------------------------
-!
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          bed_thick0(i,j)=0.0_r8
-          DO kbed=1,Nbed
-            bed_thick0(i,j)=bed_thick0(i,j)+bed(i,j,kbed,ithck)
-          END DO
-          bed_thick(i,j,1)=bed_thick0(i,j)
-          bed_thick(i,j,2)=bed_thick0(i,j)
-        END DO
-      END DO
-
-#   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        bed_thick0)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        bed_thick(:,:,1))
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        bed_thick(:,:,2))
-#   endif
-#   ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    bed_thick0,                                   &
-     &                    bed_thick(:,:,1), bed_thick(:,:,2))
-#   endif
-#  endif
-# endif
-
-# ifndef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Initialize other 2D momentum time-levels.
-!-----------------------------------------------------------------------
-!
-      IF (.not.PerfectRST(ng)) THEN
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
-            cff1=ubar(i,j,kstp)
-#  ifdef MASKING
-            cff1=cff1*umask(i,j)
-#  endif
-            ubar(i,j,kstp)=cff1
-            ubar(i,j,krhs)=cff1
-          END DO
-          IF (j.ge.JstrV) THEN
-            DO i=Istr,Iend
-              cff2=vbar(i,j,kstp)
-#  ifdef MASKING
-              cff2=cff2*vmask(i,j)
-#  endif
-              vbar(i,j,kstp)=cff2
-              vbar(i,j,krhs)=cff2
-            END DO
-          END IF
-        END DO
-
-#  ifndef OBC_M2RADIATION
-!
-!  Apply boundary conditions.
-!
-        CALL u2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, kstp,                              &
-     &                   ubar, vbar, zeta)
-        CALL v2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, kstp,                              &
-     &                   ubar, vbar, zeta)
-        CALL u2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, krhs,                              &
-     &                   ubar, vbar, zeta)
-        CALL v2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, krhs,                              &
-     &                   ubar, vbar, zeta)
-#  endif
-      END IF
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        ubar(:,:,kstp))
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        vbar(:,:,kstp))
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        ubar(:,:,krhs))
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        vbar(:,:,krhs))
-      IF (PerfectRST(ng)) THEN
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          ubar(:,:,knew))
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          vbar(:,:,knew))
-      END IF
-#  endif
-#  ifdef DISTRIBUTE
-!
-      CALL mp_exchange2d (ng, tile, model, 4,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
-     &                    ubar(:,:,krhs), vbar(:,:,krhs))
-      IF (PerfectRST(ng)) THEN
-        CALL mp_exchange2d (ng, tile, model, 2,                         &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
-     &                      ubar(:,:,knew), vbar(:,:,knew))
-      END IF
-#  endif
-
-# else
-!
-!-----------------------------------------------------------------------
-!  Initialize other 3D momentum time-levels.
+!  If not perfect restart, initialize other time levels for 3D momentum.
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
@@ -459,6 +286,7 @@
               u(i,j,k,nnew)=cff1
             END DO
           END DO
+!
           IF (j.ge.JstrV) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
@@ -522,9 +350,220 @@
      &                    u(:,:,:,nstp), v(:,:,:,nstp),                 &
      &                    u(:,:,:,nnew), v(:,:,:,nnew))
 #  endif
+# endif
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Initialize other tracers time-levels.
+!  If not perfect restart, compute vertically-integrated momentum
+!  (ubar, vbar) from initial 3D momentum (u, v).
+!-----------------------------------------------------------------------
+!
+!  Here DC(i,1:N) are the grid cell thicknesses, DC(i,0) is the total
+!  depth of the water column, and CF(i,0) is the vertical integral.
+!
+      IF (.not.PerfectRST(ng)) THEN
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            DC(i,0)=0.0_r8
+            CF(i,0)=0.0_r8
+          END DO
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+              DC(i,0)=DC(i,0)+DC(i,k)
+              CF(i,0)=CF(i,0)+DC(i,k)*u(i,j,k,nstp)
+            END DO
+          END DO
+          DO i=IstrU,Iend
+            cff1=1.0_r8/DC(i,0)
+            cff2=CF(i,0)*cff1
+#  ifdef MASKING
+            cff2=cff2*umask(i,j)
+#  endif
+            ubar(i,j,kstp)=cff2
+            ubar(i,j,knew)=cff2
+          END DO
+!
+          IF (j.ge.JstrV) THEN
+            DO i=Istr,Iend
+              DC(i,0)=0.0_r8
+              CF(i,0)=0.0_r8
+            END DO
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                DC(i,0)=DC(i,0)+DC(i,k)
+                CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nstp)
+              END DO
+            END DO
+            DO i=Istr,Iend
+              cff1=1.0_r8/DC(i,0)
+              cff2=CF(i,0)*cff1
+#  ifdef MASKING
+              cff2=cff2*vmask(i,j)
+#  endif
+              vbar(i,j,kstp)=cff2
+              vbar(i,j,knew)=cff2
+            END DO
+          END IF
+        END DO
+
+#  ifndef OBC_M2RADIATION
+!
+!  Apply boundary conditions.
+!
+        CALL u2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, kstp,                              &
+     &                   ubar, vbar, zeta)
+        CALL v2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, kstp,                              &
+     &                   ubar, vbar, zeta)
+
+        CALL u2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, knew,                              &
+     &                   ubar, vbar, zeta)
+        CALL v2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, knew,                              &
+     &                   ubar, vbar, zeta)
+#  endif
+      END IF
+
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      CALL exchange_u2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        ubar(:,:,kstp))
+      CALL exchange_v2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        vbar(:,:,kstp))
+
+      CALL exchange_u2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        ubar(:,:,knew))
+      CALL exchange_v2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        vbar(:,:,knew))
+#  endif
+#  ifdef DISTRIBUTE
+!
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
+     &                    ubar(:,:,knew), vbar(:,:,knew))
+#  endif
+
+# else
+!
+!-----------------------------------------------------------------------
+!  If not perfect restart, initialize other time levels for 2D momentum.
+!-----------------------------------------------------------------------
+!
+      IF (.not.PerfectRST(ng)) THEN
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            cff1=ubar(i,j,kstp)
+#  ifdef MASKING
+            cff1=cff1*umask(i,j)
+#  endif
+            ubar(i,j,kstp)=cff1
+            ubar(i,j,krhs)=cff1
+          END DO
+          IF (j.ge.JstrV) THEN
+            DO i=Istr,Iend
+              cff2=vbar(i,j,kstp)
+#  ifdef MASKING
+              cff2=cff2*vmask(i,j)
+#  endif
+              vbar(i,j,kstp)=cff2
+              vbar(i,j,krhs)=cff2
+            END DO
+          END IF
+        END DO
+
+#  ifndef OBC_M2RADIATION
+!
+!  Apply boundary conditions.
+!
+        CALL u2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, kstp,                              &
+     &                   ubar, vbar, zeta)
+        CALL v2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, kstp,                              &
+     &                   ubar, vbar, zeta)
+
+        CALL u2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, krhs,                              &
+     &                   ubar, vbar, zeta)
+        CALL v2dbc_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   krhs, kstp, krhs,                              &
+     &                   ubar, vbar, zeta)
+#  endif
+      END IF
+
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      CALL exchange_u2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        ubar(:,:,kstp))
+      CALL exchange_v2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        vbar(:,:,kstp))
+
+      CALL exchange_u2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        ubar(:,:,krhs))
+      CALL exchange_v2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        vbar(:,:,krhs))
+
+      IF (PerfectRST(ng)) THEN
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          ubar(:,:,knew))
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          vbar(:,:,knew))
+      END IF
+#  endif
+#  ifdef DISTRIBUTE
+!
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
+     &                    ubar(:,:,krhs), vbar(:,:,krhs))
+
+      IF (PerfectRST(ng)) THEN
+        CALL mp_exchange2d (ng, tile, model, 2,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      ubar(:,:,knew), vbar(:,:,knew))
+      END IF
+#  endif
+# endif
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  If not perfect restart, initialize other time levels for tracers.
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
@@ -556,7 +595,6 @@
      &                     t)
         END DO
       END IF
-
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
       DO itrc=1,NT(ng)
@@ -569,140 +607,14 @@
       END DO
 #  endif
 #  ifdef DISTRIBUTE
+!
       CALL mp_exchange4d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    t(:,:,:,nstp,:),                              &
      &                    t(:,:,:,nnew,:))
 #  endif
-!
-!-----------------------------------------------------------------------
-!  Compute initial depths and thicknesses.
-!-----------------------------------------------------------------------
-!
-      CALL set_depth_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     nstp, nnew,                                  &
-     &                     h,                                           &
-#  ifdef ICESHELF
-     &                     zice,                                        &
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-     &                     bed_thick,                                   &
-#  endif
-     &                     Zt_avg1,                                     &
-     &                     Hz, z_r, z_w)
-!
-!-----------------------------------------------------------------------
-!  Compute vertically integrated momentum (ubar,vbar) from initial 3D
-!  momentum (u,v).
-!-----------------------------------------------------------------------
-!
-!  Compute adjoint 2D velocity component in the XI-direction.  Here
-!  DC(i,1:N) are the thicknesses of U-boxes, DC(i,0) is total depth of
-!  the water column, and CF(i,0) is the vertical integral.
-!
-      IF (.not.PerfectRST(ng)) THEN
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
-            DC(i,0)=0.0_r8
-            CF(i,0)=0.0_r8
-          END DO
-          DO k=1,N(ng)
-            DO i=IstrU,Iend
-              DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
-              DC(i,0)=DC(i,0)+DC(i,k)
-              CF(i,0)=CF(i,0)+DC(i,k)*u(i,j,k,nstp)
-            END DO
-          END DO
-          DO i=IstrU,Iend
-            cff1=1.0_r8/DC(i,0)
-            cff2=CF(i,0)*cff1
-#  ifdef MASKING
-            cff2=cff2*umask(i,j)
-#  endif
-            ubar(i,j,kstp)=cff2
-            ubar(i,j,knew)=cff2
-          END DO
-!
-!  Compute adjoint 2D velocity component in the ETA-direction.  Here
-!  DC(i,1:N) are the thicknesses of V-boxes, DC(i,0) is total depth of
-!  the water column, and CF(i,0) is the vertical integral.
-!
-          IF (j.ge.Jstr) THEN
-            DO i=Istr,Iend
-              DC(i,0)=0.0_r8
-              CF(i,0)=0.0_r8
-            END DO
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
-                DC(i,0)=DC(i,0)+DC(i,k)
-                CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nstp)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              cff1=1.0_r8/DC(i,0)
-              cff2=CF(i,0)*cff1
-#  ifdef MASKING
-              cff2=cff2*vmask(i,j)
-#  endif
-              vbar(i,j,kstp)=cff2
-              vbar(i,j,knew)=cff2
-            END DO
-          END IF
-        END DO
-#  ifndef OBC_M2RADIATION
-!
-!  Apply boundary conditions.
-!
-        CALL u2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, kstp,                              &
-     &                   ubar, vbar, zeta)
-        CALL v2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, kstp,                              &
-     &                   ubar, vbar, zeta)
-        CALL u2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, knew,                              &
-     &                   ubar, vbar, zeta)
-        CALL v2dbc_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   krhs, kstp, knew,                              &
-     &                   ubar, vbar, zeta)
-#  endif
-      END IF
 
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        ubar(:,:,kstp))
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        vbar(:,:,kstp))
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        ubar(:,:,knew))
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        vbar(:,:,knew))
-#  endif
-#  ifdef DISTRIBUTE
-!
-      CALL mp_exchange2d (ng, tile, model, 4,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
-     &                    ubar(:,:,knew), vbar(:,:,knew))
-#  endif
 #  if defined BBL_MODEL || defined SEDIMENT
 !
 !-----------------------------------------------------------------------
@@ -768,8 +680,9 @@
 #   endif
 #  endif
 # endif
+
 # if defined PERFECT_RESTART && \
-    (defined EW_PERIODIC || defined NS_PERIODIC)
+    (defined EW_PERIODIC     || defined NS_PERIODIC)
 !
 !-----------------------------------------------------------------------
 !  If perfect restart, apply periodic boundary condition to
@@ -824,6 +737,9 @@
       USE mod_coupling
 # endif
       USE mod_ocean
+# if defined SOLVE3D && defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -846,6 +762,11 @@
      &                    GRID(ng) % h,                                 &
 # endif
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+     &                    SEDBED(ng) % bed,                             &
+     &                    SEDBED(ng) % bed_thick0,                      &
+     &                    SEDBED(ng) % bed_thick,                       &
+#  endif
      &                    COUPLING(ng) % Zt_avg1,                       &
 # endif
      &                    OCEAN(ng) % zeta)
@@ -866,6 +787,9 @@
      &                          h,                                      &
 # endif
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+     &                          bed, bed_thick0, bed_thick,             &
+#  endif
      &                          Zt_avg1,                                &
 # endif
      &                          zeta)
@@ -873,6 +797,9 @@
 !
       USE mod_param
       USE mod_scalars
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sediment
+# endif
 !
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
@@ -886,18 +813,6 @@
 !
 !  Imported variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
@@ -909,6 +824,13 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: h(LBi:,LBj:)
+#  endif
+#  if defined SOLVE3D && defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: bed_thick0(LBi:,LBj:)
+      real(r8), intent(inout) :: bed_thick(LBi:,LBj:,:)
+#  endif
+#  ifdef WET_DRY
       real(r8), intent(inout) :: rmask_wet(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
@@ -923,6 +845,13 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+#  endif
+#  if defined SOLVE3D && defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
+      real(r8), intent(inout) :: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: bed_thick(LBi:UBi,LBj:UBj,2)
+#  endif
+#  ifdef WET_DRY
       real(r8), intent(inout) :: rmask_wet(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
@@ -933,14 +862,26 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: i, j, kbed
 
-      real(r8) :: cff1, cff2
+      real(r8) :: cff1
 
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Initialize other free-surface time-levels.
+!  Initialize other time levels for free-surface.
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
@@ -1087,6 +1028,43 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Zt_avg1)
+#  endif
+
+#  if defined SEDIMENT && defined SED_MORPH
+!
+!-----------------------------------------------------------------------
+!  Compute initial total thickness for all sediment bed layers.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          bed_thick0(i,j)=0.0_r8
+          DO kbed=1,Nbed
+            bed_thick0(i,j)=bed_thick0(i,j)+bed(i,j,kbed,ithck)
+          END DO
+          bed_thick(i,j,1)=bed_thick0(i,j)
+          bed_thick(i,j,2)=bed_thick0(i,j)
+        END DO
+      END DO
+
+#   if defined EW_PERIODIC || defined NS_PERIODIC
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        bed_thick0)
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        bed_thick(:,:,1))
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        bed_thick(:,:,2))
+#   endif
+#   ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    bed_thick0,                                   &
+     &                    bed_thick(:,:,1), bed_thick(:,:,2))
+#   endif
 #  endif
 # endif
 

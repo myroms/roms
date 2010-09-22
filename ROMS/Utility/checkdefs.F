@@ -53,6 +53,7 @@
       integer :: ivelHadv = 0
       integer :: ivelVadv = 0
       integer :: ivmix = 0
+      integer :: nearshore = 0
 
       integer :: is, lstr, ng
 !
@@ -1264,11 +1265,12 @@
       Coptions(is:is+13)=' MY25_MIXING,'
       ivmix=ivmix+1
 #endif
-#ifdef NEARSHORE_MELLOR
-      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR',                 &
-     &   'Nearshore RAdiation Stress Terms.'
+#ifdef NEARSHORE_MELLOR05
+      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR05',               &
+     &   'Nearshore Radiation Stress Terms (Mellor 2005).'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+18)=' NEARSHORE_MELLOR,'
+      Coptions(is:is+20)=' NEARSHORE_MELLOR05,'
+      nearshore=nearshore+1
 #endif
 #ifdef NEMURO
       IF (Master) WRITE (stdout,20) 'NEMURO',                           &
@@ -3124,11 +3126,22 @@
       END IF
 # endif
 #endif
+#ifdef NEARSHORE
+!
+!  Stop if more that one radiation stress formulation is activated.
+!
+      IF (Master.and.(nearshore.gt.1)) THEN
+        WRITE (stdout,170)
+ 170    FORMAT (/,' CHECKDEFS - only one radiation stress formulation'  &
+     &            ' is allowed.')
+        exit_flag=5
+      END IF
+#endif
 #ifdef PARALLEL_IO
 # if !(defined HDF5 || defined PNETCDF)
       IF (Master) THEN
-        WRITE (stdout,170)
- 170    FORMAT (/,' CHECKDEFS - Need to activate either HDF5 or',       &
+        WRITE (stdout,180)
+ 180    FORMAT (/,' CHECKDEFS - Need to activate either HDF5 or',       &
      &            ' PNETCDF options',/,13x,'for parallel I/O',          &
      &            ' processing.')
         exit_flag=5
@@ -3136,8 +3149,8 @@
 # endif
 # if defined HDF5 && defined PNETCDF
       IF (Master) THEN
-        WRITE (stdout,180)
- 180    FORMAT (/,' CHECKDEFS - Both HDF5 and PNETCDF options',         &
+        WRITE (stdout,190)
+ 190    FORMAT (/,' CHECKDEFS - Both HDF5 and PNETCDF options',         &
      &            ' selected',/,13x,'for parallel I/O processing.',     &
      &          /,13x,'Choose only one.')
         exit_flag=5

@@ -114,8 +114,10 @@
 !  Sxx          3D Nearshore horizontal radiation stress, xx-component.!
 !  Sxy          3D Nearshore horizontal radiation stress, xx-component.!
 !  Syy          3D Nearshore horizontal radiation stress, xx-component.!
+# ifdef NEARSHORE_MELLOR05
 !  Szx          3D Nearshore vertical radiation stress, xx-component.  !
 !  Szy          3D Nearshore vertical radiation stress, xx-component.  !
+# endif
 !  rustr2d      2D radiation stress tensor in Xi-direction.            !
 !  rvstr2d      2D radiation stress tensor in ETA-direction.           !
 !  rustr3d      3D radiation stress tensor in Xi-direction.            !
@@ -175,8 +177,10 @@
           real(r8), pointer :: Sxx(:,:,:)
           real(r8), pointer :: Sxy(:,:,:)
           real(r8), pointer :: Syy(:,:,:)
+#  ifdef NEARSHORE_MELLOR05
           real(r8), pointer :: Szx(:,:,:)
           real(r8), pointer :: Szy(:,:,:)
+#  endif
           real(r8), pointer :: rustr3d(:,:,:)
           real(r8), pointer :: rvstr3d(:,:,:)
 # endif
@@ -418,8 +422,10 @@
       allocate ( MIXING(ng) % Sxx(LBi:UBi,LBj:UBj,1:N(ng)) )
       allocate ( MIXING(ng) % Sxy(LBi:UBi,LBj:UBj,1:N(ng)) )
       allocate ( MIXING(ng) % Syy(LBi:UBi,LBj:UBj,1:N(ng)) )
+#  ifdef NEARSHORE_MELLOR05
       allocate ( MIXING(ng) % Szx(LBi:UBi,LBj:UBj,1:N(ng)) )
       allocate ( MIXING(ng) % Szy(LBi:UBi,LBj:UBj,1:N(ng)) )
+#  endif
       allocate ( MIXING(ng) % rustr3d(LBi:UBi,LBj:UBj,1:N(ng)) )
       allocate ( MIXING(ng) % rvstr3d(LBi:UBi,LBj:UBj,1:N(ng)) )
 # endif
@@ -747,12 +753,14 @@
               MIXING(ng) % Sxx(i,j,k) = IniVal
               MIXING(ng) % Sxy(i,j,k) = IniVal
               MIXING(ng) % Syy(i,j,k) = IniVal
+#  ifdef NEARSHORE_MELLOR05
               MIXING(ng) % Szx(i,j,k) = IniVal
               MIXING(ng) % Szy(i,j,k) = IniVal
+#  endif
               MIXING(ng) % rustr3d(i,j,k) = IniVal
               MIXING(ng) % rvstr3d(i,j,k) = IniVal
             END DO
-#endif
+# endif
           END DO
 #endif
 #ifdef SOLVE3D

@@ -1670,6 +1670,8 @@
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
+#   ifdef NEARSHORE_MELLOR05
 !
 !  Define 3D radiation stress Szx.
 !
@@ -1679,9 +1681,9 @@
           Vinfo( 3)=Vname(3,idW3zx)
           Vinfo(14)=Vname(4,idW3zx)
           Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
+#    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#   endif
+#    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u3dvar,r8)
           status=def_var(ng, model, ncAVGid(ng), avgVid(idW3zx,ng),     &
@@ -1697,15 +1699,16 @@
           Vinfo( 3)=Vname(3,idW3zy)
           Vinfo(14)=Vname(4,idW3zy)
           Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
+#    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#   endif
+#    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u3dvar,r8)
           status=def_var(ng, model, ncAVGid(ng), avgVid(idW3zy,ng),     &
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+#   endif
 !
 !  Define 3D total u-radiation stress.
 !
@@ -2034,12 +2037,14 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
             got_var(idW3yy)=.TRUE.
             avgVid(idW3yy,ng)=var_id(i)
+#   ifdef NEARSHORE_MELLOR05
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
             got_var(idW3zx)=.TRUE.
             avgVid(idW3zx,ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
             got_var(idW3zy)=.TRUE.
             avgVid(idW3zy,ng)=var_id(i)
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
             got_var(idU3rs)=.TRUE.
             avgVid(idU3rs,ng)=var_id(i)
@@ -2479,6 +2484,7 @@
           exit_flag=3
           RETURN
         END IF
+#   ifdef NEARSHORE_MELLOR05
         IF (.not.got_var(idW3zx).and.Aout(idW3zx,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
      &                                  TRIM(ncname)
@@ -2491,6 +2497,7 @@
           exit_flag=3
           RETURN
         END IF
+#   endif
         IF (.not.got_var(idU3rs).and.Aout(idU3rs,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
      &                                  TRIM(ncname)

@@ -60,22 +60,8 @@
      &                         GRID(ng) % vmask,                        &
 # endif
 # ifdef SOLVE3D
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                         SEDBED(ng) % ad_bed,                     &
-     &                         SEDBED(ng) % ad_bed_thick0,              &
-     &                         SEDBED(ng) % ad_bed_thick,               &
-#  endif
      &                         GRID(ng) % Hz,                           &
      &                         GRID(ng) % ad_Hz,                        &
-     &                         GRID(ng) % h,                            &
-     &                         GRID(ng) % ad_h,                         &
-#  ifdef ICESHELF
-     &                         GRID(ng) % zice,                         &
-#  endif
-     &                         GRID(ng) % ad_z_r,                       &
-     &                         GRID(ng) % ad_z_w,                       &
-     &                         COUPLING(ng) % Zt_avg1,                  &
-     &                         COUPLING(ng) % ad_Zt_avg1,               &
      &                         OCEAN(ng) % ad_t,                        &
      &                         OCEAN(ng) % u,                           &
      &                         OCEAN(ng) % ad_u,                        &
@@ -106,17 +92,7 @@
      &                               rmask, umask, vmask,               &
 # endif
 # ifdef SOLVE3D
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                               bed, ad_bed,                       &
-     &                               bed_thick0,                        &
-#  endif
      &                               Hz, ad_Hz,                         &
-     &                               h, ad_h,                           &
-#  ifdef ICESHELF
-     &                               zice,                              &
-#  endif
-     &                               ad_z_r, ad_z_w,                    &
-     &                               Zt_avg1, ad_Zt_avg1,               &
      &                               ad_t,                              &
      &                               u, ad_u,                           &
      &                               v, ad_v,                           &
@@ -170,10 +146,6 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
-      real(r8), intent(in) :: h(LBi:,LBj:)
-#   ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:,LBj:)
-#   endif
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
 #  endif
@@ -181,19 +153,7 @@
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
-
-#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(inout) :: ad_bed(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_bed_thick0(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_bed_thick(LBi:,LBj:,:)
-#   endif
-      real(r8), intent(inout) :: ad_h(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_z_r(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_z_w(LBi:,LBj:,0:)
-
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
@@ -204,7 +164,9 @@
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+
 # else
+
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -212,10 +174,6 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-#   ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#   endif
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
@@ -223,14 +181,11 @@
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
-
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(inout) :: ad_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(inout) :: ad_bed_thick0(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_bed_thick(LBi:UBi,LBj:UBj,2)
 #   endif
-      real(r8), intent(inout) :: ad_h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -290,157 +245,100 @@
         END DO
       END DO
 # endif
-# ifndef SOLVE3D
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Adjoint of 2D momentun initialization.
+!  Adjoint of initialize other time levels for tracers. Only time level
+!  "nstp" is needed in the adjoint.
 !-----------------------------------------------------------------------
 !
 !  Apply boundary conditions.
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, tile, model, 4,                           &
-!>   &                    LBi, UBi, LBj, UBj,                           &
+!>    CALL mp_exchange4d (ng, tile, model, 1,                           &
+!>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp),         &
-!>   &                    tl_ubar(:,:,krhs), tl_vbar(:,:,krhs))
-!>
-      CALL ad_mp_exchange2d (ng, tile, model, 4,                        &
-     &                       LBi, UBi, LBj, UBj,                        &
+!>   &                    tl_t(:,:,:,nstp,:),                           &
+!>   &                    tl_t(:,:,:,nnew,:))
+!>                                                      only nstp needed
+      CALL ad_mp_exchange4d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ubar(:,:,kstp), ad_vbar(:,:,kstp),      &
-     &                       ad_ubar(:,:,krhs), ad_vbar(:,:,krhs))
+     &                       ad_t(:,:,:,nstp,:))
 #  endif
+      DO itrc=1,NT(ng)
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_v2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        tl_vbar(:,:,krhs))
-!>
-      CALL ad_exchange_v2d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           ad_vbar(:,:,krhs))
-!>    CALL exchange_u2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        tl_ubar(:,:,krhs))
-!>
-      CALL ad_exchange_u2d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           ad_ubar(:,:,krhs))
-!>    CALL exchange_v2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        tl_vbar(:,:,kstp))
-!>
-      CALL ad_exchange_v2d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           ad_vbar(:,:,kstp))
-!>    CALL exchange_u2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        tl_ubar(:,:,kstp))
-!>
-      CALL ad_exchange_u2d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           ad_ubar(:,:,kstp))
+!!      CALL exchange_r3d_tile (ng, tile,                               &
+!!   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!!   &                          tl_t(:,:,:,nnew,itrc))
+!!
+!!      CALL ad_exchange_r3d_tile (ng, tile,                            &
+!!   &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
+!!   &                             ad_t(:,:,:,nnew,itrc))
+!>      CALL exchange_r3d_tile (ng, tile,                               &
+!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!>   &                          tl_t(:,:,:,nstp,itrc))
+!>                                                      only nstp needed
+        CALL ad_exchange_r3d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
+     &                             ad_t(:,:,:,nstp,itrc))
 #  endif
-#  ifndef OBC_M2RADIATION
-!>    CALL tl_v2dbc_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>   &                    krhs, kstp, krhs,                             &
-!>   &                    ubar, vbar, zeta,                             &
-!>   &                    tl_ubar, tl_vbar, tl_zeta)
-!>
-      CALL ad_v2dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    krhs, kstp, krhs,                             &
-     &                    ubar, vbar, zeta,                             &
-     &                    ad_ubar, ad_vbar, ad_zeta)
-!>    CALL tl_u2dbc_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>   &                    krhs, kstp, krhs,                             &
-!>   &                    ubar, vbar, zeta,                             &
-!>   &                    tl_ubar, tl_vbar, tl_zeta)
-!>
-      CALL ad_u2dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    krhs, kstp, krhs,                             &
-     &                    ubar, vbar, zeta,                             &
-     &                    ad_ubar, ad_vbar, ad_zeta)
-!>    CALL tl_v2dbc_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>   &                    krhs, kstp, kstp,                             &
-!>   &                    ubar, vbar, zeta,
-!>   &                    tl_ubar, tl_vbar, tl_zeta)
-!>
-      CALL ad_v2dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    krhs, kstp, kstp,                             &
-     &                    ubar, vbar, zeta,                             &
-     &                    ad_ubar, ad_vbar, ad_zeta)
-!>    CALL tl_u2dbc_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>   &                    krhs, kstp, kstp,                             &
-!>   &                    ubar, vbar, zeta,                             &
-!>   &                    tl_ubar, tl_vbar, tl_zeta)
-!>
-      CALL ad_u2dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    krhs, kstp, kstp,                             &
-     &                    ubar, vbar, zeta,                             &
-     &                    ad_ubar, ad_vbar, ad_zeta)
-#  endif
+!!      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
+!!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+!!   &                      IminS, ImaxS, JminS, JmaxS,                 &
+!!   &                      nstp, nnew,                                 &
+!!   &                      tl_t)
+!!
+!!      CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+!!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+!!   &                      IminS, ImaxS, JminS, JmaxS,                 &
+!!   &                      nstp, nnew,                                 &
+!!   &                      ad_t)
+!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
+!>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
+!>   &                      nstp, nstp,                                 &
+!>   &                      tl_t)
+!>                                                      only nstp needed
+        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+     &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
+     &                      nstp, nstp,                                 &
+     &                      ad_t)
 !
-!  Adjoint of 2D momentum initialization.
+!  Adjoint of tracers initialization.
 !
-      DO j=Jstr,Jend
-        IF (j.ge.JstrV) THEN
-          DO i=Istr,Iend
-!>          tl_vbar(i,j,kstp)=tl_cff2
-!>          tl_vbar(i,j,krhs)=tl_cff2
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            tl_t(i,j,k,nstp,itrc)=tl_cff1
+!!            tl_t(i,j,k,nnew,itrc)=tl_cff1
 !>
-            ad_cff2=ad_cff2+ad_vbar(i,j,krhs)+ad_vbar(i,j,kstp)
-            ad_vbar(i,j,krhs)=0.0_r8
-            ad_vbar(i,j,kstp)=0.0_r8
+              ad_cff1=ad_cff1+ad_t(i,j,k,nstp,itrc)
+!!  &                        ad_t(i,j,k,nnew,itrc)
+              ad_t(i,j,k,nstp,itrc)=0.0_r8
+!!            ad_t(i,j,k,nnew,itrc)=0.0_r8
 #  ifdef MASKING
-!>          tl_cff2=tl_cff2*vmask(i,j)
+!>            tl_cff1=tl_cff1*rmask(i,j)
 !>
-            ad_cff2=ad_cff2*vmask(i,j)
+              ad_cff1=ad_cff1*rmask(i,j)
 #  endif
-!>          tl_cff2=tl_vbar(i,j,kstp)
+!>            cff1=t(i,j,k,nstp,itrc)
 !>
-            ad_vbar(i,j,kstp)=ad_vbar(i,j,kstp)+ad_cff2
-            ad_cff2=0.0_r8
+              ad_t(i,j,k,nstp,itrc)=ad_t(i,j,k,nstp,itrc)+ad_cff1
+              ad_cff1=0.0_r8
+            END DO
           END DO
-        END IF
-        DO i=IstrU,Iend
-!>        tl_ubar(i,j,kstp)=tl_cff1
-!>        tl_ubar(i,j,krhs)=tl_cff1
-!>
-          ad_cff1=ad_cff1+ad_ubar(i,j,krhs)+ad_ubar(i,j,kstp)
-          ad_ubar(i,j,krhs)=0.0_r8
-          ad_ubar(i,j,kstp)=0.0_r8
-#  ifdef MASKING
-!>        tl_cff1=tl_cff1*umask(i,j)
-!>
-          ad_cff1=ad_cff1*umask(i,j)
-#  endif
-!>        tl_cff1=tl_ubar(i,j,kstp)
-!>
-          ad_ubar(i,j,kstp)=ad_ubar(i,j,kstp)+ad_cff1
-          ad_cff1=0.0_r8
         END DO
       END DO
-# else
+# endif
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Compute adjoint vertically integrated momentum (ad_ubar,ad_vbar) from
-! initial 3D adjoint momentum (ad_u,ad_v).
+!  Adjoint of compute vertically-integrated momentum (tl_ubar, tl_vbar)
+!  from initial 3D momentum (tl_u, tl_v).
 !-----------------------------------------------------------------------
 !
 !  Apply boundary conditions.
@@ -458,7 +356,9 @@
      &                       ad_ubar(:,:,kstp), ad_vbar(:,:,kstp),      &
      &                       ad_ubar(:,:,knew), ad_vbar(:,:,knew))
 #  endif
+
 #  if defined EW_PERIODIC || defined NS_PERIODIC
+!
 !>    CALL exchange_v2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_vbar(:,:,knew))
@@ -473,6 +373,7 @@
       CALL ad_exchange_u2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_ubar(:,:,knew))
+
 !>    CALL exchange_v2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_vbar(:,:,kstp))
@@ -488,7 +389,9 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_ubar(:,:,kstp))
 #  endif
+
 #  ifndef OBC_M2RADIATION
+!
 !>    CALL tl_v2dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    IminS, ImaxS, JminS, JmaxS,                   &
@@ -515,6 +418,7 @@
      &                    krhs, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    ad_ubar, ad_vbar, ad_zeta)
+
 !>    CALL tl_v2dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    IminS, ImaxS, JminS, JmaxS,                   &
@@ -543,12 +447,13 @@
      &                    ad_ubar, ad_vbar, ad_zeta)
 #  endif
 !
-!  Compute adjoint 2D velocity component in the ETA-direction.  Here
-!  DC(i,1:N) are the thicknesses of V-boxes, DC(i,0) is total depth of
-!  the water column, and CF(i,0) is the vertical integral.
+!  Adjoint of compute vertically-integrated momentum (tl_ubar, tl_vbar)
+!  from initial 3D momentum (tl_u, tl_v). Here DC(i,1:N) are the grid
+!  cell thicknesses, DC(i,0) is total depth of the water column, and
+!  CF(i,0) is the vertical integral.
 !
       DO j=Jstr,Jend
-        IF (j.ge.Jstr) THEN
+        IF (j.ge.JstrV) THEN
           DO i=Istr,Iend
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
@@ -565,7 +470,8 @@
 !>          tl_vbar(i,j,kstp)=tl_cff2
 !>          tl_vbar(i,j,knew)=tl_cff2
 !>
-            ad_cff2=ad_cff2+ad_vbar(i,j,knew)+ad_vbar(i,j,kstp)
+            ad_cff2=ad_cff2+ad_vbar(i,j,knew)+                          &
+     &                      ad_vbar(i,j,kstp)
             ad_vbar(i,j,knew)=0.0_r8
             ad_vbar(i,j,kstp)=0.0_r8
 #  ifdef MASKING
@@ -611,10 +517,6 @@
           END DO
         END IF
 !
-!  Compute adjoint 2D velocity component in the XI-direction.  Here
-!  DC(i,1:N) are the thicknesses of U-boxes, DC(i,0) is total depth of
-!  the water column, and CF(i,0) is the vertical integral.
-!
         DO i=IstrU,Iend
           DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
@@ -631,7 +533,8 @@
 !>        tl_ubar(i,j,kstp)=tl_cff2
 !>        tl_ubar(i,j,knew)=tl_cff2
 !>
-          ad_cff2=ad_cff2+ad_ubar(i,j,knew)+ad_ubar(i,j,kstp)
+          ad_cff2=ad_cff2+ad_ubar(i,j,knew)+                            &
+     &                    ad_ubar(i,j,kstp)
           ad_ubar(i,j,knew)=0.0_r8
           ad_ubar(i,j,kstp)=0.0_r8
 #  ifdef MASKING
@@ -676,127 +579,167 @@
           ad_DC(i,0)=0.0_r8
         END DO
       END DO
+
+# else
 !
 !-----------------------------------------------------------------------
-!  Compute adjoint initial depths and thicknesses.
-!-----------------------------------------------------------------------
-!
-!>    CALL tl_set_depth_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        IminS, ImaxS, JminS, JmaxS,               &
-!>   &                        nstp, nnew,                               &
-!>   &                        h, tl_h,                                  &
-#  ifdef ICESHELF
-!>   &                        zice,                                     &
-#  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>   &                        tl_bed_thick,                             &
-#  endif
-!>   &                        Zt_avg1, tl_Zt_avg1,                      &
-!>   &                        tl_Hz, tl_z_r, tl_z_w)
-!>
-      CALL ad_set_depth_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        nstp, nnew,                               &
-     &                        h, ad_h,                                  &
-#  ifdef ICESHELF
-     &                        zice,                                     &
-#  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        ad_bed_thick,                             &
-#  endif
-     &                        Zt_avg1, ad_Zt_avg1,                      &
-     &                        ad_Hz, ad_z_r, ad_z_w)
-!
-!-----------------------------------------------------------------------
-!  Initialize other tracers time-levels, only time level "nstp" is
-!  needed in the adjoint.
+!  Adjoint of initialize other time levels for 2D momentum.
 !-----------------------------------------------------------------------
 !
 !  Apply boundary conditions.
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange4d (ng, tile, model, 1,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
+!>    CALL mp_exchange2d (ng, tile, model, 4,                           &
+!>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    tl_t(:,:,:,nstp,:),                           &
-!>   &                    tl_t(:,:,:,nnew,:))
+!>   &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp),         &
+!>   &                    tl_ubar(:,:,krhs), tl_vbar(:,:,krhs))
 !>
-      CALL ad_mp_exchange4d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
+      CALL ad_mp_exchange2d (ng, tile, model, 4,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_t(:,:,:,nstp,:))
+     &                       ad_ubar(:,:,kstp), ad_vbar(:,:,kstp),      &
+     &                       ad_ubar(:,:,krhs), ad_vbar(:,:,krhs))
 #  endif
-      DO itrc=1,NT(ng)
+
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!!      CALL exchange_r3d_tile (ng, tile,                               &
-!!   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!!   &                          tl_t(:,:,:,nnew,itrc))
-!!
-!!      CALL ad_exchange_r3d_tile (ng, tile,                            &
-!!   &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-!!   &                             ad_t(:,:,:,nnew,itrc))
-!>      CALL exchange_r3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          tl_t(:,:,:,nstp,itrc))
+!
+!>    CALL exchange_v2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_vbar(:,:,krhs))
 !>
-        CALL ad_exchange_r3d_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             ad_t(:,:,:,nstp,itrc))
+      CALL ad_exchange_v2d_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_vbar(:,:,krhs))
+!>    CALL exchange_u2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_ubar(:,:,krhs))
+!>
+      CALL ad_exchange_u2d_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_ubar(:,:,krhs))
+
+!>    CALL exchange_v2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_vbar(:,:,kstp))
+!>
+      CALL ad_exchange_v2d_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_vbar(:,:,kstp))
+!>    CALL exchange_u2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_ubar(:,:,kstp))
+!>
+      CALL ad_exchange_u2d_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_ubar(:,:,kstp))
 #  endif
-!!      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
-!!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
-!!   &                      IminS, ImaxS, JminS, JmaxS,                 &
-!!   &                      nstp, nnew,                                 &
-!!   &                      tl_t)
-!!
-!!      CALL ad_t3dbc_tile (ng, tile, itrc,                             &
-!!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
-!!   &                      IminS, ImaxS, JminS, JmaxS,                 &
-!!   &                      nstp, nnew,                                 &
-!!   &                      ad_t)
-!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
-!>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
-!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
-!>   &                      nstp, nstp,                                 &
-!>   &                      tl_t)
-!>
-        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
-     &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      nstp, nstp,                                 &
-     &                      ad_t)
+
+#  ifndef OBC_M2RADIATION
 !
-!  Adjoint of tracers initialization.
-!
-        DO k=1,N(ng)
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-!>            tl_t(i,j,k,nstp,itrc)=tl_cff1
-!!            tl_t(i,j,k,nnew,itrc)=tl_cff1
+!>    CALL tl_v2dbc_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
+!>   &                    krhs, kstp, krhs,                             &
+!>   &                    ubar, vbar, zeta,                             &
+!>   &                    tl_ubar, tl_vbar, tl_zeta)
 !>
-              ad_cff1=ad_cff1+ad_t(i,j,k,nstp,itrc)
-!!  &                        ad_t(i,j,k,nnew,itrc)
-              ad_t(i,j,k,nstp,itrc)=0.0_r8
-!!            ad_t(i,j,k,nnew,itrc)=0.0_r8
+      CALL ad_v2dbc_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    krhs, kstp, krhs,                             &
+     &                    ubar, vbar, zeta,                             &
+     &                    ad_ubar, ad_vbar, ad_zeta)
+!>    CALL tl_u2dbc_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
+!>   &                    krhs, kstp, krhs,                             &
+!>   &                    ubar, vbar, zeta,                             &
+!>   &                    tl_ubar, tl_vbar, tl_zeta)
+!>
+      CALL ad_u2dbc_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    krhs, kstp, krhs,                             &
+     &                    ubar, vbar, zeta,                             &
+     &                    ad_ubar, ad_vbar, ad_zeta)
+
+!>    CALL tl_v2dbc_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
+!>   &                    krhs, kstp, kstp,                             &
+!>   &                    ubar, vbar, zeta,                             &
+!>   &                    tl_ubar, tl_vbar, tl_zeta)
+!>
+      CALL ad_v2dbc_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    krhs, kstp, kstp,                             &
+     &                    ubar, vbar, zeta,                             &
+     &                    ad_ubar, ad_vbar, ad_zeta)
+!>    CALL tl_u2dbc_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
+!>   &                    krhs, kstp, kstp,                             &
+!>   &                    ubar, vbar, zeta,                             &
+!>   &                    tl_ubar, tl_vbar, tl_zeta)
+!>
+      CALL ad_u2dbc_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    krhs, kstp, kstp,                             &
+     &                    ubar, vbar, zeta,                             &
+     &                    ad_ubar, ad_vbar, ad_zeta)
+#  endif
+!
+!  Adjoint of initialize other time levels for 2D momentum.
+!
+      DO j=Jstr,Jend
+        IF (j.ge.JstrV) THEN
+          DO i=Istr,Iend
+!>          tl_vbar(i,j,kstp)=tl_cff2
+!>          tl_vbar(i,j,krhs)=tl_cff2
+!>
+            ad_cff2=ad_cff2+ad_vbar(i,j,krhs)+                          &
+     &                      ad_vbar(i,j,kstp)
+            ad_vbar(i,j,krhs)=0.0_r8
+            ad_vbar(i,j,kstp)=0.0_r8
 #  ifdef MASKING
-!>            tl_cff1=tl_cff1*rmask(i,j)
+!>          tl_cff2=tl_cff2*vmask(i,j)
 !>
-              ad_cff1=ad_cff1*rmask(i,j)
+            ad_cff2=ad_cff2*vmask(i,j)
 #  endif
-!>            cff1=t(i,j,k,nstp,itrc)
+!>          tl_cff2=tl_vbar(i,j,kstp)
 !>
-              ad_t(i,j,k,nstp,itrc)=ad_t(i,j,k,nstp,itrc)+ad_cff1
-              ad_cff1=0.0_r8
-            END DO
+            ad_vbar(i,j,kstp)=ad_vbar(i,j,kstp)+ad_cff2
+            ad_cff2=0.0_r8
           END DO
+        END IF
+        DO i=IstrU,Iend
+!>        tl_ubar(i,j,kstp)=tl_cff1
+!>        tl_ubar(i,j,krhs)=tl_cff1
+!>
+          ad_cff1=ad_cff1+ad_ubar(i,j,krhs)+                            &
+     &                    ad_ubar(i,j,kstp)
+          ad_ubar(i,j,krhs)=0.0_r8
+          ad_ubar(i,j,kstp)=0.0_r8
+#  ifdef MASKING
+!>        tl_cff1=tl_cff1*umask(i,j)
+!>
+          ad_cff1=ad_cff1*umask(i,j)
+#  endif
+!>        tl_cff1=tl_ubar(i,j,kstp)
+!>
+          ad_ubar(i,j,kstp)=ad_ubar(i,j,kstp)+ad_cff1
+          ad_cff1=0.0_r8
         END DO
       END DO
+# endif
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Initialize other 3D momentum time-levels, only time level "nstp" is
-!  needed in the adjoint.
+!  Adjoint of initialize other time levels for 3D momentum.
 !-----------------------------------------------------------------------
 !
 !  Apply boundary conditions.
@@ -807,76 +750,57 @@
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_u(:,:,:,nstp), tl_v(:,:,:,nstp),           &
 !>   &                    tl_u(:,:,:,nnew), tl_v(:,:,:,nnew))
-!>
-!!    CALL ad_mp_exchange3d (ng, tile, model, 4,                        &
-!!   &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-!!   &                       NghostPoints, EWperiodic, NSperiodic,      &
-!!   &                       ad_u(:,:,:,nstp), ad_v(:,:,:,nstp),        &
-!!   &                       ad_u(:,:,:,nnew), ad_v(:,:,:,nnew))
-!!
+!>                                                      only nstp needed
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_u(:,:,:,nstp), ad_v(:,:,:,nstp))
 #  endif
+
 #  if defined EW_PERIODIC || defined NS_PERIODIC
+!
 !!    CALL exchange_v3d_tile (ng, tile,                                 &
 !!   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !!   &                        tl_v(:,:,:,nnew))
-!!
-!!    CALL ad_exchange_v3d_tile (ng, tile,                              &
-!!   &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-!!   &                           ad_v(:,:,:,nnew))
+!!                                                      only nstp needed
 !!    CALL exchange_u3d_tile (ng, tile,                                 &
 !!   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !!   &                        tl_u(:,:,:,nnew))
-!!
-!!    CALL ad_exchange_u3d_tile (ng, tile,                              &
-!!   &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-!!   &                           ad_u(:,:,:,nnew))
+!!                                                      only nstp needed
 !>    CALL exchange_v3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_v(:,:,:,nstp))
-!>
+!>                                                      only nstp needed
       CALL ad_exchange_v3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_v(:,:,:,nstp))
 !>    CALL exchange_u3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_u(:,:,:,nstp))
-!>
+!>                                                      only nstp needed
       CALL ad_exchange_u3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_u(:,:,:,nstp))
 #  endif
+
 !!    CALL tl_v3dbc_tile (ng, tile,                                     &
 !!   &                    LBi, UBi, LBj, UBj, N(ng),                    &
 !!   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !!   &                    nstp, nnew,                                   &
 !!   &                    tl_v)
-!!
-!!    CALL ad_v3dbc_tile (ng, tile,                                     &
-!!   &                    LBi, UBi, LBj, UBj, N(ng),                    &
-!!   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!!   &                    nstp, nnew,                                   &
-!!   &                    ad_v)
+!!                                                      only nstp needed
 !!    CALL tl_u3dbc_tile (ng, tile,                                     &
 !!   &                    LBi, UBi, LBj, UBj, N(ng),                    &
 !!   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !!   &                    nstp, nnew,                                   &
 !!   &                    tl_u)
-!!
-!!    CALL ad_u3dbc_tile (ng, tile,                                     &
-!!   &                    LBi, UBi, LBj, UBj, N(ng),                    &
-!!   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!!   &                    nstp, nnew,                                   &
-!!   &                    ad_u)
+!!                                                      only nstp needed
 !>    CALL tl_v3dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj, N(ng),                    &
 !>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    nstp, nstp,                                   &
 !>   &                    tl_v)
-!>
+!>                                                      only nstp needed
       CALL ad_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
@@ -887,14 +811,14 @@
 !>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    nstp, nstp,                                   &
 !>   &                    tl_u)
-!>
+!>                                                      only nstp needed
       CALL ad_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nstp,                                   &
      &                    ad_u)
 !
-! Adjoint of 3D momentum initialization.
+!  Adjoint of initialize other time levels for momentum.
 !
       DO j=Jstr,Jend
         IF (j.ge.JstrV) THEN
@@ -904,14 +828,14 @@
 !!            tl_v(i,j,k,nnew)=tl_cff2
 !>
               ad_cff2=ad_cff2+ad_v(i,j,k,nstp)
-!!   &                        ad_v(i,j,k,nnew)
+!!   &                       +ad_v(i,j,k,nnew)        ! only nstp needed
               ad_v(i,j,k,nstp)=0.0_r8
 !!            ad_v(i,j,k,nnew)=0.0_r8
-# ifdef MASKING
+#  ifdef MASKING
 !>            tl_cff2=tl_cff2*vmask(i,j)
 !>
               ad_cff2=ad_cff2*vmask(i,j)
-# endif
+#  endif
 !>            tl_cff2=tl_v(i,j,k,nstp)
 !>
               ad_v(i,j,k,nstp)=ad_v(i,j,k,nstp)+ad_cff2
@@ -925,14 +849,14 @@
 !!          tl_u(i,j,k,nnew)=tl_cff1
 !>
             ad_cff1=ad_cff1+ad_u(i,j,k,nstp)
-!!    &                     +ad_u(i,j,k,nnew)
+!!    &                    +ad_u(i,j,k,nnew)          ! only nstp needed
             ad_u(i,j,k,nstp)=0.0_r8
 !!          ad_u(i,j,k,nnew)=0.0_r8
-# ifdef MASKING
+#  ifdef MASKING
 !>          tl_cff1=tl_cff1*umask(i,j)
 !>
             ad_cff1=ad_cff1*umask(i,j)
-# endif
+#  endif
 !>          tl_cff1=tl_u(i,j,k,nstp)
 !>
             ad_u(i,j,k,nstp)=ad_u(i,j,k,nstp)+ad_cff1
@@ -941,6 +865,181 @@
         END DO
       END DO
 # endif
+!
+!-----------------------------------------------------------------------
+!  Load 2D adjoint momentum solution into IO arrays.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)
+        END DO
+        IF (j.ge.Jstr) THEN
+          DO i=IstrR,IendR
+            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)
+          END DO
+        END IF
+      END DO
+
+      RETURN
+      END SUBROUTINE ad_ini_fields_tile
+
+!
+!***********************************************************************
+      SUBROUTINE ad_ini_zeta (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_ocean
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL ad_ini_zeta_tile (ng, tile, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       kstp(ng), krhs(ng), knew(ng),              &
+# ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+# endif
+# ifdef WET_DRY_NOT_YET
+     &                       GRID(ng) % h,                              &
+# endif
+# ifdef SOLVE3D
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                       SEDBED(ng) % ad_bed,                       &
+     &                       SEDBED(ng) % ad_bed_thick0,                &
+     &                       SEDBED(ng) % ad_bed_thick,                 &
+#  endif
+     &                       COUPLING(ng) % ad_Zt_avg1,                 &
+# endif
+     &                       OCEAN(ng) % zeta,                          &
+     &                       OCEAN(ng) % ad_zeta_sol,                   &
+     &                       OCEAN(ng) % ad_zeta)
+
+      RETURN
+      END SUBROUTINE ad_ini_zeta
+!
+!***********************************************************************
+      SUBROUTINE ad_ini_zeta_tile (ng, tile, model,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             kstp, krhs, knew,                    &
+# ifdef MASKING
+     &                             rmask,                               &
+# endif
+# ifdef WET_DRY_NOT_YET
+     &                             h,                                   &
+# endif
+# ifdef SOLVE3D
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                             ad_bed,                              &
+     &                             ad_bed_thick0, ad_bed_thick,         &
+#  endif
+
+     &                             ad_Zt_avg1,                          &
+# endif
+     &                             zeta, ad_zeta_sol, ad_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      USE mod_sediment
+# endif
+!
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+# endif
+# ifndef OBC_FSRADIATION
+      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: kstp, krhs, knew
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+      real(r8), intent(in) :: h(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  ifdef SOLVE3D
+#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(inout) :: ad_bed(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_bed_thick0(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_bed_thick(LBi:,LBj:,:)
+#   endif
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
+#  endif
+      real(r8), intent(inout) :: ad_zeta_sol(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+
+# else
+
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+#  ifdef SOLVE3D
+#   if defined SOLVE3D && defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(inout) :: ad_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
+      real(r8), intent(inout) :: ad_bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_bed_thick(LBi:UBi,LBj:UBj,2)
+#   endif
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(inout) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: i, j, kbed
+
+      real(r8) :: ad_cff1
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize adjoint private variables.
+!-----------------------------------------------------------------------
+!
+      ad_cff1=0.0_r8
 
 # ifdef SOLVE3D
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
@@ -1007,153 +1106,6 @@
         END DO
       END DO
 #  endif
-# endif
-!
-!-----------------------------------------------------------------------
-!  Load 2D adjoint momentum solution into IO arrays.
-!-----------------------------------------------------------------------
-!
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)
-        END DO
-        IF (j.ge.Jstr) THEN
-          DO i=IstrR,IendR
-            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)
-          END DO
-        END IF
-      END DO
-
-      RETURN
-      END SUBROUTINE ad_ini_fields_tile
-
-!
-!***********************************************************************
-      SUBROUTINE ad_ini_zeta (ng, tile, model)
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
-      USE mod_stepping
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile, model
-!
-!  Local variable declarations.
-!
-# include "tile.h"
-!
-      CALL ad_ini_zeta_tile (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       kstp(ng), krhs(ng), knew(ng),              &
-# ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-# endif
-# ifdef WET_DRY
-     &                       GRID(ng) % h,                              &
-# endif
-# ifdef SOLVE3D
-     &                       COUPLING(ng) % ad_Zt_avg1,                 &
-# endif
-     &                       OCEAN(ng) % zeta,                          &
-     &                       OCEAN(ng) % ad_zeta_sol,                   &
-     &                       OCEAN(ng) % ad_zeta)
-
-      RETURN
-      END SUBROUTINE ad_ini_zeta
-!
-!***********************************************************************
-      SUBROUTINE ad_ini_zeta_tile (ng, tile, model,                     &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             kstp, krhs, knew,                    &
-# ifdef MASKING
-     &                             rmask,                               &
-# endif
-# ifdef WET_DRY
-     &                             h,                                   &
-# endif
-# ifdef SOLVE3D
-     &                             ad_Zt_avg1,                          &
-# endif
-     &                             zeta, ad_zeta_sol, ad_zeta)
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-!
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      USE ad_exchange_2d_mod
-# endif
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-# endif
-# ifndef OBC_FSRADIATION
-      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
-# endif
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: kstp, krhs, knew
-!
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-#  endif
-#  ifdef WET_DRY
-      real(r8), intent(in) :: h(LBi:,LBj:)
-#  endif
-      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
-#  endif
-      real(r8), intent(inout) :: ad_zeta_sol(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
-# else
-#  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef WET_DRY
-      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-#  endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
-#  endif
-      real(r8), intent(inout) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
-# endif
-!
-!  Local variable declarations.
-!
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
-      integer :: i, j
-
-      real(r8) :: ad_cff1
-
-# include "set_bounds.h"
-
-# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
@@ -1191,7 +1143,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Adjoint of free-surface initialization.
+!  Adjoint of initialize other time levels for free-surface.
 !-----------------------------------------------------------------------
 !
 !  Apply boundary conditions.
@@ -1299,8 +1251,6 @@
 !
 !  Adjoint of free-surface initialization.
 !
-      ad_cff1=0.0_r8
-
 # ifndef OBC_FSRADIATION
       DO j=Jstr,Jend
         DO i=Istr,Iend

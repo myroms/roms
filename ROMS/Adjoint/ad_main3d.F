@@ -94,9 +94,7 @@
 # ifdef AVERAGES
       USE ad_set_avg_mod, ONLY : ad_set_avg
 # endif
-# ifdef MOVE_SET_DEPTH
       USE ad_set_depth_mod, ONLY : ad_set_depth
-# endif
       USE ad_set_massflux_mod, ONLY : ad_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE ad_set_tides_mod, ONLY : ad_set_tides
@@ -707,12 +705,14 @@
         END DO
 !$OMP END PARALLEL DO
 !
-!  Initialize free-surface.
+!  Adjoint of initialize free-surface and compute initial level
+!  thicknesses and depths.
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_set_depth (ng, TILE)
             CALL ad_ini_zeta (ng, TILE, iADM)
           END DO
         END DO

@@ -629,6 +629,8 @@
           RETURN
         END IF
       END IF
+
+#   ifdef NEARSHORE_MELLOR05
 !
 !  Write out 3D radiation stress, Szx-component.
 !
@@ -638,9 +640,9 @@
         status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3zx,ng),    &
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
-#   endif
+#    endif
      &                     AVERAGE(ng) % avgSzx3d)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -660,9 +662,9 @@
         status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3zy,ng),    &
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
-#   endif
+#    endif
      &                     AVERAGE(ng) % avgSzy3d)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -673,6 +675,7 @@
           RETURN
         END IF
       END IF
+#   endif
 !
 !  Write out 3D radiation stress in the XI-direction, u_Rstress.
 !

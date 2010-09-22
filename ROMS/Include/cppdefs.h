@@ -638,7 +638,7 @@
 ** Nearshore and shallow water model OPTIONS:                                **
 **                                                                           **
 ** WET_DRY             use to activate wetting and drying                    **
-** NEARSHORE_MELLOR    use to activate radiation stress terms.               **
+** NEARSHORE_MELLOR05  use to activate radiation stress terms (Mellor 2005). **
 **                                                                           **
 ** NetCDF input/output OPTIONS:                                              **
 **                                                                           **

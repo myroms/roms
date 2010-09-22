@@ -19,7 +19,7 @@
 #define DIAGNOSTICS_TS
 #define AVERAGES
 #define WET_DRY
-#define NEARSHORE_MELLOR
+#define NEARSHORE_MELLOR05
 #define OUT_DOUBLE
 #define UV_ADV
 #define TS_MPDATA

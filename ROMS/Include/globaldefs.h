@@ -153,7 +153,7 @@
 #  define UPPER_BOUND_J Jm(ng)+1
 # endif
 #endif
-#define XI_DIM LOWER_BOUND_I:UPPER_BOUND_I
+#define XI_DIM  LOWER_BOUND_I:UPPER_BOUND_I
 #define ETA_DIM LOWER_BOUND_J:UPPER_BOUND_J
 #define GLOBAL_2D_ARRAY XI_DIM,ETA_DIM
 #define PRIVATE_1D_SCRATCH_ARRAY IminS:ImaxS
@@ -838,10 +838,21 @@
 #endif
 
 /*
+** Define internal option for radiation stress forcing.
+*/
+
+#if defined NEARSHORE_MELLOR05
+# define NEARSHORE_MELLOR
+#endif
+#if defined NEARSHORE_MELLOR
+# define NEARSHORE
+#endif
+
+/*
 ** Define internal option to process wave data.
 */
 
-#if defined BBL_MODEL   || defined NEARSHORE_MELLOR || \
+#if defined BBL_MODEL   || defined NEARSHORE || \
     defined WAVES_OCEAN
 # define WAVES_DIR
 #endif
@@ -853,10 +864,15 @@
 #endif
 
 #if (defined BBL_MODEL        && !defined WAVES_UB) ||  \
-     defined NEARSHORE_MELLOR || \
+     defined NEARSHORE        || \
      defined ZOS_HSIG         || defined COARE_TAYLOR_YELLAND || \
      defined BEDLOAD_SOULSBY  || defined WAVES_OCEAN
 # define WAVES_HEIGHT
+#endif
+
+#if defined NEARSHORE || defined BEDLOAD_SOULSBY || \
+    defined WAVES_OCEAN
+# define WAVES_LENGTH
 #endif
 
 #if (!defined DEEPWATER_WAVES      && \

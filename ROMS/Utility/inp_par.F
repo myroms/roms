@@ -4035,12 +4035,14 @@
           IF (Hout(idW3yy,ng)) WRITE (out,170) Hout(idW3yy,ng),         &
      &       'Hout(idW3yy)',                                            &
      &       'Write out 3D radiation stress, Syy.'
+#  ifdef NEARSHORE_MELLOR05
           IF (Hout(idW3zx,ng)) WRITE (out,170) Hout(idW3zx,ng),         &
      &       'Hout(idW3zx)',                                            &
      &       'Write out 3D radiation stress, Szx.'
           IF (Hout(idW3zy,ng)) WRITE (out,170) Hout(idW3zy,ng),         &
      &       'Hout(idW3zy)',                                            &
      &       'Write out 3D radiation stress, Szy.'
+#  endif
           IF (Hout(idU3rs,ng)) WRITE (out,170) Hout(idU3rs,ng),         &
      &       'Hout(idU3rs)',                                            &
      &       'Write out total 3D u-radiation stress.'

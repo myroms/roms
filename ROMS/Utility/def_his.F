@@ -1911,8 +1911,10 @@
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
+# ifdef NEARSHORE_MELLOR05
 !
-!  Define 3D radiation stress, Spx-component.
+!  Define 3D radiation stress, Szx-component.
 !
         IF (Hout(idW3zx,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zx)
@@ -1920,9 +1922,9 @@
           Vinfo( 3)=Vname(3,idW3zx)
           Vinfo(14)=Vname(4,idW3zx)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r3dvar,r8)
           status=def_var(ng, iNLM, ncHISid(ng), hisVid(idW3zx,ng),      &
@@ -1930,7 +1932,7 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
-!  Define 3D radiation stress, Spy-component.
+!  Define 3D radiation stress, Szy-component.
 !
         IF (Hout(idW3zy,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zy)
@@ -1938,15 +1940,16 @@
           Vinfo( 3)=Vname(3,idW3zy)
           Vinfo(14)=Vname(4,idW3zy)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r3dvar,r8)
           status=def_var(ng, iNLM, ncHISid(ng), hisVid(idW3zy,ng),      &
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+# endif
 !
 !  Define 3D total u-radiation stress.
 !
@@ -2465,12 +2468,14 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
             got_var(idW3yy)=.TRUE.
             hisVid(idW3yy,ng)=var_id(i)
+#  ifdef NEARSHORE_MELLOR05
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
             got_var(idW3zx)=.TRUE.
             hisVid(idW3zx,ng)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
             got_var(idW3zy)=.TRUE.
             hisVid(idW3zy,ng)=var_id(i)
+#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
             got_var(idU3rs)=.TRUE.
             hisVid(idU3rs,ng)=var_id(i)
@@ -2960,6 +2965,7 @@
           exit_flag=3
           RETURN
         END IF
+#  ifdef NEARSHORE_MELLOR05
         IF (.not.got_var(idW3zx).and.Hout(idW3zx,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
      &                                  TRIM(ncname)
@@ -2972,6 +2978,7 @@
           exit_flag=3
           RETURN
         END IF
+#  endif
         IF (.not.got_var(idU3Sd).and.Hout(idU3rs,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
      &                                  TRIM(ncname)
