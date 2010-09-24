@@ -119,10 +119,15 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 # different variants of the same application without modifying its header
 # file. If this is the case, specify each options here using the -D syntax.
 # Notice also that you need to use shell's quoting syntax to enclose the
-# definition.  Both single or double quotes works. For example, to write
-# time-averaged fields set:
+# definition.  Both single or double quotes works. For example,
 #
 #export      MY_CPP_FLAGS="-DAVERAGES"
+#export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -DDEBUGGING"
+#
+# can be used to write time-averaged fields. Notice that you can have as
+# many definitions as you want by appending values.
+
+#export      MY_CPP_FLAGS="-D"
 
 # Other user defined environmental variables. See the ROMS makefile for
 # details on other options the user might want to set here. Be sure to
@@ -164,14 +169,14 @@ if [ -n "${USE_MPIF90:+1}" ]; then
   case "$FORT" in
     ifort )
 #     export PATH=/opt/intelsoft/mpich/bin:$PATH
-      export PATH=/opt/intelsoft/mpich2/bin:$PATH
-#     export PATH=/opt/intelsoft/openmpi/bin:$PATH
+#     export PATH=/opt/intelsoft/mpich2/bin:$PATH
+      export PATH=/opt/intelsoft/openmpi/bin:$PATH
       ;;
 
     pgi )
 #     export PATH=/opt/pgisoft/mpich/bin:$PATH
-      export PATH=/opt/pgisoft/mpich2/bin:$PATH
-#     export PATH=/opt/pgisoft/openmpi/bin:$PATH
+#     export PATH=/opt/pgisoft/mpich2/bin:$PATH
+      export PATH=/opt/pgisoft/openmpi/bin:$PATH
       ;;
 
     gfortran )
@@ -190,6 +195,7 @@ fi
 # The path of the libraries required by ROMS can be set here using
 # environmental variables which take precedence to the values
 # specified in the makefile macro definitions file (Compilers/*.mk).
+#
 # If so desired, uncomment the local USE_MY_LIBS definition below
 # and edit the paths to your values. For most applications, only
 # the location of the NetCDF library (NETCDF_LIBDIR) and include
@@ -197,13 +203,20 @@ fi
 #
 # Notice that when the USE_NETCDF4 macro is activated, we need a
 # serial and parallel version of the NetCDF-4/HDF5 library. The
-# parallel library uses parallel I/O through MPI-I/O so we need
-# compile also with the MPI library. This is fine in ROMS
-# distributed-memory applications.  However, in serial or
-# shared-memory ROMS applications we need to use the serial
-# version of the NetCDF-4/HDF5 to avoid conflicts with the
-# compiler. Recall also that the MPI library comes in several
-# flavors: MPICH, MPICH2, OpenMPI.
+# parallel library uses parallel I/O through MPI-I/O, so we need
+# compile also with the MPI library.
+#
+# In ROMS distributed-memory applications you can use either the
+# serial or parallel version of the NetCD-4/HDF5 library. The
+# parallel verions is required when parallel I/O is activated
+# (ROMS cpp option PARALLEL_IO).
+#
+# However, in serial or shared-memory ROMS applications we need
+# to use the serial version of the NetCDF-4/HDF5 to avoid conflicts
+# with the compiler.
+#
+# Recall also that the MPI library comes in several flavors:
+# MPICH, MPICH2, OpenMPI.
 
 #export           USE_MY_LIBS=on
 
@@ -223,8 +236,8 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export      ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
 #       export   PARPACK_LIBDIR=/opt/intelsoft/mpich/PARPACK
-        export   PARPACK_LIBDIR=/opt/intelsoft/mpich2/PARPACK
-#       export   PARPACK_LIBDIR=/opt/intelsoft/openmpi/PARPACK
+#       export   PARPACK_LIBDIR=/opt/intelsoft/mpich2/PARPACK
+        export   PARPACK_LIBDIR=/opt/intelsoft/openmpi/PARPACK
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
@@ -233,13 +246,17 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 #         export  NETCDF_LIBDIR=/opt/intelsoft/mpich/netcdf4/lib
 #         export    HDF5_LIBDIR=/opt/intelsoft/mpich/hdf5/lib
 
-          export  NETCDF_INCDIR=/opt/intelsoft/mpich2/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/intelsoft/mpich2/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/intelsoft/mpich2/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/intelsoft/mpich2/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/intelsoft/mpich2/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/intelsoft/mpich2/hdf5/lib
 
-#         export  NETCDF_INCDIR=/opt/intelsoft/openmpi/netcdf4/include
-#         export  NETCDF_LIBDIR=/opt/intelsoft/openmpi/netcdf4/lib
-#         export    HDF5_LIBDIR=/opt/intelsoft/openmpi/hdf5/lib
+          export  NETCDF_INCDIR=/opt/intelsoft/openmpi/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/intelsoft/openmpi/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/intelsoft/openmpi/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/intelsoft/serial/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/intelsoft/serial/hdf5/lib
         else
           export  NETCDF_INCDIR=/opt/intelsoft/serial/netcdf4/include
           export  NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf4/lib
@@ -264,9 +281,9 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 
       export      ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
-        export   PARPACK_LIBDIR=/opt/pgisoft/mpich/PARPACK
+#       export   PARPACK_LIBDIR=/opt/pgisoft/mpich/PARPACK
 #       export   PARPACK_LIBDIR=/opt/pgisoft/mpich2/PARPACK
-#       export   PARPACK_LIBDIR=/opt/pgisoft/openmpi/PARPACK
+        export   PARPACK_LIBDIR=/opt/pgisoft/openmpi/PARPACK
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
@@ -275,13 +292,17 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 #         export  NETCDF_LIBDIR=/opt/pgisoft/mpich/netcdf4/lib
 #         export    HDF5_LIBDIR=/opt/pgisoft/mpich/hdf5/lib
 
-          export  NETCDF_INCDIR=/opt/pgisoft/mpich2/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/pgisoft/mpich2/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/pgisoft/mpich2/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/pgisoft/mpich2/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/pgisoft/mpich2/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/pgisoft/mpich2/hdf5/lib
 
-#         export  NETCDF_INCDIR=/opt/pgisoft/openmpi/netcdf4/include
-#         export  NETCDF_LIBDIR=/opt/pgisoft/openmpi/netcdf4/lib
-#         export    HDF5_LIBDIR=/opt/pgisoft/openmpi/hdf5/lib
+          export  NETCDF_INCDIR=/opt/pgisoft/openmpi/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/pgisoft/openmpi/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/pgisoft/openmpi/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/pgisoft/serial/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/pgisoft/serial/hdf5/lib
         else
           export  NETCDF_INCDIR=/opt/pgisoft/serial/netcdf4/include
           export  NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf4/lib
@@ -300,8 +321,8 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export      ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
 #       export   PARPACK_LIBDIR=/opt/gfortransoft/mpich/PARPACK
-        export   PARPACK_LIBDIR=/opt/gfortransoft/mpich2/PARPACK
-#       export   PARPACK_LIBDIR=/opt/gfortransoft/openmpi/PARPACK
+#       export   PARPACK_LIBDIR=/opt/gfortransoft/mpich2/PARPACK
+        export   PARPACK_LIBDIR=/opt/gfortransoft/openmpi/PARPACK
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
@@ -310,13 +331,17 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 #         export  NETCDF_LIBDIR=/opt/gfortransoft/mpich/netcdf4/lib
 #         export    HDF5_LIBDIR=/opt/gfortransoft/mpich/hdf5/lib
 
-          export  NETCDF_INCDIR=/opt/gfortransoft/mpich2/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/gfortransoft/mpich2/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/gfortransoft/mpich2/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/gfortransoft/mpich2/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/gfortransoft/mpich2/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/gfortransoft/mpich2/hdf5/lib
 
-#         export  NETCDF_INCDIR=/opt/gfortransoft/openmpi/netcdf4/include
-#         export  NETCDF_LIBDIR=/opt/gfortransoft/openmpi/netcdf4/lib
-#         export    HDF5_LIBDIR=/opt/gfortransoft/openmpi/hdf5/lib
+          export  NETCDF_INCDIR=/opt/gfortransoft/openmpi/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/gfortransoft/openmpi/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/gfortransoft/openmpi/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/gfortransoft/serial/hdf5/lib
         else
           export  NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf4/include
           export  NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf4/lib
@@ -335,19 +360,23 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       export      ARPACK_LIBDIR=/opt/g95soft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
 #       export   PARPACK_LIBDIR=/opt/g95soft/mpich/PARPACK
-        export   PARPACK_LIBDIR=/opt/g95soft/mpich2/PARPACK
+#       export   PARPACK_LIBDIR=/opt/g95soft/mpich2/PARPACK
         export   PARPACK_LIBDIR=/opt/g95soft/openmpi/PARPACK
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_MPI:+1}" ]; then
-          export  NETCDF_INCDIR=/opt/g95soft/mpich2/netcdf4/include
-          export  NETCDF_LIBDIR=/opt/g95soft/mpich2/netcdf4/lib
-          export    HDF5_LIBDIR=/opt/g95soft/mpich2/hdf5/lib
+#         export  NETCDF_INCDIR=/opt/g95soft/mpich2/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/g95soft/mpich2/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/g95soft/mpich2/hdf5/lib
 
-#         export  NETCDF_INCDIR=/opt/g95soft/openmpi/netcdf4/include
-#         export  NETCDF_LIBDIR=/opt/g95soft/openmpi/netcdf4/lib
-#         export    HDF5_LIBDIR=/opt/g95soft/openmpi/hdf5/lib
+          export  NETCDF_INCDIR=/opt/g95soft/openmpi/netcdf4/include
+          export  NETCDF_LIBDIR=/opt/g95soft/openmpi/netcdf4/lib
+          export    HDF5_LIBDIR=/opt/g95soft/openmpi/hdf5/lib
+
+#         export  NETCDF_INCDIR=/opt/g95soft/serial/netcdf4/include
+#         export  NETCDF_LIBDIR=/opt/g95soft/serial/netcdf4/lib
+#         export    HDF5_LIBDIR=/opt/g95soft/serial/hdf5/lib
         else
           export  NETCDF_INCDIR=/opt/g95soft/serial/netcdf4/include
           export  NETCDF_LIBDIR=/opt/g95soft/serial/netcdf4/lib

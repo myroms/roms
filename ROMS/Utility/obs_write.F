@@ -482,7 +482,7 @@
           DO iobs=Mstr,Mend
 #  if defined IS4DVAR
             misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
-     &                   (NLmodVal(iobs)+TLmodVal(iobs)-ObsVal(iobs))
+     &                   (NLmodVal(iobs)-ObsVal(iobs))
 #  elif defined WEAK_CONSTRAINT
             misfit(iobs)=ObsScale(iobs)/SQRT(ObsErr(iobs))*             &
      &                   (TLmodVal(iobs)-ObsVal(iobs))

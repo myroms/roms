@@ -311,6 +311,16 @@
          END DO
       END DO
 #elif defined UPWELLING
+# ifdef NS_PERIODIC
+      DO j=JstrR,JendR
+         DO i=Istr,IendR
+          sustr(i,j)=0.0_r8
+#  ifdef TL_IOMS
+          tl_sustr(i,j)=0.0_r8
+#  endif
+         END DO
+      END DO
+# else
       IF ((tdays(ng)-dstart).le.2.0_r8) THEN
         windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
       ELSE
@@ -319,11 +329,12 @@
       DO j=JstrR,JendR
         DO i=Istr,IendR
           sustr(i,j)=windamp
-# ifdef TL_IOMS
+#  ifdef TL_IOMS
           tl_sustr(i,j)=windamp
-# endif
+#  endif
         END DO
       END DO
+# endif
 #elif defined WINDBASIN
       IF ((tdays(ng)-dstart).le.2.0_r8) THEN
         windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
@@ -406,6 +417,31 @@
 # endif
         END DO
       END DO
+#elif defined UPEWELLING
+# ifdef NS_PERIODIC
+      IF ((tdays(ng)-dstart).le.2.0_r8) THEN
+        windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
+      ELSE
+        windamp=-0.1_r8/rho0
+      END IF
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          svstr(i,j)=windamp
+#  ifdef TL_IOMS
+          tl_svstr(i,j)=windamp
+#  endif
+        END DO
+      END DO
+# else
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          svstr(i,j)=0.0_r8
+#  ifdef TL_IOMS
+          tl_svstr(i,j)=0.0_r8
+#  endif
+        END DO
+      END DO
+# endif
 #else
       DO j=Jstr,JendR
         DO i=IstrR,IendR

@@ -847,6 +847,19 @@
         END DO
       END DO
 #elif defined UPWELLING
+# if defined NS_PERIODIC
+      DO i=IstrR,IendR
+        IF (i.le.Lm(ng)/2) THEN
+          val1=REAL(i,r8)
+        ELSE
+          val1=REAL(Lm(ng)+1-i,r8)
+        END IF
+        val2=MIN(depth,84.5_r8+66.526_r8*TANH((val1-10.0_r8)/7.0_r8))
+        DO j=JstrR,JendR
+          h(i,j)=val2
+        END DO
+      END DO
+# else
       DO j=JstrR,JendR
         IF (j.le.Mm(ng)/2) THEN
           val1=REAL(j,r8)
@@ -858,6 +871,7 @@
           h(i,j)=val2
         END DO
       END DO
+# endif
 #elif defined WEDDELL
       val1=98.80_r8
       val2=0.8270_r8
