@@ -228,7 +228,7 @@
 ** ANA_SSH             use if analytical sea surface height                  **
 ** ANA_SSS             use if analytical sea surface salinity                **
 ** ANA_SST             use if analytical SST and dQdSST                      **
-** ANA_STFLUX          use if analytical surface temperature flux            **
+** ANA_STFLUX          use if analytical surface net heat flux               **
 ** ANA_TAIR            use if analytical surface air temperature             **
 ** ANA_TCLIMA          use if analytical tracers climatology                 **
 ** ANA_TOBC            use if analytical tracers boundary conditions         **

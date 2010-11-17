@@ -106,11 +106,12 @@
 
       real(r8) :: p1, p2, q1, q2, r1, r2
       real(r8) :: s111, s211, s121, s221, s112, s212, s122, s222
+      real(r8) :: t111, t211, t121, t221, t112, t212, t122, t222
 
 # ifdef MASKING
       integer :: Irn, Irnm1, Irnp1, Jrn, Jrnm1, Jrnp1
 
-      real(r8) :: cff1, cff2
+      real(r8) :: cff1, cff2, cff3
 # endif
 !
 !-----------------------------------------------------------------------
@@ -151,6 +152,14 @@
         s122=1.0_r8
         s212=1.0_r8
         s222=1.0_r8
+        t111=1.0_r8
+        t121=1.0_r8
+        t211=1.0_r8
+        t221=1.0_r8
+        t112=1.0_r8
+        t122=1.0_r8
+        t212=1.0_r8
+        t222=1.0_r8
       END IF
 !
 !-----------------------------------------------------------------------
@@ -214,6 +223,10 @@
      &               (Hz(i1,j2,khm)+Hz(i1,j2,khp))
                 s221=2.0_r8*pm(i2,j2)*pn(i2,j2)/                        &
      &               (Hz(i2,j2,khm)+Hz(i2,j2,khp))
+                t111=2.0_r8/(Hz(i1,j1,khm)+Hz(i1,j1,khp))
+                t211=2.0_r8/(Hz(i2,j1,khm)+Hz(i2,j1,khp))
+                t121=2.0_r8/(Hz(i1,j2,khm)+Hz(i1,j2,khp))
+                t221=2.0_r8/(Hz(i2,j2,khm)+Hz(i2,j2,khp))
                 khm=MIN(MAX(k2  ,1),N(ng))
                 khp=MIN(MAX(k2+1,1),N(ng))
                 s112=2.0_r8*pm(i1,j1)*pn(i1,j1)/                        &
@@ -224,20 +237,16 @@
      &               (Hz(i1,j2,khm)+Hz(i1,j2,khp))
                 s222=2.0_r8*pm(i2,j2)*pn(i2,j2)/                        &
      &               (Hz(i2,j2,khm)+Hz(i2,j2,khp))
+                t112=2.0_r8/(Hz(i1,j1,khm)+Hz(i1,j1,khp))
+                t212=2.0_r8/(Hz(i2,j1,khm)+Hz(i2,j1,khp))
+                t122=2.0_r8/(Hz(i1,j2,khm)+Hz(i1,j2,khp))
+                t222=2.0_r8/(Hz(i2,j2,khm)+Hz(i2,j2,khp))
               END IF
 # endif
 !
               IF (Lmask) THEN
 # ifdef MASKING
-                cff1=p1*q1*r1*Amask(i1,j1)*s111*A(i1,j1,k1)+            &
-     &               p2*q1*r1*Amask(i2,j1)*s211*A(i2,j1,k1)+            &
-     &               p1*q2*r1*Amask(i1,j2)*s121*A(i1,j2,k1)+            &
-     &               p2*q2*r1*Amask(i2,j2)*s221*A(i2,j2,k1)+            &
-     &               p1*q1*r2*Amask(i1,j1)*s112*A(i1,j1,k2)+            &
-     &               p2*q1*r2*Amask(i2,j1)*s212*A(i2,j1,k2)+            &
-     &               p1*q2*r2*Amask(i1,j2)*s122*A(i1,j2,k2)+            &
-     &               p2*q2*r2*Amask(i2,j2)*s222*A(i2,j2,k2)
-                cff2=p1*q1*r1*Amask(i1,j1)+                             &
+                cff1=p1*q1*r1*Amask(i1,j1)+                             &
      &               p2*q1*r1*Amask(i2,j1)+                             &
      &               p1*q2*r1*Amask(i1,j2)+                             &
      &               p2*q2*r1*Amask(i2,j2)+                             &
@@ -245,8 +254,24 @@
      &               p2*q1*r2*Amask(i2,j1)+                             &
      &               p1*q2*r2*Amask(i1,j2)+                             &
      &               p2*q2*r2*Amask(i2,j2)
-                IF (cff2.gt.0.0_r8) THEN
-                  track(ifield,itime,l)=cff1/cff2+nudg(l)
+                IF (cff1.gt.0.0_r8) THEN
+                  cff2=p1*q1*r1*Amask(i1,j1)*s111*A(i1,j1,k1)+          &
+     &                 p2*q1*r1*Amask(i2,j1)*s211*A(i2,j1,k1)+          &
+     &                 p1*q2*r1*Amask(i1,j2)*s121*A(i1,j2,k1)+          &
+     &                 p2*q2*r1*Amask(i2,j2)*s221*A(i2,j2,k1)+          &
+     &                 p1*q1*r2*Amask(i1,j1)*s112*A(i1,j1,k2)+          &
+     &                 p2*q1*r2*Amask(i2,j1)*s212*A(i2,j1,k2)+          &
+     &                 p1*q2*r2*Amask(i1,j2)*s122*A(i1,j2,k2)+          &
+     &                 p2*q2*r2*Amask(i2,j2)*s222*A(i2,j2,k2)
+                  cff3=(p1*q1*r1*Amask(i1,j1)*t111+                     &
+     &                  p2*q1*r1*Amask(i2,j1)*t211+                     &
+     &                  p1*q2*r1*Amask(i1,j2)*t121+                     &
+     &                  p2*q2*r1*Amask(i2,j2)*t221+                     &
+     &                  p1*q1*r2*Amask(i1,j1)*t112+                     &
+     &                  p2*q1*r2*Amask(i2,j1)*t212+                     &
+     &                  p1*q2*r2*Amask(i1,j2)*t122+                     &
+     &                  p2*q2*r2*Amask(i2,j2)*t222)*nudg(l)
+                  track(ifield,itime,l)=cff2/cff1+cff3
                 ELSE
                   track(ifield,itime,l)=0.0_r8
                 END IF
@@ -260,7 +285,14 @@
      &                                p2*q1*r2*s212*A(i2,j1,k2)+        &
      &                                p1*q2*r2*s122*A(i1,j2,k2)+        &
      &                                p2*q2*r2*s222*A(i2,j2,k2)+        &
-     &                                nudg(l)
+     &                                (p1*q1*r1*t111+                   &
+     &                                 p2*q1*r1*t211+                   &
+     &                                 p1*q2*r1*t121+                   &
+     &                                 p2*q2*r1*t221+                   &
+     &                                 p1*q1*r2*t112+                   &
+     &                                 p2*q1*r2*t212+                   &
+     &                                 p1*q2*r2*t122+                   &
+     &                                 p2*q2*r2*t222)*nudg(l)
               END IF
 !
 !-----------------------------------------------------------------------
