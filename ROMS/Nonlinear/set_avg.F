@@ -2341,7 +2341,7 @@
           DO nk=0,NTC2
             DO j=JstrR,JendR
               DO i=Istr,IendR
-               TIDES(ng)%ubar_tide(i,j,nk)=TIDES(ng)%ubar_tide(i,j,    &
+               TIDES(ng)%ubar_tide(i,j,nk)=TIDES(ng)%ubar_tide(i,j,     &
      &                                                          nk)+    &
      &                                      OCEAN(ng)%ubar(i,j,Kout)*   &
      &                                      tide_harmonics(nk)
@@ -2617,9 +2617,9 @@
             END DO
           END IF
         END DO
-
-      END IF
 #  endif
+      END IF
+
       RETURN
       END SUBROUTINE set_detide_tile
 # endif

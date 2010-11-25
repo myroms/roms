@@ -2548,7 +2548,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' UV_VIS4,'
 #endif
-#if defined UV_SMAGORINSKY && (defined UV_DIF2 || defined UV_DIF4)
+#if defined UV_SMAGORINSKY && (defined UV_VIS2 || defined UV_VIS4)
       IF (Master) WRITE (stdout,20) 'UV_SMAGORINSKY',                   &
      &   'Smagorinksy-like time-dependent viscosity coefficients.'
       is=LEN_TRIM(Coptions)+1

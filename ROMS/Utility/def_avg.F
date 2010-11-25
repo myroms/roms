@@ -536,7 +536,7 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idv2dD,ng),r8)
-          status=def_var(ng, model, ncAVGid(ng), avgVid(idv2dD,ng),       &
+          status=def_var(ng, model, ncAVGid(ng), avgVid(idv2dD,ng),     &
      &                 NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
@@ -1108,7 +1108,7 @@
             Vinfo(22)='coordinates'
             Aval(5)=REAL(v3dvar,r8)
             status=def_var(ng, model, ncAVGid(ng),                      &
-     &                     avgVid(iHVTav(itrc),ng), NF_FOUT,              &
+     &                     avgVid(iHVTav(itrc),ng), NF_FOUT,            &
      &                     nvd4, v3dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -2083,6 +2083,10 @@
      &               TRIM(Vname(1,idVTav(itrc)))) THEN
               got_var(idVTav(itrc))=.TRUE.
               avgVid(idVTav(itrc),ng)=var_id(i)
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idTTav(itrc)))) THEN
+              got_var(idTTav(itrc))=.TRUE.
+              avgVid(idTTav(itrc),ng)=var_id(i)
             END IF
           END DO
 #  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
@@ -2554,6 +2558,12 @@
           END IF
           IF (.not.got_var(idVTav(itrc)).and.Aout(idVTav(itrc),ng)) THEN
             IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVTav(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+          IF (.not.got_var(idTTav(itrc)).and.Aout(idTTav(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTTav(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN

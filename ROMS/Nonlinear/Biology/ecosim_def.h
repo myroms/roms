@@ -24,21 +24,27 @@
 
       Vinfo( 1)='RtUVR_flag'
       Vinfo( 2)='switch to calculate CDOC UV photolysis.'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='NFIX_flag'
       Vinfo( 2)='switch to calculate temperature based N fixation'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
       Vinfo( 1)='Regen_flag'
       Vinfo( 2)='switch to calculate fecal matter regeneration'
-      status=def_var(ng, model, ncid, varid, nf90_char,                 &
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN

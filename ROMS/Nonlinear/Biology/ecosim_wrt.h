@@ -20,21 +20,18 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') RtUVR_flag(ng)
-      CALL netcdf_put_svar (ng, model, ncname, 'RtUVR_flag',            &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'RtUVR_flag',            &
+     &                      RtUVR_flag(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') NFIX_flag(ng)
-      CALL netcdf_put_svar (ng, model, ncname, 'NFIX_flag',             &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'NFIX_flag',             &
+     &                      NFIX_flag(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      WRITE (char1,'(l1)') Regen_flag(ng)
-      CALL netcdf_put_svar (ng, model, ncname, 'Regen_flag',            &
-     &                      char1, (/0/), (/0/),                        &
+      CALL netcdf_put_lvar (ng, model, ncname, 'Regen_flag',            &
+     &                      Regen_flag(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
