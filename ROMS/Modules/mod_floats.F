@@ -18,6 +18,10 @@
 !               Ftype(:) = 2,  isobaric (constant depth) float.        !
 !  Tinfo      Float trajectory initial information.                    !
 !  bounded    Float bounded status switch.                             !
+# if defined SOLVE3D && defined FLOAT_VWALK
+!  rwalk      Normally distrivuted random deviates used in vertical    !
+!               random walk.                                           !
+# endif
 !  track      Multivariate float trajectory data at several time       !
 !               time levels.                                           !
 !                                                                      !
@@ -36,9 +40,12 @@
 
           real(r8), pointer :: Flon(:)
           real(r8), pointer :: Flat(:)
-          real(r8), pointer :: Tinfo(:,:)
-          real(r8), pointer :: track(:,:,:)
           real(r8), pointer :: Fz0(:)
+          real(r8), pointer :: Tinfo(:,:)
+# if defined SOLVE3D && defined FLOAT_VWALK
+          real(r8), pointer :: rwalk(:)
+# endif
+          real(r8), pointer :: track(:,:,:)
 
         END TYPE T_FLT
 
@@ -83,11 +90,15 @@
 
       allocate ( FLT(ng) % Flat(Nfloats(ng)) )
 
+      allocate ( FLT(ng) % Fz0(Nfloats(ng)) )
+
       allocate ( FLT(ng) % Tinfo(0:izrhs,Nfloats(ng)) )
 
-      allocate ( FLT(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
+# if defined SOLVE3D && defined FLOAT_VWALK
+      allocate ( FLT(ng) % rwalk(Nfloats(ng)) )
+# endif
 
-      allocate ( FLT(ng) % Fz0(Nfloats(ng)) )
+      allocate ( FLT(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
@@ -101,6 +112,9 @@
         FLT(ng) % Flon(iflt) = IniVal
         FLT(ng) % Flat(iflt) = IniVal
         FLT(ng) % Fz0(iflt) = 0
+# if defined SOLVE3D && defined FLOAT_VWALK
+        FLT(ng) % rwalk = IniVal
+# endif
         DO i=0,izrhs
           FLT(ng) % Tinfo(i,iflt) = IniVal
         END DO

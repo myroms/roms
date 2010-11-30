@@ -62,6 +62,7 @@
      &                        Predictor, MyThread,                      &
      &                        FLT(ng) % bounded,                        &
      &                        FLT(ng) % Tinfo,                          &
+     &                        FLT(ng) % rwalk,                          &
      &                        nudg,                                     &
      &                        FLT(ng) % track)
 # ifdef PROFILE
@@ -76,7 +77,7 @@
       SUBROUTINE vwalk_floats_tile (ng, Lstr, Lend,                     &
      &                              nfm3, nfm2, nfm1, nf, nfp1,         &
      &                              Predictor, MyThread, bounded,       &
-     &                              Tinfo, nudg, track)
+     &                              Tinfo, rwalk, nudg, track)
 !***********************************************************************
 !
       USE mod_param
@@ -91,7 +92,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf
 # endif
-      USE utility_mod, ONLY : nrng
+      USE nrutil, ONLY : gasdev
 !
 !  Imported variable declarations.
 !
@@ -105,6 +106,7 @@
 
       real(r8), intent(in) :: Tinfo(0:,:)
 
+      real(r8), intent(inout) :: rwalk(:)
       real(r8), intent(inout) :: nudg(Lstr:)
       real(r8), intent(inout) :: track(:,0:,:)
 # else
@@ -113,6 +115,7 @@
 
       real(r8), intent(in) :: Tinfo(0:izrhs,Nfloats(ng))
 
+      real(r8), intent(inout) :: rwalk(Nfloats(ng))
       real(r8), intent(inout) :: nudg(Lstr:Lend)
       real(r8), intent(inout) :: track(NFV(ng),0:NFT,Nfloats(ng))
 # endif
@@ -150,6 +153,25 @@
         nfindx=nfp1
       END IF
 !
+!  If predictor step, generate random number sequence.
+!
+      IF (Predictor) THEN
+# ifdef DISTRIBUTE
+        IF (Master) THEN
+          CALL gasdev (rwalk)
+        END IF
+        CALL mp_bcastf (ng, iNLM, rwalk)
+# elif defined _OPENMP
+!$OMP SINGLE
+        CALL gasdev (rwalk)
+!$OMP END SINGLE
+# else
+        IF (Lstr.eq.1) THEN
+          CALL gasdev (rwalk)
+        END IF
+# endif
+      END IF
+!
 !  Interpolate vertical diffusion (temperature) coefficient and its
 !  gradient to float locations.
 !
@@ -181,20 +203,13 @@
      &                    MIXING(ng) % dAktdz,                          &
      &                    MyThread, bounded, track)
 !
-!  Compute nudging velocity coefficients, use a randon number generator
-!  with a Gaussian distribution.
-!
-      IF (Master) THEN
-        CALL nrng (flt_iseed, nudg(Lstr:), Lend-Lstr+1, ierr)
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, iNLM, nudg)
-# endif
+!  Compute nudging velocity coefficients. Use normally distributed
+!  random numbers.
 !
       cff=2.0_r8/dt(ng)
       DO l=Lstr,Lend
         IF (MyThread(l).and.bounded(l)) THEN
-          nudg(l)=SQRT(cff*MAX(0.0_r8,track(ifakt,nfindx,l)))*nudg(l)+  &
+          nudg(l)=SQRT(cff*MAX(0.0_r8,track(ifakt,nfindx,l)))*rwalk(l)+ &
      &            track(ifdak,nfindx,l)
         ELSE
           nudg(l)=0.0_r8
@@ -221,7 +236,7 @@
 
       DO l=Lstr,Lend
         IF (MyThread(l).and.bounded(l)) THEN
-          IF (time(ng)-HalfDT.le.Tinfo(itstr,l).and.                        &
+          IF (time(ng)-HalfDT.le.Tinfo(itstr,l).and.                    &
      &        time(ng)+HalfDT.gt.Tinfo(itstr,l)) THEN
             akt =track(ifakt,nfindx,l)
             dakt=track(ifdak,nfindx,l)

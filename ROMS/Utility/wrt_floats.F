@@ -111,7 +111,11 @@
 !  Write out floats (lon,lat) or (x,y) locations.
 !
       DO l=1,Nfloats(ng)
-        Tout(l)=FLT(ng)%track(iflon,nf(ng),l)
+        IF (FLT(ng)%bounded(l)) THEN
+          Tout(l)=FLT(ng)%track(iflon,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
       END DO
       IF (spherical) THEN
         CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
@@ -129,7 +133,11 @@
       IF (exit_flag.ne.NoError) RETURN
 !
       DO l=1,Nfloats(ng)
-        Tout(l)=FLT(ng)%track(iflat,nf(ng),l)
+        IF (FLT(ng)%bounded(l)) THEN
+          Tout(l)=FLT(ng)%track(iflat,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
       END DO
       IF (spherical) THEN
         CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &

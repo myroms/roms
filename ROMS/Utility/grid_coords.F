@@ -108,14 +108,13 @@
 #  endif
             DO i=1,mc
               l=FLT(ng)%Findex(i)
-              FLT(ng)%Tinfo(ixgrd,l)=MIN(MAX(0.5_r8,Iflt(i)),           &
-     &                               REAL(Lm(ng),r8)+0.5_r8)
-              FLT(ng)%Tinfo(iygrd,l)=MIN(MAX(0.5_r8,Jflt(i)),           &
-     &                               REAL(Mm(ng),r8)+0.5_r8)
+              FLT(ng)%Tinfo(ixgrd,l)=Iflt(i)
+              FLT(ng)%Tinfo(iygrd,l)=Jflt(i)
             END DO
           END IF
         END IF
       END IF
+
 #  ifdef SOLVE3D
 !
 !  Determine which node bounds the initial float location.
