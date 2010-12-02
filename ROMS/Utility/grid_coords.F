@@ -140,16 +140,20 @@
 #  endif
 !
 !-----------------------------------------------------------------------
-!  Set float initial vertical level position.  If the initial float
-!  depth (in meters) is not found, release float at the surface model
-!  level.
+!  Set float initial vertical level position, if inside application
+!  grid.  If the initial float depth (in meters) is not found, release
+!  float at the surface model level.
 !-----------------------------------------------------------------------
 !
       DO l=1,Nfloats(ng)
         IF (Lfloats(ng)) THEN
 #  ifdef SOLVE3D
           FLT(ng)%Fz0(l)=spv
-          IF (MyThread(l)) THEN
+          IF (MyThread(l).and.                                          &
+     &        ((FLT(ng)%Tinfo(ixgrd,l).ge.0.5_r8).and.                  &
+     &         (FLT(ng)%Tinfo(iygrd,l).ge.0.5_r8).and.                  &
+     &         (FLT(ng)%Tinfo(ixgrd,l).le.REAL(Lm(ng),r8)+0.5_r8).and.  &
+     &         (FLT(ng)%Tinfo(iygrd,l).le.REAL(Mm(ng),r8)+0.5_r8))) THEN
             zfloat=FLT(ng)%Tinfo(izgrd,l)
             FLT(ng)%Fz0(l)=zfloat               ! Save original value
             Kflt(l)=zfloat
