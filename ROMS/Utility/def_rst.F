@@ -856,6 +856,9 @@
 # ifdef PERFECT_RESTART
 !
 !  Define RHS of 3D momentum equation in the XI-direction.
+!  Although this variable is a U-points, a negative value is used
+!  here to set "s_w" in the "coordinate" attribute.  The k=0 index
+!  is used during coupling in step2d.
 !
         Vinfo( 1)=Vname(1,idRu3d)
         Vinfo( 2)=Vname(2,idRu3d)
@@ -871,7 +874,7 @@
 #   endif
 #  endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idRu3d,ng),r8)
+        Aval(5)=REAL(-u3dvar, r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idRu3d,ng),        &
      &                 NF_FRST, nvd5, ru3dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -906,6 +909,9 @@
 # ifdef PERFECT_RESTART
 !
 !  Define RHS of 3D momentum equation in the ETA-direction.
+!  Although this variable is a V-points, a negative value is used
+!  here to set "s_w" in the "coordinate" attribute.  The k=0 index
+!  is used during coupling in step2d.
 !
         Vinfo( 1)=Vname(1,idRv3d)
         Vinfo( 2)=Vname(2,idRv3d)
@@ -921,7 +927,7 @@
 #   endif
 #  endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idRv3d,ng),r8)
+        Aval(5)=REAL(-v3dvar,r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idRv3d,ng),        &
      &                 NF_FRST, nvd5, rv3dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -936,16 +942,16 @@
           Vinfo(14)=Vname(4,idTvar(itrc))
           Vinfo(16)=Vname(1,idtime)
 # ifdef SEDIMENT
-            DO i=1,NST
-              IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
-              END IF
-            END DO
+          DO i=1,NST
+            IF (itrc.eq.idsed(i)) THEN
+              WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
+            END IF
+          END DO
 # endif
 # if defined WRITE_WATER && defined MASKING
 #  if defined PERFECT_RESTART
-        Vinfo(24)='_FillValue'
-        Aval(6)=spval
+          Vinfo(24)='_FillValue'
+          Aval(6)=spval
 #  else
           Vinfo(20)='mask_rho'
 #  endif
