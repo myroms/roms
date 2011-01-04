@@ -49,6 +49,9 @@
 !
 # include "tile.h"
 !
+# ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 12)
+# endif
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
@@ -64,6 +67,9 @@
      &                     GRID(ng) % Hz,                               &
      &                     GRID(ng) % z_r,                              &
      &                     GRID(ng) % z_w)
+# ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 12)
+# endif
       RETURN
       END SUBROUTINE set_depth
 !
@@ -316,6 +322,9 @@
 !
 #  include "tile.h"
 !
+#  ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 12)
+#  endif
       CALL set_depth_bry_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         IminS, ImaxS, JminS, JmaxS,              &
@@ -336,6 +345,9 @@
      &                         BOUNDARY(ng) % zeta_north,               &
 #  endif
      &                         GRID(ng) % Hz_bry)
+#  ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 12)
+#  endif
       RETURN
       END SUBROUTINE set_depth_bry
 !

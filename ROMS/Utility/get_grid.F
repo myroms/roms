@@ -315,7 +315,7 @@
               EXIT
             END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-            CALL exchange_r2d_tile (ng, tile,                           &
+            CALL exchange_u2d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              GRID(ng) % umask)
 #  endif

@@ -149,7 +149,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % rmask_io,                        &
 # endif
      &                      OCEAN(ng) % ad_zeta(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -167,7 +167,7 @@
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 # ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_io,                       &
 # endif
      &                       OCEAN(ng) % ad_zeta(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -199,7 +199,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
-     &                      GRID(ng) % umask,                           &
+     &                      GRID(ng) % umask_io,                        &
 #  endif
      &                      OCEAN(ng) % ad_ubar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -217,7 +217,7 @@
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
-     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % umask_io,                       &
 #  endif
      &                       OCEAN(ng) % ad_ubar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -247,7 +247,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
-     &                      GRID(ng) % vmask,                           &
+     &                      GRID(ng) % vmask_io,                        &
 #  endif
      &                      OCEAN(ng) % ad_vbar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -265,7 +265,7 @@
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
+     &                       GRID(ng) % vmask_io,                       &
 #  endif
      &                       OCEAN(ng) % ad_vbar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -297,7 +297,7 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
-     &                      GRID(ng) % umask,                           &
+     &                      GRID(ng) % umask_io,                        &
 #  endif
      &                      OCEAN(ng) % ad_u(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -314,7 +314,7 @@
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
-     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % umask_io,                       &
 #  endif
      &                       OCEAN(ng) % ad_u(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -344,7 +344,7 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
-     &                      GRID(ng) % vmask,                           &
+     &                      GRID(ng) % vmask_io,                        &
 #  endif
      &                      OCEAN(ng) % ad_v(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -361,7 +361,7 @@
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
+     &                       GRID(ng) % vmask_io,                       &
 #  endif
      &                       OCEAN(ng) % ad_v(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
@@ -393,7 +393,7 @@
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        scale, Fmin, Fmax,                        &
 #  ifdef MASKING
-     &                        GRID(ng) % rmask,                         &
+     &                        GRID(ng) % rmask_io,                      &
 #  endif
      &                        OCEAN(ng) % ad_t(:,:,:,Iinp,i))
             IF (status.ne.nf90_noerr) THEN
@@ -410,7 +410,7 @@
      &                         Iout, MyType,                            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
 #  ifdef MASKING
-     &                         GRID(ng) % rmask,                        &
+     &                         GRID(ng) % rmask_io,                     &
 #  endif
      &                         OCEAN(ng) % ad_t(:,:,:,Iinp,i))
             IF (status.ne.nf90_noerr) THEN

@@ -107,6 +107,9 @@
      &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
+# if defined WET_DRY && defined DIAGNOSTICS_BIO
+     &                   GRID(ng) % rmask_io,                           &
+# endif
 #endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
@@ -144,6 +147,9 @@
      &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
+# if defined WET_DRY && defined DIAGNOSTICS_BIO
+     &                         rmask_io,                                &
+# endif
 #endif
      &                         Hz, z_r, z_w, srflx,                     &
 #if defined CARBON || defined OXYGEN
@@ -177,6 +183,9 @@
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
+#  if defined WET_DRY && defined DIAGNOSTICS_BIO
+      real(r8), intent(in) :: rmask_io(LBi:,LBj:)
+#  endif
 # endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
@@ -202,6 +211,9 @@
 #else
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#  if defined WET_DRY && defined DIAGNOSTICS_BIO
+      real(r8), intent(in) :: rmask_io(LBi:UBi,LBj:UBj)
+#  endif
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
@@ -594,8 +606,14 @@
      &                         (PhyIS(ng)*MAX(Chl2C,eps)*PAR+eps)
 #ifdef DIAGNOSTICS_BIO
                 DiaBio3d(i,j,k,iPPro)=DiaBio3d(i,j,k,iPPro)+            &
-     &                                N_Flux_NewProd+N_Flux_RegProd
+# ifdef WET_DRY
+     &                                rmask_io(i,j)*                    &
+# endif
+     &                                (N_Flux_NewProd+N_Flux_RegProd)
                 DiaBio3d(i,j,k,iNO3u)=DiaBio3d(i,j,k,iNO3u)+            &
+# ifdef WET_DRY
+     &                                rmask_io(i,j)*                    &
+# endif
      &                                N_Flux_NewProd
 #endif
 #ifdef OXYGEN
@@ -891,6 +909,9 @@
      &                     O2_Flux*Hz_inv(i,k)
 # ifdef DIAGNOSTICS_BIO
             DiaBio2d(i,j,iO2fx)=DiaBio2d(i,j,iO2fx)+                    &
+#  ifdef WET_DRY
+     &                          rmask_io(i,j)*                          &
+#  endif
      &                          O2_Flux
 # endif
 
@@ -989,8 +1010,14 @@
      &                     CO2_Flux*Hz_inv(i,k)
 # ifdef DIAGNOSTICS_BIO
             DiaBio2d(i,j,iCOfx)=DiaBio2d(i,j,iCOfx)+                    &
+#  ifdef WET_DRY
+     &                          rmask_io(i,j)*                          &
+#  endif
      &                          CO2_Flux
             DiaBio2d(i,j,ipCO2)=pCO2(i)
+#  ifdef WET_DRY
+            DiaBio2d(i,j,ipCO2)=DiaBio2d(i,j,ipCO2)*rmask_io(i,j)
+#  endif
 # endif
           END DO
 #endif
@@ -1196,6 +1223,9 @@
                 Bio(i,1,iNH4_)=Bio(i,1,iNH4_)+cff1*cff2
 #  ifdef DIAGNOSTICS_BIO
                 DiaBio2d(i,j,iDNIT)=DiaBio2d(i,j,iDNIT)+                &
+#   ifdef WET_DRY
+     &                              rmask_io(i,j)*                      &
+#   endif
      &                              (1.0_r8-cff2)*cff1*Hz(i,j,1)
 #  endif
 #  ifdef OXYGEN

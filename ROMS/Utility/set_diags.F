@@ -56,6 +56,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+      USE mod_biology
+# endif
       USE mod_diags
       USE mod_grid
       USE mod_ocean
@@ -65,7 +68,15 @@
 # ifdef SOLVE3D
       USE bc_3d_mod
 # endif
+# ifdef WET_DRY
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+      USE exchange_2d_mod
+#  endif
+# endif
 # ifdef DISTRIBUTE
+#  ifdef WET_DRY
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#  endif
       USE mp_exchange_mod, ONLY : mp_exchange3d
 #  ifdef SOLVE3D
       USE mp_exchange_mod, ONLY : mp_exchange4d
@@ -100,6 +111,10 @@
 
       real(r8) :: fac
 
+      real(r8) :: rfac(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: ufac(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: vfac(IminS:ImaxS,JminS:JmaxS)
+
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -119,6 +134,45 @@
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nDIA(ng)).eq.1)).or.                          &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+
+#  ifdef WET_DRY
+!
+!  If wetting and drying, initialize time dependent counters for wet
+!  points. The time averaged field at each point is only accumulated
+!  over wet points since its multiplied by the appropriate mask.
+!
+        DO j=Jstr,JendR
+          DO i=Istr,IendR
+            GRID(ng)%pmask_dia(i,j)=MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%pmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%rmask_dia(i,j)=MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%rmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            GRID(ng)%umask_dia(i,j)=MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%umask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%vmask_dia(i,j)=MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%vmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+#  endif
+!
+!  Initialize.
+!
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -126,6 +180,9 @@
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
                   DIAGS(ng)%DiaTrc(i,j,k,it,idiag)=                     &
+#   ifdef WET_DRY
+     &                      GRID(ng)%rmask_io(i,j)*                     &
+#   endif
      &                      DIAGS(ng)%DiaTwrk(i,j,k,it,idiag)
                 END DO
               END DO
@@ -137,12 +194,20 @@
         DO idiag=1,NDM2d
           DO j=JstrR,JendR
             DO i=Istr,IendR
-              DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2wrk(i,j,idiag)
+              DIAGS(ng)%DiaU2d(i,j,idiag)=                              &
+#   ifdef WET_DRY
+     &                                    GRID(ng)%umask_io(i,j)*       &
+#   endif
+     &                                    DIAGS(ng)%DiaU2wrk(i,j,idiag)
             END DO
           END DO
           DO j=Jstr,JendR
             DO i=IstrR,IendR
-              DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2wrk(i,j,idiag)
+              DIAGS(ng)%DiaV2d(i,j,idiag)=                              &
+#   ifdef WET_DRY
+     &                                    GRID(ng)%vmask_io(i,j)*       &
+#   endif
+     &                                    DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
         END DO
@@ -152,12 +217,18 @@
             DO j=JstrR,JendR
               DO i=Istr,IendR
                 DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
+#    ifdef WET_DRY
+     &                    GRID(ng)%umask_io(i,j)*                       &
+#    endif
      &                    DIAGS(ng)%DiaU3wrk(i,j,k,idiag)
               END DO
             END DO
             DO j=Jstr,JendR
               DO i=IstrR,IendR
                 DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
+#    ifdef WET_DRY
+     &                    GRID(ng)%vmask_io(i,j)*                       &
+#    endif
      &                    DIAGS(ng)%DiaV3wrk(i,j,k,idiag)
               END DO
             END DO
@@ -171,6 +242,49 @@
 !-----------------------------------------------------------------------
 !
       ELSE IF (iic(ng).gt.ntsDIA(ng)) THEN
+
+#  ifdef WET_DRY
+!
+!  If wetting and drying, accumulate wet points counters.
+!  points. The time averaged field at each point is only accumulated
+!  over wet points since its multiplied by the appropriate mask.
+!
+        DO j=Jstr,JendR
+          DO i=Istr,IendR
+            GRID(ng)%pmask_dia(i,j)=GRID(ng)%pmask_dia(i,j)+            &
+     &                              MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%pmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%rmask_dia(i,j)=GRID(ng)%rmask_dia(i,j)+            &
+     &                              MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%rmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            GRID(ng)%umask_dia(i,j)=GRID(ng)%umask_dia(i,j)+            &
+     &                              MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%umask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%vmask_dia(i,j)=GRID(ng)%vmask_dia(i,j)+            &
+     &                              MAX(0.0_r8,                         &
+     &                                  MIN(GRID(ng)%vmask_io(i,j),     &
+     &                                      1.0_r8))
+          END DO
+        END DO
+#  endif
+!
+!  Accumulate diagnostic terms.
+!
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -179,6 +293,9 @@
                 DO i=IstrR,IendR
                   DIAGS(ng)%DiaTrc(i,j,k,it,idiag)=                     &
      &                      DIAGS(ng)%DiaTrc(i,j,k,it,idiag)+           &
+#   ifdef WET_DRY
+     &                      GRID(ng)%rmask_io(i,j)*                     &
+#   endif
      &                      DIAGS(ng)%DiaTwrk(i,j,k,it,idiag)
                 END DO
               END DO
@@ -191,12 +308,18 @@
           DO j=JstrR,JendR
             DO i=Istr,IendR
               DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2d(i,j,idiag)+  &
+#   ifdef WET_DRY
+     &                                    GRID(ng)%umask_io(i,j)*       &
+#   endif
      &                                    DIAGS(ng)%DiaU2wrk(i,j,idiag)
             END DO
           END DO
           DO j=Jstr,JendR
             DO i=IstrR,IendR
               DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2d(i,j,idiag)+  &
+#   ifdef WET_DRY
+     &                                    GRID(ng)%vmask_io(i,j)*       &
+#   endif
      &                                    DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
@@ -208,6 +331,9 @@
               DO i=Istr,IendR
                 DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaU3d(i,j,k,idiag)+                &
+#    ifdef WET_DRY
+     &                    GRID(ng)%umask_io(i,j)*                       &
+#    endif
      &                    DIAGS(ng)%DiaU3wrk(i,j,k,idiag)
               END DO
             END DO
@@ -215,6 +341,9 @@
               DO i=IstrR,IendR
                 DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
      &                    DIAGS(ng)%DiaV3d(i,j,k,idiag)+                &
+#    ifdef WET_DRY
+     &                    GRID(ng)%vmask_io(i,j)*                       &
+#    endif
      &                    DIAGS(ng)%DiaV3wrk(i,j,k,idiag)
               END DO
             END DO
@@ -226,7 +355,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Set diagnotics time.
+!  Convert accumulated sums into time-averages, if appropriate
 !-----------------------------------------------------------------------
 !
       IF ((iic(ng).gt.ntsDIA(ng)).and.                                  &
@@ -235,12 +364,165 @@
         IF (SOUTH_WEST_TEST) THEN
           DIAtime(ng)=DIAtime(ng)+REAL(nDIA(ng),r8)*dt(ng)
         END IF
+!
+!  Set time-averaged factors for each C-grid variable type. Notice that
+!  the I- and J-ranges are all grid types are the same for convinience.
+# ifdef WET_DRY
+!  In wetting and drying, the sums are devided by the number of times
+!  that each qrid point is wet.
+# endif
+!
+# ifdef WET_DRY
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            rfac(i,j)=1.0_r8/MAX(1.0_r8, GRID(ng)%rmask_dia(i,j))
+            ufac(i,j)=1.0_r8/MAX(1.0_r8, GRID(ng)%umask_dia(i,j))
+            vfac(i,j)=1.0_r8/MAX(1.0_r8, GRID(ng)%vmask_dia(i,j))
+          END DO
+        END DO
+# else
+        fac=1.0_r8/REAL(nDIA(ng),r8)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            rfac(i,j)=fac
+            ufac(i,j)=fac
+            vfac(i,j)=fac
+          END DO
+        END DO
+# endif
+
+# ifdef WET_DRY
+!
+!  If last time-step of average window, convert time dependent counters
+!  for wet points to time-averaged Land/Sea masks (dry=0, wet=1) for
+!  the current average window period. Notice that a grid point is wet
+!  if the count is greater than zero for the current time average
+!  window.
+!
+        DO j=Jstr,JendR
+          DO i=Istr,IendR
+            GRID(ng)%pmask_dia(i,j)=MIN(1.0_r8, GRID(ng)%pmask_dia(i,j))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%rmask_dia(i,j)=MIN(1.0_r8, GRID(ng)%rmask_dia(i,j))
+          END DO
+        END DO
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            GRID(ng)%umask_dia(i,j)=MIN(1.0_r8, GRID(ng)%umask_dia(i,j))
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            GRID(ng)%vmask_dia(i,j)=MIN(1.0_r8, GRID(ng)%vmask_dia(i,j))
+          END DO
+        END DO
+
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+        CALL exchange_p2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          GRID(ng)%pmask_dia)
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          GRID(ng)%rmask_dia)
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          GRID(ng)%umask_dia)
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          GRID(ng)%vmask_dia)
+#  endif
+
+#  ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, tile, iNLM, 4,                          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      GRID(ng)%pmask_dia,                         &
+     &                      GRID(ng)%rmask_dia,                         &
+     &                      GRID(ng)%umask_dia,                         &
+     &                      GRID(ng)%vmask_dia)
+#  endif
+# endif
+!
+!  Convert accumulated sums to time averages.
+!
+# ifdef DIAGNOSTICS_TS
+        DO idiag=1,NDT
+          DO it=1,NT(ng)
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  DIAGS(ng)%DiaTrc(i,j,k,it,idiag)=rfac(i,j)*           &
+     &                      DIAGS(ng)%DiaTrc(i,j,k,it,idiag)
+                END DO
+              END DO
+            END DO
+          END DO
+        END DO
+# endif
+# if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+        DO idiag=1,NDbio2d
+          IF (idiag.ne.ipCO2) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                DIAGS(ng)%DiaBio2d(i,j,idiag)=rfac(i,j)*                &
+     &                    DIAGS(ng)%DiaBio2d(i,j,idiag)
+              END DO
+            END DO
+          END IF
+        END DO
+        DO idiag=1,NDbio3d
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                DIAGS(ng)%DiaBio3d(i,j,k,idiag)=rfac(i,j)*              &
+     &                    DIAGS(ng)%DiaBio3d(i,j,k,idiag)
+              END DO
+            END DO
+          END DO
+        END DO
+# endif
+# ifdef DIAGNOSTICS_UV
+        DO idiag=1,NDM2d
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              DIAGS(ng)%DiaU2d(i,j,idiag)=ufac(i,j)*                    &
+     &                                    DIAGS(ng)%DiaU2d(i,j,idiag)
+            END DO
+          END DO
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              DIAGS(ng)%DiaV2d(i,j,idiag)=vfac(i,j)*                    &
+     &                                    DIAGS(ng)%DiaV2d(i,j,idiag)
+            END DO
+          END DO
+        END DO
+#  ifdef SOLVE3D
+        DO idiag=1,NDM3d
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,IendR
+                DIAGS(ng)%DiaU3d(i,j,k,idiag)=ufac(i,j)*                &
+     &                    DIAGS(ng)%DiaU3d(i,j,k,idiag)
+              END DO
+            END DO
+            DO j=Jstr,JendR
+              DO i=IstrR,IendR
+                DIAGS(ng)%DiaV3d(i,j,k,idiag)=vfac(i,j)*                &
+     &                    DIAGS(ng)%DiaV3d(i,j,k,idiag)
+              END DO
+            END DO
+          END DO
+        END DO
+#  endif
+# endif
 
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !
 !-----------------------------------------------------------------------
-!  Apply periodic or gradient boundary conditions and land-mask
-!  for output purposes.
+!  Apply periodic or gradient boundary conditions for output purposes.
 !-----------------------------------------------------------------------
 !
 #  ifdef DIAGNOSTICS_TS
@@ -252,17 +534,6 @@
             CALL bc_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        DIAGS(ng)%DiaTrc(:,:,:,it,idiag))
-#   ifdef MASKING
-            DO k=1,N(ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  DIAGS(ng)%DiaTrc(i,j,k,it,idiag)=                     &
-     &                      DIAGS(ng)%DiaTrc(i,j,k,it,idiag)*           &
-     &                      GRID(ng)%rmask(i,j)
-                END DO
-              END DO
-            END DO
-#   endif
           END DO
 #   ifdef DISTRIBUTE
           CALL mp_exchange4d (ng, tile, iNLM, 1,                        &
@@ -309,43 +580,6 @@
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      DIAGS(ng)%DiaU3d,                           &
      &                      DIAGS(ng)%DiaV3d)
-#    endif
-#   endif
-#   ifdef MASKING
-        DO idiag=1,NDM2d
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              DIAGS(ng)%DiaU2d(i,j,idiag)=DIAGS(ng)%DiaU2d(i,j,idiag)*  &
-     &                                    GRID(ng)%umask(i,j)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2d(i,j,idiag)*  &
-     &                                    GRID(ng)%vmask(i,j)
-            END DO
-          END DO
-        END DO
-#    ifdef SOLVE3D
-        DO idiag=1,NDM3d
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=Istr,IendR
-                DIAGS(ng)%DiaU3d(i,j,k,idiag)=                          &
-     &                                 DIAGS(ng)%DiaU3d(i,j,k,idiag)*   &
-     &                                 GRID(ng)%umask(i,j)
-              END DO
-            END DO
-            DO j=Jstr,JendR
-              DO i=IstrR,IendR
-
-                DIAGS(ng)%DiaV3d(i,j,k,idiag)=                          &
-     &                                 DIAGS(ng)%DiaV3d(i,j,k,idiag)*   &
-     &                                 GRID(ng)%vmask(i,j)
-              END DO
-            END DO
-          END DO
-        END DO
 #    endif
 #   endif
 #  endif

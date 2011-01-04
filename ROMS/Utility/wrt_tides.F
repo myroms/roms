@@ -130,7 +130,7 @@
      &                     0, gtype,                                    &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 # endif
      &                     TIDES(ng) % zeta_tide)
         IF (status.ne.nf90_noerr) THEN
@@ -152,7 +152,7 @@
      &                     0, gtype,                                    &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 # endif
      &                     TIDES(ng) % ubar_tide)
         IF (status.ne.nf90_noerr) THEN
@@ -174,7 +174,7 @@
      &                     0, gtype,                                    &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 # endif
      &                     TIDES(ng) % vbar_tide)
         IF (status.ne.nf90_noerr) THEN
@@ -199,7 +199,7 @@
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
      &                     scale,                                       &
 #  ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #  endif
      &                     TIDES(ng) % u_tide)
         IF (status.ne.nf90_noerr) THEN
@@ -222,7 +222,7 @@
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
      &                     scale,                                       &
 #  ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #  endif
      &                     TIDES(ng) % v_tide)
         IF (status.ne.nf90_noerr) THEN
@@ -247,7 +247,7 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),&
      &                       scale,                                     &
 #  ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
+     &                       GRID(ng) % vmask_io,                       &
 #  endif
      &                       TIDES(ng) % t_tide(:,:,:,:,itrc))
           IF (status.ne.nf90_noerr) THEN

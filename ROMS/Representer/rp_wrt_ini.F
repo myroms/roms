@@ -113,7 +113,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % rmask,                              &
+     &                   GRID(ng) % rmask_io,                           &
 # endif
 # ifdef WET_DRY
      &                   OCEAN(ng) % tl_zeta(:,:,Tindex),               &
@@ -162,7 +162,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % umask_io,                           &
 # endif
      &                   OCEAN(ng) % tl_ubar(:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -206,7 +206,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % vmask,                              &
+     &                   GRID(ng) % vmask_io,                           &
 # endif
      &                   OCEAN(ng) % tl_vbar(:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -255,7 +255,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % umask_io,                           &
 #  endif
      &                   FORCES(ng) % tl_ustr(:,:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -276,7 +276,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask,                              &
+     &                   GRID(ng) % vmask_io,                           &
 #  endif
      &                   FORCES(ng) % tl_vstr(:,:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -299,7 +299,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % umask_io,                           &
 #  endif
      &                   OCEAN(ng) % tl_u(:,:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -343,7 +343,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask,                              &
+     &                   GRID(ng) % vmask_io,                           &
 #  endif
      &                   OCEAN(ng) % tl_v(:,:,:,Tindex))
       IF (status.ne.nf90_noerr) THEN
@@ -388,7 +388,7 @@
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #  endif
      &                     OCEAN(ng) % tl_t(:,:,:,Tindex,itrc))
         IF (status.ne.nf90_noerr) THEN
@@ -444,7 +444,7 @@
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_io,                       &
 #   endif
      &                       FORCES(ng) % tl_tflux(:,:,:,Tindex,itrc))
           IF (status.ne.nf90_noerr) THEN

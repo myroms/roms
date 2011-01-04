@@ -55,6 +55,9 @@
 # if defined AVERAGES && !defined ADJOINT
       USE set_avg_mod, ONLY : set_avg
 # endif
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
 # if defined SSH_TIDES || defined UV_TIDES
       USE set_tides_mod, ONLY : set_tides
 # endif
@@ -159,6 +162,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL ini_fields (ng, TILE, iNLM)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iNLM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

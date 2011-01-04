@@ -90,13 +90,13 @@
       DO ivar=1,NDM2d
         ifield=idDu2d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+          scale=1.0_r8/dt(ng)
           gtype=gfactor*u2dvar
           status=nf_fwrite2d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
-     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % umask_dia,                      &
 #  endif
      &                       DIAGS(ng) % DiaU2d(:,:,ivar))
           IF (status.ne.nf90_noerr) THEN
@@ -111,13 +111,13 @@
 !
         ifield=idDv2d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+          scale=1.0_r8/dt(ng)
           gtype=gfactor*v2dvar
           status=nf_fwrite2d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
+     &                       GRID(ng) % vmask_dia,                      &
 #  endif
      &                       DIAGS(ng) % DiaV2d(:,:,ivar))
           IF (status.ne.nf90_noerr) THEN
@@ -138,13 +138,13 @@
       DO ivar=1,NDM3d
         ifield=idDu3d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+          scale=1.0_r8/dt(ng)
           gtype=gfactor*u3dvar
           status=nf_fwrite3d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
-     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % umask_dia,                      &
 #   endif
      &                       DIAGS(ng) % DiaU3d(:,:,:,ivar))
           IF (status.ne.nf90_noerr) THEN
@@ -159,13 +159,13 @@
 !
         ifield=idDv3d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+          scale=1.0_r8/dt(ng)
           gtype=gfactor*v3dvar
           status=nf_fwrite3d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
+     &                       GRID(ng) % vmask_dia,                      &
 #   endif
      &                       DIAGS(ng) % DiaV3d(:,:,:,ivar))
           IF (status.ne.nf90_noerr) THEN
@@ -188,14 +188,14 @@
         DO ivar=1,NDT
           ifield=idDtrc(itrc,ivar)
           IF (Dout(ifield,ng)) THEN
-            scale=1.0_r8/(REAL(nDIA(ng),r8)*dt(ng))
+            scale=1.0_r8/dt(ng)
             gtype=gfactor*r3dvar
             status=nf_fwrite3d(ng, iNLM, ncDIAid(ng),                   &
      &                         diaVid(ifield,ng),                       &
      &                         tDIAindx(ng), gtype,                     &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
 #  ifdef MASKING
-     &                         GRID(ng) % rmask,                        &
+     &                         GRID(ng) % rmask_dia,                    &
 #  endif
      &                         DIAGS(ng) % DiaTrc(:,:,:,itrc,ivar))
             IF (status.ne.nf90_noerr) THEN
@@ -222,14 +222,14 @@
           IF (ivar.eq.ipCO2) THEN
             scale=1.0_r8
           ELSE
-            scale=1.0_r8/(REAL(nDIA(ng),r8)*dtBIO)   ! mmole m-2 day-1
+            scale=1.0_r8/dtBIO                       ! mmole m-2 day-1
           END IF
           gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_dia,                      &
 #  endif
      &                       DIAGS(ng) % DiaBio2d(:,:,ivar))
           IF (status.ne.nf90_noerr) THEN
@@ -248,13 +248,13 @@
       DO ivar=1,NDbio3d
         ifield=iDbio3(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/(REAL(nDIA(ng),r8)*dtBIO)     ! mmole m-3 day-1
+          scale=1.0_r8/dtBIO                         ! mmole m-3 day-1
           gtype=gfactor*r3dvar
           status=nf_fwrite3d(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),  &
      &                       tDIAindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_dia,                      &
 #  endif
      &                       DIAGS(ng) % DiaBio3d(:,:,:,ivar))
           IF (status.ne.nf90_noerr) THEN

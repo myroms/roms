@@ -44,6 +44,9 @@
       USE set_depth_mod, ONLY : set_depth
       USE set_massflux_mod, ONLY : set_massflux
 # endif
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
 # ifdef BIOLOGY
       USE tl_biology_mod, ONLY : tl_biology
 # endif
@@ -229,6 +232,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL tl_ini_fields (ng, TILE, iTLM)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iTLM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

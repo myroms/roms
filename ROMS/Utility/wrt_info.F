@@ -1235,7 +1235,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 # endif
      &                           GRID(ng) % h,                          &
      &                           SetFillVal = .FALSE.)
@@ -1274,7 +1274,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 #endif
      &                           GRID(ng) % f,                          &
      &                           SetFillVal = .FALSE.)
@@ -1300,7 +1300,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 #endif
      &                           GRID(ng) % pm,                         &
      &                           SetFillVal = .FALSE.)
@@ -1324,7 +1324,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 #endif
      &                           GRID(ng) % pn,                         &
      &                           SetFillVal = .FALSE.)
@@ -1351,7 +1351,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask,                    &
+     &                             GRID(ng) % rmask_io,                 &
 #endif
      &                             GRID(ng) % lonr,                     &
      &                             SetFillVal = .FALSE.)
@@ -1387,7 +1387,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask,                    &
+     &                             GRID(ng) % rmask_io,                 &
 #endif
      &                             GRID(ng) % latr,                     &
      &                             SetFillVal = .FALSE.)
@@ -1425,7 +1425,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask,                    &
+     &                             GRID(ng) % rmask_io,                 &
 #endif
      &                             GRID(ng) % xr,                       &
      &                             SetFillVal = .FALSE.)
@@ -1461,7 +1461,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask,                    &
+     &                             GRID(ng) % rmask_io,                 &
 #endif
      &                             GRID(ng) % yr,                       &
      &                             SetFillVal = .FALSE.)
@@ -1501,7 +1501,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask,                    &
+     &                             GRID(ng) % umask_io,                 &
 #endif
      &                             GRID(ng) % lonu,                     &
      &                             SetFillVal = .FALSE.)
@@ -1525,7 +1525,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask,                    &
+     &                             GRID(ng) % umask_io,                 &
 #endif
      &                             GRID(ng) % latu,                     &
      &                             SetFillVal = .FALSE.)
@@ -1551,7 +1551,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask,                    &
+     &                             GRID(ng) % umask_io,                 &
 #endif
      &                             GRID(ng) % xu,                       &
      &                             SetFillVal = .FALSE.)
@@ -1575,7 +1575,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask,                    &
+     &                             GRID(ng) % umask_io,                 &
 #endif
      &                             GRID(ng) % yu,                       &
      &                             SetFillVal = .FALSE.)
@@ -1603,7 +1603,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % lonv,                     &
      &                             SetFillVal = .FALSE.)
@@ -1627,7 +1627,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % latv,                     &
      &                             SetFillVal = .FALSE.)
@@ -1653,7 +1653,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % xv,                       &
      &                             SetFillVal = .FALSE.)
@@ -1677,7 +1677,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % yv,                       &
      &                             SetFillVal = .FALSE.)
@@ -1705,7 +1705,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % pmask,                    &
+     &                             GRID(ng) % pmask_io,                 &
 #endif
      &                             GRID(ng) % lonp,                     &
      &                             SetFillVal = .FALSE.)
@@ -1729,7 +1729,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % latp,                     &
      &                             SetFillVal = .FALSE.)
@@ -1755,7 +1755,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % pmask,                    &
+     &                             GRID(ng) % pmask_io,                 &
 #endif
      &                             GRID(ng) % xp,                       &
      &                             SetFillVal = .FALSE.)
@@ -1779,7 +1779,7 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % vmask_io,                 &
 #endif
      &                             GRID(ng) % yp,                       &
      &                             SetFillVal = .FALSE.)
@@ -1808,7 +1808,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 # endif
      &                           GRID(ng) % angler,                     &
      &                           SetFillVal = .FALSE.)
@@ -1848,7 +1848,7 @@
             IF (find_string(var_name, n_var, 'mask_rho', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
      &                           GRID(ng) % rmask,                      &
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
@@ -1870,7 +1870,7 @@
             IF (find_string(var_name, n_var, 'mask_u', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % umask,                      &
+     &                           GRID(ng) % umask_io,                   &
      &                           GRID(ng) % umask,                      &
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
@@ -1892,7 +1892,7 @@
             IF (find_string(var_name, n_var, 'mask_v', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % vmask,                      &
+     &                           GRID(ng) % vmask_io,                   &
      &                           GRID(ng) % vmask,                      &
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
@@ -1914,7 +1914,7 @@
             IF (find_string(var_name, n_var, 'mask_psi', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % pmask,                      &
+     &                           GRID(ng) % pmask_io,                   &
      &                           GRID(ng) % pmask,                      &
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
@@ -1944,7 +1944,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 # endif
      &                           GRID(ng) % Rscope,                     &
      &                           SetFillVal = .FALSE.)
@@ -1968,7 +1968,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % umask,                      &
+     &                           GRID(ng) % umask_io,                   &
 # endif
      &                           GRID(ng) % Uscope,                     &
      &                           SetFillVal = .FALSE.)
@@ -1992,7 +1992,7 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask_io,                   &
 # endif
      &                           GRID(ng) % Vscope,                     &
      &                           SetFillVal = .FALSE.)

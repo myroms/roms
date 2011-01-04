@@ -41,6 +41,9 @@
       USE set_depth_mod, ONLY : set_depth
       USE set_massflux_mod, ONLY : set_massflux
 # endif
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
 # ifdef BIOLOGY
       USE rp_biology_mod, ONLY : rp_biology
 # endif
@@ -223,6 +226,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL rp_ini_fields (ng, TILE, iRPM)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iRPM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

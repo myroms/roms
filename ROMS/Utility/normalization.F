@@ -127,10 +127,14 @@
      &                           GRID(ng) % pnom_r,                     &
      &                           GRID(ng) % pnom_v,                     &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
      &                           GRID(ng) % pmask,                      &
+     &                           GRID(ng) % rmask,                      &
      &                           GRID(ng) % umask,                      &
      &                           GRID(ng) % vmask,                      &
+     &                           GRID(ng) % pmask_io,                   &
+     &                           GRID(ng) % rmask_io,                   &
+     &                           GRID(ng) % umask_io,                   &
+     &                           GRID(ng) % vmask_io,                   &
 # endif
 # ifdef SOLVE3D
      &                           GRID(ng) % h,                          &
@@ -197,10 +201,14 @@
      &                           GRID(ng) % pnom_r,                     &
      &                           GRID(ng) % pnom_v,                     &
 # ifdef MASKING
-     &                           GRID(ng) % rmask,                      &
      &                           GRID(ng) % pmask,                      &
+     &                           GRID(ng) % rmask,                      &
      &                           GRID(ng) % umask,                      &
      &                           GRID(ng) % vmask,                      &
+     &                           GRID(ng) % pmask_io,                   &
+     &                           GRID(ng) % rmask_io,                   &
+     &                           GRID(ng) % umask_io,                   &
+     &                           GRID(ng) % vmask_io,                   &
 # endif
 # ifdef SOLVE3D
      &                           GRID(ng) % h,                          &
@@ -258,7 +266,10 @@
      &                               pmon_p, pmon_r, pmon_u,            &
      &                               pnom_p, pnom_r, pnom_v,            &
 # ifdef MASKING
-     &                               rmask, pmask, umask, vmask,        &
+     &                               pmask, rmask,                      &
+     &                               umask, vmask,                      &
+     &                               pmask_io, rmask_io,                &
+     &                               umask_io, vmask_io,                &
 # endif
 # ifdef SOLVE3D
      &                               h,                                 &
@@ -352,10 +363,15 @@
       real(r8), intent(in) :: pnom_r(LBi:,LBj:)
       real(r8), intent(in) :: pnom_v(LBi:,LBj:)
 #  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: pmask(LBi:,LBj:)
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+
+      real(r8), intent(in) :: pmask_io(LBi:,LBj:)
+      real(r8), intent(in) :: rmask_io(LBi:,LBj:)
+      real(r8), intent(in) :: umask_io(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_io(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: Kh(LBi:,LBj:)
 #  ifdef SOLVE3D
@@ -414,10 +430,15 @@
       real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: pmask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rmask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_io(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: Kh(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
@@ -679,7 +700,7 @@
      &                       nrmVid(ifile,idFsur,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       rmask,                                     &
+     &                       rmask_io,                                  &
 # endif
      &                       HnormR(:,:,ifile))
             IF (exit_flag.ne.NoError) RETURN
@@ -790,7 +811,7 @@
      &                       nrmVid(ifile,idUbar,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       umask,                                     &
+     &                       umask_io,                                  &
 # endif
      &                       HnormU(:,:,ifile))
             IF (exit_flag.ne.NoError) RETURN
@@ -901,7 +922,7 @@
      &                       nrmVid(ifile,idVbar,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       vmask,                                     &
+     &                       vmask_io,                                  &
 # endif
      &                       HnormV(:,:,ifile))
             IF (exit_flag.ne.NoError) RETURN
@@ -1031,7 +1052,7 @@
      &                       nrmVid(ifile,idUvel,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 #  ifdef MASKING
-     &                       umask,                                     &
+     &                       umask_io,                                  &
 #  endif
      &                       VnormU(:,:,:,ifile))
             IF (exit_flag.ne.NoError) RETURN
@@ -1159,7 +1180,7 @@
      &                       nrmVid(ifile,idVvel,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 #  ifdef MASKING
-     &                       vmask,                                     &
+     &                       vmask_io,                                  &
 #  endif
      &                       VnormV(:,:,:,ifile))
             IF (exit_flag.ne.NoError) RETURN
@@ -1323,7 +1344,7 @@
      &                         nrmVid(ifile,idTvar(itrc),ng),           &
      &                         tNRMindx(ifile,ng),                      &
 #  ifdef MASKING
-     &                         rmask,                                   &
+     &                         rmask_io,                                &
 #  endif
      &                         VnormR(:,:,:,ifile,itrc))
               IF (exit_flag.ne.NoError) RETURN
@@ -2371,7 +2392,7 @@
      &                     nrmVid(ifile,idUsms,ng),                     &
      &                     tNRMindx(ifile,ng),                          &
 #   ifdef MASKING
-     &                     umask,                                       &
+     &                     umask_io,                                    &
 #   endif
      &                     HnormSUS)
           IF (exit_flag.ne.NoError) RETURN
@@ -2482,7 +2503,7 @@
      &                     nrmVid(ifile,idVsms,ng),                     &
      &                     tNRMindx(ifile,ng),                          &
 #   ifdef MASKING
-     &                     vmask,                                       &
+     &                     vmask_io,                                    &
 #   endif
      &                     HnormSVS)
           IF (exit_flag.ne.NoError) RETURN
@@ -2636,7 +2657,7 @@
      &                         nrmVid(ifile,idTsur(itrc),ng),           &
      &                         tNRMindx(ifile,ng),                      &
 #   ifdef MASKING
-     &                         rmask,                                   &
+     &                         rmask_io,                                &
 #   endif
      &                         HnormSTF(:,:,itrc))
               IF (exit_flag.ne.NoError) RETURN
@@ -2670,7 +2691,10 @@
      &                               pmon_p, pmon_r, pmon_u,            &
      &                               pnom_p, pnom_r, pnom_v,            &
 # ifdef MASKING
-     &                               rmask, pmask, umask, vmask,        &
+     &                               pmask, rmask,                      &
+     &                               umask, vmask,                      &
+     &                               pmask_io, rmask_io,                &
+     &                               umask_io, vmask_io,                &
 # endif
 # ifdef SOLVE3D
      &                               h,                                 &
@@ -2760,10 +2784,15 @@
       real(r8), intent(in) :: pnom_r(LBi:,LBj:)
       real(r8), intent(in) :: pnom_v(LBi:,LBj:)
 #  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: pmask(LBi:,LBj:)
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+
+      real(r8), intent(in) :: pmask_io(LBi:,LBj:)
+      real(r8), intent(in) :: rmask_io(LBi:,LBj:)
+      real(r8), intent(in) :: umask_io(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_io(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: Kh(LBi:,LBj:)
 #  ifdef SOLVE3D
@@ -2822,10 +2851,15 @@
       real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: pmask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rmask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask_io(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_io(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: Kh(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
@@ -3085,7 +3119,7 @@
      &                       nrmVid(ifile,idFsur,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       rmask,                                     &
+     &                       rmask_io,                                  &
 # endif
      &                       HnormR(:,:,ifile))
           END IF
@@ -3165,7 +3199,7 @@
      &                       nrmVid(ifile,idUbar,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       umask,                                     &
+     &                       umask_io,                                  &
 # endif
      &                       HnormU(:,:,ifile))
           END IF
@@ -3245,7 +3279,7 @@
      &                       nrmVid(ifile,idVbar,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 # ifdef MASKING
-     &                       vmask,                                     &
+     &                       vmask_io,                                  &
 # endif
      &                       HnormV(:,:,ifile))
           END IF
@@ -3341,7 +3375,7 @@
      &                       nrmVid(ifile,idUvel,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 #  ifdef MASKING
-     &                       umask,                                     &
+     &                       umask_io,                                  &
 #  endif
      &                       VnormU(:,:,:,ifile))
           END IF
@@ -3435,7 +3469,7 @@
      &                       nrmVid(ifile,idVvel,ng),                   &
      &                       tNRMindx(ifile,ng),                        &
 #  ifdef MASKING
-     &                       vmask,                                     &
+     &                       vmask_io,                                  &
 #  endif
      &                       VnormV(:,:,:,ifile))
           END IF
@@ -3586,7 +3620,7 @@
      &                         nrmVid(ifile,idTvar(itrc),ng),           &
      &                         tNRMindx(ifile,ng),                      &
 #  ifdef MASKING
-     &                         rmask,                                   &
+     &                         rmask_io,                                &
 #  endif
      &                         VnormR(:,:,:,ifile,itrc))
             END IF
@@ -4645,7 +4679,7 @@
      &                     nrmVid(ifile,idUsms,ng),                     &
      &                     tNRMindx(ifile,ng),                          &
 #   ifdef MASKING
-     &                     umask,                                       &
+     &                     umask_io,                                    &
 #   endif
      &                     HnormSUS)
         END IF
@@ -4725,7 +4759,7 @@
      &                     nrmVid(ifile,idVsms,ng),                     &
      &                     tNRMindx(ifile,ng),                          &
 #   ifdef MASKING
-     &                     vmask,                                       &
+     &                     vmask_io,                                    &
 #   endif
      &                     HnormSVS)
         END IF
@@ -4863,7 +4897,7 @@
      &                         nrmVid(ifile,idTsur(itrc),ng),           &
      &                         tNRMindx(ifile,ng),                      &
 #   ifdef MASKING
-     &                         rmask,                                   &
+     &                         rmask_io,                                &
 #   endif
      &                         HnormSTF(:,:,itrc))
             END IF

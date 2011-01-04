@@ -133,7 +133,7 @@
      &                   tTLMindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % umask_io,                           &
 #  endif
      &                   FORCES(ng) % tl_ustr(:,:,:,Lfout(ng)))
       IF (status.ne.nf90_noerr) THEN
@@ -153,7 +153,7 @@
      &                   tTLMindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask,                              &
+     &                   GRID(ng) % vmask_io,                           &
 #  endif
      &                   FORCES(ng) % tl_vstr(:,:,:,Lfout(ng)))
       IF (status.ne.nf90_noerr) THEN
@@ -180,7 +180,7 @@
      &                       tTLMindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_io,                       &
 #  endif
      &                       FORCES(ng)% tl_tflux(:,:,:,Lfout(ng),itrc))
           IF (status.ne.nf90_noerr) THEN
@@ -204,7 +204,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 # endif
 # ifdef WET_DRY
      &                     OCEAN(ng) % tl_zeta(:,:,KOUT),               &
@@ -225,7 +225,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #  endif
      &                     OCEAN(ng) % tl_rzeta(:,:,KOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -273,7 +273,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 # endif
      &                     OCEAN(ng) % tl_ubar(:,:,KOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -290,7 +290,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #   endif
      &                     OCEAN(ng) % tl_rubar(:,:,KOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -308,7 +308,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #    ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #    endif
      &                     COUPLING(ng) % tl_rufrc)
         IF (status.ne.nf90_noerr) THEN
@@ -324,7 +324,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #   endif
      &                     COUPLING(ng) % tl_DU_avg1)
         IF (status.ne.nf90_noerr) THEN
@@ -339,7 +339,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #   endif
      &                     COUPLING(ng) % tl_DU_avg2)
         IF (status.ne.nf90_noerr) THEN
@@ -388,7 +388,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 # endif
      &                     OCEAN(ng) % tl_vbar(:,:,KOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -405,7 +405,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #   endif
      &                     OCEAN(ng) % tl_rvbar(:,:,KOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -423,7 +423,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #    ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #    endif
      &                     COUPLING(ng) % tl_rvfrc)
         IF (status.ne.nf90_noerr) THEN
@@ -439,7 +439,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #   endif
      &                     COUPLING(ng) % tl_DV_avg1)
         IF (status.ne.nf90_noerr) THEN
@@ -454,7 +454,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #   ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #   endif
      &                     COUPLING(ng) % tl_DV_avg2)
         IF (status.ne.nf90_noerr) THEN
@@ -504,7 +504,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #  endif
      &                     OCEAN(ng) % tl_u(:,:,:,NOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -520,7 +520,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % umask_io,                         &
 #   endif
      &                     OCEAN(ng) % tl_ru(:,:,:,NOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -568,7 +568,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #  endif
      &                     OCEAN(ng) % tl_v(:,:,:,NOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -584,7 +584,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                     GRID(ng) % vmask_io,                         &
 #   endif
      &                     OCEAN(ng) % tl_rv(:,:,:,NOUT))
         IF (status.ne.nf90_noerr) THEN
@@ -633,7 +633,7 @@
      &                       tTLMindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
+     &                       GRID(ng) % rmask_io,                       &
 #  endif
      &                       OCEAN(ng) % tl_t(:,:,:,NOUT,itrc))
           IF (status.ne.nf90_noerr) THEN
@@ -685,7 +685,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #  endif
      &                     OCEAN(ng) % tl_rho)
         IF (status.ne.nf90_noerr) THEN
@@ -711,7 +711,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #   endif
 #   ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akv,                            &
@@ -738,7 +738,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #   endif
 #   ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akt(:,:,:,itemp),               &
@@ -766,7 +766,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #    endif
 #    ifdef WEAK_CONSTRAINT
      &                     MIXING(ng) % Akt(:,:,:,isalt),               &
@@ -795,7 +795,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #    endif
      &                     MIXING(ng) % tl_tke(:,:,:,NOUT),             &
      &                     SetFillVal = .FALSE.)
@@ -814,7 +814,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #    endif
      &                     MIXING(ng) % tl_Akk)
         IF (status.ne.nf90_noerr) THEN
@@ -836,7 +836,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #    endif
      &                     MIXING(ng) % tl_gls(:,:,:,NOUT),             &
      &                     SetFillVal = .FALSE.)
@@ -855,7 +855,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #    endif
      &                     MIXING(ng) % tl_Lscale)
         IF (status.ne.nf90_noerr) THEN
@@ -873,7 +873,7 @@
      &                     tTLMindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
 #     ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % rmask_io,                         &
 #     endif
      &                     MIXING(ng) % tl_Akp)
         IF (status.ne.nf90_noerr) THEN

@@ -3117,11 +3117,12 @@
 #if defined SOLVE3D && defined NEMURO
 # if !(defined IVLEV_EXPLICIT || defined HOLLING_GRAZING)
       IF (Master) THEN
-        WRITE (stdout,160)
+        WRITE (stdout,160) uppercase('ivlev_explicit'),                 &
+     &                     uppercase('holling_grazing')
  160    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
-     &            ' option;',/,13x,'use either IVLEV_EXPLICIT or',      &
-     &            ' implicit HOLLING_GRAZING.',/,13x,'The default',     &
-     &            ' implicit IVLEV algorithm does not work well yet.')
+     &            ' option;',/,13x,'use either ',a,' or implicit ',a,   &
+     &            '.',/,13x,'The default implicit IVLEV algorithm',     &
+     &            ' does not work well yet.')
         exit_flag=5
       END IF
 # endif
@@ -3140,22 +3141,38 @@
 #ifdef PARALLEL_IO
 # if !(defined HDF5 || defined PNETCDF)
       IF (Master) THEN
-        WRITE (stdout,180)
- 180    FORMAT (/,' CHECKDEFS - Need to activate either HDF5 or',       &
-     &            ' PNETCDF options',/,13x,'for parallel I/O',          &
-     &            ' processing.')
+        WRITE (stdout,180) uppercase('hdf5'),                           &
+     &                     uppercase('pnetcdf')
+ 180    FORMAT (/,' CHECKDEFS - Need to activate either ',a,' or ',a,   &
+     &            ' options',/,13x,'for parallel I/O processing.')
         exit_flag=5
       END IF
 # endif
 # if defined HDF5 && defined PNETCDF
       IF (Master) THEN
-        WRITE (stdout,190)
- 190    FORMAT (/,' CHECKDEFS - Both HDF5 and PNETCDF options',         &
+        WRITE (stdout,190) uppercase('hdf5'),                           &
+     &                     uppercase('pnetcdf')
+ 190    FORMAT (/,' CHECKDEFS - Both ',a,' and ',a,' options',          &
      &            ' selected',/,13x,'for parallel I/O processing.',     &
      &          /,13x,'Choose only one.')
         exit_flag=5
       END IF
 # endif
+#endif
+#if defined WRITE_WATER && defined WET_DRY
+!
+!  Stop if writting only water points when wetting and drying is
+!  activated.  This is not possible since the Land/Sea masking is
+!  time dependent.
+!
+      IF (Master) THEN
+        WRITE (stdout,200) uppercase('write_water'),                    &
+     &                     uppercase('wet_dry')
+ 200    FORMAT (/,' CHECKDEFS - cannot activate ',a,' and ',a,          &
+     &            ' together',/,13x,'because of time dependent ',       &
+     &            ' Land/Sea masking.')
+        exit_flag=5
+      END IF
 #endif
 
       RETURN

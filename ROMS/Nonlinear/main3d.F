@@ -92,6 +92,9 @@
       USE set_avg_mod, ONLY : set_avg
 # endif
       USE set_depth_mod, ONLY : set_depth
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
       USE set_massflux_mod, ONLY : set_massflux
 # if defined SSH_TIDES || defined UV_TIDES
       USE set_tides_mod, ONLY : set_tides
@@ -205,6 +208,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL ini_fields (ng, TILE, iNLM)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iNLM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

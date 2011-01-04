@@ -131,6 +131,9 @@
       USE rho_eos_mod, ONLY : rho_eos
       USE set_depth_mod, ONLY : set_depth
       USE set_massflux_mod
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
 !!    USE wvelocity_mod, ONLY : wvelocity
 !
       implicit none
@@ -189,6 +192,22 @@
       END DO
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
+
+# ifdef MASKING
+!
+!  If first entry, initialize I/O masks.
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL set_masks (ng, TILE, iADM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 
 # ifdef FORWARD_READ
 !

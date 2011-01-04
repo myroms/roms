@@ -434,12 +434,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
           status=def_var(ng, model, ncAVGid(ng), avgVid(idFsur,ng),     &
-# ifdef WET_DRY
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,    &
-     &                   SetFillVal = .FALSE.)
-# else
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-# endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
