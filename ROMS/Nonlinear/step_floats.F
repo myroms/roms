@@ -49,6 +49,9 @@
      &                       FLT(ng) % Ftype,                           &
      &                       FLT(ng) % Tinfo,                           &
      &                       FLT(ng) % Fz0,                             &
+# if defined SOLVE3D && defined FLOAT_STICKY
+     &                       FLT(ng) % stuck,                           &
+# endif
      &                       FLT(ng) % track)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 10)
@@ -61,6 +64,9 @@
      &                             knew, nnew,                          &
      &                             nfm3, nfm2, nfm1, nf, nfp1,          &
      &                             bounded, Ftype, Tinfo, Fz0,          &
+# if defined SOLVE3D && defined FLOAT_STICKY
+     &                             stuck,                               &
+# endif
      &                             track)
 !***********************************************************************
 !
@@ -91,6 +97,9 @@
       real(r8), intent(in) :: Fz0(:)
 
       logical, intent(inout) :: bounded(:)
+#  if defined SOLVE3D && defined FLOAT_STICKY
+      logical, intent(inout) :: stuck(:)
+#  endif
       real(r8), intent(inout) :: track(:,0:,:)
 # else
       integer, intent(in) :: Ftype(Nfloats(ng))
@@ -98,6 +107,9 @@
       real(r8), intent(in) :: Fz0(Nfloats(ng))
 
       logical, intent(inout) :: bounded(Nfloats(ng))
+#  if defined SOLVE3D && defined FLOAT_STICKY
+      logical, intent(inout) :: stuck(Nfloats(ng))
+#  endif
       real(r8), intent(inout) :: track(NFV(ng),0:NFT,Nfloats(ng))
 # endif
 !
@@ -582,20 +594,6 @@
         END IF
       END DO
 # endif
-# ifdef SOLVE3D
-!
-!  Reflect floats at surface or bottom.
-!
-      DO l=Lstr,Lend
-        IF (MyThread(l).and.bounded(l)) THEN
-          IF (track(izgrd,nfp1,l).gt.REAL(N(ng),r8))                    &
-     &      track(izgrd,nfp1,l)=2.0_r8*REAL(N(ng),r8)-                  &
-     &                          track(izgrd,nfp1,l)
-          IF (track(izgrd,nfp1,l).lt.0.0_r8)                            &
-     &      track(izgrd,nfp1,l)=-track(izgrd,nfp1,l)
-        END IF
-      END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, activate the release of new floats and set initial
@@ -615,6 +613,9 @@
      &        (Tinfo(iygrd,l).gt.REAL(Mm(ng),r8)+0.5_r8)) THEN
             bounded(l)=.FALSE.               ! outside application grid
           END IF
+# if defined SOLVE3D && defined FLOAT_STICKY
+          stuck(l)=.FALSE.
+# endif
 # ifdef DISTRIBUTE
           IF ((Xstr.le.Tinfo(ixgrd,l)).and.                             &
      &        (Tinfo(ixgrd,l).lt.Xend).and.                             &
@@ -846,6 +847,52 @@
 !-----------------------------------------------------------------------
 !
       CALL vwalk_floats (ng, Lstr, Lend, .FALSE., MyThread, nudg)
+# endif
+# ifdef SOLVE3D
+#  ifdef FLOAT_STICKY
+!
+!  Floats that hit the surface are reflected; floats that hit the bottom
+!  get stuck.
+!
+      DO l=Lstr,Lend
+        IF (MyThread(l).and.bounded(l)) THEN
+          IF (stuck(l)) THEN
+            track(ixgrd,nfp1,l)=track(ixgrd,nf,l)
+            track(iygrd,nfp1,l)=track(iygrd,nf,l)
+            track(izgrd,nfp1,l)=track(izgrd,nf,l)
+          ELSE
+            IF (track(izgrd,nfp1,l).gt.REAL(N(ng),r8)) THEN
+              DO j=0,NFT
+                track(izgrd,j,l)=2.0_r8*REAL(N(ng),r8)-                 &
+     &                           track(izgrd,j,l)
+              END DO
+            ELSE IF (track(izgrd,nfp1,l).lt.0.0_r8) THEN
+              DO j=0,NFT
+                track(izgrd,j,l)=0.0_r8
+              END DO
+              stuck(l)=.TRUE.
+            END IF
+          END IF
+        END IF
+      END DO
+#  else
+!
+!  Floats that hit the surface or bottom are reflected
+!
+      DO l=Lstr,Lend
+        IF (MyThread(l).and.bounded(l)) THEN
+          IF (track(izgrd,nfp1,l).gt.REAL(N(ng),r8)) THEN
+            DO j=0,NFT
+              track(izgrd,j,l)=2.0_r8*REAL(N(ng),r8)-track(izgrd,j,l)
+            END DO
+          ELSE IF (track(izgrd,nfp1,l).lt.0.0_r8) THEN
+            DO j=0,NFT
+              track(izgrd,:,l)=-track(izgrd,:,l)
+            END DO
+          END IF
+        END IF
+      END DO
+#  endif
 # endif
 # ifdef DISTRIBUTE
 !

@@ -185,6 +185,7 @@
 ** OPTIONS for Lagrangian drifters:                                          **
 **                                                                           **
 ** FLOATS              use to activate simulated Lagrangian drifters         **
+** FLOAT_STICKY        use to reflect/stick floats that hit surface/bottom   **
 ** FLOAT_VWALK         use if vertical random walk                           **
 ** VWALK_FORWARD       use if forward time stepping vertical random walk     **
 **                                                                           **

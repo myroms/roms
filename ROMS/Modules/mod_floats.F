@@ -19,8 +19,12 @@
 !  Tinfo      Float trajectory initial information.                    !
 !  bounded    Float bounded status switch.                             !
 # if defined SOLVE3D && defined FLOAT_VWALK
-!  rwalk      Normally distrivuted random deviates used in vertical    !
+!  rwalk      Normally distributed random deviates used in vertical    !
 !               random walk.                                           !
+# endif
+# if defined SOLVE3D && defined FLOAT_STICKY
+!  stuck      Reflection switch. Floats that hit the surface are       !
+!               reflected and floats that hitthe bottom get stick      !
 # endif
 !  track      Multivariate float trajectory data at several time       !
 !               time levels.                                           !
@@ -34,6 +38,10 @@
         TYPE T_FLT
 
           logical, pointer  :: bounded(:)
+
+# if defined SOLVE3D && defined FLOAT_STICKY
+          logical, pointer  :: stuck(:)
+# endif
 
           integer, pointer :: Findex(:)
           integer, pointer :: Ftype(:)
@@ -82,6 +90,10 @@
 !
       allocate ( FLT(ng) % bounded(Nfloats(ng)) )
 
+# if defined SOLVE3D && defined FLOAT_STICKY
+      allocate ( FLT(ng) % stuck(Nfloats(ng)) )
+# endif
+
       allocate ( FLT(ng) % Findex(0:Nfloats(ng)) )
 
       allocate ( FLT(ng) % Ftype(Nfloats(ng)) )
@@ -107,6 +119,9 @@
       FLT(ng) % Findex(0) = 0
       DO iflt=1,Nfloats(ng)
         FLT(ng) % bounded(iflt) = .FALSE.
+# if defined SOLVE3D && defined FLOAT_STICKY
+        FLT(ng) % stuck(iflt) = .FALSE.
+# endif
         FLT(ng) % Findex(iflt) = 0
         FLT(ng) % Ftype(iflt) = 0
         FLT(ng) % Flon(iflt) = IniVal

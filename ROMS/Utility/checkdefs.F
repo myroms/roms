@@ -911,6 +911,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' FLOATS,'
 #endif
+#if defined FLOATS && defined FLOAT_STICKY && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'FLOAT_STICKY',                     &
+     &   'Reflect (stick) floats that hit the surface (bottom).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' FLOAT_STICKY,'
+#endif
 #if defined FLOATS && defined FLOAT_VWALK && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'FLOAT_VWALK',                      &
      &   'Lagrangian drifters with vertical diffusion, random walk.'
