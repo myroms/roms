@@ -1218,6 +1218,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' MCT_LIB,'
 #endif
+#if defined MINRES && defined FOUR_DVAR
+      IF (Master) WRITE (stdout,20) 'MINRES',                           &
+     &   'Minimal Residual Method for 4D-Var minimization.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+8)=' MINRES,'
+#endif
 #if (defined TS_DIF2 || defined TS_DIF4) && defined SOLVE3D
 # ifdef MIX_GEO_TS
       IF (Master) WRITE (stdout,20) 'MIX_GEO_TS',                       &

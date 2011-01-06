@@ -136,6 +136,9 @@
       integer :: i, ic, j, iobs, ivec, Lscale, info
 
       real(r8) :: zbet, eps, preducv, preducy
+# ifdef MINRES
+      real(r8) :: zsum, zck, zgk
+# endif
       real(r8) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
 
       real(r8), dimension(NinnLoop) :: zu, zgam
@@ -145,6 +148,10 @@
       real(r8), dimension(Ninner,3) :: zwork
       real(r8), dimension(2*(NinnLoop-1)) :: work
       real(r8), dimension(Ninner,Ninner) :: zgv
+# ifdef MINRES
+      real(r8), dimension(innLoop,innLoop) :: ztriT, zLT, zLTt
+      real(r8), dimension(innLoop) :: tau, zwork1, ze, zeref
+# endif
 
       character (len=13) :: string
 !
@@ -512,6 +519,88 @@
      &                               zcglwk(iobs,innLoop+1,outLoop)*    &
      &                               zgrad0(iobs,outLoop)
           END DO
+# ifdef MINRES
+!
+!  Use the minimum residual method as recommended by El Akkraoui and
+!  Gauthier (2010, QJRMS, 136, 107-115) and described by Paige and
+!  Saunders ("Sparse Indefinite Systems of Linear Equations", 1975,
+!  SIAM Journal on Numerical Analysis, 617-619). Specifically we refer
+!  to equations 6.10 and 6.11 of this paper.
+!
+!  Perform a LQ factorization of the tridiagonal matrix.
+!
+          ztriT=0.0_r8
+          DO i=1,innLoop
+            ztriT(i,i)=cg_delta(i,outLoop)
+          END DO
+          DO i=1,innLoop-1
+            ztriT(i,i+1)=cg_beta(i+1,outLoop)
+          END DO
+          DO i=2,innLoop
+            ztriT(i,i-1)=cg_beta(i,outLoop)
+          END DO
+          CALL sqlq(innLoop, ztriT, tau, zwork1)
+!
+!   Isolate L=zLT and its transpose.
+!
+          zLT=0.0_r8
+          zLTt=0.0_r8
+          DO i=1,innLoop
+            DO j=1,i
+              zLT(i,j)=ztriT(i,j)
+            END DO
+          END DO
+          DO j=1,innLoop
+            DO i=1,innLoop
+              zLTt(i,j)=zLT(j,i)
+            END DO
+          END DO
+!
+!   Now form ze=beta1*Q*e1.
+!
+          ze=0.0_r8
+          DO i=1,innLoop
+            ze(i)=-cg_QG(i,outLoop)
+          END DO
+          DO i=1,innLoop
+            DO j=1,innLoop
+              zeref(j)=0.0_r8
+            END DO
+            zeref(i)=1.0_r8
+            DO j=i+1,innLoop
+              zeref(j)=ztriT(i,j)
+            END DO
+            zsum=0.0_r8
+            DO j=1,innLoop
+              zsum=zsum+ze(j)*zeref(j)
+            END DO
+            DO j=1,innLoop
+              ze(j)=ze(j)-tau(i)*zsum*zeref(j)
+            END DO
+          END DO
+!
+!   Now form ze=D*ze (using equation 5.6 and 6.5 also).
+!
+          zgk=SQRT(zLT(innLoop,innLoop)*zLT(innLoop,innLoop)+           &
+     &        cg_beta(innLoop+1,outLoop)*cg_beta(innLoop+1,outLoop))
+          zck=zLT(innLoop,innLoop)/zgk
+          ze(innLoop)=zck*ze(innLoop)
+!
+!   Now compute ze=inv(L')*ze.
+!
+          DO j=innLoop,1,-1
+            ze(j)=ze(j)/zLTt(j,j)
+            DO i=1,j-1
+              ze(i)=ze(i)-ze(j)*zLTt(i,j)
+            END DO
+          END DO
+!
+!   Copy the solution ze into zwork.
+!
+          DO i=1,innLoop
+            zwork(i,3)=ze(i)
+          END DO
+# else
 !
 !  Calculate the new solution based upon the new, orthonormalized
 !  Lanczos vector. First, the tridiagonal system is solved by
@@ -531,7 +620,7 @@
             zu(ivec)=zu(ivec)-zgam(ivec+1)*zu(ivec+1)
             zwork(ivec,3)=zu(ivec)
           END DO
-
+# endif
           DO iobs=1,Ndatum(ng)
             zw(iobs)=zgrad0(iobs,outLoop)+                              &
      &               cg_beta(innLoop+1,outLoop)*                        &
@@ -648,6 +737,54 @@
      &                     zcglwk(iobs,ivec,outLoop)*zhv(iobs)
             END DO
           END DO
+# ifdef MINRES
+!
+!   Now form ze=Q*ztemp1.
+!
+          ze=0.0_r8
+          DO i=1,innLoop
+            ze(i)=ztemp1(i)
+          END DO
+          DO i=1,innLoop
+            DO j=1,innLoop
+              zeref(j)=0.0_r8
+            END DO
+            zeref(i)=1.0_r8
+            DO j=i+1,innLoop
+              zeref(j)=ztriT(i,j)
+            END DO
+            zsum=0.0_r8
+            DO j=1,innLoop
+              zsum=zsum+ze(j)*zeref(j)
+            END DO
+            DO j=1,innLoop
+              ze(j)=ze(j)-tau(i)*zsum*zeref(j)
+            END DO
+          END DO
+!
+!   Now form ze=D*ze (using equation 5.6 and 6.5 also).
+!
+          zgk=SQRT(zLT(innLoop,innLoop)*zLT(innLoop,innLoop)+           &
+     &        cg_beta(innLoop+1,outLoop)*cg_beta(innLoop+1,outLoop))
+          zck=zLT(innLoop,innLoop)/zgk
+          ze(innLoop)=zck*ze(innLoop)
+!
+!   Now compute ze=inv(L')*ze.
+!
+          DO j=innLoop,1,-1
+            ze(j)=ze(j)/zLTt(j,j)
+            DO i=1,j-1
+              ze(i)=ze(i)-ze(j)*zLTt(i,j)
+            END DO
+          END DO
+!
+!   Copy the solution ze into ztemp2.
+!
+          DO i=1,innLoop
+            ztemp2(i)=ze(i)
+          END DO
+!
+# else
           zbet=cg_delta(1,outLoop)
           zu1(1)=ztemp1(1)/zbet
           DO ivec=2,innLoop
@@ -663,6 +800,7 @@
             zu1(ivec)=zu1(ivec)-zgam(ivec+1)*zu1(ivec+1)
             ztemp2(ivec)=zu1(ivec)
           END DO
+# endif
           DO iobs=1,Ndatum(ng)
             zhv(iobs)=0.0_r8
           END DO
@@ -685,6 +823,54 @@
               END IF
             END DO
           END DO
+# ifdef MINRES
+!
+!   Now form ze=Q*ztemp1.
+!
+          ze=0.0_r8
+          DO i=1,innLoop
+            ze(i)=ztemp1(i)
+          END DO
+          DO i=1,innLoop
+            DO j=1,innLoop
+              zeref(j)=0.0_r8
+            END DO
+            zeref(i)=1.0_r8
+            DO j=i+1,innLoop
+              zeref(j)=ztriT(i,j)
+            END DO
+            zsum=0.0_r8
+            DO j=1,innLoop
+              zsum=zsum+ze(j)*zeref(j)
+            END DO
+            DO j=1,innLoop
+              ze(j)=ze(j)-tau(i)*zsum*zeref(j)
+            END DO
+          END DO
+!
+!   Now form ze=D*ze (using equation 5.6 and 6.5 also).
+!
+          zgk=SQRT(zLT(innLoop,innLoop)*zLT(innLoop,innLoop)+           &
+     &        cg_beta(innLoop+1,outLoop)*cg_beta(innLoop+1,outLoop))
+          zck=zLT(innLoop,innLoop)/zgk
+          ze(innLoop)=zck*ze(innLoop)
+!
+!   Now compute ze=inv(L')*ze.
+!
+          DO j=innLoop,1,-1
+            ze(j)=ze(j)/zLTt(j,j)
+            DO i=1,j-1
+              ze(i)=ze(i)-ze(j)*zLTt(i,j)
+            END DO
+          END DO
+!
+!   Copy the solution ze into ztemp2.
+!
+          DO i=1,innLoop
+            ztemp2(i)=ze(i)
+          END DO
+!
+# else
           zbet=cg_delta(1,outLoop)
           zu2(1)=ztemp1(1)/zbet
           DO ivec=2,innLoop
@@ -699,6 +885,7 @@
             zu2(ivec)=zu2(ivec)-zgam(ivec+1)*zu2(ivec+1)
             ztemp2(ivec)=zu2(ivec)
           END DO
+# endif
           DO iobs=1,Ndatum(ng)
             zht(iobs)=0.0_r8
           END DO
@@ -715,8 +902,8 @@
           DO iobs=1,Ndatum(ng)
             IF (ObsErr(iobs).ne.0.0_r8) THEN
               cff=cg_pxsave(iobs)/SQRT(ObsErr(iobs))
-              Jb=Jb+zd(iobs)*zht(iobs)-2.0_r8*cff*zhv(iobs)+  &
-     &            cff*gdgw(iobs)
+              Jb=Jb+zd(iobs)*zht(iobs)-2.0_r8*cff*zhv(iobs)+            &
+     &           cff*gdgw(iobs)
             END IF
           END DO
 !

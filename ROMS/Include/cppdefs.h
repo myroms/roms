@@ -567,6 +567,7 @@
 ** FORWARD_RHS         use if processing forward right-hand-side terms       **
 ** IMPLICIT_VCONV      use if implicit vertical convolution algorithm        **
 ** IMPULSE             use if processing adjoint impulse forcing             **
+** MINRES              use if Minimal Residual Method for 4DVar minimization **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** OBS_IMPACT          use if observation impact to 4DVAR data assimilation  **
