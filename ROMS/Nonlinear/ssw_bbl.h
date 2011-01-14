@@ -51,6 +51,7 @@
      &                GRID(ng) % z_r,                                   &
      &                GRID(ng) % z_w,                                   &
      &                GRID(ng) % angler,                                &
+     &                GRID(ng) % ZoBot,                                 &
 #if defined SSW_CALC_UB
      &                FORCES(ng) % Hwave,                               &
 #else
@@ -90,7 +91,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs,                                       &
-     &                      h, z_r, z_w, angler,                        &
+     &                      h, z_r, z_w, angler, ZoBot,                 &
 #if defined SSW_CALC_UB
      &                      Hwave,                                      &
 #else
@@ -134,6 +135,7 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: angler(LBi:,LBj:)
+      real(r8), intent(in) :: ZoBot(LBi:,LBj:)
 # if defined SSW_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:,LBj:)
 # else
@@ -168,6 +170,7 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ZoBot(LBi:UBi,LBj:UBj)
 # if defined SSW_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 # else
@@ -394,7 +397,7 @@
           zoBF(i,j)=0.0_r8
           zoBIO(i,j)=0.0_r8
 !!        zoDEF(i,j)=bottom(i,j,izdef)
-          zoDEF(i,j)=Zob(ng)
+          zoDEF(i,j)=ZoBot(i,j)
 
 #ifdef SSW_CALC_ZNOT
 !
@@ -1188,34 +1191,34 @@
         xm(i)=-xm(i-1)*cff
       END DO
 !
-      thetap=CMPLX(0.0_r8,-0.3926991_r8,8)+                               &
-     &       CMPLX(0.0110486_r8,-0.0110485_r8,8)*xp(1)+                   &
-     &       CMPLX(0.0_r8,-0.0009765_r8,8)*xp(2)+                         &
-     &       CMPLX(-0.0000906_r8,-0.0000901_r8,8)*xp(3)+                  &
-     &       CMPLX(-0.0000252_r8,0.0_r8,8)*xp(4)+                         &
-     &       CMPLX(-0.0000034_r8,0.0000051_r8,8)*xp(5)+                   &
+      thetap=CMPLX(0.0_r8,-0.3926991_r8,8)+                             &
+     &       CMPLX(0.0110486_r8,-0.0110485_r8,8)*xp(1)+                 &
+     &       CMPLX(0.0_r8,-0.0009765_r8,8)*xp(2)+                       &
+     &       CMPLX(-0.0000906_r8,-0.0000901_r8,8)*xp(3)+                &
+     &       CMPLX(-0.0000252_r8,0.0_r8,8)*xp(4)+                       &
+     &       CMPLX(-0.0000034_r8,0.0000051_r8,8)*xp(5)+                 &
      &       CMPLX(0.0000006,0.0000019,8)*xp(6)
-      thetam=CMPLX(0.0_r8,-0.3926991_r8,8)+                               &
-     &       CMPLX(0.0110486_r8,-0.0110485_r8,8)*xm(1)+                   &
-     &       CMPLX(0.0_r8,-0.0009765_r8,8)*xm(2)+                         &
-     &       CMPLX(-0.0000906_r8,-0.0000901_r8,8)*xm(3)+                  &
-     &       CMPLX(-0.0000252_r8,0.0_r8,8)*xm(4)+                         &
-     &       CMPLX(-0.0000034_r8,0.0000051_r8,8)*xm(5)+                   &
+      thetam=CMPLX(0.0_r8,-0.3926991_r8,8)+                             &
+     &       CMPLX(0.0110486_r8,-0.0110485_r8,8)*xm(1)+                 &
+     &       CMPLX(0.0_r8,-0.0009765_r8,8)*xm(2)+                       &
+     &       CMPLX(-0.0000906_r8,-0.0000901_r8,8)*xm(3)+                &
+     &       CMPLX(-0.0000252_r8,0.0_r8,8)*xm(4)+                       &
+     &       CMPLX(-0.0000034_r8,0.0000051_r8,8)*xm(5)+                 &
      &       CMPLX(0.0000006_r8,0.0000019_r8,8)*xm(6)
 !
-      phip=CMPLX(0.7071068_r8,0.7071068_r8,8)+                            &
-     &     CMPLX(-0.0625001_r8,-0.0000001_r8,8)*xp(1)+                    &
-     &     CMPLX(-0.0013813_r8,0.0013811_r8,8)*xp(2)+                     &
-     &     CMPLX(0.0000005_r8,0.0002452_r8,8)*xp(3)+                      &
-     &     CMPLX(0.0000346_r8,0.0000338_r8,8)*xp(4)+                      &
-     &     CMPLX(0.0000117_r8,-0.0000024_r8,8)*xp(5)+                     &
+      phip=CMPLX(0.7071068_r8,0.7071068_r8,8)+                          &
+     &     CMPLX(-0.0625001_r8,-0.0000001_r8,8)*xp(1)+                  &
+     &     CMPLX(-0.0013813_r8,0.0013811_r8,8)*xp(2)+                   &
+     &     CMPLX(0.0000005_r8,0.0002452_r8,8)*xp(3)+                    &
+     &     CMPLX(0.0000346_r8,0.0000338_r8,8)*xp(4)+                    &
+     &     CMPLX(0.0000117_r8,-0.0000024_r8,8)*xp(5)+                   &
      &     CMPLX(0.0000016_r8,-0.0000032_r8,8)*xp(6)
-      phim=CMPLX(0.7071068_r8,0.7071068_r8,8)+                            &
-     &     CMPLX(-0.0625001_r8,-0.0000001_r8,8)*xm(1)+                    &
-     &     CMPLX(-0.0013813_r8,0.0013811_r8,8)*xm(2)+                     &
-     &     CMPLX(0.0000005_r8,0.0002452_r8,8)*xm(3)+                      &
-     &     CMPLX(0.0000346_r8,0.0000338_r8,8)*xm(4)+                      &
-     &     CMPLX(0.0000117_r8,-0.0000024_r8,8)*xm(5)+                     &
+      phim=CMPLX(0.7071068_r8,0.7071068_r8,8)+                          &
+     &     CMPLX(-0.0625001_r8,-0.0000001_r8,8)*xm(1)+                  &
+     &     CMPLX(-0.0013813_r8,0.0013811_r8,8)*xm(2)+                   &
+     &     CMPLX(0.0000005_r8,0.0002452_r8,8)*xm(3)+                    &
+     &     CMPLX(0.0000346_r8,0.0000338_r8,8)*xm(4)+                    &
+     &     CMPLX(0.0000117_r8,-0.0000024_r8,8)*xm(5)+                   &
      &     CMPLX(0.0000016_r8,-0.0000032_r8,8)*xm(6)
 !
       cff=x/SQRT(2.0_r8)

@@ -49,6 +49,13 @@
      &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nrhs(ng),                                      &
      &                   GRID(ng) % Hz,                                 &
+#  if defined UV_LOGDRAG
+     &                   GRID(ng) % ZoBot,                              &
+#  elif defined UV_LDRAG
+     &                   GRID(ng) % rdrag,                              &
+#  elif defined UV_QDRAG
+     &                   GRID(ng) % rdrag2,                             &
+#  endif
 #  if !defined BBL_MODEL || defined ICESHELF
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
@@ -93,6 +100,13 @@
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs,                                    &
      &                         Hz,                                      &
+#  if defined UV_LOGDRAG
+     &                         ZoBot,                                   &
+#  elif defined UV_LDRAG
+     &                         rdrag,                                   &
+#  elif defined UV_QDRAG
+     &                         rdrag2,                                  &
+#  endif
 #  if !defined BBL_MODEL || defined ICESHELF
      &                         z_r, z_w,                                &
 #  endif
@@ -138,6 +152,13 @@
 !
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#   if defined UV_LOGDRAG
+      real(r8), intent(in) :: ZoBot(LBi:,LBj:)
+#   elif defined UV_LDRAG
+      real(r8), intent(in) :: rdrag(LBi:,LBj:)
+#   elif defined UV_QDRAG
+      real(r8), intent(in) :: rdrag2(LBi:,LBj:)
+#   endif
 #   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
@@ -172,6 +193,13 @@
       real(r8), intent(inout) :: btflx(LBi:,LBj:,:)
 #  else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#   if defined UV_LOGDRAG
+      real(r8), intent(in) :: ZoBot(LBi:UBi,LBj:UBj)
+#   elif defined UV_LDRAG
+      real(r8), intent(in) :: rdrag(LBi:UBi,LBj:UBj)
+#   elif defined UV_QDRAG
+      real(r8), intent(in) :: rdrag2(LBi:UBi,LBj:UBj)
+#   endif
 #   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
@@ -205,7 +233,6 @@
       real(r8), intent(inout) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(inout) :: btflx(LBi:UBi,LBj:UBj,NT(ng))
 #  endif
-
 !
 !  Local variable declarations.
 !
@@ -308,7 +335,7 @@
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
-          cff1=1.0_r8/LOG((z_w(i,j,N(ng))-z_r(i,j,N(ng)))/Zob(ng))
+          cff1=1.0_r8/LOG((z_w(i,j,N(ng))-z_r(i,j,N(ng)))/ZoBot(i,j))
           cff2=vonKar*vonKar*cff1*cff1
           wrk(i,j)=MIN(Cdb_max,MAX(Cdb_min,cff2))
         END DO
@@ -351,7 +378,8 @@
      &                    v(i-1,j  ,N(ng),nrhs)+                        &
      &                    v(i-1,j+1,N(ng),nrhs))
             cff2=SQRT(u(i,j,N(ng),nrhs)*u(i,j,N(ng),nrhs)+cff1*cff1)
-            sustr(i,j)=-rdrg2(ng)*u(i,j,N(ng),nrhs)*cff2
+            sustr(i,j)=-0.5_r8*(rdrag2(i-1,j)+rdrag2(i,j))*             &
+     &                 u(i,j,N(ng),nrhs)*cff2
           END IF
         END DO
       END DO
@@ -363,7 +391,8 @@
      &                    u(i  ,j-1,N(ng),nrhs)+                        &
      &                    u(i+1,j-1,N(ng),nrhs))
             cff2=SQRT(cff1*cff1+v(i,j,N(ng),nrhs)*v(i,j,N(ng),nrhs))
-            svstr(i,j)=-rdrg2(ng)*v(i,j,N(ng),nrhs)*cff2
+            svstr(i,j)=-0.5_r8*(rdrag2(i,j-1)+rdrag2(i,j))*             &
+     &                 v(i,j,N(ng),nrhs)*cff2
           END IF
         END DO
       END DO
@@ -374,14 +403,16 @@
       DO j=Jstr,Jend
         DO i=IstrU,Iend
           IF (zice(i,j)*zice(i-1,j).ne.0.0_r8) THEN
-            sustr(i,j)=-rdrg(ng)*u(i,j,N(ng),nrhs)
+            sustr(i,j)=-0.5_r8*(rdrag(i-1,j)+rdrag(i,j))*               &
+     &                 u(i,j,N(ng),nrhs)
           END IF
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
           IF (zice(i,j)*zice(i,j-1).ne.0.0_r8) THEN
-            svstr(i,j)=-rdrg(ng)*v(i,j,N(ng),nrhs)
+            svstr(i,j)=-0.5_r8*(rdrag(i,j-1)+rdrag(i,j))*               &
+     &                 v(i,j,N(ng),nrhs)
           END IF
         END DO
       END DO
@@ -430,7 +461,7 @@
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
-          cff1=1.0_r8/LOG((z_r(i,j,1)-z_w(i,j,0))/Zob(ng))
+          cff1=1.0_r8/LOG((z_r(i,j,1)-z_w(i,j,0))/ZoBot(i,j))
           cff2=vonKar*vonKar*cff1*cff1
           wrk(i,j)=MIN(Cdb_max,MAX(Cdb_min,cff2))
         END DO
@@ -468,7 +499,8 @@
      &                  v(i-1,j  ,1,nrhs)+                              &
      &                  v(i-1,j+1,1,nrhs))
           cff2=SQRT(u(i,j,1,nrhs)*u(i,j,1,nrhs)+cff1*cff1)
-          bustr(i,j)=rdrg2(ng)*u(i,j,1,nrhs)*cff2
+          bustr(i,j)=0.5_r8*(rdrag2(i-1,j)+rdrag2(i,j))*                &
+     &               u(i,j,1,nrhs)*cff2
         END DO
       END DO
       DO j=JstrV,Jend
@@ -478,7 +510,8 @@
      &                  u(i  ,j-1,1,nrhs)+                              &
      &                  u(i+1,j-1,1,nrhs))
           cff2=SQRT(cff1*cff1+v(i,j,1,nrhs)*v(i,j,1,nrhs))
-          bvstr(i,j)=rdrg2(ng)*v(i,j,1,nrhs)*cff2
+          bvstr(i,j)=0.5_r8*(rdrag2(i,j-1)+rdrag2(i,j))*                &
+     &               v(i,j,1,nrhs)*cff2
         END DO
       END DO
 #    elif defined UV_LDRAG
@@ -487,12 +520,14 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          bustr(i,j)=rdrg(ng)*u(i,j,1,nrhs)
+          bustr(i,j)=0.5_r8*(rdrag(i-1,j)+rdrag(i,j))*                  &
+     &               u(i,j,1,nrhs)
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          bvstr(i,j)=rdrg(ng)*v(i,j,1,nrhs)
+          bvstr(i,j)=0.5_r8*(rdrag(i,j-1)+rdrag(i,j))*                  &
+     &               v(i,j,1,nrhs)
         END DO
       END DO
 #    endif
@@ -543,10 +578,11 @@
      &                   LBi, UBi, LBj, UBj,                            &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs(ng), kstp(ng), knew(ng),                  &
-     &                   GRID(ng) % om_u,                               &
-     &                   GRID(ng) % om_v,                               &
-     &                   GRID(ng) % on_u,                               &
-     &                   GRID(ng) % on_v,                               &
+#  if defined UV_LDRAG
+     &                   GRID(ng) % rdrag,                              &
+#  elif defined UV_QDRAG
+     &                   GRID(ng) % rdrag2,                             &
+#  endif
      &                   OCEAN(ng) % ubar,                              &
      &                   OCEAN(ng) % vbar,                              &
      &                   FORCES(ng) % bustr,                            &
@@ -562,7 +598,11 @@
      &                         LBi, UBi, LBj, UBj,                      &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         krhs, kstp, knew,                        &
-     &                         om_u, om_v, on_u, on_v,                  &
+#  if defined UV_LDRAG
+     &                         rdrag,                                   &
+#  elif defined UV_QDRAG
+     &                         rdrag2,                                  &
+#  endif
      &                         ubar, vbar, bustr, bvstr)
 !***********************************************************************
 !
@@ -570,9 +610,9 @@
       USE mod_scalars
 !
       USE bc_2d_mod
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -582,19 +622,23 @@
       integer, intent(in) :: krhs, kstp, knew
 !
 #  ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: om_u(LBi:,LBj:)
-      real(r8), intent(in) :: om_v(LBi:,LBj:)
-      real(r8), intent(in) :: on_u(LBi:,LBj:)
-      real(r8), intent(in) :: on_v(LBi:,LBj:)
+#   ifdef UV_LDRAG
+      real(r8), intent(in) :: rdrag(LBi:,LBj:)
+#   endif
+#   ifdef UV_QDRAG
+      real(r8), intent(in) :: rdrag2(LBi:,LBj:)
+#   endif
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(inout) :: bustr(LBi:,LBj:)
       real(r8), intent(inout) :: bvstr(LBi:,LBj:)
 #  else
-      real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
+#   ifdef UV_LDRAG
+      real(r8), intent(in) :: rdrag(LBi:UBi,LBj:UBj)
+#   endif
+#   ifdef UV_QDRAG
+      real(r8), intent(in) :: rdrag2(LBi:UBi,LBj:UBj)
+#   endif
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: bustr(LBi:UBi,LBj:UBj)
@@ -603,18 +647,18 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
+#  ifdef DISTRIBUTE
+#   ifdef EW_PERIODIC
       logical :: EWperiodic=.TRUE.
-#  else
+#   else
       logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
+#   endif
+#   ifdef NS_PERIODIC
       logical :: NSperiodic=.TRUE.
-#  else
+#   else
       logical :: NSperiodic=.FALSE.
+#   endif
 #  endif
-# endif
       integer :: i, j
 
       real(r8) :: cff1, cff2
@@ -631,12 +675,14 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          bustr(i,j)=rdrg(ng)*ubar(i,j,krhs)
+          bustr(i,j)=0.5_r8*(rdrag(i-1,j)+rdrag(i,j))*                  &
+     &               ubar(i,j,krhs)
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          bvstr(i,j)=rdrg(ng)*vbar(i,j,krhs)
+          bvstr(i,j)=0.5_r8*(rdrag(i,j-1)+rdrag(i,j))*                  &
+     &               vbar(i,j,krhs)
         END DO
       END DO
 #  elif defined UV_QDRAG
@@ -650,7 +696,8 @@
      &                  vbar(i-1,j  ,krhs)+                             &
      &                  vbar(i-1,j+1,krhs))
           cff2=SQRT(ubar(i,j,krhs)*ubar(i,j,krhs)+cff1*cff1)
-          bustr(i,j)=rdrg2(ng)*ubar(i,j,krhs)*cff2
+          bustr(i,j)=0.5_r8*(rdrag2(i-1,j)+rdrag2(i,j))*                &
+     &               ubar(i,j,krhs)*cff2
         END DO
       END DO
       DO j=JstrV,Jend
@@ -660,7 +707,8 @@
      &                  ubar(i  ,j-1,krhs)+                             &
      &                  ubar(i+1,j-1,krhs))
           cff2=SQRT(cff1*cff1+vbar(i,j,krhs)*vbar(i,j,krhs))
-          bvstr(i,j)=rdrg2(ng)*vbar(i,j,krhs)*cff2
+          bvstr(i,j)=0.5_r8*(rdrag2(i,j-1)+rdrag2(i,j))*                &
+     &               vbar(i,j,krhs)*cff2
         END DO
       END DO
 #  endif

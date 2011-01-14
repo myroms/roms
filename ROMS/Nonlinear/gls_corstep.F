@@ -64,6 +64,7 @@
      &                       GRID(ng) % pn,                             &
      &                       GRID(ng) % z_r,                            &
      &                       GRID(ng) % z_w,                            &
+     &                       GRID(ng) % ZoBot,                          &
      &                       OCEAN(ng) % u,                             &
      &                       OCEAN(ng) % v,                             &
      &                       OCEAN(ng) % W,                             &
@@ -100,6 +101,7 @@
      &                             umask, vmask,                        &
 # endif
      &                             Huon, Hvom, Hz, pm, pn, z_r, z_w,    &
+     &                             ZoBot,                               &
      &                             u, v, W,                             &
      &                             bustr, bvstr, sustr, svstr,          &
 # ifdef ZOS_HSIG
@@ -142,6 +144,7 @@
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
+      real(r8), intent(in) :: ZoBot(LBi:,LBj:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
@@ -176,6 +179,7 @@
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(in) :: ZoBot(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
@@ -219,7 +223,7 @@
 
       real(r8), parameter :: Gadv = 1.0_r8/3.0_r8
       real(r8), parameter :: eps = 1.0E-10_r8
-      real(r8) :: Zos_min, Zob_min
+      real(r8) :: Zos_min
 
       real(r8) :: Gh, Gm, Kprod, Ls_unlmt, Ls_lmt, Pprod, Sh, Sm
       real(r8) :: cff, cff1, cff2, cff3
@@ -254,6 +258,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FEP
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FXK
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FXP
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Zob_min
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curvK
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curvP
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gradK
@@ -266,7 +271,11 @@
 !-----------------------------------------------------------------------
 !
       Zos_min=MAX(Zos(ng),0.0001_r8)
-      Zob_min=MAX(Zob(ng),0.0001_r8)
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Zob_min(i,j)=MAX(ZoBot(i,j),0.0001_r8)
+        END DO
+      END DO
 !
       Lmy25=.FALSE.
       IF ((gls_p(ng).eq.0.0_r8).and.                                    &
@@ -304,8 +313,7 @@
       gls_fac2=gls_cmu0(ng)**(gls_p(ng))*gls_n(ng)*                     &
      &         vonKar**(gls_n(ng))
       gls_fac3=gls_cmu0(ng)**(gls_p(ng))*gls_n(ng)
-      gls_fac4=gls_cmu0(ng)**(gls_p(ng))*                               &
-     &         (vonKar*Zob_min)**(gls_n(ng))
+      gls_fac4=gls_cmu0(ng)**(gls_p(ng))
       gls_fac5=0.56_r8**(0.5_r8*gls_n(ng))*gls_cmu0(ng)**gls_p(ng)
       gls_fac6=8.0_r8/gls_cmu0(ng)**6.0_r8
 !
@@ -858,7 +866,8 @@
      &                            tke(i,j,N(ng),nnew)**gls_m(ng)*       &
      &                            (L_sft*Zos_eff(i))**gls_n(ng),        &
      &                            gls_Pmin(ng))
-          gls(i,j,0,nnew)=MAX(gls_fac4*tke(i,j,0,nnew)**(gls_m(ng)),    &
+          cff=gls_fac4*(vonKar*Zob_min(i,j))**(gls_n(ng))
+          gls(i,j,0,nnew)=MAX(cff*tke(i,j,0,nnew)**(gls_m(ng)),         &
      &                        gls_Pmin(ng))
         END DO
 !
@@ -926,7 +935,7 @@
 # endif
           cff=0.5_r8*(tke(i,j,0,nnew)+tke(i,j,1,nnew))
           gls_fluxb(i)=dt(ng)*gls_fac2*(cff**gls_m(ng))*                &
-     &                 (0.5_r8*Hz(i,j,1)+Zob_min)**                     &
+     &                 (0.5_r8*Hz(i,j,1)+Zob_min(i,j))**                &
      &                 (gls_n(ng)-1.0_r8)*                              &
      &                 0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
 !
@@ -1076,7 +1085,7 @@
 !
           Akv(i,j,N(ng))=Akv_bak(ng)+L_sft*Zos_eff(i)*gls_cmu0(ng)*     &
      &                   SQRT(tke(i,j,N(ng),nnew))
-          Akv(i,j,0)=Akv_bak(ng)+vonKar*Zob_min*gls_cmu0(ng)*           &
+          Akv(i,j,0)=Akv_bak(ng)+vonKar*Zob_min(i,j)*gls_cmu0(ng)*      &
      &               SQRT(tke(i,j,0,nnew))
 !
           Akk(i,j,N(ng))=Akk_bak(ng)+Akv(i,j,N(ng))/gls_sigk(ng)

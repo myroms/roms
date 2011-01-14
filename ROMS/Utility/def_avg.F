@@ -1197,6 +1197,62 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+!
+!  Define surface air pressure.
+!
+        IF (Aout(idPair,ng)) THEN
+          Vinfo( 1)=Vname(1,idPair)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idPair))
+          Vinfo( 3)=Vname(3,idPair)
+          Vinfo(14)=Vname(4,idPair)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idPair,ng),r8)
+          status=def_var(ng, iNLM, ncAVGid(ng), avgVid(idPair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+!
+!  Define surface winds.
+!
+        IF (Aout(idUair,ng)) THEN
+          Vinfo( 1)=Vname(1,idUair)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUair))
+          Vinfo( 3)=Vname(3,idUair)
+          Vinfo(14)=Vname(4,idUair)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUair,ng),r8)
+          status=def_var(ng, iNLM, ncAVGid(ng), avgVid(idUair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+        IF (Aout(idVair,ng)) THEN
+          Vinfo( 1)=Vname(1,idVair)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVair))
+          Vinfo( 3)=Vname(3,idVair)
+          Vinfo(14)=Vname(4,idVair)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVair,ng),r8)
+          status=def_var(ng, iNLM, ncAVGid(ng), avgVid(idVair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#  endif
 !
 !  Define surface net heat flux.
 !
@@ -1330,7 +1386,6 @@
         IF (Aout(idrain,ng)) THEN
           Vinfo( 1)=Vname(1,idrain)
           WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idrain))
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idrain))
           Vinfo( 3)=Vname(3,idrain)
           Vinfo(12)='downward flux, freshening (precipitation)'
           Vinfo(14)=Vname(4,idrain)
@@ -1448,7 +1503,8 @@
 !
           IF (Aout(idUbld(i),ng)) THEN
             Vinfo( 1)=Vname(1,idUbld(i))
-            Vinfo( 2)=Vname(2,idUbld(i))
+            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                         &
+     &                                   TRIM(Vname(2,idUbld(i)))
             Vinfo( 3)=Vname(3,idUbld(i))
             Vinfo(14)=Vname(4,idUbld(i))
             Vinfo(16)=Vname(1,idtime)
@@ -1467,7 +1523,8 @@
 !
           IF (Aout(idVbld(i),ng)) THEN
             Vinfo( 1)=Vname(1,idVbld(i))
-            Vinfo( 2)=Vname(2,idVbld(i))
+            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
+     &                                   TRIM(Vname(2,idVbld(i)))
             Vinfo( 3)=Vname(3,idVbld(i))
             Vinfo(14)=Vname(4,idVbld(i))
             Vinfo(16)=Vname(1,idtime)
@@ -1489,7 +1546,7 @@
 !
         IF (Aout(idW2xx,ng)) THEN
           Vinfo( 1)=Vname(1,idW2xx)
-          Vinfo( 2)=Vname(2,idW2xx)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW2xx))
           Vinfo( 3)=Vname(3,idW2xx)
           Vinfo(14)=Vname(4,idW2xx)
           Vinfo(16)=Vname(1,idtime)
@@ -1507,7 +1564,7 @@
 !
         IF (Aout(idW2xy,ng)) THEN
           Vinfo( 1)=Vname(1,idW2xy)
-          Vinfo( 2)=Vname(2,idW2xy)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW2xy))
           Vinfo( 3)=Vname(3,idW2xy)
           Vinfo(14)=Vname(4,idW2xy)
           Vinfo(16)=Vname(1,idtime)
@@ -1525,7 +1582,7 @@
 !
         IF (Aout(idW2yy,ng)) THEN
           Vinfo( 1)=Vname(1,idW2yy)
-          Vinfo( 2)=Vname(2,idW2yy)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW2yy))
           Vinfo( 3)=Vname(3,idW2yy)
           Vinfo(14)=Vname(4,idW2yy)
           Vinfo(16)=Vname(1,idtime)
@@ -1543,7 +1600,7 @@
 !
         IF (Aout(idU2rs,ng)) THEN
           Vinfo( 1)=Vname(1,idU2rs)
-          Vinfo( 2)=Vname(2,idU2rs)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idU2rs))
           Vinfo( 3)=Vname(3,idU2rs)
           Vinfo(14)=Vname(4,idU2rs)
           Vinfo(16)=Vname(1,idtime)
@@ -1561,7 +1618,7 @@
 !
         IF (Aout(idV2rs,ng)) THEN
           Vinfo( 1)=Vname(1,idV2rs)
-          Vinfo( 2)=Vname(2,idV2rs)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idV2rs))
           Vinfo( 3)=Vname(3,idV2rs)
           Vinfo(14)=Vname(4,idV2rs)
           Vinfo(16)=Vname(1,idtime)
@@ -1579,7 +1636,7 @@
 !
         IF (Aout(idU2Sd,ng)) THEN
           Vinfo( 1)=Vname(1,idU2Sd)
-          Vinfo( 2)=Vname(2,idU2Sd)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idU2Sd))
           Vinfo( 3)=Vname(3,idU2Sd)
           Vinfo(14)=Vname(4,idU2Sd)
           Vinfo(16)=Vname(1,idtime)
@@ -1597,7 +1654,7 @@
 !
         IF (Aout(idV2Sd,ng)) THEN
           Vinfo( 1)=Vname(1,idV2Sd)
-          Vinfo( 2)=Vname(2,idV2Sd)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idV2Sd))
           Vinfo( 3)=Vname(3,idV2Sd)
           Vinfo(14)=Vname(4,idV2Sd)
           Vinfo(16)=Vname(1,idtime)
@@ -1616,7 +1673,7 @@
 !
         IF (Aout(idW3xx,ng)) THEN
           Vinfo( 1)=Vname(1,idW3xx)
-          Vinfo( 2)=Vname(2,idW3xx)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW3xx))
           Vinfo( 3)=Vname(3,idW3xx)
           Vinfo(14)=Vname(4,idW3xx)
           Vinfo(16)=Vname(1,idtime)
@@ -1634,7 +1691,7 @@
 !
         IF (Aout(idW3xy,ng)) THEN
           Vinfo( 1)=Vname(1,idW3xy)
-          Vinfo( 2)=Vname(2,idW3xy)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW3xy))
           Vinfo( 3)=Vname(3,idW3xy)
           Vinfo(14)=Vname(4,idW3xy)
           Vinfo(16)=Vname(1,idtime)
@@ -1652,7 +1709,7 @@
 !
         IF (Aout(idW3yy,ng)) THEN
           Vinfo( 1)=Vname(1,idW3yy)
-          Vinfo( 2)=Vname(2,idW3yy)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW3yy))
           Vinfo( 3)=Vname(3,idW3yy)
           Vinfo(14)=Vname(4,idW3yy)
           Vinfo(16)=Vname(1,idtime)
@@ -1672,7 +1729,7 @@
 !
         IF (Aout(idW3zx,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zx)
-          Vinfo( 2)=Vname(2,idW3zx)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW3zx))
           Vinfo( 3)=Vname(3,idW3zx)
           Vinfo(14)=Vname(4,idW3zx)
           Vinfo(16)=Vname(1,idtime)
@@ -1690,7 +1747,7 @@
 !
         IF (Aout(idW3zy,ng)) THEN
           Vinfo( 1)=Vname(1,idW3zy)
-          Vinfo( 2)=Vname(2,idW3zy)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idW3zy))
           Vinfo( 3)=Vname(3,idW3zy)
           Vinfo(14)=Vname(4,idW3zy)
           Vinfo(16)=Vname(1,idtime)
@@ -1709,7 +1766,7 @@
 !
         IF (Aout(idU3rs,ng)) THEN
           Vinfo( 1)=Vname(1,idU3rs)
-          Vinfo( 2)=Vname(2,idU3rs)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idU3rs))
           Vinfo( 3)=Vname(3,idU3rs)
           Vinfo(14)=Vname(4,idU3rs)
           Vinfo(16)=Vname(1,idtime)
@@ -1727,7 +1784,7 @@
 !
         IF (Aout(idV3rs,ng)) THEN
           Vinfo( 1)=Vname(1,idV3rs)
-          Vinfo( 2)=Vname(2,idV3rs)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idV3rs))
           Vinfo( 3)=Vname(3,idV3rs)
           Vinfo(14)=Vname(4,idV3rs)
           Vinfo(16)=Vname(1,idtime)
@@ -1745,7 +1802,7 @@
 !
         IF (Aout(idU3Sd,ng)) THEN
           Vinfo( 1)=Vname(1,idU3Sd)
-          Vinfo( 2)=Vname(2,idU3Sd)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idU3Sd))
           Vinfo( 3)=Vname(3,idU3Sd)
           Vinfo(14)=Vname(4,idU3Sd)
           Vinfo(16)=Vname(1,idtime)
@@ -1763,7 +1820,7 @@
 !
         IF (Aout(idV3Sd,ng)) THEN
           Vinfo( 1)=Vname(1,idV3Sd)
-          Vinfo( 2)=Vname(2,idV3Sd)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idV3Sd))
           Vinfo( 3)=Vname(3,idV3Sd)
           Vinfo(14)=Vname(4,idV3Sd)
           Vinfo(16)=Vname(1,idtime)
@@ -1951,6 +2008,19 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSdif))) THEN
             got_var(idSdif)=.TRUE.
             avgVid(idSdif,ng)=var_id(i)
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
+            got_var(idPair)=.TRUE.
+            avgVid(idPair,ng)=var_id(i)
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUair))) THEN
+            got_var(idUair)=.TRUE.
+            avgVid(idUair,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVair))) THEN
+            got_var(idVair)=.TRUE.
+            avgVid(idVair,ng)=var_id(i)
 #  endif
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idTsur(itemp)))) THEN
@@ -2331,6 +2401,28 @@
         END IF
         IF (.not.got_var(idSdif).and.Aout(idSdif,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSdif)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+        IF (.not.got_var(idPair).and.Aout(idPair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idPair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+        IF (.not.got_var(idUair).and.Aout(idUair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVair).and.Aout(idVair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN

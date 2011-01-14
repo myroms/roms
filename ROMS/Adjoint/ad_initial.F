@@ -603,6 +603,24 @@
       END IF
 #  endif
 # endif
+
+# if defined ANA_DRAG && defined UV_DRAG_GRID
+!
+!-----------------------------------------------------------------------
+!  Set analytical spatially varying bottom friction parameter.
+!-----------------------------------------------------------------------
+!
+      IF (Nrun.eq.ERstr) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+            CALL ana_drag (ng, TILE, iADM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute grid stiffness.

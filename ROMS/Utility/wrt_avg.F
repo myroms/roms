@@ -1377,6 +1377,74 @@
         END IF
       END IF
 #  endif
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+!
+!  Write out surface air pressure.
+!
+      IF (Aout(idPair,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idPair,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask_avg,                        &
+#   endif
+     &                     AVERAGE(ng) % avgPair)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idPair)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+!
+!  Write out surface winds.
+!
+      IF (Aout(idUair,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idUair,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask_avg,                        &
+#   endif
+     &                     AVERAGE(ng) % avgUwind)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUair)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+
+      IF (Aout(idVair,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idVair,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask_avg,                        &
+#   endif
+     &                     AVERAGE(ng) % avgVwind)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVair)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
 !
 !  Write out surface net heat flux.
 !

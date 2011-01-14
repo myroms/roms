@@ -70,6 +70,7 @@
      &                GRID(ng) % z_r,                                   &
      &                GRID(ng) % z_w,                                   &
      &                GRID(ng) % angler,                                &
+     &                GRID(ng) % ZoBot,                                 &
 # ifdef MB_CALC_UB
      &                FORCES(ng) % Hwave,                               &
 # else
@@ -104,7 +105,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs,                                       &
-     &                      h, z_r, z_w, angler,                        &
+     &                      h, z_r, z_w, angler, ZoBot,                 &
 # ifdef MB_CALC_UB
      &                      Hwave,                                      &
 # else
@@ -140,6 +141,7 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: angler(LBi:,LBj:)
+      real(r8), intent(in) :: ZoBot(LBi:,LBj:)
 #  ifdef MB_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:,LBj:)
 #  else
@@ -170,6 +172,7 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ZoBot(LBi:UBi,LBj:UBj)
 #  ifdef MB_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 #  else
@@ -361,7 +364,7 @@
 !  Set Znot for currents as maximun of user value or grain roughness.
 !
            ZnotC=d50/12.0_r8
-           Znot=MAX(Zob(ng),ZnotC)
+           Znot=MAX(ZoBot(i,j),ZnotC)
 !
 !-----------------------------------------------------------------------
 !  Set tauC (m2/s2) acc. to current-only case (skin friction) [m/s]
@@ -437,7 +440,7 @@
 !  Maximum of combined wave-current stress (m2/s2) component for
 !  sediment purposes.
 !
-            tau_cwb=SQRT((tau_cw+tau_wb*COS(phiCW))**2+                  &
+            tau_cwb=SQRT((tau_cw+tau_wb*COS(phiCW))**2+                 &
      &                   (tau_wb*SIN(phiCW))**2)
             tauCWmax(i,j)=tau_cwb
             tauW(i,j)=tau_wb
@@ -579,7 +582,7 @@
           bottom(i,j,ibwav)=Ab
           bottom(i,j,irlen)=rlen
           bottom(i,j,irhgt)=rhgt
-          bottom(i,j,izdef)=Znot                       ! Zob(ng)
+          bottom(i,j,izdef)=Znot
           bottom(i,j,izapp)=ZnotC
         END DO
       END DO

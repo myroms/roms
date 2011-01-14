@@ -1155,6 +1155,62 @@
 #  endif
         END IF
 # endif
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+!
+!  Define surface air pressure.
+!
+        IF (Hout(idPair,ng)) THEN
+          Vinfo( 1)=Vname(1,idPair)
+          Vinfo( 2)=Vname(2,idPair)
+          Vinfo( 3)=Vname(3,idPair)
+          Vinfo(14)=Vname(4,idPair)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idPair,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idPair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
+!
+!  Define surface winds.
+!
+        IF (Hout(idUair,ng)) THEN
+          Vinfo( 1)=Vname(1,idUair)
+          Vinfo( 2)=Vname(2,idUair)
+          Vinfo( 3)=Vname(3,idUair)
+          Vinfo(14)=Vname(4,idUair)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUair,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idUair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+
+        IF (Hout(idVair,ng)) THEN
+          Vinfo( 1)=Vname(1,idVair)
+          Vinfo( 2)=Vname(2,idVair)
+          Vinfo( 3)=Vname(3,idVair)
+          Vinfo(14)=Vname(4,idVair)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVair,ng),r8)
+          status=def_var(ng, iNLM, ncHISid(ng), hisVid(idVair,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# endif
 !
 !  Define surface active tracer fluxes.
 !
@@ -2359,6 +2415,19 @@
             got_var(idMtls)=.TRUE.
             hisVid(idMtls,ng)=var_id(i)
 # endif
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
+            got_var(idPair)=.TRUE.
+            hisVid(idPair,ng)=var_id(i)
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUair))) THEN
+            got_var(idUair)=.TRUE.
+            hisVid(idUair,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVair))) THEN
+            got_var(idVair)=.TRUE.
+            hisVid(idVair,ng)=var_id(i)
+# endif
 # ifdef BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
@@ -2755,6 +2824,28 @@
         END IF
         IF (.not.got_var(idMtls).and.Hout(idMtls,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMtls)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+        IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idPair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
+        IF (.not.got_var(idUair).and.Hout(idUair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVair).and.Hout(idVair,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN

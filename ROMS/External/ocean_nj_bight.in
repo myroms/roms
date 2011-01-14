@@ -382,6 +382,10 @@ Hout(idWpbt) == F                          ! wave bottom period
 Hout(idWorb) == F                          ! wave bottom orbital velocity
 Hout(idWdis) == F                          ! wave dissipation
 
+Hout(idPair) == F                          ! surface air pressure
+Hout(idUair) == F                          ! surface U-wind component
+Hout(idVair) == F                          ! surface V-wind component
+
 Hout(idTsur) == T T                        ! surface net heat and salt flux
 Hout(idLhea) == T                          ! latent heat flux
 Hout(idShea) == T                          ! sensible heat flux
@@ -470,6 +474,10 @@ Aout(idU3rs) == F                          ! 3D U-radiation stress
 Aout(idV3rs) == F                          ! 3D V-radiation stress
 Aout(idU3Sd) == F                          ! 3D U-Stokes velocity
 Aout(idV3Sd) == F                          ! 3D V-Stokes velocity
+
+Aout(idPair) == F                          ! surface air pressure
+Aout(idUair) == F                          ! surface U-wind component
+Aout(idVair) == F                          ! surface V-wind component
 
 Aout(idTsur) == F F                        ! surface net heat and salt flux
 Aout(idLhea) == F                          ! latent heat flux
@@ -1546,6 +1554,10 @@ Dout(iTvdif) == T T                        ! vertical diffusion
 !  Hout(idWorb)  Write out wave bottom orbital velocity.
 !  Hout(idWdis)  Write out wave dissipation.
 !
+!  Hout(idPair)  Write out surface air pressure.
+!  Hout(idUair)  Write out surface U-wind component.
+!  Hout(idVair)  Write out surface V-wind component.
+!
 !  Hout(idTsur)  Write out surface net heat and salt flux
 !  Hout(idLhea)  Write out latent heat flux.
 !  Hout(idShea)  Write out sensible heat flux.
@@ -1605,6 +1617,10 @@ Dout(iTvdif) == T T                        ! vertical diffusion
 !  Aout(idV3rs)  Write out 3D V-radiation stress.
 !  Aout(idU3Sd)  Write out 3D U-Stokes velocity.
 !  Aout(idV3Sd)  Write out 3D V-Stokes velocity.
+!
+!  Aout(idPair)  Write out surface air pressure.
+!  Aout(idUair)  Write out surface U-wind component.
+!  Aout(idVair)  Write out surface V-wind component.
 !
 !  Aout(idTsur)  Write out surface net heat and salt flux
 !  Aout(idLhea)  Write out latent heat flux.

@@ -20,9 +20,10 @@
 !!                       tracers.                                      !
 !! ana_btflux.h        Analytical kinematic bottom flux of tracer      !
 !!                       type variables.                               !
-!! ana_bmflux.h        Analytical spatially varying bottom roughness   !
 !! ana_cloud.h         Analytical cloud fraction.                      !
 !! ana_diag.h          Customized diagnostics.                         !
+!! ana_drag.h          Analytical spatially varying bottom friction    !
+!!                       parameters.                                   !
 !! ana_fsobc.h         Analytical free-surface boundary conditions.    !
 !! ana_grid.h          Analytical model grid set-up.                   !
 !! ana_humid.h         Analytical surface air humidity.                !
@@ -84,10 +85,6 @@
 #  include <ana_biology.h>
 # endif
 
-# if defined ANA_BMFLUX && defined SEDIMENT && !defined ANA_SEDIMENT
-#  include <ana_bmflux.h>
-# endif
-
 # ifdef SOLVE3D
 #  if defined ANA_BTFLUX || defined ANA_BSFLUX || defined ANA_BPFLUX
 #   include <ana_btflux.h>
@@ -100,6 +97,10 @@
 
 # ifdef ANA_DIAG
 #  include <ana_diag.h>
+# endif
+
+# if defined ANA_DRAG && defined UV_DRAG_GRID
+#  include <ana_drag.h>
 # endif
 
 # ifdef ANA_FSOBC

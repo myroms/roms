@@ -2407,11 +2407,11 @@
       ELSE IF (Vtransform(ng).eq.2) THEN
         Vinfo(21)='ocean_s_coordinate_g2'
       END IF
-#if defined SEDIMENT && defined SED_MORPH
+# if defined SEDIMENT && defined SED_MORPH
       Vinfo(23)='s: s_rho C: Cs_r eta: zeta depth: bath depth_c: hc'
-#else
+# else
       Vinfo(23)='s: s_rho C: Cs_r eta: zeta depth: h depth_c: hc'
-#endif
+# endif
       vinfo(25)='up'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
@@ -2433,11 +2433,11 @@
       ELSE IF (Vtransform(ng).eq.2) THEN
         Vinfo(21)='ocean_s_coordinate_g2'
       END IF
-#if defined SEDIMENT && defined SED_MORPH
+# if defined SEDIMENT && defined SED_MORPH
       Vinfo(23)='s: s_w C: Cs_w eta: zeta depth: bath depth_c: hc'
-#else
+# else
       Vinfo(23)='s: s_w C: Cs_w eta: zeta depth: h depth_c: hc'
-#endif
+# endif
       vinfo(25)='up'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
@@ -2511,7 +2511,7 @@
 #else
       IF (ncid.ne.ncFLTid(ng)) THEN
 #endif
-# if !(defined SED_MORPH && defined SEDIMENT)
+#if !(defined SED_MORPH && defined SEDIMENT)
 !
 !  Bathymetry.
 !
@@ -2530,7 +2530,7 @@
      &                   2, t2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
-# endif
+#endif
 !
 !  Coriolis Parameter.
 !
@@ -2769,7 +2769,7 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END IF
-# ifdef CURVGRID
+#ifdef CURVGRID
 !
 !  Angle between XI-axis and EAST at RHO-points.
 !
@@ -2788,8 +2788,8 @@
      &                   2, t2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
-# endif
-# ifdef MASKING
+#endif
+#ifdef MASKING
 !
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
@@ -2834,10 +2834,10 @@
      &                   2, p2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
-# endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
+#endif
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+    defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !
@@ -2872,7 +2872,47 @@
      &                   2, v2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
+#endif
+#ifdef UV_DRAG_GRID
+!
+!  Spatially varying bottom friction parameter.
+!
+        IF (ncid.ne.ncSTAid(ng)) THEN
+# ifdef UV_LOGDRAG
+          Vinfo( 1)=Vname(1,idZoBL)
+          Vinfo( 2)=Vname(2,idZoBL)
+          Vinfo( 3)=Vname(3,idZoBL)
+          Vinfo(14)=Vname(4,idZoBL)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ng, model, ncid, varid, NF_TYPE,               &
+     &                   2, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 # endif
+# ifdef UV_LDRAG
+          Vinfo( 1)=Vname(1,idragL)
+          Vinfo( 2)=Vname(2,idragL)
+          Vinfo( 3)=Vname(3,idragL)
+          Vinfo(14)=Vname(4,idragL)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ng, model, ncid, varid, NF_TYPE,               &
+     &                   2, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+# endif
+# ifdef UV_QDRAG
+          Vinfo( 1)=Vname(1,idragQ)
+          Vinfo( 2)=Vname(2,idragQ)
+          Vinfo( 3)=Vname(3,idragQ)
+          Vinfo(14)=Vname(4,idragQ)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ng, model, ncid, varid, NF_TYPE,               &
+     &                   2, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+# endif
+        END IF
+#endif
       END IF
 
   10  FORMAT (i3.3,'x',i3.3)

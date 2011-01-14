@@ -184,6 +184,13 @@
           real(r8), pointer :: avgbvs(:,:)
 
 # ifdef SOLVE3D
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+          real(r8), pointer :: avgPair(:,:)
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+          real(r8), pointer :: avgUwind(:,:)
+          real(r8), pointer :: avgVwind(:,:)
+#  endif
           real(r8), pointer :: avgstf(:,:)
           real(r8), pointer :: avgswf(:,:)
 #  ifdef SHORTWAVE
@@ -383,6 +390,19 @@
       END IF
 
 # ifdef SOLVE3D
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+      IF (Aout(idPair,ng)) THEN
+        allocate ( AVERAGE(ng) % avgPair(LBi:UBi,LBj:UBj) )
+      END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+      IF (Aout(idUair,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUwind(LBi:UBi,LBj:UBj) )
+      END IF
+      IF (Aout(idVair,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVwind(LBi:UBi,LBj:UBj) )
+      END IF
+#  endif
       IF (Aout(idTsur(itemp),ng)) THEN
         allocate ( AVERAGE(ng) % avgstf(LBi:UBi,LBj:UBj) )
       END IF
@@ -815,6 +835,31 @@
       END IF
 
 # ifdef SOLVE3D
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+      IF (Aout(idPair,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgPair(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
+      IF (Aout(idUair,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUwind(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVair,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVwind(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
       IF (Aout(idTsur(itemp),ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax

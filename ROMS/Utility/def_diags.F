@@ -511,7 +511,7 @@
             Vinfo(20)='mask_rho'
 #  endif
             Vinfo(22)='coordinates'
-            Aval(5)=REAL(r3dvar,r8)
+            Aval(5)=REAL(r2dvar,r8)
             status=def_var(ng, iNLM, ncDIAid(ng), diaVid(ifield,ng),    &
      &                     NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN

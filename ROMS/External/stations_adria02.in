@@ -97,6 +97,10 @@ Sout(idWpbt) == F                          ! wave bottom period
 Sout(idWorb) == F                          ! wave bottom orbital velocity
 Sout(idWdis) == F                          ! wave dissipation
 
+Sout(idPair) == F                          ! surface air pressure
+Sout(idUair) == F                          ! surface U-wind component
+Sout(idVair) == F                          ! surface V-wind component
+
 Sout(idTsur) == T T                        ! surface net heat and salt flux
 Sout(idLhea) == T                          ! latent heat flux
 Sout(idShea) == T                          ! sensible heat flux
@@ -246,6 +250,10 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !  Sout(idWpbt)  Write out wave bottom period.
 !  Sout(idWorb)  Write out wave bottom orbital velocity.
 !  Sout(idWdis)  Write out wave dissipation.
+!
+!  Sout(idPair)  Write out surface air pressure.
+!  Sout(idUair)  Write out surface U-wind component.
+!  Sout(idVair)  Write out surface V-wind component.
 !
 !  Sout(idTsur)  Write out surface net heat and salt flux.
 !  Sout(idLhea)  Write out latent heat flux.

@@ -100,6 +100,15 @@
 !  umask_wet  Wet/Dry mask at   U-points (0=dry, 1,2=wet)              !
 !  vmask_wet  Wet/Dry mask at   V-points (0=dry, 1,2=wet)              !
 #endif
+#if defined UV_LOGDRAG || defined GLS_MIXING || \
+    defined BBL_MODEL  || defined SEDIMENT
+!  ZoBot      Bottom roughness length (m).                             !
+#endif
+#if defined UV_LDRAG
+!  rdrag      Linear drag coefficient (m/s).                           !
+#elif defined UV_QDRAG
+!  rdrag2     Quadratic drag coefficient (nondimensional).             !
+#endif
 !  xp         XI-coordinates (m) at PSI-points.                        !
 !  xr         XI-coordinates (m) at RHO-points.                        !
 !  xu         XI-coordinates (m) at U-points.                          !
@@ -172,6 +181,15 @@
           real(r8), pointer :: pnom_r(:,:)
           real(r8), pointer :: pnom_u(:,:)
           real(r8), pointer :: pnom_v(:,:)
+#if defined UV_LOGDRAG || defined GLS_MIXING || \
+    defined BBL_MODEL  || defined SEDIMENT
+          real(r8), pointer :: ZoBot(:,:)
+#endif
+#if defined UV_LDRAG
+          real(r8), pointer :: rdrag(:,:)
+#elif defined UV_QDRAG
+          real(r8), pointer :: rdrag2(:,:)
+#endif
           real(r8), pointer :: xp(:,:)
           real(r8), pointer :: xr(:,:)
           real(r8), pointer :: xu(:,:)
@@ -345,6 +363,15 @@
       allocate ( GRID(ng) % pnom_r(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % pnom_u(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % pnom_v(LBi:UBi,LBj:UBj) )
+#if defined UV_LOGDRAG || defined GLS_MIXING || \
+    defined BBL_MODEL  || defined SEDIMENT
+      allocate ( GRID(ng) % ZoBot(LBi:UBi,LBj:UBj) )
+#endif
+#if defined UV_LDRAG
+      allocate ( GRID(ng) % rdrag(LBi:UBi,LBj:UBj) )
+#elif defined UV_QDRAG
+      allocate ( GRID(ng) % rdrag2(LBi:UBi,LBj:UBj) )
+#endif
       allocate ( GRID(ng) % xp(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % xr(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % xu(LBi:UBi,LBj:UBj) )
@@ -465,6 +492,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -572,6 +600,16 @@
             GRID(ng) % pnom_r(i,j) = IniVal
             GRID(ng) % pnom_u(i,j) = IniVal
             GRID(ng) % pnom_v(i,j) = IniVal
+
+#if defined UV_LOGDRAG || defined GLS_MIXING || \
+    defined BBL_MODEL  || defined SEDIMENT
+            GRID(ng) % ZoBot(i,j) = Zob(ng)
+#endif
+#if defined UV_LDRAG
+            GRID(ng) % rdrag(i,j) = rdrg(ng)
+#elif defined UV_QDRAG
+            GRID(ng) % rdrag2(i,j) = rdrg2(ng)
+#endif
 
             GRID(ng) % xp(i,j) = IniVal
             GRID(ng) % xr(i,j) = IniVal

@@ -39,6 +39,7 @@
 ** UV_VIS2             use to turn ON or OFF harmonic horizontal mixing      **
 ** UV_VIS4             use to turn ON or OFF biharmonic horizontal mixing    **
 ** UV_SMAGORINSKY      use to turn ON or OFF Smagorinsky-like viscosity      **
+** UV_DRAG_GRID        use if spatially varying bottom friction parameters   **
 ** UV_LOGDRAG          use to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG            use to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG            use to turn ON or OFF quadratic bottom friction       **
@@ -200,12 +201,12 @@
 **    Any of the analytical expressions are coded in "analytical.F".         **
 **                                                                           **
 ** ANA_BIOLOGY         use if analytical biology initial conditions          **
-** ANA_BMFLUX          use if analytical spatially varying bottom roughness  **
 ** ANA_BPFLUX          use if analytical bottom passive tracers fluxes       **
 ** ANA_BSFLUX          use if analytical bottom salinity flux                **
 ** ANA_BTFLUX          use if analytical bottom temperature flux             **
 ** ANA_CLOUD           use if analytical cloud fraction                      **
 ** ANA_DIAG            use if customized diagnostics                         **
+** ANA_DRAG            use if analytical spatially varying drag parameters   **
 ** ANA_FSOBC           use if analytical free-surface boundary conditions    **
 ** ANA_GRID            use if analytical model grid set-up                   **
 ** ANA_HUMIDITY        use if analytical surface air humidity                **

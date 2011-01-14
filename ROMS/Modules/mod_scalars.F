@@ -1172,7 +1172,6 @@
 !    sg_zrmin      Minimum allowed height (m) of current above bed.
 !                    Otherwise, logarithmic interpolation is used.
 !    sg_znotcdef   Default apparent hydraulic roughness (m).
-!    sg_znotdef    Default hydraulic roughness (m).
 !
         integer, parameter :: sg_n = 20
 
@@ -1189,7 +1188,6 @@
         real(r8) :: sg_z1min = 0.20_r8         ! (m)
         real(r8) :: sg_z1p                     ! non-dimensional
         real(r8) :: sg_znotcdef = 0.01_r8      ! (m)
-        real(r8) :: sg_znotdef                 ! (m)
 
         complex(c8) :: sg_mp
 # endif
