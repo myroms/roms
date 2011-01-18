@@ -64,10 +64,6 @@
       USE tl_set_massflux_mod, ONLY : tl_set_massflux
 # endif
       USE stiffness_mod, ONLY : stiffness
-# if defined PROPAGATOR || \
-    (defined MASKING && (defined READ_WATER || defined WRITE_WATER ))
-      USE wpoints_mod, ONLY : wpoints
-# endif
 # ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
@@ -316,10 +312,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
             CALL metrics (ng, TILE, iTLM)
-# if defined PROPAGATOR || \
-    (defined MASKING && (defined READ_WATER || defined WRITE_WATER ))
-            CALL wpoints (ng, TILE, iTLM)
-# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

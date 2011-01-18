@@ -109,6 +109,10 @@
 # ifdef FLOATS
       USE step_floats_mod, ONLY : step_floats
 # endif
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
+      USE wpoints_mod, ONLY : wpoints
+# endif
       USE wvelocity_mod, ONLY : wvelocity
 !
       implicit none
@@ -197,6 +201,9 @@
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL ini_zeta (ng, TILE, iNLM)
             CALL set_depth (ng, TILE)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iNLM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -208,8 +215,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL ini_fields (ng, TILE, iNLM)
-# ifdef MASKING
-            CALL set_masks (ng, TILE, iNLM)
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
+            CALL wpoints (ng, TILE, iNLM)
 # endif
           END DO
         END DO

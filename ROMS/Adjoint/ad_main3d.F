@@ -134,6 +134,10 @@
 # ifdef MASKING
       USE set_masks_mod, ONLY : set_masks
 # endif
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
+      USE wpoints_mod, ONLY : wpoints
+# endif
 !!    USE wvelocity_mod, ONLY : wvelocity
 !
       implicit none
@@ -193,11 +197,12 @@
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
 
-# ifdef MASKING
+# if defined MASKING || defined PROPAGATOR
 !
 !  If first entry, initialize I/O masks.
 !
       IF (iic(ng).ne.ntstart(ng)) THEN
+#  ifdef MASKING
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -206,6 +211,21 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
+#  endif
+#  if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
+!
+!  Compute water point indices.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL wpoints (ng, TILE, iADM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+#  endif
       END IF
 # endif
 

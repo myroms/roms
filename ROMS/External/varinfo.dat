@@ -1708,7 +1708,7 @@
   'river runoff dye concentration'
   'kilogram meter-3'                               ! [kg/m3]
   'river_dye, scalar, series'
-  'ocean_time'
+  'river_time'
   'idRtrc(inert(i))'
   'nulvar'
   1.0d0

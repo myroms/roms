@@ -53,7 +53,7 @@
 # ifdef BBL_MODEL_NOT_YET
 !!    USE tl_bbl_mod, ONLY : tl_bblm
 # endif
-# ifdef BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
+# if defined BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
 !!    USE tl_bulk_flux_mod, ONLY : tl_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
@@ -113,6 +113,10 @@
 !!    USE tl_step_floats_mod, ONLY : tl_step_floats
 # endif
 !!    USE wvelocity_mod, ONLY : wvelocity
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
+      USE wpoints_mod, ONLY : wpoints
+# endif
 !
       implicit none
 !
@@ -221,6 +225,9 @@
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL tl_ini_zeta (ng, TILE, iTLM)
             CALL tl_set_depth (ng, TILE)
+# ifdef MASKING
+            CALL set_masks (ng, TILE, iTLM)
+# endif
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -232,8 +239,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL tl_ini_fields (ng, TILE, iTLM)
-# ifdef MASKING
-            CALL set_masks (ng, TILE, iTLM)
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
+            CALL wpoints (ng, TILE, iTLM)
 # endif
           END DO
         END DO

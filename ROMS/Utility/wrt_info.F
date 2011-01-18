@@ -1849,7 +1849,11 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
      &                           GRID(ng) % rmask_io,                   &
+# ifdef WRITE_WATER
+     &                           GRID(ng) % rmask_io,                   &
+# else
      &                           GRID(ng) % rmask,                      &
+# endif
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
@@ -1871,7 +1875,11 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
      &                           GRID(ng) % umask_io,                   &
+# if defined WRITE_WATER || defined UV_PSOURCE
+     &                           GRID(ng) % umask_io,                   &
+# else
      &                           GRID(ng) % umask,                      &
+# endif
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
@@ -1893,7 +1901,11 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
      &                           GRID(ng) % vmask_io,                   &
+# if defined WRITE_WATER || defined UV_PSOURCE
+     &                           GRID(ng) % vmask_io,                   &
+# else
      &                           GRID(ng) % vmask,                      &
+# endif
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
@@ -1915,7 +1927,11 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
      &                           GRID(ng) % pmask_io,                   &
+# ifdef WRITE_WATER
+     &                           GRID(ng) % pmask_io,                   &
+# else
      &                           GRID(ng) % pmask,                      &
+# endif
      &                           SetFillVal = .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_psi', TRIM(ncname)

@@ -47,6 +47,9 @@
       integer, parameter :: Natt = 25
 
       integer :: i, ifield, itrc, j, model, nvd3, nvd4
+# if defined WRITE_WATER && defined MASKING
+      integer :: xy_pdim, xyz_pdim
+# endif
       integer :: recdim, status
 
       integer :: DimIDs(32), p2dgrd(3), t2dgrd(3), u2dgrd(3), v2dgrd(3)
@@ -155,6 +158,10 @@
         status=def_dim(ng, model, ncAVGid(ng), ncname, 'xy_v',          &
      &                 IOBOUNDS(ng)%xy_v, DimIDs(19))
         IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, model, ncAVGid(ng), ncname, 'xy_psi',        &
+     &                 IOBOUNDS(ng)%xy_psi, xy_pdim)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
 
 # ifdef SOLVE3D
@@ -173,6 +180,10 @@
 
         status=def_dim(ng, model, ncAVGid(ng), ncname, 'xyz_w',         &
      &                 IOBOUNDS(ng)%xy_rho*(N(ng)+1), DimIDs(23))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, model, ncAVGid(ng), ncname, 'xyz_psi',       &
+     &                 IOBOUNDS(ng)%xy_psi*N(ng), xyz_pdim)
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 
@@ -319,8 +330,8 @@
         p2dgrd(1)=xy_pdim
         p2dgrd(2)=DimIDs(12)
 #  ifdef SOLVE3D
-        p2dgrd(1)=xyz_pdim
-        p2dgrd(2)=DimIDs(12)
+        p3dgrd(1)=xyz_pdim
+        p3dgrd(2)=DimIDs(12)
 #  endif
 # else
         p2dgrd(1)=DimIDs( 4)
@@ -428,7 +439,7 @@
           Vinfo( 3)=Vname(3,idFsur)
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
-# if !defined WET_DRY && (defined WRITE_WATER && defined MASKING)
+# if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 # endif
           Vinfo(22)='coordinates'
