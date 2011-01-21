@@ -2621,7 +2621,7 @@
   1.0d0
 
 'rdrag2'                                           ! Input/Output
-  'linear bottom drag coefficient'
+  'quadratic bottom drag coefficient'
   'nondimensional'                                 ! [nondimensional]
   'rdrag2, scalar, series'
   'ocean_time'
