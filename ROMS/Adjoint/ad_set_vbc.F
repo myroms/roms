@@ -1148,7 +1148,7 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      krhs(ng), kstp(ng), knew(ng),               &
-#  if defined UV_LOGDRAG
+#  if defined UV_LDRAG
      &                      GRID(ng) % rdrag,                           &
 #  elif defined UV_QDRAG
      &                      GRID(ng) % rdrag2,                          &
