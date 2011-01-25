@@ -302,7 +302,7 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: NSUB, bry, i, is, j, k, rec
+      integer :: NSUB, i, ibry, is, j, k, rec
 
       real(r8), parameter :: Large = 1.0E+20_r8
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
@@ -314,7 +314,7 @@
 #ifdef SOLVE3D
       real(r8) :: my_DZmax, my_DZmin
 #endif
-      real(r8) :: my_Cu_Cor, my_Cu_max, my_Cu_min, my_grdmax
+      real(r8) :: my_Cg_Cor, my_Cg_max, my_Cg_min, my_grdmax
 #if defined DIFF_3DCOEF
       real(r8) :: my_DiffMax, my_DiffMin
 #endif
@@ -771,19 +771,19 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Compute Courant number.
+!  Compute gravity waves Courant number.
 !-----------------------------------------------------------------------
 !
-!  The Courant number is defined as:
+!  The 2D Courant number is defined as:
 !
-!     Cu = c * dt * SQRT (1/dx^2 + 1/dy^2)
+!     Cg = c * dt * SQRT (1/dx^2 + 1/dy^2)
 !
-!  where c=SQRT(g*h) is phase speed for barotropic mode, and dx, dy
-!  are grid spacing in each direction.
+!  where c=SQRT(g*h) is gravity wave speed, and dx, dy are grid spacing
+!  in each direction.
 !
-      my_Cu_min= Large
-      my_Cu_max=-Large
-      my_Cu_Cor=-Large
+      my_Cg_min= Large
+      my_Cg_max=-Large
+      my_Cg_Cor=-Large
 
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -792,11 +792,11 @@
 #endif
             cff=dtfast(ng)*                                             &
      &          SQRT(g*ABS(h(i,j))*(pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
-            my_Cu_min=MIN(my_Cu_min,cff)
-            my_Cu_max=MAX(my_Cu_max,cff)
+            my_Cg_min=MIN(my_Cg_min,cff)
+            my_Cg_max=MAX(my_Cg_max,cff)
 
             cff=dt(ng)*ABS(f(i,j))
-            my_Cu_Cor=MAX(my_Cu_Cor,cff)
+            my_Cg_Cor=MAX(my_Cg_Cor,cff)
 
 #ifdef MASKING
           END IF
@@ -816,9 +816,9 @@
       END IF
 !$OMP CRITICAL (REDUCTIONS)
       IF (tile_count.eq.0) THEN
-        Cu_min=my_Cu_min
-        Cu_max=my_Cu_max
-        Cu_Cor=my_Cu_Cor
+        Cg_min=my_Cg_min
+        Cg_max=my_Cg_max
+        Cg_Cor=my_Cg_Cor
         grdmax(ng)=my_grdmax
         DXmin(ng)=my_DXmin
         DXmax(ng)=my_DXmax
@@ -837,9 +837,9 @@
         ViscMax(ng)=my_ViscMax
 #endif
       ELSE
-        Cu_min=MIN(Cu_min,my_Cu_min)
-        Cu_max=MAX(Cu_max,my_Cu_max)
-        Cu_Cor=MAX(Cu_Cor,my_Cu_Cor)
+        Cg_min=MIN(Cg_min,my_Cg_min)
+        Cg_max=MAX(Cg_max,my_Cg_max)
+        Cg_Cor=MAX(Cg_Cor,my_Cg_Cor)
         grdmax(ng)=MAX(grdmax(ng),my_grdmax)
         DXmin(ng)=MIN(DXmin(ng),my_DXmin)
         DXmax(ng)=MAX(DXmax(ng),my_DXmax)
@@ -862,11 +862,11 @@
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
 #ifdef DISTRIBUTE
-        buffer(1)=Cu_min
+        buffer(1)=Cg_min
         op_handle(1)='MIN'
-        buffer(2)=Cu_max
+        buffer(2)=Cg_max
         op_handle(2)='MAX'
-        buffer(3)=Cu_Cor
+        buffer(3)=Cg_Cor
         op_handle(3)='MAX'
         buffer(4)=grdmax(ng)
         op_handle(4)='MAX'
@@ -912,9 +912,9 @@
         op_handle(14)='MAX'
 # endif
         CALL mp_reduce (ng, model, 14, buffer, op_handle)
-        Cu_min=buffer(1)
-        Cu_max=buffer(2)
-        Cu_Cor=buffer(3)
+        Cg_min=buffer(1)
+        Cg_max=buffer(2)
+        Cg_Cor=buffer(3)
         grdmax(ng)=buffer(4)
         DXmin(ng)=buffer(5)
         DXmax(ng)=buffer(6)
@@ -945,7 +945,7 @@
   20      FORMAT (' Minimum Z-grid spacing, DZmin = ',1pe15.8,' m',/,   &
      &            ' Maximum Z-grid spacing, DZmax = ',1pe15.8,' m')
 #endif
-          WRITE (stdout,30) Cu_min, Cu_max, Cu_Cor
+          WRITE (stdout,30) Cg_min, Cg_max, Cg_Cor
   30      FORMAT (/,' Minimum barotropic Courant Number = ', 1pe15.8,/, &
      &              ' Maximum barotropic Courant Number = ', 1pe15.8,/, &
      &              ' Maximum Coriolis   Courant Number = ', 1pe15.8,/)
@@ -1029,22 +1029,22 @@
 !  Open boundaries convolutions. Recall that the horizontal convolutions
 !  are one-dimensional so a factor of 2 is used instead.
 !
-      DO bry=1,4
+      DO ibry=1,4
         DO is=1,NstateVar(ng)
-          IF ((bry.eq.iwest).or.(bry.eq.ieast)) THEN
-            DTsizeHB(bry,is)=Hgamma(3)*DYmin(ng)*DYmin(ng)/             &
-     &                       (2.0_r8*KhMax(ng))
-          ELSE IF ((bry.eq.isouth).or.(bry.eq.inorth)) THEN
-            DTsizeHB(bry,is)=Hgamma(3)*DXmin(ng)*DXmin(ng)/             &
-     &                       (2.0_r8*KhMax(ng))
+          IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+            DTsizeHB(ibry,is)=Hgamma(3)*DYmin(ng)*DYmin(ng)/            &
+     &                        (2.0_r8*KhMax(ng))
+          ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+            DTsizeHB(ibry,is)=Hgamma(3)*DXmin(ng)*DXmin(ng)/            &
+     &                        (2.0_r8*KhMax(ng))
           END IF
 #  ifdef SOLVE3D
 #   ifdef IMPLICIT_VCONV
-          DTsizeVB(bry,is)=Vgamma(3)*DZmax(ng)*DZmax(ng)/               &
-     &                     (2.0_r8*KvMax(ng))
+          DTsizeVB(ibry,is)=Vgamma(3)*DZmax(ng)*DZmax(ng)/              &
+     &                      (2.0_r8*KvMax(ng))
 #   else
-          DTsizeVB(bry,is)=Vgamma(3)*DZmin(ng)*DZmin(ng)/               &
-     &                     (2.0_r8*KvMax(ng))
+          DTsizeVB(ibry,is)=Vgamma(3)*DZmin(ng)*DZmin(ng)/              &
+     &                      (2.0_r8*KvMax(ng))
 #   endif
 #  endif
         END DO
@@ -1090,26 +1090,26 @@
 !
 !  Boundary conditions model error covariance.
 !
-      DO bry=1,4
+      DO ibry=1,4
         DO is=1,NstateVar(ng)
-          IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
-            NHstepsB(bry,is)=NINT(HdecayB(is,bry,ng)*                   &
-     &                            HdecayB(is,bry,ng)/                   &
-     &                           (2.0_r8*KhMax(ng)*DTsizeHB(bry,is)))
-            IF (MOD(NHstepsB(bry,is),2).ne.0) THEN
-              NHstepsB(bry,is)=NHstepsB(bry,is)+1
+          IF (HdecayB(is,ibry,ng).gt.0.0_r8) THEN
+            NHstepsB(ibry,is)=NINT(HdecayB(is,ibry,ng)*                 &
+     &                             HdecayB(is,ibry,ng)/                 &
+     &                             (2.0_r8*KhMax(ng)*DTsizeHB(ibry,is)))
+            IF (MOD(NHstepsB(ibry,is),2).ne.0) THEN
+              NHstepsB(ibry,is)=NHstepsB(ibry,is)+1
             END IF
           END IF
 #  ifdef SOLVE3D
-          IF (VdecayB(is,bry,ng).gt.0.0_r8) THEN
-            NVstepsB(bry,is)=NINT(VdecayB(is,bry,ng)*                   &
-     &                            VdecayB(is,bry,ng)/                   &
-     &                           (2.0_r8*KvMax(ng)*DTsizeVB(bry,is)))
+          IF (VdecayB(is,ibry,ng).gt.0.0_r8) THEN
+            NVstepsB(ibry,is)=NINT(VdecayB(is,ibry,ng)*                 &
+     &                             VdecayB(is,ibry,ng)/                 &
+     &                             (2.0_r8*KvMax(ng)*DTsizeVB(ibry,is)))
 #   ifdef IMPLICIT_VCONV
-            NVstepsB(bry,is)=MAX(1,NVstepsB(bry,is))
+            NVstepsB(ibry,is)=MAX(1,NVstepsB(ibry,is))
 #   endif
-            IF (MOD(NVstepsB(bry,is),2).ne.0) THEN
-              NVstepsB(bry,is)=NVstepsB(bry,is)+1
+            IF (MOD(NVstepsB(ibry,is),2).ne.0) THEN
+              NVstepsB(ibry,is)=NVstepsB(ibry,is)+1
             END IF
 #  endif
           END IF
@@ -1167,20 +1167,20 @@
 # endif
 # ifdef ADJUST_BOUNDARY
         DO is=1,NstateVar(ng)
-          DO bry=1,4
-            IF (Lobc(bry,is,ng)) THEN
-              IF (bry.eq.iwest) THEN
+          DO ibry=1,4
+            IF (Lobc(ibry,is,ng)) THEN
+              IF (ibry.eq.iwest) THEN
                 Text='West  bry Hconvolution, NHstepsB, DTsizeHB ='
-              ELSE IF (bry.eq.isouth) THEN
+              ELSE IF (ibry.eq.isouth) THEN
                 Text='South bry Hconvolution, NHstepsB, DTsizeHB ='
-              ELSE IF (bry.eq.ieast) THEN
+              ELSE IF (ibry.eq.ieast) THEN
                 Text='East  bry Hconvolution, NHstepsB, DTsizeHB ='
-              ELSE IF (bry.eq.isouth) THEN
+              ELSE IF (ibry.eq.isouth) THEN
                 Text='North bry Hconvolution, NHstepsB, DTsizeHB ='
               END IF
-              IF (HdecayB(is,bry,ng).gt.0.0_r8) THEN
-                WRITE (stdout,70) TRIM(Text), NHstepsB(bry,is),         &
-     &                            DTsizeHB(bry,is),                     &
+              IF (HdecayB(is,ibry,ng).gt.0.0_r8) THEN
+                WRITE (stdout,70) TRIM(Text), NHstepsB(ibry,is),        &
+     &                            DTsizeHB(ibry,is),                    &
      &                            TRIM(Vname(1,idSbry(is)))
               END IF
             END IF
@@ -1189,20 +1189,20 @@
         WRITE (stdout,80)
 #  if defined SOLVE3D && defined VCONVOLUTION
         DO is=1,NstateVar(ng)
-          DO bry=1,4
-            IF (Lobc(bry,is,ng)) THEN
-              IF (bry.eq.iwest) THEN
+          DO ibry=1,4
+            IF (Lobc(ibry,is,ng)) THEN
+              IF (ibry.eq.iwest) THEN
                 Text='West  bry Vconvolution, NVstepsB, DTsizeVB ='
-              ELSE IF (bry.eq.isouth) THEN
+              ELSE IF (ibry.eq.isouth) THEN
                 Text='South bry Vconvolution, NVstepsB, DTsizeVB ='
-              ELSE IF (bry.eq.ieast) THEN
+              ELSE IF (ibry.eq.ieast) THEN
                 Text='East  bry Vconvolution, NVstepsB, DTsizeVB ='
-              ELSE IF (bry.eq.isouth) THEN
+              ELSE IF (ibry.eq.isouth) THEN
                 Text='North bry Vconvolution, NVstepsB, DTsizeVB ='
               END IF
-              IF (VdecayB(is,bry,ng).gt.0.0_r8) THEN
-                WRITE (stdout,70) TRIM(Text), NVstepsB(bry,is),         &
-     &                            DTsizeVB(bry,is),                     &
+              IF (VdecayB(is,ibry,ng).gt.0.0_r8) THEN
+                WRITE (stdout,70) TRIM(Text), NVstepsB(ibry,is),        &
+     &                            DTsizeVB(ibry,is),                    &
      &                            TRIM(Vname(1,idSbry(is)))
               END IF
             END IF

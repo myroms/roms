@@ -442,15 +442,15 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! fields into AVERAGE output file.
 
-Aout(idUvel) == T                          ! 3D U-velocity
-Aout(idVvel) == T                          ! 3D V-velocity
-Aout(idWvel) == T                          ! 3D W-velocity
-Aout(idOvel) == T                          ! omega vertical velocity
+Aout(idUvel) == F                          ! 3D U-velocity
+Aout(idVvel) == F                          ! 3D V-velocity
+Aout(idWvel) == F                          ! 3D W-velocity
+Aout(idOvel) == F                          ! omega vertical velocity
 Aout(idUbar) == T                          ! 2D U-velocity
 Aout(idVbar) == T                          ! 2D V-velocity
 Aout(idFsur) == T                          ! free-surface
 
-Aout(idTvar) == T T                        ! temperature and salinity
+Aout(idTvar) == F F                        ! temperature and salinity
 
 Aout(idUsms) == F                          ! surface U-stress
 Aout(idVsms) == F                          ! surface V-stress
@@ -546,34 +546,34 @@ Dout(M2bstr) == T                          ! bottom stress
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! 3D momentum (u,v) diagnostic terms into DIAGNOSTIC output file.
 
-Dout(M3rate) == T                          ! acceleration
-Dout(M3pgrd) == T                          ! pressure gradient
-Dout(M3fcor) == T                          ! Coriolis force
-Dout(M3hadv) == T                          ! horizontal total advection
-Dout(M3xadv) == T                          ! horizontal XI-advection
-Dout(M3yadv) == T                          ! horizontal ETA-advection
-Dout(M3vadv) == T                          ! vertical advection
-Dout(M3hrad) == T                          ! horizontal total radiation stress
-Dout(M3vrad) == T                          ! vertical radiation stress
-Dout(M3hvis) == T                          ! horizontal total viscosity
-Dout(M3xvis) == T                          ! horizontal XI-viscosity
-Dout(M3yvis) == T                          ! horizontal ETA-viscosity
-Dout(M3vvis) == T                          ! vertical viscosity
+Dout(M3rate) == F                          ! acceleration
+Dout(M3pgrd) == F                          ! pressure gradient
+Dout(M3fcor) == F                          ! Coriolis force
+Dout(M3hadv) == F                          ! horizontal total advection
+Dout(M3xadv) == F                          ! horizontal XI-advection
+Dout(M3yadv) == F                          ! horizontal ETA-advection
+Dout(M3vadv) == F                          ! vertical advection
+Dout(M3hrad) == F                          ! horizontal total radiation stress
+Dout(M3vrad) == F                          ! vertical radiation stress
+Dout(M3hvis) == F                          ! horizontal total viscosity
+Dout(M3xvis) == F                          ! horizontal XI-viscosity
+Dout(M3yvis) == F                          ! horizontal ETA-viscosity
+Dout(M3vvis) == F                          ! vertical viscosity
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! active (temperature and salinity) and passive (inert) tracer diagnostic
 ! terms into DIAGNOSTIC output file: [1:NAT+NPT,Ngrids].
 
-Dout(iTrate) == T T                        ! time rate of change
-Dout(iThadv) == T T                        ! horizontal total advection
-Dout(iTxadv) == T T                        ! horizontal XI-advection
-Dout(iTyadv) == T T                        ! horizontal ETA-advection
-Dout(iTvadv) == T T                        ! vertical advection
-Dout(iThdif) == T T                        ! horizontal total diffusion
-Dout(iTxdif) == T T                        ! horizontal XI-diffusion
-Dout(iTydif) == T T                        ! horizontal ETA-diffusion
-Dout(iTsdif) == T T                        ! horizontal S-diffusion
-Dout(iTvdif) == T T                        ! vertical diffusion
+Dout(iTrate) == F F                        ! time rate of change
+Dout(iThadv) == F F                        ! horizontal total advection
+Dout(iTxadv) == F F                        ! horizontal XI-advection
+Dout(iTyadv) == F F                        ! horizontal ETA-advection
+Dout(iTvadv) == F F                        ! vertical advection
+Dout(iThdif) == F F                        ! horizontal total diffusion
+Dout(iTxdif) == F F                        ! horizontal XI-diffusion
+Dout(iTydif) == F F                        ! horizontal ETA-diffusion
+Dout(iTsdif) == F F                        ! horizontal S-diffusion
+Dout(iTvdif) == F F                        ! vertical diffusion
 
 ! Generic User parameters, [1:NUSER].
 

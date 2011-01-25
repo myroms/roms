@@ -126,11 +126,8 @@
 
       real(r8) :: cff, ratio
 
-      real(r8) :: my_rx0 = 0.0_r8
-      real(r8) :: my_rx1 = 0.0_r8
-      real(r8) :: my_volume0 = 0.0_r8
-      real(r8) :: my_volume1 = 1.0E+20_r8
-      real(r8) :: my_volume2 = 0.0_r8
+      real(r8) :: my_rx0, my_rx1
+      real(r8) :: my_volume0, my_volume1, my_volume2
 
 #ifdef DISTRIBUTE
       real(r8), dimension(5) :: buffer
@@ -144,6 +141,9 @@
 !-----------------------------------------------------------------------
 !  Compute grid stiffness.
 !-----------------------------------------------------------------------
+!
+      my_rx0=0.0_r8
+      my_rx1=0.0_r8
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
@@ -187,6 +187,10 @@
 !  Compute initial basin volume and grid cell minimum and maximum volumes.
 !-------------------------------------------------------------------------
 !
+      my_volume0=0.0_r8
+      my_volume1=1.0E+20_r8
+      my_volume2=0.0_r8
+!
 #ifdef SOLVE3D
       DO k=1,N(ng)
         DO j=Jstr,Jend
@@ -221,9 +225,9 @@
       END DO
 #endif
 !
-!-------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Compute global values.
-!-------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
       IF (SOUTH_WEST_CORNER.and.                                        &
      &    NORTH_EAST_CORNER) THEN
@@ -241,7 +245,7 @@
       ELSE
         rx0=MAX(rx0,my_rx0)
         rx1=MAX(rx1,my_rx1)
-        TotVolume=my_volume0
+        TotVolume=TotVolume+my_volume0
         MinVolume=MIN(MinVolume,my_volume1)
         MaxVolume=MAX(MaxVolume,my_volume2)
       END IF
@@ -269,8 +273,8 @@
         IF (Master) THEN
 #ifdef SOLVE3D
           WRITE (stdout,10) rx0, rx1
-  10      FORMAT (/,' Maximum grid stiffness ratios:  rx0 = ',1pe14.6,   &
-     &              ' (Beckmann and Haidvogel)',/,t34,'rx1 = ',1pe14.6,  &
+  10      FORMAT (/,' Maximum grid stiffness ratios:  rx0 = ',1pe14.6,  &
+     &              ' (Beckmann and Haidvogel)',/,t34,'rx1 = ',1pe14.6, &
      &              ' (Haney)',/)
 #endif
           IF (MinVolume.ne.0.0_r8) THEN
@@ -279,9 +283,9 @@
             ratio=0.0_r8
           END IF
           WRITE (stdout,20) TotVolume, MinVolume, MaxVolume, ratio
-  20      FORMAT (/,' Initial basin volumes: TotVolume = ',1p,e17.10,0p, &
-     &            ' m3',/,t25,'MinVolume = ',1p,e17.10,0p,' m3',         &
-     &            /,t25,'MaxVolume = ',1p,e17.10,0p,' m3',               &
+  20      FORMAT (/,' Initial basin volumes: TotVolume = ',1p,e17.10,   &
+     &            0p,' m3',/,t25,'MinVolume = ',1p,e17.10,0p,' m3',     &
+     &            /,t25,'MaxVolume = ',1p,e17.10,0p,' m3',              &
      &            /,t25,'  Max/Min = ',1p,e17.10,0p,/)
         END IF
       END IF

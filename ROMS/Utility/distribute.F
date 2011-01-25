@@ -32,6 +32,7 @@
 !  mp_ncread         read in state vector/matrix from NetCDF file      !
 !  mp_ncwrite        write out state vector/matrix into NetCDF file    !
 !  mp_reduce         global reduction operations                       !
+!  mp_reduce2        global reduction operations (MINLOC, MAXLOC)      !
 !  mp_scatter2d      scatter input data to a 2D tiled array            !
 !  mp_scatter3d      scatter input data to a 3D tiled array            !
 !  mp_scatter_state  scatter global data for packing of state vector   !
@@ -3193,6 +3194,121 @@
       RETURN
       END SUBROUTINE mp_reduce_1d
 
+      SUBROUTINE mp_reduce2 (ng, model, Isize, Jsize, A, op_handle)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine computes the global minimum/maximum and its associated !
+!  qualifiers like: location and/or other scalar components.  Then, it !
+!  it broadcasts reduced variables to all nodes in the group.          !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     Isize      Size of I-dimension: the minimum/maximum to reduce    !
+!                  is in location A(1,:) and qualifiers A(2:Isize,:).  !
+!     Jsize      Size of J-dimension: number of different sets of      !
+!                  minimum and/or maximum to process.                  !
+!     A          Matrix of variables and qualifiers to reduce.         !
+!     op_handle  Reduction operation handle (string) of size Jsize.    !
+!                  The following  reduction operations are supported:  !
+!                  'MINLOC', 'MAXLOC'                                  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Matrix of reduced variables and qualifiers.           !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Isize, Jsize
+
+      character (len=*), intent(in) :: op_handle(Jsize)
+
+      real(r8), intent(inout) :: A(Isize,Jsize)
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyError, Serror
+      integer :: handle, i, j
+
+      real(r8), dimension(2,Isize) :: Areduce
+      real(r8), dimension(2,Isize) :: Asend
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 43)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Reduce requested variables and qualifiers.
+!-----------------------------------------------------------------------
+!
+!  Pack and reduce.
+!
+      DO j=1,Jsize
+        DO i=1,Isize
+          Asend(1,i)=A(1,j)
+          Asend(2,i)=A(i,j)
+        END DO
+        IF (op_handle(j)(1:6).eq.'MINLOC') THEN
+          handle=MPI_MINLOC
+        ELSE IF (op_handle(j)(1:6).eq.'MAXLOC') THEN
+          handle=MPI_MAXLOC
+        END IF
+        CALL mpi_allreduce (Asend, Areduce, Isize,                      &
+# ifdef DOUBLE_PRECISION
+     &                      MPI_2DOUBLE_PRECISION,                      &
+# else
+     &                      MPI_2REAL,                                  &
+# endif
+     &                      handle, OCN_COMM_WORLD, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ALLREDUCE', MyRank, MyError,           &
+     &                      string(1:Lstr)
+ 10       FORMAT (/,' MP_REDUCE2 - error during ',a,' call, Node = ',   &
+     &            i3.3,' Error = ',i3,/,16x,a)
+          exit_flag=2
+          RETURN
+        END IF
+!
+!  Unpack.
+!
+        A(1,j)=Areduce(1,1)
+        DO i=2,Isize
+          A(i,j)=Areduce(2,i)
+        END DO
+      END DO
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 43)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_reduce2
+
       SUBROUTINE mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,           &
      &                         Nghost, gtype, Amin, Amax,               &
 # if defined READ_WATER && defined MASKING
@@ -4053,17 +4169,17 @@
 
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Awrk
 !
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Aggregate all tile data into a single array.
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
       Ascl=1.0_r8
-      CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,         &
-     &                  tindex, gtype, Ascl,                             &
+      CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                  tindex, gtype, Ascl,                            &
 # ifdef MASKING
-     &                  Amask(LBi:,LBj:),                                &
+     &                  Amask(LBi:,LBj:),                               &
 # endif
-     &                  A(LBi:,LBj:,LBk:),                               &
+     &                  A(LBi:,LBj:,LBk:),                              &
      &                  Npts, Awrk, .FALSE.)
 
       RETURN
