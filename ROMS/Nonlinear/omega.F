@@ -267,6 +267,10 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_3d_mod, ONLY : exchange_w3d_tile
+# endif
 !
 !  Imported variable declarations.
 !
@@ -302,6 +306,15 @@
           END DO
         END DO
       END DO
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!  Exchange boundary data.
+!
+      CALL exchange_w3d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        Wscl)
+# endif
 
       RETURN
       END SUBROUTINE scale_omega
