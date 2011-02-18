@@ -1081,7 +1081,11 @@
           IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).eq.CHAR(36))) THEN
             is=INDEX(Vinfo(1),'https')
             ie=INDEX(Vinfo(1),'/ROMS')-1
-            svn_url=Vinfo(1)(is:ie)
+            IF (ie.gt.is) THEN
+              svn_url=Vinfo(1)(is:ie)
+            ELSE
+              svn_url='https:://myroms.org/svn/src'
+            END IF
 #ifdef SVN_REV
             svn_rev=SVN_REV
 #endif

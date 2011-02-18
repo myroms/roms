@@ -972,10 +972,9 @@
 ** Check if processing timeless data.
 */
 
-#if (!defined ANA_PSOURCE  && \
-     (defined UV_PSOURCE   || defined TS_PSOURCE || \
-      defined Q_PSOURCE))  || \
-    (defined  SSH_TIDES    || defined UV_TIDES)
+#if (defined UV_PSOURCE || defined TS_PSOURCE || \
+     defined Q_PSOURCE) || \
+    (defined  SSH_TIDES || defined UV_TIDES)
 # define TIMELESS_DATA
 #endif
 

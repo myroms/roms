@@ -20,6 +20,7 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
+      USE mod_parallel
       USE mod_scalars
 # if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources
@@ -27,6 +28,12 @@
       USE mod_stepping
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
       USE mod_tides
+# endif
+
+# if defined ANA_PSOURCE && \
+    (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+!
+      USE analytical_mod, ONLY : ana_psource
 # endif
 !
       implicit none
@@ -43,7 +50,14 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: itrc, is
 
+# if defined ANA_PSOURCE && \
+    (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+      integer :: subs, tile, thread
+# endif
+
       real(r8) :: time_save = 0.0_r8
+!
+      SourceFile='ad_get_idata.F'
 !
 !  Lower and upper bounds for tiled arrays.
 !
@@ -70,7 +84,6 @@
 !  Tidal Period.
 !
       IF (iic(ng).eq.0) THEN
-        NTC(ng)=0
         CALL get_ngfldr (ng, iADM, idTper, ncFRCid(idTper,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
      &                   1, MTC, 1, 1, 1, NTC(ng), 1,                   &
@@ -163,16 +176,35 @@
       END IF
 # endif
 
-# if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
-                              defined TS_PSOURCE || defined Q_PSOURCE)
+# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Point Sources/Sinks position, direction, special flag, and mass
 !  transport nondimensional shape profile.  Point sources are at U-
 !  and V-points.
+#  ifdef ANA_PSOURCE
+!
+!  Since the point sources and sinks are specified with analytical
+!  expressions, we need to get their positions to process internal
+!  Land/Sea masking arrays during initialization.
+#  endif
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.0) THEN
+
+#  ifdef ANA_PSOURCE
+
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ana_psource (ng, TILE, iTLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+
+#  else
+
         CALL get_ngfldr (ng, iADM, idRxpo, ncFRCid(idRxpo,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
      &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
@@ -203,6 +235,7 @@
           SOURCES(ng)%Jsrc(is)=                                         &
      &                MAX(1,MIN(NINT(SOURCES(ng)%Ysrc(is)),Mm(ng)+1))
         END DO
+#  endif
       END IF
 # endif
 

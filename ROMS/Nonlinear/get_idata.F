@@ -22,8 +22,8 @@
       USE mod_ncparam
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       USE mod_netcdf
-      USE mod_parallel
 # endif
+      USE mod_parallel
       USE mod_scalars
 # if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources
@@ -33,6 +33,10 @@
       USE mod_tides
 # endif
 !
+# if defined ANA_PSOURCE && \
+    (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+      USE analytical_mod, ONLY : ana_psource
+# endif
       USE nf_fread3d_mod, ONLY : nf_fread3d
 #ifdef SOLVE3D
       USE nf_fread4d_mod, ONLY : nf_fread4d
@@ -51,6 +55,12 @@
 
       integer :: LBi, UBi, LBj, UBj
       integer :: itrc, is
+
+# if defined ANA_PSOURCE && \
+    (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+      integer :: subs, tile, thread
+# endif
+
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       integer :: gtype, status, varid, Vsize(4)
 
@@ -448,16 +458,35 @@
       END IF
 # endif
 
-# if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
-                              defined TS_PSOURCE || defined Q_PSOURCE)
+# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Point Sources/Sinks position, direction, special flag, and mass
 !  transport nondimensional shape profile.  Point sources are at U-
 !  and V-points.
+#  ifdef ANA_PSOURCE
+!
+!  Since the point sources and sinks are specified with analytical
+!  expressions, we need to get their positions to process internal
+!  Land/Sea masking arrays during initialization.
+#  endif
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.0) THEN
+
+#  ifdef ANA_PSOURCE
+
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ana_psource (ng, TILE, iNLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+
+#  else
+
         CALL get_ngfld (ng, iNLM, idRxpo, ncFRCid(idRxpo,ng),           &
      &                  nFfiles(ng), FRCname(1,ng), update(1),          &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
@@ -488,6 +517,7 @@
           SOURCES(ng)%Jsrc(is)=                                         &
      &                MAX(1,MIN(NINT(SOURCES(ng)%Ysrc(is)),Mm(ng)+1))
         END DO
+#  endif
       END IF
 # endif
 

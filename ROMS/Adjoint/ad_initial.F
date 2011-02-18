@@ -61,6 +61,13 @@
 # ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
+# ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+# endif
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
+      USE wpoints_mod, ONLY : wpoints
+# endif
 !
       implicit none
 !
@@ -338,7 +345,7 @@
 !  Clear all adjoint variables.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -364,7 +371,7 @@
 !  (model-observations) misfit terms.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -392,8 +399,7 @@
 !  depths with zero free-surface.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -513,8 +519,7 @@
 !!  Compute initial time-evolving depths.
 !!----------------------------------------------------------------------
 !!
-!!$OMP PARALLEL DO PRIVATE(thread,subs)                                 &
-!!$OMP&            SHARED(ng,numthreads)
+!!$OMP PARALLEL DO PRIVATE(thread,subs) SHARED(ng,numthreads)
 !!    DO thread=0,numthreads-1
 !!      subs=NtileX(ng)*NtileE(ng)/numthreads
 !!      DO tile=subs*thread,subs*(thread+1)-1
@@ -569,6 +574,40 @@
 #  endif
       IF (exit_flag.ne.NoError) RETURN
 
+# ifdef MASKING
+!
+!-----------------------------------------------------------------------
+!  Set internal I/O mask arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL set_masks (ng, TILE, iADM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
+# if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
+!
+!-----------------------------------------------------------------------
+!  Set variables associated with the processing water points and/or
+!  size of packed state arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL wpoints (ng, TILE, iADM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
 # if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
@@ -582,7 +621,7 @@
       IF (LsenPSAS(ng)) THEN
 #  endif
 #  if !defined AD_IMPULSE
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1

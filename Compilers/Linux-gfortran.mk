@@ -58,7 +58,11 @@ ifdef USE_NETCDF4
 endif
 
 ifdef USE_ARPACK
-    ARPACK_LIBDIR ?= /usr/local/lib
+ ifdef USE_MPI
+   PARPACK_LIBDIR ?= /opt/gfortransoft/PARPACK
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
+    ARPACK_LIBDIR ?= /opt/gfortransoft/PARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 

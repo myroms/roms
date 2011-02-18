@@ -34,9 +34,6 @@
 # ifdef WAVES_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
-# ifdef MASKING
-      USE set_masks_mod, ONLY : set_masks
-# endif
 # ifdef ASSIMILATION
 !!    USE oi_update_mod, ONLY : oi_update
 # endif
@@ -64,10 +61,6 @@
       USE tl_step2d_mod, ONLY : tl_step2d
 # ifdef FLOATS_NOT_YET
 !!    USE tl_step_floats_mod, ONLY : tl_step_floats
-# endif
-# if defined PROPAGATOR || \
-    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
-      USE wpoints_mod, ONLY : wpoints
 # endif
 !
       implicit none
@@ -163,9 +156,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL tl_ini_zeta (ng, TILE, iTLM)
-# ifdef MASKING
-            CALL set_masks (ng, TILE, iTLM)
-# endif
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -177,10 +167,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL tl_ini_fields (ng, TILE, iTLM)
-# if defined PROPAGATOR || \
-    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
-            CALL wpoints (ng, TILE, iTLM)
-# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

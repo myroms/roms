@@ -55,9 +55,6 @@
 # if defined AVERAGES && !defined ADJOINT
       USE set_avg_mod, ONLY : set_avg
 # endif
-# ifdef MASKING
-      USE set_masks_mod, ONLY : set_masks
-# endif
 # if defined SSH_TIDES || defined UV_TIDES
       USE set_tides_mod, ONLY : set_tides
 # endif
@@ -65,10 +62,6 @@
       USE step2d_mod, ONLY : step2d
 # ifdef FLOATS
       USE step_floats_mod, ONLY : step_floats
-# endif
-# if defined PROPAGATOR || \
-    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
-      USE wpoints_mod, ONLY : wpoints
 # endif
 !
       implicit none
@@ -155,9 +148,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL ini_zeta (ng, TILE, iNLM)
-# ifdef MASKING
-            CALL set_masks (ng, TILE, iNLM)
-# endif
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -169,10 +159,6 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL ini_fields (ng, TILE, iNLM)
-# if defined PROPAGATOR || \
-    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
-            CALL wpoints (ng, TILE, iNLM)
-# endif
           END DO
         END DO
 !$OMP END PARALLEL DO

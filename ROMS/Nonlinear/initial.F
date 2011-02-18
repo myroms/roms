@@ -44,9 +44,16 @@
       USE rho_eos_mod, ONLY : rho_eos
       USE set_massflux_mod, ONLY : set_massflux
 #endif
+#ifdef MASKING
+      USE set_masks_mod, ONLY : set_masks
+#endif
       USE stiffness_mod, ONLY : stiffness
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : ocn2wav_coupling
+#endif
+#if defined PROPAGATOR || \
+    (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
+      USE wpoints_mod, ONLY : wpoints
 #endif
 !
       implicit none
@@ -347,8 +354,7 @@
 !  depths with zero free-surface.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -495,8 +501,7 @@
 !  Compute initial time-evolving depths.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -579,6 +584,40 @@
       CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif
       IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#ifdef MASKING
+!
+!-----------------------------------------------------------------------
+!  Set internal I/O mask arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL set_masks (ng, TILE, iNLM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+#endif
+
+#if defined PROPAGATOR || \
+   (defined MASKING    && (defined READ_WATER || defined WRITE_WATER ))
+!
+!-----------------------------------------------------------------------
+!  Set variables associated with the processing water points and/or
+!  size of packed state arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL wpoints (ng, TILE, iNLM)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
 #endif
 
 #if defined NLM_OUTER || defined TL_W4DPSAS          || \

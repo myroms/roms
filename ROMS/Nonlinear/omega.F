@@ -267,9 +267,12 @@
 !***********************************************************************
 !
       USE mod_param
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
+# if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
 !
 !  Imported variable declarations.
@@ -291,6 +294,18 @@
 !
 !  Local variable declarations.
 !
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -314,6 +329,12 @@
       CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
      &                        Wscl)
+# endif
+# ifdef DISTRIBUTE
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Wscl)
 # endif
 
       RETURN
