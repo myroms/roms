@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       SUBROUTINE get_cycle (ng, model, ncname, TvarName, ntime,         &
-     &                      smday, Tid, cycle, clength, Tindex,         &
+     &                      smday, Tid, Lcycle, clength, Tindex,        &
      &                      Tstr, Tend, Tmin, Tmax, Tscale)
 !
 !svn $Id$
@@ -25,7 +25,7 @@
 !  On Output:                                                          !
 !                                                                      !
 !     Tid        NetCDF field time variable ID (integer)               !
-!     cycle      Switch indicating cycling of input fields (logical)   !
+!     Lcycle     Switch indicating cycling of input fields (logical)   !
 !     clength    Length of field time cycle (real)                     !
 !     Tindex     Starting field time index to read (integer)           !
 !     Tstr       Data time lower bound enclosing "smday" (real)        !
@@ -46,7 +46,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(out) :: cycle
+      logical, intent(out) :: Lcycle
 
       integer, intent(in) :: ng, model, ntime
 
@@ -78,7 +78,7 @@
 !
 !  Initialize.
 !
-      cycle=.FALSE.
+      Lcycle=.FALSE.
       TimeLess=.FALSE.
       Tindex=0
       clength=0.0_r8
@@ -110,7 +110,7 @@
 !
         DO i=1,nvatt
           IF (TRIM(var_Aname(i)).eq.'cycle_length') THEN
-            cycle=.TRUE.
+            Lcycle=.TRUE.
             IF (var_Afloat(i).gt.0.0_r8) THEN
               clength=var_Afloat(i)
             ELSE IF (var_Aint(i).gt.0) THEN    ! no CF compliance
@@ -149,7 +149,7 @@
 !
 !  Find lower time-snapshot (Tstr) and its associated record (Tindex).
 !
-      IF (cycle) THEN
+      IF (Lcycle) THEN
         mday=MOD(smday,clength)
       ELSE
         mday=smday
@@ -159,19 +159,30 @@
         Tstr=Tmax
       ELSE
         tstart=Tmin
-        DO i=2,ntime
-          IF ((tstart.le.mday).and.(mday.lt.Tval(i))) THEN
-            Tindex=i-1
-            Tstr=tstart
-            EXIT
-          END IF
-          tstart=Tval(i)
-        END DO
+        IF (model.eq.iADM) THEN          ! backward time logic
+          DO i=2,ntime
+            IF ((tstart.lt.mday).and.(mday.le.Tval(i))) THEN
+              Tindex=i-1
+              Tstr=tstart
+              EXIT
+            END IF
+            tstart=Tval(i)
+          END DO
+        ELSE                             ! forward  time logic
+          DO i=2,ntime
+            IF ((tstart.le.mday).and.(mday.lt.Tval(i))) THEN
+              Tindex=i-1
+              Tstr=tstart
+              EXIT
+            END IF
+            tstart=Tval(i)
+          END DO
+        END IF
       END IF
 !
 !  Find upper time-snapshot (Tend).
 !
-      IF (cycle.and.(Tindex.eq.ntime)) THEN
+      IF (Lcycle.and.(Tindex.eq.ntime)) THEN
         Tend=Tmin
       ELSE
         i=MIN(ntime,Tindex+1)
@@ -183,7 +194,7 @@
 !  since time is in terms of frequencies.
 !
       IF (.not.TimeLess) THEN
-        IF (.not.cycle.and.(ntime.gt.1)) THEN
+        IF (.not.Lcycle.and.(ntime.gt.1)) THEN
           IF (smday.lt.Tmin) THEN
             IF (Master) WRITE (stdout,20) TRIM(TvarName), Tmin, smday
             exit_flag=2

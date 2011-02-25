@@ -179,7 +179,10 @@
 !
 !  Local variable declarations.
 !
-      logical :: ITERATE, Lcomplex, LwrtGST
+      logical :: ITERATE, Lcomplex
+#ifdef CHECKPOINTING
+      logical :: LwrtGST
+#endif
 
       integer :: NconvRitz, i, iter, ng
 
@@ -238,7 +241,9 @@
 !-----------------------------------------------------------------------
 !
         ITERATE=.TRUE.
-
+#ifdef CHECKPOINTING
+        LwrtGST=.TRUE.
+#endif
         Lrvec=.TRUE.              ! Compute Ritz vectors
         ido=0                     ! reverse communication flag
         bmat='I'                  ! standard eigenvalue problem
@@ -309,7 +314,7 @@
 #ifdef PROFILE
           CALL wclock_off (ng, iADM, 38)
 #endif
-#ifdef CHECKPOINTING2
+#ifdef CHECKPOINTING
 !
 !  If appropriate, write out check point data into GST restart NetCDF
 !  file. Notice that the restart data is always saved if MaxIterGST
@@ -489,7 +494,7 @@
             ITERATE=.FALSE.
           END IF
 
-#ifdef CHECKPOINTING
+#ifdef CHECKPOINTING2
 !
 !  If appropriate, write out check point data into GST restart NetCDF
 !  file. Notice that the restart data is always saved if MaxIterGST
