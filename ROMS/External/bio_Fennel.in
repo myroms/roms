@@ -220,38 +220,38 @@
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
-Hout(idTvar) == 12*T                  ! biological tracer
-Hout(idTsur) == 12*F                  ! surface tracer flux
+Hout(idTvar) == 12*T    ! NO3, ...           biological tracer
+Hout(idTsur) == 12*F    ! NO3_sflux, ...     surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1:NBT,Ngrids].
 
-Aout(idTvar) == 12*T                  ! biological tracer
+Aout(idTvar) == 12*T    ! NO3, ...           biological tracer
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
-Dout(iTrate) == 12*T                  ! time rate of change
-Dout(iThadv) == 12*T                  ! horizontal total advection
-Dout(iTxadv) == 12*T                  ! horizontal XI-advection
-Dout(iTyadv) == 12*T                  ! horizontal ETA-advection
-Dout(iTvadv) == 12*T                  ! vertical advection
-Dout(iThdif) == 12*T                  ! horizontal total diffusion
-Dout(iTxdif) == 12*T                  ! horizontal XI-diffusion
-Dout(iTydif) == 12*T                  ! horizontal ETA-diffusion
-Dout(iTsdif) == 12*T                  ! horizontal S-diffusion
-Dout(iTvdif) == 12*T                  ! vertical diffusion
+Dout(iTrate) == 12*T    ! NO3_rate, ...      time rate of change
+Dout(iThadv) == 12*T    ! NO3_hadv, ...      horizontal total advection
+Dout(iTxadv) == 12*T    ! NO3_xadv, ...      horizontal XI-advection
+Dout(iTyadv) == 12*T    ! NO3_yadv, ...      horizontal ETA-advection
+Dout(iTvadv) == 12*T    ! NO3_vadv, ...      vertical advection
+Dout(iThdif) == 12*T    ! NO3_hdiff, ...     horizontal total diffusion
+Dout(iTxdif) == 12*T    ! NO3_xdiff, ...     horizontal XI-diffusion
+Dout(iTydif) == 12*T    ! NO3_ydiff, ...     horizontal ETA-diffusion
+Dout(iTsdif) == 12*T    ! NO3_sdiff, ...     horizontal S-diffusion
+Dout(iTvdif) == 12*T    ! NO3_vdiff, ...     vertical diffusion
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological processes diagnostics terms into DIAGNOSTIC output file [Ngrids].
 
- Dout(iCOfx) == T                     ! air-sea CO2 flux
- Dout(iDNIT) == T                     ! denitrification flux
- Dout(ipCO2) == T                     ! CO2 partial pressure
- Dout(iO2fx) == T                     ! air-sea O2 flux
- Dout(iPPro) == T                     ! primary production
- Dout(iNO3u) == T                     ! NO3 uptake
+Dout(iCOfx) == T        ! CO2_airsea         air-sea CO2 flux
+Dout(iDNIT) == T        ! denitrification    denitrification flux
+Dout(ipCO2) == T        ! pCO2               CO2 partial pressure
+Dout(iO2fx) == T        ! O2_airsea          air-sea O2 flux
+Dout(iPPro) == T        ! P_Production       primary production
+Dout(iNO3u) == T        ! NO3_uptake         NO3 uptake
 
 !
 !  GLOSSARY:
@@ -261,18 +261,18 @@ Dout(iTvdif) == 12*T                  ! vertical diffusion
 ! Fennel et al (2006), Nitrogen-based Biological Model Parameters. Currently,
 ! it can be configured with 12 biological tracers:
 !
-!   idbio( 1)     Nitrate concentration
-!   idbio( 2)     Ammonium concentration
-!   idbio( 3)     Chorophyll concentration
-!   idbio( 4)     Phytoplankton biomass
-!   idbio( 5)     Zooplankton biomass
-!   idbio( 6)     Large detritus N-concentration
-!   idbio( 7)     Small detritus N-concentration
-!   idbio( 8)     Large detritus C-concentration       if CARBON
-!   idbio( 9)     Small detritus C-concentration       if CARBON
-!   idbio(10)     Total inorganic carbon               if CARBON
-!   idbio(11)     Alkalinity                           if CARBON
-!   idbio(12)     Oxygen concentration                 if OXYGEN
+! idbio( 1)     NO3               Nitrate concentration
+! idbio( 2)     NH4               Ammonium concentration
+! idbio( 3)     chlorophyll       Chorophyll concentration
+! idbio( 4)     phytoplankton     Phytoplankton biomass
+! idbio( 5)     zooplankton       Zooplankton biomass
+! idbio( 6)     LdetritusN        Large detritus N-concentration
+! idbio( 7)     SdetritusN        Small detritus N-concentration
+! idbio( 8)     LdetritusC        Large detritus C-concentration     if CARBON
+! idbio( 9)     SdetritusC        Small detritus C-concentration     if CARBON
+! idbio(10)     TIC               Total inorganic carbon             if CARBON
+! idbio(11)     alkalinity        Alkalinity                         if CARBON
+! idbio(12)     oxygen            Oxygen concentration               if OXYGEN
 !
 !------------------------------------------------------------------------------
 !

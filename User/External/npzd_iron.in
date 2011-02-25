@@ -55,8 +55,8 @@ BioIni(iNO3_) == 17.0d0                          ! nitrate
 BioIni(iPhyt) == 1.0d0                           ! phytoplankton
 BioIni(iZoop) == 1.0d0                           ! zooplankton
 BioIni(iSDet) == 1.0d0                           ! detritus
-BioIni(iFdis) == 0.0d0                           ! dissolved iron
 BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
+BioIni(iFdis) == 0.0d0                           ! dissolved iron
 
 ! Fraction of shortwave radiation that is photosynthetically active
 ! (nondimensional), {0.43d0}.
@@ -190,28 +190,28 @@ BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output files: [1:NBT,Ngrids].
 
- Hout(idTvar) == 6*T                             ! biological tracer
- Hout(idTsur) == 6*F                             ! surface tracer flux
+Hout(idTvar) == 6*T     ! NO3, ...                biological tracer
+Hout(idTsur) == 6*F     ! NO3_sflux, ...          surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1:NBT,Ngrids].
 
- Aout(idTvar) == 6*T                             ! biological tracer
+Aout(idTvar) == 6*T     ! NO3, ...                biological tracer
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
- Dout(iTrate) == 6*T                             ! time rate of change
- Dout(iThadv) == 6*T                             ! horizontal total advection
- Dout(iTxadv) == 6*T                             ! horizontal XI-advection
- Dout(iTyadv) == 6*T                             ! horizontal ETA-advection
- Dout(iTvadv) == 6*T                             ! vertical advection
- Dout(iThdif) == 6*T                             ! horizontal total diffusion
- Dout(iTxdif) == 6*T                             ! horizontal XI-diffusion
- Dout(iTydif) == 6*T                             ! horizontal ETA-diffusion
- Dout(iTsdif) == 6*T                             ! horizontal S-diffusion
- Dout(iTvdif) == 6*T                             ! vertical diffusion
+Dout(iTrate) == 6*T     ! NO3_rate, ...           time rate of change
+Dout(iThadv) == 6*T     ! NO3_hadv, ...           horizontal total advection
+Dout(iTxadv) == 6*T     ! NO3_xadv, ...           horizontal XI-advection
+Dout(iTyadv) == 6*T     ! NO3_yadv, ...           horizontal ETA-advection
+Dout(iTvadv) == 6*T     ! NO3_vadv, ...           vertical advection
+Dout(iThdif) == 6*T     ! NO3_hdiff, ...          horizontal total diffusion
+Dout(iTxdif) == 6*T     ! NO3_xdiff, ...          horizontal XI-diffusion
+Dout(iTydif) == 6*T     ! NO3_ydiff, ...          horizontal ETA-diffusion
+Dout(iTsdif) == 6*T     ! NO3_sdiff, ...          horizontal S-diffusion
+Dout(iTvdif) == 6*T     ! NO3_vdiff, ...          vertical diffusion
 
 !
 !  GLOSSARY:
@@ -221,12 +221,12 @@ BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
 ! NPZD-Iron (Fiechter et al, 2009) Biological Model Parameters. Currently, it
 ! is configured with 6 biological tracers:
 !
-!   idbio(1)      Nitrate concentration
-!   idbio(2)      Phytoplankton biomass
-!   idbio(3)      Zooplankton biomass
-!   idbio(4)      Detritus concentration
-!   idbio(5)      Dissolved iron concentration               if IRON
-!   idbio(6)      Iron concentration in phytoplankton        if IRON
+! idbio(1)      NO3               Nitrate concentration
+! idbio(2)      phytoplankton     Phytoplankton biomass
+! idbio(3)      zooplankton       Zooplankton biomass
+! idbio(4)      detritus          Detritus concentration
+! idbio(5)      phytoplanktonFe   Iron concentration in phytoplankton  if IRON
+! idbio(6)      iron              Dissolved iron concentration         if IRON
 !
 !------------------------------------------------------------------------------
 !
@@ -251,8 +251,8 @@ BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
 !                     BioIni(iPhyt)          Phytoplankton biomass
 !                     BioIni(iZoop)          Zooplankton biomass
 !                     BioIni(iSDet)          Detritus concentration
-!                     BioIni(iFdis)          Dissolved iron concentration
 !                     BioIni(iFphy)          Phytoplankton Iron concentration
+!                     BioIni(iFdis)          Dissolved iron concentration
 !
 !  PARfrac        Fraction of shortwave radiation that is photosynthetically
 !                   active (nondimensional).
@@ -420,8 +420,8 @@ BioIni(iFphy) == 0.0d0                           ! iron in phytoplankton
 !                   idTvar(idbio(2))=iPhyt    Phytoplankton biomass
 !                   idTvar(idbio(3))=iZoop    Zooplankton biomass
 !                   idTvar(idbio(4))=iSdet    Detritus concentration
-!                   idTvar(idbio(5))=iFdis    Dissolved iron concentration
-!                   idTvar(idbio(6))=iFphy    Phytoplankton Iron concentration
+!                   idTvar(idbio(5))=iFphy    Phytoplankton Iron concentration
+!                   idTvar(idbio(6))=iFdis    Dissolved iron concentration
 !
 !
 !------------------------------------------------------------------------------

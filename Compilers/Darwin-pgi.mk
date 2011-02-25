@@ -70,7 +70,7 @@ endif
 ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
-               FC := /usr/local/openmpi-pgi/bin/mpif90
+               FC := mpif90
  else
              LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif

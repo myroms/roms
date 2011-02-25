@@ -123,35 +123,35 @@ MUD_MORPH_FAC == 1.0d0 1.0d0                    ! nondimensional
 
  MUD_Ltracer == F F
 
-! Logical switch (TRUE/FALSE) to activate writing of cohesive sediment
+! Logical switches (TRUE/FALSE) to activate writing of cohesive sediment
 ! fields into HISTORY output file.
 
-Hout(idmud)  == T                               ! suspended concentration
-Hout(iMfrac) == T                               ! bed layer fraction
-Hout(iMmass) == T                               ! bed layer mass
-Hout(iMUbld) == T                               ! bed load at U-points
-Hout(iMVbld) == T                               ! bed load at V-points
+Hout(idmud)  == T       ! mud_01, ...             suspended concentration
+Hout(iMfrac) == T       ! mudfrac_01, ...         bed layer fraction
+Hout(iMmass) == T       ! mudmass_01, ...         bed layer mass
+Hout(iMUbld) == T       ! bedload_Umud_01, ...    bed load at U-points
+Hout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 
-! Logical switch (TRUE/FALSE) to activate writing of time-averged
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! cohesive sediment fields into AVERAGE output file.
 
-Aout(idmud)  == T                               ! suspended concentration
-Aout(iMUbld) == T                               ! bed load at U-points
-Aout(iMVbld) == T                               ! bed load at V-points
+Aout(idmud)  == T       ! mud_01, ...             suspended concentration
+Aout(iMUbld) == T       ! bedload_Umud_01, ...    bed load at U-points
+Aout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! cohesive sediment diagnostic terms into DIAGNOSTIC output file.
 
-Dout(MTrate) == T                               ! time rate of change
-Dout(MThadv) == T                               ! horizontal total advection
-Dout(MTxadv) == T                               ! horizontal XI-advection
-Dout(MTyadv) == T                               ! horizontal ETA-advection
-Dout(MTvadv) == T                               ! vertical advection
-Dout(MThdif) == T                               ! horizontal total diffusion
-Dout(MTxdif) == T                               ! horizontal XI-diffusion
-Dout(MTydif) == T                               ! horizontal ETA-diffusion
-Dout(MTsdif) == T                               ! horizontal S-diffusion
-Dout(MTvdif) == T                               ! vertical diffusion
+Dout(MTrate) == T       ! mud_01_rate, ...        time rate of change
+Dout(MThadv) == T       ! mud_01_hadv, ...        horizontal total advection
+Dout(MTxadv) == T       ! mud_01_xadv, ...        horizontal XI-advection
+Dout(MTyadv) == T       ! mud_01_yadv, ...        horizontal ETA-advection
+Dout(MTvadv) == T       ! mud_01_vadv, ...        vertical advection
+Dout(MThdif) == T       ! mud_01_hdiff, ...       horizontal total diffusion
+Dout(MTxdif) == T       ! mud_01_xdiff, ...       horizontal XI-diffusion
+Dout(MTydif) == T       ! mud_01_ydiff, ...       horizontal ETA-diffusion
+Dout(MTsdif) == T       ! mud_01_sdiff, ...       horizontal S-diffusion
+Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 
 !------------------------------------------------------------------------------
 ! Non-cohesive Sediment Parameters, [1:NNS,1:Ngrids] values expected.
@@ -221,41 +221,41 @@ SAND_Ltracer == F
 ! Logical switches (TRUE/FALSE) to activate writing of non-cohesive
 ! sediment fields into HISTORY output file.
 
-Hout(idsand) == T                               ! suspended concentration
-Hout(iSfrac) == T                               ! bed layer fraction
-Hout(iSmass) == T                               ! bed layer mass
-Hout(iSUbld) == T                               ! bed load at U-points
-Hout(iSVbld) == T                               ! bed load at V-points
+Hout(idsand) == T       ! sand_01, ...            suspended concentration
+Hout(iSfrac) == T       ! sandfrac_01, ...        bed layer fraction
+Hout(iSmass) == T       ! sandmass_01, ...        bed layer mass
+Hout(iSUbld) == T       ! bedload_Usand_01, ...   bed load at U-points
+Hout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
 
-! Logical switches (TRUE/FALSE) to activate writing of time-avergaed
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! non-cohesive sediment fields into AVERAGE output file.
 
-Aout(idsand) == T                               ! suspended concentration
-Aout(iSUbld) == T                               ! bed load at U-points
-Aout(iSVbld) == T                               ! bed load at V-points
+Aout(idsand) == T       ! sand_01, ...            suspended concentration
+Aout(iSUbld) == T       ! bedload_Usand_01, ...   bed load at U-points
+Aout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! non-cohesive sediment diagnostic terms into DIAGNOSTIC output file.
 
-Dout(STrate) == T                               ! time rate of change
-Dout(SThadv) == T                               ! horizontal total advection
-Dout(STxadv) == T                               ! horizontal XI-advection
-Dout(STyadv) == T                               ! horizontal ETA-advection
-Dout(STvadv) == T                               ! vertical advection
-Dout(SThdif) == T                               ! horizontal total diffusion
-Dout(STxdif) == T                               ! horizontal XI-diffusion
-Dout(STydif) == T                               ! horizontal ETA-diffusion
-Dout(STsdif) == T                               ! horizontal S-diffusion
-Dout(STvdif) == T                               ! vertical diffusion
+Dout(STrate) == T       ! sand_01_rate, ...       time rate of change
+Dout(SThadv) == T       ! sand_01_hadv, ...       horizontal total advection
+Dout(STxadv) == T       ! sand_01_xadv, ...       horizontal XI-advection
+Dout(STyadv) == T       ! sand_01_yadv, ...       horizontal ETA-advection
+Dout(STvadv) == T       ! sand_01_vadv, ...       vertical advection
+Dout(SThdif) == T       ! sand_01_hdiff, ...      horizontal total diffusion
+Dout(STxdif) == T       ! sand_01_xdiff, ...      horizontal XI-diffusion
+Dout(STydif) == T       ! sand_01_ydiff, ...      horizontal ETA-diffusion
+Dout(STsdif) == T       ! sand_01_sdiff, ...      horizontal S-diffusion
+Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 
 !------------------------------------------------------------------------------
 ! Bed layer and bottom sediment parameters, [1:Ngrids] values expected.
 !------------------------------------------------------------------------------
 
- Hout(ithck) == T                               ! sediment layer thickness
- Hout(iaged) == T                               ! sediment layer age
- Hout(iporo) == T                               ! sediment layer porosity
- Hout(idiff) == F                               ! biodiffusivity
+ Hout(ithck) == T       ! bed_thickness           sediment layer thickness
+ Hout(iaged) == T       ! bed_age                 sediment layer age
+ Hout(iporo) == T       ! bed_porosity            sediment layer porosity
+ Hout(idiff) == F       ! bed_biodiff             biodiffusivity
 
 !
 !  GLOSSARY:

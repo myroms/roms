@@ -258,28 +258,28 @@
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
-Hout(idTvar) == 11*T                       ! biological tracers
-Hout(idTsur) == 11*F                       ! surface tracer flux
+Hout(idTvar) == 11*T    ! ..., NO3, ...          biological tracers
+Hout(idTsur) == 11*F    ! ..., NO3_sflux, ...    surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1;NBT,Ngrids].
 
-Aout(idTvar) == 11*T                       ! biological tracer
+Aout(idTvar) == 11*T    ! ..., NO3, ...          biological tracer
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
-Dout(iTrate) == 11*T                       ! time rate of change
-Dout(iThadv) == 11*T                       ! horizontal total advection
-Dout(iTxadv) == 11*T                       ! horizontal XI-advection
-Dout(iTyadv) == 11*T                       ! horizontal ETA-advection
-Dout(iTvadv) == 11*T                       ! vertical advection
-Dout(iThdif) == 11*T                       ! horizontal total diffusion
-Dout(iTxdif) == 11*T                       ! horizontal XI-diffusion
-Dout(iTydif) == 11*T                       ! horizontal ETA-diffusion
-Dout(iTsdif) == 11*T                       ! horizontal S-diffusion
-Dout(iTvdif) == 11*T                       ! vertical diffusion
+Dout(iTrate) == 11*T    ! ..., NO3_rate, ...     time rate of change
+Dout(iThadv) == 11*T    ! ..., NO3_hadv, ...     horizontal total advection
+Dout(iTxadv) == 11*T    ! ..., NO3_xadv, ...     horizontal XI-advection
+Dout(iTyadv) == 11*T    ! ..., NO3_yadv, ...     horizontal ETA-advection
+Dout(iTvadv) == 11*T    ! ..., NO3_vadv, ...     vertical advection
+Dout(iThdif) == 11*T    ! ..., NO3_hdiff, ...    horizontal total diffusion
+Dout(iTxdif) == 11*T    ! ..., NO3_xdiff, ...    horizontal XI-diffusion
+Dout(iTydif) == 11*T    ! ..., NO3_ydiff, ...    horizontal ETA-diffusion
+Dout(iTsdif) == 11*T    ! ..., NO3_sdiff, ...    horizontal S-diffusion
+Dout(iTvdif) == 11*T    ! ..., NO3_vdiff, ...    vertical diffusion
 
 !
 !  GLOSSARY:
@@ -289,17 +289,17 @@ Dout(iTvdif) == 11*T                       ! vertical diffusion
 ! NEMURO Ecosystem Model Parameters, [1:Ngrids] values are expected. Currently,
 ! it can be configured with 11 biological tracers:
 !
-!   idbio( 1)     Nanophytoplankton biomass
-!   idbio( 2)     Diatom biomass
-!   idbio( 3)     Microzooplankton biomass
-!   idbio( 4)     Mesozooplankton biomass
-!   idbio( 5)     Predactor zooplankton biomass
-!   idbio( 6)     Nitrate concentration
-!   idbio( 7)     Ammonium concentration
-!   idbio( 8)     Particulate Organic Nitrogen concentration
-!   idbio( 9)     Dissolved Organic Nitrogen concentration
-!   idbio(10)     Silicate concentration
-!   idbio(11)     Particulate organic silica (opal) concentration
+! idbio( 1)     nanophytoplankton   Nanophytoplankton biomass
+! idbio( 2)     diatom              Diatom biomass
+! idbio( 3)     microzooplankton    Microzooplankton biomass
+! idbio( 4)     mesozooplankton     Mesozooplankton biomass
+! idbio( 5)     Pzooplankton        Predactor zooplankton biomass
+! idbio( 6)     NO3                 Nitrate concentration
+! idbio( 7)     NH4                 Ammonium concentration
+! idbio( 8)     PON                 Particulate Organic Nitrogen concentration
+! idbio( 9)     DON                 Dissolved Organic Nitrogen concentration
+! idbio(10)     SiOH4               Silicate concentration
+! idbio(11)     opal                Particulate organic silica concentration
 !
 !------------------------------------------------------------------------------
 !

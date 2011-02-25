@@ -559,28 +559,28 @@
 ! Logical switches (TRUE/FALSE) to write biological fields into HISTORY output
 ! file, [NBT,Ngrids] values are expected.
 
-  Hout(idTvar) == 61*T                           ! biological tracer
-  Hout(idTsur) == 61*F                           ! surface tracer flux
+  Hout(idTvar) == 61*T   ! DIC, ...                biological tracer
+  Hout(idTsur) == 61*F   ! DIC_sflux, ...          surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file, [NBT,Ngrids] values are expected.
 
-  Aout(idTvar) == 61*T                           ! biological tracer
+  Aout(idTvar) == 61*T   ! DIC, ...                biological tracer
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
-  Dout(iTrate) == 61*T                           ! time rate of change
-  Dout(iThadv) == 61*T                           ! horizontal total advection
-  Dout(iTxadv) == 61*T                           ! horizontal XI-advection
-  Dout(iTyadv) == 61*T                           ! horizontal ETA-advection
-  Dout(iTvadv) == 61*T                           ! vertical advection
-  Dout(iThdif) == 61*T                           ! horizontal total diffusion
-  Dout(iTxdif) == 61*T                           ! horizontal XI-diffusion
-  Dout(iTydif) == 61*T                           ! horizontal ETA-diffusion
-  Dout(iTsdif) == 61*T                           ! horizontal S-diffusion
-  Dout(iTvdif) == 61*T                           ! vertical diffusion
+  Dout(iTrate) == 61*T   ! DIC_rate, ...           time rate of change
+  Dout(iThadv) == 61*T   ! DIC_hadv, ...           horizontal total advection
+  Dout(iTxadv) == 61*T   ! DIC_xadv, ...           horizontal XI-advection
+  Dout(iTyadv) == 61*T   ! DIC_yadv, ...           horizontal ETA-advection
+  Dout(iTvadv) == 61*T   ! DIC_vadv, ...           vertical advection
+  Dout(iThdif) == 61*T   ! DIC_hdiff, ...          horizontal total diffusion
+  Dout(iTxdif) == 61*T   ! DIC_xdiff, ...          horizontal XI-diffusion
+  Dout(iTydif) == 61*T   ! DIC_ydiff, ...          horizontal ETA-diffusion
+  Dout(iTsdif) == 61*T   ! DIC_sdiff, ...          horizontal S-diffusion
+  Dout(iTvdif) == 61*T   ! DIC_vdiff, ...          vertical diffusion
 
 !
 !  GLOSSARY:
@@ -590,67 +590,67 @@
 ! EcoSim Biological Model Parameters. It is configured with 61 biological
 ! tracers by default:
 !
-!   idbio( 1)     DIC concentration
-!   idbio( 2)     Iron concentration
-!   idbio( 3)     Ammonium concentration
-!   idbio( 4)     Nitrate concentration
-!   idbio( 5)     Phosphate concentration
-!   idbio( 6)     Silica concentration
-!   idbio( 7)     Bacteria, Carbon Group 1
-!   idbio( 8)     Bacteria, Iron Group 1
-!   idbio( 9)     Bacteria, Nitrogen Group 1
-!   idbio(10)     Bacteria, Phosphorus Group 1
-!   idbio(11)     Color degradational matter, Carbon Group 1
-!   idbio(12)     Dissolved organic matter, Carbon Group 1
-!   idbio(13)     Dissolved organic matter, Nitrogen Group 1
-!   idbio(14)     Dissolved organic matter, Phosphorus Group 1
-!   idbio(15)     Color degradational matter, Carbon Group 2
-!   idbio(16)     Dissolved organic matter, Carbon Group 2
-!   idbio(17)     Dissolved organic matter, Nitrogen Group 2
-!   idbio(18)     Dissolved organic matter, Phosphorus Group 2
-!   idbio(19)     Fecal matter, Carbon Group 1
-!   idbio(20)     Fecal matter, Iron Group 1
-!   idbio(21)     Fecal matter, Nitrogen Group 1
-!   idbio(22)     Fecal matter, Phosphorus Group 1
-!   idbio(23)     Fecal matter, Silica Group 1
-!   idbio(24)     Fecal matter, Carbon Group 2
-!   idbio(25)     Fecal matter, Iron Group 2
-!   idbio(26)     Fecal matter, Nitrogen Group 2
-!   idbio(27)     Fecal matter, Phosphorus Group 2
-!   idbio(28)     Fecal matter, Silica Group 2
-!   idbio(29)     Small diatom, Carbon Group
-!   idbio(30)     Small diatom, Iron Group
-!   idbio(31)     Small diatom, Nitrogen Group
-!   idbio(32)     Small diatom, Phosphorus Group
-!   idbio(33)     Large diatom, Carbon Group
-!   idbio(34)     Large diatom, Iron Group
-!   idbio(35)     Large diatom, Nitrogen Group
-!   idbio(36)     Large diatom, Phosphorus Group
-!   idbio(37)     Large dinoflagellate, Carbon Group
-!   idbio(38)     Large dinoflagellate, Iron Group
-!   idbio(39)     Large dinoflagellate, Nitrogen Group
-!   idbio(40)     Large dinoflagellate, Phosphorus Group
-!   idbio(41)     Synechococcus, Carbon Group
-!   idbio(42)     Synechococcus, Iron Group
-!   idbio(43)     Synechococcus, Nitrogen Group
-!   idbio(44)     Synechococcus, Phosphorus Group
-!   idbio(45)     Small diatom, Silica Group
-!   idbio(46)     Large diatom, Silica Group
-!   idbio(47)     Small diatom, chlorophyll-a
-!   idbio(48)     Large diatom, chlorophyll-a
-!   idbio(49)     Large dinoflagellate, chlorophyll-a
-!   idbio(50)     Synechococcus, chlorophyll-a
-!   idbio(51)     Small diatom, chlorophyll-c
-!   idbio(52)     Large diatom, chlorophyll-c
-!   idbio(53)     Large dinoflagellate, chlorophyll-c
-!   idbio(54)     Small diatom, photosynthetic carotenoids
-!   idbio(55)     Large diatom, photosynthetic carotenoids
-!   idbio(56)     Large dinoflagellate, photosynthetic carotenoids
-!   idbio(57)     Small diatom, photoprotective carotenoids
-!   idbio(58)     Large diatom, photoprotective carotenoids
-!   idbio(59)     Large dinoflagellate, photoprotective carotenoids
-!   idbio(60)     Synechococcus, photoprotective carotenoids
-!   idbio(61)     Synechococcus, high urobilin phycoeurythin carotenoids
+! idbio( 1)     DIC          DIC concentration
+! idbio( 2)     FeO          Iron concentration
+! idbio( 3)     NH4          Ammonium concentration
+! idbio( 4)     NO3          Nitrate concentration
+! idbio( 5)     PO4          Phosphate concentration
+! idbio( 6)     SiO          Silica concentration
+! idbio( 7)     Bac_C1       Bacteria, Carbon Group 1
+! idbio( 8)     Bac_F1       Bacteria, Iron Group 1
+! idbio( 9)     Bac_N1       Bacteria, Nitrogen Group 1
+! idbio(10)     Bac_P1       Bacteria, Phosphorus Group 1
+! idbio(11)     CDM_C1       Color degradational matter, Carbon Group 1
+! idbio(12)     DOM_C1       Dissolved organic matter, Carbon Group 1
+! idbio(13)     DOM_N1       Dissolved organic matter, Nitrogen Group 1
+! idbio(14)     DOM_P1       Dissolved organic matter, Phosphorus Group 1
+! idbio(15)     CDM_C2       Color degradational matter, Carbon Group 2
+! idbio(16)     DOM_C2       Dissolved organic matter, Carbon Group 2
+! idbio(17)     DOM_N2       Dissolved organic matter, Nitrogen Group 2
+! idbio(18)     DOM_P2       Dissolved organic matter, Phosphorus Group 2
+! idbio(19)     Fec_C1       Fecal matter, Carbon Group 1
+! idbio(20)     Fec_F1       Fecal matter, Iron Group 1
+! idbio(21)     Fec_N1       Fecal matter, Nitrogen Group 1
+! idbio(22)     Fec_P1       Fecal matter, Phosphorus Group 1
+! idbio(23)     Fec_S1       Fecal matter, Silica Group 1
+! idbio(24)     Fec_C2       Fecal matter, Carbon Group 2
+! idbio(25)     Fec_F2       Fecal matter, Iron Group 2
+! idbio(26)     Fec_N2       Fecal matter, Nitrogen Group 2
+! idbio(27)     Fec_P2       Fecal matter, Phosphorus Group 2
+! idbio(28)     Fec_S2       Fecal matter, Silica Group 2
+! idbio(29)     Phy_C1       Small diatom, Carbon Group 1
+! idbio(30)     Phy_F1       Small diatom, Iron Group 1
+! idbio(31)     Phy_N1       Small diatom, Nitrogen Group 1
+! idbio(32)     Phy_P1       Small diatom, Phosphorus Group 1
+! idbio(33)     Phy_C2       Large diatom, Carbon Group 2
+! idbio(34)     Phy_F2       Large diatom, Iron Group 2
+! idbio(35)     Phy_N2       Large diatom, Nitrogen Group 2
+! idbio(36)     Phy_P2       Large diatom, Phosphorus Group 2
+! idbio(37)     Phy_C3       Large dinoflagellate, Carbon Group 3
+! idbio(38)     Phy_F3       Large dinoflagellate, Iron Group 3
+! idbio(39)     Phy_N3       Large dinoflagellate, Nitrogen Group 3
+! idbio(40)     Phy_P3       Large dinoflagellate, Phosphorus Group 3
+! idbio(41)     Phy_C4       Synechococcus, Carbon Group 4
+! idbio(42)     Phy_F4       Synechococcus, Iron Group 4
+! idbio(43)     Phy_N4       Synechococcus, Nitrogen Group 4
+! idbio(44)     Phy_P4       Synechococcus, Phosphorus Group 4
+! idbio(45)     Phy_S1       Small diatom, Silica Group 1
+! idbio(46)     Phy_S2       Large diatom, Silica Group 2
+! idbio(47)     Pigs_11      Small diatom, chlorophyll-a
+! idbio(48)     Pigs_21      Large diatom, chlorophyll-a
+! idbio(49)     Pigs_31      Large dinoflagellate, chlorophyll-a
+! idbio(50)     Pigs_41      Synechococcus, chlorophyll-a
+! idbio(51)     Pigs_13      Small diatom, chlorophyll-c
+! idbio(52)     Pigs_23      Large diatom, chlorophyll-c
+! idbio(53)     Pigs_33      Large dinoflagellate, chlorophyll-c
+! idbio(54)     Pigs_14      Small diatom, photosynthetic carotenoids
+! idbio(55)     Pigs_24      Large diatom, photosynthetic carotenoids
+! idbio(56)     Pigs_34      Large dinoflagellate, photosynthetic carotenoids
+! idbio(57)     Pigs_15      Small diatom, photoprotective carotenoids
+! idbio(58)     Pigs_25      Large diatom, photoprotective carotenoids
+! idbio(59)     Pigs_35      Large dinoflagellate, photoprotective carotenoids
+! idbio(60)     Pigs_45      Synechococcus, photoprotective carotenoids
+! idbio(61)     Pigs_47      Synechococcus, urobilin phycoeurythin carotenoids
 !
 !==============================================================================
 !

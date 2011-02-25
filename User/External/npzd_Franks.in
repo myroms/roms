@@ -136,28 +136,28 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
- Hout(idTvar) == 4*T                             ! biological tracer
- Hout(idTsur) == 4*F                             ! surface tracer flux
+Hout(idTvar) == 4*T     ! NO3, ...                biological tracer
+Hout(idTsur) == 4*F     ! NO3_sflux, ...          surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1:NBT,Ngrids].
 
- Aout(idTvar) == 4*T                             ! biological tracer
+Aout(idTvar) == 4*T     ! NO3, ...                biological tracer
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
- Dout(iTrate) == 4*T                             ! time rate of change
- Dout(iThadv) == 4*T                             ! horizontal total advection
- Dout(iTxadv) == 4*T                             ! horizontal XI-advection
- Dout(iTyadv) == 4*T                             ! horizontal ETA-advection
- Dout(iTvadv) == 4*T                             ! vertical advection
- Dout(iThdif) == 4*T                             ! horizontal total diffusion
- Dout(iTxdif) == 4*T                             ! horizontal XI-diffusion
- Dout(iTydif) == 4*T                             ! horizontal ETA-diffusion
- Dout(iTsdif) == 4*T                             ! horizontal S-diffusion
- Dout(iTvdif) == 4*T                             ! vertical diffusion
+Dout(iTrate) == 4*T     ! NO3_rate, ...           time rate of change
+Dout(iThadv) == 4*T     ! NO3_hadv, ...           horizontal total advection
+Dout(iTxadv) == 4*T     ! NO3_xadv, ...           horizontal XI-advection
+Dout(iTyadv) == 4*T     ! NO3_yadv, ...           horizontal ETA-advection
+Dout(iTvadv) == 4*T     ! NO3_vadv, ...           vertical advection
+Dout(iThdif) == 4*T     ! NO3_hdiff, ...          horizontal total diffusion
+Dout(iTxdif) == 4*T     ! NO3_xdiff, ...          horizontal XI-diffusion
+Dout(iTydif) == 4*T     ! NO3_ydiff, ...          horizontal ETA-diffusion
+Dout(iTsdif) == 4*T     ! NO3_sdiff, ...          horizontal S-diffusion
+Dout(iTvdif) == 4*T     ! NO3_vdiff, ...          vertical diffusion
 
 !
 !  GLOSSARY:
@@ -167,10 +167,10 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 ! NPZD (Franks et al. 1986), Nitrogen-based Biological Model Parameters.
 ! Currently, it is configured with 4 biological tracers:
 !
-!   idbio(1)      Nitrate concentration
-!   idbio(2)      Phytoplankton biomass
-!   idbio(3)      Zooplankton biomass
-!   idbio(4)      Detritus concentration
+! idbio(1)      NO3               Nitrate concentration
+! idbio(2)      phytoplankton     Phytoplankton biomass
+! idbio(3)      zooplankton       Zooplankton biomass
+! idbio(4)      detritus          Detritus concentration
 !
 !------------------------------------------------------------------------------
 !
