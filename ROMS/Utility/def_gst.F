@@ -35,7 +35,7 @@
 !
       integer, parameter :: Natt = 25
 
-      integer :: Mstatedim, NCVdim, Nnodesdim, SworkDdim, SworkLdim
+      integer :: Mstatedim, NCVdim, SworkDdim, SworkLdim
       integer :: char1dim, char2dim, iaitrdim, iaupddim, iaup2dim
       integer :: iparamdim, ipntrdim, laitrdim, laup2dim, raitrdim
       integer :: raup2dim
@@ -88,18 +88,12 @@
         IF (exit_flag.ne.NoError) RETURN
 
         status=def_dim(ng, model, ncGSTid(ng), ncname, 'LworkD',        &
-     &                 3*Nstate(ng), SworkDdim)
+     &                 3*Mstate(ng), SworkDdim)
         IF (exit_flag.ne.NoError) RETURN
 
         status=def_dim(ng, model, ncGSTid(ng), ncname, 'LworkL',        &
      &                 LworkL, SworkLdim)
         IF (exit_flag.ne.NoError) RETURN
-
-# ifdef DISTRIBUTE
-        status=def_dim(ng, model, ncGSTid(ng), ncname, 'Nnodes',        &
-     &                 numnodes, Nnodesdim)
-        IF (exit_flag.ne.NoError) RETURN
-# endif
 
         status=def_dim(ng, model, ncGSTid(ng), ncname, 'iparam',        &
      &                 SIZE(iparam), iparamdim)
@@ -191,18 +185,6 @@
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
-
-# ifdef DISTRIBUTE
-!
-!  Define number of distribute memory nodes.
-!
-        Vinfo( 1)='Nnodes'
-        Vinfo( 2)='number of distribute-memory nodes'
-        status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, (/0/), Aval, Vinfo, ncname,                   &
-     &                 SetParAccess = .FALSE.)
-        IF (exit_flag.ne.NoError) RETURN
-# endif
 !
 !  Define iteration number.
 !
@@ -374,30 +356,16 @@
 !
         Vinfo( 1)='SworkD'
         Vinfo( 2)='reverse communications state array'
-# ifdef DISTRIBUTE
-        vardim(1)=SworkDdim
-        vardim(2)=Nnodesdim
-        status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 2, vardim, Aval, Vinfo, ncname)
-# else
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
      &                 1, (/SworkDdim/), Aval, Vinfo, ncname)
-# endif
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define eigenproblem work array.
 !
         Vinfo( 1)='SworkL'
         Vinfo( 2)='eigenproblem work array'
-# ifdef DISTRIBUTE
-        vardim(1)=SworkLdim
-        vardim(2)=Nnodesdim
-        status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 2, vardim, Aval, Vinfo, ncname)
-# else
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
      &                 1, (/SworkLdim/), Aval, Vinfo, ncname)
-# endif
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------

@@ -82,13 +82,11 @@ ifdef USE_OpenMP
 endif
 
 ifdef USE_DEBUG
-#           FFLAGS += -g -check bounds
-           FFLAGS += -g
+#          FFLAGS += -g -traceback -check all -fp-stack-check
+           FFLAGS += -g -check bounds
 else
-           FFLAGS += -ip -O3 -axP
- ifeq ($(CPU),x86_64)
-#          FFLAGS += -xW
- endif
+#          FFLAGS += -ip -O3 -Wl,-stack_size,0x10000000
+           FFLAGS += -ip -O3
 endif
 
 ifdef USE_MCT

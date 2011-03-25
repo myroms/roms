@@ -23,7 +23,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine sets variables associate with reading and writing of   !
+!  This routine sets variables associated with reading and writing of  !
 !  water points data and/or determining size of packed state vector.   !
 !                                                                      !
 !=======================================================================
@@ -355,27 +355,44 @@
 !-----------------------------------------------------------------------
 !  Determine size of state vector.
 !-----------------------------------------------------------------------
-#  if defined FORCING_SV
+#  if defined FORCING_SV || defined SO_SEMI
 !
-!  The state vector contains surface momentum stresses.
-!
-      Mstate(ng)=NwaterU(ng)+                                           &
-     &           NwaterV(ng)
-#  elif defined SO_SEMI
-!
-!  The state vector contains surface momentum stresses and surface
-!  tracer fluxes.
+!  The state vector may contain free-surface, momentum, tracers,
+!  surface momentum stresses, amd surface tracer fluxes.
 !
       Mstate(ng)=0
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        Mstate(ng)=Mstate(ng)+NwaterR(ng)
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        Mstate(ng)=Mstate(ng)+N(ng)*NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        Mstate(ng)=Mstate(ng)+N(ng)*NwaterV(ng)
+      END IF
+      DO i=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(i))) THEN
+          Mstate(ng)=Mstate(ng)+N(ng)*NwaterR(ng)
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
         Mstate(ng)=Mstate(ng)+NwaterU(ng)
       END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        Mstate(ng)=Mstate(ng)+NwaterV(ng)
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        Mstate(ng)=Mstate(ng)+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
         Mstate(ng)=Mstate(ng)+NwaterV(ng)
       END IF
 #   ifdef SOLVE3D
       DO i=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(i))) THEN
+        IF (SCALARS(ng)%Fstate(isTsur(i))) THEN
           Mstate(ng)=Mstate(ng)+NwaterR(ng)
         END IF
       END DO
@@ -407,7 +424,7 @@
       block_size=Nstate(ng)
       IF (Master) THEN
         WRITE (stdout,10) ng, Mstate(ng), Nstate(ng)
- 10     FORMAT (' Size of FULL state arrays for propagator of grid ',   &
+ 10     FORMAT (/,' Size of FULL state arrays for propagator of grid ', &
      &          i2.2,', Mstate = ', i10,/,38x,                          &
      &          'NODE partition, Nstate = ', i10,/,/,                   &
      &          9x,'Node',7x,'Nstr',7x,'Nend',7x,'Size',/)

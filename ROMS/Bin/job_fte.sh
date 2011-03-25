@@ -14,34 +14,28 @@
 #                                                                     #
 #######################################################################
 
-# Set ROOT of the directory to run Optimal Perturbations.
+# Set ROOT of the directory to run application.  The following
+# "dirname" command returns a path by removing any suffix from
+# the last slash ('/').  It returns a path above current diretory.
 
-set MYROOT="/home/arango/Work/EAC4"
-
-# Set application prefix.
-
-set PREFIX="eac4"
+set Dir=`dirname ${PWD}`
 
 # Set basic state trajectory, forward file:
 
-set HISname=${MYROOT}/Forward/${PREFIX}_his.nc
+#set HISname=${Dir}/Forward/gyre3d_his_00.nc
+ set HISname=${Dir}/Forward/gyre3d_his_01.nc
 
-set FWDname=${PREFIX}_fwd.nc
+set FWDname=gyre3d_fwd.nc
 
 if (-e $FWDname) then
   /bin/rm $FWDname
 endif
-ln -s $HISname $FWDname
-
-# Set zero fields initial condition file
-
-set ZEROname=${MYROOT}/Data/${PREFIX}_ini_zero.nc
+ln -s -v $HISname $FWDname
 
 # Set tangent linear model initial conditions file: zero fields.
 
-set ITLname=${PREFIX}_itl.nc
-
+set ITLname=gyre3d_itl.nc
 if (-e $ITLname) then
   /bin/rm $ITLname
 endif
-ln -s $ZEROname $ITLname
+ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $ITLname

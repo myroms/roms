@@ -41,6 +41,9 @@
 #ifdef SEDIMENT
       USE mod_sediment
 #endif
+#ifdef PROPAGATOR
+      USE mod_storage
+#endif
 #if defined SOLVE3D && defined TS_PSOURCE
       USE mod_sources
 #endif
@@ -217,6 +220,11 @@
 #endif
 
 #ifdef PROPAGATOR
+      CALL netcdf_put_lvar (ng, model, ncname, 'LmultiGST',             &
+     &                      LmultiGST, (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
       CALL netcdf_put_lvar (ng, model, ncname, 'LrstGST',               &
      &                      LrstGST, (/0/), (/0/),                      &
      &                      ncid = ncid)
@@ -232,6 +240,15 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
+      CALL netcdf_put_ivar (ng, model, ncname, 'NEV',                   &
+     &                      NEV, (/0/), (/0/),                          &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'NCV',                   &
+     &                      NCV, (/0/), (/0/),                          &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Ritz_tol',              &
      &                      Ritz_tol, (/0/), (/0/),                     &
@@ -1032,52 +1049,135 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 # endif
+#endif
 
-# ifdef SO_SEMI
-#  ifndef SO_SEMI_WHITE
+#if defined FORCING_SV || defined SO_SEMI
+!
+!  Singulat=r Forcing Vectors or Stochastic Optimals state switches.
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fzeta',                 &
+     &                      SCALARS(ng)%Fstate(isFsur),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+# ifndef SOLVE3D
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fubar',                 &
+     &                      SCALARS(ng)%Fstate(isUbar),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fvbar',                 &
+     &                      SCALARS(ng)%Fstate(isVbar),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+# else
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fuvel',                 &
+     &                      SCALARS(ng)%Fstate(isUvel),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fvvel',                 &
+     &                      SCALARS(ng)%Fstate(isVvel),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Ftracer',               &
+     &                      SCALARS(ng)%Fstate(isTvar(:)),              &
+     &                      (/1/), (/NT(ng)/),                          &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fsustr',                &
+     &                      SCALARS(ng)%Fstate(isUstr),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fsvstr',                &
+     &                      SCALARS(ng)%Fstate(isVstr),                 &
+     &                      (/0/), (/0/),                               &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+# ifdef SOLVE3D
+      CALL netcdf_put_lvar (ng, model, ncname, 'Fstflx',                &
+     &                      SCALARS(ng)%Fstate(isTsur(:)),              &
+     &                      (/1/), (/NT(ng)/),                          &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+#endif
+
+#ifdef SO_SEMI
+# ifndef SO_SEMI_WHITE
       CALL netcdf_put_fvar (ng, model, ncname, 'SO_decay',              &
      &                      SO_decay(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
+# endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SO_trace',              &
      &                      TRnorm(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_Ustr',              &
-     &                      SCALARS(ng)%SOstate(isUstr),                &
-     &                      (/0/), (/0/),                               &
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_zeta',           &
+     &                      SO_sdev(isFsur,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_Vstr',              &
-     &                      SCALARS(ng)%SOstate(isVstr),                &
-     &                      (/0/), (/0/),                               &
+# ifndef SOLVE3D
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_ubar',           &
+     &                      SO_sdev(isUbar,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef SOLVE3D
-      CALL netcdf_put_lvar (ng, model, ncname, 'Lso_tracer',            &
-     &                      SCALARS(ng)%SOstate(isTsur(:)),             &
-     &                      (/1/), (/NT(ng)/),                          &
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_vbar',           &
+     &                      SO_sdev(isUbar,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_Ustr',           &
+# else
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_uvel',           &
+     &                      SO_sdev(isUvel,ng), (/0/), (/0/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_vvel',           &
+     &                      SO_sdev(isVvel,ng), (/0/), (/0/),           &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      DO itrc=1,NT(ng)
+        nudg(itrc)=SO_sdev(isTvar(itrc),ng)
+      END DO
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_tracer',         &
+     &                      nudg, (/1/), (/NT(ng)/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_sustr',          &
      &                      SO_sdev(isUstr,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_Vstr',           &
-     &                      SO_sdev(isUstr,ng), (/0/), (/0/),           &
+      CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_svstr',          &
+     &                      SO_sdev(isVstr,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef SOLVE3D
+# ifdef SOLVE3D
       DO itrc=1,NT(ng)
         nudg(itrc)=SO_sdev(isTsur(itrc),ng)
       END DO
@@ -1085,7 +1185,6 @@
      &                      nudg, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
 # endif
 #endif
 

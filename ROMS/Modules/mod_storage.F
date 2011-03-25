@@ -42,7 +42,7 @@
 !                 howmany='A'  compute NEV Ritz vectors                !
 !                 howmany='P'  compute NEV Schur vectors               !
 !                 howmany='S'  compute some Ritz vectors using select  !
-!  ido          ARPACK reverse communications flag (input/outpu).      !
+!  ido          ARPACK reverse communications flag (input/output).     !
 !  iparam       ARPACK input/output integer parameters.                !
 !  ipntr        ARPACK pointer to mark the starting location in SworkD !
 !                 and SworkK arrays used in the Arnoldi iterations.    !

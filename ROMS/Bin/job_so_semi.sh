@@ -7,10 +7,10 @@
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-#  Generalized Stability Theory: Optimal Perturbations                #
+#  Generalized Stability Theory: Stochastic Optimals, seminorm        #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS optimal perturbations     #
-#  algorithm.                                                         #
+#  This script is used to run the ROMS/TOMS stochastic optimals with  #
+#  respect to the seminorm of the chosen functional.                  #
 #                                                                     #
 #######################################################################
 
@@ -32,10 +32,12 @@ if (-e $FWDname) then
 endif
 ln -s -v $HISname $FWDname
 
-# Set tangent linear model initial conditions file: zero fields.
+# Set adjoint model initial conditions file: zero fields.
 
-set ITLname=gyre3d_itl.nc
-if (-e $ITLname) then
-  /bin/rm $ITLname
+set IADname=gyre3d_iad.nc
+
+if (-e $IADname) then
+  /bin/rm $IADname
 endif
-ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $ITLname
+
+ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $IADname

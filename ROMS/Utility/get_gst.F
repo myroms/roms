@@ -24,7 +24,8 @@
 # ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasti
-      USE distribute_mod, ONLY : mp_ncread
+      USE distribute_mod, ONLY : mp_ncread1d
+      USE distribute_mod, ONLY : mp_ncread2d
 # endif
 !
       implicit none
@@ -40,11 +41,11 @@
 # ifdef DISTRIBUTE
       integer :: vrecord = -1
 
-      real(r8) :: scale =1.0_r8
+      real(r8) :: scale = 1.0_r8
 # endif
       real(r8) :: rval
 
-      character (len=1  ) :: char1, lchar(5)
+      character (len=1  ) :: char1
       character (len=2  ) :: char2
       character (len=256) :: ncname
 !
@@ -213,31 +214,17 @@
 !
 !  Read in ARPACK internal logical parameters to _aup2 routines.
 !
-      CALL netcdf_get_svar (ng, model, ncname, 'laitr', lchar,          &
+      CALL netcdf_get_lvar (ng, model, ncname, 'laitr', laitr,          &
      &                      ncid = ncGSTid(ng),                         &
-     &                      start = (/1,1/), total = (/1,SIZE(laitr)/))
+     &                      start = (/1/), total = (/SIZE(laitr)/))
       IF (exit_flag.ne. NoError) RETURN
-      DO i=1,SIZE(laitr)
-        IF (lchar(i).eq.'T') THEN
-          laitr(i)=.TRUE.
-        ELSE
-          laitr(i)=.FALSE.
-        END IF
-      END DO
 !
 !  Read in ARPACK internal logical parameters to _aup2 routines.
 !
-      CALL netcdf_get_svar (ng, model, ncname, 'laup2', lchar,          &
+      CALL netcdf_get_lvar (ng, model, ncname, 'laup2', laup2,          &
      &                      ncid = ncGSTid(ng),                         &
-     &                      start = (/1,1/), total = (/1,SIZE(laup2)/))
+     &                      start = (/1/), total = (/SIZE(laup2)/))
       IF (exit_flag.ne. NoError) RETURN
-      DO i=1,SIZE(laup2)
-        IF (lchar(i).eq.'T') THEN
-          laup2(i)=.TRUE.
-        ELSE
-          laup2(i)=.FALSE.
-        END IF
-      END DO
 !
 !  Read in ARPACK internal real parameters to _aup2 routines.
 !
@@ -260,14 +247,15 @@
 !  Read in Lanczos/Arnoldi basis vectors.
 !
 # ifdef DISTRIBUTE
-      status=mp_ncread(ng, model, ncGSTid(ng), 'Bvec', TRIM(ncname),    &
-     &                 vrecord, Nstr(ng), Nend(ng), 1, NCV, scale,      &
-     &                 Bvec(Nstr(ng):,1))
+      status=mp_ncread2d(ng, model, ncGSTid(ng), 'Bvec',                &
+     &                   TRIM(ncname), vrecord,                         &
+     &                   Nstr(ng), Nend(ng), 1, NCV, scale,             &
+     &                   Bvec(Nstr(ng):,1))
 # else
       CALL netcdf_get_fvar (ng, model, ncname, 'Bvec',                  &
-     &                      Bvec(Nstr(ng):,1),                          &
+     &                      Bvec,                                       &
      &                      ncid = ncGSTid(ng),                         &
-     &                      start = (/Nstr(ng),1/),                     &
+     &                      start = (/1,1/),                            &
      &                      total = (/Nend(ng)-Nstr(ng)+1,NCV/))
 # endif
       IF (exit_flag.ne.NoError) RETURN
@@ -275,27 +263,26 @@
 !  Read in eigenproblem residual vector.
 !
 # ifdef DISTRIBUTE
-      status=mp_ncread(ng, model, ncGSTid(ng), 'resid', TRIM(ncname),   &
-     &                 vrecord, Nstr(ng), Nend(ng), 1, 1, scale,        &
-     &                 resid(Nstr(ng):))
+      status=mp_ncread1d(ng, model, ncGSTid(ng), 'resid',               &
+     &                   TRIM(ncname), vrecord,                         &
+     &                   Nstr(ng), Nend(ng), scale,                     &
+     &                   resid(Nstr(ng):))
 # else
       CALL netcdf_get_fvar (ng, model, ncname, 'resid',                 &
-     &                      resid(Nstr(ng):),                           &
+     &                      resid,                                      &
      &                      ncid = ncGSTid(ng),                         &
-     &                      start = (/Nstr(ng)/),                       &
+     &                      start = (/1/),                              &
      &                      total = (/Nend(ng)-Nstr(ng)+1/))
 # endif
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in state reverse communication work array.
-# ifdef DISTRIBUTE
-!  Notice zero arguments indicating node dimension in NetCDF file.
-# endif
 !
 # ifdef DISTRIBUTE
-      status=mp_ncread(ng, model, ncGSTid(ng), 'SworkD', TRIM(ncname),  &
-     &                 vrecord, 1, 3*Nstate(ng), 0, 0, scale,           &
-     &                 SworkD)
+      status=mp_ncread1d(ng, model, ncGSTid(ng), 'SworkD',              &
+     &                   TRIM(ncname), vrecord,                         &
+     &                   1, 3*Nstate(ng), scale,                        &
+     &                   SworkD)
 # else
       CALL netcdf_get_fvar (ng, model, ncname, 'SworkD',                &
      &                      SworkD,                                     &
@@ -306,14 +293,12 @@
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in eigenproblem work array.
-# ifdef DISTRIBUTE
-!  Notice zero arguments indicating node dimension in NetCDF file.
-# endif
 !
 # ifdef DISTRIBUTE
-      status=mp_ncread(ng, model, ncGSTid(ng), 'SworkL', TRIM(ncname),  &
-     &                 vrecord, 1, LworkL, 0, 0, scale,                 &
-     &                 SworkL)
+      status=mp_ncread1d(ng, model, ncGSTid(ng), 'SworkL',              &
+     &                   TRIM(ncname), vrecord,                         &
+     &                   1, LworkL, scale,                              &
+     &                   SworkL)
 # else
       CALL netcdf_get_fvar (ng, model, ncname, 'SworkL',                &
      &                      SworkL,                                     &
@@ -327,8 +312,8 @@
      &          ' file:', a)
   20  FORMAT (/,' GET_GST - inconsistent input parameter', a, 2i4)
   30  FORMAT (/,' GET_GST - inconsistent input parameter', a, a, a)
-  40  FORMAT (/,' GET_GST - input parameter', a, 1pe10.4,0p,            &
-     &        /, 11x,'has been reset to: ', 1pe10.4)
+  40  FORMAT (/,' GET_GST - input parameter', a, 1pe10.2,0p,            &
+     &        /, 11x,'has been reset to: ', 1pe10.2)
 
       RETURN
       END SUBROUTINE get_gst

@@ -126,7 +126,7 @@
 # endif
       USE omega_mod, ONLY : omega
 # ifdef SO_SEMI
-      USE packing_mod, ONLY : so_pack
+      USE packing_mod, ONLY : ad_pack
 # endif
       USE rho_eos_mod, ONLY : rho_eos
       USE set_depth_mod, ONLY : set_depth
@@ -144,9 +144,6 @@
       logical :: backward = .TRUE.
 
       integer :: my_iif, next_indx1, subs, tile, thread
-# ifdef SO_SEMI
-      integer, save :: SOrec = 0
-# endif
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
@@ -157,7 +154,7 @@
 # endif
 !
 !=======================================================================
-!  Time-step 3D primitive equations backwards.
+!  Time-step adjoint 3D primitive equations backwards.
 !=======================================================================
 !
 !  Set time clock.
@@ -542,7 +539,8 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL so_pack (ng, TILE, Nstr(ng), Nend(ng), SOrec)
+            CALL ad_pack (ng, TILE, Nstr(ng), Nend(ng),                 &
+     &                    so_state(:,SOrec))
           END DO
         END DO
 !$OMP END PARALLEL DO

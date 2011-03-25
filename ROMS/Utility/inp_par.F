@@ -63,7 +63,7 @@
       out=stdout
 #endif
 !
-!  Get current data.
+!  Get current date.
 !
 #ifdef DISTRIBUTE
       IF (Master) CALL get_date (date_str)
@@ -972,9 +972,9 @@
       logical, dimension(MBOTP,Ngrids) :: Lbottom
 #endif
       logical, allocatable :: Ltracer(:,:)
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
+    defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
+    defined SENSITIVITY_4DVAR || defined SO_SEMI
       logical, allocatable :: Ladsen(:)
 #endif
 #if defined DIAGNOSTICS_UV
@@ -1143,9 +1143,9 @@
             CALL initialize_param
             CALL initialize_scalars
             CALL initialize_ncparam
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
+    defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
+    defined SENSITIVITY_4DVAR || defined SO_SEMI
             IF (.not.allocated(Ladsen)) THEN
               allocate (Ladsen(MT*Ngrids))
             END IF
@@ -1292,6 +1292,8 @@
             END DO
             allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
 #endif
+          ELSE IF (TRIM(KeyWord).eq.'LmultiGST') THEN
+            Npts=load_l(Nval, Cval, 1, LmultiGST)
           ELSE IF (TRIM(KeyWord).eq.'LrstGST') THEN
             Npts=load_l(Nval, Cval, 1, LrstGST)
           ELSE IF (TRIM(KeyWord).eq.'MaxIterGST') THEN
@@ -1474,10 +1476,10 @@
           ELSE IF (TRIM(KeyWord).eq.'Vtransform') THEN
             Npts=load_i(Nval, Rval, Ngrids, Vtransform)
             DO ng=1,Ngrids
-              IF ((Vtransform(ng).lt.0).or.                               &
+              IF ((Vtransform(ng).lt.0).or.                             &
      &            (Vtransform(ng).gt.2)) THEN
-                IF (Master) WRITE (out,260) 'Vtransform = ',              &
-     &                                      Vtransform(ng),               &
+                IF (Master) WRITE (out,260) 'Vtransform = ',            &
+     &                                      Vtransform(ng),             &
      &                                      'Must be either 1 or 2'
                 exit_flag=5
                 RETURN
@@ -1486,10 +1488,10 @@
           ELSE IF (TRIM(KeyWord).eq.'Vstretching') THEN
             Npts=load_i(Nval, Rval, Ngrids, Vstretching)
             DO ng=1,Ngrids
-              IF ((Vstretching(ng).lt.0).or.                              &
+              IF ((Vstretching(ng).lt.0).or.                            &
      &            (Vstretching(ng).gt.3)) THEN
-                IF (Master) WRITE (out,260) 'Vstretching = ',             &
-     &                                      Vstretching(ng),              &
+                IF (Master) WRITE (out,260) 'Vstretching = ',           &
+     &                                      Vstretching(ng),            &
      &                                      'Must between 1 and 3'
                 exit_flag=5
                 RETURN
@@ -1635,52 +1637,144 @@
               END DO
             END DO
 # endif
-# ifdef SO_SEMI
-          ELSE IF (TRIM(KeyWord).eq.'SO_decay') THEN
-            Npts=load_r(Nval, Rval, Ngrids, SO_decay)
-          ELSE IF (TRIM(KeyWord).eq.'SOstate(isUstr)') THEN
+#endif
+#if defined FORCING_SV || defined SO_SEMI
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isFsur)') THEN
+            IF (isFsur.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isFsur'
+              exit_flag=5
+              RETURN
+            END IF
             Npts=load_l(Nval, Cval, Ngrids, Ladsen)
             DO ng=1,Ngrids
-              SCALARS(ng)%SOstate(isUstr)=Ladsen(ng)
+              SCALARS(ng)%Fstate(isFsur)=Ladsen(ng)
             END DO
-          ELSE IF (TRIM(KeyWord).eq.'SOstate(isVstr)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isUbar)') THEN
+            IF (isUbar.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isUbar'
+              exit_flag=5
+              RETURN
+            END IF
             Npts=load_l(Nval, Cval, Ngrids, Ladsen)
             DO ng=1,Ngrids
-              SCALARS(ng)%SOstate(isVstr)=Ladsen(ng)
+              SCALARS(ng)%Fstate(isUbar)=Ladsen(ng)
             END DO
-#  ifdef SOLVE3D
-          ELSE IF (TRIM(KeyWord).eq.'SOstate(isTsur)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isVbar)') THEN
+            IF (isVbar.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isVbar'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ladsen)
+            DO ng=1,Ngrids
+              SCALARS(ng)%Fstate(isVbar)=Ladsen(ng)
+            END DO
+# ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isUvel)') THEN
+            IF (isUvel.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isUvel'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ladsen)
+            DO ng=1,Ngrids
+              SCALARS(ng)%Fstate(isUvel)=Ladsen(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isVvel)') THEN
+            IF (isVvel.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isVvel'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ladsen)
+            DO ng=1,Ngrids
+              SCALARS(ng)%Fstate(isVvel)=Ladsen(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isTvar)') THEN
+            IF (MAXVAL(isTvar).eq.0) THEN
+              IF (Master) WRITE (out,280) 'isTvar'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, MT*Ngrids, Ladsen)
+            k=0
+            DO ng=1,Ngrids
+              DO itrc=1,MT
+                k=k+1
+                i=isTvar(itrc)
+                SCALARS(ng)%Fstate(i)=Ladsen(k)
+              END DO
+            END DO
+# endif
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isUstr)') THEN
+            IF (isUstr.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isUstr'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ladsen)
+            DO ng=1,Ngrids
+              SCALARS(ng)%Fstate(isUstr)=Ladsen(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isVstr)') THEN
+            IF (isUstr.eq.0) THEN
+              IF (Master) WRITE (out,280) 'isVstr'
+              exit_flag=5
+              RETURN
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Ladsen)
+            DO ng=1,Ngrids
+              SCALARS(ng)%Fstate(isVstr)=Ladsen(ng)
+            END DO
+# ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'Fstate(isTsur)') THEN
+            IF (MAXVAL(isTsur).eq.0) THEN
+              IF (Master) WRITE (out,280) 'isTsur'
+              exit_flag=5
+              RETURN
+            END IF
             Npts=load_l(Nval, Cval, MT*Ngrids, Ladsen)
             k=0
             DO ng=1,Ngrids
               DO itrc=1,MT
                 k=k+1
                 i=isTsur(itrc)
-                SCALARS(ng)%SOstate(i)=Ladsen(k)
+                SCALARS(ng)%Fstate(i)=Ladsen(k)
               END DO
             END DO
-#  endif
+# endif
+#endif
+#ifdef SO_SEMI
+          ELSE IF (TRIM(KeyWord).eq.'SO_decay') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_decay)
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isFsur)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isFsur,1))
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isUbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isUbar,1))
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isVbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isVbar,1))
+# ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isUvel,1))
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isVvel,1))
+          ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isTvar)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, tracer)
+            k=0
+            DO ng=1,Ngrids
+              DO itrc=1,MT
+                k=k+1
+                i=isTvar(itrc)
+                SO_sdev(i,ng)=tracer(k,ng)
+              END DO
+            END DO
+# endif
           ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isUstr)') THEN
-            IF (isUstr.eq.0) THEN
-              IF (Master) WRITE (out,280) 'isUstr'
-              exit_flag=5
-              RETURN
-            END IF
             Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isUstr,1))
           ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isVstr)') THEN
-            IF (isUstr.eq.0) THEN
-              IF (Master) WRITE (out,280) 'isVstr'
-              exit_flag=5
-              RETURN
-            END IF
             Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isVstr,1))
-#  ifdef SOLVE3D
+# ifdef SOLVE3D
           ELSE IF (TRIM(KeyWord).eq.'SO_sdev(isTsur)') THEN
-            IF (MAXVAL(isTsur).eq.0) THEN
-              IF (Master) WRITE (out,280) 'isTsur'
-              exit_flag=5
-              RETURN
-            END IF
             Npts=load_r(Nval, Rval, MT*Ngrids, tracer)
             k=0
             DO ng=1,Ngrids
@@ -1690,7 +1784,6 @@
                 SO_sdev(i,ng)=tracer(k,ng)
               END DO
             END DO
-#  endif
 # endif
 #endif
 #if defined SOLVE3D && defined TS_PSOURCE
@@ -3211,6 +3304,33 @@
 # endif
       END DO
 #endif
+
+#if defined FORCING_SV || defined SO_SEMI
+!
+!  Make sure that logical output switches are activated for the
+!  Forcing Singular Vectors or Stochastic Optimals variables.
+!
+      DO ng=1,Ngrids
+        IF (SCALARS(ng)%Fstate(isFsur)) Hout(idFsur,ng)=.TRUE.
+# ifndef SOLVE3D
+        IF (SCALARS(ng)%Fstate(isUbar)) Hout(idUbar,ng)=.TRUE.
+        IF (SCALARS(ng)%Fstate(isVbar)) Hout(idVbar,ng)=.TRUE.
+# else
+        IF (SCALARS(ng)%Fstate(isUvel)) Hout(idUvel,ng)=.TRUE.
+        IF (SCALARS(ng)%Fstate(isVvel)) Hout(idVvel,ng)=.TRUE.
+        DO itrc=1,NT(ng)
+          IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+            Hout(idTvar(itrc),ng)=.TRUE.
+          END IF
+          IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+            Hout(idTsur(itrc),ng)=.TRUE.
+          END IF
+        END DO
+# endif
+        IF (SCALARS(ng)%Fstate(isUstr)) Hout(idUsms,ng)=.TRUE.
+        IF (SCALARS(ng)%Fstate(isVstr)) Hout(idVsms,ng)=.TRUE.
+      END DO
+#endif
 !
 !  Set switch to create NetCDF file.
 !
@@ -3511,6 +3631,8 @@
      &          'surface forcing fields.'
 #endif
 #ifdef PROPAGATOR
+          WRITE (out,170) LmultiGST, 'LmultiGST',                       &
+     &          'Switch to write one GST eigenvector per file.'
           WRITE (out,170) LrstGST, 'LrstGST',                           &
      &          'Switch to restart GST analysis.'
           WRITE (out,120) MaxIterGST, 'MaxIterGST',                     &
@@ -3912,43 +4034,136 @@
      &         itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
 # endif
-# ifdef SO_SEMI
-#  ifndef SO_SEMI_WHITE
+#endif
+#if defined FORCING_SV || defined SO_SEMI
+          IF (SCALARS(ng)%Fstate(isFsur))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isFsur),                &
+     &       'Fstate(isFsur)',                                          &
+# ifdef FORCING_SV
+     &       'Singular Forcing Vectors on free-surface.'
+# else
+     &       'Stochastic Optimals on free-surface.'
+# endif
+# ifdef SOLVE3D
+          IF (SCALARS(ng)%Fstate(isUvel))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isUvel),                &
+     &       'Fstate(isUvel)',                                          &
+#  ifdef FORCING_SV
+     &       'Singular Forcing Vectors on 3D U-momentum component.'
+#  else
+     &       'Stochastic Optimals on 3D U-momentum component.'
+#  endif
+          IF (SCALARS(ng)%Fstate(isVvel))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isVvel),                &
+     &       'Fstate(isVvel)',                                          &
+#  ifdef FORCING_SV
+     &       'Singular Forcing Vectors on 3D V-momentum component.'
+#  else
+     &       'Stochastic Optimals on 3D V-momentum component.'
+#  endif
+          DO itrc=1,NT(ng)
+            IF (SCALARS(ng)%Fstate(isTvar(itrc)))                       &
+     &         WRITE (out,180) SCALARS(ng)%Fstate(isTvar(itrc)),        &
+     &         'Fstate(idTVar)',                                        &
+#  ifdef FORCING_SV
+     &         'Singular Forcing Vectors on tracer',                    &
+#  else
+     &         'Stochastic Optimals on tracer',                         &
+#  endif
+     &         itrc, TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# else
+          IF (SCALARS(ng)%Fstate(isUbar))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isUbar),                &
+     &       'Fstate(isUbar)',                                          &
+#  ifdef FORCING_SV
+     &       'Singular Forcing Vectors on 2D U-momentum component.'
+#  else
+     &       'Stochastic Optimals on 2D U-momentum component.'
+#  endif
+          IF (SCALARS(ng)%Fstate(isVbar))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isVbar),                &
+     &       'Fstate(isVbar)',                                          &
+#  ifdef FORCING_SV
+     &       'Singular Forcing Vectors on 2D V-momentum component.'
+#  else
+     &       'Stochastic Optimals on 2D V-momentum component.'
+#  endif
+# endif
+          IF (SCALARS(ng)%Fstate(isUstr))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isUstr),                &
+     &       'Fstate(isUstr)',                                          &
+# ifdef FORCING_SV
+     &       'Singular Forcing Vectors on surface U-stress.'
+# else
+     &       'Stochastic Optimals on surface U-stress.'
+# endif
+          IF (SCALARS(ng)%Fstate(isVstr))                               &
+     &       WRITE (out,170) SCALARS(ng)%Fstate(isVstr),                &
+     &       'Fstate(isVstr)',                                          &
+# ifdef FORCING_SV
+     &       'Singular Forcing Vectors on surface V-stress.'
+# else
+     &       'Stochastic Optimals on surface V-stress.'
+# endif
+# ifdef SOLVE3D
+          DO itrc=1,NT(ng)
+            IF (SCALARS(ng)%Fstate(isTsur(itrc)))                       &
+     &         WRITE (out,180) SCALARS(ng)%Fstate(isTsur(itrc)),        &
+     &         'Fstate(idTsur)',                                        &
+#  ifdef FORCING_SV
+     &         'Singular Forcing Vectors on surface flux of tracer',    &
+#  else
+     &         'Stochastic Optimals on surface flux of tracer',         &
+#  endif
+     &         itrc, TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# endif
+#endif
+#ifdef SO_SEMI
+# ifndef SO_SEMI_WHITE
           WRITE (out,140) SO_decay(ng), 'SO_decay',                     &
      &          'Stochastic optimals time decorrelation scale (days).'
-#  endif
-          IF (SCALARS(ng)%SOstate(isUstr))                              &
-     &       WRITE (out,170) SCALARS(ng)%SOstate(isUstr),               &
-     &       'SOstate(isUstr)',                                         &
-     &       'Stochastic optimals on surface U-stress.'
-          IF (SCALARS(ng)%SOstate(isVstr))                              &
-     &       WRITE (out,170) SCALARS(ng)%SOstate(isVstr),               &
-     &       'SOstate(isVstr)',                                         &
-     &       'Stochastic optimals on surface V-stress.'
-#  ifdef SOLVE3D
+# endif
+          IF (SCALARS(ng)%Fstate(isFsur))                               &
+            WRITE (out,200) SO_sdev(isFsur,ng), 'SO_sdev(isFsur)',      &
+     &          'Stochastic Optimals scale, free-surface'
+# ifdef SOLVE3D
+          IF (SCALARS(ng)%Fstate(isUvel))                               &
+            WRITE (out,200) SO_sdev(isUvel,ng), 'SO_sdev(isUvel)',      &
+     &          'Stochastic Optimals scale, 3D U-momentum'
+          IF (SCALARS(ng)%Fstate(isVvel))                               &
+            WRITE (out,200) SO_sdev(isVvel,ng), 'SO_sdev(isVvel)',      &
+     &          'Stochastic Optimals scale, 3D V-momentum'
           DO itrc=1,NT(ng)
-            IF (SCALARS(ng)%SOstate(isTsur(itrc)))                      &
-     &         WRITE (out,180) SCALARS(ng)%SOstate(isTsur(itrc)),       &
-     &         'SOstate(idTsur)',                                       &
-     &         'Stochastic optimals on surface flux of tracer',         &
+            IF (SCALARS(ng)%Fstate(isTvar(itrc)))                       &
+     &         WRITE (out,195) SO_sdev(isTvar(itrc),ng),                &
+     &         'SO_sdev(idTvar)',                                       &
+     &         'Stochastic Optimals scale, tracer',                     &
      &         itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
-#  endif
-          IF (SCALARS(ng)%SOstate(isUstr))                              &
+# else
+          IF (SCALARS(ng)%Fstate(isUbar))                               &
+            WRITE (out,200) SO_sdev(isUbar,ng), 'SO_sdev(isUbar)',      &
+     &          'Stochastic Optimals scale, 2D U-momentum'
+          IF (SCALARS(ng)%Fstate(isVbar))                               &
+            WRITE (out,200) SO_sdev(isVbar,ng), 'SO_sdev(isVbar)',      &
+     &          'Stochastic Optimals scale, 2D V-momentum'
+# endif
+          IF (SCALARS(ng)%Fstate(isUstr))                               &
             WRITE (out,200) SO_sdev(isUstr,ng), 'SO_sdev(isUstr)',      &
-     &          'Stochastic optimals scale, surface U-stress'
-          IF (SCALARS(ng)%SOstate(isVstr))                              &
+     &          'Stochastic Optimals scale, surface U-stress'
+          IF (SCALARS(ng)%Fstate(isVstr))                               &
             WRITE (out,200) SO_sdev(isVstr,ng), 'SO_sdev(isVstr)',      &
-     &          'Stochastic optimals scale, surface V-stress'
-#  ifdef SOLVE3D
+     &          'Stochastic Optimals scale, surface V-stress'
+# ifdef SOLVE3D
           DO itrc=1,NT(ng)
-            IF (SCALARS(ng)%SOstate(isTsur(itrc)))                      &
+            IF (SCALARS(ng)%Fstate(isTsur(itrc)))                       &
      &         WRITE (out,195) SO_sdev(isTsur(itrc),ng),                &
      &         'SO_sdev(idTsur)',                                       &
-     &         'Stochastic optimals scale, surface flux of tracer',     &
+     &         'Stochastic Optimals scale, surface flux of tracer',     &
      &         itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
-#  endif
 # endif
 #endif
 #if defined SOLVE3D && defined TS_PSOURCE
@@ -4870,7 +5085,8 @@
 # endif
 # if defined ADJOINT && \
     !(defined AD_SENSITIVITY      || defined FOUR_DVAR         || \
-      defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS  || \
+      defined IS4DVAR_SENSITIVITY || defined FORCING_SV        || \
+      defined OPT_OBSERVATIONS    || defined OPT_PERTURBATION  || \
       defined SANITY_CHECK        || defined SENSITIVITY_4DVAR || \
       defined SO_SEMI)
           fname=IADname(ng)
@@ -4973,11 +5189,12 @@
 !-----------------------------------------------------------------------
 !
         IF (Nouter.gt.1) THEN
-          exit_flag=5
           IF (Master) THEN
             WRITE (out,320) 'Nouter = ', Nouter,                        &
      &        'Posterior analysis error available for Nouter=1 only.'
           END IF
+          exit_flag=5
+          RETURN
         END IF
 #endif
 

@@ -281,7 +281,8 @@
 #endif
 
 /*
-** Set tangent, tl_ioms and adjoint switches.
+** Set perturbation tangent linear, fine amplitude tangent linear,
+** and adjoint model switches.
 */
 
 #if defined CONVOLUTION         || defined CORRELATION        || \
@@ -387,11 +388,12 @@
 
 #define NONLINEAR
 #if defined AD_SENSITIVITY   || defined ADM_DRIVER       || \
-    defined AFT_EIGENMODES   || defined FT_EIGENMODES    || \
-    defined INNER_PRODUCT    || defined OPT_OBSERVATIONS || \
-    defined OPT_PERTURBATION || defined PICARD_TEST      || \
-    defined RPM_DRIVER       || defined SANITY_CHECK     || \
-    defined SO_SEMI          || defined TLM_DRIVER
+    defined AFT_EIGENMODES   || defined FORCING_SV       || \
+    defined FT_EIGENMODES    || defined INNER_PRODUCT    || \
+    defined OPT_OBSERVATIONS || defined OPT_PERTURBATION || \
+    defined PICARD_TEST      || defined RPM_DRIVER       || \
+    defined SANITY_CHECK     || defined SO_SEMI          || \
+    defined TLM_DRIVER
 # undef NONLINEAR
 #endif
 
@@ -438,16 +440,6 @@
     defined SO_SEMI          || defined SO_TRACE       || \
     defined STOCHASTIC_OPT
 # define PROPAGATOR
-#endif
-
-/*
-** Activate checkpointing switch for GST analysis.  This requires
-** a modified ARPACK library for symmetric (*saupd, *seupd) and
-** non-symmetric (*naupd, *neupd) drivers.
-*/
-
-#ifdef PROPAGATOR
-# define CHECKPOINTING
 #endif
 
 /*

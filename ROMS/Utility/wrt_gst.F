@@ -24,7 +24,9 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_ncwrite
+      USE distribute_mod, ONLY : mp_bcasti
+      USE distribute_mod, ONLY : mp_ncwrite1d
+      USE distribute_mod, ONLY : mp_ncwrite2d
 #endif
 !
       implicit none
@@ -35,15 +37,13 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, status, varid
-      integer :: start(4), total(4)
+      integer :: status
 
 # ifdef DISTRIBUTE
+      integer :: Is, Ie
       integer :: vrecord = -1
 
       real(r8) :: scale = 1.0_r8
-
-      character (len=6) :: var
 # endif
       SourceFile='wrt_gst.F'
 !
@@ -73,16 +73,6 @@
      &                      Mstate(ng), (/0/), (/0/),                   &
      &                      ncid = ncGSTid(ng))
       IF (exit_flag.ne.NoError) RETURN
-
-# ifdef DISTRIBUTE
-!
-!  Write out number of distributed-memory nodes.
-!
-      CALL netcdf_put_ivar (ng, model, GSTname(ng), 'Nnodes',           &
-     &                      numnodes, (/0/), (/0/),                     &
-     &                      ncid = ncGSTid(ng))
-      IF (exit_flag.ne.NoError) RETURN
-# endif
 !
 !  Write out iteration number.
 !
@@ -203,10 +193,10 @@
 !  Write out Lanczos/Arnoldi basis vectors.
 !
 # ifdef DISTRIBUTE
-      var='Bvec'
-      status=mp_ncwrite (ng, model, ncGSTid(ng), var, GSTname(ng),      &
-     &                   vrecord, Nstr(ng), Nend(ng), 1, NCV, scale,    &
-     &                   Bvec(Nstr(ng):,1))
+      status=mp_ncwrite2d(ng, model, ncGSTid(ng), 'Bvec',               &
+     &                    GSTname(ng), vrecord,                         &
+     &                    Nstr(ng), Nend(ng), 1, NCV, scale,            &
+     &                    Bvec(Nstr(ng):,1))
 # else
       CALL netcdf_put_fvar (ng, model, GSTname(ng), 'Bvec',             &
      &                      Bvec(Nstr(ng):,1),                          &
@@ -219,10 +209,10 @@
 !  Write out eigenproblem residual vector.
 !
 # ifdef DISTRIBUTE
-      var='resid'
-      status=mp_ncwrite(ng, model, ncGSTid(ng), var, GSTname(ng),       &
-     &                  vrecord, Nstr(ng), Nend(ng), 1, 1, scale,       &
-     &                  resid(Nstr(ng):))
+      status=mp_ncwrite1d(ng, model, ncGSTid(ng), 'resid',              &
+     &                    GSTname(ng), vrecord,                         &
+     &                    Nstr(ng), Nend(ng), scale,                    &
+     &                    resid(Nstr(ng):))
 # else
       CALL netcdf_put_fvar (ng, model, GSTname(ng), 'resid',            &
      &                      resid(Nstr(ng):),                           &
@@ -232,15 +222,14 @@
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out state reverse communication work array.
-# ifdef DISTRIBUTE
-!  Notice zero arguments indicating node dimension in NetCDF file.
-# endif
 !
 # ifdef DISTRIBUTE
-      var='SworkD'
-      status=mp_ncwrite(ng, model, ncGSTid(ng), var, GSTname(ng),       &
-     &                  vrecord, 1, 3*Nstate(ng), 0, 0, scale,          &
-     &                  SworkD)
+      Is=MyRank*3*Nstate(ng)+1
+      Ie=MIN(Is+3*Nstate(ng)-1, 3*Mstate(ng))
+      status=mp_ncwrite1d(ng, model, ncGSTid(ng), 'SworkD',             &
+     &                    GSTname(ng), vrecord,                         &
+     &                    Is, Ie, scale,                                &
+     &                    SworkD)
 # else
       CALL netcdf_put_fvar (ng, model, GSTname(ng), 'SworkD',           &
      &                      SworkD, (/1/), (/3*Nstate(ng)/),            &
@@ -248,21 +237,12 @@
 # endif
       IF (exit_flag.ne.NoError) RETURN
 !
-!  Write out eigenproblem work array.
-# ifdef DISTRIBUTE
-!  Notice zero arguments indicating node dimension in NetCDF file.
-# endif
+!  Write out eigenproblem work array.  In distributed-memory
+!  applications, this array is identical in all the nodes.
 !
-# ifdef DISTRIBUTE
-      var='SworkL'
-      status=mp_ncwrite(ng, model, ncGSTid(ng), var, GSTname(ng),       &
-     &                  vrecord, 1, LworkL, 0, 0, scale,                &
-     &                  SworkL)
-# else
       CALL netcdf_put_fvar (ng, model, GSTname(ng), 'SworkL',           &
      &                      SworkL, (/1/), (/LworkL/),                  &
      &                      ncid = ncGSTid(ng))
-# endif
       IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------

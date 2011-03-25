@@ -34,8 +34,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
+      PUBLIC :: c_norm2
+      PUBLIC :: r_norm2
 # ifdef ADJOINT
       PUBLIC :: ad_pack
       PUBLIC :: ad_unpack
@@ -45,17 +47,193 @@
       PUBLIC :: tl_unpack
 # endif
 # ifdef SO_SEMI
-      PUBLIC :: so_pack
-      PUBLIC :: so_unpack
 #  ifdef SO_SEMI_WHITE
       PUBLIC :: so_semi_white
 #  else
       PUBLIC :: so_semi_red
 #  endif
 # endif
+!
       CONTAINS
+!
+      SUBROUTINE c_norm2 (ng, model, Mstr, Mend,                        &
+     &                    EvalueR, EvalueI, EvectorR, EvectorI,         &
+     &                    state, norm2)
+!
+!=======================================================================
+!                                                                      !
+!  This function computes the Euclidean norm between the  propagator   !
+!  real/imaginary Ritz eigenvalue (EvalueR, EvalueI) and eigenvector   !
+!  (EvectorR, EvectorI) with state vector (state):                     !
+!                                                                      !
+!     norm2 = Euclidean NORM (state(:) + EvalueR * EvectorR(:) +       !
+!                                        EvalueI * EvectorI(:))        !
+!                                                                      !
+!  WARNING: This function is only intended for serial or distributed   !
+!           memory applications.  There is not tiled partitions. All   !
+!           quantities are vectors. It replaces the calls to "daxpy"   !
+!           and "dnrm2" from the BLAS library. This "legacy" library   !
+!           gives  different  results when called inside modules and   !
+!           the input arguments are pointers (specially using ifort).  !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
 
-# ifdef ADJOINT
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_reduce
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: Mstr, Mend
+
+      real(r8), intent(in) :: EvalueR
+      real(r8), intent(in) :: EvalueI
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: EvectorR(Mstr:)
+      real(r8), intent(in) :: EvectorI(Mstr:)
+      real(r8), intent(in) :: state(Mstr:)
+# else
+      real(r8), intent(in) :: EvectorR(Mstr:Mend)
+      real(r8), intent(in) :: EvectorI(Mstr:Mend)
+      real(r8), intent(in) :: state(Mstr:Mend)
+# endif
+      real(r8), intent(out) :: norm2
+!
+!  Local variable declarations.
+!
+      integer :: NSUB, is
+
+      real(r8) :: cff, my_norm2
+
+# ifdef DISTRIBUTE
+      character (len=3), dimension(1) :: op_handle
+# endif
+!
+!-----------------------------------------------------------------------
+!  Compute the Euclidean norm of: state(:) + Rvalue * Rvector(:)
+!-----------------------------------------------------------------------
+!
+!  Accumulate squared sum.
+!
+      my_norm2=0.0_r8
+      DO is=Mstr,Mend
+        cff=state(is)+EvalueR*EvectorR(is)+                             &
+     &                EvalueI*EvectorI(is)
+        my_norm2=my_norm2+cff*cff
+      END DO
+!
+!  Take sum squared-root: perform global reduction.
+!
+      NSUB=1                         ! no horizontal tiles
+      IF (tile_count.eq.0) THEN
+        norm2=0.0_r8
+      END IF
+      norm2=norm2+my_norm2
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle(1)='SUM'
+        CALL mp_reduce (ng, model, 1, norm2, op_handle(1))
+# endif
+      END IF
+      norm2=SQRT(norm2)
+
+      RETURN
+      END SUBROUTINE c_norm2
+!
+      SUBROUTINE r_norm2 (ng, model, Mstr, Mend,                        &
+     &                    Evalue, Evector, state, norm2)
+!
+!=======================================================================
+!                                                                      !
+!  This function computes the Euclidean norm between the propagator    !
+!  real Ritz eigenvalue (Evalue) and eigenvector (Evector) with the    !
+!  state vector (state):                                               !
+!                                                                      !
+!     norm2 = Euclidean NORM (state(:) + Evalue * Evector(:))          !
+!                                                                      !
+!  WARNING: This function is only intended for serial or distributed   !
+!           memory applications.  There is not tiled partitions. All   !
+!           quantities are vectors. It replaces the calls to "daxpy"   !
+!           and "dnrm2" from the BLAS library. This "legacy" library   !
+!           gives  different  results when called inside modules and   !
+!           the input arguments are pointers (specially using ifort).  !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_reduce
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: Mstr, Mend
+
+      real(r8), intent(in) :: Evalue
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: Evector(Mstr:)
+      real(r8), intent(in) :: state(Mstr:)
+# else
+      real(r8), intent(in) :: Evector(Mstr:Mend)
+      real(r8), intent(in) :: state(Mstr:Mend)
+# endif
+      real(r8), intent(out) :: norm2
+!
+!  Local variable declarations.
+!
+      integer :: NSUB, is
+
+      real(r8) :: cff, my_norm2
+
+# ifdef DISTRIBUTE
+      character (len=3), dimension(1) :: op_handle
+# endif
+!
+!-----------------------------------------------------------------------
+!  Compute the Euclidean norm of: state(:) + Rvalue * Rvector(:)
+!-----------------------------------------------------------------------
+!
+!  Accumulate squared sum.
+!
+      my_norm2=0.0_r8
+      DO is=Mstr,Mend
+        cff=state(is)+Evalue*Evector(is)
+        my_norm2=my_norm2+cff*cff
+      END DO
+!
+!  Take sum squared-root: perform global reduction.
+!
+      NSUB=1                         ! no horizontal tiles
+      IF (tile_count.eq.0) THEN
+        norm2=0.0_r8
+      END IF
+      norm2=norm2+my_norm2
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle(1)='SUM'
+        CALL mp_reduce (ng, model, 1, norm2, op_handle(1))
+# endif
+      END IF
+      norm2=SQRT(norm2)
+
+      RETURN
+      END SUBROUTINE r_norm2
+
+# if defined ADJOINT && (defined FORCING_SV || defined SO_SEMI)
+!
       SUBROUTINE ad_pack (ng, tile, Mstr, Mend, ad_state)
 !
 !=======================================================================
@@ -67,11 +245,627 @@
 !
       USE mod_param
       USE mod_grid
-#  if defined FORCING_SV
-      USE mod_forces
-#  else
-      USE mod_ocean
+      USE mod_stepping
+#  ifdef DISTRIBUTE
+      USE mod_storage
 #  endif
+#  ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_scatter_state
+#  endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: Mstr, Mend
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(out) :: ad_state(Mstr:)
+#  else
+      real(r8), intent(out) :: ad_state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, iADM, 2)
+#  endif
+
+      CALL ad_pack_tile (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   kstp(ng),                                      &
+#  ifdef SOLVE3D
+     &                   nstp(ng),                                      &
+#  endif
+#  ifdef MASKING
+     &                   GRID(ng) % IJwaterR,                           &
+     &                   GRID(ng) % IJwaterU,                           &
+     &                   GRID(ng) % IJwaterV,                           &
+     &                   GRID(ng) % rmask,                              &
+     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % vmask,                              &
+#  endif
+#  ifdef DISTRIBUTE
+     &                   1, Mstate(ng), Swork)
+#  else
+     &                   Mstr, Mend, ad_state)
+#  endif
+
+#  ifdef PROFILE
+      CALL wclock_off (ng, iADM, 2)
+#  endif
+
+#  ifdef DISTRIBUTE
+!
+!  Scatter (global to threaded) adjoint state solution to all
+!  distributed nodes.
+!
+      CALL mp_scatter_state (ng, iADM, Mstr, Mend, Mstate(ng),          &
+     &                       Swork, ad_state)
+#  endif
+
+      RETURN
+      END SUBROUTINE ad_pack
+!
+!***********************************************************************
+      SUBROUTINE ad_pack_tile (ng, tile,                                &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
+     &                         kstp,                                    &
+#  ifdef SOLVE3D
+     &                         nstp,                                    &
+#  endif
+#  ifdef MASKING
+     &                         IJwaterR, IJwaterU, IJwaterV,            &
+     &                         rmask, umask, vmask,                     &
+#  endif
+     &                         Mstr, Mend, ad_state)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_forces
+      USE mod_ncparam
+      USE mod_scalars
+      USE mod_ocean
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: Mstr, Mend
+      integer, intent(in) :: kstp
+#  ifdef SOLVE3D
+      integer, intent(in) :: nstp
+#  endif
+!
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:,LBj:)
+      integer, intent(in) :: IJwaterU(LBi:,LBj:)
+      integer, intent(in) :: IJwaterV(LBi:,LBj:)
+
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#   endif
+      real(r8), intent(out) :: ad_state(Mstr:)
+#  else
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterU(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterV(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#   endif
+      real(r8), intent(out) :: ad_state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  ifndef MASKING
+      integer :: Imax, Ioff, Jmax, Joff
+#  endif
+      integer :: i, iadd, icount, is, itrc, j, k
+
+      integer, dimension(7+2*NT(ng)) :: offset
+
+      real(r8), parameter :: Aspv = 0.0_r8
+
+      real(r8) :: cff, scale
+
+#  include "set_bounds.h"
+
+#  ifdef DISTRIBUTE
+!
+!-----------------------------------------------------------------------
+!  Initialize adjoint state vector with special value (zero) to
+!  facilitate gathering/scattering communications between all nodes.
+!  This is achieved by summing all the buffers.
+!-----------------------------------------------------------------------
+!
+      DO is=Mstr,Mend
+        ad_state(is)=Aspv
+      END DO
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Load adjoint STATE and FORCING variables from full 1D state vector.
+!-----------------------------------------------------------------------
+!
+!  Determine the index offset for each variable in the state vector.
+#  ifdef MASKING
+!  Notice that in Land/Sea masking application the state vector only
+!  contains water points to avoid large null space.
+#  endif
+!
+      icount=0
+      offset=0
+#  ifdef MASKING
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+        icount=icount+NwaterR(ng)
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+        icount=icount+N(ng)*NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+        icount=icount+N(ng)*NwaterV(ng)
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+          icount=icount+N(ng)*NwaterR(ng)
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+          icount=icount+NwaterR(ng)
+        END IF
+      END DO
+#   endif
+
+#  else
+
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#   else
+        icount=icount+Lm(ng)*Mm(ng)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+#    endif
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+#    ifdef FULL_GRID
+          icount=icount+(Lm(ng)+2)*(Mm(ng)+2)*N(ng)
+#    else
+          icount=icount+Lm(ng)*Mm(ng)*N(ng)
+#    endif
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#    endif
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#   else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#   endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#   else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#    else
+        icount=icount+Lm(ng)*Mm(ng)
+#    endif
+        END IF
+      END DO
+#   endif
+#  endif
+!
+!  Load adjoint of free-surface.
+!
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=0
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (rmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterR(i,j)+offset(isFsur)
+              ad_state(is)=scale*OCEAN(ng)%ad_zeta(i,j,kstp)
+            END IF
+#  else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isFsur)
+            ad_state(is)=scale*OCEAN(ng)%ad_zeta(i,j,kstp)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifndef SOLVE3D
+!
+!  Load adjoint of 2D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#   ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUbar)
+              ad_state(is)=scale*OCEAN(ng)%ad_ubar(i,j,kstp)
+            END IF
+#   else
+              is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
+              ad_state(is)=scale*OCEAN(ng)%ad_ubar(i,j,kstp)
+#   endif
+          END DO
+        END DO
+      END IF
+!
+!  Load adjoint of 2D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#   ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVbar)
+              ad_state(is)=scale*OCEAN(ng)%ad_vbar(i,j,kstp)
+            END IF
+#   else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVbar)
+            ad_state(is)=scale*OCEAN(ng)%ad_vbar(i,j,kstp)
+#   endif
+          END DO
+        END DO
+      END IF
+
+#  else
+!
+!  Load adjoint of 3D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Jmax=Mm(ng)+2
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Jmax=Mm(ng)
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterU(ng)+offset(isUvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isUvel)
+#   endif
+          DO j=JR_RANGE
+            DO i=IU_RANGE
+#   ifdef MASKING
+              IF (umask(i,j).gt.0.0_r8) THEN
+                is=IJwaterU(i,j)+iadd
+                ad_state(is)=scale*OCEAN(ng)%ad_u(i,j,k,nstp)
+              END IF
+#   else
+              is=(i-Ioff)+(j-Joff)*Imax+iadd
+              ad_state(is)=scale*OCEAN(ng)%ad_u(i,j,k,nstp)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Load adjoint of 3D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Jmax=Mm(ng)+1
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Jmax=Mm(ng)-1
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterV(ng)+offset(isVvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isVvel)
+#   endif
+          DO j=JV_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (vmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterV(i,j)+iadd
+                ad_state(is)=scale*OCEAN(ng)%ad_v(i,j,k,nstp)
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+iadd
+              ad_state(is)=scale*OCEAN(ng)%ad_v(i,j,k,nstp)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Load adjoint of tracers variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO k=1,N(ng)
+#   ifdef MASKING
+            iadd=(k-1)*NwaterR(ng)+offset(isTvar(itrc))
+#   else
+            iadd=(k-1)*Imax*Jmax+offset(isTvar(itrc))
+#   endif
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+#   ifdef MASKING
+                IF (rmask(i,j).gt.0.0_r8) THEN
+                  is=IJwaterR(i,j)+iadd
+                  ad_state(is)=scale*OCEAN(ng)%ad_t(i,j,k,nstp,itrc)
+                END IF
+#   else
+                is=(i+Ioff)+(j-Joff)*Imax+iadd
+                ad_state(is)=scale*OCEAN(ng)%ad_t(i,j,k,nstp,itrc)
+#   endif
+              END DO
+            END DO
+          END DO
+        END IF
+     END DO
+#  endif
+!
+!  Load adjoint of surface U-stress.
+!
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#   else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUstr)
+              ad_state(is)=scale*FORCES(ng)%ad_sustr(i,j)
+            END IF
+#  else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
+            ad_state(is)=scale*FORCES(ng)%ad_sustr(i,j)
+#  endif
+          END DO
+        END DO
+      END IF
+!
+!  Load adjoint of surface V-stress.
+!
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVstr)
+              ad_state(is)=scale*FORCES(ng)%ad_svstr(i,j)
+            END IF
+#  else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
+            ad_state(is)=scale*FORCES(ng)%ad_svstr(i,j)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifdef SOLVE3D
+!
+!  Load adjoint of tracers variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (rmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterR(i,j)+offset(isTsur(itrc))
+                ad_state(is)=scale*FORCES(ng)%ad_stflx(i,j,itrc)
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+offset(isTsur(itrc))
+              ad_state(is)=scale*FORCES(ng)%ad_stflx(i,j,itrc)
+#   endif
+            END DO
+          END DO
+        END IF
+      END DO
+#  endif
+
+      RETURN
+      END SUBROUTINE ad_pack_tile
+
+# elif defined ADJOINT
+!
+      SUBROUTINE ad_pack (ng, tile, Mstr, Mend, ad_state)
+!
+!=======================================================================
+!                                                                      !
+!  This routine packs the adjoint variables into the state vector.     !
+!  The state vector contains only interior water points.               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
       USE mod_stepping
 #  ifdef DISTRIBUTE
       USE mod_storage
@@ -98,6 +892,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 1)
 #  endif
+
       CALL ad_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
@@ -119,20 +914,19 @@
      &                   GRID(ng) % vmask,                              &
 #  endif
      &                   GRID(ng) % h,                                  &
-#  if defined FORCING_SV
-     &                   FORCES(ng) % ad_sustr,                         &
-     &                   FORCES(ng) % ad_svstr)
-#  else
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
      &                   GRID(ng) % Hz,                                 &
      &                   OCEAN(ng) % ad_t,                              &
      &                   OCEAN(ng) % ad_u,                              &
      &                   OCEAN(ng) % ad_v,                              &
-#   else
+#  else
      &                   OCEAN(ng) % ad_ubar,                           &
      &                   OCEAN(ng) % ad_vbar,                           &
-#   endif
+#  endif
      &                   OCEAN(ng) % ad_zeta)
+
+#  ifdef PROFILE
+      CALL wclock_off (ng, iADM, 1)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -144,9 +938,6 @@
      &                       Swork, ad_state)
 #  endif
 
-#  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
-#  endif
       RETURN
       END SUBROUTINE ad_pack
 !
@@ -158,23 +949,19 @@
 #  ifdef SOLVE3D
      &                         nstp,                                    &
 #  endif
-     &                          Nstr, Nend, ad_state,                   &
+     &                         Mstr, Mend, ad_state,                    &
 #  ifdef MASKING
      &                         IJwaterR, IJwaterU, IJwaterV,            &
      &                         rmask, umask, vmask,                     &
 #  endif
      &                         h,                                       &
-#  if defined FORCING_SV
-     &                         ad_sustr, ad_svstr)
-#  else
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
      &                         Hz,                                      &
      &                         ad_t, ad_u, ad_v,                        &
-#   else
+#  else
      &                         ad_ubar, ad_vbar,                        &
-#   endif
-     &                         ad_zeta)
 #  endif
+     &                         ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -187,7 +974,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
+      integer, intent(in) :: Mstr, Mend
       integer, intent(in) :: kstp
 #  ifdef SOLVE3D
       integer, intent(in) :: nstp
@@ -204,23 +991,18 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #   endif
       real(r8), intent(in) :: h(LBi:,LBj:)
-#   if defined FORCING_SV
-      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
-#   else
-#    ifdef SOLVE3D
+#   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-#    else
+#   else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
-#    endif
-      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
 #   endif
-      real(r8), intent(out) :: ad_state(Nstr:)
+      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+      real(r8), intent(out) :: ad_state(Mstr:)
 #  else
 #   ifdef MASKING
       integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
@@ -232,23 +1014,18 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #   endif
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-#   if defined FORCING_SV
-      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
-#   else
-#    ifdef SOLVE3D
+#   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    else
+#   else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-#    endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
 #   endif
-      real(r8), intent(out) :: ad_state(Nstr:Nend)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: ad_state(Mstr:Mend)
 #  endif
 !
 !  Local variable declarations.
@@ -258,11 +1035,7 @@
 #  endif
       integer :: i, iadd, is, itrc, j, k
 
-#  if defined FORCING_SV
-      integer, dimension(2) :: offset
-#  else
       integer, dimension(5+NT(ng)) :: offset
-#  endif
 
       real(r8), parameter :: Aspv = 0.0_r8
 
@@ -278,107 +1051,23 @@
 !  This is achieved by summing all the buffers.
 !-----------------------------------------------------------------------
 !
-      DO is=Nstr,Nend
+      DO is=Mstr,Mend
         ad_state(is)=Aspv
       END DO
 #  endif
-
-#  if defined FORCING_SV
-!
-!-----------------------------------------------------------------------
-!  Load adjoint FORCING variables from full 1D state vector.
-!-----------------------------------------------------------------------
-!
-!  Determine the index offset for each variable in the state vector.
-#   ifdef MASKING
-!  Notice that in Land/Sea masking application the state vector only
-!  contains water points to avoid large null space.
-#   endif
-!
-#   ifdef MASKING
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+NwaterU(ng)
-#   else
-#    ifdef FULL_GRID
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+(Lm(ng)+1)*(Mm(ng)+2)
-#    else
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+(Lm(ng)-1)*Mm(ng)
-#    endif
-#   endif
-
-!
-!  Load adjoint surface U-momentum stress.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+1
-      Ioff=0
-      Joff=0
-#    else
-      Imax=Lm(ng)-1
-      Ioff=1
-      Joff=1
-#    endif
-#   endif
-      scale=1.0_r8
-      DO j=JR_RANGE
-        DO i=IU_RANGE
-#   ifdef MASKING
-          IF (umask(i,j).gt.0.0_r8) THEN
-            is=IJwaterU(i,j)+offset(isUstr)
-            ad_state(is)=scale*ad_sustr(i,j)
-          END IF
-#   else
-          is=(i-Ioff)+(j-Joff)*Imax+offset(isVstr)
-          ad_state(is)=scale*ad_sustr(i,j)
-#   endif
-        END DO
-      END DO
-!
-!  Load adjoint surface V-momentum stress.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+2
-      Ioff=1
-      Joff=1
-#    else
-      Imax=Lm(ng)
-      Ioff=0
-      Joff=2
-#    endif
-#   endif
-      scale=1.0_r8
-      DO j=JV_RANGE
-        DO i=IR_RANGE
-#   ifdef MASKING
-          IF (vmask(i,j).gt.0.0_r8) THEN
-            is=IJwaterV(i,j)+offset(isVstr)
-            ad_state(is)=scale*ad_svstr(i,j)
-          END IF
-#   else
-          is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
-          ad_state(is)=scale*ad_svstr(i,j)
-#   endif
-        END DO
-      END DO
-
-#  else
 !
 !-----------------------------------------------------------------------
 !  Load adjoint STATE variables into full 1D state vector.
 !-----------------------------------------------------------------------
 !
 !  Determine the index offset for each variable in the state vector.
-#   ifdef MASKING
+#  ifdef MASKING
 !  Notice that in Land/Sea masking application the state vector only
 !  contains water points to avoid large null space.
-#   endif
+#  endif
 !
-#   ifdef SOLVE3D
-#    ifdef MASKING
+#  ifdef SOLVE3D
+#   ifdef MASKING
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+NwaterR(ng)
       offset(isVvel)=offset(isUvel)+NwaterU(ng)*N(ng)
@@ -387,8 +1076,8 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=NwaterR(ng)*N(ng)
       END DO
-#    else
-#     ifdef FULL_GRID
+#   else
+#    ifdef FULL_GRID
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+(Lm(ng)+2)*(Mm(ng)+2)
       offset(isVvel)=offset(isUvel)+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
@@ -397,7 +1086,7 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=(Lm(ng)+2)*(Mm(ng)+2)*N(ng)
       END DO
-#     else
+#    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
       offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
@@ -406,220 +1095,221 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
       END DO
-#     endif
 #    endif
-#   else
+#   endif
+#  else
 #    ifdef MASKING
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+NwaterR(ng)
       offset(isVbar)=offset(isUbar)+NwaterU(ng)
-#    else
-#     ifdef FULL_GRID
+#   else
+#    ifdef FULL_GRID
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+(Lm(ng)+2)*(Mm(ng)+2)
       offset(isVbar)=offset(isUbar)+(Lm(ng)+1)*(Mm(ng)+2)
-#     else
+#    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
       offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
-#     endif
 #    endif
 #   endif
+#  endif
 !
 !  Load adjoint free-surface.
 !
-#   ifndef MASKING
-#    ifdef FULL_GRID
+#  ifndef MASKING
+#   ifdef FULL_GRID
       Imax=Lm(ng)+2
       Ioff=1
       Joff=0
-#    else
+#   else
       Imax=Lm(ng)
       Ioff=0
       Joff=1
-#    endif
 #   endif
-#   ifdef ENERGYNORM_SCALE
+#  endif
+#  ifdef ENERGYNORM_SCALE
       scale=1.0_r8/SQRT(0.5_r8*g*rho0)
-#   else
+#  else
       scale=1.0_r8
-#   endif
+#  endif
       DO j=JR_RANGE
         DO i=IR_RANGE
-#   ifdef MASKING
+#  ifdef MASKING
           IF (rmask(i,j).gt.0.0_r8) THEN
             is=IJwaterR(i,j)+offset(isFsur)
             ad_state(is)=scale*ad_zeta(i,j,kstp)
           END IF
-#   else
+#  else
           is=(i+Ioff)+(j-Joff)*Imax+offset(isFsur)
           ad_state(is)=scale*ad_zeta(i,j,kstp)
-#   endif
+#  endif
         END DO
       END DO
-#   ifndef SOLVE3D
+
+#  ifndef SOLVE3D
 !
 !  Load adjoint 2D U-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+1
       Ioff=0
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)-1
       Ioff=1
       Joff=1
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO j=JR_RANGE
         DO i=IU_RANGE
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
           scale=1.0_r8/SQRT(cff*(h(i-1,j)+h(i,j)))
-#    endif
-#    ifdef MASKING
+#   endif
+#   ifdef MASKING
           IF (umask(i,j).gt.0.0_r8) THEN
             is=IJwaterU(i,j)+offset(isUbar)
             ad_state(is)=scale*ad_ubar(i,j,kstp)
           END IF
-#    else
+#   else
           is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
           ad_state(is)=scale*ad_ubar(i,j,kstp)
-#    endif
+#   endif
         END DO
       END DO
 !
 !  Load adjoint 2D V-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Ioff=1
       Joff=1
-#     else
+#    else
       Imax=Lm(ng)
       Ioff=0
       Joff=2
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO j=JV_RANGE
         DO i=IR_RANGE
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
           scale=1.0_r8/SQRT(cff*(h(i,j-1)+h(i,j)))
-#    endif
-#    ifdef MASKING
+#   endif
+#   ifdef MASKING
           IF (vmask(i,j).gt.0.0_r8) THEN
             is=IJwaterV(i,j)+offset(isVbar)
             ad_state(is)=scale*ad_vbar(i,j,kstp)
           END IF
-#    else
+#   else
           is=(i+Ioff)+(j-Joff)*Imax+offset(isVbar)
           ad_state(is)=scale*ad_vbar(i,j,kstp)
-#    endif
+#   endif
         END DO
       END DO
-#   else
+#  else
 !
 !  Load adjoint 3D U-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+1
       Jmax=Mm(ng)+2
       Ioff=0
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)-1
       Jmax=Mm(ng)
       Ioff=1
       Joff=1
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
         iadd=(k-1)*NwaterU(ng)+offset(isUvel)
-#    else
+#   else
         iadd=(k-1)*Imax*Jmax+offset(isUvel)
-#    endif
+#   endif
         DO j=JR_RANGE
           DO i=IU_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
             IF (umask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
-#     endif
+#    endif
               is=IJwaterU(i,j)+iadd
               ad_state(is)=scale*ad_u(i,j,k,nstp)
             END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
             scale=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
-#     endif
+#    endif
             is=(i-Ioff)+(j-Joff)*Imax+iadd
             ad_state(is)=scale*ad_u(i,j,k,nstp)
-#    endif
+#   endif
           END DO
         END DO
       END DO
 !
 !  Load adjoint 3D V-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Jmax=Mm(ng)+1
       Ioff=1
       Joff=1
-#     else
+#    else
       Imax=Lm(ng)
       Jmax=Mm(ng)-1
       Ioff=0
       Joff=2
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
         iadd=(k-1)*NwaterV(ng)+offset(isVvel)
-#    else
+#   else
         iadd=(k-1)*Imax*Jmax+offset(isVvel)
-#    endif
+#   endif
         DO j=JV_RANGE
           DO i=IR_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
             IF (vmask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
-#     endif
+#    endif
               is=IJwaterV(i,j)+iadd
               ad_state(is)=scale*ad_v(i,j,k,nstp)
             END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
             scale=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
-#     endif
+#    endif
             is=(i+Ioff)+(j-Joff)*Imax+iadd
             ad_state(is)=scale*ad_v(i,j,k,nstp)
-#    endif
+#   endif
           END DO
         END DO
       END DO
@@ -627,21 +1317,21 @@
 !  Load adjoint tracers variables. For now, use salinity scale for
 !  passive tracers.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Jmax=Mm(ng)+2
       Ioff=1
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)
       Jmax=Mm(ng)
       Ioff=0
       Joff=1
-#     endif
 #    endif
+#   endif
       DO itrc=1,NT(ng)
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
         IF (itrc.eq.itemp) THEN
           cff=0.5_r8*rho0*Tcoef(ng)*Tcoef(ng)*g*g/bvf_bak
         ELSE IF (itrc.eq.isalt) THEN
@@ -649,41 +1339,675 @@
         ELSE
           cff=0.5_r8*rho0*Scoef(ng)*Scoef(ng)*g*g/bvf_bak
         END IF
-#    else
+#   else
         scale=1.0_r8
-#    endif
+#   endif
         DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
           iadd=(k-1)*NwaterR(ng)+offset(isTvar(itrc))
-#    else
+#   else
           iadd=(k-1)*Imax*Jmax+offset(isTvar(itrc))
-#    endif
+#   endif
           DO j=JR_RANGE
             DO i=IR_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
               IF (rmask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
                 scale=1.0_r8/SQRT(cff*Hz(i,j,k))
-#     endif
+#    endif
                 is=IJwaterR(i,j)+iadd
                 ad_state(is)=scale*ad_t(i,j,k,nstp,itrc)
               END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*Hz(i,j,k))
-#     endif
+#    endif
               is=(i+Ioff)+(j-Joff)*Imax+iadd
               ad_state(is)=scale*ad_t(i,j,k,nstp,itrc)
-#    endif
+#   endif
             END DO
           END DO
         END DO
       END DO
-#   endif
 #  endif
       RETURN
       END SUBROUTINE ad_pack_tile
 
+# endif
+
+# if defined ADJOINT && defined SO_SEMI
+!
+      SUBROUTINE ad_unpack (ng, tile, Mstr, Mend, state)
+!
+!=======================================================================
+!                                                                      !
+!  This routine unpacks the requested adjoint state and/or  surface    !
+!  forcing variables used in stochastic optimals.  The state vector    !
+!  contains only interior  water points.  For output purposes,  the    !
+!  unpacked variables are loaded into the nonlinear state variables.   !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_forces
+      USE mod_stepping
+#  ifdef DISTRIBUTE
+      USE mod_storage
+#  endif
+#  ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_gather_state
+#  endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: Mstr, Mend
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: state(Mstr:)
+#  else
+      real(r8), intent(in) :: state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  include "tile.h"
+!
+#  ifdef DISTRIBUTE
+!
+!  Gather (threaded to global) adjoint state solution from all
+!  distributed nodes.
+!
+      CALL mp_gather_state (ng, iNLM, Mstr, Mend, Mstate(ng),           &
+     &                      state, Swork)
+!
+#  endif
+
+#  ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 1)
+#  endif
+
+      CALL ad_unpack_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
+     &                     kstp(ng),                                    &
+#  ifdef SOLVE3D
+     &                     nstp(ng),                                    &
+#  endif
+#  ifdef MASKING
+     &                     GRID(ng) % IJwaterR,                         &
+     &                     GRID(ng) % IJwaterU,                         &
+     &                     GRID(ng) % IJwaterV,                         &
+     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % vmask,                            &
+#  endif
+#  ifdef DISTRIBUTE
+     &                     1, Mstate(ng), Swork)
+#  else
+     &                     Mstr, Mend, state)
+#  endif
+
+#  ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 1)
+#  endif
+
+      RETURN
+      END SUBROUTINE ad_unpack
+!
+!***********************************************************************
+      SUBROUTINE ad_unpack_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
+     &                           kstp,                                  &
+#  ifdef SOLVE3D
+     &                           nstp,                                  &
+#  endif
+#  ifdef MASKING
+     &                           IJwaterR, IJwaterU, IJwaterV,          &
+     &                           rmask, umask, vmask,                   &
+#  endif
+     &                           Mstr, Mend, state)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_forces
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: kstp
+#  ifdef SOLVE3D
+      integer, intent(in) :: nstp
+#  endif
+      integer, intent(in) :: Mstr, Mend
+!
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:,LBj:)
+      integer, intent(in) :: IJwaterU(LBi:,LBj:)
+      integer, intent(in) :: IJwaterV(LBi:,LBj:)
+
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#   endif
+      real(r8), intent(in) :: state(Mstr:)
+#  else
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterU(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterV(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#   endif
+      real(r8), intent(in) :: state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  ifndef MASKING
+      integer :: Imax, Ioff, Jmax, Joff
+#  endif
+      integer :: i, iadd, icount, is, itrc, j, k
+
+#  ifdef SOLVE3D
+      integer, dimension(7+2*NT(ng)) :: offset
+#  else
+      integer, dimension(5) :: offset
+#  endif
+
+      real(r8) :: scale
+
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Extract adjoint FORCING variables from full 1D state vector.
+!-----------------------------------------------------------------------
+!
+!  Determine the index offset for each variable in the state vector.
+#  ifdef MASKING
+!  Notice that in Land/Sea masking application the state vector only
+!  contains water points to avoid large null space.
+#  endif
+!
+      icount=0
+      offset=0
+#  ifdef MASKING
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+        icount=icount+NwaterR(ng)
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+        icount=icount+N(ng)*NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+        icount=icount+N(ng)*NwaterV(ng)
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+          icount=icount+N(ng)*NwaterR(ng)
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+          icount=icount+NwaterR(ng)
+        END IF
+      END DO
+#   endif
+
+#  else
+
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#   else
+        icount=icount+Lm(ng)*Mm(ng)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+#    endif
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+#    ifdef FULL_GRID
+          icount=icount+(Lm(ng)+2)*(Mm(ng)+2)*N(ng)
+#    else
+          icount=icount+Lm(ng)*Mm(ng)*N(ng)
+#    endif
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#    endif
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#   else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#   endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#   else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#    else
+        icount=icount+Lm(ng)*Mm(ng)
+#    endif
+        END IF
+      END DO
+#   endif
+#  endif
+!
+!  Extract adjoint free-surface.
+!
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=0
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isFsur)
+              OCEAN(ng)%ad_zeta(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%ad_zeta(i,j,kstp)=0.0_r8
+            END IF
+#  else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isFsur)
+            OCEAN(ng)%ad_zeta(i,j,kstp)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifndef SOLVE3D
+!
+!  Extract adjoint 2D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#   ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUbar)
+              OCEAN(ng)%ad_ubar(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%ad_ubar(i,j,kstp)=0.0_r8
+            END IF
+#   else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
+            OCEAN(ng)%ad_ubar(i,j,kstp)=scale*state(is)
+#   endif
+          END DO
+        END DO
+      END IF
+!
+!  Extract adjoint 2D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#   ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVbar)
+              OCEAN(ng)%ad_vbar(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%ad_vbar(i,j,kstp)=0.0_r8
+            END IF
+#   else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
+            OCEAN(ng)%ad_vbar(i,j,kstp)=scale*state(is)
+#   endif
+          END DO
+        END DO
+      END DO
+
+#  else
+!
+!  Extract adjoint 3D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Jmax=Mm(ng)+2
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Jmax=Mm(ng)
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterU(ng)+offset(isUvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isUvel)
+#   endif
+          DO j=JR_RANGE
+            DO i=IU_RANGE
+#   ifdef MASKING
+              IF (umask(i,j).gt.0.0_r8) THEN
+                is=IJwaterU(i,j)+iadd
+                OCEAN(ng)%ad_u(i,j,k,nstp)=scale*state(is)
+              ELSE
+                OCEAN(ng)%ad_u(i,j,k,nstp)=0.0_r8
+              END IF
+#   else
+              is=(i-Ioff)+(j-Joff)*Imax+iadd
+              OCEAN(ng)%ad_u(i,j,k,nstp)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Extract adjoint 3D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Jmax=Mm(ng)+1
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Jmax=Mm(ng)-1
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterV(ng)+offset(isVvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isVvel)
+#   endif
+          DO j=JV_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (vmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterV(i,j)+iadd
+                OCEAN(ng)%ad_v(i,j,k,nstp)=scale*state(is)
+              ELSE
+                OCEAN(ng)%ad_v(i,j,k,nstp)=0.0_r8
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+iadd
+              OCEAN(ng)%ad_v(i,j,k,nstp)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Extract adjoint tracers variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO k=1,N(ng)
+#   ifdef MASKING
+            iadd=(k-1)*NwaterR(ng)+offset(isTvar(itrc))
+#   else
+            iadd=(k-1)*Imax*Jmax+offset(isTvar(itrc))
+#   endif
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+#   ifdef MASKING
+                IF (rmask(i,j).gt.0.0_r8) THEN
+                  is=IJwaterR(i,j)+iadd
+                  OCEAN(ng)%ad_t(i,j,k,nstp,itrc)=scale*state(is)
+                ELSE
+                  OCEAN(ng)%ad_t(i,j,k,nstp,itrc)=0.0_r8
+                END IF
+#   else
+                is=(i+Ioff)+(j-Joff)*Imax+iadd
+                OCEAN(ng)%ad_t(i,j,k,nstp,itrc)=scale*state(is)
+#   endif
+              END DO
+            END DO
+          END DO
+        END IF
+      END DO
+#  endif
+!
+!  Extract adjoint surface U-momentum stress.
+!
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#   else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUstr)
+              FORCES(ng)%ad_sustr(i,j)=scale*state(is)
+            ELSE
+              FORCES(ng)%ad_sustr(i,j)=0.0_r8
+            END IF
+#  else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
+            FORCES(ng)%ad_sustr(i,j)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+!
+!  Extract adjoint surface V-momentum stress.
+!
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVstr)
+              FORCES(ng)%ad_svstr(i,j)=scale*state(is)
+            ELSE
+              FORCES(ng)%ad_svstr(i,j)=0.0_r8
+            END IF
+#  else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
+            FORCES(ng)%ad_svstr(i,j)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifdef SOLVE3D
+!
+!  Extract adjoint surface tracer flux variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (rmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterR(i,j)+offset(isTvar(itrc))
+                FORCES(ng)%ad_stflx(i,j,itrc)=scale*state(is)
+              ELSE
+                FORCES(ng)%ad_stflx(i,j,itrc)=0.0_r8
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+offset(isTvar(itrc))
+              FORCES(ng)%ad_stflx(i,j,itrc)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END IF
+      END DO
+#  endif
+
+      RETURN
+      END SUBROUTINE ad_unpack_tile
+
+# elif defined ADJOINT
+!
       SUBROUTINE ad_unpack (ng, tile, Mstr, Mend, state)
 !
 !=======================================================================
@@ -779,7 +2103,7 @@
 #  ifdef SOLVE3D
      &                           nstp,                                  &
 #  endif
-     &                           Nstr, Nend, state,                     &
+     &                           Mstr, Mend, state,                     &
 #  ifdef MASKING
      &                           IJwaterR, IJwaterU, IJwaterV,          &
      &                           rmask, umask, vmask,                   &
@@ -804,7 +2128,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
+      integer, intent(in) :: Mstr, Mend
       integer, intent(in) :: knew
 #  ifdef SOLVE3D
       integer, intent(in) :: nstp
@@ -820,7 +2144,7 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #   endif
-      real(r8), intent(in) :: state(Nstr:)
+      real(r8), intent(in) :: state(Mstr:)
       real(r8), intent(in) :: h(LBi:,LBj:)
 #   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
@@ -843,7 +2167,7 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: state(Nstr:Nend)
+      real(r8), intent(in) :: state(Mstr:Mend)
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
@@ -1202,6 +2526,7 @@
 # endif
 
 # ifdef TANGENT
+!
       SUBROUTINE tl_pack (ng, tile, Mstr, Mend, tl_state)
 !
 !=======================================================================
@@ -1295,7 +2620,7 @@
 #  ifdef SOLVE3D
      &                         nstp,                                    &
 #  endif
-     &                         Nstr, Nend, tl_state,                    &
+     &                         Mstr, Mend, tl_state,                    &
 #  ifdef MASKING
      &                         IJwaterR, IJwaterU, IJwaterV,            &
      &                         rmask, umask, vmask,                     &
@@ -1320,7 +2645,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
+      integer, intent(in) :: Mstr, Mend
       integer, intent(in) :: krhs, kstp, knew
 #  ifdef SOLVE3D
       integer, intent(in) :: nstp
@@ -1349,7 +2674,7 @@
 #   endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 
-      real(r8), intent(out) :: tl_state(Nstr:)
+      real(r8), intent(out) :: tl_state(Mstr:)
 #  else
 #   ifdef MASKING
       integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
@@ -1373,7 +2698,7 @@
 #   endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 
-      real(r8), intent(out) :: tl_state(Nstr:Nend)
+      real(r8), intent(out) :: tl_state(Mstr:Mend)
 #  endif
 !
 !  Local variable declarations.
@@ -1399,7 +2724,7 @@
 !  This is achieved by summing all the buffers.
 !-----------------------------------------------------------------------
 !
-      DO is=Nstr,Nend
+      DO is=Mstr,Mend
         tl_state(is)=Aspv
       END DO
 #  endif
@@ -1720,7 +3045,10 @@
 
       RETURN
       END SUBROUTINE tl_pack_tile
+# endif
 
+# if defined TANGENT && defined FORCING_SV
+!
       SUBROUTINE tl_unpack (ng, tile, Mstr, Mend, state)
 !
 !=======================================================================
@@ -1733,11 +3061,631 @@
 !
       USE mod_param
       USE mod_grid
-#  if defined FORCING_SV
-      USE mod_forces
-#  else
-      USE mod_ocean
+      USE mod_stepping
+#  ifdef DISTRIBUTE
+      USE mod_storage
 #  endif
+#  ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_gather_state
+#  endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: Mstr, Mend
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: state(Mstr:)
+#  else
+      real(r8), intent(in) :: state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, iTLM, 1)
+#  endif
+
+#  ifdef DISTRIBUTE
+!
+!  Gather (threaded to global) tangent linear state solution from all
+!  distributed nodes.
+!
+      CALL mp_gather_state (ng, iTLM, Mstr, Mend, Mstate(ng),           &
+     &                      state, Swork)
+!
+#  endif
+      CALL tl_unpack_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
+     &                     kstp(ng),                                    &
+#  ifdef SOLVE3D
+     &                     nstp(ng),                                    &
+#  endif
+#  ifdef MASKING
+     &                     GRID(ng) % IJwaterR,                         &
+     &                     GRID(ng) % IJwaterU,                         &
+     &                     GRID(ng) % IJwaterV,                         &
+     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % vmask,                            &
+#  endif
+#  ifdef DISTRIBUTE
+     &                     1, Mstate(ng), Swork)
+#  else
+     &                     Mstr, Mend, state)
+#  endif
+
+#  ifdef PROFILE
+      CALL wclock_off (ng, iTLM, 1)
+#  endif
+
+      RETURN
+      END SUBROUTINE tl_unpack
+!
+!***********************************************************************
+      SUBROUTINE tl_unpack_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
+     &                           kstp,                                  &
+#  ifdef SOLVE3D
+     &                           nstp,                                  &
+#  endif
+#  ifdef MASKING
+     &                           IJwaterR, IJwaterU, IJwaterV,          &
+     &                           rmask, umask, vmask,                   &
+#  endif
+     &                           Mstr, Mend, state)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_forces
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: Mstr, Mend
+      integer, intent(in) :: kstp
+#  ifdef SOLVE3D
+      integer, intent(in) :: nstp
+#  endif
+!
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:,LBj:)
+      integer, intent(in) :: IJwaterU(LBi:,LBj:)
+      integer, intent(in) :: IJwaterV(LBi:,LBj:)
+
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#   endif
+      real(r8), intent(in) :: state(Mstr:)
+#  else
+#   ifdef MASKING
+      integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterU(LBi:UBi,LBj:UBj)
+      integer, intent(in) :: IJwaterV(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#   endif
+      real(r8), intent(in) :: state(Mstr:Mend)
+#  endif
+!
+!  Local variable declarations.
+!
+#  ifndef MASKING
+      integer :: Imax, Ioff, Jmax, Joff
+#  endif
+      integer :: i, iadd, icount, is, itrc, j, k
+
+      integer, dimension(7+2*NT(ng)) :: offset
+
+      real(r8) :: cff, scale
+
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Extract tangent linear FORCING variables from full 1D state vector.
+!-----------------------------------------------------------------------
+!
+!  Determine the index offset for each variable in the state vector.
+#  ifdef MASKING
+!  Notice that in Land/Sea masking application the state vector only
+!  contains water points to avoid large null space.
+#  endif
+!
+      icount=0
+      offset=0
+#  ifdef MASKING
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+        icount=icount+NwaterR(ng)
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+        icount=icount+N(ng)*NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+        icount=icount+N(ng)*NwaterV(ng)
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+          icount=icount+N(ng)*NwaterR(ng)
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+        icount=icount+NwaterU(ng)
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+        icount=icount+NwaterV(ng)
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+          icount=icount+NwaterR(ng)
+        END IF
+      END DO
+#   endif
+
+#  else
+
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+        offset(isFsur)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#   else
+        icount=icount+Lm(ng)*Mm(ng)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+        offset(isUvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+        offset(isVvel)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+#    endif
+      END IF
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+          offset(isTvar(itrc))=icount
+#    ifdef FULL_GRID
+          icount=icount+(Lm(ng)+2)*(Mm(ng)+2)*N(ng)
+#    else
+          icount=icount+Lm(ng)*Mm(ng)*N(ng)
+#    endif
+        END IF
+      END DO
+#   else
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+        offset(isUbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#    else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#    endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+        offset(isVbar)=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#    else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#    endif
+      END IF
+#   endif
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+        offset(isUstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
+#   else
+        icount=icount+(Lm(ng)-1)*Mm(ng)
+#   endif
+      END IF
+      IF (SCALARS(ng)%Fstate(isVstr)) THEN
+        offset(isVstr)=icount
+#   ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
+#   else
+        icount=icount+Lm(ng)*(Mm(ng)-1)
+#   endif
+      END IF
+#   ifdef SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+          offset(isTsur(itrc))=icount
+#    ifdef FULL_GRID
+        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+#    else
+        icount=icount+Lm(ng)*Mm(ng)
+#    endif
+        END IF
+      END DO
+#   endif
+#  endif
+!
+!  Extract tangent linear free-surface.
+!
+      IF (SCALARS(ng)%Fstate(isFsur)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=0
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isFsur)
+              OCEAN(ng)%tl_zeta(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%tl_zeta(i,j,kstp)=0.0_r8
+            END IF
+#  else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isFsur)
+            OCEAN(ng)%tl_zeta(i,j,kstp)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifndef SOLVE3D
+!
+!  Extract tangent linear 2D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#   ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUbar)
+              OCEAN(ng)%tl_ubar(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%tl_ubar(i,j,kstp)=0.0_r8
+            END IF
+#   else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
+            OCEAN(ng)%tl_ubar(i,j,kstp)=scale*state(is)
+#   endif
+          END DO
+        END DO
+      END IF
+!
+!  Extract tangent linear 2D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVbar)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#   ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVbar)
+              OCEAN(ng)%tl_vbar(i,j,kstp)=scale*state(is)
+            ELSE
+              OCEAN(ng)%tl_vbar(i,j,kstp)=0.0_r8
+            END IF
+#   else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
+            OCEAN(ng)%tl_vbar(i,j,kstp)=scale*state(is)
+#   endif
+          END DO
+        END DO
+      END DO
+
+#  else
+!
+!  Extract tangent linear 3D U-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isUvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Jmax=Mm(ng)+2
+        Ioff=0
+        Joff=0
+#    else
+        Imax=Lm(ng)-1
+        Jmax=Mm(ng)
+        Ioff=1
+        Joff=1
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterU(ng)+offset(isUvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isUvel)
+#   endif
+          DO j=JR_RANGE
+            DO i=IU_RANGE
+#   ifdef MASKING
+              IF (umask(i,j).gt.0.0_r8) THEN
+                is=IJwaterU(i,j)+iadd
+                OCEAN(ng)%tl_u(i,j,k,nstp)=scale*state(is)
+              ELSE
+                OCEAN(ng)%tl_u(i,j,k,nstp)=0.0_r8
+              END IF
+#   else
+              is=(i-Ioff)+(j-Joff)*Imax+iadd
+              OCEAN(ng)%tl_u(i,j,k,nstp)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Extract tangent linear 3D V-velocity.
+!
+      IF (SCALARS(ng)%Fstate(isVvel)) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Jmax=Mm(ng)+1
+        Ioff=1
+        Joff=1
+#    else
+        Imax=Lm(ng)
+        Jmax=Mm(ng)-1
+        Ioff=0
+        Joff=2
+#    endif
+#   endif
+        scale=1.0_r8
+        DO k=1,N(ng)
+#   ifdef MASKING
+          iadd=(k-1)*NwaterV(ng)+offset(isVvel)
+#   else
+          iadd=(k-1)*Imax*Jmax+offset(isVvel)
+#   endif
+          DO j=JV_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (vmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterV(i,j)+iadd
+                OCEAN(ng)%tl_v(i,j,k,nstp)=scale*state(is)
+              ELSE
+                OCEAN(ng)%tl_v(i,j,k,nstp)=0.0_r8
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+iadd
+              OCEAN(ng)%tl_v(i,j,k,nstp)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+!  Extract tangent linear tracers variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTvar(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO k=1,N(ng)
+#   ifdef MASKING
+            iadd=(k-1)*NwaterR(ng)+offset(isTvar(itrc))
+#   else
+            iadd=(k-1)*Imax*Jmax+offset(isTvar(itrc))
+#   endif
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+#   ifdef MASKING
+                IF (rmask(i,j).gt.0.0_r8) THEN
+                  is=IJwaterR(i,j)+iadd
+                  OCEAN(ng)%tl_t(i,j,k,nstp,itrc)=scale*state(is)
+                ELSE
+                  OCEAN(ng)%tl_t(i,j,k,nstp,itrc)=0.0_r8
+                END IF
+#   else
+                is=(i+Ioff)+(j-Joff)*Imax+iadd
+                OCEAN(ng)%tl_t(i,j,k,nstp,itrc)=scale*state(is)
+#   endif
+              END DO
+            END DO
+          END DO
+        END IF
+      END DO
+#  endif
+!
+!  Extract tangent linear surface U-momentum stress.
+!
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+1
+        Ioff=0
+        Joff=0
+#   else
+        Imax=Lm(ng)-1
+        Ioff=1
+        Joff=1
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JR_RANGE
+          DO i=IU_RANGE
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+              is=IJwaterU(i,j)+offset(isUstr)
+              FORCES(ng)%tl_sustr(i,j)=scale*state(is)
+            ELSE
+              FORCES(ng)%tl_sustr(i,j)=0.0_r8
+            END IF
+#  else
+            is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
+            FORCES(ng)%tl_sustr(i,j)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+!
+!  Extract tangent linear surface V-momentum stress.
+!
+      IF (SCALARS(ng)%Fstate(isUstr)) THEN
+#  ifndef MASKING
+#   ifdef FULL_GRID
+        Imax=Lm(ng)+2
+        Ioff=1
+        Joff=1
+#   else
+        Imax=Lm(ng)
+        Ioff=0
+        Joff=2
+#   endif
+#  endif
+        scale=1.0_r8
+        DO j=JV_RANGE
+          DO i=IR_RANGE
+#  ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+              is=IJwaterV(i,j)+offset(isVstr)
+              FORCES(ng)%tl_svstr(i,j)=scale*state(is)
+            ELSE
+              FORCES(ng)%tl_svstr(i,j)=0.0_r8
+            END IF
+#  else
+            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
+            FORCES(ng)%tl_svstr(i,j)=scale*state(is)
+#  endif
+          END DO
+        END DO
+      END IF
+
+#  ifdef SOLVE3D
+!
+!  Extract tangent linear surface tracer flux variables.
+!
+      DO itrc=1,NT(ng)
+        IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
+#   ifndef MASKING
+#    ifdef FULL_GRID
+          Imax=Lm(ng)+2
+          Jmax=Mm(ng)+2
+          Ioff=1
+          Joff=0
+#    else
+          Imax=Lm(ng)
+          Jmax=Mm(ng)
+          Ioff=0
+          Joff=1
+#    endif
+#   endif
+          scale=1.0_r8
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+#   ifdef MASKING
+              IF (rmask(i,j).gt.0.0_r8) THEN
+                is=IJwaterR(i,j)+offset(isTvar(itrc))
+                FORCES(ng)%tl_stflx(i,j,itrc)=scale*state(is)
+              ELSE
+                FORCES(ng)%tl_stflx(i,j,itrc)=0.0_r8
+              END IF
+#   else
+              is=(i+Ioff)+(j-Joff)*Imax+offset(isTvar(itrc))
+              FORCES(ng)%tl_stflx(i,j,itrc)=scale*state(is)
+#   endif
+            END DO
+          END DO
+        END IF
+      END DO
+#  endif
+
+      RETURN
+      END SUBROUTINE tl_unpack_tile
+
+# elif defined TANGENT
+!
+      SUBROUTINE tl_unpack (ng, tile, Mstr, Mend, state)
+!
+!=======================================================================
+!                                                                      !
+!  This routine unpacks the tangent linear variables from the state    !
+!  vector.  If applicable,  the state vector includes only unmasked    !
+!  water points.                                                       !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
       USE mod_stepping
 #  ifdef DISTRIBUTE
       USE mod_storage
@@ -1795,21 +3743,16 @@
      &                     GRID(ng) % vmask,                            &
 #  endif
      &                     GRID(ng) % h,                                &
-#  if defined FORCING_SV
-     &                     FORCES(ng) % tl_sustr,                       &
-     &                     FORCES(ng) % tl_svstr)
-#  else
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
      &                     GRID(ng) % Hz,                               &
      &                     OCEAN(ng) % tl_t,                            &
      &                     OCEAN(ng) % tl_u,                            &
      &                     OCEAN(ng) % tl_v,                            &
-#   else
+#  else
      &                     OCEAN(ng) % tl_ubar,                         &
      &                     OCEAN(ng) % tl_vbar,                         &
-#   endif
-     &                     OCEAN(ng) % tl_zeta)
 #  endif
+     &                     OCEAN(ng) % tl_zeta)
 #  ifdef PROFILE
       CALL wclock_off (ng, iTLM, 1)
 #  endif
@@ -1824,23 +3767,19 @@
 #  ifdef SOLVE3D
      &                           nstp,                                  &
 #  endif
-     &                           Nstr, Nend, state,                     &
+     &                           Mstr, Mend, state,                     &
 #  ifdef MASKING
      &                           IJwaterR, IJwaterU, IJwaterV,          &
      &                           rmask, umask, vmask,                   &
 #  endif
      &                           h,                                     &
-#  if defined FORCING_SV
-     &                           tl_sustr, tl_svstr)
-#  else
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
      &                           Hz,                                    &
      &                           tl_t, tl_u, tl_v,                      &
-#   else
+#  else
      &                           tl_ubar, tl_vbar,                      &
-#   endif
-     &                           tl_zeta)
 #  endif
+     &                           tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -1853,7 +3792,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
+      integer, intent(in) :: Mstr, Mend
       integer, intent(in) :: kstp
 #  ifdef SOLVE3D
       integer, intent(in) :: nstp
@@ -1869,24 +3808,19 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #   endif
-      real(r8), intent(in) :: state(Nstr:)
+      real(r8), intent(in) :: state(Mstr:)
       real(r8), intent(in) :: h(LBi:,LBj:)
-#   if defined FORCING_SV
-      real(r8), intent(inout) :: tl_sustr(LBi:,LBj:)
-      real(r8), intent(inout) :: tl_svstr(LBi:,LBj:)
-#   else
-#    ifdef SOLVE3D
+#   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-#    else
+#   else
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
-#    endif
-      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #   endif
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
       integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
@@ -1897,24 +3831,19 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: state(Nstr:Nend)
+      real(r8), intent(in) :: state(Mstr:Mend)
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-#   if defined FORCING_SV
-      real(r8), intent(inout) :: tl_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: tl_svstr(LBi:UBi,LBj:UBj)
-#   else
-#    ifdef SOLVE3D
+#   ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    else
+#   else
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-#    endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #   endif
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  endif
 !
 !  Local variable declarations.
@@ -1924,114 +3853,24 @@
 #  endif
       integer :: i, iadd, is, itrc, j, k
 
-#  if defined FORCING_SV
-      integer, dimension(2) :: offset
-#  else
       integer, dimension(5+NT(ng)) :: offset
-#  endif
+
       real(r8) :: cff, scale
 
 #  include "set_bounds.h"
-
-#  if defined FORCING_SV
-!
-!-----------------------------------------------------------------------
-!  Extract tangent linear FORCING variables from full 1D state vector.
-!-----------------------------------------------------------------------
-!
-!  Determine the index offset for each variable in the state vector.
-#   ifdef MASKING
-!  Notice that in Land/Sea masking application the state vector only
-!  contains water points to avoid large null space.
-#   endif
-!
-#   ifdef MASKING
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+NwaterU(ng)
-#   else
-#    ifdef FULL_GRID
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+(Lm(ng)+1)*(Mm(ng)+2)
-#    else
-      offset(isUstr)=0
-      offset(isVstr)=offset(isUstr)+(Lm(ng)-1)*Mm(ng)
-#    endif
-#   endif
-!
-!  Extract tangent linear surface U-momentum stress.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+1
-      Ioff=0
-      Joff=0
-#    else
-      Imax=Lm(ng)-1
-      Ioff=1
-      Joff=1
-#    endif
-#   endif
-      scale=1.0_r8
-      DO j=JR_RANGE
-        DO i=IU_RANGE
-#   ifdef MASKING
-          IF (umask(i,j).gt.0.0_r8) THEN
-            is=IJwaterU(i,j)+offset(isUstr)
-            tl_sustr(i,j)=scale*state(is)
-          ELSE
-            tl_sustr(i,j)=0.0_r8
-          END IF
-#   else
-          is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
-          tl_sustr(i,j)=scale*state(is)
-#   endif
-        END DO
-      END DO
-!
-!  Extract tangent linear surface V-momentum stress.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+2
-      Ioff=1
-      Joff=1
-#    else
-      Imax=Lm(ng)
-      Ioff=0
-      Joff=2
-#    endif
-#   endif
-      scale=1.0_r8
-      DO j=JV_RANGE
-        DO i=IR_RANGE
-#   ifdef MASKING
-          IF (vmask(i,j).gt.0.0_r8) THEN
-            is=IJwaterV(i,j)+offset(isVstr)
-            tl_svstr(i,j)=scale*state(is)
-          ELSE
-            tl_svstr(i,j)=0.0_r8
-          END IF
-#   else
-          is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
-          tl_svstr(i,j)=scale*state(is)
-#   endif
-        END DO
-      END DO
-
-#  else
 !
 !-----------------------------------------------------------------------
 !  Extract tangent linear STATE variables from full 1D state vector.
 !-----------------------------------------------------------------------
 !
 !  Determine the index offset for each variable in the state vector.
-#   ifdef MASKING
+#  ifdef MASKING
 !  Notice that in Land/Sea masking application the state vector only
 !  contains water points to avoid large null space.
-#   endif
+#  endif
 !
-#   ifdef SOLVE3D
-#    ifdef MASKING
+#  ifdef SOLVE3D
+#   ifdef MASKING
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+NwaterR(ng)
       offset(isVvel)=offset(isUvel)+NwaterU(ng)*N(ng)
@@ -2040,8 +3879,8 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=NwaterR(ng)*N(ng)
       END DO
-#    else
-#     ifdef FULL_GRID
+#   else
+#    ifdef FULL_GRID
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+(Lm(ng)+2)*(Mm(ng)+2)
       offset(isVvel)=offset(isUvel)+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
@@ -2050,7 +3889,7 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=(Lm(ng)+2)*(Mm(ng)+2)*N(ng)
       END DO
-#     else
+#    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
       offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
@@ -2059,230 +3898,232 @@
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
       END DO
-#     endif
 #    endif
-#   else
-#    ifdef MASKING
+#   endif
+#  else
+#   ifdef MASKING
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+NwaterR(ng)
       offset(isVbar)=offset(isUbar)+NwaterU(ng)
-#    else
-#     ifdef FULL_GRID
+#   else
+#    ifdef FULL_GRID
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+(Lm(ng)+2)*(Mm(ng)+2)
       offset(isVbar)=offset(isUbar)+(Lm(ng)+1)*(Mm(ng)+2)
-#     else
+#    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
       offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
-#     endif
 #    endif
 #   endif
+#  endif
 !
 !  Extract tangent linear free-surface.
 !
-#   ifndef MASKING
-#    ifdef FULL_GRID
+#  ifndef MASKING
+#   ifdef FULL_GRID
       Imax=Lm(ng)+2
       Ioff=1
       Joff=0
-#    else
+#   else
       Imax=Lm(ng)
       Ioff=0
       Joff=1
-#    endif
 #   endif
-#   ifdef ENERGYNORM_SCALE
+#  endif
+#  ifdef ENERGYNORM_SCALE
       scale=1.0_r8/SQRT(0.5_r8*g*rho0)
-#   else
+#  else
       scale=1.0_r8
-#   endif
+#  endif
       DO j=JR_RANGE
         DO i=IR_RANGE
-#   ifdef MASKING
+#  ifdef MASKING
           IF (rmask(i,j).gt.0.0_r8) THEN
             is=IJwaterR(i,j)+offset(isFsur)
             tl_zeta(i,j,kstp)=scale*state(is)
           ELSE
             tl_zeta(i,j,kstp)=0.0_r8
           END IF
-#   else
+#  else
           is=(i+Ioff)+(j-Joff)*Imax+offset(isFsur)
           tl_zeta(i,j,kstp)=scale*state(is)
-#   endif
+#  endif
         END DO
       END DO
-#   ifndef SOLVE3D
+
+#  ifndef SOLVE3D
 !
 !  Extract tangent linear 2D U-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+1
       Ioff=0
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)-1
       Ioff=1
       Joff=1
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO j=JR_RANGE
         DO i=IU_RANGE
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
           scale=1.0_r8/SQRT(cff*(h(i-1,j)+h(i,j)))
-#    endif
-#    ifdef MASKING
+#   endif
+#   ifdef MASKING
           IF (umask(i,j).gt.0.0_r8) THEN
             is=IJwaterU(i,j)+offset(isUbar)
             tl_ubar(i,j,kstp)=scale*state(is)
           ELSE
             tl_ubar(i,j,kstp)=0.0_r8
           END IF
-#    else
+#   else
           is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
           tl_ubar(i,j,kstp)=scale*state(is)
-#    endif
+#   endif
         END DO
       END DO
 !
 !  Extract tangent linear 2D V-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Ioff=1
       Joff=1
-#     else
+#    else
       Imax=Lm(ng)
       Ioff=0
       Joff=2
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO j=JV_RANGE
         DO i=IR_RANGE
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
           scale=1.0_r8/SQRT(cff*(h(i,j-1)+h(i,j)))
-#    endif
-#    ifdef MASKING
+#   endif
+#   ifdef MASKING
           IF (vmask(i,j).gt.0.0_r8) THEN
             is=IJwaterV(i,j)+offset(isVbar)
             tl_vbar(i,j,kstp)=scale*state(is)
           ELSE
             tl_vbar(i,j,kstp)=0.0_r8
           END IF
-#    else
+#   else
           is=(i+Ioff)+(j-Joff)*Imax+offset(isVbar)
           tl_vbar(i,j,kstp)=scale*state(is)
-#    endif
+#   endif
         END DO
       END DO
-#   else
+
+#  else
 !
 !  Extract tangent linear 3D U-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+1
       Jmax=Mm(ng)+2
       Ioff=0
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)-1
       Jmax=Mm(ng)
       Ioff=1
       Joff=1
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
         iadd=(k-1)*NwaterU(ng)+offset(isUvel)
-#    else
+#   else
         iadd=(k-1)*Imax*Jmax+offset(isUvel)
-#    endif
+#   endif
         DO j=JR_RANGE
           DO i=IU_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
             IF (umask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
-#     endif
+#    endif
               is=IJwaterU(i,j)+iadd
               tl_u(i,j,k,nstp)=scale*state(is)
             ELSE
               tl_u(i,j,k,nstp)=0.0_r8
             END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
             scale=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
-#     endif
+#    endif
             is=(i-Ioff)+(j-Joff)*Imax+iadd
             tl_u(i,j,k,nstp)=scale*state(is)
-#    endif
+#   endif
           END DO
         END DO
       END DO
 !
 !  Extract tangent linear 3D V-velocity.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Jmax=Mm(ng)+1
       Ioff=1
       Joff=1
-#     else
+#    else
       Imax=Lm(ng)
       Jmax=Mm(ng)-1
       Ioff=0
       Joff=2
-#     endif
 #    endif
-#    ifdef ENERGYNORM_SCALE
+#   endif
+#   ifdef ENERGYNORM_SCALE
       cff=0.25_r8*rho0
-#    else
+#   else
       scale=1.0_r8
-#    endif
+#   endif
       DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
         iadd=(k-1)*NwaterV(ng)+offset(isVvel)
-#    else
+#   else
         iadd=(k-1)*Imax*Jmax+offset(isVvel)
-#    endif
+#   endif
         DO j=JV_RANGE
           DO i=IR_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
             IF (vmask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
-#     endif
+#    endif
               is=IJwaterV(i,j)+iadd
               tl_v(i,j,k,nstp)=scale*state(is)
             ELSE
               tl_v(i,j,k,nstp)=0.0_r8
             END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
             scale=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
-#     endif
+#    endif
             is=(i+Ioff)+(j-Joff)*Imax+iadd
             tl_v(i,j,k,nstp)=scale*state(is)
-#    endif
+#   endif
           END DO
         END DO
       END DO
@@ -2290,21 +4131,21 @@
 !  Extract tangent linear tracers variables. For now, use salinity scale
 !  for passive tracers.
 !
-#    ifndef MASKING
-#     ifdef FULL_GRID
+#   ifndef MASKING
+#    ifdef FULL_GRID
       Imax=Lm(ng)+2
       Jmax=Mm(ng)+2
       Ioff=1
       Joff=0
-#     else
+#    else
       Imax=Lm(ng)
       Jmax=Mm(ng)
       Ioff=0
       Joff=1
-#     endif
 #    endif
+#   endif
       DO itrc=1,NT(ng)
-#    ifdef ENERGYNORM_SCALE
+#   ifdef ENERGYNORM_SCALE
         IF (itrc.eq.itemp) THEN
           cff=0.5_r8*rho0*Tcoef(ng)*Tcoef(ng)*g*g/bvf_bak
         ELSE IF (itrc.eq.isalt) THEN
@@ -2312,715 +4153,47 @@
         ELSE
           cff=0.5_r8*rho0*Scoef(ng)*Scoef(ng)*g*g/bvf_bak
         END IF
-#    else
+#   else
         scale=1.0_r8
-#    endif
+#   endif
         DO k=1,N(ng)
-#    ifdef MASKING
+#   ifdef MASKING
           iadd=(k-1)*NwaterR(ng)+offset(isTvar(itrc))
-#    else
+#   else
           iadd=(k-1)*Imax*Jmax+offset(isTvar(itrc))
-#    endif
+#   endif
           DO j=JR_RANGE
             DO i=IR_RANGE
-#    ifdef MASKING
+#   ifdef MASKING
               IF (rmask(i,j).gt.0.0_r8) THEN
-#     ifdef ENERGYNORM_SCALE
+#    ifdef ENERGYNORM_SCALE
                 scale=1.0_r8/SQRT(cff*Hz(i,j,k))
-#     endif
+#    endif
                 is=IJwaterR(i,j)+iadd
                 tl_t(i,j,k,nstp,itrc)=scale*state(is)
               ELSE
                 tl_t(i,j,k,nstp,itrc)=0.0_r8
               END IF
-#    else
-#     ifdef ENERGYNORM_SCALE
+#   else
+#    ifdef ENERGYNORM_SCALE
               scale=1.0_r8/SQRT(cff*Hz(i,j,k))
-#     endif
+#    endif
               is=(i+Ioff)+(j-Joff)*Imax+iadd
               tl_t(i,j,k,nstp,itrc)=scale*state(is)
-#    endif
+#   endif
             END DO
           END DO
         END DO
       END DO
-#   endif
 #  endif
+
       RETURN
       END SUBROUTINE tl_unpack_tile
 # endif
 
-# if defined SO_SEMI
-      SUBROUTINE so_pack (ng, tile, Mstr, Mend, Irec)
-!
-!=======================================================================
-!                                                                      !
-!  This routine packs the  adjoint surface forcing  variables used     !
-!  in stochastic optimals. If land/sea masking, the forcing vector     !
-!  contains only water points.  The  stochastic optimal  vector is     !
-!  assumed to be  nondimensional to facilitate its interpretation.     !
-!  They are  non-dimensionalized  by a representative value of the     !
-!  surface forcing standard deviation, SO_sigma.                       !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_grid
-      USE mod_forces
-      USE mod_storage
-#  ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_collect
-#  endif
-
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile
-      integer, intent(in) :: Mstr, Mend, Irec
-!
-!  Local variable declarations.
-!
-#  ifdef DISTRIBUTE
-      integer :: i
-      real(r8), parameter :: Aspv = 0.0_r8
-#  endif
-#  include "tile.h"
-!
-#  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 1)
-#  endif
-      CALL so_pack_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-#  ifdef DISTRIBUTE
-     &                   1, Mstate(ng), Swork,                          &
-#  else
-     &                   Mstr, Mend, so_state(Mstr:,Irec),              &
-#  endif
-#  ifdef MASKING
-     &                   GRID(ng) % IJwaterR,                           &
-     &                   GRID(ng) % IJwaterU,                           &
-     &                   GRID(ng) % IJwaterV,                           &
-     &                   GRID(ng) % rmask,                              &
-     &                   GRID(ng) % umask,                              &
-     &                   GRID(ng) % vmask,                              &
-#  endif
-#  ifdef SOLVE3D
-     &                   FORCES(ng) % ad_stflx,                         &
-#  endif
-     &                   FORCES(ng) % ad_sustr,                         &
-     &                   FORCES(ng) % ad_svstr)
-
-#  ifdef DISTRIBUTE
-!
-!  Collect data from all nodes. Then, load to threaded stochastic
-!  optimals state array.
-!
-      CALL mp_collect (ng, iADM, Mstate(ng), Aspv, Swork)
-      DO i=Mstr,Mend
-        so_state(i,Irec)=Swork(i)
-      END DO
-#  endif
-#  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
-#  endif
-      RETURN
-      END SUBROUTINE so_pack
-!
-!***********************************************************************
-      SUBROUTINE so_pack_tile (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         Nstr, Nend,                              &
-     &                         so_state,                                &
-#  ifdef MASKING
-     &                         IJwaterR, IJwaterU, IJwaterV,            &
-     &                         rmask, umask, vmask,                     &
-#  endif
-#  ifdef SOLVE3D
-     &                         ad_stflx,                                &
-#  endif
-     &                         ad_sustr, ad_svstr)
-
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-      USE mod_scalars
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
-!
-#  ifdef ASSUMED_SHAPE
-#   ifdef MASKING
-      integer, intent(in) :: IJwaterR(LBi:,LBj:)
-      integer, intent(in) :: IJwaterU(LBi:,LBj:)
-      integer, intent(in) :: IJwaterV(LBi:,LBj:)
-
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-#   endif
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
-#   endif
-      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
-      real(r8), intent(out) :: so_state(Nstr:)
-#  else
-#   ifdef MASKING
-      integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
-      integer, intent(in) :: IJwaterU(LBi:UBi,LBj:UBj)
-      integer, intent(in) :: IJwaterV(LBi:UBi,LBj:UBj)
-
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#   endif
-#   ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
-#   endif
-      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: so_state(Nstr:Nend)
-#  endif
-!
-!  Local variable declarations.
-!
-#  ifndef MASKING
-      integer :: Imax, Ioff, Jmax, Joff
-#  endif
-      integer :: i, iadd, is, itrc, j, k
-
-#  ifdef SOLVE3D
-      integer, dimension(2+NT(ng)) :: offset
-#  else
-      integer, dimension(2) :: offset
-#  endif
-
-      real(r8) :: cff
-
-      real(r8), parameter :: Aspv = 0.0_r8
-
-#  include "set_bounds.h"
-
-#  ifdef DISTRIBUTE
-!
-!-----------------------------------------------------------------------
-!  Initialize adjoint state vector with special value (zero) to
-!  facilitate gathering/scattering communications between all nodes.
-!  This is achieved by summing all the buffers.
-!-----------------------------------------------------------------------
-!
-      DO is=Nstr,Nend
-        so_state(is)=Aspv
-      END DO
-#  endif
-!
-!-----------------------------------------------------------------------
-!  Load adjoint FORCING variables from full 1D state vector.
-!-----------------------------------------------------------------------
-!
-!  Determine the index offset for each variable in the state vector.
-#  ifdef MASKING
-!  Notice that in Land/Sea masking application the state vector only
-!  contains water points to avoid large null space.
-#  endif
-!
-      iadd=0
-      offset=0
-#  ifdef MASKING
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=NwaterU(ng)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=NwaterV(ng)
-      END IF
-#   ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTsur(itrc))=offset(isTsur(itrc)-1)+iadd
-          iadd=NwaterR(ng)
-        END IF
-      END DO
-#   endif
-#  else
-#   ifdef FULL_GRID
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=(Lm(ng)+1)*(Mm(ng)+2)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=(Lm(ng)+2)*(Mm(ng)+1)
-      END IF
-#    ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
-          iadd=(Lm(ng)+2)*(Mm(ng)+2)
-        END IF
-      END DO
-#    endif
-#   else
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=(Lm(ng)-1)*Mm(ng)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=(Lm(ng))*(Mm(ng)-1)
-      END IF
-#    ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTsur(itrc))=offset(isTsur(itrc)-1)+iadd
-          iadd=Lm(ng)*Mm(ng)
-        END IF
-      END DO
-#    endif
-#   endif
-#  endif
-!
-!  Load scaled adjoint surface U-momentum stress.
-!
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-#  ifndef MASKING
-#   ifdef FULL_GRID
-        Imax=Lm(ng)+1
-        Ioff=0
-        Joff=0
-#   else
-        Imax=Lm(ng)-1
-        Ioff=1
-        Joff=1
-#   endif
-#  endif
-        cff=SO_sdev(isUstr,ng)/rho0
-        DO j=JR_RANGE
-          DO i=IU_RANGE
-#  ifdef MASKING
-            IF (umask(i,j).gt.0.0_r8) THEN
-              is=IJwaterU(i,j)+offset(isUstr)
-              so_state(is)=cff*ad_sustr(i,j)
-            END IF
-#  else
-            is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
-            so_state(is)=cff*ad_sustr(i,j)
-#  endif
-          END DO
-        END DO
-      END IF
-!
-!  Load scaled adjoint surface V-momentum stress.
-!
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-#  ifndef MASKING
-#   ifdef FULL_GRID
-        Imax=Lm(ng)+2
-        Ioff=1
-        Joff=1
-#   else
-        Imax=Lm(ng)
-        Ioff=0
-        Joff=2
-#   endif
-#  endif
-        cff=SO_sdev(isVstr,ng)/rho0
-        DO j=JV_RANGE
-          DO i=IR_RANGE
-#  ifdef MASKING
-            IF (vmask(i,j).gt.0.0_r8) THEN
-              is=IJwaterV(i,j)+offset(isVstr)
-              so_state(is)=cff*ad_svstr(i,j)
-            END IF
-#  else
-            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
-            so_state(is)=cff*ad_svstr(i,j)
-#  endif
-          END DO
-        END DO
-      END IF
-
-#  ifdef SOLVE3D
-!
-!  Load scaled adjoint surface tracer fluxes.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+2
-      Jmax=Mm(ng)+2
-      Ioff=1
-      Joff=0
-#    else
-      Imax=Lm(ng)
-      Jmax=Mm(ng)
-      Ioff=0
-      Joff=1
-#    endif
-#   endif
-      DO itrc=1,NT(ng)
-        IF (itrc.eq.1) THEN
-          cff=SO_sdev(isTsur(itrc),ng)/(rho0*Cp)
-        ELSE
-          cff=SO_sdev(isTsur(itrc),ng)
-        END IF
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          iadd=offset(isTsur(itrc))
-          DO j=JR_RANGE
-            DO i=IR_RANGE
-#   ifdef MASKING
-              IF (rmask(i,j).gt.0.0_r8) THEN
-                is=IJwaterR(i,j)+iadd
-                so_state(is)=cff*ad_stflx(i,j,itrc)
-              END IF
-#   else
-              is=(i+Ioff)+(j-Joff)*Imax+iadd
-              so_state(is)=cff*ad_stflx(i,j,itrc)
-#   endif
-            END DO
-          END DO
-        END IF
-      END DO
-#  endif
-
-      RETURN
-      END SUBROUTINE so_pack_tile
-
-      SUBROUTINE so_unpack (ng, tile, Mstr, Mend, state)
-!
-!=======================================================================
-!                                                                      !
-!  This routine unpacks the adjoint surface forcing variables  used    !
-!  stochastic optimals.  The forcing vector  contains only interior    !
-!  water points. For output purposes, the surface forcing variables    !
-!  are saved in the nonlinear state variables.                         !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_grid
-      USE mod_forces
-#  ifdef DISTRIBUTE
-      USE mod_storage
-#  endif
-#  ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_collect
-#  endif
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile
-      integer, intent(in) :: Mstr, Mend
-#  ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: state(Mstr:)
-#  else
-      real(r8), intent(in) :: state(Mstr:Mend)
-#  endif
-!
-!  Local variable declarations.
-!
-      integer :: i
-      real(r8), parameter :: Aspv = 0.0_r8
-
-#  include "tile.h"
-!
-#  ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 1)
-#  endif
-#  ifdef DISTRIBUTE
-!
-!  Scatter (global to threaded) adjoint state solution to all
-!  distributed nodes.
-!
-      DO i=1,Mstate(ng)
-        Swork(i)=Aspv
-      END DO
-      DO i=Mstr,Mend
-        Swork(i)=state(i)
-      END DO
-      CALL mp_collect (ng, iADM, Mstate(ng), Aspv, Swork)
-#  endif
-      CALL so_unpack_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-#  ifdef DISTRIBUTE
-     &                     1, Mstate(ng), Swork,                        &
-#  else
-     &                     Mstr, Mend, state,                           &
-#  endif
-#  ifdef MASKING
-     &                     GRID(ng) % IJwaterR,                         &
-     &                     GRID(ng) % IJwaterU,                         &
-     &                     GRID(ng) % IJwaterV,                         &
-     &                     GRID(ng) % rmask,                            &
-     &                     GRID(ng) % umask,                            &
-     &                     GRID(ng) % vmask,                            &
-#  endif
-#  ifdef SOLVE3D
-     &                     FORCES(ng) % stflx,                          &
-#  endif
-     &                     FORCES(ng) % sustr,                          &
-     &                     FORCES(ng) % svstr)
-
-#  ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 1)
-#  endif
-      RETURN
-      END SUBROUTINE so_unpack
-!
-!***********************************************************************
-      SUBROUTINE so_unpack_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           Nstr, Nend, state,                     &
-#  ifdef MASKING
-     &                           IJwaterR, IJwaterU, IJwaterV,          &
-     &                           rmask, umask, vmask,                   &
-#  endif
-#  ifdef SOLVE3D
-     &                           stflx,                                 &
-#  endif
-     &                           sustr, svstr)
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-      USE mod_scalars
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nstr, Nend
-!
-#  ifdef ASSUMED_SHAPE
-#   ifdef MASKING
-      integer, intent(in) :: IJwaterR(LBi:,LBj:)
-      integer, intent(in) :: IJwaterU(LBi:,LBj:)
-      integer, intent(in) :: IJwaterV(LBi:,LBj:)
-
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-#   endif
-      real(r8), intent(in) :: state(Nstr:)
-#   ifdef SOLVE3D
-      real(r8), intent(out) :: stflx(LBi:,LBj:,:)
-#   endif
-      real(r8), intent(out) :: sustr(LBi:,LBj:)
-      real(r8), intent(out) :: svstr(LBi:,LBj:)
-#  else
-#   ifdef MASKING
-      integer, intent(in) :: IJwaterR(LBi:UBi,LBj:UBj)
-      integer, intent(in) :: IJwaterU(LBi:UBi,LBj:UBj)
-      integer, intent(in) :: IJwaterV(LBi:UBi,LBj:UBj)
-
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#   endif
-      real(r8), intent(in) :: state(Nstr:Nend)
-
-#   ifdef SOLVE3D
-      real(r8), intent(out) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
-#   endif
-      real(r8), intent(out) :: sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: svstr(LBi:UBi,LBj:UBj)
-#  endif
-!
-!  Local variable declarations.
-!
-#  ifndef MASKING
-      integer :: Imax, Ioff, Jmax, Joff
-#  endif
-      integer :: i, iadd, is, itrc, j, k
-
-#  ifdef SOLVE3D
-      integer, dimension(2+NT(ng)) :: offset
-#  else
-      integer, dimension(2) :: offset
-#  endif
-
-#  include "set_bounds.h"
-!
-!-----------------------------------------------------------------------
-!  Extract adjoint FORCING variables from full 1D state vector.
-!-----------------------------------------------------------------------
-!
-!  Determine the index offset for each variable in the state vector.
-#  ifdef MASKING
-!  Notice that in Land/Sea masking application the state vector only
-!  contains water points to avoid large null space.
-#  endif
-!
-      iadd=0
-      offset=0
-#  ifdef MASKING
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=NwaterU(ng)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=NwaterV(ng)
-      END IF
-#   ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTsur(itrc))=offset(isTsur(itrc)-1)+iadd
-          iadd=NwaterR(ng)
-        END IF
-      END DO
-#   endif
-#  else
-#   ifdef FULL_GRID
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=(Lm(ng)+1)*(Mm(ng)+2)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=(Lm(ng)+2)*(Mm(ng)+1)
-      END IF
-#    ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
-          iadd=(Lm(ng)+2)*(Mm(ng)+2)
-        END IF
-      END DO
-#    endif
-#   else
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-        offset(isUstr)=iadd
-        iadd=(Lm(ng)-1)*Mm(ng)
-      END IF
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-        offset(isVstr)=offset(isVstr-1)+iadd
-        iadd=(Lm(ng))*(Mm(ng)-1)
-      END IF
-#    ifdef SOLVE3D
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          offset(isTsur(itrc))=offset(isTsur(itrc)-1)+iadd
-          iadd=Lm(ng)*Mm(ng)
-        END IF
-      END DO
-#    endif
-#   endif
-#  endif
-!
-!  Extract adjoint surface U-momentum stress.
-!
-      IF (SCALARS(ng)%SOstate(isUstr)) THEN
-#  ifndef MASKING
-#   ifdef FULL_GRID
-        Imax=Lm(ng)+1
-        Ioff=0
-        Joff=0
-#   else
-        Imax=Lm(ng)-1
-        Ioff=1
-        Joff=1
-#   endif
-#  endif
-        DO j=JR_RANGE
-          DO i=IU_RANGE
-#  ifdef MASKING
-            IF (umask(i,j).gt.0.0_r8) THEN
-              is=IJwaterU(i,j)+offset(isUstr)
-              sustr(i,j)=state(is)
-            END IF
-#  else
-            is=(i-Ioff)+(j-Joff)*Imax+offset(isUstr)
-            sustr(i,j)=state(is)
-#  endif
-          END DO
-        END DO
-      END IF
-!
-!  Extract adjoint surface V-momentum stress.
-!
-      IF (SCALARS(ng)%SOstate(isVstr)) THEN
-#  ifndef MASKING
-#   ifdef FULL_GRID
-        Imax=Lm(ng)+2
-        Ioff=1
-        Joff=1
-#   else
-        Imax=Lm(ng)
-        Ioff=0
-        Joff=2
-#   endif
-#  endif
-        DO j=JV_RANGE
-          DO i=IR_RANGE
-#  ifdef MASKING
-            IF (vmask(i,j).gt.0.0_r8) THEN
-              is=IJwaterV(i,j)+offset(isVstr)
-              svstr(i,j)=state(is)
-            END IF
-#  else
-            is=(i+Ioff)+(j-Joff)*Imax+offset(isVstr)
-            svstr(i,j)=state(is)
-#  endif
-          END DO
-        END DO
-      END IF
-
-#  ifdef SOLVE3D
-!
-!  Extract adjoint surface tracer fluxes.
-!
-#   ifndef MASKING
-#    ifdef FULL_GRID
-      Imax=Lm(ng)+2
-      Jmax=Mm(ng)+2
-      Ioff=1
-      Joff=0
-#    else
-      Imax=Lm(ng)
-      Jmax=Mm(ng)
-      Ioff=0
-      Joff=1
-#    endif
-#   endif
-      DO itrc=1,NT(ng)
-        IF (SCALARS(ng)%SOstate(isTsur(itrc))) THEN
-          iadd=offset(isTsur(itrc))
-          DO j=JR_RANGE
-            DO i=IR_RANGE
-#   ifdef MASKING
-              IF (rmask(i,j).gt.0.0_r8) THEN
-                is=IJwaterR(i,j)+iadd
-                stflx(i,j,itrc)=state(is)
-              END IF
-#   else
-              is=(i+Ioff)+(j-Joff)*Imax+iadd
-              stflx(i,j,itrc)=state(is)
-#   endif
-            END DO
-          END DO
-        END IF
-      END DO
-#  endif
-
-      RETURN
-      END SUBROUTINE so_unpack_tile
-
+# ifdef SO_SEMI
 #  ifdef SO_SEMI_WHITE
+!
       SUBROUTINE so_semi_white (ng, tile, Mstr, Mend, state, ad_state)
 !
 !=======================================================================
@@ -3065,7 +4238,7 @@
       character (len=3), dimension(3) :: op_handle
 #   endif
 
-#   include "tile.h"
+#   include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute seminorm, stochastic optimals adjoint perturbation vector.
@@ -3197,7 +4370,7 @@
       END SUBROUTINE so_semi_white
 
 #  else
-
+!
       SUBROUTINE so_semi_red (ng, tile, Mstr, Mend, state, ad_state)
 !
 !=======================================================================
@@ -3243,7 +4416,7 @@
       character (len=3), dimension(Nsemi) :: op_handle
 #   endif
 
-#   include "tile.h"
+#   include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute seminorm, stochastic optimals adjoint perturbation vector.
@@ -3357,6 +4530,8 @@
 #  endif
 # endif
 
+# ifdef SO_SEMI
+!
       SUBROUTINE sp_bcoef (ng, ntAD, ntTL, Bcoef)
 !
 !=======================================================================
@@ -3427,7 +4602,7 @@
 
       RETURN
       END SUBROUTINE sp_bcoef
-
+!
       SUBROUTINE sp_acoef (ng, ntAD, ntTL, Acoef)
 !
 !=======================================================================
@@ -3497,7 +4672,7 @@
 
       RETURN
       END SUBROUTINE sp_acoef
-
+!
       FUNCTION sp_autoc (ng, idf)
 !
 !=======================================================================
@@ -3522,26 +4697,27 @@
 !-----------------------------------------------------------------------
 !  Set autocorrelation model.
 !-----------------------------------------------------------------------
-# ifdef SO_NON_AR1
+#  ifdef SO_NON_AR1
 !
 !  Use a user-defined temporal decorrelation function such as in the
 !  form of a look-up table computed from actual data.
 !
       sp_autoc=0.0_r8
-# else
+#  else
 !
 !  Assume an AR(1) process with decorrelation time SO_decay.
 !
       sp_autoc=EXP(-ABS(REAL(idf-1,r8))*dt(ng)/SO_decay(ng))
-# endif
+#  endif
 !
       RETURN
       END FUNCTION sp_autoc
-
-# undef IR_RANGE
-# undef IU_RANGE
-# undef JR_RANGE
-# undef JV_RANGE
+# endif
 #endif
+
+#undef IR_RANGE
+#undef IU_RANGE
+#undef JR_RANGE
+#undef JV_RANGE
 
       END MODULE packing_mod

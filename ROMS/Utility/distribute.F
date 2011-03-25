@@ -19,23 +19,25 @@
 !  between parallel nodes:                                             !
 !                                                                      !
 !  mp_barrier        barrier sychronization                            !
-!  mp_bcastf         broadcast floating point variables                !
-!  mp_bcasti         broadcast integer variables                       !
-!  mp_bcastl         broadcast logical variables                       !
-!  mp_bcasts         broadcast character variables                     !
-!  mp_boundary       exchange boundary data between tiles              !
-!  mp_collect        collect 1D vector data from tiles                 !
+!  mp_bcastf         broadcasts floating point variables               !
+!  mp_bcasti         broadcasts integer variables                      !
+!  mp_bcastl         broadcasts logical variables                      !
+!  mp_bcasts         broadcasts character variables                    !
+!  mp_boundary       exchanges boundary data between tiles             !
+!  mp_collect        collects 1D vector data from tiles                !
 !  mp_dump           writes 2D and 3D tiles arrays for debugging       !
-!  mp_gather2d       collect a 2D tiled array for output purposes      !
-!  mp_gather3d       collect a 3D tiled array for output purposes      !
-!  mp_gather_state   collect state vector for unpacking of variables   !
-!  mp_ncread         read in state vector/matrix from NetCDF file      !
-!  mp_ncwrite        write out state vector/matrix into NetCDF file    !
+!  mp_gather2d       collects a 2D tiled array for output purposes     !
+!  mp_gather3d       collects a 3D tiled array for output purposes     !
+!  mp_gather_state   collects state vector for unpacking of variables  !
+!  mp_ncread1d       reads  in  1D state array from NetCDF file        !
+!  mp_ncread2d       reads  in  2D state array from NetCDF file        !
+!  mp_ncwrite1d      writes out 1D state array into NetCDF file        !
+!  mp_ncwrite2d      writes out 2D state array into NetCDF file        !
 !  mp_reduce         global reduction operations                       !
 !  mp_reduce2        global reduction operations (MINLOC, MAXLOC)      !
-!  mp_scatter2d      scatter input data to a 2D tiled array            !
-!  mp_scatter3d      scatter input data to a 3D tiled array            !
-!  mp_scatter_state  scatter global data for packing of state vector   !
+!  mp_scatter2d      scatters input data to a 2D tiled array           !
+!  mp_scatter3d      scatters input data to a 3D tiled array           !
+!  mp_scatter_state  scatters global data for packing of state vector  !
 !                                                                      !
 !  Notice that the tile halo exchange can be found in "mp_exchange.F"  !
 !                                                                      !
@@ -2187,7 +2189,7 @@
       RETURN
       END SUBROUTINE mp_gather3d
 
-      SUBROUTINE mp_gather_state (ng, model, Nstr, Nend, Asize,         &
+      SUBROUTINE mp_gather_state (ng, model, Mstr, Mend, Asize,         &
      &                            A, Awrk)
 !
 !***********************************************************************
@@ -2200,8 +2202,8 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     Nstr       Threaded array lower bound.                           !
-!     Nend       Threaded array upper bound.                           !
+!     Mstr       Threaded array lower bound.                           !
+!     Mend       Threaded array upper bound.                           !
 !     Asize      Size of the full state.                               !
 !     A          Threaded 1D array process.                            !
 !                                                                      !
@@ -2223,9 +2225,9 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-      integer, intent(in) :: Nstr, Nend, Asize
+      integer, intent(in) :: Mstr, Mend, Asize
 
-      real(r8), intent(in)  :: A(Nstr:Nend)
+      real(r8), intent(in)  :: A(Mstr:Mend)
       real(r8), intent(out) :: Awrk(Asize)
 !
 !  Local variable declarations.
@@ -2254,8 +2256,8 @@
 !
 !  Collect data lower and upper bound dimensions.
 !
-      my_bounds(1)=Nstr
-      my_bounds(2)=Nend
+      my_bounds(1)=Mstr
+      my_bounds(2)=Mend
       CALL mpi_allgather (my_bounds, 2, MPI_INTEGER, Abounds, 2,        &
      &                    MPI_INTEGER, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2289,15 +2291,15 @@
 !
 !  Load master node contribution.
 !
-        DO i=Nstr,Nend
+        DO i=Mstr,Mend
           Awrk(i)=A(i)
         END DO
 !
 !  Otherwise, send data to master node.
 !
       ELSE
-        np=Nend-Nstr+1
-        CALL mpi_isend (A(Nstr:), np, MP_FLOAT, MyMaster, MyRank+5,     &
+        np=Mend-Mstr+1
+        CALL mpi_isend (A(Mstr:), np, MP_FLOAT, MyMaster, MyRank+5,     &
      &                  OCN_COMM_WORLD, request, MyError)
         CALL mpi_wait (request, status, MyError)
         IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2333,35 +2335,244 @@
       RETURN
       END SUBROUTINE mp_gather_state
 
-      FUNCTION mp_ncread (ng, model, ncid, ncvname, ncname, ncrec,      &
-     &                    LB1, UB1, LB2, UB2, Ascale, A)
+      FUNCTION mp_ncread1d (ng, model, ncid, ncvname, ncname, ncrec,    &
+     &                      LB1, UB1, Ascale, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This function reads floating point data from specified NetCDF file  !
-!  and scatters it to the other nodes.  This  routine is used to read  !
-!  model state vectors or matrices. If both LB2 and UB2 are zero, its  !
-!  assumed that the second dimension is a parallel node dimension.     !
+!  This function reads floating point 1D state array from specified    !
+!  NetCDF file and scatters it to the other nodes.                     !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     ncid       NetCDF file ID.                                       !
-!     ncvname    NetCDF variable name.                                 !
-!     ncname     NetCDF file name.                                     !
-!     ncrec      NetCDF record index to write. If negative, it assumes !
-!                  that the variable is recordless.                    !
-!     LB1        First-dimension Lower bound.                          !
-!     UB1        First-dimension Upper bound.                          !
-!     LB2        Second-dimension Lower bound.                         !
-!     UB2        Second-dimension Upper bound.                         !
-!     Ascale     Factor to scale field after reading (real).           !
+!     ng           Nested grid number.                                 !
+!     model        Calling model identifier.                           !
+!     ncid         NetCDF file ID.                                     !
+!     ncvname      NetCDF variable name.                               !
+!     ncname       NetCDF file name.                                   !
+!     ncrec        NetCDF record index to write. If negative, it       !
+!                    assumes that the variable is recordless.          !
+!     LB1          First-dimension Lower bound.                        !
+!     UB1          First-dimension Upper bound.                        !
+!     Ascale       Factor to scale field after reading (real).         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Field to read in (real).                              !
-!     mp_ncread  Error flag (integer).                                 !
+!     A            Field to read in (real).                            !
+!     mp_ncread1d  Error flag (integer).                               !
+!                                                                      !
+!  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
+!        dependency. Instead we need original NetCDF library module    !
+!        "USE netcdf".                                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE netcdf
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, ncid, ncrec
+      integer, intent(in) :: LB1, UB1
+
+      real(r8), intent(in) :: Ascale
+
+      real(r8), intent(out) :: A(LB1:UB1)
+
+      character (len=*), intent(in) :: ncvname
+      character (len=*), intent(in) :: ncname
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyError, Npts, Serror
+      integer :: i, j, np, rank, request, varid
+      integer :: ibuffer(2), my_bounds(2), start(1), total(1)
+
+      integer, dimension(MPI_STATUS_SIZE) :: status
+      integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
+
+      integer :: mp_ncread1d
+
+      real(r8), allocatable :: Asend(:)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 45)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Read requested NetCDF file and scatter it to all nodes.
+!-----------------------------------------------------------------------
+!
+      mp_ncread1d=nf90_noerr
+!
+!  Collect data lower and upper bounds dimensions.
+!
+      my_bounds(1)=LB1
+      my_bounds(2)=UB1
+      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER,                    &
+     &                    Asize, 2, MPI_INTEGER,                        &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  If not master node, receive data from master node.
+!
+      IF (MyRank.ne.MyMaster) THEN
+        np=UB1-LB1+1
+        CALL mpi_irecv (A(LB1:), np, MP_FLOAT, MyMaster, MyRank+5,      &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_IRECV', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+!
+!  Scale recieved (read) data.
+!
+        DO i=LB1,UB1
+          A(i)=A(i)*Ascale
+        END DO
+!
+!  Otherwise, if master node allocate the send buffer.
+!
+      ELSE
+        Npts=0
+        DO rank=0,NtileI(ng)*NtileJ(ng)-1
+          np=Asize(2,rank)-Asize(1,rank)+1
+          Npts=MAX(Npts, np)
+        END DO
+        IF (.not.allocated(Asend)) THEN
+          allocate (Asend(Npts))
+        END IF
+!
+!  If master node, loop over all nodes and read buffers to send.
+!
+        mp_ncread1d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncread1d.ne.nf90_noerr) THEN
+          WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+          exit_flag=2
+          ioerror=mp_ncread1d
+        END IF
+        IF (exit_flag.eq.NoError) THEN
+          DO rank=0,NtileI(ng)*NtileJ(ng)-1
+            start(1)=Asize(1,rank)
+            total(1)=Asize(2,rank)-Asize(1,rank)+1
+            mp_ncread1d=nf90_get_var(ncid, varid,  Asend, start, total)
+            IF (mp_ncread1d.ne.nf90_noerr) THEN
+              WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
+              exit_flag=2
+              ioerror=mp_ncread1d
+              EXIT
+            END IF
+!
+!  Send buffer to all nodes, except itself.
+!
+            IF (rank.eq.MyMaster) THEN
+              np=0
+              DO i=LB1,UB1
+                np=np+1
+                A(i)=Asend(np)*Ascale
+              END DO
+            ELSE
+              np=Asize(2,rank)-Asize(1,rank)+1
+              CALL mpi_isend (Asend, np, MP_FLOAT, rank, rank+5,        &
+     &                        OCN_COMM_WORLD, request, MyError)
+              CALL mpi_wait (request, status, MyError)
+              IF (MyError.ne.MPI_SUCCESS) THEN
+                CALL mpi_error_string (MyError, string, Lstr, Serror)
+                Lstr=LEN_TRIM(string)
+                WRITE (stdout,10) 'MPI_ISEND', rank, MyError,           &
+     &                            string(1:Lstr)
+                exit_flag=2
+                RETURN
+              END IF
+            END IF
+          END DO
+        END IF
+      END IF
+!
+!  Broadcast error flags to all nodes.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+!
+!  Deallocate send buffer.
+!
+      IF (allocated(Asend).and.(MyRank.eq.MyMaster)) THEN
+        deallocate (Asend)
+      END IF
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 45)
+# endif
+
+ 10   FORMAT (/,' MP_NCREAD1D- error during ',a,' call, Node = ',       &
+     &          i3.3,' Error = ',i3,/,13x,a)
+ 20   FORMAT (/,' MP_NCREAD1D - error while inquiring ID for',          &
+     &          ' variable: ',a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCREAD1D - error while reading variable: ',        &
+     &        a,/,13x,'in file: ',a)
+
+      RETURN
+      END FUNCTION mp_ncread1d
+
+      FUNCTION mp_ncread2d (ng, model, ncid, ncvname, ncname, ncrec,    &
+     &                      LB1, UB1, LB2, UB2, Ascale, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This function reads floating point 2D state array from specified    !
+!  NetCDF file and scatters it to the other nodes.                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number.                                 !
+!     model        Calling model identifier.                           !
+!     ncid         NetCDF file ID.                                     !
+!     ncvname      NetCDF variable name.                               !
+!     ncname       NetCDF file name.                                   !
+!     ncrec        NetCDF record index to write. If negative, it       !
+!                    assumes that the variable is recordless.          !
+!     LB1          First-dimension Lower bound.                        !
+!     UB1          First-dimension Upper bound.                        !
+!     LB2          Second-dimension Lower bound.                       !
+!     UB2          Second-dimension Upper bound.                       !
+!     Ascale       Factor to scale field after reading (real).         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A            Field to read in (real).                            !
+!     mp_ncread2d  Error flag (integer).                               !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -2392,8 +2603,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: IsNodeDim
-
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
       integer :: ibuffer(2), my_bounds(4), start(2), total(2)
@@ -2401,7 +2610,7 @@
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
 
-      integer :: mp_ncread
+      integer :: mp_ncread2d
 
       real(r8), allocatable :: Asend(:)
 
@@ -2420,12 +2629,7 @@
 !  Read requested NetCDF file and scatter it to all nodes.
 !-----------------------------------------------------------------------
 !
-      mp_ncread=nf90_noerr
-      IF ((LB2.eq.0).and.(UB2.eq.0)) THEN
-        IsNodeDim=.TRUE.
-      ELSE
-        IsNodeDim=.FALSE.
-      END IF
+      mp_ncread2d=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
@@ -2433,12 +2637,13 @@
       my_bounds(2)=UB1
       my_bounds(3)=LB2
       my_bounds(4)=UB2
-      CALL mpi_gather (my_bounds, 4, MPI_INTEGER, Asize, 4,             &
-     &                 MPI_INTEGER, MyMaster, OCN_COMM_WORLD, MyError)
+      CALL mpi_allgather (my_bounds, 4, MPI_INTEGER,                    &
+     &                    Asize, 4, MPI_INTEGER,                        &
+     &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,10) 'MPI_GATHER', MyRank, MyError,                &
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
      &                    string(1:Lstr)
         exit_flag=2
         RETURN
@@ -2482,28 +2687,23 @@
 !
 !  If master node, loop over all nodes and read buffers to send.
 !
-        mp_ncread=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncread.ne.nf90_noerr) THEN
+        mp_ncread2d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncread2d.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
           exit_flag=2
-          ioerror=mp_ncread
+          ioerror=mp_ncread2d
         END IF
         IF (exit_flag.eq.NoError) THEN
           DO rank=0,NtileI(ng)*NtileJ(ng)-1
             start(1)=Asize(1,rank)
             total(1)=Asize(2,rank)-Asize(1,rank)+1
-            IF (IsNodeDim) THEN
-              start(2)=rank+1
-              total(2)=1
-            ELSE
-              start(2)=Asize(3,rank)
-              total(2)=Asize(4,rank)-Asize(3,rank)+1
-            END IF
-            mp_ncread=nf90_get_var(ncid, varid,  Asend, start, total)
-            IF (mp_ncread.ne.nf90_noerr) THEN
+            start(2)=Asize(3,rank)
+            total(2)=Asize(4,rank)-Asize(3,rank)+1
+            mp_ncread2d=nf90_get_var(ncid, varid,  Asend, start, total)
+            IF (mp_ncread2d.ne.nf90_noerr) THEN
               WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
               exit_flag=2
-              ioerror=mp_ncread
+              ioerror=mp_ncread2d
               EXIT
             END IF
 !
@@ -2559,45 +2759,260 @@
       CALL wclock_off (ng, model, 45)
 # endif
 
- 10   FORMAT (/,' MP_NCREAD - error during ',a,' call, Node = ',        &
+ 10   FORMAT (/,' MP_NCREAD2D - error during ',a,' call, Node = ',      &
      &          i3.3,' Error = ',i3,/,13x,a)
- 20   FORMAT (/,' MP_NCREAD - error while inquiring ID for variable: ', &
-     &        a,/,13x,'in file: ',a)
- 30   FORMAT (/,' MP_NCREAD - error while reading variable: ',          &
+ 20   FORMAT (/,' MP_NCREAD2D - error while inquiring ID for',          &
+     &          ' variable: ',a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCREAD2D - error while reading variable: ',        &
      &        a,/,13x,'in file: ',a)
 
       RETURN
-      END FUNCTION mp_ncread
+      END FUNCTION mp_ncread2d
 
-      FUNCTION mp_ncwrite (ng, model, ncid, ncvname, ncname, ncrec,     &
-     &                     LB1, UB1, LB2, UB2, Ascale, A)
+      FUNCTION mp_ncwrite1d (ng, model, ncid, ncvname, ncname, ncrec,   &
+     &                       LB1, UB1, Ascale, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This function collects floating point data from the other nodes and !
-!  writes it into specified NetCDF file. This routine is used to write !
-!  model state vectors or matrices. It boths LB2 and UB2 are zero, its !
-!  assumed that the second dimension is a parallel node dimension.     !
+!  This function collects floating point 1D state array data from the  !
+!  other nodes and writes it into specified NetCDF file.               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     ncid       NetCDF file ID.                                       !
-!     ncvname    NetCDF variable name.                                 !
-!     ncname     NetCDF file name.                                     !
-!     ncrec      NetCDF record index to write. If negative, it assumes !
-!                  that the variable is recordless.                    !
-!     LB1        First-dimension Lower bound.                          !
-!     UB1        First-dimension Upper bound.                          !
-!     LB2        Second-dimension Lower bound.                         !
-!     UB2        Second-dimension Upper bound.                         !
-!     Ascale     Factor to scale field before writing (real).          !
-!     A          Field to write out (real).                            !
+!     ng            Nested grid number.                                !
+!     model         Calling model identifier.                          !
+!     ncid          NetCDF file ID.                                    !
+!     ncvname       NetCDF variable name.                              !
+!     ncname        NetCDF file name.                                  !
+!     ncrec         NetCDF record index to write. If negative, it      !
+!                     assumes that the variable is recordless.         !
+!     LB1           First-dimension Lower bound.                       !
+!     UB1           First-dimension Upper bound.                       !
+!     Ascale        Factor to scale field before writing (real).       !
+!     A             Field to write out (real).                         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     mp_ncwrite Error flag (integer).                                 !
+!     mp_ncwrite1d  Error flag (integer).                              !
+!                                                                      !
+!  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
+!        dependency. Instead we need original NetCDF library module    !
+!        "USE netcdf".                                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE netcdf
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, ncid, ncrec
+      integer, intent(in) :: LB1, UB1
+
+      real(r8), intent(in) :: Ascale
+
+      real(r8), intent(in) :: A(LB1:UB1)
+
+      character (len=*), intent(in) :: ncvname
+      character (len=*), intent(in) :: ncname
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyError, Npts, Serror
+      integer :: i, j, np, rank, request, varid
+      integer :: ibuffer(2), my_bounds(2), start(1), total(1)
+
+      integer, dimension(MPI_STATUS_SIZE) :: status
+      integer, dimension(2,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
+
+      integer :: mp_ncwrite1d
+
+      real(r8), allocatable :: Arecv(:)
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 44)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Collect and write data into requested NetCDF file.
+!-----------------------------------------------------------------------
+!
+      mp_ncwrite1d=nf90_noerr
+!
+!  Collect data lower and upper bounds dimensions.
+!
+      my_bounds(1)=LB1
+      my_bounds(2)=UB1
+      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER,                    &
+     &                    Asize, 2, MPI_INTEGER,                        &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  If master node, allocate the receive buffer.
+!
+      IF (MyRank.eq.MyMaster) THEN
+        Npts=0
+        DO rank=0,NtileI(ng)*NtileJ(ng)-1
+          np=(Asize(2,rank)-Asize(1,rank)+1)
+          Npts=MAX(Npts, np)
+        END DO
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  Write out master node contribution.
+!
+        start(1)=LB1
+        total(1)=UB1-LB1+1
+        np=0
+        DO i=LB1,UB1
+          np=np+1
+          Arecv(np)=A(i)
+        END DO
+        mp_ncwrite1d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncwrite1d.eq.nf90_noerr) THEN
+          mp_ncwrite1d=nf90_put_var(ncid, varid, Arecv, start, total)
+          IF (mp_ncwrite1d.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+            exit_flag=3
+            ioerror=mp_ncwrite1d
+          END IF
+        ELSE
+          WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
+          exit_flag=3
+          ioerror=mp_ncwrite1d
+        END IF
+!
+!  If master node, loop over other nodes and receive the data.
+!
+        IF (exit_flag.eq.NoError) THEN
+          DO rank=1,NtileI(ng)*NtileJ(ng)-1
+            np=Asize(2,rank)-Asize(1,rank)+1
+            CALL mpi_irecv (Arecv, np, MP_FLOAT, rank, rank+5,          &
+     &                      OCN_COMM_WORLD, request, MyError)
+            CALL mpi_wait (request, status, MyError)
+            IF (MyError.ne.MPI_SUCCESS) THEN
+              CALL mpi_error_string (MyError, string, Lstr, Serror)
+              Lstr=LEN_TRIM(string)
+              WRITE (stdout,10) 'MPI_IRECV', rank, MyError,             &
+     &                          string(1:Lstr)
+              exit_flag=3
+              RETURN
+            END IF
+!
+!  Write out data into NetCDF file.
+!
+            start(1)=Asize(1,rank)
+            total(1)=Asize(2,rank)-Asize(1,rank)+1
+            DO i=1,np
+              Arecv(i)=Arecv(i)*Ascale
+            END DO
+            mp_ncwrite1d=nf90_put_var(ncid, varid, Arecv, start, total)
+            IF (mp_ncwrite1d.ne.nf90_noerr) THEN
+              WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+              exit_flag=3
+              ioerror=mp_ncwrite1d
+              EXIT
+            END IF
+          END DO
+        END IF
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        np=UB1-LB1+1
+        CALL mpi_isend (A(LB1:), np, MP_FLOAT, MyMaster, MyRank+5,      &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast error flags to all nodes.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+!
+!  Deallocate receive buffer.
+!
+      IF (allocated(Arecv).and.(MyRank.eq.MyMaster)) THEN
+        deallocate (Arecv)
+      END IF
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 44)
+# endif
+
+ 10   FORMAT (/,' MP_NCWRITE1D - error during ',a,' call, Node = ',     &
+     &          i3.3,' Error = ',i3,/,13x,a)
+ 20   FORMAT (/,' MP_NCWRITE1D - error while writing variable: ',       &
+     &        a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCWRITE1D - error while inquiring ID for',         &
+     &        ' variable: ',a,/,13x,'in file: ',a)
+
+      RETURN
+      END FUNCTION mp_ncwrite1d
+
+      FUNCTION mp_ncwrite2d (ng, model, ncid, ncvname, ncname, ncrec,   &
+     &                       LB1, UB1, LB2, UB2, Ascale, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This function collects floating point 2D state array data from the  !
+!  other nodes and writes it into specified NetCDF file.               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng            Nested grid number.                                !
+!     model         Calling model identifier.                          !
+!     ncid          NetCDF file ID.                                    !
+!     ncvname       NetCDF variable name.                              !
+!     ncname        NetCDF file name.                                  !
+!     ncrec         NetCDF record index to write. If negative, it      !
+!                     assumes that the variable is recordless.         !
+!     LB1           First-dimension Lower bound.                       !
+!     UB1           First-dimension Upper bound.                       !
+!     LB2           Second-dimension Lower bound.                      !
+!     UB2           Second-dimension Upper bound.                      !
+!     Ascale        Factor to scale field before writing (real).       !
+!     A             Field to write out (real).                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     mp_ncwrite2d  Error flag (integer).                              !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -2628,8 +3043,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: IsNodeDim
-
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
       integer :: ibuffer(2), my_bounds(4), start(2), total(2)
@@ -2637,7 +3050,7 @@
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
 
-      integer :: mp_ncwrite
+      integer :: mp_ncwrite2d
 
       real(r8), allocatable :: Arecv(:)
 
@@ -2656,12 +3069,7 @@
 !  Collect and write data into requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-      mp_ncwrite=nf90_noerr
-      IF ((LB2.eq.0).and.(UB2.eq.0)) THEN
-        IsNodeDim=.TRUE.
-      ELSE
-        IsNodeDim=.FALSE.
-      END IF
+      mp_ncwrite2d=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
@@ -2669,12 +3077,13 @@
       my_bounds(2)=UB1
       my_bounds(3)=LB2
       my_bounds(4)=UB2
-      CALL mpi_gather (my_bounds, 4, MPI_INTEGER, Asize, 4,             &
-     &                 MPI_INTEGER, MyMaster, OCN_COMM_WORLD, MyError)
+      CALL mpi_allgather (my_bounds, 4, MPI_INTEGER,                    &
+     &                    Asize, 4, MPI_INTEGER,                        &
+     &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,10) 'MPI_GATHER', MyRank, MyError,                &
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
      &                    string(1:Lstr)
         exit_flag=2
         RETURN
@@ -2697,13 +3106,8 @@
 !
         start(1)=LB1
         total(1)=UB1-LB1+1
-        IF (IsNodeDim) THEN
-          start(2)=MyRank+1
-          total(2)=1
-        ELSE
-          start(2)=LB2
-          total(2)=UB2-LB2+1
-        END IF
+        start(2)=LB2
+        total(2)=UB2-LB2+1
         np=0
         DO j=LB2,UB2
           DO i=LB1,UB1
@@ -2711,23 +3115,23 @@
             Arecv(np)=A(i,j)
           END DO
         END DO
-        mp_ncwrite=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncwrite.eq.nf90_noerr) THEN
-          mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
-          IF (mp_ncwrite.ne.nf90_noerr) THEN
+        mp_ncwrite2d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncwrite2d.eq.nf90_noerr) THEN
+          mp_ncwrite2d=nf90_put_var(ncid, varid, Arecv, start, total)
+          IF (mp_ncwrite2d.ne.nf90_noerr) THEN
             WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
             exit_flag=3
-            ioerror=mp_ncwrite
+            ioerror=mp_ncwrite2d
           END IF
         ELSE
           WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
           exit_flag=3
-          ioerror=mp_ncwrite
+          ioerror=mp_ncwrite2d
         END IF
 !
 !  If master node, loop over other nodes and receive the data.
 !
-        IF (exit_flag.ne.NoError) THEN
+        IF (exit_flag.eq.NoError) THEN
           DO rank=1,NtileI(ng)*NtileJ(ng)-1
             np=(Asize(2,rank)-Asize(1,rank)+1)*                         &
      &         (Asize(4,rank)-Asize(3,rank)+1)
@@ -2747,21 +3151,16 @@
 !
             start(1)=Asize(1,rank)
             total(1)=Asize(2,rank)-Asize(1,rank)+1
-            IF (IsNodeDim) THEN
-              start(2)=rank+1
-              total(2)=1
-            ELSE
-              start(2)=Asize(3,rank)
-              total(2)=Asize(4,rank)-Asize(3,rank)+1
-            END IF
+            start(2)=Asize(3,rank)
+            total(2)=Asize(4,rank)-Asize(3,rank)+1
             DO i=1,np
               Arecv(i)=Arecv(i)*Ascale
             END DO
-            mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
-            IF (mp_ncwrite.ne.nf90_noerr) THEN
+            mp_ncwrite2d=nf90_put_var(ncid, varid, Arecv, start, total)
+            IF (mp_ncwrite2d.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
               exit_flag=3
-              ioerror=mp_ncwrite
+              ioerror=mp_ncwrite2d
               EXIT
             END IF
           END DO
@@ -2806,15 +3205,15 @@
       CALL wclock_off (ng, model, 44)
 # endif
 
- 10   FORMAT (/,' MP_NCWRITE - error during ',a,' call, Node = ',       &
+ 10   FORMAT (/,' MP_NCWRITE2D - error during ',a,' call, Node = ',     &
      &          i3.3,' Error = ',i3,/,13x,a)
- 20   FORMAT (/,' MP_NCWRITE - error while writing variable: ',         &
+ 20   FORMAT (/,' MP_NCWRITE2D - error while writing variable: ',       &
      &        a,/,13x,'in file: ',a)
- 30   FORMAT (/,' MP_NCWRITE - error while inquiring ID for variable: ',&
-     &        a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCWRITE2D - error while inquiring ID for',         &
+     &        ' variable: ',a,/,13x,'in file: ',a)
 
       RETURN
-      END FUNCTION mp_ncwrite
+      END FUNCTION mp_ncwrite2d
 
       SUBROUTINE mp_reduce_0d (ng, model, Asize, A, op_handle)
 !
@@ -3858,7 +4257,7 @@
       RETURN
       END SUBROUTINE mp_scatter3d
 
-      SUBROUTINE mp_scatter_state (ng, model, Nstr, Nend, Asize,        &
+      SUBROUTINE mp_scatter_state (ng, model, Mstr, Mend, Asize,        &
      &                             A, Awrk)
 !
 !***********************************************************************
@@ -3873,8 +4272,8 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     Nstr       Threaded array lower bound.                           !
-!     Nend       Threaded array upper bound.                           !
+!     Mstr       Threaded array lower bound.                           !
+!     Mend       Threaded array upper bound.                           !
 !     Asize      Size of the .                                         !
 !     A          Threaded 1D array process.                            !
 !                                                                      !
@@ -3896,11 +4295,11 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-      integer, intent(in) :: Nstr, Nend, Asize
+      integer, intent(in) :: Mstr, Mend, Asize
 
       real(r8), intent(inout)  :: A(Asize)
 
-      real(r8), intent(out) :: Awrk(Nstr:Nend)
+      real(r8), intent(out) :: Awrk(Mstr:Mend)
 !
 !  Local variable declarations.
 !
@@ -3998,7 +4397,7 @@
 !
 !  Load appropriate data block into output array.
 !
-      DO i=Nstr,Nend
+      DO i=Mstr,Mend
         Awrk(i)=A(i)
       END DO
 

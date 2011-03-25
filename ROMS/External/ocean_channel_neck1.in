@@ -123,8 +123,9 @@
         NSFF == 48
         NOBC == 48
 
-! Output check pointing GST restart parameters.
+! GST output and check pointing restart parameters.
 
+   LmultiGST =  F                               ! one eigenvector per file
      LrstGST =  F                               ! GST restart switch
   MaxIterGST =  500                             ! maximun number of iterations
         NGST =  10                              ! check pointing interval
@@ -286,7 +287,7 @@
 ! whose sensitivity is required.
 
        KstrS == 1                          ! starting level
-       KendS == 12                         ! ending level
+       KendS == 1                          ! ending level
 
 ! Logical switches (TRUE/FALSE) to specify the adjoint state variables
 ! whose sensitivity is required.
@@ -297,33 +298,40 @@ Lstate(isVbar) == F                        ! 2D V-momentum
 Lstate(isUvel) == F                        ! 3D U-momentum
 Lstate(isVvel) == F                        ! 3D V-momentum
 
-! Logical switches (TRUE/FALSE) to specify the adjoint state tracer
-! variables whose sensitivity is required (NT values are expected).
+Lstate(isTvar) == F F                      ! NT tracers
 
-Lstate(isTvar) == F F                      ! tracers
+! Logical switches (TRUE/FALSE) to specify the state variables for
+! which Forcing Singular Vectors or Stochastic Optimals is required.
 
-! Stochastic optimals time decorrelation scale (days) assumed for
+Fstate(isFsur) == F                        ! free-surface
+Fstate(isUbar) == F                        ! 2D U-momentum
+Fstate(isVbar) == F                        ! 2D V-momentum
+Fstate(isUvel) == F                        ! 3D U-momentum
+Fstate(isVvel) == F                        ! 3D V-momentum
+Fstate(isTvar) == F F                      ! NT tracers
+
+Fstate(isUstr) == T                        ! surface U-stress
+Fstate(isVstr) == T                        ! surface V-stress
+Fstate(isTsur) == F F                      ! NT surface tracers flux
+
+! Stochastic Optimals time decorrelation scale (days) assumed for
 ! red noise processes.
 
-    SO_decay == 2.0d0                      ! days
+      SO_decay == 2.0d0                    ! days
 
-! Logical switches (TRUE/FALSE) to specify the state surface forcing
-! variable whose stochastic optimals is required.
-
-SOstate(isUstr) == T                       ! surface u-stress
-SOstate(isVstr) == T                       ! surface v-stress
-
-! Logical switches (TRUE/FALSE) to specify the surface tracer forcing
-! variable whose stochastic optimals is required (NT values are expected).
-
-SOstate(isTsur) == F F                     ! surface tracer flux
-
-! Stochastic optimals surface forcing standard deviation for
+! Stochastic Optimals surface forcing standard deviation for
 ! dimensionalization.
 
-SO_sdev(isUstr) == 1.0d0                   ! surface u-stress
-SO_sdev(isVstr) == 1.0d0                   ! surface v-stress
-SO_sdev(isTsur) == 1.0d0 1.0d0             ! NT surface tracer flux
+SO_sdev(isFsur) == 1.0d0                   ! free-surface
+SO_sdev(isUbar) == 1.0d0                   ! 2D U-momentum
+SO_sdev(isVbar) == 1.0d0                   ! 2D V-momentum
+SO_sdev(isUvel) == 1.0d0                   ! 3D U-momentum
+SO_sdev(isVvel) == 1.0d0                   ! 3D V-momentum
+SO_sdev(isTvar) == 1.0d0 1.0d0             ! NT tracers
+
+SO_sdev(isUstr) == 1.0d0                   ! surface U-stress
+SO_sdev(isVstr) == 1.0d0                   ! surface V-stress
+SO_sdev(isTsur) == 1.0d0 1.0d0             ! NT surface tracers flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of fields into
 ! HISTORY output file.
@@ -773,7 +781,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !
 !  Ninner      Maximum number of 4DVAR inner loop iterations.
 !
-!  Nintervals  Number of time interval divisions for stochastic optimals
+!  Nintervals  Number of time interval divisions for Stochastic Optimals
 !              computations. It must be a multiple of NTIMES. The tangent
 !              linear model (TLM) and the adjoint model (ADM) are integrated
 !              forward and backward at different intervals.  For example,
@@ -951,6 +959,9 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !------------------------------------------------------------------------------
 !  Generalized Stability Theory (GST) analysis parameters.
 !------------------------------------------------------------------------------
+!
+!  LmultiGST   Logical switch (TRUE/FALSE) to write out one GST analysis
+!              eigenvector per file.
 !
 !  LrstGST     Logical switch (TRUE/FALSE) to restart GST analysis. If TRUE,
 !              the check pointing data is read in from the GST restart NetCDF
@@ -1474,24 +1485,39 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !                Lstate(isTvar):   Traces (NT values expected)
 !
 !------------------------------------------------------------------------------
-!  Stochastic optimals parameters.
+!  Forcing Singular Vectors or Stochastic Optimals parameters.
 !------------------------------------------------------------------------------
 !
-!  SO_decay    Stochastic optimals time decorrelation scale (days) assumed
+!  Fstate      Logical switches (TRUE/FALSE) to specify state variables for
+!                which Forcing Singular Vectors or Stochastic Optimals is
+!                required.
+!
+!                Fstate(isFsur):   Free-surface
+!                Fstate(isUbar):   2D U-momentum
+!                Fstate(isVbar):   2D V-momentum
+!                Fstate(isUvel):   3D U-momentum
+!                Fstate(isVvel):   3D V-momentum
+!                Fstate(isTvar):   Traces (NT values expected)
+!
+!                Fstate(isUstr):   surface U-stress
+!                Fstate(isVstr):   surface V-stress
+!                Fstate(isTsur):   surface tracers flux (NT values expected)
+!
+!  SO_decay    Stochastic Optimals time decorrelation scale (days) assumed
 !                for red noise processes.
 !
-!  SOstate     Logical switches (TRUE/FALSE) to specify the state surface
-!                forcing variable whose stochastic optimals is required.
-!
-!                SOstate(isUstr):  surface u-stress
-!                SOstate(isVstr):  surface v-stress
-!                SOstate(isTsur):  surface tracer flux (NT values expected)
-!
-!  SO_sdev     Stochastic optimals surface forcing standard deviation for
+!  SO_sdev     Stochastic Optimals surface forcing standard deviation for
 !                dimensionalization.
 !
-!                SO_sdev(isUstr):  surface u-stress
-!                SO_sdev(isVstr):  surface v-stress
+!                SO_sdev(isFsur):  Free-surface
+!                SO_sdev(isUbar):  2D U-momentum
+!                SO_sdev(isVbar):  2D V-momentum
+!                SO_sdev(isUvel):  3D U-momentum
+!                SO_sdev(isVvel):  3D V-momentum
+!                SO_sdev(isTvar):  Traces (NT values expected)
+!
+!                SO_sdev(isUstr):  surface U-stress
+!                SO_sdev(isVstr):  surface V-stress
 !                SO_sdev(isTsur):  surface tracer flux (NT values expected)
 !
 !------------------------------------------------------------------------------

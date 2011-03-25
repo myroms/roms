@@ -129,7 +129,7 @@
 !
       IF (LwrtTime(ng)) THEN
         IF (LwrtPER(ng)) THEN
-          Tval(1)=REAL(Nrun,r8)*day2sec
+          Tval(1)=REAL(tADJindx(ng),r8)*day2sec
         ELSE
 # ifdef WEAK_CONSTRAINT
           Tval(1)=ForceTime(ng)
@@ -221,23 +221,25 @@
 !
 !  Write out bathymetry.
 !
-      scale=1.0_r8
-      gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idbath,ng),      &
-     &                   tADJindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, scale,                     &
+      IF (Hout(idbath,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idbath,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                   GRID(ng) % rmask_io,                           &
+     &                     GRID(ng) % rmask_io,                         &
 # endif
-     &                   GRID(ng)% ad_h,                                &
-     &                   SetFillVal = .FALSE.)
-      IF (status.ne.nf90_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idbath)), tADJindx(ng)
+     &                     GRID(ng)% ad_h,                              &
+     &                     SetFillVal = .FALSE.)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idbath)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
         END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
       END IF
 !
 !  Write out free-surface (m).

@@ -22,10 +22,10 @@
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
 !    IJwater       IJ-indices of water points.
 #endif
+!    Fstate        Logical switches to control computations of the
+!                    Forcing Singular Vectors or Stochastic Optimals.
 !    Lstate        Logical switches to control computations of the
 !                    model state.
-!    SOstate       Logical switches to control computations of the
-!                    stochastic optimals.
 #ifdef STATIONS
 !    Sflag         Station extraction special flag:
 !                    Sflag = 0  => locations in terms of (I,J) pairs.
@@ -44,8 +44,8 @@
 !
         TYPE T_SCALARS
 
+          logical, pointer :: Fstate(:)
           logical, pointer :: Lstate(:)
-          logical, pointer :: SOstate(:)
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
           integer , pointer :: IJwater(:,:)
 #endif
@@ -278,7 +278,7 @@
 !
         integer, dimension(Ngrids) :: ntimes
 !
-!  Number of time interval divisions for stochastic optimals.  It must
+!  Number of time interval divisions for Stochastic Optimals.  It must
 !  a multiple of "ntimes".
 !
         integer :: Nintervals = 1
@@ -921,9 +921,10 @@
 !
 !  Generalized Statbility Theory (GST) parameters.
 !
-        logical :: LrstGST                  ! restart switch
-        integer :: MaxIterGST               ! Number of iterations
-        integer :: nGST                     ! check pointing interval
+        logical :: LmultiGST          ! multiple eigenvector file switch
+        logical :: LrstGST            ! restart switch
+        integer :: MaxIterGST         ! Number of iterations
+        integer :: nGST               ! check pointing interval
 !
 !  Switches used to recycle time records in some output file. If TRUE,
 !  only the latest two time records are maintained.  If FALSE, all
@@ -959,6 +960,10 @@
 !-----------------------------------------------------------------------
 !  Stochastic optimals parameters.
 !-----------------------------------------------------------------------
+!
+!  Stochastic optimals forcing records counter.
+!
+        integer :: SOrec
 !
 !  Trace of stochastic optimals matrix.
 !
@@ -1665,18 +1670,17 @@
       DO ng=1,Ngrids
 
 #ifdef SOLVE3D
+        allocate ( SCALARS(ng) % Fstate(7+2*MT) )
+        SCALARS(ng) % Fstate(1:7+2*MT) = .FALSE.
+
         allocate ( SCALARS(ng) % Lstate(5+MT) )
         SCALARS(ng) % Lstate(1:5+MT) = .FALSE.
 #else
+        allocate ( SCALARS(ng) % Fstate(5) )
+        SCALARS(ng) % Fstate(1:5) = .FALSE.
+
         allocate ( SCALARS(ng) % Lstate(3) )
         SCALARS(ng) % Lstate(1:3) = .FALSE.
-#endif
-#ifdef SOLVE3D
-        allocate ( SCALARS(ng) % SOstate(2+MT) )
-        SCALARS(ng) % SOstate(1:2+MT) = .FALSE.
-#else
-        allocate ( SCALARS(ng) % SOstate(2) )
-        SCALARS(ng) % SOstate(1:2) = .FALSE.
 #endif
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
         allocate ( SCALARS(ng) % IJwater((Lm(ng)+2)*(Mm(ng)+2),4) )
@@ -1717,7 +1721,12 @@
       allocate ( ad_Akt_fac(MT,Ngrids) )
       allocate ( tl_Akt_fac(MT,Ngrids) )
       allocate ( Kdiff(MT,Ngrids) )
-      allocate ( SO_sdev(2+MT,Ngrids) )
+#ifdef SOLVE3D
+      allocate ( SO_sdev(7+2*MT,Ngrids) )
+#else
+      allocate ( SO_sdev(5,Ngrids) )
+#endif
+      SO_sdev = IniVal
       allocate ( ad_tnu2(MT,Ngrids) )
       allocate ( nl_tnu2(MT,Ngrids) )
       allocate ( tl_tnu2(MT,Ngrids) )
@@ -2042,6 +2051,9 @@
 !
 !  Initialize several IO flags.
 !
+      LmultiGST=.FALSE.
+      LrstGST=.FALSE.
+
       DO ng=1,Ngrids
 
         PerfectRST(ng)=.FALSE.

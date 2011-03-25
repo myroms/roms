@@ -7,9 +7,9 @@
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-#  Generalized Stability Theory: Optimal Perturbations                #
+#  Generalized Stability Theory: Forcing Singular Vectors             #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS optimal perturbations     #
+#  This script is used to run the ROMS/TOMS Forcing Singular Vectors  #
 #  algorithm.                                                         #
 #                                                                     #
 #######################################################################

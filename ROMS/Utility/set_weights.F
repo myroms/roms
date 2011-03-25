@@ -226,7 +226,7 @@
      &        i3,/,/,4x,'Primary',12x,'Secondary',12x,                  &
      &        'Accumulated to Current Step',/)
   20  FORMAT (i3,4f19.16)
-  30  FORMAT (/,1x,'ndtfast, nfast = ',2i4,3x,'nfast/ndtfast = ',f7.5)
+  30  FORMAT (/,1x,'ndtfast, nfast = ',2i4,3x,'nfast/ndtfast = ',f8.5)
 # ifdef POWER_LAW
   40  FORMAT (/,1x,'Centers of gravity and integrals ',                 &
      &        '(values must be 1, 1, approx 1/2, 1, 1):',/,             &

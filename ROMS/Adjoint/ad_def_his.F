@@ -445,10 +445,10 @@
           Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0001-01-01 00:00:00'
-          Vinfo( 4)='365.25_day'
+          Vinfo( 4)='julian'
         ELSE IF (time_ref.gt.0.0_r8) THEN
           WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
-          Vinfo( 4)='standard'
+          Vinfo( 4)='gregorian'
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, ncADJid(ng), adjVid(idtime,ng),        &
@@ -461,7 +461,7 @@
 !  Define Ritz eigenvalues and Ritz eigenvectors Euclidean norm.
 !
         Vinfo( 1)='Ritz_rvalue'
-        Vinfo( 2)='Ritz eigenvalues'
+        Vinfo( 2)='real Ritz eigenvalues'
         status=def_var(ng, iADM, ncADJid(ng), varid,                    &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .FALSE.)
@@ -585,17 +585,19 @@
 !
 !  Define bathymetry.
 !
-        Vinfo( 1)=Vname(1,idbath)
-        WRITE (Vinfo( 2),40) TRIM(Vname(2,idbath))
-        Vinfo( 3)='meter-1'
-        Vinfo(14)=Vname(4,idbath)
-        Vinfo(16)=Vname(1,idtime)
-        Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
-        status=def_var(ng, iADM, ncADJid(ng), adjVid(idbath,ng),        &
-     &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,      &
-     &                 SetFillVal = .FALSE.)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (Hout(idbath,ng)) THEN
+          Vinfo( 1)=Vname(1,idbath)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idbath))
+          Vinfo( 3)='meter-1'
+          Vinfo(14)=Vname(4,idbath)
+          Vinfo(16)=Vname(1,idtime)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
+          status=def_var(ng, iADM, ncADJid(ng), adjVid(idbath,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
 !
 !  Define free-surface.
 !

@@ -1072,6 +1072,15 @@
 #endif
 
 #ifdef PROPAGATOR
+      Vinfo( 1)='LmultiGST'
+      Vinfo( 2)='Switch to write one GST eigenvector per file'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
       Vinfo( 1)='LrstGST'
       Vinfo( 2)='Switch to restart GST analysis'
       Vinfo( 9)='.FALSE.'
@@ -1090,6 +1099,20 @@
 
       Vinfo( 1)='nGST'
       Vinfo( 2)='number GST iterations between check pointing'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='NEV'
+      Vinfo( 2)='number Ritz eigenvalues'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='NCV'
+      Vinfo( 2)='number Ritz eigenvectors generated'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -2218,11 +2241,141 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifdef SO_SEMI
+#endif
+
+#if defined FORCING_SV || defined SO_SEMI
+!
+!  Singular Forcing Vectors or Stochastic Optimals state switches.
+!
+      Vinfo( 1)='Fzeta'
+# ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for free-surface'
+# else
+      Vinfo( 2)='stochastic optimals for free-surface'
+# endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+# ifndef SOLVE3D
+      Vinfo( 1)='Fubar'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for 2D U-momentum'
+#  else
+      Vinfo( 2)='stochastic optimals for 2D U-momentum'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Fvbar'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for 2D V-momentum'
+#  else
+      Vinfo( 2)='stochastic optimals for 2D V-momentum'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+# else
+
+      Vinfo( 1)='Fuvel'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for 3D U-momentum'
+#  else
+      Vinfo( 2)='stochastic optimals for 3D U-momentum'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Fvvel'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for 3D V-momentum'
+#  else
+      Vinfo( 2)='stochastic optimals for 3D V-momentum'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Ftracer'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for tracer variables'
+#  else
+      Vinfo( 2)='stochastic optimals for tracer variables'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
+      Vinfo( 1)='Fsustr'
+# ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for surface U-stress'
+# else
+      Vinfo( 2)='stochastic optimals for surface U-stress'
+# endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='Fsvstr'
+# ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for surface V-stress'
+# else
+      Vinfo( 2)='stochastic optimals for surface V-stress'
+# endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+# ifdef SOLVE3D
+      Vinfo( 1)='Fstflx'
+#  ifdef FORCING_SV
+      Vinfo( 2)='forcing singular vectors for surface tracer flux'
+#  else
+      Vinfo( 2)='stochastic optimals for surface tracer flux'
+#  endif
+      Vinfo( 9)='off'
+      Vinfo(10)='on'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+#endif
+
+#ifdef SO_SEMI
 !
 !  Define Stochatic optimals parameters.
 !
-#  ifndef SO_SEMI_WHITE
+# ifndef SO_SEMI_WHITE
       Vinfo( 1)='SO_decay'
       Vinfo( 2)='red noise stochastic optimals time decorrelation'
       Vinfo( 3)='day'
@@ -2230,7 +2383,7 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
+# endif
 
       Vinfo( 1)='SO_trace'
       Vinfo( 2)='trace of stochastic optimals matrix'
@@ -2239,57 +2392,73 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='Lso_Ustr'
-      Vinfo( 2)='Stochastic optimats on surface u-stress'
-      Vinfo( 9)='off'
-      Vinfo(10)='on'
-      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+      Vinfo( 1)='SOsdev_zeta'
+      Vinfo( 2)='stochastic optimals scale, free-surface'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='Lso_Vstr'
-      Vinfo( 2)='Stochastic optimats on surface v-stress'
-      Vinfo( 9)='off'
-      Vinfo(10)='on'
-      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+# ifndef SOLVE3D
+      Vinfo( 1)='SOsdev_ubar'
+      Vinfo( 2)='stochastic optimals scale, 2D U-momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef SOLVE3D
-      Vinfo( 1)='Lso_tracer'
-      Vinfo( 2)='Stochastic optimats on surface flux of tracer'
-      Vinfo( 9)='off'
-      Vinfo(10)='on'
-      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+      Vinfo( 1)='SOsdev_vbar'
+      Vinfo( 2)='stochastic optimals scale, 2D V-momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+# else
+
+      Vinfo( 1)='SOsdev_uvel'
+      Vinfo( 2)='stochastic optimals scale, 3D U-momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='SOsdev_vvel'
+      Vinfo( 2)='stochastic optimals scale, 3D V-momentum'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='SOsdev_tracer'
+      Vinfo( 2)='stochastic optimals scale, tracer variables'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
+# endif
 
-      Vinfo( 1)='SOsdev_Ustr'
-      Vinfo( 2)='stochastic optimals surface u-stress scale'
+      Vinfo( 1)='SOsdev_sustr'
+      Vinfo( 2)='stochastic optimals scale, surface U-stress'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='SOsdev_Vstr'
-      Vinfo( 2)='stochastic optimals surface V-stress scale'
+      Vinfo( 1)='SOsdev_svstr'
+      Vinfo( 2)='stochastic optimals scale, surface V-stress'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#  ifdef SOLVE3D
+# ifdef SOLVE3D
       Vinfo( 1)='SOsdev_stflx'
-      Vinfo( 2)='stochastic optimals surface trace flux scales'
+      Vinfo( 2)='stochastic optimals scale, surface tracer flux'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
-#  endif
 # endif
 #endif
 

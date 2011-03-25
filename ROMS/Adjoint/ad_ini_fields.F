@@ -452,6 +452,19 @@
      &                    ad_ubar, ad_vbar, ad_zeta)
 #  endif
 !
+!  Load 2D adjoint momentum solution into IO arrays.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)+ad_ubar(i,j,knew)
+        END DO
+        IF (j.ge.Jstr) THEN
+          DO i=IstrR,IendR
+            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)+ad_vbar(i,j,knew)
+          END DO
+        END IF
+      END DO
+!
 !  Adjoint of compute vertically-integrated momentum (tl_ubar, tl_vbar)
 !  from initial 3D momentum (tl_u, tl_v). Here DC(i,1:N) are the grid
 !  cell thicknesses, DC(i,0) is total depth of the water column, and
@@ -697,6 +710,19 @@
      &                    ad_ubar, ad_vbar, ad_zeta)
 #  endif
 !
+!  Load 2D adjoint momentum solution into IO arrays.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)+ad_ubar(i,j,krhs)
+        END DO
+        IF (j.ge.Jstr) THEN
+          DO i=IstrR,IendR
+            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)+ad_vbar(i,j,krhs)
+          END DO
+        END IF
+      END DO
+!
 !  Adjoint of initialize other time levels for 2D momentum.
 !
       DO j=Jstr,Jend
@@ -870,21 +896,6 @@
         END DO
       END DO
 # endif
-!
-!-----------------------------------------------------------------------
-!  Load 2D adjoint momentum solution into IO arrays.
-!-----------------------------------------------------------------------
-!
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)
-        END DO
-        IF (j.ge.Jstr) THEN
-          DO i=IstrR,IendR
-            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)
-          END DO
-        END IF
-      END DO
 
       RETURN
       END SUBROUTINE ad_ini_fields_tile

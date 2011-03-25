@@ -110,7 +110,7 @@
 !  Write out model time (s).
 !
       IF (LwrtPER(ng)) THEN
-        Tval(1)=REAL(Nrun,r8)*day2sec
+        Tval(1)=REAL(tTLMindx(ng),r8)*day2sec
       ELSE
         Tval(1)=time(ng)
       END IF

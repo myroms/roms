@@ -109,7 +109,7 @@
         DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
           DO thread=0,numthreads-1
-            CALL wclock_on (ng, iNLM, 0)
+            CALL wclock_on (ng, iADM, 0)
           END DO
 !$OMP END PARALLEL DO
         END DO
@@ -131,7 +131,7 @@
 !  Read in model tunable parameters from standard input. Initialize
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
-        CALL inp_par (iNLM)
+        CALL inp_par (iADM)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
@@ -171,6 +171,8 @@
       USE mod_storage
 !
       USE propagator_mod
+      USE packing_mod, ONLY : c_norm2
+      USE packing_mod, ONLY : r_norm2
 !
 !  Imported variable declarations
 !
@@ -184,13 +186,10 @@
       logical :: LwrtGST
 #endif
 
-      integer :: NconvRitz, i, iter, ng
+      integer :: NconvRitz, i, icount, iter, lstr, ng, srec
 
-#ifdef DISTRIBUTE
-      real(r8), external :: dlapy2, pdnorm2
-#else
-      real(r8), external :: dlapy2, dnrm2
-#endif
+      real(r8) :: Enorm
+
       character (len=55) :: string
 !
 !=======================================================================
@@ -303,7 +302,7 @@
 #ifdef DISTRIBUTE
           CALL pdnaupd (OCN_COMM_WORLD,                                 &
      &                  ido, bmat, Nsize, which, NEV, Ritz_tol,         &
-     &                  resid(Nstr(ng):), NCV, Bvec(Nstr(ng):,1),       &
+     &                  resid(Nstr(ng)), NCV, Bvec(Nstr(ng),1),         &
      &                  Nsize, iparam, ipntr,                           &
      &                  SworkD, SworkL, LworkL, info)
 #else
@@ -356,8 +355,11 @@
               RETURN
             ELSE
 !
-!  Compute Ritz vectors. (The only choice left is IDO=99).
+!  Compute Ritz vectors (the only choice left is IDO=99).  They are
+!  generated in ARPACK in decreasing magnitude of its eigenvalue.
+!  The most significant is first.
 !
+              NconvRitz=iparam(5)
               IF (Master) THEN
                 WRITE (stdout,20) 'Number of converged Ritz values:',   &
      &                            iparam(5)
@@ -370,10 +372,10 @@
 #ifdef DISTRIBUTE
               CALL pdneupd (OCN_COMM_WORLD,                             &
      &                      Lrvec, howmany, select,                     &
-     &                      RvalueR, RvalueI, Rvector(Nstr(ng):,1),     &
+     &                      RvalueR, RvalueI, Rvector(Nstr(ng),1),      &
      &                      Nsize, sigmaR, sigmaI, SworkEV, bmat,       &
      &                      Nsize, which, NEV, Ritz_tol,                &
-     &                      resid(Nstr(ng):), NCV, Bvec(Nstr(ng):,1),   &
+     &                      resid(Nstr(ng)), NCV, Bvec(Nstr(ng),1),     &
      &                      Nsize, iparam, ipntr,                       &
      &                      SworkD, SworkL, LworkL, info)
 #else
@@ -397,96 +399,115 @@
                 RETURN
               ELSE
 !
-!  Check residuals (Euclidean norm) and Ritz values.  Activate writing
-!  of the initial and final perturbation for each eigenvector into
-!  adjoint history NetCDF file.
+!  Activate writing of each eigenvector into adjoint history NetCDF
+!  file. The "ocean_time" is the eigenvector number.
 !
                 Nrun=0
-                NrecADJ(ng)=0
-                tADJindx(ng)=0
-!!              ndefADJ(ng)=ntimes(ng)     ! one file per eigenvector
-                NconvRitz=iparam(5)
+                icount=0
                 Lcomplex=.TRUE.
-!
+
                 DO i=1,NconvRitz
+                  IF ((i.eq.1).or.LmultiGST) THEN
+                    NrecADJ(ng)=0
+                    tADJindx(ng)=0
+                  END IF
+                  IF (LmultiGST.and.Lcomplex) THEN
+                    LdefADJ(ng)=.TRUE.
+                    icount=icount+1
+                    lstr=LEN_TRIM(ADJbase(ng))
+                    WRITE (ADJname(ng),30) ADJbase(ng)(1:lstr-3), icount
+                  END IF
+!
+!  Compute and write the Ritz eigenvectors.
+!
+                  IF (RvalueI(i).eq.0.0_r8) THEN
 !
 !  Ritz value is real.
 !
-                  IF (RvalueI(i).eq.0.0_r8) THEN
                     CALL propagator (ng, Nstr(ng), Nend(ng),            &
      &                               Rvector(Nstr(ng):,i), SworkD)
                     IF (exit_flag.ne.NoError) RETURN
-                    CALL daxpy (Nsize, -RvalueR(i),                     &
-     &                          Rvector(Nstr(ng):,i), 1, SworkD, 1)
-#ifdef DISTRIBUTE
-                    norm(i)=pdnorm2(OCN_COMM_WORLD, Nsize, SworkD, 1)
-#else
-                    norm(i)=dnrm2(Nstate(ng), SworkD, 1)
-#endif
+                    CALL r_norm2 (ng, iADM, Nstr(ng), Nend(ng),         &
+     &                            -RvalueR(i),                          &
+     &                            Rvector(Nstr(ng):,i),                 &
+     &                            SworkD, Enorm)
+                    norm(i)=Enorm
+
+                  ELSE IF (Lcomplex) THEN
 !
 !  Ritz value is complex.
 !
-                  ELSE IF (Lcomplex) THEN
                     CALL propagator (ng, Nstr(ng), Nend(ng),            &
      &                               Rvector(Nstr(ng):,i  ), SworkD)
                     IF (exit_flag.ne.NoError) RETURN
-                    CALL daxpy (Nsize, -RvalueR(i),                     &
-     &                          Rvector(Nstr(ng):,i  ), 1, SworkD, 1)
-                    CALL daxpy (Nsize,  RvalueI(i),                     &
-     &                          Rvector(Nstr(ng):,i+1), 1, SworkD, 1)
-#ifdef DISTRIBUTE
-                    norm(i)=pdnorm2(OCN_COMM_WORLD, Nsize, SworkD, 1)
-#else
-                    norm(i)=dnrm2(Nstate(ng), SworkD, 1)
-#endif
+                    CALL c_norm2 (ng, iADM, Nstr(ng), Nend(ng),         &
+     &                            -RvalueR(i), RvalueI(i),              &
+     &                            Rvector(Nstr(ng):,i  ),               &
+     &                            Rvector(Nstr(ng):,i+1),               &
+     &                            SworkD, Enorm)
+                    norm(i)=Enorm
+!
                     CALL propagator (ng, Nstr(ng), Nend(ng),            &
      &                               Rvector(Nstr(ng):,i+1), SworkD)
                     IF (exit_flag.ne.NoError) RETURN
-                    CALL daxpy (Nsize, -RvalueI(i),                     &
-     &                          Rvector(Nstr(ng):,i  ), 1, SworkD, 1)
-                    CALL daxpy (Nsize, -RvalueR(i),                     &
-     &                          Rvector(Nstr(ng):,i+1), 1, SworkD, 1)
-#ifdef DISTRIBUTE
-                    norm(i)=dlapy2(norm(i),                             &
-     &                             pdnorm2(OCN_COMM_WORLD,              &
-     &                                     Nsize, SworkD, 1))
-#else
-                    norm(i)=dlapy2(norm(i),                             &
-     &                             dnrm2(Nstate(ng), SworkD, 1))
-#endif
+                    CALL c_norm2 (ng, iADM, Nstr(ng), Nend(ng),         &
+     &                            -RvalueR(i), -RvalueI(i),             &
+     &                            Rvector(Nstr(ng):,i+1),               &
+     &                            Rvector(Nstr(ng):,i  ),               &
+     &                            SworkD, Enorm)
+                    norm(i  )=SQRT(norm(i)*norm(i)+                     &
+     &                             Enorm*Enorm)
                     norm(i+1)=norm(i)
                     Lcomplex=.FALSE.
                   ELSE
                     Lcomplex=.TRUE.
                   END IF
                   IF (Master) THEN
-                    WRITE (stdout,30) i, norm(i), RvalueR(i), RvalueI(i)
+                    WRITE (stdout,40) i, norm(i), RvalueR(i),           &
+     &                                RvalueI(i), i
                   END IF
 !
-!  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm to
-!  NetCDF file(s).
+!  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm
+!  (residual) to NetCDF file(s).
 !
                   IF (LwrtADJ(ng)) THEN
+                    SourceFile='afte_ocean.h, ROMS_run'
+                    IF (LmultiGST) THEN
+                      IF (.not.Lcomplex.or.(RvalueI(i).eq.0.0_r8)) THEN
+                        srec=1
+                      ELSE
+                        srec=2
+                      END IF
+                    ELSE
+                      srec=i
+                    END IF
+
                     CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
      &                                    'Ritz_rvalue', RvalueR(i:),   &
-     &                                    start = (/i/),                &
+     &                                    start = (/srec/),             &
      &                                    total = (/1/),                &
      &                                    ncid = ncADJid(ng))
                     IF (exit_flag.ne. NoError) RETURN
 
                     CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
      &                                    'Ritz_ivalue', RvalueI(i:),   &
-     &                                    start = (/i/),                &
+     &                                    start = (/srec/),             &
      &                                    total = (/1/),                &
      &                                    ncid = ncADJid(ng))
                     IF (exit_flag.ne. NoError) RETURN
 
                     CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
      &                                    'Ritz_norm', norm(i:),        &
-     &                                    start = (/i/),                &
+     &                                    start = (/srec/),             &
      &                                    total = (/1/),                &
      &                                    ncid = ncADJid(ng))
                     IF (exit_flag.ne. NoError) RETURN
+
+                    IF (LmultiGST.and.Lcomplex) THEN
+                      CALL netcdf_close (ng, iADM, ncADJid(ng),         &
+     &                                   ADJname(ng))
+                      IF (exit_flag.ne.NoError) RETURN
+                    END IF
                   END IF
                 END DO
               END IF
@@ -494,29 +515,15 @@
             ITERATE=.FALSE.
           END IF
 
-#ifdef CHECKPOINTING2
-!
-!  If appropriate, write out check point data into GST restart NetCDF
-!  file. Notice that the restart data is always saved if MaxIterGST
-!  is reached without convergence. It is also saved when convergence
-!  is achieved (ido=99).
-!
-          IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
-              ((ido.eq.99).and.LwrtGST)) THEN
-            CALL wrt_gst (ng, iADM)
-            IF (exit_flag.ne.NoError) RETURN
-            IF (ido.eq.99) LwrtGST=.FALSE.
-          END IF
-#endif
-
         END DO ITER_LOOP
 
       END DO NEST_LOOP
 !
  10   FORMAT (/,1x,'Error in ',a,1x,a,a,1x,i5,/)
  20   FORMAT (/,a,1x,i2,/)
- 30   FORMAT (4x,i4.4,'-th residual ',1p,e14.6,0p,                      &
-     &        '  Ritz values ',1pe14.6,0p,2x,1pe14.6)
+ 30   FORMAT (a,'_',i3.3,'.nc')
+ 40   FORMAT (1x,i4.4,'-th residual',1p,e14.6,0p,                       &
+     &        '  Ritz values',1pe14.6,0p,1x,1pe14.6,2x,i4.4)
 
       RETURN
       END SUBROUTINE ROMS_run
@@ -575,7 +582,7 @@
       DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
-          CALL wclock_off (ng, iNLM, 0)
+          CALL wclock_off (ng, iADM, 0)
         END DO
 !$OMP END PARALLEL DO
       END DO

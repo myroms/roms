@@ -48,9 +48,8 @@
 !
 !  Local variable declarations.
 !
-#ifdef SOLVE3D
-      logical :: FirstPass = .TRUE.
-#endif
+      logical, save :: FirstPass = .TRUE.
+
       integer :: my_iic, subs, tile, thread
 !
 !=======================================================================
@@ -59,9 +58,11 @@
 !  the first iteration.
 !=======================================================================
 !
+      SOrec=0
       Nrun=Nrun+1
 !
-      FIRST_PASS : IF (Nrun.eq.1) THEN
+      FIRST_PASS : IF (FirstPass) THEN
+        FirstPass=.FALSE.
 !
 !  Initialize the adjoint model always from rest.
 !

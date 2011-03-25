@@ -27,7 +27,7 @@
            FFLAGS := -heap-arrays -fp-model precise
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
-          LDFLAGS := -Vaxlib
+          LDFLAGS :=
                AR := ar
           ARFLAGS := r
             MKDIR := mkdir -p
