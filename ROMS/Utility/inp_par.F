@@ -1201,21 +1201,21 @@
             Npts=load_i(Nval, Rval, 1, NCV)
 # if defined FT_EIGENMMODES || defined AFT_EIGENMODES
             IF (NCV.lt.(2*NEV+1)) THEN
-              IF (Master) WRITE (out,260) 'NCV',                        &
+              IF (Master) WRITE (out,260) 'NCV = ', NCV,                &
      &                       'Must be greater than or equal to 2*NEV+1'
               exit_flag=5
               RETURN
             END IF
 # elif defined OPT_PERTURBATION
             IF (NCV.lt.(2*NEV)) THEN
-              IF (Master) WRITE (out,260) 'NCV',                        &
+              IF (Master) WRITE (out,260) 'NCV = ', NCV,                &
      &                       'Must be greater than or equal to 2*NEV'
               exit_flag=5
               RETURN
             END IF
 # else
             IF (NCV.lt.(2*NEV)) THEN
-              IF (Master) WRITE (out,260) 'NCV',                        &
+              IF (Master) WRITE (out,260) 'NCV = ', NCV,                &
      &                                    'Must be greater than NEV'
               exit_flag=5
               RETURN
@@ -1489,10 +1489,10 @@
             Npts=load_i(Nval, Rval, Ngrids, Vstretching)
             DO ng=1,Ngrids
               IF ((Vstretching(ng).lt.0).or.                            &
-     &            (Vstretching(ng).gt.3)) THEN
+     &            (Vstretching(ng).gt.4)) THEN
                 IF (Master) WRITE (out,260) 'Vstretching = ',           &
      &                                      Vstretching(ng),            &
-     &                                      'Must between 1 and 3'
+     &                                      'Must between 1 and 4'
                 exit_flag=5
                 RETURN
               END IF
@@ -3201,7 +3201,7 @@
             Npts=load_i(Nval, Rval, Ngrids, nFfiles)
             DO ng=1,Ngrids
               IF (nFfiles(ng).le.0) THEN
-                IF (Master) WRITE (out,260) 'NFFILES',                  &
+                IF (Master) WRITE (out,260) 'NFFILES', nFfiles(ng),     &
      &                            'Must be equal or greater than one.'
                 exit_flag=4
                 RETURN
@@ -3826,7 +3826,7 @@
      &          'Bottom roughness (m).'
 #ifdef BBL_MODEL
           IF (Zob(ng).le.0.0_r8) THEN
-            WRITE (out,260) 'Zob.',                                     &
+            WRITE (out,265) 'Zob = ', Zob(ng),                          &
      &            'It must be greater than zero when BBL is activated.'
             exit_flag=5
             RETURN
@@ -3841,7 +3841,7 @@
           WRITE (out,200) blk_ZQ(ng), 'blk_ZQ',                         &
      &          'Height (m) of surface air humidity measurement.'
           IF (blk_ZQ(ng).le.0.0_r8) THEN
-            WRITE (out,260) 'blk_ZQ.',                                  &
+            WRITE (out,265) 'blk_ZQ = ', blk_ZQ(ng),                    &
      &            'It must be greater than zero.'
             exit_flag=5
             RETURN
@@ -3849,7 +3849,7 @@
           WRITE (out,200) blk_ZT(ng), 'blk_ZT',                         &
      &          'Height (m) of surface air temperature measurement.'
           IF (blk_ZT(ng).le.0.0_r8) THEN
-            WRITE (out,260) 'blk_ZT.',                                  &
+            WRITE (out,265) 'blk_ZT = ', blk_ZT(ng),                    &
      &            'It must be greater than zero.'
             exit_flag=5
             RETURN
@@ -3857,7 +3857,7 @@
           WRITE (out,200) blk_ZW(ng), 'blk_ZW',                         &
      &          'Height (m) of surface winds measurement.'
           IF (blk_ZW(ng).le.0.0_r8) THEN
-            WRITE (out,260) 'blk_ZW.',                                  &
+            WRITE (out,265) 'blk_ZW = ', blk_ZW(ng),                    &
      &            'It must be greater than zero.'
             exit_flag=5
             RETURN
@@ -3873,7 +3873,7 @@
           WRITE (out,120) lmd_Jwt(ng), 'lmd_Jwt',                       &
      &          'Jerlov water type.'
           IF ((lmd_Jwt(ng).lt.1).or.(lmd_Jwt(ng).gt.5)) THEN
-            WRITE (out,260) 'lmd_Jwt.',                                 &
+            WRITE (out,260) 'lmd_Jwt = ', lmd_Jwt(ng),                  &
      &            'It must between one and five.'
             exit_flag=5
             RETURN
@@ -3884,7 +3884,7 @@
      &          'Deepest level to apply surface stress as a',           &
      &          'bodyforce.'
           IF ((levsfrc(ng).lt.1).or.(levsfrc(ng).gt.N(ng))) THEN
-            WRITE (out,260) 'levsfrc.',                                 &
+            WRITE (out,260) 'levsfrc = ', levsfrc(ng),                  &
      &            'Out of range surface bodyforce level.'
             exit_flag=5
             RETURN
@@ -3893,7 +3893,7 @@
      &          'Shallowest level to apply bottom stress as a',         &
      &          'bodyforce.'
           IF ((levbfrc(ng).lt.1).or.(levbfrc(ng).gt.N(ng))) THEN
-            WRITE (out,260) 'levbfrc.',                                 &
+            WRITE (out,260) 'levbfrc = ', levbfrc(ng),                  &
      &            'Out of range bottom bodyforce level.'
             exit_flag=5
             RETURN
@@ -3909,9 +3909,15 @@
      &          'S-coordinate surface control parameter.'
           WRITE (out,200) theta_b(ng), 'theta_b',                       &
      &          'S-coordinate bottom  control parameter.'
-          WRITE (out,160) Tcline(ng), 'Tcline',                         &
-     &          'S-coordinate surface/bottom layer width (m) used',     &
-     &          'in vertical coordinate stretching.'
+          IF (Tcline(ng).gt.1.0E+5_r8) THEN
+            WRITE (out,210) Tcline(ng), 'Tcline',                       &
+     &            'S-coordinate surface/bottom layer width (m) used',   &
+     &            'in vertical coordinate stretching.'
+          ELSE
+            WRITE (out,160) Tcline(ng), 'Tcline',                       &
+     &            'S-coordinate surface/bottom layer width (m) used',   &
+     &            'in vertical coordinate stretching.'
+          END IF
 #endif
           WRITE (out,140) rho0, 'rho0',                                 &
      &          'Mean density (kg/m3) for Boussinesq approximation.'
@@ -3939,7 +3945,7 @@
           END DO
 # ifdef SCORRECTION
           IF (Tnudg(isalt,ng).le.0.0_r8) THEN
-            WRITE (out,260) 'Tnudg(isalt).',                            &
+            WRITE (out,265) 'Tnudg(isalt) = ', Tnudg(isalt,ng),         &
      &            'Must be greater than zero for salt flux correction.'
             exit_flag=5
             RETURN
@@ -3991,7 +3997,7 @@
           WRITE (out,120) KstrS(ng), 'KstrS',                           &
      &          'Deepest level whose ADM sensitivity is required.'
           IF ((KstrS(ng).lt.1).or.(KstrS(ng).gt.N(ng))) THEN
-            WRITE (out,260) 'KstrS',                                    &
+            WRITE (out,260) 'KstrS = ', KstrS(ng),                      &
      &            'Out of range ADM sensitivity starting level.'
             exit_flag=5
             RETURN
@@ -3999,7 +4005,7 @@
           WRITE (out,120) KendS(ng), 'KendS',                           &
      &          'Shallowest level whose ADM sensitivity is required.'
           IF ((KendS(ng).lt.1).or.(KendS(ng).gt.N(ng))) THEN
-            WRITE (out,260) 'KendS',                                    &
+            WRITE (out,260) 'KendS = ', KendS(ng),                      &
      &            'Out of range ADM sensitivity level.'
             exit_flag=5
             RETURN
@@ -5299,7 +5305,10 @@
  240  FORMAT (/,' Generic User Parameters:',/)
  250  FORMAT (1p,e11.4,2x,'user(',i2.2,')',t30,                         &
      &        'User parameter ',i2.2,'.')
- 260  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,/,15x,a)
+ 260  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,           &
+     &        i4,/,15x,a)
+ 265  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,           &
+     &        1p,e11.4,/,15x,a)
  270  FORMAT (/,' READ_PHYPAR - could not find input file:  ',a)
  280  FORMAT (/,' READ_PHYPAR - variable info not yet loaded, ', a)
  290  FORMAT (/,' READ_PHYPAR - Invalid dimension parameter, ',a,i4,    &

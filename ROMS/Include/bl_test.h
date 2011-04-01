@@ -9,7 +9,8 @@
 ** Boundary Layers Test.
 **
 ** Application flag:   BL_TEST
-** Input script:       ocean_bl_test.in
+** Input scripts:      ocean_bl_test.in
+**                     stations_bl_test.in
 */
 
 #define UV_ADV
@@ -36,11 +37,13 @@
 #define EAST_KRADIATION
 #define EAST_TRADIATION
 #define EAST_VOLCONS
+
 #undef  MY25_MIXING
 #ifdef MY25_MIXING
 # define N2S2_HORAVG
 # define KANTHA_CLAYSON
 #endif
+
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
@@ -50,6 +53,7 @@
 # define LMD_NONLOCAL
 # define LMD_DDMIX
 #endif
+
 #define BULK_FLUXES
 #ifdef BULK_FLUXES
 # define LONGWAVE
@@ -63,7 +67,8 @@
 # define ANA_SMFLUX
 # define ANA_STFLUX
 #endif
-#define SG_BBL
+
+#undef SG_BBL
 #ifdef SG_BBL
 # define SG_CALC_UB
 # define SG_CALC_ZNOT
@@ -72,6 +77,7 @@
 #else
 # define UV_QDRAG
 #endif
+
 #define ANA_GRID
 #define ANA_INITIAL
 #define ALBEDO

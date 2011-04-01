@@ -222,14 +222,14 @@
 ! Set vertical, terrain-following coordinates transformation equation and
 ! stretching function (see below for details), [1:Ngrids].
 
-  Vtransform == 1                          ! transformation equation
- Vstretching == 1                          ! stretching function
+  Vtransform == 2                          ! transformation equation
+ Vstretching == 4                          ! stretching function
 
 ! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 
-     THETA_S == 1.0d-4                     ! surface stretching parameter
+     THETA_S == 0.0d0                      ! surface stretching parameter
      THETA_B == 0.0d0                      ! bottom  stretching parameter
-      TCLINE == 50.0d0                     ! critical depth (m)
+      TCLINE == 1.0d+16                    ! critical depth (m)
 
 ! Mean Density and Brunt-Vaisala frequency.
 
@@ -961,7 +961,7 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !------------------------------------------------------------------------------
 !
 !  LmultiGST   Logical switch (TRUE/FALSE) to write out one GST analysis
-!              eigenvector per file.
+!              eigenvector per history file.
 !
 !  LrstGST     Logical switch (TRUE/FALSE) to restart GST analysis. If TRUE,
 !              the check pointing data is read in from the GST restart NetCDF
@@ -1203,7 +1203,7 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 ! The parameters below must be consistent in all input fields associated with
 ! the vertical grid.  The same vertical grid transformation (depths) needs to
 ! be used when preparing initial conditions, boundary conditions, climatology,
-! observations, and so on. Please check
+! observations, and so on. Please check:
 !
 !   https://www.myroms.org/wiki/index.php/Vertical_S-coordinate
 !
@@ -1221,7 +1221,7 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !
 !                      Zo(x,y,s)=hc*s+[h(x,y)-hc]*C(s)
 !
-!                (2) New formulation (A. Shchepetkin),
+!                (2) Improved formulation (A. Shchepetkin, 2005),
 !                    Vtransform=2
 !
 !                      z(x,y,s,t)=zeta(x,y,t)*[zeta(x,y,t)+h(x,y)]*Zo(x,y,s)
@@ -1229,6 +1229,16 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !                    where
 !
 !                      Zo(x,y,s)=[hc*s(k)+h(x,y)*C(k)]/[hc+h(x,y)]
+!
+!                    The true sigma-coordinate system is recovered as hc goes
+!                    to INFINITY. This is useful when configuring applications
+!                    with flat bathymetry and uniform level thickness.
+!                    Practically, you can achieve this by setting:
+!
+!                      THETA_S = 0.0d0
+!                      THETA_B = 0.0d0
+!                      TCLINE  = 1.0d+17       (a large number)
+!
 !
 !  Vstretching Vertical stretching function, C(s):
 !
@@ -1239,7 +1249,7 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !                         theta_b*[-0.5+0.5*TANH(theta_s*(s+0.5))/
 !                                           TANH(0.5*theta_s)]
 !
-!                (2) A. Shchepetkin function,
+!                (2) A. Shchepetkin (2005) function,
 !                    Vstretching=2
 !
 !                      C(s)=Cweight*Csur(s)+(1-Cweight)*Cbot(s)
@@ -1268,7 +1278,23 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !
 !                      Cweight=0.5*(1-TANH(Hscale*(s+0.5))
 !
-!              Many other stretching functions (Vstretching>3) are possible
+!                (4) A. Shchepetkin (2010) improved double stretching function,
+!                    Vstretching=4
+!
+!                      C(s)=[1-COSH(theta_s*s)]/[COSH(theta_s)-1]
+!
+!                    with bottom refinement
+!
+!                      C(s)=[EXP(theta_b*C(s))-1]/[1-EXP(-theta_b)]
+!
+!                    The resulting double transformation is continuous with
+!                    respect control parameters theta_s and theta_b with a
+!                    meaningful range of:
+!
+!                      0 <  theta_s <= 10.0
+!                      0 <= theta_b <=  4.0
+!
+!              Many other stretching functions (Vstretching>4) are possible
 !              provided that:
 !
 !                * C(s) is a dimensionless, nonlinear, monotonic function.
@@ -1282,6 +1308,13 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !                  free-surface and C(-1)=-1 corresponding to the bathymetry.
 !
 !              These functions are coded in routine "Utility/set_scoord.F".
+!
+! Due to its functionality and properties, the default and recommended vertical
+! coordinates transformation is:
+!
+!              Vtransform  = 2
+!              Vstretching = 4
+!
 !
 !  THETA_S     S-coordinate surface control parameter. The range of optimal
 !              values depends on the vertical stretching function, C(s).

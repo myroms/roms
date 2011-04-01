@@ -96,26 +96,26 @@
      &                       FORCES(ng) % bvstr,                        &
      &                       OCEAN(ng) % t,                             &
 # if defined BEDLOAD_SOULSBY
-     &                   FORCES(ng) % Hwave,                            &
-     &                   FORCES(ng) % Lwave,                            &
-     &                   GRID(ng) % angler,                             &
+     &                       FORCES(ng) % Hwave,                        &
+     &                       FORCES(ng) % Lwave,                        &
+     &                       GRID(ng) % angler,                         &
 # endif
 # if defined SED_MORPH
-     &                   SEDBED(ng) % bed_thick,                        &
+     &                       SEDBED(ng) % bed_thick,                    &
 # endif
 # if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
-     &                   GRID(ng) % h,                                  &
-     &                   GRID(ng) % om_r,                               &
-     &                   GRID(ng) % om_u,                               &
-     &                   GRID(ng) % on_r,                               &
-     &                   GRID(ng) % on_v,                               &
-     &                   SEDBED(ng) % bedldu,                           &
-     &                   SEDBED(ng) % bedldv,                           &
+     &                       GRID(ng) % h,                              &
+     &                       GRID(ng) % om_r,                           &
+     &                       GRID(ng) % om_u,                           &
+     &                       GRID(ng) % on_r,                           &
+     &                       GRID(ng) % on_v,                           &
+     &                       SEDBED(ng) % bedldu,                       &
+     &                       SEDBED(ng) % bedldv,                       &
 # endif
-     &                   SEDBED(ng) % bed,                              &
-     &                   SEDBED(ng) % bed_frac,                         &
-     &                   SEDBED(ng) % bed_mass,                         &
-     &                   SEDBED(ng) % bottom)
+     &                       SEDBED(ng) % bed,                          &
+     &                       SEDBED(ng) % bed_frac,                     &
+     &                       SEDBED(ng) % bed_mass,                     &
+     &                       SEDBED(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
 # endif

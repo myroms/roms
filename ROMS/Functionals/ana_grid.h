@@ -824,7 +824,7 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           val1=(xr(i,j)-0.5_r8*Xsize)/40000.0_r8
-          val2=(yr(i,j)-0.5_r8*Ysize)/40000.0_r8
+          val2=(yr(i,j)-0.5_r8*Esize)/40000.0_r8
           h(i,j)=depth-4500.0_r8*EXP(-(val1*val1+val2*val2))
         END DO
       END DO

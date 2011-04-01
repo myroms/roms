@@ -682,7 +682,6 @@
 **                                                                           **
 ** Idealized Test Problems:                                                  **
 **                                                                           **
-** A4DVAR_TOY          4DVAR Data Assimilation Toy                           **
 ** BASIN               Big Bad Basin Example                                 **
 ** BENCHMARK           Benchmark Tests (small, Medium, big grids)            **
 ** BIO_TOY             One-dimension (vertical) Biology Toy                  **
