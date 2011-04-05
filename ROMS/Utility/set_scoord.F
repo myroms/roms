@@ -444,7 +444,7 @@
             Csur=-sc_w**2
           END IF
           IF (theta_b(ng).gt.0.0_r8) THEN
-            Cbot=(EXP(theta_b(ng)*Csur)-1.0-r8)/                        &
+            Cbot=(EXP(theta_b(ng)*Csur)-1.0_r8)/                        &
      &           (1.0_r8-EXP(-theta_b(ng)))
             SCALARS(ng)%Cs_w(k)=Cbot
           ELSE
@@ -458,13 +458,13 @@
           sc_r=ds*(REAL(k-N(ng),r8)-0.5_r8)
           SCALARS(ng)%sc_r(k)=sc_r
           IF (theta_s(ng).gt.0.0_r8) THEN
-            Csur=(1.0_r8-COSH(theta_s(ng)*sc_w))/                       &
+            Csur=(1.0_r8-COSH(theta_s(ng)*sc_r))/                       &
      &           (COSH(theta_s(ng))-1.0_r8)
           ELSE
             Csur=-sc_r**2
           END IF
           IF (theta_b(ng).gt.0.0_r8) THEN
-            Cbot=(EXP(theta_b(ng)*Csur)-1.0-r8)/                        &
+            Cbot=(EXP(theta_b(ng)*Csur)-1.0_r8)/                        &
      &           (1.0_r8-EXP(-theta_b(ng)))
             SCALARS(ng)%Cs_r(k)=Cbot
           ELSE
