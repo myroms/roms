@@ -365,7 +365,7 @@
             Iimport=Iimport+1
             DO i=1,Asize
               A(i)=MAX(0.0_r8,A(i))
-              IF (A(i).eq.1.0_r8/0.0_r8) THEN
+              IF (A(i).eq.Infinity) THEN
                 A(i)=Lwave_max
               END IF
             END DO

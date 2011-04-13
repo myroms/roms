@@ -33,7 +33,7 @@
             MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
-	     PERL := perl
+             PERL := perl
              TEST := test
 
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
@@ -46,35 +46,18 @@ ifdef USE_LARGE
            FFLAGS += -q64
           ARFLAGS += -X 64
           LDFLAGS += -bmaxdata:0x200000000
-
- ifdef USE_NETCDF4
-    NETCDF_INCDIR ?= /usr/local/pkg/netcdf4/include
-    NETCDF_LIBDIR ?= /usr/local/pkg/netcdf4/lib
- else
-    NETCDF_INCDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.0_64/include
-    NETCDF_LIBDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.0_64/lib
- endif
-
 else
           LDFLAGS += -bmaxdata:0x70000000
-
- ifdef USE_NETCDF4
-    NETCDF_INCDIR ?= /usr/local/netcdf4/include
-    NETCDF_LIBDIR ?= /usr/local/netcdf4/lib
-      HDF5_LIBDIR ?= /usr/local/hdf5/lib
- else
-    NETCDF_INCDIR ?= /usr/local/include
-    NETCDF_LIBDIR ?= /usr/local/lib
- endif
-
 endif
 
-             LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 ifdef USE_NETCDF4
-             LIBS += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
- ifdef USE_DAP
-             LIBS += $(shell curl-config --libs)
- endif
+        NC_CONFIG ?= nc-config
+    NETCDF_INCDIR ?= $(shell $(NC_CONFIG) --prefix)/include
+             LIBS := $(shell $(NC_CONFIG) --flibs)
+else
+    NETCDF_INCDIR ?= /usr/local/include
+    NETCDF_LIBDIR ?= /usr/local/lib
+             LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 endif
 
 ifdef USE_ARPACK

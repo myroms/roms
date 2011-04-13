@@ -329,6 +329,7 @@
 !    Cp            Specific heat for seawater (Joules/Kg/degC).
 !    Csolar        Solar irradiantion constant (W/m2).
 !    Eradius       Earth equatorial radius (m).
+!    Infinity      Value resulting when dividing by zero.
 !    StefBo        Stefan-Boltzmann constant (W/m2/K4).
 !    emmiss        Infrared emmissivity.
 !    g             Acceleration due to gravity (m/s2).
@@ -338,6 +339,7 @@
 !
         real(r8) :: Cp = 3985.0_r8              ! Joules/kg/degC
         real(r8) :: Csolar = 1353.0_r8          ! 1360-1380 W/m2
+        real(r8) :: Infinity                    ! Infinity = 1.0/0.0
         real(r8) :: Eradius = 6371315.0_r8      ! m
         real(r8) :: StefBo = 5.67E-8_r8         ! Watts/m2/K4
         real(r8) :: emmiss = 0.97_r8            ! non_dimensional
@@ -1659,6 +1661,7 @@
 !
       integer :: i, ic, j, ng, itrc
 
+      real(r8) :: one, zero
       real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
@@ -1960,6 +1963,9 @@
 !  Initialize several scalar variables.
 !-----------------------------------------------------------------------
 !
+      one=1.0_r8
+      zero=0.0_r8
+      Infinity=one/zero
       gorho0=g/rho0
       DO ng=1,Ngrids
         ntfirst(ng)=1

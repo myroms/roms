@@ -116,7 +116,8 @@
             ELSE IF (var_Aint(i).gt.0) THEN    ! no CF compliance
               clength=REAL(var_Aint(i),r8)     ! attribute is an integer
             ELSE
-              IF (Master) WRITE (stdout,10) TRIM(TvarName)
+              IF (Master) WRITE (stdout,10) TRIM(var_Aname(i)),         &
+     &                                      TRIM(TvarName)
               exit_flag=2
               RETURN
             END IF

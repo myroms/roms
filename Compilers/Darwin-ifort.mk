@@ -43,19 +43,13 @@
 #
 
 ifdef USE_NETCDF4
-    NETCDF_INCDIR ?= /usr/local/netcdf4/include
-    NETCDF_LIBDIR ?= /usr/local/netcdf4/lib
-      HDF5_LIBDIR ?= /usr/local/hdf5/lib
+        NC_CONFIG ?= nc-config
+    NETCDF_INCDIR ?= $(shell $(NC_CONFIG) --prefix)/include
+             LIBS := $(shell $(NC_CONFIG) --flibs)
 else
-    NETCDF_INCDIR ?= /usr/local/netcdf-3.6.2-intel/include
-    NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.2-intel/lib
-endif
+    NETCDF_INCDIR ?= /usr/local/include
+    NETCDF_LIBDIR ?= /usr/local/lib
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
-ifdef USE_NETCDF4
-             LIBS += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
- ifdef USE_DAP
-             LIBS += $(shell curl-config --libs)
- endif
 endif
 
 ifdef USE_ARPACK
@@ -155,9 +149,9 @@ $(SCRATCH_DIR)/swanpre2.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swanser.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swmod1.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swmod2.o: FFLAGS += -nofree
-$(SCRATCH_DIR)/m_constants.o: FFLAGS += -ffree
-$(SCRATCH_DIR)/m_fileio.o: FFLAGS += -ffree
-$(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += -ffree
-$(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += -ffree
+$(SCRATCH_DIR)/m_constants.o: FFLAGS += -free
+$(SCRATCH_DIR)/m_fileio.o: FFLAGS += -free
+$(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += -free
+$(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += -free
 
 endif

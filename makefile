@@ -122,12 +122,6 @@ MY_CPP_FLAGS ?=
 
  USE_NETCDF4 ?=
 
-#  If applicable, activate Data Access Protocol (like OPeNDAP) support
-#  for input NetCDF files.  This is only possible for NetCDF library
-#  version 4.1.1 or higher.
-
-     USE_DAP ?=
-
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
 #  the system and the compiler. We are going to build up the name of the

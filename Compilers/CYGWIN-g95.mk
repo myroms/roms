@@ -46,19 +46,13 @@
 #
 
 ifdef USE_NETCDF4
-    NETCDF_INCDIR ?= /usr/g95soft/netcdf4/include
-    NETCDF_LIBDIR ?= /usr/g95soft/netcdf4/lib
-      HDF5_LIBDIR ?= /usr/g95soft/hdf5/lib
+        NC_CONFIG ?= nc-config
+    NETCDF_INCDIR ?= $(shell $(NC_CONFIG) --prefix)/include
+             LIBS := $(shell $(NC_CONFIG) --flibs)
 else
-    NETCDF_INCDIR ?= /usr/g95soft/netcdf/include
-    NETCDF_LIBDIR ?= /usr/g95soft/netcdf/lib
-endif
+    NETCDF_INCDIR ?= /usr/local/include
+    NETCDF_LIBDIR ?= /usr/local/lib
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
-ifdef USE_NETCDF4
-             LIBS += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
- ifdef USE_DAP
-             LIBS += $(shell curl-config --libs)
- endif
 endif
 
 ifdef USE_ARPACK

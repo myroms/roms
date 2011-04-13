@@ -1845,7 +1845,7 @@
   10  FORMAT (/,' WRT_AVG - error while writing variable: ',a,/,11x,    &
      &        'into averages NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_AVG   - wrote averaged fields into time ',        &
-     &        'record =',t72,i7.7)
+     &        'record =',t70,i7.7)
 #else
       SUBROUTINE wrt_avg
 #endif

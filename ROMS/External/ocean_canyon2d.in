@@ -72,8 +72,8 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES == 103680
-          DT == 20.0d0
+      NTIMES == 414720
+          DT == 5.0d0
      NDTFAST == 1
 
 ! Model iteration loops parameters.
@@ -95,7 +95,7 @@
 
        NRREC == 0
    LcycleRST == T
-        NRST == 8640
+        NRST == 17280
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -103,25 +103,25 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 8640
+        NHIS == 17280
      NDEFHIS == 0
       NTSAVG == 1
-        NAVG == 8640
+        NAVG == 17280
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 8640
+        NDIA == 17280
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 8640
+        NTLM == 17280
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 8640
+        NADJ == 17280
      NDEFADJ == 0
-        NSFF == 8640
-        NOBC == 8640
+        NSFF == 17280
+        NOBC == 17280
 
 ! GST output and check pointing restart parameters.
 
