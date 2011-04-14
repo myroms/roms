@@ -197,6 +197,58 @@
       END IF
 # endif
 !
+!  Clear forcing arrays on first call to this routine.
+!
+      IF (iic(ng).eq.ntstart(ng)-1) THEN
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+           f_zetaG(i,j,1)=0.0_r8
+           f_zetaG(i,j,2)=0.0_r8
+          END DO
+        END DO
+# ifndef SOLVE3D
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+             f_ubarG(i,j,1)=0.0_r8
+             f_ubarG(i,j,2)=0.0_r8
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+             f_vbarG(i,j,1)=0.0_r8
+             f_vbarG(i,j,2)=0.0_r8
+          END DO
+        END DO
+# else
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+             f_uG(i,j,k,1)=0.0_r8
+             f_uG(i,j,k,2)=0.0_r8
+            END DO
+          END DO
+        END DO
+        DO k=1,N(ng)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+             f_vG(i,j,k,1)=0.0_r8
+             f_vG(i,j,k,2)=0.0_r8
+            END DO
+          END DO
+        END DO
+        DO itrc=1,NT(ng)
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+               f_tG(i,j,k,1,itrc)=0.0_r8
+               f_tG(i,j,k,2,itrc)=0.0_r8
+              END DO
+            END DO
+          END DO
+        END DO
+# endif
+      END IF
+!
 !  Gather free-surface weak-constraint forcing terms.
 !
       IF (LwrtState2d(ng)) THEN

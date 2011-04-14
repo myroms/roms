@@ -3409,14 +3409,6 @@
 #endif
 #ifdef WEAK_CONSTRAINT
 !
-!  If weak constraint assimilation, ensure that nADJ=nHIS.
-!
-        IF (nADJ(ng).lt.ntimes(ng)) THEN
-          nADJ(ng)=nHIS(ng)
-        END IF
-#endif
-#ifdef WEAK_CONSTRAINT
-!
 !  If weak constraint assimilation, set tangent linear number of
 !  time-steps between writing of fields the same as the basic
 !  state.  Disallow recycling.

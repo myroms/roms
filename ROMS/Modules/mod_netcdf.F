@@ -133,7 +133,7 @@
 !  Netcdf file creation mode flag.
 !
 #if defined HDF5
-      integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
+      integer :: CMODE = nf90_hdf5         ! NetCDF-4/HDF5 format file
 #else
       integer :: CMODE = nf90_clobber      ! NetCDF classic format file
 #endif
@@ -143,6 +143,8 @@
       integer :: shuffle = 1
       integer :: deflate = 1
       integer :: deflate_level = 1
+
+#ifdef PARALLEL_IO
 !
 !  Set parallel I/O access for processing non-tiled and tiled data.
 !  Two modes of parallel I/O access are possible: Independent and
@@ -167,11 +169,12 @@
 !!    integer, parameter :: IO_nontiled_access = 0   ! nf90_independent
 !!    integer, parameter :: IO_tiled_access    = 1   ! nf90_independent
 !!
-      integer, parameter :: IO_nontiled_access = 1   ! nf90_collective
-      integer, parameter :: IO_tiled_access    = 1   ! nf90_collective
-
+      integer, parameter :: IO_nontiled_access = nf90_independent
+      integer, parameter :: IO_tiled_access    = nf90_collective
+#endif
+!
       CONTAINS
-
+!
       SUBROUTINE netcdf_get_dim (ng, model, ncname, DimName, DimSize,   &
      &                           DimID)
 !
@@ -3763,7 +3766,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -3900,7 +3902,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4031,7 +4032,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4162,7 +4162,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4293,7 +4292,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4424,7 +4422,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4562,7 +4559,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4693,7 +4689,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4827,7 +4822,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -4978,7 +4972,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -5125,7 +5118,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
@@ -5334,7 +5326,7 @@
           mytotal(1)=LEN_TRIM(A)
           status=nf90_put_var(my_ncid, my_varid, A, mystart, mytotal)
           IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),             &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile)
             exit_flag=3
             ioerror=status
@@ -5719,8 +5711,13 @@
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
 !
-      status=nf90_create_par(TRIM(ncname), nf90_netcdf4,                &
-     &                       OCN_COMM_WORLD, MP_INFO, ncid)
+!!    status=nf90_create_par(TRIM(ncname), nf90_netcdf4,                &
+!!   &                       OCN_COMM_WORLD, MP_INFO, ncid)
+      status=nf90_create(path = TRIM(ncname),                           &
+     &                   cmode = nf90_hdf5,                             &
+     &                   ncid = ncid,                                   &
+     &                   comm = OCN_COMM_WORLD,                         &
+     &                   info = MP_INFO)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
         exit_flag=3
@@ -5891,14 +5888,29 @@
 #if defined PARALLEL_IO && defined DISTRIBUTE
       SELECT CASE (omode)
         CASE (0)
-          status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
-     &                         OCN_COMM_WORLD, MP_INFO, ncid)
+!!        status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
+!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+          status=nf90_open(path = TRIM(ncname),                         &
+     &                     mode = nf90_nowrite,                         &
+     &                     ncid = ncid,                                 &
+     &                     comm = OCN_COMM_WORLD,                       &
+     &                     info = MP_INFO)
         CASE (1)
-          status=nf90_open_par(TRIM(ncname), nf90_write,                &
-     &                         OCN_COMM_WORLD, MP_INFO, ncid)
+!!        status=nf90_open_par(TRIM(ncname), nf90_write,                &
+!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+          status=nf90_open(path = TRIM(ncname),                         &
+     &                     mode = nf90_write,                           &
+     &                     ncid = ncid,                                 &
+     &                     comm = OCN_COMM_WORLD,                       &
+     &                     info = MP_INFO)
         CASE DEFAULT
-          status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
-     &                         OCN_COMM_WORLD, MP_INFO, ncid)
+!!        status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
+!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+          status=nf90_open(path = TRIM(ncname),                         &
+     &                     mode = nf90_nowrite,                         &
+     &                     ncid = ncid,                                 &
+     &                     comm = OCN_COMM_WORLD,                       &
+     &                     info = MP_INFO)
       END SELECT
       IF (status.ne.nf90_noerr) THEN
         IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
@@ -6072,7 +6084,7 @@
       ioerror=ibuffer(2)
 #endif
 !
-  10  FORMAT (/,' NETCDF_REDEF - unable to put in definition mode',      &
+  10  FORMAT (/,' NETCDF_REDEF - unable to put in definition mode',     &
      &        ' file:',/,16x,a,/,16x,'call from:',2x,a)
 
       RETURN

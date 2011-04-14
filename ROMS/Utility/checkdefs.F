@@ -19,6 +19,8 @@
       USE mod_scalars
       USE mod_strings
 !
+      USE strings_mod, ONLY : uppercase
+!
       implicit none
 !
 !  Local variable declarations.
@@ -649,7 +651,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DEEPWATER_WAVES,'
 #endif
-#if defined DEFLATE && defined NETCDF4
+#if defined DEFLATE && defined HDF5
       IF (Master) WRITE (stdout,20) 'DEFLATE',                          &
      &   'Setting compression in output NetCDF-4/HDF5 files.'
       is=LEN_TRIM(Coptions)+1
@@ -999,6 +1001,12 @@
       Coptions(is:is+12)=' GLS_MIXING,'
       ivmix=ivmix+1
 #endif
+#ifdef HDF5
+      IF (Master) WRITE (stdout,20) 'HDF5',                             &
+     &   'Creating NetCDF-4/HDF5 format files.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+6)=' HDF5,'
+#endif
 #if defined HOLLING_GRAZING && defined NEMURO
       IF (Master) WRITE (stdout,20) 'HOLLING_GRAZING',                  &
      &   'Holling-type s-shaped grazing algorithm, Implicit.'
@@ -1294,12 +1302,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' NEMURO,'
       ibiology=ibiology+1
-#endif
-#ifdef NETCDF4
-      IF (Master) WRITE (stdout,20) 'NETCDF4',                          &
-     &   'Creating NetCDF-4/HDF5 format files.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' NETCDF4,'
 #endif
 #if defined NL_BULK_FLUXES
       IF (Master) WRITE (stdout,20) 'NL_BULK_FLUXES',                   &
