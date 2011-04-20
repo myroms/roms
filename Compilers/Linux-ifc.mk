@@ -79,12 +79,6 @@ ifdef USE_DEBUG
            FFLAGS += -g -CA -CB -CS -CU
 else
            FFLAGS += -ip -O3
- ifeq ($(CPU),i686)
-           FFLAGS += -pc80 -xW
- endif
- ifeq ($(CPU),x86_64)
-           FFLAGS += -xW
- endif
 endif
 
 ifdef USE_MCT

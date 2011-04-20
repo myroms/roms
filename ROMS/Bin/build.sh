@@ -240,33 +240,23 @@ if ($?USE_MY_LIBS) then
       setenv ESMF_COMM            mpich
       setenv ESMF_SITE            default
 
-      if ($?USE_MPI) then
-        if ($which_MPI == "mpich" ) then
-          setenv ESMF_DIR           /opt/intelsoft/mpich/esmf
-          setenv MCT_INCDIR         /opt/intelsoft/mpich/mct/include
-          setenv MCT_LIBDIR         /opt/intelsoft/mpich/mct/lib
-        else if ($which_MPI == "mpich2" ) then
-          setenv ESMF_DIR           /opt/intelsoft/mpich2/esmf
-          setenv MCT_INCDIR         /opt/intelsoft/mpich2/mct/include
-          setenv MCT_LIBDIR         /opt/intelsoft/mpich2/mct/lib
-        else if ($which_MPI == "openmpi" ) then
-          setenv ESMF_DIR           /opt/intelsoft/openmpi/esmf
-          setenv MCT_INCDIR         /opt/intelsoft/openmpi/mct/include
-          setenv MCT_LIBDIR         /opt/intelsoft/openmpi/mct/lib
-        endif
-      endif
-
       setenv ARPACK_LIBDIR        /opt/intelsoft/serial/ARPACK
       if ($?USE_MPI) then
         if ($which_MPI == "mpich" ) then
+          setenv ESMF_DIR         /opt/intelsoft/mpich/esmf
           setenv MCT_INCDIR       /opt/intelsoft/mpich/mct/include
           setenv MCT_LIBDIR       /opt/intelsoft/mpich/mct/lib
+          setenv PARPACK_LIBDIR   /opt/intelsoft/mpich/PARPACK
         else if ($which_MPI == "mpich2" ) then
+          setenv ESMF_DIR         /opt/intelsoft/mpich2/esmf
           setenv MCT_INCDIR       /opt/intelsoft/mpich2/mct/include
           setenv MCT_LIBDIR       /opt/intelsoft/mpich2/mct/lib
+          setenv PARPACK_LIBDIR   /opt/intelsoft/mpich2/PARPACK
         else if ($which_MPI == "openmpi" ) then
+          setenv ESMF_DIR         /opt/intelsoft/openmpi/esmf
           setenv MCT_INCDIR       /opt/intelsoft/openmpi/mct/include
           setenv MCT_LIBDIR       /opt/intelsoft/openmpi/mct/lib
+          setenv PARPACK_LIBDIR   /opt/intelsoft/openmpi/PARPACK
         endif
       endif
 
@@ -300,33 +290,23 @@ if ($?USE_MY_LIBS) then
       setenv ESMF_COMM            mpich
       setenv ESMF_SITE            default
 
-      if ($?USE_MPI) then
-        if ($which_MPI == "mpich" ) then
-          setenv ESMF_DIR           /opt/pgisoft/mpich/esmf
-          setenv MCT_INCDIR         /opt/pgisoft/mpich/mct/include
-          setenv MCT_LIBDIR         /opt/pgisoft/mpich/mct/lib
-        else if ($which_MPI == "mpich2" ) then
-          setenv ESMF_DIR           /opt/pgisoft/mpich2/esmf
-          setenv MCT_INCDIR         /opt/pgisoft/mpich2/mct/include
-          setenv MCT_LIBDIR         /opt/pgisoft/mpich2/mct/lib
-        else if ($which_MPI == "openmpi" ) then
-          setenv ESMF_DIR           /opt/pgisoft/openmpi/esmf
-          setenv MCT_INCDIR         /opt/pgisoft/openmpi/mct/include
-          setenv MCT_LIBDIR         /opt/pgisoft/openmpi/mct/lib
-        endif
-      endif
-
       setenv ARPACK_LIBDIR        /opt/pgisoft/serial/ARPACK
       if ($?USE_MPI) then
         if ($which_MPI == "mpich" ) then
+          setenv ESMF_DIR         /opt/pgisoft/mpich/esmf
           setenv MCT_INCDIR       /opt/pgisoft/mpich/mct/include
           setenv MCT_LIBDIR       /opt/pgisoft/mpich/mct/lib
+          setenv PARPACK_LIBDIR   /opt/pgisoft/mpich/PARPACK
         else if ($which_MPI == "mpich2" ) then
+          setenv ESMF_DIR         /opt/pgisoft/mpich2/esmf
           setenv MCT_INCDIR       /opt/pgisoft/mpich2/mct/include
           setenv MCT_LIBDIR       /opt/pgisoft/mpich2/mct/lib
+          setenv PARPACK_LIBDIR   /opt/pgisoft/mpich2/PARPACK
         else if ($which_MPI == "openmpi" ) then
+          setenv ESMF_DIR         /opt/pgisoft/openmpi/esmf
           setenv MCT_INCDIR       /opt/pgisoft/openmpi/mct/include
           setenv MCT_LIBDIR       /opt/pgisoft/openmpi/mct/lib
+          setenv PARPACK_LIBDIR   /opt/pgisoft/openmpi/PARPACK
         endif
       endif
 
@@ -360,26 +340,18 @@ if ($?USE_MY_LIBS) then
       setenv ESMF_COMM            mpich
       setenv ESMF_SITE            default
 
-      if ($?USE_MPI) then
-        if ($which_MPI == "mpich2" ) then
-          setenv ESMF_DIR           /opt/gfortransoft/mpich2/esmf
-          setenv MCT_INCDIR         /opt/gfortransoft/mpich2/mct/include
-          setenv MCT_LIBDIR         /opt/gfortransoft/mpich2/mct/lib
-        else if ($which_MPI == "openmpi" ) then
-          setenv ESMF_DIR           /opt/gfortransoft/openmpi/esmf
-          setenv MCT_INCDIR         /opt/gfortransoft/openmpi/mct/include
-          setenv MCT_LIBDIR         /opt/gfortransoft/openmpi/mct/lib
-        endif
-      endif
-
       setenv ARPACK_LIBDIR        /opt/gfortransoft/serial/ARPACK
       if ($?USE_MPI) then
         if ($which_MPI == "mpich2" ) then
+          setenv ESMF_DIR         /opt/gfortransoft/mpich2/esmf
           setenv MCT_INCDIR       /opt/gfortransoft/mpich2/mct/include
           setenv MCT_LIBDIR       /opt/gfortransoft/mpich2/mct/lib
+          setenv PARPACK_LIBDIR   /opt/gfortransoft/mpich2/PARPACK
         else if ($which_MPI == "openmpi" ) then
+          setenv ESMF_DIR         /opt/gfortransoft/openmpi/esmf
           setenv MCT_INCDIR       /opt/gfortransoft/openmpi/mct/include
           setenv MCT_LIBDIR       /opt/gfortransoft/openmpi/mct/lib
+          setenv PARPACK_LIBDIR   /opt/gfortransoft/openmpi/PARPACK
         endif
       endif
 

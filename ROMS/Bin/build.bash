@@ -232,164 +232,144 @@ fi
 if [ -n "${USE_MY_LIBS:+1}" ]; then
   case "$FORT" in
     ifort )
-      export            ESMF_OS=Linux
-      export      ESMF_COMPILER=ifort
-      export          ESMF_BOPT=O
-      export           ESMF_ABI=64
-      export          ESMF_COMM=mpich
-      export          ESMF_SITE=default
+      export             ESMF_OS=Linux
+      export       ESMF_COMPILER=ifort
+      export           ESMF_BOPT=O
+      export            ESMF_ABI=64
+      export           ESMF_COMM=mpich
+      export           ESMF_SITE=default
 
+      export       ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
         if [ "${which_MPI}" = "mpich" ]; then
-          export       ESMF_DIR=/opt/intelsoft/mpich/esmf
-          export     MCT_INCDIR=/opt/intelsoft/mpich/mct/include
-          export     MCT_LIBDIR=/opt/intelsoft/mpich/mct/lib
+          export        ESMF_DIR=/opt/intelsoft/mpich/esmf
+          export      MCT_INCDIR=/opt/intelsoft/mpich/mct/include
+          export      MCT_LIBDIR=/opt/intelsoft/mpich/mct/lib
+          export  PARPACK_LIBDIR=/opt/intelsoft/mpich/PARPACK
         elif [ "${which_MPI}" = "mpich2" ]; then
-          export       ESMF_DIR=/opt/intelsoft/mpich2/esmf
-          export     MCT_INCDIR=/opt/intelsoft/mpich2/mct/include
-          export     MCT_LIBDIR=/opt/intelsoft/mpich2/mct/lib
+          export        ESMF_DIR=/opt/intelsoft/mpich2/esmf
+          export      MCT_INCDIR=/opt/intelsoft/mpich2/mct/include
+          export      MCT_LIBDIR=/opt/intelsoft/mpich2/mct/lib
+          export  PARPACK_LIBDIR=/opt/intelsoft/mpich2/PARPACK
         elif [ "${which_MPI}" = "openmpi" ]; then
-          export       ESMF_DIR=/opt/intelsoft/openmpi/esmf
-          export     MCT_INCDIR=/opt/intelsoft/openmpi/mct/include
-          export     MCT_LIBDIR=/opt/intelsoft/openmpi/mct/lib
-        fi
-      fi
-
-      export        ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
-      if [ -n "${USE_MPI:+1}" ]; then
-        if [ "${which_MPI}" = "mpich" ]; then
-          export   PARPACK_LIBDIR=/opt/intelsoft/mpich/PARPACK
-        elif [ "${which_MPI}" = "mpich2" ]; then
-          export   PARPACK_LIBDIR=/opt/intelsoft/mpich2/PARPACK
-        elif [ "${which_MPI}" = "openmpi" ]; then
-          export   PARPACK_LIBDIR=/opt/intelsoft/openmpi/PARPACK
+          export        ESMF_DIR=/opt/intelsoft/openmpi/esmf
+          export      MCT_INCDIR=/opt/intelsoft/openmpi/mct/include
+          export      MCT_LIBDIR=/opt/intelsoft/openmpi/mct/lib
+          export  PARPACK_LIBDIR=/opt/intelsoft/openmpi/PARPACK
         fi
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           if [ "${which_MPI}" = "mpich" ]; then
-            export      NC_CONFIG=/opt/intelsoft/mpich/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/intelsoft/mpich/netcdf4/include
+            export     NC_CONFIG=/opt/intelsoft/mpich/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/intelsoft/mpich/netcdf4/include
           elif [ "${which_MPI}" = "mpich2" ]; then
-            export      NC_CONFIG=/opt/intelsoft/mpich2/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/intelsoft/mpich2/netcdf4/include
+            export     NC_CONFIG=/opt/intelsoft/mpich2/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/intelsoft/mpich2/netcdf4/include
           elif [ "${which_MPI}" = "openmpi" ]; then
-            export      NC_CONFIG=/opt/intelsoft/openmpi/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/intelsoft/openmpi/netcdf4/include
+            export     NC_CONFIG=/opt/intelsoft/openmpi/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/intelsoft/openmpi/netcdf4/include
           fi
         else
-          export        NC_CONFIG=/opt/intelsoft/serial/netcdf4/bin/nc-config
-          export    NETCDF_INCDIR=/opt/intelsoft/serial/netcdf4/include
+          export       NC_CONFIG=/opt/intelsoft/serial/netcdf4/bin/nc-config
+          export   NETCDF_INCDIR=/opt/intelsoft/serial/netcdf4/include
         fi
       else
-        export      NETCDF_INCDIR=/opt/intelsoft/serial/netcdf3/include
-        export      NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf3/lib
+        export     NETCDF_INCDIR=/opt/intelsoft/serial/netcdf3/include
+        export     NETCDF_LIBDIR=/opt/intelsoft/serial/netcdf3/lib
       fi
       ;;
 
     pgi )
-      export            ESMF_OS=Linux
-      export      ESMF_COMPILER=pgi
-      export          ESMF_BOPT=O
-      export           ESMF_ABI=64
-      export          ESMF_COMM=mpich
-      export          ESMF_SITE=default
+      export             ESMF_OS=Linux
+      export       ESMF_COMPILER=pgi
+      export           ESMF_BOPT=O
+      export            ESMF_ABI=64
+      export           ESMF_COMM=mpich
+      export           ESMF_SITE=default
 
+      export       ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
         if [ "${which_MPI}" = "mpich" ]; then
-          export       ESMF_DIR=/opt/pgisoft/mpich/esmf
-          export     MCT_INCDIR=/opt/pgisoft/mpich/mct/include
-          export     MCT_LIBDIR=/opt/pgisoft/mpich/mct/lib
+          export        ESMF_DIR=/opt/pgisoft/mpich/esmf
+          export      MCT_INCDIR=/opt/pgisoft/mpich/mct/include
+          export      MCT_LIBDIR=/opt/pgisoft/mpich/mct/lib
+          export  PARPACK_LIBDIR=/opt/pgisoft/mpich/PARPACK
         elif [ "${which_MPI}" = "mpich2" ]; then
-          export       ESMF_DIR=/opt/pgisoft/mpich2/esmf
-          export     MCT_INCDIR=/opt/pgisoft/mpich2/mct/include
-          export     MCT_LIBDIR=/opt/pgisoft/mpich2/mct/lib
+          export        ESMF_DIR=/opt/pgisoft/mpich2/esmf
+          export      MCT_INCDIR=/opt/pgisoft/mpich2/mct/include
+          export      MCT_LIBDIR=/opt/pgisoft/mpich2/mct/lib
+          export  PARPACK_LIBDIR=/opt/pgisoft/mpich2/PARPACK
         elif [ "${which_MPI}" = "openmpi" ]; then
-          export       ESMF_DIR=/opt/pgisoft/openmpi/esmf
-          export     MCT_INCDIR=/opt/pgisoft/openmpi/mct/include
-          export     MCT_LIBDIR=/opt/pgisoft/openmpi/mct/lib
-        fi
-      fi
-
-      export        ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
-      if [ -n "${USE_MPI:+1}" ]; then
-        if [ "${which_MPI}" = "mpich" ]; then
-          export   PARPACK_LIBDIR=/opt/pgisoft/mpich/PARPACK
-        elif [ "${which_MPI}" = "mpich2" ]; then
-          export   PARPACK_LIBDIR=/opt/pgisoft/mpich2/PARPACK
-        elif [ "${which_MPI}" = "openmpi" ]; then
-          export   PARPACK_LIBDIR=/opt/pgisoft/openmpi/PARPACK
+          export        ESMF_DIR=/opt/pgisoft/openmpi/esmf
+          export      MCT_INCDIR=/opt/pgisoft/openmpi/mct/include
+          export      MCT_LIBDIR=/opt/pgisoft/openmpi/mct/lib
+          export  PARPACK_LIBDIR=/opt/pgisoft/openmpi/PARPACK
         fi
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           if [ "${which_MPI}" = "mpich" ]; then
-            export      NC_CONFIG=/opt/pgisoft/mpich/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/pgisoft/mpich/netcdf4/include
+            export     NC_CONFIG=/opt/pgisoft/mpich/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/pgisoft/mpich/netcdf4/include
           elif [ "${which_MPI}" = "mpich2" ]; then
-            export      NC_CONFIG=/opt/pgisoft/mpich2/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/pgisoft/mpich2/netcdf4/include
+            export     NC_CONFIG=/opt/pgisoft/mpich2/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/pgisoft/mpich2/netcdf4/include
           elif [ "${which_MPI}" = "openmpi" ]; then
-            export      NC_CONFIG=/opt/pgisoft/openmpi/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/pgisoft/openmpi/netcdf4/include
+            export     NC_CONFIG=/opt/pgisoft/openmpi/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/pgisoft/openmpi/netcdf4/include
           fi
         else
-          export        NC_CONFIG=/opt/pgisoft/serial/netcdf4/bin/nc-config
-          export    NETCDF_INCDIR=/opt/pgisoft/serial/netcdf4/include
+          export       NC_CONFIG=/opt/pgisoft/serial/netcdf4/bin/nc-config
+          export   NETCDF_INCDIR=/opt/pgisoft/serial/netcdf4/include
         fi
       else
-        export      NETCDF_INCDIR=/opt/pgisoft/serial/netcdf3/include
-        export      NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf3/lib
+        export     NETCDF_INCDIR=/opt/pgisoft/serial/netcdf3/include
+        export     NETCDF_LIBDIR=/opt/pgisoft/serial/netcdf3/lib
       fi
       ;;
 
     gfortran )
-      export            ESMF_OS=Linux
-      export      ESMF_COMPILER=gfortran
-      export          ESMF_BOPT=O
-      export           ESMF_ABI=64
-      export          ESMF_COMM=mpich
-      export          ESMF_SITE=default
+      export             ESMF_OS=Linux
+      export       ESMF_COMPILER=gfortran
+      export           ESMF_BOPT=O
+      export            ESMF_ABI=64
+      export           ESMF_COMM=mpich
+      export           ESMF_SITE=default
 
+      export       ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK
       if [ -n "${USE_MPI:+1}" ]; then
         if [ "${which_MPI}" = "mpich2" ]; then
-          export       ESMF_DIR=/opt/gfortransoft/mpich2/esmf
-          export     MCT_INCDIR=/opt/gfortransoft/mpich2/mct/include
-          export     MCT_LIBDIR=/opt/gfortransoft/mpich2/mct/lib
+          export        ESMF_DIR=/opt/gfortransoft/mpich2/esmf
+          export      MCT_INCDIR=/opt/gfortransoft/mpich2/mct/include
+          export      MCT_LIBDIR=/opt/gfortransoft/mpich2/mct/lib
+          export  PARPACK_LIBDIR=/opt/gfortransoft/mpich2/PARPACK
         elif [ "${which_MPI}" = "openmpi" ]; then
-          export       ESMF_DIR=/opt/gfortransoft/openmpi/esmf
-          export     MCT_INCDIR=/opt/gfortransoft/openmpi/mct/include
-          export     MCT_LIBDIR=/opt/gfortransoft/openmpi/mct/lib
-        fi
-      fi
-
-      export        ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK
-      if [ -n "${USE_MPI:+1}" ]; then
-        if [ "${which_MPI}" = "mpich2" ]; then
-          export   PARPACK_LIBDIR=/opt/gfortransoft/mpich2/PARPACK
-        elif [ "${which_MPI}" = "openmpi" ]; then
-          export   PARPACK_LIBDIR=/opt/gfortransoft/openmpi/PARPACK
+          export        ESMF_DIR=/opt/gfortransoft/openmpi/esmf
+          export      MCT_INCDIR=/opt/gfortransoft/openmpi/mct/include
+          export      MCT_LIBDIR=/opt/gfortransoft/openmpi/mct/lib
+          export  PARPACK_LIBDIR=/opt/gfortransoft/openmpi/PARPACK
         fi
       fi
 
       if [ -n "${USE_NETCDF4:+1}" ]; then
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           if [ "${which_MPI}" = "mpich2" ]; then
-            export      NC_CONFIG=/opt/gfortransoft/mpich2/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/gfortransoft/mpich2/netcdf4/include
+            export     NC_CONFIG=/opt/gfortransoft/mpich2/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/gfortransoft/mpich2/netcdf4/include
           elif [ "${which_MPI}" = "openmpi" ]; then
-            export      NC_CONFIG=/opt/gfortransoft/openmpi/netcdf4/bin/nc-config
-            export  NETCDF_INCDIR=/opt/gfortransoft/openmpi/netcdf4/include
+            export     NC_CONFIG=/opt/gfortransoft/openmpi/netcdf4/bin/nc-config
+            export NETCDF_INCDIR=/opt/gfortransoft/openmpi/netcdf4/include
           fi
         else
-          export        NC_CONFIG=/opt/gfortransoft/serial/netcdf4/bin/nc-config
-          export    NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf4/include
+          export       NC_CONFIG=/opt/gfortransoft/serial/netcdf4/bin/nc-config
+          export   NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf4/include
         fi
       else
-        export      NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf3/include
-        export      NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf3/lib
+        export     NETCDF_INCDIR=/opt/gfortransoft/serial/netcdf3/include
+        export     NETCDF_LIBDIR=/opt/gfortransoft/serial/netcdf3/lib
       fi
       ;;
 

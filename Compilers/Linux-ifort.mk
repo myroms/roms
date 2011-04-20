@@ -80,12 +80,6 @@ ifdef USE_DEBUG
            FFLAGS += -g -check uninit -ftrapuv -traceback
 else
            FFLAGS += -ip -O3
- ifeq ($(CPU),i686)
-           FFLAGS += -pc80 -xW
- endif
- ifeq ($(CPU),x86_64)
-           FFLAGS += -xW
- endif
 endif
 
 ifdef USE_MCT

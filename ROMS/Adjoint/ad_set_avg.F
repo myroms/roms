@@ -94,6 +94,11 @@
 
       real(r8) :: fac
 
+      real(r8) :: pfac(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: rfac(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: ufac(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: vfac(IminS:ImaxS,JminS:JmaxS)
+
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
