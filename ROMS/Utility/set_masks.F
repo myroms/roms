@@ -56,7 +56,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, model, 1)
+      CALL wclock_on (ng, model, 2)
 # endif
       CALL set_masks_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -88,7 +88,7 @@
      &                     GRID(ng) % umask_io,                         &
      &                     GRID(ng) % vmask_io)
 # ifdef PROFILE
-      CALL wclock_off (ng, model, 1)
+      CALL wclock_off (ng, model, 2)
 # endif
 
       RETURN

@@ -5,10 +5,10 @@
 #endif
 
 #ifdef FULL_GRID
-# define IR_RANGE IstrR,IendR
-# define IU_RANGE Istr,IendR
-# define JR_RANGE JstrR,JendR
-# define JV_RANGE Jstr,JendR
+# define IR_RANGE IstrT,IendT
+# define IU_RANGE IstrP,IendT
+# define JR_RANGE JstrT,JendT
+# define JV_RANGE JstrP,JendT
 #else
 # define IR_RANGE Istr,Iend
 # define IU_RANGE IstrU,Iend
@@ -93,6 +93,7 @@
 
       real(r8), intent(in) :: EvalueR
       real(r8), intent(in) :: EvalueI
+
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: EvectorR(Mstr:)
       real(r8), intent(in) :: EvectorI(Mstr:)
@@ -181,6 +182,7 @@
       integer, intent(in) :: Mstr, Mend
 
       real(r8), intent(in) :: Evalue
+
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Evector(Mstr:)
       real(r8), intent(in) :: state(Mstr:)
@@ -890,7 +892,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 1)
+      CALL wclock_on (ng, iADM, 2)
 #  endif
 
       CALL ad_pack_tile (ng, tile,                                      &
@@ -926,7 +928,7 @@
      &                   OCEAN(ng) % ad_zeta)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
+      CALL wclock_off (ng, iADM, 2)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -1383,8 +1385,7 @@
 !                                                                      !
 !  This routine unpacks the requested adjoint state and/or  surface    !
 !  forcing variables used in stochastic optimals.  The state vector    !
-!  contains only interior  water points.  For output purposes,  the    !
-!  unpacked variables are loaded into the nonlinear state variables.   !
+!  contains only interior water points.                                !
 !                                                                      !
 !=======================================================================
 !
@@ -1425,7 +1426,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 1)
+      CALL wclock_on (ng, iNLM, 2)
 #  endif
 
       CALL ad_unpack_tile (ng, tile,                                    &
@@ -1450,7 +1451,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 1)
+      CALL wclock_off (ng, iNLM, 2)
 #  endif
 
       RETURN
@@ -1730,7 +1731,7 @@
               is=IJwaterU(i,j)+offset(isUbar)
               OCEAN(ng)%ad_ubar(i,j,kstp)=scale*state(is)
             ELSE
-              OCEAN(ng)%ad_ubar(i,j,kstp)=0.0_r8
+              OCEAN(ng)%ubar(i,j,kstp)=0.0_r8
             END IF
 #   else
             is=(i-Ioff)+(j-Joff)*Imax+offset(isUbar)
@@ -2046,7 +2047,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 1)
+      CALL wclock_on (ng, iADM, 2)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -2090,7 +2091,7 @@
 #  endif
      &                     OCEAN(ng) % ad_zeta)
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
+      CALL wclock_off (ng, iADM, 2)
 #  endif
       RETURN
       END SUBROUTINE ad_unpack
@@ -2563,7 +2564,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 1)
+      CALL wclock_on (ng, iTLM, 2)
 #  endif
       CALL tl_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -2607,7 +2608,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 1)
+      CALL wclock_off (ng, iTLM, 2)
 #  endif
       RETURN
       END SUBROUTINE tl_pack
@@ -3085,7 +3086,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 1)
+      CALL wclock_on (ng, iTLM, 2)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -3119,7 +3120,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 1)
+      CALL wclock_off (ng, iTLM, 2)
 #  endif
 
       RETURN
@@ -3330,9 +3331,9 @@
         IF (SCALARS(ng)%Fstate(isTsur(itrc))) THEN
           offset(isTsur(itrc))=icount
 #    ifdef FULL_GRID
-        icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
+          icount=icount+(Lm(ng)+2)*(Mm(ng)+2)
 #    else
-        icount=icount+Lm(ng)*Mm(ng)
+          icount=icount+Lm(ng)*Mm(ng)
 #    endif
         END IF
       END DO
@@ -3710,7 +3711,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 1)
+      CALL wclock_on (ng, iTLM, 2)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -3754,7 +3755,7 @@
 #  endif
      &                     OCEAN(ng) % tl_zeta)
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 1)
+      CALL wclock_off (ng, iTLM, 2)
 #  endif
       RETURN
       END SUBROUTINE tl_unpack
@@ -4238,7 +4239,7 @@
       character (len=3), dimension(3) :: op_handle
 #   endif
 
-#   include "set_bounds.h"
+#   include "tile.h"
 !
 !-----------------------------------------------------------------------
 !  Compute seminorm, stochastic optimals adjoint perturbation vector.
@@ -4257,7 +4258,7 @@
       END IF
       my_TRnorm=0.0_r8
 !
-      DO rec=1,Nsemi
+      DO rec=1,Nsemi(ng)
 !
 !  Compute normalization factor.
 !
@@ -4268,27 +4269,34 @@
         my_SOnorm=0.0_r8
         my_SOnorm1=0.0_r8
         DO is=Mstr,Mend
-          my_SOnorm=my_SOnorm+so_state(is,rec)*state(is)
+          my_SOnorm=my_SOnorm+                                          &
+     &              STORAGE(ng)%so_state(is,rec)*state(is)
         END DO
 !
-        IF (rec.ne.Nsemi) THEN
+        IF (rec.ne.Nsemi(ng)) THEN
           DO is=Mstr,Mend
-            my_SOnorm1=my_SOnorm1+so_state(is,rec+1)*state(is)
+            my_SOnorm1=my_SOnorm1+                                      &
+     &                 STORAGE(ng)%so_state(is,rec+1)*state(is)
             my_TRnorm=my_TRnorm+                                        &
-     &                cff1*so_state(is,rec)*so_state(is,rec)+           &
-     &                2.0_r8*cff2*so_state(is,rec)*so_state(is,rec+1)+  &
-     &                cff*so_state(is,rec+1)*so_state(is,rec+1)
+     &                cff1*STORAGE(ng)%so_state(is,rec)*                &
+     &                     STORAGE(ng)%so_state(is,rec)+                &
+     &                2.0_r8*cff2*STORAGE(ng)%so_state(is,rec  )*       &
+     &                            STORAGE(ng)%so_state(is,rec+1)+       &
+     &                cff*STORAGE(ng)%so_state(is,rec+1)*               &
+     &                    STORAGE(ng)%so_state(is,rec+1)
           END DO
         ELSE
           DO is=Mstr,Mend
-            my_TRnorm=my_TRnorm+so_state(is,rec)*so_state(is,rec)
+            my_TRnorm=my_TRnorm+                                        &
+     &                STORAGE(ng)%so_state(is,rec)*                     &
+     &                STORAGE(ng)%so_state(is,rec)
           END DO
         END IF
 !
 !  Global reduction of normalization factor.
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
@@ -4328,25 +4336,26 @@
 !
 !  Compute new perturbation vector.
 !
-        IF (rec.ne.Nsemi) THEN
+        IF (rec.ne.Nsemi(ng)) THEN
           DO is=Mstr,Mend
             ad_state(is)=ad_state(is)+                                  &
-     &                   cff1*SOnorm *so_state(is,rec  )+               &
-     &                   cff2*SOnorm1*so_state(is,rec  )+               &
-     &                   cff2*SOnorm *so_state(is,rec+1)+               &
-     &                   cff *SOnorm1*so_state(is,rec+1)
+     &                   cff1*SOnorm *STORAGE(ng)%so_state(is,rec  )+   &
+     &                   cff2*SOnorm1*STORAGE(ng)%so_state(is,rec  )+   &
+     &                   cff2*SOnorm *STORAGE(ng)%so_state(is,rec+1)+   &
+     &                   cff *SOnorm1*STORAGE(ng)%so_state(is,rec+1)
           END DO
         ELSE
           DO is=Mstr,Mend
-            ad_state(is)=ad_state(is)+SOnorm*so_state(is,rec)
+            ad_state(is)=ad_state(is)+                                  &
+     &                   SOnorm*STORAGE(ng)%so_state(is,rec)
           END DO
         END IF
       END DO
 !
 !  Global reduction of normalization factor, TRnorm.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -4408,15 +4417,15 @@
 
       real(r8) :: SOnorm, my_TRnorm
 
-      real(r8), dimension(Nsemi) :: Bcoef
-      real(r8), dimension(Nsemi) :: SOdotprod
-      real(r8), dimension(Nsemi) :: my_dotprod
+      real(r8), dimension(Nsemi(ng)) :: Bcoef
+      real(r8), dimension(Nsemi(ng)) :: SOdotprod
+      real(r8), dimension(Nsemi(ng)) :: my_dotprod
 
 #   ifdef DISTRIBUTE
-      character (len=3), dimension(Nsemi) :: op_handle
+      character (len=3), dimension(Nsemi(ng)) :: op_handle
 #   endif
 
-#   include "set_bounds.h"
+#   include "tile.h"
 !
 !-----------------------------------------------------------------------
 !  Compute seminorm, stochastic optimals adjoint perturbation vector.
@@ -4430,38 +4439,39 @@
 !
 !  First compute the dot-products.
 !
-      DO rec=1,Nsemi
+      DO rec=1,Nsemi(ng)
         my_dotprod(rec)=0.0_r8
         DO is=Mstr,Mend
-          my_dotprod(rec)=my_dotprod(rec)+so_state(is,rec)*state(is)
+          my_dotprod(rec)=my_dotprod(rec)+                              &
+     &                    STORAGE(ng)%so_state(is,rec)*state(is)
         END DO
       END DO
 !
 !  Global reduction of dot products.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                         ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
       END IF
 !$OMP CRITICAL (SO_DOT)
       IF (tile_count.eq.0) THEN
-        DO rec=1,Nsemi
+        DO rec=1,Nsemi(ng)
           SOdotprod(rec)=0.0_r8
         END DO
       END IF
-      DO rec=1,Nsemi
+      DO rec=1,Nsemi(ng)
         SOdotprod(rec)=SOdotprod(rec)+my_dotprod(rec)
       END DO
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
 #   ifdef DISTRIBUTE
-        DO rec=1,Nsemi
+        DO rec=1,Nsemi(ng)
           op_handle(rec)='SUM'
         END DO
-        CALL mp_reduce (ng, iADM, Nsemi, SOdotprod, op_handle)
+        CALL mp_reduce (ng, iADM, Nsemi(ng), SOdotprod, op_handle)
 #   endif
       END IF
 !$OMP END CRITICAL (SO_DOT)
@@ -4474,16 +4484,17 @@
       END IF
       my_TRnorm=0.0_r8
 !
-      DO rec=1,Nsemi
+      DO rec=1,Nsemi(ng)
         ntAD=(rec-1)*nADJ(ng)+1
         SOnorm=0.0_r8
-        DO rec1=1,Nsemi
+        DO rec1=1,Nsemi(ng)
           ntTL=(rec1-1)*nADJ(ng)+1
           CALL sp_bcoef (ng, ntAD, ntTL, Bcoef(rec1))
           SOnorm=SOnorm+Bcoef(rec1)*SOdotprod(rec1)
           DO is=Mstr,Mend
             my_TRnorm=my_TRnorm+                                        &
-     &                so_state(is,rec)*Bcoef(rec1)*so_state(is,rec1)
+     &                STORAGE(ng)%so_state(is,rec )*Bcoef(rec1)*        &
+     &                STORAGE(ng)%so_state(is,rec1)
           END DO
         END DO
 !
@@ -4498,14 +4509,15 @@
 !  Compute new perturbation vector.
 !
         DO is=Mstr,Mend
-          ad_state(is)=ad_state(is)+SOnorm*so_state(is,rec)
+          ad_state(is)=ad_state(is)+                                    &
+     &                 SOnorm*STORAGE(ng)%so_state(is,rec)
         END DO
       END DO
 !
 !  Global reduction of normalization factor, TRnorm.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application

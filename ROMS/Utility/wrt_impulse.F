@@ -127,10 +127,10 @@
      &                          start = (/Irec/), total = (/1/))
           IF (exit_flag.ne.NoError) RETURN
 !
-          CALL netcdf_put_fvar (ng, model, TLFname(ng), Vname(1,idtime),&
-     &                          inp_time,                               &
+          CALL netcdf_put_fvar (ng, model, TLF(ng)%name,                &
+     &                          Vname(1,idtime), inp_time,              &
      &                          (/Iout/), (/1/),                        &
-     &                          ncid = ncTLFid(ng))
+     &                          ncid = TLF(ng)%ncid)
           IF (exit_flag.ne.NoError) RETURN
         ELSE
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idtime)),          &
@@ -163,7 +163,8 @@
           END IF
 !
           MyType=gtype
-          status=nf_fwrite2d(ng, model, ncTLFid(ng), tlfVid(idZtlf,ng), &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+     &                       TLF(ng)%Vid(idZtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 # ifdef MASKING
@@ -173,7 +174,7 @@
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idZtlf)), Irec,            &
-     &                          TRIM(TLFname(ng))
+     &                          TRIM(TLF(ng)%name)
             END IF
             exit_flag=3
             ioerror=status
@@ -213,7 +214,8 @@
           END IF
 !
           MyType=gtype
-          status=nf_fwrite2d(ng, model, ncTLFid(ng), tlfVid(idUbtf,ng), &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+     &                       TLF(ng)%Vid(idUbtf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -223,7 +225,7 @@
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idUbtf)), Irec,            &
-     &                          TRIM(TLFname(ng))
+     &                          TRIM(TLF(ng)%name)
             END IF
             exit_flag=3
             ioerror=status
@@ -261,7 +263,8 @@
           END IF
 !
           MyType=gtype
-          status=nf_fwrite2d(ng, model, ncTLFid(ng), tlfVid(idVbtf,ng), &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+     &                       TLF(ng)%Vid(idVbtf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -271,7 +274,7 @@
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idVbtf)), Irec,            &
-     &                          TRIM(TLFname(ng))
+     &                          TRIM(TLF(ng)%name)
             END IF
             exit_flag=3
             ioerror=status
@@ -310,7 +313,8 @@
             RETURN
           END IF
 !
-          status=nf_fwrite3d(ng, model, ncTLFid(ng), tlfVid(idUtlf,ng), &
+          status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
+     &                       TLF(ng)%Vid(idUtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
@@ -320,7 +324,7 @@
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idUtlf)), Irec,            &
-     &                          TRIM(TLFname(ng))
+     &                          TRIM(TLF(ng)%name)
             END IF
             exit_flag=3
             ioerror=status
@@ -357,7 +361,8 @@
             RETURN
           END IF
 !
-          status=nf_fwrite3d(ng, model, ncTLFid(ng), tlfVid(idVtlf,ng), &
+          status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
+     &                       TLF(ng)%Vid(idVtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
@@ -367,7 +372,7 @@
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idVtlf)), Irec,            &
-     &                          TRIM(TLFname(ng))
+     &                          TRIM(TLF(ng)%name)
             END IF
             exit_flag=3
             ioerror=status
@@ -406,7 +411,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, ncTLFid(ng), tlfTid(i,ng),    &
+            status=nf_fwrite3d(ng, model, TLF(ng)%ncid, TLF(ng)%Tid(i), &
      &                         Iout, MyType,                            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
 #  ifdef MASKING
@@ -416,7 +421,7 @@
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) TRIM(Vname(1,idTtlf(i))), Irec,       &
-     &                            TRIM(TLFname(ng))
+     &                            TRIM(TLF(ng)%name)
               END IF
               exit_flag=3
               ioerror=status
@@ -437,10 +442,10 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, model, INPncname, ncTLFid(ng))
+      CALL netcdf_sync (ng, model, INPncname, TLF(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLFname(ng))
+      IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLF(ng)%name)
 !
   10  FORMAT (/,' WRT_IMPULSE - unable to open input NetCDF file: ',a)
   20  FORMAT (/,' WRT_IMPULSE - error while reading variable: ',a,2x,   &

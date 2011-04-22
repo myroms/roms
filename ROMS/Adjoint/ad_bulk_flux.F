@@ -1828,13 +1828,13 @@
 !  lambda; Cwet: slope of saturation vapor.
 !
 !>            tl_Clam=48.0_r8*g*blk_Cpw*tl_rhoSea(i)*blk_visw*          &
-!>     &                             (rhoSea(i)*blk_visw)**2/           &
-!>     &           (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
+!>   &                (rhoSea(i)*blk_visw)**2/                          &
+!>   &                (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
 
               ad_rhoSea(i)=ad_rhoSea(i)+                                &
-       &                   48.0_r8*g*blk_Cpw*ad_Clam*blk_visw*          &
-       &                             (rhoSea(i)*blk_visw)**2/           &
-       &           (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
+     &                     48.0_r8*g*blk_Cpw*ad_Clam*blk_visw*          &
+     &                     (rhoSea(i)*blk_visw)**2/                     &
+     &                     (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
               ad_Clam=0.0_r8
 # endif
 

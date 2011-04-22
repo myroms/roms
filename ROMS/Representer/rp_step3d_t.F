@@ -30,14 +30,11 @@
 # ifdef CLIMATOLOGY
       USE mod_clima
 # endif
-# ifdef DIAGNOSTICS
+# ifdef DIAGNOSTICS_TS
 !!    USE mod_diags
 # endif
       USE mod_grid
       USE mod_mixing
-# if defined ASSIMILATION || defined NUDGING
-      USE mod_obs
-# endif
       USE mod_ocean
 # ifdef TS_PSOURCE
       USE mod_sources
@@ -102,10 +99,6 @@
      &                       CLIMA(ng) % Tnudgcof,                      &
      &                       CLIMA(ng) % tclm,                          &
 # endif
-# if defined NUDGING_SST || defined NUDGING_T
-!!   &                       OBS(ng) % EobsT,                           &
-!!   &                       OBS(ng) % Tobs,                            &
-# endif
      &                       MIXING(ng) % Akt,                          &
      &                       MIXING(ng) % tl_Akt,                       &
 # ifdef TS_MPDATA_NOT_YET
@@ -162,9 +155,6 @@
 # if defined TCLM_NUDGING && defined TCLIMATOLOGY
      &                             Tnudgcof, tclm,                      &
 # endif
-# if defined NUDGING_SST || defined NUDGING_T
-!!   &                             EobsT, Tobs,                         &
-# endif
      &                             Akt, tl_Akt,                         &
 # ifdef TS_MPDATA_NOT_YET
      &                             u, tl_u,                             &
@@ -188,6 +178,9 @@
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
 # endif
 # ifdef DISTRIBUTE
+#  if defined FLOATS_NOT_YET && defined FLOAT_VWALK
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+#  endif
       USE mp_exchange_mod, ONLY : mp_exchange4d
 # endif
 # ifdef TS_MPDATA_NOT_YET
@@ -240,10 +233,6 @@
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       real(r8), intent(in) :: Tnudgcof(LBi:,LBj:,:)
       real(r8), intent(in) :: tclm(LBi:,LBj:,:,:)
-#  endif
-#  if defined NUDGING_SST || defined NUDGING_T
-!!    real(r8), intent(in) :: EobsT(LBi:,LBj:,:,:)
-!!    real(r8), intent(in) :: Tobs(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
@@ -325,10 +314,6 @@
       real(r8), intent(in) :: Tnudgcof(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NT(ng))
 #  endif
-#  if defined NUDGING_SST || defined NUDGING_T
-!!    real(r8), intent(in) :: EobsT(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-!!    real(r8), intent(in) :: Tobs(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-#  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
@@ -376,12 +361,13 @@
 #  endif
 # endif
       integer :: i, is, itrc, j, k, ltrc
+# ifdef DIAGNOSTICS_TS
       integer :: idiag
-
+# endif
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3
-      real(r8) :: tl_cff, tl_cff1, tl_cff2
+      real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: tl_cff, tl_cff1, tl_cff2, tl_cff3, tl_cff4
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
@@ -406,9 +392,13 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_oHz
 # ifdef TS_MPDATA_NOT_YET
-      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
+#  ifdef DIAGNOSTICS_TS
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,3) :: Dhadv
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng),NT(ng)) :: Dvadv
+#  endif
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                      &
      &                    N(ng),NT(ng)) :: Ta
-      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                      &
      &                    N(ng),NT(ng)) :: tl_Ta
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Ua
@@ -429,16 +419,8 @@
 !  Compute inverse thickness.
 !
 # ifdef TS_MPDATA_NOT_YET
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-2,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-2,0),MIN(Iend+2,Lm(ng)+1)
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-2,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-2,0),MIN(Jend+2,Mm(ng)+1)
-#  endif
+#  define I_RANGE Istrm2,Iendp2
+#  define J_RANGE Jstrm2,Jendp2
 # else
 #  define I_RANGE Istr,Iend
 #  define J_RANGE Jstr,Jend
@@ -457,10 +439,7 @@
       END DO
 # undef I_RANGE
 # undef J_RANGE
-!
-!  Compute tangent linear horizontal tracer advection fluxes.
-!
-# if defined TS_MPDATA_NOT_YET   && \
+# if defined TS_MPDATA   && \
     (defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE)
 !
 !  The MPDATA algorithm requires a three-point footprint, so exchange
@@ -484,13 +463,15 @@
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    t(:,:,:,3,:))
 !>
-      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
+      CALL mp_exchange4d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,3,:))
 #  endif
 # endif
-
+!
+!  Compute tangent linear horizontal tracer advection fluxes.
+!
       T_LOOP : DO itrc=1,NT(ng)
         K_LOOP : DO k=1,N(ng)
 
@@ -532,18 +513,8 @@
 !
 !  First-order, upstream differences horizontal advective fluxes.
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-2,Iend+3
-#  else
-#   define I_RANGE MAX(Istr-2,1),MIN(Iend+3,Lm(ng)+1)
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-2,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-2,1),MIN(Jend+2,Mm(ng))
-#  endif
-          DO j=J_RANGE
-            DO i=I_RANGE
+          DO j=JstrVm2,Jendp2i
+            DO i=IstrUm2,Iendp3
               cff1=MAX(Huon(i,j,k),0.0_r8)
               cff2=MIN(Huon(i,j,k),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8, Huon(i,j,k)))*tl_Huon(i,j,k)
@@ -559,20 +530,8 @@
 #  endif
             END DO
           END DO
-#  undef I_RANGE
-#  undef J_RANGE
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-2,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-2,1),MIN(Iend+2,Lm(ng))
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-2,Jend+3
-#  else
-#   define J_RANGE MAX(Jstr-2,1),MIN(Jend+3,Mm(ng)+1)
-#  endif
-          DO j=J_RANGE
-            DO i=I_RANGE
+          DO j=JstrVm2,Jendp3
+            DO i=IstrUm2,Iendp2i
               cff1=MAX(Hvom(i,j,k),0.0_r8)
               cff2=MIN(Hvom(i,j,k),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8, Hvom(i,j,k)))*tl_Hvom(i,j,k)
@@ -588,8 +547,6 @@
 #  endif
             END DO
           END DO
-#  undef I_RANGE
-#  undef J_RANGE
 
 # else
 !
@@ -601,13 +558,8 @@
 !  Fourth-order, centered differences horizontal advective fluxes.
 #  endif
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-1,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
-#  endif
           DO j=Jstr,Jend
-            DO i=I_RANGE
+            DO i=Istrm1,Iendp2
               FX(i,j)=t(i  ,j,k,3,itrc)-                                &
      &                t(i-1,j,k,3,itrc)
               tl_FX(i,j)=tl_t(i  ,j,k,3,itrc)-                          &
@@ -618,15 +570,14 @@
 #  endif
             END DO
           END DO
-#  undef I_RANGE
-#  ifndef EW_PERIODIC
-          IF (WESTERN_EDGE) THEN
+#  if !defined EW_PERIODIC && !defined COMPOSED_GRID
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               FX(Istr-1,j)=FX(Istr,j)
               tl_FX(Istr-1,j)=tl_FX(Istr,j)
             END DO
           END IF
-          IF (EASTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               FX(Iend+2,j)=FX(Iend+1,j)
               tl_FX(Iend+2,j)=tl_FX(Iend+1,j)
@@ -718,12 +669,7 @@
             END DO
           END DO
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-1,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
-#  endif
-          DO j=J_RANGE
+          DO j=Jstrm1,Jendp2
             DO i=Istr,Iend
               FE(i,j)=t(i,j  ,k,3,itrc)-                                &
      &                t(i,j-1,k,3,itrc)
@@ -735,15 +681,14 @@
 #  endif
             END DO
           END DO
-#  undef J_RANGE
-#  ifndef NS_PERIODIC
-          IF (SOUTHERN_EDGE) THEN
+#  if !defined NS_PERIODIC && !defined COMPOSED_GRID
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               FE(i,Jstr-1)=FE(i,Jstr)
               tl_FE(i,Jstr-1)=tl_FE(i,Jstr)
             END DO
           END IF
-          IF (NORTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               FE(i,Jend+2)=FE(i,Jend+1)
               tl_FE(i,Jend+2)=tl_FE(i,Jend+1)
@@ -844,8 +789,8 @@
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
 #  ifdef TS_MPDATA_NOT_YET
-              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
-     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
+              IF (((IstrUm2.le.i).and.(i.le.Iendp3)).and.               &
+     &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #  else
               IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
      &            ((Jstr.le.j).and.(j.le.Jend))) THEN
@@ -878,8 +823,8 @@
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
 #  ifdef TS_MPDATA_NOT_YET
-              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
-     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
+              IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
+     &            ((JstrVm2.le.j).and.(j.le.Jendp3))) THEN
 #  else
               IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
      &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
@@ -918,52 +863,78 @@
 !  Time-step horizontal advection term.
 !
 # ifdef TS_MPDATA_NOT_YET
-#   ifdef EW_PERIODIC
-#    define I_RANGE Istr-2,Iend+2
-#   else
-#    define I_RANGE MAX(Istr-2,1),MIN(Iend+2,Lm(ng))
-#   endif
-#   ifdef NS_PERIODIC
-#    define J_RANGE Jstr-2,Jend+2
-#   else
-#    define J_RANGE MAX(Jstr-2,1),MIN(Jend+2,Mm(ng))
-#   endif
+#  define I_RANGE IstrUm2,Iendp2i
+#  define J_RANGE JstrVm2,Jendp2i
 # else
-#   define I_RANGE Istr,Iend
-#   define J_RANGE Jstr,Jend
+#  define I_RANGE Istr,Iend
+#  define J_RANGE Jstr,Jend
 # endif
           DO j=J_RANGE
             DO i=I_RANGE
               cff=dt(ng)*pm(i,j)*pn(i,j)
-              cff1=cff*(FX(i+1,j)-FX(i,j)+                              &
-     &                  FE(i,j+1)-FE(i,j))
-              tl_cff1=cff*(tl_FX(i+1,j)-tl_FX(i,j)+                     &
-     &                     tl_FE(i,j+1)-tl_FE(i,j))
-#  ifdef TS_MPDATA_NOT_YET
-              cff2=Hz(i,j,k)+                                           &
+# ifdef TS_MPDATA_NOT_YET
+              cff1=cff*(FX(i+1,j)-FX(i,j))
+# else
+!>            cff1=cff*(FX(i+1,j)-FX(i,j))
+!>
+# endif
+              tl_cff1=cff*(tl_FX(i+1,j)-tl_FX(i,j))
+# ifdef TS_MPDATA_NOT_YET
+              cff2=cff*(FE(i,j+1)-FE(i,j))
+# else
+!>            cff2=cff*(FE(i,j+1)-FE(i,j))
+!>
+# endif
+              tl_cff2=cff*(tl_FE(i,j+1)-tl_FE(i,j))
+# ifdef TS_MPDATA_NOT_YET
+              cff3=cff1+cff2
+# else
+!>            cff3=cff1+cff2
+!>
+# endif
+              tl_cff3=tl_cff1+tl_cff2
+# ifdef TS_MPDATA_NOT_YET
+              cff4=Hz(i,j,k)+                                           &
      &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
      &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
      &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
-              tl_cff2=tl_Hz(i,j,k)+                                     &
+              tl_cff4=tl_Hz(i,j,k)+                                     &
      &                cff*(tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+             &
      &                     tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k)+             &
      &                     (tl_W(i,j,k)-tl_W(i,j,k-1)))
-              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff2-cff1
-              tl_Ta(i,j,k,itrc)=tl_t(i,j,k,3,itrc)*cff2+                &
-     &                          t(i,j,k,3,itrc)*tl_cff2-tl_cff1-        &
-#   ifdef TL_IOMS
-     &                          t(i,j,k,3,itrc)*cff2
-#   endif
-#  else
-!>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
+              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff4-cff3
+              tl_Ta(i,j,k,itrc)=tl_t(i,j,k,3,itrc)*cff4+                &
+     &                          t(i,j,k,3,itrc)*tl_cff4-tl_cff3-        &
+#  ifdef TL_IOMS
+     &                          t(i,j,k,3,itrc)*cff4
+#  endif
+# else
+!>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff3
 !>
-              tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff1
+              tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff3
+# endif
+# ifdef DIAGNOSTICS_TS
+#  ifdef TS_MPDATA_NOT_YET
+!!            Dhadv(i,j,iTxadv)=-cff1
+!!            Dhadv(i,j,iTyadv)=-cff2
+!!            Dhadv(i,j,iThadv)=-cff3
+#  else
+!!            DiaTwrk(i,j,k,itrc,iTxadv)=-cff1
+!!            DiaTwrk(i,j,k,itrc,iTyadv)=-cff2
+!!            DiaTwrk(i,j,k,itrc,iThadv)=-cff3
 #  endif
-#  ifdef DIAGNOSTICS_TS
-!!            DiaTwrk(i,j,k,itrc,iThadv)=-cff1
-#  endif
+# endif
             END DO
           END DO
+# if defined DIAGNOSTICS_TS && defined TS_MPDATA_NOT_YET
+!!        DO j=Jstr,Jend
+!!          DO i=Istr,Iend
+!!            DiaTwrk(i,j,k,itrc,iTxadv)=Dhadv(i,j,iTxadv)
+!!            DiaTwrk(i,j,k,itrc,iTyadv)=Dhadv(i,j,iTyadv)
+!!            DiaTwrk(i,j,k,itrc,iThadv)=Dhadv(i,j,iThadv)
+!!          END DO
+!!        END DO
+# endif
         END DO K_LOOP
       END DO T_LOOP
 !
@@ -1359,8 +1330,13 @@
 !
           DO is=1,Nsrc
             i=Isrc(is)
+#  ifdef TS_MPDATA_NOT_YET
+            IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.                &
+     &          ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
+#  else
             IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
      &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+#  endif
               IF (j.eq.Jsrc(is)) THEN
                 DO k=1,N(ng)
                   FC(i,k)=FC(i,k)+0.5_r8*                               &
@@ -1386,7 +1362,7 @@
      &                          Ta(i,j,k,itrc)
 #  endif
 #  ifdef DIAGNOSTICS_TS
-              DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
+!!            Dvadv(i,j,k,itrc)=-cff1
 #  endif
 # else
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
@@ -1405,23 +1381,17 @@
 #  endif
 #  ifdef DIAGNOSTICS_TS
 !!            DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
-!!            DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)*    &
-!!   &                                   oHz(i,j,k)
-!!            DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)*    &
-!!   &                                   oHz(i,j,k)
-#   if defined TS_DIF2 || defined TS_DIF4
-!!            DiaTwrk(i,j,k,itrc,iThdif)=DiaTwrk(i,j,k,itrc,iThdif)*    &
-!!   &                                   oHz(i,j,k)
-#   endif
-!!            DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)*    &
-!!   &                                   oHz(i,j,k)
-!!            DiaTwrk(i,j,k,itrc,iTrate)=DiaTwrk(i,j,k,itrc,iTrate)*    &
-!!   &                                   oHz(i,j,k)
+!!            DO idiag=1,NDT
+!!              DiaTwrk(i,j,k,itrc,idiag)=DiaTwrk(i,j,k,itrc,idiag)*    &
+!!   &                                    oHz(i,j,k)
+!!            END DO
 #  endif
 # endif
             END DO
           END DO
         END DO
+# undef I_RANGE
+# undef J_RANGE
 # ifdef TS_MPDATA_NOT_YET
       END DO
 !
@@ -1434,7 +1404,6 @@
 !>      CALL mpdata_adiff_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          IminS, ImaxS, JminS, JmaxS,             &
-!>   &                          nrhs,                                   &
 #  ifdef MASKING
 !>   &                          rmask, umask, vmask,                    &
 #  endif
@@ -1450,7 +1419,6 @@
         CALL rp_mpdata_adiff_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             nrhs,                                &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
 #  endif
@@ -1523,23 +1491,30 @@
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
-!>            cff1=dt(ng)*pm(i,j)*pn(i,j)*                              &
-!>   &             (FX(i+1,j)-FX(i,j)+                                  &
-!>   &              FE(i,j+1)-FE(i,j))
+              cff=dt(ng)*pm(i,j)*pn(i,j)
+!>            cff1=cff*(FX(i+1,j)-FX(i,j))
 !>
-              tl_cff1=dt(ng)*pm(i,j)*pn(i,j)*                           &
-     &                (tl_FX(i+1,j)-tl_FX(i,j)+                         &
-     &                 tl_FE(i,j+1)-tl_FE(i,j))
-!>            t(i,j,k,nnew,itrc)=Ta(i,j,k,itrc)*Hz(i,j,k)-cff1
+              tl_cff1=cff*(tl_FX(i+1,j)-tl_FX(i,j))
+!>            cff2=cff*(FE(i,j+1)-FE(i,j))
+!>
+              tl_cff2=cff*(tl_FE(i,j+1)-tl_FE(i,j))
+!>            cff3=cff1+cff2
+!>
+              tl_cff3=tl_cff1+tl_cff2
+!>            t(i,j,k,nnew,itrc)=Ta(i,j,k,itrc)*Hz(i,j,k)-cff3
 !>
               tl_t(i,j,k,nnew,itrc)=tl_Ta(i,j,k,itrc)*Hz(i,j,k)+        &
-     &                              Ta(i,j,k,itrc)*tl_Hz(i,j,k)-tl_cff1-&
+     &                              Ta(i,j,k,itrc)*tl_Hz(i,j,k)-tl_cff3-&
 #  ifdef TL_IOMS
      &                              Ta(i,j,k,itrc)*Hz(i,j,k)
 #  endif
 #  ifdef DIAGNOSTICS_TS
-!!            DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)-    &
+!!            DiaTwrk(i,j,k,itrc,iTxadv)=DiaTwrk(i,j,k,itrc,iTxadv)-    &
 !!   &                                   cff1
+!!            DiaTwrk(i,j,k,itrc,iTyadv)=DiaTwrk(i,j,k,itrc,iTyadv)-    &
+!!   &                                   cff2
+!!            DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)-    &
+!!   &                                   cff3
 #  endif
             END DO
           END DO
@@ -1591,20 +1566,12 @@
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff1
 #  ifdef DIAGNOSTICS_TS
-!!            DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)-    &
+!!            DiaTwrk(i,j,k,itrc,iTvadv)=Dvadv(i,j,k,itrc)-             &
 !!   &                                   cff1
-!!            DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)*    &
-!!   &                                   oHz(i,j,k)
-!!            DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)*    &
-!!   &                                   oHz(i,j,k)
-#   if defined TS_DIF2 || defined TS_DIF4
-!!            DiaTwrk(i,j,k,itrc,iThdif)=DiaTwrk(i,j,k,itrc,iThdif)*    &
-!!   &                                   oHz(i,j,k)
-#   endif
-!!            DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)*    &
-!!   &                                   oHz(i,j,k)
-!!            DiaTwrk(i,j,k,itrc,iTrate)=DiaTwrk(i,j,k,itrc,iTrate)*    &
-!!   &                                   oHz(i,j,k)
+!!            DO idiag=1,NDT
+!!              DiaTwrk(i,j,k,itrc,idiag)=DiaTwrk(i,j,k,itrc,idiag)*    &
+!!   &                                    oHz(i,j,k)
+!!            END DO
 #  endif
             END DO
           END DO
@@ -1947,24 +1914,6 @@
           END DO
         END DO
 # endif
-# if defined NUDGING_SST || defined NUDGING_T
-!!
-!! Assimilate tracer observations via nudging.
-!!
-!!      IF (update_T(itrc,ng)) THEN
-!!        DO k=1,N(ng)
-!!          DO j=JstrR,JendR
-!!            DO i=IstrR,IendR
-!!              cff=MIN(1.0_r8,MAX(0.0_r8,EobsT(i,j,k,itrc)))
-!!              cff=dt(ng)*Tnudass(itrc,ng)*(1.0_r8-cff)
-!!              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+                  &
-!!   &                             cff*(Tobs(i,j,k,itrc)-               &
-!!   &                                  t(i,j,k,nnew,itrc))
-!!            END DO
-!!          END DO
-!!        END DO
-!!      END IF
-# endif
 # ifdef MASKING
 !
 !  Apply Land/Sea mask.
@@ -2028,13 +1977,27 @@
 !  floats random walk.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
           DO k=1,N(ng)
             dAktdz(i,j,k)=(Akt(i,j,k,1)-Akt(i,j,k-1,1))/Hz(i,j,k)
           END DO
         END DO
       END DO
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!  Apply periodic boundary conditions.
+!
+      CALL exchange_r3d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        dAktdz)
+#  endif
+#  ifdef DISTRIBUTE
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    dAktdz)
+#  endif
 # endif
       RETURN
       END SUBROUTINE rp_step3d_t_tile

@@ -193,19 +193,6 @@
       Coptions(is:is+16)=' CLIPPING_SPLIT,'
 # endif
 #endif
-#ifdef CONVOLUTION
-      IF (Master) WRITE (stdout,20) 'CONVOLUTION',                      &
-     &   'Generic Convolution of State Solution Driver.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' CONVOLUTION,'
-      idriver=idriver+1
-#endif
-#if defined CONVOLVE && defined W4DVAR && defined W4DVAR_SENSITIVITY
-      IF (Master) WRITE (stdout,20) 'CONVOLVE',                         &
-     &   'Convolve Adjoint State Solution.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' CONVOLVE,'
-#endif
 #ifdef CORRELATION
       IF (Master) WRITE (stdout,20) 'CORRELATION',                      &
      &   'Background-error Correlation Model.'
@@ -448,36 +435,6 @@
      &   'Analytical wind induced waves.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' ANA_WWAVE,'
-#endif
-#ifdef ASSIMILATION_SSH
-      IF (Master) WRITE (stdout,20) 'ASSIMILATION_SSH',                 &
-     &   'Assimilating SSH observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+18)=' ASSIMILATION_SSH,'
-#endif
-#ifdef ASSIMILATION_SST
-      IF (Master) WRITE (stdout,20) 'ASSIMILATION_SST',                 &
-     &   'Assimilating SST observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+18)=' ASSIMILATION_SST,'
-#endif
-#ifdef ASSIMILATION_T
-      IF (Master) WRITE (stdout,20) 'ASSIMILATION_T',                   &
-     &   'Assimilating tracers observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' ASSIMILATION_T,'
-#endif
-#ifdef ASSIMILATION_UV
-      IF (Master) WRITE (stdout,20) 'ASSIMILATION_UV',                  &
-     &   'Assimilating horizontal currents observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+17)=' ASSIMILATION_UV,'
-#endif
-#ifdef ASSIMILATION_UVsur
-      IF (Master) WRITE (stdout,20) 'ASSIMILATION_UVsur',               &
-     &   'Assimilating surface currents observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+20)=' ASSIMILATION_UVsur,'
 #endif
 #ifdef ASSUMED_SHAPE
       IF (Master) WRITE (stdout,20) 'ASSUMED_SHAPE',                    &
@@ -1296,6 +1253,13 @@
       Coptions(is:is+20)=' NEARSHORE_MELLOR05,'
       nearshore=nearshore+1
 #endif
+#ifdef NEARSHORE_MELLOR08
+      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR08',               &
+     &   'Nearshore Radiation Stress Terms (Mellor 2008).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' NEARSHORE_MELLOR08,'
+      nearshore=nearshore+1
+#endif
 #ifdef NEMURO
       IF (Master) WRITE (stdout,20) 'NEMURO',                           &
      &   'Nemuro Lower Trophic Level Ecosystem Model.'
@@ -1523,30 +1487,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' NPZD_POWELL,'
       ibiology=ibiology+1
-#endif
-#ifdef NUDGING_SST
-      IF (Master) WRITE (stdout,20) 'NUDGING_SST',                      &
-     &   'Nudging SST observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' NUDGING_SST,'
-#endif
-#ifdef NUDGING_T
-      IF (Master) WRITE (stdout,20) 'NUDGING_T',                        &
-     &   'Nudging tracers observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' NUDGING_T,'
-#endif
-#ifdef NUDGING_UV
-      IF (Master) WRITE (stdout,20) 'NUDGING_UV',                       &
-     &   'Nudging horizontal currents observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' NUDGING_UV,'
-#endif
-#ifdef NUDGING_UVsur
-      IF (Master) WRITE (stdout,20) 'NUDGING_UVsur',                    &
-     &   'Nudging surface currents observations.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' NUDGING_UVsur,'
 #endif
 #ifdef NS_PERIODIC
       IF (Master) WRITE (stdout,20) 'NS_PERIODIC',                      &
@@ -2460,13 +2400,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' UV_ADV,'
 #endif
-#if defined UV_BAROCLINIC && \
-   (defined ASSIMILATION_UVsur || defined ASSIMILATION_UV)
-      IF (Master) WRITE (stdout,20) 'UV_BAROCLINIC',                    &
-     &   'Assimilation of only baroclinic currents.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' UV_BAROCLINIC,'
-#endif
 #ifdef UV_COR
       IF (Master) WRITE (stdout,20) 'UV_COR',                           &
      &   'Coriolis term.'
@@ -2862,12 +2795,6 @@
      &   'Processing sea surface height climatology data.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ZCLIMATOLOGY,'
-#endif
-#ifdef ZCLM_NUDGING
-      IF (Master) WRITE (stdout,20) 'ZCLM_NUDGING',                     &
-     &   'Nudging toward sea surface height climatology.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ZCLM_NUDGING,'
 #endif
 #if defined ZETA_ELLIPTIC && defined BALANCE_OPERATOR && \
     defined FOUR_DVAR

@@ -38,9 +38,6 @@
 # ifdef NEARSHORE_MELLOR
       USE mod_mixing
 # endif
-# if defined ASSIMILATION || defined NUDGING
-      USE mod_obs
-# endif
       USE mod_ocean
       USE mod_stepping
 !
@@ -134,11 +131,6 @@
      &                 CLIMA(ng) % uclm,                                &
      &                 CLIMA(ng) % vclm,                                &
 # endif
-# if defined NUDGING_UVsur || defined NUDGING_UV
-     &                 OBS(ng) % EobsUV,                                &
-     &                 OBS(ng) % Uobs,                                  &
-     &                 OBS(ng) % Vobs,                                  &
-# endif
      &                 OCEAN(ng) % u,                                   &
      &                 OCEAN(ng) % v,                                   &
      &                 OCEAN(ng) % W,                                   &
@@ -198,9 +190,6 @@
 # ifdef M3CLM_NUDGING
      &                       M3nudgcof, uclm, vclm,                     &
 # endif
-# if defined NUDGING_UVsur || defined NUDGING_UV
-     &                       EobsUV, Uobs, Vobs,                        &
-# endif
      &                       u, v, W,                                   &
 # ifdef NEARSHORE_MELLOR
      &                       u_stokes, v_stokes,                        &
@@ -249,11 +238,6 @@
       real(r8), intent(in) :: uclm(LBi:,LBj:,:)
       real(r8), intent(in) :: vclm(LBi:,LBj:,:)
 #  endif
-#  if defined NUDGING_UVsur || defined NUDGING_UV
-      real(r8), intent(in) :: EobsUV(LBi:,LBj:,:)
-      real(r8), intent(in) :: Uobs(LBi:,LBj:,:)
-      real(r8), intent(in) :: Vobs(LBi:,LBj:,:)
-#  endif
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
@@ -299,11 +283,6 @@
       real(r8), intent(in) :: M3nudgcof(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: uclm(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: vclm(LBi:UBi,LBj:UBj,N(ng))
-#  endif
-#  if defined NUDGING_UVsur || defined NUDGING_UV
-      real(r8), intent(in) :: EobsUV(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Uobs(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: Vobs(LBi:UBi,LBj:UBj,N(ng))
 #  endif
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
@@ -637,40 +616,6 @@
          END DO
        END DO
 # endif
-# if defined NUDGING_UVsur || defined NUDGING_UV
-!
-!-----------------------------------------------------------------------
-!  Assimilate horizontal currents observations via nudging.
-!-----------------------------------------------------------------------
-!
-!  Notice that the nondimensional error variance "EobsUV" is flipped,
-!  so a value of unity represents unavailable data.
-!
-        IF (update_UV(ng)) THEN
-          DO j=Jstr,Jend
-            DO i=IstrU,Iend
-              cff=MIN(1.0_r8,MAX(0.0_r8,0.5_r8*(EobsUV(i-1,j,k)+        &
-     &                                          EobsUV(i  ,j,k))))
-              cff=M3nudass(ng)*(1.0_r8-cff)
-              ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                            &
-     &                       cff*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*        &
-     &                           (Uobs(i,j,k)-u(i,j,k,nrhs))*           &
-     &                           om_u(i,j)*on_u(i,j)
-            END DO
-          END DO
-          DO j=JstrV,Jend
-            DO i=Istr,Iend
-              cff=MIN(1.0_r8,MAX(0.0_r8,0.5_r8*(EobsUV(i,j-1,k)+        &
-     &                                          EobsUV(i,j  ,k))))
-              cff=M3nudass(ng)*(1.0_r8-cff)
-              rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+                            &
-     &                       cff*0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))*        &
-     &                           (Vobs(i,j,k)-v(i,j,k,nrhs))*           &
-     &                           om_v(i,j)*on_v(i,j)
-            END DO
-          END DO
-        END IF
-# endif
 # ifdef UV_ADV
 !
 !-----------------------------------------------------------------------
@@ -733,13 +678,8 @@
           END DO
         END DO
 #  else
-#   ifdef EW_PERIODIC
-#    define IU_RANGE IstrU-1,Iend+1
-#   else
-#    define IU_RANGE MAX(IstrU-1,2),MIN(Iend+1,Lm(ng))
-#   endif
         DO j=Jstr,Jend
-          DO i=IU_RANGE
+          DO i=IstrUm1,Iendp1
             uxx(i,j)=u(i-1,j,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+              &
 #   ifdef NEARSHORE_MELLOR
      &               u_stokes(i-1,j,k)-2.0_r8*u_stokes(i,j,k)+          &
@@ -749,15 +689,14 @@
             Huxx(i,j)=Huon(i-1,j,k)-2.0_r8*Huon(i,j,k)+Huon(i+1,j,k)
           END DO
         END DO
-#   undef IU_RANGE
-#   ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr,Jend
             uxx (Istr,j)=uxx (Istr+1,j)
             Huxx(Istr,j)=Huxx(Istr+1,j)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             uxx (Iend+1,j)=uxx (Iend,j)
             Huxx(Iend+1,j)=Huxx(Iend,j)
@@ -811,12 +750,7 @@
           END DO
         END DO
 #   endif
-#   ifdef NS_PERIODIC
-#    define JU_RANGE Jstr-1,Jend+1
-#   else
-#    define JU_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#   endif
-        DO j=JU_RANGE
+        DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
             uee(i,j)=u(i,j-1,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+              &
 #   ifdef NEARSHORE_MELLOR
@@ -826,14 +760,13 @@
      &               u(i,j+1,k,nrhs)
           END DO
         END DO
-#   undef JU_RANGE
-#   ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=IstrU,Iend
             uee(i,Jstr-1)=uee(i,Jstr)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=IstrU,Iend
             uee(i,Jend+1)=uee(i,Jend)
           END DO
@@ -883,13 +816,8 @@
           END DO
         END DO
 #   endif
-#   ifdef EW_PERIODIC
-#    define IV_RANGE Istr-1,Iend+1
-#   else
-#    define IV_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#   endif
         DO j=JstrV,Jend
-          DO i=IV_RANGE
+          DO i=Istrm1,Iendp1
             vxx(i,j)=v(i-1,j,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
 #   ifdef NEARSHORE_MELLOR
      &               v_stokes(i-1,j,k)-2.0_r8*v_stokes(i,j,k)+          &
@@ -898,14 +826,13 @@
      &               v(i+1,j,k,nrhs)
           END DO
         END DO
-#   undef IV_RANGE
-#   ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=JstrV,Jend
             vxx(Istr-1,j)=vxx(Istr,j)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=JstrV,Jend
             vxx(Iend+1,j)=vxx(Iend,j)
           END DO
@@ -962,12 +889,7 @@
           END DO
         END DO
 #   endif
-#   ifdef NS_PERIODIC
-#    define JV_RANGE JstrV-1,Jend+1
-#   else
-#    define JV_RANGE MAX(JstrV-1,2),MIN(Jend+1,Mm(ng))
-#   endif
-        DO j=JV_RANGE
+        DO j=JstrVm1,Jendp1
           DO i=Istr,Iend
             vee(i,j)=v(i,j-1,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
 #   ifdef NEARSHORE_MELLOR
@@ -978,15 +900,14 @@
             Hvee(i,j)=Hvom(i,j-1,k)-2.0_r8*Hvom(i,j,k)+Hvom(i,j+1,k)
           END DO
         END DO
-#   undef JV_RANGE
-#   ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
             vee (i,Jstr)=vee (i,Jstr+1)
             Hvee(i,Jstr)=Hvee(i,Jstr+1)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
             vee (i,Jend+1)=vee (i,Jend)
             Hvee(i,Jend+1)=Hvee(i,Jend)

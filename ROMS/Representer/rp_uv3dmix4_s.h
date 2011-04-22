@@ -338,7 +338,7 @@
 !  no slip) boundary conditions.
 !
 #ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=JU_RANGE
 # ifdef WESTERN_WALL
             LapU(Istr,j)=0.0_r8
@@ -358,7 +358,7 @@
 # endif
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=JU_RANGE
 # ifdef EASTERN_WALL
             LapU(Iend+1,j)=0.0_r8
@@ -380,7 +380,7 @@
         END IF
 #endif
 #ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=IU_RANGE
 # ifdef SOUTHERN_WALL
             LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
@@ -400,7 +400,7 @@
 # endif
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=IU_RANGE
 # ifdef NORTHERN_WALL
             LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
@@ -422,7 +422,7 @@
         END IF
 #endif
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           LapU(Istr  ,Jstr-1)=0.5_r8*(LapU(Istr+1,Jstr-1)+              &
      &                                LapU(Istr  ,Jstr  ))
           tl_LapU(Istr  ,Jstr-1)=0.5_r8*(tl_LapU(Istr+1,Jstr-1)+        &
@@ -432,7 +432,7 @@
           tl_LapV(Istr-1,Jstr  )=0.5_r8*(tl_LapV(Istr-1,Jstr+1)+        &
      &                                   tl_LapV(Istr  ,Jstr  ))
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           LapU(Iend+1,Jstr-1)=0.5_r8*(LapU(Iend  ,Jstr-1)+              &
      &                                LapU(Iend+1,Jstr  ))
           tl_LapU(Iend+1,Jstr-1)=0.5_r8*(tl_LapU(Iend  ,Jstr-1)+        &
@@ -442,7 +442,7 @@
           tl_LapV(Iend+1,Jstr  )=0.5_r8*(tl_LapV(Iend  ,Jstr  )+        &
      &                                   tl_LapV(Iend+1,Jstr+1))
         END IF
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           LapU(Istr  ,Jend+1)=0.5_r8*(LapU(Istr+1,Jend+1)+              &
      &                                LapU(Istr  ,Jend  ))
           tl_LapU(Istr  ,Jend+1)=0.5_r8*(tl_LapU(Istr+1,Jend+1)+        &
@@ -452,7 +452,7 @@
           tl_LapV(Istr-1,Jend+1)=0.5_r8*(tl_LapV(Istr  ,Jend+1)+        &
      &                                   tl_LapV(Istr-1,Jend  ))
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           LapU(Iend+1,Jend+1)=0.5_r8*(LapU(Iend  ,Jend+1)+              &
      &                                LapU(Iend+1,Jend  ))
           tl_LapU(Iend+1,Jend+1)=0.5_r8*(tl_LapU(Iend  ,Jend+1)+        &

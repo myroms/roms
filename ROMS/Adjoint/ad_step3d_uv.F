@@ -71,6 +71,10 @@
      &                        GRID(ng) % umask,                         &
      &                        GRID(ng) % vmask,                         &
 # endif
+# ifdef WET_DRY_NOT_YET
+     &                        GRID(ng) % umask_wet,                     &
+     &                        GRID(ng) % vmask_wet,                     &
+# endif
      &                        GRID(ng) % om_v,                          &
      &                        GRID(ng) % on_u,                          &
      &                        GRID(ng) % pm,                            &
@@ -143,6 +147,9 @@
 # ifdef MASKING
      &                              umask, vmask,                       &
 # endif
+# ifdef WET_DRY_NOT_YET
+     &                              umask_wet, vmask_wet,               &
+# endif
      &                              om_v, on_u, pm, pn,                 &
      &                              Hz, ad_Hz,                          &
      &                              z_r, ad_z_r,                        &
@@ -175,9 +182,6 @@
 !
       USE mod_param
       USE mod_scalars
-# ifdef UV_PSOURCE
-      USE mod_sources
-# endif
 !
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE ad_exchange_2d_mod
@@ -210,6 +214,10 @@
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
@@ -280,6 +288,10 @@
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
@@ -514,14 +526,14 @@
 !  Couple 2D and 3D momentum equations.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
+# if defined EW_PERIODIC || defined COMPOSED_GRID
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
 # else
 #  define IU_RANGE Istr,IendR
 #  define IV_RANGE IstrR,IendR
 # endif
-# ifdef NS_PERIODIC
+# if defined NS_PERIODIC || defined COMPOSED_GRID
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
 # else
@@ -648,11 +660,17 @@
 !  accurate barotropic component, vbar=DV_avg1/(D*om_v).  Recall that,
 !  D=CF(:,0).
 !
-# ifndef NS_PERIODIC
+# if !defined NS_PERIODIC && !defined COMPOSED_GRID
           IF (j.eq.Mm(ng)+1) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>              tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*vmask_wet(i,j)
+!>
+                ad_v_stokes(i,j,k)=ad_v_stokes(i,j,k)*                  &
+     &                             vmask_wet(i,j)
+#   endif
 #   ifdef MASKING
 !>              tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*                  &
 !>   &                             vmask(i,j)
@@ -664,6 +682,12 @@
 !>   &                             tl_CFs(i,0)
 !>
                 ad_CFs(i,0)=ad_CFs(i,0)-ad_v_stokes(i,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>              tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*vmask_wet(i,j)
+!>
+                ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                      &
+     &                           vmask_wet(i,j)
 #  endif
 #  ifdef MASKING
 !>              tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                      &
@@ -683,6 +707,12 @@
             DO k=1,N(ng)
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>              tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*vmask_wet(i,j)
+!>
+                ad_v_stokes(i,j,k)=ad_v_stokes(i,j,k)*                  &
+     &                             vmask_wet(i,j)
+#   endif
 #   ifdef MASKING
 !>              tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*                  &
 !>   &                             vmask(i,j)
@@ -694,6 +724,12 @@
 !>   &                             tl_CFs(i,0)
 !>
                 ad_CFs(i,0)=ad_CFs(i,0)-ad_v_stokes(i,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>              tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*vmask_wet(i,j)
+!>
+                ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                      &
+     &                           vmask_wet(i,j)
 #  endif
 #  ifdef MASKING
 !>              tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                      &
@@ -710,10 +746,17 @@
             END DO
           END IF
 # endif
-# ifndef EW_PERIODIC
+# if !defined EW_PERIODIC && !defined COMPOSED_GRID
           IF (Iend.eq.Lm(ng)) THEN
             DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>            tl_v_stokes(Iend+1,j,k)=tl_v_stokes(Iend+1,j,k)*          &
+!>   &                                vmask_wet(Iend+1,j)
+!>
+              ad_v_stokes(Iend+1,j,k)=ad_v_stokes(Iend+1,j,k)*          &
+     &                                vmask_wet(Iend+1,j)
+#   endif
 #   ifdef MASKING
 !>            tl_v_stokes(Iend+1,j,k)=tl_v_stokes(Iend+1,j,k)*          &
 !>   &                                vmask(Iend+1,j)
@@ -725,6 +768,13 @@
 !>   &                                tl_CFs(Iend+1,0)
 !>
               ad_CFs(Iend+1,0)=ad_CFs(Iend+1,0)-ad_v_stokes(Iend+1,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>            tl_v(Iend+1,j,k,nnew)=tl_v(Iend+1,j,k,nnew)*              &
+!>   &                              vmask_wet(Iend+1,j)
+!>
+              ad_v(Iend+1,j,k,nnew)=ad_v(Iend+1,j,k,nnew)*              &
+     &                              vmask_wet(Iend+1,j)
 #  endif
 #  ifdef MASKING
 !>            tl_v(Iend+1,j,k,nnew)=tl_v(Iend+1,j,k,nnew)*              &
@@ -742,6 +792,13 @@
           IF (Istr.eq.1) THEN
             DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>            tl_v_stokes(Istr-1,j,k)=tl_v_stokes(Istr-1,j,k)*          &
+!>   &                                vmask_wet(Istr-1,j)
+!>
+              ad_v_stokes(Istr-1,j,k)=ad_v_stokes(Istr-1,j,k)*          &
+     &                                vmask_wet(Istr-1,j)
+#   endif
 #   ifdef MASKING
 !>            tl_v_stokes(Istr-1,j,k)=tl_v_stokes(Istr-1,j,k)*          &
 !>   &                                vmask(Istr-1,j)
@@ -753,6 +810,13 @@
 !>   &                                tl_CFs(Istr-1,0)
 !>
               ad_CFs(Istr-1,0)=ad_CFs(Istr-1,0)-ad_v_stokes(Istr-1,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>            tl_v(Istr-1,j,k,nnew)=tl_v(Istr-1,j,k,nnew)*              &
+!>   &                              vmask_wet(Istr-1,j)
+!>
+              ad_v(Istr-1,j,k,nnew)=ad_v(Istr-1,j,k,nnew)*              &
+     &                              vmask_wet(Istr-1,j)
 #  endif
 #  ifdef MASKING
 !>            tl_v(Istr-1,j,k,nnew)=tl_v(Istr-1,j,k,nnew)*              &
@@ -776,6 +840,9 @@
 !!
 !!        DO idiag=1,NDM2d-1
 !!          DO i=IV_RANGE
+#  ifdef MASKING
+!!            DiaV2wrk(i,j,idiag)=DiaV2wrk(i,j,idiag)*vmask(i,j)
+#  endif
 !!            DiaV2wrk(i,j,idiag)=DC(i,0)*DiaV2wrk(i,j,idiag)
 !!          END DO
 !!        END DO
@@ -1014,11 +1081,18 @@
 !  accurate barotropic component, ubar=DU_avg1/(D*on_u). Recall that,
 !  D=CF(:,0).
 !
-# ifndef NS_PERIODIC
+# if !defined NS_PERIODIC && !defined COMPOSED_GRID
         IF (j.eq.Mm(ng)+1) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>            tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                    &
+!>   &                           umask_wet(i,j)
+!>
+              ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)*                    &
+     &                           umask_wet(i,j)
+#   endif
 #   ifdef MASKING
 !>            tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                    &
 !>   &                           umask(i,j)
@@ -1030,6 +1104,13 @@
 !>   &                           tl_CFs(i,0)
 !>
               ad_CFs(i,0)=ad_CFs(i,0)-ad_u_stokes(i,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>            tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                        &
+!>   &                         umask_wet(i,j)
+!>
+              ad_u(i,j,k,nnew)=ad_u(i,j,k,nnew)*                        &
+     &                         umask_wet(i,j)
 #  endif
 #  ifdef MASKING
 !>            tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                        &
@@ -1048,6 +1129,13 @@
           DO k=1,N(ng)
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>            tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                    &
+!>   &                           umask_wet(i,j)
+!>
+              ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)*                    &
+     &                           umask_wet(i,j)
+#   endif
 #   ifdef MASKING
 !>            tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                    &
 !>   &                           umask(i,j)
@@ -1059,6 +1147,13 @@
 !>   &                           tl_CFs(i,0)
 !>
               ad_CFs(i,0)=ad_CFs(i,0)-ad_u_stokes(i,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>            tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                        &
+!>   &                         umask_wet(i,j)
+!>
+              ad_u(i,j,k,nnew)=ad_u(i,j,k,nnew)*                        &
+     &                         umask_wet(i,j)
 #  endif
 #  ifdef MASKING
 !>            tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                        &
@@ -1074,10 +1169,17 @@
           END DO
         END IF
 # endif
-# ifndef EW_PERIODIC
+# if !defined EW_PERIODIC && !defined COMPOSED_GRID
         IF (Iend.eq.Lm(ng)) THEN
           DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>          tl_u_stokes(Iend+1,j,k)=tl_u_stokes(Iend+1,j,k)*            &
+!>   &                              umask_wet(Iend+1,j)
+!>
+            ad_u_stokes(Iend+1,j,k)=ad_u_stokes(Iend+1,j,k)*            &
+     &                              umask_wet(Iend+1,j)
+#   endif
 #   ifdef MASKING
 !>          tl_u_stokes(Iend+1,j,k)=tl_u_stokes(Iend+1,j,k)*            &
 !>   &                              umask(Iend+1,j)
@@ -1090,6 +1192,13 @@
 !>
             ad_CFs(Iend+1,0)=ad_CFs(Iend+1,0)-ad_u_stokes(Iend+1,j,k)
      &
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>          tl_u(Iend+1,j,k,nnew)=tl_u(Iend+1,j,k,nnew)*                &
+!>   &                            umask_wet(Iend+1,j)
+!>
+            ad_u(Iend+1,j,k,nnew)=ad_u(Iend+1,j,k,nnew)*                &
+     &                            umask_wet(Iend+1,j)
 #  endif
 #  ifdef MASKING
 !>          tl_u(Iend+1,j,k,nnew)=tl_u(Iend+1,j,k,nnew)*                &
@@ -1106,6 +1215,13 @@
         IF (Istr.eq.1)THEN
           DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
+#   ifdef WET_DRY_NOT_YET
+!>          tl_u_stokes(Istr,j,k)=tl_u_stokes(Istr,j,k)*                &
+!>   &                            umask_wet(Istr,j)
+!>
+            ad_u_stokes(Istr,j,k)=ad_u_stokes(Istr,j,k)*                &
+     &                            umask_wet(Istr,j)
+#   endif
 #   ifdef MASKING
 !>          tl_u_stokes(Istr,j,k)=tl_u_stokes(Istr,j,k)*                &
 !>   &                            umask(Istr,j)
@@ -1117,6 +1233,13 @@
 !>   &                            tl_CFs(Istr,0)
 !>
             ad_CFs(Istr,0)=ad_CFs(Istr,0)-ad_u_stokes(Istr,j,k)
+#  endif
+#  ifdef WET_DRY_NOT_YET
+!>          tl_u(Istr,j,k,nnew)=tl_u(Istr,j,k,nnew)*                    &
+!>   &                          umask_wet(Istr,j)
+!>
+            ad_u(Istr,j,k,nnew)=ad_u(Istr,j,k,nnew)*                    &
+     &                          umask_wet(Istr,j)
 #  endif
 #  ifdef MASKING
 !>          tl_u(Istr,j,k,nnew)=tl_u(Istr,j,k,nnew)*                    &
@@ -1138,6 +1261,9 @@
 !!
 !!      DO idiag=1,NDM2d-1
 !!        DO i=IU_RANGE
+#  ifdef MASKING
+!!          DiaU2wrk(i,j,idiag)=DiaU2wrk(i,j,idiag)*umask(i,j)
+#  endif
 !!          DiaU2wrk(i,j,idiag)=DC(i,0)*DiaU2wrk(i,j,idiag)
 !!        END DO
 !!      END DO
@@ -1371,6 +1497,14 @@
 !
 !  Couple and update new adjoint solution.
 !
+# if defined DIAGNOSTICS_UV && defined MASKING
+!!        DO k=1,N(ng)
+!!          DO i=Istr,Iend
+!!            DiaV3wrk(i,j,k,idiag)=DiaV3wrk(i,j,k,idiag)*vmask(i,j)
+!!          END DO
+!!        END DO
+# endif
+
           DO k=1,N(ng)
             DO i=Istr,Iend
 # ifdef DIAGNOSTICS_UV
@@ -1381,10 +1515,18 @@
 #  ifdef UV_ADV
 !!            DiaV3wrk(i,j,k,M3hadv)=DiaV3wrk(i,j,k,M3hadv)-            &
 !!   &                               Dwrk(i,M2hadv)
+!!            DiaV3wrk(i,j,k,M3yadv)=DiaV3wrk(i,j,k,M3yadv)-            &
+!!   &                               Dwrk(i,M2yadv)
+!!            DiaV3wrk(i,j,k,M3xadv)=DiaV3wrk(i,j,k,M3xadv)-            &
+!!   &                               Dwrk(i,M2xadv)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!            DiaV3wrk(i,j,k,M3hvis)=DiaV3wrk(i,j,k,M3hvis)-            &
 !!   &                               Dwrk(i,M2hvis)
+!!            DiaV3wrk(i,j,k,M3yvis)=DiaV3wrk(i,j,k,M3yvis)-            &
+!!   &                               Dwrk(i,M2yvis)
+!!            DiaV3wrk(i,j,k,M3xvis)=DiaV3wrk(i,j,k,M3xvis)-            &
+!!   &                               Dwrk(i,M2xvis)
 #  endif
 #  ifdef UV_COR
 !!            DiaV3wrk(i,j,k,M3fcor)=DiaV3wrk(i,j,k,M3fcor)-            &
@@ -1396,6 +1538,11 @@
 !!   &                               Dwrk(i,M2pgrd)
 # endif
 # ifdef NEARSHORE_MELLOR
+#  ifdef WET_DRY_NOT_YET
+!>            tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*vmask_wet(i,j)
+!>
+              ad_v_stokes(i,j,k)=ad_v_stokes(i,j,k)*vmask_wet(i,j)
+#  endif
 #  ifdef MASKING
 !>            tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*vmask(i,j)
 !>
@@ -1404,6 +1551,11 @@
 !>            tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)-tl_DCs(i,0)
 !>
               ad_DCs(i,0)=ad_DCs(i,0)-ad_v_stokes(i,j,k)
+# endif
+# ifdef WET_DRY_NOT_YET
+!>            tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*vmask_wet(i,j)
+!>
+              ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*vmask_wet(i,j)
 # endif
 # ifdef MASKING
 !>            tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*vmask(i,j)
@@ -1439,27 +1591,13 @@
             DCs(i,0)=DCs(i,0)*cff2-vbar_stokes(i,j)          ! recursive
 # endif
 # ifdef DIAGNOSTICS_UV
-#  ifdef NEARSHORE_MELLOR
-!!          Dwrk(i,M2hrad)=(Dwrk(i,M2hrad)*om_v(i,j)-                   &
-!!   &                      DiaV2wrk(i,j,M2hrad))*cff1
-#  endif
-#  ifdef UV_ADV
-!!          Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*om_v(i,j)-                   &
-!!   &                      DiaV2wrk(i,j,M2hadv))*cff1
-#  endif
-#  if defined UV_VIS2 || defined UV_VIS4
-!!          Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*om_v(i,j)-                   &
-!!   &                      DiaV2wrk(i,j,M2hvis))*cff1
-#  endif
-#  ifdef UV_COR
-!!          Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*om_v(i,j)-                   &
-!!   &                      DiaV2wrk(i,j,M2fcor))*cff1
-#  endif
 !!          Dwrk(i,M2bstr)=(Dwrk(i,M2bstr)*om_v(i,j)-                   &
 !!   &                      DiaV2wrk(i,j,M2bstr)-DiaV2wrk(i,j,M2sstr))* &
 !!   &                     cff1
-!!          Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*om_v(i,j)-                   &
-!!   &                      DiaV2wrk(i,j,M2pgrd))*cff1
+!!          DO idiag=1,M2pgrd
+!!            Dwrk(i,idiag)=(Dwrk(i,idiag)*om_v(i,j)-                   &
+!!   &                       DiaV2wrk(i,j,idiag))*cff1
+!!          END DO
 # endif
 # ifdef NEARSHORE_MELLOR
 !>          tl_DCs(i,0)=tl_DCs(i,0)*cff2+                               &
@@ -1502,10 +1640,18 @@
 #  ifdef UV_ADV
 !!            Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                            &
 !!   &                       DiaV3wrk(i,j,k,M3hadv)*Hzk(i,k)
+!!            Dwrk(i,M2yadv)=Dwrk(i,M2yadv)+                            &
+!!   &                       DiaV3wrk(i,j,k,M3yadv)*Hzk(i,k)
+!!            Dwrk(i,M2xadv)=Dwrk(i,M2xadv)+                            &
+!!   &                       DiaV3wrk(i,j,k,M3xadv)*Hzk(i,k)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!            Dwrk(i,M2hvis)=Dwrk(i,M2hvis)+                            &
 !!   &                       DiaV3wrk(i,j,k,M3hvis)*Hzk(i,k)
+!!            Dwrk(i,M2yvis)=Dwrk(i,M2yvis)+                            &
+!!   &                       DiaV3wrk(i,j,k,M3yvis)*Hzk(i,k)
+!!            Dwrk(i,M2xvis)=Dwrk(i,M2xvis)+                            &
+!!   &                       DiaV3wrk(i,j,k,M3xvis)*Hzk(i,k)
 #  endif
 #  ifdef UV_COR
 !!            Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                            &
@@ -1539,11 +1685,18 @@
             CF(i,0)=Hzk(i,1)
             DC(i,0)=v(i,j,1,nnew)*Hzk(i,1)
 # ifdef DIAGNOSTICS_UV
+#  ifdef NEARSHORE_MELLOR
+!!          Dwrk(i,M2hrad)=DiaV3wrk(i,j,1,M3hrad)*Hzk(i,1)
+#  endif
 #  ifdef UV_ADV
 !!          Dwrk(i,M2hadv)=DiaV3wrk(i,j,1,M3hadv)*Hzk(i,1)
+!!          Dwrk(i,M2yadv)=DiaV3wrk(i,j,1,M3yadv)*Hzk(i,1)
+!!          Dwrk(i,M2xadv)=DiaV3wrk(i,j,1,M3xadv)*Hzk(i,1)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!          Dwrk(i,M2hvis)=DiaV3wrk(i,j,1,M3hvis)*Hzk(i,1)
+!!          Dwrk(i,M2yvis)=DiaV3wrk(i,j,1,M3yvis)*Hzk(i,1)
+!!          Dwrk(i,M2xvis)=DiaV3wrk(i,j,1,M3xvis)*Hzk(i,1)
 #  endif
 #  ifdef UV_COR
 !!          Dwrk(i,M2fcor)=DiaV3wrk(i,j,1,M3fcor)*Hzk(i,1)
@@ -1945,25 +2098,17 @@
 !!   &                               oHz(i,k)
 #  endif
 !!            DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)*oHz(i,k)
-#  ifdef UV_ADV
-!!            DiaV3wrk(i,j,k,M3vadv)=(DiaV3wrk(i,j,k,M3vadv)+           &
-!!   &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3vadv))*&
-!!   &                               oHz(i,k)
-!!            DiaV3wrk(i,j,k,M3hadv)=(DiaV3wrk(i,j,k,M3hadv)+           &
-!!   &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3hadv))*&
-!!   &                               oHz(i,k)
-#  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!            DiaV3wrk(i,j,k,M3hvis)=DiaV3wrk(i,j,k,M3hvis)*oHz(i,k)
+!!            DiaV3wrk(i,j,k,M3yvis)=DiaV3wrk(i,j,k,M3yvis)*oHz(i,k)
+!!            DiaV3wrk(i,j,k,M3xvis)=DiaV3wrk(i,j,k,M3xvis)*oHz(i,k)
 #  endif
-#  ifdef UV_COR
-!!            DiaV3wrk(i,j,k,M3fcor)=(DiaV3wrk(i,j,k,M3fcor)+           &
-!!   &                               DC(i,0)*DiaRV(i,j,k,nrhs,M3fcor))* &
-!!   &                                                        oHz(i,k)
-#  endif
-!!            DiaV3wrk(i,j,k,M3pgrd)=(DiaV3wrk(i,j,k,M3pgrd)+           &
-!!   &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3pgrd))*&
-!!   &                               oHz(i,k)
+!!            DO idiag=1,M3pgrd
+!!              DiaV3wrk(i,j,k,idiag)=(DiaV3wrk(i,j,k,idiag)+           &
+!!   &                                 DC(i,0)*                         &
+!!   &                                 DiaRV(i,j,k,nrhs,idiag))*        &
+!!   &                                oHz(i,k)
+!!            END DO
 # endif
 # ifdef SPLINES
 !>            tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*oHz(i,k)+               &
@@ -2036,6 +2181,16 @@
 !
 !  Couple and update new adjoint solution.
 !
+# if defined DIAGNOSTICS_UV && defined MASKING
+!!      DO k=1,N(ng)
+!!        DO i=IstrU,Iend
+!!          DO idiag=1,NDM3d
+!!            DiaU3wrk(i,j,k,idiag)=DiaU3wrk(i,j,k,idiag)*umask(i,j)
+!!          END DO
+!!        END DO
+!!      END DO
+# endif
+
         DO k=1,N(ng)
           DO i=IstrU,Iend
 # ifdef DIAGNOSTICS_UV
@@ -2046,10 +2201,18 @@
 #  ifdef UV_ADV
 !!          DiaU3wrk(i,j,k,M3hadv)=DiaU3wrk(i,j,k,M3hadv)-              &
 !!   &                             Dwrk(i,M2hadv)
+!!          DiaU3wrk(i,j,k,M3yadv)=DiaU3wrk(i,j,k,M3yadv)-              &
+!!   &                             Dwrk(i,M2yadv)
+!!          DiaU3wrk(i,j,k,M3xadv)=DiaU3wrk(i,j,k,M3xadv)-              &
+!!   &                             Dwrk(i,M2xadv)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!          DiaU3wrk(i,j,k,M3hvis)=DiaU3wrk(i,j,k,M3hvis)-              &
 !!   &                             Dwrk(i,M2hvis)
+!!          DiaU3wrk(i,j,k,M3yvis)=DiaU3wrk(i,j,k,M3yvis)-              &
+!!   &                             Dwrk(i,M2yvis)
+!!          DiaU3wrk(i,j,k,M3xvis)=DiaU3wrk(i,j,k,M3xvis)-              &
+!!   &                             Dwrk(i,M2xvis)
 #  endif
 #  ifdef UV_COR
 !!          DiaU3wrk(i,j,k,M3fcor)=DiaU3wrk(i,j,k,M3fcor)-              &
@@ -2061,6 +2224,11 @@
 !!   &                             Dwrk(i,M2pgrd)
 # endif
 # ifdef NEARSHORE_MELLOR
+#  ifdef WET_DRY_NOT_YET
+!>          tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*umask_wet(i,j)
+!>
+            ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)*umask_wet(i,j)
+#  endif
 #  ifdef MASKING
 !>          tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*umask(i,j)
 !>
@@ -2069,6 +2237,11 @@
 !>          tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)-tl_DCs(i,0)
 !>
             ad_DCs(i,0)=ad_DCs(i,0)-ad_u_stokes(i,j,k)
+# endif
+# ifdef WET_DRY_NOT_YET
+!>          tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*umask_wet(i,j)
+!>
+            ad_u(i,j,k,nnew)=ad_u(i,j,k,nnew)*umask_wet(i,j)
 # endif
 # ifdef MASKING
 !>          tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*umask(i,j)
@@ -2104,27 +2277,13 @@
           DCs(i,0)=DCs(i,0)*cff2-ubar_stokes(i,j)            ! recursive
 # endif
 # ifdef DIAGNOSTICS_UV
-#  ifdef NEARSHORE_MELLOR
-!!        Dwrk(i,M2hrad)=(Dwrk(i,M2hrad)*on_u(i,j)-                     &
-!!   &                    DiaU2wrk(i,j,M2hrad))*cff1
-#  endif
-#  ifdef UV_ADV
-!!        Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*on_u(i,j)-                     &
-!!   &                    DiaU2wrk(i,j,M2hadv))*cff1
-#  endif
-#  if defined UV_VIS2 || defined UV_VIS4
-!!        Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*on_u(i,j)-                     &
-!!   &                    DiaU2wrk(i,j,M2hvis))*cff1
-#  endif
-#  ifdef UV_COR
-!!        Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*on_u(i,j)-                     &
-!!   &                    DiaU2wrk(i,j,M2fcor))*cff1
-#  endif
 !!        Dwrk(i,M2bstr)=(Dwrk(i,M2bstr)*on_u(i,j)-                     &
 !!   &                    DiaU2wrk(i,j,M2bstr)-DiaU2wrk(i,j,M2sstr))*   &
 !!   &                   cff1
-!!        Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*on_u(i,j)-                     &
-!!   &                    DiaU2wrk(i,j,M2pgrd))*cff1
+!!        DO idiag=1,M2pgrd
+!!          Dwrk(i,idiag)=(Dwrk(i,idiag)*on_u(i,j)-                     &
+!!   &                     DiaU2wrk(i,j,idiag))*cff1
+!!        END DO
 # endif
 # ifdef NEARSHORE_MELLOR
 !>        tl_DCs(i,0)=tl_DCs(i,0)*cff2+                                 &
@@ -2170,10 +2329,18 @@
 #  ifdef UV_ADV
 !!          Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
 !!   &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
+!!          Dwrk(i,M2yadv)=Dwrk(i,M2yadv)+                              &
+!!   &                     DiaU3wrk(i,j,k,M3yadv)*Hzk(i,k)
+!!          Dwrk(i,M2xadv)=Dwrk(i,M2xadv)+                              &
+!!   &                     DiaU3wrk(i,j,k,M3xadv)*Hzk(i,k)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!          Dwrk(i,M2hvis)=Dwrk(i,M2hvis)+                              &
 !!   &                     DiaU3wrk(i,j,k,M3hvis)*Hzk(i,k)
+!!          Dwrk(i,M2yvis)=Dwrk(i,M2yvis)+                              &
+!!   &                     DiaU3wrk(i,j,k,M3yvis)*Hzk(i,k)
+!!          Dwrk(i,M2xvis)=Dwrk(i,M2xvis)+                              &
+!!   &                     DiaU3wrk(i,j,k,M3xvis)*Hzk(i,k)
 #  endif
 #  ifdef UV_COR
 !!          Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                              &
@@ -2215,9 +2382,13 @@
 #  endif
 #  ifdef UV_ADV
 !!        Dwrk(i,M2hadv)=DiaU3wrk(i,j,1,M3hadv)*Hzk(i,1)
+!!        Dwrk(i,M2yadv)=DiaU3wrk(i,j,1,M3yadv)*Hzk(i,1)
+!!        Dwrk(i,M2xadv)=DiaU3wrk(i,j,1,M3xadv)*Hzk(i,1)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!        Dwrk(i,M2hvis)=DiaU3wrk(i,j,1,M3hvis)*Hzk(i,1)
+!!        Dwrk(i,M2yvis)=DiaU3wrk(i,j,1,M3yvis)*Hzk(i,1)
+!!        Dwrk(i,M2xvis)=DiaU3wrk(i,j,1,M3xvis)*Hzk(i,1)
 #  endif
 #  ifdef UV_COR
 !!        Dwrk(i,M2fcor)=DiaU3wrk(i,j,1,M3fcor)*Hzk(i,1)
@@ -2619,33 +2790,16 @@
 !!   &                             oHz(i,k)
 #  endif
 !!          DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)*oHz(i,k)
-#  ifdef NEARSHORE_MELLOR
-!!          DiaU3wrk(i,j,k,M3hrad)=(DiaU3wrk(i,j,k,M3hrad)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3hrad))*  &
-!!   &                             oHz(i,k)
-!!          DiaU3wrk(i,j,k,M3vrad)=(DiaU3wrk(i,j,k,M3vrad)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3vrad))*  &
-!!   &                             oHz(i,k)
-#  endif
-#  ifdef UV_ADV
-!!          DiaU3wrk(i,j,k,M3vadv)=(DiaU3wrk(i,j,k,M3vadv)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3vadv))*  &
-!!   &                             oHz(i,k)
-!!          DiaU3wrk(i,j,k,M3hadv)=(DiaU3wrk(i,j,k,M3hadv)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3hadv))*  &
-!!   &                             oHz(i,k)
-#  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!          DiaU3wrk(i,j,k,M3hvis)=DiaU3wrk(i,j,k,M3hvis)*oHz(i,k)
+!!          DiaU3wrk(i,j,k,M3yvis)=DiaU3wrk(i,j,k,M3yvis)*oHz(i,k)
+!!          DiaU3wrk(i,j,k,M3xvis)=DiaU3wrk(i,j,k,M3xvis)*oHz(i,k)
 #  endif
-#  ifdef UV_COR
-!!          DiaU3wrk(i,j,k,M3fcor)=(DiaU3wrk(i,j,k,M3fcor)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3fcor))*  &
-!!   &                             oHz(i,k)
-#  endif
-!!          DiaU3wrk(i,j,k,M3pgrd)=(DiaU3wrk(i,j,k,M3pgrd)+             &
-!!   &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3pgrd))*  &
-!!   &                             oHz(i,k)
+!!          DO idiag=1,M3pgrd
+!!            DiaU3wrk(i,j,k,idiag)=(DiaU3wrk(i,j,k,idiag)+             &
+!!   &                               DC(i,0)*DiaRU(i,j,k,nrhs,idiag))*  &
+!!   &                              oHz(i,k)
+!!          END DO
 # endif
 # ifdef SPLINES
 !>          tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*oHz(i,k)+                 &

@@ -163,9 +163,9 @@
 !  Input sediment parameters.
 !-----------------------------------------------------------------------
 !
-      real(r8) :: newlayer_thick(Ngrids)   ! deposit thickness criteria
-      real(r8) :: minlayer_thick(Ngrids)   ! 2nd layer thickness criteria
-      real(r8) :: bedload_coeff(Ngrids)    ! bedload rate coefficient
+      real(r8), allocatable :: newlayer_thick(:)   ! deposit thickness
+      real(r8), allocatable :: minlayer_thick(:)   ! 2nd layer thickness
+      real(r8), allocatable :: bedload_coeff(:)    ! bedload rate
 
       real(r8), allocatable :: Csed(:,:)       ! initial concentration
       real(r8), allocatable :: Erate(:,:)      ! erosion rate
@@ -178,15 +178,16 @@
       real(r8), allocatable :: morph_fac(:,:)  ! morphological factor
 
 #if defined COHESIVE_BED || defined MIXED_BED
-      real(r8) :: tcr_min(Ngrids)        ! minimum shear for erosion
-      real(r8) :: tcr_max(Ngrids)        ! maximum shear for erosion
-      real(r8) :: tcr_slp(Ngrids)        ! Tau_crit profile slope
-      real(r8) :: tcr_off(Ngrids)        ! Tau_crit profile offset
-      real(r8) :: tcr_tim(Ngrids)        ! Tau_crit consolidation rate
+      real(r8), allocatable :: tcr_min(:)      ! minimum shear erosion
+      real(r8), allocatable :: tcr_max(:)      ! maximum shear erosion
+      real(r8), allocatable :: tcr_slp(:)      ! Tau_crit profile slope
+      real(r8), allocatable :: tcr_off(:)      ! Tau_crit profile offset
+      real(r8), allocatable :: tcr_tim(:)      ! Tau_crit consolidation
 #endif
+
 #if defined MIXED_BED
-      real(r8) :: transC(Ngrids)         ! cohesive transition
-      real(r8) :: transN(Ngrids)         ! noncohesive transition
+      real(r8), allocatable :: transC(:)       ! cohesive transition
+      real(r8), allocatable :: transN(:)       ! noncohesive transition
 #endif
 
       CONTAINS
@@ -207,6 +208,45 @@
 !-----------------------------------------------------------------------
 !  Initialize tracer identification indices.
 !-----------------------------------------------------------------------
+!
+!  Allocate various nested grid depended parameters
+!
+      IF (.not.allocated(newlayer_thick)) THEN
+        allocate ( newlayer_thick(Ngrids) )
+      END IF
+      IF (.not.allocated(minlayer_thick)) THEN
+        allocate ( minlayer_thick(Ngrids) )
+      END IF
+      IF (.not.allocated(bedload_coeff)) THEN
+        allocate ( bedload_coeff(Ngrids) )
+      END IF
+
+#if defined COHESIVE_BED || defined MIXED_BED
+      IF (.not.allocated(tcr_min)) THEN
+        allocate ( tcr_min(Ngrids) )
+      END IF
+      IF (.not.allocated(tcr_max)) THEN
+        allocate ( tcr_max(Ngrids) )
+      END IF
+      IF (.not.allocated(tcr_slp)) THEN
+        allocate ( tcr_slp(Ngrids) )
+      END IF
+      IF (.not.allocated(tcr_off)) THEN
+        allocate ( tcr_off(Ngrids) )
+      END IF
+      IF (.not.allocated(tcr_tim)) THEN
+        allocate ( tcr_tim(Ngrids) )
+      END IF
+#endif
+
+#if defined MIXED_BED
+      IF (.not.allocated(tcr_tim)) THEN
+        allocate ( transC(Ngrids) )
+      END IF
+      IF (.not.allocated(tcr_tim)) THEN
+        allocate ( transN(Ngrids) )
+      END IF
+#endif
 !
 !  Allocate sediment tracers indices vectors.
 !

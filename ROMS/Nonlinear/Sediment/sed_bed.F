@@ -238,18 +238,8 @@
         END DO
       END DO
 #  else
-#   ifdef EW_PERIODIC
-#    define I_RANGE Istr-1,Iend+1
-#   else
-#    define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#   endif
-#   ifdef NS_PERIODIC
-#    define J_RANGE Jstr-1,Jend+1
-#   else
-#    define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#   endif
-      DO i=I_RANGE
-        DO j=J_RANGE
+        DO j=Jstrm1,Jendp1
+          DO i=Istrm1,Iendp1
           tau_w(i,j)=0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))*             &
      &                           (bustr(i,j)+bustr(i+1,j))+             &
      &                           (bvstr(i,j)+bvstr(i,j+1))*             &
@@ -259,8 +249,6 @@
 #   endif
         END DO
       END DO
-#   undef I_RANGE
-#   undef J_RANGE
 #  endif
 # endif
 !
@@ -356,7 +344,7 @@
 !  Set new top layer parameters.
 !
               DO ised=1,NST
-                bed_mass(i,j,2,nnew,ised)=MAX(bed_mass(i,j,2,nnew,ised)- &
+                bed_mass(i,j,2,nnew,ised)=MAX(bed_mass(i,j,2,nnew,ised)-&
      &                                    dep_mass(i,ised),0.0_r8)
                 bed_mass(i,j,1,nnew,ised)=dep_mass(i,ised)
               END DO

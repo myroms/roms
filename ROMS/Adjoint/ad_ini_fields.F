@@ -48,7 +48,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 1)
+      CALL wclock_on (ng, iADM, 2)
 # endif
       CALL ad_ini_fields_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -80,7 +80,7 @@
      &                         OCEAN(ng) % zeta,                        &
      &                         OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
+      CALL wclock_off (ng, iADM, 2)
 # endif
       RETURN
       END SUBROUTINE ad_ini_fields
@@ -315,8 +315,8 @@
 !  Adjoint of tracers initialization.
 !
         DO k=1,N(ng)
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=JstrB,JendB
+            DO i=IstrB,IendB
 !>            tl_t(i,j,k,nstp,itrc)=tl_cff1
 !!            tl_t(i,j,k,nnew,itrc)=tl_cff1
 !>
@@ -454,12 +454,12 @@
 !
 !  Load 2D adjoint momentum solution into IO arrays.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)+ad_ubar(i,j,knew)
         END DO
-        IF (j.ge.Jstr) THEN
-          DO i=IstrR,IendR
+        IF (j.ge.JstrP) THEN
+          DO i=IstrT,IendT
             ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)+ad_vbar(i,j,knew)
           END DO
         END IF
@@ -470,20 +470,20 @@
 !  cell thicknesses, DC(i,0) is total depth of the water column, and
 !  CF(i,0) is the vertical integral.
 !
-      DO j=Jstr,Jend
-        IF (j.ge.JstrV) THEN
-          DO i=Istr,Iend
+      DO j=JstrB,JendB
+        IF (j.ge.JstrM) THEN
+          DO i=IstrB,IendB
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
           END DO
           DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
               DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
               DC(i,0)=DC(i,0)+DC(i,k)
               CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nstp)
             END DO
           END DO
-          DO i=Istr,Iend
+          DO i=IstrB,IendB
             cff1=1.0_r8/DC(i,0)
 !>          tl_vbar(i,j,kstp)=tl_cff2
 !>          tl_vbar(i,j,knew)=tl_cff2
@@ -508,7 +508,7 @@
             ad_cff1=0.0_r8
           END DO
           DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
 !>            tl_CF(i,0)=tl_CF(i,0)+tl_DC(i,k)*v(i,j,k,nstp)+           &
 !>   &                              DC(i,k)*tl_v(i,j,k,nstp)
 !>
@@ -525,7 +525,7 @@
               ad_DC(i,k)=0.0_r8
             END DO
           END DO
-          DO i=Istr,Iend
+          DO i=IstrB,IendB
 !>          tl_CF(i,0)=0.0_r8
 !>
             ad_CF(i,0)=0.0_r8
@@ -535,18 +535,18 @@
           END DO
         END IF
 !
-        DO i=IstrU,Iend
+        DO i=IstrM,IendB
           DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
             DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
             DC(i,0)=DC(i,0)+DC(i,k)
             CF(i,0)=CF(i,0)+DC(i,k)*u(i,j,k,nstp)
           END DO
         END DO
-        DO i=IstrU,Iend
+        DO i=IstrM,IendB
           cff1=1.0_r8/DC(i,0)
 !>        tl_ubar(i,j,kstp)=tl_cff2
 !>        tl_ubar(i,j,knew)=tl_cff2
@@ -571,7 +571,7 @@
           ad_cff1=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
 !>          tl_CF(i,0)=tl_CF(i,0)+tl_DC(i,k)*u(i,j,k,nstp)+             &
 !>   &                            DC(i,k)*tl_u(i,j,k,nstp)
 !>
@@ -588,7 +588,7 @@
             ad_DC(i,k)=0.0_r8
           END DO
         END DO
-        DO i=IstrU,Iend
+        DO i=IstrM,IendB
 !>        tl_CF(i,0)=0.0_r8
 !>
           ad_CF(i,0)=0.0_r8
@@ -712,12 +712,12 @@
 !
 !  Load 2D adjoint momentum solution into IO arrays.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)+ad_ubar(i,j,krhs)
         END DO
-        IF (j.ge.Jstr) THEN
-          DO i=IstrR,IendR
+        IF (j.ge.JstrP) THEN
+          DO i=IstrT,IendT
             ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)+ad_vbar(i,j,krhs)
           END DO
         END IF
@@ -725,9 +725,9 @@
 !
 !  Adjoint of initialize other time levels for 2D momentum.
 !
-      DO j=Jstr,Jend
-        IF (j.ge.JstrV) THEN
-          DO i=Istr,Iend
+      DO j=JstrB,JendB
+        IF (j.ge.JstrM) THEN
+          DO i=IstrB,IendB
 !>          tl_vbar(i,j,kstp)=tl_cff2
 !>          tl_vbar(i,j,krhs)=tl_cff2
 !>
@@ -746,7 +746,7 @@
             ad_cff2=0.0_r8
           END DO
         END IF
-        DO i=IstrU,Iend
+        DO i=IstrM,IendB
 !>        tl_ubar(i,j,kstp)=tl_cff1
 !>        tl_ubar(i,j,krhs)=tl_cff1
 !>
@@ -851,10 +851,10 @@
 !
 !  Adjoint of initialize other time levels for momentum.
 !
-      DO j=Jstr,Jend
-        IF (j.ge.JstrV) THEN
+      DO j=JstrB,JendB
+        IF (j.ge.JstrM) THEN
           DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
 !>            tl_v(i,j,k,nstp)=tl_cff2
 !!            tl_v(i,j,k,nnew)=tl_cff2
 !>
@@ -875,7 +875,7 @@
           END DO
         END IF
         DO k=1,N(ng)
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
 !>          tl_u(i,j,k,nstp)=tl_cff1
 !!          tl_u(i,j,k,nnew)=tl_cff1
 !>
@@ -922,7 +922,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 1)
+      CALL wclock_on (ng, iADM, 2)
 # endif
       CALL ad_ini_zeta_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -946,7 +946,7 @@
      &                       OCEAN(ng) % ad_zeta_sol,                   &
      &                       OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 1)
+      CALL wclock_off (ng, iADM, 2)
 # endif
       RETURN
       END SUBROUTINE ad_ini_zeta
@@ -1106,8 +1106,8 @@
      &                           ad_bed_thick0)
 #   endif
 
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !>        tl_bed_thick(i,j,2)=tl_bed_thick0(i,j)
 !>        tl_bed_thick(i,j,1)=tl_bed_thick0(i,j)
 !>
@@ -1153,8 +1153,8 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_Zt_avg1)
 #  endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !>        tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
 !>
           ad_zeta(i,j,kstp)=ad_zeta(i,j,kstp)+ad_Zt_avg1(i,j)
@@ -1273,11 +1273,11 @@
 !  Adjoint of free-surface initialization.
 !
 # ifndef OBC_FSRADIATION
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=JstrB,JendB
+        DO i=IstrB,IendB
 # else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 # endif
 # ifdef SOLVE3D
 !>        tl_zeta(i,j,kstp)=tl_cff1
@@ -1310,8 +1310,8 @@
 !  Load free-surface adjoint solution into IO arrays.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           ad_zeta_sol(i,j)=ad_zeta(i,j,kstp)
         END DO
       END DO

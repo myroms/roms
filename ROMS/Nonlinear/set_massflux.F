@@ -5,14 +5,19 @@
 # ifdef EW_PERIODIC
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
+# elif defined COMPOSED_GRID || defined REFINED_GRID
+#  define IU_RANGE IstrP+1,IendT
+#  define IV_RANGE IstrT,IendT
 # else
 #  define IU_RANGE Istr,IendR
 #  define IV_RANGE IstrR,IendR
 # endif
-
 # ifdef NS_PERIODIC
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
+# elif defined COMPOSED_GRID || defined REFINED_GRID
+#  define JU_RANGE JstrT,JendT
+#  define JV_RANGE JstrP+1,JendT
 # else
 #  define JU_RANGE JstrR,JendR
 #  define JV_RANGE Jstr,JendR
@@ -348,6 +353,9 @@
 #  ifdef EW_PERIODIC
 #   define IU_RANGE Istr,Iend
 #   define IV_RANGE Istr,Iend
+#  elif defined COMPOSED_GRID || defined REFINED_GRID
+#   define IU_RANGE IstrP+1,IendT
+#   define IV_RANGE IstrT,IendT
 #  else
 #   define IU_RANGE Istr,IendR
 #   define IV_RANGE IstrR,IendR
@@ -355,6 +363,9 @@
 #  ifdef NS_PERIODIC
 #   define JU_RANGE Jstr,Jend
 #   define JV_RANGE Jstr,Jend
+#  elif defined COMPOSED_GRID || defined REFINED_GRID
+#   define JU_RANGE JstrT,JendT
+#   define JV_RANGE JstrP+1,JendT
 #  else
 #   define JU_RANGE JstrR,JendR
 #   define JV_RANGE Jstr,JendR
@@ -376,9 +387,9 @@
         DO k=N(ng),1,-1
           DO i=IU_RANGE
             Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
-# ifdef NEARSHORE_MELLOR
+#  ifdef NEARSHORE_MELLOR
             Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
-# endif
+#  endif
             FC(i,0)=FC(i,0)+Huon(i,j,k)
           END DO
         END DO
@@ -411,9 +422,9 @@
           DO k=N(ng),1,-1
             DO i=IV_RANGE
               Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
-# ifdef NEARSHORE_MELLOR
+#  ifdef NEARSHORE_MELLOR
               Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
-# endif
+#  endif
               FC(i,0)=FC(i,0)+Hvom(i,j,k)
             END DO
           END DO

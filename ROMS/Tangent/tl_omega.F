@@ -74,7 +74,7 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    GRID(ng) % omn,                               &
      &                    SEDBED(ng) % bed_thick,                       &
-     &                    SEDBED(ng) % tl_bed_thick,                   &
+     &                    SEDBED(ng) % tl_bed_thick,                    &
 # endif
      &                    GRID(ng) % Huon,                              &
      &                    GRID(ng) % Hvom,                              &

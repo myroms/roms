@@ -716,7 +716,7 @@
             waveEr(i,j)=cff1*FCSr*FCCr
 #  ifdef SVENDSEN_ROLLER
             cff3=SCALARS(ng)%Cs_w(k)
-            waveEr(i,j)=waveEr(i,j)+1.25_r8*(rollA(i,j)+rollA(i-1,j))* &
+            waveEr(i,j)=waveEr(i,j)+1.25_r8*(rollA(i,j)+rollA(i-1,j))*  &
      &                  (1.0_r8-cff3**4)/(Dstp(i,j)+Dstp(i-1,j))
 #  endif
 !
@@ -754,7 +754,7 @@
           END DO
           DO i=Istr,Iend
             DO k=0,N(ng)
-              cff1=0.5_r8*(waven(i,j  )*waveE(i,j  )+                     &
+              cff1=0.5_r8*(waven(i,j  )*waveE(i,j  )+                   &
      &                     waven(i,j-1)*waveE(i,j-1))
               cff2=1.0_r8+SCALARS(ng)%Cs_w(k)
               FCCr=COSH(UFe(i,j)*cff2)*ocosh(i,j)
@@ -763,29 +763,31 @@
               waveEr(i,j)=cff1*FCSr*FCCr
 #  ifdef SVENDSEN_ROLLER
               cff3=SCALARS(ng)%Cs_w(k)
-              waveEr(i,j)=waveEr(i,j)+1.25_r8*(rollA(i,j)+rollA(i,j-1))* &
+              waveEr(i,j)=waveEr(i,j)+
+     &                    1.25_r8*(rollA(i,j)+rollA(i,j-1))*            &
      &                    (1.0_r8-cff3**4)/(Dstp(i,j)+Dstp(i,j-1))
 #  endif
 !
 !  Compute radiation stresses at V-points.
 !
-              cff4=0.25_r8*FCSr*(FCCr-FSSr)*                              &
-     &             (waveE(i,j)+waveE(i,j-1))*                             &
+              cff4=0.25_r8*FCSr*(FCCr-FSSr)*                            &
+     &             (waveE(i,j)+waveE(i,j-1))*                           &
      &             (waven(i,j)+waven(i,j-1))
-              cff5=0.5_r8*(owaven(i,j  )*owaven(i,j  )+                   &
+              cff5=0.5_r8*(owaven(i,j  )*owaven(i,j  )+                 &
      &                     owaven(i,j-1)*owaven(i,j-1))
-              FCC(i,k)=cff4+0.5_r8*                                       &
-     &                 waveEr(i,j)*(waveny(i,j)*waveny(i,j)+              &
+              FCC(i,k)=cff4+0.5_r8*                                     &
+     &                 waveEr(i,j)*(waveny(i,j  )*waveny(i,j  )+        &
      &                              waveny(i,j-1)*waveny(i,j-1))*cff5
-              FCS(i,k)=waveEr(i,j)*cff5*0.5_r8*(wavenx(i,j)*waveny(i,j)+  &
-     &                                      wavenx(i-1,j)*waveny(i-1,j))
+              FCS(i,k)=waveEr(i,j)*cff5*                                &
+     &                 0.5_r8*(wavenx(i  ,j)*waveny(i  ,j)+             &
+     &                         wavenx(i-1,j)*waveny(i-1,j))
             END DO
           END DO
           DO i=Istr,Iend
             DO k=1,N(ng)
-              cff5=(z_r(i,j,k)-z_r(i-1,j,k))*                             &
-     &             on_u(i,j)*(FCS(i,k)-FCS(i,k-1))+                       &
-     &             (z_psi(i,j+1)-z_psi(i,j))*                             &
+              cff5=(z_r(i,j,k)-z_r(i-1,j,k))*                           &
+     &             on_u(i,j)*(FCS(i,k)-FCS(i,k-1))+                     &
+     &             (z_psi(i,j+1)-z_psi(i,j))*                           &
      &             om_u(i,j)*(FCC(i,k)-FCC(i,k-1))
               rvstr3d(i,j,k)=rvstr3d(i,j,k)-cff5
 #  ifdef DIAGNOSTICS_UV

@@ -48,8 +48,8 @@
 
         implicit none
 
-        integer, dimension(Ngrids) :: Msrc
-        integer, dimension(Ngrids) :: Nsrc
+        integer, allocatable :: Msrc(:)
+        integer, allocatable :: Nsrc(:)
 
         TYPE T_SOURCES
 
@@ -112,6 +112,11 @@
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
+!
+      IF (ng.eq.1) THEN
+        allocate ( Msrc(Ngrids) )
+        allocate ( Nsrc(Ngrids) )
+      END IF
 
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                               defined TS_PSOURCE || defined Q_PSOURCE)
@@ -123,7 +128,7 @@
           foundit=.FALSE.
 
           QUERY : DO ifile=1,nFfiles(mg)
-            CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,mg),           &
+            CALL netcdf_inq_var (ng, iNLM, FRC(ifile,mg)%name,          &
      &                           MyVarName = TRIM(Vname(1,idRxpo)),     &
      &                           SearchVar = foundit,                   &
      &                           VarID = Vid,                           &

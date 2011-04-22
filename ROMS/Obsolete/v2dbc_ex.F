@@ -106,7 +106,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 # if defined SOUTH_M2RADIATION
 !
@@ -114,9 +114,9 @@
 !
         DO i=Istr,Iend+1
           grad(i,Jstr  )=vbar(i  ,Jstr  ,know)-                         &
-       &                 vbar(i-1,Jstr  ,know)
+     &                   vbar(i-1,Jstr  ,know)
           grad(i,Jstr+1)=vbar(i  ,Jstr+1,know)-                         &
-       &                 vbar(i-1,Jstr+1,know)
+     &                   vbar(i-1,Jstr+1,know)
         END DO
         DO i=Istr,Iend
           dVdt=vbar(i,Jstr+1,know)-vbar(i,Jstr+1,kout)
@@ -208,7 +208,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 # if defined NORTH_M2RADIATION
 !
@@ -314,7 +314,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 # if defined WEST_M2RADIATION
 !
@@ -429,7 +429,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 # if defined EAST_M2RADIATION
 !
@@ -547,20 +547,20 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         vbar(Istr-1,Jstr,kout)=0.5_r8*(vbar(Istr-1,Jstr+1,kout)+        &
      &                                 vbar(Istr  ,Jstr  ,kout))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         vbar(Iend+1,Jstr,kout)=0.5_r8*(vbar(Iend  ,Jstr  ,kout)+        &
      &                                 vbar(Iend+1,Jstr+1,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         vbar(Istr-1,Jend+1,kout)=0.5_r8*(vbar(Istr-1,Jend  ,kout)+      &
      &                                   vbar(Istr  ,Jend+1,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
-        vbar(Iend+1,Jend+1,kout)=0.5_r8*(vbar(Iend+1,Jend  ,kout)+       &
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        vbar(Iend+1,Jend+1,kout)=0.5_r8*(vbar(Iend+1,Jend  ,kout)+      &
      &                                   vbar(Iend  ,Jend+1,kout))
       END IF
 #endif

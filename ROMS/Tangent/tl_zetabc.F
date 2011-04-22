@@ -114,7 +114,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 #  if defined WEST_FSRADIATION_NOT_YET
 !
@@ -268,7 +268,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 #  if defined EAST_FSRADIATION_NOT_YET
 
@@ -426,7 +426,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 #  if defined SOUTH_FSRADIATION_NOT_YET
 
@@ -580,7 +580,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 #  if defined NORTH_FSRADIATION_NOT_YET
 
@@ -738,7 +738,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
 !>      zeta(Istr-1,Jstr-1,kout)=0.5_r8*(zeta(Istr  ,Jstr-1,kout)+      &
 !>   &                                   zeta(Istr-1,Jstr  ,kout))
 !>
@@ -746,7 +746,7 @@
      &                              (tl_zeta(Istr  ,Jstr-1,kout)+       &
      &                               tl_zeta(Istr-1,Jstr  ,kout))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
 !>      zeta(Iend+1,Jstr-1,kout)=0.5_r8*(zeta(Iend  ,Jstr-1,kout)+      &
 !>   &                                   zeta(Iend+1,Jstr  ,kout))
 !>
@@ -754,7 +754,7 @@
      &                              (tl_zeta(Iend  ,Jstr-1,kout)+       &
      &                               tl_zeta(Iend+1,Jstr  ,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
 !>      zeta(Istr-1,Jend+1,kout)=0.5_r8*(zeta(Istr-1,Jend  ,kout)+      &
 !>   &                                   zeta(Istr  ,Jend+1,kout))
 !>
@@ -762,7 +762,7 @@
      &                              (tl_zeta(Istr-1,Jend  ,kout)+       &
      &                               tl_zeta(Istr  ,Jend+1,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
 !>      zeta(Iend+1,Jend+1,kout)=0.5_r8*(zeta(Iend+1,Jend  ,kout)+      &
 !>   &                                   zeta(Iend  ,Jend+1,kout))
 !>
@@ -779,7 +779,7 @@
 !
       cff=Dcrit(ng)-eps
 #  ifndef EW_PERIODIC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           IF (zeta(Istr-1,j,kout).le.                                   &
      &        (Dcrit(ng)-GRID(ng)%h(Istr-1,j))) THEN
@@ -789,7 +789,7 @@
           END IF
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           IF (zeta(Iend+1,j,kout).le.                                   &
      &        (Dcrit(ng)-GRID(ng)%h(Iend+1,j))) THEN
@@ -801,7 +801,7 @@
       END IF
 #  endif
 #  ifndef NS_PERIODIC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           IF (zeta(i,Jstr-1,kout).le.                                   &
      &        (Dcrit(ng)-GRID(ng)%h(i,Jstr-1))) THEN
@@ -811,7 +811,7 @@
           END IF
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           IF (zeta(i,Jend+1,kout).le.                                   &
      &        (Dcrit(ng)-GRID(ng)%h(i,Jend+1))) THEN
@@ -823,7 +823,7 @@
       END IF
 #  endif
 #  if !defined EW_PERIODIC && !defined NS_PERIODIC
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (zeta(Istr-1,Jstr-1,kout).le.                                &
      &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jstr-1))) THEN
 !>        zeta(Istr-1,Jstr-1,kout)=cff-GRID(ng)%h(Istr-1,Jstr-1)
@@ -831,7 +831,7 @@
           tl_zeta(Istr-1,Jstr-1,kout)=-GRID(ng)%tl_h(Istr-1,Jstr-1)
         END IF
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         IF (zeta(Iend+1,Jstr-1,kout).le.                                &
      &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jstr-1))) THEN
 !>        zeta(Iend+1,Jstr-1,kout)=cff-GRID(ng)%h(Iend+1,Jstr-1)
@@ -839,7 +839,7 @@
           tl_zeta(Iend+1,Jstr-1,kout)=-GRID(ng)%tl_h(Iend+1,Jstr-1)
         END IF
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         IF (zeta(Istr-1,Jend+1,kout).le.                                &
      &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jend+1))) THEN
 !>        zeta(Istr-1,Jend+1,kout)=cff-GRID(ng)%h(Istr-1,Jend+1)
@@ -847,7 +847,7 @@
           tl_zeta(Istr-1,Jend+1,kout)=-GRID(ng)%tl_h(Istr-1,Jend+1)
         END IF
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         IF (zeta(Iend+1,Jend+1,kout).le.                                &
      &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jend+1))) THEN
 !>        zeta(Iend+1,Jend+1,kout)=cff-GRID(ng)%h(Iend+1,Jend+1)

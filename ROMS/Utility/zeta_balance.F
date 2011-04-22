@@ -284,7 +284,7 @@
      &           z_r(i,j-1,k+1)+z_r(i,j-1,k  )
             gamma=0.125_r8*cff1*cff2*cff3
 !
-            cff1=(1.0_r8+gamma)*(rho(i,j,k+1)-rho(i,j-1,k+1))+ &
+            cff1=(1.0_r8+gamma)*(rho(i,j,k+1)-rho(i,j-1,k+1))+          &
      &              (1.0_r8-gamma)*(rho(i,j,k  )-rho(i,j-1,k  ))
             cff2=rho(i,j,k+1)+rho(i,j-1,k+1)-                           &
      &           rho(i,j,k  )-rho(i,j-1,k  )
@@ -1101,7 +1101,7 @@
 !  East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef R2D_GRADIENT
           A(Iend+1,j)=A(Iend,j)
@@ -1110,7 +1110,7 @@
 #  endif
         END DO
       END IF
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef R2D_GRADIENT
           A(Istr-1,j)=A(Istr,j)
@@ -1127,7 +1127,7 @@
 !  North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef R2D_GRADIENT
           A(i,Jend+1)=A(i,Jend)
@@ -1136,7 +1136,7 @@
 #  endif
         END DO
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef R2D_GRADIENT
           A(i,Jstr-1)=A(i,Jstr)
@@ -1153,19 +1153,19 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+                      &
      &                           A(Istr-1,Jstr  ))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
      &                           A(Iend+1,Jstr  ))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
      &                           A(Istr  ,Jend+1))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
      &                           A(Iend  ,Jend+1))
       END IF
@@ -1224,12 +1224,12 @@
 !  East-West boundary conditions: Closed or gradient
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           A(Iend+1,j)=0.0_r8
         END DO
       END IF
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           A(Istr,j)=0.0_r8
         END DO
@@ -1243,13 +1243,13 @@
 !  gradient.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=IstrU,Iend
           A(i,Jend+1)=0.0_r8
         END DO
       END IF
 
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=IstrU,Iend
           A(i,Jstr-1)=0.0_r8
         END DO
@@ -1262,19 +1262,19 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+                      &
      &                           A(Istr  ,Jstr  ))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
      &                           A(Iend+1,Jstr  ))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
      &                           A(Istr+1,Jend+1))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
      &                           A(Iend  ,Jend+1))
       END IF
@@ -1334,13 +1334,13 @@
 !  gradient.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrV,Jend
           A(Iend+1,j)=0.0_r8
         END DO
       END IF
 
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrV,Jend
           A(Istr-1,j)=0.0_r8
         END DO
@@ -1353,12 +1353,12 @@
 !  North-South boundary conditions: Closed or Gradient.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           A(i,Jend+1)=0.0_r8
         END DO
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           A(i,Jstr)=0.0_r8
         END DO
@@ -1371,19 +1371,19 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         A(Istr-1,Jstr  )=0.5_r8*(A(Istr  ,Jstr  )+                      &
      &                           A(Istr-1,Jstr+1))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         A(Iend+1,Jstr  )=0.5_r8*(A(Iend  ,Jstr  )+                      &
      &                           A(Iend+1,Jstr+1))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
      &                           A(Istr  ,Jend+1))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
      &                           A(Iend  ,Jend+1))
       END IF
@@ -1476,8 +1476,8 @@
 !  Perform parallel global reduction operations.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -2101,8 +2101,8 @@
 !  Perform parallel global reduction operations.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -2373,8 +2373,8 @@
 !
 !  Perform parallel global reduction operation on "my_ad_bc_bk".
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                            ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)        ! tiled application
@@ -2499,8 +2499,8 @@
 !
 !  Perform parallel global reduction operation on "my_ad_bc_ak".
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                            ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)        ! tiled application
@@ -2868,7 +2868,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
 !>      tl_A(Iend+1,Jend+1)=0.5_r8*(tl_A(Iend+1,Jend  )+                &
 !>   &                              tl_A(Iend  ,Jend+1))
 !>
@@ -2877,7 +2877,7 @@
         ad_A(Iend  ,Jend+1)=ad_A(Iend  ,Jend+1)+adfac
         ad_A(Iend+1,Jend+1)=0.0_r8
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
 !>      tl_A(Istr-1,Jend+1)=0.5_r8*(tl_A(Istr-1,Jend  )+                &
 !>   &                              tl_A(Istr  ,Jend+1))
 !>
@@ -2886,7 +2886,7 @@
         ad_A(Istr  ,Jend+1)=ad_A(Istr  ,Jend+1)+adfac
         ad_A(Istr-1,Jend+1)=0.0_r8
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
 !>      tl_A(Iend+1,Jstr-1)=0.5_r8*(tl_A(Iend  ,Jstr-1)+                &
 !>   &                              tl_A(Iend+1,Jstr  ))
 !>
@@ -2895,7 +2895,7 @@
         ad_A(Iend+1,Jstr  )=ad_A(Iend+1,Jstr  )+adfac
         ad_A(Iend+1,Jstr-1)=0.0_r8
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
 !>      tl_A(Istr-1,Jstr-1)=0.5_r8*(tl_A(Istr  ,Jstr-1)+                &
 !>   &                              tl_A(Istr-1,Jstr  ))
 !>
@@ -2912,7 +2912,7 @@
 !  Adjoint North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef R2D_GRADIENT
 !>        tl_A(i,Jstr-1)=tl_A(i,Jstr)
@@ -2926,7 +2926,7 @@
 #  endif
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef R2D_GRADIENT
 !>        tl_A(i,Jend+1)=tl_A(i,Jend)
@@ -2948,7 +2948,7 @@
 !  Adjoint East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef R2D_GRADIENT
 !>        tl_A(Istr-1,j)=tl_A(Istr,j)
@@ -2962,7 +2962,7 @@
 #  endif
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef R2D_GRADIENT
 !>        tl_A(Iend+1,j)=tl_A(Iend,j)

@@ -361,7 +361,7 @@
       IF ((iic(ng).gt.ntsDIA(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nDIA(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           DIAtime(ng)=DIAtime(ng)+REAL(nDIA(ng),r8)*dt(ng)
         END IF
 !

@@ -1497,200 +1497,200 @@
 !
 !  Write out outer and inner iteration.
 !
-      CALL netcdf_put_ivar (ng, model, MODname(ng), 'outer',            &
+      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'outer',           &
      &                      outer, (/0/), (/0/),                        &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_ivar (ng, model, MODname(ng), 'inner',            &
+      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'inner',           &
      &                      inner, (/0/), (/0/),                        &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out number of converged Ritz eigenvalues.
 !
       IF (innLoop.eq.Ninner) THEN
-        CALL netcdf_put_ivar (ng, model, MODname(ng), 'nConvRitz',      &
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'nConvRitz',     &
      &                        nConvRitz, (/outLoop/), (/1/),            &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out converged Ritz eigenvalues.
 !
       IF (innLoop.eq.Ninner) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'Ritz',           &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Ritz',          &
      &                        Ritz, (/1,outLoop/), (/nConvRitz,1/),     &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out conjugate gradient norm.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_beta',        &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_beta',       &
      &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out Lanczos algorithm coefficients.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_delta',       &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_delta',      &
      &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write normalization coefficients for Lanczos vectos.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_dla',         &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_dla',        &
      &                        cg_dla, (/1,1/), (/Ninner,Nouter/),       &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Initial gradient normalization factor.
 !
       IF (innLoop.eq.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm_y',     &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Gnorm_y',    &
      &                        cg_Gnorm_y, (/1/), (/Nouter/),            &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm_v',     &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Gnorm_v',    &
      &                        cg_Gnorm_v, (/1/), (/Nouter/),            &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Lanczos vector normalization factor.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_QG',          &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_QG',         &
      &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Reduction in the gradient norm.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_y',    &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Greduc_y',   &
      &                        preducy, (/innLoop,outLoop/), (/1,1/),    &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_v',    &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Greduc_v',   &
      &                        preducv, (/innLoop,outLoop/), (/1,1/),    &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Eigenvalues of Lanczos recurrence relationship.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Ritz',        &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Ritz',       &
      &                        cg_Ritz, (/1,1/), (/Ninner,Nouter/),      &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Eigenvalues relative error.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_RitzErr',     &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_RitzErr',    &
      &                        cg_RitzErr, (/1,1/), (/Ninner,Nouter/),   &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Eigenvectors of Lanczos recurrence relationship.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_zv',          &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_zv',         &
      &                        cg_zv(:,:,outLoop),                       &
      &                        (/1,1,outLoop/), (/Ninner,Ninner,1/),     &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  First guess initial data misfit.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jf',               &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jf',              &
      &                      Jf, (/innLoop+1,outLoop/), (/1,1/),         &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  State estimate data misfit.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jdata',            &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jdata',           &
      &                      Jdata, (/innLoop+1,outLoop/), (/1,1/),      &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Model penalty function.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jmod',             &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jmod',            &
      &                      Jmod, (/innLoop+1,outLoop/), (/1,1/),       &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Optimal penalty function.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jopt',             &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jopt',            &
      &                      Jopt, (/innLoop+1,outLoop/), (/1,1/),       &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Actual model penalty function.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jb',               &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jb',              &
      &                      Jb, (/innLoop+1,outLoop/), (/1,1/),         &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Actual data penalty function.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jobs',             &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jobs',            &
      &                      Jobs, (/innLoop+1,outLoop/), (/1,1/),       &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Actual total penalty function.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jact',             &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Jact',            &
      &                      Jact, (/innLoop+1,outLoop/), (/1,1/),       &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Initial gradient for minimization.
 !
       IF (innLoop.eq.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'zgrad0',         &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'zgrad0',        &
      &                        zgrad0(:,outLoop),                        &
      &                        (/1,outLoop/), (/Ndatum(ng),1/),          &
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Lanczos vectors.
 !
-      CALL netcdf_put_fvar (ng, model, MODname(ng), 'zcglwk',           &
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'zcglwk',          &
      &                      zcglwk(:,innLoop+1,outLoop),                &
      &                      (/1,innLoop+1,outLoop/), (/Ndatum(ng),1,1/),&
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Saved TLmodVal_S.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'TLmodVal_S',     &
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'TLmodVal_S',    &
      &                        TLmodVal_S(:,innLoop,outLoop),            &
      &                        (/1,innLoop,outLoop/), (/Ndatum(ng),1,1/),&
-     &                        ncid = ncMODid(ng))
+     &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
@@ -1698,7 +1698,7 @@
 !  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, model, MODname(ng), ncMODid(ng))
+      CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
 
       RETURN
       END SUBROUTINE cg_write

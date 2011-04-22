@@ -136,22 +136,22 @@
           mask(i,j)=1.0_r8
         END DO
       END DO
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr-1,Jend+1
           mask(Istr-1,j)=0.0_r8
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr-1,Jend+1
           mask(Iend+1,j)=0.0_r8
         END DO
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr-1,Iend+1
           mask(i,Jstr-1)=0.0_r8
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr-1,Iend+1
           mask(i,Jend+1)=0.0_r8
         END DO

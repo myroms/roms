@@ -3069,7 +3069,7 @@
      &                           Bio(i,k,iPhyt)*ZooEED(ng)*cff
 #ifdef IRON_LIMIT
                   Bio(i,k,iFphy)=Bio(i,k,iFphy)/(1.0_r8+cff)
-                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                         &
+                  Bio(i,k,iFdis)=Bio(i,k,iFdis)+                        &
      &                           Bio(i,k,iFphy)*cff*FeRR(ng)
 #endif
                 END DO
@@ -3601,12 +3601,12 @@
               ad_Bio(i,k,iFphy)=ad_Bio(i,k,iFphy)+adfac
               ad_fac1=ad_fac1-ad_FNratio*FNratio/fac1
               ad_FNratio=0.0_r8
-!>            tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*      &
+!>            tl_fac1=(0.5_r8-SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*     &
 !>   &                tl_Bio(i,k,iPhyt)
 !>
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                       &
-     &                          (0.5_r8-                                 &
-     &                           SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*   &
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          (0.5_r8-                                &
+     &                           SIGN(0.5_r8,MinVal-Bio1(i,k,iPhyt)))*  &
      &                          ad_fac1
               ad_fac1=0.0_r8
 #endif

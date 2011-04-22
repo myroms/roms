@@ -70,6 +70,6 @@
       IF (exit_flag.ne.NoError) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'poros',                 &
-     &                      poros(:,ng), (/1/), (/NST/),                 &
+     &                      poros(:,ng), (/1/), (/NST/),                &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN

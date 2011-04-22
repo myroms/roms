@@ -958,7 +958,7 @@
               fac2=fac1*Wstar(i)+eps
               tl_fac2=tl_fac1*Wstar(i)+fac1*tl_Wstar(i)
 !>              Hcool=lambd*blk_visw/fac2
-            Hcool=lambd*blk_visw/(SQRT(rhoAir(i)/rhoSea(i))*           &
+            Hcool=lambd*blk_visw/(SQRT(rhoAir(i)/rhoSea(i))*            &
      &                            Wstar(i)+eps)
               tl_Hcool=tl_lambd*blk_visw/fac2-tl_fac2*Hcool/fac2
               delTc(i)=Qcool*Hcool/blk_tcw

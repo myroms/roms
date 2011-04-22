@@ -87,6 +87,7 @@
 
       integer :: LBi, UBi, LBj, UBj
       integer :: IniRec, InpRec, Tindex, subs, tile, thread, wrtRec
+      integer :: Fcount
 
       integer :: my_numthreads
 !
@@ -107,7 +108,7 @@
 # endif
         WRITE (stdout,20) 'TL_INITIAL: Configuring and ',               &
      &                    'initializing tangent linear model ...'
-  20    FORMAT (/,1x,a,a,/)
+ 20     FORMAT (/,1x,a,a,/)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -158,9 +159,9 @@
 !  Start time wall clocks.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
       DO thread=0,numthreads-1
-        CALL wclock_on (ng, iTLM, 1)
+        CALL wclock_on (ng, iTLM, 2)
       END DO
 !$OMP END PARALLEL DO
 # endif
@@ -211,7 +212,7 @@
 !
 !  Set record to read from initial tangent linear NetCDF file.
 !
-      IniRec=tITLindx(ng)
+      IniRec=ITL(ng)%Rindex
 
 #   ifdef ADJUST_BOUNDARY
 !
@@ -231,8 +232,9 @@
 !  counters are reset in every iteration pass. This file is created
 !  on the first iteration pass.
 !
-      tTLMindx(ng)=0
-      NrecTLM(ng)=0
+      TLM(ng)%Rindex=0
+      Fcount=TLM(ng)%Fcount
+      TLM(ng)%Nrec(Fcount)=0
       LwrtTLM(ng)=.TRUE.
 !
 !  Insure that forward and history file names are the same. In 4DVar,
@@ -240,11 +242,11 @@
 !  on HISNAME NetCDF file.
 !
 #    ifdef TLM_CHECK
-      FWDname(ng)=HISbase(ng)
-      ncFWDid(ng)=-1
+      FWD(ng)%name=TRIM(HIS(ng)%base)//'.nc'
+      FWD(ng)%ncid=-1
 #    else
-      FWDname(ng)=HISname(ng)
-      ncFWDid(ng)=ncHISid(ng)
+      FWD(ng)%name=HIS(ng)%name
+      FWD(ng)%ncid=HIS(ng)%ncid
 #    endif
 #   endif
 #  endif
@@ -271,7 +273,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef ANA_GRID
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -312,7 +314,7 @@
 !  Compute various metric term combinations.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -327,7 +329,7 @@
 !  If appropriate, set nudging coefficiests time scales.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -342,7 +344,7 @@
 !  Initialize horizontal mixing coefficients.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -359,7 +361,7 @@
 !  areas.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -380,7 +382,7 @@
 !
 !  Clear tangent linear state variables.
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -403,7 +405,7 @@
 !-----------------------------------------------------------------------
 !
       IF (inner.eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -439,7 +441,7 @@
 !  depths with zero free-surface.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -457,7 +459,7 @@
 !  Initialize tangent linear bathymetry to zero.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -476,7 +478,7 @@
 !  Analytical initial conditions for momentum and active tracers.
 !
       IF (nrrec(ng).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -492,7 +494,7 @@
 !  Analytical initial conditions for inert passive tracers.
 !
       IF (nrrec(ng).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -508,7 +510,7 @@
 !  Analytical initial conditions for biology.
 !
       IF (nrrec(ng).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -524,7 +526,7 @@
 !  Analytical initial conditions for sediment.
 !
       IF (nrrec(ng).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -541,7 +543,7 @@
 !  from the first outer loop of the IS4DVAR Lanczos algorithm.
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile,Tindex)                      &
-!$OMP&            SHARED(ng,numthreads,Lnew)
+!$OMP&            SHARED(numthreads,Lnew)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -555,11 +557,11 @@
 !  Read in initial conditions for initial or restart NetCDF file.
 !
 #  ifdef INI_FILE
-      CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
+      CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
       IF (exit_flag.ne.NoError) RETURN
 #  else
       IF (nrrec(ng).ne.0) THEN
-        CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
+        CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
@@ -572,7 +574,7 @@
 !  expressions.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -591,7 +593,7 @@
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile,Tindex)                      &
-!$OMP             SHARED(ng,numthreads,Lnew)
+!$OMP             SHARED(numthreads,Lnew)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
@@ -607,7 +609,7 @@
 !!  Compute initial time-evolving depths.
 !!----------------------------------------------------------------------
 !!
-!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
 !!    DO thread=0,numthreads-1
 !!      subs=NtileX(ng)*NtileE(ng)/numthreads
 !!      DO tile=subs*thread,subs*(thread+1)-1
@@ -620,7 +622,7 @@
 !!  Compute initial horizontal mass fluxes, Hz*u/n and Hz*v/m.
 !!----------------------------------------------------------------------
 !!
-!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
 !!    DO thread=0,numthreads-1
 !!      subs=NtileX(ng)*NtileE(ng)/numthreads
 !!      DO tile=subs*thread,subs*(thread+1)-1
@@ -636,7 +638,7 @@
 !!  quatities.
 !!----------------------------------------------------------------------
 !!
-!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
 !!    DO thread=0,numthreads-1
 !!      subs=NtileX(ng)*NtileE(ng)/numthreads
 !!      DO tile=subs*thread,subs*(thread+1)-1
@@ -653,6 +655,7 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
+      CALL close_inp (ng, iTLM)
 # ifdef TIMELESS_DATA
       CALL tl_get_idata (ng)
 # endif
@@ -709,7 +712,7 @@
 !
       IF (nADJ(ng).lt.ntimes(ng)) THEN
         IniRec=1
-        CALL get_state (ng, 7, 7, TLFname(ng), IniRec, 1)
+        CALL get_state (ng, 7, 7, TLF(ng)%name, IniRec, 1)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif
@@ -721,7 +724,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Nrun.eq.ERstr) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -738,7 +741,7 @@
 !
       IF (Lstiffness) THEN
         Lstiffness=.FALSE.
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -764,7 +767,7 @@
 !  Read in initial forcing from coupled wave model.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
@@ -773,6 +776,16 @@
       END DO
 !$OMP END PARALLEL DO
 # endif
+!
+!-----------------------------------------------------------------------
+!  Initialize time-stepping counter and clock.
+!-----------------------------------------------------------------------
+!
+!  Subsract one time unit to avoid special case due to initialization
+!  in the main time-stepping routine.
+!
+      iic(ng)=ntstart(ng)-1
+      time(ng)=time(ng)-dt(ng)
 
 # ifdef PROFILE
 !
@@ -780,9 +793,9 @@
 !  Turn off initiialization time wall clock.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
       DO thread=0,numthreads-1
-        CALL wclock_off (ng, iTLM, 1)
+        CALL wclock_off (ng, iTLM, 2)
       END DO
 !$OMP END PARALLEL DO
 # endif

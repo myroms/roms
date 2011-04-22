@@ -68,7 +68,7 @@
 !
 #if defined INLET_TEST
 # ifdef NORTH_FSOBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         cff=-1.0_r8*sin(2.0_r8*pi*time(ng)/(12.0_r8*3600.0_r8))
         DO i=IstrR,IendR
           BOUNDARY(ng)%zeta_north(i)=cff
@@ -79,7 +79,7 @@
       fac=1.0_r8                                ! zeta0
       omega=2.0_r8*pi/(12.42_r8*3600.0_r8)      ! M2 Tide period
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrR,JendR
           val=fac*EXP(-GRID(ng)%f(Istr-1,j)*GRID(ng)%yp(Istr-1,j)/      &
      &                SQRT(g*GRID(ng)%h(Istr-1,j)))
@@ -88,7 +88,7 @@
       END IF
 # endif
 # ifdef EAST_FSOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrR,JendR
           cff=1.0_r8/SQRT(g*GRID(ng)%h(Istr-1,j))
           val=fac*EXP(-GRID(ng)%f(Istr-1,j)*GRID(ng)%yp(Iend,j)*cff)
@@ -99,7 +99,7 @@
 # endif
 #elif defined ESTUARY_TEST
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         cff=1.0_r8*SIN(2.0_r8*pi*time(ng)/(12.0_r8*3600.0_r8))
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=cff
@@ -108,7 +108,7 @@
 # endif
 #elif defined SED_TEST1
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         fac=100.0_r8
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=9.0E-06_r8*fac
@@ -116,7 +116,7 @@
       END IF
 # endif
 # ifdef EAST_FSOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         fac=100.0_r8
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_east(j)=9.0E-06_r8*REAL(Iend+1,r8)*fac
@@ -125,7 +125,7 @@
 # endif
 #elif defined SHOREFACE
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 !!      cff=-1.0_r8*SIN(2.0_r8*pi*time(ng)/(12.0_r8*3600.0_r8))
         cff=0.0_r8
         DO j=JstrR,JendR
@@ -135,7 +135,7 @@
 # endif
 #elif defined TEST_CHAN
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         cff=0.0_r8
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=cff
@@ -143,7 +143,7 @@
       END IF
 # endif
 # ifdef EAST_FSOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         cff=-0.4040_r8*MIN(time(ng)/150000.0_r8,1.0_r8)
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_east(j)=cff
@@ -152,7 +152,7 @@
 # endif
 #elif defined WEDDELL
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         fac=TANH((tdays(ng)-dstart)/1.0_r8)
         omega=2.0_r8*pi*time(ng)/(12.42_r8*3600.0_r8)  !  M2 Tide period
         val=0.53_r8+(0.53_r8-0.48_r8)/REAL(Iend+1,r8)
@@ -163,7 +163,7 @@
       END IF
 # endif
 # ifdef EAST_FSOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         fac=TANH((tdays(ng)-dstart)/1.0_r8)
         omega=2.0_r8*pi*time(ng)/(12.42_r8*3600.0_r8)  !  M2 Tide period
         val=0.53_r8+(0.53_r8-0.48_r8)
@@ -175,28 +175,28 @@
 # endif
 #else
 # ifdef EAST_FSOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_east(j)=0.0_r8
         END DO
       END IF
 # endif
 # ifdef WEST_FSOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=0.0_r8
         END DO
       END IF
 # endif
 # ifdef SOUTH_FSOBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=IstrR,IendR
           BOUNDARY(ng)%zeta_south(i)=0.0_r8
         END DO
       END IF
 # endif
 # ifdef NORTH_FSOBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=IstrR,IendR
           BOUNDARY(ng)%zeta_north(i)=0.0_r8
         END DO

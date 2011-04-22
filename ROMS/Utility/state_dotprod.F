@@ -1,5 +1,24 @@
 #include "cppdefs.h"
       MODULE state_dotprod_mod
+
+#ifdef EW_PERIODIC
+# define IR_RANGE Istr-1,Iend+1
+# define IU_RANGE Istr,Iend
+# define IV_RANGE Istr,Iend
+#else
+# define IR_RANGE IstrT,IendT
+# define IU_RANGE IstrP,IendT
+# define IV_RANGE IstrT,IendT
+#endif
+#ifdef NS_PERIODIC
+# define JR_RANGE Jstr-1,Jend+1
+# define JU_RANGE Jstr,Jend
+# define JV_RANGE Jstr,Jend
+#else
+# define JR_RANGE JstrT,JendT
+# define JU_RANGE JstrT,JendT
+# define JV_RANGE JstrP,JendT
+#endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -228,8 +247,8 @@
 !
 !  Free-surface.
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JR_RANGE
+        DO i=IR_RANGE
           cff=s1_zeta(i,j)*s2_zeta(i,j)
 #ifdef MASKING
           cff=cff*rmask(i,j)
@@ -245,7 +264,8 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         DO ir=1,Nbrec(ng)
-          IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isFsur,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               cff=s1_zeta_obc(j,iwest,ir)*                              &
      &            s2_zeta_obc(j,iwest,ir)
@@ -256,7 +276,8 @@
               my_DotProd(isFsur)=my_DotProd(isFsur)+cff
             END DO
           END IF
-          IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isFsur,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               cff=s1_zeta_obc(j,ieast,ir)*                              &
      &            s2_zeta_obc(j,ieast,ir)
@@ -267,7 +288,8 @@
               my_DotProd(isFsur)=my_DotProd(isFsur)+cff
             END DO
           END IF
-          IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isFsur,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               cff=s1_zeta_obc(i,isouth,ir)*                             &
      &            s2_zeta_obc(i,isouth,ir)
@@ -278,7 +300,8 @@
               my_DotProd(isFsur)=my_DotProd(isFsur)+cff
             END DO
           END IF
-          IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isFsur,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               cff=s1_zeta_obc(i,inorth,ir)*                             &
      &            s2_zeta_obc(i,inorth,ir)
@@ -297,8 +320,8 @@
 !
 !  2D U-momentum component.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JU_RANGE
+        DO i=IU_RANGE
           cff=s1_ubar(i,j)*s2_ubar(i,j)
 # ifdef MASKING
           cff=cff*umask(i,j)
@@ -315,7 +338,8 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         DO ir=1,Nbrec(ng)
-          IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isUbar,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               cff=s1_ubar_obc(j,iwest,ir)*                              &
      &            s2_ubar_obc(j,iwest,ir)
@@ -326,7 +350,8 @@
               my_DotProd(isUbar)=my_DotProd(isUbar)+cff
             END DO
           END IF
-          IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isUbar,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               cff=s1_ubar_obc(j,ieast,ir)*                              &
      &            s2_ubar_obc(j,ieast,ir)
@@ -337,7 +362,8 @@
               my_DotProd(isUbar)=my_DotProd(isUbar)+cff
             END DO
           END IF
-          IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isUbar,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=IstrU,Iend
               cff=s1_ubar_obc(i,isouth,ir)*                             &
      &            s2_ubar_obc(i,isouth,ir)
@@ -348,7 +374,8 @@
               my_DotProd(isUbar)=my_DotProd(isUbar)+cff
             END DO
           END IF
-          IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isUbar,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=IstrU,Iend
               cff=s1_ubar_obc(i,inorth,ir)*                             &
      &            s2_ubar_obc(i,inorth,ir)
@@ -367,8 +394,8 @@
 !
 !  2D V-momentum component.
 !
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JV_RANGE
+        DO i=IV_RANGE
           cff=s1_vbar(i,j)*s2_vbar(i,j)
 # ifdef MASKING
           cff=cff*vmask(i,j)
@@ -385,7 +412,8 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         DO ir=1,Nbrec(ng)
-          IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isVbar,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=JstrV,Jend
               cff=s1_vbar_obc(j,iwest,ir)*                              &
      &            s2_vbar_obc(j,iwest,ir)
@@ -396,7 +424,8 @@
               my_DotProd(isVbar)=my_DotProd(isVbar)+cff
             END DO
           END IF
-          IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isVbar,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=JstrV,Jend
               cff=s1_vbar_obc(j,ieast,ir)*                              &
      &            s2_vbar_obc(j,ieast,ir)
@@ -407,7 +436,8 @@
               my_DotProd(isVbar)=my_DotProd(isVbar)+cff
             END DO
           END IF
-          IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isVbar,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               cff=s1_vbar_obc(i,isouth,ir)*                             &
      &            s2_vbar_obc(i,isouth,ir)
@@ -418,7 +448,8 @@
               my_DotProd(isVbar)=my_DotProd(isVbar)+cff
             END DO
           END IF
-          IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isVbar,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               cff=s1_vbar_obc(i,inorth,ir)*                             &
      &            s2_vbar_obc(i,inorth,ir)
@@ -438,8 +469,8 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             cff=s1_sustr(i,j,ir)*s2_sustr(i,j,ir)
 # ifdef MASKING
             cff=cff*umask(i,j)
@@ -448,8 +479,8 @@
             my_DotProd(isUstr)=my_DotProd(isUstr)+cff
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             cff=s1_svstr(i,j,ir)*s2_svstr(i,j,ir)
 # ifdef MASKING
             cff=cff*vmask(i,j)
@@ -466,8 +497,8 @@
 !  3D U-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             cff=s1_u(i,j,k)*s2_u(i,j,k)
 # ifdef MASKING
             cff=cff*umask(i,j)
@@ -484,7 +515,8 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         DO ir=1,Nbrec(ng)
-          IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isUvel,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 cff=s1_u_obc(j,k,iwest,ir)*                             &
@@ -497,7 +529,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isUvel,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 cff=s1_u_obc(j,k,ieast,ir)*                             &
@@ -510,7 +543,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isUvel,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
                 cff=s1_u_obc(i,k,isouth,ir)*                            &
@@ -523,7 +557,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isUvel,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
                 cff=s1_u_obc(i,k,inorth,ir)*                            &
@@ -543,8 +578,8 @@
 !  3D V-momentum component.
 !
       DO k=1,N(ng)
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             cff=s1_v(i,j,k)*s2_v(i,j,k)
 # ifdef MASKING
             cff=cff*vmask(i,j)
@@ -561,7 +596,8 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         DO ir=1,Nbrec(ng)
-          IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isVvel,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 cff=s1_v_obc(j,k,iwest,ir)*                             &
@@ -574,7 +610,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isVvel,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 cff=s1_v_obc(j,k,ieast,ir)*                             &
@@ -587,7 +624,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isVvel,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 cff=s1_v_obc(i,k,isouth,ir)*                            &
@@ -600,7 +638,8 @@
               END DO
             END DO
           END IF
-          IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isVvel,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 cff=s1_v_obc(i,k,inorth,ir)*                            &
@@ -621,8 +660,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JR_RANGE
+            DO i=IR_RANGE
               cff=s1_t(i,j,k,it)*s2_t(i,j,k,it)
 # ifdef MASKING
               cff=cff*rmask(i,j)
@@ -641,7 +680,8 @@
       DO it=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(it),ng))) THEN
           DO ir=1,Nbrec(ng)
-            IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+            IF ((Lobc(iwest,isTvar(it),ng)).and.                        &
+     &          DOMAIN(ng)%Western_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   cff=s1_t_obc(j,k,iwest,ir,it)*                        &
@@ -654,7 +694,8 @@
                 END DO
               END DO
             END IF
-            IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+            IF ((Lobc(ieast,isTvar(it),ng)).and.                        &
+     &          DOMAIN(ng)%Eastern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   cff=s1_t_obc(j,k,ieast,ir,it)*                        &
@@ -667,7 +708,8 @@
                 END DO
               END DO
             END IF
-            IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+            IF ((Lobc(isouth,isTvar(it),ng)).and.                       &
+     &          DOMAIN(ng)%Southern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO i=Istr,Iend
                   cff=s1_t_obc(i,k,isouth,ir,it)*                       &
@@ -680,7 +722,8 @@
                 END DO
               END DO
             END IF
-            IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+            IF ((Lobc(inorth,isTvar(it),ng)).and.                       &
+     &          DOMAIN(ng)%Northern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO i=Istr,Iend
                   cff=s1_t_obc(i,k,inorth,ir,it)*                       &
@@ -705,8 +748,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
+            DO j=JR_RANGE
+              DO i=IR_RANGE
                 cff=s1_tflux(i,j,ir,it)*s2_tflux(i,j,ir,it)
 #  ifdef MASKING
                 cff=cff*rmask(i,j)
@@ -726,8 +769,8 @@
 !  Perform parallel global reduction operations.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -756,5 +799,12 @@
 
       RETURN
       END SUBROUTINE state_dotprod
+
+#undef IR_RANGE
+#undef IU_RANGE
+#undef IV_RANGE
+#undef JR_RANGE
+#undef JU_RANGE
+#undef JV_RANGE
 
       END MODULE state_dotprod_mod

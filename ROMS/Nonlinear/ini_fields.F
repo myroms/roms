@@ -47,7 +47,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 1)
+      CALL wclock_on (ng, iNLM, 2)
 # endif
       CALL ini_fields_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -89,7 +89,7 @@
      &                      OCEAN(ng) % vbar,                           &
      &                      OCEAN(ng) % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 1)
+      CALL wclock_off (ng, iNLM, 2)
 # endif
       RETURN
       END SUBROUTINE ini_fields
@@ -280,9 +280,9 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
-        DO j=Jstr,Jend
+        DO j=JstrB,JendB
           DO k=1,N(ng)
-            DO i=IstrU,Iend
+            DO i=IstrM,IendB
               cff1=u(i,j,k,nstp)
 #  ifdef MASKING
               cff1=cff1*umask(i,j)
@@ -292,9 +292,9 @@
             END DO
           END DO
 !
-          IF (j.ge.JstrV) THEN
+          IF (j.ge.JstrM) THEN
             DO k=1,N(ng)
-              DO i=Istr,Iend
+              DO i=IstrB,IendB
                 cff2=v(i,j,k,nstp)
 #  ifdef MASKING
                 cff2=cff2*vmask(i,j)
@@ -368,19 +368,19 @@
 !  depth of the water column, and CF(i,0) is the vertical integral.
 !
       IF (.not.PerfectRST(ng)) THEN
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
+        DO j=JstrB,JendB
+          DO i=IstrM,IendB
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
           END DO
           DO k=1,N(ng)
-            DO i=IstrU,Iend
+            DO i=IstrM,IendB
               DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
               DC(i,0)=DC(i,0)+DC(i,k)
               CF(i,0)=CF(i,0)+DC(i,k)*u(i,j,k,nstp)
             END DO
           END DO
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
             cff1=1.0_r8/DC(i,0)
             cff2=CF(i,0)*cff1
 #  ifdef MASKING
@@ -390,19 +390,19 @@
             ubar(i,j,knew)=cff2
           END DO
 !
-          IF (j.ge.JstrV) THEN
-            DO i=Istr,Iend
+          IF (j.ge.JstrM) THEN
+            DO i=IstrB,IendB
               DC(i,0)=0.0_r8
               CF(i,0)=0.0_r8
             END DO
             DO k=1,N(ng)
-              DO i=Istr,Iend
+              DO i=IstrB,IendB
                 DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
                 DC(i,0)=DC(i,0)+DC(i,k)
                 CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nstp)
               END DO
             END DO
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
               cff1=1.0_r8/DC(i,0)
               cff2=CF(i,0)*cff1
 #  ifdef MASKING
@@ -474,8 +474,8 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
+        DO j=JstrB,JendB
+          DO i=IstrM,IendB
             cff1=ubar(i,j,kstp)
 #  ifdef MASKING
             cff1=cff1*umask(i,j)
@@ -483,8 +483,8 @@
             ubar(i,j,kstp)=cff1
             ubar(i,j,krhs)=cff1
           END DO
-          IF (j.ge.JstrV) THEN
-            DO i=Istr,Iend
+          IF (j.ge.JstrM) THEN
+            DO i=IstrB,IendB
               cff2=vbar(i,j,kstp)
 #  ifdef MASKING
               cff2=cff2*vmask(i,j)
@@ -574,8 +574,8 @@
       IF (.not.PerfectRST(ng)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
+            DO j=JstrB,JendB
+              DO i=IstrB,IendB
                 cff1=t(i,j,k,nstp,itrc)
 #  ifdef MASKING
                 cff1=cff1*rmask(i,j)
@@ -629,8 +629,8 @@
 #   ifdef SEDIMENT
       IF (.not.PerfectRST(ng)) THEN
         DO k=1,Nbed
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               DO ised=1,NST
                 cff1=bed_mass(i,j,k,1,ised)
                 bed_mass(i,j,k,2,ised)=cff1
@@ -756,7 +756,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 1)
+      CALL wclock_on (ng, iNLM, 2)
 # endif
       CALL ini_zeta_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -779,7 +779,7 @@
 # endif
      &                    OCEAN(ng) % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 1)
+      CALL wclock_off (ng, iNLM, 2)
 # endif
       RETURN
       END SUBROUTINE ini_zeta
@@ -896,11 +896,11 @@
 !
       IF (.not.PerfectRST(ng)) THEN
 # ifndef OBC_FSRADIATION
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
+        DO j=JstrB,JendB
+          DO i=IstrB,IendB
 # else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
 # endif
             cff1=zeta(i,j,kstp)
 # ifdef MASKING
@@ -1022,8 +1022,8 @@
 !  free-surface
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           Zt_avg1(i,j)=zeta(i,j,kstp)
         END DO
       END DO
@@ -1046,8 +1046,8 @@
 !  Compute initial total thickness for all sediment bed layers.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bed_thick0(i,j)=0.0_r8
           DO kbed=1,Nbed
             bed_thick0(i,j)=bed_thick0(i,j)+bed(i,j,kbed,ithck)

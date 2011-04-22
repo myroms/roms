@@ -342,6 +342,12 @@
 #ifdef EW_PERIODIC
 # define IU_RANGE Istr,Iend
 # define IV_RANGE Istr,Iend
+#elif defined COMPOSED_GRID
+# define IU_RANGE IstrP,IendT
+# define IV_RANGE IstrT,IendT
+#elif defined REFINED_GRID
+# define IU_RANGE IstrP+1,IendT
+# define IV_RANGE IstrT,IendT
 #else
 # define IU_RANGE Istr,IendR
 # define IV_RANGE IstrR,IendR
@@ -349,6 +355,12 @@
 #ifdef NS_PERIODIC
 # define JU_RANGE Jstr,Jend
 # define JV_RANGE Jstr,Jend
+#elif defined COMPOSED_GRID
+# define JU_RANGE JstrT,JendT
+# define JV_RANGE JstrP,JendT
+#elif defined REFINED_GRID
+# define JU_RANGE JstrT,JendT
+# define JV_RANGE JstrP+1,JendT
 #else
 # define JU_RANGE JstrR,JendR
 # define JV_RANGE Jstr,JendR
@@ -358,8 +370,8 @@
 !  Compute 1/m, 1/n, 1/mn, and f/mn at horizontal RHO-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           om_r(i,j)=1.0_r8/pm(i,j)
           on_r(i,j)=1.0_r8/pn(i,j)
           omn(i,j)=1.0_r8/(pm(i,j)*pn(i,j))
@@ -391,8 +403,8 @@
 !  Compute n/m, and m/n at horizontal RHO-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           pnom_r(i,j)=pn(i,j)/pm(i,j)
           pmon_r(i,j)=pm(i,j)/pn(i,j)
         END DO
@@ -523,8 +535,8 @@
 !
       cff1=1.0_r8       ! computation of off-diagonal nonlinear terms
       cff2=2.0_r8
-      DO j=Jstr,JendR
-        DO i=Istr,IendR
+      DO j=JstrP,JendP
+        DO i=IstrP,IendP
           IF ((rmask(i-1,j  ).gt.0.5_r8).and.                           &
      &        (rmask(i  ,j  ).gt.0.5_r8).and.                           &
      &        (rmask(i-1,j-1).gt.0.5_r8).and.                           &
@@ -593,8 +605,8 @@
 ! Compute cosine and sine of curvilinear rotation angle.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           CosAngler(i,j)=COS(angler(i,j))
           SinAngler(i,j)=SIN(angler(i,j))
         END DO
@@ -623,8 +635,8 @@
 !-----------------------------------------------------------------------
 !
       cff=0.0_r8
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           grdscl(i,j)=SQRT(om_r(i,j)*on_r(i,j))
         END DO
       END DO
@@ -660,8 +672,8 @@
       my_ViscMin= Large
       my_ViscMax=-Large
 # endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 # if defined DIFF_3DCOEF
 #  if defined TS_DIF2
           Hdiffusion(i,j)=PecletCoef*Uscale*grdscl(i,j)
@@ -749,8 +761,8 @@
       my_DZmax=-Large
 #endif
       my_grdmax=-Large
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 #if defined VISC_GRID || defined DIFF_GRID
           cff=grdscl(i,j)
 #else
@@ -785,8 +797,8 @@
       my_Cg_max=-Large
       my_Cg_Cor=-Large
 
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 #ifdef MASKING
           IF (rmask(i,j).gt.0.0_r8) THEN
 #endif
@@ -808,8 +820,8 @@
 !  Perform global reductions.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application

@@ -36,7 +36,7 @@
 #define SOLVE3D
 #define SPLINES
 #define SWAN_COUPLING
-#define NEARSHORE_MELLOR05
+#define NEARSHORE_MELLOR08
 #define ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_FSOBC

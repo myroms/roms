@@ -112,10 +112,13 @@
 ** Set number of ghost-points in the halo region.
 */
 
-#if defined TS_MPDATA || defined UV_VIS4
+#if defined COMPOSED_GRID  || defined REFINED_GRID || \
+    defined TS_MPDATA      || defined UV_VIS4
 # define GHOST_POINTS 3
-# if defined DISTRIBUTE || defined EW_PERIODIC || defined NS_PERIODIC
-#   define THREE_GHOST
+# if defined DISTRIBUTE    || \
+     defined COMPOSED_GRID || defined REFINED_GRID || \
+     defined EW_PERIODIC   || defined NS_PERIODIC
+#  define THREE_GHOST
 # endif
 #else
 # define GHOST_POINTS 2
@@ -192,41 +195,6 @@
 #endif
 
 /*
-** The following definitions contain fortran logical expressions
-** equivalent to the question: ''Am I the thread working on a tile
-** which is adjacent to the WESTERN, EASTERN, SOUTHERN, or NORTHERN
-** edges of the model domain?'' These logical expressions are used to
-** update domain boundaries and corners.
-*/
-
-#define WESTERN_EDGE Istr.eq.1
-#define EASTERN_EDGE Iend.eq.Lm(ng)
-#define SOUTHERN_EDGE Jstr.eq.1
-#define NORTHERN_EDGE Jend.eq.Mm(ng)
-#define SOUTH_WEST_CORNER (Istr.eq.1).and.(Jstr.eq.1)
-#define NORTH_WEST_CORNER (Istr.eq.1).and.(Jend.eq.Mm(ng))
-#define SOUTH_EAST_CORNER (Iend.eq.Lm(ng)).and.(Jstr.eq.1)
-#define NORTH_EAST_CORNER (Iend.eq.Lm(ng)).and.(Jend.eq.Mm(ng))
-
-/*
-** The following definitions are fortran logical expressions use
-** to update global variables while avoiding mutual overlap between
-** threads in shared-memory configurations.
-*/
-
-#ifdef DISTRIBUTE
-# define SOUTH_WEST_TEST .TRUE.
-# define NORTH_WEST_TEST .TRUE.
-# define SOUTH_EAST_TEST .TRUE.
-# define NORTH_EAST_TEST .TRUE.
-#else
-# define SOUTH_WEST_TEST (Istr.eq.1).and.(Jstr.eq.1)
-# define NORTH_WEST_TEST (Istr.eq.1).and.(Jend.eq.Mm(ng))
-# define SOUTH_EAST_TEST (Iend.eq.Lm(ng)).and.(Jstr.eq.1)
-# define NORTH_EAST_TEST (Iend.eq.Lm(ng)).and.(Jend.eq.Mm(ng))
-#endif
-
-/*
 ** Choice of double/single precision for real type variables and
 ** associated intrinsic functions.
 */
@@ -285,30 +253,30 @@
 ** and adjoint model switches.
 */
 
-#if defined CONVOLUTION         || defined CORRELATION        || \
-    defined FT_EIGENMODES       || defined FORCING_SV         || \
-    defined INNER_PRODUCT       || defined IS4DVAR            || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_PERTURBATION   || \
-    defined OPT_OBSERVATIONS    || defined PICARD_TEST        || \
-    defined R_SYMMETRY          || defined RPM_DRIVER         || \
-    defined SANITY_CHECK        || defined SENSITIVITY_4DVAR  || \
-    defined TLM_CHECK           || defined TLM_DRIVER         || \
-    defined TL_W4DPSAS          || defined TL_W4DVAR          || \
-    defined W4DPSAS             || defined W4DVAR             || \
-    defined ARRAY_MODES         || defined CLIPPING
+#if defined ARRAY_MODES         || defined CLIPPING            || \
+    defined CORRELATION         || defined FT_EIGENMODES       || \
+    defined FORCING_SV          || defined INNER_PRODUCT       || \
+    defined IS4DVAR             || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_PERTURBATION    || defined OPT_OBSERVATIONS    || \
+    defined PICARD_TEST         || defined R_SYMMETRY          || \
+    defined RPM_DRIVER          || defined SANITY_CHECK        || \
+    defined SENSITIVITY_4DVAR   || defined TLM_CHECK           || \
+    defined TLM_DRIVER          || defined TL_W4DPSAS          || \
+    defined TL_W4DVAR           || defined W4DPSAS             || \
+    defined W4DVAR
 # define TANGENT
 #endif
-#if defined AD_SENSITIVITY      || defined ADM_DRIVER         || \
-    defined AFT_EIGENMODES      || defined CONVOLUTION        || \
-    defined CORRELATION         || defined FORCING_SV         || \
-    defined INNER_PRODUCT       || defined IS4DVAR            || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_PERTURBATION   || \
-    defined OPT_OBSERVATIONS    || defined R_SYMMETRY         || \
-    defined SANITY_CHECK        || defined SENSITIVITY_4DVAR  || \
-    defined SO_SEMI             || defined TLM_CHECK          || \
-    defined TL_W4DPSAS          || defined TL_W4DVAR          || \
-    defined W4DPSAS             || defined W4DVAR             || \
-    defined ARRAY_MODES         || defined CLIPPING
+#if defined AD_SENSITIVITY      || defined ADM_DRIVER          || \
+    defined AFT_EIGENMODES      || defined ARRAY_MODES         || \
+    defined CLIPPING            || defined CORRELATION         || \
+    defined FORCING_SV          || defined INNER_PRODUCT       || \
+    defined IS4DVAR             || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_PERTURBATION    || defined OPT_OBSERVATIONS    || \
+    defined R_SYMMETRY          || defined SANITY_CHECK        || \
+    defined SENSITIVITY_4DVAR   || defined SO_SEMI             || \
+    defined TLM_CHECK           || defined TL_W4DPSAS          || \
+    defined TL_W4DVAR           || defined W4DPSAS             || \
+    defined W4DVAR
 # define ADJOINT
 #endif
 #if defined PICARD_TEST        || defined RPM_DRIVER         || \
@@ -460,24 +428,20 @@
 */
 
 #if !defined WEAK_CONSTRAINT     && \
-    (defined CONVOLUTION         || defined R_SYMMETRY         || \
-     defined TL_W4DPSAS          || defined TL_W4DVAR          || \
-     defined W4DPSAS             || defined W4DVAR             || \
-     defined W4DPSAS_SENSITIVITY || defined W4DVAR_SENSITIVITY || \
-     defined ARRAY_MODES         || defined CLIPPING )
+    (defined ARRAY_MODES         || defined CLIPPING            || \
+     defined R_SYMMETRY          || defined TL_W4DPSAS          || \
+     defined TL_W4DVAR           || defined W4DPSAS             || \
+     defined W4DVAR              || defined W4DPSAS_SENSITIVITY || \
+     defined W4DVAR_SENSITIVITY)
 # define WEAK_CONSTRAINT
 #endif
 #if !defined WEAK_CONSTRAINT     && defined RPM_RELAXATION
 # undef RPM_RELAXATION
 #endif
-#if defined CONVOLUTION          || defined CORRELATION         || \
-    defined IS4DVAR              || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS     || defined TLM_CHECK           || \
-    defined WEAK_CONSTRAINT
+#if defined CORRELATION          || defined IS4DVAR             || \
+    defined IS4DVAR_SENSITIVITY  || defined OPT_OBSERVATIONS    || \
+    defined TLM_CHECK            || defined WEAK_CONSTRAINT
 # define FOUR_DVAR
-#endif
-#if !defined WEAK_CONSTRAINT && defined FOUR_DVAR
-# define CONVOLVE
 #endif
 #if defined IS4DVAR
 # define BACKGROUND
@@ -591,12 +555,13 @@
      (defined TS_DIF2      || defined TS_DIF4))
 # define CLM_FILE
 #endif
-#if defined ZCLIMATOLOGY   || defined M2CLIMATOLOGY || \
-    defined TCLIMATOLOGY   || defined M3CLIMATOLOGY || \
-    defined ZCLM_NUDGING   || defined M2CLM_NUDGING || \
-    defined TCLM_NUDGING   || defined M3CLM_NUDGING || \
-    (defined CLIMA_TS_MIX  && defined SOLVE3D       && \
-     (defined TS_DIF2      || defined TS_DIF4))
+
+#if defined M2CLIMATOLOGY || defined M2CLM_NUDGING || \
+    defined M3CLIMATOLOGY || defined M3CLM_NUDGING || \
+    defined TCLIMATOLOGY  || defined TCLM_NUDGING  || \
+    defined ZCLIMATOLOGY  || \
+    (defined CLIMA_TS_MIX && defined SOLVE3D       && \
+     (defined TS_DIF2     || defined TS_DIF4))
 # define CLIMATOLOGY
 #endif
 
@@ -635,8 +600,8 @@
 ** Activate internal switch to set-up nudging coefficients.
 */
 
-#if defined ZCLM_NUDGING    || defined M2CLM_NUDGING   || \
-    defined TCLM_NUDGING    || defined M3CLM_NUDGING   || \
+#if defined M2CLM_NUDGING   || defined M3CLM_NUDGING   || \
+    defined TCLM_NUDGING    || \
     defined WEST_FSNUDGING  || defined EAST_FSNUDGING  || \
     defined SOUTH_FSNUDGING || defined NORTH_FSNUDGING || \
     defined WEST_M2NUDGING  || defined EAST_M2NUDGING  || \
@@ -802,20 +767,6 @@
 #endif
 
 /*
-** Activate assimilation switches.
-*/
-
-#if defined ASSIMILATION_SSH || defined ASSIMILATION_SST   || \
-    defined ASSIMILATION_T   || defined ASSIMILATION_UVsur || \
-    defined ASSIMILATION_UV
-# define ASSIMILATION
-#endif
-#if defined NUDGING_SST   || defined NUDGING_T   || \
-    defined NUDGING_UVsur || defined NUDGING_UV
-# define NUDGING
-#endif
-
-/*
 ** Activate internal biology option when using any type of biological
 ** module.
 */
@@ -847,7 +798,7 @@
 ** Define internal option for radiation stress forcing.
 */
 
-#if defined NEARSHORE_MELLOR05
+#if defined NEARSHORE_MELLOR05 || defined NEARSHORE_MELLOR08
 # define NEARSHORE_MELLOR
 #endif
 #if defined NEARSHORE_MELLOR
@@ -1036,17 +987,6 @@
 #if defined DIAGNOSTICS_BIO || defined DIAGNOSTICS_TS || \
     defined DIAGNOSTICS_UV
 # define DIAGNOSTICS
-#endif
-
-/*
-** Activate switch to modify MAIN3D to recompute depths and
-** thicknesses using the new time filtered free-surface.  This
-** call is moved from STEP2D to facilitate nesting.
-** This strategy needs to be tested in the TLM, RPM, and ADM.
-*/
-
-#if !(defined ADJOINT || defined TANGENT || defined TL_IOMS)
-# define MOVE_SET_DEPTH
 #endif
 
 /*

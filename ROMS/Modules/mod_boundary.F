@@ -1312,7 +1312,7 @@
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
 
 # ifdef WEST_FSOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % zeta_west = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % zeta_west_C2 = IniVal
@@ -1326,7 +1326,7 @@
 # endif
 
 # ifdef EAST_FSOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % zeta_east = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % zeta_east_C2 = IniVal
@@ -1340,7 +1340,7 @@
 # endif
 
 # ifdef SOUTH_FSOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % zeta_south = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % zeta_south_C2 = IniVal
@@ -1354,7 +1354,7 @@
 # endif
 
 # ifdef NORTH_FSOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % zeta_north = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % zeta_north_C2 = IniVal
@@ -1368,7 +1368,7 @@
 # endif
 
 # ifdef WEST_M2OBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % ubar_west = IniVal
           BOUNDARY(ng) % vbar_west = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1387,7 +1387,7 @@
 # endif
 
 # ifdef EAST_M2OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % ubar_east = IniVal
           BOUNDARY(ng) % vbar_east = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1406,7 +1406,7 @@
 # endif
 
 # ifdef SOUTH_M2OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % ubar_south = IniVal
           BOUNDARY(ng) % vbar_south = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1425,7 +1425,7 @@
 # endif
 
 # ifdef NORTH_M2OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % ubar_north = IniVal
           BOUNDARY(ng) % vbar_north = IniVal
 #  if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1446,7 +1446,7 @@
 # ifdef SOLVE3D
 #  ifdef WEST_M3OBC
 !
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % u_west = IniVal
           BOUNDARY(ng) % v_west = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1465,7 +1465,7 @@
 #  endif
 
 #  ifdef EAST_M3OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % u_east = IniVal
           BOUNDARY(ng) % v_east = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1484,7 +1484,7 @@
 #  endif
 
 #  ifdef SOUTH_M3OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % u_south = IniVal
           BOUNDARY(ng) % v_south = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1503,7 +1503,7 @@
 #  endif
 
 #  ifdef NORTH_M3OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % u_north = IniVal
           BOUNDARY(ng) % v_north = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
@@ -1522,7 +1522,7 @@
 #  endif
 
 #  ifdef WEST_TOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % t_west = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % t_west_C2 = IniVal
@@ -1536,7 +1536,7 @@
 #  endif
 
 #  ifdef EAST_TOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % t_east = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % t_east_C2 = IniVal
@@ -1550,7 +1550,7 @@
 #  endif
 
 #  ifdef SOUTH_TOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % t_south = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % t_south_C2 = IniVal
@@ -1564,7 +1564,7 @@
 #  endif
 
 #  ifdef NORTH_TOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % t_north = IniVal
 #   if defined CELERITY_READ || defined CELERITY_WRITE
           BOUNDARY(ng) % t_north_C2 = IniVal
@@ -1586,45 +1586,45 @@
 !
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
 #  ifdef WEST_FSOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_zeta_west = IniVal
         END IF
 #  endif
 #  ifdef EAST_FSOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_zeta_east = IniVal
         END IF
 #  endif
 #  ifdef SOUTH_FSOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_zeta_south = IniVal
         END IF
 #  endif
 #  ifdef NORTH_FSOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_zeta_north = IniVal
         END IF
 #  endif
 #  ifdef WEST_M2OBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_ubar_west = IniVal
           BOUNDARY(ng) % tl_vbar_west = IniVal
         END IF
 #  endif
 #  ifdef EAST_M2OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_ubar_east = IniVal
           BOUNDARY(ng) % tl_vbar_east = IniVal
         END IF
 #  endif
 #  ifdef SOUTH_M2OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_ubar_south = IniVal
           BOUNDARY(ng) % tl_vbar_south = IniVal
         END IF
 #  endif
 #  ifdef NORTH_M2OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_ubar_north = IniVal
           BOUNDARY(ng) % tl_vbar_north = IniVal
         END IF
@@ -1632,47 +1632,47 @@
 
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_u_west = IniVal
           BOUNDARY(ng) % tl_v_west = IniVal
         END IF
 #   endif
 #   ifdef EAST_M3OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_u_east = IniVal
           BOUNDARY(ng) % tl_v_east = IniVal
       END IF
 #   endif
 #   ifdef SOUTH_M3OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_u_south = IniVal
           BOUNDARY(ng) % tl_v_south = IniVal
         END IF
 #   endif
 #   ifdef NORTH_M3OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_u_north = IniVal
           BOUNDARY(ng) % tl_v_north = IniVal
         END IF
 #   endif
 
 #   ifdef WEST_TOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_t_west = IniVal
         END IF
 #   endif
 #   ifdef EAST_TOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_t_east = IniVal
         END IF
 #   endif
 #   ifdef SOUTH_TOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % tl_t_south = IniVal
         END IF
 #   endif
 #   ifdef NORTH_TOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % tl_t_north = IniVal
         END IF
 #   endif
@@ -1686,45 +1686,45 @@
 !
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
 #  ifdef WEST_FSOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_zeta_west = IniVal
         END IF
 #  endif
 #  ifdef EAST_FSOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_zeta_east = IniVal
         END IF
 #  endif
 #  ifdef SOUTH_FSOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_zeta_south = IniVal
         END IF
 #  endif
 #  ifdef NORTH_FSOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_zeta_north = IniVal
         END IF
 #  endif
 #  ifdef WEST_M2OBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_ubar_west = IniVal
           BOUNDARY(ng) % ad_vbar_west = IniVal
         END IF
 #  endif
 #  ifdef EAST_M2OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_ubar_east = IniVal
           BOUNDARY(ng) % ad_vbar_east = IniVal
         END IF
 #  endif
 #  ifdef SOUTH_M2OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_ubar_south = IniVal
           BOUNDARY(ng) % ad_vbar_south = IniVal
         END IF
 #  endif
 #  ifdef NORTH_M2OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_ubar_north = IniVal
           BOUNDARY(ng) % ad_vbar_north = IniVal
         END IF
@@ -1732,47 +1732,47 @@
 
 #  ifdef SOLVE3D
 #   ifdef WEST_M3OBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_u_west = IniVal
           BOUNDARY(ng) % ad_v_west = IniVal
         END IF
 #   endif
 #   ifdef EAST_M3OBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_u_east = IniVal
           BOUNDARY(ng) % ad_v_east = IniVal
       END IF
 #   endif
 #   ifdef SOUTH_M3OBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_u_south = IniVal
           BOUNDARY(ng) % ad_v_south = IniVal
         END IF
 #   endif
 #   ifdef NORTH_M3OBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_u_north = IniVal
           BOUNDARY(ng) % ad_v_north = IniVal
         END IF
 #   endif
 
 #   ifdef WEST_TOBC
-        IF (NORTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_t_west = IniVal
         END IF
 #   endif
 #   ifdef EAST_TOBC
-        IF (SOUTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%SouthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_t_east = IniVal
         END IF
 #   endif
 #   ifdef SOUTH_TOBC
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           BOUNDARY(ng) % ad_t_south = IniVal
         END IF
 #   endif
 #   ifdef NORTH_TOBC
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
           BOUNDARY(ng) % ad_t_north = IniVal
         END IF
 #   endif
@@ -1785,7 +1785,7 @@
 !  Open boundaries arrays used in 4DVar adjustments.
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
 #  ifdef SOLVE3D
           BOUNDARY(ng) % b_t_obc = IniVal
           BOUNDARY(ng) % b_u_obc = IniVal
@@ -1822,7 +1822,7 @@
       END IF
 
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
 #  ifdef SOLVE3D
           BOUNDARY(ng) % ad_t_obc = IniVal
           BOUNDARY(ng) % ad_u_obc = IniVal
@@ -1835,7 +1835,7 @@
       END IF
 
       IF ((model.eq.0).or.(model.eq.iTLM)) THEN
-        IF (NORTH_EAST_TEST) THEN
+        IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
 #  ifdef SOLVE3D
           BOUNDARY(ng) % tl_t_obc = IniVal
           BOUNDARY(ng) % tl_u_obc = IniVal

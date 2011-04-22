@@ -88,7 +88,7 @@
 !
 #ifdef MY_APPLICATION
 # ifdef EAST_TOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -99,7 +99,7 @@
       END IF
 # endif
 # ifdef WEST_TOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -110,7 +110,7 @@
       END IF
 # endif
 # ifdef SOUTH_TOBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR
@@ -121,7 +121,7 @@
       END IF
 # endif
 # ifdef NORTH_TOBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR

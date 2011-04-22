@@ -8,93 +8,126 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ADJbase     Output adjoint base file name.                          !
-!  ADJname     Output adjoint file name.                               !
-!  ADSname     Input adjoint sensitivity functional file.              !
-!  AVGbase     Output averages base file name.                         !
-!  AVGname     Output averages file name.                              !
-!  BLKname     Input bulk fluxes file name.                            !
-!  BRYname     Input boundary data file name.                          !
-!  CLMname     Input climatology file name.                            !
-!  DIAbase     Output diagnostics base file name.                      !
-!  DIAname     Output diagnostics file name.                           !
-!  ERRname     Output 4DVar posterior error file name.                 !
-!  FLTname     Output floats file name.                                !
-!  FRCids      NetCDF ID descriptors associated with FRCname.          !
-!  FRCname     Input forcing fields file name(s).                      !
-!  FWDbase     Input forward solution base file name.                  !
-!  FWDname     Input forward solution file name.                       !
-!  GRDname     Input grid file name.                                   !
-!  GSTname     Input/output GST analysis check pointing NetCDF file.   !
-!  HISbase     Output history base file name.                          !
-!  HISname     Output history file name.                               !
-!  HSSbase     Input/output Hessian eigenvectors base file name.       !
-!  HSSname     Input/output Hessian eigenvectors file name.            !
-!  IADname     Input adjoint initial conditions file name.             !
-!  INIname     Input nonlinear initial conditions file name.           !
-!  IPRname     Input representer initial conditions file name.         !
-!  ITLname     Input tangent linear initial conditions file name.      !
+!  The input and output files information is stored in compact derived !
+!  type structure, TYPE(T_IO):                                         !
+!                                                                      !
+!    ADM       Output adjoint model history data                       !
+!    ADS       Input adjoint sensitivity functional                    !
+!    AVG       Output time-averaged data                               !
+!    BLK       Input bulk fluxes data in adjoint-based applications    !
+!    BRY       Input open boundary conditions data                     !
+!    CLM       Input climatology data                                  !
+!    DAV       Output 4D-Var data assimilation variables               !
+!    DIA       Output diagnostics fields                               !
+!    ERR       Output 4DVar posterior error estimate                   !
+!    FLT       Output Lagrangian trajectories data                     !
+!    FRC       Input forcing data                                      !
+!    FWD       Input basic state forward solution                      !
+!    GRD       Input grid data                                         !
+!    GST       Input/output GST analysis check pointing data           !
+!    HIS       Output nonlinear model history data                     !
+!    HSS       Input/output Hessian eigenvectors                       !
+!    IAD       Input adjoint model initial conditions                  !
+!    INI       Input nonlinear model initial conditions                !
+!    IPR       Input representer model initial conditions              !
+!    ITL       Input tangent linear model initial conditions           !
+!    LCZ       Input/output Lanczos vectors                            !
+!    NRM       Input/output error covariance normalization data        !
+!                NRM(1,ng)  initial conditions                         !
+!                NRM(2,ng)  model error                                !
+!                NRM(3,ng)  lateral open boundary conditions           !
+!                NRM(4,ng)  surface forcing                            !
+!    OBS       Input/output 4D-Var observations                        !
+!    RST       Output restart data                                     !
+!    TIDE      Input tide forcing                                      !
+!    TLF       Input/output tangent linear model impulse forcing       !
+!    TLM       Output tangent linear model history                     !
+!    STA       Output station data                                     !
+!    STD       Input error covariance standard deviations              !
+!                STD(1,ng)  initial conditions                         !
+!                STD(2,ng)  model error                                !
+!                STD(3,ng)  lateral open boundary conditions           !
+!                STD(4,ng)  surface forcing                            !
+!                                                                      !
+!  Standard input files:                                               !
+!                                                                      !
 !  Iname       Physical parameters standard input script file name.    !
-!  LCZname     Input/output Lanczos vectors file name.                 !
-!  MODname     Output 4DVAR processed fields file name.                !
-!  MyAppCPP    Application C-preprocessing flag.                       !
-!  NRMname     Input/output error covariance normalization file name:  !
-!                NRMname(1)  initial conditions                        !
-!                NRMname(2)  model                                     !
-!                NRMname(3)  boundary conditions                       !
-!                NRMname(4)  surface forcing                           !
-!  OBSname     Input/output datum observations file name.              !
-!  REPname     Input/output representer coefficients file name.        !
-!  Rerror      Running error messages.                                 !
-!  RSTname     Output restart file name.                               !
-!  SSHname     Input SSH observations file name.                       !
-!  SSTname     Input SST observations file name.                       !
-!  TIDEname    Input tide forcing file name.                           !
-!  TLFname     Input/output tangent linear impulse forcing file name.  !
-!  TLMbase     Output tangent linear base file name.                   !
-!  TLMname     Output tangent linear file name.                        !
-!  TOBSname    Input tracer observations file name.                    !
 !  USRname     USER input/output generic file name.                    !
-!  VSURname    Input surface currents observations file name.          !
-!  VOBSname    Input horizontal currents observations file name.       !
 !  Wname       Wave model stadard input file name.                     !
 !  aparnam     Input assimilation parameters file name.                !
 !  bparnam     Input biology parameters file name.                     !
 !  fposnam     Input initial floats positions file name.               !
-!  ioerror     IO error flag.                                          !
-!  ncfile      Current NetCDF file name being processed.               !
-!  nFfiles     Number of forcing files.                                !
 !  sparnam     Input sediment transport parameters file name.          !
 !  sposnam     Input station positions file name.                      !
-!  SourceFile  Current executed file name. It is used for IO error     !
-!                purposes.                                             !
-!  STAname     Output station data file name.                          !
-!  STDname     Input error covariance standard deviations file name:   !
-!                STDname(1)  initial conditions                        !
-!                STDname(2)  model                                     !
-!                STDname(3)  boundary conditions                       !
-!                STDname(4)  surface forcing                           !
+!  varname     Input IO variables information file name.               !
+!                                                                      !
 !  stdinp      Unit number for standard input (often 5).               !
 !  stdout      Unit number for standard output (often 6).              !
 !  usrout      Unit number for generic USER output.                    !
-!  varname     Input IO variables information file name.               !
+!                                                                      !
+!  Miscellaneous variables:                                            !
+!                                                                      !
+!  FRCids      NetCDF file ID associated with each forcing field.      !
+!  Rerror      Running error messages.                                 !
+!  SourceFile  Current executed file name. It is used for IO error     !
+!                purposes.                                             !
+!  ioerror     IO error flag.                                          !
+!  ncfile      Current NetCDF file name being processed.               !
+!  nFfiles     Number of forcing files.                                !
 !                                                                      !
 !=======================================================================
 !
-        USE mod_param
+      USE mod_param
+!
+      implicit none
+!
+!  I/O units.
+!
+      integer, parameter :: stdinp = 5      ! standard input
+      integer, parameter :: stdout = 6      ! standard output
+      integer, parameter :: usrout = 10     ! generic user unit
+!
+!  I/O files management, derived type structures.
+!
+      TYPE(T_IO), allocatable :: ADM(:)     ! ADM history fields
+      TYPE(T_IO), allocatable :: ADS(:)     ! sensitivity functional
+      TYPE(T_IO), allocatable :: AVG(:)     ! time-averaged fields
+      TYPE(T_IO), allocatable :: BLK(:)     ! bulk fluxes fields
+      TYPE(T_IO), allocatable :: BRY(:)     ! open boundary data
+      TYPE(T_IO), allocatable :: CLM(:)     ! climatology fields
+      TYPE(T_IO), allocatable :: DAV(:)     ! 4D-Var variables
+      TYPE(T_IO), allocatable :: DIA(:)     ! diagnostics fields
+      TYPE(T_IO), allocatable :: ERR(:)     ! 4D-Var posterior error
+      TYPE(T_IO), allocatable :: FLT(:)     ! Lagrangian trajectories
+      TYPE(T_IO), allocatable :: FWD(:)     ! forward solution
+      TYPE(T_IO), allocatable :: GRD(:)     ! grid data
+      TYPE(T_IO), allocatable :: GST(:)     ! generalized stability
+      TYPE(T_IO), allocatable :: HIS(:)     ! NLM history fields
+      TYPE(T_IO), allocatable :: HSS(:)     ! Hessian eigenvectors
+      TYPE(T_IO), allocatable :: IAD(:)     ! ADM initial conditions
+      TYPE(T_IO), allocatable :: INI(:)     ! NLM initial conditions
+      TYPE(T_IO), allocatable :: IRP(:)     ! RPM initial conditions
+      TYPE(T_IO), allocatable :: ITL(:)     ! TLM initial conditions
+      TYPE(T_IO), allocatable :: LCZ(:)     ! Lanczos vectors
+      TYPE(T_IO), allocatable :: OBS(:)     ! observations
+      TYPE(T_IO), allocatable :: TIDE(:)    ! tidal forcing
+      TYPE(T_IO), allocatable :: TLF(:)     ! TLM impulse fields
+      TYPE(T_IO), allocatable :: TLM(:)     ! TLM history fields
+      TYPE(T_IO), allocatable :: RST(:)     ! restart fields
+      TYPE(T_IO), allocatable :: STA(:)     ! stations data
+      TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
+      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
+!
+!  Input forcing data.
+!
+      integer, allocatable :: nFfiles(:)
+      integer, allocatable :: FRCids(:,:)
 
-        implicit none
-
-        integer, parameter :: stdinp = 5
-        integer, parameter :: stdout = 6
-        integer, parameter :: usrout = 10
-        integer :: ioerror = 0
-
-        integer, dimension(Ngrids) :: nFfiles
-
-        integer, allocatable :: FRCids(:,:)
-
-        character (len=50), dimension(8) :: Rerror =                    &
+      TYPE(T_IO), allocatable :: FRC(:,:)
+!
+!  Error messages.
+!
+      character (len=50), dimension(8) :: Rerror =                      &
      &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
      &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &
      &          ' ROMS/TOMS - Output error ............ exit_flag: ',   &
@@ -103,63 +136,78 @@
      &          ' ROMS/TOMS - Partition error ......... exit_flag: ',   &
      &          ' ROMS/TOMS - Illegal input parameter . exit_flag: ',   &
      &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ' /)
+!
+!  Standard input scripts file names.
+!
+      character (len=256) :: Iname          ! ROMS physical parameters
+      character (len=256) :: Wname          ! wave model standard input
+      character (len=256) :: USRname        ! use generic file name
+      character (len=256) :: aparnam        ! assimilation parameters
+      character (len=256) :: bparnam        ! biology model parameters
+      character (len=256) :: fposnam        ! floats positions
+      character (len=256) :: sparnam        ! sediment model parameters
+      character (len=256) :: sposnam        ! station positions
+      character (len=256) :: varname        ! I/O metadata
+!
+!  Miscelaneous variables.
+!
+      integer :: ioerror = 0                ! I/O error flag
 
-        character (len=256), allocatable :: FRCname(:,:)
+      character (len=256) :: MyAppCPP       ! application CPP flag
+      character (len=256) :: SourceFile     ! current executed ROMS file
+      character (len=256) :: ncfile         ! current NetCDF file
+!
+      CONTAINS
+!
+      SUBROUTINE allocate_iounits
+!
+!=======================================================================
+!                                                                      !
+!  This routine allocates several variables in the module that depend  !
+!  on the number of nested grids.                                      !
+!                                                                      !
+!=======================================================================
+!
+!-----------------------------------------------------------------------
+!  Allocate I/O files management, derived type structures.
+!-----------------------------------------------------------------------
+!
+      allocate ( ADM(Ngrids) )
+      allocate ( ADS(Ngrids) )
+      allocate ( AVG(Ngrids) )
+      allocate ( BLK(Ngrids) )
+      allocate ( BRY(Ngrids) )
+      allocate ( CLM(Ngrids) )
+      allocate ( DAV(Ngrids) )
+      allocate ( DIA(Ngrids) )
+      allocate ( ERR(Ngrids) )
+      allocate ( FLT(Ngrids) )
+      allocate ( FWD(Ngrids) )
+      allocate ( GRD(Ngrids) )
+      allocate ( GST(Ngrids) )
+      allocate ( HIS(Ngrids) )
+      allocate ( HSS(Ngrids) )
+      allocate ( IAD(Ngrids) )
+      allocate ( INI(Ngrids) )
+      allocate ( IRP(Ngrids) )
+      allocate ( ITL(Ngrids) )
+      allocate ( LCZ(Ngrids) )
+      allocate ( OBS(Ngrids) )
+      allocate ( TIDE(Ngrids) )
+      allocate ( TLF(Ngrids) )
+      allocate ( TLM(Ngrids) )
+      allocate ( RST(Ngrids) )
+      allocate ( STA(Ngrids) )
+      allocate ( NRM(4,Ngrids) )
+      allocate ( STD(4,Ngrids) )
+!
+!-----------------------------------------------------------------------
+!  Allocate variables.
+!-----------------------------------------------------------------------
+!
+      allocate ( nFfiles(Ngrids) )
 
-        character (len=256), dimension(Ngrids) :: ADJbase
-        character (len=256), dimension(Ngrids) :: ADJname
-        character (len=256), dimension(Ngrids) :: ADSname
-        character (len=256), dimension(Ngrids) :: AVGbase
-        character (len=256), dimension(Ngrids) :: AVGname
-        character (len=256), dimension(Ngrids) :: BLKname
-        character (len=256), dimension(Ngrids) :: BRYname
-        character (len=256), dimension(Ngrids) :: CLMname
-        character (len=256), dimension(Ngrids) :: DIAbase
-        character (len=256), dimension(Ngrids) :: DIAname
-        character (len=256), dimension(Ngrids) :: ERRname
-        character (len=256), dimension(Ngrids) :: FLTname
-        character (len=256), dimension(Ngrids) :: FWDbase
-        character (len=256), dimension(Ngrids) :: FWDname
-        character (len=256), dimension(Ngrids) :: GRDname
-        character (len=256), dimension(Ngrids) :: GSTname
-        character (len=256), dimension(Ngrids) :: HISbase
-        character (len=256), dimension(Ngrids) :: HISname
-        character (len=256), dimension(Ngrids) :: HSSbase
-        character (len=256), dimension(Ngrids) :: HSSname
-        character (len=256), dimension(Ngrids) :: IADname
-        character (len=256), dimension(Ngrids) :: INIname
-        character (len=256), dimension(Ngrids) :: IRPname
-        character (len=256), dimension(Ngrids) :: ITLname
-        character (len=256), dimension(Ngrids) :: LCZname
-        character (len=256), dimension(Ngrids) :: MODname
-        character (len=256), dimension(Ngrids) :: OBSname
-        character (len=256), dimension(Ngrids) :: REPname
-        character (len=256), dimension(Ngrids) :: SSHname
-        character (len=256), dimension(Ngrids) :: SSTname
-        character (len=256), dimension(Ngrids) :: TIDEname
-        character (len=256), dimension(Ngrids) :: TLFname
-        character (len=256), dimension(Ngrids) :: TLMbase
-        character (len=256), dimension(Ngrids) :: TLMname
-        character (len=256), dimension(Ngrids) :: TOBSname
-        character (len=256), dimension(Ngrids) :: VSURname
-        character (len=256), dimension(Ngrids) :: VOBSname
-        character (len=256), dimension(Ngrids) :: RSTname
-        character (len=256), dimension(Ngrids) :: STAname
-
-        character (len=256), dimension(4,Ngrids) :: NRMname
-        character (len=256), dimension(4,Ngrids) :: STDname
-
-        character (len=256) :: Iname
-        character (len=256) :: Wname
-        character (len=256) :: MyAppCPP
-        character (len=256) :: SourceFile
-        character (len=256) :: USRname
-        character (len=256) :: aparnam
-        character (len=256) :: bparnam
-        character (len=256) :: fposnam
-        character (len=256) :: ncfile
-        character (len=256) :: sparnam
-        character (len=256) :: sposnam
-        character (len=256) :: varname
+      RETURN
+      END SUBROUTINE allocate_iounits
 
       END MODULE mod_iounits

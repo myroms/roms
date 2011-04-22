@@ -1,5 +1,5 @@
 /*
-** svn $Id$
+** svn $Id: wc13.h 78 2011-02-07 07:08:06Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2011 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -192,10 +192,5 @@
 
 #if defined ARRAY_MODES || \
     defined W4DVAR      || defined W4DVAR_SENSITIVITY
-# define CONVOLVE
 # define RPM_RELAXATION
-#endif
-
-#if defined W4DPSAS     || defined W4DPSAS_SENSITIVITY
-# define CONVOLVE
 #endif

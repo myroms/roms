@@ -186,8 +186,8 @@
 !-----------------------------------------------------------------------
 !
       IF (Vtransform(ng).eq.1) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
 #  if defined SEDIMENT && defined SED_MORPH
 !>          h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
 !>
@@ -203,7 +203,7 @@
             cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
             cff1_w=SCALARS(ng)%Cs_w(k)
             cff1_r=SCALARS(ng)%Cs_r(k)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               hwater=h(i,j)
 #  ifdef ICESHELF
               hwater=hwater-ABS(zice(i,j))
@@ -285,8 +285,8 @@
 !-----------------------------------------------------------------------
 !
       ELSE IF (Vtransform(ng).eq.2) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
 #  if defined SEDIMENT && defined SED_MORPH
 !>          h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
 !>
@@ -302,7 +302,7 @@
             cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
             cff1_w=SCALARS(ng)%Cs_w(k)
             cff1_r=SCALARS(ng)%Cs_r(k)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               hwater=h(i,j)
 #  ifdef ICESHELF
               hwater=hwater-ABS(zice(i,j))
@@ -633,7 +633,7 @@
       IF (Vtransform(ng).eq.1) THEN
 
 #   ifdef WEST_FSOBC
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(iwest,r2dvar)
           DO j=JstrR,JendR
             hwater=h(i,j)
@@ -677,7 +677,7 @@
 #   endif
 
 #   ifdef EAST_FSOBC
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(ieast,r2dvar)
           DO j=JstrR,JendR
             hwater=h(i,j)
@@ -721,7 +721,7 @@
 #   endif
 
 #   ifdef SOUTH_FSOBC
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(isouth,r2dvar)
           DO i=IstrR,IendR
             hwater=h(i,j)
@@ -765,7 +765,7 @@
 #   endif
 
 #   ifdef NORTH_FSOBC
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(inorth,r2dvar)
           DO i=IstrR,IendR
             hwater=h(i,j)
@@ -822,7 +822,7 @@
       ELSE IF (Vtransform(ng).eq.2) THEN
 
 #   ifdef WEST_FSOBC
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(iwest,r2dvar)
           DO j=JstrR,JendR
             hwater=h(i,j)
@@ -867,7 +867,7 @@
 #   endif
 
 #   ifdef EAST_FSOBC
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(ieast,r2dvar)
           DO j=JstrR,JendR
             hwater=h(i,j)
@@ -912,7 +912,7 @@
 #   endif
 
 #   ifdef SOUTH_FSOBC
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(isouth,r2dvar)
           DO i=IstrR,IendR
             hwater=h(i,j)
@@ -957,7 +957,7 @@
 #   endif
 
 #   ifdef NORTH_FSOBC
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(inorth,r2dvar)
           DO i=IstrR,IendR
             hwater=h(i,j)
@@ -1108,8 +1108,8 @@
 !  the terms are cancelled in the barotropic pressure gradient.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           tl_h(i,j)=h(i,j)
         END DO
       END DO

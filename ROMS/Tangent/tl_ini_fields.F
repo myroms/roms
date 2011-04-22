@@ -45,7 +45,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 1)
+      CALL wclock_on (ng, iTLM, 2)
 # endif
       CALL tl_ini_fields_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -75,7 +75,7 @@
      &                         OCEAN(ng) % zeta,                        &
      &                         OCEAN(ng) % tl_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 1)
+      CALL wclock_off (ng, iTLM, 2)
 # endif
       RETURN
       END SUBROUTINE tl_ini_fields
@@ -222,9 +222,9 @@
 !  Initialize other time levels for 3D momentum.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
+      DO j=JstrB,JendB
         DO k=1,N(ng)
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
 !>          cff1=u(i,j,k,nstp)
 !>
             tl_cff1=tl_u(i,j,k,nstp)
@@ -241,9 +241,9 @@
           END DO
         END DO
 !
-        IF (j.ge.JstrV) THEN
+        IF (j.ge.JstrM) THEN
           DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
 !>            cff2=v(i,j,k,nstp)
 !>
               tl_cff2=tl_v(i,j,k,nstp)
@@ -369,15 +369,15 @@
 !  Here DC(i,1:N) are the grid cell thicknesses, DC(i,0) is the total
 !  depth of the water column, and CF(i,0) is the vertical integral.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=JstrB,JendB
+        DO i=IstrM,IendB
           DC(i,0)=0.0_r8
           tl_DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
           tl_CF(i,0)=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=IstrU,Iend
+          DO i=IstrM,IendB
             DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
             tl_DC(i,k)=0.5_r8*(tl_Hz(i,j,k)+tl_Hz(i-1,j,k))
             DC(i,0)=DC(i,0)+DC(i,k)
@@ -387,7 +387,7 @@
      &                            DC(i,k)*tl_u(i,j,k,nstp)
           END DO
         END DO
-        DO i=IstrU,Iend
+        DO i=IstrM,IendB
           cff1=1.0_r8/DC(i,0)
           tl_cff1=-cff1*cff1*tl_DC(i,0)
 !>        cff2=CF(i,0)*cff1
@@ -405,15 +405,15 @@
           tl_ubar(i,j,knew)=tl_cff2
         END DO
 !
-        IF (j.ge.JstrV) THEN
-          DO i=Istr,Iend
+        IF (j.ge.JstrM) THEN
+          DO i=IstrB,IendB
             DC(i,0)=0.0_r8
             tl_DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
             tl_CF(i,0)=0.0_r8
           END DO
           DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO i=IstrB,IendB
               DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
               tl_DC(i,k)=0.5_r8*(tl_Hz(i,j,k)+tl_Hz(i,j-1,k))
               DC(i,0)=DC(i,0)+DC(i,k)
@@ -423,7 +423,7 @@
      &                              DC(i,k)*tl_v(i,j,k,nstp)
             END DO
           END DO
-          DO i=Istr,Iend
+          DO i=IstrB,IendB
             cff1=1.0_r8/DC(i,0)
             tl_cff1=-cff1*cff1*tl_DC(i,0)
 !>          cff2=CF(i,0)*cff1
@@ -552,8 +552,8 @@
 !  Initialize other time levels for 2D momentum.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=JstrB,JendB
+        DO i=IstrM,IendB
 !>        cff1=ubar(i,j,kstp)
 !>
           tl_cff1=tl_ubar(i,j,kstp)
@@ -569,8 +569,8 @@
           tl_ubar(i,j,krhs)=tl_cff1
         END DO
 !
-        IF (j.ge.JstrV) THEN
-          DO i=Istr,Iend
+        IF (j.ge.JstrM) THEN
+          DO i=IstrB,IendB
 !>          cff2=vbar(i,j,kstp)
 !>
             tl_cff2=tl_vbar(i,j,kstp)
@@ -700,8 +700,8 @@
 !
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=JstrB,JendB
+            DO i=IstrB,IendB
 !>            cff1=t(i,j,k,nstp,itrc)
 !>
               tl_cff1=tl_t(i,j,k,nstp,itrc)
@@ -804,7 +804,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 1)
+      CALL wclock_on (ng, iTLM, 2)
 # endif
       CALL tl_ini_zeta_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -827,7 +827,7 @@
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % tl_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 1)
+      CALL wclock_off (ng, iTLM, 2)
 # endif
       RETURN
       END SUBROUTINE tl_ini_zeta
@@ -940,11 +940,11 @@
 !-----------------------------------------------------------------------
 !
 # ifndef OBC_FSRADIATION
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=JstrB,JendB
+        DO i=IstrB,IendB
 # else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 # endif
 !>        cff1=zeta(i,j,kstp)
 !>
@@ -1077,8 +1077,8 @@
 !  free-surface
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !>        Zt_avg1(i,j)=zeta(i,j,kstp)
 !>
           tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
@@ -1112,8 +1112,8 @@
 !  Compute initial total thickness for all sediment bed layers.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !>        bed_thick0(i,j)=0.0_r8
 !>
           tl_bed_thick0(i,j)=0.0_r8

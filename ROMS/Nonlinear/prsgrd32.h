@@ -342,21 +342,21 @@
 !
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            rv(i,j,k,nrhs)=om_v(i,j)*0.5_r8*                          &
-     &                       (Hz(i,j,k)+Hz(i,j-1,k))*                   &
-     &                       (P(i,j-1,k)-P(i,j,k)-                      &
-     &                        HalfGRho*                                 &
-     &                        ((rho(i,j,k)+rho(i,j-1,k))*               &
-     &                         (z_r(i,j,k)-z_r(i,j-1,k))-               &
-     &                          OneFifth*                               &
-     &                          ((dRx(i,j)-dRx(i,j-1))*                 &
-     &                           (z_r(i,j,k)-z_r(i,j-1,k)-              &
-     &                            OneTwelfth*                           &
-     &                            (dZx(i,j)+dZx(i,j-1)))-               &
-     &                           (dZx(i,j)-dZx(i,j-1))*                 &
-     &                           (rho(i,j,k)-rho(i,j-1,k)-              &
-     &                            OneTwelfth*                           &
-     &                            (dRx(i,j)+dRx(i,j-1))))))
+            rv(i,j,k,nrhs)=om_v(i,j)*0.5_r8*                            &
+     &                     (Hz(i,j,k)+Hz(i,j-1,k))*                     &
+     &                     (P(i,j-1,k)-P(i,j,k)-                        &
+     &                      HalfGRho*                                   &
+     &                      ((rho(i,j,k)+rho(i,j-1,k))*                 &
+     &                       (z_r(i,j,k)-z_r(i,j-1,k))-                 &
+     &                        OneFifth*                                 &
+     &                        ((dRx(i,j)-dRx(i,j-1))*                   &
+     &                         (z_r(i,j,k)-z_r(i,j-1,k)-                &
+     &                          OneTwelfth*                             &
+     &                          (dZx(i,j)+dZx(i,j-1)))-                 &
+     &                         (dZx(i,j)-dZx(i,j-1))*                   &
+     &                         (rho(i,j,k)-rho(i,j-1,k)-                &
+     &                          OneTwelfth*                             &
+     &                          (dRx(i,j)+dRx(i,j-1))))))
 #ifdef DIAGNOSTICS_UV
             DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
 #endif

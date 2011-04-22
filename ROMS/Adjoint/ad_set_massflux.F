@@ -6,6 +6,9 @@
 # ifdef EW_PERIODIC
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
+# elif defined COMPOSED_GRID || defined REFINED_GRID
+#  define IU_RANGE IstrP+1,IendT
+#  define IV_RANGE IstrT,IendT
 # else
 #  define IU_RANGE Istr,IendR
 #  define IV_RANGE IstrR,IendR
@@ -13,6 +16,9 @@
 # ifdef NS_PERIODIC
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
+# elif defined COMPOSED_GRID || defined REFINED_GRID
+#  define JU_RANGE JstrT,JendT
+#  define JV_RANGE JstrP+1,JendT
 # else
 #  define JU_RANGE JstrR,JendR
 #  define JV_RANGE Jstr,JendR

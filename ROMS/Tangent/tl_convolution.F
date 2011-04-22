@@ -7,18 +7,18 @@
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
 # else
-#  define IR_RANGE IstrR,IendR
-#  define IU_RANGE Istr,IendR
-#  define IV_RANGE IstrR,IendR
+#  define IR_RANGE IstrT,IendT
+#  define IU_RANGE IstrP,IendT
+#  define IV_RANGE IstrT,IendT
 # endif
 # ifdef NS_PERIODIC
 #  define JR_RANGE Jstr-1,Jend+1
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
 # else
-#  define JR_RANGE JstrR,JendR
-#  define JU_RANGE JstrR,JendR
-#  define JV_RANGE Jstr,JendR
+#  define JR_RANGE JstrT,JendT
+#  define JU_RANGE JstrT,JendT
+#  define JV_RANGE JstrP,JendT
 # endif
 !
 !svn $Id$
@@ -533,10 +533,10 @@
 !  Set switch to convolve boundary segments by the appropriate
 !  tiles.
 !
-      Lconvolve(iwest )=WESTERN_EDGE
-      Lconvolve(ieast )=EASTERN_EDGE
-      Lconvolve(isouth)=SOUTHERN_EDGE
-      Lconvolve(inorth)=NORTHERN_EDGE
+      Lconvolve(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lconvolve(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lconvolve(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lconvolve(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 # endif
 
 # ifdef SOLVE3D
@@ -883,13 +883,13 @@
         DO ir=1,Nfrec(ng)
           DO j=JU_RANGE
             DO i=IU_RANGE
-              tl_ustr(i,j,ir,Linp)=tl_ustr(i,j,ir,Linp)/                 &
+              tl_ustr(i,j,ir,Linp)=tl_ustr(i,j,ir,Linp)/                &
      &                             SQRT(om_u(i,j)*on_u(i,j))
             END DO
           END DO
           DO j=JV_RANGE
             DO i=IV_RANGE
-              tl_vstr(i,j,ir,Linp)=tl_vstr(i,j,ir,Linp)/                 &
+              tl_vstr(i,j,ir,Linp)=tl_vstr(i,j,ir,Linp)/                &
      &                             SQRT(om_v(i,j)*on_v(i,j))
             END DO
           END DO

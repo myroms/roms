@@ -83,7 +83,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 #  if defined WEST_M3RADIATION
 !
@@ -177,7 +177,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 #  if defined EAST_M3RADIATION
 !
@@ -274,7 +274,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 #  if defined SOUTH_M3RADIATION
 !
@@ -379,7 +379,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 #  if defined NORTH_M3RADIATION
 !
@@ -487,25 +487,25 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
           u(Istr,Jstr-1,k,nnew)=0.5_r8*(u(Istr+1,Jstr-1,k,nnew)+        &
      &                                  u(Istr  ,Jstr  ,k,nnew))
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
           u(Iend+1,Jstr-1,k,nnew)=0.5_r8*(u(Iend  ,Jstr-1,k,nnew)+      &
      &                                    u(Iend+1,Jstr  ,k,nnew))
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=1,N(ng)
           u(Istr,Jend+1,k,nnew)=0.5_r8*(u(Istr+1,Jend+1,k,nnew)+        &
      &                                  u(Istr  ,Jend  ,k,nnew))
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=1,N(ng)
           u(Iend+1,Jend+1,k,nnew)=0.5_r8*(u(Iend  ,Jend+1,k,nnew)+      &
      &                                    u(Iend+1,Jend  ,k,nnew))

@@ -215,13 +215,8 @@
 !
 !  Fourth-order, centered differences advection.
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-1,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
-#  endif
         DO j=Jstr,Jend
-          DO i=I_RANGE
+          DO i=Istrm1,Iendp2
             grad (i,j)=(tke(i,j,k,nstp)-tke(i-1,j,k,nstp))
 #  ifdef MASKING
             grad (i,j)=grad (i,j)*umask(i,j)
@@ -232,15 +227,14 @@
 #  endif
           END DO
         END DO
-#  undef I_RANGE
-#  ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+#  if !defined EW_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr,Jend
             grad (Istr-1,j)=grad (Istr,j)
             gradL(Istr-1,j)=gradL(Istr,j)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             grad (Iend+2,j)=grad (Iend+1,j)
             gradL(Iend+2,j)=gradL(Iend+1,j)
@@ -260,12 +254,7 @@
           END DO
         END DO
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-1,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
-#  endif
-        DO j=J_RANGE
+        DO j=Jstrm1,Jendp2
           DO i=Istr,Iend
             grad (i,j)=(tke(i,j,k,nstp)-tke(i,j-1,k,nstp))
 #  ifdef MASKING
@@ -278,14 +267,14 @@
           END DO
         END DO
 #  undef J_RANGE
-#  ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+#  if !defined NS_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
             grad (i,Jstr-1)=grad (i,Jstr)
             gradL(i,Jstr-1)=gradL(i,Jstr)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
             grad (i,Jend+2)=grad (i,Jend+1)
             gradL(i,Jend+2)=gradL(i,Jend+1)

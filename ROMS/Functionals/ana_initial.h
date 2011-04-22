@@ -320,7 +320,7 @@
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            v(i,j,k,1)=-0.05_r8*LOG((h(i,j)+z_r(i,j,k))/Zob(ng))/        &
+            v(i,j,k,1)=-0.05_r8*LOG((h(i,j)+z_r(i,j,k))/Zob(ng))/       &
      &                 (LOG(h(i,j)/Zob(ng))-1.0_r8+Zob(ng)/h(i,j))
           END DO
         END DO

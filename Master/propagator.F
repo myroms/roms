@@ -32,10 +32,10 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_kinds
+!
       implicit none
-
-      PUBLIC
-
+!
       CONTAINS
 
 # if defined AFT_EIGENMODES

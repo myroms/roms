@@ -16,7 +16,7 @@
 
 #undef  CURVGRID
 #define WET_DRY
-#define NEARSHORE_MELLOR05
+#define NEARSHORE_MELLOR08
 #define SWAN_COUPLING
 #define MASKING
 #define OUT_DOUBLE

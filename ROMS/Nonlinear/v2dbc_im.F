@@ -115,7 +115,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 # if defined SOUTH_M2RADIATION
 !
@@ -311,7 +311,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 # if defined NORTH_M2RADIATION
 !
@@ -510,7 +510,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 # if defined WEST_M2RADIATION
 !
@@ -637,7 +637,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 # if defined EAST_M2RADIATION
 !
@@ -767,19 +767,19 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         vbar(Istr-1,Jstr,kout)=0.5_r8*(vbar(Istr  ,Jstr  ,kout)+        &
      &                                 vbar(Istr-1,Jstr+1,kout))
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         vbar(Iend+1,Jstr,kout)=0.5_r8*(vbar(Iend  ,Jstr  ,kout)+        &
      &                                 vbar(Iend+1,Jstr+1,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         vbar(Istr-1,Jend+1,kout)=0.5_r8*(vbar(Istr-1,Jend  ,kout)+      &
      &                                   vbar(Istr  ,Jend+1,kout))
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         vbar(Iend+1,Jend+1,kout)=0.5_r8*(vbar(Iend+1,Jend  ,kout)+      &
      &                                   vbar(Iend  ,Jend+1,kout))
       END IF
@@ -792,7 +792,7 @@
 !-----------------------------------------------------------------------
 !
 # ifndef EW_PERIODIC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrV,Jend
           cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,j))-1.0_r8)
           cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,j,kout))*                &
@@ -802,7 +802,7 @@
           vbar(Istr,j,kout)=vbar(Istr,j,kout)*cff
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrV,Jend
           cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,j))-1.0_r8)
           cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,j,kout))*                &
@@ -814,7 +814,7 @@
       END IF
 # endif
 # ifndef NS_PERIODIC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jstr))-1.0_r8)
           cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jstr,kout))*                  &
@@ -824,7 +824,7 @@
           vbar(i,Jstr,kout)=vbar(i,Jstr,kout)*cff
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jend+1))-1.0_r8)
           cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jend+1,kout))*                &
@@ -836,7 +836,7 @@
       END IF
 # endif
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jstr))-1.0_r8)
         cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jstr,kout))*               &
      &              GRID(ng)%vmask_wet(Istr-1,Jstr)
@@ -844,7 +844,7 @@
      &      cff2*(1.0_r8-cff1)
         vbar(Istr-1,Jstr,kout)=vbar(Istr-1,Jstr,kout)*cff
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jstr))-1.0_r8)
         cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jstr,kout))*               &
      &              GRID(ng)%vmask_wet(Iend+1,Jstr)
@@ -852,7 +852,7 @@
      &      cff2*(1.0_r8-cff1)
         vbar(Iend+1,Jstr,kout)=vbar(Iend+1,Jstr,kout)*cff
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jend+1))-1.0_r8)
         cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jend+1,kout))*             &
      &              GRID(ng)%vmask_wet(Istr-1,Jend+1)
@@ -860,7 +860,7 @@
      &      cff2*(1.0_r8-cff1)
         vbar(Istr-1,Jend+1,kout)=vbar(Istr-1,Jend+1,kout)*cff
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jend+1))-1.0_r8)
         cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jend+1,kout))*             &
      &              GRID(ng)%vmask_wet(Iend+1,Jend+1)

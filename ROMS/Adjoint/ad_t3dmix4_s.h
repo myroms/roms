@@ -229,7 +229,7 @@
 !  to the first harmonic operator.
 !
 #ifndef EW_PERIODIC
-          IF (WESTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=J_RANGE
 # ifdef WESTERN_WALL
               LapT(Istr-1,j)=0.0_r8
@@ -238,7 +238,7 @@
 # endif
             END DO
           END IF
-          IF (EASTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=J_RANGE
 # ifdef EASTERN_WALL
               LapT(Iend+1,j)=0.0_r8
@@ -249,7 +249,7 @@
           END IF
 #endif
 #ifndef NS_PERIODIC
-          IF (SOUTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=I_RANGE
 # ifdef SOUTHERN_WALL
               LapT(i,Jstr-1)=0.0_r8
@@ -258,7 +258,7 @@
 # endif
             END DO
           END IF
-          IF (NORTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=I_RANGE
 # ifdef NORTHERN_WALL
               LapT(i,Jend+1)=0.0_r8
@@ -365,7 +365,7 @@
 !  to the first harmonic operator.
 !
 #ifndef NS_PERIODIC
-          IF (NORTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=I_RANGE
 # ifdef NORTHERN_WALL
 !>            tl_LapT(i,Jend+1)=0.0_r8
@@ -379,7 +379,7 @@
 # endif
             END DO
           END IF
-          IF (SOUTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=I_RANGE
 # ifdef SOUTHERN_WALL
 !>            tl_LapT(i,Jstr-1)=0.0_r8
@@ -395,7 +395,7 @@
           END IF
 #endif
 #ifndef EW_PERIODIC
-          IF (EASTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=J_RANGE
 # ifdef EASTERN_WALL
 !>            tl_LapT(Iend+1,j)=0.0_r8
@@ -409,7 +409,7 @@
 # endif
             END DO
           END IF
-          IF (WESTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=J_RANGE
 # ifdef WESTERN_WALL
 !>            tl_LapT(Istr-1,j)=0.0_r8

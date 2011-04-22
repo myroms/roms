@@ -164,7 +164,7 @@
 !  Add adjoint impulse forcing to nonlinear linear state.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (Master) WRITE (stdout,10) time_code(ng)
  10     FORMAT (3x,'NL_FORCING   - added convolved adjoint impulse,',   &
      &          t62,'t = ', a)

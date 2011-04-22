@@ -398,21 +398,6 @@
 !                VFse, VFsx, dVdz(:,:,k1) k-1/2  WV-points
 !                VFse, VFsx, dVdz(:,:,k2) k+1/2  WV-points
 !
-#ifdef EW_PERIODIC
-# define IU_RANGE IstrU-1,Iend+1
-# define IV_RANGE Istr-1,Iend+1
-#else
-# define IU_RANGE MAX(2,IstrU-1),MIN(Iend+1,Lm(ng))
-# define IV_RANGE MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
-#endif
-#ifdef NS_PERIODIC
-# define JU_RANGE Jstr-1,Jend+1
-# define JV_RANGE JstrV-1,Jend+1
-#else
-# define JU_RANGE MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
-# define JV_RANGE MAX(2,JstrV-1),MIN(Jend+1,Mm(ng))
-#endif
-
       k2=1
       K_LOOP1 : DO k=0,N(ng)
         k1=k2
@@ -421,8 +406,8 @@
 !
 !  Compute slopes (nondimensional) at RHO- and PSI-points.
 !
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
               cff=0.5_r8*(pm(i-1,j)+pm(i,j))
 #ifdef MASKING
               cff=cff*umask(i,j)
@@ -431,8 +416,8 @@
      &                      z_r(i-1,j,k+1))
             END DO
           END DO
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
               cff=0.5_r8*(pn(i,j-1)+pn(i,j))
 #ifdef MASKING
               cff=cff*vmask(i,j)
@@ -442,16 +427,16 @@
             END DO
           END DO
 !
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               dZdx_p(i,j,k2)=0.5_r8*(UFx(i,j-1)+                        &
      &                               UFx(i,j  ))
               dZde_p(i,j,k2)=0.5_r8*(VFe(i-1,j)+                        &
      &                               VFe(i  ,j))
             END DO
           END DO
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               dZdx_r(i,j,k2)=0.5_r8*(UFx(i  ,j)+                        &
      &                               UFx(i+1,j))
               dZde_r(i,j,k2)=0.5_r8*(VFe(i,j  )+                        &
@@ -462,8 +447,8 @@
 !  Compute BASIC STATE momentum horizontal (1/m/s) and vertical
 !  (1/s) gradients.
 !
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff=0.5_r8*pm(i,j)
 #ifdef MASKING
               cff=cff*rmask(i,j)
@@ -475,8 +460,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               cff=0.125_r8*(pn(i-1,j  )+pn(i,j  )+                      &
      &                      pn(i-1,j-1)+pn(i,j-1))
 #ifdef MASKING
@@ -489,8 +474,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               cff=0.125_r8*(pm(i-1,j  )+pm(i,j  )+                      &
      &                      pm(i-1,j-1)+pm(i,j-1))
 #ifdef MASKING
@@ -503,8 +488,8 @@
             END DO
           END DO
 
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff=0.5_r8*pn(i,j)
 #ifdef MASKING
               cff=cff*rmask(i,j)
@@ -518,32 +503,32 @@
         END IF
 
         IF ((k.eq.0).or.(k.eq.N(ng))) THEN
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
               dUdz(i,j,k2)=0.0_r8
             END DO
           END DO
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
               dVdz(i,j,k2)=0.0_r8
             END DO
           END DO
 
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=Jstrm1,Jendp1
+            DO i=IstrUm1,Iendp1
               UFsx(i,j,k2)=0.0_r8
               UFse(i,j,k2)=0.0_r8
             END DO
           END DO
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrVm1,Jendp1
+            DO i=Istrm1,Iendp1
               VFsx(i,j,k2)=0.0_r8
               VFse(i,j,k2)=0.0_r8
             END DO
           END DO
         ELSE
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
               cff=1.0_r8/(0.5_r8*(z_r(i-1,j,k+1)-                       &
      &                            z_r(i-1,j,k  )+                       &
      &                            z_r(i  ,j,k+1)-                       &
@@ -553,8 +538,8 @@
             END DO
           END DO
 
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
               cff=1.0_r8/(0.5_r8*(z_r(i,j-1,k+1)-                       &
      &                            z_r(i,j-1,k  )+                       &
      &                            z_r(i,j  ,k+1)-                       &
@@ -570,8 +555,8 @@
 !  ETA-directions.
 !
         IF (k.gt.0) THEN
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
               cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
               cff3=MIN(dZde_r(i,j,k1),0.0_r8)
@@ -606,8 +591,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               pm_p=0.25_r8*(pm(i-1,j-1)+pm(i-1,j)+                      &
      &                      pm(i  ,j-1)+pm(i  ,j))
               pn_p=0.25_r8*(pn(i-1,j-1)+pn(i-1,j)+                      &
@@ -659,8 +644,8 @@
 !  terrain-following surfaces.
 !
           IF (k.lt.N(ng)) THEN
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=Jstrm1,Jendp1
+              DO i=IstrUm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                 cff=0.125_r8*                                           &
@@ -743,8 +728,8 @@
               END DO
             END DO
 !
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrVm1,Jendp1
+              DO i=Istrm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                 cff=0.125_r8*                                           &
@@ -830,8 +815,8 @@
 !
 !  Compute BASIC STATE first harmonic operator (m s^-3/2).
 !
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=Jstrm1,Jendp1
+            DO i=IstrUm1,Iendp1
               cff=0.125_r8*(pm(i-1,j)+pm(i,j))*                         &
      &                     (pn(i-1,j)+pn(i,j))
               cff1=1.0_r8/(0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k)))
@@ -847,8 +832,8 @@
             END DO
           END DO
 
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrVm1,Jendp1
+            DO i=Istrm1,Iendp1
               cff=0.125_r8*(pm(i,j)+pm(i,j-1))*                         &
      &                     (pn(i,j)+pn(i,j-1))
               cff1=1.0_r8/(0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k)))
@@ -869,17 +854,17 @@
 !  Apply boundary conditions (closed or gradient; except periodic)
 !  to the first harmonic operator.
 !
-#ifndef EW_PERIODIC
-      IF (WESTERN_EDGE) THEN
+#if !defined EW_PERIODIC && !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JU_RANGE
+          DO j=Jstrm1,Jendp1
 # ifdef WESTERN_WALL
             LapU(IstrU-1,j,k)=0.0_r8
 # else
             LapU(IstrU-1,j,k)=LapU(IstrU,j,k)
 # endif
           END DO
-          DO j=JV_RANGE
+          DO j=JstrVm1,Jendp1
 # ifdef WESTERN_WALL
             LapV(Istr-1,j,k)=gamma2(ng)*LapV(Istr,j,k)
 # else
@@ -889,16 +874,16 @@
         END DO
       END IF
 
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JU_RANGE
+          DO j=Jstrm1,Jendp1
 # ifdef EASTERN_WALL
             LapU(Iend+1,j,k)=0.0_r8
 # else
             LapU(Iend+1,j,k)=LapU(Iend,j,k)
 # endif
           END DO
-          DO j=JV_RANGE
+          DO j=JstrVm1,Jendp1
 # ifdef EASTERN_WALL
             LapV(Iend+1,j,k)=gamma2(ng)*LapV(Iend,j,k)
 # else
@@ -908,17 +893,17 @@
         END DO
       END IF
 #endif
-#ifndef NS_PERIODIC
-      IF (SOUTHERN_EDGE) THEN
+#if !defined NS_PERIODIC && !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO i=IU_RANGE
+          DO i=IstrUm1,Iendp1
 # ifdef SOUTHERN_WALL
             LapU(i,Jstr-1,k)=gamma2(ng)*LapU(i,Jstr,k)
 # else
             LapU(i,Jstr-1,k)=0.0_r8
 # endif
           END DO
-          DO i=IV_RANGE
+          DO i=Istrm1,Iendp1
 # ifdef SOUTHERN_WALL
             LapV(i,JstrV-1,k)=0.0_r8
 # else
@@ -928,16 +913,16 @@
         END DO
       END IF
 
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO i=IU_RANGE
+          DO i=IstrUm1,Iendp1
 # ifdef NORTHERN_WALL
             LapU(i,Jend+1,k)=gamma2(ng)*LapU(i,Jend,k)
 # else
             LapU(i,Jend+1,k)=0.0_r8
 # endif
           END DO
-          DO i=IV_RANGE
+          DO i=Istrm1,Iendp1
 # ifdef NORTHERN_WALL
             LapV(i,Jend+1,k)=0.0_r8
 # else
@@ -947,8 +932,9 @@
         END DO
       END IF
 #endif
-#if !defined EW_PERIODIC && !defined NS_PERIODIC
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+#if !defined EW_PERIODIC   && !defined NS_PERIODIC && \
+    !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
           LapU(Istr  ,Jstr-1,k)=0.5_r8*(LapU(Istr+1,Jstr-1,k)+          &
      &                                  LapU(Istr  ,Jstr  ,k))
@@ -957,7 +943,7 @@
         END DO
       END IF
 
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
           LapU(Iend+1,Jstr-1,k)=0.5_r8*(LapU(Iend  ,Jstr-1,k)+          &
      &                                  LapU(Iend+1,Jstr  ,k))
@@ -966,7 +952,7 @@
         END DO
       END IF
 
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=1,N(ng)
           LapU(Istr  ,Jend+1,k)=0.5_r8*(LapU(Istr+1,Jend+1,k)+          &
      &                                  LapU(Istr  ,Jend  ,k))
@@ -975,7 +961,7 @@
         END DO
       END IF
 
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=1,N(ng)
           LapU(Iend+1,Jend+1,k)=0.5_r8*(LapU(Iend  ,Jend+1,k)+          &
      &                                  LapU(Iend+1,Jend  ,k))
@@ -1006,8 +992,8 @@
 !  Compute slopes (nondimensional) at RHO- and PSI-points.
 !
           IF (kk.lt.N(ng)) THEN
-            DO j=-1+JU_RANGE+1
-              DO i=-1+IU_RANGE+1
+            DO j=Jstrm2,Jendp2
+              DO i=IstrUm2,Iendp2
                 cff=0.5_r8*(pm(i-1,j)+pm(i,j))
 #ifdef MASKING
                 cff=cff*umask(i,j)
@@ -1016,8 +1002,8 @@
      &                        z_r(i-1,j,kk+1))
               END DO
             END DO
-            DO j=-1+JV_RANGE+1
-              DO i=-1+IV_RANGE+1
+            DO j=JstrVm2,Jendp2
+              DO i=Istrm2,Iendp2
                 cff=0.5_r8*(pn(i,j-1)+pn(i,j))
 #ifdef MASKING
                 cff=cff*vmask(i,j)
@@ -1027,16 +1013,16 @@
               END DO
             END DO
 !
-            DO j=JU_RANGE+1
-              DO i=IV_RANGE+1
+            DO j=Jstrm1,Jendp2
+               DO i=Istrm1,Iendp2
                 dZdx_p(i,j,k2b)=0.5_r8*(UFx(i,j-1)+                     &
      &                                  UFx(i,j  ))
                 dZde_p(i,j,k2b)=0.5_r8*(VFe(i-1,j)+                     &
      &                                  VFe(i  ,j))
               END DO
             END DO
-            DO j=-1+JV_RANGE
-              DO i=-1+IU_RANGE
+            DO j=JstrVm2,Jendp1
+              DO i=IstrUm2,Iendp1
                 dZdx_r(i,j,k2b)=0.5_r8*(UFx(i  ,j)+                     &
      &                                  UFx(i+1,j))
                 dZde_r(i,j,k2b)=0.5_r8*(VFe(i,j  )+                     &
@@ -1044,14 +1030,14 @@
               END DO
             END DO
             IF (kk.eq.0) THEN
-              DO j=JU_RANGE+1
-                DO i=IV_RANGE+1
+              DO j=Jstrm1,Jendp2
+                DO i=Istrm1,Iendp2
                   dZdx_p(i,j,k1b)=0.0_r8
                   dZde_p(i,j,k1b)=0.0_r8
                 END DO
               END DO
-              DO j=-1+JV_RANGE
-                DO i=-1+IU_RANGE
+              DO j=JstrVm2,Jendp1
+                DO i=IstrUm2,Iendp1
                   dZdx_r(i,j,k1b)=0.0_r8
                   dZde_r(i,j,k1b)=0.0_r8
                 END DO
@@ -2994,8 +2980,9 @@
 !  Apply boundary conditions (closed or gradient; except periodic)
 !  to the first harmonic operator.
 !
-#if !defined EW_PERIODIC && !defined NS_PERIODIC
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+#if !defined EW_PERIODIC   && !defined NS_PERIODIC && \
+    !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_LapV(Iend+1,Jend+1,k)=0.5_r8*(tl_LapV(Iend  ,Jend+1,k)+    &
 !>   &                                     tl_LapV(Iend+1,Jend  ,k))
@@ -3014,7 +3001,7 @@
         END DO
       END IF
 
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_LapV(Istr-1,Jend+1,k)=0.5_r8*(tl_LapV(Istr  ,Jend+1,k)+    &
 !>   &                                     tl_LapV(Istr-1,Jend  ,k))
@@ -3033,7 +3020,7 @@
         END DO
       END IF
 
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_LapV(Iend+1,Jstr  ,k)=0.5_r8*(tl_LapV(Iend  ,Jstr  ,k)+    &
 !>   &                                     tl_LapV(Iend+1,Jstr+1,k))
@@ -3052,7 +3039,7 @@
         END DO
       END IF
 
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_LapV(Istr-1,Jstr  ,k)=0.5_r8*(tl_LapV(Istr-1,Jstr+1,k)+    &
 !>   &                                     tl_LapV(Istr  ,Jstr  ,k))
@@ -3072,10 +3059,10 @@
       END IF
 #endif
 
-#ifndef NS_PERIODIC
-      IF (NORTHERN_EDGE) THEN
+#if !defined NS_PERIODIC && !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO i=IV_RANGE
+          DO i=Istrm1,Iendp1
 # ifdef NORTHERN_WALL
 !>          tl_LapV(i,Jend+1,k)=0.0_r8
 !>
@@ -3087,7 +3074,7 @@
             ad_LapV(i,Jend+1,k)=0.0_r8
 # endif
           END DO
-          DO i=IU_RANGE
+          DO i=IstrUm1,Iendp1
 # ifdef NORTHERN_WALL
 !>          tl_LapU(i,Jend+1,k)=gamma2(ng)*tl_LapU(i,Jend,k)
 !>
@@ -3103,9 +3090,9 @@
         END DO
       END IF
 
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO i=IV_RANGE
+          DO i=Istrm1,Iendp1
 # ifdef SOUTHERN_WALL
 !>          tl_LapV(i,JstrV-1,k)=0.0_r8
 !>
@@ -3117,7 +3104,7 @@
             ad_LapV(i,JstrV-1,k)=0.0_r8
 # endif
           END DO
-          DO i=IU_RANGE
+          DO i=IstrUm1,Iendp1
 # ifdef SOUTHERN_WALL
 !>          tl_LapU(i,Jstr-1,k)=gamma2(ng)*tl_LapU(i,Jstr,k)
 !>
@@ -3133,10 +3120,10 @@
         END DO
       END IF
 #endif
-#ifndef EW_PERIODIC
-      IF (EASTERN_EDGE) THEN
+#if !defined EW_PERIODIC && !defined COMPOSED_GRID
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JV_RANGE
+          DO j=JstrVm1,Jendp1
 # ifdef EASTERN_WALL
 !>          tl_LapV(Iend+1,j,k)=gamma2(ng)*tl_LapV(Iend,j,k)
 !>
@@ -3149,7 +3136,7 @@
             ad_LapV(Iend+1,j,k)=0.0_r8
 # endif
           END DO
-          DO j=JU_RANGE
+          DO j=Jstrm1,Jendp1
 # ifdef EASTERN_WALL
 !>          tl_LapU(Iend+1,j,k)=0.0_r8
 !>
@@ -3164,9 +3151,9 @@
         END DO
       END IF
 
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JV_RANGE
+          DO j=JstrVm1,Jendp1
 # ifdef WESTERN_WALL
 !>          tl_LapV(Istr-1,j,k)=gamma2(ng)*tl_LapV(Istr,j,k)
 !>
@@ -3179,7 +3166,7 @@
             ad_LapV(Istr-1,j,k)=0.0_r8
 # endif
           END DO
-          DO j=JU_RANGE
+          DO j=Jstrm1,Jendp1
 # ifdef WESTERN_WALL
 !>          tl_LapU(IstrU-1,j,k)=0.0_r8
 !>
@@ -3229,8 +3216,8 @@
 !
 !  Compute slopes (nondimensional) at RHO- and PSI-points.
 !
-            DO j=-1+JU_RANGE+1
-              DO i=-1+IU_RANGE+1
+            DO j=Jstrm2,Jendp2
+              DO i=IstrUm2,Iendp2
                 cff=0.5_r8*(pm(i-1,j)+pm(i,j))
 #ifdef MASKING
                 cff=cff*umask(i,j)
@@ -3239,8 +3226,8 @@
      &                        z_r(i-1,j,kk+1))
               END DO
             END DO
-            DO j=-1+JV_RANGE+1
-              DO i=-1+IV_RANGE+1
+            DO j=JstrVm2,Jendp2
+              DO i=Istrm2,Iendp2
                 cff=0.5_r8*(pn(i,j-1)+pn(i,j))
 #ifdef MASKING
                 cff=cff*vmask(i,j)
@@ -3250,16 +3237,16 @@
               END DO
             END DO
 !
-            DO j=JU_RANGE+1
-              DO i=IV_RANGE+1
+            DO j=Jstrm1,Jendp2
+              DO i=Istrm1,Iendp2
                 dZdx_p(i,j,k2b)=0.5_r8*(UFx(i,j-1)+                     &
      &                                  UFx(i,j  ))
                 dZde_p(i,j,k2b)=0.5_r8*(VFe(i-1,j)+                     &
      &                                  VFe(i  ,j))
               END DO
             END DO
-            DO j=-1+JV_RANGE
-              DO i=-1+IU_RANGE
+            DO j=JstrVm2,Jendp1
+              DO i=IstrUm2,Iendp1
                 dZdx_r(i,j,k2b)=0.5_r8*(UFx(i  ,j)+                     &
      &                                  UFx(i+1,j))
                 dZde_r(i,j,k2b)=0.5_r8*(VFe(i,j  )+                     &
@@ -3269,8 +3256,8 @@
 !
 !  Compute momentum horizontal (1/m/s) and vertical (1/s) gradients.
 !
-            DO j=-1+JV_RANGE
-              DO i=-1+IU_RANGE
+            DO j=JstrVm2,Jendp1
+              DO i=IstrUm2,Iendp1
                 cff=0.5_r8*pm(i,j)
 #ifdef MASKING
                 cff=cff*rmask(i,j)
@@ -3282,8 +3269,8 @@
               END DO
             END DO
 
-            DO j=JU_RANGE+1
-              DO i=IV_RANGE+1
+            DO j=Jstrm1,Jendp2
+              DO i=Istrm1,Iendp2
                 cff=0.125_r8*(pn(i-1,j  )+pn(i,j  )+                    &
      &                        pn(i-1,j-1)+pn(i,j-1))
 #ifdef MASKING
@@ -3296,8 +3283,8 @@
               END DO
             END DO
 
-            DO j=JU_RANGE+1
-              DO i=IV_RANGE+1
+            DO j=Jstrm1,Jendp2
+              DO i=Istrm1,Iendp2
                 cff=0.125_r8*(pm(i-1,j  )+pm(i,j  )+                    &
      &                        pm(i-1,j-1)+pm(i,j-1))
 #ifdef MASKING
@@ -3310,8 +3297,8 @@
               END DO
             END DO
 
-            DO j=-1+JV_RANGE
-              DO i=-1+IU_RANGE
+            DO j=JstrVm2,Jendp1
+              DO i=IstrUm2,Iendp1
                 cff=0.5_r8*pn(i,j)
 #ifdef MASKING
                 cff=cff*rmask(i,j)
@@ -3325,32 +3312,32 @@
           END IF
 
           IF ((kk.eq.0).or.(kk.eq.N(ng))) THEN
-            DO j=-1+JU_RANGE+1
-              DO i=-1+IU_RANGE+1
+            DO j=Jstrm2,Jendp2
+              DO i=IstrUm2,Iendp2
                 dUdz(i,j,k2b)=0.0_r8
               END DO
             END DO
-            DO j=-1+JV_RANGE+1
-              DO i=-1+IV_RANGE+1
+            DO j=JstrVm2,Jendp2
+              DO i=Istrm2,Iendp2
                 dVdz(i,j,k2b)=0.0_r8
               END DO
             END DO
 
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=Jstrm1,Jendp1
+              DO i=IstrUm1,Iendp1
                 UFsx(i,j,k2b)=0.0_r8
                 UFse(i,j,k2b)=0.0_r8
               END DO
             END DO
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrVm1,Jendp1
+              DO i=Istrm1,Iendp1
                 VFsx(i,j,k2b)=0.0_r8
                 VFse(i,j,k2b)=0.0_r8
               END DO
             END DO
           ELSE
-            DO j=-1+JU_RANGE+1
-              DO i=-1+IU_RANGE+1
+            DO j=Jstrm2,Jendp2
+              DO i=IstrUm2,Iendp2
                 cff=1.0_r8/(0.5_r8*(z_r(i-1,j,kk+1)-                    &
      &                              z_r(i-1,j,kk  )+                    &
      &                              z_r(i  ,j,kk+1)-                    &
@@ -3360,8 +3347,8 @@
               END DO
             END DO
 
-            DO j=-1+JV_RANGE+1
-              DO i=-1+IV_RANGE+1
+            DO j=JstrVm2,Jendp2
+              DO i=Istrm2,Iendp2
                 cff=1.0_r8/(0.5_r8*(z_r(i,j-1,kk+1)-                    &
      &                              z_r(i,j-1,kk  )+                    &
      &                              z_r(i,j  ,kk+1)-                    &
@@ -3377,8 +3364,8 @@
 !  ETA-directions.
 !
           IF (kk.gt.0) THEN
-            DO j=-1+JV_RANGE
-              DO i=-1+IU_RANGE
+            DO j=JstrVm2,Jendp1
+              DO i=IstrUm2,Iendp1
                 cff1=MIN(dZdx_r(i,j,k1b),0.0_r8)
                 cff2=MAX(dZdx_r(i,j,k1b),0.0_r8)
                 cff3=MIN(dZde_r(i,j,k1b),0.0_r8)
@@ -3413,8 +3400,8 @@
               END DO
             END DO
 
-            DO j=JU_RANGE+1
-              DO i=IV_RANGE+1
+            DO j=Jstrm1,Jendp2
+              DO i=Istrm1,Iendp2
                 pm_p=0.25_r8*(pm(i-1,j-1)+pm(i-1,j)+                    &
      &                        pm(i  ,j-1)+pm(i  ,j))
                 pn_p=0.25_r8*(pn(i-1,j-1)+pn(i-1,j)+                    &
@@ -3466,8 +3453,8 @@
 !  terrain-following surfaces.
 !
             IF (kk.lt.N(ng)) THEN
-              DO j=-1+JV_RANGE
-                DO i=IU_RANGE
+              DO j=JstrVm2,Jendp1
+                DO i=IstrUm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                   cff=0.125_r8*                                         &
@@ -3550,8 +3537,8 @@
                 END DO
               END DO
 !
-              DO j=JV_RANGE
-                DO i=IV_RANGE
+              DO j=JstrVm1,Jendp1
+                DO i=Istrm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                   cff=0.125_r8*                                         &
@@ -3641,8 +3628,8 @@
 !
 !  Compute first adjoint harmonic operator (m s^-3/2).
 !
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrVm1,Jendp1
+            DO i=Istrm1,Iendp1
               cff=0.125_r8*(pm(i,j)+pm(i,j-1))*                         &
      &                     (pn(i,j)+pn(i,j-1))
               cff1=1.0_r8/(0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k)))
@@ -3685,8 +3672,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=Jstrm1,Jendp1
+            DO i=IstrUm1,Iendp1
               cff=0.125_r8*(pm(i-1,j)+pm(i,j))*                         &
      &                     (pn(i-1,j)+pn(i,j))
               cff1=1.0_r8/(0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k)))
@@ -3733,8 +3720,8 @@
 !  surfaces.
 !
           IF (k.lt.N(ng)) THEN
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrVm1,Jendp1
+              DO i=Istrm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                 cff=0.125_r8*                                           &
@@ -4233,8 +4220,8 @@
               END DO
             END DO
 !
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=Jstrm1,Jendp1
+              DO i=IstrUm1,Iendp1
 #ifdef VISC_3DCOEF
 # ifdef UV_U3ADV_SPLIT
                 cff=0.125_r8*                                           &
@@ -4739,8 +4726,8 @@
 !  along geopotential surfaces in the XI- and ETA-directions.
 !
         IF (k.gt.0) THEN
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               pm_p=0.25_r8*(pm(i-1,j-1)+pm(i-1,j)+                      &
      &                      pm(i  ,j-1)+pm(i  ,j))
               pn_p=0.25_r8*(pn(i-1,j-1)+pn(i-1,j)+                      &
@@ -4925,8 +4912,8 @@
             END DO
           END DO
 !
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
               cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
               cff3=MIN(dZde_r(i,j,k1),0.0_r8)
@@ -5077,8 +5064,8 @@
 !  gradients.
 !
         IF ((k.eq.0).or.(k.eq.N(ng))) THEN
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrVm1,Jendp1
+            DO i=Istrm1,Iendp1
 !>            tl_VFse(i,j,k2)=0.0_r8
 !>
               ad_VFse(i,j,k2)=0.0_r8
@@ -5087,8 +5074,8 @@
               ad_VFsx(i,j,k2)=0.0_r8
             END DO
           END DO
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=Jstrm1,Jendp1
+            DO i=IstrUm1,Iendp1
 !>            tl_UFse(i,j,k2)=0.0_r8
 !>
               ad_UFse(i,j,k2)=0.0_r8
@@ -5098,23 +5085,23 @@
             END DO
           END DO
 
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
 !>            tl_dVdz(i,j,k2)=0.0_r8
 !>
               ad_dVdz(i,j,k2)=0.0_r8
             END DO
           END DO
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
 !>            tl_dUdz(i,j,k2)=0.0_r8
 !>
               ad_dUdz(i,j,k2)=0.0_r8
             END DO
           END DO
         ELSE
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
               cff=1.0_r8/(0.5_r8*(z_r(i,j-1,k+1)-                       &
      &                            z_r(i,j-1,k  )+                       &
      &                            z_r(i,j  ,k+1)-                       &
@@ -5144,8 +5131,8 @@
             END DO
           END DO
 
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
               cff=1.0_r8/(0.5_r8*(z_r(i-1,j,k+1)-                       &
      &                            z_r(i-1,j,k  )+                       &
      &                            z_r(i  ,j,k+1)-                       &
@@ -5177,8 +5164,8 @@
         END IF
 
         IF (k.lt.N(ng)) THEN
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff=0.5_r8*pn(i,j)
 #ifdef MASKING
               cff=cff*rmask(i,j)
@@ -5197,8 +5184,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               cff=0.125_r8*(pm(i-1,j  )+pm(i,j  )+                      &
      &                      pm(i-1,j-1)+pm(i,j-1))
 #ifdef MASKING
@@ -5218,8 +5205,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
               cff=0.125_r8*(pn(i-1,j  )+pn(i,j  )+                      &
      &                      pn(i-1,j-1)+pn(i,j-1))
 #ifdef MASKING
@@ -5239,8 +5226,8 @@
             END DO
           END DO
 
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
               cff=0.5_r8*pm(i,j)
 #ifdef MASKING
               cff=cff*rmask(i,j)
@@ -5261,8 +5248,8 @@
 !
 !  Compute slopes (nondimensional) at RHO- and PSI-points.
 !
-          DO j=-1+JV_RANGE
-            DO i=-1+IU_RANGE
+          DO j=JstrVm2,Jendp1
+            DO i=IstrUm2,Iendp1
 !>            tl_dZde_r(i,j,k2)=0.5_r8*(tl_VFe(i,j  )+                  &
 !>   &                                  tl_VFe(i,j+1))
 !>
@@ -5280,8 +5267,8 @@
             END DO
           END DO
 
-          DO j=JU_RANGE+1
-            DO i=IV_RANGE+1
+          DO j=Jstrm1,Jendp2
+            DO i=Istrm1,Iendp2
 !>            tl_dZde_p(i,j,k2)=0.5_r8*(tl_VFe(i-1,j)+                  &
 !>   &                                  tl_VFe(i  ,j))
 !>
@@ -5299,8 +5286,8 @@
             END DO
           END DO
 !
-          DO j=-1+JV_RANGE+1
-            DO i=-1+IV_RANGE+1
+          DO j=JstrVm2,Jendp2
+            DO i=Istrm2,Iendp2
               cff=0.5_r8*(pn(i,j-1)+pn(i,j))
 #ifdef MASKING
               cff=cff*vmask(i,j)
@@ -5315,8 +5302,8 @@
             END DO
           END DO
 
-          DO j=-1+JU_RANGE+1
-            DO i=-1+IU_RANGE+1
+          DO j=Jstrm2,Jendp2
+            DO i=IstrUm2,Iendp2
               cff=0.5_r8*(pm(i-1,j)+pm(i,j))
 #ifdef MASKING
               cff=cff*umask(i,j)

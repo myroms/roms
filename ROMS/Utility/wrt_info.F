@@ -621,36 +621,6 @@
       IF (exit_flag.ne.NoError) RETURN
 #endif
 
-#ifdef NUDGING
-!
-!  Nudging inverse time scales used in data assimilation.
-!
-      CALL netcdf_put_fvar (ng, model, ncname, 'Znudass',               &
-     &                      Znudass(ng)/sec2day, (/0/), (/0/),          &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
-
-      CALL netcdf_put_fvar (ng, model, ncname, 'M2nudass',              &
-     &                      M2nudass(ng)/sec2day, (/0/), (/0/),         &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
-
-# ifdef SOLVE3D
-      CALL netcdf_put_fvar (ng, model, ncname, 'M3nudass',              &
-     &                      M3nudass(ng)/sec2day, (/0/), (/0/),         &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
-
-      DO itrc=1,NT(ng)
-        nudg(itrc)=Tnudass(itrc,ng)/sec2day
-      END DO
-      CALL netcdf_put_fvar (ng, model, ncname, 'Tnudass',               &
-     &                      nudg, (/1/), (/NT(ng)/),                    &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
-# endif
-#endif
-
 #ifdef NUDGING_COFF
 !
 !  Open boundary nudging, inverse time scales.
@@ -1305,7 +1275,7 @@
 !
 !  Stations positions.
 !
-      IF (ncid.eq.ncSTAid(ng)) THEN
+      IF (ncid.eq.STA(ng)%ncid) THEN
         CALL netcdf_put_fvar (ng, model, ncname, 'Ipos',                &
      &                        SCALARS(ng)%SposX(:), (/1/),              &
      &                        (/Nstation(ng)/), ncid = ncid)
@@ -1319,9 +1289,9 @@
 #endif
 
 #ifdef NO_WRITE_GRID
-      GRID_VARS : IF (ncid.eq.ncSTAid(ng)) THEN
+      GRID_VARS : IF (ncid.eq.STA(ng)%ncid) THEN
 #else
-      GRID_VARS : IF (ncid.ne.ncFLTid(ng)) THEN
+      GRID_VARS : IF (ncid.ne.FLT(ng)%ncid) THEN
 #endif
 #if !(defined SED_MORPH && defined SEDIMENT)
 !
@@ -1329,7 +1299,7 @@
 !
         IF (exit_flag.eq.NoError) THEN
           scale=1.0_r8
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             IF (find_string(var_name, n_var, 'h', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
@@ -1367,7 +1337,7 @@
 !  Coriolis parameter.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'f', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -1393,7 +1363,7 @@
 !  Curvilinear transformation metrics.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'pm', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -1417,7 +1387,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'pn', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -1445,7 +1415,7 @@
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_r8
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               IF (find_string(var_name, n_var, 'lon_rho', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
@@ -1481,7 +1451,7 @@
 
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_r8
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               IF (find_string(var_name, n_var, 'lat_rho', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
@@ -1519,7 +1489,7 @@
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_r8
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               IF (find_string(var_name, n_var, 'x_rho', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
@@ -1555,7 +1525,7 @@
 
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_r8
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               IF (find_string(var_name, n_var, 'y_rho', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
@@ -1594,7 +1564,7 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lon_u', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
@@ -1618,7 +1588,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lat_u', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
@@ -1644,7 +1614,7 @@
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'x_u', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
@@ -1668,7 +1638,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'y_u', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
@@ -1696,7 +1666,7 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lon_v', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
@@ -1720,7 +1690,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lat_v', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
@@ -1746,7 +1716,7 @@
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'x_v', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
@@ -1770,7 +1740,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'y_v', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
@@ -1798,7 +1768,7 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lon_psi', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
@@ -1822,7 +1792,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'lat_psi', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
@@ -1848,7 +1818,7 @@
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'x_psi', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
@@ -1872,7 +1842,7 @@
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.ncSTAid(ng)) THEN
+            IF (ncid.ne.STA(ng)%ncid) THEN
               scale=1.0_r8
               IF (find_string(var_name, n_var, 'y_psi', varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
@@ -1902,7 +1872,7 @@
 !
         IF (exit_flag.eq.NoError) THEN
           scale=1.0_r8
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             IF (find_string(var_name, n_var, 'angle', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
@@ -1942,7 +1912,7 @@
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_rho', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -1968,7 +1938,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_u', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
@@ -1994,7 +1964,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_v', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
@@ -2020,7 +1990,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_psi', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,     &
@@ -2053,7 +2023,7 @@
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'scope_rho', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -2077,7 +2047,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'scope_u', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
@@ -2101,7 +2071,7 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'scope_v', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
@@ -2129,7 +2099,7 @@
 !  Spatially bottom friction parameter.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
 # ifdef UV_LOGDRAG
             IF (find_string(var_name, n_var, TRIM(Vname(1,idZoBL)),     &

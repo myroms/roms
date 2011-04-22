@@ -2170,7 +2170,7 @@
       IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
         END IF
 !
@@ -2991,7 +2991,7 @@
 !  re-initialized.  This allows better tidal fit as the simulation
 !  progresses.
 !
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           Hcount(ng)=Hcount(ng)+1
           DO nk=1,NTC
             SinW_avg(nk)=SinOmega(nk)
@@ -3129,7 +3129,7 @@
 !  Accumukate Detide least-squares coefficients. They only vary in time
 !  since omega (as computed in set_tides) uses model time coordinate.
 !
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           Hcount(ng)=Hcount(ng)+1
           DO nk=1,NTC
             SinW_avg(nk)=SinW_avg(nk)+SinOmega(nk)
@@ -3282,7 +3282,7 @@
 !            k=1:NTC           sine terms
 !            k=NTC+1:2*NTC     cosine terms
 !
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           C(0,0)=1.0_r8                     ! time-averaged coefficient
           fac1=1.0_r8/REAL(Hcount(ng),r8)   ! global summation factor
           DO nk=1,NTC

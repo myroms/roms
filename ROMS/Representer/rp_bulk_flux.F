@@ -583,9 +583,10 @@
      &           fac*TseaC(i)/(240.97_r8+TseaC(i))
 #endif
 
-!>          cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*EXP(fac)
-          cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                 &
-     &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
+!>        cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*EXP(fac)
+!>
+          cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
+     &        EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
           tl_cff=tl_fac*cff+                                            &
 #ifdef TL_IOMS
      &           (1.0_r8-fac)*cff
@@ -653,9 +654,9 @@
      &                        Q(i)
 #endif
           delT(i)=TseaC(i)-TairC(i)
-          tl_delT(i)=tl_TseaC(i)-                                        &
+          tl_delT(i)=tl_TseaC(i)-                                       &
 #ifdef TL_IOMS
-     &                        TairC(i)
+     &               TairC(i)
 #endif
 !
 !  Neutral coefficients.
@@ -815,7 +816,7 @@
 !>          Wstar(i)=delW(i)*vonKar/(fac2-fac3))
           Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW(ng)/Zo10(i))-             &
      &                             bulk_psiu(blk_ZW(ng)/L10(i),pi))
-          tl_Wstar(i)=-(tl_fac2-tl_fac3)*Wstar(i) &
+          tl_Wstar(i)=-(tl_fac2-tl_fac3)*Wstar(i)                       &
      &                                 /(fac2-fac3)+                    &
 #ifdef TL_IOMS
      &                 2.0_r8*Wstar(i)
@@ -1267,7 +1268,7 @@
 #endif
 !>              Hcool=lambd*blk_visw/fac2
             Hcool=lambd*blk_visw/(SQRT(rhoAir(i)/rhoSea(i))*            &
-   &                            Wstar(i)+eps)
+     &            Wstar(i)+eps)
               tl_Hcool=tl_lambd*blk_visw/fac2-tl_fac2*Hcool/fac2+       &
 #ifdef TL_IOMS
      &                   Hcool

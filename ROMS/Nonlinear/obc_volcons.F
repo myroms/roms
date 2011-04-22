@@ -128,7 +128,7 @@
       my_flux=0.0_r8
 !
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           cff=0.5_r8*(zeta(Istr-1,j,kinp)+h(Istr-1,j)+                  &
      &                zeta(Istr  ,j,kinp)+h(Istr  ,j))*on_u(Istr,j)
@@ -141,7 +141,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           cff=0.5_r8*(zeta(Iend  ,j,kinp)+h(Iend  ,j)+                  &
      &                zeta(Iend+1,j,kinp)+h(Iend+1,j))*on_u(Iend+1,j)
@@ -154,7 +154,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff=0.5_r8*(zeta(i,Jstr-1,kinp)+h(i,Jstr-1)+                  &
      &                zeta(i,Jstr  ,kinp)+h(i,Jstr  ))*om_v(i,Jstr)
@@ -167,7 +167,7 @@
       END IF
 # endif
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff=0.5_r8*(zeta(i,Jend  ,kinp)+h(i,Jend  )+                  &
      &                zeta(i,Jend+1,kinp)+h(i,Jend+1))*om_v(i,Jend+1)
@@ -186,8 +186,8 @@
 !  Perform global summation and compute correction velocity.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -306,7 +306,7 @@
 # endif
 
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=-2+J_RANGE+1
           Duon(Istr,j)=0.5_r8*(Drhs(Istr,j)+Drhs(Istr-1,j))*            &
      &                 (ubar(Istr,j,kinp)-ubar_xs)*                     &
@@ -318,7 +318,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=-2+J_RANGE+1
           Duon(Iend+1,j)=0.5_r8*(Drhs(Iend+1,j)+Drhs(Iend,j))*          &
      &                   (ubar(Iend+1,j,kinp)+ubar_xs)*                 &
@@ -330,7 +330,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=-2+I_RANGE+1
           Dvom(i,Jstr)=0.5_r8*(Drhs(i,Jstr)+Drhs(i,Jstr-1))*            &
      &                 (vbar(i,Jstr,kinp)-ubar_xs)*                     &
@@ -342,7 +342,7 @@
       END IF
 # endif
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=-2+I_RANGE+1
           Dvom(i,Jend+1)=0.5_r8*(Drhs(i,Jend+1)+Drhs(i,Jend))*          &
      &                   (vbar(i,Jend+1,kinp)+ubar_xs)*                 &
@@ -428,7 +428,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           ubar(Istr,j,kinp)=(ubar(Istr,j,kinp)-ubar_xs)
 #  ifdef MASKING
@@ -438,7 +438,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           ubar(Iend+1,j,kinp)=(ubar(Iend+1,j,kinp)+ubar_xs)
 #  ifdef MASKING
@@ -448,7 +448,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           vbar(i,Jstr,kinp)=(vbar(i,Jstr,kinp)-ubar_xs)
 #  ifdef MASKING
@@ -458,7 +458,7 @@
       END IF
 # endif
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           vbar(i,Jend+1,kinp)=(vbar(i,Jend+1,kinp)+ubar_xs)
 #  ifdef MASKING

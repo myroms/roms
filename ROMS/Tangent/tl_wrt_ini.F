@@ -68,7 +68,7 @@
 # endif
       integer :: gfactor, gtype, i, itrc, status, varid
 
-      real(r8) :: scale
+      real(r8) :: my_time, scale
 
       character (len=15) :: string
 !
@@ -98,20 +98,23 @@
        gfactor=1
 # endif
 !
-!  Write out model time (s).
+!  Write out model time (s). Use the "tdays" variable here because of
+!  the management of the "time" variable due to nesting.
 !
-      CALL netcdf_put_fvar (ng, iTLM, ITLname(ng),                      &
-     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+      my_time=tdays(ng)*day2sec
+
+      CALL netcdf_put_fvar (ng, iTLM, ITL(ng)%name,                     &
+     &                      TRIM(Vname(1,idtime)), my_time,             &
      &                      (/OutRec/), (/1/),                          &
-     &                      ncid = ncITLid(ng),                         &
-     &                      varid = itlVid(idtime,ng))
+     &                      ncid = ITL(ng)%ncid,                        &
+     &                      varid = ITL(ng)%Vid(idtime))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m)
 !
       scale=1.0_r8
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iTLM, ncITLid(ng), itlVid(idFsur,ng),      &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idFsur),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -138,9 +141,9 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
-     &                          itlVid(idSbry(isFsur),ng),              &
+     &                          ITL(ng)%Vid(idSbry(isFsur)),            &
      &                          OutRec, r2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
@@ -160,7 +163,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iTLM, ncITLid(ng), itlVid(idUbar,ng),      &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUbar),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -182,9 +185,9 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
-     &                          itlVid(idSbry(isUbar),ng),              &
+     &                          ITL(ng)%Vid(idSbry(isUbar)),            &
      &                          OutRec, u2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
@@ -204,7 +207,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iTLM, ncITLid(ng), itlVid(idVbar,ng),      &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVbar),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -226,9 +229,9 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),     &
+        status=nf_fwrite2d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
-     &                          itlVid(idSbry(isVbar),ng),              &
+     &                          ITL(ng)%Vid(idSbry(isVbar)),            &
      &                          OutRec, v2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
@@ -251,7 +254,7 @@
 !
       scale=1.0_r8                          ! m2/s2
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idUsms,ng),      &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUsms),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -271,7 +274,7 @@
 !
       scale=1.0_r8                          ! m2/s2
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idVsms,ng),      &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVsms),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -293,7 +296,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idUvel,ng),      &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUvel),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -315,9 +318,9 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),     &
+        status=nf_fwrite3d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
-     &                          itlVid(idSbry(isUvel),ng),              &
+     &                          ITL(ng)%Vid(idSbry(isUvel)),            &
      &                          OutRec, u3dvar,                         &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
@@ -337,7 +340,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idVvel,ng),      &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVvel),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -359,9 +362,9 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),     &
+        status=nf_fwrite3d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
-     &                          itlVid(idSbry(isVvel),ng),              &
+     &                          ITL(ng)%Vid(idSbry(isVvel)),            &
      &                          OutRec, v3dvar,                         &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
@@ -382,7 +385,7 @@
       DO itrc=1,NT(ng)
         scale=1.0_r8
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlTid(itrc,ng),      &
+3        status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Tid(itrc),  &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -406,9 +409,9 @@
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_r8
-          status=nf_fwrite3d_bry (ng, iTLM, ITLname(ng), ncITLid(ng),   &
+          status=nf_fwrite3d_bry (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            itlVid(idSbry(isTvar(itrc)),ng),      &
+     &                            ITL(ng)%Vid(idSbry(isTvar(itrc))),    &
      &                            OutRec, r3dvar,                       &
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
@@ -436,8 +439,8 @@
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_r8                      ! kinematic flux units
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iTLM, ncITLid(ng),                     &
-     &                       itlVid(idTsur(itrc),ng),                   &
+          status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid,                    &
+     &                       ITL(ng)%Vid(idTsur(itrc)),                 &
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
@@ -461,41 +464,42 @@
 # if defined IS4DVAR || defined BACKGROUND
 !
 !-----------------------------------------------------------------------
-!  Write other 4DVAR data to MODname file.
+!  Write other 4D-Var data to DAV(ng)%name file.
 !-----------------------------------------------------------------------
 
 #  if defined IS4DVAR
 !
 !  Write out tangent linear model misfit cost function. Notice that it
-!  is written into MODname file instead of ITLname file.
+!  is written into DAV(ng)%name file instead of ITL(ng)%name file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'TLcost_function',   &
+      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'TLcost_function',  &
      &                      FOURDVAR(ng)%ObsCost(0),                    &
      &                      (/Nrun/), (/1/),                            &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
 
 #  ifdef BACKGROUND
 !
 !  Write out background misfit cost function, Jb. Notice that it is
-!  written into MODname file instead of ITLname file.
+!  written into DAV(ng)%name file instead of ITL(ng)%name file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'back_function',     &
+      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'back_function',    &
      &                      FOURDVAR(ng)%BackCost(0),                   &
      &                      (/Nrun/), (/1/),                            &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
 
 #  if defined IS4DVAR
 !
 !  Write out current optimal, normalized cost function minimun.  Notice
-!  that it is written into MODname file instead of ITLname file.
+!  that it is written into DAV(ng)%name file instead of ITL(ng)%name
+!  file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'Jmin',              &
+      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'Jmin',             &
      &                      Optimality(ng:), (/Nrun/), (/1/),           &
-     &                      ncid = ncMODid(ng))
+     &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
@@ -505,11 +509,11 @@
 !  processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iTLM, ITLname(ng), ncITLid(ng))
+      CALL netcdf_sync (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 # if defined IS4DVAR || defined BACKGROUND
-      CALL netcdf_sync (ng, iTLM, MODname(ng), ncMODid(ng))
+      CALL netcdf_sync (ng, iTLM, DAV(ng)%name, DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 # endif
 !
@@ -530,14 +534,14 @@
 # endif
       END IF
 !
-  10  FORMAT (/,' TL_WRT_INI - error while writing variable: ',a,/,14x,    &
+  10  FORMAT (/,' TL_WRT_INI - error while writing variable: ',a,/,14x, &
      &        'into tangent initial NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  20  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',i1,   &
-     &        ',',i1,', Rec=',i4.4,')')
+  20  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
+     &        i1,',',i1,', Rec=',i4.4,')')
 # else
-  20  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',i1,   &
-     &        ', Rec=',i4.4,')')
+  20  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
+     &        i1,', Rec=',i4.4,')')
 # endif
 
 #else

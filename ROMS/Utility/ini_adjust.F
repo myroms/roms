@@ -1,24 +1,28 @@
 #include "cppdefs.h"
       MODULE ini_adjust_mod
 
+#ifdef EW_PERIODIC
+# define IR_RANGE Istr-1,Iend+1
+# define IU_RANGE Istr,Iend
+# define IV_RANGE Istr,Iend
+#else
+# define IR_RANGE IstrT,IendT
+# define IU_RANGE IstrP,IendT
+# define IV_RANGE IstrT,IendT
+#endif
+#ifdef NS_PERIODIC
+# define JR_RANGE Jstr-1,Jend+1
+# define JU_RANGE Jstr,Jend
+# define JV_RANGE Jstr,Jend
+#else
+# define JR_RANGE JstrT,JendT
+# define JU_RANGE JstrT,JendT
+# define JV_RANGE JstrP,JendT
+#endif
+
 #if defined TLM_CHECK  || defined OPT_PERTURBATION || \
     defined FORCING_SV || \
     (defined ADJOINT   && defined TANGENT)
-
-# ifdef EW_PERIODIC
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# else
-#  define IU_RANGE Istr,IendR
-#  define IV_RANGE IstrR,IendR
-# endif
-# ifdef NS_PERIODIC
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# else
-#  define JU_RANGE JstrR,JendR
-#  define JV_RANGE Jstr,JendR
-# endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -215,16 +219,16 @@
 !-----------------------------------------------------------------------
 !
 #   ifndef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JU_RANGE
+        DO i=IU_RANGE
           ubar(i,j,Lout)=ubar(i,j,Lout)+tl_ubar(i,j,Linp)
 #    ifdef MASKING
           ubar(i,j,Lout)=ubar(i,j,Lout)*umask(i,j)
 #    endif
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JV_RANGE
+        DO i=IV_RANGE
           vbar(i,j,Lout)=vbar(i,j,Lout)+tl_vbar(i,j,Linp)
 #    ifdef MASKING
           vbar(i,j,Lout)=vbar(i,j,Lout)*vmask(i,j)
@@ -232,8 +236,8 @@
         END DO
       END DO
 #   endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JR_RANGE
+        DO i=IR_RANGE
           zeta(i,j,Lout)=zeta(i,j,Lout)+tl_zeta(i,j,Linp)
 #   ifdef MASKING
           zeta(i,j,Lout)=zeta(i,j,Lout)*rmask(i,j)
@@ -249,16 +253,16 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             u(i,j,k,Lout)=u(i,j,k,Lout)+tl_u(i,j,k,Linp)
 #    ifdef MASKING
             u(i,j,k,Lout)=u(i,j,k,Lout)*umask(i,j)
 #    endif
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             v(i,j,k,Lout)=v(i,j,k,Lout)+tl_v(i,j,k,Linp)
 #    ifdef MASKING
             v(i,j,k,Lout)=v(i,j,k,Lout)*vmask(i,j)
@@ -268,8 +272,8 @@
       END DO
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JR_RANGE
+            DO i=IR_RANGE
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)+                    &
      &                           tl_t(i,j,k,Linp,itrc)
 #    ifdef MASKING
@@ -438,16 +442,16 @@
 !-----------------------------------------------------------------------
 !
 #   ifndef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JU_RANGE
+        DO i=IU_RANGE
           ubar(i,j,Lout)=ubar(i,j,Lout)+ad_ubar(i,j,Linp)
 #    ifdef MASKING
           ubar(i,j,Lout)=ubar(i,j,Lout)*umask(i,j)
 #    endif
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JV_RANGE
+        DO i=IV_RANGE
           vbar(i,j,Lout)=vbar(i,j,Lout)+ad_vbar(i,j,Linp)
 #    ifdef MASKING
           vbar(i,j,Lout)=vbar(i,j,Lout)*vmask(i,j)
@@ -455,8 +459,8 @@
         END DO
       END DO
 #   endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JR_RANGE
+        DO i=IR_RANGE
           zeta(i,j,Lout)=zeta(i,j,Lout)+ad_zeta(i,j,Linp)
 #   ifdef MASKING
           zeta(i,j,Lout)=zeta(i,j,Lout)*rmask(i,j)
@@ -472,16 +476,16 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             u(i,j,k,Lout)=u(i,j,k,Lout)+ad_u(i,j,k,Linp)
 #    ifdef MASKING
             u(i,j,k,Lout)=u(i,j,k,Lout)*umask(i,j)
 #    endif
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             v(i,j,k,Lout)=v(i,j,k,Lout)+ad_v(i,j,k,Linp)
 #    ifdef MASKING
             v(i,j,k,Lout)=v(i,j,k,Lout)*vmask(i,j)
@@ -491,8 +495,8 @@
       END DO
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JR_RANGE
+            DO i=IR_RANGE
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)+                    &
      &                           ad_t(i,j,k,Linp,itrc)
 #    ifdef MASKING
@@ -705,16 +709,16 @@
 !-----------------------------------------------------------------------
 !
 #   ifndef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JU_RANGE
+        DO i=IU_RANGE
           tl_ubar(i,j,Lout)=ubar(i,j,Linp)+ad_ubar(i,j,Lout)
 #    ifdef MASKING
           tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
 #    endif
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JV_RANGE
+        DO i=IV_RANGE
           tl_vbar(i,j,Lout)=vbar(i,j,Linp)+ad_vbar(i,j,Lout)
 #    ifdef MASKING
           tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
@@ -722,8 +726,8 @@
         END DO
       END DO
 #   endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JR_RANGE
+        DO i=IR_RANGE
           tl_zeta(i,j,Lout)=zeta(i,j,Linp)+ad_zeta(i,j,Lout)
 #   ifdef MASKING
           tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
@@ -739,16 +743,16 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             tl_u(i,j,k,Lout)=u(i,j,k,Linp)+ad_u(i,j,k,Lout)
 #    ifdef MASKING
             tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
 #    endif
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             tl_v(i,j,k,Lout)=v(i,j,k,Linp)+ad_v(i,j,k,Lout)
 #    ifdef MASKING
             tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
@@ -758,8 +762,8 @@
       END DO
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JR_RANGE
+            DO i=IR_RANGE
               tl_t(i,j,k,Lout,itrc)=t(i,j,k,Linp,itrc)+                 &
      &                              ad_t(i,j,k,Lout,itrc)
 #    ifdef MASKING
@@ -1810,22 +1814,22 @@
 !
       p=10.0_r8**REAL(-inner,r8)
       scale=1.0_r8/SQRT(adDotProduct)
-      IF (SOUTH_WEST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (Master) WRITE (stdout,10)
       END IF
 !
 !  Free-surface.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isFsur)) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JR_RANGE
+          DO i=IR_RANGE
             zeta(i,j,Lout)=zeta(i,j,Lout)+p*ad_zeta(i,j,Linp)*scale
 #  ifdef MASKING
             zeta(i,j,Lout)=zeta(i,j,Lout)*rmask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isFsur)))
@@ -1836,15 +1840,15 @@
 !  2D u-momentum component.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isUbar)) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             ubar(i,j,Lout)=ubar(i,j,Lout)+p*ad_ubar(i,j,Linp)*scale
 #  ifdef MASKING
             ubar(i,j,Lout)=ubar(i,j,Lout)*umask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isUbar)))
@@ -1855,15 +1859,15 @@
 !  2D v-momentum component.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isVbar)) THEN
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             vbar(i,j,Lout)=vbar(i,j,Lout)+p*ad_vbar(i,j,Linp)*scale
 #  ifdef MASKING
             vbar(i,j,Lout)=vbar(i,j,Lout)*vmask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isVbar)))
@@ -1876,8 +1880,8 @@
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isUvel)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
+          DO j=JU_RANGE
+            DO i=IU_RANGE
               u(i,j,k,Lout)=u(i,j,k,Lout)+p*ad_u(i,j,k,Linp)*scale
 #   ifdef MASKING
               u(i,j,k,Lout)=u(i,j,k,Lout)*umask(i,j)
@@ -1885,7 +1889,7 @@
             END DO
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isUvel)))
@@ -1897,8 +1901,8 @@
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isVvel)) THEN
         DO k=1,N(ng)
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
+          DO j=JV_RANGE
+            DO i=IV_RANGE
               v(i,j,k,Lout)=v(i,j,k,Lout)+p*ad_v(i,j,k,Linp)*scale
 #   ifdef MASKING
               v(i,j,k,Lout)=v(i,j,k,Lout)*vmask(i,j)
@@ -1906,7 +1910,7 @@
             END DO
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isVvel)))
@@ -1920,8 +1924,8 @@
         IF ((StateVar(outer).eq.0).or.                                  &
      &      (StateVar(outer).eq.isTvar(itrc))) THEN
           DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
+            DO j=JR_RANGE
+              DO i=IR_RANGE
                 t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)+                  &
      &                             p*ad_t(i,j,k,Linp,itrc)*scale
 #   ifdef MASKING
@@ -1930,7 +1934,7 @@
               END DO
             END DO
           END DO
-          IF (SOUTH_WEST_TEST) THEN
+          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) outer, inner,                           &
      &                          TRIM(Vname(1,idSvar(isTvar(itrc))))
@@ -2239,10 +2243,10 @@
 !-----------------------------------------------------------------------
 
 #  ifdef FULL_GRID
-#   define I_R_RANGE IstrR,IendR
-#   define I_U_RANGE Istr,IendR
-#   define J_R_RANGE JstrR,JendR
-#   define J_V_RANGE Jstr,JendR
+#   define I_R_RANGE IstrT,IendT
+#   define I_U_RANGE IstrP,IendT
+#   define J_R_RANGE JstrT,JendT
+#   define J_V_RANGE JstrP,JendT
 #  else
 #   define I_R_RANGE Istr,Iend
 #   define I_U_RANGE IstrU,Iend
@@ -2643,22 +2647,22 @@
 !
       p=10.0_r8**REAL(-inner,r8)
       scale=1.0_r8/SQRT(adDotProduct)
-      IF (SOUTH_WEST_TEST) THEN
+      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
         IF (Master) WRITE (stdout,10)
       END IF
 !
 !  Free-surface.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isFsur)) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JR_RANGE
+          DO i=IR_RANGE
             tl_zeta(i,j,Lout)=p*ad_zeta(i,j,Linp)*scale
 #  ifdef MASKING
             tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isFsur)))
@@ -2669,15 +2673,15 @@
 !  2D u-momentum component.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isUbar)) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JU_RANGE
+          DO i=IU_RANGE
             tl_ubar(i,j,Lout)=p*ad_ubar(i,j,Linp)*scale
 #  ifdef MASKING
             tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isUbar)))
@@ -2688,15 +2692,15 @@
 !  2D v-momentum component.
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isVbar)) THEN
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JV_RANGE
+          DO i=IV_RANGE
             tl_vbar(i,j,Lout)=p*ad_vbar(i,j,Linp)*scale
 #  ifdef MASKING
             tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
 #  endif
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isVbar)))
@@ -2709,8 +2713,8 @@
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isUvel)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
+          DO j=JU_RANGE
+            DO i=IU_RANGE
               tl_u(i,j,k,Lout)=p*ad_u(i,j,k,Linp)*scale
 #   ifdef MASKING
               tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
@@ -2718,7 +2722,7 @@
             END DO
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isUvel)))
@@ -2730,8 +2734,8 @@
 !
       IF ((StateVar(outer).eq.0).or.(StateVar(outer).eq.isVvel)) THEN
         DO k=1,N(ng)
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
+          DO j=JV_RANGE
+            DO i=IV_RANGE
               tl_v(i,j,k,Lout)=p*ad_v(i,j,k,Linp)*scale
 #   ifdef MASKING
               tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
@@ -2739,7 +2743,7 @@
             END DO
           END DO
         END DO
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) outer, inner,                             &
      &                        TRIM(Vname(1,idSvar(isVvel)))
@@ -2753,8 +2757,8 @@
         IF ((StateVar(outer).eq.0).or.                                  &
      &      (StateVar(outer).eq.isTvar(itrc))) THEN
           DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
+            DO j=JR_RANGE
+              DO i=IR_RANGE
                 tl_t(i,j,k,Lout,itrc)=p*ad_t(i,j,k,Linp,itrc)*scale
 #   ifdef MASKING
                 tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
@@ -2762,7 +2766,7 @@
               END DO
             END DO
           END DO
-          IF (SOUTH_WEST_TEST) THEN
+          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) outer, inner,                           &
      &                          TRIM(Vname(1,idSvar(isTvar(itrc))))
@@ -2900,9 +2904,13 @@
       RETURN
       END SUBROUTINE tl_ini_perturb_tile
 # endif
-# undef IU_RANGE
-# undef IV_RANGE
-# undef JU_RANGE
-# undef JV_RANGE
 #endif
+
+#undef IR_RANGE
+#undef IU_RANGE
+#undef IV_RANGE
+#undef JR_RANGE
+#undef JU_RANGE
+#undef JV_RANGE
+
       END MODULE ini_adjust_mod

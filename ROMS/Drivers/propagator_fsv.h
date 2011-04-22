@@ -1,4 +1,4 @@
-      SUBROUTINE propagator (ng, Nstr, Nend, state, ad_state)
+      SUBROUTINE propagator (RunInterval, state, ad_state)
 !
 !svn $Id$
 !************************************************** Hernan G. Arango ***
@@ -43,24 +43,16 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Nstr, Nend
+      real(r8), intent(in) :: RunInterval
 
-#ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: state(Nstr:)
-      real(r8), intent(out) :: ad_state(Nstr:)
-#else
-      real(r8), intent(in) :: state(Nstr:Nend)
-      real(r8), intent(out) :: ad_state(Nstr:Nend)
-#endif
+      TYPE (T_GST), intent(in) :: state(Ngrids)
+      TYPE (T_GST), intent(inout) :: ad_state(Ngrids)
 !
 !  Local variable declarations.
 !
-#ifdef SOLVE3D
-      logical :: FirstPass = .TRUE.
-#endif
-      integer :: ktmp, my_iic, ntmp, subs, tile, thread
+      integer :: ktmp, ng, ntmp, subs, tile, thread
 
-      real(r8) :: StateNorm
+      real(r8) :: StateNorm(Ngrids)
 !
 !=======================================================================
 !  Forward integration of the tangent linear model.
@@ -68,30 +60,36 @@
 !
       Nrun=Nrun+1
       IF (Master) THEN
-        WRITE (stdout,10) ' PROPAGATOR - Iteration Run: ', Nrun,        &
-     &                    ',  number converged RITZ values: ', Nconv
+        DO ng=1,Ngrids
+          WRITE (stdout,10) ' PROPAGATOR - Grid: ', ng,                 &
+     &                      ',  Iteration: ', Nrun,                     &
+     &                      ',  number converged RITZ values: ',        &
+     &                      Nconv(ng)
+        END DO
       END IF
 !
 !  Initialize time stepping indices and counters.
 !
-      iif(ng)=1
-      iic(ng)=0
-      indx1(ng)=1
-      kstp(ng)=1
-      krhs(ng)=1
-      knew(ng)=1
-      PREDICTOR_2D_STEP(ng)=.FALSE.
-      synchro_flag(ng)=.TRUE.
+      DO ng=1,Ngrids
+        iif(ng)=1
+        indx1(ng)=1
+        kstp(ng)=1
+        krhs(ng)=1
+        knew(ng)=1
+        PREDICTOR_2D_STEP(ng)=.FALSE.
+        synchro_flag(ng)=.TRUE.
 !
-      nstp(ng)=1
-      nrhs(ng)=1
-      nnew(ng)=1
+        iic(ng)=0
+        nstp(ng)=1
+        nrhs(ng)=1
+        nnew(ng)=1
 !
-      tdays(ng)=dstart
-      time(ng)=tdays(ng)*day2sec
-      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend(ng)=ntimes(ng)
-      ntfirst(ng)=ntstart(ng)
+        tdays(ng)=dstart
+        time(ng)=tdays(ng)*day2sec
+        ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+        ntend(ng)=ntimes(ng)
+        ntfirst(ng)=ntstart(ng)
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Clear tangent linear state variables. There is not need to clean
@@ -99,14 +97,16 @@
 !  and bottom of previous iteration.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL initialize_ocean (ng, TILE, iTLM)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_ocean (ng, TILE, iTLM)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 
 #ifdef SOLVE3D
 !
@@ -116,49 +116,56 @@
 !  Therefore, the norm scaling is time invariant.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)
-!$OMP&            SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL set_depth (ng, TILE)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL set_depth (ng, TILE)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------
 !  Unpack tangent linear initial conditions from state vector.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads,Nstr,Nend,state)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL tl_unpack (ng, TILE, Nstr, Nend, state)
+!$OMP&            SHARED(numthreads,Nstr,Nend,state)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_unpack (ng, TILE, Nstr(ng), Nend(ng),               &
+     &                      state(ng)%vector)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Compute initial tangent linear state dot product norm.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads,krhs,nstp,StateNorm)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL tl_statenorm (ng, TILE, kstp(ng), nstp(ng),              &
-     &                       StateNorm)
+!$OMP&            SHARED(numthreads,krhs,nstp,StateNorm)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL tl_statenorm (ng, TILE, kstp(ng), nstp(ng),            &
+     &                         StateNorm(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
-      IF (Master) THEN
-        WRITE (stdout,20) ' PROPAGATOR - Tangent Initial Norm: ',       &
-     &                      StateNorm
-      END IF
+
+        IF (Master) THEN
+          WRITE (stdout,20) ' PROPAGATOR - Grid: ', ng,                 &
+     &                      ',  Tangent Initial Norm: ', StateNorm(ng)
+        END IF
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from
@@ -166,47 +173,54 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
-      CALL tl_get_data (ng)
-      IF (exit_flag.ne.NoError) RETURN
+      DO ng=1,Ngrids
+        CALL close_inp (ng, iTLM)
+        IF (exit_flag.ne.NoError) RETURN
+#ifdef TIMELESS_DATA
+        CALL tl_get_idata (ng)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+        CALL tl_get_data (ng)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Time-step the tangent linear model.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
-        WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
-      END IF
+      DO ng=1,Ngrids
+        IF (Master) THEN
+          WRITE (stdout,30) 'TL', ng, ntstart(ng), ntend(ng)
+        END IF
+        iic(ng)=ntstart(ng)-1
+        time(ng)=time(ng)-dt(ng)
+      END DO
 
-      time(ng)=time(ng)-dt(ng)
-
-      TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
-
-        iic(ng)=my_iic
 #ifdef SOLVE3D
-        CALL tl_main3d (ng)
+      CALL tl_main3d (RunInterval)
 #else
-        CALL tl_main2d (ng)
+      CALL tl_main2d (RunInterval)
 #endif
-        IF (exit_flag.ne.NoError) RETURN
-
-      END DO TL_LOOP
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear nonlinear (basic state) and adjoint state variables.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL initialize_ocean (ng, TILE, iNLM)
-          CALL initialize_ocean (ng, TILE, iADM)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_ocean (ng, TILE, iNLM)
+            CALL initialize_ocean (ng, TILE, iADM)
 #ifdef SOLVE3D
-          CALL initialize_coupling (ng, TILE, 0)
+            CALL initialize_coupling (ng, TILE, 0)
 #endif
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 
 #ifdef SOLVE3D
 !
@@ -216,34 +230,39 @@
 !  Therefore, the norm scaling is time invariant.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)
-!$OMP&            SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL set_depth (ng, TILE)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL set_depth (ng, TILE)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------
 !  Compute final tangent linear state dot product norm.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads,krhs,nstp,StateNorm)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1
-          CALL tl_statenorm (ng, TILE, knew(ng), nstp(ng), StateNorm)
+!$OMP&            SHARED(numthreads,krhs,nstp,StateNorm)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL tl_statenorm (ng, TILE, knew(ng), nstp(ng),            &
+     &                         StateNorm(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
-      IF (Master) THEN
-        WRITE (stdout,20) ' PROPAGATOR - Tangent   Final Norm: ',       &
-     &                    StateNorm
-      END IF
+
+        IF (Master) THEN
+          WRITE (stdout,20) ' PROPAGATOR - Grid: ', ng,                 &
+     &                      ',  Tangent   Final Norm: ', StateNorm(ng)
+        END IF
+      END DO
 !
 !=======================================================================
 !  Backward integration with the adjoint model.
@@ -251,42 +270,46 @@
 !
 !  Initialize time stepping indices and counters.
 !
-      iif(ng)=1
-      iic(ng)=0
-      indx1(ng)=1
-      ktmp=knew(ng)
-      kstp(ng)=1
-      krhs(ng)=3
-      knew(ng)=2
-      PREDICTOR_2D_STEP(ng)=.FALSE.
-      synchro_flag(ng)=.TRUE.
+      DO ng=1,Ngrids
+        iif(ng)=1
+        indx1(ng)=1
+        ktmp=knew(ng)
+        kstp(ng)=1
+        krhs(ng)=3
+        knew(ng)=2
+        PREDICTOR_2D_STEP(ng)=.FALSE.
+        synchro_flag(ng)=.TRUE.
 !
-      ntmp=nstp(ng)
-      nstp(ng)=1
-      nrhs(ng)=1
-      nnew(ng)=2
+        iic(ng)=0
+        ntmp=nstp(ng)
+        nstp(ng)=1
+        nrhs(ng)=1
+        nnew(ng)=2
 !
-      tdays(ng)=dstart+dt(ng)*FLOAT(ntimes(ng))*sec2day
-      time(ng)=tdays(ng)*day2sec
-      ntstart(ng)=ntimes(ng)+1
-      ntend(ng)=1
-      ntfirst(ng)=ntend(ng)
+        tdays(ng)=dstart+dt(ng)*FLOAT(ntimes(ng))*sec2day
+        time(ng)=tdays(ng)*day2sec
+        ntstart(ng)=ntimes(ng)+1
+        ntend(ng)=1
+        ntfirst(ng)=ntend(ng)
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint model with the final tangent linear solution
 !  scaled by the energy norm.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile,ktmp)                        &
-!$OMP&            SHARED(ng,numthreads,knew,nstp)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL ad_ini_perturb (ng, TILE,                                &
-     &                         ktmp, knew(ng), ntmp, nstp(ng))
+!$OMP&            SHARED(numthreads,knew,nstp)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL ad_ini_perturb (ng, TILE,                              &
+     &                           ktmp, knew(ng), ntmp, nstp(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from
@@ -294,30 +317,35 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
-      CALL ad_get_data (ng)
-      IF (exit_flag.ne.NoError) RETURN
+      DO ng=1,Ngrids
+        CALL close_inp (ng, iADM)
+        IF (exit_flag.ne.NoError) RETURN
+#ifdef TIMELESS_DATA
+        CALL ad_get_idata (ng)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+        CALL ad_get_data (ng)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Time-step the adjoint model backwards.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
-        WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
-      END IF
+      DO ng=1,Ngrids
+        IF (Master) THEN
+          WRITE (stdout,30) 'AD', ng, ntstart(ng), ntend(ng)
+        END IF
+        iic(ng)=ntstart(ng)+1
+        time(ng)=time(ng)+dt(ng)
+      END DO
 
-      time(ng)=time(ng)+dt(ng)
-
-      AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
-
-        iic(ng)=my_iic
 #ifdef SOLVE3D
-        CALL ad_main3d (ng)
+      CALL ad_main3d (RunInterval)
 #else
-        CALL ad_main2d (ng)
+      CALL ad_main2d (RunInterval)
 #endif
-        IF (exit_flag.ne.NoError) RETURN
-
-      END DO AD_LOOP
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear nonlinear state (basic state) variables for next iteration
@@ -325,17 +353,19 @@
 !  state norm scaling.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL initialize_ocean (ng, TILE, iNLM)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL initialize_ocean (ng, TILE, iNLM)
 #ifdef SOLVE3D
-          CALL initialize_coupling (ng, TILE, 0)
+            CALL initialize_coupling (ng, TILE, 0)
 #endif
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 
 #ifdef SOLVE3D
 !
@@ -345,35 +375,39 @@
 !  norm scaling is time invariant.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)
-!$OMP&            SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL set_depth (ng, TILE)
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL set_depth (ng, TILE)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------
 !  Pack final adjoint solution into adjoint state vector.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,numthreads,Nstr,Nend,ad_state)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL ad_pack (ng, TILE, Nstr, Nend, ad_state)
+!$OMP&            SHARED(numthreads,Nstr,Nend,ad_state)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_pack (ng, TILE, Nstr(ng), Nend(ng),                 &
+     &                    ad_state(ng)%vector)
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END DO
 !
- 10   FORMAT (/,a,i3,a,i3/)
- 20   FORMAT (/,a,1p,e15.6,/)
+ 10   FORMAT (/,a,i2.2,a,i3.3,a,i3.3/)
+ 20   FORMAT (/,a,i2.2,a,1p,e15.6,/)
  30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
+     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')')
 
       RETURN
       END SUBROUTINE propagator

@@ -23,6 +23,8 @@
 
 # if defined NEARSHORE_MELLOR05
 #  include <nearshore_mellor05.h>
+# elif defined NEARSHORE_MELLOR08
+#  include <nearshore_mellor08.h>
 # endif
 
 #endif

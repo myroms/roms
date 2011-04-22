@@ -23,10 +23,8 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Itile      Tile coordinate in the I-direction, use only in       !
-!                  distributed-memory applications.                    !
-!     Jtile      Tile coordinate in the J-direction, use only in       !
-!                  distributed-memory applications.                    !
+!     Itile      I-tile coordinate (a value from 0 to NtileI(ng)).     !
+!     Jtile      J-tile coordinate (a value from 0 to NtileJ(ng)).     !
 !     LBi        I-dimension Lower bound.                              !
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
@@ -49,8 +47,15 @@
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: Istr, IstrR, IstrT, IstrU, Iend, IendR, IendT
-      integer :: Jstr, JstrR, JstrT, JstrV, Jend, JendR, JendT
+      integer :: Iend, Istr, Jend, Jstr
+      integer :: IstrM, IstrR, IstrU, IendR
+      integer :: JstrM, JstrR, JstrV, JendR
+      integer :: IstrB, IendB, IstrP, IendP, IstrT, IendT
+      integer :: JstrB, JendB, JstrP, JendP, JstrT, JendT
+      integer :: Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1
+      integer :: Iendp1, Iendp2, Iendp2i, Iendp3
+      integer :: Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1
+      integer :: Jendp1, Jendp2, Jendp2i, Jendp3
       integer :: MyType
 !
 !-----------------------------------------------------------------------
@@ -83,10 +88,17 @@
 !  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0)
 !  grid bounds according to tile rank.
 !
-      CALL get_tile (ng, tile, Itile, Jtile,                            &
+      CALL get_tile (ng, tile,                                          &
+     &               Itile, Jtile,                                      &
      &               Istr, Iend, Jstr, Jend,                            &
-     &               IstrR, IstrT, IstrU, IendR, IendT,                 &
-     &               JstrR, JstrT, JstrV, JendR, JendT)
+     &               IstrM, IstrR, IstrU, IendR,                        &
+     &               JstrM, JstrR, JstrV, JendR,                        &
+     &               IstrB, IendB, IstrP, IendP, IstrT, IendT,          &
+     &               JstrB, JendB, JstrP, JendP, JstrT, JendT,          &
+     &               Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1,          &
+     &               Iendp1, Iendp2, Iendp2i, Iendp3,                   &
+     &               Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1,          &
+     &               Jendp1, Jendp2, Jendp2i, Jendp3)
 !
       IF ((Itile.eq.-1).or.(Itile.eq.0)) THEN
         LBi=Imin
@@ -115,8 +127,13 @@
 !  shared-memory configurations.
 !-----------------------------------------------------------------------
 !
-      Itile=-1
-      Jtile=-1
+      IF (tile.eq.-1) THEN
+        Itile=-1
+        Jtile=-1
+      ELSE
+        Jtile=tile/NtileI(ng)
+        Itile=tile-Jtile*NtileI(ng)
+      END IF
       LBi=LOWER_BOUND_I
       UBi=UPPER_BOUND_I
       LBj=LOWER_BOUND_J
@@ -276,6 +293,216 @@
 
       END SUBROUTINE get_domain
 
+      SUBROUTINE get_domain_edges (ng, tile,                            &
+     &                             Eastern_Edge,                        &
+     &                             Western_Edge,                        &
+     &                             Northern_Edge,                       &
+     &                             Southern_Edge,                       &
+     &                             NorthEast_Corner,                    &
+     &                             NorthWest_Corner,                    &
+     &                             SouthEast_Corner,                    &
+     &                             SouthWest_Corner,                    &
+     &                             NorthEast_Test,                      &
+     &                             NorthWest_Test,                      &
+     &                             SouthEast_Test,                      &
+     &                             SouthWest_Test)
+!
+!=======================================================================
+!                                                                      !
+!  This routine sets the logical switches (T/F) needed for processing  !
+!  model variables in tiles adjacent to the domain boundary edges. It  !
+!  facilitates complicated nesting configurations.                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     tile       Domain partition.                                     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Eastern_Edge      tile next to the domain eastern  boundary      !
+!     Western_Edge      tile next to the domain western  boundary      !
+!     Northern_Edge     tile next to the domain northern boundary      !
+!     Southern_Edge     tile next to the domain southern boundary      !
+!                                                                      !
+!     NorthEast_Corner  tile next to the domain northeastern corner    !
+!     NorthWest_Corner  tile next to the domain northwestern corner    !
+!     SouthEast_Corner  tile next to the domain southeastern corner    !
+!     SouthWest_Corner  tile next to the domain southwestern corner    !
+!                                                                      !
+!     NorthEast_Test    test for tiles in the northeastern corner      !
+!     NorthWest_Test    test for tiles in the northwestern corner      !
+!     SouthEast_Test    test for tiles in the southeastern corner      !
+!     SouthWest_Test    test for tiles in the southwestern corner      !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+
+      logical, intent(out) :: Eastern_Edge
+      logical, intent(out) :: Western_Edge
+      logical, intent(out) :: Northern_Edge
+      logical, intent(out) :: Southern_Edge
+      logical, intent(out) :: NorthEast_Corner
+      logical, intent(out) :: NorthWest_Corner
+      logical, intent(out) :: SouthEast_Corner
+      logical, intent(out) :: SouthWest_Corner
+      logical, intent(out) :: NorthEast_Test
+      logical, intent(out) :: NorthWest_Test
+      logical, intent(out) :: SouthEast_Test
+      logical, intent(out) :: SouthWest_Test
+!
+!  Local variable declarations.
+!
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: Itile, Jtile
+!
+!-----------------------------------------------------------------------
+!  Compute Itile and Jtile.
+!-----------------------------------------------------------------------
+!
+      IF (tile.eq.-1) THEN
+        Itile=-1
+        Jtile=-1
+        Istr=1
+        Iend=Lm(ng)
+        Jstr=1
+        Jend=Mm(ng)
+      ELSE
+        CALL tile_bounds_2d (ng, tile, Lm(ng), Mm(ng), Itile, Jtile,    &
+     &                       Istr, Iend, Jstr, Jend)
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Set the logical switches (T/F) needed for processing model variables
+!  in tiles adjacent to the domain boundary edges.
+!-----------------------------------------------------------------------
+!
+!  HGA:  Need to add the logic for composed grids.
+
+      IF (tile.eq.-1) THEN
+!
+!  Set switches for the full grid (tile=-1) to TRUE, since it contains
+!  all the boundary edges and corners.  This is a special case use for
+!  other purposes and need only in routine "var_bounds".
+!
+        Western_Edge=.TRUE.
+        Eastern_Edge=.TRUE.
+        Southern_Edge=.TRUE.
+        Northern_Edge=.TRUE.
+
+        SouthWest_Test=.TRUE.
+        SouthEast_Test=.TRUE.
+        NorthWest_Test=.TRUE.
+        NorthEast_Test=.TRUE.
+
+        SouthWest_Corner=.TRUE.
+        SouthEast_Corner=.TRUE.
+        NorthWest_Corner=.TRUE.
+        NorthEast_Corner=.TRUE.
+
+      ELSE
+!
+!  Is the tile adjacent to the western or eastern domain
+!  boundary edge?
+!
+        IF (Itile.eq.0) THEN
+          Western_Edge=.TRUE.                   ! (Istr.eq.1)
+        ELSE
+          Western_Edge=.FALSE.                  ! elsewhere
+        END IF
+
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          Eastern_Edge=.TRUE.                   ! (Iend.eq.Lm(ng))
+        ELSE
+          Eastern_Edge=.FALSE.                  ! elsewhere
+        END IF
+!
+!  Is the tile adjacent to the southern or northern domain
+!  boundary edge?
+!
+        IF (Jtile.eq.0) THEN
+          Southern_Edge=.TRUE.                  ! (Jstr.eq.1)
+        ELSE
+          Southern_Edge=.FALSE.                 ! elsewhere
+        END IF
+
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          Northern_Edge=.TRUE.                  ! (Jend.eq.Mm(ng))
+        ELSE
+          Northern_Edge=.FALSE.                 ! elsewhere
+        END IF
+!
+!  Is the tile adjacent to the southwestern domain corner?
+!
+        IF ((Itile.eq.0).and.                                           &
+     &      (Jtile.eq.0)) THEN
+          SouthWest_Corner=.TRUE.               ! (Istr.eq.1).and.
+          SouthWest_Test  =.TRUE.               ! (Jstr.eq.1)
+        ELSE
+          SouthWest_Corner=.FALSE.              ! elsewhere
+#ifdef DISTRIBUTE
+          SouthWest_Test  =.TRUE.
+#else
+          SouthWest_Test  =.FALSE.
+#endif
+        END IF
+!
+!  Is the tile adjacent to the southeastern domain corner?
+!
+        IF ((Itile.eq.(NtileI(ng)-1)).and.                              &
+     &      (Jtile.eq.0)) THEN
+          SouthEast_Corner=.TRUE.               ! (Iend.eq.Lm(ng)).and.
+          SouthEast_Test  =.TRUE.               ! (Jstr.eq.1)
+        ELSE
+          SouthEast_Corner=.FALSE.              ! elsewhere
+#ifdef DISTRIBUTE
+          SouthEast_Test  =.TRUE.
+#else
+          SouthEast_Test  =.FALSE.
+#endif
+        END IF
+!
+!  Is the tile adjacent to the northwestern domain corner?
+!
+        IF ((Itile.eq.0).and.                                           &
+     &      (Jtile.eq.(NtileJ(ng)-1))) THEN
+          NorthWest_Corner=.TRUE.               ! (Istr.eq.1).and.
+          NorthWest_Test  =.TRUE.               ! (Jend.eq.Mm(ng))
+        ELSE
+          NorthWest_Corner=.FALSE.              ! elsewhere
+#ifdef DISTRIBUTE
+          NorthWest_Test  =.TRUE.
+#else
+          NorthWest_Test  =.FALSE.
+#endif
+        END IF
+!
+!  Is the tile adjacent to the northeastern domain corner?
+!
+        IF ((Itile.eq.(NtileI(ng)-1)).and.                              &
+     &      (Jtile.eq.(NtileJ(ng)-1))) THEN
+          NorthEast_Corner=.TRUE.               ! (Iend.eq.Lm(ng)).and.
+          NorthEast_Test  =.TRUE.               ! (Jend.eq.Mm(ng))
+        ELSE
+          NorthEast_Corner=.FALSE.              ! elsewhere
+#ifdef DISTRIBUTE
+          NorthEast_Test  =.TRUE.
+#else
+          NorthEast_Test  =.FALSE.
+#endif
+        END IF
+      END IF
+
+      RETURN
+      END SUBROUTINE get_domain_edges
+
       SUBROUTINE get_iobounds (ng)
 !
 !=======================================================================
@@ -393,10 +620,17 @@
       RETURN
       END SUBROUTINE get_iobounds
 
-      SUBROUTINE get_tile (ng, tile, Itile, Jtile,                      &
+      SUBROUTINE get_tile (ng, tile,                                    &
+     &                     Itile, Jtile,                                &
      &                     Istr, Iend, Jstr, Jend,                      &
-     &                     IstrR, IstrT, IstrU, IendR, IendT,           &
-     &                     JstrR, JstrT, JstrV, JendR, JendT)
+     &                     IstrM, IstrR, IstrU, IendR,                  &
+     &                     JstrM, JstrR, JstrV, JendR,                  &
+     &                     IstrB, IendB, IstrP, IendP, IstrT, IendT,    &
+     &                     JstrB, JendB, JstrP, JendP, JstrT, JendT,    &
+     &                     Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1,    &
+     &                     Iendp1, Iendp2, Iendp2i, Iendp3,             &
+     &                     Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1,    &
+     &                     Jendp1, Jendp2, Jendp2i, Jendp3)
 !
 !=======================================================================
 !                                                                      !
@@ -412,22 +646,55 @@
 !                                                                      !
 !     Itile      I-tile coordinate (a value from 0 to NtileI(ng)).     !
 !     Jtile      J-tile coordinate (a value from 0 to NtileJ(ng)).     !
+!                                                                      !
 !     Istr       Starting tile index in the I-direction.               !
 !     Iend       Ending   tile index in the I-direction.               !
 !     Jstr       Starting tile index in the J-direction.               !
 !     Jend       Ending   tile index in the J-direction.               !
 !                                                                      !
-!     IstrR      Starting tile index in the I-direction (RHO-points).  !
-!     IstrT      Starting nest tile  in the I-direction (RHO-points).  !
-!     IstrU      Starting tile index in the I-direction (U-points).    !
-!     IendR      Ending   tile index in the I-direction (RHO_points).  !
-!     IendT      Ending   nest tile  in the I-direction (RHO_points).  !
+!     IstrR      Starting tile index in the I-direction (RHO-points)   !
+!     IstrU      Starting tile index in the I-direction (U-points)     !
+!     IendR      Ending   tile index in the I-direction (RHO_points)   !
 !                                                                      !
-!     JstrR      Starting tile index in the J-direction (RHO-points).  !
-!     JstrT      Starting nest tile  in the J-direction (RHO-points).  !
-!     JstrV      Starting tile index in the J-direction (V-points).    !
-!     JendR      Ending   tile index in the J-direction (RHO_points).  !
-!     JendT      Ending   nest tile  in the J-direction (RHO-points).  !
+!     JstrR      Starting tile index in the J-direction (RHO-points)   !
+!     JstrV      Starting tile index in the J-direction (V-points)     !
+!     JendR      Ending   tile index in the J-direction (RHO_points)   !
+!                                                                      !
+!     IstrB      Starting nest tile in the I-direction (RHO-, V-obc)   !
+!     IendB      Ending   nest tile in the I-direction (RHO-, V-obc)   !
+!     IstrM      Starting nest tile in the I-direction (PSI-, U-obc)   !
+!     IstrP      Starting nest tile in the I-direction (PSI, U-points) !
+!     IendP      Ending   nest tile in the I-direction (PSI)           !
+!     IstrT      Starting nest tile in the I-direction (RHO-points)    !
+!     IendT      Ending   nest tile in the I-direction (RHO_points)    !
+!                                                                      !
+!     JstrB      Starting nest tile in the J-direction (RHO-, U-obc)   !
+!     JendB      Ending   nest tile in the J-direction (RHO-, U-obc)   !
+!     JstrM      Starting nest tile in the J-direction (PSI-, V-obc)   !
+!     JstrP      Starting nest tile in the J-direction (PSI, V-points) !
+!     JendP      Ending   nest tile in the J-direction (PSI)           !
+!     JstrT      Starting nest tile in the J-direction (RHO-points)    !
+!     JendT      Ending   nest tile in the J-direction (RHO-points)    !
+!                                                                      !
+!     Istrm3     Starting private I-halo computations, Istr-3          !
+!     Istrm2     Starting private I-halo computations, Istr-2          !
+!     Istrm1     Starting private I-halo computations, Istr-1          !
+!     IstrUm2    Starting private I-halo computations, IstrU-2         !
+!     IstrUm1    Starting private I-halo computations, IstrU-1         !
+!     Iendp1     Ending   private I-halo computations, Iend+1          !
+!     Iendp2     Ending   private I-halo computations, Iend+2          !
+!     Iendp2i    Ending   private I-halo computations, Iend+2 interior !
+!     Iendp3     Ending   private I-halo computations, Iend+3          !
+!                                                                      !
+!     Jstrm3     Starting private J-halo computations, Jstr-3          !
+!     Jstrm2     Starting private J-halo computations, Jstr-2          !
+!     Jstrm1     Starting private J-halo computations, Jstr-1          !
+!     JstrVm2    Starting private J-halo computations, JstrV-2         !
+!     JstrVm1    Starting private J-halo computations, JstrV-1         !
+!     Jendp1     Ending   private J-halo computations, Jend+1          !
+!     Jendp2     Ending   private J-halo computations, Jend+2          !
+!     Jendp2i    Ending   private J-halo computations, Jend+2 interior !
+!     Jendp3     Ending   private J-halo computations, Jend+3          !
 !                                                                      !
 !======================================================================!
 !
@@ -440,8 +707,14 @@
       integer, intent(in) :: ng, tile
       integer, intent(out) :: Itile, Jtile
       integer, intent(out) :: Iend, Istr, Jend, Jstr
-      integer, intent(out) :: IstrR, IstrT, IstrU, IendR, IendT
-      integer, intent(out) :: JstrR, JstrT, JstrV, JendR, JendT
+      integer, intent(out) :: IstrM, IstrR, IstrU, IendR
+      integer, intent(out) :: JstrM, JstrR, JstrV, JendR
+      integer, intent(out) :: IstrB, IendB, IstrP, IendP, IstrT, IendT
+      integer, intent(out) :: JstrB, JendB, JstrP, JendP, JstrT, JendT
+      integer, intent(out) :: Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1
+      integer, intent(out) :: Iendp1, Iendp2, Iendp2i, Iendp3
+      integer, intent(out) :: Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1
+      integer, intent(out) :: Jendp1, Jendp2, Jendp2i, Jendp3
 !
 !  Local variable declarations.
 !
@@ -466,33 +739,21 @@
 ! Tiled grids bounds.
 !
       ELSE
-        ChunkSizeI=(Lm(ng)+NtileI(ng)-1)/NtileI(ng)
-        ChunkSizeJ=(Mm(ng)+NtileJ(ng)-1)/NtileJ(ng)
-        MarginI=(NtileI(ng)*ChunkSizeI-Lm(ng))/2
-        MarginJ=(NtileJ(ng)*ChunkSizeJ-Mm(ng))/2
-        Jtile=tile/NtileI(ng)
-        Itile=tile-Jtile*NtileI(ng)
-!
-!  Tile bounds in the I-direction.
-!
-        Istr=1+Itile*ChunkSizeI-MarginI
-        Iend=Istr+ChunkSizeI-1
-        Istr=MAX(Istr,1)
-        Iend=MIN(Iend,Lm(ng))
-!
-!  Tile bounds in the J-direction.
-!
-        Jstr=1+Jtile*ChunkSizeJ-MarginJ
-        Jend=Jstr+ChunkSizeJ-1
-        Jstr=MAX(Jstr,1)
-        Jend=MIN(Jend,Mm(ng))
+        CALL tile_bounds_2d (ng, tile, Lm(ng), Mm(ng), Itile, Jtile,    &
+     &                       Istr, Iend, Jstr, Jend)
       END IF
 !
 !  Compute C-staggered variables bounds from tile bounds.
 !
-      CALL var_bounds (ng, Istr, Iend, Jstr, Jend,                      &
-     &                 IstrR, IstrT, IstrU, IendR, IendT,               &
-     &                 JstrR, JstrT, JstrV, JendR, JendT)
+      CALL var_bounds (ng, tile, Istr, Iend, Jstr, Jend,                &
+     &                 IstrM, IstrR, IstrU, IendR,                      &
+     &                 JstrM, JstrR, JstrV, JendR,                      &
+     &                 IstrB, IendB, IstrP, IendP, IstrT, IendT,        &
+     &                 JstrB, JendB, JstrP, JendP, JstrT, JendT,        &
+     &                 Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1,        &
+     &                 Iendp1, Iendp2, Iendp2i, Iendp3,                 &
+     &                 Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1,        &
+     &                 Jendp1, Jendp2, Jendp2i, Jendp3)
 
       RETURN
       END SUBROUTINE get_tile
@@ -629,9 +890,15 @@
       RETURN
       END SUBROUTINE tile_bounds_2d
 
-      SUBROUTINE var_bounds (ng, Istr, Iend, Jstr, Jend,                &
-     &                       IstrR, IstrT, IstrU, IendR, IendT,         &
-     &                       JstrR, JstrT, JstrV, JendR, JendT)
+      SUBROUTINE var_bounds (ng, tile, Istr, Iend, Jstr, Jend,          &
+     &                       IstrM, IstrR, IstrU, IendR,                &
+     &                       JstrM, JstrR, JstrV, JendR,                &
+     &                       IstrB, IendB, IstrP, IendP, IstrT, IendT,  &
+     &                       JstrB, JendB, JstrP, JendP, JstrT, JendT,  &
+     &                       Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1,  &
+     &                       Iendp1, Iendp2, Iendp2i, Iendp3,           &
+     &                       Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1,  &
+     &                       Jendp1, Jendp2, Jendp2i, Jendp3)
 !
 !=======================================================================
 !                                                                      !
@@ -642,6 +909,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     tile       Domain partition.                                     !
 !     Istr       Starting tile index in the I-direction.               !
 !     Iend       Ending   tile index in the I-direction.               !
 !     Jstr       Starting tile index in the J-direction.               !
@@ -649,17 +917,49 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     IstrR      Starting tile index in the I-direction (RHO-points).  !
-!     IstrT      Starting nest tile  in the I-direction (RHO-points).  !
-!     IstrU      Starting tile index in the I-direction (U-points).    !
-!     IendR      Ending   tile index in the I-direction (RHO_points).  !
-!     IendT      Ending   nest tile  in the I-direction (RHO_points).  !
+!     IstrR      Starting tile index in the I-direction (RHO-points)   !
+!     IstrU      Starting tile index in the I-direction (U-points)     !
+!     IendR      Ending   tile index in the I-direction (RHO_points)   !
 !                                                                      !
-!     JstrR      Starting tile index in the J-direction (RHO-points).  !
-!     JstrT      Starting nest tile  in the J-direction (RHO-points).  !
-!     JstrV      Starting tile index in the J-direction (V-points).    !
-!     JendR      Ending   tile index in the J-direction (RHO_points).  !
-!     JendT      Ending   nest tile  in the J-direction (RHO-points).  !
+!     JstrR      Starting tile index in the J-direction (RHO-points)   !
+!     JstrV      Starting tile index in the J-direction (V-points)     !
+!     JendR      Ending   tile index in the J-direction (RHO_points)   !
+!                                                                      !
+!     IstrB      Starting nest tile in the I-direction (RHO-, V-obc)   !
+!     IendB      Ending   nest tile in the I-direction (RHO-, V-obc)   !
+!     IstrM      Starting nest tile in the I-direction (PSI-, U-obc)   !
+!     IstrP      Starting nest tile in the I-direction (PSI, U-points) !
+!     IendP      Ending   nest tile in the I-direction (PSI)           !
+!     IstrT      Starting nest tile in the I-direction (RHO-points)    !
+!     IendT      Ending   nest tile in the I-direction (RHO_points)    !
+!                                                                      !
+!     JstrB      Starting nest tile in the J-direction (RHO-, U-obc)   !
+!     JendB      Ending   nest tile in the J-direction (RHO-, U-obc)   !
+!     JstrM      Starting nest tile in the J-direction (PSI-, V-obc)   !
+!     JstrP      Starting nest tile in the J-direction (PSI, V-points) !
+!     JendP      Ending   nest tile in the J-direction (PSI)           !
+!     JstrT      Starting nest tile in the J-direction (RHO-points)    !
+!     JendT      Ending   nest tile in the J-direction (RHO-points)    !
+!                                                                      !
+!     Istrm3     Starting private I-halo computations, Istr-3          !
+!     Istrm2     Starting private I-halo computations, Istr-2          !
+!     Istrm1     Starting private I-halo computations, Istr-1          !
+!     IstrUm2    Starting private I-halo computations, IstrU-2         !
+!     IstrUm1    Starting private I-halo computations, IstrU-1         !
+!     Iendp1     Ending   private I-halo computations, Iend+1          !
+!     Iendp2     Ending   private I-halo computations, Iend+2          !
+!     Iendp2i    Ending   private I-halo computations, Iend+2 interior !
+!     Iendp3     Ending   private I-halo computations, Iend+3          !
+!                                                                      !
+!     Jstrm3     Starting private J-halo computations, Jstr-3          !
+!     Jstrm2     Starting private J-halo computations, Jstr-2          !
+!     Jstrm1     Starting private J-halo computations, Jstr-1          !
+!     JstrVm2    Starting private J-halo computations, JstrV-2         !
+!     JstrVm1    Starting private J-halo computations, JstrV-1         !
+!     Jendp1     Ending   private J-halo computations, Jend+1          !
+!     Jendp2     Ending   private J-halo computations, Jend+2          !
+!     Jendp2i    Ending   private J-halo computations, Jend+2 interior !
+!     Jendp3     Ending   private J-halo computations, Jend+3          !
 !                                                                      !
 !======================================================================!
 !
@@ -669,14 +969,20 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(out) :: IstrR, IstrT, IstrU, IendR, IendT
-      integer, intent(out) :: JstrR, JstrT, JstrV, JendR, JendT
+      integer, intent(in) :: ng, tile, Iend, Istr, Jend, Jstr
+      integer, intent(out) :: IstrM, IstrR, IstrU, IendR
+      integer, intent(out) :: JstrM, JstrR, JstrV, JendR
+      integer, intent(out) :: IstrB, IendB, IstrP, IendP, IstrT, IendT
+      integer, intent(out) :: JstrB, JendB, JstrP, JendP, JstrT, JendT
+      integer, intent(out) :: Istrm3, Istrm2, Istrm1, IstrUm2, IstrUm1
+      integer, intent(out) :: Iendp1, Iendp2, Iendp2i, Iendp3
+      integer, intent(out) :: Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1
+      integer, intent(out) :: Jendp1, Jendp2, Jendp2i, Jendp3
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  Compute lower and upper bounds over a particular domain partition or
 !  tile for RHO-, U-, and V-variables.
-!-----------------------------------------------------------------------
+!=======================================================================
 !
 !  ROMS uses at staggered stencil:
 !
@@ -715,7 +1021,7 @@
 !   1  v  p++v++p++v++p++v++p++v++p++v++p++v++p++v++p++v++p++v++p  v
 !      :                                                           :
 !  0   r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r..u..r
-!         1     2                                        Lm     L
+!         1     2                                         Lm    L
 !      0     1     2                                         Lm    L
 !
 !                           interior       Boundary Conditions
@@ -754,28 +1060,28 @@
 !       *  *  *  *  *  *  *  *  *  *      *  *  *  *  *  *  *  *  *  *
 !
 !     IstrR    IstrU                                               IendR
+!              IstrM
 !
-!
-!
-!                     *  *  *  *  *  *  *  *  *  *  *
-!                               Ghost Points
-!                     *  *  *  *  *  *  *  *  *  *  *
-!
-!                     *  *  p--v--p--v--p--v--p  *  *   Jend   IstrR=Istr
-!                           |     |     |     |                IstrT=Istr
-!     Interior        *  *  u  r  u  r  u  r  u  *  *          IstrU=Istr
+!                                                              IstrB=Istr
+!                     *  *  *  *  *  *  *  *  *  *  *          IstrM=Istr
+!                               Ghost Points                   IstrP=Istr
+!                     *  *  *  *  *  *  *  *  *  *  *          IstrR=Istr
+!                                                              IstrT=Istr
+!                     *  *  p--v--p--v--p--v--p  *  *   Jend   IstrU=Istr
+!                           |     |     |     |                IendB=Iend
+!     Interior        *  *  u  r  u  r  u  r  u  *  *          IendP=Iend
 !     Tile                  |     |     |     |                IendR=Iend
 !                     *  *  p--v--p--v--p--v--p  *  *          IendT=Iend
-!                           |     |     |     |                JstrR=Jstr
-!                     *  *  u  r  u  r  u  r  u  *  *          JstrT=Jstr
-!                           |     |     |     |                JstrV=Jstr
-!                     *  *  p--v--p--v--p--v--p  *  *   Jstr   JendR=Jend
-!                                                              JendT=Jend
-!                     *  *  *  *  *  *  *  *  *  *  *
-!
-!                     *  *  *  *  *  *  *  *  *  *  *
-!
-!                          Istr              Iend
+!                           |     |     |     |                JstrB=Jstr
+!                     *  *  u  r  u  r  u  r  u  *  *          JstrM=Jstr
+!                           |     |     |     |                JstrP=Jstr
+!                     *  *  p--v--p--v--p--v--p  *  *   Jstr   JstrR=Jstr
+!                                                              JstrT=Jstr
+!                     *  *  *  *  *  *  *  *  *  *  *          JstrV=Jstr
+!                                                              JendB=Jend
+!                     *  *  *  *  *  *  *  *  *  *  *          JendP=Jend
+!                                                              JendR=Jend
+!                          Istr              Iend              JendT=Jend
 !
 !
 !
@@ -787,7 +1093,7 @@
 !       :  +     |     |     |                  |     |     |     +  :
 !       r  u  r  u  r  u  r  u  *  *      *  *  u  r  u  r  u  r  u  r
 !       :  +     |     |     |                  |     |     |     +  :
-! JstrV v  p--v--p--v--p--v--p  *  *      *  *  p--v--p--v--p--v--p  v
+! JstrV v  p--v--p--v--p--v--p  *  *      *  *  p--v--p--v--p--v--p  v JstrM
 !       :  +     |     |     |                  |     |     |     +  :
 !       r  u  r  u  r  u  r  u  *  *      *  *  u  r  u  r  u  r  u  r
 !       :  +     |     |     |                  |     |     |     +  :
@@ -796,6 +1102,7 @@
 !       r..u..r..u..r..u..r..u  *  *      *  *  u..r..u..r..u..r..u..r
 !
 !     IstrR    IstrU                                               IendR
+!              IstrM
 !
 !           Left/Bottom Tile                    Right/Bottom Tile
 !
@@ -805,81 +1112,609 @@
 !  labelled by suffixes U,V and they step one grid point inward from
 !  the side of the subdomain adjacent to the physical boundary.
 !  Conversely, for an internal subdomain which does not include a
-!  segments of the physical boundary, all bounds with suffixes R,U,V
+!  segment of the physical boundary, all bounds with suffixes R,U,V
 !  are set to the same values of corresponding non-suffixed bounds.
 !
-!  Notice that the indices IstrT, IendT, JstrT, JendT are used during
-!  nesting and include the overlap contact points between refined,
-!  mosaic, or composed grids.  If not nesting, they are set to the
-!  same values as IstrR, IendR, JstrR, JendR, respectively.
+!  In nested grids there are additional indices to process the
+!  overlap regions and ranges when calling lateral boundary
+!  conditions routines (see diagrams below):
 !
-      IF (WESTERN_EDGE) THEN      ! Western Boundary Tile
+!    IstrT    starting overlap I-direction (RHO-points)
+!    IendT    ending   overlap I-direction (RHO-points)
+!    JstrT    starting overlap J-direction (RHO-points)
+!    JendT    ending   overlap J-direction (RHO-points)
+!
+!    IstrP    starting overlap I-direction (PSI-, U-points)
+!    IendP    ending   overlap I-direction (PSI-points)
+!    JstrP    starting overlap J-direction (PSI-, V-points)
+!    JendP    ending   overlap J-direction (PSI-points)
+!
+!    IstrB    starting boundary I-direction (RHO-, V-points), IstrT+1
+!    IendB    ending   boundary I-direction (RHO-, V-points), IendT-1
+!    JstrB    starting boundary J-direction (RHO-, U-points), JstrT+1
+!    JendB    ending   boundary J-direction (RHO-, U-points), JendT-1
+!
+!    IstrM    starting boundary I-direction (PSI-, U-points), IstrP+1
+!    JstrM    starting boundary J-direction (PSI-, V-points), JstrP+1
+!
+!  If not nesting, these indices are set to:
+!
+!    IstrT = IstrR    IstrP = Istr    IstrB = Istr    IstrM = IstrU
+!    IendT = IendR    IendP = Iend    IendB = Iend
+!    JstrT = JstrR    JstrP = Jstr    JstrB = Jstr    JstrM = JstrV
+!    JendT = JendR    JendP = Jend    JendB = Jend
+!
+!  The following diagram shows the lower left corner in nested grids:
+!
+!                             +
+!        r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r
+!           :     :     :     +     |     |     |     |     |
+!        v..p..v..p..v..p..v  p--v--p--v--p--v--p--v--p--v--p--v
+!           :     :     :     +     |     |     |     |     |
+!   2    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r
+!           :     :     :     +     |     |     |     |     |
+!     2  v..p..v..p..v..p..v  p--v--p--v--p--v--p--v--p--v--p--v  JstrV
+!           :     :     :     +     |     |     |     |     |
+!   1    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  Jstr
+!           :     :     :     +     |     |     |     |     |
+!     1  v..p..v..p..v..p..v  p++v++p++v++p++v++p++v++p++v++p++v++
+!           :     :     :
+!   0    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  JstrR
+!           :     :     :     :     :     :     :     :     :
+!     0  v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v
+!           :     :     :     :     :     :     :     :     :
+!  -1    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r
+!           :     :     :     :     :     :     :     :     :
+!    -1  v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v  JstrM
+!           :     :     :     :     :     :     :     :     :
+!  -2    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  JstrB
+!           :     :     :     :     :     :     :     :     :
+!    -2  v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v  JstrP
+!           :     :     :     :     :     :     :     :     :
+!  -3    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  JstrT
+!
+!          -2    -1     0     1     2
+!       -3    -2    -1     0     1     2
+!
+!         IstrP IstrM                IstrU
+!            IstrB             Istr
+!      IstrT             IstrR
+!
+!
+!  The following diagram shows the upper right in nested grids:
+!
+!
+!                                          IendR       IendT
+!                                     Iend       IendB
+!                                                   IendP
+!
+!                                   Lm    L    L+1   L+2
+!                                      Lm    L    L+1   L+2
+!
+!  M+2   r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r   JendT
+!           :     :     :     :     :     :     :     :
+!    M+1 v  p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v   JendP
+!           :     :     :     :     :     :     :     :
+!  M+1   r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r   JendB
+!           :     :     :     :     :     :     :     :
+!    M+1 v  p..v..p..v..p..v..p..v..p..v..p..v..p..v..p..v
+!           :     :     :     :     :     :     :     :
+!  M     r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r   JendR
+!                                               :     :
+!    M ++v++p++v++p++v++p++v++p++v++p++v++p  v..p..v..p..v
+!           |     |     |     |     |     +     :     :
+!  Mm    r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r   Jend
+!           |     |     |     |     |     +     :     :
+!    Mm  v--p--v--p--v--p--v--p--v--p--v--p  v..p..v..p..v
+!           |     |     |     |     |     +     :     :
+!        r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r
+!           |     |     |     |     |     +     :     :
+!        v--p--v--p--v--p--v--p--v--p--v--p  v..p..v..p..v
+!           |     |     |     |     |     +     :     :
+!        r  u  r  u  r  u  r  u  r  u  r  u  r  u  r  u  r
+!                                         +
+!
+!-----------------------------------------------------------------------
+!  Starting I-tile indices.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 #if defined EW_PERIODIC
+        IstrP=Istr
         IstrR=Istr
         IstrT=IstrR
         IstrU=Istr
-#elif defined NESTING
+        IstrB=Istr
+        IstrM=IstrU
+#elif defined COMPOSED_GRID
+        IstrP=-NghostPoints+1
         IstrR=Istr
         IstrT=-NghostPoints
         IstrU=Istr
+        IstrB=IstrT+1
+        IstrM=IstrP+1
+#elif defined REFINED_GRID
+        IstrR=Istr-1
+        IstrU=Istr+1
+        IF (ng.eq.1) THEN
+          IstrP=IstrR
+          IstrT=IstrR
+          IstrB=Istr
+          IstrM=IstrU
+        ELSE
+          IstrP=-NghostPoints+1
+          IstrT=-NghostPoints
+          IstrB=IstrT                ! boundary conditions are avoided
+          IstrM=IstrP                ! boundary conditions are avoided
+        END IF
 #else
+        IstrP=Istr
         IstrR=Istr-1
         IstrT=IstrR
         IstrU=Istr+1
+        IstrB=IstrT+1
+        IstrM=IstrP+1
 #endif
-      ELSE                        ! Interior Tile
+      ELSE
+        IstrP=Istr
         IstrR=Istr
         IstrT=IstrR
         IstrU=Istr
+        IstrB=Istr
+        IstrM=IstrU
       END IF
-      IF (EASTERN_EDGE) THEN      ! Eastern Boundary Tile
+!
+!  Special case, Istrm3: used when MAX(0,Istr-3) is needed.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Istrm3=Istr-3
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Istrm3=MAX(0,Istr-3)
+        ELSE
+          Istrm3=Istr-3
+        END IF
+#else
+        Istrm3=MAX(0,Istr-3)
+#endif
+      ELSE
+        Istrm3=Istr-3
+      END IF
+!
+!  Special case, Istrm2: used when MAX(0,Istr-2) is needed.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Istrm2=Istr-2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Istrm2=MAX(0,Istr-2)
+        ELSE
+          Istrm2=Istr-2
+        END IF
+#else
+        Istrm2=MAX(0,Istr-2)
+#endif
+      ELSE
+        Istrm2=Istr-2
+      END IF
+!
+!  Special case, IstrUm2: used when MAX(1,IstrU-2) is needed.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+#if defined EW_PERIODIC
+        IstrUm2=IstrU-2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          IstrUm2=MAX(1,IstrU-2)
+        ELSE
+          IstrUm2=IstrU-2
+        END IF
+#else
+        IstrUm2=MAX(1,IstrU-2)
+#endif
+      ELSE
+        IstrUm2=IstrU-2
+      END IF
+!
+!  Special case, Istrm1: used when MAX(1,Istr-1) is needed.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Istrm1=Istr-1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Istrm1=MAX(1,Istr-1)
+        ELSE
+          Istrm1=Istr-1
+        END IF
+#else
+        Istrm1=MAX(1,Istr-1)
+#endif
+      ELSE
+        Istrm1=Istr-1
+      END IF
+!
+!  Special case, IstrUm1: used when MAX(2,IstrU-1) is needed.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        IstrUm1=IstrU-1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          IstrUm1=MAX(2,IstrU-1)
+        ELSE
+          IstrUm1=IstrU-1
+        END IF
+#else
+        IstrUm1=MAX(2,IstrU-1)
+#endif
+      ELSE
+        IstrUm1=IstrU-1
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Ending I-tile indices.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 #if defined EW_PERIODIC
         IendR=Iend
+        IendP=IendR                  ! check this one, same as IendR
         IendT=IendR
-#elif defined NESTING
+        IendB=Iend
+#elif defined COMPOSED_GRID
         IendR=Iend
+        IendP=Iend+NghostPoints      ! check this one, same as IendT
         IendT=Iend+NghostPoints
+        IendB=IendT-1
+#elif defined REFINED_GRID
+        IendR=Iend+1
+        IF (ng.eq.1) THEN
+          IendP=IendR
+          IendT=IendR
+          IendB=Iend
+        ELSE
+          IendP=Iend+NghostPoints    ! check this one, same as IendT
+          IendT=Iend+NghostPoints
+          IendB=IendT                ! boundary conditions are avoided
+        END IF
 #else
         IendR=Iend+1
+        IendP=IendR
         IendT=IendR
+        IendB=IendT-1
 #endif
-      ELSE                        ! Interior Tile
+      ELSE
         IendR=Iend
+        IendP=IendR
         IendT=IendR
+        IendB=Iend
       END IF
-      IF (SOUTHERN_EDGE) THEN     ! Southern Boundary Tile
+!
+!  Special case, Iendp1: used when MIN(Iend+1,Lm(ng)) is needed.
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Iendp1=Iend+1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Iendp1=MIN(Iend+1,Lm(ng))
+        ELSE
+          Iendp1=Iend+1
+        END IF
+#else
+        Iendp1=MIN(Iend+1,Lm(ng))
+#endif
+      ELSE
+        Iendp1=Iend+1
+      END IF
+!
+!  Special case, Iendp2i: used when MIN(Iend+2,Lm(ng)) is needed.
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Iendp2i=Iend+2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Iendp2i=MIN(Iend+2,Lm(ng))
+        ELSE
+          Iendp2i=Iend+2
+        END IF
+#else
+        Iendp2i=MIN(Iend+2,Lm(ng))
+#endif
+      ELSE
+        Iendp2i=Iend+2
+      END IF
+!
+!  Special case, Iendp2: used when MIN(Iend+2,Lm(ng)+1) is needed.
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Iendp2=Iend+2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Iendp2=MIN(Iend+2,Lm(ng)+1)
+        ELSE
+          Iendp2=Iend+2
+        END IF
+#else
+        Iendp2=MIN(Iend+2,Lm(ng)+1)
+#endif
+      ELSE
+        Iendp2=Iend+2
+      END IF
+!
+!  Special case, Iendp3: used when MIN(Iend+3,Lm(ng)+1) is needed.
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+#if defined EW_PERIODIC || defined COMPOSED_GRID
+        Iendp3=Iend+3
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Iendp3=MIN(Iend+2,Lm(ng)+1)
+        ELSE
+          Iendp3=Iend+3
+        END IF
+#else
+        Iendp3=MIN(Iend+3,Lm(ng)+1)
+#endif
+      ELSE
+        Iendp3=Iend+3
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Starting J-tile indices.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 #if defined NS_PERIODIC
+        JstrP=Jstr
         JstrR=Jstr
         JstrT=JstrR
         JstrV=Jstr
-#elif defined EXTENDED_GRID
+        JstrB=Jstr
+        JstrM=JstrV
+#elif defined COMPOSED_GRID
+        JstrP=-NghostPoints+1
         JstrR=Jstr
         JstrT=-NghostPoints
         JstrV=Jstr
+        JstrB=JstrT+1
+        JstrM=JstrP+1
+#elif defined REFINED_GRID
+        JstrR=Jstr-1
+        JstrV=Jstr+1
+        IF (ng.eq.1) THEN
+          JstrP=JstrR
+          JstrT=JstrR
+          JstrB=Jstr
+          JstrM=JstrV
+        ELSE
+          JstrP=-NghostPoints+1
+          JstrT=-NghostPoints
+          JstrB=JstrT                ! boundary conditions are avoided
+          JstrM=JstrP                ! boundary conditions are avoided
+        END IF
 #else
+        JstrP=Jstr
         JstrR=Jstr-1
         JstrT=JstrR
         JstrV=Jstr+1
+        JstrB=JstrT+1
+        JstrM=JstrP+1
 #endif
-      ELSE                        ! Interior Tile
+      ELSE
+        JstrP=Jstr
         JstrR=Jstr
         JstrT=JstrR
         JstrV=Jstr
+        JstrB=Jstr
+        JstrM=JstrV
       END IF
-      IF (NORTHERN_EDGE) THEN     ! Northern Boundary Tile
+!
+!  Special case, Jstrm3: used when MAX(0,Jstr-3) is needed.
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jstrm3=Jstr-3
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jstrm3=MAX(0,Jstr-3)
+        ELSE
+          Jstrm3=Jstr-3
+        END IF
+#else
+        Jstrm3=MAX(0,Jstr-3)
+#endif
+      ELSE
+        Jstrm3=Jstr-3
+      END IF
+!
+!  Special case, Jstrm2: used when MAX(0,Jstr-2) is needed.
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jstrm2=Jstr-2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jstrm2=MAX(0,Jstr-2)
+        ELSE
+          Jstrm2=Jstr-2
+        END IF
+#else
+        Jstrm2=MAX(0,Jstr-2)
+#endif
+      ELSE
+        Jstrm2=Jstr-2
+      END IF
+!
+!  Special case, JstrVm2: used when MAX(1,JstrV-2) is needed.
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        JstrVm2=JstrV-2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          JstrVm2=MAX(1,JstrV-2)
+        ELSE
+          JstrVm2=JstrV-2
+        END IF
+#else
+        JstrVm2=MAX(1,JstrV-2)
+#endif
+      ELSE
+        JstrVm2=JstrV-2
+      END IF
+!
+!  Special case, Jstrm1: used when MAX(1,Jstr-1) is needed.
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jstrm1=Jstr-1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jstrm1=MAX(1,Jstr-1)
+        ELSE
+          Jstrm1=Jstr-1
+        END IF
+#else
+        Jstrm1=MAX(1,Jstr-1)
+#endif
+      ELSE
+        Jstrm1=Jstr-1
+      END IF
+!
+!  Special case, JstrVm1: used when MAX(2,JstrV-1) is needed.
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        JstrVm1=JstrV-1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+        JstrVm1=MAX(2,JstrV-1)
+        ELSE
+          JstrVm1=JstrV-1
+        END IF
+#else
+        JstrVm1=MAX(2,JstrV-1)
+#endif
+      ELSE
+        JstrVm1=JstrV-1
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Ending J-tile indices.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 #if defined NS_PERIODIC
         JendR=Jend
+        JendP=JendR                  ! check this one, same as JendR
         JendT=JendR
-#elif defined EXTENDED_GRID
+        JendB=Jend
+#elif defined COMPOSED_GRID
         JendR=Jend
+        JendP=Jend+NghostPoints      ! check this one, same as JendT
         JendT=Jend+NghostPoints
+        JendB=JendT-1
+#elif defined REFINED_GRID
+        JendR=Jend+1
+        IF (ng.eq.1) THEN
+          JendP=JendR
+          JendT=JendR
+          JendB=Jend
+        ELSE
+          JendP=Jend+NghostPoints    ! check this one, same as JendT
+          JendT=Jend+NghostPoints
+          JendB=JendT                ! boundary conditions are avoided
+        END IF
 #else
         JendR=Jend+1
+        JendP=JendR
         JendT=JendR
+        JendB=JendT-1
 #endif
-      ELSE                        ! Interior Tile
+      ELSE
         JendR=Jend
+        JendP=JendR
+        JendP=JendR
         JendT=JendR
+        JendB=Jend
+      END IF
+!
+!  Special case, Jendp1: used when MIN(Jend+1,Mm(ng)) is needed.
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jendp1=Jend+1
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jendp1=MIN(Jend+1,Mm(ng))
+        ELSE
+          Jendp1=Jend+1
+        END IF
+#else
+        Jendp1=MIN(Jend+1,Mm(ng))
+#endif
+      ELSE
+        Jendp1=Jend+1
+      END IF
+!
+!  Special case, Jendp2i: used when MIN(Jend+2,Mm(ng)) is needed.
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jendp2i=Jend+2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jendp2i=MIN(Jend+2,Mm(ng))
+        ELSE
+          Jendp2i=Jend+2
+        END IF
+#else
+        Jendp2i=MIN(Jend+2,Mm(ng))
+#endif
+      ELSE
+        Jendp2i=Jend+2
+      END IF
+!
+!  Special case, Jendp2: used when MIN(Jend+2,Mm(ng)+1) is needed.
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jendp2=Jend+2
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jendp2=MIN(Jend+2,Mm(ng)+1)
+        ELSE
+          Jendp2=Jend+2
+        END IF
+#else
+        Jendp2=MIN(Jend+2,Mm(ng)+1)
+#endif
+      ELSE
+        Jendp2=Jend+2
+      END IF
+!
+!  Special case, Jendp3: used when MIN(Jend+3,Mm(ng)+1) is needed.
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+#if defined NS_PERIODIC || defined COMPOSED_GRID
+        Jendp3=Jend+3
+#elif defined REFINED_GRID
+        IF (ng.eq.1) THEN
+          Jendp3=MIN(Jend+3,Mm(ng)+1)
+        ELSE
+          Jendp3=Jend+3
+        END IF
+#else
+        Jendp3=MIN(Jend+3,Mm(ng)+1)
+#endif
+      ELSE
+        Jendp3=Jend+3
       END IF
 
       RETURN

@@ -42,7 +42,7 @@
       logical, save :: First = .TRUE.
       logical :: Ldefine, NewFile
 
-      integer :: ifile, lstr, status, tile
+      integer :: Fcount, ifile, status, tile
 !
       SourceFile='rp_output.F'
 
@@ -96,18 +96,18 @@
             Ldefine=.FALSE.
           END IF
           IF (Ldefine) THEN                     ! create new file or
-            NrecTLM(ng)=0                       ! inquire existing file
+            Fcount=TLM(ng)%Fcount               ! inquire existing file
+            TLM(ng)%Nrec(Fcount)=0
             ifile=(iic(ng)-1)/ndefTLM(ng)+1
             IF (Master) THEN
-              lstr=LEN_TRIM(TLMbase(ng))
-              WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
+              WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
 # ifdef DISTRIBUTE
-            CALL mp_bcasts (ng, iRPM, TLMname(ng))
+            CALL mp_bcasts (ng, iRPM, TLM(ng)%name)
 # endif
-            IF (ncTLMid(ng).ne.-1) THEN
-              CALL netcdf_close (ng, iRPM, ncTLMid(ng))
+            IF (TLM(ng)%ncid.ne.-1) THEN
+              CALL netcdf_close (ng, iRPM, TLM(ng)%ncid)
             END IF
             CALL tl_def_his (ng, NewFile)
             IF (exit_flag.ne.NoError) RETURN

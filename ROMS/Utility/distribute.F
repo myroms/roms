@@ -1035,7 +1035,9 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      IF (Lwclock) THEN
+        CALL wclock_on (ng, model, 42)
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1062,7 +1064,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      IF (Lwclock) THEN
+        CALL wclock_off (ng, model, 42)
+      END IF
 # endif
 
       RETURN

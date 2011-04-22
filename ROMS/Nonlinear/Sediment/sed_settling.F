@@ -68,7 +68,7 @@
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % Hz,                            &
      &                        GRID(ng) % z_w,                           &
-     &                        SEDBED(ng) % settling_flux,                &
+     &                        SEDBED(ng) % settling_flux,               &
      &                        OCEAN(ng) % t)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)

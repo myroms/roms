@@ -31,7 +31,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: itrc, l, status
+      integer :: Fcount, itrc, l, status
 
       real(r8), dimension(Nfloats(ng)) :: Tout
 !
@@ -45,48 +45,49 @@
 !
 !  Set time record index.
 !
-      tFLTindx(ng)=tFLTindx(ng)+1
-      NrecFLT(ng)=NrecFLT(ng)+1
+      FLT(ng)%Rindex=FLT(ng)%Rindex+1
+      Fcount=FLT(ng)%Fcount
+      FLT(ng)%Nrec(Fcount)=FLT(ng)%Nrec(Fcount)+1
 !
 !  Write out model time (s).
 !
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      TRIM(Vname(1,idtime)), time(ng:),           &
-     &                      (/tFLTindx(ng)/), (/1/),                    &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(idtime,ng))
+     &                      (/FLT(ng)%Rindex/), (/1/),                  &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idtime))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out floats X-grid locations.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(ixgrd,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(ixgrd,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      'Xgrid', Tout,                              &
-     &                      (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),      &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(idXgrd,ng))
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idXgrd))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out floats Y-grid locations.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(iygrd,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iygrd,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      'Ygrid', Tout,                              &
-     &                      (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),      &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(idYgrd,ng))
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idYgrd))
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
@@ -94,63 +95,63 @@
 !  Write out floats Z-grid locations.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(izgrd,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(izgrd,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      'Zgrid', Tout,                              &
-     &                      (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),      &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(idZgrd,ng))
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idZgrd))
       IF (exit_flag.ne.NoError) RETURN
 # endif
 !
 !  Write out floats (lon,lat) or (x,y) locations.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(iflon,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iflon,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
       IF (spherical) THEN
-        CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
+        CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                   &
      &                        'lon', Tout,                              &
-     &                        (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),    &
-     &                        ncid = ncFLTid(ng),                       &
-     &                        varid = fltVid(idglon,ng))
+     &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        varid = FLT(ng)%Vid(idglon))
       ELSE
-        CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
+        CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                   &
      &                        'x', Tout,                                &
-     &                        (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),    &
-     &                        ncid = ncFLTid(ng),                       &
-     &                        varid = fltVid(idglon,ng))
+     &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        varid = FLT(ng)%Vid(idglon))
       END IF
       IF (exit_flag.ne.NoError) RETURN
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(iflat,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iflat,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
       IF (spherical) THEN
-        CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
+        CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                   &
      &                        'lat', Tout,                              &
-     &                        (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),    &
-     &                        ncid = ncFLTid(ng),                       &
-     &                        varid = fltVid(idglat,ng))
+     &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        varid = FLT(ng)%Vid(idglat))
       ELSE
-        CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
+        CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                   &
      &                        'y', Tout,                                &
-     &                        (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),    &
-     &                        ncid = ncFLTid(ng),                       &
-     &                        varid = fltVid(idglat,ng))
+     &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        varid = FLT(ng)%Vid(idglat))
       END IF
       IF (exit_flag.ne.NoError) RETURN
 
@@ -159,50 +160,50 @@
 !  Write out floats depths.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(idpth,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(idpth,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      'depth', Tout,                              &
-     &                      (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),      &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(iddpth,ng))
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(iddpth))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out density anomaly.
 !
       DO l=1,Nfloats(ng)
-        IF (FLT(ng)%bounded(l)) THEN
-          Tout(l)=FLT(ng)%track(ifden,nf(ng),l)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(ifden,nf(ng),l)
         ELSE
           Tout(l)=spval
         END IF
       END DO
-      CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                      &
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
      &                      TRIM(Vname(1,idDano)), Tout,                &
-     &                      (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),      &
-     &                      ncid = ncFLTid(ng),                         &
-     &                      varid = fltVid(idDano,ng))
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idDano))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out tracer type variables.
 !
       DO itrc=1,NT(ng)
         DO l=1,Nfloats(ng)
-          IF (FLT(ng)%bounded(l)) THEN
-            Tout(l)=FLT(ng)%track(ifTvar(itrc),nf(ng),l)
+          IF (DRIFTER(ng)%bounded(l)) THEN
+            Tout(l)=DRIFTER(ng)%track(ifTvar(itrc),nf(ng),l)
           ELSE
             Tout(l)=spval
           END IF
         END DO
-        CALL netcdf_put_fvar (ng, iNLM, FLTname(ng),                    &
+        CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                   &
      &                        TRIM(Vname(1,idTvar(itrc))), Tout,        &
-     &                        (/1,tFLTindx(ng)/), (/Nfloats(ng),1/),    &
-     &                        ncid = ncFLTid(ng),                       &
-     &                        varid = fltTid(itrc,ng))
+     &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        varid = FLT(ng)%Tid(itrc))
         IF (exit_flag.ne.NoError) RETURN
       END DO
 # endif
@@ -211,7 +212,7 @@
 !  Synchronize floats NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iNLM, FLTname(ng), ncFLTid(ng))
+      CALL netcdf_sync (ng, iNLM, FLT(ng)%name, FLT(ng)%ncid)
 
 #else
       SUBROUTINE wrt_floats

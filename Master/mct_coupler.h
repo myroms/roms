@@ -51,9 +51,6 @@
       integer :: MyColor, MyCOMM, MyError, MyKey, Nnodes
       integer :: ng
 
-      integer, dimension(Ngrids) :: Tstr   ! starting ROMS time-step
-      integer, dimension(Ngrids) :: Tend   ! ending   ROMS time-step
-
       real(r4) :: CouplingTime             ! single precision
 !
 !-----------------------------------------------------------------------
@@ -139,16 +136,15 @@
 #endif
       IF (MyColor.eq.OCNid) THEN
         first=.TRUE.
-        Nrun=1
         IF (exit_flag.eq.NoError) THEN
-          CALL ROMS_initialize (first, MyCOMM)
+          CALL ROMS_initialize (first, mpiCOMM=MyCOMM)
+          run_time=0.0_r8
+          DO ng=1,Ngrids
+            run_time=MAX(run_time, dt(ng)*ntimes(ng))
+          END DO
         END IF
-        DO ng=1,Ngrids
-          Tstr(ng)=ntstart(ng)
-          Tend(ng)=ntend(ng)+1
-        END DO
         IF (exit_flag.eq.NoError) THEN
-          CALL ROMS_run (Tstr, Tend)
+          CALL ROMS_run (run_time)
         END IF
         CALL ROMS_finalize
 #if defined SWAN_COUPLING || defined REFDIF_COUPLING

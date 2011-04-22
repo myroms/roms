@@ -55,22 +55,22 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         IstrR=BOUNDS(ng)%Istr(tile)-1
       ELSE
         IstrR=BOUNDS(ng)%Istr(tile)
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IendR=BOUNDS(ng)%Iend(tile)+1
       ELSE
         IendR=BOUNDS(ng)%Iend(tile)
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         JstrR=BOUNDS(ng)%Jstr(tile)-1
       ELSE
         JstrR=BOUNDS(ng)%Jstr(tile)
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         JendR=BOUNDS(ng)%Jend(tile)+1
       ELSE
         JendR=BOUNDS(ng)%Jend(tile)
@@ -253,22 +253,22 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         IstrR=BOUNDS(ng)%Istr(tile)-1
       ELSE
         IstrR=BOUNDS(ng)%Istr(tile)
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IendR=BOUNDS(ng)%Iend(tile)+1
       ELSE
         IendR=BOUNDS(ng)%Iend(tile)
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         JstrR=BOUNDS(ng)%Jstr(tile)-1
       ELSE
         JstrR=BOUNDS(ng)%Jstr(tile)
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         JendR=BOUNDS(ng)%Jend(tile)+1
       ELSE
         JendR=BOUNDS(ng)%Jend(tile)

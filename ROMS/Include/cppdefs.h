@@ -500,24 +500,6 @@
 ** M2CLM_NUDGING       use if nudging 2D momentum climatology                **
 ** M3CLM_NUDGING       use if nudging 3D momentum climatology                **
 ** TCLM_NUDGING        use if nudging tracers climatology                    **
-** ZCLM_NUDGING        use if nudging SSH climatology                        **
-**                                                                           **
-** Optimal Interpolation (OI) or nudging data assimilation OPTIONS:          **
-**                                                                           **
-**   The OI assimilation is intermittent whereas nudging is continuous       **
-**   (observations are time interpolated). If applicable, choose only one    **
-**   option for each field to update: either OI assimilation or nudging.     **
-**                                                                           **
-** ASSIMILATION_SSH    use if assimilating SSH observations                  **
-** ASSIMILATION_SST    use if assimilating SST observations                  **
-** ASSIMILATION_T      use if assimilating tracers observations              **
-** ASSIMILATION_UVsur  use if assimilating surface current observations      **
-** ASSIMILATION_UV     use if assimilating horizontal current observations   **
-** UV_BAROCLINIC       use if assimilating baroclinic currents only          **
-** NUDGING_SST         use if nudging SST observations                       **
-** NUDGING_T           use if nudging tracers observations                   **
-** NUDGING_UVsur       use if nudging surface current observations           **
-** NUDGING_UV          use if nudging horizontal currents observations       **
 **                                                                           **
 ** ROMS/TOMS driver OPTIONS:                                                 **
 **                                                                           **
@@ -526,7 +508,6 @@
 ** AFT_EIGENMODES      use if adjoint finite time eingenmodes driver         **
 ** ARRAY_MODES         use if W4DVAR representer matrix array modes          **
 ** CLIPPING            use if W4DVAR representer matrix clipping analysis    **
-** CONVOLUTION         use if adjoint convolution driver                     **
 ** CORRELATION         use if background-error correlation model driver      **
 ** ENSEMBLE            use if ensemble prediction driver                     **
 ** FORCING_SV          use if forcing singular vectors driver                **
@@ -560,7 +541,6 @@
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
 ** CLIPPING_SPLIT      use to separate analysis due to IC, forcing, and OBC  **
-** CONVOLVE            use if convolving solution with diffusion operators   **
 ** DATALESS_LOOPS      use if testing convergence of Picard iterations       **
 ** FORWARD_MIXING      use if processing forward vertical mixing coefficient **
 ** FORWARD_WRITE       use if writing out forward solution, basic state      **
@@ -642,6 +622,7 @@
 **                                                                           **
 ** WET_DRY             use to activate wetting and drying                    **
 ** NEARSHORE_MELLOR05  use to activate radiation stress terms (Mellor 2005). **
+** NEARSHORE_MELLOR08  use to activate radiation stress terms (Mellor 2008). **
 **                                                                           **
 ** NetCDF input/output OPTIONS:                                              **
 **                                                                           **

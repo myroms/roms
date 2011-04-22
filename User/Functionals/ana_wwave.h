@@ -188,7 +188,9 @@
           Hwave(i,j)=2.0_r8
           Dwave(i,j)=90.0_r8*deg2rad
           Pwave_bot(i,j)=8.0_r8
+# ifdef WAVES_LENGTH
           Lwave(i,j)=20.0_r8
+# endif
         END DO
       END DO
 #else

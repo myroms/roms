@@ -184,7 +184,7 @@
 !
 !-----------------------------------------------------------------------
 !  If only Blass bottom boundary layer and not sediment model, set
-!  sediiment settling velocity (m/s).
+!  sediment settling velocity (m/s).
 !-----------------------------------------------------------------------
 !
 #  if defined MY_APPLICATION
@@ -197,7 +197,6 @@
       ana_sediment.h: no values provided for bottom(:,:,iwsed).
 #  endif
 # endif
-
 #endif
 
 #ifdef SEDIMENT
@@ -217,9 +216,9 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Initial sediment bed layer properties of
-!  age, thickness, porosity, and initialize sediment bottom
-!  properites of ripple length, ripple height, and default Zob.
+!  Initial sediment bed layer properties of age, thickness, porosity,
+!  and initialize sediment bottom properites of ripple length, ripple
+!  height, and default Zob.
 !-----------------------------------------------------------------------
 !
 # if defined MY_APPLICATION

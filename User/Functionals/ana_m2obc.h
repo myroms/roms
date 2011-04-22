@@ -109,7 +109,7 @@
 !
 #if defined MY_APPLICATION
 # ifdef EAST_M2OBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_east(j)=???
         END DO
@@ -119,7 +119,7 @@
       END IF
 # endif
 # ifdef WEST_M2OBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrR,JendR
           BOUNDARY(ng)%ubar_west(j)=???
         END DO
@@ -129,7 +129,7 @@
       END IF
 # endif
 # ifdef SOUTH_M2OBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_south(i)=???
         END DO
@@ -139,7 +139,7 @@
       END IF
 # endif
 # ifdef NORTH_M2OBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,IendR
           BOUNDARY(ng)%ubar_north(i)=???
         END DO

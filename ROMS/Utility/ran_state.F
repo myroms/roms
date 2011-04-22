@@ -220,9 +220,9 @@
       ELSE IF (PRESENT(put)) THEN
         IF (lenran.eq.0) RETURN
         ranseeds=RESHAPE(put,SHAPE(ranseeds))
-        WHERE (ranseeds(:,1:3).lt.0)                                     &
+        WHERE (ranseeds(:,1:3).lt.0)                                    &
      &    ranseeds(:,1:3)=NOT(ranseeds(:,1:3))
-        WHERE (ranseeds(:,4:5).eq.0)                                     &
+        WHERE (ranseeds(:,4:5).eq.0)                                    &
      &    ranseeds(:,4:5)=1
           iran0=ranseeds(1,1)
           jran0=ranseeds(1,2)

@@ -66,7 +66,7 @@
 !
 #if defined MY_APPLICATION
 # ifdef EAST_M3OBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%u_east(j,k)=???
@@ -78,7 +78,7 @@
       END IF
 # endif
 # ifdef WEST_M3OBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%u_west(j,k)=???
@@ -90,7 +90,7 @@
       END IF
 # endif
 # ifdef SOUTH_M3OBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
             BOUNDARY(ng)%u_south(i,k)=???
@@ -102,7 +102,7 @@
       END IF
 # endif
 # ifdef NORTH_M3OBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
             BOUNDARY(ng)%u_north(i,k)=???

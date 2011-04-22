@@ -330,9 +330,9 @@
 !  a salinity range of 0 PSU to 42 PSU.
 !=======================================================================
 !
-      DO j=JstrR,JendR
+      DO j=JstrT,JendT
         DO k=1,N(ng)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
 !
 !  Check temperature and salinity lower values. Assign depth to the
 !  pressure.
@@ -665,7 +665,7 @@
 !  (rhoS) used in barotropic pressure gradient.
 !-----------------------------------------------------------------------
 !
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           cff1=den(i,N(ng))*Hz(i,j,N(ng))
           tl_cff1=tl_den(i,N(ng))*Hz(i,j,N(ng))+                        &
      &            den(i,N(ng))*tl_Hz(i,j,N(ng))-                        &
@@ -682,7 +682,7 @@
           tl_rhoA(i,j)=tl_cff1
         END DO
         DO k=N(ng)-1,1,-1
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             cff1=den(i,k)*Hz(i,j,k)
             tl_cff1=tl_den(i,k)*Hz(i,j,k)+                              &
      &              den(i,k)*tl_Hz(i,j,k)-                              &
@@ -701,7 +701,7 @@
           END DO
         END DO
         cff2=1.0_r8/rho0
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           cff1=1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,0))
           tl_cff1=-cff1*cff1*(tl_z_w(i,j,N(ng))-tl_z_w(i,j,0))+         &
 #   ifdef TL_IOMS
@@ -740,7 +740,7 @@
 !-----------------------------------------------------------------------
 !
         DO k=1,N(ng)-1
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             bulk_up=bulk0(i,k+1)-                                       &
      &              z_w(i,j,k)*(bulk1(i,k+1)-                           &
      &                          bulk2(i,k+1)*z_w(i,j,k))
@@ -812,7 +812,7 @@
 #   endif
           END DO
         END DO
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
 !>        bvf(i,j,0)=0.0_r8
 !>
           tl_bvf(i,j,0)=0.0_r8
@@ -835,7 +835,7 @@
 #   else
         DO k=N(ng),N(ng)
 #   endif
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             Tpr10=0.1_r8*z_r(i,j,k)
             tl_Tpr10=0.1_r8*tl_z_r(i,j,k)
 !
@@ -889,7 +889,7 @@
 #   endif
           END DO
           IF (k.eq.N(ng)) THEN
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               cff=1.0_r8/wrk(i,N(ng))
               tl_cff=-cff*cff*tl_wrk(i,N(ng))+                          &
 #   ifdef TL_IOMS
@@ -918,7 +918,7 @@
 !-----------------------------------------------------------------------
 !
         DO k=1,N(ng)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             rho(i,j,k)=den(i,k)
             tl_rho(i,j,k)=tl_den(i,k)
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
@@ -1254,9 +1254,9 @@
 !  equation of state.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
+      DO j=JstrT,JendT
         DO k=1,N(ng)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             rho(i,j,k)=R0(ng)-                                          &
      &                 R0(ng)*Tcoef(ng)*(t(i,j,k,nrhs,itemp)-T0(ng))
             tl_rho(i,j,k)=-R0(ng)*Tcoef(ng)*tl_t(i,j,k,nrhs,itemp)+     &
@@ -1316,7 +1316,7 @@
 !  used (rhoS) in barotropic pressure gradient.
 !-----------------------------------------------------------------------
 !
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           cff1=rho(i,j,N(ng))*Hz(i,j,N(ng))
           tl_cff1=tl_rho(i,j,N(ng))*Hz(i,j,N(ng))+                      &
      &            rho(i,j,N(ng))*tl_Hz(i,j,N(ng))-                      &
@@ -1333,7 +1333,7 @@
           tl_rhoA(i,j)=tl_cff1
         END DO
         DO k=N(ng)-1,1,-1
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             cff1=rho(i,j,k)*Hz(i,j,k)
             tl_cff1=tl_rho(i,j,k)*Hz(i,j,k)+                            &
      &              rho(i,j,k)*tl_Hz(i,j,k)-                            &
@@ -1352,7 +1352,7 @@
           END DO
         END DO
         cff2=1.0_r8/rho0
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           cff1=1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,0))
           tl_cff1=-cff1*cff1*(tl_z_w(i,j,N(ng))-tl_z_w(i,j,0))+         &
 #   ifdef TL_IOMS
@@ -1386,7 +1386,7 @@
 !-----------------------------------------------------------------------
 !
         DO k=1,N(ng)-1
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
 !>          bvf(i,j,k)=-gorho0*(rho(i,j,k+1)-rho(i,j,k))/               &
 !>   &                         (z_r(i,j,k+1)-z_r(i,j,k))
 !>
@@ -1413,7 +1413,7 @@
 !  (1/PSU) coefficients.
 !-----------------------------------------------------------------------
 !
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           alpha(i,j)=ABS(Tcoef(ng))
 #   ifdef TL_IOMS
           tl_alpha(i,j)=ABS(Tcoef(ng))
@@ -1444,7 +1444,7 @@
           cff=1.0_r8/Scoef(ng)
         END IF
         DO k=1,N(ng)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
 !>          alfaobeta(i,j,k)=cff*Tcoef(ng)
 !>
 #     ifdef TL_IOMS

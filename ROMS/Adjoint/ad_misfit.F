@@ -381,7 +381,7 @@
 !
 !  Report.
 !
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             ObsSum=0
             ObsVoid=0

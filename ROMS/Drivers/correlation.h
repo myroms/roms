@@ -54,7 +54,7 @@
 
       CONTAINS
 
-      SUBROUTINE ROMS_initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, mpiCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -67,38 +67,39 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
+      USE mod_ncparam
       USE mod_scalars
 !
-#ifdef AIR_OCEAN
-      USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
-#endif
-#ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : initialize_waves_coupling
-#endif
+      USE normalization_mod, ONLY : normalization
 !
 !  Imported variable declarations.
 !
       logical, intent(inout) :: first
 
-      integer, intent(in), optional :: MyCOMM
+      integer, intent(in), optional :: mpiCOMM
 !
 !  Local variable declarations.
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: STDrec, Tindex, ng, thread
+#ifdef DISTRIBUTE
+      integer :: MyError, MySize
+#endif
+      integer :: STDrec, Tindex, ng, subs, tile, thread
 
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
-!  Set distribute-memory (MPI) world communictor.
+!  Set distribute-memory (MPI) world communicator.
 !-----------------------------------------------------------------------
 !
-      IF (PRESENT(MyCOMM)) THEN
-        OCN_COMM_WORLD=MyCOMM
+      IF (PRESENT(mpiCOMM)) THEN
+        OCN_COMM_WORLD=mpiCOMM
       ELSE
         OCN_COMM_WORLD=MPI_COMM_WORLD
       END IF
+      CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
+      CALL mpi_comm_size (OCN_COMM_WORLD, MySize, MyError)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -111,43 +112,34 @@
       IF (first) THEN
         first=.FALSE.
 !
-!  Initialize parallel parameters.
+!  Initialize parallel control switches. These scalars switches are
+!  independent from standard input parameters.
 !
         CALL initialize_parallel
 !
-!  Initialize wall clocks.
+!  Read in model tunable parameters from standard input. Allocate and
+!  initialize variables in several modules after the number of nested
+!  grids and dimension parameters are known.
+!
+        CALL inp_par (iNLM)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Initialize internal wall clocks. Notice that the timings does not
+!  includes processing standard input because several parameters are
+!  needed to allocate clock variables.
 !
         IF (Master) THEN
           WRITE (stdout,10)
- 10       FORMAT (' Process Information:',/)
+ 10       FORMAT (/,' Process Information:',/)
         END IF
+!
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
           DO thread=0,numthreads-1
             CALL wclock_on (ng, iNLM, 0)
           END DO
 !$OMP END PARALLEL DO
         END DO
-
-#if defined AIR_OCEAN || defined WAVES_OCEAN
-!
-!  Initialize coupling streams between model(s).
-!
-        DO ng=1,Ngrids
-# ifdef AIR_OCEAN
-          CALL initialize_atmos_coupling (ng, MyRank)
-# endif
-# ifdef WAVES_OCEAN
-          CALL initialize_waves_coupling (ng, MyRank)
-# endif
-        END DO
-#endif
-!
-!  Read in model tunable parameters from standard input. Initialize
-!  "mod_param", "mod_ncparam" and "mod_scalar" modules.
-!
-        CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -156,132 +148,87 @@
 !  Allocate and initialize observation arrays.
 !
         CALL initialize_fourdvar
+
+      END IF
 !
-!  Read in standard deviation factors for initial conditions
-!  error covariance.  They are loaded in Tindex=1 of the
-!  e_var(...,Tindex) state variables.
+!-----------------------------------------------------------------------
+!  Initialize metrics over all nested grids, if applicable.
+!-----------------------------------------------------------------------
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
-            CALL get_state (ng, 6, 6, STDname(1,ng), STDrec, Tindex)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-        END DO
+      DO ng=1,Ngrids
+        CALL initial (ng)
+        time(ng)=time(ng)+dt(ng)            ! because no time-stepping
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
 !
-!  Read in standard deviation factors for model error covariance.
-!  They are loaded in Tindex=2 of the e_var(...,Tindex) state
-!  variables.
+!  Initialize run or ensemble counter.
 !
-        STDrec=1
-        Tindex=2
-        DO ng=1,Ngrids
-          IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
-            CALL get_state (ng, 6, 6, STDname(2,ng), STDrec, Tindex)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-        END DO
+      Nrun=1
+!
+!-----------------------------------------------------------------------
+!  Read in standard deviation factors for error covariance.
+!-----------------------------------------------------------------------
+!
+!  Initial conditions standard deviation. They are loaded in Tindex=1
+!  of the e_var(...,Tindex) state variables.
+!
+      STDrec=1
+      Tindex=1
+      DO ng=1,Ngrids
+        IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
+          CALL get_state (ng, 6, 6, STD(1,ng)%name, STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
+!
+!  Model error standard deviation. They are loaded in Tindex=2
+!  of the e_var(...,Tindex) state variables.
+!
+      STDrec=1
+      Tindex=2
+      DO ng=1,Ngrids
+        IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
+          CALL get_state (ng, 6, 6, STD(2,ng)%name, STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
 
 #ifdef ADJUST_BOUNDARY
 !
-!  Read in standard deviation factors for boundary conditions
-!  error covariance.
+!  Open boundary conditions standard deviation.
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
-            CALL get_state (ng, 8, 8, STDname(3,ng), STDrec, Tindex)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-        END DO
+      STDrec=1
+      Tindex=1
+      DO ng=1,Ngrids
+        IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
+          CALL get_state (ng, 8, 8, STD(3,ng)%name, STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!  Read in standard deviation factors for surface forcing
-!  error covariance.
+!  Surface forcing standard deviation.
 !
-        STDrec=1
-        Tindex=1
-        DO ng=1,Ngrids
-          IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
-            CALL get_state (ng, 9, 9, STDname(4,ng), STDrec, Tindex)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-        END DO
+      STDrec=1
+      Tindex=1
+      DO ng=1,Ngrids
+        IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
+          CALL get_state (ng, 9, 9, STD(4,ng)%name, STDrec, Tindex)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+      END DO
 #endif
-      END IF
-
-      RETURN
-      END SUBROUTINE ROMS_initialize
-
-      SUBROUTINE ROMS_run (Tstr, Tend)
-!
-!=======================================================================
-!                                                                      !
-!  This routine computes background-error correlations.                !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_fourdvar
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-      USE mod_stepping
-!
-#ifdef BALANCE_OPERATOR
-      USE ad_balance_mod, ONLY: ad_balance
-#endif
-      USE ad_convolution_mod, ONLY : ad_convolution
-      USE ad_variability_mod, ONLY : ad_variability
-      USE analytical_mod, ONLY : ana_perturb
-      USE ini_adjust_mod, ONLY : load_ADtoTL
-      USE ini_adjust_mod, ONLY : load_TLtoAD
-      USE normalization_mod, ONLY : normalization
-#ifdef BALANCE_OPERATOR
-      USE tl_balance_mod, ONLY: tl_balance
-#endif
-      USE tl_convolution_mod, ONLY : tl_convolution
-      USE tl_variability_mod, ONLY : tl_variability
-!
-!  Imported variable declarations
-!
-      integer, dimension(Ngrids) :: Tstr
-      integer, dimension(Ngrids) :: Tend
-!
-!  Local variable declarations.
-!
-      logical :: Lweak, add
-      integer :: i, ng, subs, tile, thread
-#ifdef BALANCE_OPERATOR
-      integer :: Lbck = 1
-#endif
-      integer :: NRMrec
-!
-!=======================================================================
-!  Run model for all nested grids, if any.
-!=======================================================================
-!
-      NEST_LOOP : DO ng=1,Ngrids
 !
 !-----------------------------------------------------------------------
-!  Initialize metrics.
+!  Compute or read in error covariance normalization factors.
 !-----------------------------------------------------------------------
 !
-        CALL initial (ng)
-        IF (exit_flag.ne.NoError) RETURN
-!
-!-----------------------------------------------------------------------
-!  Get background-error covariance normalization matrix.
-!-----------------------------------------------------------------------
-!
-!  Compute or read in background-error covariance normalization factors.
 !  If computing, write out factors to NetCDF. This is an expensive
-!  computation and needs to be computed once for an application grid.
+!  computation and needs to be computed once for a particular
+!  application grid.
 !
+      DO ng=1,Ngrids
         IF (ANY(LwrtNRM(:,ng))) THEN
           IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
             CALL def_norm (ng, iNLM, 1)
@@ -304,7 +251,8 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
 #endif
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          IF (exit_flag.ne.NoError) RETURN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
@@ -315,31 +263,101 @@
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
         END IF
+      END DO
 
+      RETURN
+      END SUBROUTINE ROMS_initialize
+
+      SUBROUTINE ROMS_run (RunInterval)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes background-error correlations.                !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+      USE mod_scalars
+      USE mod_stepping
+!
 #ifdef BALANCE_OPERATOR
+      USE ad_balance_mod, ONLY: ad_balance
+#endif
+      USE ad_convolution_mod, ONLY : ad_convolution
+      USE ad_variability_mod, ONLY : ad_variability
+      USE analytical_mod, ONLY : ana_perturb
+      USE ini_adjust_mod, ONLY : load_ADtoTL
+      USE ini_adjust_mod, ONLY : load_TLtoAD
+#ifdef BALANCE_OPERATOR
+      USE tl_balance_mod, ONLY: tl_balance
+#endif
+      USE tl_convolution_mod, ONLY : tl_convolution
+      USE tl_variability_mod, ONLY : tl_variability
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      USE zeta_balance_mod, ONLY: balance_ref, biconj
+#endif
 !
-!-----------------------------------------------------------------------
-!  Read background state.
-!-----------------------------------------------------------------------
+!  Imported variable declarations.
 !
-        CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
-        IF (exit_flag.ne.NoError) RETURN
+      real(r8), intent(in) :: RunInterval            ! seconds
+!
+!  Local variable declarations.
+!
+      logical :: Lweak, add
+      integer :: i, ng, subs, tile, thread
+#ifdef BALANCE_OPERATOR
+      integer :: Lbck = 1
 #endif
 !
 !-----------------------------------------------------------------------
 !  Test correlation model.
 !-----------------------------------------------------------------------
+
+#ifdef BALANCE_OPERATOR
+!
+!  Read background state, use initial conditions.
+!
+      DO ng=1,Ngrids
+        CALL get_state (ng, iNLM, 9, INI(ng)%name, Lbck, Lbck)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+
+# ifdef ZETA_ELLIPTIC
+!
+!  Compute the reference zeta and biconjugate gradient arrays
+!  required for the balance of free surface.
+!
+      IF (balance(isFsur)) THEN
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lbck) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL balance_ref (ng, TILE, Lbck)
+              CALL biconj (ng, TILE, iNLM, Lbck)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+          wrtZetaRef(ng)=.TRUE.
+        END DO
+      END IF
+# endif
+#endif
 !
 !  Initialize adjoint model state with a delta function at specified
 !  point. Use USER parameters from standard input to perturb solution
 !  in routine "ana_perturb". Then, convolve solution with the adjoint
 !  diffusion operator.
 !
-        ADmodel=.TRUE.
-        Lweak=.FALSE.
-        Lnew(ng)=1
+      ADmodel=.TRUE.
+      Lweak=.FALSE.
 
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck) SHARED(numthreads)
+      DO ng=1,Ngrids
+        Lnew(ng)=1
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
@@ -352,14 +370,14 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
+
         ADmodel=.FALSE.
 !
 !  Initialize tangent linear model with convolved adjoint solution.
 !  Then, apply tangent linear convolution.
 !
         add=.FALSE.
-!$OMP PARALLEL DO PRIVATE(ng,add,thread,subs,tile,Lbck)
-!$OMP&            SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(add,thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
@@ -373,10 +391,12 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
+      END DO
 !
 !  Write out background error correlation in adjoint history NetCDF
 !  file.
 !
+      DO ng=1,Ngrids
         kstp(ng)=Lnew(ng)
 #ifdef SOLVE3D
         nstp(ng)=Lnew(ng)
@@ -394,8 +414,7 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.FALSE.
 #endif
-
-      END DO NEST_LOOP
+      END DO
 
       RETURN
       END SUBROUTINE ROMS_run
@@ -404,8 +423,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear, tangent linear, and    !
-!  adjoint models execution.                                           !
+!  This routine terminates ROMS/TOMS driver execution.                 !
 !                                                                      !
 !=======================================================================
 !
@@ -417,7 +435,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, thread
+      integer :: Fcount, ng, thread
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
@@ -425,20 +443,23 @@
 !
 !  If cycling restart records, write solution into record 3.
 !
-      DO ng=1,Ngrids
-        IF (LwrtRST(ng).and.(exit_flag.eq.1)) THEN
-          IF (Master) WRITE (stdout,10)
- 10       FORMAT (/,' Blowing-up: Saving latest model state into ',     &
-     &              ' RESTART file',/)
-          IF (LcycleRST(ng).and.(NrecRST(ng).ge.2)) THEN
-            tRSTindx(ng)=2
-            LcycleRST(ng)=.FALSE.
+      IF (exit_flag.eq.1) THEN
+        DO ng=1,Ngrids
+          IF (LwrtRST(ng)) THEN
+            IF (Master) WRITE (stdout,10)
+ 10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
+     &                ' RESTART file',/)
+            Fcount=RST(ng)%Fcount
+            IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
+              RST(ng)%Rindex=2
+              LcycleRST(ng)=.FALSE.
+            END IF
+            blowup=exit_flag
+            exit_flag=NoError
+            CALL wrt_rst (ng)
           END IF
-          blowup=exit_flag
-          exit_flag=NoError
-          CALL wrt_rst (ng)
-        END IF
-      END DO
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Stop model and time profiling clocks.  Close output NetCDF files.
@@ -452,7 +473,7 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(ng,thread) SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
         DO thread=0,numthreads-1
           CALL wclock_off (ng, iNLM, 0)
         END DO
@@ -461,7 +482,7 @@
 !
 !  Close IO files.
 !
-      CALL close_io
+      CALL close_out
 
       RETURN
       END SUBROUTINE ROMS_finalize

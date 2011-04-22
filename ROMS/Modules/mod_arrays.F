@@ -66,6 +66,21 @@
       integer :: tile, subs, thread
 
       integer, parameter :: model = 0
+
+#ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on allocation time wall clock.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            CALL wclock_on (ng, iNLM, 1)
+          END DO
+!$OMP END PARALLEL DO
+        END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  Allocate model structures.
@@ -169,6 +184,21 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+#ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off allocation time wall clock.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          CALL wclock_off (ng, iNLM, 1)
+        END DO
+!$OMP END PARALLEL DO
+      END DO
+#endif
 
       RETURN
       END SUBROUTINE mod_arrays

@@ -228,8 +228,8 @@
 !  critical region, finalizes the computation of diagnostics and prints
 !  them out.
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application

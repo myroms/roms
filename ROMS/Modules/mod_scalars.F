@@ -185,6 +185,7 @@
 !                    time level n+1.
 !    dt            Size baroclinic timestep (s).
 !    dtfast        Size barotropic timestep (s).
+!    run_time      Total run time for all nested grids (s).
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
 !    time_code     Model time clock (string, Day HH:MM:SS)
@@ -208,31 +209,33 @@
 !    time_ref      Reference time for "units" attribute (YYYYMMDD.dd).
 !    r_text        Model initialization reference text (string).
 !
-        logical, dimension(Ngrids) :: PerfectRST
-        logical, dimension(Ngrids) :: PREDICTOR_2D_STEP
+        logical, allocatable :: PerfectRST(:)
+        logical, allocatable :: PREDICTOR_2D_STEP(:)
 
-        integer, dimension(Ngrids) :: indx1
-        integer, dimension(Ngrids) :: iic
-        integer, dimension(Ngrids) :: iif
-        integer, dimension(Ngrids) :: ndtfast
-        integer, dimension(Ngrids) :: nfast
+        integer, allocatable :: indx1(:)
+        integer, allocatable :: iic(:)
+        integer, allocatable :: iif(:)
+        integer, allocatable :: ndtfast(:)
+        integer, allocatable :: nfast(:)
 
-        real(r8), dimension(Ngrids) :: dt                ! seconds
-        real(r8), dimension(Ngrids) :: dtfast            ! seconds
-        real(r8), dimension(Ngrids) :: tdays             ! days
-        real(r8), dimension(Ngrids) :: time              ! seconds
-        real(r8), dimension(Ngrids) :: AVGtime           ! seconds
-        real(r8), dimension(Ngrids) :: DIAtime           ! seconds
-        real(r8), dimension(Ngrids) :: IMPtime           ! seconds
-        real(r8), dimension(Ngrids) :: ObsTime           ! seconds
-        real(r8), dimension(Ngrids) :: FrcTime           ! seconds
+        real(r8), allocatable :: dt(:)                   ! seconds
+        real(r8), allocatable :: dtfast(:)               ! seconds
+        real(r8), allocatable :: tdays(:)                ! days
+        real(r8), allocatable :: time(:)                 ! seconds
+        real(r8), allocatable :: TimeEnd(:)              ! seconds
+        real(r8), allocatable :: AVGtime(:)              ! seconds
+        real(r8), allocatable :: DIAtime(:)              ! seconds
+        real(r8), allocatable :: IMPtime(:)              ! seconds
+        real(r8), allocatable :: ObsTime(:)              ! seconds
+        real(r8), allocatable :: FrcTime(:)              ! seconds
 
         real(r8), dimension(8) :: r_date
         real(r8) :: dstart = 0.0_r8                      ! days
+        real(r8) :: run_time = 0.0_r8                    ! seconds
         real(r8) :: tide_start = 0.0_r8                  ! days
         real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
 
-        character (len=14) :: time_code(Ngrids)          ! DD HH:MM:SS
+        character (len=14), allocatable :: time_code(:)  ! DD HH:MM:SS
         character (len=19) :: r_text
 
 #if defined POWER_LAW && defined SOLVE3D
@@ -276,7 +279,7 @@
 !  is the total of baroclinic timesteps. In 2D configuration, "ntimes"
 !  is the total of barotropic timesteps.
 !
-        integer, dimension(Ngrids) :: ntimes
+        integer, allocatable :: ntimes(:)
 !
 !  Number of time interval divisions for Stochastic Optimals.  It must
 !  a multiple of "ntimes".
@@ -298,15 +301,15 @@
 !
 !  First, starting, and ending timestepping parameters
 !
-        integer, dimension(Ngrids) :: ntfirst   ! Forward-Euler step
-        integer, dimension(Ngrids) :: ntstart   ! Start step
-        integer, dimension(Ngrids) :: ntend     ! End step
+        integer, allocatable :: ntfirst(:)      ! Forward-Euler step
+        integer, allocatable :: ntstart(:)      ! Start step
+        integer, allocatable :: ntend(:)        ! End step
 !
 !  Adjoint model or tangent linear model impulse forcing time record
 !  counter and number of records available.
 !
-        integer, dimension(Ngrids) :: FrcRec
-        integer, dimension(Ngrids) :: NrecFrc
+        integer, allocatable :: FrcRec(:)
+        integer, allocatable :: NrecFrc(:)
 !
 !-----------------------------------------------------------------------
 !  Control switches.
@@ -316,11 +319,10 @@
 !  nested and/or multiple connected grids.  They are .TRUE. by default.
 !  They can turned off for a particular grind in input scripts.
 !
-        logical, dimension(Ngrids) :: Lassimilate
-        logical, dimension(Ngrids) :: Lbiology
-        logical, dimension(Ngrids) :: Lfloats
-        logical, dimension(Ngrids) :: Lsediment
-        logical, dimension(Ngrids) :: Lstations
+        logical, allocatable :: Lbiology(:)
+        logical, allocatable :: Lfloats(:)
+        logical, allocatable :: Lsediment(:)
+        logical, allocatable :: Lstations(:)
 !
 !-----------------------------------------------------------------------
 !  Physical constants.
@@ -389,8 +391,8 @@
 !  Set threshold maximum speed (m/s) and density anomaly (kg/m3) to
 !  test if the model is blowing-up.
 !
-        real(r8), dimension(Ngrids) :: maxspeed
-        real(r8), dimension(Ngrids) :: maxrho
+        real(r8), allocatable :: maxspeed(:)
+        real(r8), allocatable :: maxrho(:)
 !
         real(r8) :: max_speed = 20.0_r8         ! m/s
         real(r8) :: max_rho = 200.0_r8          ! kg/m3
@@ -405,8 +407,8 @@
 !  Shallowest and Deepest levels to apply bottom momemtum stresses as
 !  a bodyforce
 !
-        integer, dimension(Ngrids) :: levsfrc
-        integer, dimension(Ngrids) :: levbfrc
+        integer, allocatable :: levsfrc(:)
+        integer, allocatable :: levbfrc(:)
 !
 !  Vertical coordinates transform.  Currently, there are two vertical
 !  transformation equations (see set_scoord.F for details):
@@ -423,7 +425,7 @@
 !
 !                 Zo_r = [hc * s(k) + C(k) * h(x,y)] / [hc + h(x,y)]
 !
-        integer :: Vtransform(Ngrids)
+        integer, allocatable :: Vtransform(:)
 !
 !  Vertical grid stretching function flag:
 !
@@ -431,7 +433,7 @@
 !               = 2   A. Shchepetkin (ROMS-UCLA) function
 !               = 3   R. Geyer BBL function
 !
-        integer :: Vstretching(Ngrids)
+        integer, allocatable :: Vstretching(:)
 !
 !  Vertical grid stretching parameters.
 !
@@ -442,39 +444,39 @@
 !    theta_s       S-coordinate surface control parameter.
 !    theta_b       S-coordinate bottom control parameter.
 !
-        real(r8), dimension(Ngrids) :: Tcline   ! m, positive
-        real(r8), dimension(Ngrids) :: hc       ! m, positive
-        real(r8), dimension(Ngrids) :: theta_s  ! 0 < theta_s < 20
-        real(r8), dimension(Ngrids) :: theta_b  ! 0 < theta_b < 1
+        real(r8), allocatable :: Tcline(:)      ! m, positive
+        real(r8), allocatable :: hc(:)          ! m, positive
+        real(r8), allocatable :: theta_s(:)     ! 0 < theta_s < 20
+        real(r8), allocatable :: theta_b(:)     ! 0 < theta_b < 1
 !
 !  Bathymetry range values.
 !
-        real(r8), dimension(Ngrids) :: hmin     ! m, positive
-        real(r8), dimension(Ngrids) :: hmax     ! m, positive
+        real(r8), allocatable :: hmin(:)        ! m, positive
+        real(r8), allocatable :: hmax(:)        ! m, positive
 !
 !  Length (m) of domain box in the XI- and ETA-directions.
 !
-        real(r8), dimension(Ngrids) :: xl       ! m
-        real(r8), dimension(Ngrids) :: el       ! m
+        real(r8), allocatable :: xl(:)          ! m
+        real(r8), allocatable :: el(:)          ! m
 !
 !  Minimum and Maximum longitude and latitude at RHO-points
 !
-        real(r8), dimension(Ngrids) :: LonMin   ! degrees east
-        real(r8), dimension(Ngrids) :: LonMax   ! degrees east
-        real(r8), dimension(Ngrids) :: LatMin   ! degrees north
-        real(r8), dimension(Ngrids) :: LatMax   ! degrees north
+        real(r8), allocatable :: LonMin(:)      ! degrees east
+        real(r8), allocatable :: LonMax(:)      ! degrees east
+        real(r8), allocatable :: LatMin(:)      ! degrees north
+        real(r8), allocatable :: LatMax(:)      ! degrees north
 !
 !  Number of digits in grid size for format statements.
 !
-        integer, dimension(Ngrids) :: Idigits
-        integer, dimension(Ngrids) :: Jdigits
+        integer, allocatable :: Idigits(:)
+        integer, allocatable :: Jdigits(:)
 #ifdef SOLVE3D
-        integer, dimension(Ngrids) :: Kdigits
+        integer, allocatable :: Kdigits(:)
 #endif
 !
 !  Diagnostic volume averaged variables.
 !
-        integer, dimension(Ngrids) :: first_time
+        integer, allocatable :: first_time(:)
 
         real(r8) :: avgke = 0.0_r8              ! Kinetic energy
         real(r8) :: avgpe = 0.0_r8              ! Potential energy
@@ -487,24 +489,24 @@
 !
 !  Minimun and maximum grid spacing
 !
-        real(r8), dimension(Ngrids) :: DXmin
-        real(r8), dimension(Ngrids) :: DXmax
-        real(r8), dimension(Ngrids) :: DYmin
-        real(r8), dimension(Ngrids) :: DYmax
-        real(r8), dimension(Ngrids) :: DZmin
-        real(r8), dimension(Ngrids) :: DZmax
+        real(r8), allocatable :: DXmin(:)
+        real(r8), allocatable :: DXmax(:)
+        real(r8), allocatable :: DYmin(:)
+        real(r8), allocatable :: DYmax(:)
+        real(r8), allocatable :: DZmin(:)
+        real(r8), allocatable :: DZmax(:)
 !
 !  Maximum size of a grid node (m) over the whole curvilinear grid
 !  application. Used for scaling horizontal mixing by the grid size.
 !
-        real(r8), dimension(Ngrids) :: grdmax
+        real(r8), allocatable :: grdmax(:)
 #ifdef DIFF_3DCOEF
-        real(r8), dimension(Ngrids) :: DiffMin  ! Minimun diffusion
-        real(r8), dimension(Ngrids) :: DiffMax  ! Maximum diffusion
+        real(r8), allocatable :: DiffMin(:)     ! Minimun diffusion
+        real(r8), allocatable :: DiffMax(:)     ! Maximum diffusion
 #endif
 #ifdef VISC_3DCOEF
-        real(r8), dimension(Ngrids) :: ViscMin  ! Minimum viscosity
-        real(r8), dimension(Ngrids) :: ViscMax  ! Maximum viscosity
+        real(r8), allocatable :: ViscMin(:)     ! Minimum viscosity
+        real(r8), allocatable :: ViscMax(:)     ! Maximum viscosity
 #endif
 !
 !  Courant Numbers due to gravity wave speed limits.
@@ -530,19 +532,19 @@
 !    Tcoef         Thermal expansion coefficient (1/Celsius).
 !    Scoef         Saline contraction coefficient (1/PSU).
 !
-        real(r8), dimension(Ngrids) :: R0
-        real(r8), dimension(Ngrids) :: Tcoef
-        real(r8), dimension(Ngrids) :: Scoef
+        real(r8), allocatable :: R0(:)
+        real(r8), allocatable :: Tcoef(:)
+        real(r8), allocatable :: Scoef(:)
 !
 !  Background potential temperature (Celsius) and salinity (PSU) values
 !  used in analytical initializations.
 !
-        real(r8), dimension(Ngrids) :: T0
-        real(r8), dimension(Ngrids) :: S0
+        real(r8), allocatable :: T0(:)
+        real(r8), allocatable :: S0(:)
 !
 !  Slipperiness variable, either 1.0 (free slip) or -1.0 (no slip).
 !
-        real(r8), dimension(Ngrids) :: gamma2
+        real(r8), allocatable :: gamma2(:)
 !
 !  Weighting coefficient for the newest (implicit) time step derivatives
 !  in the Crack-Nicolson implicit scheme (usually, lambda=0.5).
@@ -556,7 +558,7 @@
 !
 !  Jerlov water type to assign everywhere, range values: 1 - 5.
 !
-        integer, dimension(Ngrids) :: lmd_Jwt
+        integer, allocatable :: lmd_Jwt(:)
 !
 !  Grid r-factor (non-dimensional).
 !
@@ -565,8 +567,8 @@
 !
 !  Linear (m/s) and quadratic (nondimensional) bottom drag coefficients.
 !
-        real(r8), dimension(Ngrids) :: rdrg
-        real(r8), dimension(Ngrids) :: rdrg2
+        real(r8), allocatable :: rdrg(:)
+        real(r8), allocatable :: rdrg2(:)
 !
 !  Minimum and maximum threshold for transfer coefficient of momentum.
 !
@@ -575,12 +577,12 @@
 !
 !  Surface and bottom roughness (m)
 !
-        real(r8), dimension(Ngrids) :: Zos
-        real(r8), dimension(Ngrids) :: Zob
+        real(r8), allocatable :: Zos(:)
+        real(r8), allocatable :: Zob(:)
 !
 !  Minimum depth for wetting and drying (m).
 !
-        real(r8), dimension(Ngrids) :: Dcrit
+        real(r8), allocatable :: Dcrit(:)
 !
 !  Mean density (Kg/m3) used when the Boussinesq approximation is
 !  inferred.
@@ -596,7 +598,7 @@
 !  Number of converged Ritz values and relative accuracy of computed
 !  Ritz values.
 !
-        integer  :: Nconv = 0
+        integer, allocatable :: Nconv(:)
         real(r8) :: Ritz_tol = 1.0E-15_r8
 #endif
 !
@@ -607,7 +609,7 @@
 !
 !  Weights for the time average of 2D fields.
 !
-        real(r8), dimension(2,0:256,Ngrids) :: weight
+        real(r8), allocatable :: weight(:,:,:)
 !
 !  Constants.
 !
@@ -682,22 +684,22 @@
 !    tkenu4        Lateral biharmonic (squared root) constant mixing
 !                    coefficient (m2 s^-1/2) for turbulent energy.
 !
-        real(r8), dimension(Ngrids) :: Akk_bak       ! m2/s
-        real(r8), dimension(Ngrids) :: Akp_bak       ! m2/s
-        real(r8), dimension(Ngrids) :: Akv_bak       ! m2/s
+        real(r8), allocatable :: Akk_bak(:)          ! m2/s
+        real(r8), allocatable :: Akp_bak(:)          ! m2/s
+        real(r8), allocatable :: Akv_bak(:)          ! m2/s
 
-        real(r8), dimension(Ngrids) :: ad_visc2      ! m2/s
-        real(r8), dimension(Ngrids) :: nl_visc2      ! m2/s
-        real(r8), dimension(Ngrids) :: tl_visc2      ! m2/s
-        real(r8), dimension(Ngrids) :: visc2         ! m2/s
+        real(r8), allocatable :: ad_visc2(:)         ! m2/s
+        real(r8), allocatable :: nl_visc2(:)         ! m2/s
+        real(r8), allocatable :: tl_visc2(:)         ! m2/s
+        real(r8), allocatable :: visc2(:)            ! m2/s
 
-        real(r8), dimension(Ngrids) :: ad_visc4      ! m2 s-1/2
-        real(r8), dimension(Ngrids) :: nl_visc4      ! m2 s-1/2
-        real(r8), dimension(Ngrids) :: tl_visc4      ! m2 s-1/2
-        real(r8), dimension(Ngrids) :: visc4         ! m2 s-1/2
+        real(r8), allocatable :: ad_visc4(:)         ! m2 s-1/2
+        real(r8), allocatable :: nl_visc4(:)         ! m2 s-1/2
+        real(r8), allocatable :: tl_visc4(:)         ! m2 s-1/2
+        real(r8), allocatable :: visc4(:)            ! m2 s-1/2
 
-        real(r8), dimension(Ngrids) :: tkenu2        ! m2/s
-        real(r8), dimension(Ngrids) :: tkenu4        ! m2 s-1/2
+        real(r8), allocatable :: tkenu2(:)           ! m2/s
+        real(r8), allocatable :: tkenu4(:)           ! m2 s-1/2
 
         real(r8), allocatable :: Akt_bak(:,:)        ! m2/s
         real(r8), allocatable :: Kdiff(:,:)          ! m2/s
@@ -716,8 +718,8 @@
 !  representer tangent linear solution during Picard iterations to
 !  improve stability and convergence.
 !
-        real(r8), dimension(Ngrids) :: tl_M2diff     ! 2D momentum
-        real(r8), dimension(Ngrids) :: tl_M3diff     ! 3D momentum
+        real(r8), allocatable :: tl_M2diff(:)        ! 2D momentum
+        real(r8), allocatable :: tl_M3diff(:)        ! 3D momentum
 
         real(r8), allocatable :: tl_Tdiff(:,:)       ! tracers
 !
@@ -725,8 +727,8 @@
 !  based algorithms. In some applications, a smaller/larger values of
 !  vertical mixing are necessary for stability.
 !
-        real(r8), dimension(Ngrids) :: ad_Akv_fac    ! ADM momentum
-        real(r8), dimension(Ngrids) :: tl_Akv_fac    ! TLM momentum
+        real(r8), allocatable :: ad_Akv_fac(:)       ! ADM momentum
+        real(r8), allocatable :: tl_Akv_fac(:)       ! TLM momentum
 
         real(r8), allocatable :: ad_Akt_fac(:,:)     ! ADM tracers
         real(r8), allocatable :: tl_Akt_fac(:,:)     ! TLM tracers
@@ -737,104 +739,86 @@
 !
 !  Switches to activate creation and writing of output NetCDF files.
 !
-        logical, dimension(Ngrids) :: LdefADJ    ! Adjoint file
-        logical, dimension(Ngrids) :: LdefAVG    ! Average file
-        logical, dimension(Ngrids) :: LdefDIA    ! Diagnostics file
-        logical, dimension(Ngrids) :: LdefERR    ! 4DVar error file
-        logical, dimension(Ngrids) :: LdefFLT    ! Floats file
-        logical, dimension(Ngrids) :: LdefHIS    ! History file
-        logical, dimension(Ngrids) :: LdefHSS    ! Hessian file
-        logical, dimension(Ngrids) :: LdefINI    ! Initial file
-        logical, dimension(Ngrids) :: LdefIRP    ! Initial RPM file
-        logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
-        logical, dimension(Ngrids) :: LdefLCZ    ! Lanczos file
-        logical, dimension(Ngrids) :: LdefMOD    ! 4DVAR file
-        logical, dimension(Ngrids) :: LdefRST    ! Restart file
-        logical, dimension(Ngrids) :: LdefSTA    ! Stations file
-        logical, dimension(Ngrids) :: LdefTIDE   ! tide forcing file
-        logical, dimension(Ngrids) :: LdefTLM    ! Tangent linear file
-        logical, dimension(Ngrids) :: LdefTLF    ! TLM/RPM impulse file
+        logical, allocatable :: LdefADJ(:)       ! Adjoint file
+        logical, allocatable :: LdefAVG(:)       ! Average file
+        logical, allocatable :: LdefDIA(:)       ! Diagnostics file
+        logical, allocatable :: LdefERR(:)       ! 4DVar error file
+        logical, allocatable :: LdefFLT(:)       ! Floats file
+        logical, allocatable :: LdefHIS(:)       ! History file
+        logical, allocatable :: LdefHSS(:)       ! Hessian file
+        logical, allocatable :: LdefINI(:)       ! Initial file
+        logical, allocatable :: LdefIRP(:)       ! Initial RPM file
+        logical, allocatable :: LdefITL(:)       ! Initial TLM file
+        logical, allocatable :: LdefLCZ(:)       ! Lanczos file
+        logical, allocatable :: LdefMOD(:)       ! 4DVAR file
+        logical, allocatable :: LdefRST(:)       ! Restart file
+        logical, allocatable :: LdefSTA(:)       ! Stations file
+        logical, allocatable :: LdefTIDE(:)      ! tide forcing file
+        logical, allocatable :: LdefTLM(:)       ! Tangent linear file
+        logical, allocatable :: LdefTLF(:)       ! TLM/RPM impulse file
 
-        logical, dimension(Ngrids) :: LwrtADJ    ! Write adjoint file
-        logical, dimension(Ngrids) :: LwrtAVG    ! Write average file
-        logical, dimension(Ngrids) :: LwrtDIA    ! Write diagnostic file
-        logical, dimension(Ngrids) :: LwrtHIS    ! Write history file
-        logical, dimension(Ngrids) :: LwrtPER    ! Write during ensemble
-        logical, dimension(Ngrids) :: LwrtRST    ! Write restart file
-        logical, dimension(Ngrids) :: LwrtTLM    ! Write tangent file
-        logical, dimension(Ngrids) :: LwrtTLF    ! Write impulse file
+        logical, allocatable :: LwrtADJ(:)       ! Write adjoint file
+        logical, allocatable :: LwrtAVG(:)       ! Write average file
+        logical, allocatable :: LwrtDIA(:)       ! Write diagnostic file
+        logical, allocatable :: LwrtHIS(:)       ! Write history file
+        logical, allocatable :: LwrtPER(:)       ! Write during ensemble
+        logical, allocatable :: LwrtRST(:)       ! Write restart file
+        logical, allocatable :: LwrtTLM(:)       ! Write tangent file
+        logical, allocatable :: LwrtTLF(:)       ! Write impulse file
 
-        logical, dimension(4,Ngrids) :: LdefNRM  ! Norm file
-        logical, dimension(4,Ngrids) :: LwrtNRM  ! Write norm file
+        logical, allocatable :: LdefNRM(:,:)     ! Norm file
+        logical, allocatable :: LwrtNRM(:,:)     ! Write norm file
 !
 !  Switch to write out adjoint 2D state arrays instead of IO solution
 !  arrays and adjoint ocean time. This is used in 4DVAR for IO
 !  maniputations.
 !
-        logical, dimension(Ngrids) :: LwrtState2d
-        logical, dimension(Ngrids) :: LwrtTime
+        logical, allocatable :: LwrtState2d(:)
+        logical, allocatable :: LwrtTime(:)
 !
 !  Switch to write out adjoint surface forcing fields adjusted by the
 !  4DVAR algorithms.
 !
-        logical, dimension(Ngrids) :: Ladjusted
+        logical, allocatable :: Ladjusted(:)
 !
 !  Switch to write application set-up information to standard output.
 !
-        logical, dimension(Ngrids) :: LwrtInfo
+        logical, allocatable :: LwrtInfo(:)
 !
 !  Switch used to create new output NetCDF files. If TRUE, new output
 !  files are created. If FALSE, data is appended to an existing output
 !  files.  Used only for history, average and station files.
 !
-        logical, dimension(Ngrids) :: ldefout    ! New output files
+        logical, allocatable :: ldefout(:)       ! New output files
 !
 !  Number of timesteps between creation of new output files.
 !
-        integer, dimension(Ngrids) :: ndefADJ    ! Adjoint file
-        integer, dimension(Ngrids) :: ndefAVG    ! Average file
-        integer, dimension(Ngrids) :: ndefDIA    ! Diagnostics file
-        integer, dimension(Ngrids) :: ndefHIS    ! History file
-        integer, dimension(Ngrids) :: ndefTLM    ! Tangent linear file
+        integer, allocatable :: ndefADJ(:)       ! Adjoint file
+        integer, allocatable :: ndefAVG(:)       ! Average file
+        integer, allocatable :: ndefDIA(:)       ! Diagnostics file
+        integer, allocatable :: ndefHIS(:)       ! History file
+        integer, allocatable :: ndefTLM(:)       ! Tangent linear file
 !
 !  Starting timestep for accumulation of output.
 !
-        integer, dimension(Ngrids) :: ntsAVG     ! Average file
-        integer, dimension(Ngrids) :: ntsDIA     ! Diagnostics file
+        integer, allocatable :: ntsAVG(:)        ! Average file
+        integer, allocatable :: ntsDIA(:)        ! Diagnostics file
 !
 !  Number of timesteps between writing of output data.
 !
-        integer, dimension(Ngrids) :: nADJ       ! Adjoint file
-        integer, dimension(Ngrids) :: nAVG       ! Average file
-        integer, dimension(Ngrids) :: nDIA       ! Diagnostics file
-        integer, dimension(Ngrids) :: nFLT       ! Floats file
-        integer, dimension(Ngrids) :: nHIS       ! History file
-        integer, dimension(Ngrids) :: nRST       ! Restart file
-        integer, dimension(Ngrids) :: nSTA       ! Stations file
-        integer, dimension(Ngrids) :: nTLM       ! Tangent linear file
-!
-!  Number of time records written into output files.
-!
-        integer, dimension(Ngrids) :: NrecADJ    ! Adjoint file
-        integer, dimension(Ngrids) :: NrecAVG    ! Average file
-        integer, dimension(Ngrids) :: NrecDIA    ! Diagnostics file
-        integer, dimension(Ngrids) :: NrecERR    ! 4DVar error file
-        integer, dimension(Ngrids) :: NrecFLT    ! Floats file
-        integer, dimension(Ngrids) :: NrecHIS    ! History file
-        integer, dimension(Ngrids) :: NrecHSS    ! Hessian file
-        integer, dimension(Ngrids) :: NrecINI    ! NLM Initial file
-        integer, dimension(Ngrids) :: NrecITL    ! TLM Initial file
-        integer, dimension(Ngrids) :: NrecLCZ    ! Lanczos file
-        integer, dimension(Ngrids) :: NrecRST    ! Restart file
-        integer, dimension(Ngrids) :: NrecSTA    ! Station file
-        integer, dimension(Ngrids) :: NrecTLM    ! Tangent linear file
-
-        integer, dimension(4,Ngrids) :: NrecNRM  ! norm file
+        integer, allocatable :: nADJ(:)          ! Adjoint file
+        integer, allocatable :: nAVG(:)          ! Average file
+        integer, allocatable :: nDIA(:)          ! Diagnostics file
+        integer, allocatable :: nFLT(:)          ! Floats file
+        integer, allocatable :: nHIS(:)          ! History file
+        integer, allocatable :: nRST(:)          ! Restart file
+        integer, allocatable :: nSTA(:)          ! Stations file
+        integer, allocatable :: nTLM(:)          ! Tangent linear file
 !
 !  Number of timesteps between print of single line information to
 !  standard output.
 !
-        integer, dimension(Ngrids) :: ninfo
+        integer, allocatable :: ninfo(:)
 !
 !  Number of timesteps between 4DVAR adjustment of open boundaries.
 !  In strong constraint 4DVAR, it is possible to open bounadies at
@@ -849,9 +833,9 @@
 !  output history NetCDF files and the adjustment is for constant
 !  open boundaries with constant correction.
 !
-        integer, dimension(Ngrids) :: nOBC       ! number of timesteps
-        integer, dimension(Ngrids) :: Nbrec      ! number of records
-        integer, dimension(Ngrids) :: OBCcount   ! record counter
+        integer, allocatable :: nOBC(:)          ! number of timesteps
+        integer, allocatable :: Nbrec(:)         ! number of records
+        integer, allocatable :: OBCcount(:)      ! record counter
 
 #ifdef ADJUST_BOUNDARY
 !
@@ -878,9 +862,9 @@
 !  output history NetCDF files and the adjustment is for constant
 !  forcing with constant correction.
 !
-        integer, dimension(Ngrids) :: nSFF       ! number of timesteps
-        integer, dimension(Ngrids) :: Nfrec      ! number of records
-        integer, dimension(Ngrids) :: SFcount    ! record counter
+        integer, allocatable :: nSFF(:)          ! number of timesteps
+        integer, allocatable :: Nfrec(:)         ! number of records
+        integer, allocatable :: SFcount(:)       ! record counter
 
 #ifdef ADJUST_STFLUX
 !
@@ -902,24 +886,24 @@
 !  time record. That is, the initialization record is assigned
 !  internally.
 !
-        integer, dimension(Ngrids) :: nrrec
+        integer, allocatable :: nrrec(:)
 #ifdef FLOATS
 !
 !  Floats restart switch.
 !
-        integer, dimension(Ngrids) :: frrec
+        integer, allocatable :: frrec(:)
 #endif
 !
 !  Switch to activate processing of input data.  This switch becomes
 !  very useful when reading input data serially in parallel
 !  applications.
 !
-        logical, dimension(Ngrids) :: synchro_flag
+        logical, allocatable :: synchro_flag(:)
 !
 !  Switch to inialize model with latest time record from initial
 !  (restart/history) NetCDF file.
 !
-        logical, dimension(Ngrids) :: LastRec
+        logical, allocatable :: LastRec(:)
 !
 !  Generalized Statbility Theory (GST) parameters.
 !
@@ -932,16 +916,16 @@
 !  only the latest two time records are maintained.  If FALSE, all
 !  field records are saved.
 !
-        logical, dimension(Ngrids) :: LcycleADJ
-        logical, dimension(Ngrids) :: LcycleRST
-        logical, dimension(Ngrids) :: LcycleTLM
+        logical, allocatable :: LcycleADJ(:)
+        logical, allocatable :: LcycleRST(:)
+        logical, allocatable :: LcycleTLM(:)
 
 #if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !  Counter storing the number of accumulated harmonic records used
 !  for detiding.
 !
-        integer, dimension(Ngrids) :: Hcount
+        integer, allocatable :: Hcount(:)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -951,13 +935,13 @@
 !  Starting and ending vertical levels of the 3D adjoint state whose
 !  sensitivity is required.
 !
-        integer, dimension(Ngrids) :: KstrS        ! starting level
-        integer, dimension(Ngrids) :: KendS        ! ending level
+        integer, allocatable :: KstrS(:)           ! starting level
+        integer, allocatable :: KendS(:)           ! ending level
 !
 !  Starting and ending day for adjoint sensitivity forcing.
 !
-        real(r8), dimension(Ngrids) :: DstrS       ! starting day
-        real(r8), dimension(Ngrids) :: DendS       ! ending day
+        real(r8), allocatable :: DstrS(:)          ! starting day
+        real(r8), allocatable :: DendS(:)          ! ending day
 !
 !-----------------------------------------------------------------------
 !  Stochastic optimals parameters.
@@ -965,16 +949,16 @@
 !
 !  Stochastic optimals forcing records counter.
 !
-        integer :: SOrec
+        integer, allocatable :: SOrec(:)
 !
 !  Trace of stochastic optimals matrix.
 !
-        real(r8), dimension(Ngrids) :: TRnorm
+        real(r8), allocatable :: TRnorm(:)
 !
 !  Stochastic optimals time decorrelation scale (days) assumed for
 !  red noise processes.
 !
-        real(r8), dimension(Ngrids) :: SO_decay
+        real(r8), allocatable :: SO_decay(:)
 !
 !  Stochastic optimals surface forcing standard deviation for
 !  dimensionalization.
@@ -1004,8 +988,8 @@
 !  Logical switches to process weak constraint forcing as intermittent
 !  or continuous impulses.
 !
-        logical :: SporadicImpulse = .FALSE.     ! intermittent impulses
-        logical :: FrequentImpulse = .FALSE.     ! continuous impulses
+        logical, allocatable :: SporadicImpulse(:)     ! intermittent
+        logical, allocatable :: FrequentImpulse(:)     ! continuous
 !
 !  Stability and accuracy factor used to scale the time-step of the
 !  horizontal and vertical convolution operator below its theoretical
@@ -1020,13 +1004,13 @@
 !  using empirical T-S relationships in error covariance balance
 !  operator.
 !
-        real(r8), dimension(Ngrids) :: dTdz_min  ! minimum dT/ds (C/m)
-        real(r8), dimension(Ngrids) :: ml_depth  ! mixed-layer depth (m)
+        real(r8), allocatable :: dTdz_min(:)     ! minimum dT/ds (C/m)
+        real(r8), allocatable :: ml_depth(:)     ! mixed-layer depth (m)
 !
 !  Balance operator level of no motion depth (m; positive) used when
 !  computing balanced free-surface contribution.
 !
-        real(r8), dimension(Ngrids) :: LNM_depth
+        real(r8), allocatable :: LNM_depth(:)
 !
 ! Balance operator level of no motion flag used to compute balanced
 ! free-surface contribution:
@@ -1099,14 +1083,14 @@
         integer, parameter :: ieast = 3
         integer, parameter :: inorth = 4
 
-        real(r8), dimension(Ngrids) :: obcfac
-        real(r8), dimension(Ngrids,4) :: FSobc_in
-        real(r8), dimension(Ngrids,4) :: FSobc_out
-        real(r8), dimension(Ngrids,4) :: M2obc_in
-        real(r8), dimension(Ngrids,4) :: M2obc_out
+        real(r8), allocatable :: obcfac(:)
+        real(r8), allocatable :: FSobc_in(:,:)
+        real(r8), allocatable :: FSobc_out(:,:)
+        real(r8), allocatable :: M2obc_in(:,:)
+        real(r8), allocatable :: M2obc_out(:,:)
 #ifdef SOLVE3D
-        real(r8), dimension(Ngrids,4) :: M3obc_in
-        real(r8), dimension(Ngrids,4) :: M3obc_out
+        real(r8), allocatable :: M3obc_in(:,:)
+        real(r8), allocatable :: M3obc_out(:,:)
         real(r8), allocatable :: Tobc_in(:,:,:)
         real(r8), allocatable :: Tobc_out(:,:,:)
 #endif
@@ -1114,17 +1098,10 @@
 !  Inverse time-scales (1/s) for nudging at open boundaries and sponge
 !  areas.
 !
-        real(r8), dimension(Ngrids) :: Znudg       ! Free-surface
-        real(r8), dimension(Ngrids) :: M2nudg      ! 2D momentum
-        real(r8), dimension(Ngrids) :: M3nudg      ! 3D momentum
-        real(r8), allocatable :: Tnudg (:,:)       ! Tracers
-!
-!  Inverse time-scales (1/s) for assimilation via nudging.
-!
-        real(r8), dimension(Ngrids) :: Znudass     ! Free-surface
-        real(r8), dimension(Ngrids) :: M2nudass    ! 2D momentum
-        real(r8), dimension(Ngrids) :: M3nudass    ! 3D momentum
-        real(r8), allocatable :: Tnudass(:,:)      ! Tracers
+        real(r8), allocatable :: Znudg(:)          ! Free-surface
+        real(r8), allocatable :: M2nudg(:)         ! 2D momentum
+        real(r8), allocatable :: M3nudg(:)         ! 3D momentum
+        real(r8), allocatable :: Tnudg(:,:)        ! Tracers
 !
 !  Variables used to impose mass flux conservation in open boundary
 !  configurations.
@@ -1171,9 +1148,9 @@
         real(r8) :: blk_tcw = 0.6_r8          ! (W/m/K)
         real(r8) :: blk_visw = 0.000001_r8    ! (m2/s)
 
-        real(r8), dimension(Ngrids) :: blk_ZQ     ! (m)
-        real(r8), dimension(Ngrids) :: blk_ZT     ! (m)
-        real(r8), dimension(Ngrids) :: blk_ZW     ! (m)
+        real(r8), allocatable :: blk_ZQ(:)        ! (m)
+        real(r8), allocatable :: blk_ZT(:)        ! (m)
+        real(r8), allocatable :: blk_ZW(:)        ! (m)
 #endif
 # if defined SG_BBL || defined SSW_BBL
 !
@@ -1383,19 +1360,19 @@
 !    gls_sigp      Constant Schmidt number (non-dimensional) for
 !                    turbulent generic statistical field, "psi".
 !
-        real(r8), dimension(Ngrids) :: gls_m
-        real(r8), dimension(Ngrids) :: gls_n
-        real(r8), dimension(Ngrids) :: gls_p
-        real(r8), dimension(Ngrids) :: gls_sigk
-        real(r8), dimension(Ngrids) :: gls_sigp
-        real(r8), dimension(Ngrids) :: gls_cmu0
-        real(r8), dimension(Ngrids) :: gls_cmupr
-        real(r8), dimension(Ngrids) :: gls_c1
-        real(r8), dimension(Ngrids) :: gls_c2
-        real(r8), dimension(Ngrids) :: gls_c3m
-        real(r8), dimension(Ngrids) :: gls_c3p
-        real(r8), dimension(Ngrids) :: gls_Kmin
-        real(r8), dimension(Ngrids) :: gls_Pmin
+        real(r8), allocatable :: gls_m(:)
+        real(r8), allocatable :: gls_n(:)
+        real(r8), allocatable :: gls_p(:)
+        real(r8), allocatable :: gls_sigk(:)
+        real(r8), allocatable :: gls_sigp(:)
+        real(r8), allocatable :: gls_cmu0(:)
+        real(r8), allocatable :: gls_cmupr(:)
+        real(r8), allocatable :: gls_c1(:)
+        real(r8), allocatable :: gls_c2(:)
+        real(r8), allocatable :: gls_c3m(:)
+        real(r8), allocatable :: gls_c3p(:)
+        real(r8), allocatable :: gls_Kmin(:)
+        real(r8), allocatable :: gls_Pmin(:)
 #ifdef GLS_MIXING
 # if defined CANUTO_A || defined CANUTO_B
         real(r8) :: gls_s0
@@ -1448,10 +1425,10 @@
 ! amplitude (zos_hsig_alpha), wave dissipation (SZ_ALPHA), and
 ! Craig and Banner wave breaking (CRGBAN_CW).
 !
-        real(r8), dimension(Ngrids) :: charnok_alpha
-        real(r8), dimension(Ngrids) :: zos_hsig_alpha
-        real(r8), dimension(Ngrids) :: sz_alpha
-        real(r8), dimension(Ngrids) :: crgban_cw
+        real(r8), allocatable :: charnok_alpha(:)
+        real(r8), allocatable :: zos_hsig_alpha(:)
+        real(r8), allocatable :: sz_alpha(:)
+        real(r8), allocatable :: crgban_cw(:)
 
 #if defined MY25_MIXING || defined GLS_MIXING
 !
@@ -1534,134 +1511,22 @@
 !
         logical :: TLmodel = .FALSE.
         logical :: ADmodel = .FALSE.
-
-#if defined ASSIMILATION || defined NUDGING
 !
-!-----------------------------------------------------------------------
-!  Data assimilation parameters.
-!-----------------------------------------------------------------------
-!
-!  Switches to assimilate observations.
-!
-        logical, dimension(Ngrids) :: assi_SSH      ! Sea surface height
-        logical, dimension(Ngrids) :: assi_SST      ! SST
-        logical, dimension(Ngrids) :: assi_UVsur    ! Surface currents
-        logical, dimension(Ngrids) :: assi_UV       ! 3D currents
-        logical, allocatable :: assi_T(:,:)         ! Tracers
-!
-!  Switches to extend vertically surface observations.
-!
-        logical, dimension(Ngrids) :: extend_SST    ! SST
-        logical, dimension(Ngrids) :: extend_UV     ! Surface currents
-!
-!  Switches activated at the beggining of observations assimilation.
-!
-        logical, dimension(Ngrids) :: first_SSH     ! Sea surface height
-        logical, dimension(Ngrids) :: first_UV      ! Currents
-        logical, allocatable :: first_T(:,:)        ! Tracers
-!
-!  Switches indicating assimilation of observations at the current
-!  timestep.
-!
-        logical, dimension(Ngrids) :: update_SSH    ! Sea surface height
-        logical, dimension(Ngrids) :: update_SST    ! SST
-        logical, dimension(Ngrids) :: update_UVsur  ! Surface currents
-        logical, dimension(Ngrids) :: update_UV     ! Currents
-        logical, allocatable :: update_T(:,:)       ! Tracers
-!
-!  Starting time (days) for assimilation of observations.
-!
-        real(r8), dimension(Ngrids) :: timeSSHobs   ! Sea surface height
-        real(r8), dimension(Ngrids):: timeVobs      ! Currents
-        real(r8), allocatable :: timeTobs(:,:)      ! Tracers
-!
-!  Time (days) for current observations snapshots.
-!
-        real(r8), dimension(2,Ngrids) :: tSSHobs    ! Sea surface height
-        real(r8), dimension(2,Ngrids) :: tVobs      ! Currents
-        real(r8), allocatable :: tTobs(:,:,:)       ! Tracers
-!
-!  Latest observation time (seconds, monotonic) of read data.
-!
-        real(r8), dimension(Ngrids) :: tsSSHobs     ! Sea surface height
-        real(r8), dimension(Ngrids) :: tsVobs       ! Currents
-        real(r8), allocatable :: tsTobs(:,:)        ! Tracers
-!
-!  Current Observations error variance minimum and maximum values.
-!
-        real(r8), dimension(Ngrids) :: EobsSSHmin   ! Sea surface height
-        real(r8), dimension(Ngrids) :: EobsSSHmax
-        real(r8), dimension(Ngrids) :: EobsSSTmin   ! SST
-        real(r8), dimension(Ngrids) :: EobsSSTmax
-        real(r8), dimension(Ngrids) :: EobsUVmin    ! Currents
-        real(r8), dimension(Ngrids) :: EobsUVmax
-        real(r8), allocatable :: EobsTmin(:,:)      ! Tracers
-        real(r8), allocatable :: EobsTmax(:,:)
-!
-!  Observations vertical extension coefficients.
-!
-        integer, parameter :: KP = 100
-
-        integer, dimension(Ngrids) :: npSST
-        integer, dimension(Ngrids) :: npUV
-
-        real(r8), dimension(0:KP,Ngrids) :: pcoef_SST   ! SST
-        real(r8), dimension(0:KP,Ngrids) :: pcoef_U     ! U-velocity
-        real(r8), dimension(0:KP,Ngrids) :: pcoef_V     ! V-vlocity
-!
-!  Observations error variance extension coefficients.
-!
-        real(r8), dimension(0:KP,Ngrids) :: perr_SST    ! SST
-        real(r8), dimension(0:KP,Ngrids) :: perr_V      ! Currents
-!
-!  Extension depth parameters.
-!
-!    ZmSST         Maximum valid depth for SST extension basis function.
-!    ZoSST         E-folding depth  to extend vertically SST
-!                    non-dimensional error variance.
-!    ZmUV          Maximum valid depth for surface velocity extension
-!                    basis functions.
-!    ZoUV          E-folding depth to extend vertically surface
-!                    currents non-dimensional.
-!
-        real(r8), dimension(Ngrids) :: ZmSST            ! m
-        real(r8), dimension(Ngrids) :: ZoSST            ! m, positive
-        real(r8), dimension(Ngrids) :: ZmUV             ! m
-        real(r8), dimension(Ngrids) :: ZoUV             ! m, positive
-!
-!  Initial model error (percentage, 0-100%).
-!
-        real(r8), dimension(Ngrids) :: Emod0
-!
-!  Empirical model error growth scale (days).
-!
-        real(r8), dimension(Ngrids) :: Tgrowth
-!
-!  Correlation between model and observations.
-!
-        real(r8), dimension(Ngrids) :: cor
-!
-!  Model RMS error adjustment factor due to truncation.
-!
-        real(r8) :: err_fct
-#endif
-
       CONTAINS
-
-      SUBROUTINE initialize_scalars
+!
+      SUBROUTINE allocate_scalars
 !
 !=======================================================================
 !                                                                      !
-!  This routine initializes several variables in module "mod_scalars"  !
-!  for all nested grids.                                               !
+!  This routine allocates structure and  several variables in module   !
+!  that depend on the number of nested grids.                          !
 !                                                                      !
 !=======================================================================
 !
 !  Local variable declarations.
 !
-      integer :: i, ic, j, ng, itrc
+      integer :: ng
 
-      real(r8) :: one, zero
       real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
@@ -1705,8 +1570,7 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Select the bigger value of number of tracer between all grids. Then,
-!  allocate tracer type variables.
+!  Allocate variables.
 !-----------------------------------------------------------------------
 !
 #if defined FOUR_DVAR || defined VERIFICATION
@@ -1719,69 +1583,359 @@
 # endif
 !
 #endif
+
+#ifdef T_PASSIVE
+      allocate ( inert(NPT) )
+#endif
+
+#if defined FLOATS && defined SOLVE3D
+      allocate ( ifTvar(MT) )
+#endif
+
+      allocate ( PerfectRST(Ngrids) )
+      allocate ( PREDICTOR_2D_STEP(Ngrids) )
+
+      allocate ( indx1(Ngrids) )
+      allocate ( iic(Ngrids) )
+      allocate ( iif(Ngrids) )
+      allocate ( ndtfast(Ngrids) )
+      allocate ( nfast(Ngrids) )
+
+      allocate ( dt(Ngrids) )
+      allocate ( dtfast(Ngrids) )
+      allocate ( tdays(Ngrids) )
+      allocate ( time(Ngrids) )
+      allocate ( TimeEnd(Ngrids) )
+      allocate ( AVGtime(Ngrids) )
+      allocate ( DIAtime(Ngrids) )
+      allocate ( IMPtime(Ngrids) )
+      allocate ( ObsTime(Ngrids) )
+      allocate ( FrcTime(Ngrids) )
+
+      allocate ( time_code(Ngrids) )
+
+      allocate ( ntimes(Ngrids) )
+      allocate ( ntfirst(Ngrids) )
+      allocate ( ntstart(Ngrids) )
+      allocate ( ntend(Ngrids) )
+
+      allocate ( FrcRec(Ngrids) )
+      allocate ( NrecFrc(Ngrids) )
+
+      allocate ( Lbiology(Ngrids) )
+      allocate ( Lfloats(Ngrids) )
+      allocate ( Lsediment(Ngrids) )
+      allocate ( Lstations(Ngrids) )
+
       allocate ( LtracerSrc(MT,Ngrids) )
+
+      allocate ( maxspeed(Ngrids) )
+      allocate ( maxrho(Ngrids) )
+
+      allocate ( levsfrc(Ngrids) )
+      allocate ( levbfrc(Ngrids) )
+
+      allocate ( Vtransform(Ngrids) )
+      allocate ( Vstretching(Ngrids) )
+
+      allocate ( Tcline(Ngrids) )
+      allocate ( hc(Ngrids) )
+      allocate ( theta_s(Ngrids) )
+      allocate ( theta_b(Ngrids) )
+
+      allocate ( hmin(Ngrids) )
+      allocate ( hmax(Ngrids) )
+
+      allocate ( xl(Ngrids) )
+      allocate ( el(Ngrids) )
+
+      allocate ( LonMin(Ngrids) )
+      allocate ( LonMax(Ngrids) )
+      allocate ( LatMin(Ngrids) )
+      allocate ( LatMax(Ngrids) )
+
+      allocate ( Idigits(Ngrids) )
+      allocate ( Jdigits(Ngrids) )
+#ifdef SOLVE3D
+      allocate ( Kdigits(Ngrids) )
+#endif
+
+      allocate ( first_time(Ngrids) )
+
+      allocate ( DXmin(Ngrids) )
+      allocate ( DXmax(Ngrids) )
+      allocate ( DYmin(Ngrids) )
+      allocate ( DYmax(Ngrids) )
+      allocate ( DZmin(Ngrids) )
+      allocate ( DZmax(Ngrids) )
+
+      allocate ( grdmax(Ngrids) )
+
+#ifdef DIFF_3DCOEF
+      allocate ( DiffMin(Ngrids) )
+      allocate ( DiffMax(Ngrids) )
+#endif
+
+#ifdef VISC_3DCOEF
+      allocate ( ViscMin(Ngrids) )
+      allocate ( ViscMax(Ngrids) )
+#endif
+
+      allocate ( R0(Ngrids) )
+      allocate ( Tcoef(Ngrids) )
+      allocate ( Scoef(Ngrids) )
+
+      allocate ( T0(Ngrids) )
+      allocate ( S0(Ngrids) )
+
+      allocate ( gamma2(Ngrids) )
+
+      allocate ( lmd_Jwt(Ngrids) )
+
+      allocate ( rdrg(Ngrids) )
+      allocate ( rdrg2(Ngrids) )
+
+      allocate ( Zos(Ngrids) )
+      allocate ( Zob(Ngrids) )
+
+      allocate ( Dcrit(Ngrids) )
+
+#ifdef PROPAGATOR
+      allocate ( Nconv(Ngrids) )
+#endif
+
+      allocate ( weight(2,0:256,Ngrids) )
+
+      allocate ( Akk_bak(Ngrids) )
+      allocate ( Akp_bak(Ngrids) )
+      allocate ( Akv_bak(Ngrids) )
+
+      allocate ( ad_visc2(Ngrids) )
+      allocate ( nl_visc2(Ngrids) )
+      allocate ( tl_visc2(Ngrids) )
+      allocate ( visc2(Ngrids) )
+
+      allocate ( ad_visc4(Ngrids) )
+      allocate ( nl_visc4(Ngrids) )
+      allocate ( tl_visc4(Ngrids) )
+      allocate ( visc4(Ngrids) )
+
+      allocate ( tkenu2(Ngrids) )
+      allocate ( tkenu4(Ngrids) )
+
       allocate ( Akt_bak(MT,Ngrids) )
+      allocate ( Kdiff(MT,Ngrids) )
+
+      allocate ( ad_tnu2(MT,Ngrids) )
+      allocate ( nl_tnu2(MT,Ngrids) )
+      allocate ( tl_tnu2(MT,Ngrids) )
+      allocate ( tnu2(MT,Ngrids) )
+
+      allocate ( ad_tnu4(MT,Ngrids) )
+      allocate ( nl_tnu4(MT,Ngrids) )
+      allocate ( tl_tnu4(MT,Ngrids) )
+      allocate ( tnu4(MT,Ngrids) )
+
+      allocate ( tl_M2diff(Ngrids) )
+      allocate ( tl_M3diff(Ngrids) )
+      allocate ( tl_Tdiff(MT,Ngrids) )
+
+      allocate ( ad_Akv_fac(Ngrids) )
+      allocate ( tl_Akv_fac(Ngrids) )
+
       allocate ( ad_Akt_fac(MT,Ngrids) )
       allocate ( tl_Akt_fac(MT,Ngrids) )
-      allocate ( Kdiff(MT,Ngrids) )
+
+      allocate ( LdefADJ(Ngrids) )
+      allocate ( LdefAVG(Ngrids) )
+      allocate ( LdefDIA(Ngrids) )
+      allocate ( LdefERR(Ngrids) )
+      allocate ( LdefFLT(Ngrids) )
+      allocate ( LdefHIS(Ngrids) )
+      allocate ( LdefHSS(Ngrids) )
+      allocate ( LdefINI(Ngrids) )
+      allocate ( LdefIRP(Ngrids) )
+      allocate ( LdefITL(Ngrids) )
+      allocate ( LdefLCZ(Ngrids) )
+      allocate ( LdefMOD(Ngrids) )
+      allocate ( LdefRST(Ngrids) )
+      allocate ( LdefSTA(Ngrids) )
+      allocate ( LdefTIDE(Ngrids) )
+      allocate ( LdefTLM(Ngrids) )
+      allocate ( LdefTLF(Ngrids) )
+
+      allocate ( LwrtADJ(Ngrids) )
+      allocate ( LwrtAVG(Ngrids) )
+      allocate ( LwrtDIA(Ngrids) )
+      allocate ( LwrtHIS(Ngrids) )
+      allocate ( LwrtPER(Ngrids) )
+      allocate ( LwrtRST(Ngrids) )
+      allocate ( LwrtTLM(Ngrids) )
+      allocate ( LwrtTLF(Ngrids) )
+
+      allocate ( LdefNRM(4,Ngrids) )
+      allocate ( LwrtNRM(4,Ngrids) )
+
+      allocate ( LwrtState2d(Ngrids) )
+      allocate ( LwrtTime(Ngrids) )
+
+      allocate ( Ladjusted(Ngrids) )
+
+      allocate ( LwrtInfo(Ngrids) )
+
+      allocate ( ldefout(Ngrids) )
+
+      allocate ( ndefADJ(Ngrids) )
+      allocate ( ndefAVG(Ngrids) )
+      allocate ( ndefDIA(Ngrids) )
+      allocate ( ndefHIS(Ngrids) )
+      allocate ( ndefTLM(Ngrids) )
+
+      allocate ( ntsAVG(Ngrids) )
+      allocate ( ntsDIA(Ngrids) )
+
+      allocate ( nADJ(Ngrids) )
+      allocate ( nAVG(Ngrids) )
+      allocate ( nDIA(Ngrids) )
+      allocate ( nFLT(Ngrids) )
+      allocate ( nHIS(Ngrids) )
+      allocate ( nRST(Ngrids) )
+      allocate ( nSTA(Ngrids) )
+      allocate ( nTLM(Ngrids) )
+
+      allocate ( ninfo(Ngrids) )
+
+      allocate ( nOBC(Ngrids) )
+      allocate ( Nbrec(Ngrids) )
+      allocate ( OBCcount(Ngrids) )
+
+#ifdef ADJUST_BOUNDARY
+      allocate ( Lobc(4,MstateVar,Ngrids) )
+#endif
+
+      allocate ( nSFF(Ngrids) )
+      allocate ( Nfrec(Ngrids) )
+      allocate ( SFcount(Ngrids) )
+
+#ifdef ADJUST_STFLUX
+      allocate ( Lstflux(MT,Ngrids) )
+#endif
+
+      allocate ( nrrec(Ngrids) )
+
+#ifdef FLOATS
+      allocate ( frrec(Ngrids) )
+#endif
+
+      allocate ( synchro_flag(Ngrids) )
+      allocate ( LastRec(Ngrids) )
+
+      allocate ( LcycleADJ(Ngrids) )
+      allocate ( LcycleRST(Ngrids) )
+      allocate ( LcycleTLM(Ngrids) )
+
+#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      allocate ( Hcount(Ngrids) )
+#endif
+
+      allocate ( KstrS(Ngrids) )
+      allocate ( KendS(Ngrids) )
+
+      allocate ( DstrS(Ngrids) )
+      allocate ( DendS(Ngrids) )
+
+      allocate ( TRnorm(Ngrids) )
+
+      allocate ( SOrec(Ngrids) )
+      allocate ( SO_decay(Ngrids) )
 #ifdef SOLVE3D
       allocate ( SO_sdev(7+2*MT,Ngrids) )
 #else
       allocate ( SO_sdev(5,Ngrids) )
 #endif
-      SO_sdev = IniVal
-      allocate ( ad_tnu2(MT,Ngrids) )
-      allocate ( nl_tnu2(MT,Ngrids) )
-      allocate ( tl_tnu2(MT,Ngrids) )
-      allocate ( tnu2(MT,Ngrids) )
-      allocate ( ad_tnu4(MT,Ngrids) )
-      allocate ( nl_tnu4(MT,Ngrids) )
-      allocate ( tl_tnu4(MT,Ngrids) )
-      allocate ( tnu4(MT,Ngrids) )
-      allocate ( tl_Tdiff(MT,Ngrids) )
-#ifdef SOLVE3D
-      allocate ( Tobc_in(MT,Ngrids,4) )
-      Tobc_in = IniVal
-      allocate ( Tobc_out(MT,Ngrids,4) )
-      Tobc_out = IniVal
-# if defined FLOATS && defined SOLVE3D
-        allocate ( ifTvar(MT) )
-# endif
-# ifdef T_PASSIVE
-      allocate ( inert(NPT) )
-# endif
-#endif
-      allocate ( Tnudg(MT,Ngrids) )
-      allocate ( Tnudass(MT,Ngrids) )
-#if defined ASSIMILATION || defined NUDGING
-      allocate ( assi_T(MT,Ngrids) )
-      allocate ( first_T(MT,Ngrids) )
-      allocate ( update_T(MT,Ngrids) )
-      allocate ( timeTobs(MT,Ngrids) )
-      allocate ( tTobs(MT,2,Ngrids) )
-      allocate ( tsTobs(MT,Ngrids) )
-      allocate ( EobsTmin(MT,Ngrids) )
-      allocate ( EobsTmax(MT,Ngrids) )
-#endif
-#if defined FOUR_DVAR || defined VERIFICATION
-      allocate ( balance(MstateVar) )
 
+#if defined FOUR_DVAR || defined VERIFICATION
       allocate ( Cnorm(2,MstateVar) )
+      allocate ( CnormB(MstateVar,4) )
+
+      allocate ( SporadicImpulse(Ngrids) )
+      allocate ( FrequentImpulse(Ngrids) )
+
+      allocate ( dTdz_min(Ngrids) )
+      allocate ( ml_depth(Ngrids) )
+
+      allocate ( LNM_depth(Ngrids) )
+
+      allocate ( balance(MstateVar) )
 
       allocate ( Hdecay(2,MstateVar,Ngrids) )
       allocate ( Vdecay(2,MstateVar,Ngrids) )
 
-      allocate ( CnormB(MstateVar,4) )
-
       allocate ( HdecayB(MstateVar,4,Ngrids) )
       allocate ( VdecayB(MstateVar,4,Ngrids) )
 #endif
-#ifdef ADJUST_BOUNDARY
-      allocate ( Lobc(4,MstateVar,Ngrids) )
+
+      allocate ( obcfac(Ngrids) )
+      allocate ( FSobc_in(Ngrids,4) )
+      allocate ( FSobc_out(Ngrids,4) )
+      allocate ( M2obc_in(Ngrids,4) )
+      allocate ( M2obc_out(Ngrids,4) )
+
+#ifdef SOLVE3D
+      allocate ( M3obc_in(Ngrids,4) )
+      allocate ( M3obc_out(Ngrids,4) )
+      allocate ( Tobc_in(MT,Ngrids,4) )
+      allocate ( Tobc_out(MT,Ngrids,4) )
 #endif
-#ifdef ADJUST_STFLUX
-      allocate ( Lstflux(MT,Ngrids) )
+
+      allocate ( Znudg(Ngrids) )
+      allocate ( M2nudg(Ngrids) )
+      allocate ( M3nudg(Ngrids) )
+      allocate ( Tnudg(MT,Ngrids) )
+
+#ifdef BULK_FLUXES
+      allocate ( blk_ZQ(Ngrids) )
+      allocate ( blk_ZT(Ngrids) )
+      allocate ( blk_ZW(Ngrids) )
 #endif
+
+      allocate ( gls_m(Ngrids) )
+      allocate ( gls_n(Ngrids) )
+      allocate ( gls_p(Ngrids) )
+      allocate ( gls_sigk(Ngrids) )
+      allocate ( gls_sigp(Ngrids) )
+      allocate ( gls_cmu0(Ngrids) )
+      allocate ( gls_cmupr(Ngrids) )
+      allocate ( gls_c1(Ngrids) )
+      allocate ( gls_c2(Ngrids) )
+      allocate ( gls_c3m(Ngrids) )
+      allocate ( gls_c3p(Ngrids) )
+      allocate ( gls_Kmin(Ngrids) )
+      allocate ( gls_Pmin(Ngrids) )
+
+      allocate ( charnok_alpha(Ngrids) )
+      allocate ( zos_hsig_alpha(Ngrids) )
+      allocate ( sz_alpha(Ngrids) )
+      allocate ( crgban_cw(Ngrids) )
+
+      RETURN
+      END SUBROUTINE allocate_scalars
+
+      SUBROUTINE initialize_scalars
+!
+!=======================================================================
+!                                                                      !
+!  This routine initializes several variables in module for all nested !
+!  grids.                                               !              !
+!                                                                      !
+!=======================================================================
+!
+!  Local variable declarations.
+!
+      integer :: i, ic, j, ng, itrc
+
+      real(r8) :: one, zero
+      real(r8), parameter :: IniVal = 0.0_r8
 !
 !---------------------------------------------------------------------
 !  Set tracer identification indices.
@@ -1920,7 +2074,6 @@
 !
       DO ng=1,Ngrids
         LastRec(ng)=.FALSE.
-        Lassimilate(ng)=.TRUE.
         Lbiology(ng)=.TRUE.
         LcycleADJ(ng)=.FALSE.
         LcycleRST(ng)=.FALSE.
@@ -1928,6 +2081,10 @@
         Lfloats(ng)=.TRUE.
         Lsediment(ng)=.TRUE.
         Lstations(ng)=.TRUE.
+#if defined FOUR_DVAR || defined VERIFICATION
+        FrequentImpulse(ng)=.FALSE.
+        SporadicImpulse(ng)=.FALSE.
+#endif
       END DO
 
 #ifdef ADJUST_BOUNDARY
@@ -2028,6 +2185,10 @@
 #endif
         END DO
       END DO
+#ifdef SOLVE3D
+      Tobc_in = IniVal
+      Tobc_out = IniVal
+#endif
 #if defined FLOATS && defined FLOAT_VWALK
       flt_iseed=149876
 #endif
@@ -2097,21 +2258,6 @@
         ldefout(ng)=.FALSE.
 
         synchro_flag(ng)=.FALSE.
-
-        NrecADJ(ng)=0
-        NrecAVG(ng)=0
-        NrecDIA(ng)=0
-        NrecERR(ng)=0
-        NrecFLT(ng)=0
-        NrecINI(ng)=0
-        NrecITL(ng)=0
-        NrecHIS(ng)=0
-        NrecHSS(ng)=0
-        NrecRST(ng)=0
-        NrecSTA(ng)=0
-        NrecTLM(ng)=0
-
-        NrecNRM(1:4,ng)=0
 
       END DO
 

@@ -13,7 +13,6 @@
 !!  adsen_ocean.h          Adjoint sensitivity analysis driver         !
 !!  afte_ocean.h           Adjoint finite time eigenmodes driver       !
 !!  array_modes_w4dvar.h   W4DVAR array modes driver
-!!  convolution.h          Error covariance convolution driver         !
 !!  correlation.h          Error covariance correlation driver         !
 !!  fte_ocean.h            Finite time eigenmodes driver               !
 !!  fsv_ocean.h            Forcing singular vectors driver             !
@@ -52,8 +51,6 @@
 # include "adsen_ocean.h"
 #elif defined AFT_EIGENMODES
 # include "afte_ocean.h"
-#elif defined CONVOLUTION
-# include "convolution.h"
 #elif defined CORRELATION
 # include "correlation.h"
 #elif defined FT_EIGENMODES

@@ -60,11 +60,11 @@
      &                        nfm3(ng), nfm2(ng), nfm1(ng), nf(ng),     &
      &                        nfp1(ng),                                 &
      &                        Predictor, MyThread,                      &
-     &                        FLT(ng) % bounded,                        &
-     &                        FLT(ng) % Tinfo,                          &
-     &                        FLT(ng) % rwalk,                          &
+     &                        DRIFTER(ng) % bounded,                    &
+     &                        DRIFTER(ng) % Tinfo,                      &
+     &                        DRIFTER(ng) % rwalk,                      &
      &                        nudg,                                     &
-     &                        FLT(ng) % track)
+     &                        DRIFTER(ng) % track)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 10)
 # endif

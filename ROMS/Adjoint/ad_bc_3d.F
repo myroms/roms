@@ -9,15 +9,31 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This package applies gradient or periodic boundary conditions for   !
-!  generic 3D adjoint fields.                                          !
+!  These routines apply close, gradient or periodic boundary           !
+!  conditions to generic 3D adjoint fields.                            !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng                Nested grid number.                            !
+!     tile              Domain partition.                              !
+!     LBi               I-dimension Lower bound.                       !
+!     UBi               I-dimension Upper bound.                       !
+!     LBj               J-dimension Lower bound.                       !
+!     UBj               J-dimension Upper bound.                       !
+!     LBk               K-dimension Lower bound.                       !
+!     UBk               K-dimension Upper bound.                       !
+!     ad_A              3D adjoint field.                              !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     ad_A              Processed 3D adjoint field.                    !
 !                                                                      !
 !  Routines:                                                           !
 !                                                                      !
-!    ad_bc_r3d_tile     Boundary conditions for field at RHO-points    !
-!    ad_bc_u3d_tile     Boundary conditions for field at U-points      !
-!    ad_bc_v3d_tile     Boundary conditions for field at V-points      !
-!    ad_bc_w3d_tile     Boundary conditions for field at W-points      !
+!     ad_bc_r3d_tile    Boundary conditions for field at RHO-points    !
+!     ad_bc_u3d_tile    Boundary conditions for field at U-points      !
+!     ad_bc_v3d_tile    Boundary conditions for field at V-points      !
+!     ad_bc_w3d_tile    Boundary conditions for field at W-points      !
 !                                                                      !
 !=======================================================================
 !
@@ -60,7 +76,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Apply periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_r3d_tile (ng, tile,                              &
@@ -74,7 +90,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jend+1,k)=0.5_r8*(tl_A(Iend+1,Jend  ,k)+          &
 !>   &                                  tl_A(Iend  ,Jend+1,k))
@@ -85,7 +101,7 @@
           ad_A(Iend+1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jend+1,k)=0.5_r8*(tl_A(Istr-1,Jend  ,k)+          &
 !>   &                                  tl_A(Istr  ,Jend+1,k))
@@ -96,7 +112,7 @@
           ad_A(Istr-1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jstr-1,k)=0.5_r8*(tl_A(Iend  ,Jstr-1,k)+          &
 !>   &                                  tl_A(Iend+1,Jstr  ,k))
@@ -107,7 +123,7 @@
           ad_A(Iend+1,Jstr-1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jstr-1,k)=0.5_r8*(tl_A(Istr  ,Jstr-1,k)+          &
 !>   &                                  tl_A(Istr-1,Jstr  ,k))
@@ -126,7 +142,7 @@
 !  North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 !>          tl_A(i,Jstr-1,k)=tl_A(i,Jstr,k)
@@ -136,7 +152,7 @@
           END DO
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 !>          tl_A(i,Jend+1,k)=tl_A(i,Jend,k)
@@ -154,7 +170,7 @@
 !  East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 !>          tl_A(Istr-1,j,k)=tl_A(Istr,j,k)
@@ -164,7 +180,7 @@
           END DO
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 !>          tl_A(Iend+1,j,k)=tl_A(Iend,j,k)
@@ -217,7 +233,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Apply periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_u3d_tile (ng, tile,                              &
@@ -231,7 +247,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jend+1,k)=0.5_r8*(tl_A(Iend+1,Jend  ,k)+          &
 !>   &                                  tl_A(Iend  ,Jend+1,k))
@@ -242,7 +258,7 @@
           ad_A(Iend+1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr  ,Jend+1,k)=0.5_r8*(tl_A(Istr  ,Jend  ,k)+          &
 !>   &                                  tl_A(Istr+1,Jend+1,k))
@@ -253,7 +269,7 @@
           ad_A(Istr  ,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jstr-1,k)=0.5_r8*(tl_A(Iend  ,Jstr-1,k)+          &
 !>   &                                  tl_A(Iend+1,Jstr  ,k))
@@ -264,7 +280,7 @@
           ad_A(Iend+1,Jstr-1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr  ,Jstr-1,k)=0.5_r8*(tl_A(Istr+1,Jstr-1,k)+          &
 !>   &                                  tl_A(Istr  ,Jstr  ,k))
@@ -284,7 +300,7 @@
 !  or gradient.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 #  ifdef SOUTHERN_WALL
 #   ifdef EW_PERIODIC
 #    define I_RANGE IstrU,Iend
@@ -317,7 +333,7 @@
 #  endif
       END IF
 
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 #  ifdef NORTHERN_WALL
 #   ifdef EW_PERIODIC
 #    define I_RANGE IstrU,Iend
@@ -357,7 +373,7 @@
 !  East-West gradient boundary conditions: Closed or gradient.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 #  ifdef WESTERN_WALL
@@ -373,7 +389,7 @@
           END DO
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 #  ifdef EASTERN_WALL
@@ -432,7 +448,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Apply periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_v3d_tile (ng, tile,                              &
@@ -446,7 +462,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jend+1,k)=0.5_r8*(tl_A(Iend+1,Jend  ,k)+          &
 !>   &                                  tl_A(Iend  ,Jend+1,k))
@@ -457,7 +473,7 @@
           ad_A(Iend+1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jend+1,k)=0.5_r8*(tl_A(Istr-1,Jend  ,k)+          &
 !>   &                                  tl_A(Istr  ,Jend+1,k))
@@ -468,7 +484,7 @@
           ad_A(Istr-1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jstr  ,k)=0.5_r8*(tl_A(Iend  ,Jstr  ,k)+          &
 !>   &                                  tl_A(Iend+1,Jstr+1,k))
@@ -479,7 +495,7 @@
           ad_A(Iend+1,Jstr  ,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jstr  ,k)=0.5_r8*(tl_A(Istr  ,Jstr  ,k)+          &
 !>   &                                  tl_A(Istr-1,Jstr+1,k))
@@ -498,7 +514,7 @@
 !  Adjoint North-South boundary conditions: Closed or gradient.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 #  ifdef SOUTHERN_WALL
@@ -514,7 +530,7 @@
           END DO
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 #  ifdef NORTHERN_WALL
@@ -539,7 +555,7 @@
 !  gradient.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 #  ifdef WESTERN_WALL
 #   ifdef NS_PERIODIC
 #    define J_RANGE JstrV,Jend
@@ -572,7 +588,7 @@
 #  endif
       END IF
 
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 #  ifdef EASTERN_WALL
 #   ifdef NS_PERIODIC
 #    define J_RANGE JstrV,Jend
@@ -645,7 +661,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Apply periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_w3d_tile (ng, tile,                              &
@@ -659,7 +675,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jend+1,k)=0.5_r8*(tl_A(Iend+1,Jend  ,k)+          &
 !>   &                                  tl_A(Iend  ,Jend+1,k))
@@ -670,7 +686,7 @@
           ad_A(Iend+1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jend+1,k)=0.5_r8*(tl_A(Istr-1,Jend  ,k)+          &
 !>   &                                  tl_A(Istr  ,Jend+1,k))
@@ -681,7 +697,7 @@
           ad_A(Istr-1,Jend+1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Iend+1,Jstr-1,k)=0.5_r8*(tl_A(Iend+1,Jstr  ,k)+          &
 !>                                      tl_A(Iend  ,Jstr-1,k))
@@ -692,7 +708,7 @@
           ad_A(Iend+1,Jstr-1,k)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=LBk,UBk
 !>        tl_A(Istr-1,Jstr-1,k)=0.5_r8*(tl_A(Istr  ,Jstr-1,k)+          &
 !>   &                                  tl_A(Istr-1,Jstr  ,k))
@@ -711,7 +727,7 @@
 !  North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 !>          tl_A(i,Jstr-1,k)=tl_A(i,Jstr,k)
@@ -721,7 +737,7 @@
           END DO
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
 !>          tl_A(i,Jend+1,k)=tl_A(i,Jend,k)
@@ -739,7 +755,7 @@
 !  East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 !>          tl_A(Istr-1,j,k)=tl_A(Istr,j,k)
@@ -749,7 +765,7 @@
           END DO
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
 !>          tl_A(Iend+1,j,k)=tl_A(Iend,j,k)

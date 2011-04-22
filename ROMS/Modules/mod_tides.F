@@ -151,7 +151,7 @@
 !
       logical :: foundit
 
-      integer :: Vid, i, ifile, mg, nvatt, nvdim
+      integer :: Nfiles, Vid, i, ifile, mg, nvatt, nvdim
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
@@ -166,7 +166,7 @@
           foundit=.FALSE.
 
           QUERY : DO ifile=1,nFfiles(mg)
-            CALL netcdf_inq_var (ng, iNLM, FRCname(ifile,mg),           &
+            CALL netcdf_inq_var (ng, iNLM, FRC(ifile,mg)%name,          &
      &                           MyVarName = TRIM(Vname(1,idTper)),     &
      &                           SearchVar = foundit,                   &
      &                           VarID = Vid,                           &
@@ -187,12 +187,31 @@
             ENDIF
 # endif
 !
-!  Set maximun numbert of tidal components.
+!  Set maximun number of tidal components.  Allocate and initialize
+!  TIDE I/O structure.
 !
             IF (foundit) THEN
               MTC=MAX(MTC,var_Dsize(1))              ! first dimension
               NTC(mg)=var_Dsize(1)
-              TIDEname(ng)=TRIM(FRCname(ifile,mg))
+!
+              Nfiles=FRC(ifile,mg)%Nfiles
+              allocate ( TIDE(ng)%Nrec(Nfiles) )
+              allocate ( TIDE(ng)%time_min(Nfiles) )
+              allocate ( TIDE(ng)%time_max(Nfiles) )
+              allocate ( TIDE(ng)%Vid(NV) )
+              allocate ( TIDE(ng)%Tid(MT) )
+              allocate ( TIDE(ng)%files(Nfiles) )
+              TIDE(ng)%Nfiles=Nfiles
+              TIDE(ng)%Fcount=1
+              TIDE(ng)%Rindex=0
+              TIDE(ng)%ncid=-1
+              TIDE(ng)%Vid=-1
+              TIDE(ng)%Tid=-1
+              TIDE(ng)%Nrec(1:Nfiles)=0
+              TIDE(ng)%time_min(1:Nfiles)=0.0_r8
+              TIDE(ng)%time_max(1:Nfiles)=0.0_r8
+              TIDE(ng)%name=TRIM(FRC(ifile,mg)%name)
+              TIDE(ng)%label='TIDE - tidal forcing'
               EXIT QUERY
             END IF
           END DO QUERY
@@ -303,22 +322,22 @@
 !  Set array initialization range.
 !
 # ifdef _OPENMP
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         Imin=BOUNDS(ng)%LBi(tile)
       ELSE
         Imin=Istr
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         Imax=BOUNDS(ng)%UBi(tile)
       ELSE
         Imax=Iend
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         Jmin=BOUNDS(ng)%LBj(tile)
       ELSE
         Jmin=Jstr
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         Jmax=BOUNDS(ng)%UBj(tile)
       ELSE
         Jmax=Jend
@@ -336,7 +355,7 @@
 !
 !  Initialize tidal forcing variables.
 !
-      IF (SOUTH_WEST_TEST) THEN
+      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
         DO itide=1,MTC
           TIDES(ng) % Tperiod(itide) = IniVal
         END DO
@@ -368,7 +387,7 @@
 !  Initialize cariables used for the least-squares detiding of
 !  time-averaged fields.
 !
-      IF (SOUTH_WEST_TEST) THEN
+      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
         DO jtide=1,MTC
           TIDES(ng) % CosOmega(jtide) = IniVal
           TIDES(ng) % SinOmega(jtide) = IniVal

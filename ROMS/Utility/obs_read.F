@@ -95,36 +95,36 @@
 !
 !  Read in observation type identifier.
 !
-        CALL netcdf_get_ivar (ng, model, OBSname(ng), Vname(1,idOtyp),  &
+        CALL netcdf_get_ivar (ng, model, OBS(ng)%name, Vname(1,idOtyp), &
      &                        ObsType(Mstr:),                           &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in observation time (days).
 !
-        CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idObsT),  &
+        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsT), &
      &                        Tobs(Mstr:),                              &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in observation X-location (grid units).
 !
-        CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idObsX),  &
+        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsX), &
      &                        Xobs(Mstr:),                              &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in observation Y-location (grid units).
 !
-        CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idObsY),  &
+        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsY), &
      &                        Yobs(Mstr:),                              &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
@@ -138,16 +138,18 @@
 !  be written into the observation NetCDF file for latter use.
 !
         IF (wrote_Zobs(ng)) THEN
-          CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idObsZ),&
+          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+     &                          Vname(1,idObsZ),                        &
      &                          Zobs(Mstr:),                            &
-     &                          ncid = ncOBSid(ng),                     &
+     &                          ncid = OBS(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (exit_flag.ne.NoError) RETURN
         ELSE
-          CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idObsD),&
+          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+     &                          Vname(1,idObsD),                        &
      &                          Zobs(Mstr:),                            &
-     &                          ncid = ncOBSid(ng),                     &
+     &                          ncid = OBS(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (exit_flag.ne.NoError) RETURN
@@ -172,9 +174,9 @@
 !
 !  Read in observation values.
 !
-        CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idOval),  &
+        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idOval), &
      &                        ObsVal(Mstr:),                            &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
@@ -186,9 +188,9 @@
 !  convert to inverse observation error covariance.
 # endif
 !
-        CALL netcdf_get_fvar (ng, model, OBSname(ng), Vname(1,idOerr),  &
+        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idOerr), &
      &                        ObsErr(Mstr:),                            &
-     &                        ncid = ncOBSid(ng),                       &
+     &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (exit_flag.ne.NoError) RETURN
@@ -202,9 +204,10 @@
 !  Read in nonlinear model values at observation locations.
 !
         IF (readNLmod.and.haveNLmod(ng)) THEN
-          CALL netcdf_get_fvar (ng, model, MODname(ng), Vname(1,idNLmo),&
+          CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idNLmo),                        &
      &                          NLmodVal(Mstr:),                        &
-     &                          ncid = ncMODid(ng),                     &
+     &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (exit_flag.ne.NoError) RETURN
@@ -216,9 +219,10 @@
 !  values at observation locations.
 !
         IF (readTLmod.and.haveTLmod(ng)) THEN
-          CALL netcdf_get_fvar (ng, model, MODname(ng), Vname(1,idTLmo),&
+          CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idTLmo),                        &
      &                          TLmodVal(Mstr:),                        &
-     &                          ncid = ncMODid(ng),                     &
+     &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (exit_flag.ne.NoError) RETURN

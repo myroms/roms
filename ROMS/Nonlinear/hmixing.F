@@ -484,7 +484,7 @@
 !
 !  East-West gradient boundary conditions.
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrV-1,Jend
 #  if defined DIFF_3DCOEF
@@ -506,7 +506,7 @@
           END DO
         END DO
       END IF
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrV-1,Jend
 #  if defined DIFF_3DCOEF
@@ -533,7 +533,7 @@
 !
 !  North-South gradient boundary conditions.
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=IstrU-1,Iend
 #  ifdef DIFF_3DCOEF
@@ -555,7 +555,7 @@
           END DO
         END DO
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=IstrU-1,Iend
 #  ifdef DIFF_3DCOEF
@@ -582,7 +582,7 @@
 !
 !  Boundary corners.
 !
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 #  ifdef DIFF_3DCOEF
 #   ifdef TS_U3ADV_SPLIT
@@ -608,7 +608,7 @@
 #  endif
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 #  ifdef DIFF_3DCOEF
 #   ifdef TS_U3ADV_SPLIT
@@ -634,7 +634,7 @@
 #  endif
         END DO
       END IF
-      IF (NORTHERN_EDGE .and. WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile) .and. DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
 #  ifdef DIFF_3DCOEF
 #   ifdef TS_U3ADV_SPLIT
@@ -660,7 +660,7 @@
 #  endif
         END DO
       END IF
-      IF (NORTHERN_EDGE .and. EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile) .and. DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
 #  ifdef DIFF_3DCOEF
 #   ifdef TS_U3ADV_SPLIT

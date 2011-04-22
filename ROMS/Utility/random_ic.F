@@ -10,18 +10,18 @@
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
 # else
-#  define IR_RANGE IstrR,IendR
-#  define IU_RANGE Istr,IendR
-#  define IV_RANGE IstrR,IendR
+#  define IR_RANGE IstrT,IendT
+#  define IU_RANGE IstrP,IendT
+#  define IV_RANGE IstrT,IendT
 # endif
 # ifdef NS_PERIODIC
 #  define JR_RANGE Jstr-1,Jend+1
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
 # else
-#  define JR_RANGE JstrR,JendR
-#  define JU_RANGE JstrR,JendR
-#  define JV_RANGE Jstr,JendR
+#  define JR_RANGE JstrT,JendT
+#  define JU_RANGE JstrT,JendT
+#  define JV_RANGE JstrP,JendT
 # endif
 
 !
@@ -513,8 +513,10 @@
      &                                LBij, UBij,                       &
      &                                Bmin, Bmax, B2d)
             END IF
-            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
-     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+            IF (((ib.eq.iwest).and.                                     &
+     &           DOMAIN(ng)%Western_Edge(tile)).or.                     &
+     &          ((ib.eq.ieast).and.                                     &
+     &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,r2dvar)
               IF (.not.Ltrace) THEN
                 DO j=JR_RANGE
@@ -533,8 +535,10 @@
 #  endif
                 END DO
               END IF
-            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
-     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+            ELSE IF (((ib.eq.isouth).and.                               &
+     &                DOMAIN(ng)%Southern_Edge(tile)).or.               &
+     &               ((ib.eq.inorth).and.                               &
+     &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,r2dvar)
               IF (.not.Ltrace) THEN
                 DO i=IR_RANGE
@@ -583,8 +587,10 @@
      &                                LBij, UBij,                       &
      &                                Bmin, Bmax, B2d)
             END IF
-            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
-     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+            IF (((ib.eq.iwest).and.                                     &
+     &           DOMAIN(ng)%Western_Edge(tile)).or.                     &
+     &          ((ib.eq.ieast).and.                                     &
+     &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO j=JU_RANGE
@@ -603,8 +609,10 @@
 #  endif
                 END DO
               END IF
-            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
-     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+            ELSE IF (((ib.eq.isouth).and.                               &
+     &                DOMAIN(ng)%Southern_Edge(tile)).or.               &
+     &               ((ib.eq.inorth).and.                               &
+     &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO i=IU_RANGE
@@ -653,8 +661,10 @@
      &                                LBij, UBij,                       &
      &                                Bmin, Bmax, B2d)
             END IF
-            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
-     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+            IF (((ib.eq.iwest).and.                                     &
+     &           DOMAIN(ng)%Western_Edge(tile)).or.                     &
+     &          ((ib.eq.ieast).and.                                     &
+     &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO j=JV_RANGE
@@ -673,8 +683,10 @@
 #  endif
                 END DO
               END IF
-            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
-     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+            ELSE IF (((ib.eq.isouth).and.                               &
+     &                DOMAIN(ng)%Southern_Edge(tile)).or.               &
+     &               ((ib.eq.inorth).and.                               &
+     &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO i=IV_RANGE
@@ -725,8 +737,10 @@
      &                                LBij, UBij, 1, N(ng),             &
      &                                Bmin, Bmax, B3d)
             END IF
-            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
-     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+            IF (((ib.eq.iwest).and.                                     &
+     &           DOMAIN(ng)%Western_Edge(tile)).or.                     &
+     &          ((ib.eq.ieast).and.                                     &
+     &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
@@ -749,8 +763,10 @@
                   END DO
                 END DO
               END IF
-            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
-     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+            ELSE IF (((ib.eq.isouth).and.                               &
+     &                DOMAIN(ng)%Southern_Edge(tile)).or.               &
+     &               ((ib.eq.inorth).and.                               &
+     &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
@@ -803,8 +819,10 @@
      &                                LBij, UBij, 1, N(ng),             &
      &                                Bmin, Bmax, B3d)
             END IF
-            IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                    &
-     &          ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+            IF (((ib.eq.iwest).and.                                     &
+     &           DOMAIN(ng)%Western_Edge(tile)).or.                     &
+     &          ((ib.eq.ieast).and.                                     &
+     &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
@@ -827,8 +845,10 @@
                   END DO
                 END DO
               END IF
-            ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.             &
-     &               ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+            ELSE IF (((ib.eq.isouth).and.                               &
+     &                DOMAIN(ng)%Southern_Edge(tile)).or.               &
+     &               ((ib.eq.inorth).and.                               &
+     &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
@@ -884,8 +904,10 @@
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  Bmin, Bmax, B3d)
               END IF
-              IF (((ib.eq.iwest).and.WESTERN_EDGE).or.                  &
-     &            ((ib.eq.ieast).and.EASTERN_EDGE)) THEN
+              IF (((ib.eq.iwest).and.                                   &
+     &             DOMAIN(ng)%Western_Edge(tile)).or.                   &
+     &            ((ib.eq.ieast).and.                                   &
+     &             DOMAIN(ng)%Eastern_Edge(tile))) THEN
                 i=BOUNDS(ng)%edge(ib,r2dvar)
                 IF (.not.Ltrace) THEN
                   DO k=1,N(ng)
@@ -909,8 +931,10 @@
                     END DO
                   END DO
                 END IF
-              ELSE IF (((ib.eq.isouth).and.SOUTHERN_EDGE).or.           &
-     &                 ((ib.eq.inorth).and.NORTHERN_EDGE)) THEN
+              ELSE IF (((ib.eq.isouth).and.                             &
+     &                  DOMAIN(ng)%Southern_Edge(tile)).or.             &
+     &                 ((ib.eq.inorth).and.                             &
+     &                  DOMAIN(ng)%Northern_Edge(tile))) THEN
                 j=BOUNDS(ng)%edge(ib,r2dvar)
                 IF (.not.Ltrace) THEN
                   DO k=1,N(ng)
@@ -1057,8 +1081,16 @@
 #  endif
 # endif
 
+# undef IR_RANGE
+# undef IU_RANGE
+# undef IV_RANGE
+# undef JR_RANGE
+# undef JU_RANGE
+# undef JV_RANGE
+
       RETURN
       END SUBROUTINE random_ic_tile
 #endif
+
 
       END MODULE random_ic_mod

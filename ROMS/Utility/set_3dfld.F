@@ -150,13 +150,13 @@
 !  read in at the next time step.
 !
         IF ((time(ng)+dt(ng)).gt.Tintrp(it2,ifield,ng)) THEN
-          IF (SOUTH_WEST_TEST) synchro_flag(ng)=.TRUE.
+          IF (DOMAIN(ng)%SouthWest_Test(tile)) synchro_flag(ng)=.TRUE.
         END IF
 !
 !  Unable to set-up requested field.  Activate error flag to quit.
 !
       ELSE
-        IF (SOUTH_WEST_TEST) THEN
+        IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tdays(ng),         &
      &                        Finfo(1,ifield,ng), Finfo(2,ifield,ng),   &

@@ -45,14 +45,14 @@
       CALL step_floats_tile (ng, Lstr, Lend,                            &
      &                       knew(ng), nnew(ng), nfm3(ng), nfm2(ng),    &
      &                       nfm1(ng), nf(ng), nfp1(ng),                &
-     &                       FLT(ng) % bounded,                         &
-     &                       FLT(ng) % Ftype,                           &
-     &                       FLT(ng) % Tinfo,                           &
-     &                       FLT(ng) % Fz0,                             &
+     &                       DRIFTER(ng) % bounded,                     &
+     &                       DRIFTER(ng) % Ftype,                       &
+     &                       DRIFTER(ng) % Tinfo,                       &
+     &                       DRIFTER(ng) % Fz0,                         &
 # if defined SOLVE3D && defined FLOAT_STICKY
-     &                       FLT(ng) % stuck,                           &
+     &                       DRIFTER(ng) % stuck,                       &
 # endif
-     &                       FLT(ng) % track)
+     &                       DRIFTER(ng) % track)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 10)
 # endif

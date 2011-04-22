@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 #if defined NONLINEAR && defined SOLVE3D
-      SUBROUTINE main3d (ng)
+      SUBROUTINE main3d (RunInterval)
 !
 !svn $Id$
 !=======================================================================
@@ -11,7 +11,8 @@
 !                                                                      !
 !  This subroutine is the main driver for nonlinear ROMS/TOMS when     !
 !  configurated as a full 3D baroclinic ocean model.  It  advances     !
-!  forward the primitive equations for a single time step.             !
+!  forward the primitive equations for all  nested  grids, if any,     !
+!  for the specified time interval (seconds), RunInterval.             !
 !                                                                      !
 !=======================================================================
 !
@@ -65,6 +66,9 @@
       USE my25_corstep_mod, ONLY : my25_corstep
       USE my25_prestep_mod, ONLY : my25_prestep
 # endif
+# ifdef NESTING
+      USE nesting_mod, ONLY : nesting
+# endif
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod, ONLY : obc_adjust, load_obc
 # endif
@@ -73,9 +77,6 @@
 # endif
 # ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : ocn2wav_coupling
-# endif
-# ifdef ASSIMILATION
-      USE oi_update_mod, ONLY : oi_update
 # endif
       USE omega_mod, ONLY : omega
 # ifdef NEARSHORE_MELLOR
@@ -112,49 +113,64 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      real(r8), intent(in) :: RunInterval
 !
 !  Local variable declarations.
 !
+      integer :: ng
       integer :: my_iif, next_indx1, subs, tile, thread
 # ifdef FLOATS
       integer :: Lend, Lstr, chunk_size
 # endif
+      real(r8) :: my_StepTime
 !
 !=======================================================================
-!  Time-step nonlinear 3D primitive equations.
+!  Time-step nonlinear 3D primitive equations by the specified time.
 !=======================================================================
+!
+      my_StepTime=0.0_r8
+
+      STEP_LOOP : DO WHILE (my_StepTime.le.RunInterval)
+
+        my_StepTime=my_StepTime+MAXVAL(dt)
 !
 !  Set time indices and time clock.
 !
-      nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
-      nnew(ng)=3-nstp(ng)
-      nrhs(ng)=nstp(ng)
-      time(ng)=time(ng)+dt(ng)
-      tdays(ng)=time(ng)*sec2day
-      CALL time_string (time(ng), time_code(ng))
+        DO ng=1,Ngrids
+          iic(ng)=iic(ng)+1
+          nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
+          nnew(ng)=3-nstp(ng)
+          nrhs(ng)=nstp(ng)
+          time(ng)=time(ng)+dt(ng)
+          tdays(ng)=time(ng)*sec2day
+          CALL time_string (time(ng), time_code(ng))
+        END DO
 !
 !-----------------------------------------------------------------------
 !  Read in required data, if any, from input NetCDF files.
 !-----------------------------------------------------------------------
 !
-      CALL get_data (ng)
-      IF (exit_flag.ne.NoError) RETURN
+        DO ng=1,Ngrids
+          CALL get_data (ng)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
 !
 !-----------------------------------------------------------------------
 !  If applicable, process input data: time interpolate between data
 !  snapshots.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL set_data (ng, TILE)
-        END DO
-      END DO
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL set_data (ng, TILE)
+            END DO
+          END DO
 !$OMP END PARALLEL DO
-      IF (exit_flag.ne.NoError) RETURN
+        END DO
+        IF (exit_flag.ne.NoError) RETURN
 
 # if defined W4DPSAS || defined NLM_OUTER || \
      defined W4DPSAS_SENSITIVITY
@@ -167,70 +183,79 @@
 !  snapshots (FrequentImpulse=TRUE).
 !-----------------------------------------------------------------------
 !
-      IF (FrequentImpulse) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL forcing (ng, TILE, kstp(ng), nstp(ng))
-          END DO
-        END DO
+        DO ng=1,Ngrids
+          IF (FrequentImpulse(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL forcing (ng, TILE, kstp(ng), nstp(ng))
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 # endif
 !
 !-----------------------------------------------------------------------
 !  Initialize all time levels and compute other initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntstart(ng)) THEN
+        DO ng=1,Ngrids
+          IF (iic(ng).eq.ntstart(ng)) THEN
 !
 !  Initialize free-surface and compute initial level thicknesses and
 !  depths.
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ini_zeta (ng, TILE, iNLM)
-            CALL set_depth (ng, TILE)
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL ini_zeta (ng, TILE, iNLM)
+                CALL set_depth (ng, TILE)
+              END DO
+            END DO
 !$OMP END PARALLEL DO
 !
 !  Initialize other state variables.
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*(thread+1)-1,subs*thread,-1
-            CALL ini_fields (ng, TILE, iNLM)
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*(thread+1)-1,subs*thread,-1
+                CALL ini_fields (ng, TILE, iNLM)
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related
 !  quatities and report global diagnostics.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL set_massflux (ng, TILE)
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL set_massflux (ng, TILE)
 # ifndef TS_FIXED
-          CALL rho_eos (ng, TILE)
+              CALL rho_eos (ng, TILE)
 # endif
-          CALL diag (ng, TILE)
+              CALL diag (ng, TILE)
 # ifdef TLM_CHECK
-          CALL nl_dotproduct (ng, TILE, Lnew(ng))
+              CALL nl_dotproduct (ng, TILE, Lnew(ng))
 # endif
-        END DO
-      END DO
+            END DO
+          END DO
 !$OMP END PARALLEL DO
-      IF (exit_flag.ne.NoError) RETURN
+        END DO
+        IF (exit_flag.ne.NoError) RETURN
+# ifdef NESTING
+        CALL nesting (5)
+# endif
 
 # ifdef AIR_OCEAN
 !
@@ -239,17 +264,19 @@
 !  timesteps: get air/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF ((iic(ng).ne.ntstart(ng)).and.                                 &
-     &    MOD(iic(ng)-1,CoupleSteps(Iatmos,ng)).eq.0) THEN
+        DO ng=1,Ngrids
+          IF ((iic(ng).ne.ntstart(ng)).and.                             &
+     &        MOD(iic(ng)-1,CoupleSteps(Iatmos,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*(thread+1)-1,subs*thread,-1
-            CALL ocn2atm_coupling (ng, TILE)
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*(thread+1)-1,subs*thread,-1
+                CALL ocn2atm_coupling (ng, TILE)
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 # endif
 
 # ifdef WAVES_OCEAN
@@ -259,17 +286,19 @@
 !  timesteps: get waves/ocean fluxes.
 !-----------------------------------------------------------------------
 !
-      IF ((iic(ng).ne.ntstart(ng)).and.                                 &
-     &    MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
+        DO ng=1,Ngrids
+          IF ((iic(ng).ne.ntstart(ng)).and.                             &
+     &        MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ocn2wav_coupling (ng, TILE)
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL ocn2wav_coupling (ng, TILE)
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 # endif
 
 # ifdef NEARSHORE_MELLOR
@@ -278,14 +307,19 @@
 !  Compute radiation stress terms.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL radiation_stress (ng, TILE)
-        END DO
-      END DO
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
+              CALL radiation_stress (ng, TILE)
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+#  ifdef NESTING
+        CALL nesting (8)
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -293,27 +327,32 @@
 !  if any.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
 # ifdef BULK_FLUXES
 #  if defined FOUR_DVAR && defined NL_BULK_FLUXES
-          IF (Nrun.eq.1) CALL bulk_flux (ng, TILE)
+              IF (Nrun.eq.1) CALL bulk_flux (ng, TILE)
 #  else
-          CALL bulk_flux (ng, TILE)
+              CALL bulk_flux (ng, TILE)
 #  endif
 # endif
 # ifdef BBL_MODEL
-          CALL bblm (ng, TILE)
+              CALL bblm (ng, TILE)
 # endif
-          CALL set_vbc (ng, TILE)
+              CALL set_vbc (ng, TILE)
 # if defined SSH_TIDES || defined UV_TIDES
-          CALL set_tides (ng, TILE)
+              CALL set_tides (ng, TILE)
 # endif
-        END DO
-      END DO
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+# ifdef NESTING
+        CALL nesting (9)
+# endif
 
 # ifdef ADJUST_BOUNDARY
 !
@@ -323,17 +362,19 @@
 !  timestep.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+        DO ng=1,Ngrids
+          IF (iic(ng).lt.(ntend(ng)+1)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL obc_adjust (ng, TILE, Lbinp(ng))
-            CALL load_obc (ng, TILE, Lbout(ng))
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL obc_adjust (ng, TILE, Lbinp(ng))
+                CALL load_obc (ng, TILE, Lbout(ng))
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 # endif
 
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -344,16 +385,18 @@
 !  timestep.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+        DO ng=1,Ngrids
+          IF (iic(ng).lt.(ntend(ng)+1)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL frc_adjust (ng, TILE, Lfinp(ng))
-          END DO
-        END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL frc_adjust (ng, TILE, Lfinp(ng))
+              END DO
+            END DO
 !$OMP END PARALLEL DO
-      END IF
+          END IF
+        END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -362,26 +405,31 @@
 !  diagnostically from horizontal mass divergence.
 !-----------------------------------------------------------------------
 !
+        DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,nstp,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
+!$OMP&            SHARED(nstp,numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
 # if defined ANA_VMIX
-          CALL ana_vmix (ng, TILE, iNLM)
+              CALL ana_vmix (ng, TILE, iNLM)
 # elif defined LMD_MIXING
-          CALL lmd_vmix (ng, TILE)
+              CALL lmd_vmix (ng, TILE)
 # elif defined BVF_MIXING
-          CALL bvf_mix (ng, TILE)
+              CALL bvf_mix (ng, TILE)
 # endif
 # if defined DIFF_3DCOEF || defined VISC_3DCOEF
-          CALL hmixing (ng, TILE)
+              CALL hmixing (ng, TILE)
 # endif
-          CALL omega (ng, TILE)
-          CALL wvelocity (ng, TILE, nstp(ng))
-        END DO
-      END DO
+              CALL omega (ng, TILE)
+              CALL wvelocity (ng, TILE, nstp(ng))
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+# ifdef NESTING
+        CALL nesting (10)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
@@ -389,20 +437,25 @@
 !  loop in shared-memory jobs.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
-          CALL set_zeta (ng, TILE)
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
+              CALL set_zeta (ng, TILE)
 #  ifdef DIAGNOSTICS
-          CALL set_diags (ng, TILE)
+              CALL set_diags (ng, TILE)
 #  endif
 #  if defined AVERAGES && !defined ADJOINT
-          CALL set_avg (ng, TILE)
+              CALL set_avg (ng, TILE)
 #  endif
-        END DO
-      END DO
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+#  ifdef NESTING
+        CALL nesting (11)
+#  endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
@@ -410,49 +463,59 @@
 !  time step.
 !-----------------------------------------------------------------------
 !
-      CALL output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
+        DO ng=1,Ngrids
+          CALL output (ng)
+          IF ((exit_flag.ne.NoError).or.                                &
+     &        ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) RETURN
+        END DO
 !
 !-----------------------------------------------------------------------
 !  Compute right-hand-side terms for 3D equations.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL rhs3d (ng, TILE)
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
+              CALL rhs3d (ng, TILE)
 #  ifdef MY25_MIXING
-          CALL my25_prestep (ng, TILE)
+              CALL my25_prestep (ng, TILE)
 #  elif defined GLS_MIXING
-          CALL gls_prestep (ng, TILE)
+              CALL gls_prestep (ng, TILE)
 #  endif
-        END DO
-      END DO
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+#  ifdef NESTING
+        CALL nesting (12)
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the
 !  free-surface and barotropic momentum components.
 !-----------------------------------------------------------------------
 !
-      DO my_iif=1,nfast(ng)+1
+        LOOP_2D : DO my_iif=1,MAXVAL(nfast)+1
 !
 !  Set time indices for predictor step. The PREDICTOR_2D_STEP switch
 !  it is assumed to be false before the first time-step.
 !
-        next_indx1=3-indx1(ng)
-        IF (.not.PREDICTOR_2D_STEP(ng)) THEN
-          PREDICTOR_2D_STEP(ng)=.TRUE.
-          iif(ng)=my_iif
-          IF (FIRST_2D_STEP) THEN
-            kstp(ng)=indx1(ng)
-          ELSE
-            kstp(ng)=3-indx1(ng)
-          END IF
-          knew(ng)=3
-          krhs(ng)=indx1(ng)
-        END IF
+          DO ng=1,Ngrids
+            next_indx1=3-indx1(ng)
+            IF (.not.PREDICTOR_2D_STEP(ng).and.                         &
+     &          my_iif.le.(nfast(ng)+1)) THEN
+              PREDICTOR_2D_STEP(ng)=.TRUE.
+              iif(ng)=my_iif
+              IF (FIRST_2D_STEP) THEN
+                kstp(ng)=indx1(ng)
+              ELSE
+                kstp(ng)=3-indx1(ng)
+              END IF
+              knew(ng)=3
+              krhs(ng)=indx1(ng)
+            END IF
 !
 !  Predictor step - Advance barotropic equations using 2D time-step
 !  ==============   predictor scheme.  No actual time-stepping is
@@ -460,56 +523,70 @@
 !  to finalize the fast-time averaging of 2D fields, if any, and
 !  compute the new time-evolving depths.
 !
+            IF (my_iif.le.(nfast(ng)+1)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*(thread+1)-1,subs*thread,-1
-            CALL step2d (ng, TILE)
-          END DO
-        END DO
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*(thread+1)-1,subs*thread,-1
+                  CALL step2d (ng, TILE)
+                END DO
+              END DO
 !$OMP END PARALLEL DO
+            END IF
+          END DO
+# ifdef NESTING
+          CALL nesting (14)
+# endif
 !
 !  Set time indices for corrector step.
 !
-        IF (PREDICTOR_2D_STEP(ng)) THEN
-          PREDICTOR_2D_STEP(ng)=.FALSE.
-          knew(ng)=next_indx1
-          kstp(ng)=3-knew(ng)
-          krhs(ng)=3
-          IF (iif(ng).lt.(nfast(ng)+1)) indx1(ng)=next_indx1
-        END IF
+          DO ng=1,Ngrids
+            IF (PREDICTOR_2D_STEP(ng)) THEN
+              PREDICTOR_2D_STEP(ng)=.FALSE.
+              knew(ng)=next_indx1
+              kstp(ng)=3-knew(ng)
+              krhs(ng)=3
+              IF (iif(ng).lt.(nfast(ng)+1)) indx1(ng)=next_indx1
+            END IF
 !
 !  Corrector step - Apply 2D time-step corrector scheme.  Notice that
 !  ==============   there is not need for a corrector step during the
 !  auxiliary (nfast+1) time-step.
 !
-        IF (iif(ng).lt.(nfast(ng)+1)) THEN
+            IF (iif(ng).lt.(nfast(ng)+1)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1,+1
-              CALL step2d (ng, TILE)
-            END DO
-          END DO
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1,+1
+                  CALL step2d (ng, TILE)
+                END DO
+              END DO
 !$OMP END PARALLEL DO
-        END IF
-      END DO
-
-# ifdef MOVE_SET_DEPTH
+            END IF
+          END DO
+# ifdef NESTING
+          CALL nesting (15)
+# endif
+        END DO LOOP_2D
+# ifdef NESTING
+        CALL nesting (21)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Recompute depths and thicknesses using the new time filtered
-!  free-surface.  This call was moved from "step2d" to here.
+!  free-surface.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL set_depth (ng, TILE)
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
+              CALL set_depth (ng, TILE)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
         END DO
-      END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step 3D momentum equations.
@@ -518,40 +595,49 @@
 !  Time-step 3D momentum equations and couple with vertically
 !  integrated equations.
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL step3d_uv (ng, TILE)
-        END DO
-      END DO
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
+              CALL step3d_uv (ng, TILE)
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+# ifdef NESTING
+        CALL nesting (16)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step vertical mixing turbulent equations and passive tracer
 !  source and sink terms, if applicable.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(ng,nnew,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL omega (ng, TILE)
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(nnew,numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL omega (ng, TILE)
 # ifdef MY25_MIXING
-          CALL my25_corstep (ng, TILE)
+              CALL my25_corstep (ng, TILE)
 # elif defined GLS_MIXING
-          CALL gls_corstep (ng, TILE)
+              CALL gls_corstep (ng, TILE)
 # endif
 # ifdef BIOLOGY
-          CALL biology (ng, TILE)
+              CALL biology (ng, TILE)
 # endif
 # ifdef SEDIMENT
-          CALL sediment (ng, TILE)
+              CALL sediment (ng, TILE)
 # endif
-        END DO
-      END DO
+            END DO
+          END DO
 !$OMP END PARALLEL DO
+        END DO
+# ifdef NESTING
+        CALL nesting (17)
+# endif
 
 # ifndef TS_FIXED
 !
@@ -559,30 +645,19 @@
 !  Time-step tracer equations.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*(thread+1)-1,subs*thread,-1
-          CALL step3d_t (ng, TILE)
-        END DO
-      END DO
+        DO ng=1,Ngrids
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*(thread+1)-1,subs*thread,-1
+              CALL step3d_t (ng, TILE)
+            END DO
+          END DO
 !$OMP END PARALLEL DO
-# endif
-
-# ifdef ASSIMILATION
-!
-!-----------------------------------------------------------------------
-!  Assimilate observations via Optimal Interpolation.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL oi_update (ng, TILE)
         END DO
-      END DO
-!$OMP END PARALLEL DO
+#  ifdef NESTING
+        CALL nesting (18)
+#  endif
 # endif
 
 # ifdef FLOATS
@@ -591,26 +666,30 @@
 !  Compute Lagrangian drifters trajectories.
 !-----------------------------------------------------------------------
 !
-      IF (Lfloats(Ng)) THEN
+        DO ng=1,Ngrids
+          IF (Lfloats(Ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,chunk_size,Lstr,Lend)                  &
-!$OMP&            SHARED(ng,numthreads,Nfloats)
-        DO thread=0,numthreads-1
-          chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
-          Lstr=1+thread*chunk_size
-          Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
-          CALL step_floats (ng, Lstr, Lend)
-        END DO
+!$OMP&            SHARED(numthreads,Nfloats)
+            DO thread=0,numthreads-1
+              chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
+              Lstr=1+thread*chunk_size
+              Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
+              CALL step_floats (ng, Lstr, Lend)
+            END DO
 !$OMP END PARALLEL DO
 !
 !  Shift floats time indices.
 !
-        nfp1(ng)=MOD(nfp1(ng)+1,NFT+1)
-        nf(ng)  =MOD(nf(ng)  +1,NFT+1)
-        nfm1(ng)=MOD(nfm1(ng)+1,NFT+1)
-        nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
-        nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
-      END IF
+            nfp1(ng)=MOD(nfp1(ng)+1,NFT+1)
+            nf  (ng)=MOD(nf  (ng)+1,NFT+1)
+            nfm1(ng)=MOD(nfm1(ng)+1,NFT+1)
+            nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
+            nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
+          END IF
+        END DO
 # endif
+      END DO STEP_LOOP
+
       RETURN
       END SUBROUTINE main3d
 #else

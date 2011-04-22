@@ -98,7 +98,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_v(Iend+1,Jend+1,k,nout)=0.5_r8*                            &
 !>   &                               (tl_v(Iend+1,Jend  ,k,nout)+       &
@@ -110,7 +110,7 @@
           ad_v(Iend+1,Jend+1,k,nout)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_v(Istr-1,Jend+1,k,nout)=0.5_r8*                            &
 !>   &                               (tl_v(Istr-1,Jend  ,k,nout)+       &
@@ -122,7 +122,7 @@
           ad_v(Istr-1,Jend+1,k,nout)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_v(Iend+1,Jstr,k,nout)=0.5_r8*                              &
 !>   &                             (tl_v(Iend  ,Jstr  ,k,nout)+         &
@@ -134,7 +134,7 @@
           ad_v(Iend+1,Jstr  ,k,nout)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_v(Istr-1,Jstr,k,nout)=0.5_r8*                              &
 !>   &                             (tl_v(Istr  ,Jstr  ,k,nout)+         &
@@ -154,7 +154,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 #  if defined EAST_M3RADIATION_NOT_YET
 
@@ -301,7 +301,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 #  if defined WEST_M3RADIATION_NOT_YET
 
@@ -451,7 +451,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 #  if defined NORTH_M3RADIATION_NOT_YET
 
@@ -582,7 +582,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 #  if defined SOUTH_M3RADIATION_NOT_YET
 

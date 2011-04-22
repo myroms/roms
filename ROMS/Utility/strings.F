@@ -11,6 +11,7 @@
 !  This module contains several string manipulation functions:         !
 !                                                                      !
 !    find_string   scans a character array for a specified string      !
+!    join_string   concatenate character array into a single string    !
 !    lowercase     converts input string characters to lowercase       !
 !    uppercase     converts input string characters to uppercase       !
 !                                                                      !
@@ -29,13 +30,14 @@
       implicit none
 !
       PRIVATE
-
+!
       PUBLIC :: find_string
+      PUBLIC :: join_string
       PUBLIC :: lowercase
       PUBLIC :: uppercase
-
+!
       CONTAINS
-
+!
       FUNCTION find_string (A, Asize, string, Aindex) RESULT (foundit)
 !
 !=======================================================================
@@ -88,7 +90,68 @@
 
       RETURN
       END FUNCTION find_string
+!
+      SUBROUTINE join_string (A, Asize, string, Lstring)
+!
+!=======================================================================
+!                                                                      !
+!  This routine concatenate a character array into a single string     !
+!  with each element separated by commas.                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     A            Array of strings (character)                        !
+!     Asize        Size of A (integer)                                 !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     string       Concatenated string (character)                     !
+!     Lstring      Length of concatenated string (integer)             !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: Asize
 
+      integer, intent(out) :: Lstring
+
+      character (len=*), intent(in) :: A(Asize)
+      character (len=*), intent(out) :: string
+!
+!  Local variable declarations.
+!
+      integer :: i, ie, is, lstr
+!
+!-----------------------------------------------------------------------
+!  Concatenate input character array.
+!-----------------------------------------------------------------------
+!
+!  Initialize to blank string.
+!
+      lstr=LEN(string)
+      DO i=1,lstr
+        string(i:i)=' '
+      END DO
+!
+!  Concatenate.
+!
+      is=1
+      DO i=1,Asize
+        lstr=LEN_TRIM(A(i))
+        IF (lstr.gt.0) THEN
+          ie=is+lstr-1
+          string(is:ie)=TRIM(A(i))
+          is=ie+1
+          string(is:is)=','
+          is=is+2
+        END IF
+      END DO
+      Lstring=LEN_TRIM(string)-1
+
+      RETURN
+      END SUBROUTINE join_string
+!
       FUNCTION lowercase (Sinp) RESULT (Sout)
 !
 !=======================================================================
@@ -139,7 +202,7 @@
 
       RETURN
       END FUNCTION lowercase
-
+!
       FUNCTION uppercase (Sinp) RESULT (Sout)
 !
 !=======================================================================

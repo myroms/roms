@@ -1,9 +1,9 @@
 #include "cppdefs.h"
 #ifdef FULL_GRID
-# define IR_RANGE IstrR,IendR
-# define IU_RANGE Istr,IendR
-# define JR_RANGE JstrR,JendR
-# define JV_RANGE Jstr,JendR
+# define IR_RANGE IstrT,IendT
+# define IU_RANGE IstrP,IendT
+# define JR_RANGE JstrT,JendT
+# define JV_RANGE JstrP,JendT
 #else
 # define IR_RANGE Istr,Iend
 # define IU_RANGE IstrU,Iend
@@ -187,13 +187,13 @@
 !  Determine boundary points for IO purposes.  The assigment
 !  below is done to account for periodicity.
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           IF (rmask_io(Istr-1,j).gt.0.0_r8) my_Nxyr=my_Nxyr+1
           IF (vmask_io(Istr-1,j).gt.0.0_r8) my_Nxyv=my_Nxyv+1
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           IF (pmask_io(Iend+1,j).gt.0.0_r8) my_Nxyp=my_Nxyp+1
           IF (rmask_io(Iend+1,j).gt.0.0_r8) my_Nxyr=my_Nxyr+1
@@ -201,13 +201,13 @@
           IF (vmask_io(Iend+1,j).gt.0.0_r8) my_Nxyv=my_Nxyv+1
         END DO
       END IF
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           IF (rmask_io(i,Jstr-1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
           IF (umask_io(i,Jstr-1).gt.0.0_r8) my_Nxyu=my_Nxyu+1
         END DO
       END IF
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           IF (pmask_io(i,Jend+1).gt.0.0_r8) my_Nxyp=my_Nxyp+1
           IF (rmask_io(i,Jend+1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
@@ -215,18 +215,18 @@
           IF (vmask_io(i,Jend+1).gt.0.0_r8) my_Nxyv=my_Nxyv+1
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (rmask_io(Istr-1,Jstr-1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         IF (rmask_io(Iend+1,Jstr-1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
         IF (umask_io(Iend+1,Jstr-1).gt.0.0_r8) my_Nxyu=my_Nxyu+1
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         IF (rmask_io(Istr-1,Jend+1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
         IF (vmask_io(Istr-1,Jend+1).gt.0.0_r8) my_Nxyv=my_Nxyv+1
       END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         IF (pmask_io(Iend+1,Jend+1).gt.0.0_r8) my_Nxyp=my_Nxyp+1
         IF (rmask_io(Iend+1,Jend+1).gt.0.0_r8) my_Nxyr=my_Nxyr+1
         IF (umask_io(Iend+1,Jend+1).gt.0.0_r8) my_Nxyu=my_Nxyu+1
@@ -278,8 +278,8 @@
 !
 !  Determine global number of points (parallel reduction).
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application

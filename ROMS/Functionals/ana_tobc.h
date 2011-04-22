@@ -89,7 +89,7 @@
 !
 #ifdef ESTUARY_TEST
 # ifdef EAST_TOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%t_east(j,k,itemp)=T0(ng)
@@ -104,7 +104,7 @@
       END IF
 # endif
 # ifdef WEST_TOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%t_west(j,k,itemp)=T0(ng)
@@ -120,7 +120,7 @@
 # endif
 #elif defined NJ_BIGHT
 # ifdef EAST_TOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             IF (z_r(Iend+1,j,k).ge.-15.0_r8) THEN
@@ -164,7 +164,7 @@
       END IF
 # endif
 # ifdef SOUTH_TOBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=IstrR,IendR
             IF (z_r(i,Jstr-1,k).ge.-15.0_r8) THEN
@@ -209,7 +209,7 @@
 # endif
 #elif defined SED_TEST1
 # ifdef EAST_TOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%t_east(j,k,itemp)=20.0_r8
@@ -220,7 +220,7 @@
 # endif
 #else
 # ifdef EAST_TOBC
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -231,7 +231,7 @@
       END IF
 # endif
 # ifdef WEST_TOBC
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -242,7 +242,7 @@
       END IF
 # endif
 # ifdef SOUTH_TOBC
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR
@@ -253,7 +253,7 @@
       END IF
 # endif
 # ifdef NORTH_TOBC
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR

@@ -797,7 +797,7 @@
 !  surface pressure gradient.
 !
           DO i=Istr,Iend+1
-            cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                      &
+            cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                     &
      &           z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
 # ifdef ZETA_ELLIPTIC
 !>          tl_phi(i,N(ng))=tl_phix(i)
@@ -805,16 +805,16 @@
             ad_phix(i)=ad_phix(i)+ad_phi(i,N(ng))
             ad_phi(i,N(ng))=0.0_r8
 # endif
-!>          tl_gradP(i,j,N(ng))=0.5_r8*tl_phix(i)*(pm(i-1,j)+pm(i,j))/   &
+!>          tl_gradP(i,j,N(ng))=0.5_r8*tl_phix(i)*(pm(i-1,j)+pm(i,j))/  &
 !>   &                          (f(i-1,j)+f(i,j))
 !>
-            ad_phix(i)=ad_phix(i)+                                       &
-     &                 ad_gradP(i,j,N(ng))*0.5_r8*(pm(i-1,j)+pm(i,j))/   &
+            ad_phix(i)=ad_phix(i)+                                      &
+     &                 ad_gradP(i,j,N(ng))*0.5_r8*(pm(i-1,j)+pm(i,j))/  &
      &                 (f(i-1,j)+f(i,j))
             ad_gradP(i,j,N(ng))=0.0_r8
-!>          tl_phix(i)=fac1*(tl_rho(i  ,j,N(ng))-                        &
-!>                           tl_rho(i-1,j,N(ng)))*cff1+                  &
-!>   &                 fac2*(tl_zeta(i  ,j,Linp)-                        &
+!>          tl_phix(i)=fac1*(tl_rho(i  ,j,N(ng))-                       &
+!>                           tl_rho(i-1,j,N(ng)))*cff1+                 &
+!>   &                 fac2*(tl_zeta(i  ,j,Linp)-                       &
 !>                           tl_zeta(i-1,j,Linp))
 !>
             adfac1=fac1*cff1*ad_phix(i)
@@ -944,7 +944,7 @@
 !
           DO i=Istr-1,Iend
             cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                     &
-       &         z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
+     &           z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
 # ifdef ZETA_ELLIPTIC
 !>          tl_phi(i,N(ng))=tl_phie(i)
 !>

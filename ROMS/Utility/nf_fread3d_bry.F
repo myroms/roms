@@ -163,10 +163,10 @@
 !
 !  Set switch to process boundary data by their associated tiles.
 !
-      bounded(iwest )=WESTERN_EDGE
-      bounded(ieast )=EASTERN_EDGE
-      bounded(isouth)=SOUTHERN_EDGE
-      bounded(inorth)=NORTHERN_EDGE
+      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
 !  Set NetCDF dimension counters for processing requested field.
 !

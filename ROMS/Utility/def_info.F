@@ -73,6 +73,7 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 #endif
+      USE strings_mod, ONLY : join_string
 !
       implicit none
 !
@@ -119,7 +120,7 @@
 #ifdef BIOLOGY
       character (len=512) :: bio_file
 #endif
-      character (len=1024) :: ana_file
+      character (len=1024) :: string
 !
 !-----------------------------------------------------------------------
 !  Set dimension variables.
@@ -157,7 +158,7 @@
 !
 !  Set dimension for generic user parameters.
 !
-      IF ((Nuser.gt.0).and.(ncid.ne.ncGSTid(ng))) THEN
+      IF ((Nuser.gt.0).and.(ncid.ne.GST(ng)%ncid)) THEN
         status=def_dim(ng, model, ncid, ncname, 'Nuser', 25, usrdim)
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -243,45 +244,45 @@
 !
 !  Define file type global attribute.
 !
-        IF (ncid.eq.ncADJid(ng)) THEN
+        IF (ncid.eq.ADM(ng)%ncid) THEN
           type='ROMS/TOMS adjoint history file'
-        ELSE IF (ncid.eq.ncAVGid(ng)) THEN
+        ELSE IF (ncid.eq.AVG(ng)%ncid) THEN
 #ifdef ADJOINT
           type='ROMS/TOMS adjoint averages file'
 #else
           type='ROMS/TOMS averages file'
 #endif
-        ELSE IF (ncid.eq.ncDIAid(ng)) THEN
+        ELSE IF (ncid.eq.DIA(ng)%ncid) THEN
           type='ROMS/TOMS diagnostics file'
-        ELSE IF (ncid.eq.ncFLTid(ng)) THEN
+        ELSE IF (ncid.eq.FLT(ng)%ncid) THEN
           type='ROMS/TOMS floats file'
-        ELSE IF (ncid.eq.ncERRid(ng)) THEN
+        ELSE IF (ncid.eq.ERR(ng)%ncid) THEN
           type='ROMS/TOMS posterior analysis error covariance matrix'
-        ELSE IF (ncid.eq.ncGSTid(ng)) THEN
+        ELSE IF (ncid.eq.GST(ng)%ncid) THEN
           type='ROMS/TOMS GST check pointing restart file'
-        ELSE IF (ncid.eq.ncHSSid(ng)) THEN
+        ELSE IF (ncid.eq.HSS(ng)%ncid) THEN
           type='ROMS/TOMS 4DVAR Hessian eigenvectors file'
-        ELSE IF (ncid.eq.ncHISid(ng)) THEN
+        ELSE IF (ncid.eq.HIS(ng)%ncid) THEN
           type='ROMS/TOMS history file'
-        ELSE IF (ncid.eq.ncITLid(ng)) THEN
+        ELSE IF (ncid.eq.ITL(ng)%ncid) THEN
           type='ROMS/TOMS tangent linear model initial file'
-        ELSE IF (ncid.eq.ncLCZid(ng)) THEN
+        ELSE IF (ncid.eq.LCZ(ng)%ncid) THEN
           type='ROMS/TOMS 4DVAR Lanczos vectors file'
-        ELSE IF (ncid.eq.ncNRMid(1,ng)) THEN
+        ELSE IF (ncid.eq.NRM(1,ng)%ncid) THEN
           type='ROMS/TOMS initial conditions error covariance norm file'
-        ELSE IF (ncid.eq.ncNRMid(2,ng)) THEN
+        ELSE IF (ncid.eq.NRM(2,ng)%ncid) THEN
           type='ROMS/TOMS model error covariance norm file'
-        ELSE IF (ncid.eq.ncNRMid(3,ng)) THEN
+        ELSE IF (ncid.eq.NRM(3,ng)%ncid) THEN
          type='ROMS/TOMS boundary conditions error covariance norm file'
-        ELSE IF (ncid.eq.ncNRMid(4,ng)) THEN
+        ELSE IF (ncid.eq.NRM(4,ng)%ncid) THEN
           type='ROMS/TOMS surface forcing error covariance norm file'
-        ELSE IF (ncid.eq.ncRSTid(ng)) THEN
+        ELSE IF (ncid.eq.RST(ng)%ncid) THEN
           type='ROMS/TOMS restart file'
-        ELSE IF (ncid.eq.ncSTAid(ng)) THEN
+        ELSE IF (ncid.eq.STA(ng)%ncid) THEN
           type='ROMS/TOMS station file'
-        ELSE IF (ncid.eq.ncTLFid(ng)) THEN
+        ELSE IF (ncid.eq.TLF(ng)%ncid) THEN
           type='ROMS/TOMS tangent linear impulse forcing file'
-        ELSE IF (ncid.eq.ncTLMid(ng)) THEN
+        ELSE IF (ncid.eq.TLM(ng)%ncid) THEN
           type='ROMS/TOMS tangent linear history file'
         END IF
         IF (exit_flag.eq.NoError) THEN
@@ -336,7 +337,7 @@
 #ifdef PROPAGATOR
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'gst_file',            &
-     &                        TRIM(GSTname(ng)))
+     &                        TRIM(GST(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'gst_file', TRIM(ncname)
             exit_flag=3
@@ -347,7 +348,7 @@
 
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'rst_file',            &
-     &                        TRIM(RSTname(ng)))
+     &                        TRIM(RST(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'rst_file', TRIM(ncname)
             exit_flag=3
@@ -358,12 +359,11 @@
         IF (exit_flag.eq.NoError) THEN
           IF (LdefHIS(ng)) THEN
             IF (ndefHIS(ng).gt.0) THEN
-              lstr=LEN_TRIM(HISbase(ng))-3
               status=nf90_put_att(ncid, nf90_global, 'his_base',        &
-     &                            HISbase(ng)(1:lstr))
+     &                            TRIM(HIS(ng)%base))
             ELSE
               status=nf90_put_att(ncid, nf90_global, 'his_file',        &
-     &                            TRIM(HISname(ng)))
+     &                            TRIM(HIS(ng)%name))
             END IF
             IF (status.ne.nf90_noerr) THEN
               IF (Master) WRITE (stdout,20) 'his_file', TRIM(ncname)
@@ -376,12 +376,11 @@
 #ifdef AVERAGES
         IF (exit_flag.eq.NoError) THEN
           IF (ndefAVG(ng).gt.0) THEN
-            lstr=LEN_TRIM(AVGbase(ng))-3
             status=nf90_put_att(ncid, nf90_global, 'avg_base',          &
-     &                          AVGbase(ng)(1:lstr))
+     &                          TRIM(AVG(ng)%base))
           ELSE
             status=nf90_put_att(ncid, nf90_global, 'avg_file',          &
-     &                          TRIM(AVGname(ng)))
+     &                          TRIM(AVG(ng)%name))
           END IF
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'avg_file', TRIM(ncname)
@@ -394,12 +393,11 @@
 #ifdef DIAGNOSTICS
         IF (exit_flag.eq.NoError) THEN
           IF (ndefDIA(ng).gt.0) THEN
-            lstr=LEN_TRIM(DIAbase(ng))-3
             status=nf90_put_att(ncid,nf90_global, 'dia_base',           &
-     &                          DIAbase(ng)(1:lstr))
+     &                          TRIM(DIA(ng)%base))
           ELSE
             status=nf90_put_att(ncid, nf90_global, 'dia_file',          &
-     &                          TRIM(DIAname(ng)))
+     &                          TRIM(DIA(ng)%name))
           END IF
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'dia_file', TRIM(ncname)
@@ -413,7 +411,7 @@
    (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'err_file',            &
-     &                        TRIM(ERRname(ng)))
+     &                        TRIM(ERR(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'err_file', TRIM(ncname)
             exit_flag=3
@@ -425,7 +423,7 @@
 #ifdef STATIONS
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'sta_file',            &
-     &                        TRIM(STAname(ng)))
+     &                        TRIM(STA(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'sta_file', TRIM(ncname)
             exit_flag=3
@@ -437,7 +435,7 @@
 #ifdef FLOATS
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'flt_file',            &
-     &                        TRIM(FLTname(ng)))
+     &                        TRIM(FLT(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'flt_file', TRIM(ncname)
             exit_flag=3
@@ -449,7 +447,7 @@
 #ifndef ANA_GRID
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'grd_file',            &
-     &                        TRIM(GRDname(ng)))
+     &                        TRIM(GRD(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'grd_file', TRIM(ncname)
             exit_flag=3
@@ -462,7 +460,7 @@
 # ifdef NONLINEAR
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'ini_file',            &
-     &                        TRIM(INIname(ng)))
+     &                        TRIM(INI(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'ini_file', TRIM(ncname)
             exit_flag=3
@@ -474,7 +472,7 @@
 # ifdef TANGENT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid,nf90_global, 'itl_file',             &
-     &                        TRIM(ITLname(ng)))
+     &                        TRIM(ITL(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'itl_file', TRIM(ncname)
             exit_flag=3
@@ -489,7 +487,7 @@
       defined SENSITIVITY_4DVAR   || defined SO_SEMI)
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'iad_file',            &
-     &                        TRIM(IADname(ng)))
+     &                        TRIM(IAD(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'iad_file', TRIM(ncname)
             exit_flag=3
@@ -503,7 +501,7 @@
     defined WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'nrm_file',            &
-     &                        TRIM(NRMname(1,ng)))
+     &                        TRIM(NRM(1,ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'nrm_file', TRIM(ncname)
             exit_flag=3
@@ -515,7 +513,7 @@
 #ifdef WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'tlf_file',            &
-     &                        TRIM(TLFname(ng)))
+     &                        TRIM(TLF(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'tlf_file', TRIM(ncname)
             exit_flag=3
@@ -527,7 +525,7 @@
 #ifdef FOUR_DVAR
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'obs_file',            &
-     &                        TRIM(OBSname(ng)))
+     &                        TRIM(OBS(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
             exit_flag=3
@@ -539,9 +537,11 @@
 #ifdef FRC_FILE
         IF (exit_flag.eq.NoError) THEN
           DO i=1,nFfiles(ng)
+            CALL join_string (FRC(i,ng)%files, FRC(i,ng)%Nfiles,        &
+     &                        string, lstr)
             WRITE (frcatt,30) i
             status=nf90_put_att(ncid, nf90_global, frcatt,              &
-     &                          TRIM(FRCname(i,ng)))
+     &                          string(1:lstr))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) WRITE (stdout,20) TRIM(frcatt), TRIM(ncname)
               exit_flag=3
@@ -554,8 +554,9 @@
 
 #ifdef OBC_DATA
         IF (exit_flag.eq.NoError) THEN
+          CALL join_string (BRY(ng)%files, BRY(ng)%Nfiles, string, lstr)
           status=nf90_put_att(ncid, nf90_global, 'bry_file',            &
-     &                        TRIM(BRYname(ng)))
+     &                        string(1:lstr))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'bry_file', TRIM(ncname)
             exit_flag=3
@@ -569,8 +570,9 @@
     (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
     (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
         IF (exit_flag.eq.NoError) THEN
+          CALL join_string (CLM(ng)%files, CLM(ng)%Nfiles, string, lstr)
           status=nf90_put_att(ncid, nf90_global, 'clm_file',            &
-     &                        TRIM(CLMname(ng)))
+     &                        TRIM(CLM(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'clm_file', TRIM(ncname)
             exit_flag=3
@@ -582,7 +584,7 @@
 #ifdef FORWARD_READ
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'fwd_file',            &
-     &                        TRIM(FWDname(ng)))
+     &                        TRIM(FWD(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'fwd_file', TRIM(ncname)
             exit_flag=3
@@ -596,7 +598,7 @@
     defined SO_SEMI
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'ads_file',            &
-     &                        TRIM(ADSname(ng)))
+     &                        TRIM(ADS(ng)%name))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'ads_file', TRIM(ncname)
             exit_flag=3
@@ -617,7 +619,7 @@
         END IF
 #endif
 
-#if defined ASSIMILATION || defined NUDGING
+#ifdef FOUR_DVAR
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'apar_file',           &
      &                        TRIM(aparnam))
@@ -811,24 +813,10 @@
 !  Analytical header files used.
 !
         IF (exit_flag.eq.NoError) THEN
-          DO i=1,1024
-            ana_file(i:i)=' '
-          END DO
-          is=1
-          DO i=1,37
-            lstr=LEN_TRIM(ANANAME(i))
-            IF (lstr.gt.0) THEN
-              ie=is+lstr-1
-              ana_file(is:ie)=TRIM(ANANAME(i))
-              is=ie+1
-              ana_file(is:is)=','
-              is=is+2
-            END IF
-          END DO
-          lstr=LEN_TRIM(ana_file)-1
+          CALL join_string (ANANAME, 37, string, lstr)
           IF (lstr.gt.0) THEN
             status=nf90_put_att(ncid, nf90_global, 'ana_file',          &
-     &                          ana_file(1:lstr))
+     &                          string(1:lstr))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) WRITE (stdout,20) 'ana_file', TRIM(ncname)
               exit_flag=3
@@ -886,7 +874,7 @@
 !  Avoid writing other information variables if GST check pointing
 !  NetCDF file.
 !
-      IF (ncid.eq.ncGSTid(ng)) RETURN
+      IF (ncid.eq.GST(ng)%ncid) RETURN
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1630,44 +1618,6 @@
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
-#endif
-#ifdef NUDGING
-!
-!  Nudging inverse time scales used in data assimilation.
-!
-      Vinfo( 1)='Znudass'
-      Vinfo( 2)='free-surface nudging assimilation inverse time scale'
-      Vinfo( 3)='day-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/0/), Aval, Vinfo, ncname,                     &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
-
-      Vinfo( 1)='M2nudass'
-      Vinfo( 2)='2D momentum nudging assimilation inverse time scale'
-      Vinfo( 3)='day-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/0/), Aval, Vinfo, ncname,                     &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
-
-# ifdef SOLVE3D
-      Vinfo( 1)='M3nudass'
-      Vinfo( 2)='3D momentum nudging assimilation inverse time scale'
-      Vinfo( 3)='day-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/0/), Aval, Vinfo, ncname,                     &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
-
-      Vinfo( 1)='Tnudass'
-      Vinfo( 2)='Tracers nudging assimilation inverse time scale'
-      Vinfo( 3)='day-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
-# endif
 #endif
 #ifdef NUDGING_COFF
 !
@@ -2659,7 +2609,7 @@
 !
 !  Station positions.
 !
-      IF (ncid.eq.ncSTAid(ng)) THEN
+      IF (ncid.eq.STA(ng)%ncid) THEN
         Vinfo( 1)='Ipos'
         Vinfo( 2)='stations I-direction positions'
         status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
@@ -2676,9 +2626,9 @@
       END IF
 #endif
 #ifdef NO_WRITE_GRID
-      IF (ncid.eq.ncSTAid(ng)) THEN
+      IF (ncid.eq.STA(ng)%ncid) THEN
 #else
-      IF (ncid.ne.ncFLTid(ng)) THEN
+      IF (ncid.ne.FLT(ng)%ncid) THEN
 #endif
 #if !(defined SED_MORPH && defined SEDIMENT)
 !
@@ -2690,7 +2640,7 @@
         Vinfo(14)='bath, scalar'
         Vinfo(22)='coordinates'
         Aval(5)=REAL(r2dvar,r8)
-        IF (ncid.eq.ncSTAid(ng)) THEN
+        IF (ncid.eq.STA(ng)%ncid) THEN
           status=def_var(ng, model, ncid, varid, NF_TYPE,               &
      &                   1, (/stadim/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -2703,7 +2653,7 @@
 !
 !  Coriolis Parameter.
 !
-        IF (ncid.ne.ncSTAid(ng)) THEN
+        IF (ncid.ne.STA(ng)%ncid) THEN
           Vinfo( 1)='f'
           Vinfo( 2)='Coriolis parameter at RHO-points'
           Vinfo( 3)='second-1'
@@ -2717,7 +2667,7 @@
 !
 !  Curvilinear coordinate metrics.
 !
-        IF (ncid.ne.ncSTAid(ng)) THEN
+        IF (ncid.ne.STA(ng)%ncid) THEN
           Vinfo( 1)='pm'
           Vinfo( 2)='curvilinear coordinate metric in XI'
           Vinfo( 3)='meter-1'
@@ -2747,7 +2697,7 @@
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_rho, scalar'
           Vinfo(21)='longitude'
-          IF (ncid.eq.ncSTAid(ng)) THEN
+          IF (ncid.eq.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2762,7 +2712,7 @@
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_rho, scalar'
           Vinfo(21)='latitude'
-          IF (ncid.eq.ncSTAid(ng)) THEN
+          IF (ncid.eq.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo,  ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2776,7 +2726,7 @@
           Vinfo( 2)='x-locations of RHO-points'
           Vinfo( 3)='meter'
           Vinfo(14)='x_rho, scalar'
-          IF (ncid.eq.ncSTAid(ng)) THEN
+          IF (ncid.eq.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2790,7 +2740,7 @@
           Vinfo( 2)='y-locations of RHO-points'
           Vinfo( 3)='meter'
           Vinfo(14)='y_rho, scalar'
-          IF (ncid.eq.ncSTAid(ng)) THEN
+          IF (ncid.eq.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     1, (/stadim/), Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2809,7 +2759,7 @@
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_u, scalar'
           Vinfo(21)='longitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2820,7 +2770,7 @@
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_u, scalar'
           Vinfo(21)='latitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2830,7 +2780,7 @@
           Vinfo( 2)='x-locations of U-points'
           Vinfo( 3)='meter'
           Vinfo(14)='x_u, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2840,7 +2790,7 @@
           Vinfo( 2)='y-locations of U-points'
           Vinfo( 3)='meter'
           Vinfo(14)='y_u, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, u2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2855,7 +2805,7 @@
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_v, scalar'
           Vinfo(21)='longitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2866,7 +2816,7 @@
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_v, scalar'
           Vinfo(21)='latitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2876,7 +2826,7 @@
           Vinfo( 2)='x-locations of V-points'
           Vinfo( 3)='meter'
           Vinfo(14)='x_v, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2886,7 +2836,7 @@
           Vinfo( 2)='y-locations of V-points'
           Vinfo( 3)='meter'
           Vinfo(14)='y_v, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, v2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2901,7 +2851,7 @@
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_psi, scalar'
           Vinfo(21)='longitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2912,7 +2862,7 @@
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_psi, scalar'
           Vinfo(21)='latitude'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2922,7 +2872,7 @@
           Vinfo( 2)='x-locations of PSI-points'
           Vinfo( 3)='meter'
           Vinfo(14)='x_psi, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2932,7 +2882,7 @@
           Vinfo( 2)='y-locations of PSI-points'
           Vinfo( 3)='meter'
           Vinfo(14)='y_psi, scalar'
-          IF (ncid.ne.ncSTAid(ng)) THEN
+          IF (ncid.ne.STA(ng)%ncid) THEN
             status=def_var(ng, model, ncid, varid, NF_TYPE,             &
      &                     2, p2dgrd, Aval, Vinfo, ncname)
             IF (exit_flag.ne.NoError) RETURN
@@ -2948,7 +2898,7 @@
         Vinfo(14)='angle, scalar'
         Vinfo(22)='coordinates'
         Aval(5)=REAL(r2dvar,r8)
-        IF (ncid.eq.ncSTAid(ng)) THEN
+        IF (ncid.eq.STA(ng)%ncid) THEN
           status=def_var(ng, model, ncid, varid, NF_TYPE,               &
      &                   1, (/stadim/), Aval, Vinfo,  ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -2962,7 +2912,7 @@
 !
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
-        IF (ncid.ne.ncSTAid(ng)) THEN
+        IF (ncid.ne.STA(ng)%ncid) THEN
           Vinfo( 1)='mask_rho'
           Vinfo( 2)='mask on RHO-points'
           Vinfo( 9)='land'
@@ -3010,7 +2960,7 @@
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !
-        IF (ncid.ne.ncSTAid(ng)) THEN
+        IF (ncid.ne.STA(ng)%ncid) THEN
           Vinfo( 1)='scope_rho'
           Vinfo( 2)='adjoint sensitivity spatial scope on RHO-points'
           Vinfo( 9)='inactive'
@@ -3046,7 +2996,7 @@
 !
 !  Spatially varying bottom friction parameter.
 !
-        IF (ncid.ne.ncSTAid(ng)) THEN
+        IF (ncid.ne.STA(ng)%ncid) THEN
 # ifdef UV_LOGDRAG
           Vinfo( 1)=Vname(1,idZoBL)
           Vinfo( 2)=Vname(2,idZoBL)

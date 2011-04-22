@@ -771,10 +771,10 @@
 !  Perturb open boundary conditions.
 !-----------------------------------------------------------------------
 !
-      Lperturb(iwest )=WESTERN_EDGE
-      Lperturb(ieast )=EASTERN_EDGE
-      Lperturb(isouth)=SOUTHERN_EDGE
-      Lperturb(inorth)=NORTHERN_EDGE
+      Lperturb(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lperturb(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lperturb(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lperturb(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 
       DO ir=1,Nbrec(ng)
         DO ib=1,4

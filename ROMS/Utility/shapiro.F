@@ -81,8 +81,8 @@
      &                2.0_r8*A(i,j)*Amask(i,j))*                        &
      &               Amask(i,j-1)*Amask(i,j+1)*Amask(i,j)
 #else
-          Awrk1(i,j)=0.25_r8*                                            &
-     &             (A(i,j-1)+A(i,j+1)-2.0_r8*A(i,j))
+          Awrk1(i,j)=0.25_r8*                                           &
+     &               (A(i,j-1)+A(i,j+1)-2.0_r8*A(i,j))
 #endif
         END DO
       END DO
@@ -106,7 +106,7 @@
      &                2.0_r8*Awrk2(i,j)*Amask(i,j))*                    &
      &               Amask(i-1,j)*Amask(i+1,j)*Amask(i,j)
 #else
-          Awrk1(i,j)=0.25_r8*                                            &
+          Awrk1(i,j)=0.25_r8*                                           &
      &               (Awrk2(i-1,j)+Awrk2(i+1,j)-2.0_r8*Awrk2(i,j))
 #endif
         END DO

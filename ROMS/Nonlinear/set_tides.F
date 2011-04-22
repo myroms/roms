@@ -441,7 +441,7 @@
 !
 #  if defined WEST_FSOBC || defined WEST_M2OBC
       update=.FALSE.
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
           zeta_west(j)=zeta_west(j)+                                    &
@@ -459,7 +459,7 @@
 #  endif
 #  if defined EAST_FSOBC || defined EAST_M2OBC
       update=.FALSE.
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
           zeta_east(j)=zeta_east(j)+                                    &
@@ -477,7 +477,7 @@
 #  endif
 #  if defined SOUTH_FSOBC || defined SOUTH_M2OBC
       update=.FALSE.
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
           zeta_south(i)=zeta_south(i)+                                  &
@@ -495,7 +495,7 @@
 #  endif
 #  if defined NORTH_FSOBC || defined NORTH_M2OBC
       update=.FALSE.
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
           zeta_north(i)=zeta_north(i)+                                  &
@@ -592,7 +592,7 @@
 !
 #  ifdef WEST_M2OBC
       update=.FALSE.
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
           ubar_west(j)=ubar_west(j)+Utide(Istr,j)
@@ -618,7 +618,7 @@
 #  endif
 #  ifdef EAST_M2OBC
       update=.FALSE.
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
           ubar_east(j)=ubar_east(j)+Utide(Iend+1,j)
@@ -644,7 +644,7 @@
 #  endif
 #  ifdef SOUTH_M2OBC
       update=.FALSE.
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
           ubar_south(i)=ubar_south(i)+Utide(i,Jstr-1)
@@ -670,7 +670,7 @@
 #  endif
 #  ifdef NORTH_M2OBC
       update=.FALSE.
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
           ubar_north(i)=ubar_north(i)+Utide(i,Jend+1)

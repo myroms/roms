@@ -34,6 +34,40 @@
 ! USER may follow the above guidelines for specifying his/her values.  These  !
 ! parameters are marked by "==" plural symbol after the KEYWORD.              !
 !                                                                             !
+! In multiple levels of nesting and/or multiple connected domains  step-ups,  !
+! "Ngrids" entries are expected for some of these parameters.  In such case,  !
+! the order of the entries for a parameter is extremely important.  It  must  !
+! follow the same order (1:Ngrids) as in the state variable declaration. The  !
+! USER may follow the above guidelines for specifying his/her values.  These  !
+! parameters are marked by "==" plural symbol after the KEYWORD.              !
+!                                                                             !
+! Multiple NetCDF files are allowed for input field(s).  This is useful when  !
+! splitting input data (climatology,  boundary,  forcing)  time records into  !
+! several files (say monthly, annual, etc). In this case, each multiple file  !
+! entry line needs to be ended by the vertical bar (|) symbol. For example:   !
+!                                                                             !
+!    NFFILES == 8                          ! number of forcing files          !
+!                                                                             !
+!    FRCNAME == my_rivers.nc      \                                           !
+!               my_tides.nc       \                                           !
+!               my_lwrad_year1.nc |                                           !
+!               my_lwrad_year2.nc \                                           !
+!               my_swrad_year1.nc |                                           !
+!               my_swrad_year2.nc \                                           !
+!               my_winds_year1.nc |                                           !
+!               my_winds_year2.nc \                                           !
+!               my_Pair_year1.nc  |                                           !
+!               my_Pair_year2.nc  \                                           !
+!               my_Qair_year1.nc  |                                           !
+!               my_Qair_year2.nc  \                                           !
+!               my_Tair_year1.nc  |                                           !
+!               my_Tair_year2.nc                                              !
+!                                                                             !
+! Notice that NFFILES is 8 and not 14. There are 8 uniquely different fields  !
+! in the file list,  we  DO NOT  count file entries followed by the vertical  !
+! bar symbol.  This is because  multiple file  entries are processed in ROMS  !
+! with derived type structures.                                               !
+!                                                                             !
 !==============================================================================
 !
 ! Application title.
@@ -48,6 +82,10 @@
 ! first so all information arrays can be initialized properly.
 
      VARNAME = ROMS/External/varinfo.dat
+
+! Number of nested grids.
+
+      Ngrids =  1
 
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
@@ -127,7 +165,7 @@
 
    LmultiGST =  F                               ! one eigenvector per file
      LrstGST =  F                               ! GST restart switch
-  MaxIterGST =  500                             ! maximun number of iterations
+  MaxIterGST =  500                             ! maximum number of iterations
         NGST =  10                              ! check pointing interval
 
 ! Relative accuracy of the Ritz values computed in the GST analysis.
@@ -143,7 +181,7 @@
      ad_TNU2 == 0.0d0  0.0d0                    ! m2/s
      ad_TNU4 == 0.0d0  0.0d0                    ! m4/s
 
-! Harmononic/biharmonic, horizontal viscosity coefficient for nonlinear model
+! Harmonic/biharmonic, horizontal viscosity coefficient for nonlinear model
 ! and adjoint-based algorithms: [Ngrids].
 
        VISC2 == 0.0d0                           ! m2/s
@@ -613,8 +651,10 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! from the first file in the list containing the forcing field. Therefore,
 ! the order of the file names is very important. If using multiple forcing
 ! files per grid, first enter all the file names for grid 1, then grid 2,
-! and so on.  Use a single line per entry with a continuation (\) symbol
-! at the each entry, except the last one.
+! and so on.  It is also possible to split input data time records into
+! several NetCDF file (see prologue instructions above). Use a single line
+! per entry with a continuation (\) or vertical bar (|) symbol at the each
+! entry, except the last one.
 
      NFFILES == 7                          ! number of forcing files
 
@@ -668,6 +708,13 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !  VARNAME     Input/Output variable information file name.  This file needs to
 !              be processed first so all information arrays and indices can be
 !              initialized properly in "mod_ncparam.F".
+!
+!------------------------------------------------------------------------------
+! Nested grid parameters.
+!------------------------------------------------------------------------------
+!
+!  Ngrids      Number of nested grids. It needs to be read at the top of all
+!              other parameters in order to allocate all model variables.
 !
 !------------------------------------------------------------------------------
 ! Grid dimension parameters.
@@ -1235,6 +1282,16 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !                    where
 !
 !                      Zo(x,y,s)=[hc*s(k)+h(x,y)*C(k)]/[hc+h(x,y)]
+!
+!                    The true sigma-coordinate system is recovered as hc goes
+!                    to INFINITY. This is useful when configuring applications
+!                    with flat bathymetry and uniform level thickness.
+!                    Practically, you can achieve this by setting:
+!
+!                      THETA_S = 0.0d0
+!                      THETA_B = 0.0d0
+!                      TCLINE  = 1.0d+17       (a large number)
+!
 !
 !  Vstretching Vertical stretching function, C(s):
 !

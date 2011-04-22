@@ -162,9 +162,9 @@
 !  Add given forcing to tangent linear state.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (Master) THEN
-          IF (FrequentImpulse) THEN
+          IF (FrequentImpulse(ng)) THEN
             IF (iic(ng).eq.ntstart(ng)) THEN
               WRITE (stdout,10)
  10           FORMAT (3x,'TL_FORCING   - adding weak-constraint ',      &

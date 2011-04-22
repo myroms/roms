@@ -391,7 +391,7 @@
      &              '(m4/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
 # endif
 # if defined TANGENT || defined TL_IOMS
-              WRITE (out,90) tl_tnu4(i,ng), 'tl_tnu4', i,              &
+              WRITE (out,90) tl_tnu4(i,ng), 'tl_tnu4', i,               &
      &              'TLM Horizontal, biharmonic mixing coefficient',    &
      &              '(m4/s) for tracer ', i, TRIM(Vname(1,idTvar(i)))
 # endif

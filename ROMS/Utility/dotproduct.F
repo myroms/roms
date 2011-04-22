@@ -332,8 +332,8 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
@@ -524,10 +524,10 @@
 !-----------------------------------------------------------------------
 
 #  ifdef FULL_GRID
-#   define IR_RANGE IstrR,IendR
-#   define IU_RANGE Istr,IendR
-#   define JR_RANGE JstrR,JendR
-#   define JV_RANGE Jstr,JendR
+#   define IR_RANGE IstrT,IendT
+#   define IU_RANGE IstrP,IendT
+#   define JR_RANGE JstrT,JendT
+#   define JV_RANGE JstrP,JendT
 #  else
 #   define IR_RANGE Istr,Iend
 #   define IU_RANGE IstrU,Iend
@@ -643,8 +643,8 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -832,10 +832,10 @@
 !-----------------------------------------------------------------------
 
 #  ifdef FULL_GRID
-#   define IR_RANGE IstrR,IendR
-#   define IU_RANGE Istr,IendR
-#   define JR_RANGE JstrR,JendR
-#   define JV_RANGE Jstr,JendR
+#   define IR_RANGE IstrT,IendT
+#   define IU_RANGE IstrP,IendT
+#   define JR_RANGE JstrT,JendT
+#   define JV_RANGE JstrP,JendT
 #  else
 #   define IR_RANGE Istr,Iend
 #   define IU_RANGE IstrU,Iend
@@ -951,8 +951,8 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -1251,8 +1251,8 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
-        IF (SOUTH_WEST_CORNER.and.                                      &
-     &      NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
+     &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
@@ -1501,8 +1501,8 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application

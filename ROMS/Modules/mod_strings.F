@@ -24,7 +24,7 @@
 
         integer, parameter :: Nregion = 48
 
-        character (len=55), dimension(11) :: StateMsg =                 &
+        character (len=55), dimension(12) :: StateMsg =                 &
      &    (/'Read state initial conditions,               ',            &
      &      'Read previous state initial conditions,      ',            &
      &      'Read previous adjoint state solution,        ',            &
@@ -35,11 +35,12 @@
      &      'Read v-space increments,                     ',            &
      &      'Read background state,                       ',            &
      &      'Read boundary normalization factors,         ',            &
-     &      'Read forcing normalization factors,          '/)
+     &      'Read forcing normalization factors,          ',            &
+     &      'Read surface forcing and/or OBS increments,  '/)
 
         character (len=50), dimension(Nregion) :: Pregion =             &
-     &    (/'Initialization ...................................',       &
-     &      'OI data assimilation .............................',       &
+     &    (/'Allocation and array initialization ..............',       &
+     &      'Ocean state initialization .......................',       &
      &      'Reading of input data ............................',       &
      &      'Processing of input data .........................',       &
      &      'Processing of output time averaged data ..........',       &

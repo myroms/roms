@@ -98,7 +98,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_t(Iend+1,Jend+1,k,nout,itrc)=0.5_r8*                       &
 !>   &                              (tl_t(Iend+1,Jend  ,k,nout,itrc)+   &
@@ -112,7 +112,7 @@
           ad_t(Iend+1,Jend+1,k,nout,itrc)=0.0_r8
         END DO
       END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_t(Istr-1,Jend+1,k,nout,itrc)=0.5_r8*                       &
 !>   &                              (tl_t(Istr-1,Jend  ,k,nout,itrc)+   &
@@ -126,7 +126,7 @@
           ad_t(Istr-1,Jend+1,k,nout,itrc)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_t(Iend+1,Jstr-1,k,nout,itrc)=0.5_r8*                       &
 !>   &                              (tl_t(Iend  ,Jstr-1,k,nout,itrc)+   &
@@ -140,7 +140,7 @@
           ad_t(Iend+1,Jstr-1,k,nout,itrc)=0.0_r8
         END DO
       END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         DO k=1,N(ng)
 !>        tl_t(Istr-1,Jstr-1,k,nout,itrc)=0.5_r8*                       &
 !>   &                              (tl_t(Istr  ,Jstr-1,k,nout,itrc)+   &
@@ -162,7 +162,7 @@
 !  Lateral boundary conditions at the northern edge.
 !-----------------------------------------------------------------------
 !
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 
 #  if defined NORTH_TRADIATION_NOT_YET
 
@@ -308,7 +308,7 @@
 !  Lateral boundary conditions at the southern edge.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 
 #  if defined SOUTH_TRADIATION_NOT_YET
 
@@ -457,7 +457,7 @@
 !  Lateral boundary conditions at the eastern edge.
 !-----------------------------------------------------------------------
 !
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 
 #  if defined EAST_TRADIATION_NOT_YET
 
@@ -603,7 +603,7 @@
 !  Lateral boundary conditions at the western edge.
 !-----------------------------------------------------------------------
 !
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 
 #  if defined WEST_TRADIATION_NOT_YET
 

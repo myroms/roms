@@ -395,13 +395,8 @@
 !  Fourth-order, centered differences horizontal advective fluxes.
 #    endif
 !
-#    ifdef EW_PERIODIC
-#     define I_RANGE Istr-1,Iend+2
-#    else
-#     define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
-#    endif
           DO j=Jstr,Jend
-            DO i=I_RANGE
+            DO i=Istrm1,Iendp2
               FX(i,j)=t(i  ,j,k,nstp,itrc)-                             &
      &                t(i-1,j,k,nstp,itrc)
 #    ifdef MASKING
@@ -409,14 +404,13 @@
 #    endif
             END DO
           END DO
-#    undef I_RANGE
-#    ifndef EW_PERIODIC
-          IF (WESTERN_EDGE) THEN
+#    if !defined EW_PERIODIC && !defined COMPOSED_GRID
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               FX(Istr-1,j)=FX(Istr,j)
             END DO
           END IF
-          IF (EASTERN_EDGE) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               FX(Iend+2,j)=FX(Iend+1,j)
             END DO
@@ -460,12 +454,7 @@
             END DO
           END DO
 !
-#    ifdef NS_PERIODIC
-#     define J_RANGE Jstr-1,Jend+2
-#    else
-#     define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
-#    endif
-          DO j=J_RANGE
+          DO j=Jstrm1,Jendp2
             DO i=Istr,Iend
               FE(i,j)=t(i,j  ,k,nstp,itrc)-                             &
      &                t(i,j-1,k,nstp,itrc)
@@ -474,14 +463,13 @@
 #    endif
             END DO
           END DO
-#    undef J_RANGE
-#    ifndef NS_PERIODIC
-          IF (SOUTHERN_EDGE) THEN
+#    if !defined NS_PERIODIC && !defined COMPOSED_GRID
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               FE(i,Jstr-1)=FE(i,Jstr)
             END DO
           END IF
-          IF (NORTHERN_EDGE) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               FE(i,Jend+2)=FE(i,Jend+1)
             END DO
@@ -759,7 +747,7 @@
 !
 !  Compute vertical diffusive fluxes "FC" of the tracer fields at
 !  current time step n, and at horizontal RHO-points and vertical
-!  W-points. Notice that the vertical diffusion coefficients for
+!  W-points.  Notice that the vertical diffusion coefficients for
 !  passive tracers is the same as that for salinity (ltrc=NAT).
 !
       DO j=Jstr,Jend
@@ -1063,15 +1051,17 @@
       END DO
 #  ifdef DISTRIBUTE
 #   ifdef TS_MPDATA
-      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
+      CALL mp_exchange4d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    t(:,:,:,nnew,:))
-#   endif
+     &                    t(:,:,:,nnew,:),                              &
+     &                    t(:,:,:,3,:))
+#   else
       CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    t(:,:,:,3,:))
+#   endif
 #  endif
 # endif
       RETURN

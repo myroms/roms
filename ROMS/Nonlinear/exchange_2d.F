@@ -9,15 +9,29 @@
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
-!  This package contains periodic boundary conditions routines for 2D  !
-!  variables.                                                          !
+!  These routines apply periodic boundary conditions to generic        !
+!  2D fields.                                                          !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng                Nested grid number.                            !
+!     tile              Domain partition.                              !
+!     LBi               I-dimension Lower bound.                       !
+!     UBi               I-dimension Upper bound.                       !
+!     LBj               J-dimension Lower bound.                       !
+!     UBj               J-dimension Upper bound.                       !
+!     A                 2D field.                                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A                 Processed 2D field                             !
 !                                                                      !
 !  Routines:                                                           !
 !                                                                      !
-!    exchange_p2d_tile    periodic conditions/exchange at PSI-points   !
-!    exchange_r2d_tile    periodic conditions/exchange at RHO-points   !
-!    exchange_u2d_tile    periodic conditions/exchange at U-points     !
-!    exchange_v2d_tile    periodic conditions/exchange at V-points     !
+!    exchange_p2d_tile  periodic conditions/exchange at PSI-points     !
+!    exchange_r2d_tile  periodic conditions/exchange at RHO-points     !
+!    exchange_u2d_tile  periodic conditions/exchange at U-points       !
+!    exchange_v2d_tile  periodic conditions/exchange at V-points       !
 !                                                                      !
 !=======================================================================
 !
@@ -46,25 +60,49 @@
 !
 !  Local variable declarations.
 !
+# ifdef EW_PERIODIC
+      logical :: EW_exchange
+# endif
+# ifdef NS_PERIODIC
+      logical :: NS_exchange
+# endif
       integer :: i, j
 
 # include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Determine processing switches.
+!-----------------------------------------------------------------------
+!
+# ifdef EW_PERIODIC
+#  ifdef DISTRIBUTE
+      EW_exchange=NtileI(ng).eq.1
+#  else
+      EW_exchange=.TRUE.
+#  endif
+# endif
+# ifdef NS_PERIODIC
+#  ifdef DISTRIBUTE
+      NS_exchange=NtileJ(ng).eq.1
+#  else
+      NS_exchange=.TRUE.
+#  endif
+# endif
 
 # ifdef EW_PERIODIC
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE Jstr,JendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileI(ng).eq.1) THEN
+#  ifdef NS_PERIODIC
+#   define J_RANGE Jstr,Jend
+#  else
+#   define J_RANGE Jstr,JendR
 #  endif
-        IF (WESTERN_EDGE) THEN
+
+      IF (EW_exchange) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=J_RANGE
             A(Lm(ng)+1,j)=A(1,j)
             A(Lm(ng)+2,j)=A(2,j)
@@ -73,34 +111,31 @@
 #  endif
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=J_RANGE
             A(-2,j)=A(Lm(ng)-2,j)
             A(-1,j)=A(Lm(ng)-1,j)
             A( 0,j)=A(Lm(ng)  ,j)
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef J_RANGE
 # endif
 
 # ifdef NS_PERIODIC
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE Istr,IendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileJ(ng).eq.1) THEN
+#  ifdef EW_PERIODIC
+#   define I_RANGE Istr,Iend
+#  else
+#   define I_RANGE Istr,IendR
 #  endif
-        IF (SOUTHERN_EDGE) THEN
+
+      IF (NS_exchange) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,Mm(ng)+1)=A(i,1)
             A(i,Mm(ng)+2)=A(i,2)
@@ -109,16 +144,14 @@
 #  endif
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,-2)=A(i,Mm(ng)-2)
             A(i,-1)=A(i,Mm(ng)-1)
             A(i, 0)=A(i,Mm(ng)  )
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef I_RANGE
 # endif
 
@@ -128,10 +161,8 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
-#  endif
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+      IF (EW_exchange.and.NS_exchange) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Lm(ng)+1,Mm(ng)+1)=A(1,1)
           A(Lm(ng)+1,Mm(ng)+2)=A(1,2)
 #  ifdef THREE_GHOST
@@ -146,7 +177,7 @@
           A(Lm(ng)+3,Mm(ng)+3)=A(3,3)
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(-2,Mm(ng)+1)=A(Lm(ng)-2,1)
           A(-1,Mm(ng)+1)=A(Lm(ng)-1,1)
           A( 0,Mm(ng)+1)=A(Lm(ng)  ,1)
@@ -159,7 +190,7 @@
           A( 0,Mm(ng)+3)=A(Lm(ng)  ,3)
 #  endif
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Lm(ng)+1,-2)=A(1,Mm(ng)-2)
           A(Lm(ng)+1,-1)=A(1,Mm(ng)-1)
           A(Lm(ng)+1, 0)=A(1,Mm(ng)  )
@@ -172,7 +203,7 @@
           A(Lm(ng)+3, 0)=A(3,Mm(ng)  )
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(-2,-2)=A(Lm(ng)-2,Mm(ng)-2)
           A(-2,-1)=A(Lm(ng)-2,Mm(ng)-1)
           A(-2, 0)=A(Lm(ng)-2,Mm(ng)  )
@@ -183,9 +214,7 @@
           A( 0,-1)=A(Lm(ng)  ,Mm(ng)-1)
           A( 0, 0)=A(Lm(ng)  ,Mm(ng)  )
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 # endif
       RETURN
       END SUBROUTINE exchange_p2d_tile
@@ -212,25 +241,49 @@
 !
 !  Local variable declarations.
 !
+# ifdef EW_PERIODIC
+      logical :: EW_exchange
+# endif
+# ifdef NS_PERIODIC
+      logical :: NS_exchange
+# endif
       integer :: i, j
 
 #  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Determine processing switches.
+!-----------------------------------------------------------------------
+!
+# ifdef EW_PERIODIC
+#  ifdef DISTRIBUTE
+      EW_exchange=NtileI(ng).eq.1
+#  else
+      EW_exchange=.TRUE.
+#  endif
+# endif
+# ifdef NS_PERIODIC
+#  ifdef DISTRIBUTE
+      NS_exchange=NtileJ(ng).eq.1
+#  else
+      NS_exchange=.TRUE.
+#  endif
+# endif
 
 # ifdef EW_PERIODIC
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE JstrR,JendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileI(ng).eq.1) THEN
+#  ifdef NS_PERIODIC
+#   define J_RANGE Jstr,Jend
+#  else
+#   define J_RANGE JstrR,JendR
 #  endif
-        IF (WESTERN_EDGE) THEN
+
+      IF (EW_exchange) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=J_RANGE
             A(Lm(ng)+1,j)=A(1,j)
             A(Lm(ng)+2,j)=A(2,j)
@@ -239,34 +292,31 @@
 #  endif
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=J_RANGE
             A(-2,j)=A(Lm(ng)-2,j)
             A(-1,j)=A(Lm(ng)-1,j)
             A( 0,j)=A(Lm(ng)  ,j)
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef J_RANGE
 # endif
 
 # ifdef NS_PERIODIC
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileJ(ng).eq.1) THEN
+#  ifdef EW_PERIODIC
+#   define I_RANGE Istr,Iend
+#  else
+#   define I_RANGE IstrR,IendR
 #  endif
-        IF (SOUTHERN_EDGE) THEN
+
+      IF (NS_exchange) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,Mm(ng)+1)=A(i,1)
             A(i,Mm(ng)+2)=A(i,2)
@@ -275,16 +325,14 @@
 #  endif
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,-2)=A(i,Mm(ng)-2)
             A(i,-1)=A(i,Mm(ng)-1)
             A(i, 0)=A(i,Mm(ng)  )
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef I_RANGE
 # endif
 
@@ -294,10 +342,8 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
-#  endif
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+      IF (EW_exchange.and.NS_exchange) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Lm(ng)+1,Mm(ng)+1)=A(1,1)
           A(Lm(ng)+1,Mm(ng)+2)=A(1,2)
 #  ifdef THREE_GHOST
@@ -312,7 +358,7 @@
           A(Lm(ng)+3,Mm(ng)+3)=A(3,3)
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(-2,Mm(ng)+1)=A(Lm(ng)-2,1)
           A(-1,Mm(ng)+1)=A(Lm(ng)-1,1)
           A( 0,Mm(ng)+1)=A(Lm(ng)  ,1)
@@ -325,7 +371,7 @@
           A( 0,Mm(ng)+3)=A(Lm(ng)  ,3)
 #  endif
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Lm(ng)+1,-2)=A(1,Mm(ng)-2)
           A(Lm(ng)+1,-1)=A(1,Mm(ng)-1)
           A(Lm(ng)+1, 0)=A(1,Mm(ng)  )
@@ -338,7 +384,7 @@
           A(Lm(ng)+3, 0)=A(3,Mm(ng)  )
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(-2,-2)=A(Lm(ng)-2,Mm(ng)-2)
           A(-2,-1)=A(Lm(ng)-2,Mm(ng)-1)
           A(-2, 0)=A(Lm(ng)-2,Mm(ng)  )
@@ -349,9 +395,7 @@
           A( 0,-1)=A(Lm(ng)  ,Mm(ng)-1)
           A( 0, 0)=A(Lm(ng)  ,Mm(ng)  )
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 # endif
       RETURN
       END SUBROUTINE exchange_r2d_tile
@@ -378,25 +422,49 @@
 !
 !  Local variable declarations.
 !
+# ifdef EW_PERIODIC
+      logical :: EW_exchange
+# endif
+# ifdef NS_PERIODIC
+      logical :: NS_exchange
+# endif
       integer :: i, j
 
 # include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Determine processing switches.
+!-----------------------------------------------------------------------
+!
+# ifdef EW_PERIODIC
+#  ifdef DISTRIBUTE
+      EW_exchange=NtileI(ng).eq.1
+#  else
+      EW_exchange=.TRUE.
+#  endif
+# endif
+# ifdef NS_PERIODIC
+#  ifdef DISTRIBUTE
+      NS_exchange=NtileJ(ng).eq.1
+#  else
+      NS_exchange=.TRUE.
+#  endif
+# endif
 
 # ifdef EW_PERIODIC
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE JstrR,JendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileI(ng).eq.1) THEN
+#  ifdef NS_PERIODIC
+#   define J_RANGE Jstr,Jend
+#  else
+#   define J_RANGE JstrR,JendR
 #  endif
-        IF (WESTERN_EDGE) THEN
+
+      IF (EW_exchange) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=J_RANGE
             A(Lm(ng)+1,j)=A(1,j)
             A(Lm(ng)+2,j)=A(2,j)
@@ -405,34 +473,31 @@
 #  endif
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=J_RANGE
             A(-2,j)=A(Lm(ng)-2,j)
             A(-1,j)=A(Lm(ng)-1,j)
             A( 0,j)=A(Lm(ng)  ,j)
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef J_RANGE
 # endif
 
 # ifdef NS_PERIODIC
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE Istr,IendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileJ(ng).eq.1) THEN
+#  ifdef EW_PERIODIC
+#   define I_RANGE Istr,Iend
+#  else
+#   define I_RANGE Istr,IendR
 #  endif
-        IF (SOUTHERN_EDGE) THEN
+
+      IF (NS_exchange) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,Mm(ng)+1)=A(i,1)
             A(i,Mm(ng)+2)=A(i,2)
@@ -441,16 +506,14 @@
 #  endif
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,-2)=A(i,Mm(ng)-2)
             A(i,-1)=A(i,Mm(ng)-1)
             A(i, 0)=A(i,Mm(ng)  )
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef I_RANGE
 # endif
 
@@ -460,10 +523,8 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
-#  endif
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+      IF (EW_exchange.and.NS_exchange) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Lm(ng)+1,Mm(ng)+1)=A(1,1)
           A(Lm(ng)+1,Mm(ng)+2)=A(1,2)
 #  ifdef THREE_GHOST
@@ -478,7 +539,7 @@
           A(Lm(ng)+3,Mm(ng)+3)=A(3,3)
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(-2,Mm(ng)+1)=A(Lm(ng)-2,1)
           A(-1,Mm(ng)+1)=A(Lm(ng)-1,1)
           A( 0,Mm(ng)+1)=A(Lm(ng)  ,1)
@@ -491,7 +552,7 @@
           A( 0,Mm(ng)+3)=A(Lm(ng)  ,3)
 #  endif
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Lm(ng)+1,-2)=A(1,Mm(ng)-2)
           A(Lm(ng)+1,-1)=A(1,Mm(ng)-1)
           A(Lm(ng)+1, 0)=A(1,Mm(ng)  )
@@ -504,7 +565,7 @@
           A(Lm(ng)+3, 0)=A(3,Mm(ng)  )
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(-2,-2)=A(Lm(ng)-2,Mm(ng)-2)
           A(-2,-1)=A(Lm(ng)-2,Mm(ng)-1)
           A(-2, 0)=A(Lm(ng)-2,Mm(ng)  )
@@ -515,9 +576,7 @@
           A( 0,-1)=A(Lm(ng)  ,Mm(ng)-1)
           A( 0, 0)=A(Lm(ng)  ,Mm(ng)  )
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 # endif
       RETURN
       END SUBROUTINE exchange_u2d_tile
@@ -544,25 +603,49 @@
 !
 !  Local variable declarations.
 !
+# ifdef EW_PERIODIC
+      logical :: EW_exchange
+# endif
+# ifdef NS_PERIODIC
+      logical :: NS_exchange
+# endif
       integer :: i, j
 
 # include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Determine processing switches.
+!-----------------------------------------------------------------------
+!
+# ifdef EW_PERIODIC
+#  ifdef DISTRIBUTE
+      EW_exchange=NtileI(ng).eq.1
+#  else
+      EW_exchange=.TRUE.
+#  endif
+# endif
+# ifdef NS_PERIODIC
+#  ifdef DISTRIBUTE
+      NS_exchange=NtileJ(ng).eq.1
+#  else
+      NS_exchange=.TRUE.
+#  endif
+# endif
 
 # ifdef EW_PERIODIC
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE Jstr,JendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileI(ng).eq.1) THEN
+#  ifdef NS_PERIODIC
+#   define J_RANGE Jstr,Jend
+#  else
+#   define J_RANGE Jstr,JendR
 #  endif
-        IF (WESTERN_EDGE) THEN
+
+      IF (EW_exchange) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=J_RANGE
             A(Lm(ng)+1,j)=A(1,j)
             A(Lm(ng)+2,j)=A(2,j)
@@ -571,34 +654,31 @@
 #  endif
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=J_RANGE
             A(-2,j)=A(Lm(ng)-2,j)
             A(-1,j)=A(Lm(ng)-1,j)
             A( 0,j)=A(Lm(ng)  ,j)
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef J_RANGE
 # endif
 
 # ifdef NS_PERIODIC
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF (NtileJ(ng).eq.1) THEN
+#  ifdef EW_PERIODIC
+#   define I_RANGE Istr,Iend
+#  else
+#   define I_RANGE IstrR,IendR
 #  endif
-        IF (SOUTHERN_EDGE) THEN
+
+      IF (NS_exchange) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,Mm(ng)+1)=A(i,1)
             A(i,Mm(ng)+2)=A(i,2)
@@ -607,16 +687,14 @@
 #  endif
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=I_RANGE
             A(i,-2)=A(i,Mm(ng)-2)
             A(i,-1)=A(i,Mm(ng)-1)
             A(i, 0)=A(i,Mm(ng)  )
           END DO
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 #  undef I_RANGE
 # endif
 
@@ -626,10 +704,8 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
-#  endif
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+      IF (EW_exchange.and.NS_exchange) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Lm(ng)+1,Mm(ng)+1)=A(1,1)
           A(Lm(ng)+1,Mm(ng)+2)=A(1,2)
 #  ifdef THREE_GHOST
@@ -644,7 +720,7 @@
           A(Lm(ng)+3,Mm(ng)+3)=A(3,3)
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(-2,Mm(ng)+1)=A(Lm(ng)-2,1)
           A(-1,Mm(ng)+1)=A(Lm(ng)-1,1)
           A( 0,Mm(ng)+1)=A(Lm(ng)  ,1)
@@ -657,7 +733,7 @@
           A( 0,Mm(ng)+3)=A(Lm(ng)  ,3)
 #  endif
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Lm(ng)+1,-2)=A(1,Mm(ng)-2)
           A(Lm(ng)+1,-1)=A(1,Mm(ng)-1)
           A(Lm(ng)+1, 0)=A(1,Mm(ng)  )
@@ -670,7 +746,7 @@
           A(Lm(ng)+3, 0)=A(3,Mm(ng)  )
 #  endif
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(-2,-2)=A(Lm(ng)-2,Mm(ng)-2)
           A(-2,-1)=A(Lm(ng)-2,Mm(ng)-1)
           A(-2, 0)=A(Lm(ng)-2,Mm(ng)  )
@@ -681,9 +757,7 @@
           A( 0,-1)=A(Lm(ng)  ,Mm(ng)-1)
           A( 0, 0)=A(Lm(ng)  ,Mm(ng)  )
         END IF
-#  ifdef DISTRIBUTE
       END IF
-#  endif
 # endif
       RETURN
       END SUBROUTINE exchange_v2d_tile

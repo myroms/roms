@@ -10,25 +10,32 @@
 **
 ** Application flag:   DOUBLE_GYRE
 ** Input script:       ocean_double_gyre.in
+**
+**
+** Available Driver options:  choose only one and activate it in the
+**                            build.sh script (MY_CPP_FLAGS definition)
+**
+** AD_SENSITIVITY             Adjoint Sensitivity
+** AFT_EIGENMODES             Adjoint Finite Time Eigenmodes
+** CORRELATION                Background-error Correlation Check
+** GRADIENT_CHECK             TLM/ADM Gradient Check
+** FORCING_SV                 Forcing Singular Vectors
+** FT_EIGENMODES              Finite Time Eigenmodes
+** IS4DVAR_OLD                Old Incremental, strong constraint 4DVAR
+** IS4DVAR                    Incremental, strong constraint 4DVAR
+** NLM_DRIVER                 Nonlinear Basic State trajectory
+** OPT_PERTURBATION           Optimal perturbations
+** PICARD_TEST                Picard Iterations Tes
+** R_SYMMETRY                 Representer Matrix Symmetry Tes
+** S4DVAR                     Strong constraint 4DVAR
+** SANITY_CHECK               Sanity Check
+** SO_SEMI                    Stochastic Optimals: Semi-norm
+** TLM_CHECK                  Tangent Linear Model Check
+** W4DPSAS                    Weak constraint 4D-PSAS
+** W4DVAR                     Weak constraint 4DVAR
 */
 
 #define SOLVE3D
-
-#undef  AD_SENSITIVITY          /* Adjoint Sensitivity */
-#undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */
-#undef  CORRELATION             /* Background-error Correlation Check */
-#undef  FORCING_SV              /* Forcing Singular Vectors */
-#undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
-#define IS4DVAR                 /* Incremental, strong constraint 4DVAR */
-#undef  NLM_DRIVER              /* Nonlinear Basic State trajectory */
-#undef  OPT_PERTURBATION        /* Optimal perturbations */
-#undef  PICARD_TEST             /* Picard Iterations Test */
-#undef  R_SYMMETRY              /* Representer Matrix Symmetry Test */
-#undef  SANITY_CHECK            /* Sanity Check */
-#undef  SO_SEMI                 /* Stochastic Optimals: Semi-norm */
-#undef  TLM_CHECK               /* Tangent Linear Model Check */
-#undef  W4DPSAS                 /* Weak constraint 4D-PSAS */
-#undef  W4DVAR                  /* Weak constraint 4DVAR */
 
 /*
 **-----------------------------------------------------------------------------
@@ -183,8 +190,8 @@
 **-----------------------------------------------------------------------------
 */
 
-#if defined AFT_EIGENMODES || defined FT_EIGENMODES    || \
-    defined FORCING_SV     || defined OPT_PERTURBATION || \
+#if defined AFT_EIGENMODES || defined FT_EIGENMODES    ||
+    defined FORCING_SV     || defined OPT_PERTURBATION ||
     defined SO_SEMI
 # if defined SOLVE3D                   /* 3D Application */
 #  define UV_ADV
@@ -233,8 +240,8 @@
 **-----------------------------------------------------------------------------
 */
 
-#if defined CORRELATION || defined IS4DVAR   || \
-    defined R_SYMMETRY  || defined TLM_CHECK || \
+#if defined CORRELATION || defined IS4DVAR   ||
+    defined R_SYMMETRY  || defined TLM_CHECK ||
     defined W4DPSAS     || defined W4DVAR
 # if defined SOLVE3D                   /* 3D Application */
 #  undef  UV_C2ADVECTION
@@ -279,14 +286,10 @@
 #  define FORWARD_READ
 #  undef  FULL_GRID
 #  define OUT_DOUBLE
-#  if defined W4DPSAS || defined W4DVAR
-#    define CONVOLVE
-#  endif
 #  define VCONVOLUTION
 #  define IMPLICIT_VCONV
 #  ifdef W4DVAR
 #   define RPM_RELAXATION
-#   undef  CONVOLVE
 #  endif
 # else                                 /* 2D Application */
 #  undef  UV_C2ADVECTION

@@ -167,7 +167,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff=0.5_r8*om_v(i,Jend+1)*                                    &
      &        (zeta(i,Jend  ,kinp)+h(i,Jend  )+                         &
@@ -204,7 +204,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
           cff=0.5_r8*om_v(i,Jstr)*                                      &
      &        (zeta(i,Jstr-1,kinp)+h(i,Jstr-1)+                         &
@@ -241,7 +241,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
           cff=0.5_r8*on_u(Iend+1,j)*                                    &
      &        (zeta(Iend  ,j,kinp)+h(Iend  ,j)+                         &
@@ -278,7 +278,7 @@
       END IF
 # endif
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
           cff=0.5_r8*on_u(Istr,j)*                                      &
      &        (zeta(Istr-1,j,kinp)+h(Istr-1,j)+                         &
@@ -443,31 +443,31 @@
 ! order numerical stencil.
 !
 #  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
-!>      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
-!>     &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>     &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>     &                    tl_Dvom)
+!>      CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
+!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
+!>   &                      NghostPoints, EWperiodic, NSperiodic,       &
+!>   &                      tl_Dvom)
 !>
-        CALL ad_mp_exchange2d (ng, tile, iADM, 1,                         &
-       &                       IminS, ImaxS, JminS, JmaxS,                &
-       &                       NghostPoints, EWperiodic, NSperiodic,      &
-       &                       ad_Dvom)
+        CALL ad_mp_exchange2d (ng, tile, iADM, 1,                       &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_Dvom)
 #  endif
 #  if defined WEST_VOLCONS || defined EAST_VOLCONS
-!>      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
-!>     &                    IminS, ImaxS, JminS, JmaxS,                   &
-!>     &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>     &                    tl_Duon)
+!>      CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
+!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
+!>   &                      NghostPoints, EWperiodic, NSperiodic,       &
+!>   &                      tl_Duon)
 !>
-        CALL ad_mp_exchange2d (ng, tile, iADM, 1,                         &
-       &                       IminS, ImaxS, JminS, JmaxS,                &
-       &                       NghostPoints, EWperiodic, NSperiodic,      &
-       &                       ad_Duon)
+        CALL ad_mp_exchange2d (ng, tile, iADM, 1,                       &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
+     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         ad_Duon)
 #  endif
 # endif
 
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=-2+I_RANGE+1
 #  ifdef MASKING
 !>        tl_Dvom(i,Jend+1)=tl_Dvom(i,Jend+1)*vmask(i,Jend+1)
@@ -493,7 +493,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=-2+I_RANGE+1
 #  ifdef MASKING
 !>        tl_Dvom(i,Jstr)=tl_Dvom(i,Jstr)*vmask(i,Jstr)
@@ -519,7 +519,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=-2+J_RANGE+1
 #  ifdef MASKING
 !>        tl_Duon(Iend+1,j)=tl_Duon(Iend+1,j)*umask(Iend+1,j)
@@ -545,7 +545,7 @@
       END IF
 # endif
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=-2+J_RANGE+1
 #  ifdef MASKING
 !>        tl_Duon(Istr,j)=tl_Duon(Istr,j)*umask(Istr,j)
@@ -577,8 +577,8 @@
 !  Perform global summation and compute correction velocity.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTH_WEST_CORNER.and.                                        &
-     &    NORTH_EAST_CORNER) THEN
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
@@ -657,7 +657,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef NORTH_VOLCONS
-      IF (NORTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef MASKING
 !>        vbar(i,Jend+1,kinp)=vbar(i,Jend+1,kinp)*vmask(i,Jend+1)
@@ -671,7 +671,7 @@
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
-      IF (SOUTHERN_EDGE) THEN
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
 #  ifdef MASKING
 !>        tl_vbar(i,Jstr,kinp)=tl_vbar(i,Jstr,kinp)*vmask(i,Jstr)
@@ -685,7 +685,7 @@
       END IF
 # endif
 # ifdef EAST_VOLCONS
-      IF (EASTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef MASKING
 !>        tl_ubar(Iend+1,j,kinp)=tl_ubar(Iend+1,j,kinp)*umask(Iend+1,j)
@@ -699,7 +699,7 @@
       END IF
 # endif
 # ifdef WEST_VOLCONS
-      IF (WESTERN_EDGE) THEN
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
 #  ifdef MASKING
 !>        tl_ubar(Istr,j,kinp)=tl_ubar(Istr,j,kinp)*umask(Istr,j)

@@ -327,17 +327,15 @@
 !  Compute vertical velocity shear at W-points.
 !-----------------------------------------------------------------------
 !
-# define I_RANGE MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
-# define J_RANGE MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
 # ifdef SPLINES
-      DO j=J_RANGE
-        DO i=I_RANGE
+      DO j=Jstrm1,Jendp1
+        DO i=Istrm1,Iendp1
           CF(i,0)=0.0_r8
           dU(i,0)=0.0_r8
           dV(i,0)=0.0_r8
         END DO
         DO k=1,N(ng)-1
-          DO i=I_RANGE
+          DO i=Istrm1,Iendp1
             cff=1.0_r8/(2.0_r8*Hz(i,j,k+1)+                             &
      &                  Hz(i,j,k)*(2.0_r8-CF(i,k-1)))
             CF(i,k)=cff*Hz(i,j,k+1)
@@ -349,26 +347,26 @@
      &                   Hz(i,j,k)*dV(i,k-1))
           END DO
         END DO
-        DO i=I_RANGE
+        DO i=Istrm1,Iendp1
           dU(i,N(ng))=0.0_r8
           dV(i,N(ng))=0.0_r8
         END DO
         DO k=N(ng)-1,1,-1
-          DO i=I_RANGE
+          DO i=Istrm1,Iendp1
             dU(i,k)=dU(i,k)-CF(i,k)*dU(i,k+1)
             dV(i,k)=dV(i,k)-CF(i,k)*dV(i,k+1)
           END DO
         END DO
         DO k=1,N(ng)-1
-          DO i=I_RANGE
+          DO i=Istrm1,Iendp1
             shear2(i,j,k)=dU(i,k)*dU(i,k)+dV(i,k)*dV(i,k)
           END DO
         END DO
       END DO
 # else
       DO k=1,N(ng)-1
-        DO j=J_RANGE
-          DO i=I_RANGE
+        DO j=Jstrm1,Jendp1
+          DO i=Istrm1,Iendp1
             cff=0.5_r8/(z_r(i,j,k+1)-z_r(i,j,k))
             shear2(i,j,k)=(cff*(u(i  ,j,k+1,nstp)-u(i  ,j,k,nstp)+      &
      &                          u(i+1,j,k+1,nstp)-u(i+1,j,k,nstp)))**2+ &
@@ -378,8 +376,6 @@
         END DO
       END DO
 # endif
-# undef I_RANGE
-# undef J_RANGE
 !
 ! Load Brunt-Vaisala frequency.
 !
@@ -398,36 +394,36 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)-1
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
             shear2(Istr-1,j,k)=shear2(Istr,j,k)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
             shear2(Iend+1,j,k)=shear2(Iend,j,k)
           END DO
         END IF
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
             shear2(i,Jstr-1,k)=shear2(i,Jstr,k)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
             shear2(i,Jend+1,k)=shear2(i,Jend,k)
           END DO
         END IF
-        IF (SOUTH_WEST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           shear2(Istr-1,Jstr-1,k)=shear2(Istr,Jstr,k)
         END IF
-        IF (NORTH_WEST_CORNER) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           shear2(Istr-1,Jend+1,k)=shear2(Istr,Jend,k)
         END IF
-        IF (SOUTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           shear2(Iend+1,Jstr-1,k)=shear2(Iend,Jstr,k)
         END IF
-        IF (NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           shear2(Iend+1,Jend+1,k)=shear2(Iend,Jend,k)
         END IF
 !
@@ -481,13 +477,8 @@
           END DO
         END DO
 # else
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-1,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
-#  endif
         DO j=Jstr,Jend
-          DO i=I_RANGE
+          DO i=Istrm1,Iendp2
             gradK(i,j)=(tke(i,j,k,3)-tke(i-1,j,k,3))
 #  ifdef MASKING
             gradK(i,j)=gradK(i,j)*umask(i,j)
@@ -498,15 +489,14 @@
 #  endif
           END DO
         END DO
-#  undef I_RANGE
-#  ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+#  if !defined EW_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr,Jend
             gradK(Istr-1,j)=gradK(Istr,j)
             gradP(Istr-1,j)=gradP(Istr,j)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             gradK(Iend+2,j)=gradK(Iend+1,j)
             gradP(Iend+2,j)=gradP(Iend+1,j)
@@ -555,12 +545,7 @@
           END DO
         END DO
 #  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-1,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
-#  endif
-        DO j=J_RANGE
+        DO j=Jstrm1,Jendp2
           DO i=Istr,Iend
             gradK(i,j)=(tke(i,j,k,3)-tke(i,j-1,k,3))
 #  ifdef MASKING
@@ -572,15 +557,14 @@
 #  endif
           END DO
         END DO
-#  undef J_RANGE
-#  ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+#  if !defined NS_PERIODIC && !defined COMPOSED_GRID
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
             gradK(i,Jstr-1)=gradK(i,Jstr)
             gradP(i,Jstr-1)=gradP(i,Jstr)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
             gradK(i,Jend+2)=gradK(i,Jend+1)
             gradP(i,Jend+2)=gradP(i,Jend+1)

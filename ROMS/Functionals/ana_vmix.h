@@ -187,8 +187,8 @@
       DO k=1,N(ng)-1
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            Akv(i,j,k)=0.025_r8*(h(i,j)+z_w(i,j,k))*                   &
-     &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                    &
+            Akv(i,j,k)=0.025_r8*(h(i,j)+z_w(i,j,k))*                    &
+     &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
      &                  (h(i,j)+zeta(i,j,knew)))
           END DO
         END DO

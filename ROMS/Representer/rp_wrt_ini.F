@@ -10,7 +10,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine writes representer model initial conditions into       !
-!  IRPname initial conditions NetCDF file.                             !
+!  IRP(ng)%name initial conditions NetCDF file.                        !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -66,7 +66,7 @@
 # endif
       integer :: gfactor, gtype, i, itrc, status, varid
 
-      real(r8) :: scale
+      real(r8) :: my_time, scale
 
       character (len=15) :: string
 !
@@ -96,20 +96,23 @@
       gfactor=1
 # endif
 !
-!  Write out model time (s).
+!  Write out model time (s).  Use the "tdays" variable here because of
+!  the management of the "time" variable due to nesting.
 !
-      CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                      &
-     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+      my_time=tdays(ng)*day2sec
+
+      CALL netcdf_put_fvar (ng, iRPM, IRP(ng)%name,                     &
+     &                      TRIM(Vname(1,idtime)), my_time,             &
      &                      (/OutRec/), (/1/),                          &
-     &                      ncid = ncIRPid(ng),                         &
-     &                      varid = irpVid(idtime,ng))
+     &                      ncid = IRP(ng)%ncid,                        &
+     &                      varid = IRP(ng)%Vid(idtime))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m)
 !
       scale=1.0_r8
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iRPM, ncIRPid(ng), irpVid(idFsur,ng),      &
+      status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idFsur),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -136,9 +139,9 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+        status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
-     &                          irpVid(idSbry(isFsur),ng),              &
+     &                          IRP(ng)%Vid(idSbry(isFsur)),            &
      &                          OutRec, r2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
@@ -158,7 +161,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iRPM, ncIRPid(ng), irpVid(idUbar,ng),      &
+      status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUbar),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -180,9 +183,9 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+        status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
-     &                          irpVid(idSbry(isUbar),ng),              &
+     &                          IRP(ng)%Vid(idSbry(isUbar)),            &
      &                          OutRec, u2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
@@ -202,7 +205,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iRPM, ncIRPid(ng), irpVid(idVbar,ng),      &
+      status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVbar),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -224,9 +227,9 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+        status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
-     &                          irpVid(idSbry(isVbar),ng),              &
+     &                          IRP(ng)%Vid(idSbry(isVbar)),            &
      &                          OutRec, v2dvar,                         &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
@@ -251,7 +254,7 @@
 !!    scale=rho0
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iRPM, ncIRPid(ng), irpVid(idUsms,ng),      &
+      status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUsms),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -272,7 +275,7 @@
 !!    scale=rho0
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iRPM, ncIRPid(ng), irpVid(idVsms,ng),      &
+      status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVsms),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -295,7 +298,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iRPM, ncIRPid(ng), irpVid(idUvel,ng),      &
+      status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUvel),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -317,9 +320,9 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+        status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
-     &                          irpVid(idSbry(isUvel),ng),              &
+     &                          IRP(ng)%Vid(idSbry(isUvel)),            &
      &                          OutRec, u3dvar,                         &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
@@ -339,7 +342,7 @@
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iRPM, ncIRPid(ng), irpVid(idVvel,ng),      &
+      status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVvel),   &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -361,9 +364,9 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),     &
+        status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
-     &                          irpVid(idSbry(isVvel),ng),              &
+     &                          IRP(ng)%Vid(idSbry(isVvel)),            &
      &                          OutRec, v3dvar,                         &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
@@ -384,7 +387,7 @@
       DO itrc=1,NT(ng)
         scale=1.0_r8
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iRPM, ncIRPid(ng), irpTid(itrc,ng),      &
+        status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Tid(itrc),   &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -408,9 +411,9 @@
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_r8
-          status=nf_fwrite3d_bry (ng, iRPM, IRPname(ng), ncIRPid(ng),   &
+          status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            irpVid(idSbry(isTvar(itrc)),ng),      &
+     &                            IRP(ng)%Vid(idSbry(isTvar(itrc))),    &
      &                            OutRec, r3dvar,                       &
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
@@ -439,8 +442,8 @@
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_r8
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iRPM, ncIRPid(ng),                     &
-     &                       irpVid(idTsur(itrc),ng),                   &
+          status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid,                    &
+     &                       IRP(ng)%Vid(idTsur(itrc)),                 &
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
@@ -466,7 +469,7 @@
 !  processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iRPM, IRPname(ng), ncIRPid(ng))
+      CALL netcdf_sync (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
       IF (Master) THEN
@@ -480,14 +483,14 @@
 # endif
       END IF
 !
-  10  FORMAT (/,' RP_WRT_INI - error while writing variable: ',a,/,14x,    &
+  10  FORMAT (/,' RP_WRT_INI - error while writing variable: ',a,/,14x, &
      &        'into tangent initial NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  20  FORMAT (3x,'RP_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',i1,   &
-     &        ',',i1,', Rec=',i4.4,')')
+  20  FORMAT (3x,'RP_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
+     &        i1,',',i1,', Rec=',i4.4,')')
 # else
-  20  FORMAT (3x,'RP_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',i1,   &
-     &        ', Rec=',i4.4,')')
+  20  FORMAT (3x,'RP_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
+     &        i1,', Rec=',i4.4,')')
 # endif
 
 #else

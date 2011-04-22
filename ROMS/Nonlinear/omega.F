@@ -267,7 +267,6 @@
 !***********************************************************************
 !
       USE mod_param
-!
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
 # endif

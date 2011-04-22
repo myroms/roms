@@ -504,7 +504,7 @@
 !  to the first harmonic operator.
 !
 #ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=J_RANGE
 # ifdef WESTERN_WALL
@@ -517,7 +517,7 @@
             END DO
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=J_RANGE
 # ifdef EASTERN_WALL
@@ -532,7 +532,7 @@
         END IF
 #endif
 #ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=I_RANGE
 # ifdef SOUTHERN_WALL
@@ -545,7 +545,7 @@
             END DO
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=I_RANGE
 # ifdef NORTHERN_WALL
@@ -560,7 +560,7 @@
         END IF
 #endif
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           DO k=1,N(ng)
             LapT(Istr-1,Jstr-1,k)=0.5_r8*(LapT(Istr  ,Jstr-1,k)+        &
      &                                    LapT(Istr-1,Jstr  ,k))
@@ -568,7 +568,7 @@
                                              tl_LapT(Istr-1,Jstr  ,k))
           END DO
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           DO k=1,N(ng)
             LapT(Iend+1,Jstr-1,k)=0.5_r8*(LapT(Iend  ,Jstr-1,k)+        &
      &                                    LapT(Iend+1,Jstr  ,k))
@@ -576,7 +576,7 @@
      &                                       tl_LapT(Iend+1,Jstr  ,k))
           END DO
         END IF
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           DO k=1,N(ng)
             LapT(Istr-1,Jend+1,k)=0.5_r8*(LapT(Istr  ,Jend+1,k)+        &
      &                                    LapT(Istr-1,Jend  ,k))
@@ -584,7 +584,7 @@
      &                                       tl_LapT(Istr-1,Jend  ,k))
           END DO
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           DO k=1,N(ng)
             LapT(Iend+1,Jend+1,k)=0.5_r8*(LapT(Iend  ,Jend+1,k)+        &
      &                                    LapT(Iend+1,Jend  ,k))

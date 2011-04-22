@@ -35,7 +35,7 @@
 !
         implicit none
 
-        TYPE T_FLT
+        TYPE T_DRIFTER
 
           logical, pointer  :: bounded(:)
 
@@ -55,9 +55,9 @@
 # endif
           real(r8), pointer :: track(:,:,:)
 
-        END TYPE T_FLT
+        END TYPE T_DRIFTER
 
-        TYPE (T_FLT), allocatable :: FLT(:)
+        TYPE (T_DRIFTER), allocatable :: DRIFTER(:)
 
       CONTAINS
 
@@ -86,59 +86,59 @@
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
-      IF (ng.eq.1) allocate ( FLT(Ngrids) )
+      IF (ng.eq.1) allocate ( DRIFTER(Ngrids) )
 !
-      allocate ( FLT(ng) % bounded(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % bounded(Nfloats(ng)) )
 
 # if defined SOLVE3D && defined FLOAT_STICKY
-      allocate ( FLT(ng) % stuck(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % stuck(Nfloats(ng)) )
 # endif
 
-      allocate ( FLT(ng) % Findex(0:Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Findex(0:Nfloats(ng)) )
 
-      allocate ( FLT(ng) % Ftype(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Ftype(Nfloats(ng)) )
 
-      allocate ( FLT(ng) % Flon(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Flon(Nfloats(ng)) )
 
-      allocate ( FLT(ng) % Flat(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Flat(Nfloats(ng)) )
 
-      allocate ( FLT(ng) % Fz0(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Fz0(Nfloats(ng)) )
 
-      allocate ( FLT(ng) % Tinfo(0:izrhs,Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % Tinfo(0:izrhs,Nfloats(ng)) )
 
 # if defined SOLVE3D && defined FLOAT_VWALK
-      allocate ( FLT(ng) % rwalk(Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % rwalk(Nfloats(ng)) )
 # endif
 
-      allocate ( FLT(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
+      allocate ( DRIFTER(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      FLT(ng) % Findex(0) = 0
+      DRIFTER(ng) % Findex(0) = 0
       DO iflt=1,Nfloats(ng)
-        FLT(ng) % bounded(iflt) = .FALSE.
+        DRIFTER(ng) % bounded(iflt) = .FALSE.
 # if defined SOLVE3D && defined FLOAT_STICKY
-        FLT(ng) % stuck(iflt) = .FALSE.
+        DRIFTER(ng) % stuck(iflt) = .FALSE.
 # endif
-        FLT(ng) % Findex(iflt) = 0
-        FLT(ng) % Ftype(iflt) = 0
-        FLT(ng) % Flon(iflt) = IniVal
-        FLT(ng) % Flat(iflt) = IniVal
-        FLT(ng) % Fz0(iflt) = 0
+        DRIFTER(ng) % Findex(iflt) = 0
+        DRIFTER(ng) % Ftype(iflt) = 0
+        DRIFTER(ng) % Flon(iflt) = IniVal
+        DRIFTER(ng) % Flat(iflt) = IniVal
+        DRIFTER(ng) % Fz0(iflt) = 0
 # if defined SOLVE3D && defined FLOAT_VWALK
-        FLT(ng) % rwalk = IniVal
+        DRIFTER(ng) % rwalk = IniVal
 # endif
         DO i=0,izrhs
-          FLT(ng) % Tinfo(i,iflt) = IniVal
+          DRIFTER(ng) % Tinfo(i,iflt) = IniVal
         END DO
         DO i=1,NFV(ng)
-          FLT(ng) % track(i,0,iflt) = IniVal
-          FLT(ng) % track(i,1,iflt) = IniVal
-          FLT(ng) % track(i,2,iflt) = IniVal
-          FLT(ng) % track(i,3,iflt) = IniVal
-          FLT(ng) % track(i,4,iflt) = IniVal
+          DRIFTER(ng) % track(i,0,iflt) = IniVal
+          DRIFTER(ng) % track(i,1,iflt) = IniVal
+          DRIFTER(ng) % track(i,2,iflt) = IniVal
+          DRIFTER(ng) % track(i,3,iflt) = IniVal
+          DRIFTER(ng) % track(i,4,iflt) = IniVal
         END DO
       END DO
 

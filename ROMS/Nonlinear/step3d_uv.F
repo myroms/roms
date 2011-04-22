@@ -1031,14 +1031,14 @@
 !  Couple 2D and 3D momentum equations.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
+# if defined EW_PERIODIC || defined COMPOSED_GRID
 #  define IU_RANGE Istr,Iend
 #  define IV_RANGE Istr,Iend
 # else
 #  define IU_RANGE Istr,IendR
 #  define IV_RANGE IstrR,IendR
 # endif
-# ifdef NS_PERIODIC
+# if defined NS_PERIODIC || defined COMPOSED_GRID
 #  define JU_RANGE Jstr,Jend
 #  define JV_RANGE Jstr,Jend
 # else
@@ -1079,7 +1079,7 @@
         DO i=IU_RANGE
           cff1=DC(i,0)                                  ! intermediate
 # ifdef NEARSHORE_MELLOR
-!          cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
+!!        cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
           cff2=DC(i,0)*ubar_stokes(i,j)
 # endif
           DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
@@ -1119,7 +1119,7 @@
 !         code is wrong because the interior solution is corrected
 !         twice.
 !
-# ifndef EW_PERIODIC
+# if !defined EW_PERIODIC && !defined COMPOSED_GRID
         IF (Istr.eq.1)THEN
           DO k=1,N(ng)
             u(Istr,j,k,nnew)=u(Istr,j,k,nnew)-CF(Istr,0)
@@ -1155,13 +1155,14 @@
             u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*umask(Iend+1,j)
 #   endif
 #   ifdef WET_DRY
-            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*umask_wet(Iend+1,j)
+            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*                  &
+     &                           umask_wet(Iend+1,j)
 #   endif
 #  endif
           END DO
         END IF
 # endif
-# ifndef NS_PERIODIC
+# if !defined NS_PERIODIC && !defined COMPOSED_GRID
         IF (j.eq.0) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
@@ -1307,7 +1308,7 @@
 !         code is wrong because the interior solution is corrected
 !         twice.
 !
-# ifndef EW_PERIODIC
+# if !defined EW_PERIODIC && !defined COMPOSED_GRID
           IF (Istr.eq.1) THEN
             DO k=1,N(ng)
               v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)-CF(Istr-1,0)
@@ -1320,10 +1321,12 @@
 #  ifdef NEARSHORE_MELLOR
               v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)-CFs(Istr-1,0)
 #   ifdef MASKING
-              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*vmask(Istr-1,j)
+              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*                &
+     &                             vmask(Istr-1,j)
 #   endif
 #   ifdef WET_DRY
-              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*vmask_wet(Istr-1,j)
+              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*                &
+     &                             vmask_wet(Istr-1,j)
 #   endif
 #  endif
             END DO
@@ -1332,24 +1335,28 @@
             DO k=1,N(ng)
               v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)-CF(Iend+1,0)
 #  ifdef MASKING
-              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask(Iend+1,j)
+              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*                    &
+     &                           vmask(Iend+1,j)
 #  endif
 #  ifdef WET_DRY
-              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask_wet(Iend+1,j)
+              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*                    &
+     &                           vmask_wet(Iend+1,j)
 #  endif
 #  ifdef NEARSHORE_MELLOR
               v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)-CFs(Iend+1,0)
 #   ifdef MASKING
-              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*vmask(Iend+1,j)
+              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*                &
+     &                             vmask(Iend+1,j)
 #   endif
 #   ifdef WET_DRY
-              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*vmask_wet(Iend+1,j)
+              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*                &
+     &                             vmask_wet(Iend+1,j)
 #   endif
 #  endif
             END DO
           END IF
 # endif
-# ifndef NS_PERIODIC
+# if !defined NS_PERIODIC && !defined COMPOSED_GRID
           IF (j.eq.1) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend

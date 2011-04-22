@@ -237,36 +237,36 @@
 #  endif
 #  ifdef RI_HORAVG
       DO k=1,N(ng)-1
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
             Rig(Istr-1,j,k)=Rig(Istr,j,k)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
             Rig(Iend+1,j,k)=Rig(Iend,j,k)
           END DO
         END IF
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
             Rig(i,Jstr-1,k)=Rig(i,Jstr,k)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
             Rig(i,Jend+1,k)=Rig(i,Jend,k)
           END DO
         END IF
-        IF (SOUTH_WEST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           Rig(Istr-1,Jstr-1,k)=Rig(Istr,Jstr,k)
         END IF
-        IF (NORTH_WEST_CORNER) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           Rig(Istr-1,Jend+1,k)=Rig(Istr,Jend,k)
         END IF
-        IF (SOUTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           Rig(Iend+1,Jstr-1,k)=Rig(Iend,Jstr,k)
         END IF
-        IF (NORTH_EAST_CORNER) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           Rig(Iend+1,Jend+1,k)=Rig(Iend,Jend,k)
         END IF
 !

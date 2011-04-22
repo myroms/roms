@@ -372,7 +372,8 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
 # ifdef WEST_FSOBC
-        IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+        IF ((Lobc(iwest,isFsur,ng)).and.                                &
+     &      DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr,Jend
             zeta_west(j)=zeta_west(j)+                                  &
      &                   fac1*tl_zeta_obc(j,iwest,it1,Linp)+            &
@@ -381,7 +382,8 @@
         END IF
 # endif
 # ifdef EAST_FSOBC
-        IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+        IF ((Lobc(ieast,isFsur,ng)).and.                                &
+     &      DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             zeta_east(j)=zeta_east(j)+                                  &
      &                   fac1*tl_zeta_obc(j,ieast,it1,Linp)+            &
@@ -390,7 +392,8 @@
         END IF
 # endif
 # ifdef SOUTH_FSOBC
-        IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+        IF ((Lobc(isouth,isFsur,ng)).and.                               &
+     &      DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
             zeta_south(i)=zeta_south(i)+                                &
      &                    fac1*tl_zeta_obc(i,isouth,it1,Linp)+          &
@@ -399,7 +402,8 @@
         END IF
 # endif
 # ifdef NORTH_FSOBC
-        IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+        IF ((Lobc(inorth,isFsur,ng)).and.                               &
+     &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
             zeta_north(i)=zeta_north(i)+                                &
      &                    fac1*tl_zeta_obc(i,inorth,it1,Linp)+          &
@@ -413,7 +417,8 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
 # ifdef WEST_M2OBC
-        IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+        IF ((Lobc(iwest,isUbar,ng)).and.                                &
+     &      DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr,Jend
             ubar_west(j)=ubar_west(j)+                                  &
      &                   fac1*tl_ubar_obc(j,iwest,it1,Linp)+            &
@@ -422,7 +427,8 @@
         END IF
 # endif
 # ifdef EAST_M2OBC
-        IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+        IF ((Lobc(ieast,isUbar,ng)).and.                                &
+     &      DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             ubar_east(j)=ubar_east(j)+                                  &
      &                   fac1*tl_ubar_obc(j,ieast,it1,Linp)+            &
@@ -431,7 +437,8 @@
         END IF
 # endif
 # ifdef SOUTH_M2OBC
-        IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+        IF ((Lobc(isouth,isUbar,ng)).and.                               &
+     &      DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=IstrU,Iend
             ubar_south(i)=ubar_south(i)+                                &
      &                    fac1*tl_ubar_obc(i,isouth,it1,Linp)+          &
@@ -440,7 +447,8 @@
         END IF
 # endif
 # ifdef NORTH_M2OBC
-        IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+        IF ((Lobc(inorth,isUbar,ng)).and.                               &
+     &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=IstrU,Iend
             ubar_north(i)=ubar_north(i)+                                &
      &                    fac1*tl_ubar_obc(i,inorth,it1,Linp)+          &
@@ -454,7 +462,8 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
 # ifdef WEST_M2OBC
-        IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+        IF ((Lobc(iwest,isVbar,ng)).and.                                &
+     &      DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=JstrV,Jend
             vbar_west(j)=vbar_west(j)+                                  &
      &                   fac1*tl_vbar_obc(j,iwest,it1,Linp)+            &
@@ -463,7 +472,8 @@
         END IF
 # endif
 # ifdef EAST_M2OBC
-        IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+        IF ((Lobc(ieast,isVbar,ng)).and.                                &
+     &      DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=JstrV,Jend
             vbar_east(j)=vbar_east(j)+                                  &
      &                   fac1*tl_vbar_obc(j,ieast,it1,Linp)+            &
@@ -472,7 +482,8 @@
         END IF
 # endif
 # ifdef SOUTH_M2OBC
-        IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+        IF ((Lobc(isouth,isVbar,ng)).and.                               &
+     &      DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
             vbar_south(i)=vbar_south(i)+                                &
      &                    fac1*tl_vbar_obc(i,isouth,it1,Linp)+          &
@@ -481,7 +492,8 @@
         END IF
 # endif
 # ifdef NORTH_M2OBC
-        IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+        IF ((Lobc(inorth,isVbar,ng)).and.                               &
+     &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
             vbar_north(i)=vbar_north(i)+                                &
      &                    fac1*tl_vbar_obc(i,inorth,it1,Linp)+          &
@@ -497,7 +509,8 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
 #  ifdef WEST_M3OBC
-        IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+        IF ((Lobc(iwest,isUvel,ng)).and.                                &
+     &      DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
               u_west(j,k)=u_west(j,k)+                                  &
@@ -508,7 +521,8 @@
         END IF
 #  endif
 #  ifdef EAST_M3OBC
-        IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+        IF ((Lobc(ieast,isUvel,ng)).and.                                &
+     &      DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
               u_east(j,k)=u_east(j,k)+                                  &
@@ -519,7 +533,8 @@
         END IF
 #  endif
 #  ifdef SOUTH_M3OBC
-        IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+        IF ((Lobc(isouth,isUvel,ng)).and.                               &
+     &      DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
               u_south(i,k)=u_south(i,k)+                                &
@@ -530,7 +545,8 @@
         END IF
 #  endif
 #  ifdef NORTH_M3OBC
-        IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+        IF ((Lobc(inorth,isUvel,ng)).and.                               &
+     &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
               u_north(i,k)=u_north(i,k)+                                &
@@ -546,7 +562,8 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
 #  ifdef WEST_M3OBC
-        IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+        IF ((Lobc(iwest,isVvel,ng)).and.                                &
+     &      DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
               v_west(j,k)=v_west(j,k)+                                  &
@@ -557,7 +574,8 @@
         END IF
 #  endif
 #  ifdef EAST_M3OBC
-        IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+        IF ((Lobc(ieast,isVvel,ng)).and.                                &
+     &      DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
               v_east(j,k)=v_east(j,k)+                                  &
@@ -568,7 +586,8 @@
         END IF
 #  endif
 #  ifdef SOUTH_M3OBC
-        IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+        IF ((Lobc(isouth,isVvel,ng)).and.                               &
+     &      DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
               v_south(i,k)=v_south(i,k)+                                &
@@ -579,7 +598,8 @@
         END IF
 #  endif
 #  ifdef NORTH_M3OBC
-        IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+        IF ((Lobc(inorth,isVvel,ng)).and.                               &
+     &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
               v_north(i,k)=v_north(i,k)+                                &
@@ -596,7 +616,8 @@
       DO it=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(it),ng))) THEN
 #  ifdef WEST_TOBC
-          IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isTvar(it),ng)).and.                          &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 t_west(j,k,it)=t_west(j,k,it)+                          &
@@ -607,7 +628,8 @@
           END IF
 #  endif
 #  ifdef EAST_TOBC
-          IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isTvar(it),ng)).and.                          &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 t_east(j,k,it)=t_east(j,k,it)+                          &
@@ -618,7 +640,8 @@
           END IF
 #  endif
 #  ifdef SOUTH_TOBC
-          IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isTvar(it),ng)).and.                         &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 t_south(i,k,it)=t_south(i,k,it)+                        &
@@ -629,7 +652,8 @@
           END IF
 #  endif
 #  ifdef NORTH_TOBC
-          IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isTvar(it),ng)).and.                         &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 t_north(i,k,it)=t_north(i,k,it)+                        &
@@ -986,28 +1010,32 @@
 !
         IF (ANY(Lobc(:,isFsur,ng))) THEN
 # ifdef WEST_FSOBC
-          IF ((Lobc(iwest,isFsur,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isFsur,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               zeta_obc(j,iwest,OBCcount(ng),Lout)=zeta_west(j)
             END DO
           END IF
 # endif
 # ifdef EAST_FSOBC
-          IF ((Lobc(ieast,isFsur,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isFsur,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               zeta_obc(j,ieast,OBCcount(ng),Lout)=zeta_east(j)
             END DO
           END IF
 # endif
 # ifdef SOUTH_FSOBC
-          IF ((Lobc(isouth,isFsur,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isFsur,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               zeta_obc(i,isouth,OBCcount(ng),Lout)=zeta_south(i)
             END DO
           END IF
 # endif
 # ifdef NORTH_FSOBC
-          IF ((Lobc(inorth,isFsur,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isFsur,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               zeta_obc(i,inorth,OBCcount(ng),Lout)=zeta_north(i)
             END DO
@@ -1019,28 +1047,32 @@
 !
         IF (ANY(Lobc(:,isUbar,ng))) THEN
 # ifdef WEST_M2OBC
-          IF ((Lobc(iwest,isUbar,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isUbar,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=Jstr,Jend
               ubar_obc(j,iwest,OBCcount(ng),Lout)=ubar_west(j)
             END DO
           END IF
 # endif
 # ifdef EAST_M2OBC
-          IF ((Lobc(ieast,isUbar,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isUbar,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=Jstr,Jend
               ubar_obc(j,ieast,OBCcount(ng),Lout)=ubar_east(j)
             END DO
           END IF
 # endif
 # ifdef SOUTH_M2OBC
-          IF ((Lobc(isouth,isUbar,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isUbar,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=IstrU,Iend
               ubar_obc(i,isouth,OBCcount(ng),Lout)=ubar_south(i)
             END DO
           END IF
 # endif
 # ifdef NORTH_M2OBC
-          IF ((Lobc(inorth,isUbar,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isUbar,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=IstrU,Iend
               ubar_obc(i,inorth,OBCcount(ng),Lout)=ubar_north(i)
             END DO
@@ -1052,28 +1084,32 @@
 !
         IF (ANY(Lobc(:,isVbar,ng))) THEN
 # ifdef WEST_M2OBC
-          IF ((Lobc(iwest,isVbar,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isVbar,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO j=JstrV,Jend
               vbar_obc(j,iwest,OBCcount(ng),Lout)=vbar_west(j)
             END DO
           END IF
 # endif
 # ifdef EAST_M2OBC
-          IF ((Lobc(ieast,isVbar,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isVbar,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO j=JstrV,Jend
               vbar_obc(j,ieast,OBCcount(ng),Lout)=vbar_east(j)
             END DO
           END IF
 # endif
 # ifdef SOUTH_M2OBC
-          IF ((Lobc(isouth,isVbar,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isVbar,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO i=Istr,Iend
               vbar_obc(i,isouth,OBCcount(ng),Lout)=vbar_south(i)
             END DO
           END IF
 # endif
 # ifdef NORTH_M2OBC
-          IF ((Lobc(inorth,isVbar,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isVbar,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO i=Istr,Iend
               vbar_obc(i,inorth,OBCcount(ng),Lout)=vbar_north(i)
             END DO
@@ -1087,7 +1123,8 @@
 !
         IF (ANY(Lobc(:,isUvel,ng))) THEN
 #  ifdef WEST_M3OBC
-          IF ((Lobc(iwest,isUvel,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isUvel,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 u_obc(j,k,iwest,OBCcount(ng),Lout)=u_west(j,k)
@@ -1096,7 +1133,8 @@
           END IF
 #  endif
 #  ifdef EAST_M3OBC
-          IF ((Lobc(ieast,isUvel,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isUvel,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 u_obc(j,k,ieast,OBCcount(ng),Lout)=u_east(j,k)
@@ -1105,7 +1143,8 @@
           END IF
 #  endif
 #  ifdef SOUTH_M3OBC
-          IF ((Lobc(isouth,isUvel,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isUvel,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
                 u_obc(i,k,isouth,OBCcount(ng),Lout)=u_south(i,k)
@@ -1114,7 +1153,8 @@
           END IF
 #  endif
 #  ifdef NORTH_M3OBC
-          IF ((Lobc(inorth,isUvel,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isUvel,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
                 u_obc(i,k,inorth,OBCcount(ng),Lout)=u_north(i,k)
@@ -1128,7 +1168,8 @@
 !
         IF (ANY(Lobc(:,isVvel,ng))) THEN
 #  ifdef WEST_M3OBC
-          IF ((Lobc(iwest,isVvel,ng)).and.WESTERN_EDGE) THEN
+          IF ((Lobc(iwest,isVvel,ng)).and.                              &
+     &        DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 v_obc(j,k,iwest,OBCcount(ng),Lout)=v_west(j,k)
@@ -1137,7 +1178,8 @@
           END IF
 #  endif
 #  ifdef EAST_M3OBC
-          IF ((Lobc(ieast,isVvel,ng)).and.EASTERN_EDGE) THEN
+          IF ((Lobc(ieast,isVvel,ng)).and.                              &
+     &        DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 v_obc(j,k,ieast,OBCcount(ng),Lout)=v_east(j,k)
@@ -1146,7 +1188,8 @@
           END IF
 #  endif
 #  ifdef SOUTH_M3OBC
-          IF ((Lobc(isouth,isVvel,ng)).and.SOUTHERN_EDGE) THEN
+          IF ((Lobc(isouth,isVvel,ng)).and.                             &
+     &        DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 v_obc(i,k,isouth,OBCcount(ng),Lout)=v_south(i,k)
@@ -1155,7 +1198,8 @@
           END IF
 #  endif
 #  ifdef NORTH_M3OBC
-          IF ((Lobc(inorth,isVvel,ng)).and.NORTHERN_EDGE) THEN
+          IF ((Lobc(inorth,isVvel,ng)).and.                             &
+     &        DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 v_obc(i,k,inorth,OBCcount(ng),Lout)=v_north(i,k)
@@ -1170,7 +1214,8 @@
         DO it=1,NT(ng)
           IF (ANY(Lobc(:,isTvar(it),ng))) THEN
 #  ifdef WEST_TOBC
-            IF ((Lobc(iwest,isTvar(it),ng)).and.WESTERN_EDGE) THEN
+            IF ((Lobc(iwest,isTvar(it),ng)).and.                        &
+     &          DOMAIN(ng)%Western_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   t_obc(j,k,iwest,OBCcount(ng),Lout,it)=t_west(j,k,it)
@@ -1179,7 +1224,8 @@
             END IF
 #  endif
 #  ifdef EAST_TOBC
-            IF ((Lobc(ieast,isTvar(it),ng)).and.EASTERN_EDGE) THEN
+            IF ((Lobc(ieast,isTvar(it),ng)).and.                        &
+     &          DOMAIN(ng)%Eastern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   t_obc(j,k,ieast,OBCcount(ng),Lout,it)=t_east(j,k,it)
@@ -1188,7 +1234,8 @@
             END IF
 #  endif
 #  ifdef SOUTH_TOBC
-            IF ((Lobc(isouth,isTvar(it),ng)).and.SOUTHERN_EDGE) THEN
+            IF ((Lobc(isouth,isTvar(it),ng)).and.                       &
+     &          DOMAIN(ng)%Southern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO i=Istr,Iend
                   t_obc(i,k,isouth,OBCcount(ng),Lout,it)=t_south(i,k,it)
@@ -1197,7 +1244,8 @@
             END IF
 #  endif
 #  ifdef NORTH_TOBC
-            IF ((Lobc(inorth,isTvar(it),ng)).and.NORTHERN_EDGE) THEN
+            IF ((Lobc(inorth,isTvar(it),ng)).and.                       &
+     &          DOMAIN(ng)%Northern_Edge(tile)) THEN
               DO k=1,N(ng)
                 DO i=Istr,Iend
                   t_obc(i,k,inorth,OBCcount(ng),Lout,it)=t_north(i,k,it)

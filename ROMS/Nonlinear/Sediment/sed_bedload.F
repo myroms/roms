@@ -347,18 +347,8 @@
         END DO
       END DO
 #  else
-#   ifdef EW_PERIODIC
-#    define I_RANGE Istr-1,Iend+1
-#   else
-#    define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#   endif
-#   ifdef NS_PERIODIC
-#    define J_RANGE Jstr-1,Jend+1
-#   else
-#    define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#   endif
-      DO i=I_RANGE
-        DO j=J_RANGE
+      DO j=Jstrm1,Jendp1
+        DO i=Istrm1,Iendp1
 #   ifdef BSTRESS_UPWIND
           cff1=0.5_r8*(1.0_r8+SIGN(1.0_r8,bustr(i+1,j)))
           cff2=0.5_r8*(1.0_r8-SIGN(1.0_r8,bustr(i+1,j)))
@@ -386,8 +376,6 @@
 #   endif
         END DO
       END DO
-#   undef I_RANGE
-#   undef J_RANGE
 #  endif
 # endif
 
@@ -397,25 +385,14 @@
 !  Compute bedload sediment transport.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-1,Iend+1
-#  else
-#   define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-1,Jend+1
-#  else
-#   define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#  endif
-!
 ! Compute some constant bed slope parameters.
 !
       sed_angle=DTAN(33.0_r8*pi/180.0_r8)
 !
 !  Compute angle between currents and waves (radians).
 !
-      DO j=J_RANGE
-        DO i=I_RANGE
+      DO j=Jstrm1,Jendp1
+        DO i=Istrm1,Iendp1
 #  if defined BEDLOAD_SOULSBY
 !
 ! Compute angle between currents and waves, measure CCW from current
@@ -452,8 +429,8 @@
         osmgd=1.0_r8/smgd
         smgdr=SQRT(smgd)*Sd50(ised,ng)*Srho(ised,ng)
 !
-        DO j=J_RANGE
-          DO i=I_RANGE
+        DO j=Jstrm1,Jendp1
+          DO i=Istrm1,Iendp1
 #  ifdef BEDLOAD_SOULSBY
 !
 ! Compute wave asymmetry factor, based on Fredosoe and Deigaard.
@@ -623,55 +600,53 @@
           END DO
         END DO
 #  ifndef EW_PERIODIC
-        IF (WESTERN_EDGE) THEN
-          DO j=J_RANGE
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=Jstrm1,Jendp1
             FX_r(Istr-1,j)=FX_r(Istr,j)
             FE_r(Istr-1,j)=FE_r(Istr,j)
           END DO
         END IF
-        IF (EASTERN_EDGE) THEN
-          DO j=J_RANGE
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=Jstrm1,Jendp1
             FX_r(Iend+1,j)=FX_r(Iend,j)
             FE_r(Iend+1,j)=FE_r(Iend,j)
           END DO
         END IF
 #  endif
 #  ifndef NS_PERIODIC
-        IF (SOUTHERN_EDGE) THEN
-          DO i=I_RANGE
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=Istrm1,Iendp1
             FX_r(i,Jstr-1)=FX_r(i,Jstr)
             FE_r(i,Jstr-1)=FE_r(i,Jstr)
           END DO
         END IF
-        IF (NORTHERN_EDGE) THEN
-          DO i=I_RANGE
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=Istrm1,Iendp1
             FX_r(i,Jend+1)=FX_r(i,Jend)
             FE_r(i,Jend+1)=FE_r(i,Jend)
           END DO
         END IF
 #  endif
-#  undef I_RANGE
-#  undef J_RANGE
 #  if !defined EW_PERIODIC && !defined NS_PERIODIC
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           FX_r(Istr-1,Jstr-1)=0.5_r8*(FX_r(Istr  ,Jstr-1)+              &
      &                                FX_r(Istr-1,Jstr  ))
           FE_r(Istr-1,Jstr-1)=0.5_r8*(FE_r(Istr  ,Jstr-1)+              &
      &                                FE_r(Istr-1,Jstr  ))
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           FX_r(Iend+1,Jstr-1)=0.5_r8*(FX_r(Iend  ,Jstr-1)+              &
      &                                FX_r(Iend+1,Jstr  ))
           FE_r(Iend+1,Jstr-1)=0.5_r8*(FE_r(Iend  ,Jstr-1)+              &
      &                                FE_r(Iend+1,Jstr  ))
         END IF
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           FX_r(Istr-1,Jend+1)=0.5_r8*(FX_r(Istr-1,Jend  )+              &
      &                                FX_r(Istr  ,Jend+1))
           FE_r(Istr-1,Jend+1)=0.5_r8*(FE_r(Istr-1,Jend  )+              &
      &                                FE_r(Istr  ,Jend+1))
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           FX_r(Iend+1,Jend+1)=0.5_r8*(FX_r(Iend+1,Jend  )+              &
      &                                FX_r(Iend  ,Jend+1))
           FE_r(Iend+1,Jend+1)=0.5_r8*(FE_r(Iend+1,Jend  )+              &
@@ -734,14 +709,14 @@
 !
 #  ifndef EW_PERIODIC
 #   ifdef WESTERN_WALL
-        IF (WESTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=Jstr-1,Jend+1
             FX(Istr,j)=0.0_r8
           END DO
         END IF
 #   endif
 #   ifdef EASTERN_WALL
-        IF (EASTERN_EDGE) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr-1,Jend+1
             FX(Iend+1,j)=0.0_r8
           END DO
@@ -750,14 +725,14 @@
 #  endif
 #  ifndef NS_PERIODIC
 #   ifdef SOUTHERN_WALL
-        IF (SOUTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr-1,Iend+1
             FE(i,Jstr)=0.0_r8
           END DO
         END IF
 #   endif
 #   ifdef NORTHERN_WALL
-        IF (NORTHERN_EDGE) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr-1,Iend+1
             FE(i,Jend+1)=0.0_r8
           END DO

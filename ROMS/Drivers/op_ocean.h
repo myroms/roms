@@ -39,7 +39,7 @@
 
       CONTAINS
 
-      SUBROUTINE ROMS_initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, mpiCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -52,24 +52,31 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
+      USE mod_storage
+
+#ifdef MCT_LIB
 !
-#ifdef AIR_OCEAN
-      USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
-#endif
-#ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : initialize_waves_coupling
+# ifdef AIR_OCEAN
+      USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
+# endif
+# ifdef WAVES_OCEAN
+      USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
+# endif
 #endif
 !
 !  Imported variable declarations.
 !
       logical, intent(inout) :: first
 
-      integer, intent(in), optional :: MyCOMM
+      integer, intent(in), optional :: mpiCOMM
 !
 !  Local variable declarations.
 !
       logical :: allocate_vars = .TRUE.
 
+#ifdef DISTRIBUTE
+      integer :: MyError, MySize
+#endif
       integer :: ng, thread
 
 #ifdef DISTRIBUTE
@@ -78,11 +85,13 @@
 !  Set distribute-memory (MPI) world communictor.
 !-----------------------------------------------------------------------
 !
-      IF (PRESENT(MyCOMM)) THEN
-        OCN_COMM_WORLD=MyCOMM
+      IF (PRESENT(mpiCOMM)) THEN
+        OCN_COMM_WORLD=mpiCOMM
       ELSE
         OCN_COMM_WORLD=MPI_COMM_WORLD
       END IF
+      CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
+      CALL mpi_comm_size (OCN_COMM_WORLD, MySize, MyError)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -95,43 +104,34 @@
       IF (first) THEN
         first=.FALSE.
 !
-!  Initialize parallel parameters.
+!  Initialize parallel control switches. These scalars switches are
+!  independent from standard input parameters.
 !
         CALL initialize_parallel
 !
-!  Initialize wall clocks.
+!  Read in model tunable parameters from standard input. Allocate and
+!  initialize variables in several modules after the number of nested
+!  grids and dimension parameters are known.
+!
+        CALL inp_par (iTLM)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Initialize internal wall clocks. Notice that the timings does not
+!  includes processing standard input because several parameters are
+!  needed to allocate clock variables.
 !
         IF (Master) THEN
           WRITE (stdout,10)
- 10       FORMAT (' Process Information:',/)
+ 10       FORMAT (/,' Process Information:',/)
         END IF
+!
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
           DO thread=0,numthreads-1
             CALL wclock_on (ng, iTLM, 0)
           END DO
 !$OMP END PARALLEL DO
         END DO
-
-#if defined AIR_OCEAN || defined WAVES_OCEAN
-!
-!  Initialize coupling streams between model(s).
-!
-        DO ng=1,Ngrids
-# ifdef AIR_OCEAN
-          CALL initialize_atmos_coupling (ng, MyRank)
-# endif
-# ifdef WAVES_OCEAN
-          CALL initialize_waves_coupling (ng, MyRank)
-# endif
-        END DO
-#endif
-!
-!  Read in model tunable parameters from standard input. Initialize
-!  "mod_param", "mod_ncparam" and "mod_scalar" modules.
-!
-        CALL inp_par (iTLM)
-        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -139,10 +139,116 @@
 
       END IF
 
+#if defined MCT_LIB && (defined AIR_OCEAN || defined WAVES_OCEAN)
+!
+!-----------------------------------------------------------------------
+!  Initialize coupling streams between model(s).
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+# ifdef AIR_OCEAN
+        CALL initialize_ocn2atm_coupling (ng, MyRank)
+# endif
+# ifdef WAVES_OCEAN
+        CALL initialize_ocn2wav_coupling (ng, MyRank)
+# endif
+      END DO
+#endif
+!
+!-----------------------------------------------------------------------
+!  Initialize tangent linear for all grids first in order to compute
+!  the size of the state vector, Nstate.  This size is computed in
+!  routine "wpoints".
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+        BLK(ng)%name=FWD(ng)%name
+#endif
+        CALL tl_initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+!
+!  Allocate arrays associated with Generalized Stability Theory (GST)
+!  analysis.
+!
+      CALL allocate_storage
+!
+!  Initialize various IO flags.
+!
+      Nrun=0
+      DO ng=1,Ngrids
+        LdefADJ(ng)=.TRUE.
+        LwrtADJ(ng)=.TRUE.
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
+        LwrtPER(ng)=.FALSE.
+        LcycleTLM(ng)=.FALSE.
+        LcycleADJ(ng)=.FALSE.
+        nADJ(ng)=ntimes(ng)
+        nTLM(ng)=ntimes(ng)
+      END DO
+!
+!  Initialize ARPACK parameters.
+!
+      Lrvec=.TRUE.                ! Compute Ritz vectors
+      bmat='I'                    ! standard eigenvalue problem
+      which='LM'                  ! compute NEV largest eigenvalues
+      howmany='A'                 ! compute NEV Ritz vectors
+      DO ng=1,Ngrids
+        ido(ng)=0                 ! reverse communication flag
+        info(ng)=0                ! random initial residual vector
+        iparam(1,ng)=1            ! exact shifts
+        iparam(3,ng)=MaxIterGST   ! maximum number of Arnoldi iterations
+        iparam(4,ng)=1            ! block size in the recurrence
+        iparam(7,ng)=1            ! type of eigenproblem being solved
+      END DO
+!
+!  ARPACK debugging parameters.
+!
+      logfil=stdout               ! output logical unit
+      ndigit=-3                   ! number of decimal digits
+      msaupd=1                    ! iterations, timings, Ritz
+      msaup2=1                    ! norms, Ritz values
+      msaitr=0
+      mseigt=0
+      msapps=0
+      msgets=0
+      mseupd=0
+!
+!  Determine size of the eigenproblem (Nsize) and size of work space
+!  array SworkL (LworkL).
+!
+      DO ng=1,Ngrids
+        Nconv(ng)=0
+        Nsize(ng)=Nend(ng)-Nstr(ng)+1
+      END DO
+
+#ifdef CHECKPOINTING
+!
+!  If restart, read in checkpointing data GST restart NetCDF file.
+!  Otherwise, create checkpointing restart NetCDF file.
+!
+      DO ng=1,Ngrids
+        IF (LrstGST) THEN
+          CALL get_gst (ng, iTLM)
+          ido(ng)=-2
+          laup2(1)=.FALSE.        ! cnorm
+          laup2(2)=.FALSE.        ! getv0
+          laup2(3)=.FALSE.        ! initv
+          laup2(4)=.FALSE.        ! update
+          laup2(5)=.TRUE.         ! ushift
+        ELSE
+          CALL def_gst (ng, iTLM)
+        END IF
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+#endif
+
       RETURN
       END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE ROMS_run (Tstr, Tend)
+      SUBROUTINE ROMS_run (RunInterval)
 !
 !=======================================================================
 !                                                                      !
@@ -178,8 +284,7 @@
 !
 !  Imported variable declarations
 !
-      integer, dimension(Ngrids) :: Tstr
-      integer, dimension(Ngrids) :: Tend
+      real(r8), intent(in) :: RunInterval            ! seconds
 !
 !  Local variable declarations.
 !
@@ -188,141 +293,69 @@
       logical :: LwrtGST
 #endif
 
-      integer :: NconvRitz, i, iter, lstr, ng
+      integer :: Fcount, Is, Ie, i, iter, ng
+      integer :: NconvRitz(Ngrids)
 
       real(r8) :: Enorm
 
       real(r8), dimension(2) :: my_norm, my_value
 
+      TYPE (T_GST), allocatable :: ad_state(:)
+      TYPE (T_GST), allocatable :: state(:)
+
       character (len=55) :: string
-!
-!=======================================================================
-!  Run model for all nested grids, if any.
-!=======================================================================
-
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!  Set file name containing the nonlinear model bulk fluxes to be read
-!  and processed by other algorithms.
-!
-      DO ng=1,Ngrids
-        BLKname(ng)=FWDname(ng)
-      END DO
-#endif
-!
-!  Initialize tangent linear for all grids first in order to compute
-!  the size of the state vector, Nstate.  This size is computed in
-!  routine "wpoints".
-!
-      DO ng=1,Ngrids
-        CALL tl_initial (ng)
-        IF (exit_flag.ne.NoError) RETURN
-      END DO
-!
-!  Currently, only non-nested applications are considered.  Otherwise,
-!  a different structure for mod_storage is needed.
-!
-      NEST_LOOP : DO ng=1,Ngrids
-
-        IF (ng.eq.1) THEN
-          CALL allocate_storage (ng)
-        END IF
-!
-!  Initialize various parameters.
-!
-        Nrun=0
-
-        LdefADJ(ng)=.TRUE.
-        LwrtADJ(ng)=.TRUE.
-        LdefTLM(ng)=.TRUE.
-        LwrtTLM(ng)=.TRUE.
-        LwrtPER(ng)=.FALSE.
-        LcycleTLM(ng)=.FALSE.
-        LcycleADJ(ng)=.FALSE.
-        nADJ(ng)=ntimes(ng)
-        nTLM(ng)=ntimes(ng)
 !
 !-----------------------------------------------------------------------
 !  Implicit Restarted Arnoldi Method (IRAM) for the computation of
 !  optimal perturbation Ritz eigenfunctions.
 !-----------------------------------------------------------------------
 !
-        ITERATE=.TRUE.
-#ifdef CHECKPOINTING
-        LwrtGST=.TRUE.
-#endif
-        Lrvec=.TRUE.              ! Compute Ritz vectors
-        ido=0                     ! reverse communication flag
-        bmat='I'                  ! standard eigenvalue problem
-        which='LM'                ! compute NEV largest eigenvalues
-        howmany='A'               ! compute NEV Ritz vectors
-        info=0                    ! random initial residual vector
-        iparam(1)=1               ! exact shifts
-        iparam(3)=MaxIterGST      ! maximum number of Arnoldi iterations
-        iparam(4)=1               ! block size in the recurrence
-        iparam(7)=1               ! type of eigenproblem being solved
+!  Allocate nested grid pointers for state vectors.
 !
-!  ARPACK debugging parameters.
-!
-        logfil=stdout             ! output logical unit
-        ndigit=-3                 ! number of decimal digits
-        msaupd=1                  ! iterations, timings, Ritz
-        msaup2=1                  ! norms, Ritz values
-        msaitr=0
-        mseigt=0
-        msapps=0
-        msgets=0
-        mseupd=0
-!
-!  Determine size of the eigenproblem (Nsize) and size of work space
-!  array SworkL (LworkL).
-!
-        Nsize=Nend(ng)-Nstr(ng)+1
-        Nconv=0
-
-#ifdef CHECKPOINTING
-!
-!  If restart, read in checkpointing data GST restart NetCDF file.
-!  Otherwise, create checkpointing restart NetCDF file.
-!
-        IF (LrstGST) THEN
-          CALL get_gst (ng, iTLM)
-          ido=-2
-          laup2(1)=.FALSE.        ! cnorm
-          laup2(2)=.FALSE.        ! getv0
-          laup2(3)=.FALSE.        ! initv
-          laup2(4)=.FALSE.        ! update
-          laup2(5)=.TRUE.         ! ushift
-        ELSE
-          CALL def_gst (ng, iTLM)
-        END IF
-        IF (exit_flag.ne.NoError) RETURN
-#endif
+      IF (.not.allocated(ad_state)) THEN
+        allocate ( ad_state(Ngrids) )
+      END IF
+      IF (.not.allocated(state)) THEN
+        allocate ( state(Ngrids) )
+      END IF
 !
 !  Iterate until either convergence or maximum iterations has been
 !  exceeded.
 !
-        iter=0
+      iter=0
+      ITERATE=.TRUE.
+#ifdef CHECKPOINTING
+      LwrtGST=.TRUE.
+#endif
 !
-        ITER_LOOP : DO WHILE (ITERATE)
-          iter=iter+1
+      ITER_LOOP : DO WHILE (ITERATE)
+        iter=iter+1
 !
 !  Reverse communication interface.
 !
+        DO ng=1,Ngrids
 #ifdef PROFILE
           CALL wclock_on (ng, iTLM, 38)
 #endif
 #ifdef DISTRIBUTE
           CALL pdsaupd (OCN_COMM_WORLD,                                 &
-     &                  ido, bmat, Nsize, which, NEV, Ritz_tol,         &
-     &                  resid(Nstr(ng)), NCV, Bvec(Nstr(ng),1),         &
-     &                  Nsize, iparam, ipntr,                           &
-     &                  SworkD, SworkL, LworkL, info)
+     &                  ido(ng), bmat, Nsize(ng), which, NEV,           &
+     &                  Ritz_tol,                                       &
+     &                  STORAGE(ng)%resid(Nstr(ng)), NCV,               &
+     &                  STORAGE(ng)%Bvec(Nstr(ng),1), Nsize(ng),        &
+     &                  iparam(1,ng), ipntr(1,ng),                      &
+     &                  STORAGE(ng)%SworkD,                             &
+     &                  SworkL(1,ng), LworkL, info(ng))
 #else
-          CALL dsaupd (ido, bmat, Nsize, which, NEV, Ritz_tol,          &
-     &                 resid, NCV, Bvec, Nsize, iparam, ipntr,          &
-     &                 SworkD, SworkL, LworkL, info)
+          CALL dsaupd (ido(ng), bmat, Nsize(ng), which, NEV,            &
+     &                 Ritz_tol,                                        &
+     &                 STORAGE(ng)%resid, NCV,                          &
+     &                 STORAGE(ng)%Bvec, Nsize(ng),                     &
+     &                 iparam(1,ng), ipntr(1,ng),                       &
+     &                 STORAGE(ng)%SworkD,                              &
+     &                 SworkL(1,ng), LworkL, info(ng))
 #endif
+          Nconv(ng)=iaup2(4)
 #ifdef PROFILE
           CALL wclock_off (ng, iTLM, 38)
 #endif
@@ -334,184 +367,245 @@
 !  is achieved (ido=99).
 !
           IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
-              (ido.eq.99)) THEN
+     &        (ANY(ido.eq.99))) THEN
             CALL wrt_gst (ng, iTLM)
             IF (exit_flag.ne.NoError) RETURN
           END IF
 #endif
+        END DO
 !
 !  Terminate computations if maximum number of iterations is reached.
 !  This will faciliate splitting the analysis in several computational
 !  cycles using the restart option.
 !
-          IF ((iter.ge.MaxIterGST).and.(ido.ne.99)) THEN
-            ITERATE=.FALSE.
-            EXIT ITER_LOOP
-          END IF
+        IF ((iter.ge.MaxIterGST).and.ANY(ido.ne.99)) THEN
+          ITERATE=.FALSE.
+          EXIT ITER_LOOP
+        END IF
 !
 !  Perform matrix-vector operation:  R`(t,0)XR(0,t)u
 !
-          IF (ABS(ido).eq.1) THEN
-            NrecADJ(ng)=0
-            NrecTLM(ng)=0
-            tADJindx(ng)=0
-            tTLMindx(ng)=0
-            Nconv=iaup2(4)
-            CALL propagator (ng, Nstr(ng), Nend(ng),                    &
-     &                       SworkD(ipntr(1):), SworkD(ipntr(2):))
-            IF (exit_flag.ne.NoError) RETURN
-          ELSE
-            IF (info.ne.0) THEN
-              IF (Master) THEN
-                CALL IRAM_error (info, string)
-                WRITE (stdout,10) 'DSAUPD', TRIM(string),               &
-     &                            ', info = ', info
-              END IF
-              RETURN
-            ELSE
+        IF (ANY(ABS(ido).eq.1)) THEN
+          DO ng=1,Ngrids
+            Fcount=ADM(ng)%Fcount
+            ADM(ng)%Nrec(Fcount)=0
+            Fcount=TLM(ng)%Fcount
+            TLM(ng)%Nrec(Fcount)=0
+            ADM(ng)%Rindex=0
+            TLM(ng)%Rindex=0
+          END DO
 !
-!  Compute Ritz vectors (the only choice left is IDO=99).  They are
+!  Set state vectors to process by the propagator via pointer
+!  equivalence.
+!
+          DO ng=1,Ngrids
+            IF (ASSOCIATED(state(ng)%vector)) THEN
+              nullify (state(ng)%vector)
+            END IF
+            Is=ipntr(1,ng)
+            Ie=Is+Nsize(ng)-1
+            state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+
+            IF (ASSOCIATED(ad_state(ng)%vector)) THEN
+              nullify (ad_state(ng)%vector)
+            END IF
+            Is=ipntr(2,ng)
+            Ie=Is+Nsize(ng)-1
+            ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+          END DO
+
+          CALL propagator (RunInterval, state, ad_state)
+          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          IF (ANY(info.ne.0)) THEN
+            DO ng=1,Ngrids
+              IF (info(ng).ne.0) THEN
+                IF (Master) THEN
+                  CALL IRAM_error (info(ng), string)
+                  WRITE (stdout,10) 'DSAUPD', TRIM(string),             &
+     &                              ', info = ', info(ng)
+                END IF
+                RETURN
+              END IF
+            END DO
+          ELSE
+!
+!  Compute Ritz vectors (the only choice left is IDO=99). They are
 !  generated in ARPACK in decreasing magnitude of its eigenvalue.
 !  The most significant is first.
 !
-              NconvRitz=iparam(5)
+            DO ng=1,Ngrids
+              NconvRitz(ng)=iparam(5,ng)
               IF (Master) THEN
                 WRITE (stdout,20) 'Number of converged Ritz values:',   &
-     &                            iparam(5)
-                WRITE (stdout,20) 'Number of Arnoldi iterations taken:',&
-     &                            iparam(3)
+     &                            iparam(5,ng)
+                WRITE (stdout,20) 'Number of Arnoldi iterations:',      &
+     &                            iparam(3,ng)
               END IF
 #ifdef PROFILE
               CALL wclock_on (ng, iTLM, 38)
 #endif
 #ifdef DISTRIBUTE
               CALL pdseupd (OCN_COMM_WORLD,                             &
-     &                      Lrvec, howmany, select,                     &
-     &                      RvalueR, Rvector(Nstr(ng),1), Nsize,        &
-     &                      sigmaR, bmat, Nsize, which, NEV, Ritz_tol,  &
-     &                      resid(Nstr(ng)), NCV, Bvec(Nstr(ng),1),     &
-     &                      Nsize, iparam, ipntr,                       &
-     &                      SworkD, SworkL, LworkL, info)
+     &                      Lrvec, howmany, select(1,ng),               &
+     &                      RvalueR(1,ng),                              &
+     &                      STORAGE(ng)%Rvector(Nstr(ng),1),            &
+     &                      Nsize(ng), sigmaR,                          &
+     &                      bmat, Nsize(ng), which, NEV, Ritz_tol,      &
+     &                      STORAGE(ng)%resid(Nstr(ng)), NCV,           &
+     &                      STORAGE(ng)%Bvec(Nstr(ng),1), Nsize(ng),    &
+     &                      iparam(1,ng), ipntr(1,ng),                  &
+     &                      STORAGE(ng)%SworkD,                         &
+     &                      SworkL(1,ng), LworkL, info(ng))
 #else
-              CALL dseupd (Lrvec, howmany, select,                      &
-     &                     RvalueR, Rvector, Nsize,                     &
+              CALL dseupd (Lrvec, howmany, select(1,ng),                &
+     &                     RvalueR(1,ng),                               &
+     &                     STORAGE(ng)%Rvector, Nsize(ng),              &
      &                     sigmaR, bmat, Nsize, which, NEV, Ritz_tol,   &
-     &                     resid, NCV, Bvec, Nsize, iparam,             &
-     &                     ipntr, SworkD, SworkL, LworkL, info)
+     &                     STORAGE(ng)%resid, NCV,                      &
+     &                     STORAGE(ng)%Bvec, Nsize(ng),                 &
+     &                     iparam(1,ng), ipntr(1,ng),                   &
+     &                     STORAGE(ng)%SworkD,                          &
+     &                     SworkL(1,ng), LworkL, info(ng))
 #endif
 #ifdef PROFILE
               CALL wclock_off (ng, iTLM, 38)
 #endif
-              IF (info.ne.0) THEN
-                IF (Master) THEN
-                  CALL IRAM_error (info, string)
-                  WRITE (stdout,10) 'DSEUPD', TRIM(string),             &
-     &                              ', info = ', info
-                END IF
-                RETURN
-              ELSE
-!
-!  Activate writing of each eigenvector into tangent history NetCDF
-!  file. The "ocean_time" is the eigenvector number.
-!
-                Nrun=0
+            END DO
 
-                DO i=1,NconvRitz
+            IF (ANY(info.ne.0)) THEN
+              DO ng=1,Ngrids
+                IF (info(ng).ne.0) THEN
+                  IF (Master) THEN
+                    CALL IRAM_error (info(ng), string)
+                    WRITE (stdout,10) 'DSEUPD', TRIM(string),           &
+     &                                ', info = ', info(ng)
+                  END IF
+                  RETURN
+                END IF
+              END DO
+            ELSE
+!
+!  Activate writing of each eigenvector into the  adjoint and tangent
+!  linear history NetCDF files. The "ocean_time" is the eigenvector
+!  number.
+!
+              Nrun=0
+
+              DO i=1,MAXVAL(NconvRitz)
+                DO ng=1,Ngrids
                   IF ((i.eq.1).or.LmultiGST) THEN
-                    NrecADJ(ng)=0
-                    NrecTLM(ng)=0
-                    tADJindx(ng)=0
-                    tTLMindx(ng)=0
+                    Fcount=ADM(ng)%Fcount
+                    ADM(ng)%Nrec(Fcount)=0
+                    Fcount=TLM(ng)%Fcount
+                    TLM(ng)%Nrec(Fcount)=0
+                    ADM(ng)%Rindex=0
+                    TLM(ng)%Rindex=0
                   END IF
                   IF (LmultiGST) THEN
                     LdefADJ(ng)=.TRUE.
                     LdefTLM(ng)=.TRUE.
-                    lstr=LEN_TRIM(ADJbase(ng))
-                    WRITE (ADJname(ng),30) ADJbase(ng)(1:lstr-3), i
-                    lstr=LEN_TRIM(TLMbase(ng))
-                    WRITE (TLMname(ng),30) TLMbase(ng)(1:lstr-3), i
+                    WRITE (ADM(ng)%name,30) TRIM(ADM(ng)%base), i
+                    WRITE (TLM(ng)%name,30) TRIM(TLM(ng)%base), i
                   END IF
+                END DO
 !
-!  Compute and write the Ritz eigenvectors.
+!  Compute and write Ritz eigenvectors.
 !
-                  CALL propagator (ng, Nstr(ng), Nend(ng),              &
-     &                             Rvector(Nstr(ng):,i), SworkD)
-                  IF (exit_flag.ne.NoError) RETURN
+                DO ng=1,Ngrids
+                  Is=Nstr(ng)
+                  Ie=Nend(ng)
+                  IF (ASSOCIATED(state(ng)%vector)) THEN
+                    nullify (state(ng)%vector)
+                  END IF
+
+                  IF (ASSOCIATED(ad_state(ng)%vector)) THEN
+                    nullify (ad_state(ng)%vector)
+                  END IF
+                  state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
+                  ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+                END DO
+
+                CALL propagator (RunInterval, state, ad_state)
+                IF (exit_flag.ne.NoError) RETURN
+!
+                DO ng=1,Ngrids
                   CALL r_norm2 (ng, iTLM, Nstr(ng), Nend(ng),           &
-     &                          -RvalueR(i),                            &
-     &                          Rvector(Nstr(ng):,i),                   &
-     &                          SworkD, Enorm)
-                  norm(i)=Enorm
+     &                          -RvalueR(i,ng),                         &
+     &                          state(ng)%vector,                       &
+     &                          ad_state(ng)%vector, Enorm)
+                  norm(i,ng)=Enorm
                   IF (Master) THEN
-                    WRITE (stdout,40) i, norm(i), RvalueR(i), i
+                    WRITE (stdout,40) i, norm(i,ng), RvalueR(i,ng), i
                   END IF
+                END DO
 !
 !  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm
 !  (residual) to NetCDF file(s).  Notice that we write the same value
 !  twice in the TLM file for the initial and final perturbation of
 !  the eigenvector.
 !
+                DO ng=1,Ngrids
                   SourceFile='op_ocean.h, ROMS_run'
-                  my_norm(1)=norm(i)
+                  my_norm(1)=norm(i,ng)
                   my_norm(2)=my_norm(1)
-                  my_value(1)=RvalueR(i)
+                  my_value(1)=RvalueR(i,ng)
                   my_value(2)=my_value(1)
 
                   IF (LwrtTLM(ng)) THEN
-                    CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),        &
+                    CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
      &                                    'Ritz_rvalue',                &
      &                                    my_value,                     &
-     &                                    start = (/tTLMindx(ng)-1/),   &
+     &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
-     &                                    ncid = ncTLMid(ng))
+     &                                    ncid = TLM(ng)%ncid)
                     IF (exit_flag.ne. NoError) RETURN
 
-                    CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),        &
+                    CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
      &                                    'Ritz_norm',                  &
      &                                    my_norm,                      &
-     &                                    start = (/tTLMindx(ng)-1/),   &
+     &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
-     &                                    ncid = ncTLMid(ng))
+     &                                    ncid = TLM(ng)%ncid)
                     IF (exit_flag.ne. NoError) RETURN
 
                     IF (LmultiGST) THEN
-                      CALL netcdf_close (ng, iTLM, ncTLMid(ng),         &
-     &                                   TLMname(ng))
+                      CALL netcdf_close (ng, iTLM, TLM(ng)%ncid,        &
+     &                                   TLM(ng)%name)
                       IF (exit_flag.ne.NoError) RETURN
                     END IF
                   END IF
                   IF (LwrtADJ(ng)) THEN
-                    CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
+                    CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,       &
      &                                    'Ritz_rvalue',                &
-     &                                    RvalueR(i:),                  &
-     &                                    start = (/tADJindx(ng)/),     &
+     &                                    RvalueR(i:,ng),               &
+     &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
-     &                                    ncid = ncADJid(ng))
+     &                                    ncid = ADM(ng)%ncid)
                     IF (exit_flag.ne. NoError) RETURN
 
-                    CALL netcdf_put_fvar (ng, iADM, ADJname(ng),        &
+                    CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,       &
      &                                    'Ritz_norm',                  &
-     &                                    norm(i:),                     &
-     &                                    start = (/tADJindx(ng)/),     &
+     &                                     norm(i:,ng),                 &
+     &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
-     &                                    ncid = ncADJid(ng))
+     &                                    ncid = ADM(ng)%ncid)
                     IF (exit_flag.ne. NoError) RETURN
 
                     IF (LmultiGST) THEN
-                      CALL netcdf_close (ng, iADM, ncADJid(ng),         &
-     &                                   ADJname(ng))
+                      CALL netcdf_close (ng, iADM, ADM(ng)%ncid,        &
+     &                                   ADM(ng)%name)
                       IF (exit_flag.ne.NoError) RETURN
                     END IF
                   END IF
                 END DO
-              END IF
+              END DO
             END IF
-            ITERATE=.FALSE.
           END IF
+          ITERATE=.FALSE.
+        END IF
 
-        END DO ITER_LOOP
-
-      END DO NEST_LOOP
+      END DO ITER_LOOP
 !
  10   FORMAT (/,1x,'Error in ',a,1x,a,a,1x,i5,/)
  20   FORMAT (/,a,1x,i2,/)
@@ -539,7 +633,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, thread
+      integer :: Fcount, ng, thread
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
@@ -547,20 +641,23 @@
 !
 !  If cycling restart records, write solution into the next record.
 !
-      DO ng=1,Ngrids
-        IF (LwrtRST(ng).and.(exit_flag.eq.1)) THEN
-          IF (Master) WRITE (stdout,10)
- 10       FORMAT (/,' Blowing-up: Saving latest model state into ',     &
-     &              ' RESTART file',/)
-          IF (LcycleRST(ng).and.(NrecRST(ng).ge.2)) THEN
-            tRSTindx(ng)=2
-            LcycleRST(ng)=.FALSE.
+      IF (exit_flag.eq.1) THEN
+        DO ng=1,Ngrids
+          IF (LwrtRST(ng)) THEN
+            IF (Master) WRITE (stdout,10)
+ 10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
+     &                ' RESTART file',/)
+            Fcount=RST(ng)%Fcount
+            IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
+              RST(ng)%Rindex=2
+              LcycleRST(ng)=.FALSE.
+            END IF
+            blowup=exit_flag
+            exit_flag=NoError
+            CALL wrt_rst (ng)
           END IF
-          blowup=exit_flag
-          exit_flag=NoError
-          CALL wrt_rst (ng)
-        END IF
-      END DO
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Stop model and time profiling clocks.  Close output NetCDF files.
@@ -574,7 +671,7 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
         DO thread=0,numthreads-1
           CALL wclock_off (ng, iTLM, 0)
         END DO
@@ -583,7 +680,7 @@
 !
 !  Close IO files.
 !
-      CALL close_io
+      CALL close_out
 
       RETURN
       END SUBROUTINE ROMS_finalize

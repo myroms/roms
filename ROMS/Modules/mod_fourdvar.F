@@ -86,11 +86,14 @@
 !  cg_zu        Lanczos tridiagonal matrix, upper diagonal elements.   !
 !  cg_zv        Eigenvectors of Lanczos recurrence term Q(k)T(k).      !
 !  haveADmod    Logical switch indicating that there is representer    !
-!                 coefficients available to process in MODname file.   !
+!                 coefficients available to process in DAV(ng)%name    !
+!                 file.                                                !
 !  haveNLmod    Logical switch indicating that there is nonlinear      !
-!                 model data available to process in MODname file.     !
+!                 model data available to process in DAV(ng)%name      !
+!                 file.                                                !
 !  haveTLmod    Logical switch indicating that there is tangent        !
-!                 model data available to process in MODname file.     !
+!                 model data available to process in DAV(ng)%name      !
+!                 file.                                                !
 !                                                                      !
 !=======================================================================
 !
@@ -220,8 +223,8 @@
 !  given in meters (Zobs < 0) so the fractional vertical level position
 !  is computed during extraction and written to Observation NetCDF file.
 !
-        logical, dimension(Ngrids) :: Load_Zobs
-        logical, dimension(Ngrids) :: wrote_Zobs
+        logical, allocatable :: Load_Zobs(:)
+        logical, allocatable :: wrote_Zobs(:)
 !
 !  Maximum number of observations to process.
 !
@@ -229,7 +232,7 @@
 !
 !  Number of model state variables to process.
 !
-        integer, dimension(Ngrids) :: NstateVar
+        integer, allocatable :: NstateVar(:)
 !
 !  Number of interpolation weights and (I,J,K) indices offsets.
 !
@@ -253,38 +256,38 @@
 !
 !  Size of observation NetCDF file unlimited dimension.
 !
-        integer, dimension(Ngrids) :: Ndatum
+        integer, allocatable :: Ndatum(:)
 !
 !  Number of observations surveys available.
 !
-        integer, dimension(Ngrids) :: Nsurvey
+        integer, allocatable :: Nsurvey(:)
 !
 !  Observation surveys counter.
 !
-        integer, dimension(Ngrids) :: ObsSurvey
+        integer, allocatable :: ObsSurvey(:)
 !
 !  Current number of observations processed.
 !
-        integer, dimension(Ngrids) :: Nobs
+        integer, allocatable :: Nobs(:)
 !
 !  Current starting and ending observation file index processed.
 !
-        integer, dimension(Ngrids) :: NstrObs
-        integer, dimension(Ngrids) :: NendObs
+        integer, allocatable :: NstrObs(:)
+        integer, allocatable :: NendObs(:)
 !
 !  Background error covariance normalization method:
 !
 !       [0] Exact, very expensive
 !       [1] Approximated, randomization
 !
-        integer, dimension(Ngrids) :: Nmethod
+        integer, allocatable :: Nmethod(:)
 !
 !  Random number generation scheme for randomization:
 !
 !       [0] Intrinsic F90 routine "randon_number"
 !       [1] Gaussian distributed deviates, numerical recipes
 !
-        integer, dimension(Ngrids) :: Rscheme
+        integer, allocatable :: Rscheme(:)
 !
 !  Number of iterations in the randomization ensemble used to
 !  compute the background error covariance, B, normalization
@@ -313,32 +316,32 @@
 !  is idealy equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
-        real(r8), dimension(Ngrids) :: Optimality
+        real(r8), allocatable :: Optimality(:)
 !
 !  Switch to activate the processing of model state at the observation
 !  locations.
 !
-        logical, dimension(Ngrids) :: ProcessObs
+        logical, allocatable :: ProcessObs(:)
 !
 !  Switch to activate writting of nonlinear model values at
 !  observations locations into observations NetCDF file.
 !
-        logical, dimension(Ngrids) :: wrtNLmod
+        logical, allocatable :: wrtNLmod(:)
 !
 !  Switch to activate writting of representer model values at
 !  observations locations into observations NetCDF file.
 !
-        logical, dimension(Ngrids) :: wrtRPmod
+        logical, allocatable :: wrtRPmod(:)
 !
 !  Switch to activate writting of tangent linear model values at
 !  observations locations into observations NetCDF file.
 !
-        logical, dimension(Ngrids) :: wrtTLmod
+        logical, allocatable :: wrtTLmod(:)
 !
 !  Switch to activate writting of initial and final model-observation
 !  misfit (innovation) vector into 4DVAR output NetCDF file.
 !
-        logical, dimension(Ngrids) :: wrtMisfit
+        logical, allocatable :: wrtMisfit(:)
 
 # if defined IS4DVAR_SENSITIVITY
 #  ifdef OBS_IMPACT
@@ -346,39 +349,39 @@
 !  Switch to control the writing of the total observation impact for
 !  incremental 4D-Var.
 !
-        logical, dimension(Ngrids) :: wrtIMPACT_TOT
+        logical, allocatable :: wrtIMPACT_TOT(:)
 #  endif
 #  ifdef OBS_IMPACT_SPLIT
 !
 !  Switch to control the writing of the observation impact for initial
 !  conditions for incremental 4D-Var.
 !
-        logical, dimension(Ngrids) :: wrtIMPACT_IC
+        logical, allocatable :: wrtIMPACT_IC(:)
 #   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
 !  Switch to control the writing of the observation impact for surface
 !  forcing for incremental 4D-Var.
 !
-        logical, dimension(Ngrids) :: wrtIMPACT_FC
+        logical, allocatable :: wrtIMPACT_FC(:)
 #   endif
 #   if defined ADJUST_BOUNDARY
 !
 !  Switch to control the writing of the observation impact for surface
 !  forcing for incremental 4D-Var.
 !
-        logical, dimension(Ngrids) :: wrtIMPACT_BC
+        logical, allocatable :: wrtIMPACT_BC(:)
 #   endif
 #  endif
 # endif
 !
 !  Swiches indicating that there is representer coeffiecients,
 !  nonlinear, and tangent linear model data available to process
-!  in 4DVAR NetCDF output file (MODname).  At the beeginning,
+!  in 4DVAR NetCDF output file (DAV(ng)%name).  At the beeginning,
 !  there is not data since this file has been just defined.
 !
-        logical, dimension(Ngrids) :: haveADmod
-        logical, dimension(Ngrids) :: haveNLmod
-        logical, dimension(Ngrids) :: haveTLmod
+        logical, allocatable :: haveADmod(:)
+        logical, allocatable :: haveNLmod(:)
+        logical, allocatable :: haveTLmod(:)
 !
 !-----------------------------------------------------------------------
 !  Spatial convolutions parameters
@@ -413,10 +416,10 @@
 !  Minimum and maximum Horizontal and vertical diffusion coefficients
 !  used in spatial convolutions.
 !
-        real(r8), dimension(Ngrids) :: KhMin
-        real(r8), dimension(Ngrids) :: KhMax
-        real(r8), dimension(Ngrids) :: KvMin
-        real(r8), dimension(Ngrids) :: KvMax
+        real(r8), allocatable :: KhMin(:)
+        real(r8), allocatable :: KhMax(:)
+        real(r8), allocatable :: KvMin(:)
+        real(r8), allocatable :: KvMax(:)
 
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
 !
@@ -501,7 +504,7 @@
 !
 !  Logical switch to write balance operator reference free-surface.
 !
-        logical, dimension(Ngrids) :: wrtZetaRef
+        logical, allocatable :: wrtZetaRef(:)
 # endif
 # if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
      defined POSTERIOR_ERROR_F
@@ -632,25 +635,112 @@
 !  Switch to activate writing of weak constraint forings
 !  into the adjoint NetCDF file.
 !
-        logical, dimension(Ngrids) :: WRTforce
+        logical, allocatable :: WRTforce(:)
 #  ifdef RPM_RELAXATION
-        logical, dimension(Ngrids) :: LweakRelax
+        logical, allocatable :: LweakRelax(:)
 #  endif
 #  if defined W4DPSAS_SENSITIVITY  || defined W4DVAR_SENSITIVITY
 !
 !  Switch to activate reading of adjoint sensitivity initial conditions
 !  for weak constraint 4DVAR observation sensitivity.
 !
-        logical, dimension(Ngrids) :: LsenPSAS
+        logical, allocatable :: LsenPSAS(:)
 #  endif
 !
 !  Weak-constraint forcing time.  A new variable is required since this
 !  forcing is delayed by nADJ time-steps.
 !
-        real(r8), dimension(Ngrids) :: ForceTime
+        real(r8), allocatable :: ForceTime(:)
 # endif
 
       CONTAINS
+
+      SUBROUTINE allocate_fourdvar
+!
+!=======================================================================
+!                                                                      !
+!  This routine allocates several variables in module "mod_fourdvar"   !
+!  for all nested grids.                                               !
+!                                                                      !
+!=======================================================================
+
+# ifdef OBSERVATIONS
+!
+!-----------------------------------------------------------------------
+!  Allocate module structure.
+!-----------------------------------------------------------------------
+!
+      allocate ( FOURDVAR(Ngrids) )
+# endif
+!
+!-----------------------------------------------------------------------
+!  Allocate module variables due to nested grids.
+!-----------------------------------------------------------------------
+!
+      allocate ( Load_Zobs(Ngrids) )
+      allocate ( wrote_Zobs(Ngrids) )
+
+      allocate ( NstateVar(Ngrids) )
+      allocate ( Ndatum(Ngrids) )
+      allocate ( Nsurvey(Ngrids) )
+      allocate ( ObsSurvey(Ngrids) )
+      allocate ( Nobs(Ngrids) )
+
+      allocate ( NstrObs(Ngrids) )
+      allocate ( NendObs(Ngrids) )
+
+      allocate ( Nmethod(Ngrids) )
+      allocate ( Rscheme(Ngrids) )
+
+      allocate ( Optimality(Ngrids) )
+      allocate ( ProcessObs(Ngrids) )
+
+      allocate ( wrtNLmod(Ngrids) )
+      allocate ( wrtRPmod(Ngrids) )
+      allocate ( wrtTLmod(Ngrids) )
+      allocate ( wrtMisfit(Ngrids) )
+
+# if defined IS4DVAR_SENSITIVITY
+#  ifdef OBS_IMPACT
+      allocate ( wrtIMPACT_TOT(Ngrids) )
+#  endif
+#  ifdef OBS_IMPACT_SPLIT
+      allocate ( wrtIMPACT_IC(Ngrids) )
+#   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+      allocate ( wrtIMPACT_FC(Ngrids) )
+#   endif
+#   if defined ADJUST_BOUNDARY
+      allocate ( wrtIMPACT_BC(Ngrids) )
+#   endif
+#  endif
+# endif
+
+      allocate ( haveADmod(Ngrids) )
+      allocate ( haveNLmod(Ngrids) )
+      allocate ( haveTLmod(Ngrids) )
+
+      allocate ( KhMin(Ngrids) )
+      allocate ( KhMax(Ngrids) )
+      allocate ( KvMin(Ngrids) )
+      allocate ( KvMax(Ngrids) )
+
+# if defined BALANCE_OPERATOR
+      allocate ( wrtZetaRef(Ngrids) )
+# endif
+
+# ifdef WEAK_CONSTRAINT
+      allocate ( WRTforce(Ngrids) )
+#  ifdef RPM_RELAXATION
+      allocate ( LweakRelax(Ngrids) )
+#  endif
+#  if defined W4DPSAS_SENSITIVITY  || defined W4DVAR_SENSITIVITY
+      allocate ( LsenPSAS(Ngrids) )
+#  endif
+      allocate ( ForceTime(Ngrids) )
+# endif
+
+      RETURN
+      END SUBROUTINE allocate_fourdvar
 
       SUBROUTINE initialize_fourdvar
 !
@@ -682,12 +772,6 @@
 # ifdef OBSERVATIONS
 !
 !-----------------------------------------------------------------------
-!  Allocate module structure.
-!-----------------------------------------------------------------------
-!
-      allocate ( FOURDVAR(Ngrids) )
-!
-!-----------------------------------------------------------------------
 !  Inquire observations NetCDF and determine the maximum dimension of
 !  several observations arrays.
 !-----------------------------------------------------------------------
@@ -696,7 +780,7 @@
 !  "survey" dimension.
 !
       DO ng=1,Ngrids
-        CALL netcdf_get_dim(ng, iNLM, TRIM(OBSname(ng)))
+        CALL netcdf_get_dim(ng, iNLM, TRIM(OBS(ng)%name))
         IF (exit_flag.ne.NoError) RETURN
 !
         Ndatum(ng)=0
@@ -711,12 +795,12 @@
           END IF
         END DO
         IF (Ndatum(ng).eq.0) THEN
-          WRITE (stdout,10) 'datum', TRIM(OBSname(ng))
+          WRITE (stdout,10) 'datum', TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (Nsurvey(ng).eq.0) THEN
-          WRITE (stdout,10) 'survey', TRIM(OBSname(ng))
+          WRITE (stdout,10) 'survey', TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
@@ -862,7 +946,7 @@
 !
 !  Read in number of observations available per survey.
 !
-        CALL netcdf_get_ivar (ng, iNLM, TRIM(OBSname(ng)),              &
+        CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),             &
      &                        TRIM(Vname(1,idNobs)),                    &
      &                        FOURDVAR(ng)%NobsSurvey,                  &
      &                        start = (/1/),                            &
@@ -871,7 +955,7 @@
 !
 !  Read in the time of each observation survey.
 !
-        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
+        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),             &
      &                        TRIM(Vname(1,idOday)),                    &
      &                        FOURDVAR(ng)%SurveyTime,                  &
      &                        start = (/1/),                            &
@@ -1239,7 +1323,7 @@
 !
 !  Read in observations global variance.
 !
-        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
+        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),             &
      &                        TRIM(Vname(1,idOvar)),                    &
      &                        FOURDVAR(ng)%ObsVar,                      &
      &                        start = (/1/),                            &
@@ -1250,7 +1334,7 @@
 
 # ifdef OBSERVATIONS
 !
- 10   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,      &
+ 10   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,     &
      &          ' in input NetCDF file: ',a)
 # endif
 

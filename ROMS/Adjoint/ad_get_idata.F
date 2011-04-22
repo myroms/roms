@@ -85,7 +85,7 @@
 !
       IF (iic(ng).eq.0) THEN
         CALL get_ngfldr (ng, iADM, idTper, ncFRCid(idTper,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   1, MTC, 1, 1, 1, NTC(ng), 1,                   &
      &                   TIDES(ng) % Tperiod(1))
         IF (exit_flag.ne.NoError) RETURN
@@ -104,7 +104,7 @@
         tdays(ng)=time(ng)*sec2day
 
         CALL get_2dfldr (ng, iADM, idTzam, ncFRCid(idTzam,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -113,7 +113,7 @@
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfldr (ng, iADM, idTzph, ncFRCid(idTzph,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -136,7 +136,7 @@
         tdays(ng)=time(ng)*sec2day
 
         CALL get_2dfldr (ng, iADM, idTvan, ncFRCid(idTvan,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -145,7 +145,7 @@
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfldr (ng, iADM, idTvph, ncFRCid(idTvph,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -154,7 +154,7 @@
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfldr (ng, iADM, idTvma, ncFRCid(idTvma,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -163,7 +163,7 @@
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfldr (ng, iADM, idTvmi, ncFRCid(idTvmi,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   LBi, UBi, LBj, UBj, MTC, NTC(ng),              &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
@@ -206,25 +206,25 @@
 #  else
 
         CALL get_ngfldr (ng, iADM, idRxpo, ncFRCid(idRxpo,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Xsrc(1))
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfldr (ng, iADM, idRepo, ncFRCid(idRepo,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Ysrc(1))
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfldr (ng, iADM, idRdir, ncFRCid(idRdir,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Dsrc(1))
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfldr (ng, iADM, idRvsh, ncFRCid(idRvsh,ng),          &
-     &                   nFfiles(ng), FRCname(1,ng), update(1),         &
+     &                   nFfiles(ng), FRC(1,ng), update(1),             &
      &                   1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),     &
      &                   SOURCES(ng) % Qshape(1,1))
         IF (exit_flag.ne.NoError) RETURN

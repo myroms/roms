@@ -50,19 +50,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.iwest) THEN
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Jstr-1)=A(Jstr)
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
 
       IF (boundary.eq.ieast) THEN
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(Jstr-1)=A(Jstr)
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
@@ -72,19 +72,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.isouth) THEN
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Istr-1)=A(Istr)
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF
 
       IF (boundary.eq.inorth) THEN
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Istr-1)=A(Istr)
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF
@@ -120,19 +120,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.iwest) THEN
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Jstr-1)=A(Jstr)
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
 
       IF (boundary.eq.ieast) THEN
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(Jstr-1)=A(Jstr)
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
@@ -142,19 +142,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.isouth) THEN
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(IstrU-1)=A(IstrU)
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF
 
       IF (boundary.eq.inorth) THEN
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(IstrU-1)=A(IstrU)
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF
@@ -190,19 +190,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.iwest) THEN
-        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(JstrV-1)=A(JstrV)
         END IF
-        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
 
       IF (boundary.eq.ieast) THEN
-        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(JstrV-1)=A(JstrV)
         END IF
-        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Jend+1)=A(Jend)
         END IF
       END IF
@@ -212,19 +212,19 @@
 !-----------------------------------------------------------------------
 !
       IF (boundary.eq.isouth) THEN
-        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           A(Istr-1)=A(Istr)
         END IF
-        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF
 
       IF (boundary.eq.inorth) THEN
-        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           A(Istr-1)=A(Istr)
         END IF
-        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           A(Iend+1)=A(Iend)
         END IF
       END IF

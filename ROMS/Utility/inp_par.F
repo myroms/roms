@@ -67,9 +67,7 @@
 !
 #ifdef DISTRIBUTE
       IF (Master) CALL get_date (date_str)
-      DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, date_str)
-      END DO
+      CALL mp_bcasts (1, model, date_str)
 #else
       CALL get_date (date_str)
 #endif
@@ -106,11 +104,9 @@
 !  parallel nodes.  This is to avoid a very complex broadcasting of the
 !  input parameters to all nodes.
 !
-!!    CALL my_getarg (1,Iname)
-      IF (Master) CALL my_getarg (1,Iname)
-      DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, Iname)
-      END DO
+!!    CALL my_getarg (1, Iname)
+      IF (Master) CALL my_getarg (1, Iname)
+      CALL mp_bcasts (1, model, Iname)
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
      &      ERR=20)
       GO TO 40
@@ -141,38 +137,6 @@
 !  nested grids.
 !-----------------------------------------------------------------------
 !
-!  Allocate structure.
-!
-      IF (.not.allocated(BOUNDS)) THEN
-        allocate ( BOUNDS(Ngrids) )
-        DO ng=1,Ngrids
-          Ntiles=NtileI(ng)*NtileJ(ng)-1
-          allocate ( BOUNDS(ng) % tile (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % LBi  (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % UBi  (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % LBj  (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % UBj  (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % Iend (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % Istr (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % Jstr (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % Jend (-1:Ntiles) )
-          allocate ( BOUNDS(ng) % IstrR(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % IstrT(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % IstrU(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % IendR(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % IendT(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % JstrR(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % JstrT(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % JstrV(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % JendR(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % JendT(-1:Ntiles) )
-          allocate ( BOUNDS(ng) % Imin (4,0:1,0:Ntiles) )
-          allocate ( BOUNDS(ng) % Imax (4,0:1,0:Ntiles) )
-          allocate ( BOUNDS(ng) % Jmin (4,0:1,0:Ntiles) )
-          allocate ( BOUNDS(ng) % Jmax (4,0:1,0:Ntiles) )
-        END DO
-      END IF
-!
 !  Set boundary edge I- or J-indices for each variable type.
 !
       DO ng=1,Ngrids
@@ -197,7 +161,29 @@
         BOUNDS(ng) % edge(inorth,v2dvar) = Mm(ng)+1
       END DO
 !
-!  Set tile computational indices and arrays allocation bounds.
+!  Set logical switches needed when processing variables in tiles
+!  adjacent to the domain boundary edges or corners.  This needs to
+!  be computed first since these switches are used in "get_tile".
+!
+      DO ng=1,Ngrids
+        DO tile=-1,NtileI(ng)*NtileJ(ng)-1
+          CALL get_domain_edges (ng, tile,                              &
+     &                           DOMAIN(ng) % Eastern_Edge    (tile),   &
+     &                           DOMAIN(ng) % Western_Edge    (tile),   &
+     &                           DOMAIN(ng) % Northern_Edge   (tile),   &
+     &                           DOMAIN(ng) % Southern_Edge   (tile),   &
+     &                           DOMAIN(ng) % NorthEast_Corner(tile),   &
+     &                           DOMAIN(ng) % NorthWest_Corner(tile),   &
+     &                           DOMAIN(ng) % SouthEast_Corner(tile),   &
+     &                           DOMAIN(ng) % SouthWest_Corner(tile),   &
+     &                           DOMAIN(ng) % NorthEast_Test  (tile),   &
+     &                           DOMAIN(ng) % NorthWest_Test  (tile),   &
+     &                           DOMAIN(ng) % SouthEast_Test  (tile),   &
+     &                           DOMAIN(ng) % SouthWest_Test  (tile))
+        END DO
+      END DO
+!
+!  Set tile computational indices and arrays allocation bounds
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
@@ -206,20 +192,49 @@
         DO tile=-1,NtileI(ng)*NtileJ(ng)-1
           BOUNDS(ng) % tile(tile) = tile
           CALL get_tile (ng, tile, Itile, Jtile,                        &
-     &                   BOUNDS(ng) % Istr(tile),                       &
-     &                   BOUNDS(ng) % Iend(tile),                       &
-     &                   BOUNDS(ng) % Jstr(tile),                       &
-     &                   BOUNDS(ng) % Jend(tile),                       &
-     &                   BOUNDS(ng) % IstrR(tile),                      &
-     &                   BOUNDS(ng) % IstrT(tile),                      &
-     &                   BOUNDS(ng) % IstrU(tile),                      &
-     &                   BOUNDS(ng) % IendR(tile),                      &
-     &                   BOUNDS(ng) % IendT(tile),                      &
-     &                   BOUNDS(ng) % JstrR(tile),                      &
-     &                   BOUNDS(ng) % JstrT(tile),                      &
-     &                   BOUNDS(ng) % JstrV(tile),                      &
-     &                   BOUNDS(ng) % JendR(tile),                      &
-     &                   BOUNDS(ng) % JendT(tile))
+     &                   BOUNDS(ng) % Istr   (tile),                    &
+     &                   BOUNDS(ng) % Iend   (tile),                    &
+     &                   BOUNDS(ng) % Jstr   (tile),                    &
+     &                   BOUNDS(ng) % Jend   (tile),                    &
+     &                   BOUNDS(ng) % IstrM  (tile),                    &
+     &                   BOUNDS(ng) % IstrR  (tile),                    &
+     &                   BOUNDS(ng) % IstrU  (tile),                    &
+     &                   BOUNDS(ng) % IendR  (tile),                    &
+     &                   BOUNDS(ng) % JstrM  (tile),                    &
+     &                   BOUNDS(ng) % JstrR  (tile),                    &
+     &                   BOUNDS(ng) % JstrV  (tile),                    &
+     &                   BOUNDS(ng) % JendR  (tile),                    &
+     &                   BOUNDS(ng) % IstrB  (tile),                    &
+     &                   BOUNDS(ng) % IendB  (tile),                    &
+     &                   BOUNDS(ng) % IstrP  (tile),                    &
+     &                   BOUNDS(ng) % IendP  (tile),                    &
+     &                   BOUNDS(ng) % IstrT  (tile),                    &
+     &                   BOUNDS(ng) % IendT  (tile),                    &
+     &                   BOUNDS(ng) % JstrB  (tile),                    &
+     &                   BOUNDS(ng) % JendB  (tile),                    &
+     &                   BOUNDS(ng) % JstrP  (tile),                    &
+     &                   BOUNDS(ng) % JendP  (tile),                    &
+     &                   BOUNDS(ng) % JstrT  (tile),                    &
+     &                   BOUNDS(ng) % JendT  (tile),                    &
+     &                   BOUNDS(ng) % Istrm3 (tile),                    &
+     &                   BOUNDS(ng) % Istrm2 (tile),                    &
+     &                   BOUNDS(ng) % Istrm1 (tile),                    &
+     &                   BOUNDS(ng) % IstrUm2(tile),                    &
+     &                   BOUNDS(ng) % IstrUm1(tile),                    &
+     &                   BOUNDS(ng) % Iendp1 (tile),                    &
+     &                   BOUNDS(ng) % Iendp2 (tile),                    &
+     &                   BOUNDS(ng) % Iendp2i(tile),                    &
+     &                   BOUNDS(ng) % Iendp3 (tile),                    &
+     &                   BOUNDS(ng) % Jstrm3 (tile),                    &
+     &                   BOUNDS(ng) % Jstrm2 (tile),                    &
+     &                   BOUNDS(ng) % Jstrm1 (tile),                    &
+     &                   BOUNDS(ng) % JstrVm2(tile),                    &
+     &                   BOUNDS(ng) % JstrVm1(tile),                    &
+     &                   BOUNDS(ng) % Jendp1 (tile),                    &
+     &                   BOUNDS(ng) % Jendp2 (tile),                    &
+     &                   BOUNDS(ng) % Jendp2i(tile),                    &
+     &                   BOUNDS(ng) % Jendp3 (tile))
+
           CALL get_bounds (ng, tile, 0, Nghost, Itile, Jtile,           &
      &                     BOUNDS(ng) % LBi(tile),                      &
      &                     BOUNDS(ng) % UBi(tile),                      &
@@ -479,8 +494,7 @@
 
       CALL read_SedPar (model, 25, out, Lwrite)
 #endif
-#if defined ASSIMILATION || defined FOUR_DVAR || defined NUDGING || \
-    defined VERIFICATION
+#if defined FOUR_DVAR || defined VERIFICATION
 !
 !-----------------------------------------------------------------------
 !  Read in input assimilation parameters.
@@ -680,9 +694,7 @@
       out=stdout
 !
       IF (MyRank.eq.0) CALL my_getarg (1,Cname)
-      DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, Cname)
-      END DO
+      CALL mp_bcasts (1, model, Cname)
       IF (MyRank.eq.0) THEN
         WRITE(stdout,*) 'Coupled Input File name = ', TRIM(Cname)
       END IF
@@ -733,10 +745,6 @@
             IF (.not.allocated(TimeInterval) ) THEN
               allocate ( TimeInterval(Nmodels,Nmodels) )
               TimeInterval=0.0_r8
-            END IF
-            IF (.not.allocated(CoupleSteps) ) THEN
-              allocate ( CoupleSteps(Nmodels,Ngrids) )
-              CoupleSteps=0
             END IF
             IF (.not.allocated(INPname) ) THEN
               allocate ( INPname(Nmodels) )
@@ -935,6 +943,9 @@
 #ifdef MODEL_COUPLING
       USE mod_coupler
 #endif
+#if defined FOUR_DVAR || defined VERIFICATION
+      USE mod_fourdvar
+#endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
@@ -942,6 +953,7 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
+      USE mod_stepping
 #ifdef PROPAGATOR
       USE mod_storage
 #endif
@@ -956,20 +968,22 @@
 !
 !  Local variable declarations.
 !
-      logical :: find_file
+      logical :: find_file, got_Ngrids
 #if defined SOLVE3D && defined SEDIMENT
       logical :: LreadNCS = .FALSE.
       logical :: LreadNNS = .FALSE.
 #endif
       integer :: Lstr, Npts, Nval, i, itrc, k, ng, status
+      integer :: ifile, igrid, mFfiles
 
       integer :: decode_line, load_i, load_l, load_r
+      integer :: load_s1d, load_s2d
 
 #if defined SOLVE3D && defined T_PASSIVE
       logical, allocatable :: Linert(:,:)
 #endif
 #if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-      logical, dimension(MBOTP,Ngrids) :: Lbottom
+      logical, allocatable :: Lbottom(:,:)
 #endif
       logical, allocatable :: Ltracer(:,:)
 #if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
@@ -978,19 +992,34 @@
       logical, allocatable :: Ladsen(:)
 #endif
 #if defined DIAGNOSTICS_UV
-      logical :: Ldiag(Ngrids)
+      logical, allocatable :: Ldiag(:)
 #endif
+      integer, allocatable :: Nfiles(:)
+      integer, allocatable :: Ncount(:,:)
 
       real(r8), allocatable :: Rtracer(:,:)
       real(r8), allocatable :: tracer(:,:)
 
       real(r8), dimension(100) :: Rval
 
-      character (len=1 ), parameter :: blank = ' '
-      character (len=19) :: ref_att
-      character (len=40) :: KeyWord
+      character (len=1  ), parameter :: blank = ' '
+      character (len=19 ) :: ref_att
+      character (len=40 ) :: KeyWord
+      character (len=50 ) :: label
       character (len=256) :: fname, line
       character (len=256), dimension(100) :: Cval
+!
+!-----------------------------------------------------------------------
+!  Initialize.
+!-----------------------------------------------------------------------
+!
+      ifile=1
+      igrid=1
+      Nfiles(1:Ngrids)=0
+      DO i=1,LEN(label)
+        label(i:i)=blank
+      END DO
+      got_Ngrids=.FALSE.
 !
 !-----------------------------------------------------------------------
 !  Read in physical model parameters. Then, load input data into module.
@@ -1018,7 +1047,42 @@
               varname(i:i)=blank
             END DO
             varname=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'Ngrids') THEN
+            Npts=load_i(Nval, Rval, 1, Ngrids)
+            IF (Ngrids.le.0) THEN
+              IF (Master) WRITE (out,290) 'Ngrids', Ngrids,             &
+     &                                    'must be greater than zero.'
+              exit_flag=5
+              RETURN
+            END IF
+            got_Ngrids=.TRUE.
+            CALL allocate_param       ! Start allocating variables in
+            CALL allocate_parallel    ! modules that solely depend on
+            CALL allocate_iounits     ! the number of nested grids
+            CALL allocate_stepping
+#if defined FOUR_DVAR || defined VERIFICATION
+            CALL allocate_fourdvar
+#endif
+#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
+            IF (.not.allocated(Lbottom)) THEN
+              allocate ( Lbottom(MBOTP,Ngrids) )
+            END IF
+#endif
+#if defined DIAGNOSTICS_UV
+            IF (.not.allocated(Ldiag)) THEN
+              allocate ( Ldiag(Ngrids) )
+            END IF
+#endif
+            IF (.not.allocated(Nfiles)) THEN
+              allocate ( Nfiles(Ngrids) )
+            END IF
           ELSE IF (TRIM(KeyWord).eq.'Lm') THEN
+            IF (.not.got_Ngrids) THEN
+              IF (Master) WRITE (out,330) 'Ngrids',                     &
+     &      'Add "Ngrids" keyword before grid dimension (Lm, Mm) entry.'
+              exit_flag=5
+              RETURN
+            END IF
             Npts=load_i(Nval, Rval, Ngrids, Lm)
             DO ng=1,Ngrids
               IF (Lm(ng).le.0) THEN
@@ -1140,8 +1204,10 @@
 #if defined SEDIMENT || defined BBL_MODEL
             CALL initialize_sediment
 #endif
-            CALL initialize_param
-            CALL initialize_scalars
+            CALL initialize_param    ! Continue allocating/initalizing
+            CALL allocate_scalars    ! variables since the application
+            CALL initialize_scalars  ! number of nested grids and
+            CALL allocate_ncparam    ! domain parameters are known
             CALL initialize_ncparam
 #if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
@@ -1174,6 +1240,10 @@
           ELSE IF (TRIM(KeyWord).eq.'DT') THEN
             Npts=load_r(Nval, Rval, Ngrids, dt)
 #ifdef MODEL_COUPLING
+            IF (.not.allocated(CoupleSteps)) THEN
+              allocate (CoupleSteps(Nmodels,Ngrids))
+              CoupleSteps=0
+            END IF
             DO ng=1,Ngrids
               DO i=1,Nmodels
                 CoupleSteps(i,ng)=MAX(1,                                &
@@ -3113,90 +3183,50 @@
           ELSE IF (TRIM(KeyWord).eq.'NC_DLEVEL') THEN
             Npts=load_i(Nval, Rval, 1, deflate_level)
           ELSE IF (TRIM(KeyWord).eq.'GSTNAME') THEN
-            DO i=1,LEN(GSTname(Nval))
-              GSTname(Nval)(i:i)=blank
-            END DO
-            GSTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='GST - generalized stability theory analysis'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, GST)
           ELSE IF (TRIM(KeyWord).eq.'RSTNAME') THEN
-            DO i=1,LEN(RSTname(Nval))
-              RSTname(Nval)(i:i)=blank
-            END DO
-            RSTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='RST - restart fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, RST)
           ELSE IF (TRIM(KeyWord).eq.'HISNAME') THEN
-            DO i=1,LEN(HISname(Nval))
-              HISname(Nval)(i:i)=blank
-              HISbase(Nval)(i:i)=blank
-            END DO
-            HISname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            HISbase(Nval)=TRIM(ADJUSTL(HISname(Nval)))
+            label='HIS - nonlinear model history fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, HIS)
           ELSE IF (TRIM(KeyWord).eq.'TLMNAME') THEN
-            DO i=1,LEN(TLMname(Nval))
-              TLMname(Nval)(i:i)=blank
-              TLMbase(Nval)(i:i)=blank
-            END DO
-            TLMname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            TLMbase(Nval)=TRIM(ADJUSTL(TLMname(Nval)))
+            label='TLM - tangent linear model history fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, TLM)
           ELSE IF (TRIM(KeyWord).eq.'TLFNAME') THEN
-            DO i=1,LEN(TLMname(Nval))
-              TLFname(Nval)(i:i)=blank
-            END DO
-            TLFname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='TLF - tangent linear model impulse forcing'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, TLF)
           ELSE IF (TRIM(KeyWord).eq.'ADJNAME') THEN
-            DO i=1,LEN(ADJname(Nval))
-              ADJname(Nval)(i:i)=blank
-              ADJbase(Nval)(i:i)=blank
-            END DO
-            ADJname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            ADJbase(Nval)=TRIM(ADJUSTL(ADJname(Nval)))
+            label='ADM - adjoint model history fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ADM)
           ELSE IF (TRIM(KeyWord).eq.'AVGNAME') THEN
-            DO i=1,LEN(AVGname(Nval))
-              AVGname(Nval)(i:i)=blank
-              AVGbase(Nval)(i:i)=blank
-            END DO
-            AVGname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            AVGbase(Nval)=TRIM(ADJUSTL(AVGname(Nval)))
+            label='AVG - time-averaged history fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, AVG)
           ELSE IF (TRIM(KeyWord).eq.'DIANAME') THEN
-            DO i=1,LEN(DIAname(Nval))
-              DIAname(Nval)(i:i)=blank
-              DIAbase(Nval)(i:i)=blank
-            END DO
-            DIAname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            DIAbase(Nval)=TRIM(ADJUSTL(DIAname(Nval)))
+            label='DIA - time-averaged diagnostics fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, DIA)
           ELSE IF (TRIM(KeyWord).eq.'STANAME') THEN
-            DO i=1,LEN(STAname(Nval))
-              STAname(Nval)(i:i)=blank
-            END DO
-            STAname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='STA - stations time-series'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, STA)
           ELSE IF (TRIM(KeyWord).eq.'FLTNAME') THEN
-            DO i=1,LEN(FLTname(Nval))
-              FLTname(Nval)(i:i)=blank
-            END DO
-            FLTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='FLT - Lagragian particles trajectories'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, FLT)
           ELSE IF (TRIM(KeyWord).eq.'GRDNAME') THEN
-            DO i=1,LEN(GRDname(Nval))
-              GRDname(Nval)(i:i)=blank
-            END DO
-            GRDname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='GRD - application grid'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, GRD)
           ELSE IF (TRIM(KeyWord).eq.'ININAME') THEN
-            DO i=1,LEN(INIname(Nval))
-              INIname(Nval)(i:i)=blank
-            END DO
-            INIname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='INI - nonlinear model initial conditions'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, INI)
           ELSE IF (TRIM(KeyWord).eq.'IRPNAME') THEN
-            DO i=1,LEN(ITLname(Nval))
-              IRPname(Nval)(i:i)=blank
-            END DO
-            IRPname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='IRP - representer model initial conditions'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, IRP)
           ELSE IF (TRIM(KeyWord).eq.'ITLNAME') THEN
-            DO i=1,LEN(ITLname(Nval))
-              ITLname(Nval)(i:i)=blank
-            END DO
-            ITLname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='ITL - tangent linear model initial conditions'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ITL)
           ELSE IF (TRIM(KeyWord).eq.'IADNAME') THEN
-            DO i=1,LEN(IADname(Nval))
-              IADname(Nval)(i:i)=blank
-            END DO
-            IADname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='IAD - adjoint model initial conditions'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, IAD)
           ELSE IF (TRIM(KeyWord).eq.'NFFILES') THEN
             Npts=load_i(Nval, Rval, Ngrids, nFfiles)
             DO ng=1,Ngrids
@@ -3207,47 +3237,28 @@
                 RETURN
               END IF
             END DO
-            Npts=MAXVAL(nFfiles)
-            allocate ( FRCids (Npts,Ngrids) )
-            allocate ( FRCname(Npts,Ngrids) )
-            FRCids(1:Npts,1:Ngrids)=-1
-            DO ng=1,Ngrids
-              DO k=1,Npts
-                DO i=1,LEN(FRCname(k,ng))
-                  FRCname(k,ng)(i:i)=blank
-                END DO
-              END DO
-            END DO
+            mFfiles=MAXVAL(nFfiles)
+            allocate ( FRC(mFfiles,Ngrids) )
+            allocate ( FRCids(mFfiles,Ngrids) )
+            allocate ( Ncount(mFfiles,Ngrids) )
+            FRCids(1:mFfiles,1:Ngrids)=-1
+            Ncount(1:mFfiles,1:Ngrids)=0
           ELSE IF (TRIM(KeyWord).eq.'FRCNAME') THEN
-            DO ng=1,Ngrids
-              DO i=1,nFfiles(ng)
-                IF (Nval.eq.(i+(Ngrids-1)*nFfiles(ng))) THEN
-                  FRCname(i,ng)=TRIM(ADJUSTL(Cval(Nval)))
-                END IF
-              END DO
-            END DO
+            label='FRC - forcing fields'
+            Npts=load_s2d(Nval, Cval, line, label, ifile, igrid,        &
+     &                    Ncount, mFfiles, FRC)
           ELSE IF (TRIM(KeyWord).eq.'CLMNAME') THEN
-            DO i=1,LEN(CLMname(Nval))
-              CLMname(Nval)(i:i)=blank
-            END DO
-            CLMname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='CLM - climatology fields'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, CLM)
           ELSE IF (TRIM(KeyWord).eq.'BRYNAME') THEN
-            DO i=1,LEN(BRYname(Nval))
-              BRYname(Nval)(i:i)=blank
-            END DO
-            BRYname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='BRY - lateral open boundary conditions'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, BRY)
           ELSE IF (TRIM(KeyWord).eq.'FWDNAME') THEN
-            DO i=1,LEN(FWDname(Nval))
-              FWDname(Nval)(i:i)=blank
-              FWDbase(Nval)(i:i)=blank
-            END DO
-            FWDname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            FWDbase(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='FWD - basic state forward trajectory'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, FWD)
           ELSE IF (TRIM(KeyWord).eq.'ADSNAME') THEN
-            DO i=1,LEN(ADSname(Nval))
-              ADSname(Nval)(i:i)=blank
-            END DO
-            ADSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='ADS - adjoint sensitivity functional'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ADS)
           ELSE IF (TRIM(KeyWord).eq.'APARNAM') THEN
             DO i=1,LEN(aparnam)
               aparnam(i:i)=blank
@@ -3288,6 +3299,29 @@
   20  CLOSE (inp)
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Allocate and initialize BLK I/O structure with the same values as
+!  HIS.
+!
+      DO ng=1,Ngrids
+        Nfiles(ng)=MAX(1,HIS(ng)%Nfiles)
+        allocate ( BLK(ng)%Nrec(Nfiles(ng)) )
+        allocate ( BLK(ng)%time_min(Nfiles(ng)) )
+        allocate ( BLK(ng)%time_max(Nfiles(ng)) )
+        allocate ( BLK(ng)%Vid(NV) )
+        allocate ( BLK(ng)%Tid(MT) )
+        allocate ( BLK(ng)%files(Nfiles(ng)) )
+        BLK(ng)%Nfiles=Nfiles(ng)
+        BLK(ng)%Fcount=1
+        BLK(ng)%Rindex=0
+        BLK(ng)%ncid=-1
+        BLK(ng)%Vid(1:NV)=-1
+        BLK(ng)%Tid(1:MT)=-1
+        BLK(ng)%Nrec(1:Nfiles(ng))=0
+        BLK(ng)%time_min(1:Nfiles(ng))=0.0_r8
+        BLK(ng)%time_max(1:Nfiles(ng))=0.0_r8
+        BLK(ng)%label='BLK - nonlinear model bulk fluxes'
+      END DO
 !
 !  Make sure that logical output switches are activated for wind
 !  stress and surface active tracers fluxes when using fluxes from
@@ -4978,89 +5012,84 @@
           WRITE (out,220)
 #ifdef PROPAGATOR
           WRITE (out,230) '       Output GST Restart File:  ',          &
-     &                    TRIM(GSTname(ng))
+     &                    TRIM(GST(ng)%name)
 #endif
           WRITE (out,230) '           Output Restart File:  ',          &
-     &                    TRIM(RSTname(ng))
+     &                    TRIM(RST(ng)%name)
           IF (LdefHIS(ng)) THEN
             IF (ndefHIS(ng).eq.0) THEN
               WRITE (out,230) '           Output History File:  ',      &
-     &                        TRIM(HISname(ng))
+     &                        TRIM(HIS(ng)%name)
             ELSE
-              Lstr=LEN_TRIM(HISname(ng))
               WRITE (out,230) '      Prefix for History Files:  ',      &
-     &                        HISname(ng)(1:Lstr-3)
+     &                        TRIM(HIS(ng)%base)
             END IF
           END IF
 #ifdef TANGENT
           IF (ndefTLM(ng).eq.0) THEN
             WRITE (out,230) '           Output Tangent File:  ',        &
-     &                      TRIM(TLMname(ng))
+     &                      TRIM(TLM(ng)%name)
           ELSE
-            Lstr=LEN_TRIM(TLMname(ng))
             WRITE (out,230) '      Prefix for Tangent Files:  ',        &
-     &                      TLMname(ng)(1:Lstr-3)
+     &                      TRIM(TLM(ng)%base)
           END IF
 #endif
 #ifdef WEAK_CONSTRAINT
           WRITE (out,230) '   Output Impulse Forcing File:  ',          &
-     &                    TRIM(TLFname(ng))
+     &                    TRIM(TLF(ng)%name)
 #endif
 #ifdef ADJOINT
           IF (ndefADJ(ng).eq.0) THEN
             WRITE (out,230) '           Output Adjoint File:  ',        &
-     &                      TRIM(ADJname(ng))
+     &                      TRIM(ADM(ng)%name)
           ELSE
-            Lstr=LEN_TRIM(ADJname(ng))
             WRITE (out,230) '      Prefix for Adjoint Files:  ',        &
-     &                      ADJname(ng)(1:Lstr-3)
+     &                      TRIM(ADM(ng)%base)
           END IF
 #endif
 #if defined FORWARD_WRITE && !defined FOUR_DVAR
           WRITE (out,230) '     Output Forward State File:  ',          &
-     &                    TRIM(FWDname(ng))
+     &                    TRIM(FWD(ng)%name)
 #endif
 #ifdef AVERAGES
           IF (ndefAVG(ng).eq.0) THEN
             WRITE (out,230) '          Output Averages File:  ',        &
-     &                      TRIM(AVGname(ng))
+     &                      TRIM(AVG(ng)%name)
           ELSE
-            Lstr=LEN_TRIM(AVGname(ng))
             WRITE (out,230) '     Prefix for Averages Files:  ',        &
-     &                      AVGname(ng)(1:Lstr-3)
+     &                      TRIM(AVG(ng)%base)
           END IF
 #endif
 #ifdef DIAGNOSTICS
           IF (ndefDIA(ng).eq.0) THEN
             WRITE (out,230) '       Output Diagnostics File:  ',        &
-     &                      TRIM(DIAname(ng))
+     &                      TRIM(DIA(ng)%name)
           ELSE
-            Lstr=LEN_TRIM(DIAname(ng))
             WRITE (out,230) '  Prefix for Diagnostics Files:  ',        &
-     &                      DIAname(ng)(1:Lstr-3)
+     &                      TRIM(DIA(ng)%base)
           END IF
 #endif
 #ifdef STATIONS
           WRITE (out,230) '          Output Stations File:  ',          &
-     &                    TRIM(STAname(ng))
+     &                    TRIM(STA(ng)%name)
 #endif
 #ifdef FLOATS
           WRITE (out,230) '            Output Floats File:  ',          &
-     &                    TRIM(FLTname(ng))
+     &                    TRIM(FLT(ng)%name)
 #endif
 #ifdef MODEL_COUPLING
           WRITE (out,230) '      Physical parameters File:  ',          &
      &                    TRIM(Iname)
 #endif
 #ifndef ANA_GRID
-          fname=GRDname(ng)
+          fname=GRD(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '               Input Grid File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef INI_FILE
 # ifdef NONLINEAR
-          fname=INIname(ng)
+          fname=INI(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '  Input Nonlinear Initial File:  ',          &
      &                    TRIM(fname)
@@ -5069,14 +5098,14 @@
     !(defined FOUR_DVAR         || defined IS4DVAR_SENSITIVITY || \
       defined OPT_OBSERVATIONS  || defined SANITY_CHECK        || \
       defined SENSITIVITY_4DVAR || defined TLM_CHECK)
-          fname=ITLname(ng)
+          fname=ITL(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '    Input Tangent Initial File:  ',          &
      &                    TRIM(fname)
 # endif
 # if defined WEAK_CONSTRAINT && \
     !(defined W4DPSAS        || defined W4DPSAS_SENSITIVITY)
-          fname=IRPname(ng)
+          fname=IRP(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) 'Input Representer Initial File:  ',          &
      &                    TRIM(fname)
@@ -5087,7 +5116,7 @@
       defined OPT_OBSERVATIONS    || defined OPT_PERTURBATION  || \
       defined SANITY_CHECK        || defined SENSITIVITY_4DVAR || \
       defined SO_SEMI)
-          fname=IADname(ng)
+          fname=IAD(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '    Input Adjoint Initial File:  ',          &
      &                    TRIM(fname)
@@ -5095,20 +5124,32 @@
 #endif
 #ifdef FRC_FILE
           DO i=1,nFfiles(ng)
-            fname=FRCname(i,ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,310) '         Input Forcing File ', i, ':  ',   &
-     &                      TRIM(fname)
+            DO ifile=1,FRC(i,ng)%Nfiles
+              fname=FRC(i,ng)%files(ifile)
+              IF (.not.find_file(ng, fname)) GO TO 30
+              IF (ifile.eq.1) THEN
+                WRITE (out,310) '         Input Forcing File ', i,      &
+     &                          ':  ', TRIM(fname)
+              ELSE
+                WRITE (out,'(35x,a)') TRIM(fname)
+              END IF
+            END DO
           END DO
 #endif
 #ifdef CLM_FILE
-          fname=CLMname(ng)
-          IF (.not.find_file(ng, fname)) GO TO 30
-          WRITE (out,230) '        Input Climatology File:  ',          &
-     &                    TRIM(fname)
+          DO ifile=1,CLM(ng)%Nfiles
+            fname=CLM(ng)%files(ifile)
+            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (ifile.eq.1) THEN
+              WRITE (out,230) '        Input Climatology File:  ',      &
+     &                        TRIM(fname)
+            ELSE
+              WRITE (out,'(35x,a)') TRIM(fname)
+            END IF
+          END DO
 #endif
 #if defined FORWARD_READ && !(defined FOUR_DVAR || defined PICARD_TEST)
-          fname=FWDname(ng)
+          fname=FWD(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '      Input Forward State File:  ',          &
      &                    TRIM(fname)
@@ -5116,16 +5157,22 @@
 #if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
-          fname=ADSname(ng)
+          fname=ADS(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) 'Input Adjoint Sensitivity File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef OBC_DATA
-          fname=BRYname(ng)
-          IF (.not.find_file(ng, fname)) GO TO 30
-          WRITE (out,230) '           Input Boundary File:  ',          &
-     &                    TRIM(fname)
+          DO ifile=1,BRY(ng)%Nfiles
+            fname=BRY(ng)%files(ifile)
+            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (ifile.eq.1) THEN
+              WRITE (out,230) '           Input Boundary File:  ',      &
+     &                        TRIM(fname)
+            ELSE
+              WRITE (out,'(35x,a)') TRIM(fname)
+            END IF
+          END DO
 #endif
 #ifdef STATIONS
           fname=sposnam
@@ -5133,7 +5180,7 @@
           WRITE (out,230) '        Station positions File:  ',          &
      &                    TRIM(fname)
 #endif
-#if defined ASSIMILATION || defined NUDGING || defined FOUR_DVAR
+#ifdef FOUR_DVAR
           fname=aparnam
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '  Assimilation Parameters File:  ',          &
@@ -5309,12 +5356,13 @@
      &        i2.2,')',/,15x,a)
  310  FORMAT (2x,a,i2.2,a,a)
  320  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i4,/,15x,a)
+ 330  FORMAT (/,' READ_PHYPAR - could not find input parameter: ', a,   &
+     &        /,15x,'in ROMS standard input script.',/,15x,a)
 
       RETURN
       END SUBROUTINE read_PhyPar
 
-#if defined ASSIMILATION || defined FOUR_DVAR || defined NUDGING || \
-    defined VERIFICATION
+#if defined FOUR_DVAR || defined VERIFICATION
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !=======================================================================
@@ -5341,17 +5389,14 @@
 !
 !  Local variable declarations.
 !
+      logical :: find_file
+
       integer :: Npts, Nval
       integer :: i, ib, igrid, itrc, k, ng, status
 
-      integer :: decode_line, load_i, load_l, load_r
+      integer :: decode_line, load_i, load_l, load_r, load_s1d
 
-      logical :: find_file
-# if defined ASSIMILATION || defined NUDGING
-      logical, dimension(MT,Ngrids) :: Lassi
-
-      real(r8), dimension(MT,Ngrids) :: Rassi
-# endif
+      integer :: Nfiles(Ngrids)
 # if defined FOUR_DVAR || defined VERIFICATION
       logical, dimension(MT) :: Ltracer
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -5374,327 +5419,21 @@
       character (len=7) :: Text
 # endif
       character (len=40 ) :: KeyWord
+      character (len=50 ) :: label
       character (len=256) :: fname, line
       character (len=256), dimension(100) :: Cval
-
-# if defined ASSIMILATION || defined NUDGING
 !
 !-----------------------------------------------------------------------
-!  Read in assimilation parameters. Then, load input data into module.
-!  Take into account nested grid configurations.
+!  Initialize.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.TRUE.)
-        READ (inp,'(a)',ERR=10,END=20) line
-        status=decode_line(line, KeyWord, Nval, Cval, Rval)
-        IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'Lassimilate') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Lassimilate)
-          ELSE IF (TRIM(KeyWord).eq.'Emod0') THEN
-            Npts=load_r(Nval, Rval, 1, Emod0)
-          ELSE IF (TRIM(KeyWord).eq.'Tgrowth') THEN
-            Npts=load_r(Nval, Rval, 1, Tgrowth)
-          ELSE IF (TRIM(KeyWord).eq.'cor') THEN
-            Npts=load_r(Nval, Rval, 1, cor)
-          ELSE IF (TRIM(KeyWord).eq.'assi_SSH') THEN
-            Npts=load_l(Nval, Cval, Ngrids, assi_SSH)
-          ELSE IF (TRIM(KeyWord).eq.'assi_SST') THEN
-            Npts=load_l(Nval, Cval, Ngrids, assi_SST)
-          ELSE IF (TRIM(KeyWord).eq.'assi_UVsur') THEN
-            Npts=load_l(Nval, Cval, Ngrids, assi_UVsur)
-          ELSE IF (TRIM(KeyWord).eq.'assi_UV') THEN
-            Npts=load_l(Nval, Cval, Ngrids, assi_UV)
-          ELSE IF (TRIM(KeyWord).eq.'assi_T') THEN
-            Npts=load_l(Nval, Cval, NAT*Ngrids, Lassi)
-            DO ng=1,Ngrids
-              DO itrc=1,NAT
-                assi_T(itrc,ng)=Lassi(itrc,ng)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'M2nudass') THEN
-            Npts=load_r(Nval, Rval, Ngrids, M2nudass)
-          ELSE IF (TRIM(KeyWord).eq.'M3nudass') THEN
-            Npts=load_r(Nval, Rval, Ngrids, M3nudass)
-          ELSE IF (TRIM(KeyWord).eq.'Tnudass') THEN
-            Npts=load_r(Nval, Rval, NAT*Ngrids, Rassi)
-            DO ng=1,Ngrids
-              DO itrc=1,NAT
-                Tnudass(itrc,ng)=Rassi(itrc,ng)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'extend_SST') THEN
-            Npts=load_l(Nval, Cval, Ngrids, extend_SST)
-          ELSE IF (TRIM(KeyWord).eq.'ZmSST') THEN
-            Npts=load_r(Nval, Rval, Ngrids, ZmSST)
-            DO ng=1,Ngrids
-              ZmSST(ng)=-ABS(ZmSST(ng))
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'ZoSST') THEN
-            Npts=load_r(Nval, Rval, Ngrids, ZoSST)
-            DO ng=1,Ngrids
-              ZoSST(ng)=-ABS(ZoSST(ng))
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'npSST') THEN
-            Npts=load_i(Nval, Rval, 1, npSST)
-          ELSE IF (TRIM(KeyWord).eq.'Pcoef_SST') THEN
-            DO ng=1,Ngrids
-              DO i=0,npSST(ng)
-                READ (inp,*) igrid, k, pcoef_SST(k,igrid)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'Perr_SST') THEN
-            DO ng=1,Ngrids
-              DO i=0,npSST(ng)
-                READ (inp,*) igrid, k, perr_SST(k,igrid)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'extend_UV') THEN
-            Npts=load_l(Nval, Cval, Ngrids, extend_UV)
-          ELSE IF (TRIM(KeyWord).eq.'ZmUV') THEN
-            Npts=load_r(Nval, Rval, Ngrids, ZmUV)
-            DO ng=1,Ngrids
-              ZmUV(ng)=-ABS(ZmUV(ng))
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'ZoUV') THEN
-            Npts=load_r(Nval, Rval, Ngrids, ZoUV)
-            DO ng=1,Ngrids
-              ZoUV(ng)=-ABS(ZoUV(ng))
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'npUV') THEN
-            Npts=load_i(Nval, Rval, 1, npUV)
-          ELSE IF (TRIM(KeyWord).eq.'Pcoef_U') THEN
-            DO ng=1,Ngrids
-              DO i=0,npUV(ng)
-                READ (inp,*) igrid, k, pcoef_U(k,igrid)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'Pcoef_V') THEN
-            DO ng=1,Ngrids
-              DO i=0,npUV(ng)
-                READ (inp,*) igrid, k, pcoef_V(k,igrid)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'Perr_UV') THEN
-            DO ng=1,Ngrids
-              DO i=0,npUV(ng)
-                READ (inp,*) igrid, k, perr_V(k,igrid)
-              END DO
-            END DO
-          ELSE IF (TRIM(KeyWord).eq.'SSHname') THEN
-            SSHname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'SSTname') THEN
-            SSTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'VSURname') THEN
-            VSURname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'VOBSname') THEN
-            VOBSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'TOBSname') THEN
-            TOBSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-          END IF
-        END IF
-      END DO
- 10   IF (Master) WRITE (out,50) line
-      exit_flag=4
-      RETURN
- 20   CONTINUE
-!
-!-----------------------------------------------------------------------
-!  Report input parameters.
-!-----------------------------------------------------------------------
-!
-      IF (Lwrite) THEN
-        DO ng=1,Ngrids
-          IF (Lassimilate(ng)) THEN
-            WRITE (out,60) ng
-#  ifdef ASSIMILATION
-            WRITE (out,100) Emod0(ng), 'Emod0',                         &
-     &            'Initial model error (percentage).'
-            WRITE (out,100) Tgrowth(ng), 'Tgrowth',                     &
-     &            'Empirical model error growth scale (days).'
-            WRITE (out,100) cor(ng), 'cor',                             &
-     &            'Correlation between model and observations.'
-            WRITE (out,80) assi_SSH(ng), 'assi_SSH',                    &
-     &            'Activate assimilation of SSH.'
-#   ifdef SOLVE3D
-            WRITE (out,80) assi_SST(ng), 'assi_SST',                    &
-     &            'Activate assimilation of SST.'
-            DO itrc=1,NAT
-              WRITE (out,90) assi_T(itrc,ng), 'assi_T', itrc,           &
-     &              'Activate assimilation of tracer', itrc,            &
-     &              TRIM(Vname(1,idTvar(itrc)))
-            END DO
-            WRITE (out,80) assi_UVsur(ng), 'assi_UVsur',                &
-     &            'Activate assimilation of surface currents.'
-            WRITE (out,80) assi_UV(ng), 'assi_UV',                      &
-     &            'Activate assimilation of currents.'
-#   endif
-#  endif
-#  ifdef SOLVE3D
-#   if defined NUDGING_T || defined NUDGING_SST
-            DO itrc=1,NAT
-              IF (assi_T(itrc,ng)) THEN
-                WRITE (out,120) Tnudass(itrc,ng), 'Tnudass', itrc,      &
-     &                'Nudging assimilation time scale (days)',         &
-     &                'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
-              END IF
-            END DO
-#   endif
-#  endif
-#  ifdef SOLVE3D
-#   if defined NUDGING_UV || defined NUDGING_UVsur
-            WRITE (out,135) M3nudass(ng), 'M3nudass',                   &
-     &            'Nudging assimilation time scale (days)',             &
-     &            'for 3D momentum.'
-#   endif
-#   if defined NUDGING_SST || defined ASSIMILATION_SST
-            IF (extend_SST(ng)) THEN
-              WRITE (out,80) extend_SST(ng), 'extend_SST',              &
-     &              'Extend SST vertically.'
-              WRITE (out,70) npSST(ng), 'npSST',                        &
-     &              'Order of polynomial for SST extension.'
-              WRITE (out,100) ZmSST(ng), 'zmSST',                       &
-     &              'SST, maximum extension depth (m).'
-              WRITE (out,100) ZoSST(ng), 'zoSST',                       &
-     &              'E-folding depth (m) to extend SST error variance.'
-              IF (KP.lt.npSST(ng)) THEN
-                WRITE (out,160) 'KP: ', KP, npSST(ng)
-                exit_flag=5
-                RETURN
-              END IF
-            END IF
-            IF (npSST(ng).gt.0) THEN
-              WRITE (out,*)
-              DO k=0,npSST(ng)
-                WRITE (out,140) k, pcoef_SST(k,ng), perr_SST(k,ng)
-              END DO
-            END IF
-#   endif
-#   if defined NUDGING_UVsur || defined ASSIMILATION_UVsur
-            IF (extend_UV(ng)) THEN
-              WRITE (out,80) extend_UV(ng), 'extend_UV',                &
-     &              'Extend surface currents vertically.'
-              WRITE (out,70) npUV(ng), 'npUV',                          &
-     &             'Order of polynomial for surface currents extension.'
-              WRITE (out,100) ZmUV(ng), 'zmUV',                         &
-     &              'Surface currents, maximum extension depth (m).'
-              WRITE (out,110) ZoSST(ng), 'zoSST',                       &
-     &              'E-folding depth (m) to extend surface currents',   &
-     &              'error variance.'
-              IF (KP.lt.npUV(ng)) THEN
-                WRITE (out,160) 'KP: ', KP, npUV(ng)
-                exit_flag=5
-                RETURN
-              END IF
-            END IF
-            IF (npUV(ng).gt.0) THEN
-              WRITE (out,*)
-              DO k=0,npUV(ng)
-                WRITE (out,150) k, pcoef_U(k,ng), pcoef_V(k,ng),        &
-     &                             perr_V(k,ng)
-              END DO
-            END IF
-#   endif
-#  endif
-!
-!-----------------------------------------------------------------------
-!  Report input files and check availability of input files.
-!-----------------------------------------------------------------------
-!
-            WRITE (out,170)
-            WRITE (out,180) ' Assimilation parameters File:  ',         &
-     &                      TRIM(aparnam)
-#  ifdef ASSIMILATION_SSH
-            fname=SSHname(ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,180) '      Sea Surface Height File:  ',         &
-     &                      TRIM(fname)
-#  endif
-#  ifdef SOLVE3D
-#   if defined ASSIMILATION_SST || defined NUDGING_SST
-            fname=SSTname(ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,180) ' Sea Surface Temperature File:  ',         &
-     &                      TRIM(fname)
-#   endif
-#   if defined ASSIMILATION_T || defined NUDGING_T
-            fname=TOBSname(ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,180) '                 Tracers File:  ',         &
-     &                      TRIM(fname)
-#   endif
-#   if defined ASSIMILATION_UVsur || defined NUDGING_UVsur
-            fname=VSURname(ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,180) '        Surface Currents File:  ',         &
-     &                      TRIM(fname)
-#   endif
-#   if defined ASSIMILATION_UV || defined NUDGING_UV
-            fname=VOBSname(ng)
-            IF (.not.find_file(ng, fname)) GO TO 30
-            WRITE (out,180) '     Horizontal Currents File:  ',         &
-     &                      TRIM(fname)
-#   endif
-#  endif
-            GO TO 40
-  30        WRITE (out,190) TRIM(fname)
-            exit_flag=4
-            RETURN
-  40        CONTINUE
-          END IF
-        END DO
-      END IF
-!
-!-----------------------------------------------------------------------
-!  Scale relevant parameters.
-!-----------------------------------------------------------------------
-!
-      DO ng=1,Ngrids
-        Emod0(ng)=1.0_r8-0.01_r8*Emod0(ng)
-# ifdef NUDGING
-        IF (M2nudass(ng).gt.0.0_r8) THEN
-          M2nudass(ng)=1.0_r8/(M2nudass(ng)*86400.0_r8)
-        ELSE
-          M2nudass(ng)=0.0_r8
-        END IF
-#  ifdef SOLVE3D
-        IF (M3nudass(ng).gt.0.0_r8) THEN
-          M3nudass(ng)=1.0_r8/(M3nudass(ng)*86400.0_r8)
-        ELSE
-          M3nudass(ng)=0.0_r8
-        END IF
-        DO itrc=1,NAT
-          IF (Tnudass(itrc,ng).gt.0.0_r8) THEN
-            Tnudass(itrc,ng)=1.0_r8/(Tnudass(itrc,ng)*86400.0_r8)
-          ELSE
-            Tnudass(itrc,ng)=0.0_r8
-          END IF
-        END DO
-#  endif
-# endif
+      igrid=1
+      Nfiles(1:Ngrids)=0
+      DO i=1,LEN(label)
+        label(i:i)=blank
       END DO
 
-  50  FORMAT (/,' READ_AssPar - Error while processing line: ',/,a)
-  60  FORMAT (/,/,' Assimilation Parameters, Grid: ',i2.2,              &
-     &        /,  ' =================================',/)
-  70  FORMAT (1x,i10,2x,a,t30,a)
-  80  FORMAT (10x,l1,2x,a,t30,a)
-  90  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,1x,i2.2,':',1x,a)
- 100  FORMAT (f11.3,2x,a,t30,a)
- 110  FORMAT (f11.3,2x,a,t30,a,/,t32,a)
- 120  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,/,t32,a,i2.2,':',1x,a)
- 130  FORMAT (1p,e11.4,2x,a,t30,a)
- 135  FORMAT (1p,e11.4,2x,a,t30,a,/,t32,a)
- 140  FORMAT (1x,'SST,Err polynomial order ',                           &
-     &        i2.2,1x,1p,e15.8,1x,1p,e15.8)
- 150  FORMAT (1x,'U,V,Err polynomial order: ',                          &
-     &        i2.2,1x,1p,e15.8,1x,1p,e15.8,1x,1p,e15.8)
- 160  FORMAT (/,' READ_ASSPAR - too small dimension parameter, ',a,     &
-     &        2i4,/,15x,'change file  mod_scalars.F  and recompile.')
- 170  FORMAT (/,' Input Assimilation Files:',/)
- 180  FORMAT (2x,a,a)
- 190  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
-
-# elif defined FOUR_DVAR || defined VERIFICATION
+# if defined FOUR_DVAR || defined VERIFICATION
 !
 !-----------------------------------------------------------------------
 !  Read in 4DVAR assimilation parameters. Then, load input data into
@@ -6071,72 +5810,52 @@
 #   endif
 #  endif
           ELSE IF (TRIM(KeyWord).eq.'STDnameI') THEN
-            DO i=1,LEN(STDname(1,Nval))
-              STDname(1,Nval)(i:i)=blank
-            END DO
-            STDname(1,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='STD - initial conditions standard deviation'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    STD(1,:))
           ELSE IF (TRIM(KeyWord).eq.'STDnameM') THEN
-            DO i=1,LEN(STDname(2,Nval))
-              STDname(2,Nval)(i:i)=blank
-            END DO
-            STDname(2,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='STD - model error standard deviation'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    STD(2,:))
           ELSE IF (TRIM(KeyWord).eq.'STDnameB') THEN
-            DO i=1,LEN(STDname(3,Nval))
-              STDname(3,Nval)(i:i)=blank
-            END DO
-            STDname(3,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='STD - boundary conditions standard deviation'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    STD(3,:))
           ELSE IF (TRIM(KeyWord).eq.'STDnameF') THEN
-            DO i=1,LEN(STDname(4,Nval))
-              STDname(4,Nval)(i:i)=blank
-            END DO
-            STDname(4,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='STD - surface forcing standard deviation'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    STD(4,:))
           ELSE IF (TRIM(KeyWord).eq.'NRMnameI') THEN
-            DO i=1,LEN(NRMname(1,Nval))
-              NRMname(1,Nval)(i:i)=blank
-            END DO
-            NRMname(1,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='NRM - initial conditions normalization'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    NRM(1,:))
           ELSE IF (TRIM(KeyWord).eq.'NRMnameM') THEN
-            DO i=1,LEN(NRMname(2,Nval))
-              NRMname(2,Nval)(i:i)=blank
-            END DO
-            NRMname(2,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='NRM - model error normalization'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    NRM(2,:))
           ELSE IF (TRIM(KeyWord).eq.'NRMnameB') THEN
-            DO i=1,LEN(NRMname(3,Nval))
-              NRMname(3,Nval)(i:i)=blank
-            END DO
-            NRMname(3,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='NRM - boundary conditions normalization'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    NRM(3,:))
           ELSE IF (TRIM(KeyWord).eq.'NRMnameF') THEN
-            DO i=1,LEN(NRMname(4,Nval))
-              NRMname(4,Nval)(i:i)=blank
-            END DO
-            NRMname(4,Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='NRM - surface forcing normalization'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles,       &
+     &                    NRM(4,:))
           ELSE IF (TRIM(KeyWord).eq.'OBSname') THEN
-            DO i=1,LEN(OBSname(Nval))
-              OBSname(Nval)(i:i)=blank
-            END DO
-            OBSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='OBS - data assimilation observations'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, OBS)
           ELSE IF (TRIM(KeyWord).eq.'HSSname') THEN
-            DO i=1,LEN(HSSname(Nval))
-              HSSname(Nval)(i:i)=blank
-              HSSbase(Nval)(i:i)=blank
-            END DO
-            HSSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            HSSbase(Nval)=TRIM(ADJUSTL(HSSname(Nval)))
+            label='HSS - Hessian eigenvectors'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, HSS)
           ELSE IF (TRIM(KeyWord).eq.'LCZname') THEN
-            DO i=1,LEN(LCZname(Nval))
-              LCZname(Nval)(i:i)=blank
-            END DO
-            LCZname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='LCZ - Lanczos vectors'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, LCZ)
           ELSE IF (TRIM(KeyWord).eq.'MODname') THEN
-            DO i=1,LEN(MODname(Nval))
-              MODname(Nval)(i:i)=blank
-            END DO
-            MODname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='DAV - 4D-Var data assimilation variables'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, DAV)
           ELSE IF (TRIM(KeyWord).eq.'ERRname') THEN
-            DO i=1,LEN(ERRname(Nval))
-              ERRname(Nval)(i:i)=blank
-            END DO
-            ERRname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            label='ERR - 4D-Var posterior error covariance'
+            Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ERR)
           END IF
         END IF
       END DO
@@ -6626,23 +6345,23 @@
 #    if defined SENSITIVITY_4DVAR || \
         defined TL_W4DPSAS        || defined TL_W4DVAR || \
         defined W4DPSAS           || defined W4DVAR
-          fname=STDname(2,ng)
+          fname=STD(2,ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,160) '               Model STD File:  ',           &
      &                    TRIM(fname)
 #    endif
-          fname=STDname(1,ng)
+          fname=STD(1,ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,160) '  Initial Conditions STD File:  ',           &
      &                    TRIM(fname)
 #    ifdef ADJUST_BOUNDARY
-          fname=STDname(3,ng)
+          fname=STD(3,ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,160) ' Boundary Conditions STD File:  ',           &
      &                    TRIM(fname)
 #    endif
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          fname=STDname(4,ng)
+          fname=STD(4,ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,160) '     Surface Forcing STD File:  ',           &
      &                    TRIM(fname)
@@ -6651,14 +6370,14 @@
 #   if defined SENSITIVITY_4DVAR || defined TL_W4DPSAS  || \
        defined TL_W4DVAR         || defined W4DPSAS     || \
        defined W4DVAR
-          fname=NRMname(2,ng)
+          fname=NRM(2,ng)%name
           WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng)) THEN
             IF (.not.find_file(ng, fname)) GO TO 30
           END IF
 #   elif defined CORRELATION
-          fname=NRMname(2,ng)
+          fname=NRM(2,ng)%name
           WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng).and.LwrtNRM(2,ng)) THEN
@@ -6666,14 +6385,14 @@
           END IF
 #   endif
 #   if defined CORRELATION
-          fname=NRMname(1,ng)
+          fname=NRM(1,ng)%name
           WRITE (out,160) ' Initial Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng).and.LwrtNRM(1,ng)) THEN
             IF (.not.find_file(ng, fname)) GO TO 30
           END IF
 #   else
-          fname=NRMname(1,ng)
+          fname=NRM(1,ng)%name
           WRITE (out,160) ' Initial Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng)) THEN
@@ -6682,14 +6401,14 @@
 #   endif
 #   ifdef ADJUST_BOUNDARY
 #    ifdef CORRELATION
-          fname=NRMname(3,ng)
+          fname=NRM(3,ng)%name
           WRITE (out,160) 'Boundary Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng).and.LwrtNRM(3,ng)) THEN
             IF (.not.find_file(ng, fname)) GO TO 30
           END IF
 #    else
-          fname=NRMname(3,ng)
+          fname=NRM(3,ng)%name
           WRITE (out,160) 'Boundary Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng)) THEN
@@ -6699,14 +6418,14 @@
 #   endif
 #   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 #    ifdef CORRELATION
-          fname=NRMname(4,ng)
+          fname=NRM(4,ng)%name
           WRITE (out,160) '    Surface Forcing Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng).and.LwrtNRM(4,ng)) THEN
             IF (.not.find_file(ng, fname)) GO TO 30
           END IF
 #    else
-          fname=NRMname(4,ng)
+          fname=NRM(4,ng)%name
           WRITE (out,160) '    Surface Forcing Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng)) THEN
@@ -6714,31 +6433,30 @@
           END IF
 #    endif
 #   endif
-#   if !(defined CORRELATION || defined CONVOLUTION || \
-         defined OPT_OBSERVATIONS)
-          fname=OBSname(ng)
+#   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
+          fname=OBS(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,160) '            Observations File:  ',           &
      &                    TRIM(fname)
 #   endif
 #  endif
           WRITE (out,160) '    Input/Output Lanczos File:  ',           &
-     &                    TRIM(LCZname(ng))
+     &                    TRIM(LCZ(ng)%name)
 #  ifndef IS4DVAR_SENSITIVITY
           WRITE (out,160) '    Input/Output Hessian File:  ',           &
-     &                    TRIM(HSSname(ng))
+     &                    TRIM(HSS(ng)%name)
 #  endif
 #  ifdef VERIFICATION
           WRITE (out,160) '     Output verification File:  ',           &
-     &                    TRIM(MODname(ng))
+     &                    TRIM(DAV(ng)%name)
 #  else
           WRITE (out,160) '            Output 4DVAR File:  ',           &
-     &                    TRIM(MODname(ng))
+     &                    TRIM(DAV(ng)%name)
 #  endif
 #  if defined WEAK_CONSTRAINT   && \
      (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
           WRITE (out,160) '  Output Posterior Error File:  ',           &
-     &                    TRIM(ERRname(ng))
+     &                    TRIM(ERR(ng)%name)
 #  endif
           GO TO 40
   30      WRITE (out,200) TRIM(fname)
@@ -6939,67 +6657,70 @@
           DO i=1,nentry(ng)
             IF (Fcount(i,ng).eq.1) THEN
               nc=nc+1
-              FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
-              FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
-              FLT(ng)%Ftype(nc)=Ftype(i,ng)
+              DRIFTER(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
+              DRIFTER(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
+              DRIFTER(ng)%Ftype(nc)=Ftype(i,ng)
               IF (Fcoor(i,ng).eq.0) THEN
-                FLT(ng)%Tinfo(ixgrd,nc)=Fx0(i,ng)
-                FLT(ng)%Tinfo(iygrd,nc)=Fy0(i,ng)
+                DRIFTER(ng)%Tinfo(ixgrd,nc)=Fx0(i,ng)
+                DRIFTER(ng)%Tinfo(iygrd,nc)=Fy0(i,ng)
               ELSE
                 mc=mc+1
-                FLT(ng)%Flon(mc)=Fx0(i,ng)
-                FLT(ng)%Flat(mc)=Fy0(i,ng)
-                FLT(ng)%Findex(mc)=nc
+                DRIFTER(ng)%Flon(mc)=Fx0(i,ng)
+                DRIFTER(ng)%Flat(mc)=Fy0(i,ng)
+                DRIFTER(ng)%Findex(mc)=nc
               END IF
             ELSE IF (Fcount(i,ng).gt.1) THEN
               DO j=1,Fcount(i,ng)
                 nc=nc+1
                 IF (Fdt(i,ng).gt.0.0_r8) THEN
-                  FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng)+            &
-     &                                     REAL(j-1,r8)*Fdt(i,ng))*     &
-     &                                    day2sec
-                  FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
-                  FLT(ng)%Ftype(nc)=Ftype(i,ng)
+                  DRIFTER(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng)+        &
+     &                                         REAL(j-1,r8)*Fdt(i,ng))* &
+     &                                        day2sec
+                  DRIFTER(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
+                  DRIFTER(ng)%Ftype(nc)=Ftype(i,ng)
                   IF (Fcoor(i,ng).eq.0) THEN
-                    FLT(ng)%Tinfo(ixgrd,nc)=Fx0(i,ng)
-                    FLT(ng)%Tinfo(iygrd,nc)=Fy0(i,ng)
+                    DRIFTER(ng)%Tinfo(ixgrd,nc)=Fx0(i,ng)
+                    DRIFTER(ng)%Tinfo(iygrd,nc)=Fy0(i,ng)
                   ELSE
                     mc=mc+1
-                    FLT(ng)%Flon(mc)=Fx0(i,ng)
-                    FLT(ng)%Flat(mc)=Fy0(i,ng)
-                    FLT(ng)%Findex(mc)=nc
+                    DRIFTER(ng)%Flon(mc)=Fx0(i,ng)
+                    DRIFTER(ng)%Flat(mc)=Fy0(i,ng)
+                    DRIFTER(ng)%Findex(mc)=nc
                   END IF
                 ELSE
-                  FLT(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
+                  DRIFTER(ng)%Tinfo(itstr,nc)=(dstart+Ft0(i,ng))*day2sec
                   IF (Fdz(i,ng).eq.0.0_r8) THEN
-                    FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
+                    DRIFTER(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)
                   ELSE
                     IF (Fz0(i,ng).gt.0.0_r8) THEN
                       zfloat=Fz0(i,ng)+REAL(j-1,r8)*Fdz(i,ng)
-                      FLT(ng)%Tinfo(izgrd,nc)=MIN(MAX(0.0_r8,zfloat),   &
-     &                                        REAL(N(ng),r8))
+                      DRIFTER(ng)%Tinfo(izgrd,nc)=MIN(MAX(0.0_r8,       &
+     &                                                    zfloat),      &
+     &                                                REAL(N(ng),r8))
                     ELSE
-                      FLT(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)+                &
-     &                                        REAL(j-1,r8)*Fdz(i,ng)
+                      DRIFTER(ng)%Tinfo(izgrd,nc)=Fz0(i,ng)+            &
+     &                                            REAL(j-1,r8)*Fdz(i,ng)
                     END IF
                   END IF
-                  FLT(ng)%Ftype(nc)=Ftype(i,ng)
+                  DRIFTER(ng)%Ftype(nc)=Ftype(i,ng)
                   IF (Fcoor(i,ng).eq.0) THEN
                     xfloat=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
                     yfloat=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
-                    FLT(ng)%Tinfo(ixgrd,nc)=xfloat
-                    FLT(ng)%Tinfo(iygrd,nc)=yfloat
+                    DRIFTER(ng)%Tinfo(ixgrd,nc)=xfloat
+                    DRIFTER(ng)%Tinfo(iygrd,nc)=yfloat
                   ELSE
                     mc=mc+1
-                    FLT(ng)%Flon(mc)=Fx0(i,ng)+REAL(j-1,r8)*Fdx(i,ng)
-                    FLT(ng)%Flat(mc)=Fy0(i,ng)+REAL(j-1,r8)*Fdy(i,ng)
-                    FLT(ng)%Findex(mc)=nc
+                    DRIFTER(ng)%Flon(mc)=Fx0(i,ng)+                     &
+     &                                   REAL(j-1,r8)*Fdx(i,ng)
+                    DRIFTER(ng)%Flat(mc)=Fy0(i,ng)+                     &
+     &                                   REAL(j-1,r8)*Fdy(i,ng)
+                    DRIFTER(ng)%Findex(mc)=nc
                   END IF
                 END IF
               END DO
             END IF
           END DO
-          FLT(ng)%Findex(0)=mc
+          DRIFTER(ng)%Findex(0)=mc
         END IF
       END DO
 !
@@ -7611,7 +7332,7 @@
 ! Local variable declarations
 !
       logical :: IsString, Kextract, decode, nested
-      integer :: Iblank, Icmm, Kstr, Kend, Linp
+      integer :: Iblank, Icomm, Icont, Ipipe, Kstr, Kend, Linp
       integer :: Lend, LenS, Lstr, Lval, Nmul, Schar
       integer :: copies, i, ic, ie, is, j, status
 
@@ -7639,8 +7360,8 @@
 !
       Linp=LEN(line_text)
       IF ((Linp.gt.0).and.(line_text(1:1).ne.CHAR(33))) THEN
-        Icmm=INDEX(line_text,CHAR(33),BACK=.FALSE.)
-        IF (Icmm.gt.0) Linp=Icmm-1
+        Icomm=INDEX(line_text,CHAR(33),BACK=.FALSE.)
+        IF (Icomm.gt.0) Linp=Icomm-1
         line=TRIM(ADJUSTL(line_text(1:Linp)))
         Linp=LEN_TRIM(line)
       ELSE
@@ -7679,11 +7400,14 @@
         END IF
 !
 ! Extract parameter values string.  Remove continuation symbol
-! [char(92)=\], if any.  Trim leading trailing blanks.
+! [char(92)=\] or multi-line value [char(124)=|], if any.  Trim
+! leading trailing blanks.
 !
         IF (Kextract) THEN
-          Icmm=INDEX(line,CHAR(92),BACK=.FALSE.)
-          IF (Icmm.gt.0) Lend=Icmm-1
+          Icont=INDEX(line,CHAR(92 ),BACK=.FALSE.)
+          Ipipe=INDEX(line,CHAR(124),BACK=.FALSE.)
+          IF (Icont.gt.0) Lend=Icont-1
+          IF (Ipipe.gt.0) Lend=Ipipe-1
           Vstring=ADJUSTL(line(Lstr:Lend))
           Lval=LEN_TRIM(Vstring)
 !
@@ -8060,3 +7784,362 @@
 
       RETURN
       END FUNCTION load_r
+
+      FUNCTION load_s1d (Nval, Fname, line, label, igrid, Nfiles, S)
+!
+!=======================================================================
+!                                                                      !
+!  This function loads input values into requested 1D structure        !
+!  containing information about I/O files.                             !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Nval       Number of values processed (integer)                  !
+!     Fname      File name(s) processed (string array)                 !
+!     line       Current input line (string)                           !
+!     label      I/O structure label (string)                          !
+!     igrid      Nested grid counter (integer)                         !
+!     Nfiles     Number of files per grid (integer array)              !
+!     S          Derived type structure, TYPE(IO)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     igrid      Updated nested grid counter.                          !
+!     S          Updated derived type structure, TYPE(IO).             !
+!     load_s1d   Number of output values processed.                    !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in)    :: Nval
+      integer, intent(inout) :: igrid
+      integer, intent(inout) :: Nfiles(Ngrids)
+
+      character (len=*),   intent(in) :: line
+      character (len=256), intent(in) :: Fname(100)
+      character (len=*),   intent(inout) :: label
+
+      TYPE(T_IO), intent(inout) :: S(Ngrids)
+!
+!  Local variable declarations.
+!
+      logical :: load
+
+      integer :: Icont, Ipipe, i, j, lstr, ng
+      integer :: load_s1d
+
+      character (len=1 ), parameter :: blank = ' '
+!
+!-----------------------------------------------------------------------
+!  Count files for all grids and activate load switch.
+!-----------------------------------------------------------------------
+!
+!  Check current line for the continuation symbol [char(92)=\] or pipe
+!  symbol [char(124)=|]. The continuation symbol is used to separate
+!  string values for different grid, whereas the pipe symbol is used
+!  to separate multi-string values for split input files. User may
+!  split the records for a particular input field into several files.
+!
+      Icont=INDEX(TRIM(line),CHAR(92) ,BACK=.FALSE.)
+      Ipipe=INDEX(TRIM(line),CHAR(124),BACK=.FALSE.)
+      IF ((Icont.eq.0).and.(Ipipe.eq.0)) THEN
+        load=.TRUE.                           ! last input string
+      ELSE
+        load=.FALSE.                          ! process next string
+      END IF
+!
+!  Accumulate number of multi-files per each grid.
+!
+      Nfiles(igrid)=Nfiles(igrid)+1
+!
+!  Set grid counter.
+!
+      IF (.not.load) THEN
+        igrid=igrid+MIN(1,Icont)
+      END IF
+      IF (igrid.gt.Ngrids) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(line)
+        END IF
+        exit_flag=2
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Load I/O information into structure.
+!-----------------------------------------------------------------------
+!
+      IF (load) THEN
+!
+!  Allocate various fields in structure, if not continuation or pipe
+!  symbol is found which indicates end of input data.
+!
+        DO ng=1,Ngrids
+          allocate ( S(ng)%Nrec(Nfiles(ng)) )
+          allocate ( S(ng)%time_min(Nfiles(ng)) )
+          allocate ( S(ng)%time_max(Nfiles(ng)) )
+          IF (label(1:3).eq.'FLT') THEN
+            allocate ( S(ng)%Vid(-6:NV) )
+          ELSE
+            allocate ( S(ng)%Vid(NV) )
+          END IF
+          allocate ( S(ng)%Tid(MT) )
+          allocate ( S(ng)%files(Nfiles(ng)) )
+        END DO
+!
+!  Intialize strings to blank to facilitate processing.
+!
+        DO ng=1,Ngrids
+          lstr=LEN(S(ng)%name)
+          DO i=1,lstr
+            S(ng)%base(i:i)=blank
+            S(ng)%name(i:i)=blank
+          END DO
+          DO j=1,Nfiles(ng)
+            DO i=1,lstr
+              S(ng)%files(j)(i:i)=blank
+            END DO
+          END DO
+        END DO
+!
+!  Initialize and load fields into structure.
+!
+        i=0
+        DO ng=1,Ngrids
+          S(ng)%Nfiles=Nfiles(ng)              ! number of multi-files
+          S(ng)%Fcount=1                       ! multi-file counter
+          S(ng)%Rindex=0                       ! time index
+          S(ng)%ncid=-1                        ! closed NetCDF state
+          S(ng)%Vid=-1                         ! NetCDF variables IDs
+          S(ng)%Tid=-1                         ! NetCDF tracers IDs
+          DO j=1,Nfiles(ng)
+            i=i+1
+            S(ng)%files(j)=TRIM(Fname(i))      ! load multi-files
+            S(ng)%Nrec(j)=0                    ! record counter
+            S(ng)%time_min(j)=0.0_r8           ! starting time
+            S(ng)%time_max(j)=0.0_r8           ! ending time
+          END DO
+          S(ng)%label=TRIM(label)              ! structure label
+          S(ng)%name=TRIM(S(ng)%files(1))      ! load first file
+          lstr=LEN_TRIM(S(ng)%name)
+          S(ng)%base=S(ng)%name(1:lstr-3)      ! do not include ".nc"
+          Nfiles(ng)=0                         ! clean file counter
+        END DO
+!
+!  Reset counters and clean label.
+!
+        igrid=1
+        DO ng=1,Ngrids
+          Nfiles(ng)=0
+        END DO
+        DO i=1,LEN(label)
+          label(i:i)=blank
+        END DO
+      END IF
+      load_s1d=Nval
+
+ 10   FORMAT (/,' INP_PAR - incorrect continuation symbol in line:',/,  &
+     &        11x,a,/,11x,'number of nested grid values exceeded.')
+
+      RETURN
+      END FUNCTION load_s1d
+
+      FUNCTION load_s2d (Nval, Fname, line, label, ifile, igrid,        &
+     &                   Nfiles, idim, S)
+!
+!=======================================================================
+!                                                                      !
+!  This function loads input values into requested 2D structure        !
+!  containing information about input forcing files.                   !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Nval       Number of values processed (integer)                  !
+!     Fname      File name(s) processed (string array)                 !
+!     line       Current input line (string)                           !
+!     label      I/O structure label (string)                          !
+!     ifile      File structure counter (integer)                      !
+!     igrid      Nested grid counter (integer)                         !
+!     Nfiles     Number of files per grid counter (integer array)      !
+!     idim       Size of structure inner dimension (integer)           !
+!     S          Derived type structure, TYPE(IO)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     ifile      Updated file counter.                                 !
+!     igrid      Updated nested grid counter.                          !
+!     S          Updated derived type structure, TYPE(IO).             !
+!     load_s2d   Number of output values processed.                    !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in)    :: Nval, idim
+      integer, intent(inout) :: ifile, igrid
+      integer, intent(inout) :: Nfiles(idim,Ngrids)
+
+      character (len=*),   intent(in) :: line
+      character (len=256), intent(in) :: Fname(100)
+      character (len=*),   intent(inout) :: label
+
+      TYPE(T_IO), intent(inout) :: S(idim,Ngrids)
+!
+!  Local variable declarations.
+!
+      logical :: load
+
+      integer :: Icont, Ipipe, i, j, k, lstr, ng
+      integer :: load_s2d
+
+      character (len=1 ), parameter :: blank = ' '
+!
+!-----------------------------------------------------------------------
+!  Count files for all grids and activate load switch.
+!-----------------------------------------------------------------------
+!
+!  Check current line for the continuation symbol [char(92)=\] or pipe
+!  symbol [char(124)=|]. The continuation symbol is used to separate
+!  string values for different grid, whereas the pipe symbol is used
+!  to separate multi-string values for split input files. User may
+!  split the records for a particular input field into several files.
+!
+      Icont=INDEX(TRIM(line),CHAR(92) ,BACK=.FALSE.)
+      Ipipe=INDEX(TRIM(line),CHAR(124),BACK=.FALSE.)
+      IF ((Icont.eq.0).and.(Ipipe.eq.0)) THEN
+        load=.TRUE.                           ! last input string
+      ELSE
+        load=.FALSE.                          ! process next string
+      END IF
+!
+!  Accumulate number of multi-files per each grid.
+!
+      Nfiles(ifile,igrid)=Nfiles(ifile,igrid)+1
+!
+!  Set counters for next processing file, if any.  The continuation
+!  symbol in the input "line" is used to advance the counters.
+!
+      IF (.not.load) THEN
+        IF (ifile.le.nFfiles(igrid)) THEN
+          ifile=ifile+MIN(1,Icont)
+        ELSE
+          ifile=1
+          igrid=igrid+MIN(1,Icont)
+        END IF
+      END IF
+      IF (ifile.gt.idim) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(line)
+        END IF
+        exit_flag=2
+        RETURN
+      END IF
+      IF (igrid.gt.Ngrids) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(line)
+        END IF
+        exit_flag=2
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Load I/O information into structure.
+!-----------------------------------------------------------------------
+!
+      IF (load) THEN
+!
+!  Allocate various fields in structure, if not continuation or pipe
+!  symbol is found which indicates end of input data.
+!
+        DO ng=1,Ngrids
+          DO i=1,idim
+            allocate ( S(i,ng)%Nrec(Nfiles(i,ng)) )
+            allocate ( S(i,ng)%time_min(Nfiles(i,ng)) )
+            allocate ( S(i,ng)%time_max(Nfiles(i,ng)) )
+            allocate ( S(i,ng)%Vid(NV) )
+            allocate ( S(i,ng)%Tid(MT) )
+            allocate ( S(i,ng)%files(Nfiles(i,ng)) )
+          END DO
+        END DO
+!
+!  Intialize strings to blank to facilitate processing.
+!
+        DO ng=1,Ngrids
+          DO i=1,idim
+            lstr=LEN(S(i,ng)%name)
+            DO j=1,lstr
+              S(i,ng)%base(j:j)=blank
+              S(i,ng)%name(j:j)=blank
+            END DO
+            DO k=1,Nfiles(i,ng)
+              DO j=1,lstr
+                S(i,ng)%files(k)(j:j)=blank
+              END DO
+            END DO
+          END DO
+        END DO
+!
+!  Initialize and load fields into structure.
+!
+        k=0
+        DO ng=1,Ngrids
+          DO i=1,idim
+            S(i,ng)%Nfiles=Nfiles(i,ng)         ! number of multi-files
+            S(i,ng)%Fcount=1                    ! multi-file counter
+            S(i,ng)%Rindex=0                    ! time index
+            S(i,ng)%ncid=-1                     ! closed NetCDF state
+            S(i,ng)%Vid=-1                      ! NetCDF variables IDs
+            S(i,ng)%Tid=-1                      ! NetCDF tracers IDs
+            DO j=1,Nfiles(i,ng)
+              k=k+1
+              S(i,ng)%files(j)=TRIM(Fname(k))   ! load multi-files
+              S(i,ng)%Nrec(j)=0                 ! record counter
+              S(i,ng)%time_min(j)=0.0_r8        ! starting time
+              S(i,ng)%time_max(j)=0.0_r8        ! ending time
+            END DO
+            S(i,ng)%label=TRIM(label)           ! structure label
+            S(i,ng)%name=TRIM(S(i,ng)%files(1)) ! load first file
+            lstr=LEN_TRIM(S(i,ng)%name)
+            S(i,ng)%base=S(i,ng)%name(1:lstr-3) ! do not include ".nc"
+          END DO
+        END DO
+!
+!  Reset counters and clean label.
+!
+        igrid=1
+        ifile=1
+        DO ng=1,Ngrids
+          DO i=1,idim
+            Nfiles(i,ng)=0
+          END DO
+        END DO
+        DO i=1,LEN(label)
+          label(i:i)=blank
+        END DO
+      END IF
+      load_s2d=Nval
+
+ 10   FORMAT (/,' INP_PAR - incorrect continuation symbol in line:',/,  &
+     &        11x,a,/,11x,'inner dimension of structure exceeded.')
+ 20   FORMAT (/,' INP_PAR - incorrect continuation symbol in line:',/,  &
+     &        11x,a,/,11x,'number of nested grid values exceeded.')
+
+      RETURN
+      END FUNCTION load_s2d
