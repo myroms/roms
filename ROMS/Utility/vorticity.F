@@ -21,14 +21,13 @@
 !                                                                      !
 !    avor = rvor + f                                                   !
 !                                                                      !
-!  In curvilinear coordinates, the relative and potential vorticity    !
+!  In curvilinear coordinates, the vertical component of relative      !
+!  vorticity and potential vorticity are:                              !
 !  are:                                                                !
 !                                                                      !
-!    rvor = mn * [d(v/n)/d(xi) - d(u/m)/d(eta)] +                      !
+!    rvor = mn * [d(v/n)/d(xi) - d(u/m)/d(eta)]                        !
 !                                                                      !
-!           d(u)/d(z) - d(v)/d(z)]                                     !
-!                                                                      !
-!    pvor = mn/rho0 * [f/mn d(pden)/d(z) +                             !
+!    pvor = mn/rho0 * [f/mn +                                          !
 !                                                                      !
 !                      d(v/n)/d(xi) - d(u/m)/d(eta)] * d(pden)/d(z) +  !
 !                                                                      !
@@ -373,12 +372,11 @@
      &                dUdz(i  ,j  ,k1)+dUdz(i  ,j  ,k2)
               dVdz_pr=dVdz(i-1,j  ,k1)+dVdz(i-1,j  ,k2)+                &
      &                dVdz(i  ,j  ,k1)+dVdz(i  ,j  ,k2)
-              rvor(i,j,k)=cff*(dVdx(i,j)-dUde(i,j))+                    &
-     &                    0.25_r8*(dUdz_pr-dVdz_pr)
+              rvor(i,j,k)=cff*(dVdx(i,j)-dUde(i,j))
               pvor(i,j,k)=orho0*                                        &
      &                    (cff*dRdz_pr*(fomn(i,j)+                      &
      &                                  dVdx(i,j)-dUde(i,j))+           &
-     &                     0.125_r8*(dUdz_pr*dRde_pr-dVdz_pr*dRde_pr))
+     &                     0.125_r8*(dUdz_pr*dRde_pr-dVdz_pr*dRdx_pr))
             END DO
           END DO
         END IF

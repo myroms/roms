@@ -4766,7 +4766,7 @@
   1.0d0
 
 'rvorticity'                                       ! Input/Output
-  'relative vorticity'
+  'relative vorticity, vertical component'
   'second-1'                                       ! [1/s]
   'rvorticity, scalar, series'
   'ocean_time'
