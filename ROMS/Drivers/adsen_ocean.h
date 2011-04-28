@@ -130,7 +130,6 @@
 !
         IF (Master) THEN
           WRITE (stdout,10)
- 10       FORMAT (/,' Process Information:',/)
         END IF
 !
         DO ng=1,Ngrids
@@ -243,6 +242,10 @@
 !  Imported variable declarations.
 !
       real(r8), intent(in) :: RunInterval            ! seconds
+!
+!  Local variable declarations.
+!
+      integer :: ng
 !
 !-----------------------------------------------------------------------
 !  Time-step adjoint model over all nested grids, if applicable.
