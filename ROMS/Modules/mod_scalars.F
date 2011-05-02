@@ -2122,7 +2122,9 @@
 !
       one=1.0_r8
       zero=0.0_r8
+#ifdef SWAN_COUPLING
       Infinity=one/zero
+#endif
       gorho0=g/rho0
       DO ng=1,Ngrids
         ntfirst(ng)=1

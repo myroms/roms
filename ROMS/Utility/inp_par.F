@@ -1015,7 +1015,6 @@
 !
       ifile=1
       igrid=1
-      Nfiles(1:Ngrids)=0
       DO i=1,LEN(label)
         label(i:i)=blank
       END DO
@@ -1075,6 +1074,7 @@
 #endif
             IF (.not.allocated(Nfiles)) THEN
               allocate ( Nfiles(Ngrids) )
+              Nfiles(1:Ngrids)=0
             END IF
           ELSE IF (TRIM(KeyWord).eq.'Lm') THEN
             IF (.not.got_Ngrids) THEN
