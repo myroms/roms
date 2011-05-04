@@ -866,6 +866,16 @@
 !  Initialize several variables.
 !-----------------------------------------------------------------------
 !
+!  Initialize NetCDF files creation flags.
+!
+      DO ng=1,Ngrids
+        idefADJ(ng)=-1
+        idefAVG(ng)=-1
+        idefDIA(ng)=-1
+        idefHIS(ng)=-1
+        idefTLM(ng)=-1
+      END DO
+!
 !  Analytical files switch and names.
 !
       Lanafile=.TRUE.
