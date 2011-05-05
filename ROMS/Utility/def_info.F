@@ -247,10 +247,14 @@
         IF (ncid.eq.ADM(ng)%ncid) THEN
           type='ROMS/TOMS adjoint history file'
         ELSE IF (ncid.eq.AVG(ng)%ncid) THEN
-#ifdef ADJOINT
-          type='ROMS/TOMS adjoint averages file'
+#if defined AD_AVERAGES && defined ADJOINT
+          type='ROMS/TOMS adjoint model averages file'
+#elif defined RP_AVERAGES && defined TL_IOMS
+          type='ROMS/TOMS representer model averages file'
+#elif defined TL_AVERAGES && defined TANGENT
+          type='ROMS/TOMS tangent linear model averages file'
 #else
-          type='ROMS/TOMS averages file'
+          type='ROMS/TOMS nonlinear model averages file'
 #endif
         ELSE IF (ncid.eq.DIA(ng)%ncid) THEN
           type='ROMS/TOMS diagnostics file'
@@ -373,7 +377,10 @@
           END IF
         END IF
 
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
         IF (exit_flag.eq.NoError) THEN
           IF (ndefAVG(ng).gt.0) THEN
             status=nf90_put_att(ncid, nf90_global, 'avg_base',          &
@@ -980,7 +987,10 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
       Vinfo( 1)='ntsAVG'
       Vinfo( 2)=                                                        &
      &   'starting time-step for accumulation of time-averaged fields'

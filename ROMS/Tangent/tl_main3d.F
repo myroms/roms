@@ -89,8 +89,8 @@
 # ifdef SEDIMENT_NOT_YET
 !!    USE tl_sediment_mod, ONLY : tl_sediment
 # endif
-# ifdef AVERAGES
-!!    USE tl_set_avg_mod, ONLY : tl_set_avg
+# ifdef TL_AVERAGES
+      USE tl_set_avg_mod, ONLY : tl_set_avg
 # endif
       USE tl_set_depth_mod, ONLY : tl_set_depth
       USE tl_set_massflux_mod, ONLY : tl_set_massflux
@@ -445,8 +445,8 @@
 #  ifdef DIAGNOSTICS
 !!            CALL set_diags (ng, TILE)
 #  endif
-#  if defined AVERAGES && !defined ADJOINT
-!!            CALL tl_set_avg (ng, TILE)
+#  ifdef TL_AVERAGES
+              CALL tl_set_avg (ng, TILE)
 #  endif
             END DO
           END DO

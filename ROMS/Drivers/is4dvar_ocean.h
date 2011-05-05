@@ -457,6 +457,16 @@
 !  to boservation locations (compute and save H x).
 !
         DO ng=1,Ngrids
+#ifdef AVERAGES
+          LdefAVG(ng)=.TRUE.
+          LwrtAVG(ng)=.TRUE.
+          WRITE (AVG(ng)%name,10) TRIM(AVG(ng)%base), outer
+#endif
+#ifdef DIAGNOSTICS
+          LdefDIA(ng)=.TRUE.
+          LwrtDIA(ng)=.TRUE.
+          WRITE (DIA(ng)%name,10) TRIM(DIA(ng)%base), outer
+#endif
           IF (Master) THEN
             WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
           END IF
@@ -470,6 +480,14 @@
         IF (exit_flag.ne.NoError) RETURN
 
         DO ng=1,Ngrids
+#ifdef AVERAGES
+          LdefAVG(ng)=.FALSE.
+          LwrtAVG(ng)=.FALSE.
+#endif
+#ifdef DIAGNOSTICS
+          LdefDIA(ng)=.FALSE.
+          LwrtDIA(ng)=.FALSE.
+#endif
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
         END DO
@@ -1201,6 +1219,16 @@
 !  locations.
 !
       DO ng=1,Ngrids
+#ifdef AVERAGES
+        LdefAVG(ng)=.TRUE.
+        LwrtAVG(ng)=.TRUE.
+        WRITE (AVG(ng)%name,10) TRIM(AVG(ng)%base), outer
+#endif
+#ifdef DIAGNOSTICS
+        LdefDIA(ng)=.TRUE.
+        LwrtDIA(ng)=.TRUE.
+        WRITE (DIA(ng)%name,10) TRIM(DIA(ng)%base), outer
+#endif
         IF (Master) THEN
           WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
         END IF

@@ -164,7 +164,10 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
       CALL netcdf_put_ivar (ng, model, ncname, 'ntsAVG',                &
      &                      ntsAVG(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)

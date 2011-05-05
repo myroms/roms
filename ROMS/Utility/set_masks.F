@@ -31,7 +31,11 @@
 
       PRIVATE
       PUBLIC :: set_masks
-# if defined AVERAGES && defined WET_DRY
+# if defined WET_DRY     && \
+     defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
       PUBLIC :: set_avg_masks
 # endif
 !
@@ -71,7 +75,10 @@
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
      &                     GRID(ng) % pmask_avg,                        &
      &                     GRID(ng) % rmask_avg,                        &
      &                     GRID(ng) % umask_avg,                        &
@@ -104,7 +111,10 @@
 # endif
      &                           pmask, rmask,                          &
      &                           umask, vmask,                          &
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
      &                           pmask_avg, rmask_avg,                  &
      &                           umask_avg, vmask_avg,                  &
 # endif
@@ -146,7 +156,10 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
-#  ifdef AVERAGES
+#  if defined AVERAGES    || \
+     (defined AD_AVERAGES && defined ADJOINT) || \
+     (defined RP_AVERAGES && defined TL_IOMS) || \
+     (defined TL_AVERAGES && defined TANGENT)
       real(r8), intent(inout) :: pmask_avg(LBi:,LBj:)
       real(r8), intent(inout) :: rmask_avg(LBi:,LBj:)
       real(r8), intent(inout) :: umask_avg(LBi:,LBj:)
@@ -173,7 +186,10 @@
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#  ifdef AVERAGES
+#  if defined AVERAGES    || \
+     (defined AD_AVERAGES && defined ADJOINT) || \
+     (defined RP_AVERAGES && defined TL_IOMS) || \
+     (defined TL_AVERAGES && defined TANGENT)
       real(r8), intent(inout) :: pmask_avg(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: rmask_avg(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: umask_avg(LBi:UBi,LBj:UBj)
@@ -279,7 +295,10 @@
      &                    pmask_io, rmask_io, umask_io, vmask_io)
 # endif
 
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
 !
 !-----------------------------------------------------------------------
 !  Initialize average file Land/Sea masks for time-averaged fields.
@@ -421,7 +440,11 @@
       RETURN
       END SUBROUTINE set_masks_tile
 
-# if defined AVERAGES && defined WET_DRY
+# if defined WET_DRY     && \
+     defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
 !
 !***********************************************************************
       SUBROUTINE set_avg_masks (ng, tile, model,                        &

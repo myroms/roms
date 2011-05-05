@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE set_avg_mod
-#if defined AVERAGES && (!defined ADJOINT && defined NONLINEAR)
+#ifdef AVERAGES
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

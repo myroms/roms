@@ -308,7 +308,10 @@
               END DO
             END DO
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           ELSE IF (TRIM(KeyWord).eq.'Aout(idmud)') THEN
             Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
             DO ng=1,Ngrids
@@ -634,7 +637,10 @@
               END DO
             END DO
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           ELSE IF (TRIM(KeyWord).eq.'Aout(idsand)') THEN
             Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
             DO ng=1,Ngrids
@@ -868,7 +874,10 @@
      &            'Hout(idSbed)',                                       &
      &            'Write out BED property ', itrc, TRIM(Vname(1,i))
             END DO
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
             WRITE (out,'(1x)')
             DO itrc=1,NST
               i=idTvar(idsed(itrc))

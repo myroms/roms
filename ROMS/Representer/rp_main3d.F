@@ -84,9 +84,6 @@
 # ifdef SEDIMENT_NOT_YET
 !!    USE rp_sediment_mod, ONLY : rp_sediment
 # endif
-# ifdef AVERAGES
-!!    USE rp_set_avg_mod, ONLY : rp_set_avg
-# endif
       USE rp_set_depth_mod, ONLY : rp_set_depth
       USE rp_set_massflux_mod, ONLY : rp_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
@@ -104,6 +101,9 @@
 # endif
 # ifdef WEAK_CONSTRAINT
       USE tl_forcing_mod, ONLY : tl_forcing
+# endif
+# ifdef RP_AVERAGES
+      USE tl_set_avg_mod, ONLY : tl_set_avg
 # endif
 !!    USE wvelocity_mod, ONLY : wvelocity
 !
@@ -443,8 +443,8 @@
 #  ifdef DIAGNOSTICS
 !!            CALL rp_set_diags (ng, TILE)
 #  endif
-#  ifdef AVERAGES
-!!            CALL rp_set_avg (ng, TILE)
+#  ifdef RP_AVERAGES
+              CALL tl_set_avg (ng, TILE)
 #  endif
             END DO
           END DO

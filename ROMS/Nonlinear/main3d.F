@@ -89,7 +89,7 @@
 # ifdef SEDIMENT
       USE sediment_mod, ONLY : sediment
 # endif
-# if defined AVERAGES && !defined ADJOINT
+# ifdef AVERAGES
       USE set_avg_mod, ONLY : set_avg
 # endif
       USE set_depth_mod, ONLY : set_depth
@@ -446,7 +446,7 @@
 #  ifdef DIAGNOSTICS
               CALL set_diags (ng, TILE)
 #  endif
-#  if defined AVERAGES && !defined ADJOINT
+#  ifdef AVERAGES
               CALL set_avg (ng, TILE)
 #  endif
             END DO

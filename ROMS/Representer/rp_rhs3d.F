@@ -727,7 +727,7 @@
 !>
             tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)+tl_cff1
 #  ifdef DIAGNOSTICS_UV
-            DiaRU(i,j,k,nrhs,M3fcor)=cff1
+!!          DiaRU(i,j,k,nrhs,M3fcor)=cff1
 #  endif
           END DO
         END DO
@@ -740,7 +740,7 @@
 !>
             tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)-tl_cff1
 #  ifdef DIAGNOSTICS_UV
-            DiaRV(i,j,k,nrhs,M3fcor)=-cff1
+!!          DiaRV(i,j,k,nrhs,M3fcor)=-cff1
 #  endif
           END DO
         END DO

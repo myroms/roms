@@ -1,6 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_average
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

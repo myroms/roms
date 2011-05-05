@@ -56,7 +56,7 @@
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
 # endif
-# ifdef AVERAGES
+# ifdef AD_AVERAGES
       USE ad_set_avg_mod, ONLY : ad_set_avg
 # endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
@@ -136,7 +136,7 @@
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
               CALL ad_set_data (ng, TILE)
-# ifdef AVERAGES
+# ifdef AD_AVERAGES
               CALL ad_set_avg (ng, TILE)
 # endif
 # ifdef DIAGNOSTICS

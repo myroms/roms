@@ -43,9 +43,6 @@
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
 # endif
-# ifdef AVERAGES
-!!    USE rp_set_avg_mod, ONLY : rp_set_avg
-# endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE rp_set_tides_mod, ONLY : rp_set_tides
 # endif
@@ -56,6 +53,9 @@
 # endif
 # ifdef WEAK_CONSTRAINT
       USE tl_forcing_mod, ONLY : tl_forcing
+# endif
+# ifdef RP_AVERAGES
+      USE rp_set_avg_mod, ONLY : tl_set_avg
 # endif
 # if defined PROPAGATOR || \
     (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
@@ -189,8 +189,8 @@
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
-# ifdef AVERAGES
-!!            CALL rp_set_avg (ng, TILE)
+# ifdef RP_AVERAGES
+              CALL tl_set_avg (ng, TILE)
 # endif
 # ifdef DIAGNOSTICS
 !!            CALL rp_set_diags (ng, TILE)

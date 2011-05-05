@@ -48,8 +48,8 @@
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
 # endif
-# ifdef AVERAGES
-!!    USE tl_set_avg_mod, ONLY : tl_set_avg
+# ifdef TL_AVERAGES
+      USE tl_set_avg_mod, ONLY : tl_set_avg
 # endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE tl_set_tides_mod, ONLY : tl_set_tides
@@ -198,8 +198,8 @@
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
-# ifdef AVERAGES
-!!            CALL tl_set_avg (ng, TILE)
+# ifdef TL_AVERAGES
+              CALL tl_set_avg (ng, TILE)
 # endif
 # ifdef DIAGNOSTICS
 !!            CALL set_diags (ng, TILE)

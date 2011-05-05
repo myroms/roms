@@ -181,7 +181,10 @@
           CALL netcdf_close (ng, iTLM, TLM(ng)%ncid)
         END IF
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
         IF (AVG(ng)%ncid.ne.-1) THEN
           CALL netcdf_close (ng, iNLM, AVG(ng)%ncid)
         END IF
@@ -247,7 +250,10 @@
           END IF
 #endif
 
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           IF (associated(AVG(ng)%Nrec)) THEN
             Fcount=AVG(ng)%Fcount
             IF (AVG(ng)%Nrec(Fcount).gt.0) THEN

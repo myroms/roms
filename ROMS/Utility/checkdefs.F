@@ -77,6 +77,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is)=','
 !
+#if defined AD_AVERAGES && defined ADJOINT
+      IF (Master) WRITE (stdout,20) 'AD_AVERAGES',                      &
+     &   'Writing out time-averaged adjoint model fields.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' AD_AVERAGES,'
+#endif
 #if defined ADD_FSOBC && defined SSH_TIDES
       IF (Master) WRITE (stdout,20) 'ADD_FSOBC',                        &
      &   'Adding tidal elevation to proccesed OBC data.'
@@ -444,12 +450,12 @@
 #endif
 #ifdef AVERAGES
       IF (Master) WRITE (stdout,20) 'AVERAGES',                         &
-     &   'Writing out time-averaged fields.'
+     &   'Writing out time-averaged nonlinear model fields.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' AVERAGES,'
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       IF (Master) WRITE (stdout,20) 'AVERAGES_DETIDE',                  &
-     &   'Writing out time-averaged detided fields.'
+     &   'Writing out time-averaged nonlinear model detided fields.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' AVERAGES_DETIDE,'
 # endif
@@ -1745,6 +1751,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' RHO_SURF,'
 #endif
+#if defined RP_AVERAGES && defined TL_IOMS
+      IF (Master) WRITE (stdout,20) 'RP_AVERAGES',                      &
+     &   'Writing out time-averaged representer model fields.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' RP_AVERAGES,'
+#endif
 #ifdef RPM_DRIVER
       IF (Master) WRITE (stdout,20) 'RPM_DRIVER',                       &
      &   'Generic representers tangent linear model driver.'
@@ -2172,6 +2184,12 @@
      &   'Nudging toward tracer climatology.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' TCLM_NUDGING,'
+#endif
+#if defined TL_AVERAGES && defined TANGENT
+      IF (Master) WRITE (stdout,20) 'TL_AVERAGES',                      &
+     &   'Writing out time-averaged tangent linear model fields.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' TL_AVERAGES,'
 #endif
 #ifdef TLM_DRIVER
       IF (Master) WRITE (stdout,20) 'TLM_DRIVER',                       &
@@ -3128,6 +3146,27 @@
  200    FORMAT (/,' CHECKDEFS - cannot activate ',a,' and ',a,          &
      &            ' together',/,13x,'because of time dependent ',       &
      &            ' Land/Sea masking.')
+        exit_flag=5
+      END IF
+#endif
+#if ((defined AD_AVERAGES && defined ADJOINT) && defined AVERAGES) || \
+    ((defined RP_AVERAGES && defined TL_IOMS) && defined AVERAGES) || \
+    ((defined TL_AVERAGES && defined TANGENT) && defined AVERAGES) || \
+    (defined AD_AVERAGES && defined TL_AVERAGES) || \
+    (defined AD_AVERAGES && defined RP_AVERAGES) || \
+    (defined RP_AVERAGES && defined TL_AVERAGES)
+!
+!  Stop if activating more that one time-averaged option. This is not
+!  possible in the same executable because the same internal arrays
+!  are used to store the cummulative sums.
+!
+      IF (Master) THEN
+        WRITE (stdout,210) uppercase('averages'),                       &
+     &                     uppercase('ad_averages'),                    &
+     &                     uppercase('rp_averages'),                    &
+     &                     uppercase('tl_averages')
+ 210    FORMAT (/,' CHECKDEFS - cannot activate ',a,' ',a,' ',a,        &
+     &            ' or',a,/,13x,'at the same time. Choose one!')
         exit_flag=5
       END IF
 #endif

@@ -2379,7 +2379,10 @@
               END DO
             END DO
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           ELSE IF (TRIM(KeyWord).eq.'Aout(idUvel)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Aout(idUvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Aout(idVvel)') THEN
@@ -3596,7 +3599,10 @@
      &            'Number of timesteps between creation of new',        &
      &            'history files.'
           END IF
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           WRITE (out,130) ntsAVG(ng), 'ntsAVG',                         &
      &          'Starting timestep for the accumulation of output',     &
      &          'time-averaged data.'
@@ -4473,7 +4479,10 @@
      &       'Write out turbulent generic length-scale.'
 # endif
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           WRITE (out,'(1x)')
           IF (Aout(idFsur,ng)) WRITE (out,170) Aout(idFsur,ng),         &
      &       'Aout(idFsur)',                                            &
@@ -5051,7 +5060,10 @@
           WRITE (out,230) '     Output Forward State File:  ',          &
      &                    TRIM(FWD(ng)%name)
 #endif
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
           IF (ndefAVG(ng).eq.0) THEN
             WRITE (out,230) '          Output Averages File:  ',        &
      &                      TRIM(AVG(ng)%name)

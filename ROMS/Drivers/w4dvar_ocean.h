@@ -468,6 +468,10 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       DO ng=1,Ngrids
+#ifdef RP_AVERAGES
+        LdefAVG(ng)=.FALSE.
+        LwrtAVG(ng)=.FALSE.
+#endif
         IF (Master) THEN
           WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
         END IF
@@ -574,6 +578,10 @@
 !  state.  Compute model solution at observation points, H * X_n.
 !
         DO ng=1,Ngrids
+# ifdef RP_AVERAGES
+          LdefAVG(ng)=.FALSE.
+          LwrtAVG(ng)=.FALSE.
+# endif
           IF (Master) THEN
             WRITE (stdout,20) 'RP', ng, ntstart(ng), ntend(ng)
           END IF
@@ -1074,6 +1082,11 @@
 !  basic state and forced with convolved adjoint trajectory impulses.
 !
         DO ng=1,Ngrids
+#ifdef RP_AVERAGES
+          LdefAVG(ng)=.TRUE.
+          LwrtAVG(ng)=.TRUE.
+          WRITE (AVG(ng)%name,10) TRIM(AVG(ng)%base), outer
+#endif
           IF (Master) THEN
             WRITE (stdout,20) 'RP', ng, ntstart(ng), ntend(ng)
           END IF
@@ -1085,6 +1098,13 @@
         CALL rp_main2d (RunInterval)
 #endif
         IF (exit_flag.ne.NoError) RETURN
+
+#ifdef RP_AVERAGES
+        DO ng=1,Ngrids
+          LdefAVG(ng)=.FALSE.
+          LwrtAVG(ng)=.FALSE.
+        END DO
+#endif
 !
 !  Report data penalty function.
 !

@@ -53,7 +53,7 @@
 # ifdef NEARSHORE_MELLOR
       USE radiation_stress_mod, ONLY : radiation_stress
 # endif
-# if defined AVERAGES && !defined ADJOINT
+# ifdef AVERAGES
       USE set_avg_mod, ONLY : set_avg
 # endif
 # if defined SSH_TIDES || defined UV_TIDES
@@ -191,7 +191,7 @@
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
-# if defined AVERAGES && !defined ADJOINT
+# ifdef AVERAGES
               CALL set_avg (ng, TILE)
 # endif
 # ifdef DIAGNOSTICS

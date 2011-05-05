@@ -151,7 +151,7 @@
         END IF
       END IF
 
-# ifdef AVERAGES
+# ifdef AD_AVERAGES
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process time-averaged NetCDF file.
@@ -200,9 +200,9 @@
               WRITE (AVG(ng)%name,20) TRIM(AVG(ng)%base), ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iADM, AVG(ng)%name)
-# endif
+#  endif
             IF (AVG(ng)%ncid.ne.-1) THEN
               CALL netcdf_close (ng, iADM, AVG(ng)%ncid)
             END IF
@@ -230,6 +230,7 @@
         END IF
       END IF
 # endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------

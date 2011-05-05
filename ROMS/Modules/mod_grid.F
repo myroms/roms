@@ -74,7 +74,10 @@
 !  rmask      Mask at RHO-points (0=Land, 1=Sea).                      !
 !  umask      Mask at U-points (0=Land, 1=Sea).                        !
 !  vmask      Mask at V-points (0=Land, 1=Sea).                        !
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
 !
 !  pmask_avg  Time-average FillValue mask at PSI-points (0=dry, 1=wet) !
 !  rmask_avg  Time-average FillValue mask at RHO-points (0=dry, 1=wet) !
@@ -220,7 +223,11 @@
           real(r8), pointer :: rmask(:,:)
           real(r8), pointer :: umask(:,:)
           real(r8), pointer :: vmask(:,:)
-# ifdef AVERAGES
+
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
           real(r8), pointer :: pmask_avg(:,:)
           real(r8), pointer :: rmask_avg(:,:)
           real(r8), pointer :: umask_avg(:,:)
@@ -406,7 +413,10 @@
       allocate ( GRID(ng) % rmask(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % umask(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % vmask(LBi:UBi,LBj:UBj) )
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
       allocate ( GRID(ng) % pmask_avg(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % rmask_avg(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % umask_avg(LBi:UBi,LBj:UBj) )
@@ -629,7 +639,10 @@
             GRID(ng) % rmask(i,j) = IniVal
             GRID(ng) % umask(i,j) = IniVal
             GRID(ng) % vmask(i,j) = IniVal
-# ifdef AVERAGES
+# if defined AVERAGES    || \
+    (defined AD_AVERAGES && defined ADJOINT) || \
+    (defined RP_AVERAGES && defined TL_IOMS) || \
+    (defined TL_AVERAGES && defined TANGENT)
             GRID(ng) % pmask_avg(i,j) = IniVal
             GRID(ng) % rmask_avg(i,j) = IniVal
             GRID(ng) % umask_avg(i,j) = IniVal

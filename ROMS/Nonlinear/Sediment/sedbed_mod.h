@@ -8,7 +8,11 @@
 !                                                                      !
 !  Sediment Model Kernel Variables:                                    !
 !                                                                      !
-#if defined BEDLOAD && defined AVERAGES
+#if defined BEDLOAD     && \
+    defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
 ! avgbedldu       Time-averaged Bed load u-transport (kg/m/s).         !
 ! avgbedldv       Time-averaged Bed load v-transport (kg/m/s).         !
 #endif
@@ -64,7 +68,11 @@
 !
 !  Nonlinear model state.
 !
-#if defined BEDLOAD && defined AVERAGES
+#if defined BEDLOAD     && \
+    defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
         real(r8), pointer :: avgbedldu(:,:,:)
         real(r8), pointer :: avgbedldv(:,:,:)
 #endif
@@ -166,7 +174,11 @@
 !
 !  Nonlinear model state.
 !
-#if defined BEDLOAD && defined AVERAGES
+#if defined BEDLOAD     && \
+    defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
       IF (ANY(Aout(idUbld(:),ng))) THEN
         allocate ( SEDBED(ng) % avgbedldu(LBi:UBi,LBj:UBj,NST) )
       END IF
@@ -311,7 +323,11 @@
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
 
-#if defined BEDLOAD && defined AVERAGES
+#if defined BEDLOAD     && \
+    defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
         IF (ANY(Aout(idUbld(:),ng))) THEN
           DO itrc=1,NST
             DO j=Jmin, Jmax

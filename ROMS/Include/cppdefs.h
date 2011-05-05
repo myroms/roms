@@ -173,8 +173,11 @@
 ** MASKING             use if land/sea masking                               **
 ** BODYFORCE           use if applying stresses as bodyforces                **
 ** PROFILE             use if time profiling                                 **
-** AVERAGES            use if writing out time-averaged data                 **
-** AVERAGES_DETIDE     use if writing out time-averaged detided fields       **
+** AVERAGES            use if writing out NLM time-averaged data             **
+** AVERAGES_DETIDE     use if writing out NLM time-averaged detided fields   **
+** AD_AVERAGES         use if writing out ADM time-averaged data             **
+** RP_AVERAGES         use if writing out TLM time-averaged data             **
+** TL_AVERAGES         use if writing out ADM time-averaged data             **
 ** DIAGNOSTICS_BIO     use if writing out biological diagnostics             **
 ** DIAGNOSTICS_UV      use if writing out momentum diagnostics               **
 ** DIAGNOSTICS_TS      use if writing out tracer diagnostics                 **

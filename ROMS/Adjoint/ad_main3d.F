@@ -92,7 +92,7 @@
 # ifdef SEDIMENT_NOT_YET
 !!    USE ad_sediment_mod, ONLY : ad_sediment
 # endif
-# ifdef AVERAGES
+# ifdef AD_AVERAGES
       USE ad_set_avg_mod, ONLY : ad_set_avg
 # endif
       USE ad_set_depth_mod, ONLY : ad_set_depth
@@ -692,7 +692,7 @@
 # endif
               CALL ad_set_massflux (ng, TILE)
               CALL ad_diag (ng, TILE)
-# ifdef AVERAGES
+# ifdef AD_AVERAGES
               CALL ad_set_avg (ng, TILE)
 # endif
             END DO

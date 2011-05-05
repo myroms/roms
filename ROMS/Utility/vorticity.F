@@ -1,7 +1,10 @@
 #include "cppdefs.h"
       MODULE vorticity_mod
 
-#ifdef AVERAGES
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
 !
 !svn $Id$
 !=======================================================================
