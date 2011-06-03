@@ -1738,7 +1738,7 @@
 !         twice.
 !
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (Istr.eq.1)THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=1,N(ng)
 !>          u(Istr,j,k,nnew)=u(Istr,j,k,nnew)-CF(Istr,0)
 !>
@@ -1776,7 +1776,7 @@
 #  endif
           END DO
         END IF
-        IF (Iend.eq.Lm(ng)) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=1,N(ng)
 !>          u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)-CF(Iend+1,0)
 !>
@@ -1817,7 +1817,7 @@
         END IF
 # endif
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (j.eq.0) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 !>            u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
@@ -1858,7 +1858,7 @@
             END DO
           END DO
         END IF
-        IF (j.eq.Mm(ng)+1) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 !>            u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
@@ -2070,7 +2070,7 @@
 !         twice.
 !
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
-          IF (Istr.eq.1) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
 !>            v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)-CF(Istr-1,0)
 !>
@@ -2110,7 +2110,7 @@
 #  endif
             END DO
           END IF
-          IF (Iend.eq.Lm(ng)) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
 !>            v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)-CF(Iend+1,0)
 !>
@@ -2153,7 +2153,7 @@
           END IF
 # endif
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (j.eq.1) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
@@ -2191,7 +2191,7 @@
               END DO
             END DO
           END IF
-          IF (j.eq.Mm(ng)+1) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)

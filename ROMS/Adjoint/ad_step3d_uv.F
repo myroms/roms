@@ -661,7 +661,7 @@
 !  D=CF(:,0).
 !
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (j.eq.Mm(ng)+1) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
@@ -703,7 +703,7 @@
               END DO
             END DO
           END IF
-          IF (j.eq.1) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
@@ -747,7 +747,7 @@
           END IF
 # endif
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
-          IF (Iend.eq.Lm(ng)) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -789,7 +789,7 @@
               ad_CF(Iend+1,0)=ad_CF(Iend+1,0)-ad_v(Iend+1,j,k,nnew)
             END DO
           END IF
-          IF (Istr.eq.1) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -1082,7 +1082,7 @@
 !  D=CF(:,0).
 !
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (j.eq.Mm(ng)+1) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
@@ -1125,7 +1125,7 @@
             END DO
           END DO
         END IF
-        IF (j.eq.0) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
@@ -1170,7 +1170,7 @@
         END IF
 # endif
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (Iend.eq.Lm(ng)) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -1212,7 +1212,7 @@
             ad_CF(Iend+1,0)=ad_CF(Iend+1,0)-ad_u(Iend+1,j,k,nnew)
           END DO
         END IF
-        IF (Istr.eq.1)THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=1,N(ng)
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET

@@ -243,7 +243,7 @@
 #elif defined LMD_TEST
       IF (time(ng).le.57600.0_r8) THEN
         windamp=-0.6_r8*SIN(pi*time(ng)/57600.0_r8)*                    &
-     &                  SIN(2.0_r8*pi/57600.0_r8)/rho0
+     &                  SIN(2.0_r8*pi*time(ng)/57600.0_r8)/rho0
       ELSE
         windamp=0.0_r8
       END IF
@@ -377,7 +377,7 @@
 #elif defined LMD_TEST
       IF (time(ng).le.57600.0_r8) THEN
         windamp=-0.6_r8*SIN(pi*time(ng)/57600.0_r8)*                    &
-     &                  COS(2.0_r8*pi/57600.0_r8)/rho0
+     &                  COS(2.0_r8*pi*time(ng)/57600.0_r8)/rho0
       ELSE
         windamp=0.0_r8
       END IF
