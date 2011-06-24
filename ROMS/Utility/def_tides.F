@@ -88,42 +88,42 @@
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.Vname(1,idCosW)) THEN
             got_var(idCosW)=.TRUE.
-            TIDE(ng)%Vid(idCosW,ng)=var_id(i)
+            TIDE(ng)%Vid(idCosW)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idSinW)) THEN
             got_var(idSinW)=.TRUE.
-            TIDE(ng)%Vid(idSinW,ng)=var_id(i)
+            TIDE(ng)%Vid(idSinW)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idCos2)) THEN
             got_var(idCos2)=.TRUE.
-            TIDE(ng)%Vid(idCos2,ng)=var_id(i)
+            TIDE(ng)%Vid(idCos2)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idSin2)) THEN
             got_var(idSin2)=.TRUE.
-            TIDE(ng)%Vid(idSin2,ng)=var_id(i)
+            TIDE(ng)%Vid(idSin2)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idSWCW)) THEN
             got_var(idSWCW)=.TRUE.
-            TIDE(ng)%Vid(idSWCW,ng)=var_id(i)
+            TIDE(ng)%Vid(idSWCW)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idFsuH)) THEN
             got_var(idFsuH)=.TRUE.
-            TIDE(ng)%Vid(idFsuH,ng)=var_id(i)
+            TIDE(ng)%Vid(idFsuH)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idu2dH)) THEN
             got_var(idu2dH)=.TRUE.
-            TIDE(ng)%Vid(idu2dH,ng)=var_id(i)
+            TIDE(ng)%Vid(idu2dH)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idv2dH)) THEN
             got_var(idv2dH)=.TRUE.
-            TIDE(ng)%Vid(idv2dH,ng)=var_id(i)
+            TIDE(ng)%Vid(idv2dH)=var_id(i)
 # ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idu3dH)) THEN
             got_var(idu3dH)=.TRUE.
-            TIDE(ng)%Vid(idu3dH,ng)=var_id(i)
+            TIDE(ng)%Vid(idu3dH)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.Vname(1,idv3dH)) THEN
             got_var(idv3dH)=.TRUE.
-            TIDE(ng)%Vid(idv3dH,ng)=var_id(i)
+            TIDE(ng)%Vid(idv3dH)=var_id(i)
 # endif
           END IF
 # ifdef SOLVE3D
           DO itrc=1,NAT
             IF (TRIM(var_name(i)).eq.Vname(1,idTrcH(itrc))) THEN
               got_var(idTrcH(itrc))=.TRUE.
-              TIDE(ng)%Vid(idTrcH(itrc),ng)=var_id(i)
+              TIDE(ng)%Vid(idTrcH(itrc))=var_id(i)
             END IF
           END DO
 # endif
