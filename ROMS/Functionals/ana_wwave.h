@@ -201,7 +201,7 @@
       ramp_time=10.0_r8    ! ramp from 0 to 1 over RAMP_TIME (hours)
       ramp_d=50.0_r8       ! start ramp DOWN at RAMP_DOWN (hours)
       DO j=JstrR,JendR
-        DO i=Istr,IendR
+        DO i=IstrR,IendR
           Dwave(i,j)=270.0_r8*deg2rad
           Pwave_bot(i,j)=5.0_r8    ! wave period (seconds)
            cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
@@ -237,86 +237,89 @@
         END DO
       END DO
 #else
-      ana_wwave: No values provided for Hwave, Dwave, Pwave, Lwave.
+      ana_wwave: no values provided for Hwave, Dwave, Pwave, Lwave.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
 # if defined WAVES_DIR
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Dwave)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Dwave)
-#  endif
 # endif
 # ifdef WAVES_HEIGHT
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Hwave)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Hwave)
-#  endif
 # endif
 # ifdef WAVES_LENGTH
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Lwave)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Lwave)
-#  endif
 # endif
 # ifdef WAVES_TOP_PERIOD
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_top)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Pwave_top)
-#  endif
 # endif
 # ifdef WAVES_BOT_PERIOD
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_bot)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Pwave_bot)
-#  endif
 # endif
 # ifdef WAVES_UB
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Ub_swan)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Ub_swan)
-#  endif
 # endif
 # ifdef TKE_WAVEDISS
       CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        wave_dissip)
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 3,                           &
+# endif
+#endif
+#ifdef DISTRIBUTE
+# if defined WAVES_DIR
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Dwave)
+# endif
+# ifdef WAVES_HEIGHT
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Hwave)
+# endif
+# ifdef WAVES_LENGTH
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Lwave)
+# endif
+# ifdef WAVES_TOP_PERIOD
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Pwave_top)
+# endif
+# ifdef WAVES_BOT_PERIOD
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Pwave_bot)
+# endif
+# ifdef WAVES_UB
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Ub_swan)
+# endif
+# ifdef TKE_WAVEDISS
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    wave_dissip)
-#  endif
 # endif
 #endif
+
       RETURN
       END SUBROUTINE ana_wwave_tile
