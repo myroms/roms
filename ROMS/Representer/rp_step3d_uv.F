@@ -1735,7 +1735,9 @@
 !         update in the interior again for computational purposes which
 !         will not affect the nonlinear code.  However, the adjoint
 !         code is wrong because the interior solution is corrected
-!         twice.
+!         twice. The replacement is avoided if the boundary edge is
+!         periodic. The J-loop is pipelined, so we need to do a special
+!         test for the southern and northern domain edges.
 !
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
@@ -1817,8 +1819,8 @@
         END IF
 # endif
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
+        IF (j.eq.0) THEN                             ! southern boundary
+          DO k=1,N(ng)                               ! J-loop pipelined
             DO i=IstrU,Iend
 !>            u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
 !>
@@ -1858,8 +1860,8 @@
             END DO
           END DO
         END IF
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
+        IF (j.eq.Mm(ng)+1) THEN                      ! northern boundary
+          DO k=1,N(ng)                               ! J-loop pipelined
             DO i=IstrU,Iend
 !>            u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
 !>
@@ -2067,7 +2069,9 @@
 !         update in the interior again for computational purposes which
 !         will not affect the nonlinear code.  However, the adjoint
 !         code is wrong because the interior solution is corrected
-!         twice.
+!         twice. The replacement is avoided if the boundary edge is
+!         periodic. The J-loop is pipelined, so we need to do a special
+!         test for the southern and northern domain edges.
 !
 # if !defined EW_PERIODIC && !defined COMPOSED_GRID
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
@@ -2153,8 +2157,8 @@
           END IF
 # endif
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO k=1,N(ng)
+          IF (j.eq.1) THEN                           ! southern boundary
+            DO k=1,N(ng)                             ! J-loop pipelined
               DO i=Istr,Iend
 !>              v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
 !>
@@ -2191,8 +2195,8 @@
               END DO
             END DO
           END IF
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO k=1,N(ng)
+          IF (j.eq.Mm(ng)+1) THEN                    ! northern boundary
+            DO k=1,N(ng)                             ! J-loop pipelined
               DO i=Istr,Iend
 !>              v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
 !>

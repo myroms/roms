@@ -657,12 +657,14 @@
           END DO
 !
 !  Replace only BOUNDARY POINTS incorrect vertical mean with more
-!  accurate barotropic component, vbar=DV_avg1/(D*om_v).  Recall that,
-!  D=CF(:,0).
+!  accurate barotropic component, vbar=DV_avg1/(D*om_v). Recall that,
+!  D=CF(:,0). The replacement is avoided if the boundary edge is
+!  periodic. The J-loop is pipelined, so we need to do a special
+!  test for the southern and northern domain edges.
 !
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO k=1,N(ng)
+          IF (j.eq.Mm(ng)+1) THEN                    ! northern boundary
+            DO k=1,N(ng)                             ! J-loop pipelined
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -703,8 +705,8 @@
               END DO
             END DO
           END IF
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO k=1,N(ng)
+          IF (j.eq.1) THEN                           ! southern boundary
+            DO k=1,N(ng)                             ! J-loop pipelined
               DO i=Istr,Iend
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -1079,11 +1081,13 @@
 !
 !  Replace only BOUNDARY POINTS incorrect vertical mean with more
 !  accurate barotropic component, ubar=DU_avg1/(D*on_u). Recall that,
-!  D=CF(:,0).
+!  D=CF(:,0). The replacement is avoided if the boundary edge is
+!  periodic. The J-loop is pipelined, so we need to do a special
+!  test for the southern and northern domain edges.
 !
 # if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
+        IF (j.eq.Mm(ng)+1) THEN                      ! northern boundary
+          DO k=1,N(ng)                               ! J-loop piplined
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
@@ -1125,8 +1129,8 @@
             END DO
           END DO
         END IF
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
+        IF (j.eq.0) THEN                             ! southern boundary
+          DO k=1,N(ng)                               ! J-loop pipelined
             DO i=IstrU,Iend
 #  ifdef NEARSHORE_MELLOR
 #   ifdef WET_DRY_NOT_YET
