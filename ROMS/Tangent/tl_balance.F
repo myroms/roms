@@ -449,7 +449,7 @@
 #  if defined EW_PERIODIC || defined NS_PERIODIC
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          tl_t(:,:,:,Linp,isalt)
+     &                          tl_t(:,:,:,Linp,isalt))
 #  endif
 #  ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, iTLM, 1,                          &

@@ -33,6 +33,14 @@
 !                                                                      !
 !     status       Error flag (integer).                               !
 !                                                                      !
+#ifdef POSITIVE_ZERO
+!  Starting F95 zero values can be signed (-0 or +0) following the     !
+!  IEEE 754 floating point standard.  This may produce different       !
+!  output data in serial and parallel applications. Since comparing    !
+!  serial and parallel output is essential for tracking parallel       !
+!  partition bugs, "positive zero" is enforced.                        !
+!                                                                      !
+#endif
 !=======================================================================
 !
       implicit none
@@ -180,6 +188,11 @@
                 DO j=Jmin,Jmax
                   ic=1+(j-LBij)+kc
                   Awrk(ic)=A(j,k,ib,ir)*Ascl
+#ifdef POSITIVE_ZERO
+                  IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+                    Awrk(ic)=0.0_r8               ! impose positive zero
+                  END IF
+#endif
                 END DO
               END DO
             ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
@@ -188,6 +201,11 @@
                 DO i=Imin,Imax
                   ic=1+(i-LBij)+kc
                   Awrk(ic)=A(i,k,ib,ir)*Ascl
+#ifdef POSITIVE_ZERO
+                  IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+                    Awrk(ic)=0.0_r8               ! impose positive zero
+                  END IF
+#endif
                 END DO
               END DO
             END IF

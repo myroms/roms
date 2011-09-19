@@ -815,7 +815,6 @@
             ioerror=status
           END IF
         END IF
-#endif
 !
 !  Analytical header files used.
 !
@@ -831,6 +830,7 @@
             END IF
           END IF
         END IF
+#endif
 
 #ifdef BIOLOGY
 !
@@ -1629,7 +1629,8 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 #endif
-#ifdef NUDGING_COFF
+
+#if !defined DEBUGGING && defined NUDGING_COFF
 !
 !  Open boundary nudging, inverse time scales.
 !

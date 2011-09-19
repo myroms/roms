@@ -576,7 +576,7 @@
 #   ifdef WEST_FSOBC
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(iwest,r2dvar)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -611,7 +611,7 @@
 #   ifdef EAST_FSOBC
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(ieast,r2dvar)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -646,7 +646,7 @@
 #   ifdef SOUTH_FSOBC
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(isouth,r2dvar)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -681,7 +681,7 @@
 #   ifdef NORTH_FSOBC
         IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(inorth,r2dvar)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -729,7 +729,7 @@
 #   ifdef WEST_FSOBC
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(iwest,r2dvar)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -765,7 +765,7 @@
 #   ifdef EAST_FSOBC
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           i=BOUNDS(ng)%edge(ieast,r2dvar)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -801,7 +801,7 @@
 #   ifdef SOUTH_FSOBC
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(isouth,r2dvar)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
@@ -837,7 +837,7 @@
 #   ifdef NORTH_FSOBC
         IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(inorth,r2dvar)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             hwater=h(i,j)
 #    ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))

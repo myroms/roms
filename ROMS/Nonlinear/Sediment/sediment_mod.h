@@ -204,6 +204,8 @@
 !  Local variable declarations
 !
       integer :: i, ic
+
+      real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Initialize tracer identification indices.
@@ -213,38 +215,48 @@
 !
       IF (.not.allocated(newlayer_thick)) THEN
         allocate ( newlayer_thick(Ngrids) )
+        newlayer_thick = IniVal
       END IF
       IF (.not.allocated(minlayer_thick)) THEN
         allocate ( minlayer_thick(Ngrids) )
+        minlayer_thick = IniVal
       END IF
       IF (.not.allocated(bedload_coeff)) THEN
         allocate ( bedload_coeff(Ngrids) )
+        bedload_coeff = IniVal
       END IF
 
 #if defined COHESIVE_BED || defined MIXED_BED
       IF (.not.allocated(tcr_min)) THEN
         allocate ( tcr_min(Ngrids) )
+        tcr_min = IniVal
       END IF
       IF (.not.allocated(tcr_max)) THEN
         allocate ( tcr_max(Ngrids) )
+        tcr_max = IniVal
       END IF
       IF (.not.allocated(tcr_slp)) THEN
         allocate ( tcr_slp(Ngrids) )
+        tcr_slp = IniVal
       END IF
       IF (.not.allocated(tcr_off)) THEN
         allocate ( tcr_off(Ngrids) )
+        tcr_off = IniVal
       END IF
       IF (.not.allocated(tcr_tim)) THEN
         allocate ( tcr_tim(Ngrids) )
+        tcr_tim = IniVal
       END IF
 #endif
 
 #if defined MIXED_BED
       IF (.not.allocated(tcr_tim)) THEN
         allocate ( transC(Ngrids) )
+        transC = IniVal
       END IF
       IF (.not.allocated(tcr_tim)) THEN
         allocate ( transN(Ngrids) )
+        transN = IniVal
       END IF
 #endif
 !

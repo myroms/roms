@@ -293,7 +293,7 @@
 !>
             ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
      &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1)=0.0_r8
+            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
 !>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
             ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
@@ -302,7 +302,7 @@
 !>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
             ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3)
+     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
             ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
 #  endif
           END DO
@@ -421,7 +421,7 @@
      &                    ad_A(Lm(ng)+2,j,k)
               ad_A(Lm(ng)+2,j,k)=0.0_r8
 #  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j)=tl_A(3,j)
+!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
 !>
               ad_A(3,j,k)=ad_A(3,j,k)+                                  &
      &                    ad_A(Lm(ng)+3,j,k)
@@ -688,7 +688,7 @@
 !>
             ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
      &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1)=0.0_r8
+            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
 !>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
             ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
@@ -697,7 +697,7 @@
 !>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
             ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3)
+     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
             ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
 #  endif
           END DO
@@ -816,7 +816,7 @@
      &                    ad_A(Lm(ng)+2,j,k)
               ad_A(Lm(ng)+2,j,k)=0.0_r8
 #  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j)=tl_A(3,j)
+!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
 !>
               ad_A(3,j,k)=ad_A(3,j,k)+                                  &
      &                    ad_A(Lm(ng)+3,j,k)
@@ -1083,7 +1083,7 @@
 !>
             ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
      &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1)=0.0_r8
+            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
 !>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
             ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
@@ -1092,7 +1092,7 @@
 !>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
             ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3)
+     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
             ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
 #  endif
           END DO
@@ -1211,7 +1211,7 @@
      &                    ad_A(Lm(ng)+2,j,k)
               ad_A(Lm(ng)+2,j,k)=0.0_r8
 #  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j)=tl_A(3,j)
+!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
 !>
               ad_A(3,j,k)=ad_A(3,j,k)+                                  &
      &                    ad_A(Lm(ng)+3,j,k)
@@ -1478,7 +1478,7 @@
 !>
             ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
      &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1)=0.0_r8
+            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
 !>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
             ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
@@ -1487,7 +1487,7 @@
 !>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
             ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3)
+     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
             ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
 #  endif
           END DO
@@ -1606,7 +1606,7 @@
      &                    ad_A(Lm(ng)+2,j,k)
               ad_A(Lm(ng)+2,j,k)=0.0_r8
 #  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j)=tl_A(3,j)
+!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
 !>
               ad_A(3,j,k)=ad_A(3,j,k)+                                  &
      &                    ad_A(Lm(ng)+3,j,k)
@@ -1873,7 +1873,7 @@
 !>
             ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
      &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1)=0.0_r8
+            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
 !>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
             ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
@@ -1882,7 +1882,7 @@
 !>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
             ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3)
+     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
             ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
 #  endif
           END DO
@@ -2001,7 +2001,7 @@
      &                    ad_A(Lm(ng)+2,j,k)
               ad_A(Lm(ng)+2,j,k)=0.0_r8
 #  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j)=tl_A(3,j)
+!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
 !>
               ad_A(3,j,k)=ad_A(3,j,k)+                                  &
      &                    ad_A(Lm(ng)+3,j,k)

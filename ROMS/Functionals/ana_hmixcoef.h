@@ -154,20 +154,23 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
+#ifdef DISTRIBUTE
+# ifdef EW_PERIODIC
       logical :: EWperiodic=.TRUE.
-#  else
+# else
       logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
 # endif
+# ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+# else
+      logical :: NSperiodic=.FALSE.
+# endif
+#endif
       integer :: Iwrk, i, j, itrc
       real(r8) :: cff, cff1, cff2, fac
+#ifdef WC13
+      real(r8) :: cff_t, cff_s, cff1_t, cff2_t, cff1_s, cff2_s
+#endif
 
 #include "set_bounds.h"
 
@@ -211,6 +214,7 @@
       END DO
 # endif
 #endif
+
 #ifdef DIFF_GRID
 !
 !-----------------------------------------------------------------------
@@ -241,6 +245,7 @@
       END DO
 # endif
 #endif
+
 #ifdef SPONGE
 !
 !-----------------------------------------------------------------------
@@ -285,8 +290,97 @@
         END DO
       END DO
 #  endif
+
+# elif defined WC13
+!
+!  US West Coast sponge areas.
+!
+      Iwrk=INT(user(1))  ! same for sponge and nudging layers
+
+#  if defined UV_VIS2
+!
+!  Momentum sponge regions:  sponge viscosities as in Marchesiello
+!  et al 2003.
+!
+      cff1=visc2(ng)
+      cff2=100.0_r8
+!
+!  Southern edge.
+!
+      DO j=JstrR,MIN(Iwrk,JendR)
+        cff=cff1+REAL(Iwrk-j,r8)*(cff2-cff1)/REAL(Iwrk,r8)
+        DO i=IstrR,IendR
+          visc2_r(i,j)=MAX(MIN(cff,cff2),cff1)
+          visc2_p(i,j)=MAX(MIN(cff,cff2),cff1)
+        END DO
+      END DO
+!
+!  Northern edge.
+!
+      DO j=MAX(JstrR,Mm(ng)+1-Iwrk),JendR
+        cff=cff2-REAL(Mm(ng)+1-j,r8)*(cff2-cff1)/REAL(Iwrk,r8)
+        DO i=IstrR,IendR
+          visc2_r(i,j)=MAX(MIN(cff,cff2),cff1)
+          visc2_p(i,j)=MAX(MIN(cff,cff2),cff1)
+        END DO
+      END DO
+!
+!  Western edge.
+!
+      DO i=IstrR,MIN(Iwrk,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          cff=cff1+REAL(Iwrk-i,r8)*(cff2-cff1)/REAL(Iwrk,r8)
+          visc2_r(i,j)=MAX(MIN(cff,cff2),cff1)
+          visc2_p(i,j)=MAX(MIN(cff,cff2),cff1)
+        END DO
+      END DO
+#  endif
+#  if defined TS_DIF2
+!
+!  Tracer sponge regions: sponge diffusivities as in Marchesiello
+!  et al 2003.
+!
+      cff1_t=tnu2(itemp,ng)
+      cff1_s=tnu2(isalt,ng)
+      cff2_t=50.0_r8
+      cff2_s=50.0_r8
+!
+!  Southern edge.
+!
+      DO j=JstrR,MIN(Iwrk,JendR)
+        cff_t=cff1_t+REAL(Iwrk-j,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+        cff_s=cff1_s+REAL(Iwrk-j,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+        DO i=IstrR,IendR
+          diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+          diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+        END DO
+      END DO
+!
+!  Northern edge.
+!
+      DO j=MAX(JstrR,Mm(ng)+1-Iwrk),JendR
+        cff_t=cff2_t-REAL(Mm(ng)+1-j,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+        cff_s=cff2_s-REAL(Mm(ng)+1-j,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+        DO i=IstrR,IendR
+          diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+          diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+        END DO
+      END DO
+!
+!  Western edge.
+!
+      DO i=IstrR,MIN(Iwrk,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          cff_t=cff1_t+REAL(Iwrk-i,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+          cff_s=cff1_s+REAL(Iwrk-i,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+          diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+          diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+        END DO
+      END DO
+#  endif
 # endif
 #endif
+
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -360,5 +454,6 @@
 # endif
 
 #endif
+
       RETURN
       END SUBROUTINE ana_hmixcoef_tile

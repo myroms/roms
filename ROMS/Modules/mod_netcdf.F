@@ -130,12 +130,16 @@
       integer, parameter :: NF_TYPE = nf90_real
 #endif
 !
-!  Netcdf file creation mode flag.
+!  Netcdf file basic creation mode flag. Its value is further modified
+!  in "netcdf_create" using the IOR function to include additional
+!  flags, like "nf90_clobber" to overwrite existing file.
 !
 #if defined HDF5
-      integer :: CMODE = nf90_hdf5         ! NetCDF-4/HDF5 format file
+!     integer :: CMODE = nf90_hdf5         ! NetCDF-4/HDF5 format file
+      integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
 #else
-      integer :: CMODE = nf90_clobber      ! NetCDF classic format file
+      integer :: CMODE = nf90_64bit_offset ! NetCDF 64-bit offset format
+!                                            (large file support)
 #endif
 !
 !  Set NetCDF-4/HDF5 deflate (file compression) parameters.
@@ -5695,7 +5699,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: status
+      integer :: my_cmode, status
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer :: ibuffer(3)
 #endif
@@ -5711,10 +5715,10 @@
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
 !
-!!    status=nf90_create_par(TRIM(ncname), nf90_netcdf4,                &
-!!   &                       OCN_COMM_WORLD, MP_INFO, ncid)
+      my_cmode=IOR(nf90_mpiio, nf90_clobber)
+      my_cmode=IOR(my_cmode, CMODE)
       status=nf90_create(path = TRIM(ncname),                           &
-     &                   cmode = nf90_hdf5,                             &
+     &                   cmode = my_cmode,                              &
      &                   ncid = ncid,                                   &
      &                   comm = OCN_COMM_WORLD,                         &
      &                   info = MP_INFO)
@@ -5724,8 +5728,9 @@
         ioerror=status
       END IF
 #else
+      my_cmode=IOR(nf90_clobber, CMODE)
       IF (OutThread) THEN
-        status=nf90_create(TRIM(ncname), CMODE, ncid)
+        status=nf90_create(TRIM(ncname), my_cmode, ncid)
         IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
           exit_flag=3

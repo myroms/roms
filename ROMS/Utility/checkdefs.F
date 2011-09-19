@@ -1614,6 +1614,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' PJ_GRADPQ4,'
 #endif
+#ifdef POSITIVE_ZERO
+      IF (Master) WRITE (stdout,20) 'POSITIVE_ZERO',                    &
+     &   'Impose positive zero in output data.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' POSITIVE_ZERO,'
+#endif
 #if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
       IF (Master) WRITE (stdout,20) 'POSTERIOR_EOFS',                   &
      &   'Estimating posterior analysis error covariace matrix EOFs.'

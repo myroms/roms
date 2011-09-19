@@ -636,6 +636,7 @@
 ** PARALLEL_IO         use if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART     use to include perfect restart variables              **
 ** PNETCDF             use if parallel I/O with pnetcdf (classic format)     **
+** POSITIVE_ZERO       use to impose positive zero in ouput data             **
 ** READ_WATER          use if only reading water points data                 **
 ** WRITE_WATER         use if only writing water points data                 **
 ** RST_SINGLE          use if writing single precision restart fields        **

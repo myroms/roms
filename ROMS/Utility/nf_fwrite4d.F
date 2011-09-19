@@ -37,6 +37,14 @@
 !                                                                      !
 !     nf_fwrite4d  Error flag (integer).                               !
 !                                                                      !
+#ifdef POSITIVE_ZERO
+!  Starting F95 zero values can be signed (-0 or +0) following the     !
+!  IEEE 754 floating point standard.  This may produce different       !
+!  output data in serial and parallel applications. Since comparing    !
+!  serial and parallel output is essential for tracking parallel       !
+!  partition  bugs, "positive zero" is enforced.                       !
+!                                                                      !
+#endif
 !=======================================================================
 !
       implicit none
@@ -232,6 +240,11 @@
               DO i=Imin,Imax
                 ic=ic+1
                 Awrk(ic)=A(i,j,k,l)*Ascl
+# ifdef POSITIVE_ZERO
+                IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+                  Awrk(ic)=0.0_r8                 ! impose positive zero
+                END IF
+# endif
 # ifdef MASKING
                 IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                   Awrk(ic)=spval
@@ -323,6 +336,11 @@
               DO i=Imin,Imax
                 ic=i+Ioff+jc
                 Awrk(ic)=A(i,j,k,l)*Ascl
+#  ifdef POSITIVE_ZERO
+                IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+                  Awrk(ic)=0.0_r8                 ! impose positive zero
+                END IF
+#  endif
                 IF (Amask(i,j).eq.0.0_r8) THEN
                   Awrk(ic)=spval
                 END IF
@@ -552,6 +570,13 @@
             total(2)=1
 #  endif
           END IF
+#  ifdef POSITIVE_ZERO
+          DO ic=1,Npts
+            IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+              Awrk(ic)=0.0_r8                     ! impose positive zero
+            END IF
+          END DO
+#  endif
           status=nf90_put_var(ncid, ncvarid, Awrk, start, total)
           nf_fwrite4d=status
         END IF
@@ -630,6 +655,13 @@
             total(2)=1
 #  endif
           END IF
+#  ifdef POSITIVE_ZERO
+          DO ic=1,Npts
+            IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
+              Awrk(ic)=0.0_r8                     ! impose positive zero
+            END IF
+          END DO
+#  endif
           status=nf90_put_var(ncid, ncvarid, Awrk, start, total)
         END IF
       END DO

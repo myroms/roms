@@ -624,7 +624,7 @@
       IF (exit_flag.ne.NoError) RETURN
 #endif
 
-#ifdef NUDGING_COFF
+#if !defined DEBUGGING && defined NUDGING_COFF
 !
 !  Open boundary nudging, inverse time scales.
 !

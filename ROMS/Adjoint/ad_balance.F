@@ -1066,11 +1066,11 @@
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          tl_t(:,:,:,Linp,isalt)
+!>   &                          tl_t(:,:,:,Linp,isalt))
 !>
         CALL ad_exchange_r3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             ad_t(:,:,:,Linp,isalt)
+     &                             ad_t(:,:,:,Linp,isalt))
 #  endif
 !
 !  Compute temperature (dTdz) and salinity (dSdz) shears.
