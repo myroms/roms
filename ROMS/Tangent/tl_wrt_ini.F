@@ -493,7 +493,7 @@
 
 #  if defined IS4DVAR
 !
-!  Write out current optimal, normalized cost function minimun.  Notice
+!  Write out current optimal, normalized cost function minimum.  Notice
 !  that it is written into DAV(ng)%name file instead of ITL(ng)%name
 !  file.
 !

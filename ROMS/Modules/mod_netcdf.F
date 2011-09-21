@@ -72,8 +72,8 @@
 !
 !  Local dimension parameters.
 !
-      integer, parameter :: Mdims = 50  ! maximun number of dimensions
-      integer, parameter :: Mvars = 700 ! maximun number of variables
+      integer, parameter :: Mdims = 50  ! maximum number of dimensions
+      integer, parameter :: Mvars = 800 ! maximum number of variables
       integer, parameter :: NvarD = 5   ! number of variable dimensions
       integer, parameter :: NvarA = 50  ! number of variable attributes
 !
@@ -1464,7 +1464,7 @@
      &        /,18x,'call from:',2x,a)
   20  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring variable ID:', &
      &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
-  30  FORMAT (/,' NETCDF_INQ_VAR - too small dimension parameter,',a,   &
+  30  FORMAT (/,' NETCDF_INQ_VAR - too small dimension parameter, ',a,  &
      &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
   40  FORMAT (/,' NETCDF_INQ_VAR - unable to inquire about contents',   &
      &          ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a)
@@ -1857,7 +1857,7 @@
       END IF
 #endif
 !
-!  Compute minimum and maximun values of read variable. Notice that
+!  Compute minimum and maximum values of read variable. Notice that
 !  the same read value is assigned since a scalar variable was
 !  processed.
 !
@@ -2070,7 +2070,7 @@
         END DO
       END IF
 !
-!  Compute minimum and maximun values of read variable.
+!  Compute minimum and maximum values of read variable.
 !
       IF (PRESENT(min_val)) THEN
         min_val=MINVAL(A)
@@ -2283,7 +2283,7 @@
         END DO
       END IF
 !
-!  Compute minimum and maximun values of read variable.
+!  Compute minimum and maximum values of read variable.
 !
       IF (PRESENT(min_val)) THEN
         min_val=MINVAL(A)
@@ -2498,7 +2498,7 @@
         END DO
       END IF
 !
-!  Compute minimum and maximun values of read variable.
+!  Compute minimum and maximum values of read variable.
 !
       IF (PRESENT(min_val)) THEN
         min_val=MINVAL(A)
@@ -2717,7 +2717,7 @@
         END DO
       END IF
 !
-!  Compute minimum and maximun values of read variable.
+!  Compute minimum and maximum values of read variable.
 !
       IF (PRESENT(min_val)) THEN
         min_val=MINVAL(A)

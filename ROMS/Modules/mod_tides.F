@@ -187,7 +187,7 @@
             ENDIF
 # endif
 !
-!  Set maximun number of tidal components.  Allocate and initialize
+!  Set maximum number of tidal components.  Allocate and initialize
 !  TIDE I/O structure.
 !
             IF (foundit) THEN

@@ -46,7 +46,7 @@
 ! empirical T-S relationships in the error covariance balance operator,
 ! [1:Ngrids].
 
-       dTdz_min == 0.001d0                ! minimun dT/dz (Celsius/m)
+       dTdz_min == 0.001d0                ! minimum dT/dz (Celsius/m)
        ml_depth == 100.0d0                ! mixed-layer depth (m; positive)
 
 ! Balance operator level of no motion depth (m) used when computing balanced

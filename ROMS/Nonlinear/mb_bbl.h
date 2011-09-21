@@ -361,7 +361,7 @@
           tau_bf=0.79_r8*(viscosity**(-0.6_r8))*                        &
      &           (((rhoSed-1.0_r8)*g)**0.3_r8)*(d50**0.9_r8)*tau_cb
 !
-!  Set Znot for currents as maximun of user value or grain roughness.
+!  Set Znot for currents as maximum of user value or grain roughness.
 !
            ZnotC=d50/12.0_r8
            Znot=MAX(ZoBot(i,j),ZnotC)

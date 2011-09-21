@@ -148,7 +148,7 @@
      &                      min_val = Tmin,                             &
      &                      max_val = Tmax)
 !
-!  Scale time variable to days.  Determine the minimum and maximun time
+!  Scale time variable to days.  Determine the minimum and maximum time
 !  values available
 !
       DO i=1,ntime

@@ -71,8 +71,8 @@
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-        integer, parameter :: MV = 800
-        integer, parameter :: NV = 800
+        integer, parameter :: MV = 950
+        integer, parameter :: NV = 950
 !
 !  Input/output grid-type variables.
 !
@@ -389,7 +389,7 @@
         integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
 #endif
 !
-!  Assimilation state variables indices (order is important).
+!  State variables indices (order is important).
 !
         integer  :: isFsur = 1                ! free-surface
         integer  :: isUbar = 2                ! 2D U-velocity
