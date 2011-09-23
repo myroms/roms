@@ -69,9 +69,7 @@
       USE bc_3d_mod
 # endif
 # ifdef WET_DRY
-#  if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
-#  endif
 # endif
 # ifdef DISTRIBUTE
 #  ifdef WET_DRY
@@ -94,18 +92,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, it, j, k
       integer :: idiag
 
@@ -419,26 +405,29 @@
             GRID(ng)%vmask_dia(i,j)=MIN(1.0_r8, GRID(ng)%vmask_dia(i,j))
           END DO
         END DO
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_p2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          GRID(ng)%pmask_dia)
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          GRID(ng)%rmask_dia)
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          GRID(ng)%umask_dia)
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          GRID(ng)%vmask_dia)
-#  endif
+!
+!  Exchange boundary data.
+!
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          CALL exchange_p2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            GRID(ng)%pmask_dia)
+          CALL exchange_r2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            GRID(ng)%rmask_dia)
+          CALL exchange_u2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            GRID(ng)%umask_dia)
+          CALL exchange_v2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            GRID(ng)%vmask_dia)
+        END IF
 
 #  ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iNLM, 4,                          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      GRID(ng)%pmask_dia,                         &
      &                      GRID(ng)%rmask_dia,                         &
      &                      GRID(ng)%umask_dia,                         &
@@ -538,7 +527,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange4d (ng, tile, iNLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),  &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        DIAGS(ng)%DiaTrc(:,:,:,:,idiag))
 #   endif
         END DO
@@ -558,7 +548,8 @@
 #   ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, NDM2d,               &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      DIAGS(ng)%DiaU2d,                           &
      &                      DIAGS(ng)%DiaV2d)
 #   endif
@@ -577,7 +568,8 @@
 #    ifdef DISTRIBUTE
         CALL mp_exchange4d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDM3d,     &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      DIAGS(ng)%DiaU3d,                           &
      &                      DIAGS(ng)%DiaV3d)
 #    endif

@@ -4431,6 +4431,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
+      USE mod_scalars
 !
       implicit none
 !
@@ -4473,18 +4474,20 @@
 !
       Imin=0
       Imax=Lm(ng)+1
-# ifdef EW_PERIODIC
-      Ioff=3
-# else
-      Ioff=1
-# endif
+      IF (EWperiodic(ng)) THEN
+        Ioff=3
+      ELSE
+        Ioff=1
+      END IF
+
       Jmin=0
       Jmax=Mm(ng)+1
-# ifdef NS_PERIODIC
-      Joff=3
-# else
-      Joff=1
-# endif
+      IF (NSperiodic(ng)) THEN
+        Joff=3
+      ELSE
+        Joff=1
+      END IF
+
       IF ((gtype.eq.p2dvar).or.(gtype.eq.p3dvar).or.                    &
      &    (gtype.eq.u2dvar).or.(gtype.eq.u3dvar)) THEN
         Imin=1
@@ -4504,18 +4507,20 @@
 !
       Imin=IstrR
       Imax=IendR
-# ifdef EW_PERIODIC
-      Ioff=2
-# else
-      Ioff=1
-# endif
+      IF (EWperiodic(ng)) THEN
+        Ioff=2
+      ELSE
+        Ioff=1
+      END IF
+
       Jmin=JstrR
       Jmax=JendR
-# ifdef NS_PERIODIC
-      Joff=2
-# else
-      Joff=1
-# endif
+      IF (NSperiodic(ng)) THEN
+        Joff=2
+      ELSE
+        Joff=1
+      END IF
+
       IF ((gtype.eq.p2dvar).or.(gtype.eq.p3dvar).or.                    &
      &    (gtype.eq.u2dvar).or.(gtype.eq.u3dvar)) THEN
         Imin=Istr

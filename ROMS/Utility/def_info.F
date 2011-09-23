@@ -217,7 +217,7 @@
      &                        'netCDF-4/HDF5 file')
 # else
           status=nf90_put_att(ncid, nf90_global, 'format',              &
-     &                        'netCDF-3 classic file')
+     &                        'netCDF-3 64bit offset file')
 # endif
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'format', TRIM(ncname)
@@ -559,18 +559,19 @@
         END IF
 #endif
 
-#ifdef OBC_DATA
-        IF (exit_flag.eq.NoError) THEN
-          CALL join_string (BRY(ng)%files, BRY(ng)%Nfiles, string, lstr)
-          status=nf90_put_att(ncid, nf90_global, 'bry_file',            &
-     &                        string(1:lstr))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) WRITE (stdout,20) 'bry_file', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
+        IF (ObcData(ng)) THEN
+          IF (exit_flag.eq.NoError) THEN
+            CALL join_string (BRY(ng)%files, BRY(ng)%Nfiles,            &
+     &                        string, lstr)
+            status=nf90_put_att(ncid, nf90_global, 'bry_file',          &
+     &                          string(1:lstr))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'bry_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
           END IF
         END IF
-#endif
 
 #if (defined  ZCLIMATOLOGY && !defined ANA_SSH)     || \
     (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
@@ -672,6 +673,34 @@
             ioerror=status
           END IF
         END IF
+#endif
+
+#ifndef DEBUGGING
+!
+!  NLM Lateral boundary conditions.
+!
+        IF (exit_flag.eq.NoError) THEN
+          CALL lbc_putatt (ng, ncid, ncname, 'NLM_LBC', LBC, status)
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'NLM_LBC', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+!
+!  Adjoint-based lateral boundary conditions.
+!
+        IF (exit_flag.eq.NoError) THEN
+          CALL lbc_putatt (ng, ncid, ncname, 'ADM_LBC', ad_LBC, status)
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'ADM_LBC', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+# endif
 #endif
 !
 !  SVN repository information.
@@ -1630,75 +1659,77 @@
       IF (exit_flag.ne.NoError) RETURN
 #endif
 
-#if !defined DEBUGGING && defined NUDGING_COFF
+#ifndef DEBUGGING
 !
 !  Open boundary nudging, inverse time scales.
 !
-      Vinfo( 1)='FSobc_in'
-      Vinfo( 2)='free-surface inflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (NudgingCoeff(ng)) THEN
+        Vinfo( 1)='FSobc_in'
+        Vinfo( 2)='free-surface inflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='FSobc_out'
-      Vinfo( 2)='free-surface outflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='FSobc_out'
+        Vinfo( 2)='free-surface outflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='M2obc_in'
-      Vinfo( 2)='2D momentum inflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='M2obc_in'
+        Vinfo( 2)='2D momentum inflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='M2obc_out'
-      Vinfo( 2)='2D momentum outflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='M2obc_out'
+        Vinfo( 2)='2D momentum outflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
-      Vinfo( 1)='Tobc_in'
-      Vinfo( 2)='tracers inflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               2, tbrydim, Aval, Vinfo, ncname,                   &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='Tobc_in'
+        Vinfo( 2)='tracers inflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 2, tbrydim, Aval, Vinfo, ncname,                 &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='Tobc_out'
-      Vinfo( 2)='tracers outflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               2, tbrydim, Aval, Vinfo, ncname,                   &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='Tobc_out'
+        Vinfo( 2)='tracers outflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 2, tbrydim, Aval, Vinfo, ncname,                 &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='M3obc_in'
-      Vinfo( 2)='3D momentum inflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='M3obc_in'
+        Vinfo( 2)='3D momentum inflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 
-      Vinfo( 1)='M3obc_out'
-      Vinfo( 2)='3D momentum outflow, nudging inverse time scale'
-      Vinfo( 3)='second-1'
-      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/brydim/), Aval, Vinfo, ncname,                &
-     &               SetParAccess = .FALSE.)
-      IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='M3obc_out'
+        Vinfo( 2)='3D momentum outflow, nudging inverse time scale'
+        Vinfo( 3)='second-1'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/brydim/), Aval, Vinfo, ncname,              &
+     &                 SetParAccess = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
+      END IF
 #endif
 !
 !  Equation of State parameters.

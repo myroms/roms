@@ -34,10 +34,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ad_pre_step3d
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -203,9 +203,7 @@
       USE mod_param
       USE mod_scalars
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
       USE ad_exchange_3d_mod, ONLY : ad_exchange_r3d_tile
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange4d
 # endif
@@ -383,18 +381,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, indx, is, itrc, j, k, ltrc
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
@@ -479,37 +465,43 @@
 #   ifdef TS_MPDATA_NOT_YET
 !>    CALL mp_exchange4d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    tl_t(:,:,:,nnew,:),                           &
 !>   &                    tl_t(:,:,:,3,:))
 !>
       CALL ad_mp_exchange4d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_t(:,:,:,nnew,:),                        &
      &                       ad_t(:,:,:,3,:))
 #   else
 !>    CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    tl_t(:,:,:,3,:))
 !>
       CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_t(:,:,:,3,:))
 #   endif
+!
 #  endif
+
       DO itrc=1,NT(ng)
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!>      CALL exchange_r3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          tl_t(:,:,:,3,itrc))
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+!>        CALL exchange_r3d_tile (ng, tile,                             &
+!>   &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+!>   &                            tl_t(:,:,:,3,itrc))
 !>
-        CALL ad_exchange_r3d_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             ad_t(:,:,:,3,itrc))
-#  endif
+          CALL ad_exchange_r3d_tile (ng, tile,                          &
+     &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
+     &                               ad_t(:,:,:,3,itrc))
+        END IF
 !>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !>   &                      IminS, ImaxS, JminS, JmaxS,                 &
@@ -1868,18 +1860,21 @@
 #    endif
             END DO
           END DO
-#    if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO i=Istr,Iend
-              FE(i,Jstr-1)=FE(i,Jstr)
-            END DO
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                DO i=Istr,Iend
+                  FE(i,Jstr-1)=FE(i,Jstr)
+                END DO
+              END IF
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                DO i=Istr,Iend
+                  FE(i,Jend+2)=FE(i,Jend+1)
+                END DO
+              END IF
+            END IF
           END IF
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO i=Istr,Iend
-              FE(i,Jend+2)=FE(i,Jend+1)
-            END DO
-          END IF
-#    endif
+!
           DO j=Jstr-1,Jend+1
             DO i=Istr,Iend
 #    if defined TS_U3HADVECTION_TL
@@ -2010,24 +2005,26 @@
 #    endif
             END DO
           END DO
-#    if !defined NS_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO i=Istr,Iend
-!>            tl_FE(i,Jend+2)=tl_FE(i,Jend+1)
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                DO i=Istr,Iend
+!>                tl_FE(i,Jend+2)=tl_FE(i,Jend+1)
 !>
-              ad_FE(i,Jend+1)=ad_FE(i,Jend+1)+ad_FE(i,Jend+2)
-              ad_FE(i,Jend+2)=0.0_r8
-            END DO
-          END IF
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO i=Istr,Iend
-!>            tl_FE(i,Jstr-1)=tl_FE(i,Jstr)
+                  ad_FE(i,Jend+1)=ad_FE(i,Jend+1)+ad_FE(i,Jend+2)
+                  ad_FE(i,Jend+2)=0.0_r8
+                END DO
+              END IF
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                DO i=Istr,Iend
+!>                tl_FE(i,Jstr-1)=tl_FE(i,Jstr)
 !>
-              ad_FE(i,Jstr)=ad_FE(i,Jstr)+ad_FE(i,Jstr-1)
-              ad_FE(i,Jstr-1)=0.0_r8
-            END DO
+                  ad_FE(i,Jstr)=ad_FE(i,Jstr)+ad_FE(i,Jstr-1)
+                  ad_FE(i,Jstr-1)=0.0_r8
+                END DO
+              END IF
+            END IF
           END IF
-#    endif
 !
           DO j=Jstrm1,Jendp2
             DO i=Istr,Iend
@@ -2054,18 +2051,21 @@
 #    endif
             END DO
           END DO
-#    if !defined EW_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-            DO j=Jstr,Jend
-              FX(Istr-1,j)=FX(Istr,j)
-            END DO
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                DO j=Jstr,Jend
+                  FX(Istr-1,j)=FX(Istr,j)
+                END DO
+              END IF
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                DO j=Jstr,Jend
+                  FX(Iend+2,j)=FX(Iend+1,j)
+                END DO
+              END IF
+            END IF
           END IF
-          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-            DO j=Jstr,Jend
-              FX(Iend+2,j)=FX(Iend+1,j)
-            END DO
-          END IF
-#    endif
+!
           DO j=Jstr,Jend
             DO i=Istr-1,Iend+1
 #    if defined TS_U3HADVECTION_TL
@@ -2197,24 +2197,26 @@
               ad_cff=0.0_r8
             END DO
           END DO
-#    if !defined EW_PERIODIC && !defined COMPOSED_GRID
-          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-            DO j=Jstr,Jend
-!>            tl_FX(Iend+2,j)=tl_FX(Iend+1,j)
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                DO j=Jstr,Jend
+!>                tl_FX(Iend+2,j)=tl_FX(Iend+1,j)
 !>
-              ad_FX(Iend+1,j)=ad_FX(Iend+1,j)+ad_FX(Iend+2,j)
-              ad_FX(Iend+2,j)=0.0_r8
-            END DO
-          END IF
-          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-            DO j=Jstr,Jend
-!>            tl_FX(Istr-1,j)=tl_FX(Istr,j)
+                  ad_FX(Iend+1,j)=ad_FX(Iend+1,j)+ad_FX(Iend+2,j)
+                  ad_FX(Iend+2,j)=0.0_r8
+                END DO
+              END IF
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                DO j=Jstr,Jend
+!>                tl_FX(Istr-1,j)=tl_FX(Istr,j)
 !>
-              ad_FX(Istr,j)=ad_FX(Istr,j)+ad_FX(Istr-1,j)
-              ad_FX(Istr-1,j)=0.0_r8
-            END DO
+                  ad_FX(Istr,j)=ad_FX(Istr,j)+ad_FX(Istr-1,j)
+                  ad_FX(Istr-1,j)=0.0_r8
+                END DO
+              END IF
+            END IF
           END IF
-#    endif
 !
           DO j=Jstr,Jend
             DO i=Istrm1,Iendp2

@@ -27,11 +27,6 @@
 #define SALINITY
 #define SOLVE3D
 #define SPLINES
-#define NS_PERIODIC
-#define EASTERN_WALL
-#define WEST_FSCHAPMAN
-#define WEST_M2FLATHER
-#define WEST_M3GRADIENT
 
 #define MASKING
 #ifdef MASKING

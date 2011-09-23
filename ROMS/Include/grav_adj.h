@@ -25,7 +25,6 @@
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES
-#define NS_PERIODIC
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX

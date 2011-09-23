@@ -7,11 +7,12 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Weak Constraint 4-Dimensional Variational (4DVar)         !
-!            Data Assimilation Driver: Indirect Representer Approach   !
+!  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
+!            Assimilation Driver: Indirect Representer Approach        !
+!           (R4D-Var).  Dual formulation in observarion space.         !
 !                                                                      !
-!  This driver is used for weak constraint 4DVar where errors are      !
-!  considered in both model and observations.                          !
+!  This driver is used for strong/weak constraint 4D-Var where errors  !
+!  may be considered in both model and observations.                   !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
 !  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
@@ -21,11 +22,20 @@
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
 !                                                                      !
-!  WARNING: This driver cannot be run from the ESMF super-structure.   !
-!  =======  Therefore, ESMF coupling is not possible. However, there   !
-!  are newer options in ESMF for direct coupling,  so it is possible   !
-!  to couple from any of the synchronization points in time-stepping   !
-!  routines main2d or main3d.                                          !
+!  References:                                                         !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, B.S. Powell, A.T. Weaver,     !
+!    and J. Zavala-Garay, 2011: The Regional Ocean Modeling System     !
+!    (ROMS)  4-dimensional variational data assimilations systems,     !
+!    Part I - System overview and formulation, Prog. Oceanogr., 91,    !
+!    34-49, doi:10.1016/j.pocean.2011.05.004.                          !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part II - Performance     !
+!    and application to the California Current System, Prog.           !
+!    Oceanogr., 91, 50-73, doi:10.1016/j.pocean.2011.05.003.           !
 !                                                                      !
 !=======================================================================
 !

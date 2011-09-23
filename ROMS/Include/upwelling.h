@@ -33,7 +33,6 @@
 #define AVERAGES
 #define DIAGNOSTICS_TS
 #define DIAGNOSTICS_UV
-#define EW_PERIODIC
 
 #define ANA_GRID
 #define ANA_INITIAL

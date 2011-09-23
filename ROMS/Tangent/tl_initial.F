@@ -31,9 +31,7 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef ANALYTICAL
       USE analytical_mod
-# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
@@ -135,9 +133,9 @@
       nfm2(ng)=3
       nfm3(ng)=2
 # endif
-# ifdef OBC_VOLCONS
-      tl_ubar_xs=0.0_r8
-# endif
+      IF (ANY(tl_VolCons(:,ng))) THEN
+        tl_ubar_xs=0.0_r8
+      END IF
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
@@ -322,8 +320,6 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-
-# ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
 !  If appropriate, set nudging coefficiests time scales.
@@ -337,7 +333,7 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-# endif
+
       END IF
 !
 !-----------------------------------------------------------------------

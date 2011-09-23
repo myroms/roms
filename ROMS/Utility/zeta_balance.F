@@ -143,10 +143,8 @@
       USE mod_scalars
       USE mod_grid
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
       USE exchange_3d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
@@ -212,18 +210,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j, k
 
       real(r8) :: fac, fac1, fac2, fac3, gamma
@@ -392,7 +378,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    rhs_r2d)
 # endif
 
@@ -479,6 +466,7 @@
       USE mod_grid
       USE mod_iounits
       USE mod_parallel
+      USE mod_scalars
 !
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d
@@ -546,18 +534,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical :: Ltrans
 
       integer :: i, j, it
@@ -605,7 +581,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    r2d_ref)
 # endif
 !
@@ -659,7 +636,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      z1_r2d)
 # endif
 !
@@ -725,7 +703,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        r2d_ref)
 # endif
 !
@@ -791,7 +770,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      z1_r2d)
 # endif
 !
@@ -816,7 +796,8 @@
 # ifdef DISTRIBUTE
         CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         NghostPoints,                            &
+     &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         bv_r2d)
 # endif
         CALL ad_r2d_bc (ng, tile,                                       &
@@ -928,18 +909,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j
 
       real(r8) :: cff, fac
@@ -1072,11 +1041,9 @@
 !***********************************************************************
 !
       USE mod_param
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE mod_scalars
 !
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
-# endif
 !
 !  Imported variable declarations.
 !
@@ -1094,93 +1061,89 @@
       integer :: i, j
 
 # include "set_bounds.h"
-
-# ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstr,Jend
-#  ifdef R2D_GRADIENT
-          A(Iend+1,j)=A(Iend,j)
-#  else
-          A(Iend+1,j)=0.0_r8
-#  endif
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstr,Jend
-#  ifdef R2D_GRADIENT
-          A(Istr-1,j)=A(Istr,j)
-#  else
-          A(Istr-1,j)=0.0_r8
-#  endif
-        END DO
-      END IF
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=Jstr,Jend
+# ifdef R2D_GRADIENT
+            A(Iend+1,j)=A(Iend,j)
+# else
+            A(Iend+1,j)=0.0_r8
 # endif
-
-# ifndef NS_PERIODIC
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=Jstr,Jend
+# ifdef R2D_GRADIENT
+            A(Istr-1,j)=A(Istr,j)
+# else
+            A(Istr-1,j)=0.0_r8
+# endif
+          END DO
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,Iend
-#  ifdef R2D_GRADIENT
-          A(i,Jend+1)=A(i,Jend)
-#  else
-          A(i,Jend+1)=0.0_r8
-#  endif
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,Iend
-#  ifdef R2D_GRADIENT
-          A(i,Jstr-1)=A(i,Jstr)
-#  else
-          A(i,Jstr-1)=0.0_r8
-#  endif
-        END DO
-      END IF
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=Istr,Iend
+# ifdef R2D_GRADIENT
+            A(i,Jend+1)=A(i,Jend)
+# else
+            A(i,Jend+1)=0.0_r8
 # endif
-
-# if !defined EW_PERIODIC && !defined NS_PERIODIC
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=Istr,Iend
+# ifdef R2D_GRADIENT
+            A(i,Jstr-1)=A(i,Jstr)
+# else
+            A(i,Jstr-1)=0.0_r8
+# endif
+          END DO
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+                      &
-     &                           A(Istr-1,Jstr  ))
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+                    &
+     &                             A(Istr-1,Jstr  ))
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                    &
+     &                             A(Iend+1,Jstr  ))
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                    &
+     &                             A(Istr  ,Jend+1))
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                    &
+     &                             A(Iend  ,Jend+1))
+        END IF
       END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
-     &                           A(Iend+1,Jstr  ))
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
-     &                           A(Istr  ,Jend+1))
-      END IF
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
-     &                           A(Iend  ,Jend+1))
-      END IF
-# endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        A)
-# endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          A)
+      END IF
 
       RETURN
       END SUBROUTINE r2d_bc
@@ -1195,11 +1158,8 @@
       USE mod_param
       USE mod_grid
       USE mod_scalars
-
-#if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_2d_mod, ONLY : exchange_u2d_tile
-#endif
 !
 !  Imported variable declarations.
 !
@@ -1217,79 +1177,75 @@
       integer :: i, j
 
 #include "set_bounds.h"
-
-#ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West boundary conditions: Closed or gradient
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstr,Jend
-          A(Iend+1,j)=0.0_r8
-        END DO
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=Jstr,Jend
+            A(Iend+1,j)=0.0_r8
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=Jstr,Jend
+            A(Istr,j)=0.0_r8
+          END DO
+        END IF
       END IF
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstr,Jend
-          A(Istr,j)=0.0_r8
-        END DO
-      END IF
-#endif
-
-#ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South boundary conditions: Closed (free-slip/no-slip) or
 !  gradient.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=IstrU,Iend
-          A(i,Jend+1)=0.0_r8
-        END DO
-      END IF
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=IstrU,Iend
+            A(i,Jend+1)=0.0_r8
+          END DO
+        END IF
 
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=IstrU,Iend
-          A(i,Jstr-1)=0.0_r8
-        END DO
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=IstrU,Iend
+            A(i,Jstr-1)=0.0_r8
+          END DO
+        END IF
       END IF
-#endif
-
-#if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+                      &
-     &                           A(Istr  ,Jstr  ))
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+                    &
+     &                             A(Istr  ,Jstr  ))
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                    &
+     &                             A(Iend+1,Jstr  ))
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                    &
+     &                             A(Istr+1,Jend+1))
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                    &
+     &                             A(Iend  ,Jend+1))
+        END IF
       END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
-     &                           A(Iend+1,Jstr  ))
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-        A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
-     &                           A(Istr+1,Jend+1))
-      END IF
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
-     &                           A(Iend  ,Jend+1))
-      END IF
-#endif
-
-#if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        A)
-#endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          A)
+      END IF
 
       RETURN
       END SUBROUTINE u2d_bc
@@ -1304,11 +1260,8 @@
       USE mod_param
       USE mod_grid
       USE mod_scalars
-
-#if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_2d_mod, ONLY : exchange_v2d_tile
-#endif
 !
 !  Imported variable declarations.
 !
@@ -1326,79 +1279,75 @@
       integer :: i, j
 
 #include "set_bounds.h"
-
-#ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West boundary conditions: Closed (free-slip/no-slip) or
 !  gradient.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrV,Jend
-          A(Iend+1,j)=0.0_r8
-        END DO
-      END IF
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=JstrV,Jend
+            A(Iend+1,j)=0.0_r8
+          END DO
+        END IF
 
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrV,Jend
-          A(Istr-1,j)=0.0_r8
-        END DO
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=JstrV,Jend
+            A(Istr-1,j)=0.0_r8
+          END DO
+        END IF
       END IF
-#endif
-
-#ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South boundary conditions: Closed or Gradient.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,Iend
-          A(i,Jend+1)=0.0_r8
-        END DO
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=Istr,Iend
+            A(i,Jend+1)=0.0_r8
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=Istr,Iend
+            A(i,Jstr)=0.0_r8
+          END DO
+        END IF
       END IF
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,Iend
-          A(i,Jstr)=0.0_r8
-        END DO
-      END IF
-#endif
-
-#if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        A(Istr-1,Jstr  )=0.5_r8*(A(Istr  ,Jstr  )+                      &
-     &                           A(Istr-1,Jstr+1))
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          A(Istr-1,Jstr  )=0.5_r8*(A(Istr  ,Jstr  )+                    &
+     &                             A(Istr-1,Jstr+1))
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          A(Iend+1,Jstr  )=0.5_r8*(A(Iend  ,Jstr  )+                    &
+     &                             A(Iend+1,Jstr+1))
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                    &
+     &                             A(Istr  ,Jend+1))
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                    &
+     &                             A(Iend  ,Jend+1))
+        END IF
       END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-        A(Iend+1,Jstr  )=0.5_r8*(A(Iend  ,Jstr  )+                      &
-     &                           A(Iend+1,Jstr+1))
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
-     &                           A(Istr  ,Jend+1))
-      END IF
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
-     &                           A(Iend  ,Jend+1))
-      END IF
-#endif
-
-#if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        A)
-#endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          A)
+      END IF
 
       RETURN
       END SUBROUTINE v2d_bc
@@ -1519,6 +1468,7 @@
       USE mod_scalars
       USE mod_grid
       USE mod_parallel
+      USE mod_scalars
 !
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d
@@ -1584,18 +1534,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical :: Ltrans
 
       integer :: i, j, it
@@ -1655,7 +1593,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_r2d_ref)
 # endif
 
@@ -1710,7 +1649,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 2,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      z1_r2d,                                     &
      &                      tl_z1_r2d)
 # endif
@@ -1804,7 +1744,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      z1_r2d)
 # endif
 !
@@ -1841,7 +1782,8 @@
 # ifdef DISTRIBUTE
         CALL ad_mp_exchange2d (ng, tile, model, 2,                      &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         NghostPoints,                            &
+     &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         bv_r2d,                                  &
      &                         tl_bv_r2d)
 # endif
@@ -1961,18 +1903,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j
 
       real(r8) :: cff, tl_fac
@@ -2144,6 +2074,7 @@
       USE mod_scalars
       USE mod_grid
       USE mod_parallel
+      USE mod_scalars
 !
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_reduce
@@ -2212,16 +2143,6 @@
 !
 # ifdef DISTRIBUTE
       character (len=3) :: op_handle
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
 # endif
       logical :: Ltrans
 
@@ -2305,7 +2226,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 2,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      z1_r2d,                                     &
      &                      z2_r2d)
 # endif
@@ -2341,7 +2263,8 @@
 # ifdef DISTRIBUTE
         CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         NghostPoints,                            &
+     &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         bv_r2d)
 # endif
         CALL ad_r2d_bc (ng, tile,                                       &
@@ -2458,7 +2381,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      ad_bv_r2d)
 # endif
         CALL tl_r2d_oper (ng, tile,                                     &
@@ -2588,7 +2512,8 @@
 # ifdef DISTRIBUTE
         CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints, EWperiodic, NSperiodic,    &
+     &                         NghostPoints,                            &
+     &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_z1_r2d)
 # endif
         CALL ad_r2d_bc (ng, tile,                                       &
@@ -2654,7 +2579,8 @@
 # ifdef DISTRIBUTE
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_r2d_ref)
 # endif
       CALL ad_r2d_bc (ng, tile,                                         &
@@ -2723,18 +2649,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j
 
       real(r8) :: adfac, cff
@@ -2826,11 +2740,9 @@
 !***********************************************************************
 !
       USE mod_param
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE mod_scalars
 !
       USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
-# endif
 !
 !  Imported variable declarations.
 !
@@ -2850,133 +2762,129 @@
       real(r8) :: adfac
 
 # include "set_bounds.h"
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
-      CALL ad_exchange_r2d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           ad_A)
-# endif
-
-# if !defined EW_PERIODIC && !defined NS_PERIODIC
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL ad_exchange_r2d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             ad_A)
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-!>      tl_A(Iend+1,Jend+1)=0.5_r8*(tl_A(Iend+1,Jend  )+                &
-!>   &                              tl_A(Iend  ,Jend+1))
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+!>        tl_A(Iend+1,Jend+1)=0.5_r8*(tl_A(Iend+1,Jend  )+              &
+!>   &                                tl_A(Iend  ,Jend+1))
 !>
-        adfac=0.5_r8*ad_A(Iend+1,Jend+1)
-        ad_A(Iend+1,Jend  )=ad_A(Iend+1,Jend  )+adfac
-        ad_A(Iend  ,Jend+1)=ad_A(Iend  ,Jend+1)+adfac
-        ad_A(Iend+1,Jend+1)=0.0_r8
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-!>      tl_A(Istr-1,Jend+1)=0.5_r8*(tl_A(Istr-1,Jend  )+                &
-!>   &                              tl_A(Istr  ,Jend+1))
+          adfac=0.5_r8*ad_A(Iend+1,Jend+1)
+          ad_A(Iend+1,Jend  )=ad_A(Iend+1,Jend  )+adfac
+          ad_A(Iend  ,Jend+1)=ad_A(Iend  ,Jend+1)+adfac
+          ad_A(Iend+1,Jend+1)=0.0_r8
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+!>        tl_A(Istr-1,Jend+1)=0.5_r8*(tl_A(Istr-1,Jend  )+              &
+!>   &                                tl_A(Istr  ,Jend+1))
 !>
-        adfac=0.5_r8*ad_A(Istr-1,Jend+1)
-        ad_A(Istr-1,Jend  )=ad_A(Istr-1,Jend  )+adfac
-        ad_A(Istr  ,Jend+1)=ad_A(Istr  ,Jend+1)+adfac
-        ad_A(Istr-1,Jend+1)=0.0_r8
-      END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-!>      tl_A(Iend+1,Jstr-1)=0.5_r8*(tl_A(Iend  ,Jstr-1)+                &
-!>   &                              tl_A(Iend+1,Jstr  ))
+          adfac=0.5_r8*ad_A(Istr-1,Jend+1)
+          ad_A(Istr-1,Jend  )=ad_A(Istr-1,Jend  )+adfac
+          ad_A(Istr  ,Jend+1)=ad_A(Istr  ,Jend+1)+adfac
+          ad_A(Istr-1,Jend+1)=0.0_r8
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+!>        tl_A(Iend+1,Jstr-1)=0.5_r8*(tl_A(Iend  ,Jstr-1)+              &
+!>   &                                tl_A(Iend+1,Jstr  ))
 !>
-        adfac=0.5_r8*ad_A(Iend+1,Jstr-1)
-        ad_A(Iend  ,Jstr-1)=ad_A(Iend  ,Jstr-1)+adfac
-        ad_A(Iend+1,Jstr  )=ad_A(Iend+1,Jstr  )+adfac
-        ad_A(Iend+1,Jstr-1)=0.0_r8
-      END IF
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-!>      tl_A(Istr-1,Jstr-1)=0.5_r8*(tl_A(Istr  ,Jstr-1)+                &
-!>   &                              tl_A(Istr-1,Jstr  ))
+          adfac=0.5_r8*ad_A(Iend+1,Jstr-1)
+          ad_A(Iend  ,Jstr-1)=ad_A(Iend  ,Jstr-1)+adfac
+          ad_A(Iend+1,Jstr  )=ad_A(Iend+1,Jstr  )+adfac
+          ad_A(Iend+1,Jstr-1)=0.0_r8
+        END IF
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+!>        tl_A(Istr-1,Jstr-1)=0.5_r8*(tl_A(Istr  ,Jstr-1)+              &
+!>   &                                tl_A(Istr-1,Jstr  ))
 !>
-        adfac=0.5_r8*ad_A(Istr-1,Jstr-1)
-        ad_A(Istr  ,Jstr-1)=ad_A(Istr  ,Jstr-1)+adfac
-        ad_A(Istr-1,Jstr  )=ad_A(Istr-1,Jstr  )+adfac
-        ad_A(Istr-1,Jstr-1)=0.0_r8
+          adfac=0.5_r8*ad_A(Istr-1,Jstr-1)
+          ad_A(Istr  ,Jstr-1)=ad_A(Istr  ,Jstr-1)+adfac
+          ad_A(Istr-1,Jstr  )=ad_A(Istr-1,Jstr  )+adfac
+          ad_A(Istr-1,Jstr-1)=0.0_r8
+        END IF
       END IF
-# endif
-
-# ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Adjoint North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,Iend
-#  ifdef R2D_GRADIENT
-!>        tl_A(i,Jstr-1)=tl_A(i,Jstr)
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=Istr,Iend
+# ifdef R2D_GRADIENT
+!>          tl_A(i,Jstr-1)=tl_A(i,Jstr)
 !>
-          ad_A(i,Jstr  )=ad_A(i,Jstr)+ad_A(i,Jstr-1)
-          ad_A(i,Jstr-1)=0.0_r8
-#  else
-!>        tl_A(i,Jstr-1)=0.0_r8
+            ad_A(i,Jstr  )=ad_A(i,Jstr)+ad_A(i,Jstr-1)
+            ad_A(i,Jstr-1)=0.0_r8
+# else
+!>          tl_A(i,Jstr-1)=0.0_r8
 !>
-          ad_A(i,Jstr-1)=0.0_r8
-#  endif
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,Iend
-#  ifdef R2D_GRADIENT
-!>        tl_A(i,Jend+1)=tl_A(i,Jend)
-!>
-          ad_A(i,Jend  )=ad_A(i,Jend)+ad_A(i,Jend+1)
-          ad_A(i,Jend+1)=0.0_r8
-#  else
-!>        tl_A(i,Jend+1)=0.0_r8
-!>
-          ad_A(i,Jend+1)=0.0_r8
-#  endif
-        END DO
-      END IF
+            ad_A(i,Jstr-1)=0.0_r8
 # endif
-
-# ifndef EW_PERIODIC
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=Istr,Iend
+# ifdef R2D_GRADIENT
+!>          tl_A(i,Jend+1)=tl_A(i,Jend)
+!>
+            ad_A(i,Jend  )=ad_A(i,Jend)+ad_A(i,Jend+1)
+            ad_A(i,Jend+1)=0.0_r8
+# else
+!>          tl_A(i,Jend+1)=0.0_r8
+!>
+            ad_A(i,Jend+1)=0.0_r8
+# endif
+          END DO
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Adjoint East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstr,Jend
-#  ifdef R2D_GRADIENT
-!>        tl_A(Istr-1,j)=tl_A(Istr,j)
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=Jstr,Jend
+# ifdef R2D_GRADIENT
+!>          tl_A(Istr-1,j)=tl_A(Istr,j)
 !>
-          ad_A(Istr  ,j)=ad_A(Istr,j)+ad_A(Istr-1,j)
-          ad_A(Istr-1,j)=0.0_r8
-#  else
-!>        tl_A(Istr-1,j)=0.0_r8
+            ad_A(Istr  ,j)=ad_A(Istr,j)+ad_A(Istr-1,j)
+            ad_A(Istr-1,j)=0.0_r8
+# else
+!>          tl_A(Istr-1,j)=0.0_r8
 !>
-          ad_A(Istr-1,j)=0.0_r8
-#  endif
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstr,Jend
-#  ifdef R2D_GRADIENT
-!>        tl_A(Iend+1,j)=tl_A(Iend,j)
-!>
-          ad_A(Iend  ,j)=ad_A(Iend,j)+ad_A(Iend+1,j)
-          ad_A(Iend+1,j)=0.0_r8
-#  else
-!>        tl_A(Iend+1,j)=0.0_r8
-!>
-          ad_A(Iend+1,j)=0.0_r8
-#  endif
-        END DO
-      END IF
+            ad_A(Istr-1,j)=0.0_r8
 # endif
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=Jstr,Jend
+# ifdef R2D_GRADIENT
+!>          tl_A(Iend+1,j)=tl_A(Iend,j)
+!>
+            ad_A(Iend  ,j)=ad_A(Iend,j)+ad_A(Iend+1,j)
+            ad_A(Iend+1,j)=0.0_r8
+# else
+!>          tl_A(Iend+1,j)=0.0_r8
+!>
+            ad_A(Iend+1,j)=0.0_r8
+# endif
+          END DO
+        END IF
+      END IF
 
       RETURN
       END SUBROUTINE ad_r2d_bc

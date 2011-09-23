@@ -5,25 +5,6 @@
    (defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
     defined POSTERIOR_ERROR_F)
 
-# ifdef EW_PERIODIC
-#  define IR_RANGE Istr-1,Iend+1
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# else
-#  define IR_RANGE IstrT,IendT
-#  define IU_RANGE IstrP,IendT
-#  define IV_RANGE IstrT,IendT
-# endif
-# ifdef NS_PERIODIC
-#  define JR_RANGE Jstr-1,Jend+1
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# else
-#  define JR_RANGE JstrT,JendT
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP,JendT
-# endif
-
 !
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2011 The ROMS/TOMS Group       Andrew M. Moore   !
@@ -249,18 +230,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j, ir, Zscheme
 # ifdef SOLVE3D
       integer :: itrc, k
@@ -300,8 +269,8 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Amin, Amax, A2d)
       IF (.not.Ltrace) THEN
-        DO j=JR_RANGE
-           DO i=IR_RANGE
+        DO j=JstrT,JendT
+           DO i=IstrT,IendT
              tl_zeta(i,j,Lout)=A2d(i,j)
 # ifdef MASKING
              tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
@@ -309,8 +278,8 @@
            END DO
         END DO
       ELSE
-        DO j=JR_RANGE
-           DO i=IR_RANGE
+        DO j=JstrT,JendT
+           DO i=IstrT,IendT
              tl_zeta(i,j,Lout)=DSIGN(1.0_r8,A2d(i,j))
 # ifdef MASKING
              tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
@@ -321,7 +290,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_zeta(:,:,Lout))
 # endif
 # ifndef SOLVE3D
@@ -333,8 +303,8 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Amin, Amax, A2d)
       IF (.not.Ltrace) THEN
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             tl_ubar(i,j,Lout)=A2d(i,j)
 # ifdef MASKING
             tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
@@ -342,8 +312,8 @@
           END DO
         END DO
       ELSE
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             tl_ubar(i,j,Lout)=DSIGN(1.0_r8,A2d(i,j))
 # ifdef MASKING
             tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
@@ -359,8 +329,8 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Amin, Amax, A2d)
       IF (.not.Ltrace) THEN
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             tl_vbar(i,j,Lout)=A2d(i,j)
 # ifdef MASKING
             tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
@@ -368,8 +338,8 @@
           END DO
         END DO
       ELSE
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             tl_vbar(i,j,Lout)=DSIGN(1.0_r8,A2d(i,j))
 # ifdef MASKING
             tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
@@ -380,7 +350,8 @@
 #  ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,Lout),                            &
      &                    tl_vbar(:,:,Lout))
 #  endif
@@ -396,8 +367,8 @@
      &                    Amin, Amax, A3d)
       IF (.not.Ltrace) THEN
         DO k=1,N(ng)
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               tl_u(i,j,k,Lout)=A3d(i,j,k)
 #  ifdef MASKING
               tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
@@ -407,8 +378,8 @@
         END DO
       ELSE
         DO k=1,N(ng)
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               tl_u(i,j,k,Lout)=DSIGN(1.0_r8,A3d(i,j,k))
 #  ifdef MASKING
               tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
@@ -426,8 +397,8 @@
      &                     Amin, Amax, A3d)
       IF (.not.Ltrace) THEN
         DO k=1,N(ng)
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               tl_v(i,j,k,Lout)=A3d(i,j,k)
 #  ifdef MASKING
               tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
@@ -437,8 +408,8 @@
         END DO
       ELSE
         DO k=1,N(ng)
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               tl_v(i,j,k,Lout)=DSIGN(1.0_r8,A3d(i,j,k))
 #  ifdef MASKING
               tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
@@ -450,7 +421,8 @@
 #  ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_u(:,:,:,Lout), tl_v(:,:,:,Lout))
 #  endif
 !
@@ -463,8 +435,8 @@
      &                       Amin, Amax, A3d)
          IF (.not.Ltrace) THEN
            DO k=1,N(ng)
-             DO j=JR_RANGE
-               DO i=IR_RANGE
+             DO j=JstrT,JendT
+               DO i=IstrT,IendT
                  tl_t(i,j,k,Lout,itrc)=A3d(i,j,k)
 #  ifdef MASKING
                  tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
@@ -474,8 +446,8 @@
            END DO
          ELSE
            DO k=1,N(ng)
-             DO j=JR_RANGE
-               DO i=IR_RANGE
+             DO j=JstrT,JendT
+               DO i=IstrT,IendT
                  tl_t(i,j,k,Lout,itrc)=DSIGN(1.0_r8,A3d(i,j,k))
 # ifdef MASKING
                  tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
@@ -488,7 +460,8 @@
 #  ifdef DISTRIBUTE
       CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_t(:,:,:,Lout,:))
 #  endif
 # endif
@@ -519,7 +492,7 @@
      &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,r2dvar)
               IF (.not.Ltrace) THEN
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   tl_zeta_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
                   tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*  &
@@ -527,7 +500,7 @@
 #  endif
                 END DO
               ELSE
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   tl_zeta_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
                   tl_zeta_obc(j,ib,ir,Lout)=tl_zeta_obc(j,ib,ir,Lout)*  &
@@ -541,7 +514,7 @@
      &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,r2dvar)
               IF (.not.Ltrace) THEN
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   tl_zeta_obc(i,ib,ir,Lout)=B2d(i)
 #  ifdef MASKING
                   tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*  &
@@ -549,7 +522,7 @@
 #  endif
                 END DO
               ELSE
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   tl_zeta_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
 #  ifdef MASKING
                   tl_zeta_obc(i,ib,ir,Lout)=tl_zeta_obc(i,ib,ir,Lout)*  &
@@ -562,7 +535,7 @@
             CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
      &                              LBij, UBij,                         &
      &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              tl_zeta_obc(:,ib,ir,Lout))
 #  endif
           END IF
@@ -593,7 +566,7 @@
      &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   tl_ubar_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
                   tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*  &
@@ -601,7 +574,7 @@
 #  endif
                 END DO
               ELSE
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   tl_ubar_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
                   tl_ubar_obc(j,ib,ir,Lout)=tl_ubar_obc(j,ib,ir,Lout)*  &
@@ -615,7 +588,7 @@
      &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   tl_ubar_obc(i,ib,ir,Lout)=B2d(i)
 #  ifdef MASKING
                   tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*  &
@@ -623,7 +596,7 @@
 #  endif
                 END DO
               ELSE
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   tl_ubar_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
 #  ifdef MASKING
                   tl_ubar_obc(i,ib,ir,Lout)=tl_ubar_obc(i,ib,ir,Lout)*  &
@@ -636,7 +609,7 @@
             CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
      &                              LBij, UBij,                         &
      &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              tl_ubar_obc(:,ib,ir,Lout))
 #  endif
           END IF
@@ -667,7 +640,7 @@
      &           DOMAIN(ng)%Eastern_Edge(tile))) THEN
               i=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   tl_vbar_obc(j,ib,ir,Lout)=B2d(j)
 #  ifdef MASKING
                   tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*  &
@@ -675,7 +648,7 @@
 #  endif
                 END DO
               ELSE
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   tl_vbar_obc(j,ib,ir,Lout)=DSIGN(1.0_r8,B2d(j))
 #  ifdef MASKING
                   tl_vbar_obc(j,ib,ir,Lout)=tl_vbar_obc(j,ib,ir,Lout)*  &
@@ -689,7 +662,7 @@
      &                DOMAIN(ng)%Northern_Edge(tile))) THEN
               j=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   tl_vbar_obc(i,ib,ir,Lout)=B2d(i)
 #  ifdef MASKING
                   tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*  &
@@ -697,7 +670,7 @@
 #  endif
                 END DO
               ELSE
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   tl_vbar_obc(i,ib,ir,Lout)=DSIGN(1.0_r8,B2d(i))
 #  ifdef MASKING
                   tl_vbar_obc(i,ib,ir,Lout)=tl_vbar_obc(i,ib,ir,Lout)*  &
@@ -710,7 +683,7 @@
             CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,              &
      &                              LBij, UBij,                         &
      &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              tl_vbar_obc(:,ib,ir,Lout))
 #  endif
           END IF
@@ -744,7 +717,7 @@
               i=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
-                  DO j=JU_RANGE
+                  DO j=JstrT,JendT
                     tl_u_obc(j,k,ib,ir,Lout)=B3d(j,k)
 #   ifdef MASKING
                     tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*  &
@@ -754,7 +727,7 @@
                 END DO
               ELSE
                 DO k=1,N(ng)
-                  DO j=JU_RANGE
+                  DO j=JstrT,JendT
                     tl_u_obc(j,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
                     tl_u_obc(j,k,ib,ir,Lout)=tl_u_obc(j,k,ib,ir,Lout)*  &
@@ -770,7 +743,7 @@
               j=BOUNDS(ng)%edge(ib,u2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
-                  DO i=IU_RANGE
+                  DO i=IstrP,IendT
                     tl_u_obc(i,k,ib,ir,Lout)=B3d(i,k)
 #   ifdef MASKING
                     tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*  &
@@ -780,7 +753,7 @@
                 END DO
               ELSE
                 DO k=1,N(ng)
-                  DO i=IU_RANGE
+                  DO i=IstrP,IendT
                     tl_u_obc(i,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
 #   ifdef MASKING
                     tl_u_obc(i,k,ib,ir,Lout)=tl_u_obc(i,k,ib,ir,Lout)*  &
@@ -794,7 +767,7 @@
             CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,              &
      &                              LBij, UBij, 1, N(ng),               &
      &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              tl_u_obc(:,:,ib,ir,Lout))
 #   endif
           END IF
@@ -826,7 +799,7 @@
               i=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
-                  DO j=JV_RANGE
+                  DO j=JstrP,JendT
                     tl_v_obc(j,k,ib,ir,Lout)=B3d(j,k)
 #   ifdef MASKING
                     tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*  &
@@ -836,7 +809,7 @@
                 END DO
               ELSE
                 DO k=1,N(ng)
-                  DO j=JV_RANGE
+                  DO j=JstrP,JendT
                     tl_v_obc(j,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
                     tl_v_obc(j,k,ib,ir,Lout)=tl_v_obc(j,k,ib,ir,Lout)*  &
@@ -852,7 +825,7 @@
               j=BOUNDS(ng)%edge(ib,v2dvar)
               IF (.not.Ltrace) THEN
                 DO k=1,N(ng)
-                  DO i=IV_RANGE
+                  DO i=IstrT,IendT
                     tl_v_obc(i,k,ib,ir,Lout)=B3d(i,k)
 #   ifdef MASKING
                     tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*  &
@@ -862,7 +835,7 @@
                 END DO
               ELSE
                 DO k=1,N(ng)
-                  DO i=IV_RANGE
+                  DO i=IstrT,IendT
                     tl_v_obc(i,k,ib,ir,Lout)=DSIGN(1.0_r8,B3d(i,k))
 #   ifdef MASKING
                     tl_v_obc(i,k,ib,ir,Lout)=tl_v_obc(i,k,ib,ir,Lout)*  &
@@ -876,7 +849,7 @@
             CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,              &
      &                              LBij, UBij, 1, N(ng),               &
      &                              NghostPoints,                       &
-     &                              EWperiodic, NSperiodic,             &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              tl_v_obc(:,:,ib,ir,Lout))
 #   endif
           END IF
@@ -911,7 +884,7 @@
                 i=BOUNDS(ng)%edge(ib,r2dvar)
                 IF (.not.Ltrace) THEN
                   DO k=1,N(ng)
-                    DO j=JR_RANGE
+                    DO j=JstrT,JendT
                       tl_t_obc(j,k,ib,ir,Lout,itrc)=B3d(j,k)
 #   ifdef MASKING
                       tl_t_obc(j,k,ib,ir,Lout,itrc)=                    &
@@ -921,7 +894,7 @@
                   END DO
                 ELSE
                   DO k=1,N(ng)
-                    DO j=JR_RANGE
+                    DO j=JstrT,JendT
                       tl_t_obc(j,k,ib,ir,Lout,itrc)=                    &
      &                                        DSIGN(1.0_r8,B3d(j,k))
 #   ifdef MASKING
@@ -938,7 +911,7 @@
                 j=BOUNDS(ng)%edge(ib,r2dvar)
                 IF (.not.Ltrace) THEN
                   DO k=1,N(ng)
-                    DO i=IR_RANGE
+                    DO i=IstrT,IendT
                       tl_t_obc(i,k,ib,ir,Lout,itrc)=B3d(i,k)
 #   ifdef MASKING
                       tl_t_obc(i,k,ib,ir,Lout,itrc)=                    &
@@ -948,7 +921,7 @@
                   END DO
                 ELSE
                   DO k=1,N(ng)
-                    DO i=IR_RANGE
+                    DO i=IstrT,IendT
                       tl_t_obc(i,k,ib,ir,Lout,itrc)=                    &
      &                                        DSIGN(1.0_r8,B3d(i,k))
 #   ifdef MASKING
@@ -963,7 +936,7 @@
               CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij, 1, N(ng),             &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_t_obc(:,:,ib,ir,Lout,itrc))
 #   endif
             END IF
@@ -984,8 +957,8 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Amin, Amax, A2d)
         IF (.not.Ltrace) THEN
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               tl_ustr(i,j,ir,Lout)=A2d(i,j)
 #   ifdef MASKING
               tl_ustr(i,j,ir,Lout)=tl_ustr(i,j,ir,Lout)*umask(i,j)
@@ -993,8 +966,8 @@
             END DO
           END DO
         ELSE
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               tl_ustr(i,j,ir,Lout)=DSIGN(1.0_r8,A2d(i,j))
 #   ifdef MASKING
               tl_ustr(i,j,ir,Lout)=tl_ustr(i,j,ir,Lout)*umask(i,j)
@@ -1012,8 +985,8 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Amin, Amax, A2d)
         IF (.not.Ltrace) THEN
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               tl_vstr(i,j,ir,Lout)=A2d(i,j)
 #   ifdef MASKING
               tl_vstr(i,j,ir,Lout)=tl_vstr(i,j,ir,Lout)*vmask(i,j)
@@ -1021,8 +994,8 @@
             END DO
           END DO
         ELSE
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               tl_vstr(i,j,ir,Lout)=DSIGN(1.0_r8,A2d(i,j))
 #   ifdef MASKING
               tl_vstr(i,j,ir,Lout)=tl_vstr(i,j,ir,Lout)*vmask(i,j)
@@ -1034,7 +1007,8 @@
 #   ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ustr(:,:,:,Lout),                          &
      &                    tl_vstr(:,:,:,Lout))
 #   endif
@@ -1050,8 +1024,8 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Amin, Amax, A2d)
           IF (.not.Ltrace) THEN
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 tl_tflux(i,j,ir,Lout,itrc)=A2d(i,j)
 #   ifdef MASKING
                 tl_tflux(i,j,ir,Lout,itrc)=tl_tflux(i,j,ir,Lout,itrc)*  &
@@ -1060,8 +1034,8 @@
               END DO
             END DO
           ELSE
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 tl_tflux(i,j,ir,Lout,itrc)=DSIGN(1.0_r8,A2d(i,j))
 #   ifdef MASKING
                 tl_tflux(i,j,ir,Lout,itrc)=tl_tflux(i,j,ir,Lout,itrc)*  &
@@ -1073,7 +1047,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, Nfrec(ng),         &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_tflux(:,:,:,Lout,itrc))
 #   endif
         END DO
@@ -1081,16 +1056,7 @@
 #  endif
 # endif
 
-# undef IR_RANGE
-# undef IU_RANGE
-# undef IV_RANGE
-# undef JR_RANGE
-# undef JU_RANGE
-# undef JV_RANGE
-
       RETURN
       END SUBROUTINE random_ic_tile
 #endif
-
-
       END MODULE random_ic_mod

@@ -7,12 +7,14 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Weak Constraint 4-Dimensional Variational (4DVar) Data    !
+!  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
 !         Assimilation and Observation Sensitivity Driver: Indirect    !
-!         Representer Approach                                         !
+!         Representer Approach (R4D-Var).                              !
+!         Dual formulation in observarion space.                       !
 !                                                                      !
-!  This driver is used for  weak constraint 4DVar where errors are     !
-!  considered in both model and observations.                          !
+!                                                                      !
+!  This driver is used for strong/weak constraint 4D-Var where errors  !
+!  may be considered in both model and observations.                   !
 !                                                                      !
 !  It computes the array modes of the stabilized representer matrix    !
 !  or clips the analysis  by  disregarding  potentially  unphysical    !
@@ -25,6 +27,29 @@
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
+!                                                                      !
+!  References:                                                         !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, B.S. Powell, A.T. Weaver,     !
+!    and J. Zavala-Garay, 2011: The Regional Ocean Modeling System     !
+!    (ROMS)  4-dimensional variational data assimilations systems,     !
+!    Part I - System overview and formulation, Prog. Oceanogr., 91,    !
+!    34-49, doi:10.1016/j.pocean.2011.05.004.                          !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part II - Performance     !
+!    and application to the California Current System, Prog.           !
+!    Oceanogr., 91, 50-73, doi:10.1016/j.pocean.2011.05.003.           !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part III - Observation    !
+!    impact and observation sensitivity in the California Current      !
+!    System, Prog. Oceanogr., 91, 74-94,                               !
+!    doi:10.1016/j.pocean.2011.05.005.                                 !
 !                                                                      !
 !=======================================================================
 !

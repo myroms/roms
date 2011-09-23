@@ -13,9 +13,7 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_boundary
       USE mod_grid
-      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -54,9 +52,10 @@
 !***********************************************************************
 !
       USE mod_param
-      USE mod_scalars
       USE mod_boundary
+      USE mod_ncparam
       USE mod_ocean
+      USE mod_scalars
 #ifdef SEDIMENT
       USE mod_sediment
 #endif
@@ -87,8 +86,8 @@
 !-----------------------------------------------------------------------
 !
 #ifdef MY_APPLICATION
-# ifdef EAST_TOBC
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+      IF (ANY(LBC(ieast,isTvar(:),ng)%acquire).and.                     &
+     &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -97,9 +96,9 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef WEST_TOBC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+
+      IF (ANY(LBC(iwest,isTvar(:),ng)%acquire).and.                     &
+     &    DOMAIN(ng)%Western_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -108,9 +107,9 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef SOUTH_TOBC
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+
+      IF (ANY(LBC(isouth,isTvar(:),ng)%acquire).and.                    &
+     &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR
@@ -119,9 +118,9 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef NORTH_TOBC
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+
+      IF (ANY(LBC(inorth,isTvar(:),ng)%acquire).and.                    &
+     &    DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=IstrR,IendR
@@ -130,7 +129,6 @@
           END DO
         END DO
       END IF
-# endif
 #else
       ana_tobc.h: No values provided for BOUNDARY(ng)%t_xxxx.
 #endif

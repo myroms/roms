@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE ad_exchange_3d_mod
-#if defined ADJOINT && defined SOLVE3D && \
-    (defined EW_PERIODIC || defined NS_PERIODIC)
+#if defined ADJOINT && defined SOLVE3D
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -40,7 +39,7 @@
 !=======================================================================
 !
       implicit none
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -50,6 +49,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -64,12 +64,10 @@
 !
 !  Local variable declarations.
 !
-# ifdef EW_PERIODIC
       logical :: EW_exchange
-# endif
-# ifdef NS_PERIODIC
       logical :: NS_exchange
-# endif
+
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -78,361 +76,379 @@
 !  Determine processing switches.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
-#  ifdef DISTRIBUTE
-      EW_exchange=NtileI(ng).eq.1
-#  else
-      EW_exchange=.TRUE.
-#  endif
+      IF (EWperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        EW_exchange=NtileI(ng).eq.1
+# else
+        EW_exchange=.TRUE.
 # endif
-# ifdef NS_PERIODIC
-#  ifdef DISTRIBUTE
-      NS_exchange=NtileJ(ng).eq.1
-#  else
-      NS_exchange=.TRUE.
-#  endif
-# endif
+      ELSE
+        EW_exchange=.FALSE.
+      END IF
 
-# if defined EW_PERIODIC && defined NS_PERIODIC
+      IF (NSperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        NS_exchange=NtileJ(ng).eq.1
+# else
+        NS_exchange=.TRUE.
+# endif
+      ELSE
+        NS_exchange=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (EW_exchange.and.NS_exchange) THEN
-        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+      IF (EWperiodic(ng).and.NSperiodic(ng)) THEN
+        IF (EW_exchange.and.NS_exchange) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+        &
-     &                                ad_A(-2,-2,k)
-            ad_A(-2,-2,k)=0.0_r8
-!>          tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+              ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
+     &                                  ad_A(-2,-2,k)
+              ad_A(-2,-2,k)=0.0_r8
+!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+        &
-     &                                ad_A(-2,-1,k)
-            ad_A(-2,-1,k)=0.0_r8
-!>          tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+              ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
+     &                                  ad_A(-2,-1,k)
+              ad_A(-2,-1,k)=0.0_r8
+!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+        &
-     &                                ad_A(-2, 0,k)
-            ad_A(-2, 0,k)=0.0_r8
-!>          tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+              ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
+     &                                  ad_A(-2, 0,k)
+              ad_A(-2, 0,k)=0.0_r8
+!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+        &
-     &                                ad_A(-1,-2,k)
-            ad_A(-1,-2,k)=0.0_r8
-!>          tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+              ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
+     &                                  ad_A(-1,-2,k)
+              ad_A(-1,-2,k)=0.0_r8
+!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+        &
-     &                                ad_A(-1,-1,k)
-            ad_A(-1,-1,k)=0.0_r8
-!>          tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+              ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
+     &                                  ad_A(-1,-1,k)
+              ad_A(-1,-1,k)=0.0_r8
+!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+        &
-     &                                ad_A(-1, 0,k)
-            ad_A(-1, 0,k)=0.0_r8
-!>          tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+              ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
+     &                                  ad_A(-1, 0,k)
+              ad_A(-1, 0,k)=0.0_r8
+!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+        &
-     &                                ad_A( 0,-2,k)
-            ad_A( 0,-2,k)=0.0_r8
-!>          tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+              ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
+     &                                  ad_A( 0,-2,k)
+              ad_A( 0,-2,k)=0.0_r8
+!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+        &
-     &                                ad_A( 0,-1,k)
-            ad_A( 0,-1,k)=0.0_r8
-!>          tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+              ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
+     &                                  ad_A( 0,-1,k)
+              ad_A( 0,-1,k)=0.0_r8
+!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+        &
-     &                                ad_A( 0, 0,k)
-            ad_A( 0, 0,k)=0.0_r8
-          END DO
-        END IF
+              ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
+     &                                  ad_A( 0, 0,k)
+              ad_A( 0, 0,k)=0.0_r8
+            END DO
+          END IF
 
-        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
 !>
-            ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+1,-2,k)
-            ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+              ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+1,-2,k)
+              ad_A(Lm(ng)+1,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
 !>
-            ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+1,-1,k)
-            ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+              ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+1,-1,k)
+              ad_A(Lm(ng)+1,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
 !>
-            ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+1, 0,k)
-            ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+              ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+1, 0,k)
+              ad_A(Lm(ng)+1, 0,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
 !>
-            ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+2,-2,k)
-            ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+              ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+2,-2,k)
+              ad_A(Lm(ng)+2,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
 !>
-            ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+2,-1,k)
-            ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+              ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+2,-1,k)
+              ad_A(Lm(ng)+2,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
 !>
-            ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+2, 0,k)
-            ad_A(Lm(ng)+2, 0,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+              ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+2, 0,k)
+              ad_A(Lm(ng)+2, 0,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
 !>
-            ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+3,-2,k)
-            ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+                ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
+     &                              ad_A(Lm(ng)+3,-2,k)
+                ad_A(Lm(ng)+3,-2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
 !>
-            ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+3,-1,k)
-            ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+                ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
+     &                              ad_A(Lm(ng)+3,-1,k)
+                ad_A(Lm(ng)+3,-1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
 !>
-            ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+3, 0,k)
-            ad_A(Lm(ng)+3, 0,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
+     &                              ad_A(Lm(ng)+3, 0,k)
+                ad_A(Lm(ng)+3, 0,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
 !>
-            ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                    &
-     &                          ad_A(-2,Mm(ng)+1,k)
-            ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+              ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
+     &                            ad_A(-2,Mm(ng)+1,k)
+              ad_A(-2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
 !>
-            ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                    &
-     &                          ad_A(-1,Mm(ng)+1,k)
-            ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+              ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
+     &                            ad_A(-1,Mm(ng)+1,k)
+              ad_A(-1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
 !>
-            ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                    &
-     &                          ad_A( 0,Mm(ng)+1,k)
-            ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+              ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
+     &                            ad_A( 0,Mm(ng)+1,k)
+              ad_A( 0,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
 !>
-            ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                    &
-     &                          ad_A(-2,Mm(ng)+2,k)
-            ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+              ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
+     &                            ad_A(-2,Mm(ng)+2,k)
+              ad_A(-2,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
 !>
-            ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                    &
-     &                          ad_A(-1,Mm(ng)+2,k)
-            ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+              ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
+     &                            ad_A(-1,Mm(ng)+2,k)
+              ad_A(-1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
 !>
-            ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                    &
-     &                          ad_A( 0,Mm(ng)+2,k)
-            ad_A( 0,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+              ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
+     &                            ad_A( 0,Mm(ng)+2,k)
+              ad_A( 0,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
 !>
-            ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                    &
-     &                          ad_A(-2,Mm(ng)+3,k)
-            ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+                ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
+     &                              ad_A(-2,Mm(ng)+3,k)
+                ad_A(-2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
 !>
-            ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                    &
-     &                          ad_A(-1,Mm(ng)+3,k)
-            ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+                ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
+     &                              ad_A(-1,Mm(ng)+3,k)
+                ad_A(-1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
 !>
-            ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                    &
-     &                          ad_A( 0,Mm(ng)+3,k)
-            ad_A( 0,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
+     &                              ad_A( 0,Mm(ng)+3,k)
+                ad_A( 0,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
 !>
-            ad_A( 1, 1,k)=ad_A( 1, 1,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+1,k)
-            ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+              ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
+              ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
 !>
-            ad_A( 1, 2,k)=ad_A( 1, 2,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+2,k)
-            ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+              ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
+              ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
 !>
-            ad_A( 1, 3,k)=ad_A( 1, 3,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+3,k)
-            ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-#  endif
-!>          tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+              ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
+              ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A(2, 2,k)
 !>
-            ad_A( 2, 1,k)=ad_A( 2, 1,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+1,k)
-            ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A(2, 2,k)
+              ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
+              ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
 !>
-            ad_A( 2, 2,k)=ad_A( 2, 2,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+2,k)
-            ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+                ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
+     &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
+                ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
+
+!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
 !>
-            ad_A( 2, 3,k)=ad_A( 2, 3,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+3,k)
-            ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+                ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
+     &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
+                ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
 !>
-            ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+                ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
+                ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
-            ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+2,k)
-            ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+                ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
+                ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
-            ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
-            ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
+                ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
+                ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-# endif
-
-# ifdef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE Istr,IendR
-#  endif
-
-      IF (NS_exchange) THEN
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
-              ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                    &
-     &                           ad_A(i,-2,k)
-              ad_A(i,-2,k)=0.0_r8
-!>            tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
-              ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                    &
-     &                           ad_A(i,-1,k)
-              ad_A(i,-1,k)=0.0_r8
-!>            tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
-              ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                    &
-     &                           ad_A(i, 0,k)
-              ad_A(i, 0,k)=0.0_r8
-            END DO
-          END DO
+      IF (NSperiodic(ng)) THEN
+        IF (EWperiodic(ng)) THEN
+          Imin=Istr
+          Imax=Iend
+        ELSE
+          Imin=Istr
+          Imax=IendR
         END IF
-
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!
+        IF (NS_exchange) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
 !>
-              ad_A(i,1,k)=ad_A(i,1,k)+                                  &
-     &                      ad_A(i,Mm(ng)+1,k)
-              ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+                ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
+     &                             ad_A(i,-2,k)
+                ad_A(i,-2,k)=0.0_r8
+!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
 !>
-              ad_A(i,2,k)=ad_A(i,2,k)+                                  &
-     &                    ad_A(i,Mm(ng)+2,k)
-              ad_A(i,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+                ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
+     &                             ad_A(i,-1,k)
+                ad_A(i,-1,k)=0.0_r8
+!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
 !>
-              ad_A(i,3,k)=ad_A(i,3,k)+                                  &
-     &                    ad_A(i,Mm(ng)+3,k)
-              ad_A(i,Mm(ng)+3,k)=0.0_r8
-#  endif
+                ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
+     &                             ad_A(i, 0,k)
+                ad_A(i, 0,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!>
+                ad_A(i,1,k)=ad_A(i,1,k)+                                &
+     &                      ad_A(i,Mm(ng)+1,k)
+                ad_A(i,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+!>
+                ad_A(i,2,k)=ad_A(i,2,k)+                                &
+     &                      ad_A(i,Mm(ng)+2,k)
+                ad_A(i,Mm(ng)+2,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO i=Imin,Imax
+
+!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!>
+                  ad_A(i,3,k)=ad_A(i,3,k)+                              &
+     &                        ad_A(i,Mm(ng)+3,k)
+                  ad_A(i,Mm(ng)+3,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef I_RANGE
-# endif
-
-# ifdef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE Jstr,JendR
-#  endif
-
-      IF (EW_exchange) THEN
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
-              ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                    &
-     &                           ad_A(-2,j,k)
-              ad_A(-2,j,k)=0.0_r8
-!>            tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
-              ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                    &
-     &                           ad_A(-1,j,k)
-              ad_A(-1,j,k)=0.0_r8
-!>            tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
-              ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                    &
-     &                           ad_A( 0,j,k)
-              ad_A( 0,j,k)=0.0_r8
-            END DO
-          END DO
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          Jmin=Jstr
+          Jmax=Jend
+        ELSE
+          Jmin=Jstr
+          Jmax=JendR
         END IF
-
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!
+        IF (EW_exchange) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
 !>
-              ad_A(1,j,k)=ad_A(1,j,k)+                                  &
-     &                    ad_A(Lm(ng)+1,j,k)
-              ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,j,k)=tl_A(2,j,k)
+                ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
+     &                             ad_A(-2,j,k)
+                ad_A(-2,j,k)=0.0_r8
+!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
 !>
-              ad_A(2,j,k)=ad_A(2,j,k)+                                  &
-     &                    ad_A(Lm(ng)+2,j,k)
-              ad_A(Lm(ng)+2,j,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+                ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
+     &                             ad_A(-1,j,k)
+                ad_A(-1,j,k)=0.0_r8
+!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
 !>
-              ad_A(3,j,k)=ad_A(3,j,k)+                                  &
-     &                    ad_A(Lm(ng)+3,j,k)
-              ad_A(Lm(ng)+3,j,k)=0.0_r8
-#  endif
+                ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
+     &                             ad_A( 0,j,k)
+                ad_A( 0,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!>
+                ad_A(1,j,k)=ad_A(1,j,k)+                                &
+     &                      ad_A(Lm(ng)+1,j,k)
+                ad_A(Lm(ng)+1,j,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,j,k)=tl_A(2,j,k)
+!>
+                ad_A(2,j,k)=ad_A(2,j,k)+                                &
+     &                      ad_A(Lm(ng)+2,j,k)
+                ad_A(Lm(ng)+2,j,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO j=Jmin,Jmax
+!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!>
+                  ad_A(3,j,k)=ad_A(3,j,k)+                              &
+     &                        ad_A(Lm(ng)+3,j,k)
+                  ad_A(Lm(ng)+3,j,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef J_RANGE
-# endif
 
       RETURN
       END SUBROUTINE ad_exchange_p3d_tile
@@ -445,6 +461,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -459,12 +476,10 @@
 !
 !  Local variable declarations.
 !
-# ifdef EW_PERIODIC
       logical :: EW_exchange
-# endif
-# ifdef NS_PERIODIC
       logical :: NS_exchange
-# endif
+
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -473,361 +488,378 @@
 !  Determine processing switches.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
-#  ifdef DISTRIBUTE
-      EW_exchange=NtileI(ng).eq.1
-#  else
-      EW_exchange=.TRUE.
-#  endif
+      IF (EWperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        EW_exchange=NtileI(ng).eq.1
+# else
+        EW_exchange=.TRUE.
 # endif
-# ifdef NS_PERIODIC
-#  ifdef DISTRIBUTE
-      NS_exchange=NtileJ(ng).eq.1
-#  else
-      NS_exchange=.TRUE.
-#  endif
-# endif
+      ELSE
+        EW_exchange=.FALSE.
+      END IF
 
-# if defined EW_PERIODIC && defined NS_PERIODIC
+      IF (NSperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        NS_exchange=NtileJ(ng).eq.1
+# else
+        NS_exchange=.TRUE.
+# endif
+      ELSE
+        NS_exchange=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (EW_exchange.and.NS_exchange) THEN
-        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+      IF (EWperiodic(ng).and.NSperiodic(ng)) THEN
+        IF (EW_exchange.and.NS_exchange) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+        &
-     &                                ad_A(-2,-2,k)
-            ad_A(-2,-2,k)=0.0_r8
-!>          tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+              ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
+     &                                  ad_A(-2,-2,k)
+              ad_A(-2,-2,k)=0.0_r8
+!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+        &
-     &                                ad_A(-2,-1,k)
-            ad_A(-2,-1,k)=0.0_r8
-!>          tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+              ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
+     &                                  ad_A(-2,-1,k)
+              ad_A(-2,-1,k)=0.0_r8
+!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+        &
-     &                                ad_A(-2, 0,k)
-            ad_A(-2, 0,k)=0.0_r8
-!>          tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+              ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
+     &                                  ad_A(-2, 0,k)
+              ad_A(-2, 0,k)=0.0_r8
+!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+        &
-     &                                ad_A(-1,-2,k)
-            ad_A(-1,-2,k)=0.0_r8
-!>          tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+              ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
+     &                                  ad_A(-1,-2,k)
+              ad_A(-1,-2,k)=0.0_r8
+!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+        &
-     &                                ad_A(-1,-1,k)
-            ad_A(-1,-1,k)=0.0_r8
-!>          tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+              ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
+     &                                  ad_A(-1,-1,k)
+              ad_A(-1,-1,k)=0.0_r8
+!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+        &
-     &                                ad_A(-1, 0,k)
-            ad_A(-1, 0,k)=0.0_r8
-!>          tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+              ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
+     &                                  ad_A(-1, 0,k)
+              ad_A(-1, 0,k)=0.0_r8
+!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+        &
-     &                                ad_A( 0,-2,k)
-            ad_A( 0,-2,k)=0.0_r8
-!>          tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+              ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
+     &                                  ad_A( 0,-2,k)
+              ad_A( 0,-2,k)=0.0_r8
+!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+        &
-     &                                ad_A( 0,-1,k)
-            ad_A( 0,-1,k)=0.0_r8
-!>          tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+              ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
+     &                                  ad_A( 0,-1,k)
+              ad_A( 0,-1,k)=0.0_r8
+!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+        &
-     &                                ad_A( 0, 0,k)
-            ad_A( 0, 0,k)=0.0_r8
-          END DO
-        END IF
+              ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
+     &                                  ad_A( 0, 0,k)
+              ad_A( 0, 0,k)=0.0_r8
+            END DO
+          END IF
 
-        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
 !>
-            ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+1,-2,k)
-            ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+              ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+1,-2,k)
+              ad_A(Lm(ng)+1,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
 !>
-            ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+1,-1,k)
-            ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+              ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+1,-1,k)
+              ad_A(Lm(ng)+1,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
 !>
-            ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+1, 0,k)
-            ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+              ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+1, 0,k)
+              ad_A(Lm(ng)+1, 0,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
 !>
-            ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+2,-2,k)
-            ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+              ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+2,-2,k)
+              ad_A(Lm(ng)+2,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
 !>
-            ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+2,-1,k)
-            ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+              ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+2,-1,k)
+              ad_A(Lm(ng)+2,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
 !>
-            ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+2, 0,k)
-            ad_A(Lm(ng)+2, 0,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+              ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+2, 0,k)
+              ad_A(Lm(ng)+2, 0,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
 !>
-            ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+3,-2,k)
-            ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+                ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
+     &                              ad_A(Lm(ng)+3,-2,k)
+                ad_A(Lm(ng)+3,-2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
 !>
-            ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+3,-1,k)
-            ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+                ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
+     &                              ad_A(Lm(ng)+3,-1,k)
+                ad_A(Lm(ng)+3,-1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
 !>
-            ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+3, 0,k)
-            ad_A(Lm(ng)+3, 0,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
+     &                              ad_A(Lm(ng)+3, 0,k)
+                ad_A(Lm(ng)+3, 0,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
 !>
-            ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                    &
-     &                          ad_A(-2,Mm(ng)+1,k)
-            ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+              ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
+     &                            ad_A(-2,Mm(ng)+1,k)
+              ad_A(-2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
 !>
-            ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                    &
-     &                          ad_A(-1,Mm(ng)+1,k)
-            ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+              ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
+     &                            ad_A(-1,Mm(ng)+1,k)
+              ad_A(-1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
 !>
-            ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                    &
-     &                          ad_A( 0,Mm(ng)+1,k)
-            ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+              ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
+     &                            ad_A( 0,Mm(ng)+1,k)
+              ad_A( 0,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
 !>
-            ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                    &
-     &                          ad_A(-2,Mm(ng)+2,k)
-            ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+              ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
+     &                            ad_A(-2,Mm(ng)+2,k)
+              ad_A(-2,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
 !>
-            ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                    &
-     &                          ad_A(-1,Mm(ng)+2,k)
-            ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+              ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
+     &                            ad_A(-1,Mm(ng)+2,k)
+              ad_A(-1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
 !>
-            ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                    &
-     &                          ad_A( 0,Mm(ng)+2,k)
-            ad_A( 0,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+              ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
+     &                            ad_A( 0,Mm(ng)+2,k)
+              ad_A( 0,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
 !>
-            ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                    &
-     &                          ad_A(-2,Mm(ng)+3,k)
-            ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+                ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
+     &                              ad_A(-2,Mm(ng)+3,k)
+                ad_A(-2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
 !>
-            ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                    &
-     &                          ad_A(-1,Mm(ng)+3,k)
-            ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+                ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
+     &                              ad_A(-1,Mm(ng)+3,k)
+                ad_A(-1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
 !>
-            ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                    &
-     &                          ad_A( 0,Mm(ng)+3,k)
-            ad_A( 0,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
+     &                              ad_A( 0,Mm(ng)+3,k)
+                ad_A( 0,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
 !>
-            ad_A( 1, 1,k)=ad_A( 1, 1,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+1,k)
-            ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+              ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
+              ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
 !>
-            ad_A( 1, 2,k)=ad_A( 1, 2,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+2,k)
-            ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+              ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
+              ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
 !>
-            ad_A( 1, 3,k)=ad_A( 1, 3,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+3,k)
-            ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-#  endif
-!>          tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+              ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
+              ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
 !>
-            ad_A( 2, 1,k)=ad_A( 2, 1,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+1,k)
-            ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+              ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
+              ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
 !>
-            ad_A( 2, 2,k)=ad_A( 2, 2,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+2,k)
-            ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+                ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
+     &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
+                ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
+
+!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
 !>
-            ad_A( 2, 3,k)=ad_A( 2, 3,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+3,k)
-            ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+                ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
+     &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
+                ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
 !>
-            ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+                ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
+                ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
-            ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+2,k)
-            ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+                ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
+                ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
-            ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
-            ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
+                ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
+                ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-# endif
-
-# ifdef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
-
-      IF (NS_exchange) THEN
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
-              ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                    &
-     &                           ad_A(i,-2,k)
-              ad_A(i,-2,k)=0.0_r8
-!>            tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
-              ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                    &
-     &                           ad_A(i,-1,k)
-              ad_A(i,-1,k)=0.0_r8
-!>            tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
-              ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                    &
-     &                           ad_A(i, 0,k)
-              ad_A(i, 0,k)=0.0_r8
-            END DO
-          END DO
+      IF (NSperiodic(ng)) THEN
+        IF (EWperiodic(ng)) THEN
+          Imin=Istr
+          Imax=Iend
+        ELSE
+          Imin=IstrR
+          Imax=IendR
         END IF
-
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,Mm(ng)+1,k)=tl_A(i, 1,k)
+!
+        IF (NS_exchange) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
 !>
-              ad_A(i, 1,k)=ad_A(i, 1,k)+                                &
-     &                     ad_A(i,Mm(ng)+1,k)
-              ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+                ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
+     &                             ad_A(i,-2,k)
+                ad_A(i,-2,k)=0.0_r8
+!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
 !>
-              ad_A(i, 2,k)=ad_A(i, 2,k)+                                &
-     &                     ad_A(i,Mm(ng)+2,k)
-              ad_A(i,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+                ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
+     &                             ad_A(i,-1,k)
+                ad_A(i,-1,k)=0.0_r8
+!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
 !>
-              ad_A(i,3,k)=ad_A(i,3,k)+                                  &
-     &                    ad_A(i,Mm(ng)+3,k)
-              ad_A(i,Mm(ng)+3,k)=0.0_r8
-#  endif
+                ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
+     &                             ad_A(i, 0,k)
+                ad_A(i, 0,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,Mm(ng)+1,k)=tl_A(i, 1,k)
+!>
+                ad_A(i, 1,k)=ad_A(i, 1,k)+                              &
+     &                       ad_A(i,Mm(ng)+1,k)
+                ad_A(i,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!>
+                ad_A(i, 2,k)=ad_A(i, 2,k)+                              &
+     &                       ad_A(i,Mm(ng)+2,k)
+                ad_A(i,Mm(ng)+2,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO i=Imin,Imax
+!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!>
+                  ad_A(i,3,k)=ad_A(i,3,k)+                              &
+     &                        ad_A(i,Mm(ng)+3,k)
+                  ad_A(i,Mm(ng)+3,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef I_RANGE
-# endif
-
-# ifdef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE JstrR,JendR
-#  endif
-
-      IF (EW_exchange) THEN
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
-              ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                    &
-     &                           ad_A(-2,j,k)
-              ad_A(-2,j,k)=0.0_r8
-!>            tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
-              ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                    &
-     &                           ad_A(-1,j,k)
-              ad_A(-1,j,k)=0.0_r8
-!>            tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
-              ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                    &
-     &                           ad_A( 0,j,k)
-              ad_A( 0,j,k)=0.0_r8
-            END DO
-          END DO
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          Jmin=Jstr
+          Jmax=Jend
+        ELSE
+          Jmin=JstrR
+          Jmax=JendR
         END IF
-
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!
+        IF (EW_exchange) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
 !>
-              ad_A(1,j,k)=ad_A(1,j,k)+                                  &
-     &                    ad_A(Lm(ng)+1,j,k)
-              ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+                ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
+     &                             ad_A(-2,j,k)
+                ad_A(-2,j,k)=0.0_r8
+!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
 !>
-              ad_A(2,j,k)=ad_A(2,j,k)+                                  &
-     &                    ad_A(Lm(ng)+2,j,k)
-              ad_A(Lm(ng)+2,j,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+                ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
+     &                             ad_A(-1,j,k)
+                ad_A(-1,j,k)=0.0_r8
+!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
 !>
-              ad_A(3,j,k)=ad_A(3,j,k)+                                  &
-     &                    ad_A(Lm(ng)+3,j,k)
-              ad_A(Lm(ng)+3,j,k)=0.0_r8
-#  endif
+                ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
+     &                             ad_A( 0,j,k)
+                ad_A( 0,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!>
+                ad_A(1,j,k)=ad_A(1,j,k)+                                &
+     &                      ad_A(Lm(ng)+1,j,k)
+                ad_A(Lm(ng)+1,j,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!>
+                ad_A(2,j,k)=ad_A(2,j,k)+                                &
+     &                      ad_A(Lm(ng)+2,j,k)
+                ad_A(Lm(ng)+2,j,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO j=Jmin,Jmax
+!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!>
+                  ad_A(3,j,k)=ad_A(3,j,k)+                              &
+     &                        ad_A(Lm(ng)+3,j,k)
+                  ad_A(Lm(ng)+3,j,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef J_RANGE
-# endif
 
       RETURN
       END SUBROUTINE ad_exchange_r3d_tile
@@ -840,6 +872,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -854,12 +887,10 @@
 !
 !  Local variable declarations.
 !
-# ifdef EW_PERIODIC
       logical :: EW_exchange
-# endif
-# ifdef NS_PERIODIC
       logical :: NS_exchange
-# endif
+
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -868,361 +899,378 @@
 !  Determine processing switches.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
-#  ifdef DISTRIBUTE
-      EW_exchange=NtileI(ng).eq.1
-#  else
-      EW_exchange=.TRUE.
-#  endif
+      IF (EWperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        EW_exchange=NtileI(ng).eq.1
+# else
+        EW_exchange=.TRUE.
 # endif
-# ifdef NS_PERIODIC
-#  ifdef DISTRIBUTE
-      NS_exchange=NtileJ(ng).eq.1
-#  else
-      NS_exchange=.TRUE.
-#  endif
-# endif
+      ELSE
+        EW_exchange=.FALSE.
+      END IF
 
-# if defined EW_PERIODIC && defined NS_PERIODIC
+      IF (NSperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        NS_exchange=NtileJ(ng).eq.1
+# else
+        NS_exchange=.TRUE.
+# endif
+      ELSE
+        NS_exchange=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (EW_exchange.and.NS_exchange) THEN
-        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+      IF (EWperiodic(ng).and.NSperiodic(ng)) THEN
+        IF (EW_exchange.and.NS_exchange) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+        &
-     &                                ad_A(-2,-2,k)
-            ad_A(-2,-2,k)=0.0_r8
-!>          tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+              ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
+     &                                  ad_A(-2,-2,k)
+              ad_A(-2,-2,k)=0.0_r8
+!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+        &
-     &                                ad_A(-2,-1,k)
-            ad_A(-2,-1,k)=0.0_r8
-!>          tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+              ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
+     &                                  ad_A(-2,-1,k)
+              ad_A(-2,-1,k)=0.0_r8
+!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+        &
-     &                                ad_A(-2, 0,k)
-            ad_A(-2, 0,k)=0.0_r8
-!>          tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+              ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
+     &                                  ad_A(-2, 0,k)
+              ad_A(-2, 0,k)=0.0_r8
+!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+        &
-     &                                ad_A(-1,-2,k)
-            ad_A(-1,-2,k)=0.0_r8
-!>          tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+              ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
+     &                                  ad_A(-1,-2,k)
+              ad_A(-1,-2,k)=0.0_r8
+!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+        &
-     &                                ad_A(-1,-1,k)
-            ad_A(-1,-1,k)=0.0_r8
-!>          tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+              ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
+     &                                  ad_A(-1,-1,k)
+              ad_A(-1,-1,k)=0.0_r8
+!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+        &
-     &                                ad_A(-1, 0,k)
-            ad_A(-1, 0,k)=0.0_r8
-!>          tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+              ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
+     &                                  ad_A(-1, 0,k)
+              ad_A(-1, 0,k)=0.0_r8
+!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+        &
-     &                                ad_A( 0,-2,k)
-            ad_A( 0,-2,k)=0.0_r8
-!>          tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+              ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
+     &                                  ad_A( 0,-2,k)
+              ad_A( 0,-2,k)=0.0_r8
+!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+        &
-     &                                ad_A( 0,-1,k)
-            ad_A( 0,-1,k)=0.0_r8
-!>          tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+              ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
+     &                                  ad_A( 0,-1,k)
+              ad_A( 0,-1,k)=0.0_r8
+!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+        &
-     &                                ad_A( 0, 0,k)
-            ad_A( 0, 0,k)=0.0_r8
-          END DO
-        END IF
+              ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
+     &                                  ad_A( 0, 0,k)
+              ad_A( 0, 0,k)=0.0_r8
+            END DO
+          END IF
 
-        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
 !>
-            ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+1,-2,k)
-            ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+              ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+1,-2,k)
+              ad_A(Lm(ng)+1,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
 !>
-            ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+1,-1,k)
-            ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+              ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+1,-1,k)
+              ad_A(Lm(ng)+1,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
 !>
-            ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+1, 0,k)
-            ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+              ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+1, 0,k)
+              ad_A(Lm(ng)+1, 0,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
 !>
-            ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+2,-2,k)
-            ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+              ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+2,-2,k)
+              ad_A(Lm(ng)+2,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
 !>
-            ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+2,-1,k)
-            ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+              ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+2,-1,k)
+              ad_A(Lm(ng)+2,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
 !>
-            ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+2, 0,k)
-            ad_A(Lm(ng)+2, 0,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+              ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+2, 0,k)
+              ad_A(Lm(ng)+2, 0,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
 !>
-            ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+3,-2,k)
-            ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+                ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
+     &                              ad_A(Lm(ng)+3,-2,k)
+                ad_A(Lm(ng)+3,-2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
 !>
-            ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+3,-1,k)
-            ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+                ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
+     &                              ad_A(Lm(ng)+3,-1,k)
+                ad_A(Lm(ng)+3,-1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
 !>
-            ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+3, 0,k)
-            ad_A(Lm(ng)+3, 0,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
+     &                              ad_A(Lm(ng)+3, 0,k)
+                ad_A(Lm(ng)+3, 0,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
 !>
-            ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                    &
-     &                          ad_A(-2,Mm(ng)+1,k)
-            ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+              ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
+     &                            ad_A(-2,Mm(ng)+1,k)
+              ad_A(-2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
 !>
-            ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                    &
-     &                          ad_A(-1,Mm(ng)+1,k)
-            ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+              ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
+     &                            ad_A(-1,Mm(ng)+1,k)
+              ad_A(-1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
 !>
-            ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                    &
-     &                          ad_A( 0,Mm(ng)+1,k)
-            ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+              ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
+     &                            ad_A( 0,Mm(ng)+1,k)
+              ad_A( 0,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
 !>
-            ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                    &
-     &                          ad_A(-2,Mm(ng)+2,k)
-            ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+              ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
+     &                            ad_A(-2,Mm(ng)+2,k)
+              ad_A(-2,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
 !>
-            ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                    &
-     &                          ad_A(-1,Mm(ng)+2,k)
-            ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+              ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
+     &                            ad_A(-1,Mm(ng)+2,k)
+              ad_A(-1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
 !>
-            ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                    &
-     &                          ad_A( 0,Mm(ng)+2,k)
-            ad_A( 0,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+              ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
+     &                            ad_A( 0,Mm(ng)+2,k)
+              ad_A( 0,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
 !>
-            ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                    &
-     &                          ad_A(-2,Mm(ng)+3,k)
-            ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+                ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
+     &                              ad_A(-2,Mm(ng)+3,k)
+                ad_A(-2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
 !>
-            ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                    &
-     &                          ad_A(-1,Mm(ng)+3,k)
-            ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+                ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
+     &                              ad_A(-1,Mm(ng)+3,k)
+                ad_A(-1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
 !>
-            ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                    &
-     &                          ad_A( 0,Mm(ng)+3,k)
-            ad_A( 0,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
+     &                              ad_A( 0,Mm(ng)+3,k)
+                ad_A( 0,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1  , 1  ,k)
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1  , 1  ,k)
 !>
-            ad_A( 1, 1,k)=ad_A( 1, 1,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+1,k)
-            ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1  , 2,k)
+              ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
+              ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1  , 2,k)
 !>
-            ad_A( 1, 2,k)=ad_A( 1, 2,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+2,k)
-            ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+              ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
+              ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1  ,k)
 !>
-            ad_A( 1, 3,k)=ad_A( 1, 3,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+3,k)
-            ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-#  endif
-!>          tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1  ,k)
+              ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
+              ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
 !>
-            ad_A( 2, 1,k)=ad_A( 2, 1,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+1,k)
-            ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+              ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
+              ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
 !>
-            ad_A( 2, 2,k)=ad_A( 2, 2,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+2,k)
-            ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+                ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
+     &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
+                ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
+
+!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
 !>
-            ad_A( 2, 3,k)=ad_A( 2, 3,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+3,k)
-            ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+                ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
+     &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
+                ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
 !>
-            ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+                ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
+                ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
-            ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+2,k)
-            ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+                ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
+                ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
-            ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
-            ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
+                ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
+                ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-# endif
-
-# ifdef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE Istr,IendR
-#  endif
-
-      IF (NS_exchange) THEN
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
-              ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                    &
-     &                           ad_A(i,-2,k)
-              ad_A(i,-2,k)=0.0_r8
-!>            tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
-              ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                    &
-     &                           ad_A(i,-1,k)
-              ad_A(i,-1,k)=0.0_r8
-!>            tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
-              ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                    &
-     &                           ad_A(i, 0,k)
-              ad_A(i, 0,k)=0.0_r8
-            END DO
-          END DO
+      IF (NSperiodic(ng)) THEN
+        IF (EWperiodic(ng)) THEN
+          Imin=Istr
+          Imax=Iend
+        ELSE
+          Imin=Istr
+          Imax=IendR
         END IF
-
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!
+        IF (NS_exchange) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
 !>
-              ad_A(i,1,k)=ad_A(i,1,k)+                                  &
-     &                    ad_A(i,Mm(ng)+1,k)
-              ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+                ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
+     &                             ad_A(i,-2,k)
+                ad_A(i,-2,k)=0.0_r8
+!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
 !>
-              ad_A(i,2,k)=ad_A(i,2,k)+                                  &
-     &                    ad_A(i,Mm(ng)+2,k)
-              ad_A(i,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+                ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
+     &                             ad_A(i,-1,k)
+                ad_A(i,-1,k)=0.0_r8
+!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
 !>
-              ad_A(i,3,k)=ad_A(i,3,k)+                                  &
-     &                    ad_A(i,Mm(ng)+3,k)
-              ad_A(i,Mm(ng)+3,k)=0.0_r8
-#  endif
+                ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
+     &                             ad_A(i, 0,k)
+                ad_A(i, 0,k)=0.0_r8
+              END DO
             END DO
-          END DO
-        ENDIF
-      END IF
-#  undef I_RANGE
-# endif
+          END IF
 
-# ifdef EW_PERIODIC
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!>
+                ad_A(i,1,k)=ad_A(i,1,k)+                                &
+     &                      ad_A(i,Mm(ng)+1,k)
+                ad_A(i,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!>
+                ad_A(i,2,k)=ad_A(i,2,k)+                                &
+     &                      ad_A(i,Mm(ng)+2,k)
+                ad_A(i,Mm(ng)+2,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO i=Imin,Imax
+!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!>
+                  ad_A(i,3,k)=ad_A(i,3,k)+                              &
+     &                        ad_A(i,Mm(ng)+3,k)
+                  ad_A(i,Mm(ng)+3,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE JstrR,JendR
-#  endif
-
-      IF (EW_exchange) THEN
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
-              ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                    &
-     &                           ad_A(-2,j,k)
-              ad_A(-2,j,k)=0.0_r8
-!>            tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
-              ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                    &
-     &                           ad_A(-1,j,k)
-              ad_A(-1,j,k)=0.0_r8
-!>            tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
-              ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                    &
-     &                           ad_A( 0,j,k)
-              ad_A( 0,j,k)=0.0_r8
-            END DO
-          END DO
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          Jmin=Jstr
+          Jmax=Jend
+        ELSE
+          Jmin=JstrR
+          Jmax=JendR
         END IF
-
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!
+        IF (EW_exchange) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
 !>
-              ad_A(1,j,k)=ad_A(1,j,k)+                                  &
-     &                    ad_A(Lm(ng)+1,j,k)
-              ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+                ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
+     &                             ad_A(-2,j,k)
+                ad_A(-2,j,k)=0.0_r8
+!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
 !>
-              ad_A(2,j,k)=ad_A(2,j,k)+                                  &
-     &                    ad_A(Lm(ng)+2,j,k)
-              ad_A(Lm(ng)+2,j,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+                ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
+     &                             ad_A(-1,j,k)
+                ad_A(-1,j,k)=0.0_r8
+!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
 !>
-              ad_A(3,j,k)=ad_A(3,j,k)+                                  &
-     &                    ad_A(Lm(ng)+3,j,k)
-              ad_A(Lm(ng)+3,j,k)=0.0_r8
-#  endif
+                ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
+     &                             ad_A( 0,j,k)
+                ad_A( 0,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!>
+                ad_A(1,j,k)=ad_A(1,j,k)+                                &
+     &                      ad_A(Lm(ng)+1,j,k)
+                ad_A(Lm(ng)+1,j,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!>
+                ad_A(2,j,k)=ad_A(2,j,k)+                                &
+     &                      ad_A(Lm(ng)+2,j,k)
+                ad_A(Lm(ng)+2,j,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO j=Jmin,Jmax
+!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!>
+                  ad_A(3,j,k)=ad_A(3,j,k)+                              &
+     &                        ad_A(Lm(ng)+3,j,k)
+                  ad_A(Lm(ng)+3,j,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef J_RANGE
-# endif
 
       RETURN
       END SUBROUTINE ad_exchange_u3d_tile
@@ -1235,6 +1283,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1249,12 +1298,10 @@
 !
 !  Local variable declarations.
 !
-# ifdef EW_PERIODIC
       logical :: EW_exchange
-# endif
-# ifdef NS_PERIODIC
       logical :: NS_exchange
-# endif
+
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -1263,361 +1310,377 @@
 !  Determine processing switches.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
-#  ifdef DISTRIBUTE
-      EW_exchange=NtileI(ng).eq.1
-#  else
-      EW_exchange=.TRUE.
-#  endif
+      IF (EWperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        EW_exchange=NtileI(ng).eq.1
+# else
+        EW_exchange=.TRUE.
 # endif
-# ifdef NS_PERIODIC
-#  ifdef DISTRIBUTE
-      NS_exchange=NtileJ(ng).eq.1
-#  else
-      NS_exchange=.TRUE.
-#  endif
-# endif
+      ELSE
+        EW_exchange=.FALSE.
+      END IF
 
-# if defined EW_PERIODIC && defined NS_PERIODIC
+      IF (NSperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        NS_exchange=NtileJ(ng).eq.1
+# else
+        NS_exchange=.TRUE.
+# endif
+      ELSE
+        NS_exchange=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (EW_exchange.and.NS_exchange) THEN
-        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+      IF (EWperiodic(ng).and.NSperiodic(ng)) THEN
+        IF (EW_exchange.and.NS_exchange) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+        &
-     &                                ad_A(-2,-2,k)
-            ad_A(-2,-2,k)=0.0_r8
-!>          tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+              ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
+     &                                  ad_A(-2,-2,k)
+              ad_A(-2,-2,k)=0.0_r8
+!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+        &
-     &                                ad_A(-2,-1,k)
-            ad_A(-2,-1,k)=0.0_r8
-!>          tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+              ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
+     &                                  ad_A(-2,-1,k)
+              ad_A(-2,-1,k)=0.0_r8
+!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+        &
-     &                                ad_A(-2, 0,k)
-            ad_A(-2, 0,k)=0.0_r8
-!>          tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+              ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
+     &                                  ad_A(-2, 0,k)
+              ad_A(-2, 0,k)=0.0_r8
+!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+        &
-     &                                ad_A(-1,-2,k)
-            ad_A(-1,-2,k)=0.0_r8
-!>          tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+              ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
+     &                                  ad_A(-1,-2,k)
+              ad_A(-1,-2,k)=0.0_r8
+!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+        &
-     &                                ad_A(-1,-1,k)
-            ad_A(-1,-1,k)=0.0_r8
-!>          tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+              ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
+     &                                  ad_A(-1,-1,k)
+              ad_A(-1,-1,k)=0.0_r8
+!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+        &
-     &                                ad_A(-1, 0,k)
-            ad_A(-1, 0,k)=0.0_r8
-!>          tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+              ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
+     &                                  ad_A(-1, 0,k)
+              ad_A(-1, 0,k)=0.0_r8
+!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+        &
-     &                                ad_A( 0,-2,k)
-            ad_A( 0,-2,k)=0.0_r8
-!>          tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+              ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
+     &                                  ad_A( 0,-2,k)
+              ad_A( 0,-2,k)=0.0_r8
+!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+        &
-     &                                ad_A( 0,-1,k)
-            ad_A( 0,-1,k)=0.0_r8
-!>          tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+              ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
+     &                                  ad_A( 0,-1,k)
+              ad_A( 0,-1,k)=0.0_r8
+!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+        &
-     &                                ad_A( 0, 0,k)
-            ad_A( 0, 0,k)=0.0_r8
-          END DO
-        END IF
+              ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
+     &                                  ad_A( 0, 0,k)
+              ad_A( 0, 0,k)=0.0_r8
+            END DO
+          END IF
 
-        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
 !>
-            ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+1,-2,k)
-            ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+              ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+1,-2,k)
+              ad_A(Lm(ng)+1,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
 !>
-            ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+1,-1,k)
-            ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+              ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+1,-1,k)
+              ad_A(Lm(ng)+1,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
 !>
-            ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+1, 0,k)
-            ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+              ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+1, 0,k)
+              ad_A(Lm(ng)+1, 0,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
 !>
-            ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+2,-2,k)
-            ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+              ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+2,-2,k)
+              ad_A(Lm(ng)+2,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
 !>
-            ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+2,-1,k)
-            ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+              ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+2,-1,k)
+              ad_A(Lm(ng)+2,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
 !>
-            ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+2, 0,k)
-            ad_A(Lm(ng)+2, 0,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+              ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+2, 0,k)
+              ad_A(Lm(ng)+2, 0,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
 !>
-            ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+3,-2,k)
-            ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+                ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
+     &                              ad_A(Lm(ng)+3,-2,k)
+                ad_A(Lm(ng)+3,-2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
 !>
-            ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+3,-1,k)
-            ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+                ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
+     &                              ad_A(Lm(ng)+3,-1,k)
+                ad_A(Lm(ng)+3,-1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
 !>
-            ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+3, 0,k)
-            ad_A(Lm(ng)+3, 0,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
+     &                              ad_A(Lm(ng)+3, 0,k)
+                ad_A(Lm(ng)+3, 0,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
 !>
-            ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                    &
-     &                          ad_A(-2,Mm(ng)+1,k)
-            ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+              ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
+     &                            ad_A(-2,Mm(ng)+1,k)
+              ad_A(-2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
 !>
-            ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                    &
-     &                          ad_A(-1,Mm(ng)+1,k)
-            ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+              ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
+     &                            ad_A(-1,Mm(ng)+1,k)
+              ad_A(-1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
 !>
-            ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                    &
-     &                          ad_A( 0,Mm(ng)+1,k)
-            ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+              ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
+     &                            ad_A( 0,Mm(ng)+1,k)
+              ad_A( 0,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
 !>
-            ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                    &
-     &                          ad_A(-2,Mm(ng)+2,k)
-            ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+              ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
+     &                            ad_A(-2,Mm(ng)+2,k)
+              ad_A(-2,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
 !>
-            ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                    &
-     &                          ad_A(-1,Mm(ng)+2,k)
-            ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+              ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
+     &                            ad_A(-1,Mm(ng)+2,k)
+              ad_A(-1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
 !>
-            ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                    &
-     &                          ad_A( 0,Mm(ng)+2,k)
-            ad_A( 0,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+              ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
+     &                            ad_A( 0,Mm(ng)+2,k)
+              ad_A( 0,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
 !>
-            ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                    &
-     &                          ad_A(-2,Mm(ng)+3,k)
-            ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+                ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
+     &                              ad_A(-2,Mm(ng)+3,k)
+                ad_A(-2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
 !>
-            ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                    &
-     &                          ad_A(-1,Mm(ng)+3,k)
-            ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+                ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
+     &                              ad_A(-1,Mm(ng)+3,k)
+                ad_A(-1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
 !>
-            ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                    &
-     &                          ad_A( 0,Mm(ng)+3,k)
-            ad_A( 0,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
+     &                              ad_A( 0,Mm(ng)+3,k)
+                ad_A( 0,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
 !>
-            ad_A( 1, 1,k)=ad_A( 1, 1,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+1,k)
-            ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+              ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
+              ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
 !>
-            ad_A( 1, 2,k)=ad_A( 1, 2,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+2,k)
-            ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+              ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
+              ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
 !>
-            ad_A( 1, 3,k)=ad_A( 1, 3,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+3,k)
-            ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-#  endif
-!>          tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+              ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
+              ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
 !>
-            ad_A( 2, 1,k)=ad_A( 2, 1,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+1,k)
-            ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+              ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
+              ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
 !>
-            ad_A( 2, 2,k)=ad_A( 2, 2,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+2,k)
-            ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+                ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
+     &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
+                ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
 !>
-            ad_A( 2, 3,k)=ad_A( 2, 3,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+3,k)
-            ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+                ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
+     &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
+                ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
 !>
-            ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+                ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
+                ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
-            ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+2,k)
-            ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+                ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
+                ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
-            ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
-            ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
+                ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
+                ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-# endif
-
-# ifdef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
-
-      IF (NS_exchange) THEN
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
-              ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                    &
-     &                           ad_A(i,-2,k)
-              ad_A(i,-2,k)=0.0_r8
-!>            tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
-              ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                    &
-     &                           ad_A(i,-1,k)
-              ad_A(i,-1,k)=0.0_r8
-!>            tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
-              ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                    &
-     &                           ad_A(i, 0,k)
-              ad_A(i, 0,k)=0.0_r8
-            END DO
-          END DO
+      IF (NSperiodic(ng)) THEN
+        IF (EWperiodic(ng)) THEN
+          Imin=Istr
+          Imax=Iend
+        ELSE
+          Imin=IstrR
+          Imax=IendR
         END IF
-
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!
+        IF (NS_exchange) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
 !>
-              ad_A(i,1,k)=ad_A(i,1,k)+                                  &
-     &                    ad_A(i,Mm(ng)+1,k)
-              ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+                ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
+     &                             ad_A(i,-2,k)
+                ad_A(i,-2,k)=0.0_r8
+!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
 !>
-              ad_A(i,2,k)=ad_A(i,2,k)+                                  &
-     &                    ad_A(i,Mm(ng)+2,k)
-              ad_A(i,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+                ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
+     &                             ad_A(i,-1,k)
+                ad_A(i,-1,k)=0.0_r8
+!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
 !>
-              ad_A(i,3,k)=ad_A(i,3,k)+                                  &
-     &                    ad_A(i,Mm(ng)+3,k)
-              ad_A(i,Mm(ng)+3,k)=0.0_r8
-#  endif
+                ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
+     &                             ad_A(i, 0,k)
+                ad_A(i, 0,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!>
+                ad_A(i,1,k)=ad_A(i,1,k)+                                &
+     &                      ad_A(i,Mm(ng)+1,k)
+                ad_A(i,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!>
+                ad_A(i,2,k)=ad_A(i,2,k)+                                &
+     &                      ad_A(i,Mm(ng)+2,k)
+                ad_A(i,Mm(ng)+2,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO i=Imin,Imax
+!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!>
+                  ad_A(i,3,k)=ad_A(i,3,k)+                              &
+     &                        ad_A(i,Mm(ng)+3,k)
+                  ad_A(i,Mm(ng)+3,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef I_RANGE
-# endif
-
-# ifdef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE Jstr,JendR
-#  endif
-
-      IF (EW_exchange) THEN
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
-              ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                    &
-     &                           ad_A(-2,j,k)
-              ad_A(-2,j,k)=0.0_r8
-!>            tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
-              ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                    &
-     &                           ad_A(-1,j,k)
-              ad_A(-1,j,k)=0.0_r8
-!>            tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
-              ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                    &
-     &                           ad_A( 0,j,k)
-              ad_A( 0,j,k)=0.0_r8
-            END DO
-          END DO
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          Jmin=Jstr
+          Jmax=Jend
+        ELSE
+          Jmin=Jstr
+          Jmax=JendR
         END IF
-
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO k=1,N(ng)
-            DO j=J_RANGE
-!>            tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!
+        IF (EW_exchange) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
 !>
-              ad_A(1,j,k)=ad_A(1,j,k)+                                  &
-     &                    ad_A(Lm(ng)+1,j,k)
-              ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+                ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
+     &                             ad_A(-2,j,k)
+                ad_A(-2,j,k)=0.0_r8
+!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
 !>
-              ad_A(2,j,k)=ad_A(2,j,k)+                                  &
-     &                    ad_A(Lm(ng)+2,j,k)
-              ad_A(Lm(ng)+2,j,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+                ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
+     &                             ad_A(-1,j,k)
+                ad_A(-1,j,k)=0.0_r8
+!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
 !>
-              ad_A(3,j,k)=ad_A(3,j,k)+                                  &
-     &                    ad_A(Lm(ng)+3,j,k)
-              ad_A(Lm(ng)+3,j,k)=0.0_r8
-#  endif
+                ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
+     &                             ad_A( 0,j,k)
+                ad_A( 0,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!>
+                ad_A(1,j,k)=ad_A(1,j,k)+                                &
+     &                      ad_A(Lm(ng)+1,j,k)
+                ad_A(Lm(ng)+1,j,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!>
+                ad_A(2,j,k)=ad_A(2,j,k)+                                &
+     &                      ad_A(Lm(ng)+2,j,k)
+                ad_A(Lm(ng)+2,j,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO j=Jmin,Jmax
+!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!>
+                  ad_A(3,j,k)=ad_A(3,j,k)+                              &
+     &                        ad_A(Lm(ng)+3,j,k)
+                  ad_A(Lm(ng)+3,j,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef J_RANGE
-# endif
 
       RETURN
       END SUBROUTINE ad_exchange_v3d_tile
@@ -1630,6 +1693,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1644,12 +1708,10 @@
 !
 !  Local variable declarations.
 !
-# ifdef EW_PERIODIC
       logical :: EW_exchange
-# endif
-# ifdef NS_PERIODIC
       logical :: NS_exchange
-# endif
+
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -1658,361 +1720,377 @@
 !  Determine processing switches.
 !-----------------------------------------------------------------------
 !
-# ifdef EW_PERIODIC
-#  ifdef DISTRIBUTE
-      EW_exchange=NtileI(ng).eq.1
-#  else
-      EW_exchange=.TRUE.
-#  endif
+      IF (EWperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        EW_exchange=NtileI(ng).eq.1
+# else
+        EW_exchange=.TRUE.
 # endif
-# ifdef NS_PERIODIC
-#  ifdef DISTRIBUTE
-      NS_exchange=NtileJ(ng).eq.1
-#  else
-      NS_exchange=.TRUE.
-#  endif
-# endif
+      ELSE
+        EW_exchange=.FALSE.
+      END IF
 
-# if defined EW_PERIODIC && defined NS_PERIODIC
+      IF (NSperiodic(ng)) THEN
+# ifdef DISTRIBUTE
+        NS_exchange=NtileJ(ng).eq.1
+# else
+        NS_exchange=.TRUE.
+# endif
+      ELSE
+        NS_exchange=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (EW_exchange.and.NS_exchange) THEN
-        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=0,N(ng)
-!>          tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+      IF (EWperiodic(ng).and.NSperiodic(ng)) THEN
+        IF (EW_exchange.and.NS_exchange) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+        &
-     &                                ad_A(-2,-2,k)
-            ad_A(-2,-2,k)=0.0_r8
-!>          tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+              ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
+     &                                  ad_A(-2,-2,k)
+              ad_A(-2,-2,k)=0.0_r8
+!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+        &
-     &                                ad_A(-2,-1,k)
-            ad_A(-2,-1,k)=0.0_r8
-!>          tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+              ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
+     &                                  ad_A(-2,-1,k)
+              ad_A(-2,-1,k)=0.0_r8
+!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+        &
-     &                                ad_A(-2, 0,k)
-            ad_A(-2, 0,k)=0.0_r8
-!>          tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+              ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
+     &                                  ad_A(-2, 0,k)
+              ad_A(-2, 0,k)=0.0_r8
+!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+        &
-     &                                ad_A(-1,-2,k)
-            ad_A(-1,-2,k)=0.0_r8
-!>          tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+              ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
+     &                                  ad_A(-1,-2,k)
+              ad_A(-1,-2,k)=0.0_r8
+!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+        &
-     &                                ad_A(-1,-1,k)
-            ad_A(-1,-1,k)=0.0_r8
-!>          tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+              ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
+     &                                  ad_A(-1,-1,k)
+              ad_A(-1,-1,k)=0.0_r8
+!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+        &
-     &                                ad_A(-1, 0,k)
-            ad_A(-1, 0,k)=0.0_r8
-!>          tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+              ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
+     &                                  ad_A(-1, 0,k)
+              ad_A(-1, 0,k)=0.0_r8
+!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+        &
-     &                                ad_A( 0,-2,k)
-            ad_A( 0,-2,k)=0.0_r8
-!>          tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+              ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
+     &                                  ad_A( 0,-2,k)
+              ad_A( 0,-2,k)=0.0_r8
+!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+        &
-     &                                ad_A( 0,-1,k)
-            ad_A( 0,-1,k)=0.0_r8
-!>          tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+              ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
+     &                                  ad_A( 0,-1,k)
+              ad_A( 0,-1,k)=0.0_r8
+!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
 !>
-            ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+        &
-     &                                ad_A( 0, 0,k)
-            ad_A( 0, 0,k)=0.0_r8
-          END DO
-        END IF
+              ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
+     &                                  ad_A( 0, 0,k)
+              ad_A( 0, 0,k)=0.0_r8
+            END DO
+          END IF
 
-        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=0,N(ng)
-!>          tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
 !>
-            ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+1,-2,k)
-            ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+              ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+1,-2,k)
+              ad_A(Lm(ng)+1,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
 !>
-            ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                    &
+              ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                          ad_A(Lm(ng)+1,-1,k)
-            ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+              ad_A(Lm(ng)+1,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
 !>
-            ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+1, 0,k)
-            ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+              ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+1, 0,k)
+              ad_A(Lm(ng)+1, 0,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
 !>
-            ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+2,-2,k)
-            ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+              ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
+     &                            ad_A(Lm(ng)+2,-2,k)
+              ad_A(Lm(ng)+2,-2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
 !>
-            ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+2,-1,k)
-            ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+              ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
+     &                            ad_A(Lm(ng)+2,-1,k)
+              ad_A(Lm(ng)+2,-1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
 !>
-            ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+2, 0,k)
-            ad_A(Lm(ng)+2, 0,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+              ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
+     &                            ad_A(Lm(ng)+2, 0,k)
+              ad_A(Lm(ng)+2, 0,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
 !>
-            ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                    &
-     &                          ad_A(Lm(ng)+3,-2,k)
-            ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+                ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
+     &                              ad_A(Lm(ng)+3,-2,k)
+                ad_A(Lm(ng)+3,-2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
 !>
-            ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                    &
-     &                          ad_A(Lm(ng)+3,-1,k)
-            ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+                ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
+     &                              ad_A(Lm(ng)+3,-1,k)
+                ad_A(Lm(ng)+3,-1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
 !>
-            ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                    &
-     &                          ad_A(Lm(ng)+3, 0,k)
-            ad_A(Lm(ng)+3, 0,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
+     &                              ad_A(Lm(ng)+3, 0,k)
+                ad_A(Lm(ng)+3, 0,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=0,N(ng)
-!>          tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
 !>
-            ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                    &
-     &                          ad_A(-2,Mm(ng)+1,k)
-            ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+              ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
+     &                            ad_A(-2,Mm(ng)+1,k)
+              ad_A(-2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
 !>
-            ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                    &
-     &                          ad_A(-1,Mm(ng)+1,k)
-            ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+              ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
+     &                            ad_A(-1,Mm(ng)+1,k)
+              ad_A(-1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
 !>
-            ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                    &
-     &                          ad_A( 0,Mm(ng)+1,k)
-            ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+              ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
+     &                            ad_A( 0,Mm(ng)+1,k)
+              ad_A( 0,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
 !>
-            ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                    &
-     &                          ad_A(-2,Mm(ng)+2,k)
-            ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+              ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
+     &                            ad_A(-2,Mm(ng)+2,k)
+              ad_A(-2,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
 !>
-            ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                    &
-     &                          ad_A(-1,Mm(ng)+2,k)
-            ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+              ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
+     &                            ad_A(-1,Mm(ng)+2,k)
+              ad_A(-1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
 !>
-            ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                    &
-     &                          ad_A( 0,Mm(ng)+2,k)
-            ad_A( 0,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+              ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
+     &                            ad_A( 0,Mm(ng)+2,k)
+              ad_A( 0,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
 !>
-            ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                    &
-     &                          ad_A(-2,Mm(ng)+3,k)
-            ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+                ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
+     &                              ad_A(-2,Mm(ng)+3,k)
+                ad_A(-2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
 !>
-            ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                    &
-     &                          ad_A(-1,Mm(ng)+3,k)
-            ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>          tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+                ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
+     &                              ad_A(-1,Mm(ng)+3,k)
+                ad_A(-1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
 !>
-            ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                    &
-     &                          ad_A( 0,Mm(ng)+3,k)
-            ad_A( 0,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        END IF
+                ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
+     &                              ad_A( 0,Mm(ng)+3,k)
+                ad_A( 0,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
 
-        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=0,N(ng)
-!>          tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            DO k=LBk,UBk
+!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
 !>
-            ad_A( 1, 1,k)=ad_A( 1, 1,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+1,k)
-            ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+              ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
+              ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
 !>
-            ad_A( 1, 2,k)=ad_A( 1, 2,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+2,k)
-            ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+              ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
+     &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
+              ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
 !>
-            ad_A( 1, 3,k)=ad_A( 1, 3,k)+                                &
-     &                    ad_A(Lm(ng)+1,Mm(ng)+3,k)
-            ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-#  endif
-!>          tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+              ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
+              ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
+!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
 !>
-            ad_A( 2, 1,k)=ad_A( 2, 1,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+1,k)
-            ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+              ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
+     &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
+              ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
 !>
-            ad_A( 2, 2,k)=ad_A( 2, 2,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+2,k)
-            ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>          tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+                ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
+     &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
+                ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
 !>
-            ad_A( 2, 3,k)=ad_A( 2, 3,k)+                                &
-     &                    ad_A(Lm(ng)+2,Mm(ng)+3,k)
-            ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+                ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
+     &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
+                ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
 !>
-            ad_A( 3, 1,k)=ad_A( 3, 1,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+1,k)
-            ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+                ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
+                ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
 !>
-            ad_A( 3, 2,k)=ad_A( 3, 2,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+2,k)
-            ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>          tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+                ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
+                ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
+!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
 !>
-            ad_A( 3, 3,k)=ad_A( 3, 3,k)+                                &
-     &                    ad_A(Lm(ng)+3,Mm(ng)+3,k)
-            ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
-#  endif
-          END DO
-        ENDIF
+                ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
+     &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
+                ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
+              END DO
+            END IF
+          END IF
+        END IF
       END IF
-# endif
-
-# ifdef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  North-South periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
-
-      IF (NS_exchange) THEN
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO k=0,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
-              ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                    &
-     &                           ad_A(i,-2,k)
-              ad_A(i,-2,k)=0.0_r8
-!>            tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
-              ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                    &
-     &                           ad_A(i,-1,k)
-              ad_A(i,-1,k)=0.0_r8
-!>            tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
-              ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                    &
-     &                           ad_A(i, 0,k)
-              ad_A(i, 0,k)=0.0_r8
-            END DO
-          END DO
+      IF (NSperiodic(ng)) THEN
+        IF (EWperiodic(ng)) THEN
+          Imin=Istr
+          Imax=Iend
+        ELSE
+          Imin=IstrR
+          Imax=IendR
         END IF
-
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO k=0,N(ng)
-            DO i=I_RANGE
-!>            tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!
+        IF (NS_exchange) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
 !>
-              ad_A(i,1,k)=ad_A(i,1 ,k)+                                 &
-     &                    ad_A(i,Mm(ng)+1,k)
-              ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+                ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
+     &                             ad_A(i,-2,k)
+                ad_A(i,-2,k)=0.0_r8
+!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
 !>
-              ad_A(i,2,k)=ad_A(i,2,k)+                                  &
-     &                    ad_A(i,Mm(ng)+2,k)
-              ad_A(i,Mm(ng)+2,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+                ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
+     &                             ad_A(i,-1,k)
+                ad_A(i,-1,k)=0.0_r8
+!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
 !>
-              ad_A(i,3,k)=ad_A(i,3,k)+                                  &
-     &                    ad_A(i,Mm(ng)+3,k)
-              ad_A(i,Mm(ng)+3,k)=0.0_r8
-#  endif
+                ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
+     &                             ad_A(i, 0,k)
+                ad_A(i, 0,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO i=Imin,Imax
+!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!>
+                ad_A(i,1,k)=ad_A(i,1 ,k)+                               &
+     &                      ad_A(i,Mm(ng)+1,k)
+                ad_A(i,Mm(ng)+1,k)=0.0_r8
+!>              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+!>
+                ad_A(i,2,k)=ad_A(i,2,k)+                                &
+     &                      ad_A(i,Mm(ng)+2,k)
+                ad_A(i,Mm(ng)+2,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO i=Imin,Imax
+!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!>
+                  ad_A(i,3,k)=ad_A(i,3,k)+                              &
+     &                        ad_A(i,Mm(ng)+3,k)
+                  ad_A(i,Mm(ng)+3,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef I_RANGE
-# endif
-
-# ifdef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  East-West periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr,Jend
-#  else
-#   define J_RANGE JstrR,JendR
-#  endif
-
-      IF (EW_exchange) THEN
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO k=0,N(ng)
-            DO j=J_RANGE
-!>            tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
-              ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                    &
-     &                           ad_A(-2,j,k)
-              ad_A(-2,j,k)=0.0_r8
-!>            tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
-              ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                    &
-     &                           ad_A(-1,j,k)
-              ad_A(-1,j,k)=0.0_r8
-!>            tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
-              ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                    &
-     &                           ad_A( 0,j,k)
-              ad_A( 0,j,k)=0.0_r8
-            END DO
-          END DO
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          Jmin=Jstr
+          Jmax=Jend
+        ELSE
+          Jmin=JstrR
+          Jmax=JendR
         END IF
-
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO k=0,N(ng)
-            DO j=J_RANGE
-!>            tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!
+        IF (EW_exchange) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
 !>
-              ad_A(1,j,k)=ad_A(1,j,k)+                                  &
-     &                    ad_A(Lm(ng)+1,j,k)
-              ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+                ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
+     &                             ad_A(-2,j,k)
+                ad_A(-2,j,k)=0.0_r8
+!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
 !>
-              ad_A(2,j,k)=ad_A(2,j,k)+                                  &
-     &                    ad_A(Lm(ng)+2,j,k)
-              ad_A(Lm(ng)+2,j,k)=0.0_r8
-#  ifdef THREE_GHOST
-!>            tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+                ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
+     &                             ad_A(-1,j,k)
+                ad_A(-1,j,k)=0.0_r8
+!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
 !>
-              ad_A(3,j,k)=ad_A(3,j,k)+                                  &
-     &                    ad_A(Lm(ng)+3,j,k)
-              ad_A(Lm(ng)+3,j,k)=0.0_r8
-#  endif
+                ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
+     &                             ad_A( 0,j,k)
+                ad_A( 0,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
+          END IF
+
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO k=LBk,UBk
+              DO j=Jmin,Jmax
+!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!>
+                ad_A(1,j,k)=ad_A(1,j,k)+                                &
+     &                      ad_A(Lm(ng)+1,j,k)
+                ad_A(Lm(ng)+1,j,k)=0.0_r8
+!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!>
+                ad_A(2,j,k)=ad_A(2,j,k)+                                &
+     &                      ad_A(Lm(ng)+2,j,k)
+                ad_A(Lm(ng)+2,j,k)=0.0_r8
+              END DO
+            END DO
+            IF (NghostPoints.eq.3) THEN
+              DO k=LBk,UBk
+                DO j=Jmin,Jmax
+!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!>
+                  ad_A(3,j,k)=ad_A(3,j,k)+                              &
+     &                        ad_A(Lm(ng)+3,j,k)
+                  ad_A(Lm(ng)+3,j,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
         END IF
       END IF
-#  undef J_RANGE
-# endif
 
       RETURN
       END SUBROUTINE ad_exchange_w3d_tile

@@ -5,24 +5,6 @@
 #if defined WEAK_CONSTRAINT   && \
    (defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F)
 
-# ifdef EW_PERIODIC
-#  define IR_RANGE Istr-1,Iend+1
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# else
-#  define IR_RANGE IstrT,IendT
-#  define IU_RANGE IstrP,IendT
-#  define IV_RANGE IstrT,IendT
-# endif
-# ifdef NS_PERIODIC
-#  define JR_RANGE Jstr-1,Jend+1
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# else
-#  define JR_RANGE JstrT,JendT
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP,JendT
-# endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -1199,8 +1181,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           cff=zeta_std(i,j,rec)*zeta_std(i,j,rec)-                      &
      &        s1_zeta(i,j,Lout)
 # ifdef MASKING
@@ -1268,8 +1250,8 @@
 !
 !  2D U-momentum component.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           cff=ubar_std(i,j,rec)*ubar_std(i,j,rec)-                      &
      &        s1_ubar(i,j,Lout)
 #  ifdef MASKING
@@ -1338,8 +1320,8 @@
 !
 !  2D V-momentum component.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           cff=vbar_std(i,j,rec)*vbar_std(i,j,rec)-                      &
      &        s1_vbar(i,j,Lout)
 #  ifdef MASKING
@@ -1409,8 +1391,8 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             cff=sustr_std(i,j)*sustr_std(i,j)-                          &
      &          s1_sustr(i,j,ir,Lout)
 #  ifdef MASKING
@@ -1419,8 +1401,8 @@
             s1_sustr(i,j,ir,Lout)=cff
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             cff=svstr_std(i,j)*svstr_std(i,j)-                          &
      &          s1_svstr(i,j,ir,Lout)
 #  ifdef MASKING
@@ -1437,8 +1419,8 @@
 !  3D U-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             cff=u_std(i,j,k,rec)*u_std(i,j,k,rec)-                      &
      &          s1_u(i,j,k,Lout)
 #  ifdef MASKING
@@ -1514,8 +1496,8 @@
 !  3D V-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             cff=v_std(i,j,k,rec)*v_std(i,j,k,rec)-                      &
      &          s1_v(i,j,k,Lout)
 #  ifdef MASKING
@@ -1592,8 +1574,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               cff=t_std(i,j,k,rec,it)*t_std(i,j,k,rec,it)-              &
      &            s1_t(i,j,k,Lout,it)
 #  ifdef MASKING
@@ -1676,8 +1658,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 cff=stflx_std(i,j,it)*stflx_std(i,j,it)-                &
      &              s1_tflux(i,j,ir,Lout,it)
 #   ifdef MASKING
@@ -1695,14 +1677,5 @@
 
       RETURN
       END SUBROUTINE analysis_var
-
-# undef IR_RANGE
-# undef IU_RANGE
-# undef IV_RANGE
-# undef JR_RANGE
-# undef JU_RANGE
-# undef JV_RANGE
-
 #endif
-
       END MODULE posterior_var_mod

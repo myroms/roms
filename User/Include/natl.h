@@ -42,7 +42,3 @@
 #endif
 #define TCLIMATOLOGY
 #define TCLM_NUDGING
-#define EASTERN_WALL
-#define WESTERN_WALL
-#define SOUTHERN_WALL
-#define NORTHERN_WALL

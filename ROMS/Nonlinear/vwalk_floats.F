@@ -22,10 +22,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: vwalk_floats
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -180,7 +180,7 @@
       END DO
 
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                    Lstr, Lend, nfindx, ifakt,                    &
+     &                    Lstr, Lend, nfindx, ifakt, isBw3d,            &
      &                    w3dvar, Lmask, spval, nudg,                   &
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % pn,                                &
@@ -192,7 +192,7 @@
      &                    MyThread, bounded, track)
 
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                    Lstr, Lend, nfindx, ifdak,                    &
+     &                    Lstr, Lend, nfindx, ifdak, isBr3d,            &
      &                    r3dvar, Lmask, spval, nudg,                   &
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % pn,                                &
@@ -219,7 +219,7 @@
 !  Interpolate vertical slopes using nudging velocity coefficients.
 !
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                    Lstr, Lend, nfindx, izrhs,                    &
+     &                    Lstr, Lend, nfindx, izrhs, isBw3d,            &
      &                    -w3dvar, Lmask, spval, nudg,                  &
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % pn,                                &

@@ -22,8 +22,6 @@
 #undef  TS_DIF2
 #undef  MIX_GEO_TS
 #define SALINITY
-#define EW_PERIODIC
-#define NS_PERIODIC
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES

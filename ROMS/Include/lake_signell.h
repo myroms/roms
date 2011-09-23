@@ -24,10 +24,6 @@
 #define MASKING
 #define AVERAGES
 #define FLOATS
-#define NORTHERN_WALL
-#define SOUTHERN_WALL
-#define EASTERN_WALL
-#define WESTERN_WALL
 
 /* define only one of the four following */
 

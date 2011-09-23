@@ -33,9 +33,6 @@
 #define SOLVE3D
 #define MASKING
 #undef  SPLINES
-#define EW_PERIODIC
-#define SOUTHERN_WALL
-#define NORTHERN_WALL
 #undef  ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_STFLUX
@@ -77,5 +74,4 @@
 
 #ifdef MULTI_DOMAIN
 # undef MASKING
-# undef EW_PERIODIC
 #endif

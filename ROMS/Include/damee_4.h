@@ -27,10 +27,6 @@
 #define SRELAXATION
 #define CURVGRID
 #define AVERAGES
-#define EASTERN_WALL
-#define WESTERN_WALL
-#define SOUTHERN_WALL
-#define NORTHERN_WALL
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX

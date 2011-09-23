@@ -74,15 +74,9 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_scalars
       USE mod_sediment
-!
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      USE exchange_3d_mod, ONLY : exchange_r3d_tile
-#endif
-#ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-#endif
 !
 !  Imported variable declarations.
 !
@@ -125,18 +119,6 @@
 !  Local variable declarations.
 !
 #ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
-#ifdef DISTRIBUTE
       integer :: Tstr, Tend
 #endif
       integer :: i, ised, j, k
@@ -176,6 +158,7 @@
       ana_sediment.h: no values provided for bottom(:,:,isd50) and
                                              bottom(:,:,idens)
 # endif
+
 # if defined MB_BBL || defined SSW_BBL
 #  undef YALIN
 !
@@ -442,9 +425,9 @@
 !
              DO ised=1,NST
                bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
-     &                                 Srho(ised,ng)*                   &
-     &                                 (1.0_r8-bed(i,j,k,iporo))*       &
-     &                                 bed_frac(i,j,k,ised)
+     &                                Srho(ised,ng)*                    &
+     &                                (1.0_r8-bed(i,j,k,iporo))*        &
+     &                                bed_frac(i,j,k,ised)
              END DO
           END DO
         END DO
@@ -481,5 +464,6 @@
         END DO
       END DO
 #endif
+
       RETURN
       END SUBROUTINE ana_sediment_tile

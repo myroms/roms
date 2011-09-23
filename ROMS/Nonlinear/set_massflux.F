@@ -2,26 +2,6 @@
       MODULE set_massflux_mod
 
 #ifdef SOLVE3D
-# ifdef EW_PERIODIC
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# elif defined COMPOSED_GRID || defined REFINED_GRID
-#  define IU_RANGE IstrP+1,IendT
-#  define IV_RANGE IstrT,IendT
-# else
-#  define IU_RANGE Istr,IendR
-#  define IV_RANGE IstrR,IendR
-# endif
-# ifdef NS_PERIODIC
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# elif defined COMPOSED_GRID || defined REFINED_GRID
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP+1,JendT
-# else
-#  define JU_RANGE JstrR,JendR
-#  define JV_RANGE Jstr,JendR
-# endif
 !
 !svn $Id$
 !=======================================================================
@@ -34,15 +14,14 @@
 !                                                                      !
 !=======================================================================
 !
-!
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: set_massflux
 # ifdef ADJOINT
       PUBLIC  :: reset_massflux
 # endif
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -83,6 +62,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 12)
 # endif
+
       RETURN
       END SUBROUTINE set_massflux
 !
@@ -101,11 +81,8 @@
 !
       USE mod_param
       USE mod_scalars
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_3d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -147,18 +124,8 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
+      integer :: IminU, IminV, ImaxU, ImaxV
+      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -167,9 +134,51 @@
 !  Compute horizontal mass fluxes, Hz*u/n and Hz*v/m.
 !-----------------------------------------------------------------------
 !
+!  Set local I- and J-ranges.
+!
+      IF (EWperiodic(ng)) THEN
+        IminU=Istr
+        ImaxU=Iend
+        IminV=Istr
+        ImaxV=Iend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          IminU=IstrP+1
+          ImaxU=IendT
+          IminV=IstrT
+          ImaxV=IendT
+        ELSE
+          IminU=Istr
+          ImaxU=IendR
+          IminV=IstrR
+          ImaxV=IendR
+        END IF
+      END IF
+
+      IF (NSperiodic(ng)) THEN
+        JminU=Jstr
+        JmaxU=Jend
+        JminV=Jstr
+        JmaxV=Jend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          JminU=JstrT
+          JmaxU=JendT
+          JminV=JstrP+1
+          JmaxV=JendT
+        ELSE
+          JminU=JstrR
+          JmaxU=JendR
+          JminV=Jstr
+          JmaxV=JendR
+        END IF
+      END IF
+!
+!  Compute horizontal mass fluxes.
+!
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JminU,JmaxU
+          DO i=IminU,ImaxU
             Huon(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)*   &
      &                  on_u(i,j)
 # ifdef NEARSHORE_MELLOR
@@ -179,8 +188,8 @@
 # endif
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JminV,JmaxV
+          DO i=IminV,ImaxV
             Hvom(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)*   &
      &                  om_v(i,j)
 # ifdef NEARSHORE_MELLOR
@@ -191,25 +200,26 @@
           END DO
         END DO
       END DO
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !  Exchange boundary information.
 !
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        Huon)
-      CALL exchange_v3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        Hvom)
-#  endif
-#  ifdef DISTRIBUTE
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          Huon)
+        CALL exchange_v3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          Hvom)
+      END IF
+
+# ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Huon, Hvom)
-#  endif
 # endif
+
       RETURN
       END SUBROUTINE set_massflux_tile
 
@@ -256,6 +266,7 @@
 #  ifdef PROFILE
       CALL wclock_off (ng, iADM, 12)
 #  endif
+
       RETURN
       END SUBROUTINE reset_massflux
 !
@@ -276,9 +287,7 @@
       USE mod_param
       USE mod_scalars
 !
-#  if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod
-#  endif
 #  ifdef DISTRIBUTE
       USE mp_exchange_mod
 #  endif
@@ -325,18 +334,8 @@
 !
 !  Local variable declarations.
 !
-#  ifdef DISTRIBUTE
-#   ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#   else
-      logical :: EWperiodic=.FALSE.
-#   endif
-#   ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#   else
-      logical :: NSperiodic=.FALSE.
-#   endif
-#  endif
+      integer :: IminU, IminV, ImaxU, ImaxV
+      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: i, j, k
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
@@ -349,43 +348,62 @@
 !  adjoint model.  The original values can be reinstated by calling
 !  "set_massflux" after "ad_omega".
 !-----------------------------------------------------------------------
+!
+!  Set local I- and J-ranges.
+!
+      IF (EWperiodic(ng)) THEN
+        IminU=Istr
+        ImaxU=Iend
+        IminV=Istr
+        ImaxV=Iend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          IminU=IstrP+1
+          ImaxU=IendT
+          IminV=IstrT
+          ImaxV=IendT
+        ELSE
+          IminU=Istr
+          ImaxU=IendR
+          IminV=IstrR
+          ImaxV=IendR
+        END IF
+      END IF
 
-#  ifdef EW_PERIODIC
-#   define IU_RANGE Istr,Iend
-#   define IV_RANGE Istr,Iend
-#  elif defined COMPOSED_GRID || defined REFINED_GRID
-#   define IU_RANGE IstrP+1,IendT
-#   define IV_RANGE IstrT,IendT
-#  else
-#   define IU_RANGE Istr,IendR
-#   define IV_RANGE IstrR,IendR
-#  endif
-#  ifdef NS_PERIODIC
-#   define JU_RANGE Jstr,Jend
-#   define JV_RANGE Jstr,Jend
-#  elif defined COMPOSED_GRID || defined REFINED_GRID
-#   define JU_RANGE JstrT,JendT
-#   define JV_RANGE JstrP+1,JendT
-#  else
-#   define JU_RANGE JstrR,JendR
-#   define JV_RANGE Jstr,JendR
-#  endif
+      IF (NSperiodic(ng)) THEN
+        JminU=Jstr
+        JmaxU=Jend
+        JminV=Jstr
+        JmaxV=Jend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          JminU=JstrT
+          JmaxU=JendT
+          JminV=JstrP+1
+          JmaxV=JendT
+        ELSE
+          JminU=JstrR
+          JmaxU=JendR
+          JminV=Jstr
+          JmaxV=JendR
+        END IF
+      END IF
 !
 !  Compute mass flux, Hz*u/n.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JminU,JmaxU
+        DO i=IminU,ImaxU
           DC(i,0)=0.0_r8
           FC(i,0)=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=IU_RANGE
+          DO i=IminU,ImaxU
             DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*on_u(i,j)
             DC(i,0)=DC(i,0)+DC(i,k)
           END DO
         END DO
         DO k=N(ng),1,-1
-          DO i=IU_RANGE
+          DO i=IminU,ImaxU
             Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
 #  ifdef NEARSHORE_MELLOR
             Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
@@ -396,12 +414,12 @@
 !
 !  Replace with correct vertical mean, DU_avg2.
 !
-        DO i=IU_RANGE
+        DO i=IminU,ImaxU
           DC(i,0)=1.0_r8/DC(i,0)
           FC(i,0)=DC(i,0)*(FC(i,0)-DU_avg2(i,j))
         END DO
         DO k=1,N(ng)
-          DO i=IU_RANGE
+          DO i=IminU,ImaxU
             Huon(i,j,k)=Huon(i,j,k)-DC(i,k)*FC(i,0)
           END DO
         END DO
@@ -409,18 +427,18 @@
 !  Compute mass flux, Hz*v/m.
 !
         IF (j.ge.Jstr) THEN
-          DO i=IV_RANGE
+          DO i=IminV,ImaxV
             DC(i,0)=0.0_r8
             FC(i,0)=0.0_r8
           END DO
           DO k=1,N(ng)
-            DO i=IV_RANGE
+            DO i=IminV,ImaxV
               DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*om_v(i,j)
               DC(i,0)=DC(i,0)+DC(i,k)
             END DO
           END DO
           DO k=N(ng),1,-1
-            DO i=IV_RANGE
+            DO i=IminV,ImaxV
               Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
 #  ifdef NEARSHORE_MELLOR
               Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
@@ -431,40 +449,37 @@
 !
 !  Replace with correct vertical mean, DV_avg2.
 !
-          DO i=IV_RANGE
+          DO i=IminV,ImaxV
             DC(i,0)=1.0_r8/DC(i,0)
             FC(i,0)=DC(i,0)*(FC(i,0)-DV_avg2(i,j))
           END DO
           DO k=1,N(ng)
-            DO i=IV_RANGE
+            DO i=IminV,ImaxV
               Hvom(i,j,k)=Hvom(i,j,k)-DC(i,k)*FC(i,0)
             END DO
           END DO
         ENDIF
       END DO
-#  undef IU_RANGE
-#  undef JU_RANGE
-#  undef IV_RANGE
-#  undef JV_RANGE
-#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !  Exchange boundary information.
 !
-#   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        Huon)
-      CALL exchange_v3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        Hvom)
-#   endif
-#   ifdef DISTRIBUTE
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          Huon)
+        CALL exchange_v3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          Hvom)
+      END IF
+
+#  ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Huon, Hvom)
-#   endif
 #  endif
+
       RETURN
       END SUBROUTINE reset_massflux_tile
 # endif

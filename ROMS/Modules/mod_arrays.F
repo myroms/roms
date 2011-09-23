@@ -22,9 +22,7 @@
    (defined TL_AVERAGES && defined TANGENT)
       USE mod_average, ONLY : allocate_average, initialize_average
 #endif
-#ifdef OBC
       USE mod_boundary, ONLY : allocate_boundary, initialize_boundary
-#endif
 #if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
     defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SENSITIVITY_4DVAR   || defined SO_SEMI
@@ -104,9 +102,7 @@
    (defined TL_AVERAGES && defined TANGENT)
           CALL allocate_average (ng, LBi, UBi, LBj, UBj)
 #endif
-#ifdef OBC
           CALL allocate_boundary (ng)
-#endif
 #ifdef BBL_MODEL
           CALL allocate_bbl (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -162,9 +158,7 @@
 #ifdef BBL_MODEL
             CALL initialize_bbl (ng, TILE)
 #endif
-#ifdef OBC
             CALL initialize_boundary (ng, TILE, model)
-#endif
 #if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
     defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SENSITIVITY_4DVAR   || defined SO_SEMI

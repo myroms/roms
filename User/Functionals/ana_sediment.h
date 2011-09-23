@@ -77,13 +77,6 @@
       USE mod_scalars
       USE mod_sediment
 !
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      USE exchange_3d_mod, ONLY : exchange_r3d_tile
-#endif
-#ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-#endif
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
@@ -124,19 +117,6 @@
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
-
       integer :: i, ised, j, k
 
       real(r8) :: cff1, cff2, cff3, cff4
@@ -159,7 +139,7 @@
       END DO
 # else
       ana_sediment.h: no values provided for bottom(:,:,isd50) and
-                                             bottom(:,:,idens).
+                                             bottom(:,:,idens)
 # endif
 
 # if defined MB_BBL || defined SSW_BBL
@@ -300,5 +280,6 @@
         END DO
       END DO
 #endif
+
       RETURN
       END SUBROUTINE ana_sediment_tile

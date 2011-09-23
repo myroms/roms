@@ -54,9 +54,9 @@
 !=======================================================================
 !
       implicit none
-
+!
       PUBLIC
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -120,18 +120,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -185,12 +173,14 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -291,12 +281,14 @@
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
 !>   &                          LBij, UBij,                             &
-!>   &                          Nghost, EWperiodic, NSperiodic,         &
+!>   &                          Nghost,                                 &
+!>   &                          EWperiodic(ng), NSperiodic(ng),         &
 !>   &                          Awrk(:,Nnew))
 !>
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,Nnew))
 # endif
 !
@@ -336,12 +328,14 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_A)
 # endif
 
@@ -408,18 +402,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -476,12 +458,14 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -579,12 +563,14 @@
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
 !>   &                          LBij, UBij,                             &
-!>   &                          Nghost, EWperiodic, NSperiodic,         &
+!>   &                          Nghost,                                 &
+!>   &                          EWperiodic(ng), NSperiodic(ng),         &
 !>   &                          Awrk(:,Nnew))
 !>
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,Nnew))
 # endif
 !
@@ -624,12 +610,13 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost, EWperiodic(ng), NSperiodic(ng),   &
      &                        tl_A)
 # endif
 
@@ -696,18 +683,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -764,12 +739,14 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -867,12 +844,14 @@
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
 !>   &                          LBij, UBij,                             &
-!>   &                          Nghost, EWperiodic, NSperiodic,         &
+!>   &                          Nghost,                                 &
+!>   &                          EWperiodic(ng), NSperiodic(ng),         &
 !>   &                          Awrk(:,Nnew))
 !>
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,Nnew))
 # endif
 !
@@ -912,12 +891,14 @@
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
 !>   &                        LBij, UBij,                               &
-!>   &                        Nghost, EWperiodic, NSperiodic,           &
+!>   &                        Nghost,                                   &
+!>   &                        EWperiodic(ng), NSperiodic(ng),           &
 !>   &                        A)
 !>
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        tl_A)
 # endif
 

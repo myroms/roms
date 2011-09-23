@@ -685,7 +685,7 @@
       IF (model.eq.iADM) THEN
         Nghost=0
       ELSE
-        Nghost=GHOST_POINTS
+        Nghost=NghostPoints
       END IF
 #  endif
 # endif

@@ -51,12 +51,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_scalars
-!
-      USE bc_3d_mod
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -124,18 +120,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, is, j, k
 
       real(r8), parameter :: Large = 1.0E+20_r8
@@ -168,64 +152,66 @@
 !
 !  Set boundary conditions to advected tracer, Ta.
 !
-# ifndef EW_PERIODIC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=JstrVm2,Jendp2i
-            Ta(Istr-1,j,k)=Ta(Istr,j,k)
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO k=1,N(ng)
+            DO j=JstrVm2,Jendp2i
+              Ta(Istr-1,j,k)=Ta(Istr,j,k)
+            END DO
           END DO
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=JstrVm2,Jendp2i
-            Ta(Iend+1,j,k)=Ta(Iend,j,k)
+        END IF
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO k=1,N(ng)
+            DO j=JstrVm2,Jendp2i
+              Ta(Iend+1,j,k)=Ta(Iend,j,k)
+            END DO
           END DO
-        END DO
+        END IF
       END IF
-# endif
-# ifndef NS_PERIODIC
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=IstrUm2,Iendp2i
-            Ta(i,Jstr-1,k)=Ta(i,Jstr,k)
+
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO k=1,N(ng)
+            DO i=IstrUm2,Iendp2i
+              Ta(i,Jstr-1,k)=Ta(i,Jstr,k)
+            END DO
           END DO
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=IstrUm2,Iendp2i
-            Ta(i,Jend+1,k)=Ta(i,Jend,k)
+        END IF
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO k=1,N(ng)
+            DO i=IstrUm2,Iendp2i
+              Ta(i,Jend+1,k)=Ta(i,Jend,k)
+            END DO
           END DO
-        END DO
+        END IF
       END IF
-# endif
-# if !defined EW_PERIODIC && !defined NS_PERIODIC
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        DO k=1,N(ng)
-          Ta(Istr-1,Jstr-1,k)=0.5_r8*(Ta(Istr  ,Jstr-1,k)+              &
-     &                                Ta(Istr-1,Jstr  ,k))
-        END DO
+
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          DO k=1,N(ng)
+            Ta(Istr-1,Jstr-1,k)=0.5_r8*(Ta(Istr  ,Jstr-1,k)+            &
+     &                                  Ta(Istr-1,Jstr  ,k))
+          END DO
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          DO k=1,N(ng)
+            Ta(Iend+1,Jstr-1,k)=0.5_r8*(Ta(Iend+1,Jstr  ,k)+            &
+     &                                  Ta(Iend  ,Jstr-1,k))
+          END DO
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          DO k=1,N(ng)
+            Ta(Istr-1,Jend+1,k)=0.5_r8*(Ta(Istr-1,Jend  ,k)+            &
+     &                                  Ta(Istr  ,Jend+1,k))
+          END DO
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          DO k=1,N(ng)
+            Ta(Iend+1,Jend+1,k)=0.5_r8*(Ta(Iend+1,Jend  ,k)+            &
+     &                                  Ta(Iend  ,Jend+1,k))
+          END DO
+        END IF
       END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-        DO k=1,N(ng)
-          Ta(Iend+1,Jstr-1,k)=0.5_r8*(Ta(Iend+1,Jstr  ,k)+              &
-     &                                Ta(Iend  ,Jstr-1,k))
-        END DO
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-        DO k=1,N(ng)
-          Ta(Istr-1,Jend+1,k)=0.5_r8*(Ta(Istr-1,Jend  ,k)+              &
-     &                                Ta(Istr  ,Jend+1,k))
-        END DO
-      END IF
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-        DO k=1,N(ng)
-          Ta(Iend+1,Jend+1,k)=0.5_r8*(Ta(Iend+1,Jend  ,k)+              &
-     &                                Ta(Iend  ,Jend+1,k))
-        END DO
-      END IF
-# endif
 !
 !  Compute inverse vertical grid spacing at W-points.
 !
@@ -751,54 +737,72 @@
 !
 !  Set boundary conditions.
 !
-# ifndef EW_PERIODIC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=JstrV-1,Jendp1
-#  ifdef WESTERN_WALL
-            Ua(Istr,j,k)=0.0_r8
-#  else
-            Ua(Istr,j,k)=Ua(Istr+1,j,k)
-#  endif
-          END DO
-        END DO
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          IF (LBC(iwest,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=JstrV-1,Jendp1
+                Ua(Istr,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=JstrV-1,Jendp1
+                Ua(Istr,j,k)=Ua(Istr+1,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          IF (LBC(ieast,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=JstrV-1,Jendp1
+                Ua(Iend+1,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=JstrV-1,Jendp1
+                Ua(Iend+1,j,k)=Ua(Iend,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=JstrV-1,Jendp1
-#  ifdef EASTERN_WALL
-            Ua(Iend+1,j,k)=0.0_r8
-#  else
-            Ua(Iend+1,j,k)=Ua(Iend,j,k)
-#  endif
-          END DO
-        END DO
+
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          IF (LBC(isouth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=IstrU-1,Iendp1
+                Va(i,Jstr,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=IstrU-1,Iendp1
+                Va(i,Jstr,k)=Va(i,Jstr+1,k)
+              END DO
+            END DO
+          END IF
+        END IF
+
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          IF (LBC(inorth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=IstrU-1,Iendp1
+                Va(i,Jend+1,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=IstrU-1,Iendp1
+                Va(i,Jend+1,k)=Va(i,Jend,k)
+              END DO
+            END DO
+          END IF
+        END IF
       END IF
-# endif
-# ifndef NS_PERIODIC
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=IstrU-1,Iendp1
-#  ifdef SOUTHERN_WALL
-            Va(i,Jstr,k)=0.0_r8
-#  else
-            Va(i,Jstr,k)=Va(i,Jstr+1,k)
-#  endif
-          END DO
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=IstrU-1,Iendp1
-#  ifdef NORTHERN_WALL
-            Va(i,Jend+1,k)=0.0_r8
-#  else
-            Va(i,Jend+1,k)=Va(i,Jend,k)
-#  endif
-          END DO
-        END DO
-      END IF
-# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1020,54 +1024,73 @@
 !
 !  Apply boundary conditions to anti-diffusive velocities.
 !
-# ifndef EW_PERIODIC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=Jstr,Jend
-#  ifdef WESTERN_WALL
-            Ua(Istr,j,k)=0.0_r8
-#  else
-            Ua(Istr,j,k)=Ua(Istr+1,j,k)
-#  endif
-          END DO
-        END DO
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          IF (LBC(iwest,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                Ua(Istr,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                Ua(Istr,j,k)=Ua(Istr+1,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
+
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          IF (LBC(ieast,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                Ua(Iend+1,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=Jstr,Jend
+                Ua(Iend+1,j,k)=Ua(Iend,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO j=Jstr,Jend
-#  ifdef EASTERN_WALL
-            Ua(Iend+1,j,k)=0.0_r8
-#  else
-            Ua(Iend+1,j,k)=Ua(Iend,j,k)
-#  endif
-          END DO
-        END DO
+
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          IF (LBC(isouth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Va(i,Jstr,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Va(i,Jstr,k)=Va(i,Jstr+1,k)
+              END DO
+            END DO
+          END IF
+        END IF
+
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          IF (LBC(inorth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Va(i,Jend+1,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Va(i,Jend+1,k)=Va(i,Jend,k)
+              END DO
+            END DO
+          END IF
+        END IF
       END IF
-# endif
-# ifndef NS_PERIODIC
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=Istr,Iend
-#  ifdef SOUTHERN_WALL
-            Va(i,Jstr,k)=0.0_r8
-#  else
-            Va(i,Jstr,k)=Va(i,Jstr+1,k)
-#  endif
-          END DO
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO k=1,N(ng)
-          DO i=Istr,Iend
-#  ifdef NORTHERN_WALL
-            Va(i,Jend+1,k)=0.0_r8
-#  else
-            Va(i,Jend+1,k)=Va(i,Jend,k)
-#  endif
-          END DO
-        END DO
-      END IF
-# endif
 
       RETURN
       END SUBROUTINE mpdata_adiff_tile

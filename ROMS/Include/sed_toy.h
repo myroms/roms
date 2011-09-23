@@ -22,8 +22,6 @@
 #undef  SALINITY
 #define SPLINES
 #define OUT_DOUBLE
-#define EW_PERIODIC
-#define NS_PERIODIC
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX

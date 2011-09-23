@@ -73,9 +73,7 @@
       USE mod_param
       USE mod_scalars
 !
-#if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
-#endif
 #ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 #endif
@@ -120,18 +118,6 @@
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
       integer :: i, j
       real(r8) :: Ewind, Nwind, cff, val1, val2, windamp, winddir
 #if defined LAKE_SIGNELL
@@ -311,30 +297,30 @@
          END DO
       END DO
 #elif defined UPWELLING
-# ifdef NS_PERIODIC
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
-          sustr(i,j)=0.0_r8
-#  ifdef TL_IOMS
-          tl_sustr(i,j)=0.0_r8
-#  endif
-         END DO
-      END DO
-# else
-      IF ((tdays(ng)-dstart).le.2.0_r8) THEN
-        windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
-      ELSE
-        windamp=-0.1_r8/rho0
-      END IF
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          sustr(i,j)=windamp
-#  ifdef TL_IOMS
-          tl_sustr(i,j)=windamp
-#  endif
-        END DO
-      END DO
+      IF (NSperiodic(ng)) THEN
+        DO j=JstrR,JendR
+           DO i=Istr,IendR
+            sustr(i,j)=0.0_r8
+# ifdef TL_IOMS
+            tl_sustr(i,j)=0.0_r8
 # endif
+          END DO
+        END DO
+      ELSE IF (EWperiodic(ng)) THEN
+        IF ((tdays(ng)-dstart).le.2.0_r8) THEN
+          windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
+        ELSE
+          windamp=-0.1_r8/rho0
+        END IF
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            sustr(i,j)=windamp
+# ifdef TL_IOMS
+            tl_sustr(i,j)=windamp
+# endif
+          END DO
+        END DO
+      END IF
 #elif defined WINDBASIN
       IF ((tdays(ng)-dstart).le.2.0_r8) THEN
         windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
@@ -418,30 +404,30 @@
         END DO
       END DO
 #elif defined UPEWELLING
-# ifdef NS_PERIODIC
-      IF ((tdays(ng)-dstart).le.2.0_r8) THEN
-        windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
-      ELSE
-        windamp=-0.1_r8/rho0
-      END IF
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          svstr(i,j)=windamp
-#  ifdef TL_IOMS
-          tl_svstr(i,j)=windamp
-#  endif
-        END DO
-      END DO
-# else
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          svstr(i,j)=0.0_r8
-#  ifdef TL_IOMS
-          tl_svstr(i,j)=0.0_r8
-#  endif
-        END DO
-      END DO
+      IF (NSperiodic(ng)) THEN
+        IF ((tdays(ng)-dstart).le.2.0_r8) THEN
+          windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
+        ELSE
+          windamp=-0.1_r8/rho0
+        END IF
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            svstr(i,j)=windamp
+# ifdef TL_IOMS
+            tl_svstr(i,j)=windamp
 # endif
+          END DO
+        END DO
+      ELSE IF (EWperiodic(ng)) THEN
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            svstr(i,j)=0.0_r8
+# ifdef TL_IOMS
+            tl_svstr(i,j)=0.0_r8
+# endif
+          END DO
+        END DO
+      END IF
 #else
       DO j=Jstr,JendR
         DO i=IstrR,IendR
@@ -452,33 +438,42 @@
         END DO
       END DO
 #endif
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        sustr)
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        svstr)
-# ifdef TL_IOMS
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_sustr)
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_svstr)
-# endif
+!
+!  Exchange boundary data.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          sustr)
+#ifdef TL_IOMS
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          tl_sustr)
 #endif
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          svstr)
+#ifdef TL_IOMS
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          tl_svstr)
+#endif
+      END IF
+
 #ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    sustr, svstr)
-#  ifdef TL_IOMS
+# ifdef TL_IOMS
       CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_sustr, tl_svstr)
-#  endif
+# endif
 #endif
+
       RETURN
       END SUBROUTINE ana_smflux_tile

@@ -1,25 +1,6 @@
 #include "cppdefs.h"
       MODULE posterior_mod
 
-#ifdef EW_PERIODIC
-# define IR_RANGE Istr-1,Iend+1
-# define IU_RANGE Istr,Iend
-# define IV_RANGE Istr,Iend
-#else
-# define IR_RANGE IstrT,IendT
-# define IU_RANGE IstrP,IendT
-# define IV_RANGE IstrT,IendT
-#endif
-#ifdef NS_PERIODIC
-# define JR_RANGE Jstr-1,Jend+1
-# define JU_RANGE Jstr,Jend
-# define JV_RANGE Jstr,Jend
-#else
-# define JR_RANGE JstrT,JendT
-# define JU_RANGE JstrT,JendT
-# define JV_RANGE JstrP,JendT
-#endif
-
 #if defined WEAK_CONSTRAINT   && \
    (defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
     defined POSTERIOR_ERROR_F)
@@ -1327,8 +1308,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           tl_zeta(i,j,Lout)=d_zeta(i,j)
 # ifdef MASKING
           tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
@@ -1394,8 +1375,8 @@
 !
 !  2D U-momentum.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           tl_ubar(i,j,Lout)=d_ubar(i,j)
 #  ifdef MASKING
           tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
@@ -1462,8 +1443,8 @@
 !
 !  2D V-momentum.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           tl_vbar(i,j,Lout)=d_vbar(i,j)
 #  ifdef MASKING
           tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
@@ -1531,16 +1512,16 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             tl_ustr(i,j,ir,Lout)=d_sustr(i,j,ir)
 #  ifdef MASKING
             tl_ustr(i,j,ir,Lout)=tl_ustr(i,j,ir,Lout)*umask(i,j)
 #  endif
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             tl_vstr(i,j,ir,Lout)=d_svstr(i,j,ir)
 #  ifdef MASKING
             tl_vstr(i,j,ir,Lout)=tl_vstr(i,j,ir,Lout)*vmask(i,j)
@@ -1555,8 +1536,8 @@
 !  3D U-momentum.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             tl_u(i,j,k,Lout)=d_u(i,j,k)
 #  ifdef MASKING
             tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
@@ -1630,8 +1611,8 @@
 !  3D V-momentum.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             tl_v(i,j,k,Lout)=d_v(i,j,k)
 #  ifdef MASKING
             tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
@@ -1706,8 +1687,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               tl_t(i,j,k,Lout,it)=d_t(i,j,k,it)
 #  ifdef MASKING
               tl_t(i,j,k,Lout,it)=tl_t(i,j,k,Lout,it)*rmask(i,j)
@@ -1788,8 +1769,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 tl_tflux(i,j,ir,Lout,it)=d_stflx(i,j,ir,it)
 #   ifdef MASKING
                 tl_tflux(i,j,ir,Lout,it)=tl_tflux(i,j,ir,Lout,it)*      &
@@ -2609,8 +2590,8 @@
 !
 !  Free-sruface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           d_zeta(i,j)=ad_zeta(i,j,Lnew)
 # ifdef MASKING
           d_zeta(i,j)=d_zeta(i,j)*rmask(i,j)
@@ -2676,8 +2657,8 @@
 !
 !  2D U-momentum.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           d_ubar(i,j)=ad_ubar(i,j,Lnew)
 #  ifdef MASKING
           d_ubar(i,j)=d_ubar(i,j)*umask(i,j)
@@ -2744,8 +2725,8 @@
 !
 !  2D V-momentum.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           d_vbar(i,j)=ad_vbar(i,j,Lnew)
 #  ifdef MASKING
           d_vbar(i,j)=d_vbar(i,j)*vmask(i,j)
@@ -2813,16 +2794,16 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             d_sustr(i,j,ir)=ad_ustr(i,j,ir,Lnew)
 #  ifdef MASKING
             d_sustr(i,j,ir)=d_sustr(i,j,ir)*umask(i,j)
 #  endif
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             d_svstr(i,j,ir)=ad_vstr(i,j,ir,Lnew)
 #  ifdef MASKING
             d_svstr(i,j,ir)=d_svstr(i,j,ir)*vmask(i,j)
@@ -2837,8 +2818,8 @@
 !  3D U-momentum.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             d_u(i,j,k)=ad_u(i,j,k,Lnew)
 #  ifdef MASKING
             d_u(i,j,k)=d_u(i,j,k)*umask(i,j)
@@ -2912,8 +2893,8 @@
 !  3D V-momentum.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             d_v(i,j,k)=ad_v(i,j,k,Lnew)
 #  ifdef MASKING
             d_v(i,j,k)=d_v(i,j,k)*vmask(i,j)
@@ -2988,8 +2969,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               d_t(i,j,k,it)=ad_t(i,j,k,Lnew,it)
 #  ifdef MASKING
               d_t(i,j,k,it)=d_t(i,j,k,it)*rmask(i,j)
@@ -3070,8 +3051,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 d_stflx(i,j,ir,it)=ad_tflux(i,j,ir,Lnew,it)
 #   ifdef MASKING
                 d_stflx(i,j,ir,it)=d_stflx(i,j,ir,it)*rmask(i,j)
@@ -3622,8 +3603,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           ad_zeta(i,j,Lnew)=tl_zeta(i,j,Lnew)-ad_zeta(i,j,Lnew)
 # ifdef MASKING
           ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lnew)*rmask(i,j)
@@ -3693,8 +3674,8 @@
 !
 !  2D U-momentum.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           ad_ubar(i,j,Lnew)=tl_ubar(i,j,Lnew)-ad_ubar(i,j,Lnew)
 #  ifdef MASKING
           ad_ubar(i,j,Lnew)=ad_ubar(i,j,Lnew)*umask(i,j)
@@ -3765,8 +3746,8 @@
 !
 !  2D V-momentum.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           ad_vbar(i,j,Lnew)=tl_vbar(i,j,Lnew)-ad_vbar(i,j,Lnew)
 #  ifdef MASKING
           ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lnew)*vmask(i,j)
@@ -3838,8 +3819,8 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             ad_ustr(i,j,ir,Lnew)=tl_ustr(i,j,ir,Lnew)-                  &
      &                           ad_ustr(i,j,ir,Lnew)
 #  ifdef MASKING
@@ -3847,8 +3828,8 @@
 #  endif
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             ad_vstr(i,j,ir,Lnew)=tl_vstr(i,j,ir,Lnew)-                  &
      &                           ad_vstr(i,j,ir,Lnew)
 #  ifdef MASKING
@@ -3864,8 +3845,8 @@
 !  3D U-momentum.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             ad_u(i,j,k,Lnew)=tl_u(i,j,k,Lnew)-ad_u(i,j,k,Lnew)
 #  ifdef MASKING
             ad_u(i,j,k,Lnew)=ad_u(i,j,k,Lnew)*umask(i,j)
@@ -3943,8 +3924,8 @@
 !  3D V-momentum.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             ad_v(i,j,k,Lnew)=tl_v(i,j,k,Lnew)-ad_v(i,j,k,Lnew)
 #  ifdef MASKING
             ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lnew)*vmask(i,j)
@@ -4023,8 +4004,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               ad_t(i,j,k,Lnew,it)=tl_t(i,j,k,Lnew,it)-                  &
      &                            ad_t(i,j,k,Lnew,it)
 #  ifdef MASKING
@@ -4114,8 +4095,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 ad_tflux(i,j,ir,Lnew,it)=tl_tflux(i,j,ir,Lnew,it)-      &
      &                                   ad_tflux(i,j,ir,Lnew,it)
 #   ifdef MASKING
@@ -5627,11 +5608,12 @@
       END SUBROUTINE posterior_eofs
 #endif
 
-#undef IR_RANGE
-#undef IU_RANGE
-#undef IV_RANGE
-#undef JR_RANGE
-#undef JU_RANGE
-#undef JV_RANGE
+#undef IstrT,IendT
+#undef IstrP,IendT
+#undef IstrT,IendT
+
+#undef JstrT,JendT
+#undef JstrT,JendT
+#undef JstrP,JendT
 
       END MODULE posterior_mod

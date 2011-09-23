@@ -77,32 +77,10 @@
 # ifdef SSH_TIDES
 #  define FSOBC_REDUCED
 #  define ADD_FSOBC
-#  define EAST_FSCHAPMAN
-#  define WEST_FSCHAPMAN
-#  define SOUTH_FSCHAPMAN
-# else
-#  define EAST_FSGRADIENT
-#  define WEST_FSGRADIENT
-#  define SOUTH_FSGRADIENT
 # endif
 # if defined UV_TIDES || defined SSH_TIDES
 #  define ADD_M2OBC
-#  define EAST_M2FLATHER
-#  define WEST_M2FLATHER
-#  define SOUTH_M2FLATHER
-# else
-#  define EAST_M2RADIATION
-#  define WEST_M2RADIATION
-#  define SOUTH_M2RADIATION
 # endif
-# define NORTHERN_WALL
-# define EAST_M3GRADIENT
-# define WEST_M3GRADIENT
-# define SOUTH_M3GRADIENT
-# define EAST_TGRADIENT
-# define WEST_TGRADIENT
-# define SOUTH_TGRADIENT
-# define RADIATION_2D
 
 # undef  TCLIMATOLOGY
 # undef  TCLM_NUDGING
@@ -112,9 +90,6 @@
 # define ANA_BTFLUX
 # define ANA_SSFLUX
 
-# undef  FORWARD_READ
-# undef  FORWARD_WRITE
-# undef FORWARD_MIXING
 # define OUT_DOUBLE
 
 #else
@@ -159,32 +134,10 @@
 # ifdef SSH_TIDES
 #  define FSOBC_REDUCED
 #  define ADD_FSOBC
-#  define EAST_FSCHAPMAN
-#  define WEST_FSCHAPMAN
-#  define SOUTH_FSCHAPMAN
-# else
-#  define EAST_FSGRADIENT
-#  define WEST_FSGRADIENT
-#  define SOUTH_FSGRADIENT
 # endif
 # if defined UV_TIDES || defined SSH_TIDES
 #  define ADD_M2OBC
-#  define EAST_M2FLATHER
-#  define WEST_M2FLATHER
-#  define SOUTH_M2FLATHER
-# else
-#  define EAST_M2RADIATION
-#  define WEST_M2RADIATION
-#  define SOUTH_M2RADIATION
 # endif
-# define RADIATION_2D
-# define NORTHERN_WALL
-# define EAST_M3GRADIENT
-# define WEST_M3GRADIENT
-# define SOUTH_M3GRADIENT
-# define EAST_TGRADIENT
-# define WEST_TGRADIENT
-# define SOUTH_TGRADIENT
 
 # undef  TCLIMATOLOGY
 # undef  TCLM_NUDGING

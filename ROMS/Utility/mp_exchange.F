@@ -19,35 +19,35 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     Nvar       Number of variables for aggregated exchanges.         !
-!     Istr       Starting tile index in the I-direction.               !
-!     Iend       Ending   tile index in the I-direction.               !
-!     Jstr       Starting tile index in the J-direction.               !
-!     Jend       Ending   tile index in the J-direction.               !
-!     LBi        I-dimension Lower bound.                              !
-!     UBi        I-dimension Upper bound.                              !
-!     LBj        J-dimension Lower bound.                              !
-!     UBj        J-dimension Upper bound.                              !
-!     LBk        K-dimension Lower bound.                              !
-!     UBk        K-dimension Upper bound.                              !
-!     LBt        T-dimension Lower bound.                              !
-!     UBt        T-dimension Upper bound.                              !
-!     Nghost     Number of ghost-points in the halo region.            !
-!     EWperiodic Switch indicating EW periodicity exchanges.           !
-!     NSperiodic Switch indicating NS periodicity exchanges.           !
-!     A          2D tiled array to process.                            !
-!     B          2D tiled array (optional) to process.                 !
-!     C          2D tiled array (optional) to process.                 !
-!     D          2D tiled array (optional) to process.                 !
+!     ng          Nested grid number.                                  !
+!     model       Calling model identifier.                            !
+!     Nvar        Number of variables for aggregated exchanges.        !
+!     Istr        Starting tile index in the I-direction.              !
+!     Iend        Ending   tile index in the I-direction.              !
+!     Jstr        Starting tile index in the J-direction.              !
+!     Jend        Ending   tile index in the J-direction.              !
+!     LBi         I-dimension Lower bound.                             !
+!     UBi         I-dimension Upper bound.                             !
+!     LBj         J-dimension Lower bound.                             !
+!     UBj         J-dimension Upper bound.                             !
+!     LBk         K-dimension Lower bound.                             !
+!     UBk         K-dimension Upper bound.                             !
+!     LBt         T-dimension Lower bound.                             !
+!     UBt         T-dimension Upper bound.                             !
+!     Nghost      Number of ghost-points in the halo region.           !
+!     EW_periodic Switch indicating EW periodicity exchanges.          !
+!     NS_periodic Switch indicating NS periodicity exchanges.          !
+!     A           2D tiled array to process.                           !
+!     B           2D tiled array (optional) to process.                !
+!     C           2D tiled array (optional) to process.                !
+!     D           2D tiled array (optional) to process.                !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     A          Updated tiled array.                                  !
-!     B          Updated tiled array (optional).                       !
-!     C          Updated tiled array (optional).                       !
-!     D          Updated tiled array (optional).                       !
+!     A           Updated tiled array.                                 !
+!     B           Updated tiled array (optional).                      !
+!     C           Updated tiled array (optional).                      !
+!     D           Updated tiled array (optional).                      !
 !                                                                      !
 !  Routines:                                                           !
 !                                                                      !
@@ -70,7 +70,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,    &
+      SUBROUTINE tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,  &
      &                           GrecvW, GsendW, Wtile, Wexchange,      &
      &                           GrecvE, GsendE, Etile, Eexchange,      &
      &                           GrecvS, GsendS, Stile, Sexchange,      &
@@ -84,7 +84,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, Nghost
 
@@ -152,29 +152,29 @@
 !                      Lm-2  Lm-1  Lm   Lm+1  Lm+2   Lm+3
 !                      -2    -1     0    1     2      3
 !
-      IF (EWperiodic) THEN
+      IF (EW_periodic) THEN
         IF ((table(MyRankI-1,MyRankJ).eq.Null_Value).and.               &
      &      (NtileI(ng).gt.1)) THEN
           Wtile=table(NtileI(ng)-1,MyRankJ)
           Etile=table(MyRankI+1,MyRankJ)
           GsendW=Nghost
           GsendE=Nghost
-# if defined THREE_GHOST
-          GrecvW=Nghost
-# else
-          GrecvW=Nghost+1
-# endif
+          IF (NghostPoints.eq.3) THEN
+            GrecvW=Nghost
+          ELSE
+            GrecvW=Nghost+1
+          END IF
           GrecvE=Nghost
         ELSE IF ((table(MyRankI+1,MyRankJ).eq.Null_Value).and.          &
      &           (NtileI(ng).gt.1)) THEN
           Wtile=table(MyRankI-1,MyRankJ)
           Etile=table(0,MyRankJ)
           GsendW=Nghost
-# if defined THREE_GHOST
-          GsendE=Nghost
-# else
-          GsendE=Nghost+1
-# endif
+          IF (NghostPoints.eq.3) THEN
+            GsendE=Nghost
+          ELSE
+            GsendE=Nghost+1
+          END IF
           GrecvW=Nghost
           GrecvE=Nghost
         ELSE
@@ -227,29 +227,29 @@
 !                      Mm-2  Mm-1  Mm   Mm+1  Mm+2  Mm+3
 !                      -2    -1     0    1     2     3
 !
-      IF (NSperiodic) THEN
+      IF (NS_periodic) THEN
         IF ((table(MyRankI,MyRankJ-1).eq.Null_Value).and.               &
      &      (NtileJ(ng).gt.1)) THEN
           Stile=table(MyRankI,NtileJ(ng)-1)
           Ntile=table(MyRankI,MyRankJ+1)
           GsendS=Nghost
           GsendN=Nghost
-# if defined THREE_GHOST
-          GrecvS=Nghost
-# else
-          GrecvS=Nghost+1
-# endif
+          IF (NghostPoints.eq.3) THEN
+            GrecvS=Nghost
+          ELSE
+            GrecvS=Nghost+1
+          END IF
           GrecvN=Nghost
         ELSE IF ((table(MyRankI,MyRankJ+1).eq.Null_Value).and.          &
      &           (NtileJ(ng).gt.1)) then
           Stile=table(MyRankI,MyRankJ-1)
           Ntile=table(MyRankI,0)
           GsendS=Nghost
-# if defined THREE_GHOST
-          GsendN=Nghost
-# else
-          GsendN=Nghost+1
-# endif
+          IF (NghostPoints.eq.3) THEN
+            GsendN=Nghost
+          ELSE
+            GsendN=Nghost+1
+          END IF
           GrecvS=Nghost
           GrecvN=Nghost
         ELSE
@@ -289,7 +289,7 @@
 !***********************************************************************
       SUBROUTINE mp_exchange2d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost, EW_periodic, NS_periodic,       &
      &                          A, B, C, D)
 !***********************************************************************
 !
@@ -302,7 +302,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
@@ -328,7 +328,7 @@
 
       integer :: i, icS, icN, ioff, Imin, Imax, Ilen
       integer :: j, jcW, jcE, joff, Jmin, Jmax, Jlen
-      integer :: m, mc, Ierror, Lstr
+      integer :: m, mc, Ierror, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -338,12 +338,6 @@
 
 # ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-# endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-# else
-      integer, parameter :: pp = 0
 # endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)) :: sendW, sendE
@@ -370,7 +364,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -391,6 +385,11 @@
       Jmax=UBj
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       EWsize=Nvar*(Nghost+pp)*Jlen
       NSsize=Nvar*(Nghost+pp)*Ilen
       IF (SIZE(sendE).lt.EWsize) THEN
@@ -896,7 +895,7 @@
 !***********************************************************************
       SUBROUTINE mp_exchange2d_bry (ng, tile, model, Nvar, boundary,    &
      &                              LBij, UBij,                         &
-     &                              Nghost, EWperiodic, NSperiodic,     &
+     &                              Nghost, EW_periodic, NS_periodic,   &
      &                              A, B, C, D)
 !***********************************************************************
 !
@@ -909,7 +908,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij
@@ -935,7 +934,7 @@
 
       integer :: i, icS, icN
       integer :: j, jcW, jcE
-      integer :: m, Ierror, Lstr
+      integer :: m, Ierror, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -946,18 +945,12 @@
 # ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
 # endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-# else
-      integer, parameter :: pp = 0
-# endif
 !
-      real(r8), dimension(Nvar*(Nghost+pp)) :: sendW, sendE
-      real(r8), dimension(Nvar*(Nghost+pp)) :: recvW, recvE
+      real(r8), dimension(Nvar*HaloBry(ng)) :: sendW, sendE
+      real(r8), dimension(Nvar*HaloBry(ng)) :: recvW, recvE
 
-      real(r8), dimension(Nvar*(Nghost+pp)) :: sendS, sendN
-      real(r8), dimension(Nvar*(Nghost+pp)) :: recvS, recvN
+      real(r8), dimension(Nvar*HaloBry(ng)) :: sendS, sendN
+      real(r8), dimension(Nvar*HaloBry(ng)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -977,7 +970,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -1003,6 +996,11 @@
 !
 !  Determine range and length of the distributed tile boundary segments.
 !
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       EWsize=Nvar*(Nghost+pp)
       NSsize=Nvar*(Nghost+pp)
       IF (SIZE(sendE).lt.EWsize) THEN
@@ -1397,7 +1395,7 @@
 !***********************************************************************
       SUBROUTINE mp_exchange3d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost, EW_periodic, NS_periodic,       &
      &                          A, B, C, D)
 !***********************************************************************
 !
@@ -1410,7 +1408,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
@@ -1436,7 +1434,7 @@
 
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen
-      integer :: k, kc,  m, mc, Ierror, Klen, Lstr
+      integer :: k, kc,  m, mc, Ierror, Klen, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -1446,12 +1444,6 @@
 
 # ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-# endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-# else
-      integer, parameter :: pp = 0
 # endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)*                           &
@@ -1482,7 +1474,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -1506,6 +1498,11 @@
       Klen=UBk-LBk+1
       IKlen=Ilen*Klen
       JKlen=Jlen*Klen
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       EWsize=Nvar*(Nghost+pp)*JKlen
       NSsize=Nvar*(Nghost+pp)*IKlen
       IF (SIZE(sendE).lt.EWsize) THEN
@@ -2108,7 +2105,7 @@
 !***********************************************************************
       SUBROUTINE mp_exchange3d_bry (ng, tile, model, Nvar, boundary,    &
      &                              LBij, UBij, LBk, UBk,               &
-     &                              Nghost, EWperiodic, NSperiodic,     &
+     &                              Nghost, EW_periodic, NS_periodic,   &
      &                              A, B, C, D)
 !***********************************************************************
 !
@@ -2121,7 +2118,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij, LBk, UBk
@@ -2147,7 +2144,7 @@
 
       integer :: i, ikS, ikN, ioff
       integer :: j, jkW, jkE, joff
-      integer :: k, m, mc, Ierror, Klen, Lstr
+      integer :: k, m, mc, Ierror, Klen, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -2158,17 +2155,11 @@
 # ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
 # endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-# else
-      integer, parameter :: pp = 0
-# endif
 !
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: sendW, sendE
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: recvW, recvE
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: sendS, sendN
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: recvS, recvN
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendW, sendE
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvW, recvE
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendS, sendN
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -2188,7 +2179,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -2215,6 +2206,11 @@
 !  Determine range and length of the distributed tile boundary segments.
 !
       Klen=UBk-LBk+1
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       EWsize=Nvar*(Nghost+pp)*Klen
       NSsize=Nvar*(Nghost+pp)*Klen
       IF (SIZE(sendE).lt.EWsize) THEN
@@ -2722,7 +2718,7 @@
 !***********************************************************************
       SUBROUTINE mp_exchange4d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt, &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost, EW_periodic, NS_periodic,       &
      &                          A, B)
 !***********************************************************************
 !
@@ -2735,7 +2731,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
@@ -2758,7 +2754,7 @@
 
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen, IKTlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen, JKTlen
-      integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen
+      integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen, pp
       integer :: l, lc
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
@@ -2769,12 +2765,6 @@
 
 # ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-# endif
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-# else
-      integer, parameter :: pp = 0
 # endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)*                           &
@@ -2805,7 +2795,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -2832,6 +2822,11 @@
       JKlen=Jlen*Klen
       IKTlen=IKlen*Tlen
       JKTlen=JKlen*Tlen
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       EWsize=Nvar*(Nghost+pp)*JKTlen
       NSsize=Nvar*(Nghost+pp)*IKTlen
       IF (SIZE(sendE).lt.EWsize) THEN
@@ -3251,7 +3246,7 @@
 !***********************************************************************
       SUBROUTINE ad_mp_exchange2d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj,                  &
-     &                             Nghost, EWperiodic, NSperiodic,      &
+     &                             Nghost, EW_periodic, NS_periodic,    &
      &                             ad_A, ad_B, ad_C, ad_D)
 !***********************************************************************
 !
@@ -3264,7 +3259,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
@@ -3290,7 +3285,7 @@
 
       integer :: i, icS, icN, ioff, Imin, Imax, Ilen
       integer :: j, jcW, jcE, joff, Jmin, Jmax, Jlen
-      integer :: m, mc, Ierror, Lstr
+      integer :: m, mc, Ierror, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -3300,12 +3295,6 @@
 
 #  ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-#  endif
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-#  else
-      integer, parameter :: pp = 0
 #  endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)) :: sendW, sendE
@@ -3331,7 +3320,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -3352,6 +3341,11 @@
       Jmax=UBj
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       NSsize=Nvar*(Nghost+pp)*Ilen
       EWsize=Nvar*(Nghost+pp)*Jlen
       BufferSizeNS=Nvar*HaloSizeI(ng)
@@ -3992,7 +3986,7 @@
 !***********************************************************************
       SUBROUTINE ad_mp_exchange2d_bry (ng, tile, model, Nvar, boundary, &
      &                                 LBij, UBij,                      &
-     &                                 Nghost, EWperiodic, NSperiodic,  &
+     &                                 Nghost, EW_periodic, NS_periodic,&
      &                                 ad_A, ad_B, ad_C, ad_D)
 !***********************************************************************
 !
@@ -4005,7 +3999,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij
@@ -4031,7 +4025,7 @@
 
       integer :: i, icS, icN
       integer :: j, jcW, jcE
-      integer :: m, Ierror, Lstr
+      integer :: m, Ierror, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -4042,18 +4036,12 @@
 #  ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
 #  endif
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-#  else
-      integer, parameter :: pp = 0
-#  endif
 !
-      real(r8), dimension(Nvar*(Nghost+pp)) :: sendW, sendE
-      real(r8), dimension(Nvar*(Nghost+pp)) :: recvW, recvE
+      real(r8), dimension(Nvar*HaloBry(ng)) :: sendW, sendE
+      real(r8), dimension(Nvar*HaloBry(ng)) :: recvW, recvE
 
-      real(r8), dimension(Nvar*(Nghost+pp)) :: sendS, sendN
-      real(r8), dimension(Nvar*(Nghost+pp)) :: recvS, recvN
+      real(r8), dimension(Nvar*HaloBry(ng)) :: sendS, sendN
+      real(r8), dimension(Nvar*HaloBry(ng)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -4072,7 +4060,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -4098,6 +4086,11 @@
 !
 !  Determine range and length of the distributed tile boundary segments.
 !
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       NSsize=Nvar*(Nghost+pp)
       EWsize=Nvar*(Nghost+pp)
       BufferSizeNS=Nvar*(Nghost+pp)
@@ -4627,7 +4620,7 @@
 !***********************************************************************
       SUBROUTINE ad_mp_exchange3d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
-     &                             Nghost, EWperiodic, NSperiodic,      &
+     &                             Nghost, EW_periodic, NS_periodic,    &
      &                             ad_A, ad_B, ad_C, ad_D)
 !***********************************************************************
 !
@@ -4640,7 +4633,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
@@ -4666,7 +4659,7 @@
 
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen
-      integer :: k, kc, m, mc, Ierror, Klen, Lstr
+      integer :: k, kc, m, mc, Ierror, Klen, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -4676,12 +4669,6 @@
 
 #  ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-#  endif
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-#  else
-      integer, parameter :: pp = 0
 #  endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)*                           &
@@ -4711,7 +4698,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -4735,6 +4722,11 @@
       Klen=UBk-LBk+1
       IKlen=Ilen*Klen
       JKlen=Jlen*Klen
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       NSsize=Nvar*(Nghost+pp)*IKlen
       EWsize=Nvar*(Nghost+pp)*JKlen
       BufferSizeNS=Nvar*HaloSizeI(ng)*Klen
@@ -5470,7 +5462,7 @@
 !***********************************************************************
       SUBROUTINE ad_mp_exchange3d_bry (ng, tile, model, Nvar, boundary, &
      &                                 LBij, UBij, LBk, UBk,            &
-     &                                 Nghost, EWperiodic, NSperiodic,  &
+     &                                 Nghost, EW_periodic, NS_periodic,&
      &                                 ad_A, ad_B, ad_C, ad_D)
 !***********************************************************************
 !
@@ -5483,7 +5475,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij, LBk, UBk
@@ -5509,7 +5501,7 @@
 
       integer :: i, ikS, ikN, ioff
       integer :: j, jkW, jkE, joff
-      integer :: k, m, mc, Ierror, Klen, Lstr
+      integer :: k, m, mc, Ierror, Klen, Lstr, pp
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
       integer :: Etile, GsendE, GrecvE, Etag, Eerror, Erequest
@@ -5520,17 +5512,11 @@
 #  ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
 #  endif
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-#  else
-      integer, parameter :: pp = 0
-#  endif
 !
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: sendW, sendE
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: recvW, recvE
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: sendS, sendN
-      real(r8), dimension(Nvar*(Nghost+pp)*(UBk-LBk+1)) :: recvS, recvN
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendW, sendE
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvW, recvE
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendS, sendN
+      real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -5550,7 +5536,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -5577,6 +5563,11 @@
 !  Determine range and length of the distributed tile boundary segments.
 !
       Klen=UBk-LBk+1
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       NSsize=Nvar*(Nghost+pp)*Klen
       EWsize=Nvar*(Nghost+pp)*Klen
       BufferSizeNS=Nvar*(Nghost+pp)*Klen
@@ -6218,7 +6209,7 @@
       SUBROUTINE ad_mp_exchange4d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             LBt, UBt,                            &
-     &                             Nghost, EWperiodic, NSperiodic,      &
+     &                             Nghost, EW_periodic, NS_periodic,    &
      &                             ad_A, ad_B)
 !***********************************************************************
 !
@@ -6231,7 +6222,7 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: EWperiodic, NSperiodic
+      logical, intent(in) :: EW_periodic, NS_periodic
 
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
@@ -6254,7 +6245,7 @@
 
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen, IKTlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen, JKTlen
-      integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen
+      integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen, pp
       integer :: l, lc
       integer :: Wtile, GsendW, GrecvW, Wtag, Werror, Wrequest
       integer :: Stile, GsendS, GrecvS, Stag, Serror, Srequest
@@ -6265,12 +6256,6 @@
 
 #  ifdef MPI
       integer, dimension(MPI_STATUS_SIZE,4) :: status
-#  endif
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      integer, parameter :: pp = 1
-#  else
-      integer, parameter :: pp = 0
 #  endif
 !
       real(r8), dimension(Nvar*HaloSizeJ(ng)*(UBk-LBk+1)*               &
@@ -6300,7 +6285,7 @@
 !  exchange.
 !-----------------------------------------------------------------------
 !
-      CALL tile_neighbors (ng, Nghost, EWperiodic, NSperiodic,          &
+      CALL tile_neighbors (ng, Nghost, EW_periodic, NS_periodic,        &
      &                     GrecvW, GsendW, Wtile, Wexchange,            &
      &                     GrecvE, GsendE, Etile, Eexchange,            &
      &                     GrecvS, GsendS, Stile, Sexchange,            &
@@ -6327,6 +6312,11 @@
       JKlen=Jlen*Klen
       IKTlen=IKlen*Tlen
       JKTlen=JKlen*Tlen
+      IF (EW_periodic.or.NS_periodic) THEN
+        pp=1
+      ELSE
+        pp=0
+      END IF
       NSsize=Nvar*(Nghost+pp)*IKTlen
       EWsize=Nvar*(Nghost+pp)*JKTlen
       BufferSizeNS=Nvar*HaloSizeI(ng)*Klen*Tlen

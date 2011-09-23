@@ -25,6 +25,7 @@
 !     Lend       Ending   float index to process.                      !
 !     itime      Floats time level to process.                         !
 !     ifield     ID of field to compute.                               !
+!     isBval     Lateral boundary variable index.                      !
 !     gtype      Grid type. If negative, interpolate floats slopes.    !
 !     maskit     Should the field be masked? Ignored if Land/Sea       !
 !                 masking is not active.                               !
@@ -45,15 +46,15 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: interp_floats
-
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE interp_floats (ng, LBi, UBi, LBj, UBj, LBk, UBk,       &
-     &                          Lstr, Lend, itime, ifield,              &
+     &                          Lstr, Lend, itime, ifield, isBval,      &
      &                          gtype, maskit, Fspval, nudg,            &
      &                          pm, pn,                                 &
 # ifdef SOLVE3D
@@ -74,7 +75,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, LBi, UBi, LBj, UBj, LBk, UBk
-      integer, intent(in) :: Lstr, Lend, itime, ifield, gtype
+      integer, intent(in) :: Lstr, Lend, itime, ifield, isBval, gtype
 
       logical, intent(in) :: maskit
       logical, intent(in) :: MyThread(Lstr:Lend)
@@ -324,36 +325,36 @@
               IF (Lmask) THEN
                 Irn=NINT(track(ixgrd,itime,l))
                 Jrn=NINT(track(iygrd,itime,l))
-#  ifdef EW_PERIODIC
-                IF (Irn.ge.Lm(ng)) THEN
-                  Irnp1=Irn+1-Lm(ng)
-                ELSE
-                  Irnp1=Irn+1
-                END IF
-                IF (Irn.le.1) THEN
-                  Irnm1=Irn-1+Lm(ng)
+                IF (EWperiodic(ng)) THEN
+                  IF (Irn.ge.Lm(ng)) THEN
+                    Irnp1=Irn+1-Lm(ng)
+                  ELSE
+                    Irnp1=Irn+1
+                  END IF
+                  IF (Irn.le.1) THEN
+                    Irnm1=Irn-1+Lm(ng)
+                  ELSE
+                    Irnm1=Irn-1
+                  END IF
                 ELSE
                   Irnm1=Irn-1
+                  Irnp1=Irn+1
                 END IF
-#  else
-                Irnm1=Irn-1
-                Irnp1=Irn+1
-#  endif
-#  ifdef NS_PERIODIC
-                IF (Jrn.ge.Mm(ng)) THEN
-                  Jrnp1=Jrn+1-Mm(ng)
-                ELSE
-                  Jrnp1=Jrn+1
-                END IF
-                IF (Jrn.le.1) THEN
-                  Jrnm1=Jrn-1+Mm(ng)
+                IF (NSperiodic(ng)) THEN
+                  IF (Jrn.ge.Mm(ng)) THEN
+                    Jrnp1=Jrn+1-Mm(ng)
+                  ELSE
+                    Jrnp1=Jrn+1
+                  END IF
+                  IF (Jrn.le.1) THEN
+                    Jrnm1=Jrn-1+Mm(ng)
+                  ELSE
+                    Jrnm1=Jrn-1
+                  END IF
                 ELSE
                   Jrnm1=Jrn-1
+                  Jrnp1=Jrn+1
                 END IF
-#  else
-                Jrnm1=Jrn-1
-                Jrnp1=Jrn+1
-#  endif
                 IF (Amask(Irn,Jrn).lt.0.5_r8) THEN
                   halo=.TRUE.
                 ELSE IF ((Ir.lt.Irn).and.                               &

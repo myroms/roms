@@ -34,13 +34,6 @@
 ! USER may follow the above guidelines for specifying his/her values.  These  !
 ! parameters are marked by "==" plural symbol after the KEYWORD.              !
 !                                                                             !
-! In multiple levels of nesting and/or multiple connected domains  step-ups,  !
-! "Ngrids" entries are expected for some of these parameters.  In such case,  !
-! the order of the entries for a parameter is extremely important.  It  must  !
-! follow the same order (1:Ngrids) as in the state variable declaration. The  !
-! USER may follow the above guidelines for specifying his/her values.  These  !
-! parameters are marked by "==" plural symbol after the KEYWORD.              !
-!                                                                             !
 ! Multiple NetCDF files are allowed for input field(s).  This is useful when  !
 ! splitting input data (climatology,  boundary,  forcing)  time records into  !
 ! several files (say monthly, annual, etc). In this case, each multiple file  !
@@ -74,7 +67,7 @@
 
        TITLE = Inlet Test Case
 
-! C-preprocessing Flag, default configuration.
+! C-preprocessing Flag.
 
     MyAppCPP = INLET_TEST
 
@@ -107,6 +100,78 @@
 
       NtileI == 1                               ! I-direction partition
       NtileJ == 1                               ! J-direction partition
+
+! Set lateral boundary conditions keyword. Notice that a value is expected
+! for each boundary segment per nested grid for each state variable.
+!
+! Each tracer variable requires [1:4,1:NAT+NPT,Ngrids] values. Otherwise,
+! [1:4,1:Ngrids] values are expected for other variables. The boundary
+! order is: 1=west, 2=south, 3=east, and 4=north. That is, anticlockwise
+! starting at the western boundary.
+!
+! The keyword is case insensitive and usually has three characters. However,
+! it is possible to have compound keywords, if applicable. For example, the
+! keyword "RadNud" implies radiation boundary condition with nudging. This
+! combination is usually used in active/passive radiation conditions.
+!
+!   Keyword    Lateral Boundary Condition Type
+!
+!   Cha        Chapman
+!   Cla        Clamped
+!   Clo        Closed
+!   Fla        Flather                                _____N_____     j=Mm
+!   Gra        Gradient                              |     4     |
+!   Nes        Nested                                |           |
+!   Nud        Nudging                             1 W           E 3
+!   Per        Periodic                              |           |
+!   Rad        Radiation                             |_____S_____|
+!   Red        Reduced Physics                             2          j=1
+!                                                   i=1         i=Lm
+!                   W       S       E       N
+!                   e       o       a       o
+!                   s       u       s       r
+!                   t       t       t       t
+!                           h               h
+!
+!                   1       2       3       4
+
+   LBC(isFsur) ==   Gra     Clo     Gra     Gra         ! free-surface
+   LBC(isUbar) ==   Gra     Clo     Gra     Red         ! 2D U-momentum
+   LBC(isVbar) ==   Gra     Clo     Gra     Red         ! 2D V-momentum
+   LBC(isUvel) ==   Gra     Clo     Gra     Gra         ! 3D U-momentum
+   LBC(isVvel) ==   Gra     Clo     Gra     Gra         ! 3D V-momentum
+   LBC(isMtke) ==   Gra     Clo     Gra     Gra         ! mixing TKE
+
+   LBC(isTvar) ==   Gra     Clo     Gra     Gra \       ! temperature
+                    Gra     Clo     Gra     Gra         ! salinity
+
+! Adjoint-based algorithms can have different lateral boundary
+! conditions keywords.
+
+ad_LBC(isFsur) ==   Gra     Clo     Gra     Gra         ! free-surface
+ad_LBC(isUbar) ==   Gra     Clo     Gra     Red         ! 2D U-momentum
+ad_LBC(isVbar) ==   Gra     Clo     Gra     Red         ! 2D U-momentum
+ad_LBC(isUvel) ==   Gra     Clo     Gra     Gra         ! 3D U-momentum
+ad_LBC(isVvel) ==   Gra     Clo     Gra     Gra         ! 3D V-momentum
+ad_LBC(isMtke) ==   Gra     Clo     Gra     Gra         ! mixing TKE
+
+ad_LBC(isTvar) ==   Gra     Clo     Gra     Gra \       ! temperature
+                    Gra     Clo     Gra     Gra         ! salinity
+
+! Set lateral open boundary edge volume conservation switch for
+! nonlinear model and adjoint-based algorithms. Usually activated
+! with radiation boundary conditions to enforce global mass
+! conservation, except if tidal forcing enabled. [1:Ngrids].
+
+   VolCons(west)  ==  F                            ! western  boundary
+   VolCons(east)  ==  F                            ! eastern  boundary
+   VolCons(south) ==  F                            ! southern boundary
+   VolCons(north) ==  F                            ! northern boundary
+
+ad_VolCons(west)  ==  F                            ! western  boundary
+ad_VolCons(east)  ==  F                            ! eastern  boundary
+ad_VolCons(south) ==  F                            ! southern boundary
+ad_VolCons(north) ==  F                            ! northern boundary
 
 ! Time-Stepping parameters.
 
@@ -656,7 +721,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! per entry with a continuation (\) or vertical bar (|) symbol at the each
 ! entry, except the last one.
 
-     NFFILES == 1                          ! number of forcing files
+     NFFILES == 1                          ! number of unique forcing files
 
      FRCNAME == ocean_frc.nc               ! forcing file 1, grid 1
 
@@ -800,6 +865,80 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !              must be EQUAL to the number of parallel nodes specified during
 !              execution with the "mprun" or "mpirun" command.
 !
+!------------------------------------------------------------------------------
+! Lateral boundary conditions parameters.
+!------------------------------------------------------------------------------
+!
+! The lateral boundary conditions are now specified with logical switches
+! instead of CPP flags to allow nested grid configurations. Their values are
+! loaded into structured array:
+!
+!    LBC(1:4, nLBCvar, Ngrids)
+!
+! where 1:4 are the number of boundary edges, nLBCvar are the number LBC state
+! variables, and Ngrids is the number of nested grids. For Example, to apply
+! gradient boundary conditions we use:
+!
+!    LBC(iwest,  isFsur, ng) % gradient
+!    LBC(ieast,  ...   , ng) % gradient
+!    LBC(isouth, ...   , ng) % gradient
+!    LBC(inorth, ...   , ng) % gradient
+!
+! The lateral boundary conditions are entered with a keyword. This keyword
+! is case insensitive and usually has three characters. However, it is
+! possible to have compound keywords, if applicable. For example, the
+! keyword "RadNud" implies radiation boundary condition with nudging. This
+! combination is usually used in active/passive radiation conditions.
+!
+!   Keyword    Lateral Boundary Condition Type
+!
+!   Cha        Chapman
+!   Cla        Clamped
+!   Clo        Closed
+!   Fla        Flather                                _____N_____     j=Mm
+!   Gra        Gradient                              |     4     |
+!   Nes        Nested                                |           |
+!   Nud        Nudging                             1 W           E 3
+!   Per        Periodic                              |           |
+!   Rad        Radiation                             |_____S_____|
+!   Red        Reduced Physics                             2          j=1
+!                                                   i=1         i=Lm
+!
+!  LBC(isFsur) Free-surface,  [1:4, Ngrids] values are expected.
+!  LBC(isUbar) 2D U-momentum, [1:4, Ngrids] values are expected.
+!  LBC(isVbar) 2D V-momentum, [1:4, Ngrids] values are expected.
+!  LBC(isUvel) 3D U-momentum, [1:4, Ngrids] values are expected.
+!  LBC(isVvel) 3D V-momentum, [1:4, Ngrids] values are expected.
+!  LBC(isMtke) Mixing TKE,    [1:4, Ngrids] values are expected.
+!  LBC(isTvar) Tracers,       [1:4, 1:NAT+NPT, Ngrids] values are expected.
+!
+! Similarly, the adjoint-based algorithms (ADM, TLM, RPM) can have different
+! lateral boundary conditions keywords:
+!
+!  ad_LBC(isFsur) Free-surface,  [1:4, Ngrids] values are expected.
+!  ad_LBC(isUbar) 2D U-momentum, [1:4, Ngrids] values are expected.
+!  ad_LBC(isVbar) 2D V-momentum, [1:4, Ngrids] values are expected.
+!  ad_LBC(isUvel) 3D U-momentum, [1:4, Ngrids] values are expected.
+!  ad_LBC(isVvel) 3D V-momentum, [1:4, Ngrids] values are expected.
+!  ad_LBC(isMtke) Mixing TKE,    [1:4, Ngrids] values are expected.
+!  ad_LBC(isTvar) Tracers,       [1:4, 1:NAT+NPT, Ngrids] values are expected.
+!
+! Lateral open boundary edge volume conservation switch for nonlinear model
+! and adjoint-based algorithm. Usually activated with radiation boundary
+! conditions to enforce global mass conservation. Notice that these switches
+! should not be activated if tidal forcing enabled, [1:Ngrids] values are
+! expected.
+!
+!  VolCons(west)       Western  boundary volume conservation switch.
+!  VolCons(east)       Eastern  boundary volume conservation switch.
+!  VolCons(south)      Southern boundary volume conservation switch.
+!  VolCons(north)      Northern boundary volume conservation switch.
+!
+!  ad_VolCons(west)    Western  boundary volume conservation switch.
+!  ad_VolCons(east)    Eastern  boundary volume conservation switch.
+!  ad_VolCons(south)   Southern boundary volume conservation switch.
+!  ad_VolCons(north)   Northern boundary volume conservation switch.
+
 !------------------------------------------------------------------------------
 ! Time-Stepping parameters.
 !------------------------------------------------------------------------------

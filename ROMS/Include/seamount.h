@@ -24,7 +24,6 @@
 #define MIX_GEO_TS
 #define SOLVE3D
 #define SPLINES
-#define EW_PERIODIC
 #define ANA_DIAG
 #define ANA_GRID
 #define ANA_INITIAL

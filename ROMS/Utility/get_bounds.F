@@ -35,6 +35,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
+      USE mod_scalars
 !
       implicit none
 !
@@ -70,10 +71,31 @@
 !
       MyType=ABS(gtype)
       IF (MyType.eq.0) THEN
-        Imin=LOWER_BOUND_I
-        Imax=UPPER_BOUND_I
-        Jmin=LOWER_BOUND_J
-        Jmax=UPPER_BOUND_J
+        IF (EWperiodic(ng)) THEN
+          IF (NSperiodic(ng)) THEN
+            Imin=-NghostPoints
+            Imax=Im(ng)+NghostPoints
+            Jmin=-NghostPoints
+            Jmax=Jm(ng)+NghostPoints
+          ELSE
+            Imin=-NghostPoints
+            Imax=Im(ng)+NghostPoints
+            Jmin=0
+            Jmax=Jm(ng)+1
+          END IF
+        ELSE
+          IF (NSperiodic(ng)) THEN
+            Imin=0
+            Imax=Im(ng)+1
+            Jmin=-NghostPoints
+            Jmax=Jm(ng)+NghostPoints
+          ELSE
+            Imin=0
+            Imax=Im(ng)+1
+            Jmin=0
+            Jmax=Jm(ng)+1
+          END IF
+        END IF
       ELSE
         Imin=0
         Imax=Lm(ng)+1
@@ -134,11 +156,34 @@
         Jtile=tile/NtileI(ng)
         Itile=tile-Jtile*NtileI(ng)
       END IF
-      LBi=LOWER_BOUND_I
-      UBi=UPPER_BOUND_I
-      LBj=LOWER_BOUND_J
-      UBj=UPPER_BOUND_J
+!
+      IF (EWperiodic(ng)) THEN
+        IF (NSperiodic(ng)) THEN
+          LBi=-NghostPoints
+          UBi=Im(ng)+NghostPoints
+          LBj=-NghostPoints
+          UBj=Jm(ng)+NghostPoints
+        ELSE
+          LBi=-NghostPoints
+          UBi=Im(ng)+NghostPoints
+          LBj=0
+          UBj=Jm(ng)+1
+        END IF
+      ELSE
+        IF (NSperiodic(ng)) THEN
+          LBi=0
+          UBi=Im(ng)+1
+          LBj=-NghostPoints
+          UBj=Jm(ng)+NghostPoints
+        ELSE
+          LBi=0
+          UBi=Im(ng)+1
+          LBj=0
+          UBj=Jm(ng)+1
+        END IF
+      END IF
 #endif
+
       RETURN
       END SUBROUTINE get_bounds
 
@@ -964,6 +1009,7 @@
 !======================================================================!
 !
       USE mod_param
+      USE mod_scalars
 !
       implicit none
 !
@@ -1219,42 +1265,42 @@
 !-----------------------------------------------------------------------
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC
-        IstrP=Istr
-        IstrR=Istr
-        IstrT=IstrR
-        IstrU=Istr
-        IstrB=Istr
-        IstrM=IstrU
-#elif defined COMPOSED_GRID
-        IstrP=-NghostPoints+1
-        IstrR=Istr
-        IstrT=-NghostPoints
-        IstrU=Istr
-        IstrB=IstrT+1
-        IstrM=IstrP+1
-#elif defined REFINED_GRID
-        IstrR=Istr-1
-        IstrU=Istr+1
-        IF (ng.eq.1) THEN
-          IstrP=IstrR
+        IF (EWperiodic(ng)) THEN
+          IstrP=Istr
+          IstrR=Istr
           IstrT=IstrR
+          IstrU=Istr
           IstrB=Istr
           IstrM=IstrU
-        ELSE
+        ELSE IF (ComposedGrid(ng)) THEN
           IstrP=-NghostPoints+1
+          IstrR=Istr
           IstrT=-NghostPoints
-          IstrB=IstrT                ! boundary conditions are avoided
-          IstrM=IstrP                ! boundary conditions are avoided
+          IstrU=Istr
+          IstrB=IstrT+1
+          IstrM=IstrP+1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IstrR=Istr-1
+          IstrU=Istr+1
+          IF (ng.eq.1) THEN
+            IstrP=IstrR
+            IstrT=IstrR
+            IstrB=Istr
+            IstrM=IstrU
+          ELSE
+            IstrP=-NghostPoints+1
+            IstrT=-NghostPoints
+            IstrB=IstrT              ! boundary conditions are avoided
+            IstrM=IstrP              ! boundary conditions are avoided
+          END IF
+        ELSE
+          IstrP=Istr
+          IstrR=Istr-1
+          IstrT=IstrR
+          IstrU=Istr+1
+          IstrB=IstrT+1
+          IstrM=IstrP+1
         END IF
-#else
-        IstrP=Istr
-        IstrR=Istr-1
-        IstrT=IstrR
-        IstrU=Istr+1
-        IstrB=IstrT+1
-        IstrM=IstrP+1
-#endif
       ELSE
         IstrP=Istr
         IstrR=Istr
@@ -1267,17 +1313,17 @@
 !  Special case, Istrm3: used when MAX(0,Istr-3) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Istrm3=Istr-3
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Istrm3=MAX(0,Istr-3)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Istrm3=Istr-3
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Istrm3=MAX(0,Istr-3)
+          ELSE
+            Istrm3=Istr-3
+          END IF
+        ELSE
+          Istrm3=MAX(0,Istr-3)
         END IF
-#else
-        Istrm3=MAX(0,Istr-3)
-#endif
       ELSE
         Istrm3=Istr-3
       END IF
@@ -1285,17 +1331,17 @@
 !  Special case, Istrm2: used when MAX(0,Istr-2) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Istrm2=Istr-2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Istrm2=MAX(0,Istr-2)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Istrm2=Istr-2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Istrm2=MAX(0,Istr-2)
+          ELSE
+            Istrm2=Istr-2
+          END IF
+        ELSE
+          Istrm2=MAX(0,Istr-2)
         END IF
-#else
-        Istrm2=MAX(0,Istr-2)
-#endif
       ELSE
         Istrm2=Istr-2
       END IF
@@ -1303,17 +1349,17 @@
 !  Special case, IstrUm2: used when MAX(1,IstrU-2) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC
-        IstrUm2=IstrU-2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          IstrUm2=MAX(1,IstrU-2)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           IstrUm2=IstrU-2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            IstrUm2=MAX(1,IstrU-2)
+          ELSE
+            IstrUm2=IstrU-2
+          END IF
+        ELSE
+          IstrUm2=MAX(1,IstrU-2)
         END IF
-#else
-        IstrUm2=MAX(1,IstrU-2)
-#endif
       ELSE
         IstrUm2=IstrU-2
       END IF
@@ -1321,17 +1367,17 @@
 !  Special case, Istrm1: used when MAX(1,Istr-1) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Istrm1=Istr-1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Istrm1=MAX(1,Istr-1)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Istrm1=Istr-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Istrm1=MAX(1,Istr-1)
+          ELSE
+            Istrm1=Istr-1
+          END IF
+        ELSE
+          Istrm1=MAX(1,Istr-1)
         END IF
-#else
-        Istrm1=MAX(1,Istr-1)
-#endif
       ELSE
         Istrm1=Istr-1
       END IF
@@ -1339,17 +1385,17 @@
 !  Special case, IstrUm1: used when MAX(2,IstrU-1) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        IstrUm1=IstrU-1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          IstrUm1=MAX(2,IstrU-1)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           IstrUm1=IstrU-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            IstrUm1=MAX(2,IstrU-1)
+          ELSE
+            IstrUm1=IstrU-1
+          END IF
+        ELSE
+          IstrUm1=MAX(2,IstrU-1)
         END IF
-#else
-        IstrUm1=MAX(2,IstrU-1)
-#endif
       ELSE
         IstrUm1=IstrU-1
       END IF
@@ -1359,33 +1405,33 @@
 !-----------------------------------------------------------------------
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-#if defined EW_PERIODIC
-        IendR=Iend
-        IendP=IendR                  ! check this one, same as IendR
-        IendT=IendR
-        IendB=Iend
-#elif defined COMPOSED_GRID
-        IendR=Iend
-        IendP=Iend+NghostPoints      ! check this one, same as IendT
-        IendT=Iend+NghostPoints
-        IendB=IendT-1
-#elif defined REFINED_GRID
-        IendR=Iend+1
-        IF (ng.eq.1) THEN
-          IendP=IendR
+        IF (EWperiodic(ng)) THEN
+          IendR=Iend
+          IendP=IendR                ! check this one, same as IendR?
           IendT=IendR
           IendB=Iend
-        ELSE
-          IendP=Iend+NghostPoints    ! check this one, same as IendT
+        ELSE IF (ComposedGrid(ng)) THEN
+          IendR=Iend
+          IendP=Iend+NghostPoints    ! check this one, same as IendT?
           IendT=Iend+NghostPoints
-          IendB=IendT                ! boundary conditions are avoided
+          IendB=IendT-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IendR=Iend+1
+          IF (ng.eq.1) THEN
+            IendP=IendR
+            IendT=IendR
+            IendB=Iend
+          ELSE
+            IendP=Iend+NghostPoints  ! check this one, same as IendT
+            IendT=Iend+NghostPoints
+            IendB=IendT              ! boundary conditions are avoided
+          END IF
+        ELSE
+          IendR=Iend+1
+          IendP=IendR
+          IendT=IendR
+          IendB=IendT-1
         END IF
-#else
-        IendR=Iend+1
-        IendP=IendR
-        IendT=IendR
-        IendB=IendT-1
-#endif
       ELSE
         IendR=Iend
         IendP=IendR
@@ -1396,17 +1442,17 @@
 !  Special case, Iendp1: used when MIN(Iend+1,Lm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Iendp1=Iend+1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Iendp1=MIN(Iend+1,Lm(ng))
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Iendp1=Iend+1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Iendp1=MIN(Iend+1,Lm(ng))
+          ELSE
+            Iendp1=Iend+1
+          END IF
+        ELSE
+          Iendp1=MIN(Iend+1,Lm(ng))
         END IF
-#else
-        Iendp1=MIN(Iend+1,Lm(ng))
-#endif
       ELSE
         Iendp1=Iend+1
       END IF
@@ -1414,17 +1460,17 @@
 !  Special case, Iendp2i: used when MIN(Iend+2,Lm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Iendp2i=Iend+2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Iendp2i=MIN(Iend+2,Lm(ng))
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Iendp2i=Iend+2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Iendp2i=MIN(Iend+2,Lm(ng))
+          ELSE
+            Iendp2i=Iend+2
+          END IF
+        ELSE
+          Iendp2i=MIN(Iend+2,Lm(ng))
         END IF
-#else
-        Iendp2i=MIN(Iend+2,Lm(ng))
-#endif
       ELSE
         Iendp2i=Iend+2
       END IF
@@ -1432,17 +1478,17 @@
 !  Special case, Iendp2: used when MIN(Iend+2,Lm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Iendp2=Iend+2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Iendp2=MIN(Iend+2,Lm(ng)+1)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Iendp2=Iend+2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Iendp2=MIN(Iend+2,Lm(ng)+1)
+          ELSE
+            Iendp2=Iend+2
+          END IF
+        ELSE
+          Iendp2=MIN(Iend+2,Lm(ng)+1)
         END IF
-#else
-        Iendp2=MIN(Iend+2,Lm(ng)+1)
-#endif
       ELSE
         Iendp2=Iend+2
       END IF
@@ -1450,17 +1496,17 @@
 !  Special case, Iendp3: used when MIN(Iend+3,Lm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-#if defined EW_PERIODIC || defined COMPOSED_GRID
-        Iendp3=Iend+3
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Iendp3=MIN(Iend+2,Lm(ng)+1)
-        ELSE
+        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
           Iendp3=Iend+3
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Iendp3=MIN(Iend+2,Lm(ng)+1)
+          ELSE
+            Iendp3=Iend+3
+          END IF
+        ELSE
+          Iendp3=MIN(Iend+3,Lm(ng)+1)
         END IF
-#else
-        Iendp3=MIN(Iend+3,Lm(ng)+1)
-#endif
       ELSE
         Iendp3=Iend+3
       END IF
@@ -1470,42 +1516,42 @@
 !-----------------------------------------------------------------------
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC
-        JstrP=Jstr
-        JstrR=Jstr
-        JstrT=JstrR
-        JstrV=Jstr
-        JstrB=Jstr
-        JstrM=JstrV
-#elif defined COMPOSED_GRID
-        JstrP=-NghostPoints+1
-        JstrR=Jstr
-        JstrT=-NghostPoints
-        JstrV=Jstr
-        JstrB=JstrT+1
-        JstrM=JstrP+1
-#elif defined REFINED_GRID
-        JstrR=Jstr-1
-        JstrV=Jstr+1
-        IF (ng.eq.1) THEN
-          JstrP=JstrR
+        IF (NSperiodic(ng)) THEN
+          JstrP=Jstr
+          JstrR=Jstr
           JstrT=JstrR
+          JstrV=Jstr
           JstrB=Jstr
           JstrM=JstrV
-        ELSE
+        ELSE IF (ComposedGrid(ng)) THEN
           JstrP=-NghostPoints+1
+          JstrR=Jstr
           JstrT=-NghostPoints
-          JstrB=JstrT                ! boundary conditions are avoided
-          JstrM=JstrP                ! boundary conditions are avoided
+          JstrV=Jstr
+          JstrB=JstrT+1
+          JstrM=JstrP+1
+        ELSE IF (RefinedGrid(ng)) THEN
+          JstrR=Jstr-1
+          JstrV=Jstr+1
+          IF (ng.eq.1) THEN
+            JstrP=JstrR
+            JstrT=JstrR
+            JstrB=Jstr
+            JstrM=JstrV
+          ELSE
+            JstrP=-NghostPoints+1
+            JstrT=-NghostPoints
+            JstrB=JstrT              ! boundary conditions are avoided
+            JstrM=JstrP              ! boundary conditions are avoided
+          END IF
+        ELSE
+          JstrP=Jstr
+          JstrR=Jstr-1
+          JstrT=JstrR
+          JstrV=Jstr+1
+          JstrB=JstrT+1
+          JstrM=JstrP+1
         END IF
-#else
-        JstrP=Jstr
-        JstrR=Jstr-1
-        JstrT=JstrR
-        JstrV=Jstr+1
-        JstrB=JstrT+1
-        JstrM=JstrP+1
-#endif
       ELSE
         JstrP=Jstr
         JstrR=Jstr
@@ -1518,17 +1564,17 @@
 !  Special case, Jstrm3: used when MAX(0,Jstr-3) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jstrm3=Jstr-3
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jstrm3=MAX(0,Jstr-3)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jstrm3=Jstr-3
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jstrm3=MAX(0,Jstr-3)
+          ELSE
+            Jstrm3=Jstr-3
+          END IF
+        ELSE
+          Jstrm3=MAX(0,Jstr-3)
         END IF
-#else
-        Jstrm3=MAX(0,Jstr-3)
-#endif
       ELSE
         Jstrm3=Jstr-3
       END IF
@@ -1536,17 +1582,17 @@
 !  Special case, Jstrm2: used when MAX(0,Jstr-2) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jstrm2=Jstr-2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jstrm2=MAX(0,Jstr-2)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jstrm2=Jstr-2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jstrm2=MAX(0,Jstr-2)
+          ELSE
+            Jstrm2=Jstr-2
+          END IF
+        ELSE
+          Jstrm2=MAX(0,Jstr-2)
         END IF
-#else
-        Jstrm2=MAX(0,Jstr-2)
-#endif
       ELSE
         Jstrm2=Jstr-2
       END IF
@@ -1554,17 +1600,17 @@
 !  Special case, JstrVm2: used when MAX(1,JstrV-2) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        JstrVm2=JstrV-2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          JstrVm2=MAX(1,JstrV-2)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           JstrVm2=JstrV-2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            JstrVm2=MAX(1,JstrV-2)
+          ELSE
+            JstrVm2=JstrV-2
+          END IF
+        ELSE
+          JstrVm2=MAX(1,JstrV-2)
         END IF
-#else
-        JstrVm2=MAX(1,JstrV-2)
-#endif
       ELSE
         JstrVm2=JstrV-2
       END IF
@@ -1572,17 +1618,17 @@
 !  Special case, Jstrm1: used when MAX(1,Jstr-1) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jstrm1=Jstr-1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jstrm1=MAX(1,Jstr-1)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jstrm1=Jstr-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jstrm1=MAX(1,Jstr-1)
+          ELSE
+            Jstrm1=Jstr-1
+          END IF
+        ELSE
+          Jstrm1=MAX(1,Jstr-1)
         END IF
-#else
-        Jstrm1=MAX(1,Jstr-1)
-#endif
       ELSE
         Jstrm1=Jstr-1
       END IF
@@ -1590,17 +1636,17 @@
 !  Special case, JstrVm1: used when MAX(2,JstrV-1) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        JstrVm1=JstrV-1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-        JstrVm1=MAX(2,JstrV-1)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           JstrVm1=JstrV-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            JstrVm1=MAX(2,JstrV-1)
+          ELSE
+            JstrVm1=JstrV-1
+          END IF
+        ELSE
+          JstrVm1=MAX(2,JstrV-1)
         END IF
-#else
-        JstrVm1=MAX(2,JstrV-1)
-#endif
       ELSE
         JstrVm1=JstrV-1
       END IF
@@ -1610,33 +1656,33 @@
 !-----------------------------------------------------------------------
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-#if defined NS_PERIODIC
-        JendR=Jend
-        JendP=JendR                  ! check this one, same as JendR
-        JendT=JendR
-        JendB=Jend
-#elif defined COMPOSED_GRID
-        JendR=Jend
-        JendP=Jend+NghostPoints      ! check this one, same as JendT
-        JendT=Jend+NghostPoints
-        JendB=JendT-1
-#elif defined REFINED_GRID
-        JendR=Jend+1
-        IF (ng.eq.1) THEN
-          JendP=JendR
+        IF (NSperiodic(ng)) THEN
+          JendR=Jend
+          JendP=JendR                ! check this one, same as JendR?
           JendT=JendR
           JendB=Jend
-        ELSE
-          JendP=Jend+NghostPoints    ! check this one, same as JendT
+        ELSE IF (ComposedGrid(ng)) THEN
+          JendR=Jend
+          JendP=Jend+NghostPoints    ! check this one, same as JendT?
           JendT=Jend+NghostPoints
-          JendB=JendT                ! boundary conditions are avoided
+          JendB=JendT-1
+        ELSE IF (RefinedGrid(ng)) THEN
+          JendR=Jend+1
+          IF (ng.eq.1) THEN
+            JendP=JendR
+            JendT=JendR
+            JendB=Jend
+          ELSE
+            JendP=Jend+NghostPoints  ! check this one, same as JendT
+            JendT=Jend+NghostPoints
+            JendB=JendT              ! boundary conditions are avoided
+          END IF
+        ELSE
+          JendR=Jend+1
+          JendP=JendR
+          JendT=JendR
+          JendB=JendT-1
         END IF
-#else
-        JendR=Jend+1
-        JendP=JendR
-        JendT=JendR
-        JendB=JendT-1
-#endif
       ELSE
         JendR=Jend
         JendP=JendR
@@ -1648,17 +1694,17 @@
 !  Special case, Jendp1: used when MIN(Jend+1,Mm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jendp1=Jend+1
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jendp1=MIN(Jend+1,Mm(ng))
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jendp1=Jend+1
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jendp1=MIN(Jend+1,Mm(ng))
+          ELSE
+            Jendp1=Jend+1
+          END IF
+        ELSE
+          Jendp1=MIN(Jend+1,Mm(ng))
         END IF
-#else
-        Jendp1=MIN(Jend+1,Mm(ng))
-#endif
       ELSE
         Jendp1=Jend+1
       END IF
@@ -1666,17 +1712,17 @@
 !  Special case, Jendp2i: used when MIN(Jend+2,Mm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jendp2i=Jend+2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jendp2i=MIN(Jend+2,Mm(ng))
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jendp2i=Jend+2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jendp2i=MIN(Jend+2,Mm(ng))
+          ELSE
+            Jendp2i=Jend+2
+          END IF
+        ELSE
+          Jendp2i=MIN(Jend+2,Mm(ng))
         END IF
-#else
-        Jendp2i=MIN(Jend+2,Mm(ng))
-#endif
       ELSE
         Jendp2i=Jend+2
       END IF
@@ -1684,17 +1730,17 @@
 !  Special case, Jendp2: used when MIN(Jend+2,Mm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jendp2=Jend+2
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jendp2=MIN(Jend+2,Mm(ng)+1)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jendp2=Jend+2
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jendp2=MIN(Jend+2,Mm(ng)+1)
+          ELSE
+            Jendp2=Jend+2
+          END IF
+        ELSE
+          Jendp2=MIN(Jend+2,Mm(ng)+1)
         END IF
-#else
-        Jendp2=MIN(Jend+2,Mm(ng)+1)
-#endif
       ELSE
         Jendp2=Jend+2
       END IF
@@ -1702,17 +1748,17 @@
 !  Special case, Jendp3: used when MIN(Jend+3,Mm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-#if defined NS_PERIODIC || defined COMPOSED_GRID
-        Jendp3=Jend+3
-#elif defined REFINED_GRID
-        IF (ng.eq.1) THEN
-          Jendp3=MIN(Jend+3,Mm(ng)+1)
-        ELSE
+        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
           Jendp3=Jend+3
+        ELSE IF (RefinedGrid(ng)) THEN
+          IF (ng.eq.1) THEN
+            Jendp3=MIN(Jend+3,Mm(ng)+1)
+          ELSE
+            Jendp3=Jend+3
+          END IF
+        ELSE
+          Jendp3=MIN(Jend+3,Mm(ng)+1)
         END IF
-#else
-        Jendp3=MIN(Jend+3,Mm(ng)+1)
-#endif
       ELSE
         Jendp3=Jend+3
       END IF

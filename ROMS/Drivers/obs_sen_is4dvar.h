@@ -7,13 +7,13 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS 4DVAR Observation Sensitivity Analysis Driver:            !
+!  ROMS/TOMS I4D-VAR Observation Sensitivity Analysis Driver:          !
 !                                                                      !
 !  This driver evaluates the impact of each observation in the         !
-!  4DVAR analysis increment by measuring their sensitivity over        !
+!  4D-Var analysis increment by measuring their sensitivity over       !
 !  a specified circulation functional index, J, similar to the         !
 !  adjoint sensitivity driver. This is equivalent to taking the        !
-!  adjoint of the 4DVAR algorithm.                                     !
+!  adjoint of the 4D-Var algorithm.                                    !
 !                                                                      !
 !  Algorithm Outline:                                                  !
 !                                                                      !
@@ -62,7 +62,7 @@
 !      (3), we will have a full 3D-adjoint state vector at time t=t0.  !
 !      Let's call this vector x(0). The next thing we want to do is    !
 !      to compute the dot-product of x(0) with each of the Lanczos     !
-!      vectors from the previous IS4DVAR run. So if we ran IS4DVAR     !
+!      vectors from the previous I4D-Var run. So if we ran I4D-Var     !
 !      with k inner-loops we will have k Lanczos vectors which we      !
 !      denote as q_i where i=1,2,...,k. So we will compute a_i=x'q_i   !
 !      where x' is the transpose of the vector x(0), and a_i for       !
@@ -99,6 +99,29 @@
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
+!                                                                      !
+!  References:                                                         !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, B.S. Powell, A.T. Weaver,     !
+!    and J. Zavala-Garay, 2011: The Regional Ocean Modeling System     !
+!    (ROMS)  4-dimensional variational data assimilations systems,     !
+!    Part I - System overview and formulation, Prog. Oceanogr., 91,    !
+!    34-49, doi:10.1016/j.pocean.2011.05.004.                          !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part II - Performance     !
+!    and application to the California Current System, Prog.           !
+!    Oceanogr., 91, 50-73, doi:10.1016/j.pocean.2011.05.003.           !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part III - Observation    !
+!    impact and observation sensitivity in the California Current      !
+!    System, Prog. Oceanogr., 91, 74-94,                               !
+!    doi:10.1016/j.pocean.2011.05.005.                                 !
 !                                                                      !
 !=======================================================================
 !

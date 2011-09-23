@@ -2,24 +2,6 @@
       MODULE normalization_mod
 
 #if defined FOUR_DVAR
-# ifdef EW_PERIODIC
-#  define IR_RANGE Istr-1,Iend+1
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# else
-#  define IR_RANGE IstrT,IendT
-#  define IU_RANGE IstrP,IendT
-#  define IV_RANGE IstrT,IendT
-# endif
-# ifdef NS_PERIODIC
-#  define JR_RANGE Jstr-1,Jend+1
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# else
-#  define JR_RANGE JstrT,JendT
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP,JendT
-# endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -485,18 +467,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
 # ifdef SOLVE3D
       logical :: Ldiffer, Lsame
 # endif
@@ -616,8 +586,8 @@
      &                          '2D normalization factors at RHO-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
               END DO
             END DO
@@ -657,8 +627,8 @@
      &                                   rmask, umask, vmask,           &
 # endif
      &                                   A2d)
-                  DO j=JR_RANGE
-                    DO i=IR_RANGE
+                  DO j=JstrT,JendT
+                    DO i=IstrT,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
@@ -693,7 +663,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormR(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -711,24 +682,24 @@
 !  2D norm at U-points.
 !
           IF (Cnorm(ifile,isUbar)) THEN
-# ifdef EW_PERIODIC
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# else
-            Imin=2
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# endif
+            IF (EWperiodic(ng)) THEN
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            ELSE
+              Imin=2
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            END IF
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   U-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrP,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
               END DO
             END DO
@@ -768,8 +739,8 @@
      &                                   umask, pmask,                  &
 # endif
      &                                   A2d)
-                  DO j=JU_RANGE
-                    DO i=IU_RANGE
+                  DO j=JstrT,JendT
+                    DO i=IstrP,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
@@ -804,7 +775,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormU(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -822,24 +794,24 @@
 !  2D norm at V-points.
 !
           IF (Cnorm(ifile,isVbar)) THEN
-# ifdef NS_PERIODIC
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# else
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=2
-            Jmax=Mm(ng)
-# endif
+            IF (NSperiodic(ng)) THEN
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            ELSE
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=2
+              Jmax=Mm(ng)
+            END IF
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   V-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrP,JendT
+              DO i=IstrT,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
               END DO
             END DO
@@ -879,8 +851,8 @@
      &                                   vmask, pmask,                  &
 # endif
      &                                   A2d)
-                  DO j=JV_RANGE
-                    DO i=IV_RANGE
+                  DO j=JstrP,JendT
+                    DO i=IstrT,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
@@ -915,7 +887,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormV(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -935,24 +908,24 @@
 !  3D norm U-points.
 !
           IF (Cnorm(ifile,isUvel)) THEN
-# ifdef EW_PERIODIC
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# else
-            Imin=2
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# endif
+            IF (EWperiodic(ng)) THEN
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            ELSE
+              Imin=2
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            END IF
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   U-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrP,IendT
                 cff=om_u(i,j)*on_u(i,j)*0.5_r8
                 DO k=1,N(ng)
                   Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
@@ -1003,8 +976,8 @@
      &                                     Hz, z_r,                     &
      &                                     A3d)
                     DO k=1,N(ng)
-                      DO j=JU_RANGE
-                        DO i=IU_RANGE
+                      DO j=JstrT,JendT
+                        DO i=IstrP,IendT
                           A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                         END DO
                       END DO
@@ -1045,7 +1018,8 @@
 #  ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormU(:,:,:,ifile))
 #  endif
             CALL wrt_norm3d (ng, tile, iTLM, ncname,                    &
@@ -1063,24 +1037,24 @@
 !  3D norm at V-points.
 !
           IF (Cnorm(ifile,isVvel)) THEN
-# ifdef NS_PERIODIC
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=1
-            Jmax=Mm(ng)
-# else
-            Imin=1
-            Imax=Lm(ng)
-            Jmin=2
-            Jmax=Mm(ng)
-# endif
+            IF (NSperiodic(ng)) THEN
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=1
+              Jmax=Mm(ng)
+            ELSE
+              Imin=1
+              Imax=Lm(ng)
+              Jmin=2
+              Jmax=Mm(ng)
+            END IF
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   V-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrP,JendT
+              DO i=IstrT,IendT
                 cff=om_v(i,j)*on_v(i,j)*0.5_r8
                 DO k=1,N(ng)
                   Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
@@ -1131,8 +1105,8 @@
      &                                     Hz, z_r,                     &
      &                                     A3d)
                     DO k=1,N(ng)
-                      DO j=JV_RANGE
-                        DO i=IV_RANGE
+                      DO j=JstrP,JendT
+                        DO i=IstrT,IendT
                           A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                         END DO
                       END DO
@@ -1173,7 +1147,8 @@
 #  ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormV(:,:,:,ifile))
 #  endif
             CALL wrt_norm3d (ng, tile, iTLM, ncname,                    &
@@ -1229,8 +1204,8 @@
             UBt=NT(ng)
           END IF
 !
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               cff=om_r(i,j)*on_r(i,j)
               DO k=1,N(ng)
                 Vscale(i,j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
@@ -1284,8 +1259,8 @@
      &                                       Hz, z_r,                   &
      &                                       A3d)
                       DO k=1,N(ng)
-                        DO j=JR_RANGE
-                          DO i=IR_RANGE
+                        DO j=JstrT,JendT
+                          DO i=IstrT,IendT
                             A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                           END DO
                         END DO
@@ -1337,7 +1312,8 @@
 #  ifdef DISTRIBUTE
               CALL mp_exchange3d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            VnormR(:,:,:,ifile,itrc))
 #  endif
               CALL wrt_norm3d (ng, tile, iTLM, ncname,                  &
@@ -1411,7 +1387,7 @@
               Bmin=1
               Bmax=Mm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               END IF
@@ -1420,7 +1396,7 @@
               Bmin=1
               Bmax=Lm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               END IF
@@ -1467,11 +1443,11 @@
 #  endif
      &                                     B2d)
                 IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JR_RANGE
+                  DO j=JstrT,JendT
                     B2d(j)=B2d(j)*HscaleB(j)
                   END DO
                 ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IR_RANGE
+                  DO i=IstrT,IendT
                     B2d(i)=B2d(i)*HscaleB(i)
                   END DO
                 END IF
@@ -1537,21 +1513,21 @@
               Bmin=1
               Bmax=Mm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,u2dvar)
-#  ifdef EW_PERIODIC
-              Bmin=1
-              Bmax=Lm(ng)
-#  else
-              Bmin=2
-              Bmax=Lm(ng)
-#  endif
+              IF (EWperiodic(ng)) THEN
+                Bmin=1
+                Bmax=Lm(ng)
+              ELSE
+                Bmin=2
+                Bmax=Lm(ng)
+              END IF
               IF (Lconvolve(ibry)) THEN
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
@@ -1598,11 +1574,11 @@
 #  endif
      &                                     B2d)
                 IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JU_RANGE
+                  DO j=JstrT,JendT
                     B2d(j)=B2d(j)*HscaleB(j)
                   END DO
                 ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IU_RANGE
+                  DO i=IstrP,IendT
                     B2d(i)=B2d(i)*HscaleB(i)
                   END DO
                 END IF
@@ -1665,15 +1641,15 @@
           IF (CnormB(isVbar,ibry)) THEN
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,v2dvar)
-#  ifdef NS_PERIODIC
-              Bmin=1
-              Bmax=Mm(ng)
-#  else
-              Bmin=2
-              Bmax=Mm(ng)
-#  endif
+              IF (NSperiodic(ng)) THEN
+                Bmin=1
+                Bmax=Mm(ng)
+              ELSE
+                Bmin=2
+                Bmax=Mm(ng)
+              END IF
               IF (Lconvolve(ibry)) THEN
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
@@ -1682,7 +1658,7 @@
               Bmin=1
               Bmax=Lm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
@@ -1729,11 +1705,11 @@
 #  endif
      &                                     B2d)
                 IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JV_RANGE
+                  DO j=JstrP,JendT
                     B2d(j)=B2d(j)*HscaleB(j)
                   END DO
                 ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IV_RANGE
+                  DO i=IstrT,IendT
                     B2d(i)=B2d(i)*HscaleB(i)
                   END DO
                 END IF
@@ -1801,7 +1777,7 @@
               Bmin=1
               Bmax=Mm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   cff=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(j,k)=1.0_r8/                                &
@@ -1811,15 +1787,15 @@
               END IF
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,u2dvar)
-#   ifdef EW_PERIODIC
-              Bmin=1
-              Bmax=Lm(ng)
-#   else
-              Bmin=2
-              Bmax=Lm(ng)
-#   endif
+              IF (EWperiodic(ng)) THEN
+                Bmin=1
+                Bmax=Lm(ng)
+              ELSE
+                Bmin=2
+                Bmax=Lm(ng)
+              END IF
               IF (Lconvolve(ibry)) THEN
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   cff=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(i,k)=1.0_r8/                                &
@@ -1876,13 +1852,13 @@
      &                                       B3d)
                   IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                     DO k=1,N(ng)
-                      DO j=JU_RANGE
+                      DO j=JstrT,JendT
                         B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                       END DO
                     END DO
                   ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
                     DO k=1,N(ng)
-                      DO i=IU_RANGE
+                      DO i=IstrP,IendT
                         B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                       END DO
                     END DO
@@ -1951,15 +1927,15 @@
           IF (CnormB(isVvel,ibry)) THEN
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,v2dvar)
-#   ifdef NS_PERIODIC
-              Bmin=1
-              Bmax=Mm(ng)
-#   else
-              Bmin=2
-              Bmax=Mm(ng)
-#   endif
+              IF (NSperiodic(ng)) THEN
+                Bmin=1
+                Bmax=Mm(ng)
+              ELSE
+                Bmin=2
+                Bmax=Mm(ng)
+              END IF
               IF (Lconvolve(ibry)) THEN
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   cff=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(j,k)=1.0_r8/                                &
@@ -1972,7 +1948,7 @@
               Bmin=1
               Bmax=Lm(ng)
               IF (Lconvolve(ibry)) THEN
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   cff=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(i,k)=1.0_r8/                                &
@@ -2029,13 +2005,13 @@
      &                                       B3d)
                   IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                     DO k=1,N(ng)
-                      DO j=JV_RANGE
+                      DO j=JstrP,JendT
                         B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                       END DO
                     END DO
                   ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
                     DO k=1,N(ng)
-                      DO i=IV_RANGE
+                      DO i=IstrT,IendT
                         B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                       END DO
                     END DO
@@ -2117,7 +2093,7 @@
                 Bmin=2
                 Bmax=Mm(ng)
                 IF (Lconvolve(ibry)) THEN
-                  DO j=JR_RANGE
+                  DO j=JstrT,JendT
                     cff=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
@@ -2129,7 +2105,7 @@
                 Bmin=1
                 Bmax=Lm(ng)
                 IF (Lconvolve(ibry)) THEN
-                  DO i=IR_RANGE
+                  DO i=IstrT,IendT
                     cff=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
@@ -2187,13 +2163,13 @@
      &                                         B3d)
                     IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                       DO k=1,N(ng)
-                        DO j=JR_RANGE
+                        DO j=JstrT,JendT
                           B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                         END DO
                       END DO
                     ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
                       DO k=1,N(ng)
-                        DO i=IR_RANGE
+                        DO i=IstrT,IendT
                           B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                         END DO
                       END DO
@@ -2295,24 +2271,24 @@
 !  2D norm at U-stress points.
 !
         IF (Cnorm(rec,isUstr)) THEN
-#   ifdef EW_PERIODIC
-          Imin=1
-          Imax=Lm(ng)
-          Jmin=1
-          Jmax=Mm(ng)
-#   else
-          Imin=2
-          Imax=Lm(ng)
-          Jmin=1
-          Jmax=Mm(ng)
-#   endif
+          IF (EWperiodic(ng)) THEN
+            Imin=1
+            Imax=Lm(ng)
+            Jmin=1
+            Jmax=Mm(ng)
+          ELSE
+            Imin=2
+            Imax=Lm(ng)
+            Jmin=1
+            Jmax=Mm(ng)
+          END IF
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                     '2D normalization factors at U-stress points'
             CALL my_flush (stdout)
           END IF
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
             END DO
           END DO
@@ -2352,8 +2328,8 @@
      &                                 umask, pmask,                    &
 #   endif
      &                                 A2d)
-                DO j=JU_RANGE
-                  DO i=IU_RANGE
+                DO j=JstrT,JendT
+                  DO i=IstrP,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
@@ -2388,7 +2364,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSUS)
 #   endif
           CALL wrt_norm2d (ng, tile, iTLM, ncname,                      &
@@ -2406,24 +2383,24 @@
 !  2D norm at V-stress points.
 !
         IF (Cnorm(rec,isVstr)) THEN
-#   ifdef NS_PERIODIC
-          Imin=1
-          Imax=Lm(ng)
-          Jmin=1
-          Jmax=Mm(ng)
-#   else
-          Imin=1
-          Imax=Lm(ng)
-          Jmin=2
-          Jmax=Mm(ng)
-#   endif
+          IF (NSperiodic(ng)) THEN
+            Imin=1
+            Imax=Lm(ng)
+            Jmin=1
+            Jmax=Mm(ng)
+          ELSE
+            Imin=1
+            Imax=Lm(ng)
+            Jmin=2
+            Jmax=Mm(ng)
+          END IF
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                     '2D normalization factors at V-stress points'
             CALL my_flush (stdout)
           END IF
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
             END DO
           END DO
@@ -2463,8 +2440,8 @@
      &                                 vmask, pmask,                    &
 #   endif
      &                                 A2d)
-                DO j=JV_RANGE
-                  DO i=IV_RANGE
+                DO j=JstrP,JendT
+                  DO i=IstrT,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
@@ -2499,7 +2476,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSVS)
 #   endif
           CALL wrt_norm2d (ng, tile, iTLM, ncname,                      &
@@ -2557,8 +2535,8 @@
           UBt=NT(ng)
         END IF
 !
-        DO j=JR_RANGE
-          DO i=IR_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           END DO
         END DO
@@ -2602,8 +2580,8 @@
      &                                     rmask, umask, vmask,         &
 #   endif
      &                                     A2d)
-                    DO j=JR_RANGE
-                      DO i=IR_RANGE
+                    DO j=JstrT,JendT
+                      DO i=IstrT,IendT
                         A2d(i,j)=A2d(i,j)*Hscale(i,j)
                       END DO
                     END DO
@@ -2653,7 +2631,8 @@
 #   ifdef DISTRIBUTE
               CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj,                   &
-     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            HnormSTF(:,:,itrc))
 #   endif
               CALL wrt_norm2d (ng, tile, iTLM, ncname,                  &
@@ -2911,18 +2890,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
 # ifdef SOLVE3D
       logical :: Ldiffer, Lsame
 # endif
@@ -3061,8 +3028,8 @@
      &                          '2D normalization factors at RHO-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
                 Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
@@ -3073,8 +3040,8 @@
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
-              DO j=JR_RANGE
-                DO i=IR_RANGE
+              DO j=JstrT,JendT
+                DO i=IstrT,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
@@ -3119,7 +3086,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormR(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -3141,8 +3109,8 @@
      &                          '2D normalization factors at   U-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrP,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
                 Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
@@ -3153,8 +3121,8 @@
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
-              DO j=JU_RANGE
-                DO i=IU_RANGE
+              DO j=JstrT,JendT
+                DO i=IstrP,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
@@ -3199,7 +3167,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormU(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -3221,8 +3190,8 @@
      &                          '2D normalization factors at   V-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrP,JendT
+              DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
                 Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
@@ -3233,8 +3202,8 @@
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
-              DO j=JV_RANGE
-                DO i=IV_RANGE
+              DO j=JstrP,JendT
+                DO i=IstrT,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
@@ -3279,7 +3248,8 @@
 # ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormV(:,:,ifile))
 # endif
             CALL wrt_norm2d (ng, tile, iTLM, ncname,                    &
@@ -3303,8 +3273,8 @@
      &                          '3D normalization factors at   U-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrP,IendT
                 val=om_u(i,j)*on_u(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
@@ -3319,8 +3289,8 @@
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            Amin, Amax, A3d)
               DO k=1,N(ng)
-                DO j=JU_RANGE
-                  DO i=IU_RANGE
+                DO j=JstrT,JendT
+                  DO i=IstrP,IendT
                     A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                   END DO
                 END DO
@@ -3375,7 +3345,8 @@
 #  ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormU(:,:,:,ifile))
 #  endif
             CALL wrt_norm3d (ng, tile, iTLM, ncname,                    &
@@ -3397,8 +3368,8 @@
      &                          '3D normalization factors at   V-points'
               CALL my_flush (stdout)
             END IF
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrP,JendT
+              DO i=IstrT,IendT
                 val=om_v(i,j)*on_v(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
@@ -3413,8 +3384,8 @@
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            Amin, Amax, A3d)
               DO k=1,N(ng)
-                DO j=JV_RANGE
-                  DO i=IV_RANGE
+                DO j=JstrP,JendT
+                  DO i=IstrT,IendT
                     A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                   END DO
                 END DO
@@ -3469,7 +3440,8 @@
 #  ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormV(:,:,:,ifile))
 #  endif
             CALL wrt_norm3d (ng, tile, iTLM, ncname,                    &
@@ -3520,8 +3492,8 @@
             UBt=NT(ng)
           END IF
 !
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               val=om_r(i,j)*on_r(i,j)
               DO k=1,N(ng)
                 Vscale(i,j,k)=1.0_r8/SQRT(val*Hz(i,j,k))
@@ -3532,8 +3504,8 @@
             is=isTvar(itrc)
             IF (Cnorm(ifile,is)) THEN
               DO k=1,N(ng)
-                DO j=JR_RANGE
-                  DO i=IR_RANGE
+                DO j=JstrT,JendT
+                  DO i=IstrT,IendT
                     A3davg(i,j,k)=0.0_r8
                     A3dsqr(i,j,k)=0.0_r8
                   END DO
@@ -3545,8 +3517,8 @@
      &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
      &                              Amin, Amax, A3d)
                 DO k=1,N(ng)
-                  DO j=JR_RANGE
-                    DO i=IR_RANGE
+                  DO j=JstrT,JendT
+                    DO i=IstrT,IendT
                       A3d(i,j,k)=A3d(i,j,k)*Vscale(i,j,k)
                     END DO
                   END DO
@@ -3620,7 +3592,8 @@
 #  ifdef DISTRIBUTE
               CALL mp_exchange3d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            VnormR(:,:,:,ifile,itrc))
 #  endif
               CALL wrt_norm3d (ng, tile, iTLM, ncname,                  &
@@ -3697,14 +3670,14 @@
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,r2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               END IF
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,r2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               END IF
@@ -3716,7 +3689,7 @@
      &                                  JstrR, JendR,                   &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO j=JR_RANGE
+                DO j=JstrT,JendT
                   B2d(j)=B2d(j)*HscaleB(j)
                 END DO
               ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
@@ -3725,7 +3698,7 @@
      &                                  IstrR, IendR,                   &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO i=IR_RANGE
+                DO i=IstrT,IendT
                   B2d(i)=B2d(i)*HscaleB(i)
                 END DO
               END IF
@@ -3829,14 +3802,14 @@
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,u2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,u2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
@@ -3848,7 +3821,7 @@
      &                                  JstrR, JendR,                   &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   B2d(j)=B2d(j)*HscaleB(j)
                 END DO
               ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
@@ -3857,7 +3830,7 @@
      &                                  Istr, IendR,                    &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   B2d(i)=B2d(i)*HscaleB(i)
                 END DO
               END IF
@@ -3961,14 +3934,14 @@
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,v2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   HscaleB(j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,v2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   HscaleB(i)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
@@ -3980,7 +3953,7 @@
      &                                  Jstr, JendR,                    &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   B2d(j)=B2d(j)*HscaleB(j)
                 END DO
               ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
@@ -3989,7 +3962,7 @@
      &                                  IstrR, IendR,                   &
      &                                  LBij, UBij,                     &
      &                                  Bmin, Bmax, B2d)
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   B2d(i)=B2d(i)*HscaleB(i)
                 END DO
               END IF
@@ -4095,7 +4068,7 @@
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,u2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO j=JU_RANGE
+                DO j=JstrT,JendT
                   val=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(j,k)=1.0_r8/                                &
@@ -4106,7 +4079,7 @@
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,u2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO i=IU_RANGE
+                DO i=IstrP,IendT
                   val=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(i,k)=1.0_r8/                                &
@@ -4123,7 +4096,7 @@
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  Bmin, Bmax, B3d)
                 DO k=1,N(ng)
-                  DO j=JU_RANGE
+                  DO j=JstrT,JendT
                     B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                   END DO
                 END DO
@@ -4134,7 +4107,7 @@
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  Bmin, Bmax, B3d)
                 DO k=1,N(ng)
-                  DO i=IU_RANGE
+                  DO i=IstrP,IendT
                     B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                   END DO
                 END DO
@@ -4254,7 +4227,7 @@
             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
               i=BOUNDS(ng)%edge(ibry,v2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO j=JV_RANGE
+                DO j=JstrP,JendT
                   val=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(j,k)=1.0_r8/                                &
@@ -4265,7 +4238,7 @@
             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
               j=BOUNDS(ng)%edge(ibry,v2dvar)
               IF (Lconvolve(ibry)) THEN
-                DO i=IV_RANGE
+                DO i=IstrT,IendT
                   val=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     VscaleB(i,k)=1.0_r8/                                &
@@ -4282,7 +4255,7 @@
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  Bmin, Bmax, B3d)
                 DO k=1,N(ng)
-                  DO j=JV_RANGE
+                  DO j=JstrP,JendT
                     B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                   END DO
                 END DO
@@ -4293,7 +4266,7 @@
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  Bmin, Bmax, B3d)
                 DO k=1,N(ng)
-                  DO i=IV_RANGE
+                  DO i=IstrT,IendT
                     B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                   END DO
                 END DO
@@ -4423,7 +4396,7 @@
               IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ibry,r2dvar)
                 IF (Lconvolve(ibry)) THEN
-                  DO j=JR_RANGE
+                  DO j=JstrT,JendT
                     val=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/SQRT(val*Hz(i,j,k))
@@ -4433,7 +4406,7 @@
               ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ibry,r2dvar)
                 IF (Lconvolve(ibry)) THEN
-                  DO i=IR_RANGE
+                  DO i=IstrT,IendT
                     val=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/SQRT(val*Hz(i,j,k))
@@ -4449,7 +4422,7 @@
      &                                    LBij, UBij, 1, N(ng),         &
      &                                    Bmin, Bmax, B3d)
                   DO k=1,N(ng)
-                    DO j=JR_RANGE
+                    DO j=JstrT,JendT
                       B3d(j,k)=B3d(j,k)*VscaleB(j,k)
                     END DO
                   END DO
@@ -4460,7 +4433,7 @@
      &                                    LBij, UBij, 1, N(ng),         &
      &                                    Bmin, Bmax, B3d)
                   DO k=1,N(ng)
-                    DO i=IR_RANGE
+                    DO i=IstrT,IendT
                       B3d(i,k)=B3d(i,k)*VscaleB(i,k)
                     END DO
                   END DO
@@ -4620,8 +4593,8 @@
      &                        '2D normalization factors at U-points'
             CALL my_flush (stdout)
           END IF
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               A2davg(i,j)=0.0_r8
               A2dsqr(i,j)=0.0_r8
               Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
@@ -4632,8 +4605,8 @@
      &                          Istr, IendR, JstrR, JendR,              &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Amin, Amax, A2d)
-            DO j=JU_RANGE
-              DO i=IU_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrP,IendT
                 A2d(i,j)=A2d(i,j)*Hscale(i,j)
               END DO
             END DO
@@ -4678,7 +4651,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSUS)
 #   endif
           CALL wrt_norm2d (ng, tile, iTLM, ncname,                      &
@@ -4700,8 +4674,8 @@
      &                        '2D normalization factors at V-points'
             CALL my_flush (stdout)
           END IF
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               A2davg(i,j)=0.0_r8
               A2dsqr(i,j)=0.0_r8
               Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
@@ -4712,8 +4686,8 @@
      &                          IstrR, IendR, Jstr, JendR,              &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Amin, Amax, A2d)
-            DO j=JV_RANGE
-              DO i=IV_RANGE
+            DO j=JstrP,JendT
+              DO i=IstrT,IendT
                 A2d(i,j)=A2d(i,j)*Hscale(i,j)
               END DO
             END DO
@@ -4758,7 +4732,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSVS)
 #   endif
           CALL wrt_norm2d (ng, tile, iTLM, ncname,                      &
@@ -4811,8 +4786,8 @@
           UBt=NT(ng)
         END IF
 !
-        DO j=JR_RANGE
-          DO i=IR_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           END DO
         END DO
@@ -4820,8 +4795,8 @@
           IF (Lstflux(itrc,ng)) THEN
             is=isTsur(itrc)
             IF (Cnorm(rec,is)) THEN
-              DO j=JR_RANGE
-                DO i=IR_RANGE
+              DO j=JstrT,JendT
+                DO i=IstrT,IendT
                   A2davg(i,j)=0.0_r8
                   A2dsqr(i,j)=0.0_r8
                 END DO
@@ -4831,8 +4806,8 @@
      &                              IstrR, IendR, JstrR, JendR,         &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              Amin, Amax, A2d)
-                DO j=JR_RANGE
-                  DO i=IR_RANGE
+                DO j=JstrT,JendT
+                  DO i=IstrT,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
@@ -4896,7 +4871,8 @@
 #   ifdef DISTRIBUTE
               CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj,                   &
-     &                            NghostPoints, EWperiodic, NSperiodic, &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            HnormSTF(:,:,itrc))
 #   endif
               CALL wrt_norm2d (ng, tile, iTLM, ncname,                  &
@@ -5126,13 +5102,5 @@
       RETURN
 
       END SUBROUTINE wrt_norm3d
-
-# undef IR_RANGE
-# undef JR_RANGE
-# undef IU_RANGE
-# undef JU_RANGE
-# undef IV_RANGE
-# undef JV_RANGE
-
 #endif
       END MODULE normalization_mod

@@ -133,18 +133,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: Mstr, Mend, ObsSum, ObsVoid
 # ifdef DISTRIBUTE
       integer :: Ncollect
@@ -212,7 +200,8 @@
 # ifdef DISTRIBUTE
           CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           f_zeta)
 # endif
         END IF
@@ -242,7 +231,8 @@
 # ifdef DISTRIBUTE
           CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           f_ubar)
 # endif
         END IF
@@ -272,7 +262,8 @@
 # ifdef DISTRIBUTE
           CALL ad_mp_exchange2d (ng, tile, iADM, 1,                     &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           f_vbar)
 # endif
         END IF
@@ -313,7 +304,8 @@
 #  ifdef DISTRIBUTE
           CALL ad_mp_exchange3d (ng, tile, iADM, 1,                     &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           f_u)
 #  endif
         END IF
@@ -353,7 +345,8 @@
 #  ifdef DISTRIBUTE
           CALL ad_mp_exchange3d (ng, tile, iADM, 1,                     &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           NghostPoints, EWperiodic, NSperiodic,  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           f_v)
 #  endif
         END IF
@@ -386,7 +379,8 @@
 #  ifdef DISTRIBUTE
             CALL ad_mp_exchange3d (ng, tile, iADM, 1,                   &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             NghostPoints, EWperiodic, NSperiodic,&
+     &                             NghostPoints,                        &
+     &                             EWperiodic(ng), NSperiodic(ng),      &
      &                             f_t(:,:,:,itrc))
 #  endif
 

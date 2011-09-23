@@ -29,11 +29,8 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_2d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
@@ -56,18 +53,7 @@
 !  Local variable declarations.
 !
       logical :: Lgrided, Lonerec
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
+
       integer :: Tindex, gtype, i, it1, it2, j
 
       real(r8) :: Fval, fac, fac1, fac2
@@ -168,34 +154,35 @@
           update=.FALSE.
         END IF
       END IF
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !  Exchange boundary data.
 !
       IF (update) THEN
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-        IF (gtype.eq.r2dvar) THEN
-          CALL exchange_r2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            Fout)
-        ELSE IF (gtype.eq.u2dvar) THEN
-          CALL exchange_u2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            Fout)
-        ELSE IF (gtype.eq.v2dvar) THEN
-          CALL exchange_v2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            Fout)
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          IF (gtype.eq.r2dvar) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              Fout)
+          ELSE IF (gtype.eq.u2dvar) THEN
+            CALL exchange_u2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              Fout)
+          ELSE IF (gtype.eq.v2dvar) THEN
+            CALL exchange_v2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              Fout)
+          END IF
         END IF
-#  endif
-#  ifdef DISTRIBUTE
+
+# ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      Fout)
-#  endif
-      END IF
 # endif
+      END IF
+
       RETURN
       END SUBROUTINE set_2dfldr_tile
 #endif

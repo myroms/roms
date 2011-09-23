@@ -258,7 +258,7 @@
       OPEN (inp, FILE=TRIM(CPLname), FORM='formatted', STATUS='old',    &
      &      ERR=10)
       GO TO 20
-  10  IF (Master) WRITE(stdout,50) TRIM(CPLname)
+  10  IF (MyRank.eq.0) WRITE(stdout,50) TRIM(CPLname)
       STOP
   20  CONTINUE
 !

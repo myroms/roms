@@ -2,24 +2,6 @@
       MODULE tl_variability_mod
 
 #if defined TANGENT && defined FOUR_DVAR
-# ifdef EW_PERIODIC
-#  define IR_RANGE Istr-1,Iend+1
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# else
-#  define IR_RANGE IstrT,IendT
-#  define IU_RANGE IstrP,IendT
-#  define IV_RANGE IstrT,IendT
-# endif
-# ifdef NS_PERIODIC
-#  define JR_RANGE Jstr-1,Jend+1
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# else
-#  define JR_RANGE JstrT,JendT
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP,JendT
-# endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -201,8 +183,9 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
-!
+
 # ifdef DISTRIBUTE
+!
       USE mp_exchange_mod
 # endif
 !
@@ -329,18 +312,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, ib, ir, j, rec
 # ifdef SOLVE3D
       integer :: it, k
@@ -365,35 +336,37 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           tl_zeta(i,j,Linp)=tl_zeta(i,j,Linp)*zeta_std(i,j,rec)
         END DO
       END DO
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_zeta(:,:,Linp))
 # endif
 # ifndef SOLVE3D
 !
 !  2D U-momentum.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           tl_ubar(i,j,Linp)=tl_ubar(i,j,Linp)*ubar_std(i,j,rec)
         END DO
       END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           tl_vbar(i,j,Linp)=tl_vbar(i,j,Linp)*vbar_std(i,j,rec)
         END DO
       END DO
 #  ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,Linp),                            &
      &                    tl_vbar(:,:,Linp))
 #  endif
@@ -403,13 +376,13 @@
 !  3D U-momentum.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             tl_u(i,j,k,Linp)=tl_u(i,j,k,Linp)*u_std(i,j,k,rec)
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             tl_v(i,j,k,Linp)=tl_v(i,j,k,Linp)*v_std(i,j,k,rec)
           END DO
         END DO
@@ -417,7 +390,8 @@
 #  ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_u(:,:,:,Linp),                             &
      &                    tl_v(:,:,:,Linp))
 #  endif
@@ -426,8 +400,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               tl_t(i,j,k,Linp,it)=tl_t(i,j,k,Linp,it)*                  &
      &                            t_std(i,j,k,rec,it)
             END DO
@@ -437,7 +411,8 @@
 #  ifdef DISTRIBUTE
       CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_t(:,:,:,Linp,:))
 #  endif
 # endif
@@ -491,7 +466,7 @@
               CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij,                       &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_zeta_obc(:,ib,ir,Linp))
             END IF
           END DO
@@ -541,7 +516,7 @@
               CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij,                       &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_ubar_obc(:,ib,ir,Linp))
             END IF
           END DO
@@ -591,7 +566,7 @@
               CALL mp_exchange2d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij,                       &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_vbar_obc(:,ib,ir,Linp))
             END IF
           END DO
@@ -651,7 +626,7 @@
               CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij, 1, N(ng),             &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_u_obc(:,:,ib,ir,Linp))
             END IF
           END DO
@@ -709,7 +684,7 @@
               CALL mp_exchange3d_bry (ng, tile, iADM, 1, ib,            &
      &                                LBij, UBij, 1, N(ng),             &
      &                                NghostPoints,                     &
-     &                                EWperiodic, NSperiodic,           &
+     &                                EWperiodic(ng), NSperiodic(ng),   &
      &                                tl_v_obc(:,:,ib,ir,Linp))
             END IF
           END DO
@@ -772,7 +747,7 @@
                 CALL mp_exchange3d_bry (ng, tile, iADM, 1, ib,          &
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  NghostPoints,                   &
-     &                                  EWperiodic, NSperiodic,         &
+     &                                  EWperiodic(ng), NSperiodic(ng), &
      &                                  tl_t_obc(:,:,ib,ir,Linp,it))
               END IF
             END DO
@@ -796,13 +771,13 @@
 !
       IF (.not.Lweak) THEN
         DO ir=1,Nfrec(ng)
-          DO j=JU_RANGE
-            DO i=IU_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
               tl_ustr(i,j,ir,Linp)=tl_ustr(i,j,ir,Linp)*sustr_std(i,j)
             END DO
           END DO
-          DO j=JV_RANGE
-            DO i=IV_RANGE
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
               tl_vstr(i,j,ir,Linp)=tl_vstr(i,j,ir,Linp)*svstr_std(i,j)
             END DO
           END DO
@@ -810,7 +785,8 @@
 #   ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, iTLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, Nfrec(ng),           &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_ustr(:,:,:,Linp),                        &
      &                      tl_vstr(:,:,:,Linp))
 #   endif
@@ -824,8 +800,8 @@
         DO it=1,NT(ng)
           IF (Lstflux(it,ng)) THEN
             DO ir=1,Nfrec(ng)
-              DO j=JR_RANGE
-                DO i=IR_RANGE
+              DO j=JstrT,JendT
+                DO i=IstrT,IendT
                   tl_tflux(i,j,ir,Linp,it)=tl_tflux(i,j,ir,Linp,it)*    &
      &                                     stflx_std(i,j,it)
                 END DO
@@ -834,7 +810,8 @@
 #   ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, Nfrec(ng),       &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_tflux(:,:,:,Linp,it))
 #   endif
           END IF
@@ -842,13 +819,6 @@
       END IF
 #  endif
 # endif
-
-# undef IR_RANGE
-# undef IU_RANGE
-# undef IV_RANGE
-# undef JR_RANGE
-# undef JU_RANGE
-# undef JV_RANGE
 
       RETURN
       END SUBROUTINE tl_variability_tile

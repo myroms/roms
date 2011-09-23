@@ -29,10 +29,6 @@
 #define SPLINES
 #define AVERAGES
 
-#define NS_PERIODIC
-#define WESTERN_WALL
-#define EASTERN_WALL
-
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX

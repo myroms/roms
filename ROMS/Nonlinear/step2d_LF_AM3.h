@@ -132,6 +132,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 9)
 # endif
+
       RETURN
       END SUBROUTINE step2d
 !
@@ -211,20 +212,17 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_scalars
 # if defined SEDIMENT && defined SED_MORPH
       USE mod_sediment
 # endif
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
-# ifdef OBC_VOLCONS
       USE obc_volcons_mod, ONLY : obc_flux_tile, set_DUV_bc_tile
-# endif
       USE u2dbc_mod, ONLY : u2dbc_tile
       USE v2dbc_mod, ONLY : v2dbc_tile
       USE zetabc_mod, ONLY : zetabc_tile
@@ -482,18 +480,7 @@
 !  Local variable declarations.
 !
       logical :: CORRECTOR_2D_STEP
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
+
       integer :: i, j, ptsk
 # if defined UV_PSOURCE || defined Q_PSOURCE
       integer :: is
@@ -590,17 +577,19 @@
 #  endif
         END DO
       END DO
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        DUon)
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        DVom)
-#  endif
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          DUon)
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          DVom)
+      END IF
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    DUon, DVom)
 
 # else
@@ -633,22 +622,22 @@
         END DO
       END DO
 # endif
-# ifdef OBC_VOLCONS
 !
 !  Set vertically integrated mass fluxes DUon and DVom along the open
 !  boundaries in such a way that the integral volume is conserved.
 !
-      CALL set_DUV_bc_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      krhs,                                       &
-#  ifdef MASKING
-     &                      umask, vmask,                               &
-#  endif
-     &                      om_v, on_u,                                 &
-     &                      ubar, vbar,                                 &
-     &                      Drhs, DUon, DVom)
+      IF (ANY(VolCons(:,ng))) THEN
+        CALL set_DUV_bc_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        krhs,                                     &
+# ifdef MASKING
+     &                        umask, vmask,                             &
 # endif
+     &                        om_v, on_u,                               &
+     &                        ubar, vbar,                               &
+     &                        Drhs, DUon, DVom)
+      END IF
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -725,27 +714,26 @@
         END DO
       END IF
 !
-!  After all fast time steps are completed, recompute S-coordinate
-!  surfaces according to the new free surface field.  Apply boundary
-!  conditions to time averaged fields.
+!  After all fast time steps are completed, apply boundary conditions
+!  to time averaged fields.
 !
       IF ((iif(ng).eq.(nfast(ng)+1)).and.PREDICTOR_2D_STEP(ng)) THEN
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Zt_avg1)
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          DU_avg1)
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          DV_avg1)
-#  endif
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          CALL exchange_r2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Zt_avg1)
+          CALL exchange_u2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            DU_avg1)
+          CALL exchange_v2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            DV_avg1)
+        END IF
 #  ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iNLM, 3,                          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      Zt_avg1, DU_avg1, DV_avg1)
 #  endif
       END IF
@@ -901,15 +889,16 @@
             rzeta(i,j,krhs)=rhs_zeta(i,j)
           END DO
         END DO
-# if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          rzeta(:,:,krhs))
-# endif
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          CALL exchange_r2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            rzeta(:,:,krhs))
+        END IF
 # ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iNLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      rzeta(:,:,krhs))
 # endif
       END IF
@@ -936,15 +925,16 @@
      &                  IminS, ImaxS, JminS, JmaxS,                     &
      &                  krhs, kstp, knew,                               &
      &                  zeta)
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        zeta(:,:,knew))
-# endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          zeta(:,:,knew))
+      END IF
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    zeta(:,:,knew))
 # endif
 !
@@ -1066,6 +1056,7 @@
      &                      vbar(i-1,j,krhs))
         END DO
       END DO
+
       DO j=JstrV-1,Jend
         DO i=Istr,Iend
           VFe(i,j)=0.25_r8*(DVom(i,j)+DVom(i,j+1))*                     &
@@ -1084,28 +1075,31 @@
       DO j=Jstr,Jend
         DO i=IstrUm1,Iendp1
           grad (i,j)=ubar(i-1,j,krhs)-2.0_r8*ubar(i,j,krhs)+            &
-#    ifdef NEARSHORE_MELLOR
+#   ifdef NEARSHORE_MELLOR
      &               ubar_stokes(i-1,j)-2.0_r8*ubar_stokes(i,j)+        &
      &               ubar_stokes(i+1,j)+                                &
-#    endif
+#   endif
      &               ubar(i+1,j,krhs)
           Dgrad(i,j)=DUon(i-1,j)-2.0_r8*DUon(i,j)+DUon(i+1,j)
         END DO
       END DO
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstr,Jend
-          grad (Istr,j)=grad (Istr+1,j)
-          Dgrad(Istr,j)=Dgrad(Istr+1,j)
-        END DO
+      IF (.not.ComposedGrid(ng)) THEN
+        IF (.not.EWperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              grad (Istr,j)=grad (Istr+1,j)
+              Dgrad(Istr,j)=Dgrad(Istr+1,j)
+            END DO
+          END IF
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              grad (Iend+1,j)=grad (Iend,j)
+              Dgrad(Iend+1,j)=Dgrad(Iend,j)
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstr,Jend
-          grad (Iend+1,j)=grad (Iend,j)
-          Dgrad(Iend+1,j)=Dgrad(Iend,j)
-        END DO
-      END IF
-#   endif
+
       cff=1.0_r8/6.0_r8
       DO j=Jstr,Jend
         DO i=IstrU-1,Iend
@@ -1120,6 +1114,7 @@
      &                      cff*(Dgrad(i,j)+Dgrad(i+1,j)))
         END DO
       END DO
+
       DO j=Jstrm1,Jendp1
         DO i=IstrU,Iend
           grad(i,j)=ubar(i,j-1,krhs)-2.0_r8*ubar(i,j,krhs)+             &
@@ -1130,23 +1125,26 @@
      &              ubar(i,j+1,krhs)
         END DO
       END DO
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=IstrU,Iend
-          grad(i,Jstr-1)=grad(i,Jstr)
-        END DO
+      IF (.not.ComposedGrid(ng)) THEN
+        IF (.not.NSperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=IstrU,Iend
+              grad(i,Jstr-1)=grad(i,Jstr)
+            END DO
+          END IF
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=IstrU,Iend
+              grad(i,Jend+1)=grad(i,Jend)
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=IstrU,Iend
-          grad(i,Jend+1)=grad(i,Jend)
-        END DO
-      END IF
-#   endif
       DO j=Jstr,Jend+1
         DO i=IstrU-1,Iend
           Dgrad(i,j)=DVom(i-1,j)-2.0_r8*DVom(i,j)+DVom(i+1,j)
         END DO
       END DO
+
       cff=1.0_r8/6.0_r8
       DO j=Jstr,Jend+1
         DO i=IstrU,Iend
@@ -1161,6 +1159,7 @@
      &                      cff*(Dgrad(i,j)+Dgrad(i-1,j)))
         END DO
       END DO
+
       DO j=JstrV,Jend
         DO i=Istrm1,Iendp1
           grad(i,j)=vbar(i-1,j,krhs)-2.0_r8*vbar(i,j,krhs)+             &
@@ -1171,23 +1170,26 @@
      &              vbar(i+1,j,krhs)
         END DO
       END DO
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrV,Jend
-          grad(Istr-1,j)=grad(Istr,j)
-        END DO
+      IF (.not.ComposedGrid(ng)) THEN
+        IF (.not.EWperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=JstrV,Jend
+              grad(Istr-1,j)=grad(Istr,j)
+            END DO
+          END IF
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=JstrV,Jend
+              grad(Iend+1,j)=grad(Iend,j)
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrV,Jend
-          grad(Iend+1,j)=grad(Iend,j)
-        END DO
-      END IF
-#   endif
       DO j=JstrV-1,Jend
         DO i=Istr,Iend+1
           Dgrad(i,j)=DUon(i,j-1)-2.0_r8*DUon(i,j)+DUon(i,j+1)
         END DO
       END DO
+
       cff=1.0_r8/6.0_r8
       DO j=JstrV,Jend
         DO i=Istr,Iend+1
@@ -1202,6 +1204,7 @@
      &                      cff*(Dgrad(i,j)+Dgrad(i,j-1)))
         END DO
       END DO
+
       DO j=JstrVm1,Jendp1
         DO i=Istr,Iend
           grad(i,j)=vbar(i,j-1,krhs)-2.0_r8*vbar(i,j,krhs)+             &
@@ -1213,20 +1216,23 @@
           Dgrad(i,j)=DVom(i,j-1)-2.0_r8*DVom(i,j)+DVom(i,j+1)
         END DO
       END DO
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,Iend
-          grad (i,Jstr)=grad (i,Jstr+1)
-          Dgrad(i,Jstr)=Dgrad(i,Jstr+1)
-        END DO
+      IF (.not.ComposedGrid(ng)) THEN
+        IF (.not.NSperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              grad (i,Jstr)=grad (i,Jstr+1)
+              Dgrad(i,Jstr)=Dgrad(i,Jstr+1)
+            END DO
+          END IF
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              grad (i,Jend+1)=grad (i,Jend)
+              Dgrad(i,Jend+1)=Dgrad(i,Jend)
+            END DO
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,Iend
-          grad (i,Jend+1)=grad (i,Jend)
-          Dgrad(i,Jend+1)=Dgrad(i,Jend)
-        END DO
-      END IF
-#   endif
+
       cff=1.0_r8/6.0_r8
       DO j=JstrV-1,Jend
         DO i=Istr,Iend
@@ -1242,6 +1248,7 @@
         END DO
       END DO
 #  endif
+
       DO j=Jstr,Jend
         DO i=IstrU,Iend
           cff1=UFx(i,j)-UFx(i-1,j)
@@ -1490,9 +1497,9 @@
      &         pnom_p(i,j)*                                             &
      &         ((pm(i-1,j  )+pm(i,j  ))*ubar(i,j  ,krhs)-               &
      &          (pm(i-1,j-1)+pm(i,j-1))*ubar(i,j-1,krhs)))
-#   ifdef MASKING
+#  ifdef MASKING
           cff=cff*pmask(i,j)
-#   endif
+#  endif
           UFe(i,j)=om_p(i,j)*om_p(i,j)*cff
           VFx(i,j)=on_p(i,j)*on_p(i,j)*cff
         END DO
@@ -1525,101 +1532,122 @@
 !  harmonic operator. These are gradient or closed (free slip or
 !  no slip) boundary conditions.
 !
-#  if !defined EW_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstrm1,Jendp1
-#   ifdef WESTERN_WALL
-          LapU(IstrU-1,j)=0.0_r8
-#   else
-          LapU(IstrU-1,j)=LapU(IstrU,j)
-#   endif
-        END DO
-        DO j=JstrVm1,Jendp1
-#   ifdef WESTERN_WALL
-          LapV(Istr-1,j)=gamma2(ng)*LapV(Istr,j)
-#   else
-          LapV(Istr-1,j)=0.0_r8
-#   endif
-        END DO
+      IF (.not.ComposedGrid(ng)) THEN
+        IF (.not.EWperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            IF (LBC(iwest,isUbar,ng)%closed) THEN
+              DO j=Jstrm1,Jendp1
+                LapU(IstrU-1,j)=0.0_r8
+              END DO
+            ELSE
+              DO j=Jstrm1,Jendp1
+                LapU(IstrU-1,j)=LapU(IstrU,j)
+              END DO
+            END IF
+            IF (LBC(iwest,isVbar,ng)%closed) THEN
+              DO j=JstrVm1,Jendp1
+                LapV(Istr-1,j)=gamma2(ng)*LapV(Istr,j)
+              END DO
+            ELSE
+              DO j=JstrVm1,Jendp1
+                LapV(Istr-1,j)=0.0_r8
+              END DO
+            END IF
+          END IF
+
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            IF (LBC(ieast,isUbar,ng)%closed) THEN
+              DO j=Jstrm1,Jendp1
+                LapU(Iend+1,j)=0.0_r8
+              END DO
+            ELSE
+              DO j=Jstrm1,Jendp1
+                LapU(Iend+1,j)=LapU(Iend,j)
+              END DO
+            END IF
+            IF (LBC(ieast,isVbar,ng)%closed) THEN
+              DO j=JstrVm1,Jendp1
+                LapV(Iend+1,j)=gamma2(ng)*LapV(Iend,j)
+              END DO
+            ELSE
+              DO j=JstrVm1,Jendp1
+                LapV(Iend+1,j)=0.0_r8
+              END DO
+            END IF
+          END IF
+        END IF
+
+        IF (.not.NSperiodic(ng)) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            IF (LBC(isouth,isUbar,ng)%closed) THEN
+              DO i=IstrUm1,Iendp1
+                LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
+              END DO
+            ELSE
+              DO i=IstrUm1,Iendp1
+                LapU(i,Jstr-1)=0.0_r8
+              END DO
+            END IF
+            IF (LBC(isouth,isVbar,ng)%closed) THEN
+              DO i=Istrm1,Iendp1
+                LapV(i,JstrV-1)=0.0_r8
+              END DO
+            ELSE
+              DO i=Istrm1,Iendp1
+                LapV(i,JstrV-1)=LapV(i,JstrV)
+              END DO
+            END IF
+          END IF
+
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            IF (LBC(inorth,isUbar,ng)%closed) THEN
+              DO i=IstrUm1,Iendp1
+                LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
+              END DO
+            ELSE
+              DO i=IstrUm1,Iendp1
+                LapU(i,Jend+1)=0.0_r8
+              END DO
+            END IF
+            IF (LBC(inorth,isVbar,ng)%closed) THEN
+              DO i=Istrm1,Iendp1
+                LapV(i,Jend+1)=0.0_r8
+              END DO
+            ELSE
+              DO i=Istrm1,Iendp1
+                LapV(i,Jend+1)=LapV(i,Jend)
+              END DO
+            END IF
+          END IF
+        END IF
+
+        IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            LapU(Istr  ,Jstr-1)=0.5_r8*(LapU(Istr+1,Jstr-1)+            &
+     &                                  LapU(Istr  ,Jstr  ))
+            LapV(Istr-1,Jstr  )=0.5_r8*(LapV(Istr-1,Jstr+1)+            &
+     &                                  LapV(Istr  ,Jstr  ))
+          END IF
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            LapU(Iend+1,Jstr-1)=0.5_r8*(LapU(Iend  ,Jstr-1)+            &
+     &                                  LapU(Iend+1,Jstr  ))
+            LapV(Iend+1,Jstr  )=0.5_r8*(LapV(Iend  ,Jstr  )+            &
+     &                                  LapV(Iend+1,Jstr+1))
+          END IF
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            LapU(Istr  ,Jend+1)=0.5_r8*(LapU(Istr+1,Jend+1)+            &
+     &                                  LapU(Istr  ,Jend  ))
+            LapV(Istr-1,Jend+1)=0.5_r8*(LapV(Istr  ,Jend+1)+            &
+     &                                  LapV(Istr-1,Jend  ))
+          END IF
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            LapU(Iend+1,Jend+1)=0.5_r8*(LapU(Iend  ,Jend+1)+            &
+     &                                  LapU(Iend+1,Jend  ))
+            LapV(Iend+1,Jend+1)=0.5_r8*(LapV(Iend  ,Jend+1)+            &
+     &                                  LapV(Iend+1,Jend  ))
+          END IF
+        END IF
       END IF
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstrm1,Jendp1
-#   ifdef EASTERN_WALL
-          LapU(Iend+1,j)=0.0_r8
-#   else
-          LapU(Iend+1,j)=LapU(Iend,j)
-#   endif
-        END DO
-        DO j=JstrVm1,Jendp1
-#   ifdef EASTERN_WALL
-          LapV(Iend+1,j)=gamma2(ng)*LapV(Iend,j)
-#   else
-          LapV(Iend+1,j)=0.0_r8
-#   endif
-        END DO
-      END IF
-#  endif
-#  if !defined NS_PERIODIC && !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=IstrUm1,Iendp1
-#   ifdef SOUTHERN_WALL
-          LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
-#   else
-          LapU(i,Jstr-1)=0.0_r8
-#   endif
-        END DO
-        DO i=Istrm1,Iendp1
-#   ifdef SOUTHERN_WALL
-          LapV(i,JstrV-1)=0.0_r8
-#   else
-          LapV(i,JstrV-1)=LapV(i,JstrV)
-#   endif
-        END DO
-      END IF
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=IstrUm1,Iendp1
-#   ifdef NORTHERN_WALL
-          LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
-#   else
-          LapU(i,Jend+1)=0.0_r8
-#   endif
-        END DO
-        DO i=Istrm1,Iendp1
-#   ifdef NORTHERN_WALL
-          LapV(i,Jend+1)=0.0_r8
-#   else
-          LapV(i,Jend+1)=LapV(i,Jend)
-#   endif
-        END DO
-      END IF
-#  endif
-#  if !defined EW_PERIODIC   && !defined NS_PERIODIC && \
-      !defined COMPOSED_GRID
-      IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        LapU(Istr  ,Jstr-1)=0.5_r8*(LapU(Istr+1,Jstr-1)+                &
-     &                              LapU(Istr  ,Jstr  ))
-        LapV(Istr-1,Jstr  )=0.5_r8*(LapV(Istr-1,Jstr+1)+                &
-     &                              LapV(Istr  ,Jstr  ))
-      END IF
-      IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-        LapU(Iend+1,Jstr-1)=0.5_r8*(LapU(Iend  ,Jstr-1)+                &
-     &                              LapU(Iend+1,Jstr  ))
-        LapV(Iend+1,Jstr  )=0.5_r8*(LapV(Iend  ,Jstr  )+                &
-     &                              LapV(Iend+1,Jstr+1))
-      END IF
-      IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-        LapU(Istr  ,Jend+1)=0.5_r8*(LapU(Istr+1,Jend+1)+                &
-     &                              LapU(Istr  ,Jend  ))
-        LapV(Istr-1,Jend+1)=0.5_r8*(LapV(Istr  ,Jend+1)+                &
-     &                              LapV(Istr-1,Jend  ))
-      END IF
-      IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-        LapU(Iend+1,Jend+1)=0.5_r8*(LapU(Iend  ,Jend+1)+                &
-     &                              LapU(Iend+1,Jend  ))
-        LapV(Iend+1,Jend+1)=0.5_r8*(LapV(Iend  ,Jend+1)+                &
-     &                              LapV(Iend+1,Jend  ))
-      END IF
-#  endif
 !
 !  Compute flux-components of the horizontal divergence of the
 !  biharmonic stress tensor (m4/s2) in XI- and ETA-directions.
@@ -1646,9 +1674,9 @@
      &         pnom_p(i,j)*                                             &
      &         ((pm(i-1,j  )+pm(i,j  ))*LapU(i,j  )-                    &
      &          (pm(i-1,j-1)+pm(i,j-1))*LapU(i,j-1)))
-#   ifdef MASKING
+#  ifdef MASKING
           cff=cff*pmask(i,j)
-#   endif
+#  endif
           UFe(i,j)=om_p(i,j)*om_p(i,j)*cff
           VFx(i,j)=on_p(i,j)*on_p(i,j)*cff
         END DO
@@ -2387,21 +2415,21 @@
      &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 krhs, kstp, knew,                                &
      &                 ubar, vbar, zeta)
-# ifdef OBC_VOLCONS
 !
 !  Compute integral mass flux across open boundaries and adjust
 !  for volume conservation.
 !
-      CALL obc_flux_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    knew,                                         &
-#  ifdef MASKING
-     &                    umask, vmask,                                 &
-#  endif
-     &                    h, om_v, on_u,                                &
-     &                    ubar, vbar, zeta)
+      IF (ANY(VolCons(:,ng))) THEN
+        CALL obc_flux_tile (ng, tile,                                   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
+     &                      knew,                                       &
+# ifdef MASKING
+     &                      umask, vmask,                               &
 # endif
+     &                      h, om_v, on_u,                              &
+     &                      ubar, vbar, zeta)
+      END IF
 # ifdef UV_PSOURCE
 !
 !-----------------------------------------------------------------------
@@ -2427,28 +2455,29 @@
         END IF
       END DO
 # endif
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary information.
 !-----------------------------------------------------------------------
 !
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        ubar(:,:,knew))
-      CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        vbar(:,:,knew))
-#  endif
-#  ifdef DISTRIBUTE
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_u2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          ubar(:,:,knew))
+        CALL exchange_v2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          vbar(:,:,knew))
+      END IF
+
+# ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    ubar(:,:,knew),                               &
      &                    vbar(:,:,knew))
-#  endif
 # endif
+
       RETURN
       END SUBROUTINE step2d_tile
 #else

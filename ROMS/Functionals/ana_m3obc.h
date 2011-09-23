@@ -47,6 +47,7 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_ncparam
 !
 !  Imported variable declarations.
 !
@@ -66,8 +67,9 @@
 !-----------------------------------------------------------------------
 !
 #if defined SED_TEST1
-# ifdef WEST_M3OBC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+      IF (LBC(iwest,isUvel,ng)%acquire.and.                             &
+     &    LBC(iwest,isVvel,ng)%acquire.and.                             &
+     &    DOMAIN(ng)%Western_Edge(tile)) THEN
         fac=5.0E-06_r8
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -83,9 +85,10 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef EAST_M3OBC
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+
+      IF (LBC(ieast,isUvel,ng)%acquire.and.                             &
+     &    LBC(ieast,isVvel,ng)%acquire.and.                             &
+     &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         fac=5.0E-06_r8
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -101,10 +104,10 @@
           END DO
         END DO
       END IF
-# endif
 #else
-# ifdef EAST_M3OBC
-      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+      IF (LBC(ieast,isUvel,ng)%acquire.and.                             &
+     &    LBC(ieast,isVvel,ng)%acquire.and.                             &
+     &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%u_east(j,k)=0.0_r8
@@ -114,9 +117,10 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef WEST_M3OBC
-      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+
+      IF (LBC(iwest,isUvel,ng)%acquire.and.                             &
+     &    LBC(iwest,isVvel,ng)%acquire.and.                             &
+     &    DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
           DO j=JstrR,JendR
             BOUNDARY(ng)%u_west(j,k)=0.0_r8
@@ -126,9 +130,10 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef SOUTH_M3OBC
-      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+
+      IF (LBC(isouth,isUvel,ng)%acquire.and.                            &
+     &    LBC(isouth,isVvel,ng)%acquire.and.                            &
+     &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
             BOUNDARY(ng)%u_south(i,k)=0.0_r8
@@ -138,9 +143,10 @@
           END DO
         END DO
       END IF
-# endif
-# ifdef NORTH_M3OBC
-      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+
+      IF (LBC(inorth,isUvel,ng)%acquire.and.                            &
+     &    LBC(inorth,isVvel,ng)%acquire.and.                            &
+     &    DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=Istr,IendR
             BOUNDARY(ng)%u_north(i,k)=0.0_r8
@@ -150,7 +156,6 @@
           END DO
         END DO
       END IF
-# endif
 #endif
       RETURN
       END SUBROUTINE ana_m3obc_tile

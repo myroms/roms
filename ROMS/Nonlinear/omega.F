@@ -18,10 +18,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: omega, scale_omega
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -76,6 +76,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 13)
 # endif
+
       RETURN
       END SUBROUTINE omega
 !
@@ -156,18 +157,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j, k
 # ifdef Q_PSOURCE
       integer :: ii, jj, is
@@ -254,7 +243,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    W)
 # endif
 
@@ -267,9 +257,10 @@
 !***********************************************************************
 !
       USE mod_param
-# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE mod_ncparam
+      USE mod_scalars
+!
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -293,18 +284,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -320,19 +299,20 @@
           END DO
         END DO
       END DO
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !  Exchange boundary data.
 !
-      CALL exchange_w3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
-     &                        Wscl)
-# endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
+     &                          Wscl)
+      END IF
+
 # ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Wscl)
 # endif
 

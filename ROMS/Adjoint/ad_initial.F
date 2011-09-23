@@ -38,9 +38,7 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef ANALYTICAL
       USE analytical_mod
-# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
@@ -284,8 +282,6 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-
-# ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
 !  If appropriate, set nudging coefficiests time scales.
@@ -299,7 +295,7 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-# endif
+
       END IF
 !
 !-----------------------------------------------------------------------
@@ -570,9 +566,9 @@
       CALL ad_get_idata (ng)
 # endif
       CALL ad_get_data (ng)
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iADM, exit_flag)
-#  endif
+# endif
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef MASKING

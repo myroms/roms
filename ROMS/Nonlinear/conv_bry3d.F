@@ -26,7 +26,7 @@
 !     ng         Nested grid number                                    !
 !     tile       Tile partition                                        !
 !     model      Calling model identifier                              !
-!     boundary   Boundary edge to process                              !
+!     boundary   Boundary edge to convolve                             !
 !     edge       Boundary edges index                                  !
 !     LBij       Lower bound MIN(I,J)-dimension                        !
 !     LBij       Lower bound MAX(I,J)-dimension                        !
@@ -58,9 +58,9 @@
 !=======================================================================
 !
       implicit none
-
+!
       PUBLIC
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -134,18 +134,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, k, step
@@ -257,7 +245,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -342,7 +331,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij, 1, N(ng),                   &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,:,Nnew))
 # endif
 !
@@ -691,7 +681,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 
@@ -768,18 +759,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, k, step
@@ -896,7 +875,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -979,7 +959,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij, 1, N(ng),                   &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,:,Nnew))
 # endif
 !
@@ -1331,7 +1312,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 
@@ -1408,18 +1390,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, k, step
@@ -1467,6 +1437,7 @@
 !  used for efficiency.
 !
       IF (Lconvolve(boundary)) THEN
+        cff=DTsizeH*0.25_r8
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=JstrV-1,Jend+1
@@ -1535,7 +1506,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -1618,7 +1590,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij, 1, N(ng),                   &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,:,Nnew))
 # endif
 !
@@ -1970,7 +1943,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij, 1, N(ng),                     &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 

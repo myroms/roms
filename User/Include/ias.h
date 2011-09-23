@@ -83,28 +83,6 @@
 #undef  TCLIMATOLOGY
 #undef  ZCLIMATOLOGY
 
-
-#define  OBC_OPEN
-#ifdef  OBC_OPEN
-# define NORTH_FSCHAPMAN
-# define NORTH_M2FLATHER
-# define NORTH_M3CLAMPED
-# define NORTH_TCLAMPED
-# define NORTH_VOLCONS
-# define SOUTHERN_WALL
-# define EAST_FSCHAPMAN
-# define EAST_M2FLATHER
-# define EAST_M3CLAMPED
-# define EAST_TCLAMPED
-# define EAST_VOLCONS
-# define WESTERN_WALL
-#else
-# define NORTHERN_WALL
-# define SOUTHERN_WALL
-# define EASTERN_WALL
-# define WESTERN_WALL
-#endif
-
 #define BULK_FLUXES
 #ifdef BULK_FLUXES
 # undef  QCORRECTION

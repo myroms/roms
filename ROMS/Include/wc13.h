@@ -1,5 +1,5 @@
 /*
-** svn $Id: wc13.h 78 2011-02-07 07:08:06Z arango $
+** svn $Id: wc13.h 100 2011-08-17 18:22:46Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2011 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -82,27 +82,6 @@
 # define N2S2_HORAVG
 # define KANTHA_CLAYSON
 #endif
-
-/*
-** Boundary Condition Specifications
-*/
-
-#define EASTERN_WALL        /* Eastern edge, closed wall condition */
-
-#define WEST_FSCHAPMAN
-#define WEST_M2FLATHER
-#define WEST_M3CLAMPED
-#define WEST_TCLAMPED
-
-#define NORTH_FSCHAPMAN
-#define NORTH_M2FLATHER
-#define NORTH_M3CLAMPED
-#define NORTH_TCLAMPED
-
-#define SOUTH_FSCHAPMAN
-#define SOUTH_M2FLATHER
-#define SOUTH_M3CLAMPED
-#define SOUTH_TCLAMPED
 
 /* If you define SPONGE or allow for a nudging layer at the boundaries,
 ** you need to provide the appropriate "ana_hmixcoef.h" and "ana_nudgcoef.h"

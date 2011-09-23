@@ -1,24 +1,5 @@
 #include "cppdefs.h"
       MODULE state_dotprod_mod
-
-#ifdef EW_PERIODIC
-# define IR_RANGE Istr-1,Iend+1
-# define IU_RANGE Istr,Iend
-# define IV_RANGE Istr,Iend
-#else
-# define IR_RANGE IstrT,IendT
-# define IU_RANGE IstrP,IendT
-# define IV_RANGE IstrT,IendT
-#endif
-#ifdef NS_PERIODIC
-# define JR_RANGE Jstr-1,Jend+1
-# define JU_RANGE Jstr,Jend
-# define JV_RANGE Jstr,Jend
-#else
-# define JR_RANGE JstrT,JendT
-# define JU_RANGE JstrT,JendT
-# define JV_RANGE JstrP,JendT
-#endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -247,8 +228,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           cff=s1_zeta(i,j)*s2_zeta(i,j)
 #ifdef MASKING
           cff=cff*rmask(i,j)
@@ -320,8 +301,8 @@
 !
 !  2D U-momentum component.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           cff=s1_ubar(i,j)*s2_ubar(i,j)
 # ifdef MASKING
           cff=cff*umask(i,j)
@@ -394,8 +375,8 @@
 !
 !  2D V-momentum component.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           cff=s1_vbar(i,j)*s2_vbar(i,j)
 # ifdef MASKING
           cff=cff*vmask(i,j)
@@ -469,8 +450,8 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             cff=s1_sustr(i,j,ir)*s2_sustr(i,j,ir)
 # ifdef MASKING
             cff=cff*umask(i,j)
@@ -479,8 +460,8 @@
             my_DotProd(isUstr)=my_DotProd(isUstr)+cff
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             cff=s1_svstr(i,j,ir)*s2_svstr(i,j,ir)
 # ifdef MASKING
             cff=cff*vmask(i,j)
@@ -497,8 +478,8 @@
 !  3D U-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             cff=s1_u(i,j,k)*s2_u(i,j,k)
 # ifdef MASKING
             cff=cff*umask(i,j)
@@ -578,8 +559,8 @@
 !  3D V-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             cff=s1_v(i,j,k)*s2_v(i,j,k)
 # ifdef MASKING
             cff=cff*vmask(i,j)
@@ -660,8 +641,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               cff=s1_t(i,j,k,it)*s2_t(i,j,k,it)
 # ifdef MASKING
               cff=cff*rmask(i,j)
@@ -748,8 +729,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 cff=s1_tflux(i,j,ir,it)*s2_tflux(i,j,ir,it)
 #  ifdef MASKING
                 cff=cff*rmask(i,j)
@@ -799,12 +780,5 @@
 
       RETURN
       END SUBROUTINE state_dotprod
-
-#undef IR_RANGE
-#undef IU_RANGE
-#undef IV_RANGE
-#undef JR_RANGE
-#undef JU_RANGE
-#undef JV_RANGE
 
       END MODULE state_dotprod_mod

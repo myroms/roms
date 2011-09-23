@@ -24,26 +24,28 @@
 
 #include "tile.h"
 !
-      CALL ana_initial_tile (ng, tile, model,                           &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       GRID(ng) % h,                              &
+      IF (model.eq.iNLM) THEN
+        CALL ana_NLMinitial_tile (ng, tile, model,                      &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
+     &                            GRID(ng) % h,                         &
 #ifdef SPHERICAL
-     &                       GRID(ng) % lonr,                           &
-     &                       GRID(ng) % latr,                           &
+     &                            GRID(ng) % lonr,                      &
+     &                            GRID(ng) % latr,                      &
 #else
-     &                       GRID(ng) % xr,                             &
-     &                       GRID(ng) % yr,                             &
+     &                            GRID(ng) % xr,                        &
+     &                            GRID(ng) % yr,                        &
 #endif
 #ifdef SOLVE3D
-     &                       GRID(ng) % z_r,                            &
-     &                       OCEAN(ng) % u,                             &
-     &                       OCEAN(ng) % v,                             &
-     &                       OCEAN(ng) % t,                             &
+     &                            GRID(ng) % z_r,                       &
+     &                            OCEAN(ng) % u,                        &
+     &                            OCEAN(ng) % v,                        &
+     &                            OCEAN(ng) % t,                        &
 #endif
-     &                       OCEAN(ng) % ubar,                          &
-     &                       OCEAN(ng) % vbar,                          &
-     &                       OCEAN(ng) % zeta)
+     &                            OCEAN(ng) % ubar,                     &
+     &                            OCEAN(ng) % vbar,                     &
+     &                            OCEAN(ng) % zeta)
+      END IF
 !
 ! Set analytical header file name used.
 !
@@ -59,20 +61,20 @@
       END SUBROUTINE ana_initial
 !
 !***********************************************************************
-      SUBROUTINE ana_initial_tile (ng, tile, model,                     &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             h,                                   &
+      SUBROUTINE ana_NLMinitial_tile (ng, tile, model,                  &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                h,                                &
 #ifdef SPHERICAL
-     &                             lonr, latr,                          &
+     &                                lonr, latr,                       &
 #else
-     &                             xr, yr,                              &
+     &                                xr, yr,                           &
 #endif
 #ifdef SOLVE3D
-     &                             z_r,                                 &
-     &                             u, v, t,                             &
+     &                                z_r,                              &
+     &                                u, v, t,                          &
 #endif
-     &                             ubar, vbar, zeta)
+     &                                ubar, vbar, zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -242,6 +244,5 @@
       END DO
 # endif
 #endif
-
       RETURN
-      END SUBROUTINE ana_initial_tile
+      END SUBROUTINE ana_NLMinitial_tile

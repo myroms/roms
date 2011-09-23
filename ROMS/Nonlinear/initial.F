@@ -27,9 +27,7 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef ANALYTICAL
       USE analytical_mod
-# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
@@ -280,8 +278,6 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-
-#ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
 !  If appropriate, set nudging coefficiests time scales.
@@ -295,7 +291,7 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-#endif
+
       END IF
 !
 !-----------------------------------------------------------------------

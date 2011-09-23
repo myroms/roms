@@ -1,14 +1,3 @@
-#ifdef EW_PERIODIC
-# define I_RANGE Istr-1,Iend+1
-#else
-# define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#endif
-#ifdef NS_PERIODIC
-# define J_RANGE Jstr-1,Jend+1
-#else
-# define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#endif
-
       SUBROUTINE ad_t3dmix4 (ng, tile)
 !
 !svn $Id$
@@ -150,6 +139,7 @@
 !
 !  Local variable declarations.
 !
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i, itrc, j, k
 
       real(r8) :: cff, cff1
@@ -183,13 +173,29 @@
 !  harmonic operator twice.
 !----------------------------------------------------------------------
 !
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
+!  Set local I- and J-ranges.
+!
+      IF (EWperiodic(ng)) THEN
+        Imin=Istr-1
+        Imax=Iend+1
+      ELSE
+        Imin=MAX(Istr-1,1)
+        Imax=MIN(Iend+1,Lm(ng))
+      END IF
+      IF (NSperiodic(ng)) THEN
+        Jmin=Jstr-1
+        Jmax=Jend+1
+      ELSE
+        Jmin=MAX(Jstr-1,1)
+        Jmax=MIN(Jend+1,Mm(ng))
+      END IF
 !
 !  Compute FX=d(LapT)/d(xi) and FE=d(LapT)/d(eta) BASIC STATE terms.
 !
-          DO j=J_RANGE
-            DO i=I_RANGE+1
+      DO itrc=1,NT(ng)
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax+1
               cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*          &
      &            pmon_u(i,j)
 #ifdef MASKING
@@ -200,8 +206,8 @@
      &                 t(i-1,j,k,nrhs,itrc))
             END DO
           END DO
-          DO j=J_RANGE+1
-            DO i=I_RANGE
+          DO j=Jmin,Jmax+1
+            DO i=Imin,Imax
               cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*          &
                   pnom_v(i,j)
 #ifdef MASKING
@@ -216,8 +222,8 @@
 !  Compute first BASIC STATE harmonic operator and multiply by the
 !  metrics of the second harmonic operator.
 !
-          DO j=J_RANGE
-            DO i=I_RANGE
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               cff=1.0_r8/Hz(i,j,k)
               LapT(i,j)=pm(i,j)*pn(i,j)*cff*                            &
      &                  (FX(i+1,j)-FX(i,j)+                             &
@@ -228,46 +234,57 @@
 !  Apply boundary conditions (except periodic; closed or gradient)
 !  to the first harmonic operator.
 !
-#ifndef EW_PERIODIC
-          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-            DO j=J_RANGE
-# ifdef WESTERN_WALL
-              LapT(Istr-1,j)=0.0_r8
-# else
-              LapT(Istr-1,j)=LapT(Istr,j)
-# endif
-            END DO
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
+                  DO j=Jmin,Jmax
+                    LapT(Istr-1,j)=0.0_r8
+                  END DO
+                ELSE
+                  DO j=Jmin,Jmax
+                    LapT(Istr-1,j)=LapT(Istr,j)
+                  END DO
+                END IF
+              END IF
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
+                  DO j=Jmin,Jmax
+                    LapT(Iend+1,j)=0.0_r8
+                  END DO
+                ELSE
+                  DO j=Jmin,Jmax
+                    LapT(Iend+1,j)=LapT(Iend,j)
+                  END DO
+                END IF
+              END IF
+            END IF
+
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
+                  DO i=Imin,Imax
+                    LapT(i,Jstr-1)=0.0_r8
+                  END DO
+                ELSE
+                  DO i=Imin,Imax
+                    LapT(i,Jstr-1)=LapT(i,Jstr)
+                  END DO
+                END IF
+              END IF
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
+                  DO i=Imin,Imax
+                    LapT(i,Jend+1)=0.0_r8
+                  END DO
+                ELSE
+                  DO i=Imin,Imax
+                    LapT(i,Jend+1)=LapT(i,Jend)
+                  END DO
+                END IF
+              END IF
+            END IF
           END IF
-          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-            DO j=J_RANGE
-# ifdef EASTERN_WALL
-              LapT(Iend+1,j)=0.0_r8
-# else
-              LapT(Iend+1,j)=LapT(Iend,j)
-# endif
-            END DO
-          END IF
-#endif
-#ifndef NS_PERIODIC
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO i=I_RANGE
-# ifdef SOUTHERN_WALL
-              LapT(i,Jstr-1)=0.0_r8
-# else
-              LapT(i,Jstr-1)=LapT(i,Jstr)
-# endif
-            END DO
-          END IF
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO i=I_RANGE
-# ifdef NORTHERN_WALL
-              LapT(i,Jend+1)=0.0_r8
-# else
-              LapT(i,Jend+1)=LapT(i,Jend)
-# endif
-            END DO
-          END IF
-#endif
 !
 !  Time-step biharmonic, S-surfaces diffusion term (m Tunits).
 !
@@ -364,72 +381,85 @@
 !  Apply boundary conditions (except periodic; closed or gradient)
 !  to the first harmonic operator.
 !
-#ifndef NS_PERIODIC
-          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-            DO i=I_RANGE
-# ifdef NORTHERN_WALL
-!>            tl_LapT(i,Jend+1)=0.0_r8
+          IF (.not.ComposedGrid(ng)) THEN
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
+                  DO i=Imin,Imax
+!>                  tl_LapT(i,Jend+1)=0.0_r8
 !>
-              ad_LapT(i,Jend+1)=0.0_r8
-# else
-!>            tl_LapT(i,Jend+1)=tl_LapT(i,Jend)
+                    ad_LapT(i,Jend+1)=0.0_r8
+                  END DO
+                ELSE
+                  DO i=Imin,Imax
+!>                  tl_LapT(i,Jend+1)=tl_LapT(i,Jend)
 !>
-              ad_LapT(i,Jend)=ad_LapT(i,Jend)+ad_LapT(i,Jend+1)
-              ad_LapT(i,Jend+1)=0.0_r8
-# endif
-            END DO
+                    ad_LapT(i,Jend)=ad_LapT(i,Jend)+ad_LapT(i,Jend+1)
+                    ad_LapT(i,Jend+1)=0.0_r8
+                  END DO
+                END IF
+              END IF
+
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
+                  DO i=Imin,Imax
+!>                  tl_LapT(i,Jstr-1)=0.0_r8
+!>
+                    ad_LapT(i,Jstr-1)=0.0_r8
+                  END DO
+                ELSE
+                  DO i=Imin,Imax
+!>                  tl_LapT(i,Jstr-1)=tl_LapT(i,Jstr)
+!>
+                    ad_LapT(i,Jstr)=ad_LapT(i,Jstr)+ad_LapT(i,Jstr-1)
+                    ad_LapT(i,Jstr-1)=0.0_r8
+                  END DO
+                END IF
+              END IF
+            END IF
+
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
+                  DO j=Jmin,Jmax
+!>                  tl_LapT(Iend+1,j)=0.0_r8
+!>
+                    ad_LapT(Iend+1,j)=0.0_r8
+                  END DO
+                ELSE
+                  DO j=Jmin,Jmax
+!>                  tl_LapT(Iend+1,j)=tl_LapT(Iend,j)
+!>
+                    ad_LapT(Iend,j)=ad_LapT(Iend,j)+ad_LapT(Iend+1,j)
+                    ad_LapT(Iend+1,j)=0.0_r8
+                  END DO
+                END IF
+              END IF
+
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
+                  DO j=Jmin,Jmax
+!>                  tl_LapT(Istr-1,j)=0.0_r8
+!>
+                    ad_LapT(Istr-1,j)=0.0_r8
+                  END DO
+                ELSE
+                  DO j=Jmin,Jmax
+!>                  tl_LapT(Istr-1,j)=tl_LapT(Istr,j)
+!>
+                    ad_LapT(Istr,j)=ad_LapT(Istr,j)+ad_LapT(Istr-1,j)
+                    ad_LapT(Istr-1,j)=0.0_r8
+                  END DO
+                END IF
+              END IF
+            END IF
           END IF
-          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-            DO i=I_RANGE
-# ifdef SOUTHERN_WALL
-!>            tl_LapT(i,Jstr-1)=0.0_r8
-!>
-              ad_LapT(i,Jstr-1)=0.0_r8
-# else
-!>            tl_LapT(i,Jstr-1)=tl_LapT(i,Jstr)
-!>
-              ad_LapT(i,Jstr)=ad_LapT(i,Jstr)+ad_LapT(i,Jstr-1)
-              ad_LapT(i,Jstr-1)=0.0_r8
-# endif
-            END DO
-          END IF
-#endif
-#ifndef EW_PERIODIC
-          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-            DO j=J_RANGE
-# ifdef EASTERN_WALL
-!>            tl_LapT(Iend+1,j)=0.0_r8
-!>
-              ad_LapT(Iend+1,j)=0.0_r8
-# else
-!>            tl_LapT(Iend+1,j)=tl_LapT(Iend,j)
-!>
-              ad_LapT(Iend,j)=ad_LapT(Iend,j)+ad_LapT(Iend+1,j)
-              ad_LapT(Iend+1,j)=0.0_r8
-# endif
-            END DO
-          END IF
-          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-            DO j=J_RANGE
-# ifdef WESTERN_WALL
-!>            tl_LapT(Istr-1,j)=0.0_r8
-!>
-              ad_LapT(Istr-1,j)=0.0_r8
-# else
-!>            tl_LapT(Istr-1,j)=tl_LapT(Istr,j)
-!>
-              ad_LapT(Istr,j)=ad_LapT(Istr,j)+ad_LapT(Istr-1,j)
-              ad_LapT(Istr-1,j)=0.0_r8
-# endif
-            END DO
-          END IF
-#endif
 !
 !  Compute first harmonic operator and multiply by the metrics of the
 !  second harmonic operator.
 !
-          DO j=J_RANGE
-            DO i=I_RANGE
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               cff=1.0_r8/Hz(i,j,k)
 !>            tl_LapT(i,j)=pm(i,j)*pn(i,j)*                             &
 !>   &                     (tl_cff*                                     &
@@ -458,8 +488,8 @@
 !
 !  Compute horizontal tracer flux in the ETA- and XI-directions.
 !
-          DO j=J_RANGE+1
-            DO i=I_RANGE
+          DO j=Jmin,Jmax+1
+            DO i=Imin,Imax
               cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*          &
                   pnom_v(i,j)
 #ifdef MASKING
@@ -498,8 +528,8 @@
               ad_FE(i,j)=0.0_r8
             END DO
           END DO
-          DO j=J_RANGE
-            DO i=I_RANGE+1
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax+1
               cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*          &
      &            pmon_u(i,j)
 #ifdef MASKING
@@ -540,7 +570,6 @@
           END DO
         END DO
       END DO
-#undef I_RANGE
-#undef J_RANGE
+
       RETURN
       END SUBROUTINE ad_t3dmix4_tile

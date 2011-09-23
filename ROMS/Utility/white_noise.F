@@ -277,18 +277,6 @@
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
       integer :: Ioff, i, ic
 
       real(r8), parameter :: fac = 2.0_r8 * 1.73205080756887720_r8
@@ -348,7 +336,8 @@
 #ifdef DISTRIBUTE
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          R)
 #endif
       END IF
@@ -516,18 +505,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: Ilen, Ioff, i, ic, k, kc
 
       real(r8), parameter :: fac = 2.0_r8 * 1.73205080756887720_r8
@@ -596,7 +573,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij, LBk, UBk,                   &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          R)
 # endif
       END IF

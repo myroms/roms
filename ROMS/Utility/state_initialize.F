@@ -1,24 +1,5 @@
 #include "cppdefs.h"
       MODULE state_initialize_mod
-
-#ifdef EW_PERIODIC
-# define IR_RANGE Istr-1,Iend+1
-# define IU_RANGE Istr,Iend
-# define IV_RANGE Istr,Iend
-#else
-# define IR_RANGE IstrT,IendT
-# define IU_RANGE IstrP,IendT
-# define IV_RANGE IstrT,IendT
-#endif
-#ifdef NS_PERIODIC
-# define JR_RANGE Jstr-1,Jend+1
-# define JU_RANGE Jstr,Jend
-# define JV_RANGE Jstr,Jend
-#else
-# define JR_RANGE JstrT,JendT
-# define JU_RANGE JstrT,JendT
-# define JV_RANGE JstrP,JendT
-#endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -168,8 +149,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           s_zeta(i,j,Lout)=fac
         END DO
       END DO
@@ -213,8 +194,8 @@
 !
 !  2D U-momentum component.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           s_ubar(i,j,Lout)=fac
         END DO
       END DO
@@ -258,8 +239,8 @@
 !
 !  2D V-momentum component.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           s_vbar(i,j,Lout)=fac
         END DO
       END DO
@@ -304,13 +285,13 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             s_sustr(i,j,ir,Lout)=fac
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             s_svstr(i,j,ir,Lout)=fac
           END DO
         END DO
@@ -322,8 +303,8 @@
 !  3D U-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             s_u(i,j,k,Lout)=fac
           END DO
         END DO
@@ -374,8 +355,8 @@
 !  3D V-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             s_v(i,j,k,Lout)=fac
           END DO
         END DO
@@ -427,8 +408,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               s_t(i,j,k,Lout,it)=fac
             END DO
           END DO
@@ -486,8 +467,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 s_tflux(i,j,ir,Lout,it)=fac
               END DO
             END DO
@@ -500,12 +481,5 @@
 
       RETURN
       END SUBROUTINE state_initialize
-
-#undef IR_RANGE
-#undef IU_RANGE
-#undef IV_RANGE
-#undef JR_RANGE
-#undef JU_RANGE
-#undef JV_RANGE
 
       END MODULE state_initialize_mod

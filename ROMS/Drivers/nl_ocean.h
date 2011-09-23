@@ -44,7 +44,6 @@
 #endif
       USE mod_iounits
       USE mod_scalars
-
 #ifdef MCT_LIB
 !
 # ifdef AIR_OCEAN

@@ -17,7 +17,6 @@
 # define UV_QDRAG
 # define UV_VIS2
 # define UV_COR
-# define EW_PERIODIC
 # define BODYFORCE
 # define ANA_DIAG
 # define ANA_GRID
@@ -35,7 +34,6 @@
 # define TS_DIF2
 # define MIX_GEO_TS
 # define SPLINES
-# define EW_PERIODIC
 # define ANA_DIAG
 # define ANA_GRID
 # define ANA_INITIAL

@@ -86,9 +86,7 @@
       USE mod_sediment
 #endif
 !
-#if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
-#endif
 #ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 #endif
@@ -127,18 +125,6 @@
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
       integer :: i, j
 
       real(r8) :: cff
@@ -177,23 +163,26 @@
 #else
       ana_drag.h: no values provided for either ZoBot, rdrag, or rdrag2
 #endif
-
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-# if defined UV_LOGDRAG
-     &                        ZoBot)
-# elif defined UV_LDRAG
-     &                        rdrag)
-# elif defined UV_QDRAG
-     &                        rdrag2)
-# endif
+!
+!  Exchange boundary data.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+#if defined UV_LOGDRAG
+     &                          ZoBot)
+#elif defined UV_LDRAG
+     &                          rdrag)
+#elif defined UV_QDRAG
+     &                          rdrag2)
 #endif
+      END IF
 
 #ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
 # if defined UV_LOGDRAG
      &                    ZoBot)
 # elif defined UV_LDRAG

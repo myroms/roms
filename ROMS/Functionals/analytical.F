@@ -1,6 +1,5 @@
 #include "cppdefs.h"
       MODULE analytical_mod
-#ifdef ANALYTICAL
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -78,9 +77,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       CONTAINS
-
+!
+#ifdef ANALYTICAL
 # if defined ANA_BIOLOGY && defined BIOLOGY
 #  include <ana_biology.h>
 # endif
@@ -143,10 +143,6 @@
 
 # if defined ANA_GRID && defined MASKING
 #  include <ana_mask.h>
-# endif
-
-# if defined NUDGING_COFF
-#  include <ana_nudgcoef.h>
 # endif
 
 # if defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM || \
@@ -240,7 +236,8 @@
 # if defined ANA_WWAVE
 #  include <ana_wwave.h>
 # endif
-
 #endif
+
+#include <ana_nudgcoef.h>
 
       END MODULE analytical_mod

@@ -51,9 +51,9 @@
 !=======================================================================
 !
       implicit none
-
+!
       PUBLIC
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -85,8 +85,7 @@
       integer, intent(in) :: LBij, UBij
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nghost
-      integer, intent(in) :: NHsteps
+      integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
 !
@@ -118,18 +117,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -179,7 +166,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -252,7 +240,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,Nnew))
 # endif
 !
@@ -284,7 +273,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 
@@ -321,8 +311,7 @@
       integer, intent(in) :: LBij, UBij
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Nghost
-      integer, intent(in) :: NHsteps
+      integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
 !
@@ -352,18 +341,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -416,7 +393,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -487,7 +465,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,Nnew))
 # endif
 !
@@ -519,7 +498,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 
@@ -586,18 +566,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical, dimension(4) :: Lconvolve
 
       integer :: Nnew, Nold, Nsav, i, j, step
@@ -650,7 +618,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,             &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
       IF (Lconvolve(boundary)) THEN
@@ -721,7 +690,8 @@
 # ifdef DISTRIBUTE
         CALL mp_exchange2d_bry (ng, tile, model, 1, boundary,           &
      &                          LBij, UBij,                             &
-     &                          Nghost, EWperiodic, NSperiodic,         &
+     &                          Nghost,                                 &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          Awrk(:,Nnew))
 # endif
 !
@@ -753,7 +723,8 @@
 # ifdef DISTRIBUTE
       CALL mp_exchange2d_bry (ng, tile, model, 1,  boundary,            &
      &                        LBij, UBij,                               &
-     &                        Nghost, EWperiodic, NSperiodic,           &
+     &                        Nghost,                                   &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        A)
 # endif
 

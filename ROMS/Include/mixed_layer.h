@@ -28,7 +28,6 @@
 #define TS_U3HADVECTION
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
-#define EW_PERIODIC
 
 #undef  MY25_MIXING
 #define GLS_MIXING

@@ -69,10 +69,6 @@
 #  define SALINITY
 #  define AVERAGES
 #  define SPLINES
-#  define WESTERN_WALL
-#  define EASTERN_WALL
-#  define NORTHERN_WALL
-#  define SOUTHERN_WALL
 #  define TCLIMATOLOGY
 #  define TCLM_NUDGING
 #  define ANA_GRID

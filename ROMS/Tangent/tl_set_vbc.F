@@ -20,10 +20,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: tl_set_vbc
-
+!
       CONTAINS
 
 # ifdef SOLVE3D
@@ -104,6 +104,7 @@
 #  ifdef PROFILE
       CALL wclock_off (ng, iTLM, 6)
 #  endif
+
       RETURN
       END SUBROUTINE tl_set_vbc
 !
@@ -268,18 +269,6 @@
 !
 !  Local variable declarations.
 !
-#  ifdef DISTRIBUTE
-#   ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#   else
-      logical :: EWperiodic=.FALSE.
-#   endif
-#   ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#   else
-      logical :: NSperiodic=.FALSE.
-#   endif
-#  endif
       integer :: i, j, itrc
 
 #  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
@@ -314,7 +303,8 @@
 #  ifdef SALINITY
 !
 !-----------------------------------------------------------------------
-!  Add salt flux correction or multiply flux by salinity.
+!  Multiply fresh water flux with surface salinity. If appropriate,
+!  apply correction.
 !-----------------------------------------------------------------------
 !
       DO j=JstrR,JendR
@@ -387,7 +377,7 @@
 !  If ice shelf cavities, replace surface wind stress with ice shelf
 !  cavity stress (m2/s2).
 !-----------------------------------------------------------------------
-!
+
 #   if defined UV_LOGDRAG
 !
 !  Set logarithmic ice shelf cavity stress.
@@ -587,15 +577,18 @@
       CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_svstr)
+
 #   ifdef DISTRIBUTE
 !>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    sustr, svstr)
 !>
       CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_sustr, tl_svstr)
 #   endif
 #  endif
@@ -768,15 +761,18 @@
       CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bvstr)
+
 #   ifdef DISTRIBUTE
 !>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    bustr, bvstr)
 !>
       CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_bustr, tl_bvstr)
 #   endif
 #  endif
@@ -825,6 +821,7 @@
 #  ifdef PROFILE
       CALL wclock_off (ng, iTLM, 6)
 #  endif
+
       RETURN
       END SUBROUTINE tl_set_vbc
 !
@@ -886,18 +883,6 @@
 !
 !  Local variable declarations.
 !
-#  ifdef DISTRIBUTE
-#   ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#   else
-      logical :: EWperiodic=.FALSE.
-#   endif
-#   ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#   else
-      logical :: NSperiodic=.FALSE.
-#   endif
-#  endif
       integer :: i, j
 
       real(r8) :: cff1, cff2
@@ -1001,17 +986,21 @@
       CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bvstr)
+
 #  ifdef DISTRIBUTE
 !>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    sustr, svstr)
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
+!>   &                    bustr, bvstr)
 !>
       CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_bustr, tl_bvstr)
 #  endif
+
       RETURN
       END SUBROUTINE tl_set_vbc_tile
 # endif

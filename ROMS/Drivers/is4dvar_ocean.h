@@ -8,37 +8,14 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Strong Constraint 4-Dimensional Variational (4DVar)       !
-!            Data Assimilation Driver, Incremental Approach:           !
+!  ROMS/TOMS Strong Constraint 4-Dimensional Variational Data          !
+!            Assimilation Driver, Incremental Approach (I4D-Var).      !
+!            Primal formulation in model space.                        !
 !                                                                      !
-!  This driver is used for strong constraint 4DVar where the only      !
-!  errors considered are those for the observations. The model is      !
-!  assumed to be perfect.  This is the incremental method and the      !
+!  This driver is used for strong constraint 4D-Var where the only     !
+!  errors considered are those for the observations.  The model is     !
+!  assumed to be perfect.  This is the  incremental method and the     !
 !  nonlinear, tangent linear and adjoint models are needed.            !
-!                                                                      !
-!  The misfit (squared difference) between model and observations      !
-!  is defined as:                                                      !
-!                                                                      !
-!         J  = Jb + Jo                                                 !
-!                                                                      !
-!         Jb = 1/2 transpose(deltaX) * B^(-1) * (deltaX)               !
-!                                                                      !
-!         Jo = 1/2 transpose(H deltaX - d) * O^(-1) * (H deltaX - d)   !
-!                                                                      !
-!          d = Xo - Xb                                                 !
-!                                                                      !
-!     deltaX = X - Xb                                                  !
-!                                                                      !
-!  where                                                               !
-!                                                                      !
-!         B : background error covariance                              !
-!         d : innovation vector                                        !
-!    deltaX : increment vector propagated in time by the TLM.          !
-!         H : linearized observation operator                          !
-!         O : observation error covariance                             !
-!         X : model at observation or background points                !
-!        Xb : background or reference vector                           !
-!        Xo : observations vector                                      !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
 !  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
@@ -47,6 +24,21 @@
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
+!                                                                      !
+!  References:                                                         !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, B.S. Powell, A.T. Weaver,     !
+!    and J. Zavala-Garay, 2011: The Regional Ocean Modeling System     !
+!    (ROMS)  4-dimensional variational data assimilations systems,     !
+!    Part I - System overview and formulation, Prog. Oceanogr., 91,    !
+!    34-49, doi:10.1016/j.pocean.2011.05.004.                          !
+!                                                                      !
+!  Moore, A.M., H.G. Arango, G. Broquet, C. Edward, M. Veneziani,      !
+!    B. Powell, D. Foley, J.D. Doyle, D. Costa, and P. Robinson,       !
+!    2011: The Regional Ocean Modeling System (ROMS) 4-dimensional     !
+!    variational data assimilations systems, Part II - Performance     !
+!    and application to the California Current System, Prog.           !
+!    Oceanogr., 91, 50-73, doi:10.1016/j.pocean.2011.05.003.           !
 !                                                                      !
 !=======================================================================
 !

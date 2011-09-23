@@ -38,13 +38,7 @@
 #define STATIONS
 #undef  FLOATS
 
-#define WESTERN_WALL
-#define NORTHERN_WALL
 #define RADIATION_2D
-#define EAST_M3RADIATION
-#define EAST_TRADIATION
-#define SOUTH_M3RADIATION
-#define SOUTH_TRADIATION
 
 #define GLS_MIXING
 #undef  MY25_MIXING
@@ -89,28 +83,11 @@
 #define SSH_TIDES
 #ifdef SSH_TIDES
 # define ANA_FSOBC
-# define EAST_FSCHAPMAN
-# define SOUTH_FSCHAPMAN
-#else
-# define EAST_FSGRADIENT
-# define SOUTH_M2RADIATION
 #endif
 
 #define UV_TIDES
 #ifdef UV_TIDES
 # define ANA_M2OBC
-# define EAST_M2FLATHER
-# define SOUTH_M2FLATHER
-#else
-# define EAST_M2RADIATION
-# define SOUTH_FSGRADIENT
-#endif
-#if defined SSH_TIDES || defined UV_TIDES
-# undef  EAST_VOLCONS
-# undef  SOUTH_VOLCONS
-#else
-# define EAST_VOLCONS
-# define SOUTH_VOLCONS
 #endif
 
 #undef  BIO_FENNEL

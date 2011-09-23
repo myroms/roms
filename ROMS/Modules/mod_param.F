@@ -28,6 +28,7 @@
 !               each nested grid. Values used in parallel loops.       !
 !  NtileE     Number of ETA-direction tiles or domain partitions for   !
 !               each nested grid. Values used in parallel loops.       !
+!  HaloBry    Buffers halo size for exchanging boundary arrays.        !
 !  HaloSizeI  Maximum halo size, in grid points, in XI-direction.      !
 !  HaloSizeJ  Maximum halo size, in grid points, in ETA-direction.     !
 !  TileSide   Maximun tile side length in XI- or ETA-directions.       !
@@ -307,6 +308,53 @@
       END TYPE T_DOMAIN
 
       TYPE (T_DOMAIN), allocatable :: DOMAIN(:)
+!
+!-----------------------------------------------------------------------
+!  Lateral Boundary Conditions (LBC) switches structure.
+!-----------------------------------------------------------------------
+!
+!  The lateral boundary conditions are specified by logical switches
+!  to facilitate applications with nested grids. It also allows to
+!  set different boundary conditions between the nonlinear model and
+!  the adjoint/tangent models. The LBC structure is allocated as:
+!
+!       LBC(1:4, nLBCvar, Ngrids)
+!
+!  where 1:4 are the number boundary edges, nLBCvar are the number
+!  LBC state variables, and Ngrids is the number of nested grids.
+!  For example, for free-surface gradient boundary conditions we
+!  have:
+!
+!       LBC(iwest,  isFsur, ng) % gradient
+!       LBC(ieast,  isFsur, ng) % gradient
+!       LBC(isouth, isFsur, ng) % gradient
+!       LBC(inorth, isFsur, ng) % gradient
+!
+      integer :: nLBCvar
+!
+      TYPE T_LBC
+        logical :: acquire        ! process lateral boundary data
+
+        logical :: Chapman
+        logical :: clamped
+        logical :: closed
+        logical :: Flather
+        logical :: gradient
+        logical :: nested
+        logical :: nudging
+        logical :: periodic
+        logical :: radiation
+        logical :: reduced
+      END TYPE T_LBC
+
+      TYPE (T_LBC), allocatable :: LBC(:,:,:)
+
+#ifdef ADJOINT
+      TYPE (T_LBC), allocatable :: ad_LBC(:,:,:)
+#endif
+#if defined TANGENT || defined TL_IOMS
+      TYPE (T_LBC), allocatable :: tl_LBC(:,:,:)
+#endif
 
 #ifdef PROPAGATOR
 !
@@ -534,6 +582,11 @@
       integer, allocatable :: NtileX(:)
       integer, allocatable :: NtileE(:)
 !
+!  Maximun number of points in the halo region for exchanging state
+!  boundary arrays during convolutions.
+!
+      integer, allocatable :: HaloBry(:)
+!
 !  Maximum number of points in the halo region in the XI- and
 !  ETA-directions.
 !
@@ -548,10 +601,10 @@
 !
       integer, allocatable :: TileSize(:)
 !
-!  Set number of ghost-points in the halo region.  It is only used
-!  in distributed-memory applications.
+!  Set number of ghost-points in the halo region.  It is used in
+!  periodic, nested, and distributed-memory applications.
 !
-      integer :: NghostPoints = GHOST_POINTS
+      integer :: NghostPoints
 !
       CONTAINS
 !
@@ -585,6 +638,8 @@
 
       allocate ( NtileX(Ngrids) )
       allocate ( NtileE(Ngrids) )
+
+      allocate ( HaloBry(Ngrids) )
 
       allocate ( HaloSizeI(Ngrids) )
       allocate ( HaloSizeJ(Ngrids) )
@@ -630,7 +685,8 @@
 !
 !  Local variable declarations
 !
-      integer :: I_padd, J_padd, Ntiles, ng
+      integer :: I_padd, J_padd, Ntiles
+      integer :: ibry, ivar, ng
 !
 !-----------------------------------------------------------------------
 !  Now that we know the values for the tile partitions (NtileI,NtileJ),
@@ -852,6 +908,84 @@
 !  Set maximum number of tracer between all nested grids.
 !
       MT=MAX(2,MAXVAL(NT))
+!
+!-----------------------------------------------------------------------
+!  Allocate Lateral Boundary Conditions switches structure.
+!-----------------------------------------------------------------------
+!
+#ifdef SOLVE3D
+      nLBCvar=5+MT
+# if defined GLS_MIXING || defined MY25_MIXING
+      nLBCvar=nLBCvar+1
+# endif
+#else
+      nLBCvar=3
+#endif
+!
+      IF (.not.allocated(LBC)) THEN
+        allocate ( LBC(4,nLBCvar,Ngrids) )
+        DO ng=1,Ngrids
+          DO ivar=1,nLBCvar
+            DO ibry=1,4
+              LBC(ibry,ivar,ng)%acquire  =.FALSE.
+              LBC(ibry,ivar,ng)%Chapman  =.FALSE.
+              LBC(ibry,ivar,ng)%clamped  =.FALSE.
+              LBC(ibry,ivar,ng)%closed   =.FALSE.
+              LBC(ibry,ivar,ng)%Flather  =.FALSE.
+              LBC(ibry,ivar,ng)%gradient =.FALSE.
+              LBC(ibry,ivar,ng)%nested   =.FALSE.
+              LBC(ibry,ivar,ng)%nudging  =.FALSE.
+              LBC(ibry,ivar,ng)%periodic =.FALSE.
+              LBC(ibry,ivar,ng)%radiation=.FALSE.
+              LBC(ibry,ivar,ng)%reduced  =.FALSE.
+            END DO
+          END DO
+        END DO
+      END IF
+#ifdef ADJOINT
+      IF (.not.allocated(ad_LBC)) THEN
+        allocate ( ad_LBC(4,nLBCvar,Ngrids) )
+        DO ng=1,Ngrids
+          DO ivar=1,nLBCvar
+            DO ibry=1,4
+              ad_LBC(ibry,ivar,ng)%acquire  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%Chapman  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%clamped  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%closed   =.FALSE.
+              ad_LBC(ibry,ivar,ng)%Flather  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%gradient =.FALSE.
+              ad_LBC(ibry,ivar,ng)%nested   =.FALSE.
+              ad_LBC(ibry,ivar,ng)%nudging  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%periodic =.FALSE.
+              ad_LBC(ibry,ivar,ng)%radiation=.FALSE.
+              ad_LBC(ibry,ivar,ng)%reduced  =.FALSE.
+            END DO
+          END DO
+        END DO
+      END IF
+#endif
+#if defined TANGENT || defined TL_IOMS
+      IF (.not.allocated(tl_LBC)) THEN
+        allocate ( tl_LBC(4,nLBCvar,Ngrids) )
+        DO ng=1,Ngrids
+          DO ivar=1,nLBCvar
+            DO ibry=1,4
+              tl_LBC(ibry,ivar,ng)%acquire  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%Chapman  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%clamped  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%closed   =.FALSE.
+              tl_LBC(ibry,ivar,ng)%Flather  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%gradient =.FALSE.
+              tl_LBC(ibry,ivar,ng)%nested   =.FALSE.
+              tl_LBC(ibry,ivar,ng)%nudging  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%periodic =.FALSE.
+              tl_LBC(ibry,ivar,ng)%radiation=.FALSE.
+              tl_LBC(ibry,ivar,ng)%reduced  =.FALSE.
+            END DO
+          END DO
+        END DO
+      END IF
+#endif
 
       RETURN
       END SUBROUTINE initialize_param

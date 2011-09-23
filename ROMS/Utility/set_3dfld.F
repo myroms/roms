@@ -29,11 +29,8 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
-
-# if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_3d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -56,18 +53,7 @@
 !  Local variable declarations.
 !
       logical :: Lgrided, Lonerec
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
+
       integer :: Tindex, gtype, i, it1, it2, j, k
 
       real(r8) :: Fval, fac, fac1, fac2
@@ -176,38 +162,39 @@
           update=.FALSE.
         END IF
       END IF
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !  Exchange boundary data.
 !
       IF (update) THEN
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-        IF (gtype.eq.r3dvar) THEN
-          CALL exchange_r3d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
-     &                            Fout)
-        ELSE IF (gtype.eq.u3dvar) THEN
-          CALL exchange_u3d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
-     &                            Fout)
-        ELSE IF (gtype.eq.v3dvar) THEN
-          CALL exchange_v3d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
-     &                            Fout)
-        ELSE IF (gtype.eq.w3dvar) THEN
-          CALL exchange_w3d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
-     &                            Fout)
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          IF (gtype.eq.r3dvar) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Fout)
+          ELSE IF (gtype.eq.u3dvar) THEN
+            CALL exchange_u3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Fout)
+          ELSE IF (gtype.eq.v3dvar) THEN
+            CALL exchange_v3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Fout)
+          ELSE IF (gtype.eq.w3dvar) THEN
+            CALL exchange_w3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Fout)
+          END IF
         END IF
-#  endif
-#  ifdef DISTRIBUTE
+
+# ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      Fout)
-#  endif
-      END IF
 # endif
+      END IF
+
       RETURN
       END SUBROUTINE set_3dfld_tile
 #endif

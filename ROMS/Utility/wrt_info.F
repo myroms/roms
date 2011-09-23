@@ -624,61 +624,63 @@
       IF (exit_flag.ne.NoError) RETURN
 #endif
 
-#if !defined DEBUGGING && defined NUDGING_COFF
+#ifndef DEBUGGING
 !
 !  Open boundary nudging, inverse time scales.
 !
-      CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_in',              &
-     &                      FSobc_in(ng,:), (/1/), (/4/),               &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (NudgingCoeff(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_in',            &
+     &                        FSobc_in(ng,:), (/1/), (/4/),             &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_out',             &
-     &                      FSobc_out(ng,:), (/1/), (/4/),              &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_out',           &
+     &                        FSobc_out(ng,:), (/1/), (/4/),            &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_in',              &
-     &                      M2obc_in(ng,:), (/1/), (/4/),               &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_in',            &
+     &                        M2obc_in(ng,:), (/1/), (/4/),             &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_out',             &
-     &                      M2obc_out(ng,:), (/1/), (/4/),              &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_out',           &
+     &                        M2obc_out(ng,:), (/1/), (/4/),            &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
-      DO ibry=1,4
-        DO itrc=1,NT(ng)
-          Tobc(itrc,ibry)=Tobc_in(itrc,ng,ibry)
+        DO ibry=1,4
+          DO itrc=1,NT(ng)
+            Tobc(itrc,ibry)=Tobc_in(itrc,ng,ibry)
+          END DO
         END DO
-      END DO
-      CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_in',               &
-     &                      Tobc, (/1,1/), (/NT(ng),4/),                &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_in',             &
+     &                        Tobc, (/1,1/), (/NT(ng),4/),              &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      DO ibry=1,4
-        DO itrc=1,NT(ng)
-          Tobc(itrc,ibry)=Tobc_out(itrc,ng,ibry)
+        DO ibry=1,4
+          DO itrc=1,NT(ng)
+            Tobc(itrc,ibry)=Tobc_out(itrc,ng,ibry)
+          END DO
         END DO
-      END DO
-      CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_out',              &
-     &                      Tobc, (/1,1/), (/NT(ng),4/),                &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_out',            &
+     &                        Tobc, (/1,1/), (/NT(ng),4/),              &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_in',              &
-     &                      M3obc_in(ng,:), (/1/), (/4/),               &
-     &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_in',            &
+     &                        M3obc_in(ng,:), (/1/), (/4/),             &
+     &                        ncid = ncid)
+        IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_out',             &
-     &                      M3obc_out(ng,:), (/1/), (/4/),              &
+        CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_out',           &
+     &                        M3obc_out(ng,:), (/1/), (/4/),            &
      &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) RETURN
+        IF (exit_flag.ne.NoError) RETURN
 # endif
+      END IF
 #endif
 !
 !  Equation of State parameters.

@@ -81,18 +81,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       logical :: Perfect2D, Perfect3D, foundit
 #if defined ADJUST_BOUNDARY || \
     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
@@ -212,6 +200,15 @@
       IF (exit_flag.ne.NoError) THEN
         IF (Master) WRITE (stdout,20) TRIM(ncname)
         RETURN
+      END IF
+!
+!  If restart, read in lateral boundary conditions global attribute
+!  from restart file and check keyword strings with structure vlues
+!  for consistency.
+!
+      IF (((model.eq.0).or.(model.eq.iNLM)).and.(nrrec(ng).ne.0)) THEN
+        CALL lbc_getatt (ng, model, ncINPid, ncname, 'NLM_LBC', LBC)
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Inquire about the input time variable.
@@ -882,7 +879,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        MIXING(ng) % AKv)
 #   endif
         END IF
@@ -918,7 +916,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        MIXING(ng) % AKt(:,:,:,itemp))
 #   endif
         END IF
@@ -955,7 +954,8 @@
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        MIXING(ng) % AKt(:,:,:,isalt))
 #   endif
         END IF
@@ -2724,7 +2724,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % b_zeta(:,:,Tindex))
 # endif
         END IF
@@ -2760,7 +2761,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % b_ubar(:,:,Tindex))
 # endif
         END IF
@@ -2796,7 +2798,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % b_vbar(:,:,Tindex))
 # endif
         END IF
@@ -2833,7 +2836,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % b_u(:,:,:,Tindex))
 #  endif
         END IF
@@ -2869,7 +2873,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % b_v(:,:,:,Tindex))
 #  endif
         END IF
@@ -2907,7 +2912,8 @@
 #  ifdef DISTRIBUTE
             CALL mp_exchange3d (ng, MyRank, IDmod, 1,                   &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          NghostPoints, EWperiodic, NSperiodic,   &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          OCEAN(ng) % b_t(:,:,:,Tindex,itrc))
 #  endif
           END IF
@@ -3061,7 +3067,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % b_sustr)
 #  endif
         END IF
@@ -3097,7 +3104,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % b_svstr)
 #  endif
         END IF
@@ -3138,7 +3146,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % b_stflx(:,:,itrc))
 #  endif
           END IF
@@ -3188,7 +3197,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_zeta(:,:,Tindex))
 # endif
         END IF
@@ -3224,7 +3234,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_ubar(:,:,Tindex))
 # endif
         END IF
@@ -3260,7 +3271,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_vbar(:,:,Tindex))
 # endif
         END IF
@@ -3297,7 +3309,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_u(:,:,:,Tindex))
 #  endif
         END IF
@@ -3333,7 +3346,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_v(:,:,:,Tindex))
 #  endif
         END IF
@@ -3371,7 +3385,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        OCEAN(ng) % e_t(:,:,:,Tindex,itrc))
 #  endif
           END IF
@@ -3410,7 +3425,8 @@
 # ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        MIXING(ng) % Kh)
 # endif
         END IF
@@ -3448,7 +3464,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        MIXING(ng) % Kv)
 #  endif
         END IF
@@ -3602,7 +3619,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % e_sustr)
 #  endif
         END IF
@@ -3639,7 +3657,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % e_svstr)
 #  endif
         END IF
@@ -3685,7 +3704,8 @@
 #  ifdef DISTRIBUTE
           CALL mp_exchange2d (ng, MyRank, IDmod, 1,                     &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        FORCES(ng) % e_stflx(:,:,itrc))
 #  endif
           END IF

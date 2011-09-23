@@ -394,18 +394,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, j, k
 
       real(r8), parameter :: Gadv = -0.25_r8
@@ -2589,20 +2577,22 @@
             Hvee(i,j)=Hvom(i,j-1,k)-2.0_r8*Hvom(i,j,k)+Hvom(i,j+1,k)
           END DO
         END DO
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO i=Istr,Iend
-            vee (i,Jstr)=vee (i,Jstr+1)
-            Hvee(i,Jstr)=Hvee(i,Jstr+1)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.NSperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                vee (i,Jstr)=vee (i,Jstr+1)
+                Hvee(i,Jstr)=Hvee(i,Jstr+1)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                vee (i,Jend+1)=vee (i,Jend)
+                Hvee(i,Jend+1)=Hvee(i,Jend)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO i=Istr,Iend
-            vee (i,Jend+1)=vee (i,Jend)
-            Hvee(i,Jend+1)=Hvee(i,Jend)
-          END DO
-        END IF
-#   endif
 #   ifdef UV_C4ADVECTION
         cff=1.0_r8/6.0_r8
         DO j=JstrV-1,Jend
@@ -2730,32 +2720,34 @@
           END DO
         END DO
 #   endif
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO i=Istr,Iend
-!>          tl_Hvee(i,Jend+1)=tl_Hvee(i,Jend)
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.NSperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+!>              tl_Hvee(i,Jend+1)=tl_Hvee(i,Jend)
 !>
-            ad_Hvee(i,Jend)=ad_Hvee(i,Jend)+ad_Hvee(i,Jend+1)
-            ad_Hvee(i,Jend+1)=0.0_r8
-!>          tl_vee (i,Jend+1)=tl_vee (i,Jend)
+                ad_Hvee(i,Jend)=ad_Hvee(i,Jend)+ad_Hvee(i,Jend+1)
+                ad_Hvee(i,Jend+1)=0.0_r8
+!>              tl_vee (i,Jend+1)=tl_vee (i,Jend)
 !>
-            ad_vee (i,Jend)=ad_vee (i,Jend)+ad_vee (i,Jend+1)
-            ad_vee (i,Jend+1)=0.0_r8
-          END DO
+                ad_vee (i,Jend)=ad_vee (i,Jend)+ad_vee (i,Jend+1)
+                ad_vee (i,Jend+1)=0.0_r8
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+!>              tl_Hvee(i,Jstr)=tl_Hvee(i,Jstr+1)
+!>
+                ad_Hvee(i,Jstr+1)=ad_Hvee(i,Jstr+1)+ad_Hvee(i,Jstr)
+                ad_Hvee(i,Jstr)=0.0_r8
+!>              tl_vee (i,Jstr)=tl_vee (i,Jstr+1)
+!>
+                ad_vee (i,Jstr+1)=ad_vee (i,Jstr+1)+ad_vee (i,Jstr)
+                ad_vee (i,Jstr)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO i=Istr,Iend
-!>          tl_Hvee(i,Jstr)=tl_Hvee(i,Jstr+1)
-!>
-            ad_Hvee(i,Jstr+1)=ad_Hvee(i,Jstr+1)+ad_Hvee(i,Jstr)
-            ad_Hvee(i,Jstr)=0.0_r8
-!>          tl_vee (i,Jstr)=tl_vee (i,Jstr+1)
-!>
-            ad_vee (i,Jstr+1)=ad_vee (i,Jstr+1)+ad_vee (i,Jstr)
-            ad_vee (i,Jstr)=0.0_r8
-          END DO
-        END IF
-#   endif
         DO j=JstrVm1,Jendp1
           DO i=Istr,Iend
 !>          tl_Hvee(i,j)=tl_Hvom(i,j-1,k)-2.0_r8*tl_Hvom(i,j,k)+        &
@@ -2793,18 +2785,20 @@
      &               v(i+1,j,k,nrhs)
           END DO
         END DO
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO j=JstrV,Jend
-            vxx(Istr-1,j)=vxx(Istr,j)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.EWperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=JstrV,Jend
+                vxx(Istr-1,j)=vxx(Istr,j)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=JstrV,Jend
+                vxx(Iend+1,j)=vxx(Iend,j)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO j=JstrV,Jend
-            vxx(Iend+1,j)=vxx(Iend,j)
-          END DO
-        END IF
-#   endif
         DO j=JstrV-1,Jend
           DO i=Istr,Iend+1
            Huee(i,j)=Huon(i,j-1,k)-2.0_r8*Huon(i,j,k)+Huon(i,j+1,k)
@@ -2947,24 +2941,26 @@
             ad_Huee(i,j)=0.0_r8
           END DO
         END DO
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO j=JstrV,Jend
-!>           tl_vxx(Iend+1,j)=tl_vxx(Iend,j)
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.EWperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=JstrV,Jend
+!>              tl_vxx(Iend+1,j)=tl_vxx(Iend,j)
 !>
-             ad_vxx(Iend,j)=ad_vxx(Iend,j)+ad_vxx(Iend+1,j)
-             ad_vxx(Iend+1,j)=0.0_r8
-          END DO
-        END IF
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO j=JstrV,Jend
-!>          tl_vxx(Istr-1,j)=tl_vxx(Istr,j)
+                ad_vxx(Iend,j)=ad_vxx(Iend,j)+ad_vxx(Iend+1,j)
+                ad_vxx(Iend+1,j)=0.0_r8
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=JstrV,Jend
+!>              tl_vxx(Istr-1,j)=tl_vxx(Istr,j)
 !>
-            ad_vxx(Istr,j)=ad_vxx(Istr,j)+ad_vxx(Istr-1,j)
-            ad_vxx(Istr-1,j)=0.0_r8
-          END DO
+                ad_vxx(Istr,j)=ad_vxx(Istr,j)+ad_vxx(Istr-1,j)
+                ad_vxx(Istr-1,j)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
-#   endif
         DO j=JstrV,Jend
           DO i=Istrm1,Iendp1
 !>          tl_vxx(i,j)=tl_v(i-1,j,k,nrhs)-2.0_r8*tl_v(i,j,k,nrhs)+     &
@@ -2995,18 +2991,20 @@
      &               u(i,j+1,k,nrhs)
           END DO
         END DO
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO i=IstrU,Iend
-            uee(i,Jstr-1)=uee(i,Jstr)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.NSperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=IstrU,Iend
+                uee(i,Jstr-1)=uee(i,Jstr)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=IstrU,Iend
+                uee(i,Jend+1)=uee(i,Jend)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO i=IstrU,Iend
-            uee(i,Jend+1)=uee(i,Jend)
-          END DO
-        END IF
-#   endif
         DO j=Jstr,Jend+1
           DO i=IstrU-1,Iend
            Hvxx(i,j)=Hvom(i-1,j,k)-2.0_r8*Hvom(i,j,k)+Hvom(i+1,j,k)
@@ -3156,24 +3154,26 @@
             ad_Hvxx(i,j)=0.0_r8
           END DO
         END DO
-#   if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO i=IstrU,Iend
-!>          tl_uee(i,Jend+1)=tl_uee(i,Jend)
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.NSperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=IstrU,Iend
+!>              tl_uee(i,Jend+1)=tl_uee(i,Jend)
 !>
-            ad_uee(i,Jend)=ad_uee(i,Jend)+ad_uee(i,Jend+1)
-            ad_uee(i,Jend+1)=0.0_r8
-          END DO
-        END IF
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO i=IstrU,Iend
-!>          tl_uee(i,Jstr-1)=tl_uee(i,Jstr)
+                ad_uee(i,Jend)=ad_uee(i,Jend)+ad_uee(i,Jend+1)
+                ad_uee(i,Jend+1)=0.0_r8
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=IstrU,Iend
+!>              tl_uee(i,Jstr-1)=tl_uee(i,Jstr)
 !>
-            ad_uee(i,Jstr)=ad_uee(i,Jstr)+ad_uee(i,Jstr-1)
-            ad_uee(i,Jstr-1)=0.0_r8
-          END DO
+                ad_uee(i,Jstr)=ad_uee(i,Jstr)+ad_uee(i,Jstr-1)
+                ad_uee(i,Jstr-1)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
-#   endif
         DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
 !>          tl_uee(i,j)=tl_u(i,j-1,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+     &
@@ -3205,20 +3205,22 @@
             Huxx(i,j)=Huon(i-1,j,k)-2.0_r8*Huon(i,j,k)+Huon(i+1,j,k)
           END DO
         END DO
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO j=Jstr,Jend
-            uxx (Istr,j)=uxx (Istr+1,j)
-            Huxx(Istr,j)=Huxx(Istr+1,j)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.EWperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                uxx (Istr,j)=uxx (Istr+1,j)
+                Huxx(Istr,j)=Huxx(Istr+1,j)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                uxx (Iend+1,j)=uxx (Iend,j)
+                Huxx(Iend+1,j)=Huxx(Iend,j)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO j=Jstr,Jend
-            uxx (Iend+1,j)=uxx (Iend,j)
-            Huxx(Iend+1,j)=Huxx(Iend,j)
-          END DO
-        END IF
-#   endif
 #   ifdef UV_C4ADVECTION
         cff=1.0_r8/6.0_r8
         DO j=Jstr,Jend
@@ -3346,32 +3348,34 @@
           END DO
         END DO
 #   endif
-#   if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO j=Jstr,Jend
-!>          tl_Huxx(Iend+1,j)=tl_Huxx(Iend,j)
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.EWperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+!>              tl_Huxx(Iend+1,j)=tl_Huxx(Iend,j)
 !>
-            ad_Huxx(Iend,j)=ad_Huxx(Iend,j)+ad_Huxx(Iend+1,j)
-            ad_Huxx(Iend+1,j)=0.0_r8
-!>          tl_uxx (Iend+1,j)=tl_uxx (Iend,j)
+                ad_Huxx(Iend,j)=ad_Huxx(Iend,j)+ad_Huxx(Iend+1,j)
+                ad_Huxx(Iend+1,j)=0.0_r8
+!>              tl_uxx (Iend+1,j)=tl_uxx (Iend,j)
 !>
-            ad_uxx (Iend,j)=ad_uxx (Iend,j)+ad_uxx (Iend+1,j)
-            ad_uxx (Iend+1,j)=0.0_r8
-          END DO
+                ad_uxx (Iend,j)=ad_uxx (Iend,j)+ad_uxx (Iend+1,j)
+                ad_uxx (Iend+1,j)=0.0_r8
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+!>              tl_Huxx(Istr,j)=tl_Huxx(Istr+1,j)
+!>
+                ad_Huxx(Istr+1,j)=ad_Huxx(Istr+1,j)+ad_Huxx(Istr,j)
+                ad_Huxx(Istr,j)=0.0_r8
+!>              tl_uxx (Istr,j)=tl_uxx (Istr+1,j)
+!>
+                ad_uxx (Istr+1,j)=ad_uxx (Istr+1,j)+ad_uxx (Istr,j)
+                ad_uxx (Istr  ,j)=0.0_r8
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO j=Jstr,Jend
-!>          tl_Huxx(Istr,j)=tl_Huxx(Istr+1,j)
-!>
-            ad_Huxx(Istr+1,j)=ad_Huxx(Istr+1,j)+ad_Huxx(Istr,j)
-            ad_Huxx(Istr,j)=0.0_r8
-!>          tl_uxx (Istr,j)=tl_uxx (Istr+1,j)
-!>
-            ad_uxx (Istr+1,j)=ad_uxx (Istr+1,j)+ad_uxx (Istr,j)
-            ad_uxx (Istr  ,j)=0.0_r8
-          END DO
-        END IF
-#   endif
         DO j=Jstr,Jend
           DO i=IstrUm1,Iendp1
 !>          tl_Huxx(i,j)=tl_Huon(i-1,j,k)-2.0_r8*tl_Huon(i,j,k)+        &

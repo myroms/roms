@@ -1,24 +1,5 @@
 #include "cppdefs.h"
       MODULE state_addition_mod
-
-#ifdef EW_PERIODIC
-# define IR_RANGE Istr-1,Iend+1
-# define IU_RANGE Istr,Iend
-# define IV_RANGE Istr,Iend
-#else
-# define IR_RANGE IstrT,IendT
-# define IU_RANGE IstrP,IendT
-# define IV_RANGE IstrT,IendT
-#endif
-#ifdef NS_PERIODIC
-# define JR_RANGE Jstr-1,Jend+1
-# define JU_RANGE Jstr,Jend
-# define JV_RANGE Jstr,Jend
-#else
-# define JR_RANGE JstrT,JendT
-# define JU_RANGE JstrT,JendT
-# define JV_RANGE JstrP,JendT
-#endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -234,8 +215,8 @@
 !
 !  Free-surface.
 !
-      DO j=JR_RANGE
-        DO i=IR_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           s1_zeta(i,j,Lout)=fac1*s1_zeta(i,j,Lin1)+                     &
      &                      fac2*s2_zeta(i,j,Lin2)
 #ifdef MASKING
@@ -306,8 +287,8 @@
 !
 !  2D U-momentum component.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           s1_ubar(i,j,Lout)=fac1*s1_ubar(i,j,Lin1)+                     &
      &                      fac2*s2_ubar(i,j,Lin2)
 # ifdef MASKING
@@ -379,8 +360,8 @@
 !
 !  2D V-momentum component.
 !
-      DO j=JV_RANGE
-        DO i=IV_RANGE
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           s1_vbar(i,j,Lout)=fac1*s1_vbar(i,j,Lin1)+                     &
      &                      fac2*s2_vbar(i,j,Lin2)
 # ifdef MASKING
@@ -453,8 +434,8 @@
 !  Surface momentum stress.
 !
       DO ir=1,Nfrec(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             s1_sustr(i,j,ir,Lout)=fac1*s1_sustr(i,j,ir,Lin1)+           &
      &                            fac2*s2_sustr(i,j,ir,Lin2)
 # ifdef MASKING
@@ -462,8 +443,8 @@
 # endif
           END DO
         END DO
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             s1_svstr(i,j,ir,Lout)=fac1*s1_svstr(i,j,ir,Lin1)+           &
      &                            fac2*s2_svstr(i,j,ir,Lin2)
 # ifdef MASKING
@@ -479,8 +460,8 @@
 !  3D U-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             s1_u(i,j,k,Lout)=fac1*s1_u(i,j,k,Lin1)+                     &
      &                       fac2*s2_u(i,j,k,Lin2)
 # ifdef MASKING
@@ -559,8 +540,8 @@
 !  3D V-momentum component.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             s1_v(i,j,k,Lout)=fac1*s1_v(i,j,k,Lin1)+                     &
      &                       fac2*s2_v(i,j,k,Lin2)
 # ifdef MASKING
@@ -640,8 +621,8 @@
 !
       DO it=1,NT(ng)
         DO k=1,N(ng)
-          DO j=JR_RANGE
-            DO i=IR_RANGE
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               s1_t(i,j,k,Lout,it)=fac1*s1_t(i,j,k,Lin1,it)+             &
      &                            fac2*s2_t(i,j,k,Lin2,it)
 # ifdef MASKING
@@ -731,8 +712,8 @@
       DO it=1,NT(ng)
         IF (Lstflux(it,ng)) THEN
           DO ir=1,Nfrec(ng)
-            DO j=JR_RANGE
-              DO i=IR_RANGE
+            DO j=JstrT,JendT
+              DO i=IstrT,IendT
                 s1_tflux(i,j,ir,Lout,it)=fac1*s1_tflux(i,j,ir,Lin1,it)+ &
      &                                   fac2*s2_tflux(i,j,ir,Lin2,it)
 #  ifdef MASKING
@@ -751,11 +732,11 @@
       RETURN
       END SUBROUTINE state_addition
 
-#undef IR_RANGE
-#undef IU_RANGE
-#undef IV_RANGE
-#undef JR_RANGE
-#undef JU_RANGE
-#undef JV_RANGE
+#undef IstrT,IendT
+#undef IstrP,IendT
+#undef IstrT,IendT
+#undef JstrT,JendT
+#undef JstrT,JendT
+#undef JstrP,JendT
 
       END MODULE state_addition_mod

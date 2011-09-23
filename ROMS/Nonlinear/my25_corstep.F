@@ -104,11 +104,10 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_scalars
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
 # endif
@@ -179,18 +178,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: i, itrc, j, k
 
       real(r8), parameter :: Gadv = 1.0_r8/3.0_r8
@@ -387,20 +374,22 @@
 #  endif
           END DO
         END DO
-#  if !defined EW_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-          DO j=Jstr,Jend
-            gradK(Istr-1,j)=gradK(Istr,j)
-            gradP(Istr-1,j)=gradP(Istr,j)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.EWperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                gradK(Istr-1,j)=gradK(Istr,j)
+                gradP(Istr-1,j)=gradP(Istr,j)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                gradK(Iend+2,j)=gradK(Iend+1,j)
+                gradP(Iend+2,j)=gradP(Iend+1,j)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-          DO j=Jstr,Jend
-            gradK(Iend+2,j)=gradK(Iend+1,j)
-            gradP(Iend+2,j)=gradP(Iend+1,j)
-          END DO
-        END IF
-#  endif
 #  ifdef K_C4ADVECTION
 !
 !  Fourth-order, centered differences advection.
@@ -455,20 +444,22 @@
 #  endif
           END DO
         END DO
-#  if !defined NS_PERIODIC && !defined COMPOSED_GRID
-        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-          DO i=Istr,Iend
-            gradK(i,Jstr-1)=gradK(i,Jstr)
-            gradP(i,Jstr-1)=gradP(i,Jstr)
-          END DO
+        IF (.not.ComposedGrid(ng)) THEN
+          IF (.not.NSperiodic(ng)) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                gradK(i,Jstr-1)=gradK(i,Jstr)
+                gradP(i,Jstr-1)=gradP(i,Jstr)
+              END DO
+            END IF
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                gradK(i,Jend+2)=gradK(i,Jend+1)
+                gradP(i,Jend+2)=gradP(i,Jend+1)
+              END DO
+            END IF
+          END IF
         END IF
-        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-          DO i=Istr,Iend
-            gradK(i,Jend+2)=gradK(i,Jend+1)
-            gradP(i,Jend+2)=gradP(i,Jend+1)
-          END DO
-        END IF
-#  endif
 #  ifdef K_C4ADVECTION
         cff1=1.0_r8/6.0_r8
         DO j=Jstr,Jend+1
@@ -767,32 +758,36 @@
      &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 nnew, nstp,                                      &
      &                 gls, tke)
-# if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_w3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        tke(:,:,:,nnew))
-      CALL exchange_w3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        gls(:,:,:,nnew))
-      CALL exchange_w3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        Akv)
-      DO itrc=1,NAT
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_w3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
-     &                          Akt(:,:,:,itrc))
-      END DO
-# endif
+     &                          tke(:,:,:,nnew))
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          gls(:,:,:,nnew))
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          Akv)
+        DO itrc=1,NAT
+          CALL exchange_w3d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj, 0, N(ng),         &
+     &                            Akt(:,:,:,itrc))
+        END DO
+      END IF
+
 # ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, iNLM, 3,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tke(:,:,:,nnew),                              &
      &                    gls(:,:,:,nnew),                              &
      &                    Akv)
       CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Akt)
 # endif
 

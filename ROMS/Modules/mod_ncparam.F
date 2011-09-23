@@ -398,10 +398,24 @@
         integer  :: isVvel = 5                ! 3D V-velocity
         integer  :: isUstr                    ! surface u-stress
         integer  :: isVstr                    ! surface v-stress
+        integer  :: isMtke                    ! turbulent kinetic energy
         integer, allocatable :: isTsur(:)     ! surface tracer flux
         integer, allocatable :: isTvar(:)     ! tracers
+        integer, allocatable :: idBvar(:)     ! LBC variables indices
         integer, allocatable :: idSvar(:)     ! state vector indices
         integer, allocatable :: idSbry(:)     ! state boundaries indices
+!
+!  Generic state variables lateral boundary indices.
+!
+        integer  :: isBp2d                    ! 2D PSI-variables
+        integer  :: isBr2d                    ! 2D RHO-variables
+        integer  :: isBu2d                    ! 2D U-variables
+        integer  :: isBv2d                    ! 2D V-variables
+        integer  :: isBp3d                    ! 3D PSI-variables
+        integer  :: isBr3d                    ! 3D RHO-variables
+        integer  :: isBu3d                    ! 3D U-variables
+        integer  :: isBv3d                    ! 3D V-variables
+        integer  :: isBw3d                    ! 3D W-variables
 !
 !  Input forcing NetCDF files IDs.
 !
@@ -434,7 +448,7 @@
 
         real(r8), allocatable :: Vtime(:,:,:)
 
-        character (len=5  ) :: version = '3.5  '
+        character (len=5  ) :: version = '3.6  '
         character (len=40 ) :: varnam(MV)
         character (len=44 ) :: date_str
         character (len=46 ) :: Tname(0:NV)
@@ -556,6 +570,7 @@
 
       allocate ( isTsur(MT) )
       allocate ( isTvar(MT) )
+      allocate ( idBvar(nLBCvar) )
       allocate ( idSvar(MAXVAL(NSV)+1) )
       allocate ( idSbry(MAXVAL(NSV)+1) )
 
@@ -621,26 +636,16 @@
       integer :: Lvar, Ntiles, i, ic, ie, is, j, ng
       integer :: gtype, tile, varid
 
-      real(r8), parameter :: epsilon = 1.0E-8_r8
       real(r8), parameter :: spv = 0.0_r8
       real(r8) :: offset, scale
 
       character (len=120), dimension(7) :: Vinfo
 !
 !-----------------------------------------------------------------------
-!  Set minimum and maximum fractional coordinates for processing
-!  observations. Either the full grid or only interior points will
-!  be considered.  The strategy here is to add a small value (epsilon)
-!  to the eastern and northern boundary values of Xmax and Ymax so
-!  observations at such boundaries locations are processed. This
-!  is needed because the .lt. operator in the following conditional:
-!
-!     IF (...
-!    &    ((Xmin.le.Xobs(iobs)).and.(Xobs(iobs).lt.Xmax)).and.          &
-!    &    ((Ymin.le.Yobs(iobs)).and.(Yobs(iobs).lt.Ymax))) THEN
+!  Initialize several variables.
 !-----------------------------------------------------------------------
 !
-!  Initialize.
+!  Initialize DOMAIN structure.
 !
       DO ng=1,Ngrids
         DOMAIN(ng) % Eastern_Edge  = .FALSE.
@@ -678,193 +683,6 @@
         DOMAIN(ng) % Ymin_v   = spv
         DOMAIN(ng) % Ymax_v   = spv
       END DO
-!
-!  Set RHO-points domain lower and upper bounds (integer).
-!
-      DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-        CALL get_bounds (ng, MyRank, r2dvar, 0, Itile, Jtile,           &
-     &                   rILB(ng), rIUB(ng), rJLB(ng), rJUB(ng))
-#  ifndef FULL_GRID
-        IF (Itile.eq.0) THEN
-          rILB(ng)=rILB(ng)+1
-        END IF
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          rIUB(ng)=rIUB(ng)-1
-        END IF
-        IF (Jtile.eq.0) THEN
-          rJLB(ng)=rJLB(ng)+1
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          rJUB(ng)=rJUB(ng)-1
-        END IF
-#  endif
-# else
-#  ifdef FULL_GRID
-        rILB(ng)=0
-        rIUB(ng)=Lm(ng)+1
-        rJLB(ng)=0
-        rJUB(ng)=Mm(ng)+1
-#  else
-        rILB(ng)=1
-        rIUB(ng)=Lm(ng)
-        rJLB(ng)=1
-        rJUB(ng)=Mm(ng)
-#  endif
-# endif
-!
-!  Minimum and maximum fractional coordinates for RHO-points.
-!
-        DO tile=0,NtileI(ng)*NtileJ(ng)-1
-          CALL get_domain (ng, tile, r2dvar, 0, epsilon,                &
-# ifdef FULL_GRID
-     &                     .TRUE.,                                      &
-# else
-     &                     .FALSE.,                                     &
-# endif
-     &                     DOMAIN(ng) % Xmin_rho(tile),                 &
-     &                     DOMAIN(ng) % Xmax_rho(tile),                 &
-     &                     DOMAIN(ng) % Ymin_rho(tile),                 &
-     &                     DOMAIN(ng) % Ymax_rho(tile))
-        END DO
-# ifdef DISTRIBUTE
-        rXmin(ng)=DOMAIN(ng)%Xmin_rho(MyRank)
-        rXmax(ng)=DOMAIN(ng)%Xmax_rho(MyRank)
-        rYmin(ng)=DOMAIN(ng)%Ymin_rho(MyRank)
-        rYmax(ng)=DOMAIN(ng)%Ymax_rho(MyRank)
-# else
-        rXmin(ng)=DOMAIN(ng)%Xmin_rho(0)
-        rXmax(ng)=DOMAIN(ng)%Xmax_rho(0)
-        rYmin(ng)=DOMAIN(ng)%Ymin_rho(0)
-        rYmax(ng)=DOMAIN(ng)%Ymax_rho(0)
-# endif
-      END DO
-!
-!  Set U-points domain lower and upper bounds (integer).
-!
-      DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-        CALL get_bounds (ng, MyRank, u2dvar, 0, Itile, Jtile,           &
-     &                   uILB(ng), uIUB(ng), uJLB(ng), uJUB(ng))
-#  ifndef FULL_GRID
-        IF (Itile.eq.0) THEN
-          uILB(ng)=uILB(ng)+1
-        END IF
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          uIUB(ng)=uIUB(ng)-1
-        END IF
-        IF (Jtile.eq.0) THEN
-          uJLB(ng)=uJLB(ng)+1
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          uJUB(ng)=uJUB(ng)-1
-        END IF
-#  endif
-# else
-#  ifdef FULL_GRID
-        uILB(ng)=1
-        uIUB(ng)=Lm(ng)+1
-        uJLB(ng)=0
-        uJUB(ng)=Mm(ng)+1
-#  else
-        uILB(ng)=2
-        uIUB(ng)=Lm(ng)
-        uJLB(ng)=1
-        uJUB(ng)=Mm(ng)
-#  endif
-# endif
-!
-!  Minimum and maximum fractional coordinates for U-points.
-!
-        DO tile=0,NtileI(ng)*NtileJ(ng)-1
-          CALL get_domain (ng, tile, u2dvar, 0, epsilon,                &
-# ifdef FULL_GRID
-     &                     .TRUE.,                                      &
-# else
-     &                     .FALSE.,                                     &
-# endif
-     &                     DOMAIN(ng) % Xmin_u(tile),                   &
-     &                     DOMAIN(ng) % Xmax_u(tile),                   &
-     &                     DOMAIN(ng) % Ymin_u(tile),                   &
-     &                     DOMAIN(ng) % Ymax_u(tile))
-        END DO
-# ifdef DISTRIBUTE
-        uXmin(ng)=DOMAIN(ng)%Xmin_u(MyRank)
-        uXmax(ng)=DOMAIN(ng)%Xmax_u(MyRank)
-        uYmin(ng)=DOMAIN(ng)%Ymin_u(MyRank)
-        uYmax(ng)=DOMAIN(ng)%Ymax_u(MyRank)
-# else
-        uXmin(ng)=DOMAIN(ng)%Xmin_u(0)
-        uXmax(ng)=DOMAIN(ng)%Xmax_u(0)
-        uYmin(ng)=DOMAIN(ng)%Ymin_u(0)
-        uYmax(ng)=DOMAIN(ng)%Ymax_u(0)
-# endif
-      END DO
-!
-!  Set V-points domain lower and upper bounds (integer).
-!
-      DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-        CALL get_bounds (ng, MyRank, v2dvar, 0, Itile, Jtile,           &
-     &                   vILB(ng), vIUB(ng), vJLB(ng), vJUB(ng))
-#  ifndef FULL_GRID
-        IF (Itile.eq.0) THEN
-          vILB(ng)=vILB(ng)+1
-        END IF
-        IF (Itile.eq.(NtileI(ng)-1)) THEN
-          vIUB(ng)=vIUB(ng)-1
-        END IF
-        IF (Jtile.eq.0) THEN
-          vJLB(ng)=vJLB(ng)+1
-        END IF
-        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          vJUB(ng)=vJUB(ng)-1
-        END IF
-#  endif
-# else
-#  ifdef FULL_GRID
-        vILB(ng)=0
-        vIUB(ng)=Lm(ng)+1
-        vJLB(ng)=1
-        vJUB(ng)=Mm(ng)+1
-#  else
-        vILB(ng)=1
-        vIUB(ng)=Lm(ng)
-        vJLB(ng)=2
-        vJUB(ng)=Mm(ng)
-#  endif
-# endif
-!
-!  Minimum and maximum fractional coordinates for V-points.
-!
-        DO tile=0,NtileI(ng)*NtileJ(ng)-1
-          CALL get_domain (ng, tile, v2dvar, 0, epsilon,                &
-# ifdef FULL_GRID
-     &                     .TRUE.,                                      &
-# else
-     &                     .FALSE.,                                     &
-# endif
-     &                     DOMAIN(ng) % Xmin_v(tile),                   &
-     &                     DOMAIN(ng) % Xmax_v(tile),                   &
-     &                     DOMAIN(ng) % Ymin_v(tile),                   &
-     &                     DOMAIN(ng) % Ymax_v(tile))
-        END DO
-# ifdef DISTRIBUTE
-        vXmin(ng)=DOMAIN(ng)%Xmin_v(MyRank)
-        vXmax(ng)=DOMAIN(ng)%Xmax_v(MyRank)
-        vYmin(ng)=DOMAIN(ng)%Ymin_v(MyRank)
-        vYmax(ng)=DOMAIN(ng)%Ymax_v(MyRank)
-# else
-        vXmin(ng)=DOMAIN(ng)%Xmin_v(0)
-        vXmax(ng)=DOMAIN(ng)%Xmax_v(0)
-        vYmin(ng)=DOMAIN(ng)%Ymin_v(0)
-        vYmax(ng)=DOMAIN(ng)%Ymax_v(0)
-# endif
-      END DO
-!
-!-----------------------------------------------------------------------
-!  Initialize several variables.
-!-----------------------------------------------------------------------
 !
 !  Initialize NetCDF files creation flags.
 !
@@ -919,6 +737,24 @@
         ic=ic+1
         isTsur(i)=ic
       END DO
+#endif
+!
+!  Set generic lateral boundary indices for LBC structure.  Use the same
+!  values of the state variables at the same C-grid location.  Generic
+!  indices are used for testing periodicity.  The PSI-variables and
+!  W-variables are assign the same value as the RHO-variables.
+!
+      isBp2d=isFsur                           ! 2D PSI-variables
+      isBr2d=isFsur                           ! 2D RHO-variables
+      isBu2d=isUbar                           ! 2D U-variables
+      isBv2d=isVbar                           ! 2D V-variables
+      isBp3d=isTvar(1)                        ! 3D PSI-variables
+      isBr3d=isTvar(1)                        ! 3D RHO-variables
+      isBu3d=isUvel                           ! 3D U-variables
+      isBv3d=isVvel                           ! 3D V-variables
+      isBw3d=isTvar(1)                        ! 3D W-variables
+#if defined SOLVE3D && (defined GLS_MIXING || defined MY25_MIXING)
+      isMtke=isTvar(MT)+1                     ! turbulent variables
 #endif
 !
 !  Initialize IO information variables.
@@ -2214,6 +2050,28 @@
         WRITE (Vname(5,varid),'(a)')                                    &
      &          TRIM(ADJUSTL(Vname(5,idTvar(i))))
       END DO
+#endif
+!
+!-----------------------------------------------------------------------
+!  Set model lateral boundary variables index.
+!-----------------------------------------------------------------------
+!
+      idBvar(isFsur)=idFsur
+      idBvar(isUbar)=idUbar
+      idBvar(isVbar)=idVbar
+      ic=3
+#ifdef SOLVE3D
+      idBvar(isUvel)=idUvel
+      idBvar(isVvel)=idVvel
+      ic=ic+2
+      DO i=1,MT
+        idBvar(isTvar(i))=idTvar(i)
+        ic=ic+1
+      END DO
+# if defined GLS_MIXING || defined MY25_MIXING
+      ic=ic+1
+      idBvar(ic)=idMtke
+# endif
 #endif
 !
 !-----------------------------------------------------------------------

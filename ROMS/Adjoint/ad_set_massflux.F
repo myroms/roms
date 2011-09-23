@@ -2,27 +2,6 @@
       MODULE ad_set_massflux_mod
 
 #if defined ADJOINT && defined SOLVE3D
-
-# ifdef EW_PERIODIC
-#  define IU_RANGE Istr,Iend
-#  define IV_RANGE Istr,Iend
-# elif defined COMPOSED_GRID || defined REFINED_GRID
-#  define IU_RANGE IstrP+1,IendT
-#  define IV_RANGE IstrT,IendT
-# else
-#  define IU_RANGE Istr,IendR
-#  define IV_RANGE IstrR,IendR
-# endif
-# ifdef NS_PERIODIC
-#  define JU_RANGE Jstr,Jend
-#  define JV_RANGE Jstr,Jend
-# elif defined COMPOSED_GRID || defined REFINED_GRID
-#  define JU_RANGE JstrT,JendT
-#  define JV_RANGE JstrP+1,JendT
-# else
-#  define JU_RANGE JstrR,JendR
-#  define JV_RANGE Jstr,JendR
-# endif
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -41,10 +20,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ad_set_massflux
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -113,9 +92,7 @@
       USE mod_param
       USE mod_scalars
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
       USE ad_exchange_3d_mod
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange3d
 # endif
@@ -173,18 +150,8 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
+      integer :: IminU, IminV, ImaxU, ImaxV
+      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: i, j, k
 
       real(r8) :: adfac, adfac1
@@ -194,45 +161,86 @@
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes, Hz*u/n and Hz*v/m.
 !-----------------------------------------------------------------------
+!
+!  Set local I- and J-ranges.
+!
+      IF (EWperiodic(ng)) THEN
+        IminU=Istr
+        ImaxU=Iend
+        IminV=Istr
+        ImaxV=Iend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          IminU=IstrP+1
+          ImaxU=IendT
+          IminV=IstrT
+          ImaxV=IendT
+        ELSE
+          IminU=Istr
+          ImaxU=IendR
+          IminV=IstrR
+          ImaxV=IendR
+        END IF
+      END IF
 
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+      IF (NSperiodic(ng)) THEN
+        JminU=Jstr
+        JmaxU=Jend
+        JminV=Jstr
+        JmaxV=Jend
+      ELSE
+        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
+          JminU=JstrT
+          JmaxU=JendT
+          JminV=JstrP+1
+          JmaxV=JendT
+        ELSE
+          JminU=JstrR
+          JmaxU=JendR
+          JminV=Jstr
+          JmaxV=JendR
+        END IF
+      END IF
 !
 !  Exchange boundary information.
 !
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    NghostPoints,                                 &
+!>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    tl_Huon, tl_Hvom)
 !>
       CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Huon, ad_Hvom)
-#  endif
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_v3d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-!>   &                        tl_Hvom)
-!>
-      CALL ad_exchange_v3d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           ad_Hvom)
-!>    CALL exchange_u3d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-!>   &                        tl_Huon)
-!>
-      CALL ad_exchange_u3d_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           ad_Huon)
-#  endif
+!
 # endif
+
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+!>      CALL exchange_v3d_tile (ng, tile,                               &
+!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!>   &                          tl_Hvom)
+!>
+        CALL ad_exchange_v3d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
+     &                             ad_Hvom)
+!>      CALL exchange_u3d_tile (ng, tile,                               &
+!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!>   &                          tl_Huon)
+!>
+        CALL ad_exchange_u3d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
+     &                             ad_Huon)
+      END IF
 !
 !  Compute adjoint horizontal mass fluxes.
 !
       DO k=1,N(ng)
-        DO j=JV_RANGE
-          DO i=IV_RANGE
+        DO j=JminV,JmaxV
+          DO i=IminV,ImaxV
 # ifdef NEARSHORE_MELLOR
 !>          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
 !>   &                     0.5_r8*om_v(i,j)*                            &
@@ -263,8 +271,8 @@
             ad_Hvom(i,j,k)=0.0_r8
           END DO
         END DO
-        DO j=JU_RANGE
-          DO i=IU_RANGE
+        DO j=JminU,JmaxU
+          DO i=IminU,ImaxU
 # ifdef NEARSHORE_MELLOR
 !>          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
 !>   &                     0.5_r8*on_u(i,j)*                            &

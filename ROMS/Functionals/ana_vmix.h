@@ -60,9 +60,7 @@
       USE mod_param
       USE mod_scalars
 !
-#if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
-#endif
 #ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
 #endif
@@ -92,18 +90,6 @@
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
       integer :: i, itrc, j, k
 
 #include "set_bounds.h"
@@ -214,15 +200,20 @@
 #else
       ana_vmix.h: no values provided for Akv.
 #endif
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_w3d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
-     &                        Akv)
-#endif
+!
+!  Exchange boundary data.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          Akv)
+      END IF
+
 #ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Akv)
 #endif
 !
@@ -323,18 +314,24 @@
 #else
       ana_vmix.h: no values provided for Akt.
 #endif
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      DO itrc=1,NAT
-        CALL exchange_w3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
-     &                          Akt(:,:,:,itrc))
-      END DO
-#endif
+!
+!  Exchange boundary data.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        DO itrc=1,NAT
+          CALL exchange_w3d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj, 0, N(ng),         &
+     &                            Akt(:,:,:,itrc))
+        END DO
+      END IF
+
 #ifdef DISTRIBUTE
       CALL mp_exchange4d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Akt)
 #endif
+
       RETURN
       END SUBROUTINE ana_vmix_tile

@@ -30,9 +30,6 @@
 #define CURVGRID
 #define SOLVE3D
 #define SPLINES
-#define EW_PERIODIC
-#define SOUTHERN_WALL
-#define NORTHERN_WALL
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX

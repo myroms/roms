@@ -26,8 +26,6 @@
 #define STATIONS
 #define SOLVE3D
 #define SPLINES
-#define EW_PERIODIC
-#define NS_PERIODIC
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
