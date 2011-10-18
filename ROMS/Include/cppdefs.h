@@ -506,6 +506,7 @@
 **                                                                           **
 ** DEFLATE             use to set compression NetCDF-4/HDF5 format files     **
 ** HDF5                use to create NetCDF-4/HDF5 format files              **
+** NO_LBC_ATT          use to not check NLM_LBC global attribute on restart  **
 ** NO_READ_GHOST       use to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID       use if not writing grid arrays                        **
 ** PARALLEL_IO         use if parallel I/O via HDF5 or pnetcdf libraries     **

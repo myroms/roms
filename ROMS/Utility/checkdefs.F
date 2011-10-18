@@ -1111,6 +1111,12 @@
       Coptions(is:is+13)=' !NONLIN_EOS,'
 # endif
 #endif
+#ifdef NO_LBC_ATT
+      IF (Master) WRITE (stdout,20) 'NO_LBC_ATT',                       &
+     &   'Not checking NetCDF global attribute NLM_LBC during restart.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' NO_LBC_ATT,'
+#endif
 #if defined NO_READ_GHOST && defined DISTRIBUTE
       IF (Master) WRITE (stdout,20) 'NO_READ_GRID',                     &
      &   'Not including ghost points during scattering read data.'
@@ -1132,7 +1138,7 @@
 #endif
 #ifdef NPZD_IRON
       IF (Master) WRITE (stdout,20) 'NPZD_IRON',                        &
-     &   'NPZD Biological Model (Powell et al.) with iron limitation'
+     &   'NPZD Biological Model (Powell et al.) with iron limitation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' NPZD_IRON,'
       ibiology=ibiology+1
