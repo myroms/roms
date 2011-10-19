@@ -126,12 +126,19 @@
 
       real(r8) :: cff, ratio
 
+#ifdef SOLVE3D
       real(r8) :: my_rx0, my_rx1
+#endif
       real(r8) :: my_volume0, my_volume1, my_volume2
 
 #ifdef DISTRIBUTE
+# ifdef SOLVE3D
       real(r8), dimension(5) :: buffer
       character (len=3), dimension(5) :: op_handle
+# else
+      real(r8), dimension(3) :: buffer
+      character (len=3), dimension(3) :: op_handle
+# endif
 #endif
 
 #include "set_bounds.h"
@@ -237,38 +244,52 @@
       END IF
 !$OMP CRITICAL (R_FACTOR)
       IF (tile_count.eq.0) THEN
-        rx0=my_rx0
-        rx1=my_rx1
         TotVolume=my_volume0
         MinVolume=my_volume1
         MaxVolume=my_volume2
+#ifdef SOLVE3D
+        rx0=my_rx0
+        rx1=my_rx1
+#endif
       ELSE
-        rx0=MAX(rx0,my_rx0)
-        rx1=MAX(rx1,my_rx1)
         TotVolume=TotVolume+my_volume0
         MinVolume=MIN(MinVolume,my_volume1)
         MaxVolume=MAX(MaxVolume,my_volume2)
+#ifdef SOLVE3D
+        rx0=MAX(rx0,my_rx0)
+        rx1=MAX(rx1,my_rx1)
+#endif
       END IF
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
 #ifdef DISTRIBUTE
-        buffer(1)=rx0
-        buffer(2)=rx1
-        buffer(3)=TotVolume
-        buffer(4)=MinVolume
-        buffer(5)=MaxVolume
-        op_handle(1)='MAX'
-        op_handle(2)='MAX'
-        op_handle(3)='SUM'
-        op_handle(4)='MIN'
+        buffer(1)=TotVolume
+        buffer(2)=MinVolume
+        buffer(3)=MaxVolume
+# ifdef SOLVE3D
+        buffer(4)=rx0
+        buffer(5)=rx1
+# endif
+        op_handle(1)='SUM'
+        op_handle(2)='MIN'
+        op_handle(3)='MAX'
+# ifdef SOLVE3D
+        op_handle(4)='MAX'
         op_handle(5)='MAX'
+# endif
+# ifdef SOLVE3D
         CALL mp_reduce (ng, model, 5, buffer, op_handle)
-        rx0=buffer(1)
-        rx1=buffer(2)
-        TotVolume=buffer(3)
-        MinVolume=buffer(4)
-        MaxVolume=buffer(5)
+# else
+        CALL mp_reduce (ng, model, 3, buffer, op_handle)
+# endif
+        TotVolume=buffer(1)
+        MinVolume=buffer(2)
+        MaxVolume=buffer(3)
+# ifdef SOLVE3D
+        rx0=buffer(4)
+        rx1=buffer(5)
+# endif
 #endif
         IF (Master) THEN
 #ifdef SOLVE3D
