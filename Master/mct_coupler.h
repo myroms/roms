@@ -159,7 +159,7 @@
 !  Terminates all the mpi-processing and coupling.
 !-----------------------------------------------------------------------
 !
-      CALL mpi_barrier (MPI_COMM_WORLD)
+      CALL mpi_barrier (MPI_COMM_WORLD, MyError)
       CALL MCTWorld_clean ()
       CALL mpi_finalize (MyError)
 
