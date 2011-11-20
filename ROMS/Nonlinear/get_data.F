@@ -589,7 +589,7 @@
 #  endif
 # endif
 
-# if defined SEDIMENT || defined BIOLOGY
+# if defined BIOLOGY || defined SEDIMENT || defined T_PASSIVE
 #  ifndef ANA_SPFLUX
 !
 !-----------------------------------------------------------------------
