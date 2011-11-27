@@ -457,7 +457,6 @@
 !
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
-          LwrtTime(ng)=.TRUE.
           DO irec=1,Nrec(ng)-1
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
