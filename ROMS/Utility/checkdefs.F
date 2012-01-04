@@ -65,13 +65,13 @@
 #endif
 #if defined ADD_FSOBC && defined SSH_TIDES
       IF (Master) WRITE (stdout,20) 'ADD_FSOBC',                        &
-     &   'Adding tidal elevation to proccesed OBC data.'
+     &   'Adding tidal elevation to processed OBC data.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' ADD_FSOBC,'
 #endif
 #if defined ADD_M2OBC && defined UV_TIDES
       IF (Master) WRITE (stdout,20) 'ADD_M2OBC',                        &
-     &   'Adding tidal currents to proccesed OBC data.'
+     &   'Adding tidal currents to processed OBC data.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' ADD_M2OBC,'
 #endif
@@ -442,7 +442,7 @@
 #endif
 #if defined BACKGROUND && defined FOUR_DVAR
       IF (Master) WRITE (stdout,20) 'BACKGROUND',                       &
-     &   'Include bacground cost function.'
+     &   'Include background cost function.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' BACKGROUND,'
 #endif
@@ -480,7 +480,7 @@
 #endif
 #ifdef BULK_FLUXES
       IF (Master) WRITE (stdout,20) 'BULK_FLUXES',                      &
-     &   'Surface bulk fluxes parametererization.'
+     &   'Surface bulk fluxes parameterization.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' BULK_FLUXES,'
 #endif
@@ -519,7 +519,7 @@
       IF (Master) WRITE (stdout,20) 'CELERITY_WRITE',                   &
      &   'Write out radiation celerity in forward file.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' CELERETY_WRITE,'
+      Coptions(is:is+16)=' CELERITY_WRITE,'
 #endif
 #if defined DATALESS_LOOPS && defined W4DVAR
       IF (Master) WRITE (stdout,20) 'DATALESS_LOOPS',                   &
@@ -732,7 +732,7 @@
 #endif
 #ifdef FSOBC_REDUCED
       IF (Master) WRITE (stdout,20) 'FSOBC_REDUCED',                    &
-     &   'Using free-surface data in reduced physics condtions'
+     &   'Using free-surface data in reduced physics conditions'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' FSOBC_REDUCED,'
 #endif
@@ -1646,14 +1646,14 @@
 #if defined CARBON && defined BIO_FENNEL
 # ifdef TALK_NONCONSERV
       IF (Master) WRITE (stdout,20) 'TALK_NONCONSERV',                  &
-     &   'Nonconservative computation of alkalinity.'
+     &   'Alkalinity is affected by changes in nitrate or ammonium.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+17)=' TALK_PROGNOSTIC,'
+      Coptions(is:is+17)=' TALK_NONCONSERV,'
 # else
-      IF (Master) WRITE (stdout,20) '!TALK_PROGNOSTIC',                 &
-     &   'Diagnostic computation of alkalinity.'
+      IF (Master) WRITE (stdout,20) '!TALK_NONCONSERV',                 &
+     &   'Alkalinity is passive and unaffected by nitrate or ammonium.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+18)=' !TALK_PROGNOSTIC,'
+      Coptions(is:is+18)=' !TALK_NONCONSERV,'
 # endif
 #endif
 #ifdef TANGENT
