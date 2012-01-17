@@ -250,11 +250,11 @@
 #endif
 
 #if defined MIXED_BED
-      IF (.not.allocated(tcr_tim)) THEN
+      IF (.not.allocated(transC)) THEN
         allocate ( transC(Ngrids) )
         transC = IniVal
       END IF
-      IF (.not.allocated(tcr_tim)) THEN
+      IF (.not.allocated(transN)) THEN
         allocate ( transN(Ngrids) )
         transN = IniVal
       END IF
