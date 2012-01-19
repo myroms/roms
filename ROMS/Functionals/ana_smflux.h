@@ -403,7 +403,7 @@
 # endif
         END DO
       END DO
-#elif defined UPEWELLING
+#elif defined UPWELLING
       IF (NSperiodic(ng)) THEN
         IF ((tdays(ng)-dstart).le.2.0_r8) THEN
           windamp=-0.1_r8*SIN(pi*(tdays(ng)-dstart)/4.0_r8)/rho0
