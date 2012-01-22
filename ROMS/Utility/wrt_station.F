@@ -37,6 +37,10 @@
 # else
       USE extract_sta_mod, ONLY : extract_sta2d
 # endif
+      USE uv_rotate_mod, ONLY : uv_rotate2d
+# ifdef SOLVE3D
+      USE uv_rotate_mod, ONLY : uv_rotate3d
+# endif
 !
       implicit none
 !
@@ -62,6 +66,13 @@
       real(r8), dimension(Nstation(ng)*(N(ng))) :: XposR, YposR, ZposR
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: XposW, YposW, ZposW
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta
+# endif
+
+      real(r8), allocatable :: Ur2d(:,:)
+      real(r8), allocatable :: Vr2d(:,:)
+# ifdef SOLVE3D
+      real(r8), allocatable :: Ur3d(:,:,:)
+      real(r8), allocatable :: Vr3d(:,:,:)
 # endif
 !
       SourceFile='wrt_station.F'
@@ -200,6 +211,58 @@
      &                        varid = STA(ng)%Vid(idVbar))
         IF (exit_flag.ne.NoError) RETURN
       END IF
+!
+!  Write out 2D Eastward and Northward momentum components (m/s) at
+!  RHO-points
+!
+      IF (Sout(idu2dE,ng).and.Sout(idv2dN,ng)) THEN
+        IF (.not.allocated(Ur2d)) THEN
+          allocate (Ur2d(LBi:UBi,LBj:UBj))
+            Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        IF (.not.allocated(Vr2d)) THEN
+          allocate (Vr2d(LBi:UBi,LBj:UBj))
+            Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        DO tile=0,NtileX(ng)*NtileE(ng)-1
+          CALL uv_rotate2d (ng, TILE, .FALSE., .TRUE.,                  &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      GRID(ng) % CosAngler,                       &
+     &                      GRID(ng) % SinAngler,                       &
+# ifdef MASKING
+     &                      GRID(ng) % rmask_io,                        &
+# endif
+     &                      OCEAN(ng) % ubar(:,:,KOUT),                 &
+     &                      OCEAN(ng) % vbar(:,:,KOUT),                 &
+     &                      Ur2d, Vr2d)
+        END DO
+
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idu2dE, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, Ur2d,                                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idu2dE)), psta,              &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idu2dE))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL extract_sta2d (ng, iNLM, Cgrid, idv2dN, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, Vr2d,                                &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idv2dN)), psta,              &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idv2dN))
+        IF (exit_flag.ne.NoError) RETURN
+
+        deallocate (Ur2d)
+        deallocate (Vr2d)
+      END IF
 
 # ifdef SOLVE3D
 !
@@ -235,6 +298,60 @@
      &                        ncid = STA(ng)%ncid,                      &
      &                        varid = STA(ng)%Vid(idVvel))
         IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out 3D Eastward and Northward momentum components (m/s) at
+!  RHO-points.
+!
+      IF (Sout(idu3dE,ng).and.Sout(idv3dN,ng)) THEN
+        IF (.not.allocated(Ur3d)) THEN
+          allocate (Ur3d(LBi:UBi,LBj:UBj,N(ng)))
+          Ur3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+        IF (.not.allocated(Vr3d)) THEN
+          allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
+          Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+        DO tile=0,NtileX(ng)*NtileE(ng)-1
+          CALL uv_rotate3d (ng, TILE, .FALSE., .TRUE.,                  &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      GRID(ng) % CosAngler,                       &
+     &                      GRID(ng) % SinAngler,                       &
+#  ifdef MASKING
+     &                      GRID(ng) % rmask_io,                        &
+#  endif
+     &                      OCEAN(ng) % u(:,:,:,NOUT),                  &
+     &                      OCEAN(ng) % v(:,:,:,NOUT),                  &
+     &                      Ur3d, Vr3d)
+        END DO
+
+        scale=1.0_r8
+        CALL extract_sta3d (ng, iNLM, Cgrid, idu3dE, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, Ur3d,                                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idu3dE)), rsta,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idu3dE))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL extract_sta3d (ng, iNLM, Cgrid, idv3dN, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, Vr3d,                                &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idv3dN)), rsta,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idv3dN))
+        IF (exit_flag.ne.NoError) RETURN
+
+        deallocate (Ur3d)
+        deallocate (Vr3d)
       END IF
 !
 !  Write out vertical velocity (m/s).

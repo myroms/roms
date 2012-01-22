@@ -66,6 +66,10 @@
               Npts=load_l(Nval, Cval, Ngrids, Sout(idUvel,:))
             CASE ('Sout(idVvel)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idVvel,:))
+            CASE ('Sout(idu3dE)')
+              Npts=load_l(Nval, Cval, Ngrids, Sout(idu3dE,:))
+            CASE ('Sout(idv3dN)')
+              Npts=load_l(Nval, Cval, Ngrids, Sout(idv3dN,:))
             CASE ('Sout(idWvel)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idWvel,:))
             CASE ('Sout(idOvel)')
@@ -74,6 +78,10 @@
               Npts=load_l(Nval, Cval, Ngrids, Sout(idUbar,:))
             CASE ('Sout(idVbar)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idVbar,:))
+            CASE ('Sout(idu2dE)')
+              Npts=load_l(Nval, Cval, Ngrids, Sout(idu2dE,:))
+            CASE ('Sout(idv2dN)')
+              Npts=load_l(Nval, Cval, Ngrids, Sout(idv2dN,:))
             CASE ('Sout(idFsur)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idFsur,:))
 # if defined SEDIMENT && defined SED_MORPH
@@ -260,6 +268,10 @@
       RETURN
  30   CONTINUE
 !
+!-----------------------------------------------------------------------
+!  Process input parameters.
+!-----------------------------------------------------------------------
+!
 !  Turn off the processing of stations if not running long enough to
 !  create a stations file (LdefSTA=.FALSE. because nSTA < ntimes or
 !  nSTA = 0 when nrrec = 0).
@@ -268,6 +280,26 @@
         IF (.not.LdefSTA(ng).and.Lstations(ng)) THEN
           Lstations(ng)=.FALSE.
         END IF
+      END DO
+!
+!  Make sure that both component switches are activated when processing
+!  (Eastward,Northward) momentum components at RHO-points.
+!
+      DO ng=1,Ngrids
+        IF (.not.Sout(idu2dE,ng).and.Sout(idv2dN,ng)) THEN
+          Sout(idu2dE,ng)=.TRUE.
+        END IF
+        IF (.not.Sout(idv2dN,ng).and.Sout(idu2dE,ng)) THEN
+          Sout(idv2dN,ng)=.TRUE.
+        END IF
+# ifdef SOLVE3D
+        IF (.not.Sout(idu3dE,ng).and.Sout(idv3dN,ng)) THEN
+          Sout(idu3dE,ng)=.TRUE.
+        END IF
+        IF (.not.Sout(idv3dN,ng).and.Sout(idu3dE,ng)) THEN
+          Sout(idv3dN,ng)=.TRUE.
+        END IF
+# endif
       END DO
 !
 !-----------------------------------------------------------------------
@@ -294,6 +326,12 @@
             IF (Sout(idVbar,ng)) WRITE (out,80) Sout(idVbar,ng),        &
      &          'Sout(idVbar)',                                         &
      &          'Write out 2D V-momentum component.'
+            IF (Sout(idu2dE,ng)) WRITE (out,80) Sout(idu2dE,ng),        &
+     &          'Sout(idu2dE)',                                         &
+     &          'Write out 2D U-eastward  at RHO-points.'
+            IF (Sout(idv2dN,ng)) WRITE (out,80) Sout(idv2dN,ng),        &
+     &          'Sout(idv2dN)',                                         &
+     &          'Write out 2D V-northward at RHO-points.'
 # ifdef SOLVE3D
             IF (Sout(idUvel,ng)) WRITE (out,80) Sout(idUvel,ng),        &
      &          'Sout(idUvel)',                                         &
@@ -301,6 +339,12 @@
             IF (Sout(idVvel,ng)) WRITE (out,80) Sout(idVvel,ng),        &
      &          'Sout(idVvel)',                                         &
      &          'Write out 3D V-momentum component.'
+            IF (Sout(idu3dE,ng)) WRITE (out,80) Sout(idu3dE,ng),        &
+     &          'Sout(idu3dE)',                                         &
+     &          'Write out 3D U-eastward  at RHO-points.'
+            IF (Sout(idv3dN,ng)) WRITE (out,80) Sout(idv3dN,ng),        &
+     &          'Sout(idv3dN)',                                         &
+     &          'Write out 3D V-northward at RHO-points.'
             IF (Sout(idWvel,ng)) WRITE (out,80) Sout(idWvel,ng),        &
      &          'Sout(idWvel)',                                         &
      &          'Write out W-momentum component.'

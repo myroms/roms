@@ -45,10 +45,14 @@
 
 Sout(idUvel) == T       ! u                  3D U-velocity
 Sout(idVvel) == T       ! v                  3D V-velocity
+Sout(idu3dE) == F       ! u_eastward         3D U-eastward at RHO-points
+Sout(idv3dN) == F       ! v_northward        3D V-nortward at RHO-points
 Sout(idWvel) == T       ! w                  3D W-velocity
 Sout(idOvel) == T       ! omega              3D omega vertical velocity
 Sout(idUbar) == T       ! ubar               2D U-velocity
 Sout(idVbar) == T       ! vbar               2D V-velocity
+Sout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
+Sout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Sout(idFsur) == T       ! zeta               free-surface
 Sout(idBath) == T       ! bath               time-dependent bathymetry
 
@@ -202,10 +206,14 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !
 !  Sout(idUvel)  Write out 3D U-velocity component.
 !  Sout(idVvel)  Write out 3D V-velocity component.
+!  Sout(idu3dE)  Write out 3D Eastward  velocity component at RHO-points.
+!  Sout(idv3dN)  Write out 3D Northward velocity component at RHO-points.
 !  Sout(idWvel)  Write out 3D W-velocity component.
 !  Sout(idOvel)  Write out 3D omega vertical velocity.
 !  Sout(idUbar)  Write out 2D U-velocity component.
 !  Sout(idVbar)  Write out 2D V-velocity component.
+!  Sout(idu2dE)  Write out 2D Eastward  velocity component at RHO-points.
+!  Sout(idv2dN)  Write out 2D Northward velocity component at RHO-points.
 !  Sout(idFsur)  Write out free-surface.
 !  Sout(idBath)  Write out time-dependent bathymetry.
 !

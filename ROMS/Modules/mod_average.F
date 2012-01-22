@@ -18,13 +18,17 @@
 !                                                                      !
 !  Time-averaged state variables for output purposes.                  !
 !                                                                      !
-!  avgu2d     2D velocity component (m/s) in the XI-direction.         !
-!  avgv2d     2D velocity component (m/s) in the ETA-direction.        !
+!  avgu2d     2D velocity  component (m/s) in the XI-direction.        !
+!  avgv2d     2D velocity  component (m/s) in the ETA-direction.       !
+!  avgu2dE    2D Eastward  component (m/s) at RHO-points.              !
+!  avgv2dN    2D Northward component (m/s) at RHO-points.              !
 !  avgzeta    Free surface (m).                                        !
 
 # ifdef SOLVE3D
-!  avgu3d     3D velocity component (m/s) in the XI-direction.         !
-!  avgv3d     3D velocity component (m/s) in the ETA-direction.        !
+!  avgu3d     3D velocity  component (m/s) in the XI-direction.        !
+!  avgv3d     3D velocity  component (m/s) in the ETA-direction.       !
+!  avgu3dE    3D Eastward  component (m/s) at RHO-points.              !
+!  avgv3dN    3D Northward component (m/s) at RHO-points.              !
 !  avgw3d     S-coordinate [omega*Hz/mn] vertical velocity (m3/s).     !
 !  avgwvel    3D "true" vertical velocity (m/s).                       !
 !  avgrho     Density anomaly (kg/m3).                                 !
@@ -140,13 +144,20 @@
 !
 !  Time-averaged state variables.
 !
+          real(r8), pointer :: avgzeta(:,:)
+
           real(r8), pointer :: avgu2d(:,:)
           real(r8), pointer :: avgv2d(:,:)
-          real(r8), pointer :: avgzeta(:,:)
+
+          real(r8), pointer :: avgu2dE(:,:)
+          real(r8), pointer :: avgv2dN(:,:)
 
 # ifdef SOLVE3D
           real(r8), pointer :: avgu3d(:,:,:)
           real(r8), pointer :: avgv3d(:,:,:)
+
+          real(r8), pointer :: avgu3dE(:,:,:)
+          real(r8), pointer :: avgv3dN(:,:,:)
 
           real(r8), pointer :: avgw3d(:,:,:)
           real(r8), pointer :: avgwvel(:,:,:)
@@ -305,11 +316,19 @@
       IF (Aout(idFsur,ng)) THEN
         allocate ( AVERAGE(ng) % avgzeta(LBi:UBi,LBj:UBj) )
       END IF
+
       IF (Aout(idUbar,ng)) THEN
         allocate ( AVERAGE(ng) % avgu2d(LBi:UBi,LBj:UBj) )
       END IF
       IF (Aout(idVbar,ng)) THEN
         allocate ( AVERAGE(ng) % avgv2d(LBi:UBi,LBj:UBj) )
+      END IF
+
+      IF (Aout(idu2dE,ng)) THEN
+        allocate ( AVERAGE(ng) % avgu2dE(LBi:UBi,LBj:UBj) )
+      END IF
+      IF (Aout(idv2dN,ng)) THEN
+        allocate ( AVERAGE(ng) % avgv2dN(LBi:UBi,LBj:UBj) )
       END IF
 
 # ifdef SOLVE3D
@@ -318,6 +337,13 @@
       END IF
       IF (Aout(idVvel,ng)) THEN
         allocate ( AVERAGE(ng) % avgv3d(LBi:UBi,LBj:UBj,N(ng)) )
+      END IF
+
+      IF (Aout(idu3dE,ng)) THEN
+        allocate ( AVERAGE(ng) % avgu3dE(LBi:UBi,LBj:UBj,N(ng)) )
+      END IF
+      IF (Aout(idv3dN,ng)) THEN
+        allocate ( AVERAGE(ng) % avgv3dN(LBi:UBi,LBj:UBj,N(ng)) )
       END IF
 
       IF (Aout(idOvel,ng)) THEN
@@ -644,6 +670,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idUbar,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -655,6 +682,21 @@
         DO j=Jmin,Jmax
           DO i=Imin,Imax
             AVERAGE(ng) % avgv2d(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idu2dE,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgu2dE(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idv2dN,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgv2dN(i,j) = IniVal
           END DO
         END DO
       END IF
@@ -674,6 +716,25 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               AVERAGE(ng) % avgv3d(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idu3dE,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgu3dE(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (Aout(idv3dN,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgv3dN(i,j,k) = IniVal
             END DO
           END DO
         END DO

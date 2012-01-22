@@ -54,11 +54,9 @@
      &                   GRID(ng) % pmask,                              &
      &                   GRID(ng) % rmask,                              &
 #endif
-#ifdef CURVGRID
      &                   GRID(ng) % angler,                             &
      &                   GRID(ng) % CosAngler,                          &
      &                   GRID(ng) % SinAngler,                          &
-#endif
 #ifdef SOLVE3D
 # ifdef ICESHELF
      &                   GRID(ng) % zice,                               &
@@ -110,9 +108,7 @@
 #ifdef MASKING
      &                         pmask, rmask,                            &
 #endif
-#ifdef CURVGRID
      &                         angler, CosAngler, SinAngler,            &
-#endif
 #ifdef SOLVE3D
 # ifdef ICESHELF
      &                         zice,                                    &
@@ -178,9 +174,7 @@
       real(r8), intent(inout) :: pmask(LBi:,LBj:)
       real(r8), intent(inout) :: rmask(LBi:,LBj:)
 # endif
-# ifdef CURVGRID
       real(r8), intent(inout) :: angler(LBi:,LBj:)
-# endif
 # ifdef SOLVE3D
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
@@ -217,10 +211,8 @@
       real(r8), intent(out) :: pmon_r(LBi:,LBj:)
       real(r8), intent(out) :: pmon_u(LBi:,LBj:)
       real(r8), intent(out) :: pmon_v(LBi:,LBj:)
-# ifdef CURVGRID
       real(r8), intent(out) :: CosAngler(LBi:,LBj:)
       real(r8), intent(out) :: SinAngler(LBi:,LBj:)
-# endif
 # ifdef SOLVE3D
       real(r8), intent(out) :: Hz(LBi:,LBj:,:)
       real(r8), intent(out) :: z_r(LBi:,LBj:,:)
@@ -236,9 +228,7 @@
       real(r8), intent(inout) :: pmask(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: rmask(LBi:UBi,LBj:UBj)
 # endif
-# ifdef CURVGRID
       real(r8), intent(inout) :: angler(LBi:UBi,LBj:UBj)
-# endif
 # ifdef SOLVE3D
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
@@ -275,10 +265,8 @@
       real(r8), intent(out) :: pmon_r(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: pmon_u(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: pmon_v(LBi:UBi,LBj:UBj)
-# ifdef CURVGRID
       real(r8), intent(out) :: CosAngler(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: SinAngler(LBi:UBi,LBj:UBj)
-# endif
 # ifdef SOLVE3D
       real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -637,11 +625,9 @@
      &                    pmask)
 # endif
 #endif
-
-#ifdef CURVGRID
 !
 !-----------------------------------------------------------------------
-! Compute cosine and sine of curvilinear rotation angle.
+! Compute cosine and sine of grid rotation angle.
 !-----------------------------------------------------------------------
 !
       DO j=JstrT,JendT
@@ -662,12 +648,11 @@
      &                          SinAngler)
       END IF
 
-# ifdef DISTRIBUTE
+#ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic(ng), NSperiodic(ng), &
      &                    CosAngler, SinAngler)
-# endif
 #endif
 
 #if defined DIFF_GRID || defined DIFF_3DCOEF || \

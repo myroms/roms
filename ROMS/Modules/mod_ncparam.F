@@ -278,8 +278,10 @@
         integer  :: idUwet        ! wet/dry mask on U-points
         integer  :: idu2dD        ! detided 2D U-velocity
         integer  :: idu2dH        ! 2D U-velocity tide harmonics
+        integer  :: idu2dE        ! 2D eastward velocity at RHO-points
         integer  :: idu3dD        ! detided 3D U-velocity
         integer  :: idu3dH        ! 3D U-velocity tide harmonics
+        integer  :: idu3dE        ! 3D eastward velocity at RHO-points
         integer  :: idV2rs        ! 2D total V-radiation stress
         integer  :: idV3rs        ! 3D total V-radiation stress
         integer  :: idV2Sd        ! 2D U-Stokes drift velocity
@@ -313,8 +315,10 @@
         integer  :: idVwet        ! wet/dry mask on V-points
         integer  :: idv2dD        ! detided 2D U-velocity
         integer  :: idv2dH        ! 2D U-velocity tide harmonics
+        integer  :: idv2dN        ! 2D northward velocity at RHO-points
         integer  :: idv3dD        ! detided 3D U-velocity
         integer  :: idv3dH        ! 3D U-velocity tide harmonics
+        integer  :: idv3dN        ! 3D northward velocity at RHO-points
         integer  :: idW2xx        ! 2D radiation stress, Sxx-component
         integer  :: idW2xy        ! 2D radiation stress, Sxy-component
         integer  :: idW2yy        ! 2D radiation stress, Syy-component
@@ -901,18 +905,26 @@
               idRzet=varid
             CASE ('idUbar')
               idUbar=varid
+            CASE ('idu2dE')
+              idu2dE=varid
             CASE ('idRu2d')
               idRu2d=varid
             CASE ('idVbar')
               idVbar=varid
+            CASE ('idv2dN')
+              idv2dN=varid
             CASE ('idRv2d')
               idRv2d=varid
             CASE ('idUvel')
               idUvel=varid
+            CASE ('idu3dE')
+              idu3dE=varid
             CASE ('idRu3d')
               idRu3d=varid
             CASE ('idVvel')
               idVvel=varid
+            CASE ('idv3dN')
+              idv3dN=varid
             CASE ('idRv3d')
               idRv3d=varid
             CASE ('idWvel')
