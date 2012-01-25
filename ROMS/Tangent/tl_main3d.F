@@ -121,17 +121,18 @@
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
-      real(r8) :: my_StepTime
+      real(r8) :: MaxDT, my_StepTime
 !
 !=======================================================================
 !  Time-step tangent linear 3D primitive equations.
 !=======================================================================
 !
       my_StepTime=0.0_r8
+      MaxDT=MAXVAL(dt)
 
-      STEP_LOOP : DO WHILE (my_StepTime.le.RunInterval)
+      STEP_LOOP : DO WHILE (my_StepTime.le.(RunInterval+0.5_r8*MaxDT))
 
-        my_StepTime=my_StepTime+MAXVAL(dt)
+        my_StepTime=my_StepTime+MaxDT
 !
 !  Set time indices and time clock.
 !

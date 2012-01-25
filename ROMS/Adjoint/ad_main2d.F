@@ -95,17 +95,18 @@
       integer :: Lend, Lstr, chunk_size
 # endif
       integer :: ksav, ktmp
-      real(r8) :: my_StepTime
+      real(r8) :: HalfDT, MaxDT, my_StepTime
 !
 !=======================================================================
 !  Time-step adjoint vertically integrated equations.
 !=======================================================================
 !
       my_StepTime=0.0_r8
+      MaxDT=MAXVAL(dt)
 
-      STEP_LOOP : DO WHILE (my_StepTime.le.RunInterval)
+      STEP_LOOP : DO WHILE (my_StepTime.le.(RunInterval+0.5_r8*MaxDT))
 
-        my_StepTime=my_StepTime+MAXVAL(dt)
+        my_StepTime=my_StepTime+MaxDT
 !
 !  Set time clock.
 !
