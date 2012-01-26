@@ -407,6 +407,7 @@ endif
 		ROMS/Nonlinear/Sediment \
 		ROMS/Functionals \
 		ROMS/Utility \
+		ROMS/Nonlinear \
 		ROMS/Modules
 
  includes :=	ROMS/Include
