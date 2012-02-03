@@ -48,10 +48,10 @@
       USE nf_fwrite3d_bry_mod, ONLY : nf_fwrite3d_bry
 # endif
       USE omega_mod, ONLY : scale_omega
+#endif
       USE uv_rotate_mod, ONLY : uv_rotate2d
-# ifdef SOLVE3D
+#ifdef SOLVE3D
       USE uv_rotate_mod, ONLY : uv_rotate3d
-# endif
 #endif
 !
       implicit none
@@ -66,9 +66,9 @@
 #ifdef ADJUST_BOUNDARY
       integer :: LBij, UBij
 #endif
-      integer :: Fcount, gfactor, gtype, status
+      integer :: Fcount, gfactor, gtype, status, tile
 #ifdef SOLVE3D
-      integer :: i, itrc, j, k, tile
+      integer :: i, itrc, j, k
 #endif
       real(r8) :: scale
 
