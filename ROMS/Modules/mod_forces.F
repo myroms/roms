@@ -68,7 +68,7 @@
 !                                                                      !
 !  Surface heat fluxes, Atmosphere-Ocean bulk parameterization.        !
 !                                                                      !
-!  lhflx        Kinematic net sensible heat flux (degC m/s).           !
+!  lhflx        Kinematic net latent heat flux (degC m/s).             !
 !  lrflx        Kinematic net longwave radiation (degC m/s).           !
 !  shflx        Kinematic net sensible heat flux (degC m/s).           !
 !                                                                      !

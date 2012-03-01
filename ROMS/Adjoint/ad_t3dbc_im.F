@@ -112,6 +112,7 @@
             ad_t(Iend  ,Jend+1,k,nout,itrc)=ad_t(Iend  ,Jend+1,k,nout,  &
      &                                           itrc)+                 &
      &                                      adfac
+            ad_t(Iend+1,Jend+1,k,nout,itrc)=0.0_r8
           END DO
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN

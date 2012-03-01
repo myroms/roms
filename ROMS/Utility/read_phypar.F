@@ -1431,7 +1431,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idUair,:))
             CASE ('Hout(idVair)')
-              IF (idPair.eq.0) THEN
+              IF (idVair.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idVair'
                 exit_flag=5
                 RETURN
