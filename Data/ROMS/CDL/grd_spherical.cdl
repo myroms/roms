@@ -132,14 +132,14 @@ variables:
 		mask_psi:coordinates = "lon_rho lat_rho" ;
 	double rdrag(eta_rho, xi_rho) ;
 		rdrag:long_name = "linear bottom drag coefficient" ;
-		rdrag:units = "meter second-1 ;
+		rdrag:units = "meter second-1" ;
 		rdrag:coordinates = "lon_rho lat_rho" ;
 	double rdrag2(eta_rho, xi_rho) ;
 		rdrag2:long_name = "quadratic bottom drag coefficient" ;
 		rdrag2:coordinates = "lon_rho lat_rho" ;
 	double ZoBot(eta_rho, xi_rho) ;
 		ZoBot:long_name = "time invariant, bottom roughness length" ;
-		ZoBot:units = "meter ;
+		ZoBot:units = "meter" ;
 		ZoBot:coordinates = "lon_rho lat_rho" ;
 
 // global attributes:
