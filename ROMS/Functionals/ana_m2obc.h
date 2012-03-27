@@ -118,8 +118,8 @@
 !-----------------------------------------------------------------------
 !
 #if defined ESTUARY_TEST
-      IF (LBC(ieast,isUbar,ng)%acquire.and.                             &
-     &    LBC(ieast,isVbar,ng)%acquire.and.                             &
+      IF (LBC(iwest,isUbar,ng)%acquire.and.                             &
+     &    LBC(iwest,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
         cff1=0.40_r8                                          ! west end
         cff2=0.08_r8
