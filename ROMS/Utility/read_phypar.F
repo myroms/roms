@@ -3513,7 +3513,7 @@
 # ifdef T_PASSIVE
           DO i=1,NPT
             itrc=inert(i)
-            WRITE (out,185) LtracerSrc(i,ng), 'LtracerSrc', itrc,       &
+            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
      &            'Processing point sources/Sink on tracer ', itrc,     &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO

@@ -1122,6 +1122,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_grid
       USE mod_ocean
       USE mod_stepping
 !

@@ -373,6 +373,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, icount, is, itrc, j, k
 
       integer, dimension(7+2*NT(ng)) :: offset
@@ -399,6 +400,23 @@
 !-----------------------------------------------------------------------
 !  Load adjoint STATE and FORCING variables from full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -471,7 +489,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVvel)) THEN
@@ -479,7 +497,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)*N(ng)
 #    endif
       END IF
       DO itrc=1,NT(ng)
@@ -498,7 +516,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVbar)) THEN
@@ -506,7 +524,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #    endif
       END IF
 #   endif
@@ -515,7 +533,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #   else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #   endif
       END IF
       IF (SCALARS(ng)%Fstate(isVstr)) THEN
@@ -523,7 +541,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #   else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #   endif
       END IF
 #   ifdef SOLVE3D
@@ -581,8 +599,8 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -613,7 +631,7 @@
 #    else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -644,9 +662,9 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
+        Imax=Lm(ng)-Uoff
         Jmax=Mm(ng)
-        Ioff=1
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -684,9 +702,9 @@
         Joff=1
 #    else
         Imax=Lm(ng)
-        Jmax=Mm(ng)-1
+        Jmax=Mm(ng)-Voff
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -763,8 +781,8 @@
         Ioff=0
         Joff=0
 #   else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #   endif
 #  endif
@@ -795,7 +813,7 @@
 #   else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #   endif
 #  endif
         scale=1.0_r8
@@ -1035,6 +1053,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, is, itrc, j, k
 
       integer, dimension(5+NT(ng)) :: offset
@@ -1061,6 +1080,23 @@
 !-----------------------------------------------------------------------
 !  Load adjoint STATE variables into full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -1091,8 +1127,8 @@
 #    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
-      iadd=Lm(ng)*(Mm(ng)-1)*N(ng)
+      offset(isVvel)=offset(isUvel)+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
+      iadd=Lm(ng)*(Mm(ng)-Voff)*N(ng)
       DO itrc=1,NT(ng)
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
@@ -1112,7 +1148,7 @@
 #    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
+      offset(isVbar)=offset(isUbar)+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
 #   endif
 #  endif
@@ -1159,8 +1195,8 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
-      Ioff=1
+      Imax=Lm(ng)-Uoff
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -1196,7 +1232,7 @@
 #    else
       Imax=Lm(ng)
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -1231,9 +1267,9 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
+      Imax=Lm(ng)-Uoff
       Jmax=Mm(ng)
-      Ioff=1
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -1279,9 +1315,9 @@
       Joff=1
 #    else
       Imax=Lm(ng)
-      Jmax=Mm(ng)-1
+      Jmax=Mm(ng)-Voff
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -1519,6 +1555,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, icount, is, itrc, j, k
 
 #  ifdef SOLVE3D
@@ -1534,6 +1571,23 @@
 !-----------------------------------------------------------------------
 !  Extract adjoint FORCING variables from full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -1606,7 +1660,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVvel)) THEN
@@ -1614,7 +1668,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)*N(ng)
 #    endif
       END IF
       DO itrc=1,NT(ng)
@@ -1633,7 +1687,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVbar)) THEN
@@ -1641,7 +1695,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #    endif
       END IF
 #   endif
@@ -1650,7 +1704,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #   else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #   endif
       END IF
       IF (SCALARS(ng)%Fstate(isVstr)) THEN
@@ -1658,7 +1712,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #   else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #   endif
       END IF
 #   ifdef SOLVE3D
@@ -1718,8 +1772,8 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -1752,7 +1806,7 @@
 #    else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -1785,9 +1839,9 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
+        Imax=Lm(ng)-Uoff
         Jmax=Mm(ng)
-        Ioff=1
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -1827,9 +1881,9 @@
         Joff=1
 #    else
         Imax=Lm(ng)
-        Jmax=Mm(ng)-1
+        Jmax=Mm(ng)-Voff
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -1910,8 +1964,8 @@
         Ioff=0
         Joff=0
 #   else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #   endif
 #  endif
@@ -1944,7 +1998,7 @@
 #   else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #   endif
 #  endif
         scale=1.0_r8
@@ -2188,6 +2242,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, is, itrc, j, k
 
       integer, dimension(5+NT(ng)) :: offset
@@ -2199,6 +2254,23 @@
 !-----------------------------------------------------------------------
 !  Extract adjoint state variables from full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -2229,8 +2301,8 @@
 #    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
-      iadd=Lm(ng)*(Mm(ng)-1)*N(ng)
+      offset(isVvel)=offset(isUvel)+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
+      iadd=Lm(ng)*(Mm(ng)-Voff)*N(ng)
       DO itrc=1,NT(ng)
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
@@ -2250,7 +2322,7 @@
 #    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
+      offset(isVbar)=offset(isUbar)+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
 #   endif
 #  endif
@@ -2298,8 +2370,8 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
-      Ioff=1
+      Imax=Lm(ng)-Uoff
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -2337,7 +2409,7 @@
 #    else
       Imax=Lm(ng)
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -2374,9 +2446,9 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
+      Imax=Lm(ng)-Uoff
       Jmax=Mm(ng)
-      Ioff=1
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -2424,9 +2496,9 @@
       Joff=1
 #    else
       Imax=Lm(ng)
-      Jmax=Mm(ng)-1
+      Jmax=Mm(ng)-Voff
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -2707,6 +2779,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, is, itrc, j, k
 
       integer, dimension(5+NT(ng)) :: offset
@@ -2733,6 +2806,23 @@
 !-----------------------------------------------------------------------
 !  Load tangent linear state variables into full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -2763,8 +2853,9 @@
 #    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
-      iadd=Lm(ng)*(Mm(ng)-1)*N(ng)
+
+      offset(isVvel)=offset(isUvel)+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
+      iadd=Lm(ng)*(Mm(ng)-Voff)*N(ng)
       DO itrc=1,NT(ng)
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
@@ -2784,7 +2875,7 @@
 #    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
+      offset(isVbar)=offset(isUbar)+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
 #   endif
 #  endif
@@ -2830,8 +2921,8 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
-      Ioff=1
+      Imax=Lm(ng)-Uoff
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -2867,7 +2958,7 @@
 #    else
       Imax=Lm(ng)
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -2902,9 +2993,9 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
+      Imax=Lm(ng)-Uoff
       Jmax=Mm(ng)
-      Ioff=1
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -2950,9 +3041,9 @@
       Joff=1
 #    else
       Imax=Lm(ng)
-      Jmax=Mm(ng)-1
+      Jmax=Mm(ng)-Voff
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -3188,6 +3279,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, icount, is, itrc, j, k
 
       integer, dimension(7+2*NT(ng)) :: offset
@@ -3199,6 +3291,23 @@
 !-----------------------------------------------------------------------
 !  Extract tangent linear FORCING variables from full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -3271,7 +3380,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)*N(ng)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)*N(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVvel)) THEN
@@ -3279,7 +3388,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)*N(ng)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)*N(ng)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)*N(ng)
 #    endif
       END IF
       DO itrc=1,NT(ng)
@@ -3298,7 +3407,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #    else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
       END IF
       IF (SCALARS(ng)%Fstate(isVbar)) THEN
@@ -3306,7 +3415,7 @@
 #    ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #    else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #    endif
       END IF
 #   endif
@@ -3315,7 +3424,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+1)*(Mm(ng)+2)
 #   else
-        icount=icount+(Lm(ng)-1)*Mm(ng)
+        icount=icount+(Lm(ng)-Uoff)*Mm(ng)
 #   endif
       END IF
       IF (SCALARS(ng)%Fstate(isVstr)) THEN
@@ -3323,7 +3432,7 @@
 #   ifdef FULL_GRID
         icount=icount+(Lm(ng)+2)*(Mm(ng)+1)
 #   else
-        icount=icount+Lm(ng)*(Mm(ng)-1)
+        icount=icount+Lm(ng)*(Mm(ng)-Voff)
 #   endif
       END IF
 #   ifdef SOLVE3D
@@ -3383,8 +3492,8 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -3417,7 +3526,7 @@
 #    else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -3450,9 +3559,9 @@
         Ioff=0
         Joff=0
 #    else
-        Imax=Lm(ng)-1
+        Imax=Lm(ng)-Uoff
         Jmax=Mm(ng)
-        Ioff=1
+        Ioff=Uoff
         Joff=1
 #    endif
 #   endif
@@ -3492,9 +3601,9 @@
         Joff=1
 #    else
         Imax=Lm(ng)
-        Jmax=Mm(ng)-1
+        Jmax=Mm(ng)-Voff
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #    endif
 #   endif
         scale=1.0_r8
@@ -3575,8 +3684,8 @@
         Ioff=0
         Joff=0
 #   else
-        Imax=Lm(ng)-1
-        Ioff=1
+        Imax=Lm(ng)-Uoff
+        Ioff=Uoff
         Joff=1
 #   endif
 #  endif
@@ -3609,7 +3718,7 @@
 #   else
         Imax=Lm(ng)
         Ioff=0
-        Joff=2
+        Joff=1+Voff
 #   endif
 #  endif
         scale=1.0_r8
@@ -3852,6 +3961,7 @@
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
+      integer :: Uoff, Voff
       integer :: i, iadd, is, itrc, j, k
 
       integer, dimension(5+NT(ng)) :: offset
@@ -3863,6 +3973,23 @@
 !-----------------------------------------------------------------------
 !  Extract tangent linear STATE variables from full 1D state vector.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for momentum variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
 !
 !  Determine the index offset for each variable in the state vector.
 #  ifdef MASKING
@@ -3893,8 +4020,8 @@
 #    else
       offset(isFsur)=0
       offset(isUvel)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVvel)=offset(isUvel)+(Lm(ng)-1)*Mm(ng)*N(ng)
-      iadd=Lm(ng)*(Mm(ng)-1)*N(ng)
+      offset(isVvel)=offset(isUvel)+(Lm(ng)-Uoff)*Mm(ng)*N(ng)
+      iadd=Lm(ng)*(Mm(ng)-Voff)*N(ng)
       DO itrc=1,NT(ng)
         offset(isTvar(itrc))=offset(isTvar(itrc)-1)+iadd
         iadd=Lm(ng)*Mm(ng)*N(ng)
@@ -3914,7 +4041,7 @@
 #    else
       offset(isFsur)=0
       offset(isUbar)=offset(isFsur)+Lm(ng)*Mm(ng)
-      offset(isVbar)=offset(isUbar)+(Lm(ng)-1)*Mm(ng)
+      offset(isVbar)=offset(isUbar)+(Lm(ng)-Uoff)*Mm(ng)
 #    endif
 #   endif
 #  endif
@@ -3963,8 +4090,8 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
-      Ioff=1
+      Imax=Lm(ng)-Uoff
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -4002,7 +4129,7 @@
 #    else
       Imax=Lm(ng)
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE
@@ -4040,9 +4167,9 @@
       Ioff=0
       Joff=0
 #    else
-      Imax=Lm(ng)-1
+      Imax=Lm(ng)-Uoff
       Jmax=Mm(ng)
-      Ioff=1
+      Ioff=Uoff
       Joff=1
 #    endif
 #   endif
@@ -4090,9 +4217,9 @@
       Joff=1
 #    else
       Imax=Lm(ng)
-      Jmax=Mm(ng)-1
+      Jmax=Mm(ng)-Voff
       Ioff=0
-      Joff=2
+      Joff=1+Voff
 #    endif
 #   endif
 #   ifdef ENERGYNORM_SCALE

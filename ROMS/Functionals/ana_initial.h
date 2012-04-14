@@ -110,7 +110,16 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_grid
       USE mod_scalars
+
+#ifdef CHANNEL
+!
+# ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
+      USE erf_mod, ONLY : ERF
+#endif
 !
 !  Imported variable declarations.
 !
@@ -161,6 +170,11 @@
 !  Local variable declarations.
 !
       integer :: Iless, Iplus, i, itrc, j, k
+
+#ifdef CHANNEL
+      real(r8), parameter :: guscale = 40.0E+03_r8
+      real(r8), parameter :: u0 = 1.6_r8
+#endif
       real(r8) :: depth, dx, val1, val2, val3, val4, x, x0, y, y0
 
 #include "set_bounds.h"
@@ -169,7 +183,20 @@
 !  Initial conditions for 2D momentum (m/s) components.
 !-----------------------------------------------------------------------
 !
-#if defined SOLITON
+#if defined CHANNEL && !defined ONLY_TS_IC
+      y0=0.5_r8*el(ng)
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          val1=(GRID(ng)%yu(i,j)-y0)/guscale
+          ubar(i,j,1)=u0*EXP(-val1*val1)/6.0_r8
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          vbar(i,j,1)=0.0_r8
+        END DO
+      END DO
+#elif defined SOLITON
       x0=2.0_r8*xl(ng)/3.0_r8
       y0=0.5_r8*el(ng)
       val1=0.395_r8
@@ -257,7 +284,29 @@
 !  Initial conditions for free-surface (m).
 !-----------------------------------------------------------------------
 !
-#if defined KELVIN
+#if defined CHANNEL && !defined ONLY_TS_IC
+      y0=0.5_r8*el(ng)
+# ifdef SOLVE3D
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          val1=(yr(i,j)-y0)/guscale
+          val2=-u0*guscale*GRID(ng)%f(i,j)*SQRT(pi)/(12.0_r8*g)
+          zeta(i,j,1)=val2*ERF(val1)
+        END DO
+      END DO
+# else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          val1=(yr(i,j)-y0))/guscale
+          val2=-0.5_r8*u0*guscale*GRID(ng)%f(i,j)*sqrt(pi)/g
+          zeta(i,j,1)=val2*ERF(val1)
+        END DO
+      END DO
+# endif
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag)  ! in case of error in ERF
+# endif
+#elif defined KELVIN
 !!    val1=1.0_r8                               ! zeta0
 !!    val2=2.0_r8*pi/(12.42_r8*3600.0_r8)       ! M2 Tide period
       DO j=JstrR,JendR
@@ -311,7 +360,26 @@
 !  Initial conditions for 3D momentum components (m/s).
 !-----------------------------------------------------------------------
 !
-# if defined RIVERPLUME2
+# if defined CHANNEL && !defined ONLY_TS_IC
+      y0=0.5_r8*el(ng)
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+         DO i=Istr,IendR
+           val1=(GRID(ng)%yu(i,j)-y0)/guscale
+           val2=(z_r(i,j,k)+z_r(i-1,j,k))/(h(i,j)+h(i-1,j))
+           val3=u0*(0.5_r8+val2+(0.5_r8*val2*val2))*EXP(-val1*val1)
+           u(i,j,k,1)=val3
+         END DO
+        END DO
+      END DO
+      DO k=1,N(ng)
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            v(i,j,k,1)=0.0_r8
+          END DO
+        END DO
+      END DO
+# elif defined RIVERPLUME2
       DO k=1,N(ng)
        DO j=JstrR,JendR
          DO i=Istr,IendR
@@ -409,6 +477,22 @@
           END DO
         END DO
       END DO
+# elif defined CHANNEL
+      y0=0.5_r8*el(ng)
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            val1=(yr(i,j)-y0)/guscale
+            val2=-0.5_r8*u0*guscale*GRID(ng)%f(i,j)*SQRT(pi)/            &
+     &           (Tcoef(ng)*g*h(i,j))
+            val3=(val2*ERF(val1)+T0(ng))*(1.0_r8+z_r(i,j,k)/h(i,j))
+            t(i,j,k,1,itemp)=val3
+          END DO
+        END DO
+      END DO
+#  ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag)  ! in case of error in ERF
+#  endif
 # elif defined CANYON
       DO k=1,N(ng)
         DO j=JstrR,JendR

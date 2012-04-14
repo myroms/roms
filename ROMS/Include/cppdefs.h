@@ -547,6 +547,7 @@
 ** BENCHMARK           Benchmark Tests (small, Medium, big grids)            **
 ** BIO_TOY             One-dimension (vertical) Biology Toy                  **
 ** BL_TEST             Boundary Layers Test                                  **
+** CHANNEL             Periodic channel, Optimal Perturbations Test          **
 ** CANYON              Coastal form stress Canyon Test                       **
 ** CHANNEL_NECK        Channel with a Constriction                           **
 ** COUPLING_TEST       Two-way Atmosphere-Ocean Coupling Test                **

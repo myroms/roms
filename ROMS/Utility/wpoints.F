@@ -143,6 +143,7 @@
 # ifdef PROPAGATOR
       integer :: Imin, Imax, Jmin, Jmax
 # endif
+      integer :: Uoff, Voff
       integer :: NSUB, Npts, i, ic, ij, j
 # ifdef DISTRIBUTE
 #  ifdef PROPAGATOR
@@ -458,6 +459,24 @@
 !-----------------------------------------------------------------------
 !  If distributed-memory, set process water indices arrays.
 !-----------------------------------------------------------------------
+!
+!  Set offsets for U- and V-variables due to periodic boundary
+!  conditions. Recall that in East-West periodic boundary conditions
+!  IstrU=1. Otherwise, IstrU=2. Similarly, in North-South periodic
+!  applications IstrV=1 or else IstrV=2.
+!
+      IF (EWperiodic(ng)) THEN
+        Uoff=0
+      ELSE
+        Uoff=1
+      END IF
+!
+      IF (NSperiodic(ng)) THEN
+        Voff=0
+      ELSE
+        Voff=1
+      END IF
+
 #  ifdef DISTRIBUTE
 !
 !  Gather masking at RHO-points from all nodes.
@@ -606,7 +625,7 @@
       Jmin=0
       Jmax=Mm(ng)+1
 #   else
-      Imin=2
+      Imin=1+Uoff
       Imax=Lm(ng)
       Jmin=1
       Jmax=Mm(ng)
@@ -689,7 +708,7 @@
 #   else
       Imin=1
       Imax=Lm(ng)
-      Jmin=2
+      Jmin=1+Voff
       Jmax=Mm(ng)
 #   endif
       DO j=1,Mm(ng)+1
