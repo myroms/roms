@@ -383,7 +383,7 @@
 !
 !  Northern edge, clamped boundary condition.
 !
-        ELSE IF (ad_LBC(isouth,isFsur,ng)%clamped) THEN
+        ELSE IF (ad_LBC(inorth,isFsur,ng)%clamped) THEN
           DO i=Istr,Iend
 # ifdef MASKING
 !>          tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*              &
@@ -414,7 +414,7 @@
 !
 !  Northern edge, gradient boundary condition.
 !
-        ELSE IF (ad_LBC(isouth,isFsur,ng)%gradient) THEN
+        ELSE IF (ad_LBC(inorth,isFsur,ng)%gradient) THEN
           DO i=Istr,Iend
 # ifdef MASKING
 !>          tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*              &
@@ -432,7 +432,7 @@
 !
 !  Northern edge, closed boundary condition.
 !
-        ELSE IF (ad_LBC(isouth,isFsur,ng)%closed) THEN
+        ELSE IF (ad_LBC(inorth,isFsur,ng)%closed) THEN
           DO i=Istr,Iend
 # ifdef MASKING
 !>          tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*              &
