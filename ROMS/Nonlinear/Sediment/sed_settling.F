@@ -163,11 +163,7 @@
           indx=idsed(ised)
           DO k=1,N(ng)
             DO i=Istr,Iend
-# ifdef TS_MPDATA
-              qc(i,k)=t(i,j,k,3,indx)
-# else
               qc(i,k)=t(i,j,k,nnew,indx)*Hz_inv(i,k)
-# endif
             END DO
           END DO
 !
@@ -331,9 +327,6 @@
           DO i=Istr,Iend
             DO k=1,N(ng)
               t(i,j,k,nnew,indx)=qc(i,k)*Hz(i,j,k)+(FC(i,k)-FC(i,k-1))
-# ifdef TS_MPDATA
-              t(i,j,k,3,indx)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
-# endif
             END DO
             settling_flux(i,j,ised)=FC(i,0)
           END DO

@@ -250,7 +250,7 @@
 # endif
 #endif
 
-      integer :: Iter, i, indx, isink, ibio, ivar, j, k, ks
+      integer :: Iter, i, ibio, isink, itrc, ivar, j, k, ks
 
       integer, dimension(Nsink) :: idsink
 
@@ -342,6 +342,7 @@
 #endif
 
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_old
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
@@ -363,6 +364,7 @@
 !
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng),nDIA(ng)).eq.1)).or.                            &
+     &    ((iic(ng).ge.ntsDIA(ng)).and.(nDIA(ng).eq.1)).or.             &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
         DO ivar=1,NDbio2d
           DO j=Jstr,Jend
@@ -386,6 +388,10 @@
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
 !-----------------------------------------------------------------------
+!
+!  Avoid computing source/sink terms if no biological iterations.
+!
+      IF (BioIter(ng).le.0) RETURN
 !
 !  Set time-stepping according to the number of iterations.
 !
@@ -440,19 +446,21 @@
 !  values for zeta and Hz. These are known after the 2D barotropic
 !  time-stepping.
 !
-        DO ibio=1,NBT
-          indx=idbio(ibio)
+        DO itrc=1,NBT
+          ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              Bio(i,k,indx)=MAX(t(i,j,k,nstp,indx),0.0_r8)
+              Bio_old(i,k,ibio)=MAX(0.0_r8,t(i,j,k,nstp,ibio))
+              Bio(i,k,ibio)=Bio_old(i,k,ibio)
             END DO
           END DO
         END DO
 #ifdef CARBON
         DO k=1,N(ng)
           DO i=Istr,Iend
-            Bio(i,k,iTIC_)=MIN(Bio(i,k,iTIC_),3000.0_r8)
-            Bio(i,k,iTIC_)=MAX(Bio(i,k,iTIC_),400.0_r8)
+            Bio_old(i,k,iTIC_)=MIN(Bio_old(i,k,iTIC_),3000.0_r8)
+            Bio_old(i,k,iTIC_)=MAX(Bio_old(i,k,iTIC_),400.0_r8)
+            Bio(i,k,iTIC_)=Bio_old(i,k,iTIC_)
           END DO
         END DO
 #endif
@@ -1031,7 +1039,7 @@
 !  grid box. Then, compute semi-Lagrangian flux due to sinking.
 !
           SINK_LOOP: DO isink=1,Nsink
-            indx=idsink(isink)
+            ibio=idsink(isink)
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
@@ -1040,7 +1048,7 @@
 !
             DO k=1,N(ng)
               DO i=Istr,Iend
-                qc(i,k)=Bio(i,k,indx)
+                qc(i,k)=Bio(i,k,ibio)
               END DO
             END DO
 !
@@ -1196,7 +1204,7 @@
             END DO
             DO k=1,N(ng)
               DO i=Istr,Iend
-                Bio(i,k,indx)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
+                Bio(i,k,ibio)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
               END DO
             END DO
 
@@ -1214,9 +1222,9 @@
             cff3=115.0_r8/16.0_r8
             cff4=106.0_r8/16.0_r8
 # endif
-            IF ((indx.eq.iPhyt).or.                                     &
-     &          (indx.eq.iSDeN).or.                                     &
-     &          (indx.eq.iLDeN)) THEN
+            IF ((ibio.eq.iPhyt).or.                                     &
+     &          (ibio.eq.iSDeN).or.                                     &
+     &          (ibio.eq.iLDeN)) THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)
 # ifdef DENITRIFICATION
@@ -1244,14 +1252,14 @@
             cff3=12.0_r8
             cff4=0.74_r8
 #  endif
-            IF ((indx.eq.iSDeC).or.                                     &
-     &          (indx.eq.iLDeC))THEN
+            IF ((ibio.eq.iSDeC).or.                                     &
+     &          (ibio.eq.iLDeC))THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)
                 Bio(i,1,iTIC_)=Bio(i,1,iTIC_)+cff1
               END DO
             END IF
-            IF (indx.eq.iPhyt)THEN
+            IF (ibio.eq.iPhyt)THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)
                 Bio(i,1,iTIC_)=Bio(i,1,iTIC_)+cff1*PhyCN(ng)
@@ -1263,26 +1271,27 @@
         END DO ITER_LOOP
 !
 !-----------------------------------------------------------------------
-!  Update global tracer variables.
+!  Update global tracer variables: Add increment due to BGC processes
+!  to tracer array in time index "nnew". Index "nnew" is solution after
+!  advection and mixing and has transport units (m Tunits) hence the
+!  increment is multiplied by Hz.  Notice that we need to subtract
+!  original values "Bio_old" at the top of the routine to just account
+!  for the concentractions affected by BGC processes. This also takes
+!  into account any constraints (non-negative concentrations, carbon
+!  concentration range) specified before entering BGC kernel. If "Bio"
+!  were unchanged by BGC processes, the increment would be exactly
+!  zero. Notice that final tracer values, t(:,:,:,nnew,:) are not
+!  bounded >=0 so that we can preserve total inventory of N and
+!  C even when advection causes tracer concentration to go negative.
+!  (J. Wilkin and H. Arango, Apr 27, 2012)
 !-----------------------------------------------------------------------
 !
-#ifdef CARBON
-        DO k=1,N(ng)
-          DO i=Istr,Iend
-            Bio(i,k,iTIC_)=MIN(Bio(i,k,iTIC_),3000.0_r8)
-            Bio(i,k,iTIC_)=MAX(Bio(i,k,iTIC_),400.0_r8)
-          END DO
-        END DO
-#endif
-        DO ibio=1,NBT
-          indx=idbio(ibio)
+        DO itrc=1,NBT
+          ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              t(i,j,k,nnew,indx)=MIN(t(i,j,k,nnew,indx),0.0_r8)+        &
-     &                           Hz(i,j,k)*Bio(i,k,indx)
-#ifdef TS_MPDATA
-              t(i,j,k,3,indx)=t(i,j,k,nnew,indx)*Hz_inv(i,k)
-#endif
+              cff=Bio(i,k,ibio)-Bio_old(i,k,ibio)
+              t(i,j,k,nnew,ibio)=t(i,j,k,nnew,ibio)+cff*Hz(i,j,k)
             END DO
           END DO
         END DO
@@ -1535,7 +1544,7 @@
 !
             fn=((((p5*X+p4)*X+p3)*X+p2)*X+p1)*X+p0
 !
-!  Evaluate derivative, f'([H+]):
+!  Evaluate derivative, df([H+])/dx:
 !
 !     df= d(fn)/d(X)
 !

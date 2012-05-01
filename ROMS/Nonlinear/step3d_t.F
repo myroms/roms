@@ -9,8 +9,19 @@
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
-!  This routine time-steps tracer equations. Notice that advective     !
-!  and diffusive terms are time-stepped differently.                   !
+!  This routine time-steps tracer equations.  Notice that advective    !
+!  and diffusive terms are time-stepped differently. It applies the    !
+!  corrector time-step for horizontal/vertical advection,  vertical    !
+!  diffusion, nudging if necessary, and lateral boundary conditions.   !
+!                                                                      !
+!  Notice that at input the tracer arrays have:                        !
+!                                                                      !
+!    t(:,:,:,nnew,:)   m Tunits  n+1     horizontal/vertical diffusion !
+!                                        terms plus source/sink terms  !
+!                                        (biology, sediment), if any   !
+!                                                                      !
+!    t(:,:,:,3   ,:)   Tunits    n+1/2   advective terms and vertical  !
+!                                        diffusion predictor step      !
 !                                                                      !
 !=======================================================================
 !
@@ -95,10 +106,6 @@
      &                    CLIMA(ng) % tclm,                             &
 # endif
      &                    MIXING(ng) % Akt,                             &
-# ifdef TS_MPDATA
-     &                    OCEAN(ng) % u,                                &
-     &                    OCEAN(ng) % v,                                &
-# endif
      &                    OCEAN(ng) % W,                                &
 # if defined FLOATS && defined FLOAT_VWALK
      &                    MIXING(ng) % dAktdz,                          &
@@ -144,9 +151,6 @@
      &                          Tnudgcof, tclm,                         &
 # endif
      &                          Akt,                                    &
-# ifdef TS_MPDATA
-     &                          u, v,                                   &
-# endif
      &                          W,                                      &
 # if defined FLOATS && defined FLOAT_VWALK
      &                          dAktdz,                                 &
@@ -228,10 +232,6 @@
 #  else
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
 #  endif
-#  ifdef TS_MPDATA
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
 #  ifdef DIAGNOSTICS_TS
       real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
@@ -287,10 +287,6 @@
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
-#  ifdef TS_MPDATA
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  endif
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
 
 #  ifdef DIAGNOSTICS_TS
@@ -312,7 +308,7 @@
 # endif
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: cff, cff1, cff2, cff3
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
@@ -364,14 +360,14 @@
 # ifdef TS_MPDATA
 !
 !  The MPDATA algorithm requires a three-point footprint, so exchange
-!  boundary data on t(:,:,:,3,:) so other processes computed earlier
+!  boundary data on t(:,:,:,nnew,:) so other processes computed earlier
 !  (horizontal diffusion, biology, or sediment) are accounted.
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         DO itrc=1,NT(ng)
           CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            t(:,:,:,3,itrc))
+     &                            t(:,:,:,nnew,itrc))
         END DO
       END IF
 
@@ -380,7 +376,7 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    t(:,:,:,3,:))
+     &                    t(:,:,:,nnew,:))
 #  endif
 # endif
 !
@@ -407,6 +403,7 @@
      &                        t(i,j  ,k,3,itrc))
             END DO
           END DO
+
 # elif defined TS_MPDATA
 !
 !  First-order, upstream differences horizontal advective fluxes.
@@ -615,7 +612,14 @@
           END DO
 # endif
 !
-!  Time-step horizontal advection term.
+# ifdef TS_MPDATA
+!  Time-step horizontal advection for intermediate diffusive tracer, Ta.
+!  Advective fluxes have units of Tunits m3/s.  The new tracer has
+!  units of m Tunits.
+# else
+!  Time-step horizontal advection term.  Advective fluxes have units
+!  of Tunits m3/s.  The new tracer has units of m Tunits.
+# endif
 !
 # ifdef TS_MPDATA
 #  define I_RANGE IstrUm2,Iendp2i
@@ -631,11 +635,7 @@
               cff2=cff*(FE(i,j+1)-FE(i,j))
               cff3=cff1+cff2
 # ifdef TS_MPDATA
-              cff4=Hz(i,j,k)+                                           &
-     &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
-     &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
-     &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
-              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff4-cff3
+              Ta(i,j,k,itrc)=t(i,j,k,nnew,itrc)-cff3
 # else
               t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff3
 # endif
@@ -830,7 +830,16 @@
           END DO
 # endif
 !
-!  Time-step vertical advection term.
+# ifdef TS_MPDATA
+!  Time-step vertical advection for intermediate diffusive tracer, Ta
+!  (Tunits).
+# else
+#  ifdef SPLINES
+!  Time-step vertical advection term (Tunits).
+#  else
+!  Time-step vertical advection term (m Tunits).
+#  endif
+# endif
 # ifdef DIAGNOSTICS_TS
 !  Convert units of tracer diagnostic terms to Tunits.
 # endif

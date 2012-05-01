@@ -156,7 +156,7 @@
 !
       integer :: i, itrc, j, k, k1, k2
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4, cff5
+      real(r8) :: cff, cff1, cff2, cff3, cff4
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
@@ -357,10 +357,6 @@
                 cff3=dt(ng)*(FS(i,j,k2)-FS(i,j,k1))
                 cff4=cff1+cff2+cff3
                 t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+cff4
-#ifdef TS_MPDATA
-                cff5=1.0_r8/Hz(i,j,k)
-                t(i,j,k,3,itrc)=cff5*t(i,j,k,nnew,itrc)
-#endif
 #ifdef DIAGNOSTICS_TS
                 DiaTwrk(i,j,k,itrc,iTxdif)=cff1
                 DiaTwrk(i,j,k,itrc,iTydif)=cff2

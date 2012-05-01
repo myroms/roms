@@ -160,8 +160,7 @@
       real(r8), dimension(NT(ng),2) :: BioTrc
 
       real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
-
-      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_bak
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_old
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
@@ -181,6 +180,10 @@
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
 !-----------------------------------------------------------------------
+!
+!  Avoid computing source/sink terms if no biological iterations.
+!
+      IF (BioIter(ng).le.0) RETURN
 !
 !  Set time-stepping size (days) according to the number of iterations.
 !
@@ -227,8 +230,8 @@
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              Bio_bak(i,k,ibio)=MAX(0.0_r8,t(i,j,k,nstp,ibio))
-              Bio(i,k,ibio)=Bio_bak(i,k,ibio)
+              Bio_old(i,k,ibio)=MAX(0.0_r8,t(i,j,k,nstp,ibio))
+              Bio(i,k,ibio)=Bio_old(i,k,ibio)
             END DO
           END DO
         END DO
@@ -1009,20 +1012,26 @@
         END DO ITER_LOOP
 !
 !-----------------------------------------------------------------------
-!  Update global tracer variables (m Tunits).
+!  Update global tracer variables: Add increment due to BGC processes
+!  to tracer array in time index "nnew". Index "nnew" is solution after
+!  advection and mixing and has transport units (m Tunits) hence the
+!  increment is multiplied by Hz.  Notice that we need to subtract
+!  original values "Bio_old" at the top of the routine to just account
+!  for the concentractions affected by BGC processes. This also takes
+!  into account any constraints (non-negative concentrations, carbon
+!  concentration range) specified before entering BGC kernel. If "Bio"
+!  were unchanged by BGC processes, the increment would be exactly
+!  zero. Notice that final tracer values, t(:,:,:,nnew,:) are not
+!  bounded >=0 so that we can preserve total inventory of nutrients
+!  when advection causes tracer concentration to go negative.
 !-----------------------------------------------------------------------
 !
         DO itrc=1,NBT
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              t(i,j,k,nnew,ibio)=MAX(t(i,j,k,nnew,ibio)+                &
-     &                               (Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
-     &                               Hz(i,j,k),                         &
-     &                               0.0_r8)
-#ifdef TS_MPDATA
-              t(i,j,k,3,ibio)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
-#endif
+              cff=Bio(i,k,ibio)-Bio_old(i,k,ibio)
+              t(i,j,k,nnew,ibio)=t(i,j,k,nnew,ibio)+cff*Hz(i,j,k)
             END DO
           END DO
         END DO

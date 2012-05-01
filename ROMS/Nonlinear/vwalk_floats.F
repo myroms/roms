@@ -162,9 +162,15 @@
         END IF
         CALL mp_bcastf (ng, iNLM, rwalk)
 # elif defined _OPENMP
-!$OMP SINGLE
-        CALL gasdev (rwalk)
-!$OMP END SINGLE
+!$OMP CRITICAL (VWALK_RANDOM)
+        IF (tile_count.eq.0) THEN
+          CALL gasdev (rwalk)
+        END IF
+        tile_count=tile_count+1
+        IF (tile_count.eq.NtileX(ng)*NtileE(ng)) THEN
+          tile_count=0
+        END IF
+!$OMP END CRITICAL (VWALK_RANDOM)
 # else
         IF (Lstr.eq.1) THEN
           CALL gasdev (rwalk)

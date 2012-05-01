@@ -199,7 +199,7 @@
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: NSUB, i, j, k
+      integer :: NSUB, i, ival, j, k
 
       real(r8), parameter :: twopi = 2.0_r8*pi
 
@@ -920,16 +920,13 @@
       END DO
 #elif defined WINDBASIN
       DO i=IstrR,IendR
-        val1=1;
-        IF ((i-IstrR).lt.(INT(0.03_r8*REAL(IendR-IstrR,r8)))) THEN
-          val1=1.0_r8-(REAL((i-IstrR+1)-                                &
-     &                      INT(0.03_r8*REAL(IendR-IstrR,r8)),r8)/      &
-     &                 (0.03_r8*REAL(IendR-IstrR,r8)))**2
-        END IF
-        IF ((IendR-i).lt.(INT(0.03_r8*REAL(IendR-IstrR,r8)))) THEN
-          val1=1.0_r8-(REAL((IendR-i+1)-                                &
-     &                      INT(0.03_r8*REAL(IendR-IstrR,r8)),r8)/      &
-     &                 (0.03_r8*REAL(IendR-IstrR,r8)))**2
+        ival=INT(0.03_r8*REAL(Lm(ng)+1,r8))
+        IF (i.lt.ival) THEN
+          val1=1.0_r8-(REAL((i+1)-ival,r8)/REAL(ival,r8))**2
+        ELSE IF ((Lm(ng)+1-i).lt.ival) THEN
+          val1=1.0_r8-(REAL((Lm(ng)+1-i)-ival,r8)/REAL(ival,r8))**2
+        ELSE
+          val1=1.0_r8
         END IF
         DO j=JstrR,JendR
          val2=2.0_r8*REAL(j-(Mm(ng)+1)/2,r8)/REAL(Mm(ng)+1,r8)

@@ -597,22 +597,6 @@
 #ifdef DIAGNOSTICS_TS
 !!              DiaTwrk(i,j,k,itrc,iThdif)=-cff
 #endif
-#ifdef TS_MPDATA_NOT_YET
-                cff1=1.0_r8/Hz(i,j,k)
-!>              tl_t(i,j,k,3,itrc)=tl_cff1*t(i,j,k,nnew,itrc)+          &
-!>   &                             cff1*tl_t(i,j,k,nnew,itrc)
-!>
-                ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+            &
-     &                                cff1*ad_t(i,j,k,3,itrc)
-                ad_cff1=ad_cff1+                                        &
-     &                  t(i,j,k,nnew,itrc)*ad_t(i,j,k,3,itrc)
-                ad_t(i,j,k,3,itrc)=0.0_r8
-!>              tl_cff1=-cff1*cff1*tl_Hz(i,j,k)
-!>
-                ad_Hz(i,j,k)=ad_Hz(i,j,k)-                              &
-     &                       cff1*cff1*ad_cff1
-                ad_cff1=0.0_r8
-#endif
 !>              tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff
 !>
                 ad_cff=ad_cff-ad_t(i,j,k,nnew,itrc)

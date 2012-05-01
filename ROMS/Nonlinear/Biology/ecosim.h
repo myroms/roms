@@ -2347,20 +2347,26 @@
         END DO ITER_LOOP
 !
 !-----------------------------------------------------------------------
-!  Update global tracer variables.
+!  Update global tracer variables: Add increment due to BGC processes
+!  to tracer array in time index "nnew". Index "nnew" is solution after
+!  advection and mixing and has transport units (m Tunits) hence the
+!  increment is multiplied by Hz.  Notice that we need to subtract
+!  original values "Bio_old" at the top of the routine to just account
+!  for the concentractions affected by BGC processes. This also takes
+!  into account any constraints (non-negative concentrations, carbon
+!  concentration range) specified before entering BGC kernel. If "Bio"
+!  were unchanged by BGC processes, the increment would be exactly
+!  zero. Notice that final tracer values, t(:,:,:,nnew,:) are not
+!  bounded >=0 so that we can preserve total inventory of nutrients
+!  when advection causes tracer concentration to go negative.
 !-----------------------------------------------------------------------
 !
         DO ibio=1,NBT
           itrc=idbio(ibio)
           DO k=1,N(ng)
             DO i=Istr,Iend
-               t(i,j,k,nnew,itrc)=MAX(MinVal,                           &
-     &                                t(i,j,k,nnew,itrc)+               &
-     &                                Hz(i,j,k)*                        &
-     &                                (Bio(i,k,itrc)-Bio_old(i,k,itrc)))
-#ifdef TS_MPDATA
-               t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)*Hz_inv(i,k)
-#endif
+               cff=Bio(i,k,itrc)-Bio_old(i,k,itrc)
+               t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+cff*Hz(i,j,k)
             END DO
           END DO
         END DO

@@ -2391,6 +2391,24 @@
         exit_flag=5
       END IF
 #endif
+#if !defined DISTRIBUTE && defined TS_MPDATA
+!
+!  Stop if activating MPDATA in serial with partitions or shared-
+!  memory.
+!
+      IF (Master) THEN
+        DO ng=1,Ngrids
+          IF (NtileX(ng)*NtileE(ng).gt.1) THEN
+            WRITE (stdout,210) uppercase('ts_mpdata')
+            exit_flag=5
+            EXIT
+          END IF
+        END DO
+ 210    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,           &
+     &          /,13x,'in serial with partitions or shared-memory...', &
+     &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
+      END IF
+#endif
 
       RETURN
       END SUBROUTINE checkdefs

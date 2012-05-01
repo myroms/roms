@@ -274,10 +274,6 @@
 !  for erosive flux.
 !
             t(i,j,1,nnew,indx)=t(i,j,1,nnew,indx)+ero_flux(i,j,ised)
-# ifdef TS_MPDATA
-            t(i,j,1,3,indx)=t(i,j,1,3,indx)+                            &
-     &                      ero_flux(i,j,ised)*Hz_inv(i,1)
-# endif
           END DO
         END DO SED_LOOP
       END DO J_LOOP

@@ -231,6 +231,7 @@
 !
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
+     &    ((iic(ng).ge.ntsAVG(ng)).and.(nAVG(ng).eq.1)).or.             &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
 
 # ifdef WET_DRY
@@ -2241,11 +2242,16 @@
 !  the full I- and J-ranges are different.
 !-----------------------------------------------------------------------
 !
-      IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
-     &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
-     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
+      IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
+     &     (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                          &
+     &     ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))).or.          &
+     &    ((iic(ng).ge.ntsAVG(ng)).and.(nAVG(ng).eq.1))) THEN
         IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
-          AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
+          IF (nAVG(ng).eq.1) THEN
+            AVGtime(ng)=time(ng)
+          ELSE
+            AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
+          END IF
         END IF
 !
 !  Set time-averaged factors for each C-grid variable type. Notice that

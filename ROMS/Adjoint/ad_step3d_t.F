@@ -11,6 +11,18 @@
 !                                                                      !
 !  This routine time-steps adjoint tracer equations.  Notice that      !
 !  advective and diffusive terms are time-stepped differently.         !
+!  It applies the corrector time-step for horizontal and vertical      !
+!  advection, vertical diffusion, nudging if necessary, and lateral    !
+!  boundary conditions.                                                !
+!                                                                      !
+!  Notice that at input the tracer arrays have:                        !
+!                                                                      !
+!    t(:,:,:,nnew,:)   m Tunits  n+1     horizontal/vertical diffusion !
+!                                        terms plus source/sink terms  !
+!                                        (biology, sediment), if any   !
+!                                                                      !
+!    t(:,:,:,3   ,:)   Tunits    n+1/2   advective terms and vertical  !
+!                                        diffusion predictor step      !
 !                                                                      !
 !=======================================================================
 !
@@ -72,7 +84,7 @@
      &                       GRID(ng) % umask,                          &
      &                       GRID(ng) % vmask,                          &
 # endif
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  ifdef WET_DRY
      &                       GRID(ng) % rmask_wet,                      &
      &                       GRID(ng) % umask_wet,                      &
@@ -100,12 +112,6 @@
 # endif
      &                       MIXING(ng) % Akt,                          &
      &                       MIXING(ng) % ad_Akt,                       &
-# ifdef TS_MPDATA_NOT_YET
-     &                       OCEAN(ng) % u,                             &
-     &                       OCEAN(ng) % ad_u,                          &
-     &                       OCEAN(ng) % v,                             &
-     &                       OCEAN(ng) % ad_v,                          &
-# endif
      &                       OCEAN(ng) % W,                             &
      &                       OCEAN(ng) % ad_W,                          &
 # if defined FLOATS_NOT_YET && defined FLOAT_VWALK
@@ -140,7 +146,7 @@
 # ifdef MASKING
      &                             rmask, umask, vmask,                 &
 # endif
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  ifdef WET_DRY
      &                             rmask_wet, umask_wet, vmask_wet,     &
 #  endif
@@ -155,10 +161,6 @@
      &                             Tnudgcof, tclm,                      &
 # endif
      &                             Akt, ad_Akt,                         &
-# ifdef TS_MPDATA_NOT_YET
-     &                             u, ad_u,                             &
-     &                             v, ad_v,                             &
-# endif
      &                             W, ad_W,                             &
 # if defined FLOATS_NOT_YET && defined FLOAT_VWALK
      &                             dAktdz,                              &
@@ -181,7 +183,7 @@
 #  endif
       USE mp_exchange_mod, ONLY : ad_mp_exchange4d
 # endif
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 !!    USE ad_mpdata_adiff_mod
 # endif
       USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
@@ -214,7 +216,7 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
       real(r8), intent(in) :: umask_wet(LBi:,LBj:)
@@ -243,10 +245,6 @@
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 #  endif
-#  ifdef TS_MPDATA_NOT_YET
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
 
 #  ifdef DIAGNOSTICS_TS
@@ -260,10 +258,6 @@
       real(r8), intent(inout) :: ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
 #  else
       real(r8), intent(inout) :: ad_Akt(LBi:,LBj:,0:,:)
-#  endif
-#  ifdef TS_MPDATA_NOT_YET
-      real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_W(LBi:,LBj:,0:)
 #  ifdef SUN
@@ -294,7 +288,7 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
@@ -318,10 +312,6 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#  ifdef TS_MPDATA_NOT_YET
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  endif
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
 
 #  ifdef DIAGNOSTICS_TS
@@ -333,10 +323,6 @@
       real(r8), intent(inout) :: ad_Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
-#  ifdef TS_MPDATA_NOT_YET
-      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#  endif
       real(r8), intent(inout) :: ad_W(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #  if defined FLOATS_NOT_YET && defined FLOAT_VWALK
@@ -351,8 +337,8 @@
 
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4
-      real(r8) :: ad_cff, ad_cff1, ad_cff2, ad_cff3, ad_cff4
+      real(r8) :: cff, cff1, cff2, cff3
+      real(r8) :: ad_cff, ad_cff1, ad_cff2, ad_cff3
       real(r8) :: adfac, adfac1, adfac2
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
@@ -380,7 +366,7 @@
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_oHz
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  ifdef DIAGNOSTICS_TS
 !!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,3) :: Dhadv
 !!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng),NT(ng)) :: Dvadv
@@ -410,7 +396,6 @@
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
       ad_cff3=0.0_r8
-      ad_cff4=0.0_r8
       DO j=JminS,JmaxS
         DO i=IminS,ImaxS
           ad_FE(i,j)=0.0_r8
@@ -423,7 +408,7 @@
             ad_oHz(i,j,k)=0.0_r8
           END DO
         END DO
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
         DO k=1,N(ng)
           DO i=IminS,ImaxS
             ad_Ua(i,j,k)=0.0_r8
@@ -452,6 +437,7 @@
           ad_FC(i,k)=0.0_r8
         END DO
       END DO
+
 # if defined FLOATS_NOT_YET && defined FLOAT_VWALK
 !
 !-----------------------------------------------------------------------
@@ -588,7 +574,7 @@
 !
 !  Compute BASIC STATE inverse thickness.
 !
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  define I_RANGE Istrm2,Iendp2
 #  define J_RANGE Jstrm2,Jendp2
 # else
@@ -612,7 +598,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES && !defined TS_MPDATA_NOT_YET
+# if defined SPLINES && !defined TS_MPDATA
 !
 !  Use conservative, parabolic spline reconstruction of BASIC STATE
 !  vertical diffusion derivatives.  Solve BASIC STATE tridiagonal
@@ -983,7 +969,8 @@
 # endif
         END DO
       END DO
-# ifdef TS_MPDATA_NOT_YET
+
+# ifdef TS_MPDATA
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint anti-diffusive velocities and correct advected
@@ -992,14 +979,14 @@
 !-----------------------------------------------------------------------
 !
 !  The MPDATA algorithm requires a three-point footprint, so exchange
-!  boundary data on t(:,:,:,3,:) so other processes computed earlier
+!  boundary data on t(:,:,:,nnew,:) so other processes computed earlier
 !  (horizontal diffusion, biology, or sediment) are accounted.
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         DO itrc=1,NT(ng)
           CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            t(:,:,:,3,itrc))
+     &                            t(:,:,:,nnew,itrc))
         END DO
       END IF
 #  ifdef DISTRIBUTE
@@ -1007,7 +994,7 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    t(:,:,:,3,:))
+     &                    t(:,:,:,nnew,:))
 #  endif
 !
 !  Compute BASIC STATE private tracer diffusion and anti-diffusive
@@ -1043,7 +1030,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#   ifdef TS_MPDATA_NOT_YET
+#   ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp3)).and.               &
      &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #   else
@@ -1065,7 +1052,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#   ifdef TS_MPDATA_NOT_YET
+#   ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
      &            ((JstrVm2.le.j).and.(j.le.Jendp3))) THEN
 #   else
@@ -1091,18 +1078,14 @@
           END DO
 #  endif
 !
-!  Time-step BASIC STATE horizontal advection term (Tunits).
+!  Time-step BASIC STATE horizontal advection term (m Tunits).
 !
           DO j=JstrVm2,Jendp2i
             DO i=IstrUm2,Iendp2i
-              cff=dt(ng)*pm(i,j)*pn(i,j)*oHz(i,j,k)
+              cff=dt(ng)*pm(i,j)*pn(i,j)
               cff1=cff*(FX(i+1,j)-FX(i,j)+                              &
      &                  FE(i,j+1)-FE(i,j))
-              cff2=Hz(i,j,k)+                                           &
-     &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
-     &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
-     &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
-              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff2-cff1
+              Ta(i,j,k,itrc)=t(i,j,k,nnew,itrc)-cff1
             END DO
           END DO
         END DO
@@ -1128,16 +1111,17 @@
             FC(i,N(ng))=0.0_r8
           END DO
 !
-!  Time-step BASIC STATE vertical advection term.
+!  Time-step BASIC STATE vertical advection term (Tunits).
 !
           DO i=IstrUm2,Iendp2i
             CF(i,0)=dt(ng)*pm(i,j)*pn(i,j)
           END DO
+
 #  ifdef Q_PSOURCE
 !
 !  Apply mass point sources - Volume influx.
 !
-#   ifdef TS_MPDATA_NOT_YET
+#   ifdef TS_MPDATA
           IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.                  &
      &        ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #   else
@@ -1453,13 +1437,13 @@
      &                             Va, ad_Va,                           &
      &                             Wa, ad_Wa)
       END DO
-# endif /* TS_MPDATA_NOT_YET */
+# endif /* TS_MPDATA */
 !
 !-----------------------------------------------------------------------
 !  Time-step adjoint vertical advection term.
 !-----------------------------------------------------------------------
-!
-# ifdef TS_MPDATA_NOT_YET
+
+# ifdef TS_MPDATA
 !
 !  Compute BASIC STATE Ta due to horizontal advection only.
 !
@@ -1484,6 +1468,7 @@
      &                cff2*t(i,j  ,k,3,itrc)
             END DO
           END DO
+
 #  if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply tracers point sources to the BASIC STATE horizontal advection
@@ -1493,7 +1478,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#   ifdef TS_MPDATA_NOT_YET
+#   ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp3)).and.               &
      &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #   else
@@ -1515,7 +1500,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#   ifdef TS_MPDATA_NOT_YET
+#   ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
      &            ((JstrVm2.le.j).and.(j.le.Jendp3))) THEN
 #   else
@@ -1548,11 +1533,7 @@
               cff=dt(ng)*pm(i,j)*pn(i,j)*oHz(i,j,k)
               cff1=cff*(FX(i+1,j)-FX(i,j)+                              &
      &                  FE(i,j+1)-FE(i,j))
-              cff2=Hz(i,j,k)+                                           &
-     &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
-     &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
-     &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
-              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff2-cff1
+              Ta(i,j,k,itrc)=t(i,j,k,nnew,itrc)-cff1
             END DO
           END DO
         END DO
@@ -1562,7 +1543,7 @@
 !  Time-step adjoint vertical advection term. Compute first BASIC
 !  STATE vertical advection flux, FC.
 !
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  define I_RANGE IstrUm2,Iendp2i
 #  define J_RANGE JstrVm2,Jendp2i
 # else
@@ -1616,6 +1597,7 @@
             FC(i,N(ng))=0.0_r8
             FC(i,0)=0.0_r8
           END DO
+
 # elif defined TS_A4VADVECTION_TL
 !
 !  Fourth-order, BASIC STATE Akima vertical advective flux.
@@ -1657,6 +1639,7 @@
 #  endif
             FC(i,N(ng))=0.0_r8
           END DO
+
 # elif defined TS_C2VADVECTION_TL
 !
 !  Second-order, BASIC STATE central differences vertical advective
@@ -1677,7 +1660,8 @@
 #  endif
             FC(i,N(ng))=0.0_r8
           END DO
-# elif defined TS_MPDATA_NOT_YET
+
+# elif defined TS_MPDATA
 !
 !  First_order, BASIC STATE upstream differences vertical advective
 !  flux.
@@ -1696,6 +1680,7 @@
 #  endif
             FC(i,N(ng))=0.0_r8
           END DO
+
 # else
 !!
 !!  Fourth-order, BASIC STATE central differences vertical advective
@@ -1745,7 +1730,7 @@
           DO k=1,N(ng)
             DO i=I_RANGE
 !!            cff1=CF(i,0)*(FC(i,k)-FC(i,k-1))    ! not needed HGA
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  ifdef DIAGNOSTICS_TS
 !!            Dvadv(i,j,k,itrc)=-cff1
 #  endif
@@ -1790,13 +1775,14 @@
               ad_cff1=0.0_r8
             END DO
           END DO
+
 # ifdef Q_PSOURCE
 !
 !  Apply mass point sources - Volume influx.
 !
           DO is=1,Nsrc
             i=Isrc(is)
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
             IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.                &
      &          ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #  else
@@ -2064,6 +2050,7 @@
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
+
 # elif defined TS_C2VADVECTION_TL
 !
 !  Second-order, central differences adjoint vertical advective flux.
@@ -2106,7 +2093,8 @@
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
-# elif defined TS_MPDATA_NOT_YET
+
+# elif defined TS_MPDATA
 !
 !  First_order, upstream differences vertical advective flux.
 !
@@ -2266,7 +2254,7 @@
 !
 !  Time-step adjoint horizontal advection term.
 !
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  define I_RANGE IstrUm2,Iendp2i
 #  define J_RANGE JstrVm2,Jendp2i
 # else
@@ -2274,7 +2262,7 @@
 #  define J_RANGE Jstr,Jend
 # endif
 
-# if defined DIAGNOSTICS_TS && defined TS_MPDATA_NOT_YET
+# if defined DIAGNOSTICS_TS && defined TS_MPDATA
 !!        DO j=Jstr,Jend
 !!          DO i=Istr,Iend
 !!            DiaTwrk(i,j,k,itrc,iThadv)=Dhadv(i,j,iThadv)
@@ -2287,7 +2275,7 @@
             DO i=I_RANGE
               cff=dt(ng)*pm(i,j)*pn(i,j)
 # ifdef DIAGNOSTICS_TS
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
 !!            Dhadv(i,j,iThadv)=-cff3
 !!            Dhadv(i,j,iTyadv)=-cff2
 !!            Dhadv(i,j,iTxadv)=-cff1
@@ -2297,37 +2285,13 @@
 !!            DiaTwrk(i,j,k,itrc,iTxadv)=-cff1
 #  endif
 # endif
-# ifdef TS_MPDATA_NOT_YET
-              cff1=cff*(FX(i+1,j)-FX(i,j))
-              cff2=cff*(FE(i,j+1)-FE(i,j))
-              cff3=cff1+cff2
-              cff4=Hz(i,j,k)+                                           &
-     &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
-     &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
-     &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
-!>            tl_Ta(i,j,k,itrc)=tl_t(i,j,k,3,itrc)*cff4+                &
-!>   &                          t(i,j,k,3,itrc)*tl_cff4-tl_cff3
+# ifdef TS_MPDATA
+!>            tl_Ta(i,j,k,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff3
 !>
-
-              ad_t(i,j,k,3,itrc)=ad_t(i,j,k,3,itrc)+                    &
-     &                           cff2*ad_Ta(i,j,k,itrc)
-              ad_cff4=ad_cff4+t(i,j,k,3,itrc)*ad_Ta(i,j,k,itrc)
               ad_cff3=ad_cff3-ad_Ta(i,j,k,itrc)
+              ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+              &
+     &                              ad_Ta(i,j,k,itrc)
               ad_Ta(i,j,k,itrc)=0.0_r8
-!>            tl_cff4=tl_Hz(i,j,k)+                                     &
-!>   &                cff*(tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+             &
-!>   &                     tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k)+             &
-!>   &                     (tl_W(i,j,k)-tl_W(i,j,k-1)))
-!>
-              adfac=cff*ad_cff4
-              ad_Hz(i,j,k)=ad_Hz(i,j,k)+ad_cff4
-              ad_Huon(i  ,j,k)=ad_Huon(i  ,j,k)-adfac
-              ad_Huon(i+1,j,k)=ad_Huon(i+1,j,k)+adfac
-              ad_Hvom(i,j  ,k)=ad_Hvom(i,j  ,k)-adfac
-              ad_Hvom(i,j+1,k)=ad_Hvom(i,j+1,k)+adfac
-              ad_W(i,j,k-1)=ad_W(i,j,k-1)-adfac
-              ad_W(i,j,k  )=ad_W(i,j,k  )+adfac
-              ad_cff4=0.0_r8
 # else
 !>            tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff3
 !>
@@ -2364,7 +2328,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp3)).and.               &
      &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #  else
@@ -2404,7 +2368,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#  ifdef TS_MPDATA_NOT_YET
+#  ifdef TS_MPDATA
               IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
      &            ((JstrVm2.le.j).and.(j.le.Jendp3))) THEN
 #  else
@@ -2487,7 +2451,8 @@
               ad_FX(i,j)=0.0_r8
             END DO
           END DO
-# elif defined TS_MPDATA_NOT_YET
+
+# elif defined TS_MPDATA
 !
 !  First-order, upstream differences adjoint horizontal advective
 !  fluxes.
@@ -2949,7 +2914,7 @@
 # ifdef TS_MPDATA
 !
 !  The MPDATA algorithm requires a three-point footprint, so exchange
-!  boundary data on t(:,:,:,3,:) so other processes computed earlier
+!  boundary data on t(:,:,:,nnew,:) so other processes computed earlier
 !  (horizontal diffusion, biology, or sediment) are accounted.
 !
 #  ifdef DISTRIBUTE
@@ -2957,30 +2922,30 @@
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints,                                 &
 !>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    tl_t(:,:,:,3,:))
+!>   &                    tl_t(:,:,:,nnew,:))
 !>
       CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_t(:,:,:,3,:))
+     &                       ad_t(:,:,:,nnew,:))
 #  endif
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         DO itrc=1,NT(ng)
 !>        CALL exchange_r3d_tile (ng, tile,                             &
 !>   &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-!>   &                            tl_t(:,:,:,3,itrc))
+!>   &                            tl_t(:,:,:,nnew,itrc))
 !>
           CALL ad_exchange_r3d_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
-     &                               ad_t(:,:,:,3,itrc))
+     &                               ad_t(:,:,:,nnew,itrc))
         END DO
       END IF
 # endif
 !
 !  Compute adjoint inverse thickness.
 !
-# ifdef TS_MPDATA_NOT_YET
+# ifdef TS_MPDATA
 #  define I_RANGE Istrm2,Iendp2
 #  define J_RANGE Jstrm2,Jendp2
 # else

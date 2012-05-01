@@ -611,7 +611,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idRwet,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRwet),     &
-     &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,      &
+     &                 NF_FOUT, nvd3, sr2dgrd, Aval, Vinfo, ncname,     &
      &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
