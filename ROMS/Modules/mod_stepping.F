@@ -57,19 +57,23 @@
         integer, allocatable :: knew(:)
         integer, allocatable :: krhs(:)
         integer, allocatable :: kstp(:)
-
+!$OMP THREADPRIVATE (knew, krhs, kstp)
+!
         integer, allocatable :: nnew(:)
         integer, allocatable :: nrhs(:)
         integer, allocatable :: nstp(:)
+!$OMP THREADPRIVATE (nnew, nrhs, nstp)
 
 #ifdef FLOATS
+!
         integer, allocatable :: nf(:)
         integer, allocatable :: nfp1(:)
         integer, allocatable :: nfm3(:)
         integer, allocatable :: nfm2(:)
         integer, allocatable :: nfm1(:)
+!$OMP THREADPRIVATE (nf, nfp1, nfm3, nfm2, nfm1)
 #endif
-
+!
 #ifdef ADJUST_BOUNDARY
         integer, allocatable :: Lbinp(:)
         integer, allocatable :: Lbout(:)
@@ -99,83 +103,73 @@
 !                                                                      !
 !=======================================================================
 !
-!  Local variable declarations.
-!
-      integer :: ng
-!
 !-----------------------------------------------------------------------
-!  Allocate variables.
+!  Allocate and intialize time indices.
 !-----------------------------------------------------------------------
 !
+!$OMP PARALLEL
       allocate ( knew(Ngrids) )
+      knew(1:Ngrids)=1
+
       allocate ( krhs(Ngrids) )
+      krhs(1:Ngrids)=1
+
       allocate ( kstp(Ngrids) )
+      knew(1:Ngrids)=1
 
       allocate ( nnew(Ngrids) )
+      nnew(1:Ngrids)=1
+
       allocate ( nrhs(Ngrids) )
+      nrhs(1:Ngrids)=1
+
       allocate ( nstp(Ngrids) )
+      nstp(1:Ngrids)=1
 
 #ifdef FLOATS
       allocate ( nf(Ngrids) )
+      nf(1:Ngrids)=0
+
       allocate ( nfp1(Ngrids) )
+      nfp1(1:Ngrids)=1
+
       allocate ( nfm3(Ngrids) )
+      nfm3(1:Ngrids)=2
+
       allocate ( nfm2(Ngrids) )
+      nfm2(1:Ngrids)=3
+
       allocate ( nfm1(Ngrids) )
+      nfm1(1:Ngrids)=4
 #endif
+!$OMP END PARALLEL
 
 #ifdef ADJUST_BOUNDARY
       allocate ( Lbinp(Ngrids) )
+      Lbinp(1:Ngrids)=1
+
       allocate ( Lbout(Ngrids) )
+      Lbout(1:Ngrids)=1
 #endif
 
 #if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
       allocate ( Lfinp(Ngrids) )
+      Lfinp(1:Ngrids)=1
+
       allocate ( Lfout(Ngrids) )
+      Lbout(1:Ngrids)=1
 #endif
 
       allocate ( Lnew(Ngrids) )
+      Lnew(1:Ngrids)=1
+
       allocate ( Lold(Ngrids) )
+      Lold(1:Ngrids)=1
 
 #if defined SSH_TIDES || defined UV_TIDES
       allocate ( NTC(Ngrids) )
 #endif
-!
-!-----------------------------------------------------------------------
-!  Initialize time-stepping indices.
-!-----------------------------------------------------------------------
-!
-      DO ng=1,Ngrids
-        knew(ng)=1
-        krhs(ng)=1
-        kstp(ng)=1
-
-        nnew(ng)=1
-        nrhs(ng)=1
-        nstp(ng)=1
-
-#ifdef FLOATS
-        nf  (ng)=0
-        nfp1(ng)=1
-        nfm3(ng)=2
-        nfm2(ng)=3
-        nfm1(ng)=4
-#endif
-
-#ifdef ADJUST_BOUNDARY
-        Lbinp(ng)=1
-        Lbout(ng)=1
-#endif
-
-#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
-    defined ADJUST_WSTRESS
-        Lfinp(ng)=1
-        Lfout(ng)=1
-#endif
-
-        Lnew(ng)=1
-        Lold(ng)=1
-      END DO
 
       RETURN
       END SUBROUTINE allocate_stepping

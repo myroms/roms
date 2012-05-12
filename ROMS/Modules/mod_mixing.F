@@ -678,7 +678,12 @@
 !
 !  Set array initialization range.
 !
-#ifdef _OPENMP
+#ifdef DISTRIBUTE
+      Imin=BOUNDS(ng)%LBi(tile)
+      Imax=BOUNDS(ng)%UBi(tile)
+      Jmin=BOUNDS(ng)%LBj(tile)
+      Jmax=BOUNDS(ng)%UBj(tile)
+#else
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         Imin=BOUNDS(ng)%LBi(tile)
       ELSE
@@ -699,11 +704,6 @@
       ELSE
         Jmax=Jend
       END IF
-#else
-      Imin=BOUNDS(ng)%LBi(tile)
-      Imax=BOUNDS(ng)%UBi(tile)
-      Jmin=BOUNDS(ng)%LBj(tile)
-      Jmax=BOUNDS(ng)%UBj(tile)
 #endif
 !
 !-----------------------------------------------------------------------

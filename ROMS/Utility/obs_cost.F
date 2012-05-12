@@ -169,7 +169,11 @@
 !  the vectors used.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       NSUB=NtileX(ng)*NtileE(ng)
+# endif
 !$OMP CRITICAL (COST_FUN)
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN

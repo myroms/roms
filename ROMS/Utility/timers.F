@@ -30,7 +30,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: iregion, MyModel, MyThread
+      integer :: iregion, MyModel
 
       integer :: my_getpid
 #ifndef DISTRIBUTE
@@ -65,7 +65,6 @@
      &                    ' (pid=',proc(0,MyModel,ng),') is active.'
         CALL my_flush (stdout)
 #else
-        MyThread=my_threadnum()
         WRITE (stdout,10) ' Thread #', MyThread,                        &
      &                    ' (pid=',proc(0,MyModel,ng),') is active.'
 #endif
@@ -102,7 +101,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: imodel, iregion, MyModel, MyThread
+      integer :: imodel, iregion, MyModel
 
       integer :: my_threadnum
 
@@ -153,7 +152,6 @@
      &                    Cend(region,MyModel,ng)
         CALL my_flush (stdout)
 #else
-        MyThread=my_threadnum()
         WRITE (stdout,10) ' Thread #', MyThread, ' CPU:',               &
      &                    Cend(region,MyModel,ng)
 #endif

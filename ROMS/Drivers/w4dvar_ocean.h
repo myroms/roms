@@ -86,7 +86,11 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: STDrec, Tindex, ng, thread
+      integer :: STDrec, Tindex
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -125,6 +129,25 @@
         CALL inp_par (iNLM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -135,16 +158,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -271,7 +296,7 @@
 #endif
       integer :: my_inner, my_outer
       integer :: Lbck, Lini, Rec, Rec1, Rec2
-      integer :: i, ng, status, subs, tile, thread
+      integer :: i, ng, status, tile
       integer :: Fcount, NRMrec
 
       integer, dimension(Ngrids) :: Nrec
@@ -325,7 +350,9 @@
         wrtNLmod(ng)=.TRUE.
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
+!$OMP PARALLEL
         CALL initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -390,14 +417,11 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
 
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL normalization (ng, TILE, 2)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL normalization (ng, tile, 2)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
         ELSE
@@ -487,11 +511,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL main3d (RunInterval)
 #else
       CALL main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 
       DO ng=1,Ngrids
@@ -580,7 +606,9 @@
 !
         DO ng=1,Ngrids
           IRP(ng)%Rindex=Rec1
+!$OMP PARALLEL
           CALL rp_initial (ng)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         END DO
 !
@@ -597,11 +625,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
         CALL rp_main3d (RunInterval)
 # else
         CALL rp_main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Report data penalty function.
@@ -652,21 +682,14 @@
 !  tangent linear model.
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-# if defined _OPENMP || defined DISTRIBUTE
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-# else
-            subs=1
-# endif
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL initialize_forces (ng, TILE, iTLM)
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL initialize_forces (ng, tile, iTLM)
 # ifdef ADJUST_BOUNDARY
-              CALL initialize_boundary (ng, TILE, iTLM)
+            CALL initialize_boundary (ng, tile, iTLM)
 # endif
-            END DO
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
@@ -679,15 +702,12 @@
             CALL get_state (ng, iNLM, 2, INI(ng)%name, Lini, Lini)
             IF (exit_flag.ne.NoError) RETURN
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1
-                CALL balance_ref (ng, TILE, Lini)
-                CALL biconj (ng, TILE, iNLM, Lini)
-              END DO
+!$OMP PARALLEL
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL balance_ref (ng, tile, Lini)
+              CALL biconj (ng, tile, iNLM, Lini)
             END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
             wrtZetaRef(ng)=.TRUE.
           END DO
         END IF
@@ -727,7 +747,9 @@
 !  Initialize the adjoint model from rest.
 !
             DO ng=1,Ngrids
+!$OMP PARALLEL
               CALL ad_initial (ng)
+!$OMP END PARALLEL
               IF (exit_flag.ne.NoError) RETURN
               wrtMisfit(ng)=.FALSE.
             END DO
@@ -761,11 +783,13 @@
               END IF
             END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
             CALL ad_main3d (RunInterval)
 # else
             CALL ad_main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
             IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
@@ -843,7 +867,9 @@
 !
             DO ng=1,Ngrids
               ITL(ng)%Rindex=Rec1
+!$OMP PARALLEL
               CALL tl_initial (ng)
+!$OMP END PARALLEL
               IF (exit_flag.ne.NoError) RETURN
             END DO
 !
@@ -877,11 +903,13 @@
               END IF
             END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
             CALL tl_main3d (RunInterval)
 # else
             CALL tl_main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
             IF (exit_flag.ne.NoError) RETURN
 
             DO ng=1,Ngrids
@@ -896,15 +924,11 @@
 !
             add=.FALSE.
             DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(add,numthreads)
-              DO thread=0,numthreads-1
-                subs=NtileX(ng)*NtileE(ng)/numthreads
-                DO tile=subs*thread,subs*(thread+1)-1,+1
-                  CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-                END DO
+!$OMP PARALLEL
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL load_TLtoAD (ng, tile, Lold(ng), Lold(ng), add)
               END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
             END DO
 !
 !  Write evolved tangent solution into hessian netcdf file for use
@@ -953,7 +977,9 @@
 !  Initialize the adjoint model always from rest.
 !
         DO ng=1,Ngrids
+!$OMP PARALLEL
           CALL ad_initial (ng)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -987,11 +1013,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
         CALL ad_main3d (RunInterval)
 # else
         CALL ad_main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
@@ -1075,7 +1103,9 @@
 #else
           IRP(ng)%Rindex=Rec2
 #endif
+!$OMP PARALLEL
           CALL rp_initial (ng)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         END DO
 !
@@ -1102,11 +1132,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
         CALL rp_main3d (RunInterval)
 #else
         CALL rp_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
 
 #ifdef RP_AVERAGES
@@ -1184,21 +1216,18 @@
 !  work arrays below.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL initialize_ocean (ng, TILE, iADM)
-            CALL initialize_ocean (ng, TILE, iTLM)
-            CALL initialize_forces (ng, TILE, iADM)
-            CALL initialize_forces (ng, TILE, iTLM)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iADM)
+          CALL initialize_ocean (ng, tile, iTLM)
+          CALL initialize_forces (ng, tile, iADM)
+          CALL initialize_forces (ng, tile, iTLM)
 # ifdef ADJUST_BOUNDARY
-            CALL initialize_boundary (ng, TILE, iADM)
-            CALL initialize_boundary (ng, TILE, iTLM)
+          CALL initialize_boundary (ng, tile, iADM)
+          CALL initialize_boundary (ng, tile, iTLM)
 # endif
-          END DO
         END DO
-!$OMF END PARALLEL DO
+!$OMF END PARALLEL
       END DO
 !
 !   Compute the diagonal of the posterior/analysis error covariance
@@ -1209,15 +1238,11 @@
 
         DO ng=1,Ngrids
 !
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
-!$OMP&            SHARED(outer,numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL posterior_var (ng, TILE, iTLM, outer)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL posterior_var (ng, tile, iTLM, outer)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         END DO
       END DO VAR_OLOOP
@@ -1234,21 +1259,18 @@
 !  work arrays below.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL initialize_ocean (ng, TILE, iADM)
-            CALL initialize_ocean (ng, TILE, iTLM)
-            CALL initialize_forces (ng, TILE, iADM)
-            CALL initialize_forces (ng, TILE, iTLM)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iADM)
+          CALL initialize_ocean (ng, tile, iTLM)
+          CALL initialize_forces (ng, tile, iADM)
+          CALL initialize_forces (ng, tile, iTLM)
 # ifdef ADJUST_BOUNDARY
-            CALL initialize_boundary (ng, TILE, iADM)
-            CALL initialize_boundary (ng, TILE, iTLM)
+          CALL initialize_boundary (ng, tile, iADM)
+          CALL initialize_boundary (ng, tile, iTLM)
 # endif
-          END DO
         END DO
-!$OMF END PARALLEL DO
+!$OMF END PARALLEL
       END DO
 #endif
 
@@ -1281,16 +1303,12 @@
 !  comprised of +1 and -1 elements randomly chosen.
 !
           DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(Ltrace,inner,outer,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1
-                CALL random_ic (ng, TILE, iTLM, inner, outer,           &
-     &                          Lold(ng), Ltrace)
-              END DO
+!$OMP PARALLEL
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL random_ic (ng, tile, iTLM, inner, outer,             &
+     &                        Lold(ng), Ltrace)
             END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
             IF (exit_flag.ne.NoError) RETURN
           END DO
 !
@@ -1303,15 +1321,11 @@
 !  error covariance matrix.
 !
           DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(Ltrace,inner,outer,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1
-                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace)
-              END DO
+!$OMP PARALLEL
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL posterior (ng, tile, iTLM, inner, outer, Ltrace)
             END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
             IF (exit_flag.ne.NoError) RETURN
           END DO
 
@@ -1352,16 +1366,12 @@
             END DO
           ELSE
             DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(Ltrace,inner,outer,numthreads)
-              DO thread=0,numthreads-1
-                subs=NtileX(ng)*NtileE(ng)/numthreads
-                DO tile=subs*thread,subs*(thread+1)-1
-                  CALL random_ic (ng, TILE, iTLM, inner, outer,         &
-     &                            Lold(ng), Ltrace)
-                END DO
+!$OMP PARALLEL
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL random_ic (ng, tile, iTLM, inner, outer,           &
+     &                          Lold(ng), Ltrace)
               END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
               IF (exit_flag.ne.NoError) RETURN
             END DO
           END IF
@@ -1375,15 +1385,11 @@
 !  error covariance matrix.
 !
           DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
-!$OMP&            SHARED(Ltrace,inner,outer,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1
-                CALL posterior (ng, TILE, iTLM, inner, outer, Ltrace)
-              END DO
+!$OMP PARALLEL
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL posterior (ng, tile, iTLM, inner, outer, Ltrace)
             END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
             IF (exit_flag.ne.NoError) RETURN
           END DO
 !
@@ -1509,11 +1515,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iNLM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

@@ -279,12 +279,16 @@
 !
 !  Determine global number of points (parallel reduction).
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+# endif
 !$OMP CRITICAL (MAX_WATER)
       IF (block_count.eq.0) THEN
 # if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
@@ -421,7 +425,7 @@
 !
 !  Deternine state vector starting and ending blocking indices.
 !
-      Nstate(ng)=(Mstate(ng)+numnodes-1)/numnodes
+      Nstate(ng)=(Mstate(ng)+numthreads-1)/numthreads
       block_size=Nstate(ng)
       IF (Master) THEN
         WRITE (stdout,10) ng, Mstate(ng), Nstate(ng)
@@ -429,7 +433,7 @@
      &          i2.2,', Mstate = ', i10,/,38x,                          &
      &          'NODE partition, Nstate = ', i10,/,/,                   &
      &          9x,'Node',7x,'Nstr',7x,'Nend',7x,'Size',/)
-        DO ic=0,numnodes-1
+        DO ic=0,numthreads-1
            i=1+ic*block_size
            j=MIN(Mstate(ng),i+block_size-1)
            WRITE (stdout,20) ic, i, j, j-i+1
@@ -440,7 +444,7 @@
       Nstr(ng)=1+MyRank*block_size
 !!    Nend(ng)=MIN(Mstate(ng),Nstr(ng)+block_size-1)
       Nend(ng)=Nstr(ng)+block_size-1
-      Mstate(ng)=Nstate(ng)*numnodes
+      Mstate(ng)=Nstate(ng)*numthreads
 #  else
       Nstr(ng)=1
       Nend(ng)=Mstate(ng)

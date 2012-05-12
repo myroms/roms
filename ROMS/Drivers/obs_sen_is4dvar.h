@@ -174,7 +174,11 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: NRMrec, STDrec, Tindex, ng, thread
+      integer :: NRMrec, STDrec, Tindex
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -213,6 +217,25 @@
         CALL inp_par (iNLM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -223,16 +246,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -386,7 +411,7 @@
 !
       logical :: Ladjoint, Lweak
 
-      integer :: i, ng, subs, tile, thread
+      integer :: i, ng, tile
       integer :: Fcount, Lbck, Lini, Litl, Rec
 
       real (r8) :: str_day, end_day
@@ -414,7 +439,9 @@
         RST(ng)%Rindex=0
         Fcount=RST(ng)%Fcount
         RST(ng)%Nrec(Fcount)=0
+!$OMP PARALLEL
         CALL initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 
@@ -425,15 +452,12 @@
 !
       IF (balance(isFsur)) THEN
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL balance_ref (ng, TILE, Lini)
-              CALL biconj (ng, TILE, iNLM, Lini)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL balance_ref (ng, tile, Lini)
+            CALL biconj (ng, tile, iNLM, Lini)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
           wrtZetaRef(ng)=.TRUE.
         END DO
       END IF
@@ -449,11 +473,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL main3d (RunInterval)
 #else
       CALL main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
@@ -470,7 +496,9 @@
 !
       Lstiffness=.FALSE.
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL ad_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -532,11 +560,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
         CALL ad_main3d (RunInterval)
 #else
         CALL ad_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
@@ -565,18 +595,15 @@
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
 #ifdef BALANCE_OPERATOR
-            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+          CALL ad_balance (ng, tile, Lini, Lnew(ng))
 #endif
-            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
-            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
-          END DO
+          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
+          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
@@ -604,7 +631,9 @@
         INI(ng)%Rindex=Lbck
         Fcount=RST(ng)%Fcount
         RST(ng)%Nrec(Fcount)=0
+!$OMP PARALLEL
         CALL initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -618,11 +647,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
       CALL main3d (RunInterval)
 # else
       CALL main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 #endif
 !
@@ -631,7 +662,9 @@
 !  above.
 !
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
@@ -641,18 +674,15 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
-            CALL tl_variability (ng, TILE, Litl, Lweak)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_convolution (ng, tile, Litl, Lweak, 2)
+          CALL tl_variability (ng, tile, Litl, Lweak)
 #ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lini, Litl)
+          CALL tl_balance (ng, tile, Lini, Litl)
 #endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Define output 4DVAR NetCDF file containing the sensitivity at the
@@ -677,11 +707,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #else
       CALL tl_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 
 #if defined OBS_IMPACT && defined OBS_IMPACT_SPLIT
@@ -715,35 +747,29 @@
 !  Clear the adjoint forcing and boundary condition increment arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL initialize_forces (ng, TILE, iADM)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_forces (ng, tile, iADM)
 # ifdef ADJUST_BOUNDARY
-            CALL initialize_boundary (ng, TILE, iADM)
+          CALL initialize_boundary (ng, tile, iADM)
 # endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
 # ifdef BALANCE_OPERATOR
-            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+          CALL ad_balance (ng, tile, Lini, Lnew(ng))
 # endif
-            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
-            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
-          END DO
+          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
+          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
@@ -762,7 +788,9 @@
 !  above.
 !
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
@@ -780,18 +808,15 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
-            CALL tl_variability (ng, TILE, Litl, Lweak)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_convolution (ng, tile, Litl, Lweak, 2)
+          CALL tl_variability (ng, tile, Litl, Lweak)
 # ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lini, Litl)
+          CALL tl_balance (ng, tile, Lini, Litl)
 # endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -803,11 +828,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 # ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 # else
       CALL tl_main2d (RunInterval)
 # endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -841,35 +868,29 @@
 !  arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL initialize_ocean (ng, TILE, iADM)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iADM)
 #  ifdef ADJUST_BOUNDARY
-            CALL initialize_boundary (ng, TILE, iADM)
+          CALL initialize_boundary (ng, tile, iADM)
 #  endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
 #  ifdef BALANCE_OPERATOR
-            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+          CALL ad_balance (ng, tile, Lini, Lnew(ng))
 #  endif
-            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
-            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
-          END DO
+          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
+          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
@@ -888,7 +909,9 @@
 !  above.
 !
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
@@ -904,18 +927,15 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
-            CALL tl_variability (ng, TILE, Litl, Lweak)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_convolution (ng, tile, Litl, Lweak, 2)
+          CALL tl_variability (ng, tile, Litl, Lweak)
 #  ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lini, Litl)
+          CALL tl_balance (ng, tile, Lini, Litl)
 #  endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -927,11 +947,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #  ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #  else
       CALL tl_main2d (RunInterval)
 #  endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 # endif
 
@@ -965,33 +987,27 @@
 !  Clear the adjoint increment initial condition and forcing arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL initialize_ocean (ng, TILE, iADM)
-            CALL initialize_forces (ng, TILE, iADM)
-          END DO
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iADM)
+          CALL initialize_forces (ng, tile, iADM)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
 #  ifdef BALANCE_OPERATOR
-            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+          CALL ad_balance (ng, tile, Lini, Lnew(ng))
 #  endif
-            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
-            CALL ad_convolution (ng, TILE, Lnew(ng), Lweak, 2)
-          END DO
+          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
+          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
@@ -1010,7 +1026,9 @@
 !  above.
 !
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
@@ -1026,18 +1044,15 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Lini) SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_convolution (ng, TILE, Litl, Lweak, 2)
-            CALL tl_variability (ng, TILE, Litl, Lweak)
+!$OMP PARALLEL
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_convolution (ng, tile, Litl, Lweak, 2)
+          CALL tl_variability (ng, tile, Litl, Lweak)
 #  ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lini, Litl)
+          CALL tl_balance (ng, tile, Lini, Litl)
 #  endif
-          END DO
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -1049,11 +1064,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #  ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #  else
       CALL tl_main2d (RunInterval)
 #  endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 # endif
 
@@ -1125,11 +1142,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iADM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

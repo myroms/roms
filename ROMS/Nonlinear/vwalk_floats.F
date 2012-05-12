@@ -30,7 +30,7 @@
 !
 !***********************************************************************
       SUBROUTINE vwalk_floats (ng, Lstr, Lend, Predictor,               &
-     &                         MyThread, nudg)
+     &                         my_thread, nudg)
 !***********************************************************************
 !
       USE mod_param
@@ -43,11 +43,11 @@
 
       logical, intent(in) :: Predictor
 # ifdef ASSUMED_SHAPE
-      logical, intent(in) :: MyThread(Lstr:)
+      logical, intent(in) :: my_thread(Lstr:)
 
       real(r8), intent(inout) :: nudg(Lstr:)
 # else
-      logical, intent(in) :: MyThread(Lstr:Lend)
+      logical, intent(in) :: my_thread(Lstr:Lend)
 
       real(r8), intent(inout) :: nudg(Lstr:Lend)
 # endif
@@ -59,7 +59,7 @@
       CALL vwalk_floats_tile (ng, Lstr, Lend,                           &
      &                        nfm3(ng), nfm2(ng), nfm1(ng), nf(ng),     &
      &                        nfp1(ng),                                 &
-     &                        Predictor, MyThread,                      &
+     &                        Predictor, my_thread,                     &
      &                        DRIFTER(ng) % bounded,                    &
      &                        DRIFTER(ng) % Tinfo,                      &
      &                        DRIFTER(ng) % rwalk,                      &
@@ -76,7 +76,7 @@
 !***********************************************************************
       SUBROUTINE vwalk_floats_tile (ng, Lstr, Lend,                     &
      &                              nfm3, nfm2, nfm1, nf, nfp1,         &
-     &                              Predictor, MyThread, bounded,       &
+     &                              Predictor, my_thread, bounded,      &
      &                              Tinfo, rwalk, nudg, track)
 !***********************************************************************
 !
@@ -102,7 +102,7 @@
 !
 # ifdef ASSUMED_SHAPE
       logical, intent(in) :: bounded(:)
-      logical, intent(in) :: MyThread(Lstr:)
+      logical, intent(in) :: my_thread(Lstr:)
 
       real(r8), intent(in) :: Tinfo(0:,:)
 
@@ -111,7 +111,7 @@
       real(r8), intent(inout) :: track(:,0:,:)
 # else
       logical, intent(in) :: bounded(Nfloats(ng))
-      logical, intent(in) :: MyThread(Lstr:Lend)
+      logical, intent(in) :: my_thread(Lstr:Lend)
 
       real(r8), intent(in) :: Tinfo(0:izrhs,Nfloats(ng))
 
@@ -161,20 +161,11 @@
           CALL gasdev (rwalk)
         END IF
         CALL mp_bcastf (ng, iNLM, rwalk)
-# elif defined _OPENMP
-!$OMP CRITICAL (VWALK_RANDOM)
-        IF (tile_count.eq.0) THEN
-          CALL gasdev (rwalk)
-        END IF
-        tile_count=tile_count+1
-        IF (tile_count.eq.NtileX(ng)*NtileE(ng)) THEN
-          tile_count=0
-        END IF
-!$OMP END CRITICAL (VWALK_RANDOM)
 # else
-        IF (Lstr.eq.1) THEN
-          CALL gasdev (rwalk)
-        END IF
+!$OMP MASTER
+        CALL gasdev (rwalk)
+!$OMP END MASTER
+!$OMP BARRIER
 # endif
       END IF
 !
@@ -195,7 +186,7 @@
      &                    GRID(ng) % rmask,                             &
 # endif
      &                    MIXING(ng) % Akt(:,:,:,itemp),                &
-     &                    MyThread, bounded, track)
+     &                    my_thread, bounded, track)
 
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                    Lstr, Lend, nfindx, ifdak, isBr3d,            &
@@ -207,14 +198,14 @@
      &                    GRID(ng) % rmask,                             &
 # endif
      &                    MIXING(ng) % dAktdz,                          &
-     &                    MyThread, bounded, track)
+     &                    my_thread, bounded, track)
 !
 !  Compute nudging velocity coefficients. Use normally distributed
 !  random numbers.
 !
       cff=2.0_r8/dt(ng)
       DO l=Lstr,Lend
-        IF (MyThread(l).and.bounded(l)) THEN
+        IF (my_thread(l).and.bounded(l)) THEN
           nudg(l)=SQRT(cff*MAX(0.0_r8,track(ifakt,nfindx,l)))*rwalk(l)+ &
      &            track(ifdak,nfindx,l)
         ELSE
@@ -234,14 +225,14 @@
      &                    GRID(ng) % rmask,                             &
 # endif
      &                    OCEAN(ng) % W,                                &
-     &                    MyThread, bounded, track)
+     &                    my_thread, bounded, track)
 !
 !  If newly relased float, initialize all time levels.
 !
       HalfDT=0.5_r8*dt(ng)
 
       DO l=Lstr,Lend
-        IF (MyThread(l).and.bounded(l)) THEN
+        IF (my_thread(l).and.bounded(l)) THEN
           IF (time(ng)-HalfDT.le.Tinfo(itstr,l).and.                    &
      &        time(ng)+HalfDT.gt.Tinfo(itstr,l)) THEN
             akt =track(ifakt,nfindx,l)
@@ -276,7 +267,7 @@
 !
 # ifdef VWALK_FORWARD
       DO l=Lstr,Lend
-        IF (MyThread(l).and.bounded(l)) THEN
+        IF (my_thread(l).and.bounded(l)) THEN
           track(izgrd,nfp1,l)=track(izgrd,nf,l)+                        &
      &                        dt(ng)*track(izrhs,nf,l)
         END IF
@@ -284,7 +275,7 @@
 # else
       IF (Predictor) THEN
         DO l=Lstr,Lend
-          IF (MyThread(l).and.bounded(l)) THEN
+          IF (my_thread(l).and.bounded(l)) THEN
             track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
      &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
      &                                  cff2*track(izrhs,nfm1,l)+       &
@@ -293,7 +284,7 @@
         END DO
       ELSE
         DO l=Lstr,Lend
-          IF (MyThread(l).and.bounded(l)) THEN
+          IF (my_thread(l).and.bounded(l)) THEN
             track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
      &                          cff2*track(izgrd,nfm2,l)+               &
      &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &

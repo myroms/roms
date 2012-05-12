@@ -762,8 +762,7 @@
       integer :: my_NstateVar, i, ng
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       integer :: LBi, UBi, LBj, UBj
-
-      integer, parameter :: tile = 0
+      integer :: tile
 # endif
       real(r8), parameter :: IniVal = 0.0_r8
 !
@@ -810,13 +809,21 @@
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
+#  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+#   ifdef DISTRIBUTE
+      tile=MyRank
+#   else
+      tile=0
+#   endif
+#  endif
+
       DO ng=1,Ngrids
 
 #  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-        LBi=BOUNDS(ng)%LBi(TILE)
-        UBi=BOUNDS(ng)%UBi(TILE)
-        LBj=BOUNDS(ng)%LBj(TILE)
-        UBj=BOUNDS(ng)%UBj(TILE)
+        LBi=BOUNDS(ng)%LBi(tile)
+        UBi=BOUNDS(ng)%UBi(tile)
+        LBj=BOUNDS(ng)%LBj(tile)
+        UBj=BOUNDS(ng)%UBj(tile)
 #  endif
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)

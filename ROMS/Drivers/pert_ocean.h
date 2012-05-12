@@ -99,7 +99,10 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: ng, thread
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -138,6 +141,25 @@
         CALL inp_par (iNLM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -148,16 +170,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 
       END IF
 
@@ -209,7 +233,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, subs, tile, thread
+      integer :: ng, tile
 #ifdef SANITY_CHECK
       logical :: BOUNDED_AD, BOUNDED_TL, SAME_VAR
 # ifdef DISTRIBUTE
@@ -308,7 +332,9 @@
         TLmodel=.TRUE.
         ADmodel=.FALSE.
         DO ng=1,Ngrids
+!$OMP PARALLEL
           CALL tl_initial (ng)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
 
           IF (Master) THEN
@@ -316,11 +342,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
         CALL tl_main3d (RunInterval)
 #else
         CALL tl_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
 
 #ifdef SANITY_CHECK
@@ -411,18 +439,11 @@
 !  Clear all model state arrays arrays.
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-#if defined _OPENMP || defined DISTRIBUTE
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-#else
-            subs=1
-#endif
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL initialize_ocean (ng, TILE, 0)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL initialize_ocean (ng, tile, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !-----------------------------------------------------------------------
@@ -432,7 +453,9 @@
         TLmodel=.FALSE.
         ADmodel=.TRUE.
         DO ng=1,Ngrids
+!$OMP PARALLEL
           CALL ad_initial (ng)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
 
           IF (Master) THEN
@@ -440,11 +463,13 @@
           END IF
         END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
         CALL ad_main3d (RunInterval)
 #else
         CALL ad_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
 
 #ifdef SANITY_CHECK
@@ -603,18 +628,11 @@
 !  Clear model state arrays arrays.
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-#if defined _OPENMP || defined DISTRIBUTE
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-#else
-            subs=1
-#endif
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL initialize_ocean (ng, TILE, 0)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL initialize_ocean (ng, tile, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Close current forward NetCDF file.
@@ -703,11 +721,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iNLM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

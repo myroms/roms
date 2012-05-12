@@ -92,10 +92,6 @@
 !  Number of nested and/or connected grids to solve.
 !-----------------------------------------------------------------------
 !
-!  Because of ROMS design, the Ngrids parameter is assigned during
-!  C-preprocessing before compilation in the "makefile" or "build"
-!  script. This is the only way that can be done.
-!
       integer :: Ngrids
 !
 !-----------------------------------------------------------------------
@@ -349,10 +345,8 @@
 
       TYPE (T_LBC), allocatable :: LBC(:,:,:)
 
-#ifdef ADJOINT
+#if defined ADJOINT || defined TANGENT || defined TL_IOMS
       TYPE (T_LBC), allocatable :: ad_LBC(:,:,:)
-#endif
-#if defined TANGENT || defined TL_IOMS
       TYPE (T_LBC), allocatable :: tl_LBC(:,:,:)
 #endif
 
@@ -942,7 +936,7 @@
           END DO
         END DO
       END IF
-#ifdef ADJOINT
+#if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (.not.allocated(ad_LBC)) THEN
         allocate ( ad_LBC(4,nLBCvar,Ngrids) )
         DO ng=1,Ngrids

@@ -126,10 +126,10 @@
       USE mod_iounits
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -332,12 +332,16 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
+#  ifdef DISTRIBUTE
+        NSUB=1                           ! distributed-memory
+#  else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
+#  endif
 !$OMP CRITICAL (NL_DOT)
         IF (tile_count.eq.0) THEN
           DotProduct=0.0_r8
@@ -349,7 +353,7 @@
 #  ifdef DISTRIBUTE
           op_handle='SUM'
           CALL mp_reduce (ng, iNLM, 1, DotProduct, op_handle)
-#   endif
+#  endif
           ig1count=ig1count+1
           g1(ig1count)=DotProduct
           IF (Master) THEN
@@ -449,10 +453,10 @@
       USE mod_parallel
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -639,16 +643,20 @@
           END DO
         END DO
       END DO
-#   endif
+#  endif
 !
 !  Perform parallel global reduction operation: dot product.
 !
+#  ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#  else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#  endif
 !$OMP CRITICAL (TL_NORM)
       IF (tile_count.eq.0) THEN
         StateNorm=0.0_r8
@@ -664,10 +672,10 @@
       END IF
 !$OMP END CRITICAL (TL_NORM)
 
-# undef IR_RANGE
-# undef IU_RANGE
-# undef JR_RANGE
-# undef JV_RANGE
+#  undef IR_RANGE
+#  undef IU_RANGE
+#  undef JR_RANGE
+#  undef JV_RANGE
 
       RETURN
       END SUBROUTINE ad_statenorm_tile
@@ -757,10 +765,10 @@
       USE mod_parallel
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -947,16 +955,20 @@
           END DO
         END DO
       END DO
-#   endif
+#  endif
 !
 !  Perform parallel global reduction operation: dot product.
 !
+#  ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#  else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#  endif
 !$OMP CRITICAL (TL_NORM)
       IF (tile_count.eq.0) THEN
         StateNorm=0.0_r8
@@ -972,10 +984,10 @@
       END IF
 !$OMP END CRITICAL (TL_NORM)
 
-# undef IR_RANGE
-# undef IU_RANGE
-# undef JR_RANGE
-# undef JV_RANGE
+#  undef IR_RANGE
+#  undef IU_RANGE
+#  undef JR_RANGE
+#  undef JV_RANGE
 
       RETURN
       END SUBROUTINE tl_statenorm_tile
@@ -1067,10 +1079,10 @@
       USE mod_iounits
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -1172,9 +1184,9 @@
           DO i=IstrR,IendR
             my_dot=my_dot+                                              &
      &             p*scale*ad_zeta(i,j,Linp)*tl_zeta(i,j,Kinp)
-#   ifdef MASKING
+#  ifdef MASKING
             my_dot=my_dot*rmask(i,j)
-#   endif
+#  endif
           END DO
         END DO
 !
@@ -1184,9 +1196,9 @@
           DO i=Istr,IendR
             my_dot=my_dot+                                              &
      &             p*scale*ad_ubar(i,j,Linp)*tl_ubar(i,j,Kinp)
-#   ifdef MASKING
+#  ifdef MASKING
             my_dot=my_dot*umask(i,j)
-#   endif
+#  endif
           END DO
         END DO
 !
@@ -1196,12 +1208,12 @@
           DO i=IstrR,IendR
             my_dot=my_dot+                                              &
      &             p*scale*ad_vbar(i,j,Linp)*tl_vbar(i,j,Kinp)
-#   ifdef MASKING
+#  ifdef MASKING
             my_dot=my_dot*vmask(i,j)
-#   endif
+#  endif
           END DO
         END DO
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
 !
 !  3D u-momentum component.
 !
@@ -1210,9 +1222,9 @@
             DO i=Istr,IendR
               my_dot=my_dot+                                            &
      &               p*scale*ad_u(i,j,k,Linp)*tl_u(i,j,k,Ninp)
-#    ifdef MASKING
+#   ifdef MASKING
               my_dot=my_dot*umask(i,j)
-#    endif
+#   endif
             END DO
           END DO
         END DO
@@ -1224,9 +1236,9 @@
             DO i=IstrR,IendR
               my_dot=my_dot+                                            &
      &               p*scale*ad_v(i,j,k,Linp)*tl_v(i,j,k,Ninp)
-#    ifdef MASKING
+#   ifdef MASKING
               my_dot=my_dot*vmask(i,j)
-#    endif
+#   endif
             END DO
           END DO
         END DO
@@ -1240,23 +1252,27 @@
                 my_dot=my_dot+                                          &
      &                 p*scale*ad_t(i,j,k,Linp,itrc)*                   &
      &                         tl_t(i,j,k,Ninp,itrc)
-#    ifdef MASKING
+#   ifdef MASKING
                 my_dot=my_dot*rmask(i,j)
-#    endif
+#   endif
               END DO
             END DO
           END DO
         END DO
-#   endif
+#  endif
 !
 !  Perform parallel global reduction operation: dot product.
 !
+#  ifdef DISTRIBUTE
+        NSUB=1                           ! distributed-memory
+#  else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
+#  endif
 !$OMP CRITICAL (TL_DOT)
         IF (tile_count.eq.0) THEN
           DotProduct=0.0_r8
@@ -1353,10 +1369,10 @@
       USE mod_iounits
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -1501,12 +1517,16 @@
 !
 !  Perform parallel global reduction operation: dot product.
 !
+#  ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#  else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#  endif
 !$OMP CRITICAL (AD_DOT)
       IF (tile_count.eq.0) THEN
         adDotProduct=0.0_r8

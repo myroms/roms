@@ -65,7 +65,10 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: ng, thread
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -104,6 +107,25 @@
         CALL inp_par (iADM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -114,16 +136,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iADM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 
       END IF
 
@@ -150,7 +174,9 @@
 !
       Lstiffness=.FALSE.
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL ad_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -201,11 +227,14 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL ad_main3d (RunInterval)
 #else
       CALL ad_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
+
       IF (exit_flag.ne.NoError) RETURN
 !
  10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
@@ -268,11 +297,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iADM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

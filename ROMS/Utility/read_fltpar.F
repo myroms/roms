@@ -65,6 +65,8 @@
           SELECT CASE (TRIM(KeyWord))
             CASE ('Lfloats')
               Npts=load_l(Nval, Cval, Ngrids, Lfloats)
+            CASE ('Fprint')
+              Npts=load_l(Nval, Cval, Ngrids, Lprint)
             CASE ('FRREC')
               Npts=load_i(Nval, Rval, Ngrids, frrec)
             CASE ('NFLOATS')
@@ -156,7 +158,7 @@
 !
       IF (Lwrite) THEN
         DO ng=1,Ngrids
-          IF (Lfloats(ng)) THEN
+          IF (Lfloats(ng).and.Fprint(ng)) THEN
             IF (ncount(ng).ne.Nfloats(ng)) THEN
               WRITE (stdout,60) ncount(ng), Nfloats(ng)
               exit_flag=4

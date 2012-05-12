@@ -73,7 +73,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: next_indx1, ng, subs, tile, thread
+      integer :: ng, tile
+      integer :: next_indx1
 # ifdef FLOATS
       integer :: Lend, Lstr, chunk_size
 # endif
@@ -94,9 +95,12 @@
 !
         DO ng=1,Ngrids
           iic(ng)=iic(ng)+1
+!$OMP MASTER
           time(ng)=time(ng)+dt(ng)
           tdays(ng)=time(ng)*sec2day
           CALL time_string (time(ng), time_code(ng))
+!$OMP END MASTER
+!$OMP BARRIER
         END DO
 
 # if defined W4DPSAS || defined NLM_OUTER || \
@@ -112,14 +116,10 @@
 !
         DO ng=1,Ngrids
           IF (FrequentImpulse(ng)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL forcing (ng, TILE, kstp(ng), nstp(ng))
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL forcing (ng, tile, kstp(ng), nstp(ng))
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # endif
@@ -129,7 +129,10 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
+!$OMP MASTER
           CALL get_data (ng)
+!$OMP END MASTER
+!$OMP BARRIER
           IF (exit_flag.ne.NoError) RETURN
         END DO
 !
@@ -139,14 +142,10 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1,+1
-              CALL set_data (ng, TILE)
-            END DO
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL set_data (ng, tile)
           END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
         END DO
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -159,25 +158,17 @@
 !
 !  Initialize free-surface.
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL ini_zeta (ng, TILE, iNLM)
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ini_zeta (ng, tile, iNLM)
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
 !
 !  Initialize other state variables.
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*(thread+1)-1,subs*thread,-1
-                CALL ini_fields (ng, TILE, iNLM)
-              END DO
+            DO tile=last_tile(ng),first_tile(ng),-1
+              CALL ini_fields (ng, tile, iNLM)
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 !
@@ -188,23 +179,19 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(Lnew,numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1,+1      ! irreversible
+          DO tile=first_tile(ng),last_tile(ng),+1         ! irreversible
 # ifdef AVERAGES
-              CALL set_avg (ng, TILE)
+            CALL set_avg (ng, tile)
 # endif
 # ifdef DIAGNOSTICS
-              CALL set_diags (ng, TILE)
+            CALL set_diags (ng, tile)
 # endif
-              CALL diag (ng, TILE)
+            CALL diag (ng, tile)
 # ifdef TLM_CHECK
-              CALL nl_dotproduct (ng, TILE, Lnew(ng))
+            CALL nl_dotproduct (ng, tile, Lnew(ng))
 # endif
-            END DO
           END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
         END DO
         IF (exit_flag.ne.NoError) RETURN
 
@@ -218,14 +205,10 @@
         DO ng=1,Ngrids
           IF ((iic(ng).ne.ntstart(ng)).and.                             &
      &        MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*(thread+1)-1,subs*thread,-1
-                CALL ocn2atm_coupling (ng, TILE)
-              END DO
+            DO tile=last_tile(ng),first_tile(ng),-1
+              CALL ocn2atm_coupling (ng, tile)
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # endif
@@ -240,15 +223,11 @@
 !
         DO ng=1,Ngrids
           IF (iic(ng).lt.(ntend(ng)+1)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL obc_adjust (ng, TILE, Lbinp(ng))
-                CALL load_obc (ng, TILE, Lbout(ng))
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL obc_adjust (ng, tile, Lbinp(ng))
+              CALL load_obc (ng, tile, Lbout(ng))
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # endif
@@ -262,14 +241,10 @@
 !
         DO ng=1,Ngrids
           IF (iic(ng).lt.(ntend(ng)+1)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL frc_adjust (ng, TILE, Lfinp(ng))
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL frc_adjust (ng, tile, Lfinp(ng))
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # endif
@@ -284,14 +259,10 @@
         DO ng=1,Ngrids
           IF ((iic(ng).ne.ntstart(ng)).and.                             &
      &        MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL ocn2wav_coupling (ng, TILE)
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ocn2wav_coupling (ng, tile)
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # endif
@@ -303,14 +274,10 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*(thread+1)-1,subs*thread,-1
-              CALL radiation_stress (ng, TILE)
-            END DO
+          DO tile=last_tile(ng),first_tile(ng),-1
+            CALL radiation_stress (ng, tile)
           END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
         END DO
 # endif
 !
@@ -319,17 +286,13 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1,+1
-              CALL set_vbc (ng, TILE)
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL set_vbc (ng, tile)
 # if defined SSH_TIDES || defined UV_TIDES
-              CALL set_tides (ng, TILE)
+            CALL set_tides (ng, tile)
 # endif
-            END DO
           END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
         END DO
 # ifdef NESTING
         CALL nesting (100)
@@ -342,7 +305,10 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
+!$OMP MASTER
           CALL output (ng)
+!$OMP END MASTER
+!$OMP BARRIER
           IF ((exit_flag.ne.NoError).or.                                &
      &        ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) RETURN
         END DO
@@ -373,14 +339,10 @@
 !  Predictor step - Advance barotropic equations using 2D time-step
 !  ==============   predictor scheme.
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*(thread+1)-1,subs*thread,-1
-              CALL step2d (ng, TILE)
-            END DO
+          DO tile=last_tile(ng),first_tile(ng),-1
+            CALL step2d (ng, tile)
           END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
         END DO
 # ifdef NESTING
         CALL nesting (100)
@@ -402,14 +364,10 @@
 !  auxiliary (nfast+1) time-step.
 !
           IF (iif(ng).lt.(nfast(ng)+1)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1,+1
-                CALL step2d (ng, TILE)
-              END DO
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL step2d (ng, tile)
             END DO
-!$OMP END PARALLEL DO
+!$OMP BARRIER
           END IF
         END DO
 # ifdef NESTING
@@ -419,20 +377,25 @@
 # ifdef FLOATS
 !
 !-----------------------------------------------------------------------
-!  Compute Lagrangian drifters trajectories.
+!  Compute Lagrangian drifters trajectories: Split all the drifters
+!  between all the computational threads, except in distributed-memory
+!  and serial configurations. In distributed-memory, the parallel node
+!  containing the drifter is selected internally since the state
+!  variables do not have a global scope.
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
           IF (Lfloats(Ng)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,chunk_size,Lstr,Lend)                  &
-!$OMP&            SHARED(numthreads,Nfloats)
-            DO thread=0,numthreads-1
-              chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
-              Lstr=1+thread*chunk_size
-              Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
-              CALL step_floats (ng, Lstr, Lend)
-            END DO
-!$OMP END PARALLEL DO
+#  ifdef _OPENMP
+            chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
+            Lstr=1+MyThread*chunk_size
+            Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
+#  else
+            Lstr=1
+            Lend=Nfloats(ng)
+#  endif
+            CALL step_floats (ng, Lstr, Lend)
+!$OMP BARRIER
 !
 !  Shift floats time indices.
 !

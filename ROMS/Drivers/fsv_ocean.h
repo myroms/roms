@@ -86,7 +86,10 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: ng, thread
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -125,6 +128,25 @@
         CALL inp_par (iTLM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -135,16 +157,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iTLM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 
       END IF
 
@@ -174,7 +198,9 @@
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
         BLK(ng)%name=FWD(ng)%name
 #endif
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -418,7 +444,9 @@
             ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
           END DO
 
+!$OMP PARALLEL
           CALL propagator (RunInterval, state, ad_state)
+!$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         ELSE
           IF (ANY(info.ne.0)) THEN
@@ -530,7 +558,9 @@
                   ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
                 END DO
 
+!$OMP PARALLEL
                 CALL propagator (RunInterval, state, ad_state)
+!$OMP END PARALLEL
                 IF (exit_flag.ne.NoError) RETURN
 !
                 DO ng=1,Ngrids
@@ -674,11 +704,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iTLM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

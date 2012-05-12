@@ -131,13 +131,13 @@
 #endif
 
 /*
-** Set tile variable for distributed- or shared-memory configurations.
+** Set tile range for distributed- or shared-memory configurations.
 */
 
 #ifdef DISTRIBUTE
-# define TILE MyRank
+# define THREAD_RANGE MyRank,MyRank
 #else
-# define TILE tile
+# define THREAD_RANGE 0,numthreads-1
 #endif
 
 /*

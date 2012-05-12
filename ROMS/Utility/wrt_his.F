@@ -520,18 +520,21 @@
           allocate (Vr2d(LBi:UBi,LBj:UBj))
             Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
         END IF
-        DO tile=0,NtileX(ng)*NtileE(ng)-1
-          CALL uv_rotate2d (ng, TILE, .FALSE., .TRUE.,                  &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      GRID(ng) % CosAngler,                       &
-     &                      GRID(ng) % SinAngler,                       &
-#ifdef MASKING
-     &                      GRID(ng) % rmask_io,                        &
+#ifdef DISTRIBUTE
+        tile=MyRank
+#else
+        tile=-1
 #endif
-     &                      OCEAN(ng) % ubar(:,:,KOUT),                 &
-     &                      OCEAN(ng) % vbar(:,:,KOUT),                 &
-     &                      Ur2d, Vr2d)
-        END DO
+        CALL uv_rotate2d (ng, tile, .FALSE., .TRUE.,                    &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    GRID(ng) % CosAngler,                         &
+     &                    GRID(ng) % SinAngler,                         &
+#ifdef MASKING
+     &                    GRID(ng) % rmask_io,                          &
+#endif
+     &                    OCEAN(ng) % ubar(:,:,KOUT),                   &
+     &                    OCEAN(ng) % vbar(:,:,KOUT),                   &
+     &                    Ur2d, Vr2d)
 
         scale=1.0_r8
         gtype=gfactor*r2dvar
@@ -710,18 +713,21 @@
           allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
           Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
         END IF
-        DO tile=0,NtileX(ng)*NtileE(ng)-1
-          CALL uv_rotate3d (ng, TILE, .FALSE., .TRUE.,                  &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      GRID(ng) % CosAngler,                       &
-     &                      GRID(ng) % SinAngler,                       &
-# ifdef MASKING
-     &                      GRID(ng) % rmask_io,                        &
+# ifdef DISTRIBUTE
+        tile=MyRank
+# else
+        tile=-1
 # endif
-     &                      OCEAN(ng) % u(:,:,:,NOUT),                  &
-     &                      OCEAN(ng) % v(:,:,:,NOUT),                  &
-     &                      Ur3d, Vr3d)
-        END DO
+        CALL uv_rotate3d (ng, tile, .FALSE., .TRUE.,                    &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    GRID(ng) % CosAngler,                         &
+     &                    GRID(ng) % SinAngler,                         &
+# ifdef MASKING
+     &                    GRID(ng) % rmask_io,                          &
+# endif
+     &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
+     &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
+     &                    Ur3d, Vr3d)
 
         scale=1.0_r8
         gtype=gfactor*r3dvar
@@ -769,13 +775,16 @@
         END IF
         scale=1.0_r8
         gtype=gfactor*w3dvar
-        DO tile=0,NtileX(ng)*NtileE(ng)-1
-          CALL scale_omega (ng, TILE, LBi, UBi, LBj, UBj, 0, N(ng),     &
-     &                      GRID(ng) % pm,                              &
-     &                      GRID(ng) % pn,                              &
-     &                      OCEAN(ng) % W,                              &
-     &                      Wr3d)
-        END DO
+# ifdef DISTRIBUTE
+        tile=MyRank
+# else
+        tile=-1
+# endif
+        CALL scale_omega (ng, tile, LBi, UBi, LBj, UBj, 0, N(ng),       &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
+     &                    OCEAN(ng) % W,                                &
+     &                    Wr3d)
         status=nf_fwrite3d(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idOvel), &
      &                     HIS(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &

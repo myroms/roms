@@ -577,12 +577,16 @@
 !-----------------------------------------------------------------------
 !
       IF (ANY(ad_VolCons(:,ng))) THEN
+# ifdef DISTRIBUTE
+        NSUB=1                           ! distributed-memory
+# else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
+# endif
 !$OMP CRITICAL (AD_OBC_VOLUME)
         IF (tile_count.eq.0) THEN
           adfac3=0.0_r8
@@ -591,12 +595,12 @@
         tile_count=tile_count+1
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
           buffer=adfac3
           op_handle='SUM'
           CALL mp_reduce (ng, iADM, 1, buffer, op_handle)
           adfac3=buffer
-#  endif
+# endif
           IF (iif(ng).eq.nfast(ng)+1) THEN
             ad_ubar_xs=ad_ubar_xs+adfac3
           ELSE

@@ -188,12 +188,16 @@
 !-----------------------------------------------------------------------
 !
       IF (ANY(VolCons(:,ng))) THEN
+#ifdef DISTRIBUTE
+        NSUB=1                           ! distributed-memory
+#else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
+#endif
 !$OMP CRITICAL (OBC_VOLUME)
         IF (tile_count.eq.0) THEN
           bc_flux=0.0_r8

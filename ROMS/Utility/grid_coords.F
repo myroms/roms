@@ -43,7 +43,7 @@
 
 # ifdef FLOATS
       real(r8) :: Xstr, Xend, Ystr, Yend, zfloat
-      logical, dimension(Nfloats(ng)) :: MyThread
+      logical, dimension(Nfloats(ng)) :: my_thread
       real(r8), dimension(Nfloats(ng)) :: Iflt, Jflt
 #  ifdef SOLVE3D
       real(r8), dimension(Nfloats(ng)) :: Kflt
@@ -126,15 +126,15 @@
      &        (DRIFTER(ng)%Tinfo(ixgrd,l).lt.Xend).and.                 &
      &        (Ystr.le.DRIFTER(ng)%Tinfo(iygrd,l)).and.                 &
      &        (DRIFTER(ng)%Tinfo(iygrd,l).lt.Yend)) THEN
-            MyThread(l)=.TRUE.
+            my_thread(l)=.TRUE.
           ELSE
-            MyThread(l)=.FALSE.
+            my_thread(l)=.FALSE.
           END IF
         END DO
       END IF
 #   else
       DO l=1,Nfloats(ng)
-        MyThread(l)=.TRUE.
+        my_thread(l)=.TRUE.
       END DO
 #   endif
 #  endif
@@ -149,7 +149,7 @@
         IF (Lfloats(ng)) THEN
 #  ifdef SOLVE3D
           DRIFTER(ng)%Fz0(l)=spv
-          IF (MyThread(l).and.                                          &
+          IF (my_thread(l).and.                                         &
      &        ((DRIFTER(ng)%Tinfo(ixgrd,l).ge.0.5_r8).and.              &
      &         (DRIFTER(ng)%Tinfo(iygrd,l).ge.0.5_r8).and.              &
      &         (DRIFTER(ng)%Tinfo(ixgrd,l).le.                          &

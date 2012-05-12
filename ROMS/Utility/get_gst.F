@@ -36,7 +36,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ivar, status, tile
+      integer :: i, ivar, status
 
 # ifdef DISTRIBUTE
       integer :: vrecord = -1
@@ -106,8 +106,8 @@
       CALL netcdf_get_ivar (ng, model, ncname, 'Nnodes', ivar,          &
      &                      ncid = GST(ng)%ncid)
       IF (exit_flag.ne. NoError) RETURN
-      IF (ivar.ne.numnodes) THEN
-        IF (Master) WRITE (stdout,20) ', Nnodes = ', ivar, numnodes
+      IF (ivar.ne.numthreads) THEN
+        IF (Master) WRITE (stdout,20) ', Nnodes = ', ivar, numthreads
         exit_flag=6
         RETURN
       END IF

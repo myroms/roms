@@ -841,12 +841,16 @@
 ! Compute global background cost function.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+# endif
 !$OMP CRITICAL (BACKCOST)
       IF (tile_count.eq.0) THEN
         DO i=0,NstateVar(ng)

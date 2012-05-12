@@ -84,7 +84,11 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: STDrec, Tindex, ng, thread
+      integer :: STDrec, Tindex
+      integer :: chunk_size, ng, thread
+#ifdef _OPENMP
+      integer :: my_threadnum
+#endif
 
 #ifdef DISTRIBUTE
 !
@@ -123,6 +127,25 @@
         CALL inp_par (iADM)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Set domain decomposition tile partition range.  This range is
+!  computed only once since the "first_tile" and "last_tile" values
+!  are private for each parallel thread/node.
+!
+!$OMP PARALLEL
+#if defined _OPENMP
+      MyThread=my_threadnum()
+#elif defined DISTRIBUTE
+      MyThread=MyRank
+#else
+      MyThread=0
+#endif
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
+!$OMP END PARALLEL
+!
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
 !  needed to allocate clock variables.
@@ -133,16 +156,18 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(numthreads)
-          DO thread=0,numthreads-1
+!$OMP PARALLEL
+          DO thread=THREAD_RANGE
             CALL wclock_on (ng, iADM, 0)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize all model state arrays.
 !
+!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
+!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -252,7 +277,7 @@
 !
       logical :: Lposterior
 
-      integer :: ng, thread, subs, tile
+      integer :: ng, tile
       integer :: Lbck, Lini, Rec, Rec1, Rec2
       integer :: NRMrec
 
@@ -305,15 +330,12 @@
           CALL get_state (ng, iNLM, 2, INI(ng)%name, Lini, Lini)
           IF (exit_flag.ne.NoError) RETURN
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL balance_ref (ng, TILE, Lini)
-              CALL biconj (ng, TILE, iNLM, Lini)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL balance_ref (ng, tile, Lini)
+            CALL biconj (ng, tile, iNLM, Lini)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
           wrtZetaRef(ng)=.TRUE.
         END DO
       END IF
@@ -326,7 +348,9 @@
 !
       DO ng=1,Ngrids
         Lstiffness=.FALSE.
+!$OMP PARALLEL
         CALL ad_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -376,14 +400,11 @@
           IF (exit_flag.ne.NoError) RETURN
 #endif
 
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
-          DO thread=0,numthreads-1
-            subs=NtileX(ng)*NtileE(ng)/numthreads
-            DO tile=subs*thread,subs*(thread+1)-1
-              CALL normalization (ng, TILE, 2)
-            END DO
+!$OMP PARALLEL
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL normalization (ng, tile, 2)
           END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
            LdefNRM(1:4,ng)=.FALSE.
            LwrtNRM(1:4,ng)=.FALSE.
         ELSE
@@ -444,11 +465,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL ad_main3d (RunInterval)
 #else
       CALL ad_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Convolve adjoint trajectory with error covariances and write
@@ -467,7 +490,9 @@
 !  Initialize tangent linear model.
 !
       DO ng=1,Ngrids
+!$OMP PARALLEL
         CALL tl_initial (ng)
+!$OMP END PARALLEL
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
@@ -487,11 +512,13 @@
         END IF
       END DO
 
+!$OMP PARALLEL
 #ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #else
       CALL tl_main2d (RunInterval)
 #endif
+!$OMP END PARALLEL
       IF (exit_flag.ne.NoError) RETURN
 !
  10   FORMAT (/,'AD ROMS/TOMS: adjoint forcing time range: ',           &
@@ -557,11 +584,11 @@
       END IF
 
       DO ng=1,Ngrids
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
+!$OMP PARALLEL
+        DO thread=THREAD_RANGE
           CALL wclock_off (ng, iADM, 0)
         END DO
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
       END DO
 !
 !  Close IO files.

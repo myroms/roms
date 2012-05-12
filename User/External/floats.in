@@ -40,6 +40,11 @@
 !
      Lfloats == T
 
+! Switch to control the printing of floats positions to standard output
+! file, [1:Ngrids].
+!
+      Fprint == T
+
 ! Flag indicating re-start from previous solution. If FRREC = 0, a new
 ! NetCDF output file is created.
 
@@ -88,6 +93,11 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !             for all grids when the CPP option FLOATS is activated. The
 !             USER can control which grid to process by turning on/off this
 !             switch.
+!
+! Fprint    Switch to control the printing of floats positions to standard
+!             output file. This switch can be used to turn of the printing
+!             of information whe thousands of floats are released.  This
+!             information is still in output floats NetCDF file.
 !
 ! FRREC     Flag to indicate re-start from a previous solution.  Use
 !             FRREC=0 for new solutions. In a re-start solution, FRREC

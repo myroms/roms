@@ -1425,12 +1425,16 @@
 !  Perform parallel global reduction operations.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+# endif
 !$OMP CRITICAL (DOT_PROD)
       IF (tile_count.eq.0) THEN
         DotProd=0.0_r8
@@ -2031,12 +2035,16 @@
 !  Perform parallel global reduction operations.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+# endif
 !$OMP CRITICAL (TL_DOT_PROD)
       IF (tile_count.eq.0) THEN
         tl_DotProd=0.0_r8
@@ -2296,12 +2304,16 @@
 !
 !  Perform parallel global reduction operation on "my_ad_bc_bk".
 !
+# ifdef DISTRIBUTE
+        NSUB=1                              ! distributed-memory
+# else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                            ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)        ! tiled application
         END IF
+# endif
 !$OMP CRITICAL (AD_DOT_PROD1)
         IF (tile_count.eq.0) THEN
           ad_bc_bk=0.0_r8
@@ -2423,12 +2435,16 @@
 !
 !  Perform parallel global reduction operation on "my_ad_bc_ak".
 !
+# ifdef DISTRIBUTE
+        NSUB=1                              ! distributed-memory
+# else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                            ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)        ! tiled application
         END IF
+# endif
 !$OMP CRITICAL (AD_DOT_PROD2)
         IF (tile_count.eq.0) THEN
           ad_bc_ak=0.0_r8

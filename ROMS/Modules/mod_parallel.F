@@ -33,14 +33,17 @@
       logical :: InpThread
       logical :: OutThread
 !
-!  Number of shared-memory parallel threads.  In distributed memory
-!  configurations, its value must be equal to one.
+!  Number of shared-memory parallel threads or distributed-memory
+!  parallel nodes.
 !
-      integer :: numthreads = 1
+      integer :: numthreads
 !
-!  Number distributed memory nodes.
+!  First and last tile to process in a tiled application.
 !
-      integer :: numnodes = 0
+      integer, allocatable :: first_tile(:)
+      integer, allocatable :: last_tile(:)
+
+!$OMP THREADPRIVATE (first_tile, last_tile)
 
 #ifdef AIR_OCEAN
 !
@@ -81,10 +84,8 @@
       real(r8), allocatable :: Cend(:,:,:)
       real(r8), allocatable :: Csum(:,:,:)
 
-#ifdef _OPENMP
 !$OMP THREADPRIVATE (proc)
 !$OMP THREADPRIVATE (Cstr, Cend)
-#endif
 
 #if defined DISTRIBUTE && defined PROFILE
 !
@@ -95,10 +96,16 @@
       logical :: Lwclock = .FALSE.
 #endif
 !
-!  Distributed-memory master process and rank of the local process.
+!  Distributed-memory master process.
 !
       integer, parameter :: MyMaster = 0
+!
+!  Rank of the parallel local process.
+!
       integer :: MyRank = 0
+      integer :: MyThread = 0
+
+!$OMP THREADPRIVATE (MyThread)
 
 #ifdef DISTRIBUTE
 # ifdef MPI
@@ -141,10 +148,17 @@
       USE mod_strings, ONLY: Nregion
 !
 !-----------------------------------------------------------------------
-!  Allocate and Initialize profiling variables.
+!  Allocate and initialize module variables.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL
+!  First and last tile to process in a tiled application.
+!
+      allocate ( first_tile(Ngrids) )
+      allocate ( last_tile (Ngrids) )
+!
+!  Time profiling variables.
+!
       allocate ( proc(0:1,4,Ngrids) )
       proc(0:1,1:4,1:Ngrids)=0
 
@@ -186,13 +200,22 @@
       integer :: i
 #ifdef DISTRIBUTE
       integer :: MyError
-#endif
-#ifndef DISTRIBUTE
+#else
       integer :: my_numthreads
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize shared-memory (OpenMP) or serial configuration.
 !-----------------------------------------------------------------------
+
+#ifdef _OPENMP
+!
+!  Disable dynamic adjustment, by the run-time environment, of the
+!  number of threads available to execute parallel regions.
+!
+      CALL omp_set_dynamic (.FALSE.)
+#endif
+#ifndef DISTRIBUTE
 !
 !  Inquire number of threads in parallel region.
 !
@@ -211,8 +234,7 @@
 !  Get the number of processes in the group associated with the world
 !  communicator.
 !
-      numthreads=1
-      CALL mpi_comm_size (OCN_COMM_WORLD, numnodes, MyError)
+      CALL mpi_comm_size (OCN_COMM_WORLD, numthreads, MyError)
       IF (MyError.ne.0) THEN
         WRITE (stdout,10)
   10    FORMAT (/,' ROMS/TOMS - Unable to inquire number of',           &

@@ -492,12 +492,16 @@
           my_max=MAX(my_max,h(i,j))
         END DO
       END DO
+#ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#endif
 !$OMP CRITICAL (H_RANGE)
       IF (tile_count.eq.0) THEN
         hmin(ng)=my_min

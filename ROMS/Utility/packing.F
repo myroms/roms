@@ -4422,12 +4422,16 @@
 !
 !  Global reduction of normalization factor.
 !
+#   ifdef DISTRIBUTE
+        NSUB=1                           ! distributed-memory
+#   else
         IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                      &
      &      DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           NSUB=1                         ! non-tiled application
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
+#   endif
 !$OMP CRITICAL (SO_NORM)
         IF (tile_count.eq.0) THEN
           SOnorm=0.0_r8
@@ -4481,12 +4485,16 @@
 !
 !  Global reduction of normalization factor, TRnorm.
 !
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+# endif
 !$OMP CRITICAL (TR_NORM)
       IF (tile_count.eq.0) THEN
         TRnorm(ng)=0.0_r8
@@ -4576,12 +4584,16 @@
 !
 !  Global reduction of dot products.
 !
+#   ifdef DISTRIBUTE
+      NSUB=1                           ! distributed-memory
+#   else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                         ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
       END IF
+#   endif
 !$OMP CRITICAL (SO_DOT)
       IF (tile_count.eq.0) THEN
         DO rec=1,Nsemi(ng)
@@ -4643,12 +4655,16 @@
 !
 !  Global reduction of normalization factor, TRnorm.
 !
+#   ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#   else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#   endif
 !$OMP CRITICAL (TR_NORM)
       IF (tile_count.eq.0) THEN
         TRnorm(ng)=0.0_r8

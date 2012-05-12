@@ -267,18 +267,10 @@
 #endif
             CASE ('NtileI')
               Npts=load_i(Nval, Rval, Ngrids, NtileI)
-#ifdef DISTRIBUTE
-              NtileX(1:Ngrids)=1
-#else
               NtileX(1:Ngrids)=NtileI(1:Ngrids)
-#endif
             CASE ('NtileJ')
               Npts=load_i(Nval, Rval, Ngrids, NtileJ)
-#ifdef DISTRIBUTE
-              NtileE(1:Ngrids)=1
-#else
               NtileE(1:Ngrids)=NtileJ(1:Ngrids)
-#endif
 #ifdef BIOLOGY
               CALL initialize_biology
 #endif
@@ -388,7 +380,7 @@
               Npts=load_l(Nval, Cval, Ngrids, VolCons(isouth,:))
             CASE ('VolCons(north)')
               Npts=load_l(Nval, Cval, Ngrids, VolCons(inorth,:))
-#if defined ADJONT || defined TANGENT || defined TL_IOMS
+#if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_VolCons(west)')
               Npts=load_l(Nval, Cval, Ngrids, ad_VolCons(iwest,:))
               DO ng=1,Ngrids
@@ -2632,7 +2624,7 @@
           LdefHIS(ng)=.TRUE.
         END IF
 #endif
-#if defined ADJOINT || defined TANGENT || defined TL_IOMS
+#if defined TANGENT || defined TL_IOMS
 !
 !  Set lateral boundary condition switches for the tangent linear
 !  models (TLM and RPM) to the same values as the adjoint model.
@@ -2784,9 +2776,9 @@
 !  decomposition.
 !
 #ifdef DISTRIBUTE
-          WRITE (out,70) ng, Lm(ng), Mm(ng), N(ng), numnodes,           &
+          WRITE (out,70) ng, Lm(ng), Mm(ng), N(ng), numthreads,         &
      &                   NtileI(ng), NtileJ(ng)
-          IF ((NtileI(ng)*NtileJ(ng)).ne.numnodes) THEN
+          IF ((NtileI(ng)*NtileJ(ng)).ne.numthreads) THEN
             WRITE (out,80) ng
             exit_flag=6
             RETURN

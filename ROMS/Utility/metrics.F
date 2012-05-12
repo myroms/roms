@@ -858,12 +858,16 @@
 !  Perform global reductions.
 !-----------------------------------------------------------------------
 !
+#ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#else
       IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
      &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         NSUB=1                           ! non-tiled application
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
+#endif
 !$OMP CRITICAL (REDUCTIONS)
       IF (tile_count.eq.0) THEN
         Cg_min=my_Cg_min
