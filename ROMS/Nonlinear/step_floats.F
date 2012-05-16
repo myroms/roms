@@ -18,6 +18,17 @@
 !  Gaussian and includes a correction for the vertical gradient in     !
 !  diffusion coefficient                                               !
 !                                                                      !
+# ifdef FLOAT_BIOLOGY
+!  If biological behavior is activated, the biological float vertical  !
+!  velocity is scaled to grid units by dividing by the thickness (Hz), !
+!  according to the model omega vertical velocity:                     !
+!                                                                      !
+!    track(iwbio,:,:) / Hz                                             !
+!                                                                      !
+!  A new field is added to the track array, track(i1ohz,:,;), having   !
+!  the values of 1/Hz for each float. This facilitates the scaling.    !
+!                                                                      !
+# endif
 !=======================================================================
 !
       implicit none
@@ -72,12 +83,16 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_floats
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
       USE mod_ocean
       USE mod_scalars
 !
+# ifdef FLOAT_BIOLOGY
+      USE biology_floats_mod, ONLY : biology_floats
+# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
 # endif
@@ -129,7 +144,7 @@
       real(r8), parameter :: Fspv = 0.0_r8
 
       real(r8) :: cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8, cff9
-      real(r8) :: p1, p2, q1, q2, xrhs, yrhs, zrhs, zfloat
+      real(r8) :: oHz, p1, p2, q1, q2, xrhs, yrhs, zrhs, zfloat
       real(r8) :: HalfDT
 
       real(r8), dimension(Lstr:Lend) :: nudg
@@ -232,10 +247,23 @@
 !  Compute vertical position (grid units) 3D Lagrangian floats.
 !
           IF (Ftype(l).eq.flt_Lagran) THEN
+#  ifdef FLOAT_BIOLOGY
+            track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
+     &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
+     &                                  cff2*track(izrhs,nfm1,l)+       &
+     &                                  cff1*track(izrhs,nfm2,l)+       &
+     &                                  cff1*track(iwbio,nf  ,l)*       &
+     &                                       track(i1oHz,nf  ,l)-       &
+     &                                  cff2*track(iwbio,nfm1,l)*       &
+     &                                       track(i1oHz,nfm1,l)+       &
+     &                                  cff1*track(iwbio,nfm2,l)*       &
+     &                                       track(i1oHz,nfm2,l))
+#  else
             track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
      &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
      &                                  cff2*track(izrhs,nfm1,l)+       &
      &                                  cff1*track(izrhs,nfm2,l))
+#  endif
 !
 !  Compute vertical position (grid units) for isobaric floats
 !  (p=g*(z+zeta)=constant) or geopotential floats (constant depth).
@@ -353,6 +381,24 @@
      &                    OCEAN(ng) % W,                                &
      &                    my_thread, bounded, track)
 #  endif
+#  if defined FLOAT_BIOLOGY
+      CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                    Lstr, Lend, nfp1, i1oHz, isBr3d,              &
+     &                    r3dvar, Gmask, Fspv, nudg,                    &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
+     &                    GRID(ng) % Hz,                                &
+#   ifdef MASKING
+     &                    GRID(ng) % rmask,                             &
+#   endif
+     &                    GRID(ng) % Hz,                                &
+     &                    my_thread, bounded, track)
+      DO l=Lstr,Lend
+        IF (my_thread(l).and.bounded(l)) THEN
+          track(i1oHz,nfp1,l)=1.0_r8/track(i1oHz,nfp1,l)
+        END IF
+      END DO
+#  endif
 # else
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, 1,                 &
      &                    Lstr, Lend, nfp1, ixrhs, isUbar,              &
@@ -375,6 +421,34 @@
 #  endif
      &                    OCEAN(ng) % vbar(:,:,knew),                   &
      &                    my_thread, bounded, track)
+# endif
+
+# ifdef FLOAT_BIOLOGY
+!
+!-----------------------------------------------------------------------
+!  Compute biological float behavior, predictor step.
+!-----------------------------------------------------------------------
+!
+!  Interpolate tracer to the predictor step locations. These values
+!  are used in the "biology_floats" routine.
+!
+      DO itrc=1,NT(ng)
+        CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                      Lstr, Lend, nfp1, ifTvar(itrc),             &
+     &                      isTvar(itrc), r3dvar, Lmask, spval, nudg,   &
+     &                      GRID(ng) % pm,                              &
+     &                      GRID(ng) % pn,                              &
+     &                      GRID(ng) % Hz,                              &
+#  ifdef MASKING
+     &                      GRID(ng) % rmask,                           &
+#  endif
+     &                      OCEAN(ng) % t(:,:,:,nnew,itrc),             &
+     &                      my_thread, bounded, track)
+      END DO
+!
+!  Biological behavior predictor step.
+!
+      CALL biology_floats (ng, Lstr, Lend, .TRUE., my_thread)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -404,11 +478,25 @@
 !  Compute vertical position (grid units) 3D Lagrangian floats.
 !
           IF (Ftype(l).eq.flt_Lagran) THEN
+#  if defined FLOAT_BIOLOGY
+            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
+     &                          cff2*track(izgrd,nfm2,l)+               &
+     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
+     &                                  cff4*track(izrhs,nf  ,l)-       &
+     &                                  cff3*track(izrhs,nfm1,l)+       &
+     &                                  cff3*track(iwbio,nfp1,l)*       &
+     &                                       track(i1oHz,nfp1,l)+       &
+     &                                  cff4*track(iwbio,nf  ,l)*       &
+     &                                       track(i1oHz,nf  ,l)-       &
+     &                                  cff3*track(iwbio,nfm1,l)*       &
+     &                                       track(i1oHz,nf  ,l))
+#  else
             track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
      &                          cff2*track(izgrd,nfm2,l)+               &
      &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
      &                                  cff4*track(izrhs,nf  ,l)-       &
      &                                  cff3*track(izrhs,nfm1,l))
+#  endif
 !
 !  Compute vertical position (grid units) for isobaric floats
 !  (p=g*(z+zeta)=constant) or geopotential floats (constant depth).
@@ -695,6 +783,24 @@
      &                    OCEAN(ng) % W,                                &
      &                    my_thread, bounded, track)
 #  endif
+#  ifdef FLOAT_BIOLOGY
+      CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                    Lstr, Lend, nfp1, i1oHz, isBr3d,              &
+     &                    r3dvar, Gmask, Fspv, nudg,                    &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
+     &                    GRID(ng) % Hz,                                &
+#   ifdef MASKING
+     &                    GRID(ng) % rmask,                             &
+#   endif
+     &                    GRID(ng) % Hz,                                &
+     &                    my_thread, bounded, track)
+      DO l=Lstr,Lend
+        IF (my_thread(l).and.bounded(l)) THEN
+          track(i1oHz,nfp1,l)=1.0_r8/track(i1oHz,nfp1,l)
+        END IF
+      END DO
+#  endif
 # else
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, 1,                 &
      &                    Lstr, Lend, nfp1, ixrhs, isUbar,              &
@@ -730,11 +836,17 @@
 # ifdef SOLVE3D
           zrhs=track(izrhs,nfp1,l)
 # endif
+# ifdef FLOAT_BIOLOGY
+          oHz=track(i1oHz,nfp1,l)
+# endif
           DO i=0,NFT
             track(ixrhs,i,l)=xrhs
             track(iyrhs,i,l)=yrhs
 # ifdef SOLVE3D
             track(izrhs,i,l)=zrhs
+# endif
+# ifdef FLOAT_BIOLOGY
+            track(i1oHz,i,l)=oHz
 # endif
           END DO
         END IF
@@ -839,6 +951,14 @@
      &                      OCEAN(ng) % t(:,:,:,nnew,itrc),             &
      &                      my_thread, bounded, track)
       END DO
+# endif
+# ifdef FLOAT_BIOLOGY
+!
+!-----------------------------------------------------------------------
+!  Compute biological float behavior, corrector step.
+!-----------------------------------------------------------------------
+!
+      CALL biology_floats (ng, Lstr, Lend, .FALSE., my_thread)
 # endif
 # if defined SOLVE3D && defined FLOAT_VWALK && !defined VWALK_FORWARD
 !

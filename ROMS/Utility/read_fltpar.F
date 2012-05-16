@@ -29,6 +29,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: find_file
+
       integer :: Npts, Nval
       integer :: i, j, igrid, mc, nc, ng, status
 
@@ -45,14 +47,21 @@
       real(r8), allocatable :: Ft0(:,:), Fx0(:,:), Fy0(:,:), Fz0(:,:)
       real(r8), allocatable :: Fdt(:,:), Fdx(:,:), Fdy(:,:), Fdz(:,:)
 
+      character (len=1  ), parameter :: blank = ' '
+
       character (len=35 ) :: frmt
       character (len=40 ) :: KeyWord
-      character (len=256) :: line
+      character (len=256) :: fname, line
       character (len=256), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.
 !-----------------------------------------------------------------------
+!
+!  Allocate floats parameters that do not depend on the number of
+!  floats, Nfloats(ng).
+!
+      CALL allocate_floats (.FALSE.)
 !
 !  Notice I added one when allocating local scratch arrays to avoid
 !  out of bounds in some compilers when reading the last blank line
@@ -66,9 +75,14 @@
             CASE ('Lfloats')
               Npts=load_l(Nval, Cval, Ngrids, Lfloats)
             CASE ('Fprint')
-              Npts=load_l(Nval, Cval, Ngrids, Lprint)
+              Npts=load_l(Nval, Cval, Ngrids, Fprint)
             CASE ('FRREC')
               Npts=load_i(Nval, Rval, Ngrids, frrec)
+            CASE ('FBIONAM')
+              DO i=1,LEN(fbionam)
+                fbionam(i:i)=blank
+              END DO
+              fbionam=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('NFLOATS')
               Npts=load_i(Nval, Rval, Ngrids, Nfloats)
             CASE ('POS')
@@ -107,9 +121,7 @@
               IF (.not.allocated(Fdz)) THEN
                 allocate ( Fdz(Npts,Ngrids) )
               END IF
-              DO ng=1,Ngrids
-                CALL allocate_floats (ng)
-              END DO
+              CALL allocate_floats (.TRUE.) ! allocate DRIFTER structure
               ncount(1:Ngrids)=0
               nentry(1:Ngrids)=0
               DO WHILE (.TRUE.)
@@ -126,7 +138,7 @@
      &                                   Fdy(nentry(igrid)+1,igrid),    &
      &                                   Fdz(nentry(igrid)+1,igrid)
                 IF (igrid.gt.Ngrids) THEN
-                  IF (Lwrite) WRITE (out,40) fposnam
+                  IF (Lwrite) WRITE (out,60) fposnam
                   exit_flag=4
                   RETURN
                 END IF
@@ -137,7 +149,7 @@
           END SELECT
         END IF
       END DO
-  20  IF (Master) WRITE (out,50) line
+  20  IF (Master) WRITE (out,70) line
       exit_flag=4
       RETURN
   30  CONTINUE
@@ -160,11 +172,11 @@
         DO ng=1,Ngrids
           IF (Lfloats(ng).and.Fprint(ng)) THEN
             IF (ncount(ng).ne.Nfloats(ng)) THEN
-              WRITE (stdout,60) ncount(ng), Nfloats(ng)
+              WRITE (stdout,80) ncount(ng), Nfloats(ng)
               exit_flag=4
               RETURN
             END IF
-            WRITE (out,70) ng
+            WRITE (out,90) ng
             DO i=1,nentry(ng)
               IF (.not.spherical.and.(Fcoor(i,ng).eq.0)) THEN
                 frmt='(i1,i2,i5,f10.4,2f8.2,f8.2,4f9.3)'
@@ -176,12 +188,24 @@
      &                         Fz0(i,ng), Fdt(i,ng), Fdx(i,ng),         &
      &                         Fdy(i,ng), Fdz(i,ng)
             END DO
-            WRITE (out,80) Nfloats(ng),                                 &
+            WRITE (out,100) Nfloats(ng),                                &
      &            'Nfloats',                                            &
      &            'Number of float trajectories to compute.'
           END IF
         END DO
       END IF
+
+# ifdef FLOAT_BIOLOGY
+      fname=fbionam
+      IF (.not.find_file(1, fname)) GO TO 40
+      GO TO 50
+ 40   IF (Master) WRITE (out,110) TRIM(fname)
+      exit_flag=4
+      RETURN
+ 50   CONTINUE
+      IF (Lwrite) WRITE (out,120) 'biological floats behavior File:  ', &
+     &                            TRIM(fname)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Process initial float locations.
@@ -279,16 +303,18 @@
       IF (allocated(Fdy))    deallocate ( Fdy )
       IF (allocated(Fdz))    deallocate ( Fdz )
 !
-  40  FORMAT (/,' READ_FltPar - Error while reading floats',            &
+  60  FORMAT (/,' READ_FltPar - Error while reading floats',            &
      &          ' locations in input script: ',a)
-  50  FORMAT (/,' READ_FltPar - Error while processing line: ',/,a)
-  60  FORMAT (/,' READ_FltPar - Inconsistent number of floats to',      &
+  70  FORMAT (/,' READ_FltPar - Error while processing line: ',/,a)
+  80  FORMAT (/,' READ_FltPar - Inconsistent number of floats to',      &
      &          ' process: ', 2i6,/,18x,'change input script.')
-  70  FORMAT (/,/,' Floats Initial Locations, Grid: ',i2.2,             &
+  90  FORMAT (/,/,' Floats Initial Locations, Grid: ',i2.2,             &
      &        /,  ' ==================================',/,/,            &
      &        15x,'Ft0',5x,'Fx0',5x,'Fy0',5x,'Fz0',                     &
      &        6x,'Fdt',6x,'Fdx',6x,'Fdy',6x,'Fdz',/)
-  80  FORMAT (/,1x,i10,2x,a,t30,a)
+ 100  FORMAT (/,1x,i10,2x,a,t30,a)
+ 110  FORMAT (/,' READ_FltPar - could not find input file: ', a)
+ 120  FORMAT (/,2x,a,a)
 
       RETURN
       END SUBROUTINE read_FltPar

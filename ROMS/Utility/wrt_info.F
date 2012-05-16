@@ -27,6 +27,9 @@
 !
       USE mod_param
       USE mod_parallel
+#if defined FLOATS && defined FLOAT_BIOLOGY
+      USE mod_behavior
+#endif
 #ifdef BIOLOGY
       USE mod_biology
 #endif
@@ -1176,6 +1179,12 @@
 #  include <npzd_iron_wrt.h>
 # elif defined NPZD_POWELL
 #  include <npzd_Powell_wrt.h>
+# endif
+#endif
+
+#if defined FLOATS && defined FLOAT_BIOLOGY
+# if defined FLOAT_OYSTER
+#  include <oyster_floats_wrt.h>
 # endif
 #endif
 

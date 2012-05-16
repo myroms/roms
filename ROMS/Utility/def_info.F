@@ -2470,6 +2470,12 @@
 # endif
 #endif
 
+#if defined FLOATS && defined FLOAT_BIOLOGY
+# if defined FLOAT_OYSTER
+#  include <oyster_floats_def.h>
+# endif
+#endif
+
 #ifdef SEDIMENT
 # include <sediment_def.h>
 #endif

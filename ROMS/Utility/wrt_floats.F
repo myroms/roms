@@ -207,6 +207,73 @@
         IF (exit_flag.ne.NoError) RETURN
       END DO
 # endif
+
+# ifdef FLOAT_OYSTER
+!
+!  Write out biological float swimming time.
+!
+      DO l=1,Nfloats(ng)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iswim,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
+      END DO
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
+     &                      'swim_time', Tout,                          &
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = Flt(ng)%Vid(idswim))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out biological float vertical velocity.
+!
+      DO l=1,Nfloats(ng)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iwbio,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
+      END DO
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
+     &                      'w_bio', Tout,                              &
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idwbio))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out biological float size (length).
+!
+      DO l=1,Nfloats(ng)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+                Tout(l)=DRIFTER(ng)%track(isizf,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
+      END DO
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
+     &                      'bio_size', Tout,                           &
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idsize))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out biological float sinking velocity.
+!
+      DO l=1,Nfloats(ng)
+        IF (DRIFTER(ng)%bounded(l)) THEN
+          Tout(l)=DRIFTER(ng)%track(iwsin,nf(ng),l)
+        ELSE
+          Tout(l)=spval
+        END IF
+      END DO
+      CALL netcdf_put_fvar (ng, iNLM, FLT(ng)%name,                     &
+     &                      'bio_sink', Tout,                           &
+     &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
+     &                      ncid = FLT(ng)%ncid,                        &
+     &                      varid = FLT(ng)%Vid(idwsin))
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize floats NetCDF file to disk.

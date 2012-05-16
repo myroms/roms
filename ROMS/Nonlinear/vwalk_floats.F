@@ -82,6 +82,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_floats
       USE mod_grid
       USE mod_mixing
       USE mod_ncparam
@@ -266,13 +267,58 @@
 !  Compute new float vertical position.
 !
 # ifdef VWALK_FORWARD
+#  if defined FLOAT_BIOLOGY
+      DO l=Lstr,Lend
+        IF (my_thread(l).and.bounded(l)) THEN
+          track(izgrd,nfp1,l)=track(izgrd,nf,l)+                        &
+     &                        dt(ng)*(track(izrhs,nf,l)+                &
+     &                                track(iwbio,nf,l)*                &
+     &                                track(i1oHz,nf,l))
+        END IF
+      END DO
+#  else
       DO l=Lstr,Lend
         IF (my_thread(l).and.bounded(l)) THEN
           track(izgrd,nfp1,l)=track(izgrd,nf,l)+                        &
      &                        dt(ng)*track(izrhs,nf,l)
         END IF
       END DO
+#  endif
 # else
+#  if defined FLOAT_BIOLOGY
+      IF (Predictor) THEN
+        DO l=Lstr,Lend
+          IF (my_thread(l).and.bounded(l)) THEN
+            track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
+     &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
+     &                                  cff2*track(izrhs,nfm1,l)+       &
+     &                                  cff1*track(izrhs,nfm2,l)+       &
+     &                                  cff1*track(iwbio,nf  ,l)*       &
+     &                                       track(i1oHz,nf  ,l)-       &
+     &                                  cff2*track(iwbio,nfm1,l)*       &
+     &                                       track(i1oHz,nfm1,l)+       &
+     &                                  cff1*track(iwbio,nfm2,l)*       &
+     &                                       track(i1oHz,nfm2,l))
+          END IF
+        END DO
+      ELSE
+        DO l=Lstr,Lend
+          IF (my_thread(l).and.bounded(l)) THEN
+            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
+     &                          cff2*track(izgrd,nfm2,l)+               &
+     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
+     &                                  cff4*track(izrhs,nf  ,l)-       &
+     &                                  cff3*track(izrhs,nfm1,l)+       &
+     &                                  cff3*track(iwbio,nfp1,l)*       &
+     &                                       track(i1oHz,nfp1,l)+       &
+     &                                  cff4*track(iwbio,nf  ,l)*       &
+     &                                       track(i1oHz,nf  ,l)-       &
+     &                                  cff3*track(iwbio,nfm1,l)*       &
+     &                                       track(i1oHz,nf  ,l))
+          END IF
+        END DO
+      END IF
+#  else
       IF (Predictor) THEN
         DO l=Lstr,Lend
           IF (my_thread(l).and.bounded(l)) THEN
@@ -293,6 +339,7 @@
           END IF
         END DO
       END IF
+#  endif
 # endif
 !
 !  Zeroth-out nudging velocities coefficients.

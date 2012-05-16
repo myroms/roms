@@ -68,6 +68,7 @@
 !
       USE mod_param
       USE mod_ncparam
+      USE mod_floats
       USE mod_scalars
 !
       implicit none

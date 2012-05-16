@@ -56,6 +56,7 @@
 !  Wname       Wave model stadard input file name.                     !
 !  aparnam     Input assimilation parameters file name.                !
 !  bparnam     Input biology parameters file name.                     !
+!  fbionam     Input floats biological behavior parameters file name.  !
 !  fposnam     Input initial floats positions file name.               !
 !  sparnam     Input sediment transport parameters file name.          !
 !  sposnam     Input station positions file name.                      !
@@ -144,6 +145,7 @@
       character (len=256) :: USRname        ! use generic file name
       character (len=256) :: aparnam        ! assimilation parameters
       character (len=256) :: bparnam        ! biology model parameters
+      character (len=256) :: fbionam        ! floats behavior parameters
       character (len=256) :: fposnam        ! floats positions
       character (len=256) :: sparnam        ! sediment model parameters
       character (len=256) :: sposnam        ! station positions

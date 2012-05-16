@@ -40,8 +40,8 @@
 !
      Lfloats == T
 
-! Switch to control the printing of floats positions to standard output
-! file, [1:Ngrids].
+! Switch to control the printing of floats initial positions to standard
+! output file, [1:Ngrids].
 !
       Fprint == T
 
@@ -49,6 +49,11 @@
 ! NetCDF output file is created.
 
        FRREC == 0
+
+! If applicable, input script file name containing biological floats behavior
+! model parameters.
+
+     FBIONAM =  behavior_oyster.in
 
 ! Number of floats to release in each nested grid.  These values are
 ! essential because the FLOATS structure in "mod_floats" is dynamically
@@ -94,8 +99,8 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !             switch.
 !
 ! Fprint    Switch to control the printing of floats positions to standard
-!             output file. This switch can be used to turn of the printing
-!             of information whe thousands of floats are released.  This
+!             output file. This switch can be used to turn off the printing
+!             of information when thousands of floats are released.  This
 !             information is still in output floats NetCDF file.
 !
 ! FRREC     Flag to indicate re-start from a previous solution.  Use
@@ -104,6 +109,13 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !             initialization.  If FRREC is negative (say FRREC=-1), the
 !             floats will re-start from the most recent time record.
 !             That is, the initialization record is assigned internally.
+!
+!------------------------------------------------------------------------------
+! Biological behavior.
+!------------------------------------------------------------------------------
+!
+! FBIONAM   If applicable, input script file name containing biological floats
+!              behavior model parameters.
 !
 !------------------------------------------------------------------------------
 ! Number of floats.

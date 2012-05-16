@@ -390,6 +390,69 @@
           IF (exit_flag.ne.NoError) RETURN
         END DO
 # endif
+
+# ifdef FLOAT_OYSTER
+!
+!  Define biological float swimming time.
+!
+        Vinfo( 1)='swim_time'
+        Vinfo( 2)='biological float swimming time'
+        Vinfo( 3)='s'
+        Vinfo(14)='swim_time, scalar, series'
+        Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  endif
+        status=def_var(ng, iNLM, FLT(ng)%ncid, FLT(ng)%Vid(idswim),     &
+     &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define biological float vertical velocity.
+!
+        Vinfo( 1)='w_bio'
+        Vinfo( 2)='biological float vertical velocity'
+        Vinfo( 3)='m/s'
+        Vinfo(14)='w_bio, scalar, series'
+        Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  endif
+        status=def_var(ng, iNLM, FLT(ng)%ncid, FLT(ng)%Vid(idwbio),     &
+     &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define biological float size (length).
+!
+        Vinfo( 1)='bio_size'
+        Vinfo( 2)='biological float size'
+        Vinfo( 3)='um'
+        Vinfo(14)='bio_size, scalar, series'
+        Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  endif
+        status=def_var(ng, iNLM, FLT(ng)%ncid, FLT(ng)%Vid(idsize),     &
+     &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define biological float sinking velocity.
+!
+        Vinfo( 1)='bio_sink'
+        Vinfo( 2)='biological float sinking velocity'
+        Vinfo( 3)='m/s'
+        Vinfo(14)='bio_sink, scalar, series'
+        Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  endif
+        status=def_var(ng, iNLM, FLT(ng)%ncid, FLT(ng)%Vid(idwsin),    &
+     &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
 !
 !  Initialize unlimited time record dimension.
 !
@@ -489,6 +552,20 @@
             got_var(idDano)=.TRUE.
             FLT(ng)%Vid(idDano)=var_id(i)
 # endif
+# ifdef FLOAT_OYSTER
+          ELSE IF (TRIM(var_name(i)).eq.'swim_time') THEN
+            got_var(idswim)=.TRUE.
+            FLT(ng)%Vid(idswim)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.'w_bio') THEN
+            got_var(idwbio)=.TRUE.
+            FLT(ng)%Vid(idwbio)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.'bio_size') THEN
+            got_var(idsize)=.TRUE.
+            FLT(ng)%Vid(idsize)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.'bio_sink') THEN
+            got_var(idwsin)=.TRUE.
+            FLT(ng)%Vid(idwsin)=var_id(i)
+# endif
           END IF
 # ifdef SOLVE3D
           DO itrc=1,NT(ng)
@@ -552,6 +629,28 @@
         IF (.not.got_var(idDano)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef FLOAT_OYSTER
+        IF (.not.got_var(idswim)) THEN
+          IF (Master) WRITE (stdout,60) 'swim_time', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idwbio)) THEN
+          IF (Master) WRITE (stdout,60) 'w_bio', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idsize)) THEN
+          IF (Master) WRITE (stdout,60) 'bio_size', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idwsin)) THEN
+          IF (Master) WRITE (stdout,60) 'bio_sink', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF

@@ -745,6 +745,16 @@
 
       CALL read_FltPar (model, 45, out, Lwrite)
 #endif
+#if defined FLOATS && defined FLOAT_BIOLOGY
+!
+!-----------------------------------------------------------------------
+!  Read in biological float behavior model input parameters.
+!-----------------------------------------------------------------------
+!
+      OPEN (50, FILE=TRIM(fbionam), FORM='formatted', STATUS='old')
+
+      CALL read_FltBioPar (model, 50, out, Lwrite)
+#endif
 #ifdef STATIONS
 !
 !-----------------------------------------------------------------------
@@ -1639,7 +1649,11 @@
           allocate ( S(ng)%time_min(Nfiles(ng)) )
           allocate ( S(ng)%time_max(Nfiles(ng)) )
           IF (label(1:3).eq.'FLT') THEN
+#ifdef FLOAT_BIOLOGY
+            allocate ( S(ng)%Vid(-10:NV) )
+#else
             allocate ( S(ng)%Vid(-6:NV) )
+#endif
           ELSE
             allocate ( S(ng)%Vid(NV) )
           END IF
