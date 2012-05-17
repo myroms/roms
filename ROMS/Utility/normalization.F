@@ -499,6 +499,9 @@
 #  ifdef SOLVE3D
       real(r8), dimension(LBij:UBij,1:N(ng)) :: B3d
       real(r8), dimension(LBij:UBij,1:N(ng)) :: VscaleB
+#   ifdef DISTRIBUTE
+      real(r8), dimension((UBij-LBij+1)*N(ng)) :: Bwrk
+#   endif
 #  endif
 # endif
 
@@ -1896,8 +1899,15 @@
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormUobc(:,:,ibry))
 #   ifdef DISTRIBUTE
-            CALL mp_collect (ng, iTLM, IJKlen, Aspv,                    &
-     &                       VnormUobc(LBij:,:,ibry))
+            Bwrk=RESHAPE(VnormUobc(:,:,ibry), (/IJKlen/))
+            CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+            ic=0
+            DO k=1,N(ng)
+              DO ib=LBij,UBij
+                ic=ic+1
+                VnormUobc(ib,k,ibry)=Bwrk(ic)
+              END DO
+            END DO
 #   endif
           END IF
         END DO
@@ -2049,8 +2059,15 @@
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormVobc(:,:,ibry))
 #   ifdef DISTRIBUTE
-            CALL mp_collect (ng, iTLM, IJKlen, Aspv,                    &
-     &                       VnormVobc(LBij:,:,ibry))
+            Bwrk=RESHAPE(VnormVobc(:,:,ibry), (/IJKlen/))
+            CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+            ic=0
+            DO k=1,N(ng)
+              DO ib=LBij,UBij
+                ic=ic+1
+                VnormVobc(ib,k,ibry)=Bwrk(ic)
+              END DO
+            END DO
 #   endif
           END IF
         END DO
@@ -2209,8 +2226,15 @@
      &                              LBij, UBij, 1, N(ng),               &
      &                              VnormRobc(:,:,ibry,itrc))
 #   ifdef DISTRIBUTE
-              CALL mp_collect (ng, iTLM, IJKlen, Aspv,                  &
-     &                         VnormRobc(LBij:,:,ibry,itrc))
+              Bwrk=RESHAPE(VnormRobc(:,:,ibry,itrc), (/IJKlen/))
+              CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+              ic=0
+              DO k=1,N(ng)
+                DO ib=LBij,UBij
+                  ic=ic+1
+                  VnormRobc(ib,k,ibry,itrc)=Bwrk(ic)
+                END DO
+              END DO
 #   endif
             END IF
           END DO
@@ -2901,7 +2925,7 @@
       integer :: UBt, itrc, k
 # endif
 # ifdef ADJUST_BOUNDARY
-      integer :: IJlen, IJKlen, ibry, ifield
+      integer :: IJlen, IJKlen, ib, ibry, ic, ifield
 # endif
       integer :: start(4), total(4)
 
@@ -2934,6 +2958,9 @@
       real(r8), dimension(LBij:UBij,1:N(ng)) :: B3davg
       real(r8), dimension(LBij:UBij,1:N(ng)) :: B3dsqr
       real(r8), dimension(LBij:UBij,1:N(ng)) :: VscaleB
+#   ifdef DISTRIBUTE
+      real(r8), dimension((UBij-LBij+1)*N(ng)) :: Bwrk
+#   endif
 #  endif
 # endif
 
@@ -4192,8 +4219,15 @@
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormUobc(:,:,ibry))
 #  ifdef DISTRIBUTE
-            CALL mp_collect (ng, iTLM, IJKlen, Aspv,                    &
-     &                       VnormUobc(LBij:,:,ibry))
+            Bwrk=RESHAPE(VnormUobc(:,:,ibry), (/IJKlen/))
+            CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+            ic=0
+            DO k=1,N(ng)
+              DO ib=LBij,UBij
+                ic=ic+1
+                VnormUobc(ib,k,ibry)=Bwrk(ic)
+              END DO
+            END DO
 #  endif
           END IF
         END DO
@@ -4351,8 +4385,15 @@
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormVobc(:,:,ibry))
 #  ifdef DISTRIBUTE
-            CALL mp_collect (ng, iTLM, IJKlen, Aspv,                    &
-     &                       VnormVobc(LBij:,:,ibry))
+            Bwrk=RESHAPE(VnormVobc(:,:,ibry), (/IJKlen/))
+            CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+            ic=0
+            DO k=1,N(ng)
+              DO ib=LBij,UBij
+                ic=ic+1
+                VnormVobc(ib,k,ibry)=Bwrk(ic)
+              END DO
+            END DO
 #  endif
           END IF
         END DO
@@ -4523,8 +4564,15 @@
      &                              LBij, UBij, 1, N(ng),               &
      &                              VnormRobc(:,:,ibry,itrc))
 #  ifdef DISTRIBUTE
-              CALL mp_collect (ng, iTLM, IJKlen, Aspv,                  &
-     &                         VnormRobc(LBij:,:,ibry,itrc))
+              Bwrk=RESHAPE(VnormRobc(:,:,ibry,itrc), (/IJKlen/))
+              CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
+              ic=0
+              DO k=1,N(ng)
+                DO ib=LBij,UBij
+                  ic=ic+1
+                  VnormRobc(ib,k,ibry,itrc)=Bwrk(ic)
+                END DO
+              END DO
 #  endif
             END IF
           END DO

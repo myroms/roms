@@ -243,9 +243,10 @@
 /*
 **  Biological tracers term diagnostics.
 */
-
+# ifdef DENITRIFICATION
               CASE ('iDbio2(iDNIT)')
                 iDbio2(iDNIT)=varid
+# endif
 # ifdef CARBON
               CASE ('iDbio2(iCOfx)')
                 iDbio2(iCOfx)=varid

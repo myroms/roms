@@ -103,56 +103,58 @@
      &                       u(Istr+1,j-1,k,nstp)
             END DO
             DO j=Jstr,Jend
-              dUdt=u(Istr+1,j,k,nstp)-u(Istr+1,j,k,nout)
-              dUdx=u(Istr+1,j,k,nout)-u(Istr+2,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+                dUdt=u(Istr+1,j,k,nstp)-u(Istr+1,j,k,nout)
+                dUdx=u(Istr+1,j,k,nout)-u(Istr+2,j,k,nout)
 
-              IF (LBC(iwest,isUvel,ng)%nudging) THEN
-                IF ((dUdt*dUdx).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,iwest)
-                ELSE
-                  tau=M3obc_out(ng,iwest)
+                IF (LBC(iwest,isUvel,ng)%nudging) THEN
+                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,iwest)
+                  ELSE
+                    tau=M3obc_out(ng,iwest)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
-              IF ((dUdt*(grad(Istr+1,j  )+                              &
-     &                   grad(Istr+1,j+1))).gt.0.0_r8) THEN
-                dUde=grad(Istr+1,j  )
-              ELSE
-                dUde=grad(Istr+1,j+1)
-              END IF
-              cff=MAX(dUdx*dUdx+dUde*dUde,eps)
-              Cx=dUdt*dUdx
+                IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
+                IF ((dUdt*(grad(Istr+1,j  )+                            &
+     &                     grad(Istr+1,j+1))).gt.0.0_r8) THEN
+                  dUde=grad(Istr+1,j  )
+                ELSE
+                  dUde=grad(Istr+1,j+1)
+                END IF
+                cff=MAX(dUdx*dUdx+dUde*dUde,eps)
+                Cx=dUdt*dUdx
 # ifdef RADIATION_2D
-              Ce=MIN(cff,MAX(dUdt*dUde,-cff))
+                Ce=MIN(cff,MAX(dUdt*dUde,-cff))
 # else
-              Ce=0.0_r8
+                Ce=0.0_r8
 # endif
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%u_west_Cx(j,k)=Cx
-              BOUNDARY(ng)%u_west_Ce(j,k)=Ce
-              BOUNDARY(ng)%u_west_C2(j,k)=cff
+                BOUNDARY(ng)%u_west_Cx(j,k)=Cx
+                BOUNDARY(ng)%u_west_Ce(j,k)=Ce
+                BOUNDARY(ng)%u_west_C2(j,k)=cff
 # endif
-              u(Istr,j,k,nout)=(cff*u(Istr  ,j,k,nstp)+                 &
-     &                          Cx *u(Istr+1,j,k,nout)-                 &
-     &                          MAX(Ce,0.0_r8)*grad(Istr,j  )-          &
-     &                          MIN(Ce,0.0_r8)*grad(Istr,j+1))/         &
-     &                         (cff+Cx)
+                u(Istr,j,k,nout)=(cff*u(Istr  ,j,k,nstp)+               &
+     &                            Cx *u(Istr+1,j,k,nout)-               &
+     &                            MAX(Ce,0.0_r8)*grad(Istr,j  )-        &
+     &                            MIN(Ce,0.0_r8)*grad(Istr,j+1))/       &
+     &                           (cff+Cx)
 
-              IF (LBC(iwest,isUvel,ng)%nudging) THEN
-                u(Istr,j,k,nout)=u(Istr,j,k,nout)+                      &
-     &                           tau*(BOUNDARY(ng)%u_west(j,k)-         &
-     &                                u(Istr,j,k,nstp))
-              END IF
+                IF (LBC(iwest,isUvel,ng)%nudging) THEN
+                  u(Istr,j,k,nout)=u(Istr,j,k,nout)+                    &
+     &                             tau*(BOUNDARY(ng)%u_west(j,k)-       &
+     &                                  u(Istr,j,k,nstp))
+                END IF
 # ifdef MASKING
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask(Istr,j)
 # endif
 # ifdef WET_DRY
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask_wet(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask_wet(Istr,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -161,15 +163,17 @@
         ELSE IF (LBC(iwest,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
+              IF (LBC_apply(ng)%west(j)) THEN
+                u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
 # ifdef MASKING
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask(Istr,j)
 # endif
 # ifdef WET_DRY
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask_wet(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask_wet(Istr,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -178,15 +182,17 @@
         ELSE IF (LBC(iwest,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Istr,j,k,nout)=u(Istr+1,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+                u(Istr,j,k,nout)=u(Istr+1,j,k,nout)
 # ifdef MASKING
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask(Istr,j)
 # endif
 # ifdef WET_DRY
-              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-     &                         GRID(ng)%umask_wet(Istr,j)
+                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+     &                           GRID(ng)%umask_wet(Istr,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -195,7 +201,9 @@
         ELSE IF (LBC(iwest,isUvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Istr,j,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%west(j)) THEN
+                u(Istr,j,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -218,56 +226,58 @@
      &                       u(Iend+1,j-1,k,nstp)
             END DO
             DO j=Jstr,Jend
-              dUdt=u(Iend,j,k,nstp)-u(Iend  ,j,k,nout)
-              dUdx=u(Iend,j,k,nout)-u(Iend-1,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+                dUdt=u(Iend,j,k,nstp)-u(Iend  ,j,k,nout)
+                dUdx=u(Iend,j,k,nout)-u(Iend-1,j,k,nout)
 
-              IF (LBC(ieast,isUvel,ng)%nudging) THEN
-                IF ((dUdt*dUdx).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,ieast)
-                ELSE
-                  tau=M3obc_out(ng,ieast)
+                IF (LBC(ieast,isUvel,ng)%nudging) THEN
+                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,ieast)
+                  ELSE
+                    tau=M3obc_out(ng,ieast)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
-              IF ((dUdt*(grad(Iend,j  )+                                &
-     &                   grad(Iend,j+1))).gt.0.0_r8) THEN
-                dUde=grad(Iend,j  )
-              ELSE
-                dUde=grad(Iend,j+1)
-              END IF
-              cff=MAX(dUdx*dUdx+dUde*dUde,eps)
-              Cx=dUdt*dUdx
+                IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
+                IF ((dUdt*(grad(Iend,j  )+                              &
+     &                     grad(Iend,j+1))).gt.0.0_r8) THEN
+                  dUde=grad(Iend,j  )
+                ELSE
+                  dUde=grad(Iend,j+1)
+                END IF
+                cff=MAX(dUdx*dUdx+dUde*dUde,eps)
+                Cx=dUdt*dUdx
 # ifdef RADIATION_2D
-              Ce=MIN(cff,MAX(dUdt*dUde,-cff))
+                Ce=MIN(cff,MAX(dUdt*dUde,-cff))
 # else
-              Ce=0.0_r8
+                Ce=0.0_r8
 # endif
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%u_east_Cx(j,k)=Cx
-              BOUNDARY(ng)%u_east_Ce(j,k)=Ce
-              BOUNDARY(ng)%u_east_C2(j,k)=cff
+                BOUNDARY(ng)%u_east_Cx(j,k)=Cx
+                BOUNDARY(ng)%u_east_Ce(j,k)=Ce
+                BOUNDARY(ng)%u_east_C2(j,k)=cff
 # endif
-              u(Iend+1,j,k,nout)=(cff*u(Iend+1,j,k,nstp)+               &
-     &                            Cx *u(Iend  ,j,k,nout)-               &
-     &                            MAX(Ce,0.0_r8)*grad(Iend+1,j  )-      &
-     &                            MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/     &
-     &                           (cff+Cx)
+                u(Iend+1,j,k,nout)=(cff*u(Iend+1,j,k,nstp)+             &
+     &                              Cx *u(Iend  ,j,k,nout)-             &
+     &                              MAX(Ce,0.0_r8)*grad(Iend+1,j  )-    &
+     &                              MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/   &
+     &                             (cff+Cx)
 
-              IF (LBC(ieast,isUvel,ng)%nudging) THEN
-                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%u_east(j,k)-       &
-     &                                  u(Iend+1,j,k,nstp))
-              END IF
+                IF (LBC(ieast,isUvel,ng)%nudging) THEN
+                  u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%u_east(j,k)-     &
+     &                                    u(Iend+1,j,k,nstp))
+                END IF
 # ifdef MASKING
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -276,15 +286,17 @@
         ELSE IF (LBC(ieast,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
+              IF (LBC_apply(ng)%east(j)) THEN
+                u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
 # ifdef MASKING
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -293,15 +305,17 @@
         ELSE IF (LBC(ieast,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Iend+1,j,k,nout)=u(Iend,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+                u(Iend+1,j,k,nout)=u(Iend,j,k,nout)
 # ifdef MASKING
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(Iend+1,j)
+                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -310,7 +324,9 @@
         ELSE IF (LBC(ieast,isUvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-              u(Iend+1,j,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%east(j)) THEN
+                u(Iend+1,j,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -333,56 +349,58 @@
      &                       u(i  ,Jstr  ,k,nstp)
             END DO
             DO i=IstrU,Iend
-              dUdt=u(i,Jstr,k,nstp)-u(i,Jstr  ,k,nout)
-              dUde=u(i,Jstr,k,nout)-u(i,Jstr+1,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+                dUdt=u(i,Jstr,k,nstp)-u(i,Jstr  ,k,nout)
+                dUde=u(i,Jstr,k,nout)-u(i,Jstr+1,k,nout)
 
-              IF (LBC(isouth,isUvel,ng)%nudging) THEN
-                IF ((dUdt*dUde).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,isouth)
-                ELSE
-                  tau=M3obc_out(ng,isouth)
+                IF (LBC(isouth,isUvel,ng)%nudging) THEN
+                  IF ((dUdt*dUde).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,isouth)
+                  ELSE
+                    tau=M3obc_out(ng,isouth)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
-              IF ((dUdt*(grad(i-1,Jstr)+                                &
-     &                   grad(i  ,Jstr))).gt.0.0_r8) THEN
-                dUdx=grad(i-1,Jstr)
-              ELSE
-                dUdx=grad(i  ,Jstr)
-              END IF
-              cff=MAX(dUdx*dUdx+dUde*dUde,eps)
+                IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
+                IF ((dUdt*(grad(i-1,Jstr)+                              &
+     &                     grad(i  ,Jstr))).gt.0.0_r8) THEN
+                  dUdx=grad(i-1,Jstr)
+                ELSE
+                  dUdx=grad(i  ,Jstr)
+                END IF
+                cff=MAX(dUdx*dUdx+dUde*dUde,eps)
 # ifdef RADIATION_2D
-              Cx=MIN(cff,MAX(dUdt*dUdx,-cff))
+                Cx=MIN(cff,MAX(dUdt*dUdx,-cff))
 # else
-              Cx=0.0_r8
+                Cx=0.0_r8
 # endif
-              Ce=dUdt*dUde
+                Ce=dUdt*dUde
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%u_south_Cx(i,k)=Cx
-              BOUNDARY(ng)%u_south_Ce(i,k)=Ce
-              BOUNDARY(ng)%u_south_C2(i,k)=cff
+                BOUNDARY(ng)%u_south_Cx(i,k)=Cx
+                BOUNDARY(ng)%u_south_Ce(i,k)=Ce
+                BOUNDARY(ng)%u_south_C2(i,k)=cff
 # endif
-              u(i,Jstr-1,k,nout)=(cff*u(i,Jstr-1,k,nstp)+               &
-     &                            Ce *u(i,Jstr  ,k,nout)-               &
-     &                            MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-      &
-     &                            MIN(Cx,0.0_r8)*grad(i  ,Jstr-1))/     &
-     &                           (cff+Ce)
+                u(i,Jstr-1,k,nout)=(cff*u(i,Jstr-1,k,nstp)+             &
+     &                              Ce *u(i,Jstr  ,k,nout)-             &
+     &                              MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-    &
+     &                              MIN(Cx,0.0_r8)*grad(i  ,Jstr-1))/   &
+     &                             (cff+Ce)
 
-              IF (LBC(isouth,isUvel,ng)%nudging) THEN
-                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%u_south(i,k)-      &
-     &                                  u(i,Jstr-1,k,nstp))
-              END IF
+                IF (LBC(isouth,isUvel,ng)%nudging) THEN
+                  u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%u_south(i,k)-    &
+     &                                    u(i,Jstr-1,k,nstp))
+                END IF
 # ifdef MASKING
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jstr-1)
 # endif
 # ifdef WET_DRY
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -391,15 +409,17 @@
         ELSE IF (LBC(isouth,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-              u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
+              IF (LBC_apply(ng)%south(i)) THEN
+                u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
 # ifdef MASKING
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jstr-1)
 # endif
 # ifdef WET_DRY
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -408,15 +428,17 @@
         ELSE IF (LBC(isouth,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-              u(i,Jstr-1,k,nout)=u(i,Jstr,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+                u(i,Jstr-1,k,nout)=u(i,Jstr,k,nout)
 # ifdef MASKING
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jstr-1)
 # endif
 # ifdef WET_MASK
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -433,15 +455,17 @@
           END IF
           DO k=1,N(ng)
             DO i=Imin,Imax
-              u(i,Jstr-1,k,nout)=gamma2(ng)*u(i,Jstr,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+                u(i,Jstr-1,k,nout)=gamma2(ng)*u(i,Jstr,k,nout)
 # ifdef MASKING
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jstr-1)
 # endif
 # ifdef WET_DRY
-              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jstr-1)
+                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -464,56 +488,58 @@
      &                       u(i  ,Jend+1,k,nstp)
             END DO
             DO i=IstrU,Iend
-              dUdt=u(i,Jend,k,nstp)-u(i,Jend  ,k,nout)
-              dUde=u(i,Jend,k,nout)-u(i,Jend-1,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+                dUdt=u(i,Jend,k,nstp)-u(i,Jend  ,k,nout)
+                dUde=u(i,Jend,k,nout)-u(i,Jend-1,k,nout)
 
-              IF (LBC(inorth,isUvel,ng)%nudging) THEN
-                IF ((dUdt*dUde).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,inorth)
-                ELSE
-                  tau=M3obc_out(ng,inorth)
+                IF (LBC(inorth,isUvel,ng)%nudging) THEN
+                  IF ((dUdt*dUde).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,inorth)
+                  ELSE
+                    tau=M3obc_out(ng,inorth)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
-              IF ((dUdt*(grad(i-1,Jend)+                                &
-     &                   grad(i  ,Jend))).gt.0.0_r8) THEN
-                dUdx=grad(i-1,Jend)
-              ELSE
-                dUdx=grad(i  ,Jend)
-              END IF
-              cff=MAX(dUdx*dUdx+dUde*dUde,eps)
+                IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
+                IF ((dUdt*(grad(i-1,Jend)+                              &
+     &                     grad(i  ,Jend))).gt.0.0_r8) THEN
+                  dUdx=grad(i-1,Jend)
+                ELSE
+                  dUdx=grad(i  ,Jend)
+                END IF
+                cff=MAX(dUdx*dUdx+dUde*dUde,eps)
 # ifdef RADIATION_2D
-              Cx=MIN(cff,MAX(dUdt*dUdx,-cff))
+                Cx=MIN(cff,MAX(dUdt*dUdx,-cff))
 # else
-              Cx=0.0_r8
+                Cx=0.0_r8
 # endif
-              Ce=dUdt*dUde
+                Ce=dUdt*dUde
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%u_north_Cx(i,k)=Cx
-              BOUNDARY(ng)%u_north_Ce(i,k)=Ce
-              BOUNDARY(ng)%u_north_C2(i,k)=cff
+                BOUNDARY(ng)%u_north_Cx(i,k)=Cx
+                BOUNDARY(ng)%u_north_Ce(i,k)=Ce
+                BOUNDARY(ng)%u_north_C2(i,k)=cff
 # endif
-              u(i,Jend+1,k,nout)=(cff*u(i,Jend+1,k,nstp)+               &
-     &                            Ce *u(i,Jend  ,k,nout)-               &
-     &                            MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-      &
-     &                            MIN(Cx,0.0_r8)*grad(i  ,Jend+1))/     &
-     &                           (cff+Ce)
+                u(i,Jend+1,k,nout)=(cff*u(i,Jend+1,k,nstp)+             &
+     &                              Ce *u(i,Jend  ,k,nout)-             &
+     &                              MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-    &
+     &                              MIN(Cx,0.0_r8)*grad(i  ,Jend+1))/   &
+     &                             (cff+Ce)
 
-              IF (LBC(inorth,isUvel,ng)%nudging) THEN
-                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%u_north(i,k)-      &
-     &                                  u(i,Jend+1,k,nstp))
-              END IF
+                IF (LBC(inorth,isUvel,ng)%nudging) THEN
+                  u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%u_north(i,k)-    &
+     &                                    u(i,Jend+1,k,nstp))
+                END IF
 # ifdef MASKING
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -522,15 +548,17 @@
         ELSE IF (LBC(inorth,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-              u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
+              IF (LBC_apply(ng)%north(i)) THEN
+                u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
 # ifdef MASKING
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -539,15 +567,17 @@
         ELSE IF (LBC(inorth,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-              u(i,Jend+1,k,nout)=u(i,Jend,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+                u(i,Jend+1,k,nout)=u(i,Jend,k,nout)
 # ifdef MASKING
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -564,15 +594,17 @@
           END IF
           DO k=1,N(ng)
             DO i=Imin,Imax
-              u(i,Jend+1,k,nout)=gamma2(ng)*u(i,Jend,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+                u(i,Jend+1,k,nout)=gamma2(ng)*u(i,Jend,k,nout)
 # ifdef MASKING
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%umask_wet(i,Jend+1)
+                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%umask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -584,28 +616,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-            u(Istr,Jstr-1,k,nout)=0.5_r8*(u(Istr+1,Jstr-1,k,nout)+      &
-     &                                    u(Istr  ,Jstr  ,k,nout))
-          END DO
+          IF (LBC_apply(ng)%south(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            DO k=1,N(ng)
+              u(Istr,Jstr-1,k,nout)=0.5_r8*(u(Istr+1,Jstr-1,k,nout)+    &
+     &                                      u(Istr  ,Jstr  ,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-            u(Iend+1,Jstr-1,k,nout)=0.5_r8*(u(Iend  ,Jstr-1,k,nout)+    &
-     &                                      u(Iend+1,Jstr  ,k,nout))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            DO k=1,N(ng)
+              u(Iend+1,Jstr-1,k,nout)=0.5_r8*(u(Iend  ,Jstr-1,k,nout)+  &
+     &                                        u(Iend+1,Jstr  ,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-            u(Istr,Jend+1,k,nout)=0.5_r8*(u(Istr  ,Jend  ,k,nout)+      &
-     &                                    u(Istr+1,Jend+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%north(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=1,N(ng)
+              u(Istr,Jend+1,k,nout)=0.5_r8*(u(Istr  ,Jend  ,k,nout)+    &
+     &                                      u(Istr+1,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-            u(Iend+1,Jend+1,k,nout)=0.5_r8*(u(Iend+1,Jend  ,k,nout)+    &
-     &                                      u(Iend  ,Jend+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=1,N(ng)
+              u(Iend+1,Jend+1,k,nout)=0.5_r8*(u(Iend+1,Jend  ,k,nout)+  &
+     &                                        u(Iend  ,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
       END IF
 

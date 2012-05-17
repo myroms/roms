@@ -356,7 +356,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 39)
+      CALL wclock_on (ng, model, 40)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -886,7 +886,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 39)
+      CALL wclock_off (ng, model, 40)
 # endif
 
       RETURN
@@ -962,7 +962,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 39)
+      CALL wclock_on (ng, model, 43)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1386,7 +1386,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 39)
+      CALL wclock_off (ng, model, 43)
 # endif
 
       RETURN
@@ -1466,7 +1466,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 41)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2095,7 +2095,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 41)
 # endif
 
       RETURN
@@ -2171,7 +2171,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 43)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2708,7 +2708,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 43)
 # endif
 
       RETURN
@@ -2719,7 +2719,7 @@
       SUBROUTINE mp_exchange4d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt, &
      &                          Nghost, EW_periodic, NS_periodic,       &
-     &                          A, B)
+     &                          A, B, C)
 !***********************************************************************
 !
       USE mod_param
@@ -2741,11 +2741,15 @@
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:,LBt:)
 
       real(r8), intent(inout), optional :: B(LBi:,LBj:,LBk:,LBt:)
+      real(r8), intent(inout), optional :: C(LBi:,LBj:,LBk:,LBt:)
+
 # else
       real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 
       real(r8), intent(inout), optional ::                              &
      &                           B(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+      real(r8), intent(inout), optional ::                              &
+     &                           C(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 # endif
 !
 !  Local variable declarations.
@@ -2787,7 +2791,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 41)
+      CALL wclock_on (ng, model, 42)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2877,6 +2881,24 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(C)) THEN
+          joff=jkW
+          DO m=1,GsendW
+            mc=(m-1)*JKTlen
+            i=Istr+m-1
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  sizeW=sizeW+1
+                  jkW=joff+1+(j-Jmin)+kc
+                  sendW(jkW)=C(i,j,k,l)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Eexchange) THEN
@@ -2909,6 +2931,24 @@
                   sizeE=sizeE+1
                   jkE=joff+1+(j-Jmin)+kc
                   sendE(jkE)=B(i,j,k,l)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (PRESENT(C)) THEN
+          joff=jkE
+          DO m=1,GsendE
+            mc=(m-1)*JKTlen
+            i=Iend-GsendE+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  sizeE=sizeE+1
+                  jkE=joff+1+(j-Jmin)+kc
+                  sendE(jkE)=C(i,j,k,l)
                 END DO
               END DO
             END DO
@@ -2988,6 +3028,23 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(C)) THEN
+          joff=jkW
+          DO m=GrecvW,1,-1
+            mc=(GrecvW-m)*JKTlen
+            i=Istr-m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  jkW=joff+1+(j-Jmin)+kc
+                  C(i,j,k,l)=recvW(jkW)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Eexchange) THEN
@@ -3028,6 +3085,23 @@
                 DO j=Jmin,Jmax
                   jkE=joff+1+(j-Jmin)+kc
                   B(i,j,k,l)=recvE(jkE)
+                END DO
+              END DO
+            ENDDO
+          END DO
+        END IF
+        IF (PRESENT(C)) THEN
+          joff=jkE
+          DO m=1,GrecvE
+            mc=(m-1)*JKTlen
+            i=Iend+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  jkE=joff+1+(j-Jmin)+kc
+                  C(i,j,k,l)=recvE(jkE)
                 END DO
               END DO
             ENDDO
@@ -3074,6 +3148,24 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(C)) THEN
+          ioff=ikS
+          DO m=1,GsendS
+            mc=(m-1)*IKTlen
+            j=Jstr+m-1
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  sizeS=sizeS+1
+                  ikS=ioff+1+(i-Imin)+kc
+                  sendS(ikS)=C(i,j,k,l)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Nexchange) THEN
@@ -3106,6 +3198,24 @@
                   sizeN=sizeN+1
                   ikN=ioff+1+(i-Imin)+kc
                   sendN(ikN)=B(i,j,k,l)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (PRESENT(C)) THEN
+          ioff=ikN
+          DO m=1,GsendN
+            mc=(m-1)*IKTlen
+            j=Jend-GsendN+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  sizeN=sizeN+1
+                  ikN=ioff+1+(i-Imin)+kc
+                  sendN(ikN)=C(i,j,k,l)
                 END DO
               END DO
             END DO
@@ -3183,6 +3293,23 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(C)) THEN
+          ioff=ikS
+          DO m=GrecvS,1,-1
+            mc=(GrecvS-m)*IKTlen
+            j=Jstr-m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  ikS=ioff+1+(i-Imin)+kc
+                  C(i,j,k,l)=recvS(ikS)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Nexchange) THEN
@@ -3228,6 +3355,23 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(C)) THEN
+          ioff=ikN
+          DO m=1,GrecvN
+            mc=(m-1)*IKTlen
+            j=Jend+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  ikN=ioff+1+(i-Imin)+kc
+                  C(i,j,k,l)=recvN(ikN)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 # ifdef PROFILE
 !
@@ -3235,7 +3379,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 41)
+      CALL wclock_off (ng, model, 42)
 # endif
 
       RETURN
@@ -3312,7 +3456,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 39)
+      CALL wclock_on (ng, model, 40)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -3976,7 +4120,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 39)
+      CALL wclock_off (ng, model, 40)
 #  endif
 
       RETURN
@@ -4052,7 +4196,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 39)
+      CALL wclock_on (ng, model, 43)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -4610,7 +4754,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 39)
+      CALL wclock_off (ng, model, 43)
 #  endif
 
       RETURN
@@ -4690,7 +4834,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 41)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -5453,7 +5597,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 41)
 #  endif
 
       RETURN
@@ -5528,7 +5672,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 43)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -6199,7 +6343,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 43)
 #  endif
 
       RETURN
@@ -6210,7 +6354,7 @@
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             LBt, UBt,                            &
      &                             Nghost, EW_periodic, NS_periodic,    &
-     &                             ad_A, ad_B)
+     &                             ad_A, ad_B, ad_C)
 !***********************************************************************
 !
       USE mod_param
@@ -6232,11 +6376,14 @@
       real(r8), intent(inout) :: ad_A(LBi:,LBj:,LBk:,LBt:)
 
       real(r8), intent(inout), optional :: ad_B(LBi:,LBj:,LBk:,LBt:)
+      real(r8), intent(inout), optional :: ad_C(LBi:,LBj:,LBk:,LBt:)
 #  else
       real(r8), intent(inout) :: ad_A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 
       real(r8), intent(inout), optional ::                              &
      &                           ad_B(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+      real(r8), intent(inout), optional ::                              &
+     &                           ad_C(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 #  endif
 !
 !  Local variable declarations.
@@ -6277,7 +6424,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 41)
+      CALL wclock_on (ng, model, 42)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -6379,6 +6526,27 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(ad_C)) THEN
+          ioff=ikN
+          DO m=1,GrecvN
+            mc=(m-1)*IKTlen
+            j=Jend+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  sizeN=sizeN+1
+                  ikN=ioff+1+(i-Imin)+kc
+!>                C(i,j,k,l)=recvN(ikN)
+!>
+                  recvN(ikN)=ad_C(i,j,k,l)
+                  ad_C(i,j,k,l)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Sexchange) THEN
@@ -6421,6 +6589,27 @@
 !>
                   recvS(ikS)=ad_B(i,j,k,l)
                   ad_B(i,j,k,l)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (PRESENT(ad_C)) THEN
+          ioff=ikS
+          DO m=GrecvS,1,-1
+            mc=(GrecvS-m)*IKTlen
+            j=Jstr-m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  sizeS=sizeS+1
+                  ikS=ioff+1+(i-Imin)+kc
+!>                C(i,Jstr-m,k,l)=recvS(ikS)
+!>
+                  recvS(ikS)=ad_C(i,j,k,l)
+                  ad_C(i,j,k,l)=0.0_r8
                 END DO
               END DO
             END DO
@@ -6516,6 +6705,26 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(ad_C)) THEN
+          ioff=ikS
+          DO m=1,GsendS
+            mc=(m-1)*IKTlen
+            j=Jstr+m-1
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  ikS=ioff+1+(i-Imin)+kc
+!>                sendS(ikS)=C(i,j,k,l)
+!>
+                  ad_C(i,j,k,l)=ad_C(i,j,k,l)+sendS(ikS)
+                  sendS(ikS)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Nexchange) THEN
@@ -6561,6 +6770,26 @@
 !>                sendN(ikN)=B(i,j,k,l)
 !>
                   ad_B(i,j,k,l)=ad_B(i,j,k,l)+sendN(ikN)
+                  sendN(ikN)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (PRESENT(ad_C)) THEN
+          ioff=ikN
+          DO m=1,GsendN
+            mc=(m-1)*IKlen
+            j=Jend-GsendN+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*IKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Ilen+lc
+                DO i=Imin,Imax
+                  ikN=ioff+1+(i-Imin)+kc
+!>                sendN(ikN)=C(i,j,k,l)
+!>
+                  ad_C(i,j,k,l)=ad_C(i,j,k,l)+sendN(ikN)
                   sendN(ikN)=0.0_r8
                 END DO
               END DO
@@ -6618,6 +6847,27 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(ad_C)) THEN
+          joff=jkE
+          DO m=1,GrecvE
+            mc=(m-1)*JKTlen
+            i=Iend+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  sizeE=sizeE+1
+                  jkE=joff+1+(j-Jmin)+kc
+!>                C(i,j,k,l)=recvE(jkE)
+!>
+                  recvE(jkE)=ad_C(i,j,k,l)
+                  ad_C(i,j,k,l)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Wexchange) THEN
@@ -6660,6 +6910,27 @@
 !>
                   recvW(jkW)=ad_B(i,j,k,l)
                   ad_B(i,j,k,l)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (PRESENT(ad_C)) THEN
+          joff=jkW
+          DO m=GrecvW,1,-1
+            mc=(GrecvW-m)*JKTlen
+            i=Istr-m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  sizeW=sizeW+1
+                  jkW=joff+1+(j-Jmin)+kc
+!>                C(i,j,k,l)=recvW(jkW)
+!>
+                  recvW(jkW)=ad_C(i,j,k,l)
+                  ad_C(i,j,k,l)=0.0_r8
                 END DO
               END DO
             END DO
@@ -6753,6 +7024,26 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(ad_C)) THEN
+          joff=jkW
+          DO m=1,GsendW
+            mc=(m-1)*JKTlen
+            i=Istr+m-1
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  jkW=joff+1+(j-Jmin)+kc
+!>                sendW(jkW)=C(i,j,k,l)
+!>
+                  ad_C(i,j,k,l)=ad_C(i,j,k,l)+sendW(jkW)
+                  sendW(jkW)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 !
       IF (Eexchange) THEN
@@ -6804,6 +7095,26 @@
             END DO
           END DO
         END IF
+        IF (PRESENT(ad_C)) THEN
+          joff=jkE
+          DO m=1,GsendE
+            mc=(m-1)*JKTlen
+            i=Iend-GsendE+m
+            DO l=LBt,UBt
+              lc=(l-LBt)*JKlen+mc
+              DO k=LBk,UBk
+                kc=(k-LBk)*Jlen+lc
+                DO j=Jmin,Jmax
+                  jkE=joff+1+(j-Jmin)+kc
+!>                sendE(jkE)=C(i,j,k,l)
+!>
+                  ad_C(i,j,k,l)=ad_C(i,j,k,l)+sendE(jkE)
+                  sendE(jkE)=0.0_r8
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
       END IF
 #  ifdef PROFILE
 !
@@ -6811,7 +7122,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 41)
+      CALL wclock_off (ng, model, 42)
 #  endif
 
       RETURN

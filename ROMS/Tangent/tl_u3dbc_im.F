@@ -104,52 +104,54 @@
                 tl_grad(Istr,j)=0.0_r8
               END DO
               DO j=Jstr,Jend
+                IF (LBC_apply(ng)%west(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
-                IF (tl_LBC(iwest,isUvel,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%u_west_Cx(j,k).eq.0.0_r8) THEN
-                    tau=M3obc_in(ng,iwest)
-                  ELSE
-                    tau=M3obc_out(ng,iwest)
+                  IF (tl_LBC(iwest,isUvel,ng)%nudging) THEN
+                    IF (BOUNDARY(ng)%u_west_Cx(j,k).eq.0.0_r8) THEN
+                      tau=M3obc_in(ng,iwest)
+                    ELSE
+                      tau=M3obc_out(ng,iwest)
+                    END IF
+                    tau=tau*dt(ng)
                   END IF
-                  tau=tau*dt(ng)
-                END IF
-                Cx=BOUNDARY(ng)%u_west_Cx(j,k)
+                  Cx=BOUNDARY(ng)%u_west_Cx(j,k)
 #  ifdef RADIATION_2D
-                Ce=BOUNDARY(ng)%u_west_Ce(j,k)
+                  Ce=BOUNDARY(ng)%u_west_Ce(j,k)
 #  else
-                Ce=0.0_r8
+                  Ce=0.0_r8
 #  endif
-                cff=BOUNDARY(ng)%u_west_C2(j,k)
+                  cff=BOUNDARY(ng)%u_west_C2(j,k)
 # endif
-!>              u(Istr,j,k,nout)=(cff*u(Istr  ,j,k,nstp)+               &
-!>   &                            Cx *u(Istr+1,j,k,nout)-               &
-!>   &                            MAX(Ce,0.0_r8)*grad(Istr,j  )-        &
-!>   &                            MIN(Ce,0.0_r8)*grad(Istr,j+1))/       &
-!>   &                           (cff+Cx)
+!>                u(Istr,j,k,nout)=(cff*u(Istr  ,j,k,nstp)+             &
+!>   &                              Cx *u(Istr+1,j,k,nout)-             &
+!>   &                              MAX(Ce,0.0_r8)*grad(Istr,j  )-      &
+!>   &                              MIN(Ce,0.0_r8)*grad(Istr,j+1))/     &
+!>   &                             (cff+Cx)
 !>
-                tl_u(Istr,j,k,nout)=(cff*tl_u(Istr  ,j,k,nstp)+         &
-     &                               Cx *tl_u(Istr+1,j,k,nout)-         &
-     &                               MAX(Ce,0.0_r8)*                    &
-     &                                  tl_grad(Istr,j  )-              &
-     &                               MIN(Ce,0.0_r8)*                    &
-     &                                  tl_grad(Istr,j+1))/             &
-     &                              (cff+Cx)
+                  tl_u(Istr,j,k,nout)=(cff*tl_u(Istr  ,j,k,nstp)+       &
+     &                                 Cx *tl_u(Istr+1,j,k,nout)-       &
+     &                                 MAX(Ce,0.0_r8)*                  &
+     &                                    tl_grad(Istr,j  )-            &
+     &                                 MIN(Ce,0.0_r8)*                  &
+     &                                    tl_grad(Istr,j+1))/           &
+     &                                (cff+Cx)
 
-                IF (tl_LBC(iwest,isUvel,ng)%nudging) THEN
-!>                u(Istr,j,k,nout)=u(Istr,j,k,nout)+                    &
-!>   &                             tau*(BOUNDARY(ng)%u_west(j,k)-       &
-!>   &                                  u(Istr,j,k,nstp))
+                  IF (tl_LBC(iwest,isUvel,ng)%nudging) THEN
+!>                  u(Istr,j,k,nout)=u(Istr,j,k,nout)+                  &
+!>   &                               tau*(BOUNDARY(ng)%u_west(j,k)-     &
+!>   &                                    u(Istr,j,k,nstp))
 !>
-                  tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)-              &
-     &                                tau*tl_u(Istr,j,k,nstp)
-                END IF
+                    tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)-            &
+     &                                  tau*tl_u(Istr,j,k,nstp)
+                  END IF
 # ifdef MASKING
-!>              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
-!>   &                           GRID(ng)%umask(Istr,j)
+!>                u(Istr,j,k,nout)=u(Istr,j,k,nout)*                    &
+!>   &                             GRID(ng)%umask(Istr,j)
 !>
-                tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                &
-     &                              GRID(ng)%umask(Istr,j)
+                  tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*              &
+     &                                GRID(ng)%umask(Istr,j)
 # endif
+                END IF
               END DO
             END DO
           END IF
@@ -159,24 +161,26 @@
         ELSE IF (tl_LBC(iwest,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
+              IF (LBC_apply(ng)%west(j)) THEN
+!>              u(Istr,j,k,nout)=BOUNDARY(ng)%u_west(j,k)
 !>
 # ifdef ADJUST_BOUNDARY
-              IF (Lobc(iwest,isUvel,ng)) THEN
-                tl_u(Istr,j,k,nout)=BOUNDARY(ng)%tl_u_west(j,k)
-              ELSE
-                tl_u(Istr,j,k,nout)=0.0_r8
-              END IF
+                IF (Lobc(iwest,isUvel,ng)) THEN
+                  tl_u(Istr,j,k,nout)=BOUNDARY(ng)%tl_u_west(j,k)
+                ELSE
+                  tl_u(Istr,j,k,nout)=0.0_r8
+                END IF
 # else
-              tl_u(Istr,j,k,nout)=0.0_r8
+                tl_u(Istr,j,k,nout)=0.0_r8
 # endif
 # ifdef MASKING
-!>            u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-!>   &                         GRID(ng)%umask(Istr,j)
+!>              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+!>   &                           GRID(ng)%umask(Istr,j)
 !>
-              tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                  &
-     &                            GRID(ng)%umask(Istr,j)
+                tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                &
+     &                              GRID(ng)%umask(Istr,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -185,16 +189,18 @@
         ELSE IF (tl_LBC(iwest,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Istr,j,k,nout)=u(Istr+1,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+!>              u(Istr,j,k,nout)=u(Istr+1,j,k,nout)
 !>
-              tl_u(Istr,j,k,nout)=tl_u(Istr+1,j,k,nout)
+                tl_u(Istr,j,k,nout)=tl_u(Istr+1,j,k,nout)
 # ifdef MASKING
-!>            u(Istr,j,k,nout)=u(Istr,j,k,nout)*                        &
-!>   &                         GRID(ng)%umask(Istr,j)
+!>              u(Istr,j,k,nout)=u(Istr,j,k,nout)*                      &
+!>   &                           GRID(ng)%umask(Istr,j)
 !>
-              tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                  &
-     &                            GRID(ng)%umask(Istr,j)
+                tl_u(Istr,j,k,nout)=tl_u(Istr,j,k,nout)*                &
+     &                              GRID(ng)%umask(Istr,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -203,9 +209,11 @@
         ELSE IF (tl_LBC(iwest,isUvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Istr,j,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%west(j)) THEN
+!>              u(Istr,j,k,nout)=0.0_r8
 !>
-              tl_u(Istr,j,k,nout)=0.0_r8
+                tl_u(Istr,j,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -229,52 +237,54 @@
                 tl_grad(Iend+1,j)=0.0_r8
               END DO
               DO j=Jstr,Jend
+                IF (LBC_apply(ng)%east(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
-                IF (tl_LBC(ieast,isUvel,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%u_east_Cx(j,k).eq.0.0_r8) THEN
-                    tau=M3obc_in(ng,ieast)
-                  ELSE
-                    tau=M3obc_out(ng,ieast)
+                  IF (tl_LBC(ieast,isUvel,ng)%nudging) THEN
+                    IF (BOUNDARY(ng)%u_east_Cx(j,k).eq.0.0_r8) THEN
+                      tau=M3obc_in(ng,ieast)
+                    ELSE
+                      tau=M3obc_out(ng,ieast)
+                    END IF
+                    tau=tau*dt(ng)
                   END IF
-                  tau=tau*dt(ng)
-                END IF
-                Cx=BOUNDARY(ng)%u_east_Cx(j,k)
+                  Cx=BOUNDARY(ng)%u_east_Cx(j,k)
 #  ifdef RADIATION_2D
-                Ce=BOUNDARY(ng)%u_east_Ce(j,k)
+                  Ce=BOUNDARY(ng)%u_east_Ce(j,k)
 #  else
-                Ce=0.0_r8
+                  Ce=0.0_r8
 #  endif
-                cff=BOUNDARY(ng)%u_east_C2(j,k)
+                  cff=BOUNDARY(ng)%u_east_C2(j,k)
 # endif
-!>              u(Iend+1,j,k,nout)=(cff*u(Iend+1,j,k,nstp)+             &
-!>   &                              Cx *u(Iend  ,j,k,nout)-             &
-!>   &                              MAX(Ce,0.0_r8)*grad(Iend+1,j  )-    &
-!>   &                              MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/   &
-!>   &                             (cff+Cx)
+!>                u(Iend+1,j,k,nout)=(cff*u(Iend+1,j,k,nstp)+           &
+!>   &                                Cx *u(Iend  ,j,k,nout)-           &
+!>   &                                MAX(Ce,0.0_r8)*grad(Iend+1,j  )-  &
+!>   &                                MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/ &
+!>   &                               (cff+Cx)
 !>
-                tl_u(Iend+1,j,k,nout)=(cff*tl_u(Iend+1,j,k,nstp)+       &
-     &                                 Cx *tl_u(Iend  ,j,k,nout)-       &
-     &                                 MAX(Ce,0.0_r8)*                  &
-     &                                    tl_grad(Iend+1,j  )-          &
-     &                                 MIN(Ce,0.0_r8)*                  &
-     &                                    tl_grad(Iend+1,j+1))/         &
-     &                                (cff+Cx)
+                  tl_u(Iend+1,j,k,nout)=(cff*tl_u(Iend+1,j,k,nstp)+     &
+     &                                   Cx *tl_u(Iend  ,j,k,nout)-     &
+     &                                   MAX(Ce,0.0_r8)*                &
+     &                                      tl_grad(Iend+1,j  )-        &
+     &                                   MIN(Ce,0.0_r8)*                &
+     &                                      tl_grad(Iend+1,j+1))/       &
+     &                                  (cff+Cx)
 
-                IF (tl_LBC(ieast,isUvel,ng)%nudging) THEN
-!>                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)+                &
-!>   &                               tau*(BOUNDARY(ng)%u_east(j,k)-     &
-!>   &                                    u(Iend+1,j,k,nstp))
+                  IF (tl_LBC(ieast,isUvel,ng)%nudging) THEN
+!>                  u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)+              &
+!>   &                                 tau*(BOUNDARY(ng)%u_east(j,k)-   &
+!>   &                                      u(Iend+1,j,k,nstp))
 !>
-                  tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)-          &
-     &                                  tau*tl_u(Iend+1,j,k,nstp)
-                END IF
+                    tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)-        &
+     &                                    tau*tl_u(Iend+1,j,k,nstp)
+                  END IF
 # ifdef MASKING
-!>              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
-!>   &                             GRID(ng)%umask(Iend+1,j)
+!>                u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                &
+!>   &                               GRID(ng)%umask(Iend+1,j)
 !>
-                tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*            &
-     &                                GRID(ng)%umask(Iend+1,j)
+                  tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*          &
+     &                                  GRID(ng)%umask(Iend+1,j)
 # endif
+                END IF
               END DO
             END DO
           END IF
@@ -284,24 +294,26 @@
         ELSE IF (tl_LBC(ieast,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
+              IF (LBC_apply(ng)%east(j)) THEN
+!>              u(Iend+1,j,k,nout)=BOUNDARY(ng)%u_east(j,k)
 !>
 # ifdef ADJUST_BOUNDARY
-              IF (Lobc(ieast,isUvel,ng)) THEN
-                tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_u_east(j,k)
-              ELSE
-                tl_u(Iend+1,j,k,nout)=0.0_r8
-              END IF
+                IF (Lobc(ieast,isUvel,ng)) THEN
+                  tl_u(Iend+1,j,k,nout)=BOUNDARY(ng)%tl_u_east(j,k)
+                ELSE
+                  tl_u(Iend+1,j,k,nout)=0.0_r8
+                END IF
 # else
-              tl_u(Iend+1,j,k,nout)=0.0_r8
+                tl_u(Iend+1,j,k,nout)=0.0_r8
 # endif
 # ifdef MASKING
-!>            u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-!>   &                           GRID(ng)%umask(Iend+1,j)
+!>              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+!>   &                             GRID(ng)%umask(Iend+1,j)
 !>
-              tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*              &
-     &                              GRID(ng)%umask(Iend+1,j)
+                tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*            &
+     &                                GRID(ng)%umask(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -310,16 +322,18 @@
         ELSE IF (tl_LBC(ieast,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Iend+1,j,k,nout)=u(Iend,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+!>              u(Iend+1,j,k,nout)=u(Iend,j,k,nout)
 !>
-              tl_u(Iend+1,j,k,nout)=tl_u(Iend,j,k,nout)
+                tl_u(Iend+1,j,k,nout)=tl_u(Iend,j,k,nout)
 # ifdef MASKING
-!>            u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                    &
-!>   &                           GRID(ng)%umask(Iend+1,j)
+!>              u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                  &
+!>   &                             GRID(ng)%umask(Iend+1,j)
 !>
-              tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*              &
-     &                              GRID(ng)%umask(Iend+1,j)
+                tl_u(Iend+1,j,k,nout)=tl_u(Iend+1,j,k,nout)*            &
+     &                                GRID(ng)%umask(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -328,9 +342,11 @@
         ELSE IF (tl_LBC(ieast,isUvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO j=Jstr,Jend
-!>            u(Iend+1,j,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%east(j)) THEN
+!>              u(Iend+1,j,k,nout)=0.0_r8
 !>
-              tl_u(Iend+1,j,k,nout)=0.0_r8
+                tl_u(Iend+1,j,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -354,52 +370,54 @@
                 tl_grad(i,Jstr-1)=0.0_r8
               END DO
               DO i=IstrU,Iend
+                IF (LBC_apply(ng)%south(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
-                IF (tl_LBC(isouth,isUvel,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%u_south_Ce(i,k).eq.0.0_r8) THEN
-                    tau=M3obc_in(ng,isouth)
-                  ELSE
-                    tau=M3obc_out(ng,isouth)
+                  IF (tl_LBC(isouth,isUvel,ng)%nudging) THEN
+                    IF (BOUNDARY(ng)%u_south_Ce(i,k).eq.0.0_r8) THEN
+                      tau=M3obc_in(ng,isouth)
+                    ELSE
+                      tau=M3obc_out(ng,isouth)
+                    END IF
+                    tau=tau*dt(ng)
                   END IF
-                  tau=tau*dt(ng)
-                END IF
 #  ifdef RADIATION_2D
-                Cx=BOUNDARY(ng)%u_south_Cx(i,k)
+                  Cx=BOUNDARY(ng)%u_south_Cx(i,k)
 #  else
-                Cx=0.0_r8
+                  Cx=0.0_r8
 #  endif
-                Ce=BOUNDARY(ng)%u_south_Ce(i,k)
-                cff=BOUNDARY(ng)%u_south_C2(i,k)
+                  Ce=BOUNDARY(ng)%u_south_Ce(i,k)
+                  cff=BOUNDARY(ng)%u_south_C2(i,k)
 # endif
-!>              u(i,Jstr-1,k,nout)=(cff*u(i,Jstr-1,k,nstp)+             &
-!>   &                              Ce *u(i,Jstr  ,k,nout)-             &
-!>   &                              MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-    &
-!>   &                              MIN(Cx,0.0_r8)*grad(i  ,Jstr-1))/   &
-!>   &                             (cff+Ce)
+!>                u(i,Jstr-1,k,nout)=(cff*u(i,Jstr-1,k,nstp)+           &
+!>   &                                Ce *u(i,Jstr  ,k,nout)-           &
+!>   &                                MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-  &
+!>   &                                MIN(Cx,0.0_r8)*grad(i  ,Jstr-1))/ &
+!>   &                               (cff+Ce)
 !>
-                tl_u(i,Jstr-1,k,nout)=(cff*tl_u(i,Jstr-1,k,nstp)+       &
-     &                                 Ce *tl_u(i,Jstr  ,k,nout)-       &
-     &                                 MAX(Cx,0.0_r8)*                  &
-     &                                    tl_grad(i-1,Jstr-1)-          &
-     &                                 MIN(Cx,0.0_r8)*                  &
-     &                                    tl_grad(i  ,Jstr-1))/         &
-     &                                (cff+Ce)
+                  tl_u(i,Jstr-1,k,nout)=(cff*tl_u(i,Jstr-1,k,nstp)+     &
+     &                                   Ce *tl_u(i,Jstr  ,k,nout)-     &
+     &                                   MAX(Cx,0.0_r8)*                &
+     &                                      tl_grad(i-1,Jstr-1)-        &
+     &                                   MIN(Cx,0.0_r8)*                &
+     &                                      tl_grad(i  ,Jstr-1))/       &
+     &                                  (cff+Ce)
 
-                IF (tl_LBC(isouth,isUvel,ng)%nudging) THEN
-!>                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)+                &
-!>   &                               tau*(BOUNDARY(ng)%u_south(i,k)-    &
-!>   &                                    u(i,Jstr-1,k,nstp))
+                  IF (tl_LBC(isouth,isUvel,ng)%nudging) THEN
+!>                  u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)+              &
+!>   &                                 tau*(BOUNDARY(ng)%u_south(i,k)-  &
+!>   &                                      u(i,Jstr-1,k,nstp))
 !>
-                  tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)-          &
-     &                                  tau*tl_u(i,Jstr-1,k,nstp)
-                END IF
+                    tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)-        &
+     &                                    tau*tl_u(i,Jstr-1,k,nstp)
+                  END IF
 # ifdef MASKING
-!>              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
-!>   &                             GRID(ng)%umask(i,Jstr-1)
+!>                u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                &
+!>   &                               GRID(ng)%umask(i,Jstr-1)
 !>
-                tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*            &
-     &                                GRID(ng)%umask(i,Jstr-1)
+                  tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*          &
+     &                                  GRID(ng)%umask(i,Jstr-1)
 # endif
+                END IF
               END DO
             END DO
           END IF
@@ -409,24 +427,26 @@
         ELSE IF (tl_LBC(isouth,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-!>            u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
+              IF (LBC_apply(ng)%south(i)) THEN
+!>              u(i,Jstr-1,k,nout)=BOUNDARY(ng)%u_south(i,k)
 !>
 # ifdef ADJUST_BOUNDARY
-              IF (Lobc(isouth,isUvel,ng)) THEN
-                tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%tl_u_south(i,k)
-              ELSE
-                tl_u(i,Jstr-1,k,nout)=0.0_r8
-              END IF
+                IF (Lobc(isouth,isUvel,ng)) THEN
+                  tl_u(i,Jstr-1,k,nout)=BOUNDARY(ng)%tl_u_south(i,k)
+                ELSE
+                  tl_u(i,Jstr-1,k,nout)=0.0_r8
+                END IF
 # else
-              tl_u(i,Jstr-1,k,nout)=0.0_r8
+                tl_u(i,Jstr-1,k,nout)=0.0_r8
 # endif
 # ifdef MASKING
-!>            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jstr-1)
+!>              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jstr-1)
 !>
-              tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jstr-1)
+                tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -435,16 +455,18 @@
         ELSE IF (tl_LBC(isouth,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-!>            u(i,Jstr-1,k,nout)=u(i,Jstr,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+!>              u(i,Jstr-1,k,nout)=u(i,Jstr,k,nout)
 !>
-              tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr,k,nout)
+                tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr,k,nout)
 # ifdef MASKING
-!>            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jstr-1)
+!>              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jstr-1)
 !>
-              tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jstr-1)
+                tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -461,16 +483,18 @@
           END IF
           DO k=1,N(ng)
             DO i=Imin,Imax
-!>            u(i,Jstr-1,k,nout)=gamma2(ng)*u(i,Jstr,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+!>              u(i,Jstr-1,k,nout)=gamma2(ng)*u(i,Jstr,k,nout)
 !>
-              tl_u(i,Jstr-1,k,nout)=gamma2(ng)*tl_u(i,Jstr,k,nout)
+                tl_u(i,Jstr-1,k,nout)=gamma2(ng)*tl_u(i,Jstr,k,nout)
 # ifdef MASKING
-!>            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jstr-1)
+!>              u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jstr-1)
 !>
-              tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jstr-1)
+                tl_u(i,Jstr-1,k,nout)=tl_u(i,Jstr-1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jstr-1)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -494,52 +518,54 @@
                 tl_grad(i,Jend+1)=0.0_r8
               END DO
               DO i=IstrU,Iend
+                IF (LBC_apply(ng)%north(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
-                IF (tl_LBC(inorth,isUvel,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%u_north_Ce(i,k).eq.0.0_r8) THEN
-                    tau=M3obc_in(ng,inorth)
-                  ELSE
-                    tau=M3obc_out(ng,inorth)
+                  IF (tl_LBC(inorth,isUvel,ng)%nudging) THEN
+                    IF (BOUNDARY(ng)%u_north_Ce(i,k).eq.0.0_r8) THEN
+                      tau=M3obc_in(ng,inorth)
+                    ELSE
+                      tau=M3obc_out(ng,inorth)
+                    END IF
+                    tau=tau*dt(ng)
                   END IF
-                  tau=tau*dt(ng)
-                END IF
 #  ifdef RADIATION_2D
-                Cx=BOUNDARY(ng)%u_north_Cx(i,k)
+                  Cx=BOUNDARY(ng)%u_north_Cx(i,k)
 #  else
-                Cx=0.0_r8
+                  Cx=0.0_r8
 #  endif
-                Ce=BOUNDARY(ng)%u_north_Ce(i,k)
-                cff=BOUNDARY(ng)%u_north_C2(i,k)
+                  Ce=BOUNDARY(ng)%u_north_Ce(i,k)
+                  cff=BOUNDARY(ng)%u_north_C2(i,k)
 # endif
-!>              u(i,Jend+1,k,nout)=(cff*u(i,Jend+1,k,nstp)+             &
-!>   &                              Ce *u(i,Jend  ,k,nout)-             &
-!>   &                              MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-    &
-!>   &                              MIN(Cx,0.0_r8)*grad(i  ,Jend+1))/   &
-!>   &                             (cff+Ce)
+!>                u(i,Jend+1,k,nout)=(cff*u(i,Jend+1,k,nstp)+           &
+!>   &                                Ce *u(i,Jend  ,k,nout)-           &
+!>   &                                MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-  &
+!>   &                                MIN(Cx,0.0_r8)*grad(i  ,Jend+1))/ &
+!>   &                               (cff+Ce)
 !>
-                tl_u(i,Jend+1,k,nout)=(cff*tl_u(i,Jend+1,k,nstp)+       &
-     &                                 Ce *tl_u(i,Jend  ,k,nout)-       &
-     &                                 MAX(Cx,0.0_r8)*                  &
-     &                                    tl_grad(i-1,Jend+1)-          &
-     &                                 MIN(Cx,0.0_r8)*                  &
-     &                                    tl_grad(i  ,Jend+1))/         &
-     &                                (cff+Ce)
+                  tl_u(i,Jend+1,k,nout)=(cff*tl_u(i,Jend+1,k,nstp)+     &
+     &                                   Ce *tl_u(i,Jend  ,k,nout)-     &
+     &                                   MAX(Cx,0.0_r8)*                &
+     &                                      tl_grad(i-1,Jend+1)-        &
+     &                                   MIN(Cx,0.0_r8)*                &
+     &                                      tl_grad(i  ,Jend+1))/       &
+     &                                  (cff+Ce)
 
-                IF (tl_LBC(inorth,isUvel,ng)%nudging) THEN
-!>                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)+                &
-!>   &                               tau*(BOUNDARY(ng)%u_north(i,k)-    &
-!>   &                                    u(i,Jend+1,k,nstp))
+                  IF (tl_LBC(inorth,isUvel,ng)%nudging) THEN
+!>                  u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)+              &
+!>   &                                 tau*(BOUNDARY(ng)%u_north(i,k)-  &
+!>   &                                      u(i,Jend+1,k,nstp))
 !>
-                  tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)-          &
-     &                                  tau*tl_u(i,Jend+1,k,nstp)
-                END IF
+                    tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)-        &
+     &                                    tau*tl_u(i,Jend+1,k,nstp)
+                  END IF
 # ifdef MASKING
-!>              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
-!>   &                             GRID(ng)%umask(i,Jend+1)
+!>                u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                &
+!>   &                               GRID(ng)%umask(i,Jend+1)
 !>
-                tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*            &
-     &                                GRID(ng)%umask(i,Jend+1)
+                  tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*          &
+     &                                  GRID(ng)%umask(i,Jend+1)
 # endif
+                END IF
               END DO
             END DO
           END IF
@@ -549,24 +575,26 @@
         ELSE IF (tl_LBC(inorth,isUvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-!>            u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
+              IF (LBC_apply(ng)%north(i)) THEN
+!>              u(i,Jend+1,k,nout)=BOUNDARY(ng)%u_north(i,k)
 !>
 # ifdef ADJUST_BOUNDARY
-              IF (Lobc(inorth,isUvel,ng)) THEN
-                tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_u_north(i,k)
-              ELSE
-                tl_u(i,Jend+1,k,nout)=0.0_r8
-              END IF
+                IF (Lobc(inorth,isUvel,ng)) THEN
+                  tl_u(i,Jend+1,k,nout)=BOUNDARY(ng)%tl_u_north(i,k)
+                ELSE
+                  tl_u(i,Jend+1,k,nout)=0.0_r8
+                END IF
 # else
-              tl_u(i,Jend+1,k,nout)=0.0_r8
+                tl_u(i,Jend+1,k,nout)=0.0_r8
 # endif
 # ifdef MASKING
-!>            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jend+1)
+!>              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jend+1)
 !>
-              tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jend+1)
+                tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -575,16 +603,18 @@
         ELSE IF (tl_LBC(inorth,isUvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
-!>            u(i,Jend+1,k,nout)=u(i,Jend,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+!>              u(i,Jend+1,k,nout)=u(i,Jend,k,nout)
 !>
-              tl_u(i,Jend+1,k,nout)=tl_u(i,Jend,k,nout)
+                tl_u(i,Jend+1,k,nout)=tl_u(i,Jend,k,nout)
 # ifdef MASKING
-!>            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jend+1)
+!>              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jend+1)
 !>
-              tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jend+1)
+                tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -601,16 +631,18 @@
           END IF
           DO k=1,N(ng)
             DO i=Imin,Imax
-!>            u(i,Jend+1,k,nout)=gamma2(ng)*u(i,Jend,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+!>              u(i,Jend+1,k,nout)=gamma2(ng)*u(i,Jend,k,nout)
 !>
-              tl_u(i,Jend+1,k,nout)=gamma2(ng)*tl_u(i,Jend,k,nout)
+                tl_u(i,Jend+1,k,nout)=gamma2(ng)*tl_u(i,Jend,k,nout)
 # ifdef MASKING
-!>            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                    &
-!>   &                           GRID(ng)%umask(i,Jend+1)
+!>              u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                  &
+!>   &                             GRID(ng)%umask(i,Jend+1)
 !>
-              tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*              &
-     &                              GRID(ng)%umask(i,Jend+1)
+                tl_u(i,Jend+1,k,nout)=tl_u(i,Jend+1,k,nout)*            &
+     &                                GRID(ng)%umask(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -622,44 +654,56 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          u(Istr,Jstr-1,k,nout)=0.5_r8*(u(Istr+1,Jstr-1,k,nout)+      &
-!>   &                                    u(Istr  ,Jstr  ,k,nout))
+          IF (LBC_apply(ng)%south(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            DO k=1,N(ng)
+!>            u(Istr,Jstr-1,k,nout)=0.5_r8*(u(Istr+1,Jstr-1,k,nout)+    &
+!>   &                                      u(Istr  ,Jstr  ,k,nout))
 !>
-            tl_u(Istr,Jstr-1,k,nout)=0.5_r8*                            &
-     &                               (tl_u(Istr+1,Jstr-1,k,nout)+       &
-     &                                tl_u(Istr  ,Jstr  ,k,nout))
-          END DO
+              tl_u(Istr,Jstr-1,k,nout)=0.5_r8*                          &
+     &                                 (tl_u(Istr+1,Jstr-1,k,nout)+     &
+     &                                  tl_u(Istr  ,Jstr  ,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          u(Iend+1,Jstr-1,k,nout)=0.5_r8*(u(Iend  ,Jstr-1,k,nout)+    &
-!>   &                                      u(Iend+1,Jstr  ,k,nout))
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            DO k=1,N(ng)
+!>            u(Iend+1,Jstr-1,k,nout)=0.5_r8*(u(Iend  ,Jstr-1,k,nout)+  &
+!>   &                                        u(Iend+1,Jstr  ,k,nout))
 !>
-            tl_u(Iend+1,Jstr-1,k,nout)=0.5_r8*                          &
-     &                                 (tl_u(Iend  ,Jstr-1,k,nout)+     &
-     &                                  tl_u(Iend+1,Jstr  ,k,nout))
-          END DO
+              tl_u(Iend+1,Jstr-1,k,nout)=0.5_r8*                        &
+     &                                   (tl_u(Iend  ,Jstr-1,k,nout)+   &
+     &                                    tl_u(Iend+1,Jstr  ,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          u(Istr,Jend+1,k,nout)=0.5_r8*(u(Istr  ,Jend  ,k,nout)+      &
-!>   &                                    u(Istr+1,Jend+1,k,nout))
+          IF (LBC_apply(ng)%north(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=1,N(ng)
+!>            u(Istr,Jend+1,k,nout)=0.5_r8*(u(Istr  ,Jend  ,k,nout)+    &
+!>   &                                      u(Istr+1,Jend+1,k,nout))
 !>
-            tl_u(Istr,Jend+1,k,nout)=0.5_r8*                            &
-     &                               (tl_u(Istr  ,Jend  ,k,nout)+       &
-     &                                tl_u(Istr+1,Jend+1,k,nout))
-          END DO
+              tl_u(Istr,Jend+1,k,nout)=0.5_r8*                          &
+     &                                 (tl_u(Istr  ,Jend  ,k,nout)+     &
+     &                                  tl_u(Istr+1,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-!>          u(Iend+1,Jend+1,k,nout)=0.5_r8*(u(Iend+1,Jend  ,k,nout)+    &
-!>   &                                      u(Iend  ,Jend+1,k,nout))
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=1,N(ng)
+!>            u(Iend+1,Jend+1,k,nout)=0.5_r8*(u(Iend+1,Jend  ,k,nout)+  &
+!>   &                                        u(Iend  ,Jend+1,k,nout))
 !>
-            tl_u(Iend+1,Jend+1,k,nout)=0.5_r8*                          &
-     &                                 (tl_u(Iend+1,Jend  ,k,nout)+     &
-     &                                  tl_u(Iend  ,Jend+1,k,nout))
-          END DO
+              tl_u(Iend+1,Jend+1,k,nout)=0.5_r8*                        &
+     &                                   (tl_u(Iend+1,Jend  ,k,nout)+   &
+     &                                    tl_u(Iend  ,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
       END IF
 

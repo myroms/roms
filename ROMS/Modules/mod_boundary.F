@@ -349,7 +349,30 @@
         USE mod_kinds
 
         implicit none
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary condition apply switches.
+!-----------------------------------------------------------------------
+!
+!  The following switches are used to control which grid points are
+!  processed by the lateral boundary conditions. These switches are
+!  set to TRUE by default.  However in composite grids, the points
+!  processed by nesting are set to FALSE to allow mixed boundary
+!  conditions along the grid edges.
+!
+        TYPE T_APPLY
+          logical, pointer :: west(:)
+          logical, pointer :: east(:)
+          logical, pointer :: south(:)
+          logical, pointer :: north(:)
+        END TYPE
 
+        TYPE (T_APPLY), allocatable :: LBC_apply(:)
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary conditions structure.
+!-----------------------------------------------------------------------
+!
         TYPE T_BOUNDARY
 !
 !  Nonlinear model state.
@@ -723,9 +746,30 @@
       UBij=BOUNDS(ng)%UBij
 #endif
 !
-!  Allocate structure.
+!  Allocate structures.
 !
-      IF (ng.eq.1) allocate ( BOUNDARY(Ngrids) )
+      IF (ng.eq.1) THEN
+        allocate ( LBC_apply(Ngrids) )
+        allocate ( BOUNDARY(Ngrids) )
+      END IF
+!
+!  Lateral boundary conditions apply switches.  These switches need to
+!  be initilized to TRUE here because 'initialize_boundary' is called
+!  several times in adjoint-based application to clear state arrays.
+!  These switches are part of the application grid and will be set to
+!  FALSE elsewhere, if the boundary point is assigned by a nested grid.
+!
+      allocate ( LBC_apply(ng) % west(LBj:UBj) )
+      LBC_apply(ng) % west = .TRUE.
+
+      allocate ( LBC_apply(ng) % east(LBj:UBj) )
+      LBC_apply(ng) % east = .TRUE.
+
+      allocate ( LBC_apply(ng) % south(LBi:UBi) )
+      LBC_apply(ng) % south = .TRUE.
+
+      allocate ( LBC_apply(ng) % north(LBi:UBi) )
+      LBC_apply(ng) % north = .TRUE.
 !
 !  Nonlinear model state.
 !

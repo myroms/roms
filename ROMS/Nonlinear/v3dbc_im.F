@@ -103,56 +103,58 @@
      &                       v(i-1,Jstr+1,k,nstp)
             END DO
             DO i=Istr,Iend
-              dVdt=v(i,Jstr+1,k,nstp)-v(i,Jstr+1,k,nout)
-              dVde=v(i,Jstr+1,k,nout)-v(i,Jstr+2,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+                dVdt=v(i,Jstr+1,k,nstp)-v(i,Jstr+1,k,nout)
+                dVde=v(i,Jstr+1,k,nout)-v(i,Jstr+2,k,nout)
 
-              IF (LBC(isouth,isVvel,ng)%nudging) THEN
-                IF ((dVdt*dVde).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,isouth)
-                ELSE
-                  tau=M3obc_out(ng,isouth)
+                IF (LBC(isouth,isVvel,ng)%nudging) THEN
+                  IF ((dVdt*dVde).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,isouth)
+                  ELSE
+                    tau=M3obc_out(ng,isouth)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
-              IF ((dVdt*(grad(i  ,Jstr+1)+                              &
-     &                   grad(i+1,Jstr+1))).gt.0.0_r8) THEN
-                dVdx=grad(i  ,Jstr+1)
-              ELSE
-                dVdx=grad(i+1,Jstr+1)
-              END IF
-              cff=MAX(dVdx*dVdx+dVde*dVde,eps)
+                IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
+                IF ((dVdt*(grad(i  ,Jstr+1)+                            &
+     &                     grad(i+1,Jstr+1))).gt.0.0_r8) THEN
+                  dVdx=grad(i  ,Jstr+1)
+                ELSE
+                  dVdx=grad(i+1,Jstr+1)
+                END IF
+                cff=MAX(dVdx*dVdx+dVde*dVde,eps)
 # ifdef RADIATION_2D
-              Cx=MIN(cff,MAX(dVdt*dVdx,-cff))
+                Cx=MIN(cff,MAX(dVdt*dVdx,-cff))
 # else
-              Cx=0.0_r8
+                Cx=0.0_r8
 # endif
-              Ce=dVdt*dVde
+                Ce=dVdt*dVde
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%v_south_Cx(i,k)=Cx
-              BOUNDARY(ng)%v_south_Ce(i,k)=Ce
-              BOUNDARY(ng)%v_south_C2(i,k)=cff
+                BOUNDARY(ng)%v_south_Cx(i,k)=Cx
+                BOUNDARY(ng)%v_south_Ce(i,k)=Ce
+                BOUNDARY(ng)%v_south_C2(i,k)=cff
 # endif
-              v(i,Jstr,k,nout)=(cff*v(i,Jstr  ,k,nstp)+                 &
-     &                          Ce *v(i,Jstr+1,k,nout)-                 &
-     &                          MAX(Cx,0.0_r8)*grad(i  ,Jstr)-          &
-     &                          MIN(Cx,0.0_r8)*grad(i+1,Jstr))/         &
-     &                         (cff+Ce)
+                v(i,Jstr,k,nout)=(cff*v(i,Jstr  ,k,nstp)+               &
+     &                            Ce *v(i,Jstr+1,k,nout)-               &
+     &                            MAX(Cx,0.0_r8)*grad(i  ,Jstr)-        &
+     &                            MIN(Cx,0.0_r8)*grad(i+1,Jstr))/       &
+     &                           (cff+Ce)
 
-              IF (LBC(isouth,isVvel,ng)%nudging) THEN
-                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)+                      &
-     &                           tau*(BOUNDARY(ng)%v_south(i,k)-        &
-     &                                v(i,Jstr,k,nstp))
-              END IF
+                IF (LBC(isouth,isVvel,ng)%nudging) THEN
+                  v(i,Jstr,k,nout)=v(i,Jstr,k,nout)+                    &
+     &                             tau*(BOUNDARY(ng)%v_south(i,k)-      &
+     &                                  v(i,Jstr,k,nstp))
+                END IF
 # ifdef MASKING
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask(i,Jstr)
 # endif
 # ifdef WET_DRY
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask_wet(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask_wet(i,Jstr)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -161,15 +163,17 @@
         ELSE IF (LBC(isouth,isVvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jstr,k,nout)=BOUNDARY(ng)%v_south(i,k)
+              IF (LBC_apply(ng)%south(i)) THEN
+                v(i,Jstr,k,nout)=BOUNDARY(ng)%v_south(i,k)
 # ifdef MASKING
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask(i,Jstr)
 # endif
 # ifdef WET_DRY
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask_wet(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask_wet(i,Jstr)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -178,15 +182,17 @@
         ELSE IF (LBC(isouth,isVvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jstr,k,nout)=v(i,Jstr+1,k,nout)
+              IF (LBC_apply(ng)%south(i)) THEN
+                v(i,Jstr,k,nout)=v(i,Jstr+1,k,nout)
 # ifdef MASKING
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask(i,Jstr)
 # endif
 # ifdef WET_DRY
-              v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                        &
-     &                         GRID(ng)%vmask_wet(i,Jstr)
+                v(i,Jstr,k,nout)=v(i,Jstr,k,nout)*                      &
+     &                           GRID(ng)%vmask_wet(i,Jstr)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -195,7 +201,9 @@
         ELSE IF (LBC(isouth,isVvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jstr,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%south(i)) THEN
+                v(i,Jstr,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -218,56 +226,58 @@
      &                       v(i-1,Jend+1,k,nstp)
             END DO
             DO i=Istr,Iend
-              dVdt=v(i,Jend,k,nstp)-v(i,Jend  ,k,nout)
-              dVde=v(i,Jend,k,nout)-v(i,Jend-1,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+                dVdt=v(i,Jend,k,nstp)-v(i,Jend  ,k,nout)
+                dVde=v(i,Jend,k,nout)-v(i,Jend-1,k,nout)
 
-              IF (LBC(inorth,isVvel,ng)%nudging) THEN
-                IF ((dVdt*dVde).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,inorth)
-                ELSE
-                  tau=M3obc_out(ng,inorth)
+                IF (LBC(inorth,isVvel,ng)%nudging) THEN
+                  IF ((dVdt*dVde).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,inorth)
+                  ELSE
+                    tau=M3obc_out(ng,inorth)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
-              IF ((dVdt*(grad(i  ,Jend)+                                &
-     &                   grad(i+1,Jend))).gt.0.0_r8) THEN
-                dVdx=grad(i  ,Jend)
-              ELSE
-                dVdx=grad(i+1,Jend)
-              END IF
-              cff=MAX(dVdx*dVdx+dVde*dVde,eps)
+                IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
+                IF ((dVdt*(grad(i  ,Jend)+                              &
+     &                     grad(i+1,Jend))).gt.0.0_r8) THEN
+                  dVdx=grad(i  ,Jend)
+                ELSE
+                  dVdx=grad(i+1,Jend)
+                END IF
+                cff=MAX(dVdx*dVdx+dVde*dVde,eps)
 # ifdef RADIATION_2D
-              Cx=MIN(cff,MAX(dVdt*dVdx,-cff))
+                Cx=MIN(cff,MAX(dVdt*dVdx,-cff))
 # else
-              Cx=0.0_r8
+                Cx=0.0_r8
 # endif
-              Ce=dVdt*dVde
+                Ce=dVdt*dVde
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%v_north_Cx(i,k)=Cx
-              BOUNDARY(ng)%v_north_Ce(i,k)=Ce
-              BOUNDARY(ng)%v_north_C2(i,k)=cff
+                BOUNDARY(ng)%v_north_Cx(i,k)=Cx
+                BOUNDARY(ng)%v_north_Ce(i,k)=Ce
+                BOUNDARY(ng)%v_north_C2(i,k)=cff
 # endif
-              v(i,Jend+1,k,nout)=(cff*v(i,Jend+1,k,nstp)+               &
-     &                            Ce *v(i,Jend  ,k,nout)-               &
-     &                            MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-      &
-     &                            MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/     &
-     &                           (cff+Ce)
+                v(i,Jend+1,k,nout)=(cff*v(i,Jend+1,k,nstp)+             &
+     &                              Ce *v(i,Jend  ,k,nout)-             &
+     &                              MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-    &
+     &                              MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/   &
+     &                             (cff+Ce)
 
-              IF (LBC(inorth,isVvel,ng)%nudging) THEN
-                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%v_north(i,k)-      &
-     &                                  v(i,Jend+1,k,nstp))
-              END IF
+                IF (LBC(inorth,isVvel,ng)%nudging) THEN
+                  v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%v_north(i,k)-    &
+     &                                    v(i,Jend+1,k,nstp))
+                END IF
 # ifdef MASKING
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -276,15 +286,17 @@
         ELSE IF (LBC(inorth,isVvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jend+1,k,nout)=BOUNDARY(ng)%v_north(i,k)
+              IF (LBC_apply(ng)%north(i)) THEN
+                v(i,Jend+1,k,nout)=BOUNDARY(ng)%v_north(i,k)
 # ifdef MASKING
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -293,15 +305,17 @@
         ELSE IF (LBC(inorth,isVvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jend+1,k,nout)=v(i,Jend,k,nout)
+              IF (LBC_apply(ng)%north(i)) THEN
+                v(i,Jend+1,k,nout)=v(i,Jend,k,nout)
 # ifdef MASKING
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask(i,Jend+1)
 # endif
 # ifdef WET_DRY
-              v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(i,Jend+1)
+                v(i,Jend+1,k,nout)=v(i,Jend+1,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(i,Jend+1)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -310,7 +324,9 @@
         ELSE IF (LBC(inorth,isVvel,ng)%closed) THEN
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,Jend+1,k,nout)=0.0_r8
+              IF (LBC_apply(ng)%north(i)) THEN
+                v(i,Jend+1,k,nout)=0.0_r8
+              END IF
             END DO
           END DO
         END IF
@@ -333,56 +349,58 @@
      &                       v(Istr  ,j  ,k,nstp)
             END DO
             DO j=JstrV,Jend
-              dVdt=v(Istr,j,k,nstp)-v(Istr  ,j,k,nout)
-              dVdx=v(Istr,j,k,nout)-v(Istr+1,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+                dVdt=v(Istr,j,k,nstp)-v(Istr  ,j,k,nout)
+                dVdx=v(Istr,j,k,nout)-v(Istr+1,j,k,nout)
 
-              IF (LBC(iwest,isVvel,ng)%nudging) THEN
-                IF ((dVdt*dVdx).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,iwest)
-                ELSE
-                  tau=M3obc_out(ng,iwest)
+                IF (LBC(iwest,isVvel,ng)%nudging) THEN
+                  IF ((dVdt*dVdx).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,iwest)
+                  ELSE
+                    tau=M3obc_out(ng,iwest)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
-              IF ((dVdt*(grad(Istr,j-1)+                                &
-     &                   grad(Istr,j  ))).gt.0.0_r8) THEN
-                dVde=grad(Istr,j-1)
-              ELSE
-                dVde=grad(Istr,j  )
-              END IF
-              cff=MAX(dVdx*dVdx+dVde*dVde,eps)
-              Cx=dVdt*dVdx
+                IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
+                IF ((dVdt*(grad(Istr,j-1)+                              &
+     &                     grad(Istr,j  ))).gt.0.0_r8) THEN
+                  dVde=grad(Istr,j-1)
+                ELSE
+                  dVde=grad(Istr,j  )
+                END IF
+                cff=MAX(dVdx*dVdx+dVde*dVde,eps)
+                Cx=dVdt*dVdx
 # ifdef RADIATION_2D
-              Ce=MIN(cff,MAX(dVdt*dVde,-cff))
+                Ce=MIN(cff,MAX(dVdt*dVde,-cff))
 # else
-              Ce=0.0_r8
+                Ce=0.0_r8
 # endif
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%v_west_Cx(j,k)=Cx
-              BOUNDARY(ng)%v_west_Ce(j,k)=Ce
-              BOUNDARY(ng)%v_west_C2(j,k)=cff
+                BOUNDARY(ng)%v_west_Cx(j,k)=Cx
+                BOUNDARY(ng)%v_west_Ce(j,k)=Ce
+                BOUNDARY(ng)%v_west_C2(j,k)=cff
 # endif
-              v(Istr-1,j,k,nout)=(cff*v(Istr-1,j,k,nstp)+               &
-     &                            Cx *v(Istr  ,j,k,nout)-               &
-     &                            MAX(Ce,0.0_r8)*grad(Istr-1,j-1)-      &
-     &                            MIN(Ce,0.0_r8)*grad(Istr-1,j  ))/     &
-     &                           (cff+Cx)
+                v(Istr-1,j,k,nout)=(cff*v(Istr-1,j,k,nstp)+             &
+     &                              Cx *v(Istr  ,j,k,nout)-             &
+     &                              MAX(Ce,0.0_r8)*grad(Istr-1,j-1)-    &
+     &                              MIN(Ce,0.0_r8)*grad(Istr-1,j  ))/   &
+     &                             (cff+Cx)
 
-              IF (LBC(iwest,isVvel,ng)%nudging) THEN
-                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%v_west(j,k)-       &
-     &                                  v(Istr-1,j,k,nstp))
-              END IF
+                IF (LBC(iwest,isVvel,ng)%nudging) THEN
+                  v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%v_west(j,k)-     &
+     &                                    v(Istr-1,j,k,nstp))
+                END IF
 # ifdef MASKING
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Istr-1,j)
 # endif
 # ifdef WET_DRY
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Istr-1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -391,15 +409,17 @@
         ELSE IF (LBC(iwest,isVvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
-              v(Istr-1,j,k,nout)=BOUNDARY(ng)%v_west(j,k)
+              IF (LBC_apply(ng)%west(j)) THEN
+                v(Istr-1,j,k,nout)=BOUNDARY(ng)%v_west(j,k)
 # ifdef MASKING
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Istr-1,j)
 # endif
 # ifdef WET_DRY
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Istr-1,j)
 #   endif
+              END IF
             END DO
           END DO
 !
@@ -408,15 +428,17 @@
         ELSE IF (LBC(iwest,isVvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
-              v(Istr-1,j,k,nout)=v(Istr,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+                v(Istr-1,j,k,nout)=v(Istr,j,k,nout)
 # ifdef MASKING
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                         GRID(ng)%vmask(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Istr-1,j)
 # endif
 # ifdef WET_DRY
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Istr-1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -433,15 +455,17 @@
           END IF
           DO k=1,N(ng)
             DO j=Jmin,Jmax
-              v(Istr-1,j,k,nout)=gamma2(ng)*v(Istr,j,k,nout)
+              IF (LBC_apply(ng)%west(j)) THEN
+                v(Istr-1,j,k,nout)=gamma2(ng)*v(Istr,j,k,nout)
 # ifdef MASKING
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Istr-1,j)
 # endif
 # ifdef WET_DRY
-              v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Istr-1,j)
+                v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Istr-1,j)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -464,56 +488,58 @@
      &                       v(Iend+1,j  ,k,nstp)
             END DO
             DO j=JstrV,Jend
-              dVdt=v(Iend,j,k,nstp)-v(Iend  ,j,k,nout)
-              dVdx=v(Iend,j,k,nout)-v(Iend-1,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+                dVdt=v(Iend,j,k,nstp)-v(Iend  ,j,k,nout)
+                dVdx=v(Iend,j,k,nout)-v(Iend-1,j,k,nout)
 
-              IF (LBC(ieast,isVvel,ng)%nudging) THEN
-                IF ((dVdt*dVdx).lt.0.0_r8) THEN
-                  tau=M3obc_in(ng,ieast)
-                ELSE
-                  tau=M3obc_out(ng,ieast)
+                IF (LBC(ieast,isVvel,ng)%nudging) THEN
+                  IF ((dVdt*dVdx).lt.0.0_r8) THEN
+                    tau=M3obc_in(ng,ieast)
+                  ELSE
+                    tau=M3obc_out(ng,ieast)
+                  END IF
+                  tau=tau*dt(ng)
                 END IF
-                tau=tau*dt(ng)
-              END IF
 
-              IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
-              IF ((dVdt*(grad(Iend,j-1)+                                &
-     &                   grad(Iend,j  ))).gt.0.0_r8) THEN
-                dVde=grad(Iend,j-1)
-              ELSE
-                dVde=grad(Iend,j  )
-               END IF
-              cff=MAX(dVdx*dVdx+dVde*dVde,eps)
-              Cx=dVdt*dVdx
+                IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
+                IF ((dVdt*(grad(Iend,j-1)+                              &
+     &                     grad(Iend,j  ))).gt.0.0_r8) THEN
+                  dVde=grad(Iend,j-1)
+                ELSE
+                  dVde=grad(Iend,j  )
+                END IF
+                cff=MAX(dVdx*dVdx+dVde*dVde,eps)
+                Cx=dVdt*dVdx
 # ifdef RADIATION_2D
-              Ce=MIN(cff,MAX(dVdt*dVde,-cff))
+                Ce=MIN(cff,MAX(dVdt*dVde,-cff))
 # else
-              Ce=0.0_r8
+                Ce=0.0_r8
 # endif
 # if defined CELERITY_WRITE && defined FORWARD_WRITE
-              BOUNDARY(ng)%v_east_Cx(j,k)=Cx
-              BOUNDARY(ng)%v_east_Ce(j,k)=Ce
-              BOUNDARY(ng)%v_east_C2(j,k)=cff
+                BOUNDARY(ng)%v_east_Cx(j,k)=Cx
+                BOUNDARY(ng)%v_east_Ce(j,k)=Ce
+                BOUNDARY(ng)%v_east_C2(j,k)=cff
 # endif
-              v(Iend+1,j,k,nout)=(cff*v(Iend+1,j,k,nstp)+               &
-     &                            Cx *v(Iend  ,j,k,nout)-               &
-     &                            MAX(Ce,0.0_r8)*grad(Iend+1,j-1)-      &
-     &                            MIN(Ce,0.0_r8)*grad(Iend+1,j  ))/     &
-     &                           (cff+Cx)
+                v(Iend+1,j,k,nout)=(cff*v(Iend+1,j,k,nstp)+             &
+     &                              Cx *v(Iend  ,j,k,nout)-             &
+     &                              MAX(Ce,0.0_r8)*grad(Iend+1,j-1)-    &
+     &                              MIN(Ce,0.0_r8)*grad(Iend+1,j  ))/   &
+     &                             (cff+Cx)
 
-              IF (LBC(ieast,isVvel,ng)%nudging) THEN
-                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)+                  &
-     &                             tau*(BOUNDARY(ng)%v_east(j,k)-       &
-     &                                  v(Iend+1,j,k,nstp))
-              END IF
+                IF (LBC(ieast,isVvel,ng)%nudging) THEN
+                  v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)+                &
+     &                               tau*(BOUNDARY(ng)%v_east(j,k)-     &
+     &                                    v(Iend+1,j,k,nstp))
+                END IF
 # ifdef MASKING
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -522,15 +548,17 @@
         ELSE IF (LBC(ieast,isVvel,ng)%clamped) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
-              v(Iend+1,j,k,nout)=BOUNDARY(ng)%v_east(j,k)
+              IF (LBC_apply(ng)%east(j)) THEN
+                v(Iend+1,j,k,nout)=BOUNDARY(ng)%v_east(j,k)
 # ifdef MASKING
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -539,15 +567,17 @@
         ELSE IF (LBC(ieast,isVvel,ng)%gradient) THEN
           DO k=1,N(ng)
             DO j=JstrV,Jend
-              v(Iend+1,j,k,nout)=v(Iend,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+                v(Iend+1,j,k,nout)=v(Iend,j,k,nout)
 # ifdef MASKING
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
 !
@@ -564,15 +594,17 @@
           END IF
           DO k=1,N(ng)
             DO j=Jmin,Jmax
-              v(Iend+1,j,k,nout)=gamma2(ng)*v(Iend,j,k,nout)
+              IF (LBC_apply(ng)%east(j)) THEN
+                v(Iend+1,j,k,nout)=gamma2(ng)*v(Iend,j,k,nout)
 # ifdef MASKING
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask(Iend+1,j)
 # endif
 # ifdef WET_DRY
-              v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                    &
-     &                           GRID(ng)%vmask_wet(Iend+1,j)
+                v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                  &
+     &                             GRID(ng)%vmask_wet(Iend+1,j)
 # endif
+              END IF
             END DO
           END DO
         END IF
@@ -584,28 +616,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-            v(Istr-1,Jstr,k,nout)=0.5_r8*(v(Istr  ,Jstr  ,k,nout)+      &
-     &                                    v(Istr-1,Jstr+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr  )) THEN
+            DO k=1,N(ng)
+              v(Istr-1,Jstr,k,nout)=0.5_r8*(v(Istr  ,Jstr  ,k,nout)+    &
+     &                                      v(Istr-1,Jstr+1,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-            v(Iend+1,Jstr,k,nout)=0.5_r8*(v(Iend  ,Jstr  ,k,nout)+      &
-     &                                    v(Iend+1,Jstr+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr  )) THEN
+            DO k=1,N(ng)
+              v(Iend+1,Jstr,k,nout)=0.5_r8*(v(Iend  ,Jstr  ,k,nout)+    &
+     &                                      v(Iend+1,Jstr+1,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=1,N(ng)
-            v(Istr-1,Jend+1,k,nout)=0.5_r8*(v(Istr-1,Jend  ,k,nout)+    &
-     &                                      v(Istr  ,Jend+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=1,N(ng)
+              v(Istr-1,Jend+1,k,nout)=0.5_r8*(v(Istr-1,Jend  ,k,nout)+  &
+     &                                        v(Istr  ,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=1,N(ng)
-            v(Iend+1,Jend+1,k,nout)=0.5_r8*(v(Iend+1,Jend  ,k,nout)+    &
-     &                                      v(Iend  ,Jend+1,k,nout))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=1,N(ng)
+              v(Iend+1,Jend+1,k,nout)=0.5_r8*(v(Iend+1,Jend  ,k,nout)+  &
+     &                                        v(Iend  ,Jend+1,k,nout))
+            END DO
+          END IF
         END IF
       END IF
 

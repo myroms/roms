@@ -215,7 +215,7 @@
             END IF
             sumcpu=0.0_r8
             sumper=0.0_r8
-            DO iregion=1,38
+            DO iregion=1,Mregion-1
               IF (Csum(iregion,imodel,ng).gt.0.0_r8) THEN
                 percent=100.0_r8*Csum(iregion, imodel,ng)/              &
      &                           Csum( region,MyModel,ng)
@@ -238,7 +238,7 @@
 !
           DO imodel=1,4
             total=0.0_r8
-            DO iregion=39,Nregion
+            DO iregion=Mregion,Nregion
               total=total+Csum(iregion,imodel,ng)
             END DO
             IF (Master.and.(total.gt.0.0_r8)) THEN
@@ -248,7 +248,7 @@
             sumcpu=0.0_r8
             sumper=0.0_r8
             IF (total.gt.0.0_r8) THEN
-              DO iregion=39,Nregion
+              DO iregion=Mregion,Nregion
                 IF (Csum(iregion,imodel,ng).gt.0.0_r8) THEN
                   percent=100.0_r8*Csum(iregion, imodel,ng)/            &
      &                             Csum( region,Mymodel,ng)

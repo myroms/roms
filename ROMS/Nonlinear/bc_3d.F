@@ -48,6 +48,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_boundary
       USE mod_ncparam
       USE mod_scalars
 !
@@ -78,7 +79,9 @@
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO j=Jstr,Jend
-              A(Iend+1,j,k)=A(Iend,j,k)
+              IF (LBC_apply(ng)%east(j)) THEN
+                A(Iend+1,j,k)=A(Iend,j,k)
+              END IF
             END DO
           END DO
         END IF
@@ -86,7 +89,9 @@
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=LBk,UBk
             DO j=Jstr,Jend
-              A(Istr-1,j,k)=A(Istr,j,k)
+              IF (LBC_apply(ng)%west(j)) THEN
+                A(Istr-1,j,k)=A(Istr,j,k)
+              END IF
             END DO
           END DO
         END IF
@@ -100,7 +105,9 @@
         IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO i=Istr,Iend
-              A(i,Jend+1,k)=A(i,Jend,k)
+              IF (LBC_apply(ng)%north(i)) THEN
+                A(i,Jend+1,k)=A(i,Jend,k)
+              END IF
             END DO
           END DO
         END IF
@@ -108,7 +115,9 @@
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO i=Istr,Iend
-              A(i,Jstr-1,k)=A(i,Jstr,k)
+              IF (LBC_apply(ng)%south(i)) THEN
+                A(i,Jstr-1,k)=A(i,Jstr,k)
+              END IF
             END DO
           END DO
         END IF
@@ -120,28 +129,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+              &
-     &                                 A(Istr-1,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+            &
+     &                                   A(Istr-1,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+              &
-     &                                 A(Iend+1,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+            &
+     &                                   A(Iend+1,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+              &
-     &                               A(Istr  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+            &
+     &                                   A(Istr  ,Jend+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+              &
-     &                                 A(Iend  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+            &
+     &                                   A(Iend  ,Jend+1,k))
+            END DO
+          END IF
         END IF
       END IF
 !
@@ -166,6 +187,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_boundary
       USE mod_grid
       USE mod_ncparam
       USE mod_scalars
@@ -199,13 +221,17 @@
           IF (LBC(ieast,isBu3d,ng)%closed) THEN
             DO k=LBk,UBk
               DO j=Jstr,Jend
-                A(Iend+1,j,k)=0.0_r8
+                IF (LBC_apply(ng)%east(j)) THEN
+                  A(Iend+1,j,k)=0.0_r8
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO j=Jstr,Jend
-                A(Iend+1,j,k)=A(Iend,j,k)
+                IF (LBC_apply(ng)%east(j)) THEN
+                  A(Iend+1,j,k)=A(Iend,j,k)
+                END IF
               END DO
             END DO
           END IF
@@ -215,13 +241,17 @@
           IF (LBC(iwest,isBu3d,ng)%closed) THEN
             DO k=LBk,UBk
               DO j=Jstr,Jend
-                A(Istr,j,k)=0.0_r8
+                IF (LBC_apply(ng)%west(j)) THEN
+                  A(Istr,j,k)=0.0_r8
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO j=Jstr,Jend
-                A(Istr,j,k)=A(Istr+1,j,k)
+                IF (LBC_apply(ng)%west(j)) THEN
+                  A(Istr,j,k)=A(Istr+1,j,k)
+                END IF
               END DO
             END DO
           END IF
@@ -245,16 +275,20 @@
             END IF
             DO k=LBk,UBk
               DO i=Imin,Imax
-                A(i,Jend+1,k)=gamma2(ng)*A(i,Jend,k)
+                IF (LBC_apply(ng)%north(i)) THEN
+                  A(i,Jend+1,k)=gamma2(ng)*A(i,Jend,k)
 # ifdef MASKING
-                A(i,Jend+1,k)=A(i,Jend+1,k)*GRID(ng)%umask(i,Jend+1)
+                  A(i,Jend+1,k)=A(i,Jend+1,k)*GRID(ng)%umask(i,Jend+1)
 # endif
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO i=IstrU,Iend
-                A(i,Jend+1,k)=A(i,Jend,k)
+                IF (LBC_apply(ng)%north(i)) THEN
+                  A(i,Jend+1,k)=A(i,Jend,k)
+                END IF
               END DO
             END DO
           END IF
@@ -271,16 +305,20 @@
             END IF
             DO k=LBk,UBk
               DO i=Imin,Imax
-                A(i,Jstr-1,k)=gamma2(ng)*A(i,Jstr,k)
+                IF (LBC_apply(ng)%south(i)) THEN
+                  A(i,Jstr-1,k)=gamma2(ng)*A(i,Jstr,k)
 # ifdef MASKING
-                A(i,Jstr-1,k)=A(i,Jstr-1,k)*GRID(ng)%umask(i,Jstr-1)
+                  A(i,Jstr-1,k)=A(i,Jstr-1,k)*GRID(ng)%umask(i,Jstr-1)
 # endif
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO i=IstrU,Iend
-                A(i,Jstr-1,k)=A(i,Jstr,k)
+                IF (LBC_apply(ng)%south(i)) THEN
+                  A(i,Jstr-1,k)=A(i,Jstr,k)
+                END IF
               END DO
             END DO
           END IF
@@ -293,28 +331,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr  ,Jstr-1,k)=0.5_r8*(A(Istr+1,Jstr-1,k)+              &
-     &                                 A(Istr  ,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+             DO k=LBk,UBk
+              A(Istr  ,Jstr-1,k)=0.5_r8*(A(Istr+1,Jstr-1,k)+            &
+     &                                   A(Istr  ,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+              &
-     &                                 A(Iend+1,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+            &
+     &                                   A(Iend+1,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr  ,Jend+1,k)=0.5_r8*(A(Istr  ,Jend  ,k)+              &
-     &                                 A(Istr+1,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Istr  ).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Istr  ,Jend+1,k)=0.5_r8*(A(Istr  ,Jend  ,k)+            &
+     &                                   A(Istr+1,Jend+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+              &
-     &                                 A(Iend  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+            &
+     &                                   A(Iend  ,Jend+1,k))
+            END DO
+          END IF
         END IF
       END IF
 !
@@ -339,6 +389,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_boundary
       USE mod_grid
       USE mod_ncparam
       USE mod_scalars
@@ -380,16 +431,20 @@
             END IF
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-                A(Iend+1,j,k)=gamma2(ng)*A(Iend,j,k)
+                IF (LBC_apply(ng)%east(j)) THEN
+                  A(Iend+1,j,k)=gamma2(ng)*A(Iend,j,k)
 # ifdef MASKING
-                A(Iend+1,j,k)=A(Iend+1,j,k)*GRID(ng)%vmask(Iend+1,j)
+                  A(Iend+1,j,k)=A(Iend+1,j,k)*GRID(ng)%vmask(Iend+1,j)
 # endif
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO j=JstrV,Jend
-                A(Iend+1,j,k)=A(Iend,j,k)
+                IF (LBC_apply(ng)%east(j)) THEN
+                  A(Iend+1,j,k)=A(Iend,j,k)
+                END IF
               END DO
             END DO
           END IF
@@ -406,16 +461,20 @@
             END IF
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-                A(Istr-1,j,k)=gamma2(ng)*A(Istr,j,k)
+                IF (LBC_apply(ng)%west(j)) THEN
+                  A(Istr-1,j,k)=gamma2(ng)*A(Istr,j,k)
 # ifdef MASKING
-                A(Istr-1,j,k)=A(Istr-1,j,k)*GRID(ng)%vmask(Istr-1,j)
+                  A(Istr-1,j,k)=A(Istr-1,j,k)*GRID(ng)%vmask(Istr-1,j)
 # endif
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO j=JstrV,Jend
-                A(Istr-1,j,k)=A(Istr,j,k)
+                IF (LBC_apply(ng)%west(j)) THEN
+                  A(Istr-1,j,k)=A(Istr,j,k)
+                END IF
               END DO
             END DO
           END IF
@@ -431,13 +490,17 @@
           IF (LBC(inorth,isBv3d,ng)%closed) THEN
             DO k=LBk,UBk
               DO i=Istr,Iend
-                A(i,Jend+1,k)=0.0_r8
+                IF (LBC_apply(ng)%north(i)) THEN
+                  A(i,Jend+1,k)=0.0_r8
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO i=Istr,Iend
-                A(i,Jend+1,k)=A(i,Jend,k)
+                IF (LBC_apply(ng)%north(i)) THEN
+                  A(i,Jend+1,k)=A(i,Jend,k)
+                END IF
               END DO
             END DO
           END IF
@@ -447,13 +510,17 @@
           IF (LBC(isouth,isBv3d,ng)%closed) THEN
             DO k=LBk,UBk
               DO i=Istr,Iend
-                A(i,Jstr,k)=0.0_r8
+                IF (LBC_apply(ng)%south(i)) THEN
+                  A(i,Jstr,k)=0.0_r8
+                END IF
               END DO
             END DO
           ELSE
             DO k=LBk,UBk
               DO i=Istr,Iend
-                A(i,Jstr,k)=A(i,Jstr+1,k)
+                IF (LBC_apply(ng)%south(i)) THEN
+                  A(i,Jstr,k)=A(i,Jstr+1,k)
+                END IF
               END DO
             END DO
           END IF
@@ -466,28 +533,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jstr  ,k)=0.5_r8*(A(Istr  ,Jstr  ,k)+              &
-     &                                 A(Istr-1,Jstr+1,k))
-          END DO
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr  )) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jstr  ,k)=0.5_r8*(A(Istr  ,Jstr  ,k)+            &
+     &                                   A(Istr-1,Jstr+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jstr  ,k)=0.5_r8*(A(Iend  ,Jstr  ,k)+              &
-     &                                 A(Iend+1,Jstr+1,k))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr  )) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jstr  ,k)=0.5_r8*(A(Iend  ,Jstr  ,k)+            &
+     &                                   A(Iend+1,Jstr+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+              &
-     &                                 A(Istr  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+            &
+     &                                   A(Istr  ,Jend+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+              &
-     &                                 A(Iend  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+            &
+     &                                   A(Iend  ,Jend+1,k))
+            END DO
+          END IF
         END IF
       END IF
 !
@@ -512,6 +591,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_boundary
       USE mod_ncparam
       USE mod_scalars
 !
@@ -542,7 +622,9 @@
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO j=Jstr,Jend
-              A(Iend+1,j,k)=A(Iend,j,k)
+              IF (LBC_apply(ng)%east(j)) THEN
+                A(Iend+1,j,k)=A(Iend,j,k)
+              END IF
             END DO
           END DO
         END IF
@@ -550,7 +632,9 @@
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO k=LBk,UBk
             DO j=Jstr,Jend
-              A(Istr-1,j,k)=A(Istr,j,k)
+              IF (LBC_apply(ng)%west(j)) THEN
+                A(Istr-1,j,k)=A(Istr,j,k)
+              END IF
             END DO
           END DO
         END IF
@@ -564,7 +648,9 @@
         IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO i=Istr,Iend
-              A(i,Jend+1,k)=A(i,Jend,k)
+              IF (LBC_apply(ng)%north(i)) THEN
+                A(i,Jend+1,k)=A(i,Jend,k)
+              END IF
             END DO
           END DO
         END IF
@@ -572,7 +658,9 @@
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO k=LBk,UBk
             DO i=Istr,Iend
-              A(i,Jstr-1,k)=A(i,Jstr,k)
+              IF (LBC_apply(ng)%south(i)) THEN
+                A(i,Jstr-1,k)=A(i,Jstr,k)
+              END IF
             END DO
           END DO
         END IF
@@ -584,28 +672,40 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+              &
-     &                                 A(Istr-1,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+            &
+     &                                   A(Istr-1,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+              &
-     &                                 A(Iend+1,Jstr  ,k))
-          END DO
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+            &
+     &                                   A(Iend+1,Jstr  ,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+              &
-     &                                 A(Istr  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+            &
+     &                                   A(Istr  ,Jend+1,k))
+            END DO
+          END IF
         END IF
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          DO k=LBk,UBk
-            A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+              &
-     &                                 A(Iend  ,Jend+1,k))
-          END DO
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            DO k=LBk,UBk
+              A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+            &
+     &                                   A(Iend  ,Jend+1,k))
+            END DO
+          END IF
         END IF
       END IF
 !

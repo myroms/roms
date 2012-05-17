@@ -24,7 +24,8 @@
 !  mp_bcastl         broadcasts logical variables                      !
 !  mp_bcasts         broadcasts character variables                    !
 !  mp_boundary       exchanges boundary data between tiles             !
-!  mp_collect        collects 1D vector data from tiles                !
+!  mp_collect_f      collects 1D floating point array from tiles       !
+!  mp_collect_i      collects 1D integer array from tiles              !
 !  mp_dump           writes 2D and 3D tiles arrays for debugging       !
 !  mp_gather2d       collects a 2D tiled array for output purposes     !
 !  mp_gather3d       collects a 3D tiled array for output purposes     !
@@ -44,7 +45,12 @@
 !=======================================================================
 !
       implicit none
-
+!
+      INTERFACE mp_collect
+        MODULE PROCEDURE mp_collect_f
+        MODULE PROCEDURE mp_collect_i
+      END INTERFACE mp_collect
+!
       INTERFACE mp_bcastf
         MODULE PROCEDURE mp_bcastf_0d
         MODULE PROCEDURE mp_bcastf_1d
@@ -52,31 +58,31 @@
         MODULE PROCEDURE mp_bcastf_3d
         MODULE PROCEDURE mp_bcastf_4d
       END INTERFACE mp_bcastf
-
+!
       INTERFACE mp_bcastl
         MODULE PROCEDURE mp_bcastl_0d
         MODULE PROCEDURE mp_bcastl_1d
         MODULE PROCEDURE mp_bcastl_2d
       END INTERFACE mp_bcastl
-
+!
       INTERFACE mp_bcasti
         MODULE PROCEDURE mp_bcasti_0d
         MODULE PROCEDURE mp_bcasti_1d
         MODULE PROCEDURE mp_bcasti_2d
       END INTERFACE mp_bcasti
-
+!
       INTERFACE mp_bcasts
         MODULE PROCEDURE mp_bcasts_0d
         MODULE PROCEDURE mp_bcasts_1d
       END INTERFACE mp_bcasts
-
+!
       INTERFACE mp_reduce
         MODULE PROCEDURE mp_reduce_0d
         MODULE PROCEDURE mp_reduce_1d
       END INTERFACE mp_reduce
-
+!
       CONTAINS
-
+!
       SUBROUTINE mp_barrier (ng)
 !
 !***********************************************************************
@@ -109,7 +115,7 @@
 
       RETURN
       END SUBROUTINE mp_barrier
-
+!
       SUBROUTINE mp_bcastf_0d (ng, model, A)
 !
 !***********************************************************************
@@ -155,7 +161,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -180,12 +186,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf_0d
-
+!
       SUBROUTINE mp_bcastf_1d (ng, model, A)
 !
 !***********************************************************************
@@ -231,7 +237,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -259,12 +265,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf_1d
-
+!
       SUBROUTINE mp_bcastf_2d (ng, model, A)
 !
 !***********************************************************************
@@ -312,7 +318,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -342,12 +348,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf_2d
-
+!
       SUBROUTINE mp_bcastf_3d (ng, model, A)
 !
 !***********************************************************************
@@ -395,7 +401,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -426,12 +432,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf_3d
-
+!
       SUBROUTINE mp_bcastf_4d (ng, model, A)
 !
 !***********************************************************************
@@ -479,7 +485,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -511,12 +517,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf_4d
-
+!
       SUBROUTINE mp_bcasti_0d (ng, model, A)
 !
 !***********************************************************************
@@ -561,7 +567,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -586,12 +592,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasti_0d
-
+!
       SUBROUTINE mp_bcasti_1d (ng, model, A)
 !
 !***********************************************************************
@@ -637,7 +643,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -665,12 +671,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasti_1d
-
+!
       SUBROUTINE mp_bcasti_2d (ng, model, A)
 !
 !***********************************************************************
@@ -717,7 +723,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -747,12 +753,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasti_2d
-
+!
       SUBROUTINE mp_bcastl_0d (ng, model, A)
 !
 !***********************************************************************
@@ -798,7 +804,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -824,12 +830,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastl_0d
-
+!
       SUBROUTINE mp_bcastl_1d (ng, model, A)
 !
 !***********************************************************************
@@ -875,7 +881,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -903,12 +909,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastl_1d
-
+!
       SUBROUTINE mp_bcastl_2d (ng, model, A)
 !
 !***********************************************************************
@@ -955,7 +961,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -985,12 +991,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastl_2d
-
+!
       SUBROUTINE mp_bcasts_0d (ng, model, A)
 !
 !***********************************************************************
@@ -1036,7 +1042,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwclock) THEN
-        CALL wclock_on (ng, model, 42)
+        CALL wclock_on (ng, model, 44)
       END IF
 # endif
 !
@@ -1065,13 +1071,13 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwclock) THEN
-        CALL wclock_off (ng, model, 42)
+        CALL wclock_off (ng, model, 44)
       END IF
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasts_0d
-
+!
       SUBROUTINE mp_bcasts_1d (ng, model, A)
 !
 !***********************************************************************
@@ -1117,7 +1123,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1146,12 +1152,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasts_1d
-
+!
       SUBROUTINE mp_boundary (ng, model, Imin, Imax,                    &
      &                        LBi, UBi, LBk, UBk,                       &
      &                        update, A)
@@ -1222,7 +1228,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 48)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1319,29 +1325,29 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 48)
 # endif
 
       RETURN
       END SUBROUTINE mp_boundary
-
-      SUBROUTINE mp_collect (ng, model, Npts, Aspv, A)
+!
+      SUBROUTINE mp_collect_f (ng, model, Npts, Aspv, A)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine collects requested buffer from all members in the      !
-!  group. Then, it packs distributed data by removing the special      !
-!  values. This routine is used when extracting station data from      !
-!  tiled arrays.                                                       !
+!  This routine collects a 1D floating-point array from all members    !
+!  in the group. Then, it packs distributed data by removing the       !
+!  special values. This routine is used when extracting station        !
+!  data from tiled arrays.                                             !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
-!     Npts       Number of extracted data points.                      !
+!     Npts       Number of collected data points.                      !
 !     Aspv       Special value indicating no data.  This implies that  !
 !                  desired data is tile unbouded.                      !
-!     A          Extracted data.                                       !
+!     A          Collected data.                                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -1387,7 +1393,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 49)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1501,7 +1507,7 @@
         RETURN
       END IF
 # endif
- 10   FORMAT (/,' MP_COLLECT - error during ',a,' call, Node = ',       &
+ 10   FORMAT (/,' MP_COLLECT_F - error during ',a,' call, Node = ',     &
      &        i3.3,' Error = ',i3,/,14x,a)
 
 # ifdef PROFILE
@@ -1510,12 +1516,203 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 49)
 # endif
 
       RETURN
-      END SUBROUTINE mp_collect
+      END SUBROUTINE mp_collect_f
+!
+      SUBROUTINE mp_collect_i (ng, model, Npts, Aspv, A)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine collects a 1D integer array from all members in        !
+!  the group. Then, it packs distributed data by removing the          !
+!  special values. This routine is used when extracting station        !
+!  data from tiled arrays.                                             !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     Npts       Number of collected data points.                      !
+!     Aspv       Special value indicating no data.  This implies that  !
+!                  desired data is tile unbouded.                      !
+!     A          Collected data.                                       !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Collected data.                                       !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Npts
 
+      integer, intent(in) :: Aspv
+
+      integer, intent(inout) :: A(Npts)
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyError, Nnodes, Serror
+      integer :: i, rank, request
+
+      integer, dimension(MPI_STATUS_SIZE) :: status
+
+# if defined COLLECT_ALLGATHER
+      integer, dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+# elif defined COLLECT_ALLREDUCE
+      integer, dimension(Npts) :: Asend
+# else
+      integer, allocatable :: Arecv(:)
+# endif
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 49)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Collect data from all nodes.
+!-----------------------------------------------------------------------
+!
+# if defined COLLECT_ALLGATHER
+      CALL mpi_allgather (A, Npts, MPI_INTEGER, Arecv, Npts,            &
+     &                    MPI_INTEGER, OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0) THEN
+        DO i=1,Npts
+          A(i)=0
+          DO rank=0,Nnodes
+            A(i)=A(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              A(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+# elif defined COLLECT_ALLREDUCE
+!
+!  Copy data to send.
+!
+      DO i=1,Npts
+        Asend(i)=A(i)
+      END DO
+!
+!  Collect data from all nodes as a reduced sum.
+!
+      CALL mpi_allreduce (Asend, A, Npts, MPI_INTEGER, MPI_SUM,         &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_ALLREDUCE', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# else
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MPI_INTEGER, rank, rank+5,       &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,10) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            A(i)=A(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (A, Npts, MPI_INTEGER, MyMaster, MyRank+5,       &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+ 10   FORMAT (/,' MP_COLLECT_I - error during ',a,' call, Node = ',     &
+     &        i3.3,' Error = ',i3,/,14x,a)
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 49)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_collect_i
+!
       SUBROUTINE mp_gather2d (ng, model, LBi, UBi, LBj, UBj,            &
      &                        tindex, gtype, Ascl,                      &
 # ifdef MASKING
@@ -1611,7 +1808,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 46)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1837,12 +2034,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 46)
 # endif
 
       RETURN
       END SUBROUTINE mp_gather2d
-
+!
       SUBROUTINE mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,  &
      &                        tindex, gtype, Ascl,                      &
 # ifdef MASKING
@@ -1940,7 +2137,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 46)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2187,12 +2384,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 46)
 # endif
 
       RETURN
       END SUBROUTINE mp_gather3d
-
+!
       SUBROUTINE mp_gather_state (ng, model, Mstr, Mend, Asize,         &
      &                            A, Awrk)
 !
@@ -2251,7 +2448,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 46)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2333,12 +2530,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 46)
 # endif
 
       RETURN
       END SUBROUTINE mp_gather_state
-
+!
       FUNCTION mp_ncread1d (ng, model, ncid, ncvname, ncname, ncrec,    &
      &                      LB1, UB1, Ascale, A)
 !
@@ -2413,7 +2610,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 47)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2537,7 +2734,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 47)
 # endif
 
  10   FORMAT (/,' MP_NCREAD1D- error during ',a,' call, Node = ',       &
@@ -2626,7 +2823,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 47)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2760,7 +2957,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 47)
 # endif
 
  10   FORMAT (/,' MP_NCREAD2D - error during ',a,' call, Node = ',      &
@@ -2847,7 +3044,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 46)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2977,7 +3174,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 46)
 # endif
 
  10   FORMAT (/,' MP_NCWRITE1D - error during ',a,' call, Node = ',     &
@@ -3066,7 +3263,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 46)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3206,7 +3403,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 46)
 # endif
 
  10   FORMAT (/,' MP_NCWRITE2D - error during ',a,' call, Node = ',     &
@@ -3280,7 +3477,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 45)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3396,12 +3593,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 45)
 # endif
 
       RETURN
       END SUBROUTINE mp_reduce_0d
-
+!
       SUBROUTINE mp_reduce_1d (ng, model, Asize, A, op_handle)
 !
 !***********************************************************************
@@ -3463,7 +3660,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 45)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3591,12 +3788,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 45)
 # endif
 
       RETURN
       END SUBROUTINE mp_reduce_1d
-
+!
       SUBROUTINE mp_reduce2 (ng, model, Isize, Jsize, A, op_handle)
 !
 !***********************************************************************
@@ -3655,7 +3852,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 45)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3706,12 +3903,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 45)
 # endif
 
       RETURN
       END SUBROUTINE mp_reduce2
-
+!
       SUBROUTINE mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,           &
      &                         Nghost, gtype, Amin, Amax,               &
 # if defined READ_WATER && defined MASKING
@@ -3795,7 +3992,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 47)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3973,12 +4170,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 47)
 # endif
 
       RETURN
       END SUBROUTINE mp_scatter2d
-
+!
       SUBROUTINE mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk, &
      &                         Nghost, gtype, Amin, Amax,               &
 # if defined READ_WATER && defined MASKING
@@ -4064,7 +4261,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 47)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4255,12 +4452,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 47)
 # endif
 
       RETURN
       END SUBROUTINE mp_scatter3d
-
+!
       SUBROUTINE mp_scatter_state (ng, model, Mstr, Mend, Asize,        &
      &                             A, Awrk)
 !
@@ -4324,7 +4521,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 47)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4411,12 +4608,12 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 47)
 # endif
 
       RETURN
       END SUBROUTINE mp_scatter_state
-
+!
       SUBROUTINE mp_dump (ng, tile, gtype,                              &
      &                    ILB, IUB, JLB, JUB, KLB, KUB, A, name)
 !
@@ -4540,57 +4737,413 @@
 
       RETURN
       END SUBROUTINE mp_dump
-
-      SUBROUTINE mp_aggregate (ng, model, tindex, gtype,                &
-     &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
-# ifdef MASKING
-     &                         Amask,                                   &
-# endif
-     &                         A)
+!
+      SUBROUTINE mp_aggregate2d (ng, model, gtype,                      &
+     &                           LBiT, UBiT, LBjT, UBjT,                &
+     &                           LBiG, UBiG, LBjG, UBjG,                &
+     &                           Ainp, Aout)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine is used to aggregate tiled data into a full 2D/3D      !
-!  array for debugging purposes.                                       !
+!  This routine collects a 2D tiled, floating-point array from each    !
+!  spawned node and stores it into 2D global array. If nesting, the    !
+!  global array contains the contact points data.                      !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     gtype      C-grid type.                                          !
+!     LBiT       Tiled  array, I-dimension Lower bound.                !
+!     UBiT       Tiled  array, I-dimension Upper bound.                !
+!     LBjT       Tiled  array, J-dimension Lower bound.                !
+!     UBjT       Tiled  array, J-dimension Upper bound.                !
+!     LBiG       Global array, I-dimension Lower bound.                !
+!     UBiG       Global array, I-dimension Upper bound.                !
+!     LBjG       Global array, J-dimension Lower bound.                !
+!     UBjG       Global array, J-dimension Upper bound.                !
+!     Ainp       2D tiled, floating-point array to process.            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Aout       2D global array, all tiles are aggregated.            !
 !                                                                      !
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
 !
       implicit none
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, tindex, gtype
-      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: ng, model, gtype
+      integer, intent(in) :: LBiT, UBiT, LBjT, UBjT
+      integer, intent(in) :: LBiG, UBiG, LBjG, UBjG
 
-# ifdef MASKING
-      real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-# endif
-      real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+      real(r8), intent(in)  :: Ainp(LBiT:UBiT,LBjT:UBjT)
+      real(r8), intent(out) :: Aout(LBiG:UBiG,LBjG:UBjG)
 !
 !  Local variable declarations.
 !
-      integer :: Npts
+      integer :: Lstr, MyError, MyType, Nnodes, Npts, Serror
+      integer :: i, j, np, rank
 
-      real(r8) :: Ascl
+      integer,  dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: my_bounds
 
-      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Awrk
+      real(r8), dimension(TileSize(ng)) :: Asend
+      real(r8), dimension(TileSize(ng),                                 &
+     &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
 !
 !-----------------------------------------------------------------------
-!  Aggregate all tile data into a single array.
+!  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      Ascl=1.0_r8
-      CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,        &
-     &                  tindex, gtype, Ascl,                            &
-# ifdef MASKING
-     &                  Amask(LBi:,LBj:),                               &
+      CALL wclock_on (ng, model, 46)
 # endif
-     &                  A(LBi:,LBj:,LBk:),                              &
-     &                  Npts, Awrk, .FALSE.)
+!
+!-----------------------------------------------------------------------
+!  Set horizontal starting and ending indices for parallel domain
+!  partitions in the XI- and ETA-directions.
+!-----------------------------------------------------------------------
+!
+!  Number of nodes in the group.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+!
+!  Set starting and ending indices to process including contact points
+!  (if nesting) according to the staggered C-grid classification.
+!
+      MyType=ABS(gtype)
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrP(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendP(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrP(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendP(rank)
+          END DO
+        CASE (r2dvar, r3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrT(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendT(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrT(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendT(rank)
+          END DO
+        CASE (u2dvar, u3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrP(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendP(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrT(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendT(rank)
+          END DO
+        CASE (v2dvar, v3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrT(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendT(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrP(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendP(rank)
+          END DO
+      END SELECT
+!
+!  Determine the maximum number of points to process between all tiles.
+!  In collective communications, the amount of data sent must be equal
+!  to the amount of data received.
+!
+      Npts=0
+      DO rank=0,Nnodes
+        np=(my_bounds(2,rank)-my_bounds(1,rank)+1)*                     &
+     &     (my_bounds(4,rank)-my_bounds(3,rank)+1)
+        Npts=MAX(Npts, np)
+      END DO
+
+      IF (Npts.lt.TileSize(ng)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) ' TileSize = ', TileSize(ng), Npts
+ 10       FORMAT (/,' MP_AGGREGATE2D - communication buffer to small,', &
+     &            a, 2i8)
+        END IF
+        exit_flag=5
+        RETURN
+      END IF
+!
+!  Initialize local arrays to facilitate collective communicatios.
+!  This also avoid denormalized values, which facilitates debugging.
+!
+      Asend=0.0_r8
+      Arecv=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Pack tile data.
+!-----------------------------------------------------------------------
+!
+      np=0
+      DO j=my_bounds(3,MyRank),my_bounds(4,MyRank)
+        DO i=my_bounds(1,MyRank),my_bounds(2,MyRank)
+          np=np+1
+          Asend(np)=Ainp(i,j)
+        END DO
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Aggregate data from all nodes.
+!-----------------------------------------------------------------------
+!
+      CALL mpi_alltoall (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,  &
+     &                   OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,20) 'MPI_ALLTOALL', MyRank, MyError,              &
+     &                    string(1:Lstr)
+ 20     FORMAT (/,' MP_AGGREGATE2D - error during ',a,' call, Node = ', &
+     &          i3.3,' Error = ',i3,/,18x,a)
+        exit_flag=5
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Unpack data into a global 2D array.
+!-----------------------------------------------------------------------
+!
+      DO rank=0,Nnodes
+        np=0
+        DO j=my_bounds(3,rank),my_bounds(4,rank)
+          DO i=my_bounds(1,rank),my_bounds(2,rank)
+            np=np+1
+            Aout(i,j)=Arecv(np,rank)
+          END DO
+        END DO
+      END DO
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 46)
+# endif
 
       RETURN
-      END SUBROUTINE mp_aggregate
+      END SUBROUTINE mp_aggregate2d
+!
+      SUBROUTINE mp_aggregate3d (ng, model, gtype,                      &
+     &                           LBiT, UBiT, LBjT, UBjT,                &
+     &                           LBiG, UBiG, LBjG, UBjG,                &
+     &                           LBk,  UBk,                             &
+     &                           Ainp, Aout)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine collects a 3D tiled, floating-point array from each    !
+!  spawned node and stores it into 3D global array. If nesting, the    !
+!  global array contains the contact points data.                      !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     gtype      C-grid type.                                          !
+!     LBiT       Tiled  array, I-dimension Lower bound.                !
+!     UBiT       Tiled  array, I-dimension Upper bound.                !
+!     LBjT       Tiled  array, J-dimension Lower bound.                !
+!     UBjT       Tiled  array, J-dimension Upper bound.                !
+!     LBkT       Tiled  array, K-dimension Lower bound.                !
+!     UBkT       Tiled  array, K-dimension Upper bound.                !
+!     LBiG       Global array, I-dimension Lower bound.                !
+!     UBiG       Global array, I-dimension Upper bound.                !
+!     LBjG       Global array, J-dimension Lower bound.                !
+!     UBjG       Global array, J-dimension Upper bound.                !
+!     LBkG       Global array, K-dimension Lower bound.                !
+!     UBkG       Global array, K-dimension Upper bound.                !
+!     Ainp       3D tiled, floating-point array to process.            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Aout       3D global array, all tiles are aggregated.            !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, gtype
+      integer, intent(in) :: LBiT, UBiT, LBjT, UBjT
+      integer, intent(in) :: LBiG, UBiG, LBjG, UBjG
+      integer, intent(in) :: LBk,  UBk
+
+      real(r8), intent(in)  :: Ainp(LBiT:UBiT,LBjT:UBjT,LBk:UBk)
+      real(r8), intent(out) :: Aout(LBiG:UBiG,LBjG:UBjG,LBk:UBk)
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyError, MyType, Nnodes, Npts, Serror
+      integer :: i, j, k, np, rank
+
+      integer,  dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: my_bounds
+
+      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)) :: Asend
+
+      real(r8), dimension(TileSize(ng)*(UBk-LBk+1),                     &
+     &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 46)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Set horizontal starting and ending indices for parallel domain
+!  partitions in the XI- and ETA-directions.
+!-----------------------------------------------------------------------
+!
+!  Number of nodes in the group.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+!
+!  Set starting and ending indices to process including contact points
+!  (if nesting) according to the staggered C-grid classification.
+!
+      MyType=ABS(gtype)
+
+      SELECT CASE (MyType)
+        CASE (p2dvar, p3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrP(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendP(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrP(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendP(rank)
+          END DO
+        CASE (r2dvar, r3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrT(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendT(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrT(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendT(rank)
+          END DO
+        CASE (u2dvar, u3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrP(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendP(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrT(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendT(rank)
+          END DO
+        CASE (v2dvar, v3dvar)
+          DO rank=0,Nnodes
+            my_bounds(1,rank)=BOUNDS(ng) % IstrT(rank)
+            my_bounds(2,rank)=BOUNDS(ng) % IendT(rank)
+            my_bounds(3,rank)=BOUNDS(ng) % JstrP(rank)
+            my_bounds(4,rank)=BOUNDS(ng) % JendP(rank)
+          END DO
+      END SELECT
+!
+!  Determine the maximum number of points to process between all tiles.
+!  In collective communications, the amount of data sent must be equal
+!  to the amount of data received.
+!
+      Npts=0
+      DO rank=0,Nnodes
+        np=(my_bounds(2,rank)-my_bounds(1,rank)+1)*                     &
+     &     (my_bounds(4,rank)-my_bounds(3,rank)+1)*                     &
+     &     (UBk-LBk+1)
+        Npts=MAX(Npts, np)
+      END DO
+
+      IF (Npts.lt.TileSize(ng)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) ' TileSize = ', TileSize(ng), Npts
+ 10       FORMAT (/,' MP_AGGREGATE3D - communication buffer to small,', &
+     &            a, 2i8)
+        END IF
+        exit_flag=5
+        RETURN
+      END IF
+!
+!  Initialize local arrays to facilitate collective communicatios.
+!  This also avoid denormalized values, which facilitates debugging.
+!
+      Asend=0.0_r8
+      Arecv=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Pack tile data.
+!-----------------------------------------------------------------------
+!
+      np=0
+      DO k=LBk,UBk
+        DO j=my_bounds(3,MyRank),my_bounds(4,MyRank)
+          DO i=my_bounds(1,MyRank),my_bounds(2,MyRank)
+            np=np+1
+            Asend(np)=Ainp(i,j,k)
+          END DO
+        END DO
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Aggregate data from all nodes.
+!-----------------------------------------------------------------------
+!
+      CALL mpi_alltoall (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,  &
+     &                   OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,20) 'MPI_ALLTOALL', MyRank, MyError,              &
+     &                    string(1:Lstr)
+ 20     FORMAT (/,' MP_AGGREGATE3D - error during ',a,' call, Node = ', &
+     &          i3.3,' Error = ',i3,/,18x,a)
+        exit_flag=5
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Unpack data into a global 2D array.
+!-----------------------------------------------------------------------
+!
+      DO rank=0,Nnodes
+        np=0
+        DO k=LBk,UBk
+          DO j=my_bounds(3,rank),my_bounds(4,rank)
+            DO i=my_bounds(1,rank),my_bounds(2,rank)
+              np=np+1
+              Aout(i,j,k)=Arecv(np,rank)
+            END DO
+          END DO
+        END DO
+      END DO
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 46)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_aggregate3d
 #endif
       END MODULE distribute_mod

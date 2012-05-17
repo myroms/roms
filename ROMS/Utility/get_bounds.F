@@ -35,6 +35,9 @@
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_scalars
 !
       implicit none
@@ -43,6 +46,7 @@
 !
       integer, intent(in) :: ng, tile, gtype, Nghost
       integer, intent(out) :: Itile, Jtile, LBi, UBi, LBj, UBj
+
 #ifdef DISTRIBUTE
 !
 !  Local variable declarations.
@@ -71,6 +75,35 @@
 !
       MyType=ABS(gtype)
       IF (MyType.eq.0) THEN
+# ifdef NESTING
+        IF (RefinedGrid(ng)) THEN
+          Imin=-NghostPoints
+          Imax=Lm(ng)+NghostPoints
+          Jmin=-NghostPoints
+          Jmax=Mm(ng)+NghostPoints
+        ELSE IF (ComposedGrid(ng)) THEN
+          IF (ContactRegion(iwest,ng).or.EWperiodic(ng)) THEN
+            Imin=-NghostPoints
+          ELSE
+            Imin=0
+          END IF
+          IF (ContactRegion(ieast,ng).or.EWperiodic(ng)) THEN
+            Imax=Lm(ng)+NghostPoints
+          ELSE
+            Imax=Im(ng)+1
+          END IF
+          IF (ContactRegion(isouth,ng).or.NSperiodic(ng)) THEN
+            Jmin=-NghostPoints
+          ELSE
+            Jmin=0
+          END IF
+          IF (ContactRegion(inorth,ng).or.NSperiodic(ng)) THEN
+            Jmax=Mm(ng)+NghostPoints
+          ELSE
+            Jmax=Jm(ng)+1
+          END IF
+        END IF
+# else
         IF (EWperiodic(ng)) THEN
           IF (NSperiodic(ng)) THEN
             Imin=-NghostPoints
@@ -96,15 +129,22 @@
             Jmax=Jm(ng)+1
           END IF
         END IF
+# endif
       ELSE
-        Imin=0
-        Imax=Lm(ng)+1
-        Jmin=0
-        Jmax=Mm(ng)+1
         IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                &
-     &      (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Imin=1
+     &      (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) THEN
+          Imin=1
+        ELSE
+          Imin=0
+        END IF
+        Imax=Lm(ng)+1
         IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                &
-     &      (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jmin=1
+     &      (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) THEN
+          Jmin=1
+        ELSE
+          Jmin=0
+        END IF
+        Jmax=Mm(ng)+1
       END IF
 !
 !  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0)
@@ -157,6 +197,36 @@
         Itile=tile-Jtile*NtileI(ng)
       END IF
 !
+# ifdef NESTING
+      IF (RefinedGrid(ng)) THEN
+        Imin=-NghostPoints
+        Imax=Lm(ng)+NghostPoints
+        Jmin=-NghostPoints
+        Jmax=Mm(ng)+NghostPoints
+      ELSE IF (ComposedGrid(ng)) THEN
+        IF (ContactRegion(iwest,ng).or.EWperiodic(ng)) THEN
+          Imin=-NghostPoints
+        ELSE
+          Imin=0
+        END IF
+        IF (ContactRegion(ieast,ng).or.EWperiodic(ng)) THEN
+          Imax=Lm(ng)+NghostPoints
+        ELSE
+          Imax=Im(ng)+1
+        END IF
+        IF (ContactRegion(isouth,ng).or.NSperiodic(ng)) THEN
+          Jmin=-NghostPoints
+        ELSE
+          Jmin=0
+        END IF
+        IF (ContactRegion(inorth,ng).or.NSperiodic(ng)) THEN
+          Jmax=Mm(ng)+NghostPoints
+        ELSE
+          Jmax=Jm(ng)+1
+        END IF
+      END IF
+# else
+
       IF (EWperiodic(ng)) THEN
         IF (NSperiodic(ng)) THEN
           LBi=-NghostPoints
@@ -182,6 +252,7 @@
           UBj=Jm(ng)+1
         END IF
       END IF
+# endif
 #endif
 
       RETURN
