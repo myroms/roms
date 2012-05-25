@@ -75,6 +75,7 @@
 !  Local variable declarations.
 !
       logical :: Lweak, add
+      integer :: IniRec
       integer :: ng, tile
 !
 !-----------------------------------------------------------------------
@@ -88,8 +89,9 @@
 !
 !  Read NLM initial condition in readiness for the balance operator.
 !
+      IniRec=Rini
       DO ng=1,Ngrids
-        CALL get_state (ng, iNLM, 2, INI(ng)%name, Rini, Rini)
+        CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
         IF (exit_flag.ne.NoError) RETURN
         nrhs(ng)=Rini
       END DO
@@ -188,7 +190,7 @@
 !  Local variable declarations.
 !
       logical :: Lweak, add
-      integer :: ADrec, Fcount
+      integer :: ADrec, BckRec, Fcount, IniRec
       integer :: i, irec, ng, tile
 
       integer, dimension(Ngrids) :: Nrec
@@ -252,8 +254,9 @@
 !  Read NLM initial condition in readiness for the balance
 !  operator.
 !
+      IniRec=Rini
       DO ng=1,Ngrids
-        CALL get_state (ng, iNLM, 2, INI(ng)%name, Rini, Rini)
+        CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
         IF (exit_flag.ne.NoError) RETURN
         nrhs(ng)=Rini
       END DO
@@ -330,8 +333,9 @@
 !
       IF ((model.eq.iRPM).and.                                          &
      &    (INDEX(driver,'w4dvar').ne.0)) THEN
+        BckRec=Rbck
         DO ng=1,Ngrids
-          CALL get_state (ng, iNLM, 9, INI(ng)%name, Rbck, Rnew(ng))
+          CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
           IF (exit_flag.ne.NoError) RETURN
         END DO
 !

@@ -105,7 +105,7 @@
         CALL get_ngfld (ng, iNLM, idTper, ncFRCid(idTper,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
-     &                  TIDES(ng) % Tperiod(1))
+     &                  TIDES(ng) % Tperiod)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif
@@ -125,18 +125,18 @@
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % SSH_Tamp(LBi,LBj,1))
+     &                  TIDES(ng) % SSH_Tamp)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfld (ng, iNLM, idTzph, ncFRCid(idTzph,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % SSH_Tphase(LBi,LBj,1))
+     &                  TIDES(ng) % SSH_Tphase)
         IF (exit_flag.ne.NoError) RETURN
 
         time(ng)=time_save
@@ -157,36 +157,36 @@
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % UV_Tangle(LBi,LBj,1))
+     &                  TIDES(ng) % UV_Tangle)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfld (ng, iNLM, idTvph, ncFRCid(idTvph,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % UV_Tphase(LBi,LBj,1))
+     &                  TIDES(ng) % UV_Tphase)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfld (ng, iNLM, idTvma, ncFRCid(idTvma,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % UV_Tmajor(LBi,LBj,1))
+     &                  TIDES(ng) % UV_Tmajor)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfld (ng, iNLM, idTvmi, ncFRCid(idTvmi,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 #  ifdef MASKING
-     &                  GRID(ng) % rmask(LBi,LBj),                      &
+     &                  GRID(ng) % rmask,                               &
 #  endif
-     &                  TIDES(ng) % UV_Tminor(LBi,LBj,1))
+     &                  TIDES(ng) % UV_Tminor)
         IF (exit_flag.ne.NoError) RETURN
 
         time(ng)=time_save
@@ -240,7 +240,7 @@
         CALL get_ngfld (ng, iNLM, idCosW, ncFRCid(idCosW,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
-     &                  TIDES(ng) % CosW_sum(1))
+     &                  TIDES(ng) % CosW_sum)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-accumulated SIN(omega(k)*t) harmonics.
@@ -248,7 +248,7 @@
         CALL get_ngfld (ng, iNLM, idSinW, ncFRCid(idSinW,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
-     &                  TIDES(ng) % SinW_sum(1))
+     &                  TIDES(ng) % SinW_sum)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-accumulated COS(omega(k)*t)*COS(omega(k)*t) harmonics.
@@ -256,7 +256,7 @@
         CALL get_ngfld (ng, iNLM, idCos2, ncFRCid(idCos2,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
-     &                  TIDES(ng) % CosWCosW(1,1))
+     &                  TIDES(ng) % CosWCosW)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-accumulated SIN(omega(k)*t)*SIN(omega(k)*t) harmonics.
@@ -264,7 +264,7 @@
         CALL get_ngfld (ng, iNLM, idSin2, ncFRCid(idSin2,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
-     &                  TIDES(ng) %  SinWSinW(1,1))
+     &                  TIDES(ng) %  SinWSinW)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-accumulated SIN(omega(k)*t)*COS(omega(k)*t) harmonics.
@@ -272,7 +272,7 @@
         CALL get_ngfld (ng, iNLM, idSWCW, ncFRCid(idSWCW,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
-     &                  TIDES(ng) %  SinWCosW(1,1))
+     &                  TIDES(ng) %  SinWCosW)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-accumulated free-surface tide harmonics.
@@ -466,25 +466,25 @@
         CALL get_ngfld (ng, iNLM, idRxpo, ncFRCid(idRxpo,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
-     &                  SOURCES(ng) % Xsrc(1))
+     &                  SOURCES(ng) % Xsrc)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfld (ng, iNLM, idRepo, ncFRCid(idRepo,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
-     &                  SOURCES(ng) % Ysrc(1))
+     &                  SOURCES(ng) % Ysrc)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfld (ng, iNLM, idRdir, ncFRCid(idRdir,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
-     &                  SOURCES(ng) % Dsrc(1))
+     &                  SOURCES(ng) % Dsrc)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_ngfld (ng, iNLM, idRvsh, ncFRCid(idRvsh,ng),           &
      &                  nFfiles(ng), FRC(1,ng), update(1),              &
      &                  1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),      &
-     &                  SOURCES(ng) % Qshape(1,1))
+     &                  SOURCES(ng) % Qshape)
         IF (exit_flag.ne.NoError) RETURN
 
         DO is=1,Nsrc(ng)

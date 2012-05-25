@@ -34,8 +34,10 @@
 !  Local variable declarations.
 !
       logical :: Lwrite
+      logical :: Lvalue(1)
 
       integer :: Npts, Nval, i, ic, j, inp, ng, out, status
+      integer :: Ivalue(1)
 
       integer :: decode_line, load_i, load_l, load_r
 
@@ -99,7 +101,8 @@
         IF (status.gt.0) THEN
           SELECT CASE (TRIM(KeyWord))
             CASE ('Nmodels')
-              Npts=load_i(Nval, Rval, 1, Nmodels)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Nmodels=Ivalue(1)
               IF (.not.allocated(MyRval) ) THEN
                 allocate ( MyRval(Nmodels) )
               END IF
@@ -126,7 +129,8 @@
                 Nimport=0
               END IF
             CASE ('Lreport')
-              Npts=load_l(Nval, Cval, 1, Lreport)
+              Npts=load_l(Nval, Cval, 1, Lvalue)
+              Lreport=Lvalue(1)
             CASE ('OrderLabel')
               DO i=1,Nmodels
                 IF (i.eq.Nval) THEN

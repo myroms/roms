@@ -29,15 +29,18 @@
 !
       integer :: Npts, Nval
       integer :: i, j, igrid, mc, nc, ng, status
+      integer :: Ivalue(1)
 
       integer :: decode_line, load_i, load_l, load_r
+
+      real(r8) :: Rvalue(1)
 
       real(r8), dimension(100) :: Rval
 
       character (len=35) :: frmt
       character (len=40) :: KeyWord
-      character (len=160) :: line
-      character (len=160), dimension(100) :: Cval
+      character (len=256) :: line
+      character (len=256), dimension(100) :: Cval
 
       character (len=1 ), parameter :: blank = ' '
 !
@@ -101,17 +104,23 @@
             CASE ('sink_size')
               Npts=load_r(Nval, Rval, Ngrids, sink_size)
             CASE ('swim_Im')
-              Npts=load_i(Nval, Rval, 1, swim_Im)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              swim_Im=Ivalue(1)
             CASE ('swim_Jm')
-              Npts=load_i(Nval, Rval, 1, swim_Jm)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              swim_Jm=Ivalue(1)
             CASE ('swim_L0')
-              Npts=load_r(Nval, Rval, 1, swim_L0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              swim_L0=Rvalue(1)
             CASE ('swim_T0')
-              Npts=load_r(Nval, Rval, 1, swim_T0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              swim_T0=Rvalue(1)
             CASE ('swim_DL')
-              Npts=load_r(Nval, Rval, 1, swim_DL)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              swim_DL=Rvalue(1)
             CASE ('swim_DT')
-              Npts=load_r(Nval, Rval, 1, swim_DT)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              swim_DT=Rvalue(1)
             CASE ('swim_table')
               IF (.not.allocated(swim_table)) THEN
                 allocate ( swim_table(swim_Im,swim_Jm) )
@@ -120,17 +129,23 @@
               READ (inp,*,ERR=20,END=30)                                &
                    ((swim_table(i,j),i=1,swim_Im),j=1,swim_Jm)
             CASE ('Gfactor_Im')
-              Npts=load_i(Nval, Rval, 1, Gfactor_Im)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Gfactor_Im=Ivalue(1)
             CASE ('Gfactor_Jm')
-              Npts=load_i(Nval, Rval, 1, Gfactor_Jm)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Gfactor_Jm=Ivalue(1)
             CASE ('Gfactor_S0')
-              Npts=load_r(Nval, Rval, 1, Gfactor_S0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Gfactor_S0=Rvalue(1)
             CASE ('Gfactor_T0')
-              Npts=load_r(Nval, Rval, 1, Gfactor_T0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Gfactor_T0=Rvalue(1)
             CASE ('Gfactor_DS')
-              Npts=load_r(Nval, Rval, 1, Gfactor_DS)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Gfactor_DS=Rvalue(1)
             CASE ('Gfactor_DT')
-              Npts=load_r(Nval, Rval, 1, Gfactor_DT)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Gfactor_DT=Rvalue(1)
             CASE ('Gfactor_table')
               IF (.not.allocated(Gfactor_table)) THEN
                 allocate ( Gfactor_table(Gfactor_Im,Gfactor_Jm) )
@@ -139,17 +154,23 @@
               READ (inp,*,ERR=20,END=30)                                &
                    ((Gfactor_table(i,j),i=1,Gfactor_Im),j=1,Gfactor_Jm)
             CASE ('Grate_Im')
-              Npts=load_i(Nval, Rval, 1, Grate_Im)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Grate_Im=Ivalue(1)
             CASE ('Grate_Jm')
-              Npts=load_i(Nval, Rval, 1, Grate_Jm)
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Grate_Jm=Ivalue(1)
             CASE ('Grate_F0')
-              Npts=load_r(Nval, Rval, 1, Grate_F0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Grate_F0=Rvalue(1)
             CASE ('Grate_L0')
-              Npts=load_r(Nval, Rval, 1, Grate_L0)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Grate_L0=Rvalue(1)
             CASE ('Grate_DF')
-              Npts=load_r(Nval, Rval, 1, Grate_DF)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Grate_DF=Rvalue(1)
             CASE ('Grate_DL')
-              Npts=load_r(Nval, Rval, 1, Grate_DL)
+              Npts=load_r(Nval, Rval, 1, Rvalue)
+              Grate_DL=Rvalue(1)
             CASE ('Grate_table')
               IF (.not.allocated(Grate_table)) THEN
                 allocate ( Grate_table(Grate_Im,Grate_Jm) )

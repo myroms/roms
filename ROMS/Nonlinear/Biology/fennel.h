@@ -273,6 +273,8 @@
       real(r8) :: l2mol = 1000.0_r8/22.9316_r8      ! liter to mol
 #endif
 #ifdef CARBON
+      integer :: iday, month, year
+
       integer, parameter :: DoNewton = 0            ! pCO2 solver
 
       real(r8), parameter :: Acoef = 2073.1_r8      ! Schmidt
@@ -289,7 +291,7 @@
 
       real(r8) :: pmonth                         ! months since Jan 1951
       real(r8) :: pCO2air_secular
-      real(r8) :: year, yday, month, iday, hour
+      real(r8) :: yday, hour
 
       real(r8), parameter :: pi2 = 6.2831853071796_r8
 
