@@ -901,7 +901,7 @@
 
       integer, intent(inout) :: Nval
 
-      character (len=256), dimension(100), intent(inout) :: Cval
+      character (len=256), dimension(200), intent(inout) :: Cval
 
       real(r8), dimension(100), intent(inout) :: Rval
 !

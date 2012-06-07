@@ -52,7 +52,7 @@
       character (len=35 ) :: frmt
       character (len=40 ) :: KeyWord
       character (len=256) :: fname, line
-      character (len=256), dimension(100) :: Cval
+      character (len=256), dimension(200) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.

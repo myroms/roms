@@ -40,7 +40,7 @@
       character (len=35) :: frmt
       character (len=40) :: KeyWord
       character (len=256) :: line
-      character (len=256), dimension(100) :: Cval
+      character (len=256), dimension(200) :: Cval
 
       character (len=1 ), parameter :: blank = ' '
 !
