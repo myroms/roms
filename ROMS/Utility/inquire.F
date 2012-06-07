@@ -344,7 +344,7 @@
       IF (label(1:3).eq.'FRC') THEN
         DO ifile=1,nfiles
           IF ((TRIM(ncfile).eq.TRIM(S(ifile)%name)).and.                &
-     &        ((ncid.eq.-1).and.(FRCids(ifile,ng).ne.-1))) THEN
+     &        (ncid.ne.FRCids(ifile,ng))) THEN
             ncid=FRCids(ifile,ng)
             EXIT
           END IF
