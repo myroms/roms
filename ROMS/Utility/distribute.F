@@ -4741,7 +4741,7 @@
       SUBROUTINE mp_aggregate2d (ng, model, gtype,                      &
      &                           LBiT, UBiT, LBjT, UBjT,                &
      &                           LBiG, UBiG, LBjG, UBjG,                &
-     &                           Ainp, Aout)
+     &                           Atiled, Aglobal)
 !
 !***********************************************************************
 !                                                                      !
@@ -4762,11 +4762,11 @@
 !     UBiG       Global array, I-dimension Upper bound.                !
 !     LBjG       Global array, J-dimension Lower bound.                !
 !     UBjG       Global array, J-dimension Upper bound.                !
-!     Ainp       2D tiled, floating-point array to process.            !
+!     Atiled     2D tiled, floating-point array to process.            !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout       2D global array, all tiles are aggregated.            !
+!     Aglobal    2D global array, all tiles are aggregated.            !
 !                                                                      !
 !***********************************************************************
 !
@@ -4784,8 +4784,8 @@
       integer, intent(in) :: LBiT, UBiT, LBjT, UBjT
       integer, intent(in) :: LBiG, UBiG, LBjG, UBjG
 
-      real(r8), intent(in)  :: Ainp(LBiT:UBiT,LBjT:UBjT)
-      real(r8), intent(out) :: Aout(LBiG:UBiG,LBjG:UBjG)
+      real(r8), intent(in)  :: Atiled(LBiT:UBiT,LBjT:UBjT)
+      real(r8), intent(out) :: Aglobal(LBiG:UBiG,LBjG:UBjG)
 !
 !  Local variable declarations.
 !
@@ -4889,7 +4889,7 @@
       DO j=my_bounds(3,MyRank),my_bounds(4,MyRank)
         DO i=my_bounds(1,MyRank),my_bounds(2,MyRank)
           np=np+1
-          Asend(np)=Ainp(i,j)
+          Asend(np)=Atiled(i,j)
         END DO
       END DO
 !
@@ -4919,7 +4919,7 @@
         DO j=my_bounds(3,rank),my_bounds(4,rank)
           DO i=my_bounds(1,rank),my_bounds(2,rank)
             np=np+1
-            Aout(i,j)=Arecv(np,rank)
+            Aglobal(i,j)=Arecv(np,rank)
           END DO
         END DO
       END DO
@@ -4940,7 +4940,7 @@
      &                           LBiT, UBiT, LBjT, UBjT,                &
      &                           LBiG, UBiG, LBjG, UBjG,                &
      &                           LBk,  UBk,                             &
-     &                           Ainp, Aout)
+     &                           Atiled, Aglobal)
 !
 !***********************************************************************
 !                                                                      !
@@ -4965,11 +4965,11 @@
 !     UBjG       Global array, J-dimension Upper bound.                !
 !     LBkG       Global array, K-dimension Lower bound.                !
 !     UBkG       Global array, K-dimension Upper bound.                !
-!     Ainp       3D tiled, floating-point array to process.            !
+!     Atiled     3D tiled, floating-point array to process.            !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout       3D global array, all tiles are aggregated.            !
+!     Aglobal    3D global array, all tiles are aggregated.            !
 !                                                                      !
 !***********************************************************************
 !
@@ -4988,8 +4988,8 @@
       integer, intent(in) :: LBiG, UBiG, LBjG, UBjG
       integer, intent(in) :: LBk,  UBk
 
-      real(r8), intent(in)  :: Ainp(LBiT:UBiT,LBjT:UBjT,LBk:UBk)
-      real(r8), intent(out) :: Aout(LBiG:UBiG,LBjG:UBjG,LBk:UBk)
+      real(r8), intent(in)  :: Atiled(LBiT:UBiT,LBjT:UBjT,LBk:UBk)
+      real(r8), intent(out) :: Aglobal(LBiG:UBiG,LBjG:UBjG,LBk:UBk)
 !
 !  Local variable declarations.
 !
@@ -5096,7 +5096,7 @@
         DO j=my_bounds(3,MyRank),my_bounds(4,MyRank)
           DO i=my_bounds(1,MyRank),my_bounds(2,MyRank)
             np=np+1
-            Asend(np)=Ainp(i,j,k)
+            Asend(np)=Atiled(i,j,k)
           END DO
         END DO
       END DO
@@ -5128,7 +5128,7 @@
           DO j=my_bounds(3,rank),my_bounds(4,rank)
             DO i=my_bounds(1,rank),my_bounds(2,rank)
               np=np+1
-              Aout(i,j,k)=Arecv(np,rank)
+              Aglobal(i,j,k)=Arecv(np,rank)
             END DO
           END DO
         END DO
