@@ -852,20 +852,22 @@
 !  Apply mass point sources - Volume influx.
 !
           DO is=1,Nsrc
-            i=Isrc(is)
+            IF (LtracerSrc(itrc,ng)) THEN
+              i=Isrc(is)
 #  ifdef TS_MPDATA
-            IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.                &
-     &          ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
+              IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
+     &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #  else
-            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
-     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              IF (((IstrR.le.i).and.(i.le.IendR)).and.                  &
+     &            ((JstrR.le.j).and.(j.le.JendR))) THEN
 #  endif
-              IF (j.eq.Jsrc(is)) THEN
-                DO k=1,N(ng)
-                  FC(i,k)=FC(i,k)+0.5_r8*                               &
-     &                    (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+              &
-     &                     Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
-                END DO
+                IF (j.eq.Jsrc(is)) THEN
+                  DO k=1,N(ng)-1
+                    FC(i,k)=FC(i,k)+0.5_r8*                             &
+     &                      (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+            &
+     &                       Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
+                  END DO
+                END IF
               END IF
             END IF
           END DO

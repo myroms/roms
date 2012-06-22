@@ -1131,10 +1131,12 @@
             IF (j.eq.Jsrc(is)) THEN
               DO k=1,N(ng)-1
                 DO is=1,Nsrc
-                  i=Isrc(is)
-                  FC(i,k)=FC(i,k)+0.5_r8*                               &
-     &                    (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+              &
-     &                     Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
+                  IF (LtracerSrc(itrc,ng)) THEN
+                    i=Isrc(is)
+                    FC(i,k)=FC(i,k)+0.5_r8*                             &
+     &                      (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+            &
+     &                       Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
+                  END IF
                 END DO
               END DO
             END IF
@@ -1781,19 +1783,21 @@
 !  Apply mass point sources - Volume influx.
 !
           DO is=1,Nsrc
-            i=Isrc(is)
+            IF (LtracerSrc(itrc,ng)) THEN
+              i=Isrc(is)
 #  ifdef TS_MPDATA
-            IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.                &
-     &          ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
+              IF (((IstrUm2.le.i).and.(i.le.Iendp2i)).and.              &
+     &            ((JstrVm2.le.j).and.(j.le.Jendp2i))) THEN
 #  else
-            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
-     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              IF (((IstrR.le.i).and.(i.le.IendR)).and.                  &
+     &            ((JstrR.le.j).and.(j.le.JendR))) THEN
 #  endif
-              IF (j.eq.Jsrc(is)) THEN
-                DO k=1,N(ng)
-!>                tl_FC(i,k)=tl_FC(i,k)+0.0_r8
+                IF (j.eq.Jsrc(is)) THEN
+                  DO k=1,N(ng)-1
+!>                  tl_FC(i,k)=tl_FC(i,k)+0.0_r8
 !>
-                END DO
+                  END DO
+                END IF
               END IF
             END IF
           END DO
