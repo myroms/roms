@@ -57,6 +57,10 @@
 #ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_collect
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+# ifdef SOLVE3D
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+# endif
 #endif
 !
       implicit none
@@ -718,6 +722,29 @@
         END IF
 #endif
       END IF
+
+#ifdef DISTRIBUTE
+# ifdef M2CLM_NUDGING
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, .FALSE., .FALSE.,               &
+     &                    CLIMA(ng)%M2nudgcof)
+# endif
+# ifdef SOLVE3D
+#  ifdef M3CLM_NUDGING
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, .FALSE., .FALSE.,               &
+     &                    CLIMA(ng)%M3nudgcof)
+#  endif
+#  ifdef TCLM_NUDGING
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, NT(ng),                &
+     &                    NghostPoints, .FALSE., .FALSE.,               &
+     &                    CLIMA(ng)%Tnudgcof)
+#  endif
+# endif
+#endif
 
       RETURN
       END SUBROUTINE ana_nudgcoef_tile
