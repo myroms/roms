@@ -168,7 +168,7 @@
         Perfect3D=.TRUE.
       END IF
 #endif
-      PerfectRST(ng)=Perfect2d.or.Perfect3d
+      PerfectRST(ng)=Perfect2D.or.Perfect3D
 !
 !  Determine variables to read.
 !
@@ -441,12 +441,12 @@
         IF (get_var(idFsur)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
-          IF (Perfect2d) THEN
+          IF (Perfect2D) THEN
             gtype=var_flag(varid)*r3dvar
           ELSE
             gtype=var_flag(varid)*r2dvar
           END IF
-          IF (Perfect2d) THEN
+          IF (Perfect2D) THEN
             status=nf_fread3d(ng, IDmod, ncname, ncINPid,               &
      &                        Vname(1,idFsur), varid,                   &
      &                        InpRec, gtype, Vsize,                     &
@@ -969,6 +969,104 @@
 #   endif
         END IF
 #   endif
+#  endif
+#  if defined LMD_SKPP
+!
+!  Read in Hsbl
+!
+        IF (have_var(idHsbl).and.Perfect3D) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idHsbl)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idHsbl), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      Fscl, Fmin, Fmax,                           &
+# ifdef MASKING
+     &                      GRID(ng) % rmask,                           &
+# endif
+     &                      MIXING(ng) % Hsbl)
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,60) string, TRIM(Vname(1,idHsbl)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,70) TRIM(Vname(2,idHsbl)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+#  endif
+#  if defined LMD_BKPP
+!
+!  Read in Hbbl
+!
+        IF (have_var(idHbbl).and.Perfect3D) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idHbbl)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
+          status=nf_fread2d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idHbbl), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      Fscl, Fmin, Fmax,                           &
+# ifdef MASKING
+     &                      GRID(ng) % rmask,                           &
+# endif
+     &                      MIXING(ng) % Hbbl)
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,60) string, TRIM(Vname(1,idHbbl)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,70) TRIM(Vname(2,idHbbl)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+#  endif
+#  if defined LMD_NONLOCAL && defined PERFECT_RESTART
+!
+!  Read in Ghats
+!
+      DO itrc=1,NAT
+        IF (have_var(idGhat(itrc))) THEN
+          foundit=find_string(var_name, n_var,                          &
+     &                        TRIM(Vname(1,idGhat(itrc))), varid)
+          gtype=var_flag(varid)*w3dvar
+          status=nf_fread3d(ng, IDmod, ncname, ncINPid,                 &
+     &                      Vname(1,idGhat(itrc)), varid,                     &
+     &                      InpRec, gtype, Vsize,                       &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      Fscl, Fmin,Fmax,                            &
+#   ifdef MASKING
+     &                      GRID(ng) % rmask,                           &
+#   endif
+     &                      MIXING(ng) % Ghats(:,:,:,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,60) string, TRIM(Vname(1,idGhat(itrc))),  &
+     &                          InpRec, TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,70) TRIM(Vname(2,idGhat(itrc))), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+      END DO
 #  endif
 #  if defined GLS_MIXING || defined MY25_MIXING
 !

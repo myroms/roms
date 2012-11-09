@@ -593,6 +593,31 @@
         RETURN
       END IF
 # endif
+# if defined PERFECT_RESTART && defined LMD_NONLOCAL
+!
+!  Write out KPP nonlocal transport.
+!
+      DO i=1,NAT
+        scale=1.0_r8
+        gtype=gfactor*w3dvar
+        status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid,                      &
+     &                       RST(ng)%Vid(idGhat(i)),                    &
+     &                       RST(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng), scale,       &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask_io,                       &
+#  endif
+     &                       MIXING(ng) % ghats(:,:,:,i))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idGhat(i))), RST(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+# endif
 # if defined BVF_MIXING  || defined GLS_MIXING || \
      defined MY25_MIXING || defined LMD_MIXING
 !

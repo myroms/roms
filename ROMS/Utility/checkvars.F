@@ -327,6 +327,20 @@
           have_var(idTdif)=.TRUE.
         ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSdif))) THEN
           have_var(idSdif)=.TRUE.
+#  ifdef LMD_SKPP
+        ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idHsbl))) THEN
+          have_var(idHsbl)=.TRUE.
+#  endif
+#  ifdef LMD_BKPP
+        ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idHbbl))) THEN
+          have_var(idHbbl)=.TRUE.
+#  endif
+#  ifdef LMD_NONLOCAL
+        ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idGhat(itemp)))) THEN
+          have_var(idGhat(itemp))=.TRUE.
+        ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idGhat(isalt)))) THEN
+          have_var(idGhat(isalt))=.TRUE.
+#  endif
 # endif
 # if defined GLS_MIXING || defined MY25_MIXING
         ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtke))) THEN

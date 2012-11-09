@@ -1008,7 +1008,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idHsbl,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idHsbl),     &
-     &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd3, sr2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 
@@ -1032,8 +1032,29 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idHbbl,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idHbbl),     &
-     &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd3, sr2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined PERFECT_RESTART && defined LMD_NONLOCAL
+!
+!  Define out KPP nonlocal transport.
+!
+        DO itrc=1,NAT
+          Vinfo( 1)=Vname(1,idGhat(itrc))
+          Vinfo( 2)=Vname(2,idGhat(itrc))
+          Vinfo( 3)=Vname(3,idGhat(itrc))
+          Vinfo(14)=Vname(4,idGhat(itrc))
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idGhat(itrc),ng),r8)
+          status=def_var(ng, iNLM, RST(ng)%ncid,                        &
+     &                     RST(ng)%Vid(idGhat(itrc)), NF_FRST,          &
+     &                     nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END DO
 # endif
 # if defined BVF_MIXING || defined LMD_MIXING || \
      defined GLS_MIXING || defined MY25_MIXING
@@ -1550,6 +1571,16 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idHbbl))) THEN
             got_var(idHbbl)=.TRUE.
             RST(ng)%Vid(idHbbl)=var_id(i)
+# endif
+# if defined PERFECT_RESTART && defined LMD_NONLOCAL
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idGhat(itemp)))) THEN
+            got_var(idGhat(itemp))=.TRUE.
+            RST(ng)%Vid(idGhat(itemp))=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idGhat(isalt)))) THEN
+            got_var(idGhat(isalt))=.TRUE.
+            RST(ng)%Vid(idGhat(isalt))=var_id(i)
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
