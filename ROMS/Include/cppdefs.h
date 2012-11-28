@@ -46,6 +46,11 @@
 ** UV_PSOURCE          use to turn ON or OFF point Sources/Sinks             **
 ** Q_PSOURCE           use to turn ON or OFF mass point Sources              **
 **                                                                           **
+** OPTION to not allow the bottom stress components to change the direction  **
+** of bottom momentum (change sign of velocity components.                   **
+**                                                                           **
+** LIMIT_BSTRESS       use to limit the magnitude of bottom stress           **
+**                                                                           **
 ** OPTIONS associated with tracers equations:                                **
 **                                                                           **
 **   The default horizontal and vertical advection is 4th-order centered.    **

@@ -240,7 +240,7 @@
       integer :: i, j, itrc
 
 #  if !defined BBL_MODEL || defined ICESHELF
-      real(r8) :: cff1, cff2
+      real(r8) :: cff, cff1, cff2, cff3
 #  endif
 
 #  if (!defined BBL_MODEL || defined ICESHELF) && defined UV_LOGDRAG
@@ -445,6 +445,15 @@
 !  Set kinematic bottom momentum flux (m2/s2).
 !-----------------------------------------------------------------------
 
+#   ifdef LIMIT_BSTRESS
+!
+!  Set limiting factor for bottom stress. The bottom stress is adjusted
+!  to not change the direction of momentum.  It only should slow down
+!  to zero.  The value of 0.75 is arbitrary limitation assigment.
+!
+      cff=0.75_r8/dt(ng)
+#   endif
+
 #   if defined UV_LOGDRAG
 !
 !  Set logarithmic bottom stress.
@@ -465,6 +474,12 @@
           cff2=SQRT(u(i,j,1,nrhs)*u(i,j,1,nrhs)+cff1*cff1)
           bustr(i,j)=0.5_r8*(wrk(i-1,j)+wrk(i,j))*                      &
      &               u(i,j,1,nrhs)*cff2
+#    ifdef LIMIT_BSTRESS
+          cff3=cff*0.5_r8*(Hz(i-1,j,1)+Hz(i,j,1))
+          bustr(i,j)=SIGN(1.0_r8, bustr(i,j))*                          &
+     &               MIN(ABS(bustr(i,j)),                               &
+     &                   ABS(u(i,j,1,nrhs))*cff3)
+#    endif
         END DO
       END DO
       DO j=JstrV,Jend
@@ -476,6 +491,12 @@
           cff2=SQRT(cff1*cff1+v(i,j,1,nrhs)*v(i,j,1,nrhs))
           bvstr(i,j)=0.5_r8*(wrk(i,j-1)+wrk(i,j))*                      &
      &               v(i,j,1,nrhs)*cff2
+#    ifdef LIMIT_BSTRESS
+          cff3=cff*0.5_r8*(Hz(i,j-1,1)+Hz(i,j,1))
+          bvstr(i,j)=SIGN(1.0_r8, bvstr(i,j))*                          &
+     &               MIN(ABS(bvstr(i,j)),                               &
+     &                   ABS(v(i,j,1,nrhs))*cff3)
+#    endif
         END DO
       END DO
 #   elif defined UV_QDRAG
@@ -491,6 +512,12 @@
           cff2=SQRT(u(i,j,1,nrhs)*u(i,j,1,nrhs)+cff1*cff1)
           bustr(i,j)=0.5_r8*(rdrag2(i-1,j)+rdrag2(i,j))*                &
      &               u(i,j,1,nrhs)*cff2
+#    ifdef LIMIT_BSTRESS
+          cff3=cff*0.5_r8*(Hz(i-1,j,1)+Hz(i,j,1))
+          bustr(i,j)=SIGN(1.0_r8, bustr(i,j))*                          &
+     &               MIN(ABS(bustr(i,j)),                               &
+     &                   ABS(u(i,j,1,nrhs))*cff3)
+#    endif
         END DO
       END DO
       DO j=JstrV,Jend
@@ -502,6 +529,12 @@
           cff2=SQRT(cff1*cff1+v(i,j,1,nrhs)*v(i,j,1,nrhs))
           bvstr(i,j)=0.5_r8*(rdrag2(i,j-1)+rdrag2(i,j))*                &
      &               v(i,j,1,nrhs)*cff2
+#    ifdef LIMIT_BSTRESS
+          cff3=cff*0.5_r8*(Hz(i,j-1,1)+Hz(i,j,1))
+          bvstr(i,j)=SIGN(1.0_r8, bvstr(i,j))*                          &
+     &               MIN(ABS(bvstr(i,j)),                               &
+     &                   ABS(v(i,j,1,nrhs))*cff3)
+#    endif
         END DO
       END DO
 #    elif defined UV_LDRAG
@@ -512,15 +545,27 @@
         DO i=IstrU,Iend
           bustr(i,j)=0.5_r8*(rdrag(i-1,j)+rdrag(i,j))*                  &
      &               u(i,j,1,nrhs)
+#    ifdef LIMIT_BSTRESS
+          cff1=cff*0.5_r8*(Hz(i-1,j,1)+Hz(i,j,1))
+          bustr(i,j)=SIGN(1.0_r8, bustr(i,j))*                          &
+     &               MIN(ABS(bustr(i,j)),                               &
+     &                   ABS(u(i,j,1,nrhs))*cff1)
+#    endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
           bvstr(i,j)=0.5_r8*(rdrag(i,j-1)+rdrag(i,j))*                  &
      &               v(i,j,1,nrhs)
+#    ifdef LIMIT_BSTRESS
+          cff1=cff*0.5_r8*(Hz(i,j-1,1)+Hz(i,j,1))
+          bvstr(i,j)=SIGN(1.0_r8, bvstr(i,j))*                          &
+     &               MIN(ABS(bvstr(i,j)),                               &
+     &                   ABS(v(i,j,1,nrhs))*cff1)
+#    endif
         END DO
       END DO
-#    endif
+#   endif
 !
 !  Apply boundary conditions.
 !

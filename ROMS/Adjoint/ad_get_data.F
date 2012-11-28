@@ -59,7 +59,7 @@
 
       integer :: ILB, IUB, JLB, JUB
       integer :: LBi, UBi, LBj, UBj
-      integer :: i, my_tile
+      integer :: i, ic, my_tile
 
 # ifdef FORWARD_MIXING
       real(r8) :: scale
@@ -883,15 +883,19 @@
 
 #  ifdef SOLVE3D
 #   if !defined ANA_TCLIMA && defined TCLIMATOLOGY
-      DO i=1,NAT
-        CALL get_3dfldr (ng, iADM, idTclm(i), CLM(ng)%ncid,             &
-     &                   1, CLM(ng), update(1),                         &
-     &                   LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,            &
+      ic=0
+      DO i=1,NT(ng)
+        IF (LtracerCLM(i,ng)) THEN
+          ic=ic+1
+          CALL get_3dfldr (ng, iADM, idTclm(i), CLM(ng)%ncid,           &
+     &                     1, CLM(ng), update(1),                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,          &
 #    ifdef MASKING
-     &                   GRID(ng) % rmask,                              &
+     &                     GRID(ng) % rmask,                            &
 #    endif
-     &                   CLIMA(ng) % tclmG(:,:,:,:,i))
-        IF (exit_flag.ne.NoError) RETURN
+     &                     CLIMA(ng) % tclmG(:,:,:,:,ic))
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
       END DO
 #   endif
 

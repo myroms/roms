@@ -300,6 +300,14 @@
       END IF
 # endif
 
+      string=uppercase('limit_bstress')
+      ifound=INDEX(TRIM(Coptions), TRIM(string))
+      IF (ifound.ne.0) THEN
+        ic=ic+1
+        IF (Master) WRITE(stdout,20) TRIM(string),                      &
+     &                               'not coded, FATAL ERROR'
+      END IF
+
 # ifndef FORWARD_MIXING
       string=uppercase('lmd_mixing')
       ifound=INDEX(TRIM(Coptions), TRIM(string))

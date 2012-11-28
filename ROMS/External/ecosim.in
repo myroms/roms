@@ -592,6 +592,12 @@
 
 ad_LBC(isTvar) ==   Per     Clo     Per     Clo      ! idbio(:), compact
 
+! Logical switches (TRUE/FALSE) to specify which variables to process for
+! tracers climatology: [NBT,Ngrids] values are expected. See glossary below
+! for details.
+
+    LtracerCLM == 61*F
+
 ! Logical switches (TRUE/FALSE) to specify which variables to consider on
 ! tracers point Sources/Sinks (like river runoff): [NBT,Ngrids] values are
 ! expected. See glossary below for details.
@@ -1157,6 +1163,24 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo      ! idbio(:), compact
 ! lateral boundary conditions keywords:
 !
 !  ad_LBC(isTvar) Biological Tracers, [1:4, 1:NBT, Ngrids] values are expected.
+!
+!------------------------------------------------------------------------------
+!  Tracer climatology processing switches.
+!------------------------------------------------------------------------------
+!
+!  LtracerCLM     Logical switches (T/F) to specify which tracer climatology
+!                   variables to consider when the option TCLIMATOLOGY is
+!                   activated; [1:NBT,1:Ngrids] values are expected.
+!
+!                     LtracerCLM(idbio(  1),ng)
+!                     ...              ...
+!                     LtracerCLM(idbio(NBT),ng)
+!
+!                 Recall that TCLIMATOLOGY is usually activated to nudge to
+!                 tracer climatology (TLCM_NUDGING).  The purpose of these
+!                 switches is to control which climatology tracer fields
+!                 (specially passive tracers) needs to be processed.  So we
+!                 may reduce the memory allocation for such array.
 !
 !------------------------------------------------------------------------------
 !  Tracer point Sources/Sink sources switches.

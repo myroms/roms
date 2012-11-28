@@ -736,11 +736,6 @@
         ic=ic+1
         isTvar(i)=ic
       END DO
-      ic=5
-      DO i=1,MT
-        ic=ic+1
-        isTvar(i)=ic
-      END DO
 #if defined ADJUST_WSTRESS || defined FORCING_SV || defined SO_SEMI
       isUstr=ic+1
       isVstr=ic+2
@@ -1318,16 +1313,16 @@
             CASE ('idZZav')
               idZZav=varid
 #ifdef SOLVE3D
-            CASE ('idTTav(itemp)')
-              idTTav(itemp)=varid
-            CASE ('iHUTav(itemp)')
-              iHUTav(itemp)=varid
-            CASE ('iHVTav(itemp)')
-              iHVTav(itemp)=varid
-            CASE ('idUTav(itemp)')
-              idUTav(itemp)=varid
-            CASE ('idVTav(itemp)')
-              idVTav(itemp)=varid
+            CASE ('idTTav(itrc)')
+              load=.TRUE.
+            CASE ('iHUTav(itrc)')
+              load=.TRUE.
+            CASE ('iHVTav(itrc)')
+              load=.TRUE.
+            CASE ('idUTav(itrc)')
+              load=.TRUE.
+            CASE ('idVTav(itrc)')
+              load=.TRUE.
             CASE ('idHUav')
               idHUav=varid
             CASE ('idHVav')
@@ -1992,6 +1987,154 @@
                   WRITE (Vname(3,varid),'(a,1x,a)')                     &
      &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
      &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+            END SELECT
+#endif
+#if defined SOLVE3D && defined AVERAGES
+!
+!  Determine metadata for quadratic tracer averages.
+!
+            SELECT CASE (Vinfo(1))
+              CASE ('tracer2')
+                varid=varid-1
+                DO i=1,MT
+                  varid=varid+1
+                  idTTav(i)=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,a)')                        &
+     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))), '2'
+                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
+     &                  'time-averaged squared',                        &
+     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
+     &                'nondimensional') THEN
+                    WRITE (Vname(3,varid),'(a)')                        &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                  ELSE
+                    WRITE (Vname(3,varid),'(a,a)')                      &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))), '2'
+                  END IF
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+              CASE ('Huontracer')
+                varid=varid-1
+                DO i=1,MT
+                  varid=varid+1
+                  iHUTav(i)=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,a)')                        &
+     &                  'Huon', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                  WRITE (Vname(2,varid),'(a,1x,a,1x,a)')                &
+     &                  'time-averaged',                                &
+     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
+     &                  'u-volume flux'
+                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
+     &                'nondimensional') THEN
+                    WRITE (Vname(3,varid),'(a)')                        &
+     &                    'meter3 second-1'
+                  ELSE
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    'meter3 second-1',                            &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                  END IF
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+              CASE ('utracer')
+                varid=varid-1
+                DO i=1,MT
+                  varid=varid+1
+                  idUTav(i)=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,a)')                        &
+     &                  'u', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
+     &                  'time-averaged u-momentum times',               &
+     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
+     &                'nondimensional') THEN
+                    WRITE (Vname(3,varid),'(a)')                        &
+     &                    'meter second-1'
+                  ELSE
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    'meter second-1',                             &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                  END IF
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+              CASE ('Hvomtracer')
+                varid=varid-1
+                DO i=1,MT
+                  varid=varid+1
+                  iHVTav(i)=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,a)')                        &
+     &                  'Hvom', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                  WRITE (Vname(2,varid),'(a,1x,a,1x,a)')                &
+     &                  'time-averaged',                                &
+     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
+     &                  'v-volume flux'
+                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
+     &                'nondimensional') THEN
+                    WRITE (Vname(3,varid),'(a)')                        &
+     &                    'meter3 second-1'
+                  ELSE
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    'meter3 second-1',                            &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                  END IF
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+              CASE ('vtracer')
+                varid=varid-1
+                DO i=1,MT
+                  varid=varid+1
+                  idVTav(i)=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,a)')                        &
+     &                  'v', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
+     &                  'time-averaged v-momentum times',               &
+     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
+     &                'nondimensional') THEN
+                    WRITE (Vname(3,varid),'(a)')                        &
+     &                    'meter second-1'
+                  ELSE
+                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
+     &                    'meter second-1',                             &
+     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                  END IF
                   WRITE (Vname(4,varid),'(a,a)')                        &
      &                  TRIM(Vname(1,varid)), ', scalar, series'
                   WRITE (Vname(5,varid),'(a)')                          &

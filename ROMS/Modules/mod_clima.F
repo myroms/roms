@@ -222,10 +222,12 @@
 
 # ifdef SOLVE3D
 #  ifdef TCLIMATOLOGY
-      allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
+      IF (NTC(ng).gt.0) THEN
+        allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTC(ng)) )
 #   ifndef ANA_TCLIMA
-      allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
+        allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,NTC(ng)) )
 #   endif
+      END IF
 #  endif
 
 #  ifdef TCLM_NUDGING
@@ -376,6 +378,7 @@
           CLIMA(ng) % vbar_adsG(i,j,2) = IniVal
 # endif
         END DO
+
 # ifdef SOLVE3D
         DO k=1,N(ng)
           DO i=Imin,Imax
@@ -401,31 +404,42 @@
 #  endif
           END DO
         END DO
-        DO itrc=1,NT(ng)
+
+#  ifdef TCLIMATOLOGY
+        DO itrc=1,NTC(ng)
           DO k=1,N(ng)
             DO i=Imin,Imax
-#  ifdef TCLIMATOLOGY
               CLIMA(ng) % tclm(i,j,k,itrc) = IniVal
 #   ifndef ANA_TCLIMA
               CLIMA(ng) % tclmG(i,j,k,1,itrc) = IniVal
               CLIMA(ng) % tclmG(i,j,k,2,itrc) = IniVal
 #   endif
+            END DO
+          END DO
+        END DO
 #  endif
+
 #  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
       defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
       defined SO_SEMI
+        DO itrc=1,NT(ng)
+          DO k=1,N(ng)
+            DO i=Imin,Imax
               CLIMA(ng) % t_ads(i,j,k,itrc) = IniVal
               CLIMA(ng) % t_adsG(i,j,k,1,itrc) = IniVal
               CLIMA(ng) % t_adsG(i,j,k,2,itrc) = IniVal
-#  endif
             END DO
           END DO
+        END DO
+#  endif
+
 #  ifdef TCLM_NUDGING
+        DO itrc=1,NT(ng)
           DO i=Imin,Imax
             CLIMA(ng) % Tnudgcof(i,j,itrc) = IniVal
           END DO
-#  endif
         END DO
+#  endif
 # endif
       END DO
 

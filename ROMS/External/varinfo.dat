@@ -4456,93 +4456,48 @@
   'v3dvar'
   1.0d0
 
-'temp2'                                            ! Output
-  'time-averaged squared potential temperature'
-  'Celsius2'                                       ! [Celsius2]
-  'temp2, scalar, series'
+'tracer2'                                          ! Output
+  'time-averaged squared tracer'
+  'tracer2'                                        ! [tracer2]
+  'tracer2, scalar, series'
   'ocean_time'
-  'idTTav(itemp)'
+  'idTTav(itrc)'
   'r3dvar'
   1.0d0
 
-'Huontemp'                                          ! Output
-  'time-averaged  potential temperature u-volume flux'
-  'meter3 second-1 Celsius'                         ! [m3/s Celsius]
-  'Huontemp, scalar, series'
+'Huontracer'                                       ! Output
+  'time-averaged tracer u-volume flux'
+  'meter3 second-1 tracer'                         ! [m3/s tracer]
+  'Huontracer, scalar, series'
   'ocean_time'
-  'iHUTav(itemp)'
+  'iHUTav(itrc)'
   'u3dvar'
  1.0d0
 
-'utemp'                                            ! Output
-  'time-averaged u-momentum times potential temperature'
-  'meter second-1 Celsius'                         ! [m/s Celsius]
-  'utemp, scalar, series'
+'utracer'                                          ! Output
+  'time-averaged u-momentum times tracer'
+  'meter second-1 tracer'                          ! [m/s tracer]
+  'utracer, scalar, series'
   'ocean_time'
-  'idUTav(itemp)'
+  'idUTav(itrc)'
   'u3dvar'
   1.0d0
 
-'Hvomtemp'                                          ! Output
-  'time-averaged  potential temperature v-volume flux'
-  'meter3 second-1 Celsius'                         ! [m3/s Celsius]
-  'Hvomtemp, scalar, series'
+'Hvomtracer'                                       ! Output
+  'time-averaged tracer v-volume flux'
+  'meter3 second-1 tracer'                         ! [m3/s tracer]
+  'Hvomtracer, scalar, series'
   'ocean_time'
-  'iHVTav(itemp)'
+  'iHVTav(itrc)'
   'v3dvar'
  1.0d0
 
-'vtemp'                                            ! Output
-  'time-averaged v-momentum times potential temperature'
-  'meter second-1 Celsius'                         ! [m/s Celsius]
-  'vtemp, scalar, series'
+'vtracer'                                          ! Output
+  'time-averaged v-momentum times tracer'
+  'meter second-1 tracer'                          ! [m/s tracer]
+  'vtracer, scalar, series'
   'ocean_time'
-  'idVTav(itemp)'
-  'v3dvar'
-  1.0d0
-
-'salt2'                                            ! Output
-  'time-averaged squared salinity'
-  'nondimensional'                                 ! [PSU]
-  'salt2, scalar, series'
-  'ocean_time'
-  'idTTav(isalt)'
-  'r3dvar'
-  1.0d0
-
-'Huonsalt'                                         ! Output
-  'time-averaged salinity u-volume flux'
-  'meter3 second-1'                                ! [m3/s]
-  'Huonsalt, scalar, series'
-  'ocean_time'
-  'iHUTav(isalt)'
-  'u3dvar'
- 1.0d0
-
-'usalt'                                            ! Input/Output
-  'time-averaged u-momentum times salinity'
-  'meter second-1'                                 ! [m/s PSU]
-  'usalt, scalar, series'
-  'ocean_time'
-  'idUTav(isalt)'
-  'u3dvar'
-  1.0d0
-
-'Hvomsalt'                                          ! Output
-  'time-averaged salinity v-volume flux'
-  'meter3 second-1'                                 ! [m3/s]
-  'Hvomsalt, scalar, series'
-  'ocean_time'
-  'iHVTav(isalt)'
-  'v3dvar'
- 1.0d0
-
-'vsalt'                                            ! Input/Output
-  'time-averaged v-momentum times salinity'
-  'meter second-1'                                 ! [m/s PSU]
-  'vsalt, scalar, series'
-  'ocean_time'
-  'idVTav(isalt)'
+  'idVTav(itrc)'
   'v3dvar'
   1.0d0
 

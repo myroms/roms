@@ -373,6 +373,11 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
       GAMMA2 == 1.0d0
 
+! Logical switches (TRUE/FALSE) to specify which variables to process for
+! tracers climatology: [1:NAT+NPT,Ngrids]. See glossary below for details.
+
+  LtracerCLM == T T                        ! temperature, salinity, inert
+
 ! Logical switches (TRUE/FALSE) to specify which variables to consider on
 ! tracers point Sources/Sinks (like river runoff): [1:NAT+NPT,Ngrids].
 ! See glossary below for details.
@@ -635,11 +640,11 @@ Aout(idU2av) == F       ! ubar2              quadratic <ubar*ubar> term
 Aout(idV2av) == F       ! vbar2              quadratic <vbar*vbar> term
 Aout(idZZav) == F       ! zeta2              quadratic <zeta*zeta> term
 
-Aout(idTTav) == F F     ! temp2, salt2       quadratic <t*t> T/S terms
-Aout(idUTav) == F F     ! utemp, usalt       quadratic <u*t> T/S terms
-Aout(idVTav) == F F     ! vtemp, vsalt       quadratic <v*t> T/S terms
-Aout(iHUTav) == F F     ! Huontemp, ...      T/S volume flux, <Huon*t>
-Aout(iHVTav) == F F     ! Hvomtemp, ...      T/S volume flux, <Hvom*t>
+Aout(idTTav) == F F     ! temp2, ...         quadratic <t*t> tracer terms
+Aout(idUTav) == F F     ! utemp, ...         quadratic <u*t> tracer terms
+Aout(idVTav) == F F     ! vtemp, ...         quadratic <v*t> tracer terms
+Aout(iHUTav) == F F     ! Huontemp, ...      tracer volume flux, <Huon*t>
+Aout(iHVTav) == F F     ! Hvomtemp, ...      tracer volume flux, <Hvom*t>
 
 ! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
 ! tracers other than biological and sediment tracers into the AVERAGE file.
@@ -1642,6 +1647,30 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !  GAMMA2      Slipperiness variable, either 1.0 (free slip) or -1.0 (no slip).
 !
 !------------------------------------------------------------------------------
+!  Tracer climatology processing switches.
+!------------------------------------------------------------------------------
+!
+!  LtracerCLM  Logical switches (T/F) to specify which tracer variables
+!              to consider when the option TCLIMATOLOGY is activated. Only
+!              NAT active tracers (temperature, salinity) and NPT inert
+!              tracers need to be specified here:
+!
+!                LtracerCLM(itemp,ng)     for temperature (itemp=1)
+!                LtracerCLM(isalt,ng)     for salinity    (isalt=2)
+!                LtracerCLM(NAT+1,ng)     for inert tracer 1
+!                ...                      ...
+!                LtracerCLM(NAT+NPT,ng)   for inert tracer NPT
+!
+!              Other biological and sediment tracers switches are specified in
+!              their respective input scripts.
+!
+!              Recall that TCLIMATOLOGY is usually activated to nudge to
+!              tracer climatology (TLCM_NUDGING).  The purpose of these
+!              switches is to control which climatology tracer fields
+!              (specially passive tracers) needs to be processed.  So we
+!              may reduce the memory allocation for such array.
+!
+!------------------------------------------------------------------------------
 !  Tracer point Sources/Sink sources switches.
 !------------------------------------------------------------------------------
 !
@@ -1927,11 +1956,11 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !  Aout(idV2av)  Write out quadratic <vbar*vbar> term.
 !  Aout(idZZav)  Write out quadratic <zeta*zeta> term.
 !
-!  Aout(idTTav)  Write out quadratic <t*t> temperature and salinity terms.
-!  Aout(idUTav)  Write out quadratic <u*t> temperature and salinity terms.
-!  Aout(idVTav)  Write out quadratic <v*t> temperature and salinity terms.
-!  Aout(iHUTav)  Write out temperature and salinity volume flux, <Huon*t>.
-!  Aout(iHVTav)  Write out temperature and salinity volume flux, <Hvom*t>.
+!  Aout(idTTav)  Write out quadratic <t*t> active and inert tracers terms.
+!  Aout(idUTav)  Write out quadratic <u*t> active and inert tracers terms.
+!  Aout(idVTav)  Write out quadratic <v*t> active and inert tracers terms.
+!  Aout(iHUTav)  Write out active and inert tracer u-volume flux, <Huon*t>.
+!  Aout(iHVTav)  Write out active and inert tracer v-volume flux, <Hvom*t>.
 !
 !  Aout(inert)   Write out extra inert passive tracers.
 !

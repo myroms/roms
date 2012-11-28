@@ -304,7 +304,7 @@
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       real(r8), intent(in) :: Tnudgcof(LBi:UBi,LBj:UBj,NT(ng))
-      real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NTC(ng))
 #  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -332,7 +332,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, is, itrc, j, k, ltrc
+      integer :: i, ic, is, itrc, j, k, ltrc
       integer :: idiag
 
       real(r8), parameter :: eps = 1.0E-16_r8
@@ -490,7 +490,9 @@
      &                       ad_t(:,:,:,nnew,:))
 !
 # endif
-
+# if defined TCLM_NUDGING && defined TCLIMATOLOGY
+      ic=0
+# end
       DO itrc=1,NT(ng)
 !
 !  Apply adjoint periodic boundary conditions.
@@ -538,19 +540,22 @@
 !
 !  Nudge towards tracer climatology.
 !
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-!>            tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-              &
-!>   &                              dt(ng)*Tnudgcof(i,j,itrc)*          &
-!>   &                              tl_t(i,j,k,nnew,itrc)
+        IF (LtracerCLM(itrc,ng)) THEN
+          ic=ic+1
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+!>              tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-            &
+!>   &                                dt(ng)*Tnudgcof(i,j,itrc)*        &
+!>   &                                tl_t(i,j,k,nnew,itrc)
 !>
-              ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)-              &
-     &                              dt(ng)*Tnudgcof(i,j,itrc)*          &
-     &                              ad_t(i,j,k,nnew,itrc)
+                ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)-            &
+     &                                dt(ng)*Tnudgcof(i,j,itrc)*        &
+     &                                ad_t(i,j,k,nnew,itrc)
+              END DO
             END DO
           END DO
-        END DO
+        END IF
 # endif
 !
 !  Set adjoint lateral boundary conditions.

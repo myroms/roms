@@ -43,7 +43,7 @@
 #ifdef DISTRIBUTE
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
-      integer :: inp, out, ifield, itrc, ng, npts, sequence
+      integer :: inp, out, ic, ifield, itrc, ng, npts, sequence
 
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
@@ -868,6 +868,19 @@
         Fscale(idLhea,ng)=cff*Fscale(idLhea,ng)
         Fscale(idShea,ng)=cff*Fscale(idShea,ng)
         Fscale(iddQdT,ng)=cff*Fscale(iddQdT,ng)
+
+#if defined SOLVE3D && defined TCLIMATOLOGY
+!
+!  Determine the number of climatology tracers to process.
+!
+        ic=0
+        DO itrc=1,NT(ng)
+          IF (LtracerCLM(itrc,ng)) THEN
+            ic=ic+1
+          END IF
+        END DO
+        NTC(ng)=ic
+#endif
       END DO
 !
 !-----------------------------------------------------------------------

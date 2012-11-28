@@ -58,7 +58,6 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
 #endif
-      USE strings_mod, ONLY : find_string
 !
       implicit none
 !

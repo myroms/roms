@@ -1130,7 +1130,7 @@
           END DO
         END IF
 
-        DO it=1,NAT
+        DO it=1,NT(ng)
           IF (Aout(idTTav(it),ng)) THEN
             DO k=1,N(ng)
               DO j=JstrR,JendR
@@ -2137,7 +2137,7 @@
           END DO
         END IF
 
-        DO it=1,NAT
+        DO it=1,NT(ng)
           IF (Aout(idTTav(it),ng)) THEN
             DO k=1,N(ng)
               DO j=JstrR,JendR
@@ -3764,7 +3764,7 @@
           END IF
         END IF
 
-        DO it=1,NAT
+        DO it=1,NT(ng)
           IF (Aout(idTTav(it),ng)) THEN
             DO k=1,N(ng)
               DO j=JstrR,JendR

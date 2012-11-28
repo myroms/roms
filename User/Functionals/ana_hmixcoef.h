@@ -5,7 +5,7 @@
 !! Copyright (c) 2002-2012 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!======================================================================
+!=======================================================================
 !                                                                      !
 !  This routine rescales horizontal mixing coefficients according      !
 !  to the grid size.  Also,  if applicable,  increases horizontal      !

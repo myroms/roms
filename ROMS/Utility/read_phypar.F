@@ -823,6 +823,36 @@
               END DO
             CASE ('GAMMA2')
               Npts=load_r(Nval, Rval, Ngrids, gamma2)
+#if defined SOLVE3D && defined TCLIMATOLOGY
+            CASE ('LtracerCLM')
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NAT
+                  LtracerCLM(itrc,ng)=Ltracer(itrc,ng)
+                END DO
+# ifdef T_PASSIVE
+                DO i=1,NPT
+                  itrc=inert(i)
+                  LtracerCLM(itrc,ng)=Ltracer(NAT+i,ng)
+                END DO
+# endif
+              END DO
+#endif
+#if defined SOLVE3D && defined TS_PSOURCE
+            CASE ('LtracerSrc')
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NAT
+                  LtracerSrc(itrc,ng)=Ltracer(itrc,ng)
+                END DO
+# ifdef T_PASSIVE
+                DO i=1,NPT
+                  itrc=inert(i)
+                  LtracerSrc(itrc,ng)=Ltracer(NAT+i,ng)
+                END DO
+# endif
+              END DO
+#endif
 #if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
@@ -1049,21 +1079,6 @@
                 END DO
               END DO
 # endif
-#endif
-#if defined SOLVE3D && defined TS_PSOURCE
-            CASE ('LtracerSrc')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
-              DO ng=1,Ngrids
-                DO itrc=1,NAT
-                  LtracerSrc(itrc,ng)=Ltracer(itrc,ng)
-                END DO
-# ifdef T_PASSIVE
-                DO i=1,NPT
-                  itrc=inert(i)
-                  LtracerSrc(itrc,ng)=Ltracer(NAT+i,ng)
-                END DO
-# endif
-              END DO
 #endif
             CASE ('Hout(idUvel)')
               IF (idUvel.eq.0) THEN
@@ -1864,9 +1879,9 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
               DO ng=1,Ngrids
-                DO itrc=1,NAT
+                DO itrc=1,NAT+NPT
                   i=idTTav(itrc)
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
@@ -1877,9 +1892,9 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
               DO ng=1,Ngrids
-                DO itrc=1,NAT
+                DO itrc=1,NAT+NPT
                   i=idUTav(itrc)
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
@@ -1890,9 +1905,9 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
               DO ng=1,Ngrids
-                DO itrc=1,NAT
+                DO itrc=1,NAT+NPT
                   i=idVTav(itrc)
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
@@ -1903,9 +1918,9 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
               DO ng=1,Ngrids
-                DO itrc=1,NAT
+                DO itrc=1,NAT+NPT
                   i=iHUTav(itrc)
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
@@ -1916,9 +1931,9 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
               DO ng=1,Ngrids
-                DO itrc=1,NAT
+                DO itrc=1,NAT+NPT
                   i=iHVTav(itrc)
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
@@ -3341,6 +3356,36 @@
           WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
+#if defined SOLVE3D && defined TCLIMATOLOGY
+          DO itrc=1,NAT
+            WRITE (out,185) LtracerCLM(itrc,ng), 'LtracerCLM', itrc,    &
+     &            'Processing climatology on tracer ', itrc,            &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# ifdef T_PASSIVE
+          DO i=1,NPT
+            itrc=inert(i)
+            WRITE (out,185) LtracerCLM(itrc,ng), 'LtracerCLM', itrc,    &
+     &            'Processing climatology on tracer ', itrc,            &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# endif
+#endif
+#if defined SOLVE3D && defined TS_PSOURCE
+          DO itrc=1,NAT
+            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
+     &            'Processing point sources/Sink on tracer ', itrc,     &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# ifdef T_PASSIVE
+          DO i=1,NPT
+            itrc=inert(i)
+            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
+     &            'Processing point sources/Sink on tracer ', itrc,     &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+# endif
+#endif
 #if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
@@ -3524,21 +3569,6 @@
      &         'SO_sdev(idTsur)',                                       &
      &         'Stochastic Optimals scale, surface flux of tracer',     &
      &         itrc, TRIM(Vname(1,idTvar(itrc)))
-          END DO
-# endif
-#endif
-#if defined SOLVE3D && defined TS_PSOURCE
-          DO itrc=1,NAT
-            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
-     &            'Processing point sources/Sink on tracer ', itrc,     &
-     &            TRIM(Vname(1,idTvar(itrc)))
-          END DO
-# ifdef T_PASSIVE
-          DO i=1,NPT
-            itrc=inert(i)
-            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
-     &            'Processing point sources/Sink on tracer ', itrc,     &
-     &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 # endif
 #endif
@@ -4040,31 +4070,31 @@
           IF (Aout(idVVav,ng)) WRITE (out,170) Aout(idVVav,ng),         &
      &       'Aout(idVVav)',                                            &
      &       'Write out averaged quadratic <v*v> term.'
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             IF (Aout(idTTav(itrc),ng)) WRITE (out,180)                  &
      &          Aout(idTTav(itrc),ng), 'Aout(idTTav)',                  &
      &          'Write out averaged <t*t> for tracer ', itrc,           &
      &          TRIM(Vname(1,idTvar(itrc)))
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             IF (Aout(idUTav(itrc),ng)) WRITE (out,180)                  &
      &          Aout(idUTav(itrc),ng), 'Aout(idUTav)',                  &
      &          'Write out averaged <u*t> for tracer ', itrc,           &
      &          TRIM(Vname(1,idTvar(itrc)))
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             IF (Aout(idVTav(itrc),ng)) WRITE (out,180)                  &
      &          Aout(idVTav(itrc),ng), 'Aout(idVTav)',                  &
      &          'Write out averaged <v*t> for tracer ', itrc,           &
      &          TRIM(Vname(1,idTvar(itrc)))
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             IF (Aout(iHUTav(itrc),ng)) WRITE (out,180)                  &
      &          Aout(iHUTav(itrc),ng), 'Aout(iHUTav)',                  &
      &          'Write out averaged <Huon*t> for tracer ', itrc,        &
      &          TRIM(Vname(1,idTvar(itrc)))
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             IF (Aout(iHVTav(itrc),ng)) WRITE (out,180)                  &
      &          Aout(iHVTav(itrc),ng), 'Aout(iHVTav)',                  &
      &          'Write out averaged <Hvom*t> for tracer ', itrc,        &

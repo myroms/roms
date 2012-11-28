@@ -272,8 +272,18 @@
                 tcr_tim(ng)=Rbed(ng)
               END DO
 #endif
+#ifdef TCLIMATOLOGY
+            CASE ('MUD_Ltclm')
+              Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idsed(itrc)
+                  LtracerCLM(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+#endif
 #ifdef TS_PSOURCE
-            CASE ('MUD_Ltracer')
+            CASE ('MUD_Ltsrc', 'MUD_Ltracer')
               Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
               DO ng=1,Ngrids
                 DO itrc=1,NCS
@@ -601,8 +611,18 @@
                   morph_fac(i,ng)=Rsand(itrc,ng)
                 END DO
               END DO
+#ifdef TCLIMATOLOGY
+            CASE ('SAND_Ltclm')
+              Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
+              DO ng=1,Ngrids
+                DO itrc=1,NNS
+                  i=idsed(NCS+itrc)
+                  LtracerCLM(i,ng)=Lsand(itrc,ng)
+                END DO
+              END DO
+#endif
 #ifdef TS_PSOURCE
-            CASE ('SAND_Ltracer')
+            CASE ('SAND_Ltsrc', 'SAND_Ltracer')
               Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
               DO ng=1,Ngrids
                 DO itrc=1,NNS
@@ -859,6 +879,14 @@
 #ifdef MIXED_BED
             WRITE (out,130) transC(ng)
             WRITE (out,140) transN(ng)
+#endif
+#ifdef TCLIMATOLOGY
+            DO itrc=1,NST
+              i=idsed(itrc)
+              WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM',           &
+     &              i, 'Processing climatology on tracer ', i,          &
+     &              TRIM(Vname(1,idTvar(i)))
+            END DO
 #endif
 #ifdef TS_PSOURCE
             DO itrc=1,NST

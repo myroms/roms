@@ -93,7 +93,7 @@
 # endif
 
       integer :: ILB, IUB, JLB, JUB
-      integer :: i, itrc, j, k, my_tile
+      integer :: i, ic, itrc, j, k, my_tile
 
       real(r8) :: cff, cff1, cff2
 
@@ -1165,13 +1165,17 @@
 #  ifdef ANA_TCLIMA
       CALL ana_tclima (ng, tile, iNLM)
 #  else
-      DO itrc=1,NAT
-        CALL set_3dfld_tile (ng, tile, iNLM, idTclm(itrc),              &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       CLIMA(ng)%tclmG(:,:,:,:,itrc),             &
-     &                       CLIMA(ng)%tclm (:,:,:,itrc),               &
-     &                       update)
-        IF (exit_flag.ne.NoError) RETURN
+      ic=0
+      DO itrc=1,NT(ng)
+        IF (LtracerCLM(itrc,ng)) THEN
+          ic=ic+1
+          CALL set_3dfld_tile (ng, tile, iNLM, idTclm(itrc),            &
+     &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
+     &                         CLIMA(ng)%tclmG(:,:,:,:,ic),             &
+     &                         CLIMA(ng)%tclm (:,:,:,ic),               &
+     &                         update)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
       END DO
 #  endif
 # endif

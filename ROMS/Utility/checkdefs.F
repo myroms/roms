@@ -807,6 +807,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' IMPLICIT_VCONV,'
 #endif
+#if defined LIMIT_BSTRESS && defined SOLVE3D  && !defined BBL_MODEL
+      IF (Master) WRITE (stdout,20) 'LIMIT_BSTRESS',                    &
+     &   'Limit bottom stress to maintain bottom velocity direction.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' LIMIT_BSTRESS,'
+#endif
 #if defined NPZD_IRON && defined IRON_LIMIT
       IF (Master) WRITE (stdout,20) 'IRON_LIMIT',                       &
      &   'Include dissolved iron limitation on phytoplankton growth.'
