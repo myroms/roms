@@ -304,7 +304,7 @@
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       real(r8), intent(in) :: Tnudgcof(LBi:UBi,LBj:UBj,NT(ng))
-      real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NTC(ng))
+      real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng))
 #  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))

@@ -222,10 +222,11 @@
 
 # ifdef SOLVE3D
 #  ifdef TCLIMATOLOGY
-      IF (NTC(ng).gt.0) THEN
-        allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTC(ng)) )
+      IF (NTCLM(ng).gt.0) THEN
+        allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
 #   ifndef ANA_TCLIMA
-        allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,NTC(ng)) )
+        allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,          &
+     &                               NTCLM(ng)) )
 #   endif
       END IF
 #  endif
@@ -406,7 +407,7 @@
         END DO
 
 #  ifdef TCLIMATOLOGY
-        DO itrc=1,NTC(ng)
+        DO itrc=1,NTCLM(ng)
           DO k=1,N(ng)
             DO i=Imin,Imax
               CLIMA(ng) % tclm(i,j,k,itrc) = IniVal

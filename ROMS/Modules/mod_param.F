@@ -68,7 +68,7 @@
 !               advect and diffuse only (dyes, etc).                   !
 !  MT         Maximum number of tracer type variables.                 !
 !  NT         Total number of tracer type variables.                   !
-!  NTC        Total number of climatology tracer type variables to     !
+!  NTCLM      Total number of climatology tracer type variables to     !
 !               process.                                               !
 !                                                                      !
 !  Nbed       Number of sediment bed layers.                           !
@@ -408,7 +408,7 @@
 !
 !  Total number of climatology tracer type variables to process.
 !
-      integer, allocatable :: NTC(:)
+      integer, allocatable :: NTCLM(:)
 !
 !  Number of active tracers. Usually, NAT=2 for potential temperature
 !  and salinity.
@@ -631,7 +631,7 @@
 
       allocate ( NT(Ngrids) )
 
-      allocate ( NTC(Ngrids) )
+      allocate ( NTCLM(Ngrids) )
 
       allocate ( NSV(Ngrids) )
 

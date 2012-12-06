@@ -879,7 +879,7 @@
             ic=ic+1
           END IF
         END DO
-        NTC(ng)=ic
+        NTCLM(ng)=ic
 #endif
       END DO
 !
