@@ -90,6 +90,7 @@
 !
 !  Local variable declarations.
 !
+      logical :: SetBC
       logical :: update = .FALSE.
 # if defined WET_DRY
       logical :: bry_update
@@ -540,11 +541,13 @@
 #  ifdef ANA_PAIR
       CALL ana_pair (ng, tile, iTLM)
 #  else
+      SetBC=.TRUE.
+!     SetBC=.FALSE.
       CALL set_2dfld_tile (ng, tile, iTLM, idPair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%PairG,                            &
      &                     FORCES(ng)%Pair,                             &
-     &                     update)
+     &                     update, SetBC)
       IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif

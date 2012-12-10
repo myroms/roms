@@ -21,7 +21,8 @@
 !***********************************************************************
       SUBROUTINE set_3dfld_tile (ng, tile, model, ifield,               &
      &                           LBi, UBi, LBj, UBj, LBk, UBk,          &
-     &                           Finp, Fout, update)
+     &                           Finp, Fout, update,                    &
+     &                           SetBC)
 !***********************************************************************
 !
       USE mod_param
@@ -37,6 +38,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in), optional :: SetBC
+
       logical, intent(out) :: update
 
       integer, intent(in) :: ng, tile, model, ifield
@@ -52,7 +55,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lgrided, Lonerec
+      logical :: LapplyBC, Lgrided, Lonerec
 
       integer :: Tindex, gtype, i, it1, it2, j, k
 
@@ -63,6 +66,14 @@
 !--------------------------------------------------------------------
 !  Set-up requested field for current tile.
 !--------------------------------------------------------------------
+!
+!  Set switch to apply boundary conditions.
+!
+      IF (PRESENT(SetBC)) THEN
+        LapplyBC=SetBC
+      ELSE
+        LapplyBC=.TRUE.
+      END IF
 !
 !  Get requested field information from global storage.
 !
@@ -166,7 +177,7 @@
 !  Exchange boundary data.
 !
       IF (update) THEN
-        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        IF (LapplyBC.and.(EWperiodic(ng).or.NSperiodic(ng))) THEN
           IF (gtype.eq.r3dvar) THEN
             CALL exchange_r3d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
@@ -187,11 +198,19 @@
         END IF
 
 # ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      Fout)
+        IF (.not.LapplyBC) THEN
+          CALL mp_exchange3d (ng, tile, model, 1,                       &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        NghostPoints,                             &
+     &                        .FALSE., .FALSE.,                         &
+     &                        Fout)
+        ELSE
+          CALL mp_exchange3d (ng, tile, model, 1,                       &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        Fout)
+        END IF
 # endif
       END IF
 
