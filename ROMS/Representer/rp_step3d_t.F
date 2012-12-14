@@ -1852,7 +1852,7 @@
 !
 # if defined TCLM_NUDGING && defined TCLIMATOLOGY
       ic=0
-# end
+# endif
       DO itrc=1,NT(ng)
 !
 !  Set lateral boundary conditions.

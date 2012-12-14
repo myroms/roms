@@ -800,7 +800,7 @@
 #elif defined LAKE_SIGNELL
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          h(i,j)=18.0_r8-16.0_r8*FLOAT(Mm(ng)-j)/FLOAT(Mm(ng)-1)
+          h(i,j)=18.0_r8-16.0_r8*REAL(Mm(ng)-j,r8)/REAL(Mm(ng)-1,r8)
         END DO
       END DO
 # elif defined MIXED_LAYER
@@ -854,7 +854,7 @@
 #elif defined SHOREFACE
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          h(i,j)=11.75_r8-0.0125_r8*Xsize/FLOAT(Lm(ng)+1)*FLOAT(i)
+          h(i,j)=11.75_r8-0.0125_r8*Xsize/REAL(Lm(ng)+1,r8)*REAL(i,r8)
         END DO
       END DO
 #elif defined TEST_CHAN
