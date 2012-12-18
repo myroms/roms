@@ -568,11 +568,11 @@
       allocate ( idTsur(MT) )
       allocate ( idTtlf(MT) )
 
-      allocate ( iHUTav(NAT) )
-      allocate ( iHVTav(NAT) )
-      allocate ( idTTav(NAT) )
-      allocate ( idUTav(NAT) )
-      allocate ( idVTav(NAT) )
+      allocate ( iHUTav(MT) )
+      allocate ( iHVTav(MT) )
+      allocate ( idTTav(MT) )
+      allocate ( idUTav(MT) )
+      allocate ( idVTav(MT) )
 
 #ifdef DIAGNOSTICS
       allocate ( idDtrc(MT,NDT) )
