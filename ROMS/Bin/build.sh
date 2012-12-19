@@ -51,7 +51,7 @@ while ( ($#argv) > 0 )
     case "-j"
       shift
       set parallel = 1
-      if (`echo $1 | grep -P '^\d+$'` != "" ) then
+      if (`echo $1 | grep '^[0-9]\+$'` != "" ) then
         set NCPUS = "-j $1"
         shift
       else

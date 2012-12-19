@@ -47,7 +47,7 @@ do
     -j )
       shift
       parallel=1
-      test=`echo $1 | grep -P '^\d+$'`
+      test=`echo $1 | grep '^[0-9]\+$'`
       if [ "$test" != "" ]; then
         NCPUS="-j $1"
         shift
