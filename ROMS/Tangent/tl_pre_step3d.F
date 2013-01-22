@@ -743,7 +743,11 @@
 !
 !  Time-step horizontal advection (m Tunits).
 !
+#   if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+#   else
           IF (iic(ng).eq.ntfirst(ng)) THEN
+#   endif
             cff=0.5_r8*dt(ng)
             cff1=1.0_r8
             cff2=0.0_r8
@@ -778,7 +782,11 @@
 !  load it into private array DC (1/m). Notice pipelined J-loop.
 !
       J_LOOP1 : DO j=Jstr,Jend
+#   if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+#   else
         IF (iic(ng).eq.ntfirst(ng)) THEN
+#   endif
           cff=0.5_r8*dt(ng)
         ELSE
           cff=(1.0_r8-Gamma)*dt(ng)
@@ -1135,7 +1143,11 @@
 !          STATE file and is in Tunits, so we need to multiply
 !          by level thickness (Hz).
 !
+#   if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+#   else
           IF (iic(ng).eq.ntfirst(ng)) THEN
+#   endif
             cff=0.5_r8*dt(ng)
           ELSE
             cff=(1.0_r8-Gamma)*dt(ng)
@@ -1319,7 +1331,11 @@
           DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
         END DO
         indx=3-nrhs
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+# else
         IF (iic(ng).eq.ntfirst(ng)) THEN
+# endif
           DO k=1,N(ng)
             DO i=IstrU,Iend
 !>            cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
@@ -1343,7 +1359,11 @@
 # endif
             END DO
           END DO
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1).and.SOinitial(ng)) THEN
+# else
         ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
+# endif
           DO k=1,N(ng)
             DO i=IstrU,Iend
 !>            cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
@@ -1473,7 +1493,11 @@
           DO i=Istr,Iend
             DC(i,0)=cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
           END DO
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+# else
           IF (iic(ng).eq.ntfirst(ng)) THEN
+# endif
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
@@ -1497,7 +1521,11 @@
 # endif
               END DO
             END DO
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1).and.SOinitial(ng)) THEN
+# else
           ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
+# endif
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))

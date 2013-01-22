@@ -371,7 +371,7 @@
 !
 !  INNER LOOP: scale perturbation amplitude by selecting "p" scalar,
 !  ==========  such that:
-!                              p = 10 ** FLOAT(-inner)
+!                              p = 10 ** REAL(-inner,r8)
 !
         INNER_LOOP : DO inner=1,Ninner
 !
@@ -484,7 +484,7 @@
      &      'TLM Test - Dot Products Summary: p, g1, g2, (g1-g2)/g1'
           inner=1
           DO i=1,MIN(ig1count,ig2count)
-            p=10.0_r8**FLOAT(-inner)
+            p=10.0_r8**REAL(-inner,r8)
             IF (MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0) inner=inner+1
             WRITE (stdout,90) i, p, g1(i), g2(i), (g1(i)-g2(i))/g1(i)
             IF ((MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0).and.                &

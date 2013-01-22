@@ -108,7 +108,13 @@
 # ifdef SOLVE3D
       IF (iic(ng).ne.ntend(ng)) THEN
         nout=nnew(ng)
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        LwrtState3d(ng)=.FALSE.
+# endif
       ELSE
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        LwrtState3d(ng)=.TRUE.
+# endif
         nout=nstp(ng)
       END IF
 # endif
@@ -542,14 +548,29 @@
 #  endif
           scale=1.0_r8
           gtype=gfactor*u3dvar
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (LwrtState3d(ng)) THEN
+#  endif
           status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idUvel),                       &
      &                       ADM(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-#  ifdef MASKING
+#    ifdef MASKING
      &                       GRID(ng) % umask_io,                       &
-#  endif
+#    endif
      &                       OCEAN(ng) % ad_u(:,:,:,nout))
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          ELSE
+          status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
+     &                       ADM(ng)%Vid(idUvel),                       &
+     &                       ADM(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#    ifdef MASKING
+     &                       GRID(ng) % umask_io,                       &
+#    endif
+     &                       OCEAN(ng) % ad_u_sol(:,:,:))
+          ENDIF
+#  endif
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idUvel)), ADM(ng)%Rindex
@@ -615,14 +636,29 @@
 #  endif
           scale=1.0_r8
           gtype=gfactor*v3dvar
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (LwrtState3d(ng)) THEN
+#  endif
           status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idVvel),                       &
      &                       ADM(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-#  ifdef MASKING
+#   ifdef MASKING
      &                       GRID(ng) % vmask_io,                       &
-#  endif
+#   endif
      &                       OCEAN(ng) % ad_v(:,:,:,nout))
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          ELSE
+          status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
+     &                       ADM(ng)%Vid(idVvel),                       &
+     &                       ADM(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#   ifdef MASKING
+     &                       GRID(ng) % vmask_io,                       &
+#   endif
+     &                       OCEAN(ng) % ad_v_sol(:,:,:))
+          END IF
+#  endif
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idVvel)), ADM(ng)%Rindex
@@ -690,14 +726,29 @@
 #  endif
             scale=1.0_r8
             gtype=gfactor*r3dvar
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+            IF (LwrtState3d(ng)) THEN
+#  endif
             status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                  &
      &                         ADM(ng)%Tid(itrc),                       &
      &                         ADM(ng)%Rindex, gtype,                   &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
-#  ifdef MASKING
+#   ifdef MASKING
      &                         GRID(ng) % rmask_io,                     &
-#  endif
+#   endif
      &                         OCEAN(ng) % ad_t(:,:,:,nout,itrc))
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+            ELSE
+            status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                  &
+     &                         ADM(ng)%Tid(itrc),                       &
+     &                         ADM(ng)%Rindex, gtype,                   &
+     &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
+#   ifdef MASKING
+     &                         GRID(ng) % rmask_io,                     &
+#   endif
+     &                         OCEAN(ng) % ad_t_sol(:,:,:,itrc))
+            END IF
+#  endif
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),          &

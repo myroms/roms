@@ -55,7 +55,7 @@
 !!    USE tl_bvf_mix_mod, ONLY : tl_bvf_mix
 # endif
       USE tl_diag_mod, ONLY : tl_diag
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT || defined FORCING_SV
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -191,7 +191,7 @@
 !$OMP BARRIER
         END DO
 # endif
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT || defined FORCING_SV
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
@@ -202,12 +202,19 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
+#  ifdef WEAK_CONSTRAINT
           IF (FrequentImpulse(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
             END DO
 !$OMP BARRIER
           END IF
+#  else
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+          END DO
+!$OMP BARRIER
+#  endif
         END DO
 # endif
 !

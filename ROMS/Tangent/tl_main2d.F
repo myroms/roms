@@ -35,7 +35,7 @@
       USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
       USE tl_diag_mod, ONLY : tl_diag
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT || defined FORCING_SV
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
 # ifdef ADJUST_WSTRESS
@@ -123,7 +123,7 @@
         END DO
         IF (exit_flag.ne.NoError) RETURN
 
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT || defined FORCING_SV
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
@@ -134,12 +134,19 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
+#  ifdef WEAK_CONSTRAINT
           IF (FrequentImpulse(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
             END DO
 !$OMP BARRIER
           END IF
+#  else
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+          END DO
+!$OMP BARRIER
+#  endif
         END DO
 # endif
 !

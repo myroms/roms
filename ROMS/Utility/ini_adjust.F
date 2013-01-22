@@ -2,7 +2,8 @@
       MODULE ini_adjust_mod
 
 #if defined TLM_CHECK  || defined OPT_PERTURBATION || \
-    defined FORCING_SV || \
+    defined FORCING_SV || defined STOCHASTIC_OPT || \
+    defined HESSIAN_SV || defined HESSIAN_SO || defined HESSIAN_FSV || \
     (defined ADJOINT   && defined TANGENT)
 !
 !svn $Id$
@@ -40,7 +41,9 @@
 # ifdef TLM_CHECK
       PUBLIC :: tl_ini_perturb
 # endif
-# if defined OPT_PERTURBATION || defined FORCING_SV
+# if defined OPT_PERTURBATION || defined FORCING_SV || \
+     defined STOCHASTIC_OPT   || defined HESSIAN_SV || \
+     defined HESSIAN_SO       || defined HESSIAN_FSV
       PUBLIC :: ad_ini_perturb
 # endif
 
@@ -2062,7 +2065,9 @@
       END SUBROUTINE ini_perturb_tile
 # endif
 
-# if defined OPT_PERTURBATION || defined FORCING_SV
+# if defined OPT_PERTURBATION || defined FORCING_SV || \
+     defined STOCHASTIC_OPT   || defined HESSIAN_SV || \
+     defined HESSIAN_SO       || defined HESSIAN_FSV
 
       SUBROUTINE ad_ini_perturb (ng, tile, Kinp, Kout, Ninp, Nout)
 !

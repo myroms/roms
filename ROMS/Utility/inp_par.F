@@ -841,7 +841,8 @@
           M3nudg(ng)=0.0_r8
         END IF
 #endif
-#ifdef SO_SEMI
+#if defined SO_SEMI        || \
+   (defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE)
        SO_decay(ng)=SO_decay(ng)*86400.0_r8
 #endif
 !

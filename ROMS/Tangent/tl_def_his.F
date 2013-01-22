@@ -499,6 +499,73 @@
      &                 NF_FOUT, nvd4, v3dfrc, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
+# if defined FORCING_SV || defined STOCHASTIC_OPT || \
+     defined HESSIAN_SO || defined HESSIAN_FSV
+!
+!  Define surface U-momentum stress.
+!
+        IF (Hout(idUsms,ng)) THEN
+          Vinfo( 1)=Vname(1,idUsms)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
+          Vinfo( 3)=Vname(3,idUsms)
+          Vinfo(14)=Vname(4,idUsms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+          status=def_var(ng, iTLM, TLM(ng)%ncid, TLM(ng)%Vid(idUsms),   &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define surface V-momentum stress.
+!
+        IF (Hout(idVsms,ng)) THEN
+          Vinfo( 1)=Vname(1,idVsms)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
+          Vinfo( 3)=Vname(3,idVsms)
+          Vinfo(14)=Vname(4,idVsms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+          status=def_var(ng, iTLM, TLM(ng)%ncid, TLM(ng)%Vid(idVsms),   &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define surface tracer fluxes.
+!
+        DO itrc=1,NT(ng)
+          IF (Hout(idTsur(itrc),ng)) THEN
+            Vinfo( 1)=Vname(1,idTsur(itrc))
+            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+            Vinfo( 3)=Vname(3,idTsur(itrc))
+            IF (itrc.eq.itemp) THEN
+              Vinfo(11)='upward flux, cooling'
+              Vinfo(12)='downward flux, heating'
+            ELSE IF (itrc.eq.isalt) THEN
+              Vinfo(11)='upward flux, freshening (net precipitation)'
+              Vinfo(12)='downward flux, salting (net evaporation)'
+            END IF
+            Vinfo(14)=Vname(4,idTsur(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#   endif
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+            status=def_var(ng, iTLM, TLM(ng)%ncid,                      &
+     &                     TLM(ng)%Vid(idTsur(itrc)), NF_FOUT,          &
+     &                     nvd3, t2dgrd, Aval, Vinfo, ncname)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+        END DO
+# endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
 !  Define surface net heat flux. Notice that different tracer fluxes

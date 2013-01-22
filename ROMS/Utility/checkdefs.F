@@ -789,6 +789,24 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+6)=' HDF5,'
 #endif
+#ifdef HESSIAN_FSV
+      IF (Master) WRITE (stdout,20) 'HESSIAN_FSV',                      &
+     &   'Hessian (4D-Var) Forcing Singular Vectors Propagator.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' HESSIAN_FSV,'
+#endif
+#ifdef HESSIAN_SO
+      IF (Master) WRITE (stdout,20) 'HESSIAN_SO',                       &
+     &   'Hessian (4D-Var) Stochastic Optimals Propagator.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' HESSIAN_SO,'
+#endif
+#ifdef HESSIAN_SV
+      IF (Master) WRITE (stdout,20) 'HESSIAN_SV',                       &
+     &   'Hessian (4D-Var) Singular Vectors Propagator.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' HESSIAN_SV,'
+#endif
 #if defined HOLLING_GRAZING && defined NEMURO
       IF (Master) WRITE (stdout,20) 'HOLLING_GRAZING',                  &
      &   'Holling-type s-shaped grazing algorithm, Implicit.'
@@ -1533,14 +1551,14 @@
 #endif
 #ifdef SO_SEMI
       IF (Master) WRITE (stdout,20) 'SO_SEMI',                          &
-     &   'Stochastic Optimals, Semi-norm Estimation.'
+     &   'Stochastic Optimals Propagator, Semi-norm Estimation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' SO_SEMI,'
       idriver=idriver+1
 #endif
 #ifdef SO_TRACE
       IF (Master) WRITE (stdout,20) 'SO_TRACE',                         &
-     &   'Stochastic Optimals, Randomized Trace Estimation.'
+     &   'Stochastic Optimals Propagator, Randomized Trace Estimation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' SO_TRACE,'
       idriver=idriver+1
@@ -1654,6 +1672,18 @@
      &   'Stochastic Optimals Propagator.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' STOCHASTIC_OPT,'
+      idriver=idriver+1
+#endif
+#ifdef STOCH_OPT_WHITE
+      IF (Master) WRITE (stdout,20) 'STOCH_OPT_WHITE',                  &
+     &   'Stochastic Optimals, white noise processes.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' STOCH_OPT_WHITE,'
+#else
+      IF (Master) WRITE (stdout,20) '!STOCH_OPT_WHITE',                 &
+     &   'Stochastic Optimals, red noise processes.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !STOCH_OPT_WHITE,'
 #endif
 #ifdef SWAN_COUPLING
       IF (Master) WRITE (stdout,20) 'SWAN_COUPLING',                    &

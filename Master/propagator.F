@@ -19,10 +19,14 @@
 !!  propagator_adte      Adjoint Finite time Eigenmodes                !
 !!  propagator_fte       Finite Time Eigenmodes                        !
 !!  propagator_fsv       Forcing singular vectors                      !
+!!  propagator_hfsv      Hessian Forcing singular vectors              !
+!!  propagator_hop       Optimal Perturbations, Hessian singular       !
+!!                         vectors                                     !
+!!  propagator_hso       Hessian Stochastic optimals                   !
 !!  propagator_op        Optimal Perturbations, singular vectors       !
-!!  propagator_so        Stochactic optimals                           !
-!!  propagator_so_semi   Stochactic optimals, semi-norm estimation     !
-!!  propagator_so_trace  Stochactic optimals, randomized trace         !
+!!  propagator_so        Stochastic optimals                           !
+!!  propagator_so_semi   Stochastic optimals, semi-norm estimation     !
+!!  propagator_so_trace  Stochastic optimals, randomized trace         !
 !!                                                                     !
 !   Reference:                                                         !
 !                                                                      !
@@ -42,12 +46,20 @@
 #  include "propagator_afte.h"
 # elif defined FT_EIGENMODES
 #  include "propagator_fte.h"
-# elif defined OPT_PERTURBATION
-#  include "propagator_op.h"
 # elif defined FORCING_SV
 #  include "propagator_fsv.h"
+# elif defined HESSIAN_FSV
+#  include "propagator_hfsv.h"
+# elif defined OPT_PERTURBATION
+#  include "propagator_op.h"
+# elif defined HESSIAN_SV
+#  include "propagator_hop.h"
 # elif defined STOCHASTIC_OPT
-!!#  include "propagator_so.h"
+#  ifdef HESSIAN_SO
+#    include "propagator_hso.h"
+#  else
+#    include "propagator_so.h"
+#  endif
 # elif defined SO_SEMI
 #  include "propagator_so_semi.h"
 # elif defined SO_TRACE

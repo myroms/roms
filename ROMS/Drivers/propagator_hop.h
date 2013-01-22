@@ -7,14 +7,14 @@
 !    See License_ROMS.txt                                              !
 !***********************************************************************
 !                                                                      !
-!  Forcing Singular Vectors Propagator:                                !
+!  Optimal Perturbation (Hessian singular vectors) Propagator:         !
 !                                                                      !
-!  This routine solves the forcing singular vectors of the propagator  !
-!  R(0,t) which measure the fastest growing  forcing patterns  of all  !
-!  possible  perturbations over a given time interval. It involves  a  !
-!  single  integration  of a  perturbation  forward in time  with the  !
-!  tangent linear model over [0,t], followed by an integration of the  !
-!  result backward in time with the adjoint model over [t,0].          !
+!  This routine solves the singular vectors of the propagator R(0,t)   !
+!  which measure the  fastest  growing of all possible perturbations   !
+!  over a given time interval. It involves a single integration of a   !
+!  perturbation forward in time with the  tangent linear model  over   !
+!  [0,t],  followed by an integration of the result backward in time   !
+!  with the adjoint model over [t,0].                                  !
 !                                                                      !
 !   Reference:                                                         !
 !                                                                      !
@@ -36,8 +36,8 @@
 !
       USE dotproduct_mod, ONLY : tl_statenorm
       USE ini_adjust_mod, ONLY : ad_ini_perturb
-      USE packing_mod, ONLY : tl_unpack, ad_pack
-      USE mod_forces, ONLY : initialize_forces
+      USE inner2state_mod, ONLY : ad_inner2state, tl_inner2state
+      USE inner2state_mod, ONLY : ini_C_norm
 #ifdef SOLVE3D
       USE set_depth_mod, ONLY: set_depth
 #endif
@@ -52,7 +52,7 @@
 !  Local variable declarations.
 !
       integer :: ng, tile
-      integer :: ktmp, ntmp
+      integer :: ktmp, ntmp, Lini
 
       real(r8) :: StateNorm(Ngrids)
 !
@@ -98,6 +98,8 @@
       END DO
 !$OMP BARRIER
 !
+      Lini=1
+!
 !-----------------------------------------------------------------------
 !  Clear tangent linear state variables. There is not need to clean
 !  the basic state arrays since they were zeroth out at initialization
@@ -128,25 +130,24 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Unpack tangent linear initial conditions from state vector.
+!  Compute tangent linear initial conditions from state vector.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL tl_unpack (ng, tile, Nstr(ng), Nend(ng),                 &
-     &                    state(ng)%vector)
+          CALL tl_inner2state (ng, tile, Lini, state(ng)%vector)
         END DO
 !$OMP BARRIER
       END DO
 !
 !-----------------------------------------------------------------------
-!  Compute initial tangent linear state dot product norm.
+!  Compute initial tangent linear state analysis error norm.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
         DO tile=last_tile(ng),first_tile(ng),-1
-          CALL tl_statenorm (ng, tile, kstp(ng), nstp(ng),              &
-     &                       StateNorm(ng))
+          CALL ini_C_norm (ng, tile, kstp(ng), nstp(ng),                &
+     &                     StateNorm(ng))
         END DO
 !$OMP BARRIER
 
@@ -233,7 +234,7 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Compute final tangent linear state dot product norm.
+!  Compute final tangent linear energy norm.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
@@ -312,9 +313,9 @@
 #endif
         CALL ad_get_data (ng)
 !$OMP END MASTER
-!$OMP BARRIER
         IF (exit_flag.ne.NoError) RETURN
       END DO
+!$OMP BARRIER
 !
 !-----------------------------------------------------------------------
 !  Time-step the adjoint model backwards.
@@ -372,32 +373,15 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Pack final adjoint solution into adjoint state vector.
+!  Compute adjoint state vector.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ad_pack (ng, tile, Nstr(ng), Nend(ng),                   &
-     &                  ad_state(ng)%vector)
+          CALL ad_inner2state (ng, tile, Lini, ad_state(ng)%vector)
         END DO
 !$OMP BARRIER
       END DO
-!
-!$OMP BARRIER
-      IF (exit_flag.ne.NoError) RETURN
-!
-!-----------------------------------------------------------------------
-!  Clear forcing variables for next iteration.
-!-----------------------------------------------------------------------
-!
-      DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL initialize_forces (ng, tile, iTLM)
-          CALL initialize_forces (ng, tile, iADM)
-        END DO
-!$OMP BARRIER
-      END DO
-
 !
  10   FORMAT (/,a,i2.2,a,i3.3,a,i3.3/)
  20   FORMAT (/,a,i2.2,a,1p,e15.6,/)

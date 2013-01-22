@@ -545,20 +545,31 @@
         real(r8), allocatable :: zLanczos_err(:,:)     ! error, identity
 #  endif
 # endif
-# if defined IS4DVAR_SENSITIVITY
+# if defined HESSIAN_FSV || defined HESSIAN_SO          || \
+     defined HESSIAN_SV  || defined IS4DVAR_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Lanczos algorithm coefficients.
 !-----------------------------------------------------------------------
 !
-!  These coefficients are computed in the IS4DVAR Lanczos data
+!  These coefficients are computed in the 4DVAR Lanczos data
 !  assimilation algorithm and are used here to tangent linear
 !  model initial conditions as weighted sum of the Lanczos
 !  vectors.
 !
         real(r8), allocatable :: cg_beta(:,:)
         real(r8), allocatable :: cg_delta(:,:)
+#  if defined IS4DVAR_SENSITIVITY
         real(r8), allocatable :: cg_zu(:,:)
+#  endif
+# endif
+# if defined HESSIAN_FSV || defined HESSIAN_SO || defined HESSIAN_SV
+!
+!  Lanczos diagonal and off-diagonal coefficients for the Hessian
+!  propagator.
+!
+        real(r8), allocatable :: zLanczos_diag(:)
+        real(r8), allocatable :: zLanczos_offdiag(:)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1274,7 +1285,8 @@
       cg_zu = IniVal
 
 # endif
-# if defined IS4DVAR_SENSITIVITY
+# if defined HESSIAN_FSV || defined HESSIAN_SO          || \
+     defined HESSIAN_SV  || defined IS4DVAR_SENSITIVITY
 !
 !  Allocate Lanczos algorithm coefficients.
 !
@@ -1284,8 +1296,17 @@
       allocate ( cg_delta(Ninner,Nouter) )
       cg_delta = IniVal
 
+#  if defined IS4DVAR_SENSITIVITY
       allocate ( cg_zu(Ninner,Nouter) )
       cg_zu = IniVal
+#  endif
+# endif
+# if defined HESSIAN_FSV || defined HESSIAN_SO || defined HESSIAN_SV
+      allocate ( zLanczos_diag(Ninner) )
+      zLanczos_diag = IniVal
+
+      allocate ( zLanczos_offdiag(Ninner) )
+      zLanczos_offdiag = IniVal
 # endif
 !
 !-----------------------------------------------------------------------

@@ -736,12 +736,16 @@
         ic=ic+1
         isTvar(i)=ic
       END DO
-#if defined ADJUST_WSTRESS || defined FORCING_SV || defined SO_SEMI
+#if defined ADJUST_WSTRESS || defined FORCING_SV     || \
+    defined HESSIAN_FSV    || defined SO_SEMI        || \
+    defined STOCHASTIC_OPT
       isUstr=ic+1
       isVstr=ic+2
       ic=ic+2
 #endif
-#if defined ADJUST_STFLUX  || defined FORCING_SV || defined SO_SEMI
+#if defined ADJUST_STFLUX  || defined FORCING_SV     || \
+    defined HESSIAN_FSV    || defined SO_SEMI        || \
+    defined STOCHASTIC_OPT
       DO i=1,MT
         ic=ic+1
         isTsur(i)=ic

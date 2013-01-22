@@ -399,6 +399,9 @@
 ** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
 ** IS4DVAR             use if incremental 4DVar data assimilation            **
 ** IS4DVAR_SENSITIVITY use if I4DVar observations sensitivity driver         **
+** HESSIAN_FSV         use if Hessian forcing singular vectors               **
+** HESSIAN_SO          use if Hessian stochastic optimals                    **
+** HESSIAN_SV          use if Hessian singular vectors                       **
 ** OPT_OBSERVATIONS    use if optimal observations driver                    **
 ** OPT_PERTURBATION    use if optimal perturbations driver, singular vectors **
 ** PICARD_TEST         use if representer tangent linear model test          **
@@ -442,7 +445,8 @@
 ** POSTERIOR_ERROR_I   use if initial posterior analysis error covariance    **
 ** RECOMPUTE_4DVAR     use if recomputing 4DVar in analysis algorithms       **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
-** SO_SEMI_WHITE       use to activate white/red noise processes             **
+** SO_SEMI_WHITE       use to activate SO semi norm white/red noise processes**
+** STOCH_OPT_WHITE     use to activate SO white/red noise processes          **
 ** SPLINES_VCONV       use to activate implicit splines vertical convolution **
 ** VCONVOLUTION        use to add vertical correlation to 3D convolution     **
 ** VERIFICATION        use if writing out solution at observation locations  **

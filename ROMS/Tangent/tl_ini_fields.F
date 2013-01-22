@@ -356,6 +356,9 @@
 !  Here DC(i,1:N) are the grid cell thicknesses, DC(i,0) is the total
 !  depth of the water column, and CF(i,0) is the vertical integral.
 !
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+      IF (SOinitial(ng)) THEN
+#  endif
       DO j=JstrB,JendB
         DO i=IstrM,IendB
           DC(i,0)=0.0_r8
@@ -534,6 +537,10 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp),         &
      &                    tl_ubar(:,:,knew), tl_vbar(:,:,knew))
+#  endif
+
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+      END IF
 #  endif
 
 # else

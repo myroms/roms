@@ -22,6 +22,8 @@
 !  Rvector      Real Ritz eigenvectors.                                !
 !  Swork        FULL state work array used in distributed memory       !
 !                 communications.                                      !
+!  SworkR       FULL state work array used to compute the ROMS state   !
+!                 eigenvectors.                                        !
 !  SworkD       State work array for ARPACK reverse communications.    !
 !  SworkEV      ARPACK work array.                                     !
 !  SworkL       ARPACK work array.                                     !
@@ -69,6 +71,8 @@
       integer :: NCV                      ! number of Lanczos vectors
       integer :: NEV                      ! number of eigenvalues
       integer :: LworkL                   ! size of array SworkL
+
+      integer, allocatable :: LworkD(:)   ! size of array SworkD
 !
 !  ARPACK integer parameters and flags.
 !
@@ -98,6 +102,7 @@
 # ifdef DISTRIBUTE
       real(r8), allocatable :: Swork(:)           ! [Mstate]
 # endif
+      real(r8), pointer :: SworkR(:)              ! [Mstate]
 !
 !  State work arrays structure for nested grids.
 !
@@ -107,6 +112,12 @@
           real(r8), pointer :: Rvector(:,:)         ! [Nstr:Nend,NEV+1]
           real(r8), pointer :: SworkD(:)            ! [3*Nstate]
           real(r8), pointer :: resid(:)             ! [Nstr:Nend]
+# ifdef STOCHASTIC_OPT
+          real(r8), pointer :: ad_Work(:)           ! [Mstate]
+# endif
+# if defined STOCHASTIC_OPT && defined HESSIAN_SO
+          real(r8), pointer :: my_state(:)          ! [Nstr:Nend]
+# endif
 # ifdef SO_SEMI
           real(r8), pointer :: so_state(:,:)        ! [Nstr:Nend,Nsemi]
 # endif
@@ -172,16 +183,24 @@
 !
       integer :: i, j, ng
 
+      integer, allocatable :: Mstr(:), Mend(:)
+
       real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
+!  Allocate local dimension parameters.
+!
+      allocate ( Mstr(Ngrids) )
+      allocate ( Mend(Ngrids) )
+!
 !  Allocate parameters associated with nested grids.
 !
       allocate ( ido(Ngrids) )
       allocate ( info(Ngrids) )
+      allocate ( LworkD(Ngrids) )
 
       allocate ( iparam(11,Ngrids) )
 # if defined AFT_EIGENMODES || defined FT_EIGENMODES
@@ -194,7 +213,13 @@
 !
 # if defined OPT_PERTURBATION
       LworkL=NCV*(NCV+8)
+# elif defined HESSIAN_SV
+      LworkL=NCV*(NCV+8)
+# elif defined HESSIAN_FSV
+      LworkL=NCV*(NCV+8)
 # elif defined FORCING_SV
+      LworkL=NCV*(NCV+8)
+# elif defined STOCHASTIC_OPT
       LworkL=NCV*(NCV+8)
 # elif defined SO_SEMI
       LworkL=NCV*(NCV+8)
@@ -207,21 +232,43 @@
       END DO
 # endif
 !
+!  Set local dimensions of storage arrays according to the propagator
+!  driver.
+!
+      DO ng=1,Ngrids
+# if defined HESSIAN_FSV || defined HESSIAN_SO || defined HESSIAN_SV
+        Mstr(ng)=1
+        Mend(ng)=Ninner
+        LworkD(ng)=3*Ninner
+# else
+        Mstr(ng)=Nstr(ng)
+        Mend(ng)=Nend(ng)
+        LworkD(ng)=3*Nstate(ng)
+# endif
+      END DO
+!
 !  Allocate structure.
 !
       allocate ( STORAGE(Ngrids) )
 
       DO ng=1,Ngrids
-        allocate ( STORAGE(ng) % Bvec(Nstr(ng):Nend(ng),NCV) )
+        allocate ( STORAGE(ng) % Bvec(Mstr(ng):Mend(ng),NCV) )
 
-        allocate ( STORAGE(ng) % Rvector(Nstr(ng):Nend(ng),NEV+1) )
+        allocate ( STORAGE(ng) % Rvector(Mstr(ng):Mend(ng),NEV+1) )
 
-        allocate ( STORAGE(ng) % SworkD(3*Nstate(ng)) )
+        allocate ( STORAGE(ng) % SworkD(LworkD(ng)) )
 
-        allocate ( STORAGE(ng) % resid(Nstr(ng):Nend(ng)) )
+        allocate ( STORAGE(ng) % resid(Mstr(ng):Mend(ng)) )
 
+# ifdef STOCHASTIC_OPT
+        allocate ( STORAGE(ng) % ad_Work(MAXVAL(Mstate)) )
+# endif
+
+# if defined STOCHASTIC_OPT && defined HESSIAN_SO
+        allocate ( STORAGE(ng) % my_state(Nstr(ng):Nend(ng)) )
+# endif
 # ifdef SO_SEMI
-        allocate ( STORAGE(ng) % so_state(Nstr(ng):Nend(ng),Nsemi(ng)) )
+        allocate ( STORAGE(ng) % so_state(Mstr(ng):Mend(ng),Nsemi(ng)) )
 # endif
       END DO
 !
@@ -239,6 +286,8 @@
 
       allocate ( SworkL(LworkL,Ngrids) )
 
+      allocate ( SworkR(MAXVAL(Mstate)) )
+
 # ifdef DISTRIBUTE
       allocate ( Swork(MAXVAL(Mstate)) )
 # endif
@@ -253,7 +302,7 @@
       DO ng=1,Ngrids
         DO j=1,NCV
           select(j,ng) = .TRUE.
-          DO i=Nstr(ng),Nend(ng)
+          DO i=Mstr(ng),Mend(ng)
             STORAGE(ng) % Bvec(i,j) = IniVal
           END DO
         END DO
@@ -261,10 +310,33 @@
           norm(j,ng) = IniVal
           RvalueR(j,ng) = IniVal
           RvalueI(j,ng) = IniVal
-          DO i=Nstr(ng),Nend(ng)
+          DO i=Mstr(ng),Mend(ng)
             STORAGE(ng) % Rvector(i,j) = IniVal
           END DO
         END DO
+        DO i=Mstr(ng),Mend(ng)
+          STORAGE(ng) % resid(i) = IniVal
+        END DO
+# ifdef STOCHASTIC_OPT
+        DO i=1,MAXVAL(Mstate)
+          STORAGE(ng) % ad_Work(i) = IniVal
+        END DO
+# endif
+# if defined STOCHASTIC_OPT && defined HESSIAN_SO
+        DO i=Nstr(ng),Nend(ng)
+          STORAGE(ng) % my_state(i) = IniVal
+        END DO
+# endif
+# ifdef SO_SEMI
+        DO j=1,Nsemi(ng)
+          DO i=Mstr(ng),Mend(ng)
+            STORAGE(ng) % so_state(i,j) = IniVal
+          END DO
+        END DO
+# endif
+      END DO
+      DO i=1,MAXVAL(Mstate)
+        SworkR(i) = IniVal
       END DO
 # ifdef DISTRIBUTE
       DO i=1,MAXVAL(Mstate)
@@ -273,7 +345,7 @@
 # endif
 !
       DO ng=1,Ngrids
-        DO i=1,3*Nstate(ng)
+        DO i=1,LworkD(ng)
           STORAGE(ng) % SworkD(i) = IniVal
         END DO
         DO i=1,3*NCV
@@ -282,16 +354,6 @@
         DO i=1,LworkL
           SworkL(i,ng) = IniVal
         END DO
-        DO i=Nstr(ng),Nend(ng)
-          STORAGE(ng) % resid(i) = IniVal
-        END DO
-# ifdef SO_SEMI
-        DO j=1,Nsemi(ng)
-          DO i=Nstr(ng),Nend(ng)
-            STORAGE(ng) % so_state(i,j) = IniVal
-          END DO
-        END DO
-# endif
       END DO
 
       RETURN

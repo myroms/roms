@@ -7,22 +7,14 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Finite Time Eigenmodes (FTE) Driver:                      !
+!  ROMS/TOMS Stochastic Optimal Driver:                                !
 !                                                                      !
-!  This driver computes the finite time eigenmodes of the propagator   !
-!  R(0,t)  linearized about a time  evolving  circulation.  They are   !
-!  often referred to as the finite time normal modes and are used to   !
-!  measure the asymptotic stability of the circulation.                !
-!                                                                      !
-!  These  routines  control the  initialization,  time-stepping, and   !
+!  These  routines  control the  initialization,  time-stepping,  and  !
 !  finalization of  ROMS/TOMS  model following ESMF conventions:       !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
-!                                                                      !
-!  WARNING: This driver cannot be run from the ESMF super-structure.   !
-!  =======  Therefore, ESMF coupling is not possible.                  !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -197,7 +189,6 @@
         IF (exit_flag.ne.NoError) RETURN
       END DO
 !
-!
 !  Allocate arrays associated with Generalized Stability Theory (GST)
 !  analysis.
 !
@@ -207,10 +198,13 @@
 !
       Nrun=0
       DO ng=1,Ngrids
-        LdefTLM(ng)=.TRUE.
+        LwrtADJ(ng)=.TRUE.
+        LwrtHIS(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
         LwrtPER(ng)=.FALSE.
         LcycleTLM(ng)=.FALSE.
+        LcycleADJ(ng)=.FALSE.
+        nADJ(ng)=ntimes(ng)/Nintervals
         nTLM(ng)=ntimes(ng)
       END DO
 !
@@ -251,13 +245,18 @@
 
 #ifdef CHECKPOINTING
 !
-!  If restart, read in check pointing data GST restart NetCDF file.
-!  Otherwise, create check pointing restart NetCDF file.
+!  If restart, read in checkpointing data GST restart NetCDF file.
+!  Otherwise, create checkpointing restart NetCDF file.
 !
       DO ng=1,Ngrids
         IF (LrstGST) THEN
           CALL get_gst (ng, iTLM)
           ido(ng)=-2
+          laup2(1)=.FALSE.        ! cnorm
+          laup2(2)=.FALSE.        ! getv0
+          laup2(3)=.FALSE.        ! initv
+          laup2(4)=.FALSE.        ! update
+          laup2(5)=.TRUE.         ! ushift
         ELSE
           CALL def_gst (ng, iTLM)
         END IF
@@ -272,12 +271,17 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine computes the eigenvectors of the propagator R(0,t)     !
-!  for either autonomous  or  non-autonomous ocean circulations. A     !
-!  single integration of an arbitrary perturbation state vector "u"    !
-!  forward in time over the interval  [0,t]  by the tangent linear     !
-!  model: R(0,t)*u.  The eigenspectrum of  R(0,t) is computed with     !
-!  the Arnoldi algorithm using ARPACK library:                         !
+!  This routine computes the singular vectors of R(0,t) by a single    !
+!  integration  of  a  perturbation "u"  forward  in time  with the    !
+!  tangent linear model over [0,t],  multiplication  of the  result    !
+!  by "X",  followed by an integration of the  result  backwards in    !
+!  time with the  adjoint model over [t,0].  This is  equivalmet to    !
+!  the matrix-vector operation:                                        !
+!                                                                      !
+!       transpose[R(t,0)] X R(0,t) u                                   !
+!                                                                      !
+!  The above operator is symmetric and the  ARPACK library is used     !
+!  to select eigenvectors and eigenvalues:                             !
 !                                                                      !
 !  Lehoucq, R.B., D.C. Sorensen, and C. Yang, 1997:  ARPACK user's     !
 !    guide:  solution  of  large  scale  eigenvalue  problems with     !
@@ -295,7 +299,6 @@
       USE mod_storage
 !
       USE propagator_mod
-      USE packing_mod, ONLY : c_norm2
       USE packing_mod, ONLY : r_norm2
 !
 !  Imported variable declarations
@@ -304,20 +307,19 @@
 !
 !  Local variable declarations.
 !
-      logical :: ITERATE, Lcomplex
+      logical :: ITERATE
 #ifdef CHECKPOINTING
       logical :: LwrtGST
 #endif
 
-      integer :: Fcount, Is, Ie, i, icount, iter, ng, srec
+      integer :: Is, Ie
+      integer :: i, iter, ng, tile
       integer :: NconvRitz(Ngrids)
 
       real(r8) :: Enorm
 
-      real(r8), dimension(2) :: my_norm, my_Ivalue, my_Rvalue
-
+      TYPE (T_GST), allocatable :: ad_state(:)
       TYPE (T_GST), allocatable :: state(:)
-      TYPE (T_GST), allocatable :: tl_state(:)
 
       character (len=55) :: string
 !
@@ -328,11 +330,11 @@
 !
 !  Allocate nested grid pointers for state vectors.
 !
+      IF (.not.allocated(ad_state)) THEN
+        allocate ( ad_state(Ngrids) )
+      END IF
       IF (.not.allocated(state)) THEN
         allocate ( state(Ngrids) )
-      END IF
-      IF (.not.allocated(tl_state)) THEN
-        allocate ( tl_state(Ngrids) )
       END IF
 !
 !  Iterate until either convergence or maximum iterations has been
@@ -354,7 +356,7 @@
           CALL wclock_on (ng, iTLM, 38)
 #endif
 #ifdef DISTRIBUTE
-          CALL pdnaupd (OCN_COMM_WORLD,                                 &
+          CALL pdsaupd (OCN_COMM_WORLD,                                 &
      &                  ido(ng), bmat, Nsize(ng), which, NEV,           &
      &                  Ritz_tol,                                       &
      &                  STORAGE(ng)%resid(Nstr(ng)), NCV,               &
@@ -363,7 +365,7 @@
      &                  STORAGE(ng)%SworkD,                             &
      &                  SworkL(1,ng), LworkL, info(ng))
 #else
-          CALL dnaupd (ido(ng), bmat, Nsize(ng), which, NEV,            &
+          CALL dsaupd (ido(ng), bmat, Nsize(ng), which, NEV,            &
      &                 Ritz_tol,                                        &
      &                 STORAGE(ng)%resid, NCV,                          &
      &                 STORAGE(ng)%Bvec, Nsize(ng),                     &
@@ -399,14 +401,9 @@
           EXIT ITER_LOOP
         END IF
 !
-!  Perform matrix-vector operation:  R`(t,0)u
+!  Perform matrix-vector operation:  R`(t,0)XR(0,t)u
 !
         IF (ANY(ABS(ido).eq.1)) THEN
-          DO ng=1,Ngrids
-            Fcount=TLM(ng)%Fcount
-            TLM(ng)%Nrec(Fcount)=0
-            TLM(ng)%Rindex=0
-          END DO
 !
 !  Set state vectors to process by the propagator via pointer
 !  equivalence.
@@ -419,16 +416,16 @@
             Ie=Is+Nsize(ng)-1
             state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
 
-            IF (ASSOCIATED(tl_state(ng)%vector)) THEN
-              nullify (tl_state(ng)%vector)
+            IF (ASSOCIATED(ad_state(ng)%vector)) THEN
+              nullify (ad_state(ng)%vector)
             END IF
             Is=ipntr(2,ng)
             Ie=Is+Nsize(ng)-1
-            tl_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+            ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
           END DO
 
 !$OMP PARALLEL
-          CALL propagator (RunInterval, state, tl_state)
+          CALL propagator (RunInterval, iter, state, ad_state)
 !$OMP END PARALLEL
           IF (exit_flag.ne.NoError) RETURN
         ELSE
@@ -436,8 +433,8 @@
             DO ng=1,Ngrids
               IF (info(ng).ne.0) THEN
                 IF (Master) THEN
-                  CALL IRAM_error (info(ng), 1, string)
-                  WRITE (stdout,10) 'DNAUPD', TRIM(string),             &
+                  CALL IRAM_error (info(ng), string)
+                  WRITE (stdout,10) 'DSAUPD', TRIM(string),             &
      &                              ', info = ', info(ng)
                 END IF
                 RETURN
@@ -445,7 +442,7 @@
             END DO
           ELSE
 !
-!  Compute Ritz vectors (the only choice left is IDO=99).  They are
+!  Compute Ritz vectors (the only choice left is IDO=99). They are
 !  generated in ARPACK in decreasing magnitude of its eigenvalue.
 !  The most significant is first.
 !
@@ -461,29 +458,26 @@
               CALL wclock_on (ng, iTLM, 38)
 #endif
 #ifdef DISTRIBUTE
-              CALL pdneupd (OCN_COMM_WORLD,                             &
+              CALL pdseupd (OCN_COMM_WORLD,                             &
      &                      Lrvec, howmany, select(1,ng),               &
-     &                      RvalueR(1,ng), RvalueI(1,ng),               &
+     &                      RvalueR(1,ng),                              &
      &                      STORAGE(ng)%Rvector(Nstr(ng),1),            &
-     &                      Nsize(ng), sigmaR, sigmaI,                  &
-     &                      SworkEV(1,ng), bmat, Nsize(ng),             &
-     &                      which, NEV, Ritz_tol,                       &
+     &                      Nsize(ng), sigmaR,                          &
+     &                      bmat, Nsize(ng), which, NEV, Ritz_tol,      &
      &                      STORAGE(ng)%resid(Nstr(ng)), NCV,           &
      &                      STORAGE(ng)%Bvec(Nstr(ng),1), Nsize(ng),    &
      &                      iparam(1,ng), ipntr(1,ng),                  &
      &                      STORAGE(ng)%SworkD,                         &
-     &                      SworkL(:,ng), LworkL, info(ng))
+     &                      SworkL(1,ng), LworkL, info(ng))
 #else
-              CALL dneupd (Lrvec, howmany, select(1,ng),                &
-     &                     RvalueR(1,ng), RvalueI(1,ng),                &
+              CALL dseupd (Lrvec, howmany, select(1,ng),                &
+     &                     RvalueR(1,ng),                               &
      &                     STORAGE(ng)%Rvector, Nsize(ng),              &
-     &                     sigmaR, sigmaI,                              &
-     &                     SworkEV(1,ng), bmat, Nsize(ng),              &
-     &                     which, NEV, Ritz_tol,                        &
+     &                     sigmaR, bmat, Nsize, which, NEV, Ritz_tol,   &
      &                     STORAGE(ng)%resid, NCV,                      &
      &                     STORAGE(ng)%Bvec, Nsize(ng),                 &
      &                     iparam(1,ng), ipntr(1,ng),                   &
-     &                     STORAGE(ng) % SworkD,                        &
+     &                     STORAGE(ng)%SworkD,                          &
      &                     SworkL(1,ng), LworkL, info(ng))
 #endif
 #ifdef PROFILE
@@ -495,8 +489,8 @@
               DO ng=1,Ngrids
                 IF (info(ng).ne.0) THEN
                   IF (Master) THEN
-                    CALL IRAM_error (info(ng), 2, string)
-                    WRITE (stdout,10) 'DNEUPD', TRIM(string),           &
+                    CALL IRAM_error (info(ng), string)
+                    WRITE (stdout,10) 'DSEUPD', TRIM(string),           &
      &                                ', info = ', info(ng)
                   END IF
                   RETURN
@@ -504,135 +498,49 @@
               END DO
             ELSE
 !
-!  Activate writing of each eigenvector into the tangent history NetCDF
-!  file. The "ocean_time" is the eigenvector number. If writing one
-!  eigenvector per file (LmultiGST=.TRUE.), both the real and imaginaryg
-!  eigenvectors are stored in the same file. Then, this file will
-!  contains four records for the initial and final perturbations of the
-!  complex eigenvector.
+!  Activate writing of each eigenvector into single or multiple tangent
+!  linear history NetCDF files.
 !
               Nrun=0
-              icount=0
-              Lcomplex=.TRUE.
 
               DO i=1,MAXVAL(NconvRitz)
                 DO ng=1,Ngrids
-                  IF ((i.eq.1).or.LmultiGST) THEN
-                    Fcount=TLM(ng)%Fcount
-                    TLM(ng)%Nrec(Fcount)=0
-                    TLM(ng)%Rindex=0
-                  END IF
-                  IF (LmultiGST.and.Lcomplex) THEN
-                    LdefTLM(ng)=.TRUE.
-                    icount=icount+1
-                    WRITE (TLM(ng)%name,30) TRIM(TLM(ng)%base), icount
+                  IF (LmultiGST) THEN
+                    WRITE (TLM(ng)%name,30) TRIM(TLM(ng)%base), i
                   END IF
                 END DO
 !
 !  Compute and write Ritz eigenvectors.
 !
-                IF (ANY(RvalueI(i,:).eq.0.0_r8)) THEN
-!
-!  Ritz value is real.
-!
-                  DO ng=1,Ngrids
-                    Is=Nstr(ng)
-                    Ie=Nend(ng)
-                    IF (ASSOCIATED(state(ng)%vector)) THEN
-                      nullify (state(ng)%vector)
-                    END IF
+                DO ng=1,Ngrids
+                  Is=Nstr(ng)
+                  Ie=Nend(ng)
+                  IF (ASSOCIATED(state(ng)%vector)) THEN
+                    nullify (state(ng)%vector)
+                  END IF
 
-                    IF (ASSOCIATED(tl_state(ng)%vector)) THEN
-                      nullify (tl_state(ng)%vector)
-                    END IF
-                    state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
-                    tl_state(ng)%vector => SworkR(Is:Ie)
-                  END DO
+                  IF (ASSOCIATED(ad_state(ng)%vector)) THEN
+                    nullify (ad_state(ng)%vector)
+                  END IF
+                  state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
+                  ad_state(ng)%vector => SworkR(Is:Ie)
+                END DO
 
 !$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
+                CALL propagator (RunInterval, -i, state, ad_state)
 !$OMP END PARALLEL
-                  IF (exit_flag.ne.NoError) RETURN
+                IF (exit_flag.ne.NoError) RETURN
 !
-                  DO ng=1,Ngrids
-                    CALL r_norm2 (ng, iTLM, Nstr(ng), Nend(ng),         &
-     &                            -RvalueR(i,ng),                       &
-     &                            state(ng)%vector,                     &
-     &                            tl_state(ng)%vector, Enorm)
-                    norm(i,ng)=Enorm
-                  END DO
-
-                ELSE IF (Lcomplex) THEN
-!
-!  Ritz value is complex.
-!
-                  DO ng=1,Ngrids
-                    Is=Nstr(ng)
-                    Ie=Nend(ng)
-                    IF (ASSOCIATED(state(ng)%vector)) THEN
-                      nullify (state(ng)%vector)
-                    END IF
-
-                    IF (ASSOCIATED(tl_state(ng)%vector)) THEN
-                      nullify (tl_state(ng)%vector)
-                    END IF
-                    state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
-                    tl_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
-                  END DO
-
-!$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
-!$OMP END PARALLEL
-                  IF (exit_flag.ne.NoError) RETURN
-!
-                  DO ng=1,Ngrids
-                    CALL c_norm2 (ng, iTLM, Nstr(ng), Nend(ng),         &
-     &                            -RvalueR(i,ng), RvalueI(i,ng),        &
-     &                            STORAGE(ng)%Rvector(Nstr(ng):,i  ),   &
-     &                            STORAGE(ng)%Rvector(Nstr(ng):,i+1),   &
-     &                            tl_state(ng)%vector, Enorm)
-                    norm(i,ng)=Enorm
-                  END DO
-!
-                  DO ng=1,Ngrids
-                    Is=Nstr(ng)
-                    Ie=Nend(ng)
-                    IF (ASSOCIATED(state(ng)%vector)) THEN
-                      nullify (state(ng)%vector)
-                    END IF
-
-                    IF (ASSOCIATED(tl_state(ng)%vector)) THEN
-                      nullify (tl_state(ng)%vector)
-                    END IF
-                    state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i+1)
-                    tl_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
-                  END DO
-
-!$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
-!$OMP END PARALLEL
-                  IF (exit_flag.ne.NoError) RETURN
-!
-                  DO ng=1,Ngrids
-                    CALL c_norm2 (ng, iTLM, Nstr(ng), Nend(ng),         &
-     &                            -RvalueR(i,ng), -RvalueI(i,ng),       &
-     &                            STORAGE(ng)%Rvector(Nstr(ng):,i+1),   &
-     &                            STORAGE(ng)%Rvector(Nstr(ng):,i  ),   &
-     &                            tl_state(ng)%vector, Enorm)
-                    norm(i  ,ng)=SQRT(norm(i,ng)*norm(i,ng)+            &
-     &                                Enorm*Enorm)
-                    norm(i+1,ng)=norm(i,ng)
-                    Lcomplex=.FALSE.
-                  END DO
-                ELSE
-                  Lcomplex=.TRUE.
-                END IF
-                IF (Master) THEN
-                  DO ng=1,Ngrids
-                    WRITE (stdout,40) i, norm(i,ng),                    &
-     &                                RvalueR(i,ng), RvalueI(i,ng), i
-                  END DO
-                END IF
+                DO ng=1,Ngrids
+                  CALL r_norm2 (ng, iTLM, Nstr(ng), Nend(ng),           &
+     &                          -RvalueR(i,ng),                         &
+     &                          state(ng)%vector,                       &
+     &                          ad_state(ng)%vector, Enorm)
+                  norm(i,ng)=Enorm
+                  IF (Master) THEN
+                    WRITE (stdout,40) i, norm(i,ng), RvalueR(i,ng), i
+                  END IF
+                END DO
 !
 !  Write out Ritz eigenvalues and Ritz eigenvector Euclidean norm
 !  (residual) to NetCDF file(s).  Notice that we write the same value
@@ -640,54 +548,45 @@
 !  the eigenvector.
 !
                 DO ng=1,Ngrids
-                  SourceFile='fte_ocean.h, ROMS_run'
-                  my_norm(1)=norm(i,ng)
-                  my_norm(2)=my_norm(1)
-                  my_Rvalue(1)=RvalueR(i,ng)
-                  my_Rvalue(2)=my_Rvalue(1)
-                  my_Ivalue(1)=RvalueI(i,ng)
-                  my_Ivalue(2)=my_Ivalue(1)
+                  SourceFile='so_ocean.h, ROMS_run'
+
+                  CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,         &
+     &                                  'Ritz_rvalue',                  &
+     &                                  RvalueR(i:,ng),                 &
+     &                                  start = (/TLM(ng)%Rindex/),     &
+     &                                  total = (/1/),                  &
+     &                                  ncid = TLM(ng)%ncid)
+                  IF (exit_flag.ne. NoError) RETURN
+
+                  CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,         &
+     &                                  'Ritz_norm',                    &
+     &                                  norm(i:,ng),                    &
+     &                                  start = (/TLM(ng)%Rindex/),     &
+     &                                  total = (/1/),                  &
+     &                                  ncid = TLM(ng)%ncid)
+                  IF (exit_flag.ne. NoError) RETURN
+
                   IF (LmultiGST) THEN
-                    IF (.not.Lcomplex.or.(RvalueI(i,ng).eq.0.0_r8)) THEN
-                      srec=1
-                    ELSE
-                      srec=3
-                    END IF
-                  ELSE
-                    srec=2*i-1
+                    CALL netcdf_close (ng, iTLM, TLM(ng)%ncid,          &
+     &                                 TLM(ng)%name)
+                    IF (exit_flag.ne.NoError) RETURN
                   END IF
 
-                  IF (LwrtTLM(ng)) THEN
-                    CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
-     &                                    'Ritz_rvalue',                &
-     &                                    my_Rvalue,                    &
-     &                                    start = (/srec/),             &
-     &                                    total = (/2/),                &
-     &                                    ncid = TLM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
+                  CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,         &
+     &                                  'Ritz_rvalue',                  &
+     &                                  RvalueR(i:,ng),                 &
+     &                                  start = (/ADM(ng)%Rindex/),     &
+     &                                  total = (/1/),                  &
+     &                                  ncid = ADM(ng)%ncid)
+                  IF (exit_flag.ne. NoError) RETURN
 
-                    CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
-     &                                    'Ritz_ivalue',                &
-     &                                    my_Ivalue,                    &
-     &                                    start = (/srec/),             &
-     &                                    total = (/2/),                &
-     &                                    ncid = TLM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
-
-                    CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
-     &                                    'Ritz_norm',                  &
-     &                                    my_norm,                      &
-     &                                    start = (/srec/),             &
-     &                                    total = (/2/),                &
-     &                                    ncid = TLM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
-
-                    IF (LmultiGST.and.Lcomplex) THEN
-                      CALL netcdf_close (ng, iTLM, TLM(ng)%ncid,        &
-     &                                   TLM(ng)%name)
-                      IF (exit_flag.ne.NoError) RETURN
-                    END IF
-                  END IF
+                  CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,         &
+     &                                  'Ritz_norm',                    &
+     &                                  norm(i:,ng),                    &
+     &                                  start = (/ADM(ng)%Rindex/),     &
+     &                                  total = (/1/),                  &
+     &                                  ncid = ADM(ng)%ncid)
+                  IF (exit_flag.ne. NoError) RETURN
                 END DO
               END DO
             END IF
@@ -701,7 +600,7 @@
  20   FORMAT (/,a,1x,i2,/)
  30   FORMAT (a,'_',i3.3,'.nc')
  40   FORMAT (1x,i4.4,'-th residual',1p,e14.6,0p,                       &
-     &        '  Ritz values',1pe14.6,0p,1x,1pe14.6,2x,i4.4)
+     &        '  Ritz value',1pe14.6,0p,2x,i4.4)
 
       RETURN
       END SUBROUTINE ROMS_run
@@ -766,6 +665,7 @@
           CALL wclock_off (ng, iTLM, 0)
         END DO
 !$OMP END PARALLEL
+
       END DO
 !
 !  Close IO files.
@@ -775,7 +675,7 @@
       RETURN
       END SUBROUTINE ROMS_finalize
 
-      SUBROUTINE IRAM_error (info, icall, string)
+      SUBROUTINE IRAM_error (info, string)
 !
 !=======================================================================
 !                                                                      !
@@ -788,7 +688,7 @@
 !
 !  imported variable declarations.
 !
-      integer, intent(in) :: info, icall
+      integer, intent(in) :: info
 
       character (len=*), intent(out) :: string
 !
@@ -799,11 +699,7 @@
       IF (info.eq.0)  THEN
         string='Normal exit                                            '
       ELSE IF (info.eq.1) THEN
-        IF (icall.eq.1) THEN
-          string='Maximum number of iterations taken                   '
-        ELSE
-          string='Could not reorder Schur vectors                      '
-        END IF
+        string='Maximum number of iterations taken                     '
       ELSE IF (info.eq.3) THEN
         string='No shifts could be applied during an IRAM cycle        '
       ELSE IF (info.eq.-1) THEN
@@ -821,33 +717,25 @@
       ELSE IF (info.eq.-7) THEN
         string='Length of private work array SworkL is not sufficient  '
       ELSE IF (info.eq.-8) THEN
-        IF (icall.eq.1) THEN
-          string='Error return from LAPACK eigenvalue calculation      '
-        ELSE
-          string='Error in DLAHQR in the Shurn vectors calculation     '
-        END IF
+        string='Error in DSTEQR in the eigenvalue calculation          '
       ELSE IF (info.eq.-9) THEN
-        IF (icall.eq.1) THEN
-          string='Starting vector is zero'
-        ELSE
-          string='Error in DTREVC in the eigenvectors calculation      '
-        END IF
+        string='Starting vector is zero                                '
       ELSE IF (info.eq.-10) THEN
         string='IPARAM(7) must be 1, 2, 3, 4, 5                        '
       ELSE IF (info.eq.-11) THEN
         string='IPARAM(7) = 1 and BMAT = G are incompatable            '
       ELSE IF (info.eq.-12) THEN
-        IF (icall.eq.1) THEN
-          string='IPARAM(1) must be equal to 0 or 1                    '
-        ELSE
-          string='HOWMANY = S not yet implemented                      '
-        END IF
+        string='IPARAM(1) must be equal to 0 or 1                      '
       ELSE IF (info.eq.-13) THEN
-        string='HOWMANY must be one of A or P if Lrvec = .TRUE.        '
+        string='NEV and WHICH = BE are incompatable                    '
       ELSE IF (info.eq.-14) THEN
         string='Did not find any eigenvalues to sufficient accuaracy   '
       ELSE IF (info.eq.-15) THEN
-        string='Different count of converge Ritz values in DNEUPD      '
+        string='HOWMANY must be one of A or S if RVEC = .TRUE.         '
+      ELSE IF (info.eq.-16) THEN
+        string='HOWMANY = S not yet implemented                        '
+      ELSE IF (info.eq.-17) THEN
+        string='Different count of converge Ritz values in DSEUPD      '
       ELSE IF (info.eq.-9999) THEN
         string='Could not build and Arnoldi factorization              '
       END IF

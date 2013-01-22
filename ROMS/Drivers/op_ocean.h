@@ -551,7 +551,7 @@
                     nullify (ad_state(ng)%vector)
                   END IF
                   state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
-                  ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+                  ad_state(ng)%vector => SworkR(Is:Ie)
                 END DO
 
 !$OMP PARALLEL

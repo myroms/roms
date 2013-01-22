@@ -177,7 +177,9 @@
 !
        IniRec=1
 
-# elif defined FOUR_DVAR || defined TLM_CHECK
+# elif defined FOUR_DVAR    && \
+     !(defined HESSIAN_SV   || defined HESSIAN_SO || \
+       defined HESSIAN_FSV) || defined TLM_CHECK
 !
 !-----------------------------------------------------------------------
 !  If variational data assimilation, reset several IO switches and
@@ -368,7 +370,8 @@
 !  executed for each ensemble/perturbation/iteration pass.
 !=======================================================================
 
-# if defined FOUR_DVAR && !defined IS4DVAR_SENSITIVITY
+# if defined FOUR_DVAR  && !defined IS4DVAR_SENSITIVITY && \
+   !(defined HESSIAN_SV ||  defined HESSIAN_SO || defined HESSIAN_FSV)
 #  if defined OPT_OBSERVATIONS || defined TLM_CHECK || \
       defined WEAK_CONSTRAINT
 !

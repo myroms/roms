@@ -133,17 +133,21 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         ELSE
+# ifdef HESSIAN_SO
+          wrtHIS=(MOD(iic(ng)-1,nADJ(ng)).eq.0)   ! otherwise
+# else
           IF (nADJ(ng).eq.ntimes(ng)) THEN
             wrtHIS=(iic(ng).ne.ntstart(ng)).and.                        &
      &             (MOD(iic(ng)-1,nADJ(ng)).eq.0) ! avoid ntstart rec
           ELSE
-# ifdef WEAK_CONSTRAINT
+#  ifdef WEAK_CONSTRAINT
             wrtHIS=(iic(ng).ne.ntstart(ng)).and.                        &
      &             (MOD(iic(ng)-1,nADJ(ng)).eq.0) ! avoid ntstart-1 rec
-# else
+#  else
             wrtHIS=(MOD(iic(ng)-1,nADJ(ng)).eq.0) ! otherwise
-# endif
+#  endif
           END IF
+# endif
           IF (wrtHIS) THEN
             CALL ad_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN

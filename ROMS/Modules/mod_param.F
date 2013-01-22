@@ -917,7 +917,11 @@
 !
 !  Set maximum number of tracer between all nested grids.
 !
+#if defined IS4DVAR || defined W4DVAR || defined W4DPSAS
+      MT=MAX(NAT,MAXVAL(NT))
+#else
       MT=MAX(2,MAXVAL(NT))
+#endif
 !
 !-----------------------------------------------------------------------
 !  Allocate Lateral Boundary Conditions switches structure.

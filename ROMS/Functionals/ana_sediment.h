@@ -258,7 +258,7 @@
             bed(i,j,k,ithck)=0.10_r8
             bed(i,j,k,iporo)=0.90_r8
             DO ised=1,NST
-              bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+              bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
             END DO
           END DO
 !
@@ -280,7 +280,7 @@
             bed(i,j,k,ithck)=0.001_r8
             bed(i,j,k,iporo)=0.90_r8
             DO ised=1,NST
-              bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+              bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
             END DO
           END DO
 !
@@ -302,7 +302,7 @@
              bed(i,j,k,ithck)=10.0_r8
              bed(i,j,k,iporo)=0.50_r8
              DO ised=1,NST
-               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+               bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
              ENDDO
           END DO
 !
@@ -324,7 +324,7 @@
              bed(i,j,k,ithck)=0.01_r8
              bed(i,j,k,iporo)=0.30_r8
 !!           DO ised=1,NST
-!!             bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+!!             bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
 !!           END DO
              bed_frac(i,j,k,1)=1.0_r8
              bed_frac(i,j,k,2)=0.0_r8
@@ -352,7 +352,7 @@
              bed(i,j,k,ithck)=15.00_r8
              bed(i,j,k,iporo)=0.50_r8
              DO ised=1,NST
-               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+               bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
              END DO
           END DO
 !
@@ -374,7 +374,7 @@
             bed(i,j,k,ithck)=5.0_r8
             bed(i,j,k,iporo)=0.50_r8
             DO ised=1,NST
-              bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+              bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
             END DO
           END DO
 !
@@ -396,7 +396,7 @@
             bed(i,j,k,ithck)=1.0_r8
             bed(i,j,k,iporo)=0.90_r8
             DO ised=1,NST
-              bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+              bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
             END DO
           END DO
 !

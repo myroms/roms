@@ -344,9 +344,10 @@
 #  endif
 !$OMP CRITICAL (NL_DOT)
         IF (tile_count.eq.0) THEN
-          DotProduct=0.0_r8
+          DotProduct=my_dot
+        ELSE
+          DotProduct=DotProduct+my_dot
         END IF
-        DotProduct=DotProduct+my_dot
         tile_count=tile_count+1
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
@@ -659,9 +660,10 @@
 #  endif
 !$OMP CRITICAL (TL_NORM)
       IF (tile_count.eq.0) THEN
-        StateNorm=0.0_r8
+        StateNorm=my_norm
+      ELSE
+        StateNorm=StateNorm+my_norm
       END IF
-      StateNorm=StateNorm+my_norm
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
@@ -971,9 +973,10 @@
 #  endif
 !$OMP CRITICAL (TL_NORM)
       IF (tile_count.eq.0) THEN
-        StateNorm=0.0_r8
+        StateNorm=my_norm
+      ELSE
+        StateNorm=StateNorm+my_norm
       END IF
-      StateNorm=StateNorm+my_norm
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
@@ -1275,9 +1278,10 @@
 #  endif
 !$OMP CRITICAL (TL_DOT)
         IF (tile_count.eq.0) THEN
-          DotProduct=0.0_r8
+          DotProduct=my_dot
+        ELSE
+          DotProduct=DotProduct+my_dot
         END IF
-        DotProduct=DotProduct+my_dot
         tile_count=tile_count+1
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
@@ -1529,9 +1533,10 @@
 #  endif
 !$OMP CRITICAL (AD_DOT)
       IF (tile_count.eq.0) THEN
-        adDotProduct=0.0_r8
+        adDotProduct=my_dot
+      ELSE
+        adDotProduct=adDotProduct+my_dot
       END IF
-      adDotProduct=adDotProduct+my_dot
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0

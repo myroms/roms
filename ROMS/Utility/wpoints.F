@@ -360,7 +360,8 @@
 !-----------------------------------------------------------------------
 !  Determine size of state vector.
 !-----------------------------------------------------------------------
-#  if defined FORCING_SV || defined SO_SEMI
+#  if defined FORCING_SV || \
+      defined SO_SEMI    || defined STOCHASTIC_OPT
 !
 !  The state vector may contain free-surface, momentum, tracers,
 !  surface momentum stresses, amd surface tracer fluxes.
@@ -442,7 +443,6 @@
         WRITE (stdout,'(/)')
       END IF
       Nstr(ng)=1+MyRank*block_size
-!!    Nend(ng)=MIN(Mstate(ng),Nstr(ng)+block_size-1)
       Nend(ng)=Nstr(ng)+block_size-1
       Mstate(ng)=Nstate(ng)*numthreads
 #  else

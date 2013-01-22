@@ -766,6 +766,10 @@
 !  arrays and adjoint ocean time. This is used in 4DVAR for IO
 !  maniputations.
 !
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        logical, allocatable :: LwrtState3d(:)
+        logical, allocatable :: SOinitial(:)
+#endif
         logical, allocatable :: LwrtState2d(:)
         logical, allocatable :: LwrtTime(:)
 !
@@ -1786,6 +1790,11 @@
       allocate ( LdefNRM(4,Ngrids) )
       allocate ( LwrtNRM(4,Ngrids) )
 
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+      allocate ( LwrtState3d(Ngrids) )
+      allocate ( SOinitial(Ngrids) )
+#endif
+
       allocate ( LwrtState2d(Ngrids) )
       allocate ( LwrtTime(Ngrids) )
 
@@ -2255,6 +2264,10 @@
         LwrtTLM(ng)=.FALSE.
         LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        LwrtState3d(ng)=.FALSE.
+        SOinitial(ng)=.FALSE.
+#endif
         LwrtTime(ng)=.TRUE.
         ldefout(ng)=.FALSE.
 

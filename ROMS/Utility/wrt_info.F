@@ -1029,9 +1029,9 @@
 # endif
 #endif
 
-#if defined FORCING_SV || defined SO_SEMI
+#if defined FORCING_SV || defined SO_SEMI || defined STOCHASTIC_OPT
 !
-!  Singulat=r Forcing Vectors or Stochastic Optimals state switches.
+!  Singular Forcing Vectors or Stochastic Optimals state switches.
 !
       CALL netcdf_put_lvar (ng, model, ncname, 'Fzeta',                 &
      &                      SCALARS(ng)%Fstate(isFsur),                 &

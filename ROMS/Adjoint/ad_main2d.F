@@ -36,13 +36,16 @@
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT || defined FORCING_SV
       USE ad_forcing_mod, ONLY : ad_forcing
 # endif
 # ifdef ADJUST_WSTRESS
       USE ad_frc_adjust_mod, ONLY : ad_frc_adjust
 # endif
       USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+      USE ad_ini_fields_mod, ONLY : ad_out_fields, ad_out_zeta
+# endif
 # if defined FOUR_DVAR && defined OBSERVATIONS
 #  ifdef WEAK_CONSTRAINT
       USE ad_htobs_mod, ONLY : ad_htobs
@@ -382,6 +385,26 @@
           END IF
         END DO
 # endif
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+!
+!-----------------------------------------------------------------------
+!  Define adjoint output arrays.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          IF (iic(ng).ne.ntend(ng)) THEN
+            DO tile=last_tile(ng),first_tile(ng),-1
+                CALL ad_out_fields (ng, tile, iADM)
+            END DO
+!$OMP BARRIER
+            DO tile=first_tile(ng),last_tile(ng),+1
+                CALL ad_set_depth (ng, tile)
+                CALL ad_out_zeta (ng, tile, iADM)
+            END DO
+!$OMP BARRIER
+          END IF
+        END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  If not a restart, initialize all time levels and compute other
@@ -406,6 +429,28 @@
 !$OMP BARRIER
           END IF
         END DO
+# ifdef FORCING_SV
+!
+!-----------------------------------------------------------------------
+!  Compute adjoint forcing for forcing singular vectors.
+!-----------------------------------------------------------------------
+!
+        IF (iic(ng).ne.ntend(ng)) THEN
+          DO ng=1,Ngrids
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ad_forcing (ng, tile, kstp(ng), knew(ng), nstp(ng))
+            END DO
+!$OMP BARRIER
+          END DO
+        ELSE
+          DO ng=1,Ngrids
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ad_forcing (ng, tile, kstp(ng), krhs(ng), nstp(ng))
+            END DO
+!$OMP BARRIER
+          END DO
+        END IF
+# endif
 
 # ifdef ADJUST_WSTRESS
 !

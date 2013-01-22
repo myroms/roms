@@ -273,7 +273,7 @@
 !
 !$OMP MASTER
         synchro_flag(ng)=.TRUE.
-        tdays(ng)=dstart+dt(ng)*FLOAT(ntimes(ng))*sec2day
+        tdays(ng)=dstart+dt(ng)*REAL(ntimes(ng),r8)*sec2day
         time(ng)=tdays(ng)*day2sec
         ntstart(ng)=ntimes(ng)+1
         ntend(ng)=1

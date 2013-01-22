@@ -491,7 +491,8 @@
 # if defined ADJOINT && \
     !(defined AD_SENSITIVITY      || defined FOUR_DVAR        || \
       defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SENSITIVITY_4DVAR   || defined SO_SEMI)
+      defined SENSITIVITY_4DVAR   || defined SO_SEMI          || \
+      defined STOCHASTIC_OPT )
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'iad_file',            &
      &                        TRIM(IAD(ng)%name))
@@ -2235,7 +2236,7 @@
 # endif
 #endif
 
-#if defined FORCING_SV || defined SO_SEMI
+#if defined FORCING_SV || defined SO_SEMI || defined STOCHASTIC_OPT
 !
 !  Singular Forcing Vectors or Stochastic Optimals state switches.
 !

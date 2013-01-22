@@ -1162,8 +1162,8 @@
             END DO
           END DO
         END DO
-# endif
       END IF
+# endif
 
       RETURN
       END SUBROUTINE ad_balance_tile

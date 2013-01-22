@@ -212,7 +212,7 @@
              bed(i,j,k,ithck)=???
              bed(i,j,k,iporo)=???
              DO ised=1,NST
-               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+               bed_frac(i,j,k,ised)=1.0_r8/REAL(NST,r8)
              END DO
           END DO
 !

@@ -1003,7 +1003,12 @@
 # if defined VAR_RHO_2D && defined SOLVE3D
       fac=1000.0_r8/rho0
 # endif
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE && \
+    !defined SOLVE3D
+      IF (FIRST_2D_STEP.and.SOinitial(ng)) THEN
+# else
       IF (FIRST_2D_STEP) THEN
+# endif
         cff1=dtfast(ng)
         DO j=JstrV-1,Jend
           DO i=IstrU-1,Iend
@@ -2711,7 +2716,11 @@
 !  "rhs_ubar" and "rhs_vbar" during all subsequent time steps.
 !
       IF (FIRST_2D_STEP.and.PREDICTOR_2D_STEP(ng)) THEN
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+# else
         IF (iic(ng).eq.ntfirst(ng)) THEN
+# endif
           DO j=Jstr,Jend
             DO i=IstrU,Iend
 !>            rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)
@@ -2764,7 +2773,11 @@
 #  endif
             END DO
           END DO
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1).and.SOinitial(ng)) THEN
+# else
         ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
+# endif
           DO j=Jstr,Jend
             DO i=IstrU,Iend
 !>            rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)
@@ -2989,7 +3002,12 @@
 !        since they are time-dependent.
 # endif
 !
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE && \
+    !defined SOLVE3D
+      IF (FIRST_2D_STEP.and.SOinitial(ng)) THEN
+# else
       IF (FIRST_2D_STEP) THEN
+# endif
         cff1=0.5_r8*dtfast(ng)
 # ifdef WET_DRY_NOT_YET
         cff2=1.0_r8/cff1

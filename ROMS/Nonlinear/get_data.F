@@ -993,7 +993,7 @@
      &                    1, FWD(ng), update(1),                        &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
 #  ifdef MASKING
-     &                    GRID(ng) % vmask,                             &
+     &                    GRID(ng) % rmask,                             &
 #  endif
      &                    OCEAN(ng) % tG(:,:,:,:,i))
           IF (exit_flag.ne.NoError) RETURN

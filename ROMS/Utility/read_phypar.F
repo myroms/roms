@@ -60,7 +60,8 @@
       logical, allocatable :: Ltracer(:,:)
 #if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
-    defined SENSITIVITY_4DVAR || defined SO_SEMI
+    defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
+    defined STOCHASTIC_OPT
       logical, allocatable :: Ladsen(:)
 #endif
 #if defined DIAGNOSTICS_UV
@@ -294,7 +295,8 @@
               CALL initialize_ncparam
 #if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
-    defined SENSITIVITY_4DVAR || defined SO_SEMI
+    defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
+    defined STOCHASTIC_OPT
               IF (.not.allocated(Ladsen)) THEN
                 allocate (Ladsen(MT*Ngrids))
               END IF
@@ -460,15 +462,8 @@
                 exit_flag=5
                 RETURN
               END IF
-# elif defined OPT_PERTURBATION
-              IF (NCV.lt.(2*NEV)) THEN
-                IF (Master) WRITE (out,260) 'NCV = ', NCV,              &
-     &            'Must be greater than or equal to 2*NEV'
-                exit_flag=5
-                RETURN
-              END IF
 # else
-              IF (NCV.lt.(2*NEV)) THEN
+              IF (NCV.lt.NEV) THEN
                 IF (Master) WRITE (out,260) 'NCV = ', NCV,              &
      &            'Must be greater than NEV'
                 exit_flag=5
@@ -932,7 +927,8 @@
               END DO
 # endif
 #endif
-#if defined FORCING_SV || defined SO_SEMI
+#if defined FORCING_SV     || defined SO_SEMI || \
+    defined STOCHASTIC_OPT
             CASE ('Fstate(isFsur)')
               IF (isFsur.eq.0) THEN
                 IF (Master) WRITE (out,280) 'isFsur'
@@ -1038,7 +1034,8 @@
               END DO
 # endif
 #endif
-#ifdef SO_SEMI
+#if defined SO_SEMI        || \
+   (defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE)
             CASE ('SO_decay')
               Npts=load_r(Nval, Rval, Ngrids, SO_decay)
             CASE ('SO_sdev(isFsur)')
@@ -2595,7 +2592,8 @@
       END DO
 #endif
 
-#if defined FORCING_SV || defined SO_SEMI
+#if defined FORCING_SV     || defined SO_SEMI || \
+    defined STOCHASTIC_OPT
 !
 !  Make sure that logical output switches are activated for the
 !  Forcing Singular Vectors or Stochastic Optimals variables.
@@ -2739,6 +2737,13 @@
 !
         nRST(ng)=ntimes(ng)
 #endif
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+!
+!  For red noise stochastic optimals, nADJ must equal the number of
+!  trapezoidal intervals.
+!
+        nADJ(ng)=ntimes(ng)/Nintervals
+#endif
 #if defined FOUR_DVAR || defined IMPULSE
 !
 !  Set size of additonal dimension for error covariance normalization
@@ -2865,7 +2870,9 @@
 #if defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
     defined SENSITIVITY_4DVAR || \
     defined TL_W4DPSAS        || defined TL_W4DVAR           || \
-    defined W4DPSAS           || defined W4DVAR
+    defined W4DPSAS           || defined W4DVAR              || \
+    defined HESSIAN_SV        || defined HESSIAN_SO          || \
+    defined HESSIAN_FSV
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximun number of 4DVAR inner loop iterations.'
 #endif
@@ -3441,7 +3448,7 @@
           END DO
 # endif
 #endif
-#if defined FORCING_SV || defined SO_SEMI
+#if defined FORCING_SV || defined SO_SEMI || defined STOCHASTIC_OPT
           IF (SCALARS(ng)%Fstate(isFsur))                               &
      &       WRITE (out,170) SCALARS(ng)%Fstate(isFsur),                &
      &       'Fstate(isFsur)',                                          &
@@ -4504,7 +4511,9 @@
       defined IS4DVAR_SENSITIVITY || defined FORCING_SV        || \
       defined OPT_OBSERVATIONS    || defined OPT_PERTURBATION  || \
       defined SANITY_CHECK        || defined SENSITIVITY_4DVAR || \
-      defined SO_SEMI)
+      defined SO_SEMI             || defined STOCHASTIC_OPT    || \
+      defined HESSIAN_SV          || defined HESSIAN_SO        || \
+      defined HESSIAN_FSV)
           fname=IAD(ng)%name
           IF (.not.find_file(ng, fname)) GO TO 30
           WRITE (out,230) '    Input Adjoint Initial File:  ',          &

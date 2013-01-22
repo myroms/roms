@@ -419,9 +419,17 @@
 !
 !  Time step right-hand-side terms.
 !
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+# else
         IF (iic(ng).eq.ntfirst(ng)) THEN
+# endif
           cff=0.25_r8*dt(ng)
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1).and.SOinitial(ng)) THEN
+# else
         ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
+# endif
           cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
         ELSE
           cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8
@@ -901,9 +909,17 @@
 !
 !  Time step right-hand-side terms.
 !
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
+# else
           IF (iic(ng).eq.ntfirst(ng)) THEN
+# endif
             cff=0.25_r8*dt(ng)
+# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1).and.SOinitial(ng)) THEN
+# else
           ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
+# endif
             cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
           ELSE
             cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8

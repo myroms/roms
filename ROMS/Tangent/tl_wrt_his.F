@@ -22,7 +22,9 @@
 # ifdef SOLVE3D
       USE mod_coupling
 # endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
+     defined FORCING_SV    || defined STOCHASTIC_OPT || \
+     defined HESSIAN_SO    || defined HESSIAN_FSV
       USE mod_forces
 # endif
       USE mod_grid
@@ -194,6 +196,81 @@
           END IF
         END IF
       END DO
+# endif
+# if defined FORCING_SV || defined STOCHASTIC_OPT || \
+     defined HESSIAN_SO    || defined HESSIAN_FSV
+!
+!  Write out surface U-momentum stress.
+!
+      IF (Hout(idUsms,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iTLM, TLM(ng)%ncid, TLM(ng)%Vid(idUsms), &
+     &                     TLM(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask_io,                         &
+#  endif
+     &                     FORCES(ng) % tl_sustr)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUsms)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+      IF (Hout(idVsms,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iTLM, TLM(ng)%ncid, TLM(ng)%Vid(idVsms), &
+     &                     TLM(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask_io,                         &
+#  endif
+     &                     FORCES(ng) % tl_svstr)
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVsms)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  ifdef SOLVE3D
+!
+!  Write out net surface active tracer fluxes.
+!
+      DO itrc=1,NT(ng)
+        IF (Hout(idTsur(itrc),ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*r2dvar
+          status=nf_fwrite2d(ng, iTLM, TLM(ng)%ncid,                    &
+     &                       TLM(ng)%Vid(idTsur(itrc)),                 &
+     &                       TLM(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#   ifdef MASKING
+     &                       GRID(ng) % rmask_io,                       &
+#   endif
+     &                       FORCES(ng) % tl_stflx(:,:,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
+     &                          TLM(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+#  endif
 # endif
 !
 !  Write out free-surface (m)

@@ -128,6 +128,16 @@
 !  conditions in perturbation mode computations.
 !
       IF (LwrtTLM(ng)) THEN
+# if defined STOCHASTIC_OPT || defined FORCING_SV || \
+     defined HESSIAN_SO     || defined HESSIAN_FSV
+!
+!  Write only on first time step.
+!
+        IF (iic(ng).eq.1) THEN
+          CALL tl_wrt_his (ng)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+# else
         IF (LwrtPER(ng)) THEN
           IF ((iic(ng).gt.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nTLM(ng)).eq.0)) THEN
@@ -141,6 +151,7 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END IF
+# endif
       END IF
 
 # ifdef TL_AVERAGES
