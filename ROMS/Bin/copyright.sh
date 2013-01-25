@@ -89,9 +89,9 @@ foreach FILE ( `find ${c_dirs} ! -path '*/.svn/*' ! -name 'copyright.*' -type f 
 
   if ( `echo $FILE | grep -vc '.svn/'` ) then
     if ( $verb == 1 ) then
-      grep -l "${search}" $FILE && sed -i "s|${search}|${replace}|g" $FILE
+      grep -l "${search}" $FILE && sed -i -e "s|${search}|${replace}|g" $FILE
     else
-      grep -l "${search}" $FILE > /dev/null && sed -i "s|${search}|${replace}|g" $FILE
+      grep -l "${search}" $FILE > /dev/null && sed -i -e "s|${search}|${replace}|g" $FILE
     endif
   else
     echo "There is a .svn in the path: $FILE skipped"
@@ -103,9 +103,9 @@ end
 
 foreach FILE ( $special_files )
   if ( $verb == 1 ) then
-    grep -l "${search}" $FILE && sed -i "s|${search}|${replace}|g" $FILE
+    grep -l "${search}" $FILE && sed -i -e "s|${search}|${replace}|g" $FILE
   else
-    grep -l "${search}" $FILE > /dev/null && sed -i "s|${search}|${replace}|g" $FILE
+    grep -l "${search}" $FILE > /dev/null && sed -i -e "s|${search}|${replace}|g" $FILE
   endif
 end
 
