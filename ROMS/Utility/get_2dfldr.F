@@ -273,11 +273,11 @@
      &        /,15x,'in ',a)
   30  FORMAT (/,' GET_2DFLDR  - unable to open input NetCDF file: ',a)
   40  FORMAT (/,' GET_2DFLDR  - error while reading variable: ',a,2x,   &
-     &        ' at TIME index = ',i4)
+     &        ' at TIME index = ',i7)
   50  FORMAT (3x,' GET_2DFLDR  - ',a,/,19x,'(Min = ',1p,e15.8,0p,       &
      &        ' Max = ',1p,e15.8,0p,')')
   60  FORMAT (3x,' GET_2DFLDR  - ',a,',',t62,'t = ',a,/,19x,            &
-     &        '(Rec=',i4.4,', Index=',i1,', File: ',a,')',/,19x,        &
+     &        '(Rec=',i7.7,', Index=',i1,', File: ',a,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
 

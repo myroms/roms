@@ -1673,17 +1673,17 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' STOCHASTIC_OPT,'
       idriver=idriver+1
-#endif
-#ifdef STOCH_OPT_WHITE
+# ifdef STOCH_OPT_WHITE
       IF (Master) WRITE (stdout,20) 'STOCH_OPT_WHITE',                  &
      &   'Stochastic Optimals, white noise processes.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' STOCH_OPT_WHITE,'
-#else
+# else
       IF (Master) WRITE (stdout,20) '!STOCH_OPT_WHITE',                 &
      &   'Stochastic Optimals, red noise processes.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' !STOCH_OPT_WHITE,'
+# endif
 #endif
 #ifdef SWAN_COUPLING
       IF (Master) WRITE (stdout,20) 'SWAN_COUPLING',                    &
