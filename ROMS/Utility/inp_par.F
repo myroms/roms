@@ -43,7 +43,8 @@
 #ifdef DISTRIBUTE
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
-      integer :: inp, out, ic, ifield, itrc, ng, npts, sequence
+      integer :: inp, out, i, ic, ifield, itrc, ivar, ng, npts
+      integer :: sequence
 
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
@@ -882,6 +883,29 @@
         END DO
         NTCLM(ng)=ic
 #endif
+
+#if defined TANGENT || defined TL_IOMS
+!
+!  Set lateral boundary condition switches for the tangent linear
+!  models (TLM and RPM) to the same values as the adjoint model.
+!
+        DO ivar=1,nLBCvar
+          DO i=1,4
+            tl_LBC(i,ivar,ng)%acquire  =ad_LBC(i,ivar,ng)%acquire
+            tl_LBC(i,ivar,ng)%Chapman  =ad_LBC(i,ivar,ng)%Chapman
+            tl_LBC(i,ivar,ng)%clamped  =ad_LBC(i,ivar,ng)%clamped
+            tl_LBC(i,ivar,ng)%closed   =ad_LBC(i,ivar,ng)%closed
+            tl_LBC(i,ivar,ng)%Flather  =ad_LBC(i,ivar,ng)%Flather
+            tl_LBC(i,ivar,ng)%gradient =ad_LBC(i,ivar,ng)%gradient
+            tl_LBC(i,ivar,ng)%nested   =ad_LBC(i,ivar,ng)%nested
+            tl_LBC(i,ivar,ng)%nudging  =ad_LBC(i,ivar,ng)%nudging
+            tl_LBC(i,ivar,ng)%periodic =ad_LBC(i,ivar,ng)%periodic
+            tl_LBC(i,ivar,ng)%radiation=ad_LBC(i,ivar,ng)%radiation
+            tl_LBC(i,ivar,ng)%reduced  =ad_LBC(i,ivar,ng)%reduced
+          END DO
+        END DO
+#endif
+
       END DO
 !
 !-----------------------------------------------------------------------
