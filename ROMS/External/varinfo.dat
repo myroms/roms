@@ -1892,7 +1892,8 @@
 
 !
 !------------------------------------------------------------------------------
-!  Climatotogy variables.
+!  Climatotogy variables.  Active and passive climatology tracers variable
+!  metadata is set internally in "mod_ncparam".
 !------------------------------------------------------------------------------
 !
 
@@ -1957,24 +1958,6 @@
   'sst_time'
   'idSSTc'
   'r2dvar'
-  1.0d0
-
-'temp'                                             ! Input
-  'potential temperature climatology'
-  'Celsius'                                        ! [Celsius]
-  'temp, scalar, series'
-  'temp_time'
-  'idTclm(itemp)'
-  'r3dvar'
-  1.0d0
-
-'salt'                                             ! Input
-  'salinity climatology'
-  'nondimensional'                                 ! [PSU]
-  'salt, scalar, series'
-  'salt_time'
-  'idTclm(isalt)'
-  'r3dvar'
   1.0d0
 
 !

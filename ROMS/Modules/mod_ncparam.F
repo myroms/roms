@@ -1202,10 +1202,6 @@
               idSSSc=varid
             CASE ('idSSTc')
               idSSTc=varid
-            CASE ('idTclm(itemp)')
-              idTclm(itemp)=varid
-            CASE ('idTclm(isalt)')
-              idTclm(isalt)=varid
 #if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
@@ -2159,6 +2155,40 @@
   40  CLOSE (inp)
 
 #ifdef SOLVE3D
+# ifdef TCLIMATOLOGY
+!
+!-----------------------------------------------------------------------
+!  Set climatology tracers (active and passive) metadata. The variable
+!  name and units are the same as the basic tracers. The default
+!  time-variable name is the same as the variable name but with the
+!  _time suffix.  Recall that other time-variables names are allowed
+!  provided that the input NetCDF variable has the "time" attribute
+!  with the appropriate value.
+!-----------------------------------------------------------------------
+!
+      DO i=1,MT
+        varid=varid+1
+        IF (varid.gt.MV) THEN
+          WRITE (stdout,60) MV, varid
+          STOP
+        END IF
+        idTclm(i)=varid
+        DO ng=1,Ngrids
+          Fscale(varid,ng)=1.0_r8
+          Iinfo(1,varid,ng)=r3dvar
+        END DO
+        WRITE (Vname(1,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(1,idTvar(i))))
+        WRITE (Vname(2,varid),'(a,a)')                                  &
+     &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ' climatology'
+        WRITE (Vname(3,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
+        WRITE (Vname(4,varid),'(a,a)')                                  &
+     &        TRIM(Vname(1,varid)), ', scalar, series'
+        WRITE (Vname(5,varid),'(a,a)')                                  &
+     &        TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_time'
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set passive tracers surface flux metadata. The variable name is the

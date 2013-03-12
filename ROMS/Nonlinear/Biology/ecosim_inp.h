@@ -1131,7 +1131,7 @@
 #ifdef TCLIMATOLOGY
             DO itrc=1,NBT
               i=idbio(itrc)
-              WRITE (out,110) LtracerCLM(i,ng), 'LtracerCLM',           &
+              WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM',           &
      &              i, 'Processing climatology on tracer ', i,          &
      &              TRIM(Vname(1,idTvar(i)))
             END DO

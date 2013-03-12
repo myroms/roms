@@ -115,7 +115,7 @@
       krhs(1:Ngrids)=1
 
       allocate ( kstp(Ngrids) )
-      knew(1:Ngrids)=1
+      kstp(1:Ngrids)=1
 
       allocate ( nnew(Ngrids) )
       nnew(1:Ngrids)=1
