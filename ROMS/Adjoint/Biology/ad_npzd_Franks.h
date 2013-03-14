@@ -651,7 +651,7 @@
 !>   &                              tl_cff*Hz(i,j,k)+cff*tl_Hz(i,j,k)
 !>
               ad_Hz(i,j,k)=ad_Hz(i,j,k)+cff*ad_t(i,j,k,nnew,ibio)
-              ad_cff=add_cff+Hz(i,j,k)*ad_t(i,j,k,nnew,ibio)
+              ad_cff=ad_cff+Hz(i,j,k)*ad_t(i,j,k,nnew,ibio)
 !>            tl_cff=tl_Bio(i,k,ibio)-tl_Bio_old(i,k,ibio)
 !>
               ad_Bio_old(i,k,ibio)=ad_Bio_old(i,k,ibio)-ad_cff
