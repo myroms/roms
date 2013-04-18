@@ -95,8 +95,8 @@
       Imax=Imin+2
       Jmin=-2+(Mm(ng)+1)/2
       Jmax=Jmin+2
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
           IF (((Imin.le.i).and.(i.le.Imax)).and.                        &
      &        ((Jmin.le.j).and.(j.le.Jmax))) THEN
@@ -105,8 +105,8 @@
         END DO
       END DO
 #elif defined FLT_TEST
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
           IF (j.eq.1 ) mask(i,j)=0.0_r8
           IF (j.eq.Mm(ng)) mask(i,j)=0.0_r8
@@ -117,62 +117,62 @@
         END DO
       END DO
 #elif defined LAKE_SIGNELL
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
         END DO
       END DO
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=Jstr-1,Jend+1
+        DO j=Jstrm1,Jendp1
           mask(Istr-1,j)=0.0_r8
         END DO
       END IF
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=Jstr-1,Jend+1
+        DO j=Jstrm1,Jendp1
           mask(Iend+1,j)=0.0_r8
         END DO
       END IF
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr-1,Iend+1
+        DO i=Istrm1,Iendp1
           mask(i,Jstr-1)=0.0_r8
         END DO
       END IF
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr-1,Iend+1
+        DO i=Istrm1,Iendp1
           mask(i,Jend+1)=0.0_r8
         END DO
       END IF
 #elif defined RIVERPLUME1
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
         END DO
       END DO
-      DO i=Istr-2,MIN(5,Iend+2)
-        DO j=Jstr-2,MIN(Mm(ng)-18,Jend+2)
+      DO i=Istrm2,MIN(5,Iendp2)
+        DO j=Jstrm2,MIN(Mm(ng)-18,Jendp2)
           mask(i,j)=0.0_r8
         END DO
-        DO j=MAX(Jstr-2,Mm(ng)-16),Jend+2
+        DO j=MAX(Jstrm2,Mm(ng)-16),Jendp2
           mask(i,j)=0.0_r8
         END DO
       END DO
 #elif defined RIVERPLUME2
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
         END DO
       END DO
-      DO i=Istr-2,MIN(5,Iend+2)
-        DO j=Jstr-2,MIN(Mm(ng)-11,Jend+2)
+      DO i=Istrm2,MIN(5,Iendp2)
+        DO j=Jstrm2,MIN(Mm(ng)-11,Jendp2)
           mask(i,j)=0.0_r8
         END DO
-        DO j=MAX(Jstr-2,Mm(ng)-9),Jend+2
+        DO j=MAX(Jstrm2,Mm(ng)-9),Jendp2
           mask(i,j)=0.0_r8
         END DO
       END DO
 #elif defined SHOREFACE
-      DO j=Jstr-2,Jend+2
-        DO i=Istr-2,Iend+2
+      DO j=Jstrm2,Jendp2
+        DO i=Istrm2,Iendp2
           mask(i,j)=1.0_r8
         END DO
       END DO
@@ -180,8 +180,8 @@
       ana_mask.h: no values provided for mask.
 #endif
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           rmask(i,j)=mask(i,j)
         END DO
       END DO
@@ -190,13 +190,13 @@
 !  Compute Land/Sea mask of U- and V-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           umask(i,j)=mask(i-1,j)*mask(i,j)
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           vmask(i,j)=mask(i,j-1)*mask(i,j)
         END DO
       END DO
@@ -205,8 +205,8 @@
 !  Compute Land/Sea mask of PSI-points.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,JendR
-        DO i=Istr,IendR
+      DO j=JstrP,JendT
+        DO i=IstrP,IendT
           pmask(i,j)=mask(i-1,j-1)*mask(i,j-1)*                         &
      &               mask(i-1,j  )*mask(i,j  )
         END DO

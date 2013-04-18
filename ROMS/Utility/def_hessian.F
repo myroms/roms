@@ -96,9 +96,9 @@
 !
       IF (Master) THEN
         IF (LdefHSS(ng)) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -1031,8 +1031,10 @@
         HSS(ng)%Rindex=rec_size
       END IF QUERY
 !
-  10  FORMAT (3x,'DEF_HESSIAN  - creating Hessian  file: ',a)
-  20  FORMAT (3x,'DEF_HESSIAN  - inquiring Hessian file: ',a)
+  10  FORMAT (3x,'DEF_HESSIAN  - creating Hessian file, Grid ',i2.2,    &
+     &        ': ',a)
+  20  FORMAT (3x,'DEF_HESSIAN  - inquiring Hessian file, Grid ',i2.2,   &
+     &        ': ',a)
   30  FORMAT (/,' DEF_HESSIAN - unable to create Hessian NetCDF file:', &
      &        1x,a)
   40  FORMAT (a,', Hessian eigenvectors')

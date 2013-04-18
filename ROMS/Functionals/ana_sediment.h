@@ -134,22 +134,22 @@
 !-----------------------------------------------------------------------
 !
 # if defined BL_TEST || defined NJ_BIGHT
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,isd50)=0.0005_r8
           bottom(i,j,idens)=2650.0_r8
         END DO
       END DO
 # elif defined LAKE_SIGNELL || defined ADRIA02
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,isd50)=0.000150_r8    ! 150 microns
           bottom(i,j,idens)=2650.0_r8
         END DO
       END DO
 # elif defined SED_TOY
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,isd50)=0.0005_r8
           bottom(i,j,idens)=2650.0_r8
         END DO
@@ -173,8 +173,8 @@
 !  Yalin method (Miller et. al, 1977).
 !
       Kvisc=0.0013_r8/rho0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           rhoWater=rho(i,j,1)+1000.0_r8
           cff=SQRT((bottom(i,j,idens)-rhoWater)*                        &
      &             g*bottom(i,j,isd50)*bottom(i,j,isd50)*               &
@@ -197,8 +197,8 @@
         END DO
       END DO
 #  else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,itauc)=0.15_r8/rho0
         END DO
       END DO
@@ -210,8 +210,8 @@
 !-----------------------------------------------------------------------
 !
       Kvisc=0.0013_r8/rho0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,iwsed)=0.02_r8
 !!
 !! Consider Souslby (1997) estimate of settling velocity.
@@ -233,8 +233,8 @@
 !
       DO ised=1,NST
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               t(i,j,k,1,idsed(ised))=Csed(ised,ng)
             END DO
           END DO
@@ -248,8 +248,8 @@
 !-----------------------------------------------------------------------
 !
 # if defined LAKE_SIGNELL || defined ADRIA02
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -270,8 +270,8 @@
         END DO
       END DO
 # elif defined ESTUARY_TEST
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -292,8 +292,8 @@
         END DO
       END DO
 # elif defined INLET_TEST
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -314,8 +314,8 @@
         END DO
       END DO
 # elif defined SED_TOY
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -337,13 +337,13 @@
           bottom(i,j,izdef)=Zob(ng)
         END DO
       END DO
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
         END DO
       END DO
 # elif defined SED_TEST1
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -364,8 +364,8 @@
         END DO
       END DO
 # elif defined SHOREFACE
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -386,8 +386,8 @@
         END DO
       END DO
 # elif defined TEST_CHAN
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Set bed layer properties.
 !
@@ -417,8 +417,8 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,Nbed
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
 !
 !  Calculate mass so it is consistent with density, thickness, and
 !  porosity.
@@ -435,8 +435,8 @@
 !
 !  Set exposed sediment layer properties.
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           cff1=1.0_r8
           cff2=1.0_r8
           cff3=1.0_r8

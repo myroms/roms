@@ -142,20 +142,20 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           ZoBot(i,j)=???
         END DO
       END DO
 # elif defined UV_LDRAG
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           rdrag(i,j)=???
         END DO
       END DO
 # elif defined UV_QDRAG
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           rdrag2(i,j)=???
         END DO
       END DO
@@ -198,8 +198,8 @@
 !  Load bottom roughness length into bottom properties array.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           bottom(i,j,izdef)=ZoBot(i,j)
         END DO
       END DO

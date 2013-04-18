@@ -276,8 +276,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IminU, IminV, ImaxU, ImaxV
-      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: NSUB, i, ibry, is, j, k, rec
 
       real(r8), parameter :: Large = 1.0E+20_r8
@@ -314,58 +312,6 @@
 #endif
 
 #include "set_bounds.h"
-!
-!-----------------------------------------------------------------------
-!  Set local I- and J-indices.
-!-----------------------------------------------------------------------
-!
-      IF (EWperiodic(ng)) THEN
-        IminU=Istr
-        ImaxU=Iend
-        IminV=Istr
-        ImaxV=Iend
-      ELSE
-        IF (ComposedGrid(ng)) THEN
-          IminU=IstrP
-          ImaxU=IendT
-          IminV=IstrT
-          ImaxV=IendT
-        ELSE IF (RefinedGrid(ng)) THEN
-          IminU=IstrP+1
-          ImaxU=IendT
-          IminV=IstrT
-          ImaxV=IendT
-        ELSE
-          IminU=Istr
-          ImaxU=IendR
-          IminV=IstrR
-          ImaxV=IendR
-        END IF
-      END IF
-
-      IF (NSperiodic(ng)) THEN
-        JminU=Jstr
-        JmaxU=Jend
-        JminV=Jstr
-        JmaxV=Jend
-      ELSE
-        IF (ComposedGrid(ng)) THEN
-          JminU=JstrT
-          JmaxU=JendT
-          JminV=JstrP
-          JmaxV=JendT
-        ELSE IF (RefinedGrid(ng)) THEN
-          JminU=JstrT
-          JmaxU=JendT
-          JminV=JstrP+1
-          JmaxV=JendT
-        ELSE
-          JminU=JstrR
-          JmaxU=JendR
-          JminV=Jstr
-          JmaxV=JendR
-        END IF
-      END IF
 !
 !-----------------------------------------------------------------------
 !  Compute 1/m, 1/n, 1/mn, and f/mn at horizontal RHO-points.
@@ -437,8 +383,8 @@
 !  Compute m/n, 1/m, and 1/n at horizontal U-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JminU,JmaxU
-        DO i=IminU,ImaxU
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           pmon_u(i,j)=(pm(i-1,j)+pm(i,j))/(pn(i-1,j)+pn(i,j))
           pnom_u(i,j)=(pn(i-1,j)+pn(i,j))/(pm(i-1,j)+pm(i,j))
           om_u(i,j)=2.0_r8/(pm(i-1,j)+pm(i,j))
@@ -474,8 +420,8 @@
 !  Compute n/m, 1/m, and 1/m at horizontal V-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JminV,JmaxV
-        DO i=IminV,ImaxV
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           pmon_v(i,j)=(pm(i,j-1)+pm(i,j))/(pn(i,j-1)+pn(i,j))
           pnom_v(i,j)=(pn(i,j-1)+pn(i,j))/(pm(i,j-1)+pm(i,j))
           om_v(i,j)=2.0_r8/(pm(i,j-1)+pm(i,j))
@@ -511,8 +457,8 @@
 !  Compute n/m and m/n at horizontal PSI-points.
 !-----------------------------------------------------------------------
 !
-      DO j=JminV,JmaxV
-        DO i=IminU,ImaxU
+      DO j=JstrP,JendT
+        DO i=IstrP,IendT
           pnom_p(i,j)=(pn(i-1,j-1)+pn(i-1,j)+pn(i,j-1)+pn(i,j))/        &
      &                (pm(i-1,j-1)+pm(i-1,j)+pm(i,j-1)+pm(i,j))
           pmon_p(i,j)=(pm(i-1,j-1)+pm(i-1,j)+pm(i,j-1)+pm(i,j))/        &
@@ -988,9 +934,12 @@
 # endif
 #endif
         IF (Master.and.LwrtInfo(ng)) THEN
-          WRITE(stdout,10) DXmin(ng)/1000.0_r8, DXmax(ng)/1000.0_r8,    &
+          WRITE(stdout,10) ng,                                          &
+     &                     DXmin(ng)/1000.0_r8, DXmax(ng)/1000.0_r8,    &
      &                     DYmin(ng)/1000.0_r8, DYmax(ng)/1000.0_r8
-  10      FORMAT (/,' Minimum X-grid spacing, DXmin = ',1pe15.8,' km',  &
+  10      FORMAT (/,' Metrics information for Grid ',i2.2,':',          &
+     &            /,' ===============================',/,               &
+     &            /,' Minimum X-grid spacing, DXmin = ',1pe15.8,' km',  &
      &            /,' Maximum X-grid spacing, DXmax = ',1pe15.8,' km',  &
      &            /,' Minimum Y-grid spacing, DYmin = ',1pe15.8,' km',  &
      &            /,' Maximum Y-grid spacing, DYmax = ',1pe15.8,' km')

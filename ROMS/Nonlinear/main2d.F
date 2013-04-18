@@ -23,6 +23,9 @@
       USE mod_coupler
 # endif
       USE mod_iounits
+# ifdef NESTING
+      USE mod_nesting
+# endif
       USE mod_scalars
       USE mod_stepping
 !
@@ -73,35 +76,57 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, tile
-      integer :: next_indx1
+      logical :: Time_Step
+
+      integer :: Nsteps, Rsteps
+      integer :: ig, istep, ng, nl, tile
+      integer :: next_indx1, tile
 # ifdef FLOATS
       integer :: Lend, Lstr, chunk_size
 # endif
-      real(r8) :: MaxDT, my_StepTime
 !
 !=======================================================================
 !  Time-step vertically integrated equations.
 !=======================================================================
 !
-      my_StepTime=0.0_r8
-      MaxDT=MAXVAL(dt)
-
-      STEP_LOOP : DO WHILE (my_StepTime.le.(RunInterval+0.5_r8*MaxDT))
-
-        my_StepTime=my_StepTime+MaxDT
+!  Time-step the 3D kernel for the specified time interval (seconds),
+!  RunInterval.
 !
-!  Set time clock.
+      Time_Step=.TRUE.
 !
-        DO ng=1,Ngrids
-          iic(ng)=iic(ng)+1
-!$OMP MASTER
-          time(ng)=time(ng)+dt(ng)
-          tdays(ng)=time(ng)*sec2day
-          CALL time_string (time(ng), time_code(ng))
-!$OMP END MASTER
-!$OMP BARRIER
-        END DO
+      KERNEL_LOOP : DO WHILE (Time_Step)
+!
+!  In nesting applications, the number of nesting layers (NestLayers) is
+!  used to facilitate refinement grids and composite/refinament grids
+!  combinations. Otherwise, the solution it is looped once for a single
+!  grid application (NestLayers = 1).
+!
+        NEST_LAYER : DO nl=1,NestLayers
+!
+!  Determine number of time steps to compute in each nested grid layer
+!  based on the specified time interval (seconds), RunInterval. Notice
+!  that RunInterval is set in the calling driver. Its value may span
+!  the full period of the simulation, or a multi-model coupling
+!  interval, or just a single step.
+!
+          CALL ntimesteps (nl, GridsInLayer(nl), iNLM, RunInterval,     &
+     &                     Nsteps, Rsteps)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Time-step governing equations for Nsteps.
+!
+          STEP_LOOP : DO istep=1,Nsteps
+!
+!  Set time indices and time clock.
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              iic(ng)=iic(ng)+1
+              time(ng)=time(ng)+dt(ng)
+              tdays(ng)=time(ng)*sec2day
+              CALL time_string (time(ng), time_code(ng))
+              IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
+            END DO
 
 # if defined W4DPSAS || defined NLM_OUTER || \
      defined W4DPSAS_SENSITIVITY
@@ -114,63 +139,97 @@
 !  snapshots (FrequentImpulse=TRUE).
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (FrequentImpulse(ng)) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL forcing (ng, tile, kstp(ng), nstp(ng))
-            END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (FrequentImpulse(ng)) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL forcing (ng, tile, kstp(ng), nstp(ng))
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
 # endif
 !
 !-----------------------------------------------------------------------
 !  Read in required data, if any, from input NetCDF files.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
 !$OMP MASTER
-          CALL get_data (ng)
+              CALL get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
-        END DO
+              IF (exit_flag.ne.NoError) RETURN
+            END DO
 !
 !-----------------------------------------------------------------------
 !  If applicable, process input data: time interpolate between data
 !  snapshots.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL set_data (ng, tile)
-          END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL set_data (ng, tile)
+              END DO
 !$OMP BARRIER
-        END DO
-        IF (exit_flag.ne.NoError) RETURN
+            END DO
+            IF (exit_flag.ne.NoError) RETURN
+
+# ifdef NESTING
+!
+!-----------------------------------------------------------------------
+!  If refinement grid and not initialization, extract donor grid data.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (RefinedGrid(ng).and.(iic(ng).gt.1)) THEN
+!
+!  Extract donor grid data at contact points and store it in REFINED
+!  structure so it can be used for the space-time interpolation.
+!
+                IF ((istep.eq.1).and.(RefineScale(ng).gt.0)) THEN
+                  CALL nesting (ng, iNLM, ngetD)
+                END IF
+              END IF
+            END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize all time levels and compute other initial fields.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (iic(ng).eq.ntstart(ng)) THEN
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (iic(ng).eq.ntstart(ng)) THEN
 !
 !  Initialize free-surface.
 !
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ini_zeta (ng, tile, iNLM)
-            END DO
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL ini_zeta (ng, tile, iNLM)
+                END DO
 !$OMP BARRIER
 !
 !  Initialize other state variables.
 !
-            DO tile=last_tile(ng),first_tile(ng),-1
-              CALL ini_fields (ng, tile, iNLM)
-            END DO
+                DO tile=last_tile(ng),first_tile(ng),-1
+                  CALL ini_fields (ng, tile, iNLM)
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+
+# ifdef NESTING
+!
+!  Extract donor grid initial data at contact points and store it in
+!  REFINED structure so it can be used for the space-time interpolation.
+!
+                IF (RefinedGrid(ng)) THEN
+                  CALL nesting (ng, iNLM, ngetD)
+                END IF
+# endif
+              END IF
+            END DO
 !
 !-----------------------------------------------------------------------
 !  Compute and report diagnostics. If appropriate, accumulate time-
@@ -178,22 +237,23 @@
 !  jobs.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1         ! irreversible
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1     ! irreversible
 # ifdef AVERAGES
-            CALL set_avg (ng, tile)
+                CALL set_avg (ng, tile)
 # endif
 # ifdef DIAGNOSTICS
-            CALL set_diags (ng, tile)
+                CALL set_diags (ng, tile)
 # endif
-            CALL diag (ng, tile)
+                CALL diag (ng, tile)
 # ifdef TLM_CHECK
-            CALL nl_dotproduct (ng, tile, Lnew(ng))
+                CALL nl_dotproduct (ng, tile, Lnew(ng))
 # endif
-          END DO
+              END DO
 !$OMP BARRIER
-        END DO
-        IF (exit_flag.ne.NoError) RETURN
+            END DO
+            IF (exit_flag.ne.NoError) RETURN
 
 # ifdef AIR_OCEAN
 !
@@ -202,15 +262,16 @@
 !  timesteps: get air/sea fluxes.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF ((iic(ng).ne.ntstart(ng)).and.                             &
-     &        MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
-            DO tile=last_tile(ng),first_tile(ng),-1
-              CALL ocn2atm_coupling (ng, tile)
-            END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF ((iic(ng).ne.ntstart(ng)).and.                         &
+     &            MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
+                DO tile=last_tile(ng),first_tile(ng),-1
+                  CALL ocn2atm_coupling (ng, tile)
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
 # endif
 
 # ifdef ADJUST_BOUNDARY
@@ -221,15 +282,16 @@
 !  timestep.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (iic(ng).lt.(ntend(ng)+1)) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL obc_adjust (ng, tile, Lbinp(ng))
-              CALL load_obc (ng, tile, Lbout(ng))
-            END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (iic(ng).lt.(ntend(ng)+1)) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL obc_adjust (ng, tile, Lbinp(ng))
+                  CALL load_obc (ng, tile, Lbout(ng))
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
 # endif
 
 # ifdef ADJUST_WSTRESS
@@ -239,14 +301,15 @@
 !  Load surface forcing to storage arrays.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (iic(ng).lt.(ntend(ng)+1)) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL frc_adjust (ng, tile, Lfinp(ng))
-            END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (iic(ng).lt.(ntend(ng)+1)) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL frc_adjust (ng, tile, Lfinp(ng))
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
 # endif
 
 # ifdef WAVES_OCEAN
@@ -256,15 +319,16 @@
 !  timesteps: get waves/sea fluxes.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF ((iic(ng).ne.ntstart(ng)).and.                             &
-     &        MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ocn2wav_coupling (ng, tile)
-            END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF ((iic(ng).ne.ntstart(ng)).and.                         &
+     &            MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL ocn2wav_coupling (ng, tile)
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
 # endif
 
 # ifdef NEARSHORE_MELLOR
@@ -273,29 +337,41 @@
 !  Compute radiation stress terms.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          DO tile=last_tile(ng),first_tile(ng),-1
-            CALL radiation_stress (ng, tile)
-          END DO
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=last_tile(ng),first_tile(ng),-1
+                CALL radiation_stress (ng, tile)
+              END DO
 !$OMP BARRIER
-        END DO
+            END DO
 # endif
 !
 !-----------------------------------------------------------------------
 !  Set vertical boundary conditions. Process tidal forcing.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL set_vbc (ng, tile)
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL set_vbc (ng, tile)
 # if defined SSH_TIDES || defined UV_TIDES
-            CALL set_tides (ng, tile)
+                CALL set_tides (ng, tile)
 # endif
-          END DO
+              END DO
 !$OMP BARRIER
-        END DO
+            END DO
+
 # ifdef NESTING
-        CALL nesting (100)
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for bottom stress variables.
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (ANY(CompositeGrid(:,ng))) THEN
+                CALL nesting (ng, iNLM, nbstr)
+              END IF
+            END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -304,14 +380,32 @@
 !  time step.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
 !$OMP MASTER
-          CALL output (ng)
+              CALL output (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF ((exit_flag.ne.NoError).or.                                &
-     &        ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) RETURN
-        END DO
+              IF ((exit_flag.ne.NoError).or.                            &
+     &            ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) THEN
+                RETURN
+              END IF
+            END DO
+
+# ifdef NESTING
+!
+!-----------------------------------------------------------------------
+!  If refinement grid, interpolate (space, time) state variables
+!  contact points from donor grid extracted data.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+                CALL nesting (ng, iNLM, nputD)
+              END IF
+            END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the
@@ -321,57 +415,81 @@
 !  Set time indices for predictor step. The PREDICTOR_2D_STEP switch
 !  it is assumed to be false before the first time-step.
 !
-        DO ng=1,Ngrids
-          iif(ng)=1
-          nfast(ng)=1
-          next_indx1=3-indx1(ng)
-          IF (.not.PREDICTOR_2D_STEP(ng)) THEN
-            PREDICTOR_2D_STEP(ng)=.TRUE.
-            IF (FIRST_2D_STEP) THEN
-              kstp(ng)=indx1(ng)
-            ELSE
-              kstp(ng)=3-indx1(ng)
-            END IF
-            knew(ng)=3
-            krhs(ng)=indx1(ng)
-          END IF
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              iif(ng)=1
+              nfast(ng)=1
+              next_indx1=3-indx1(ng)
+              IF (.not.PREDICTOR_2D_STEP(ng)) THEN
+                PREDICTOR_2D_STEP(ng)=.TRUE.
+                IF (FIRST_2D_STEP) THEN
+                  kstp(ng)=indx1(ng)
+                ELSE
+                  kstp(ng)=3-indx1(ng)
+                END IF
+                knew(ng)=3
+                krhs(ng)=indx1(ng)
+              END IF
 !
 !  Predictor step - Advance barotropic equations using 2D time-step
 !  ==============   predictor scheme.
 !
-          DO tile=last_tile(ng),first_tile(ng),-1
-            CALL step2d (ng, tile)
-          END DO
+              DO tile=last_tile(ng),first_tile(ng),-1
+                CALL step2d (ng, tile)
+              END DO
 !$OMP BARRIER
-        END DO
+            END DO
+
 # ifdef NESTING
-        CALL nesting (100)
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine Predictor Step section.
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (ANY(CompositeGrid(:,ng))) THEN
+                CALL nesting (ng, iNLM, n2dPS)
+              END IF
+            END DO
 # endif
 !
 !  Set time indices for corrector step.
 !
-        DO ng=1,Ngrids
-          IF (PREDICTOR_2D_STEP(ng)) THEN
-            PREDICTOR_2D_STEP(ng)=.FALSE.
-            knew(ng)=next_indx1
-            kstp(ng)=3-knew(ng)
-            krhs(ng)=3
-            IF (iif(ng).lt.(nfast(ng)+1)) indx1(ng)=next_indx1
-          END IF
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (PREDICTOR_2D_STEP(ng)) THEN
+                PREDICTOR_2D_STEP(ng)=.FALSE.
+                knew(ng)=next_indx1
+                kstp(ng)=3-knew(ng)
+                krhs(ng)=3
+                IF (iif(ng).lt.(nfast(ng)+1)) indx1(ng)=next_indx1
+              END IF
 !
 !  Corrector step - Apply 2D time-step corrector scheme.  Notice that
 !  ==============   there is not need for a corrector step during the
 !  auxiliary (nfast+1) time-step.
 !
-          IF (iif(ng).lt.(nfast(ng)+1)) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL step2d (ng, tile)
-            END DO
+              IF (iif(ng).lt.(nfast(ng)+1)) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL step2d (ng, tile)
+                END DO
 !$OMP BARRIER
-          END IF
-        END DO
+              END IF
+            END DO
+
 # ifdef NESTING
-        CALL nesting (100)
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine Corrector Step section.
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (ANY(CompositeGrid(:,ng))) THEN
+                CALL nesting (ng, iNLM, n2dCS)
+              END IF
+            END DO
 # endif
 
 # ifdef FLOATS
@@ -384,33 +502,41 @@
 !  variables do not have a global scope.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (Lfloats(Ng)) THEN
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              IF (Lfloats(ng)) THEN
 #  ifdef _OPENMP
-            chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
-            Lstr=1+MyThread*chunk_size
-            Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
+                chunk_size=(Nfloats(ng)+numthreads-1)/numthreads
+                Lstr=1+MyThread*chunk_size
+                Lend=MIN(Nfloats(ng),Lstr+chunk_size-1)
 #  else
-            Lstr=1
-            Lend=Nfloats(ng)
+                Lstr=1
+                Lend=Nfloats(ng)
 #  endif
-            CALL step_floats (ng, Lstr, Lend)
+                CALL step_floats (ng, Lstr, Lend)
 !$OMP BARRIER
 !
 !  Shift floats time indices.
 !
-            nfp1(ng)=MOD(nfp1(ng)+1,NFT+1)
-            nf  (ng)=MOD(nf  (ng)+1,NFT+1)
-            nfm1(ng)=MOD(nfm1(ng)+1,NFT+1)
-            nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
-            nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
-          END IF
-        END DO
+                nfp1(ng)=MOD(nfp1(ng)+1,NFT+1)
+                nf  (ng)=MOD(nf  (ng)+1,NFT+1)
+                nfm1(ng)=MOD(nfm1(ng)+1,NFT+1)
+                nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
+                nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
+              END IF
+            END DO
 # endif
-      END DO STEP_LOOP
 
-#else
-      SUBROUTINE main2d
-#endif
+          END DO STEP_LOOP
+
+        END DO NEST_LAYER
+
+      END DO KERNEL_LOOP
+
       RETURN
       END SUBROUTINE main2d
+#else
+      SUBROUTINE main2d
+      RETURN
+      END SUBROUTINE main2d
+#endif

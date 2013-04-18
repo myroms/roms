@@ -92,7 +92,7 @@
       IF (ANY(LBC(ieast,isTvar(:),ng)%acquire).and.                     &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             BOUNDARY(ng)%t_east(j,k,itemp)=T0(ng)
             BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
 # ifdef SEDIMENT
@@ -107,7 +107,7 @@
       IF (ANY(LBC(iwest,isTvar(:),ng)%acquire).and.                     &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             BOUNDARY(ng)%t_west(j,k,itemp)=T0(ng)
             BOUNDARY(ng)%t_west(j,k,isalt)=30.0_r8
 # ifdef SEDIMENT
@@ -123,7 +123,7 @@
       IF (ANY(LBC(ieast,isTvar(:),ng)%acquire).and.                     &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             IF (z_r(Iend+1,j,k).ge.-15.0_r8) THEN
               BOUNDARY(ng)%t_east(j,k,itemp)=2.04926425772840E+01_r8-   &
      &                                       z_r(Iend+1,j,k)*           &
@@ -167,7 +167,7 @@
       IF (ANY(LBC(isouth,isTvar(:),ng)%acquire).and.                     &
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO i=IstrR,IendR
+          DO i=IstrT,IendT
             IF (z_r(i,Jstr-1,k).ge.-15.0_r8) THEN
               BOUNDARY(ng)%t_south(i,k,itemp)=2.04926425772840E+01_r8-  &
      &                                        z_r(i,Jstr-1,k)*          &
@@ -212,7 +212,7 @@
       IF (ANY(LBC(ieast,isTvar(:),ng)%acquire).and.                     &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO k=1,N(ng)
-          DO j=JstrR,JendR
+          DO j=JstrT,JendT
             BOUNDARY(ng)%t_east(j,k,itemp)=20.0_r8
             BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
           END DO
@@ -224,7 +224,7 @@
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO j=JstrR,JendR
+            DO j=JstrT,JendT
               BOUNDARY(ng)%t_east(j,k,itrc)=0.0_r8
             END DO
           END DO
@@ -235,7 +235,7 @@
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO j=JstrR,JendR
+            DO j=JstrT,JendT
               BOUNDARY(ng)%t_west(j,k,itrc)=0.0_r8
             END DO
           END DO
@@ -246,7 +246,7 @@
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               BOUNDARY(ng)%t_south(i,k,itrc)=0.0_r8
             END DO
           END DO
@@ -257,7 +257,7 @@
      &    DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               BOUNDARY(ng)%t_north(i,k,itrc)=0.0_r8
             END DO
           END DO

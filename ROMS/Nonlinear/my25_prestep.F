@@ -214,20 +214,20 @@
 #  endif
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                grad (Istr-1,j)=grad (Istr,j)
-                gradL(Istr-1,j)=gradL(Istr,j)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                grad (Iend+2,j)=grad (Iend+1,j)
-                gradL(Iend+2,j)=gradL(Iend+1,j)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              grad (Istr-1,j)=grad (Istr,j)
+              gradL(Istr-1,j)=gradL(Istr,j)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              grad (Iend+2,j)=grad (Iend+1,j)
+              gradL(Iend+2,j)=gradL(Iend+1,j)
+            END DO
           END IF
         END IF
         cff=1.0_r8/6.0_r8
@@ -255,20 +255,20 @@
 #  endif
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                grad (i,Jstr-1)=grad (i,Jstr)
-                gradL(i,Jstr-1)=gradL(i,Jstr)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                grad (i,Jend+2)=grad (i,Jend+1)
-                gradL(i,Jend+2)=gradL(i,Jend+1)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              grad (i,Jstr-1)=grad (i,Jstr)
+              gradL(i,Jstr-1)=gradL(i,Jstr)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              grad (i,Jend+2)=grad (i,Jend+1)
+              gradL(i,Jend+2)=gradL(i,Jend+1)
+            END DO
           END IF
         END IF
         cff=1.0_r8/6.0_r8

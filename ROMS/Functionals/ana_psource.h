@@ -266,8 +266,8 @@
         DO is=1,Nsrc
           i=Isrc(is)
           j=Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+          IF (((IstrT.le.i).and.(i.le.IendT)).and.                      &
+     &        ((JstrT.le.j).and.(j.le.JendT))) THEN
             IF (ubar(i,j,knew).ne.0.0_r8) THEN
               cff=ABS(u(i,j,k,nnew)/ubar(i,j,knew))
             ELSE
@@ -291,8 +291,8 @@
         DO is=1,Nsrc-1
           i=Isrc(is)
           j=Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+          IF (((IstrT.le.i).and.(i.le.IendT)).and.                      &
+     &        ((JstrT.le.j).and.(j.le.JendT))) THEN
             IF (vbar(i,j,knew).ne.0.0_r8) THEN
               cff=ABS(v(i,j,k,nnew)/vbar(i,j,knew))
             ELSE
@@ -355,8 +355,8 @@
       DO is=1,(Nsrc-1)/2                     ! North end
         i=Isrc(is)
         j=Jsrc(is)
-        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
-     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+        IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
+     &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           Qbar(is)=-0.05_r8*om_v(i,j)*                                  &
      &             (0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+                  &
      &                      zeta(i  ,j,knew)+h(i  ,j)))
@@ -365,8 +365,8 @@
       DO is=(Nsrc-1)/2+1,Nsrc-1              ! South end
         i=Isrc(is)
         j=Jsrc(is)
-        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
-     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+        IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
+     &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           Qbar(is)=-0.05_r8*om_v(i,j)*                                  &
      &             (0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+                  &
      &                      zeta(i  ,j,knew)+h(i  ,j)))
@@ -384,8 +384,8 @@
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
-        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
-     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+        IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
+     &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           cff=0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                        &
      &                zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
           Qbar(is)=fac*cff
@@ -398,8 +398,8 @@
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
-        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
-     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+        IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
+     &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           cff=0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                        &
      &                zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
           Qbar(is)=fac*cff

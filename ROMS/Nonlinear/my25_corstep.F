@@ -374,20 +374,20 @@
 #  endif
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                gradK(Istr-1,j)=gradK(Istr,j)
-                gradP(Istr-1,j)=gradP(Istr,j)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                gradK(Iend+2,j)=gradK(Iend+1,j)
-                gradP(Iend+2,j)=gradP(Iend+1,j)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              gradK(Istr-1,j)=gradK(Istr,j)
+              gradP(Istr-1,j)=gradP(Istr,j)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              gradK(Iend+2,j)=gradK(Iend+1,j)
+              gradP(Iend+2,j)=gradP(Iend+1,j)
+            END DO
           END IF
         END IF
 #  ifdef K_C4ADVECTION
@@ -444,20 +444,20 @@
 #  endif
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                gradK(i,Jstr-1)=gradK(i,Jstr)
-                gradP(i,Jstr-1)=gradP(i,Jstr)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                gradK(i,Jend+2)=gradK(i,Jend+1)
-                gradP(i,Jend+2)=gradP(i,Jend+1)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              gradK(i,Jstr-1)=gradK(i,Jstr)
+              gradP(i,Jstr-1)=gradP(i,Jstr)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              gradK(i,Jend+2)=gradK(i,Jend+1)
+              gradP(i,Jend+2)=gradP(i,Jend+1)
+            END DO
           END IF
         END IF
 #  ifdef K_C4ADVECTION

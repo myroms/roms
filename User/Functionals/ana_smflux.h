@@ -128,14 +128,14 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=???
         END DO
       END DO
 #else
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=0.0_r8
         END DO
       END DO
@@ -147,14 +147,14 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=???
         END DO
       END DO
 #else
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=0.0_r8
         END DO
       END DO

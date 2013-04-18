@@ -76,9 +76,9 @@
 !
       IF (Master) THEN
         IF (ldef) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -2300,8 +2300,10 @@
         STA(ng)%Rindex=(ntstart(ng)-1)/nSTA(ng)
       END IF QUERY
 !
-  10  FORMAT (6x,'DEF_STATION - creating stations file: ',a)
-  20  FORMAT (6x,'DEF_STATION - inquiring stations file: ',a)
+  10  FORMAT (6x,'DEF_STATION - creating stations file, Grid ',i2.2,    &
+     &        ': ',a)
+  20  FORMAT (6x,'DEF_STATION - inquiring stations file, Grid ',i2.2,   &
+     &        ': ',a)
   30  FORMAT (/,' DEF_STATION - unable to create stations NetCDF ',     &
      &        'file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')

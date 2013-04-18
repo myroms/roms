@@ -282,12 +282,20 @@
       CALL netcdf_sync (ng, iNLM, DIA(ng)%name, DIA(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
+# ifdef NESTING
+      IF (Master) WRITE (stdout,20) DIA(ng)%Rindex, ng
+# else
       IF (Master) WRITE (stdout,20) DIA(ng)%Rindex
+# endif
 !
   10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,13x,  &
      &        'into diagnostics NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_DIAGS - wrote diagnostics fields into time ',     &
+# ifdef NESTING
+     &        'record = ',t72,i7.7,2x,i2.2)
+# else
      &        'record = ',t72,i7.7)
+# endif
 #else
       SUBROUTINE wrt_diags
 #endif

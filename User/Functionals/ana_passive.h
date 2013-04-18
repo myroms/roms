@@ -76,8 +76,8 @@
       DO ip=1,NPT
         itrc=inert(ip)
         DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
               t(i,j,k,1,itrc)=???
               t(i,j,k,2,itrc)=t(i,j,k,1,itrc)
             END DO

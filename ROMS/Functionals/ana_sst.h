@@ -87,8 +87,8 @@
 !  SST (Watts/m2).
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           sst(i,j)=???
           dqdt(i,j)=???
         END DO

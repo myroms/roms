@@ -84,9 +84,9 @@
 !
       IF (Master) THEN
         IF (ldef) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -3377,8 +3377,10 @@
         HIS(ng)%Rindex=MIN(HIS(ng)%Rindex,rec_size)
       END IF QUERY
 !
-  10  FORMAT (6x,'DEF_HIS   - creating history file: ',a)
-  20  FORMAT (6x,'DEF_HIS   - inquiring history file: ',a)
+  10  FORMAT (6x,'DEF_HIS   - creating history file, Grid ',i2.2,': ',  &
+     &        a)
+  20  FORMAT (6x,'DEF_HIS   - inquiring history file, Grid ',i2.2,': ', &
+     &        a)
   30  FORMAT (/,' DEF_HIS - unable to create history NetCDF file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_HIS - unable to open history NetCDF file: ',a)

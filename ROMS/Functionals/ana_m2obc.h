@@ -127,14 +127,14 @@
         tid_flow=cff1*300.0_r8*10.0_r8
         my_area=0.0_r8
         my_flux=0.0_r8
-        DO j=Jstr,Jend
+        DO j=JstrP,JendP
           cff=0.5_r8*(zeta(Istr  ,j,knew)+h(Istr  ,j)+                  &
      &                zeta(Istr-1,j,knew)+h(Istr-1,j))/pn(Istr,j)
           my_area=my_area+cff
         END DO
         my_flux=-tid_flow*SIN(2.0_r8*pi*time(ng)/                       &
      &          (12.0_r8*3600.0_r8))-riv_flow
-        DO j=Jstr,Jend
+        DO j=JstrP,JendP
           BOUNDARY(ng)%ubar_west(j)=my_flux/my_area
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
@@ -147,13 +147,13 @@
         riv_flow=cff2*300.0_r8*5.0_r8
         my_area=0.0_r8
         my_flux=0.0_r8
-        DO j=Jstr,Jend
+        DO j=JstrP,JendP
           cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
      &                zeta(Iend+1,j,knew)+h(Iend+1,j))/pn(Iend,j)
           my_area=my_area+cff
         END DO
         my_flux=-riv_flow
-        DO j=Jstr,Jend
+        DO j=JstrP,JendP
           BOUNDARY(ng)%ubar_east(j)=my_flux/my_area
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
@@ -166,13 +166,13 @@
       IF (LBC(iwest,isUbar,ng)%acquire.and.                             &
      &    LBC(iwest,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           cff=SQRT(g*GRID(ng)%h(Istr-1,j))
           BOUNDARY(ng)%ubar_west(j)=(val*cff/GRID(ng)%h(Istr-1,j))*     &
      &                              EXP(-GRID(ng)%f(Istr-1,j)*          &
      &                                   GRID(ng)%yp(Istr-1,j)/cff)
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
@@ -180,14 +180,14 @@
       IF (LBC(ieast,isUbar,ng)%acquire.and.                             &
      &    LBC(ieast,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           cff=SQRT(g*GRID(ng)%h(Iend,j))
           val=fac*EXP(-GRID(ng)%f(Iend,j)*GRID(ng)%yp(Istr-1,j)/cff)
           BOUNDARY(ng)%ubar_east(j)=(val*cff/GRID(ng)%h(Iend,j))*       &
      &                              SIN(omega*GRID(ng)%xp(Iend,j)/cff-  &
      &                                  omega*time(ng))
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
@@ -196,12 +196,12 @@
       IF (LBC(iwest,isUbar,ng)%acquire.and.                             &
      &    LBC(iwest,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           val=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                  &
      &                zeta(Istr  ,j,knew)+h(Istr  ,j))
           BOUNDARY(ng)%ubar_west(j)=-10.0_r8/val
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
@@ -209,12 +209,12 @@
       IF (LBC(ieast,isUbar,ng)%acquire.and.                             &
      &    LBC(ieast,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           val=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
      &                zeta(Iend+1,j,knew)+h(Iend+1,j))
           BOUNDARY(ng)%ubar_east(j)=-10.0_r8/val
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
@@ -300,14 +300,14 @@
         major=0.1144_r8+(0.1144_r8-0.013_r8)/REAL(Iend+1,r8)
         phase=(318.0_r8+(318.0_r8-355.0_r8)/REAL(Iend+1,r8))*deg2rad
         angle=(125.0_r8+(125.0_r8- 25.0_r8)/REAL(Iend+1,r8))*deg2rad
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           val=0.5_r8*(angler(Istr-1,j)+angler(Istr,j))
           BOUNDARY(ng)%ubar_west(j)=fac*(major*COS(angle-val)*          &
      &                                         COS(omega-phase)-        &
      &                                   minor*SIN(angle-val)*          &
      &                                         SIN(omega-phase))
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           val=0.5_r8*(angler(Istr-1,j-1)+angler(Istr-1,j))
           BOUNDARY(ng)%vbar_west(j)=fac*(major*SIN(angle-val)*          &
      &                                         COS(omega-phase)-        &
@@ -325,14 +325,14 @@
         major=0.1144_r8+(0.1144_r8-0.013_r8)
         phase=(318.0_r8+(318.0_r8-355.0_r8))*deg2rad
         angle=(125.0_r8+(125.0_r8- 25.0_r8))*deg2rad
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           val=0.5_r8*(angler(Iend,j)+angler(Iend+1,j))
           BOUNDARY(ng)%ubar_east(j)=fac*(major*COS(angle-val)*          &
      &                                         COS(omega-phase)-        &
      &                                   minor*SIN(angle-val)*          &
      &                                         SIN(omega-phase))
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           val=0.5_r8*(angler(Iend+1,j-1)+angler(Iend+1,j))
           BOUNDARY(ng)%vbar_east(j)=fac*(major*SIN(angle-val)*          &
      &                                         COS(omega-phase)-        &
@@ -344,10 +344,10 @@
       IF (LBC(ieast,isUbar,ng)%acquire.and.                             &
      &    LBC(ieast,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           BOUNDARY(ng)%ubar_east(j)=0.0_r8
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
@@ -355,10 +355,10 @@
       IF (LBC(iwest,isUbar,ng)%acquire.and.                             &
      &    LBC(iwest,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           BOUNDARY(ng)%ubar_west(j)=0.0_r8
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
         END DO
       END IF
@@ -366,10 +366,10 @@
       IF (LBC(isouth,isUbar,ng)%acquire.and.                            &
      &    LBC(isouth,isVbar,ng)%acquire.and.                            &
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,IendR
+        DO i=IstrP,IendT
           BOUNDARY(ng)%ubar_south(i)=0.0_r8
         END DO
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           BOUNDARY(ng)%vbar_south(i)=0.0_r8
         END DO
       END IF
@@ -377,10 +377,10 @@
       IF (LBC(inorth,isUbar,ng)%acquire.and.                            &
      &    LBC(inorth,isVbar,ng)%acquire.and.                            &
      &    DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,IendR
+        DO i=IstrP,IendT
           BOUNDARY(ng)%ubar_north(i)=0.0_r8
         END DO
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           BOUNDARY(ng)%vbar_north(i)=0.0_r8
         END DO
       END IF

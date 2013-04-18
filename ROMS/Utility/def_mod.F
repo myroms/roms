@@ -71,9 +71,9 @@
 !
       IF (Master) THEN
         IF (LdefMOD(ng)) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -1146,13 +1146,13 @@
 # endif
       END IF QUERY
 
-  10  FORMAT (/,6x,'DEF_MOD   - creating model/observation data file:', &
-     &        1x,a)
-  20  FORMAT (/,6x,'DEF_MOD   - inquiring model/observation data file:',&
-     &        1x,a)
+  10  FORMAT (/,6x,'DEF_MOD   - creating model/observation data file,', &
+     &        ' Grid ',i2.2,': ',a)
+  20  FORMAT (/,6x,'DEF_MOD   - inquiring model/observation data file,',&
+     &        ' Grid ',i2.2,': ',a)
   30  FORMAT (/,' DEF_MOD - unable to create model/observation file:',  &
      &        1x,a)
-  40  FORMAT (/,' DEF_MOD - unable to create globat attribute: ',       &
+  40  FORMAT (/,' DEF_MOD - unable to create global attribute: ',       &
      &        a,/,11x,a)
   50  FORMAT (/,' DEF_MOD - unable to open observation/model file: ',a)
 

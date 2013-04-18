@@ -371,11 +371,12 @@
           RST(ng)%Rindex=0
           Fcount=RST(ng)%Fcount
           RST(ng)%Nrec(Fcount)=0
-!$OMP PARALLEL
-          CALL initial (ng)
-!$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
         END DO
+
+!$OMP PARALLEL
+        CALL initial
+!$OMP END PARALLEL
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  If first pass, save nonlinear initial conditions (currently in time
 !  index 1, background) into next record (Lbck) of INI(ng)%name NetCDF
@@ -1182,11 +1183,12 @@
         RST(ng)%Rindex=0
         Fcount=RST(ng)%Fcount
         RST(ng)%Nrec(Fcount)=0
-!$OMP PARALLEL
-        CALL initial (ng)
-!$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
       END DO
+
+!$OMP PARALLEL
+      CALL initial
+!$OMP END PARALLEL
+      IF (exit_flag.ne.NoError) RETURN
 !
 ! Clear NLobsCost.
 !

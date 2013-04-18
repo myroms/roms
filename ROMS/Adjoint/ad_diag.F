@@ -238,9 +238,9 @@
 # endif
 !$OMP CRITICAL (AD_DIAGNOSTICS)
         IF (tile_count.eq.0) THEN
-          volume=0.0_r8
-          avgke=0.0_r8
-          avgpe=0.0_r8
+          volume=my_volume
+          avgke=my_avgke
+          avgpe=my_avgpe
         END IF
         volume=volume+my_volume
         avgke=avgke+my_avgke
@@ -268,15 +268,35 @@
           avgkp=avgke+avgpe
           IF (first_time(ng).eq.0) THEN
             first_time(ng)=1
-            IF (Master) WRITE (stdout,10) 'STEP', 'Day HH:MM:SS',       &
-     &                                    'KINETIC_ENRG', 'POTEN_ENRG', &
-     &                                    'TOTAL_ENRG', 'NET_VOLUME'
- 10         FORMAT (/,3x,a,3x,a,2x,a,3x,a,4x,a,4x,a,/)
+            IF (Master.and.(ng.eq.1)) THEN
+              WRITE (stdout,10) 'STEP', 'Day HH:MM:SS',                 &
+     &                          'KINETIC_ENRG', 'POTEN_ENRG',           &
+# ifdef NESTING
+     &                          'TOTAL_ENRG', 'NET_VOLUME', 'Grid'
+# else
+     &                          'TOTAL_ENRG', 'NET_VOLUME'
+# endif
+# ifdef NESTING
+ 10           FORMAT (/,3x,a,3x,a,2x,a,3x,a,4x,a,4x,a,2x,a)
+# else
+ 10           FORMAT (/,3x,a,3x,a,2x,a,3x,a,4x,a,4x,a)
+# endif
+            END IF
           END IF
-          IF (Master) WRITE (stdout,20) iic(ng)-1, time_code(ng),       &
-     &                                  avgke, avgpe, avgkp, volume
- 20       FORMAT (i7,1x,a,4(1pe14.6))
-          IF (Master) CALL my_flush (stdout)
+          IF (Master) THEN
+            WRITE (stdout,20) iic(ng)-1, time_code(ng),                 &
+# ifdef NESTING
+     &                        avgke, avgpe, avgkp, volume, ng
+# else
+     &                        avgke, avgpe, avgkp, volume
+# endif
+# ifdef NESTING
+ 20         FORMAT (i7,1x,a,4(1pe14.6),2x,i2.2)
+# else
+ 20         FORMAT (i7,1x,a,4(1pe14.6))
+# endif
+            CALL my_flush (stdout)
+          END IF
 !
 !  If blowing-up, set exit_flag to stop computations.
 !

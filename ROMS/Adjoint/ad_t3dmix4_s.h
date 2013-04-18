@@ -234,54 +234,58 @@
 !  Apply boundary conditions (except periodic; closed or gradient)
 !  to the first harmonic operator.
 !
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.EWperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-                IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
-                  DO j=Jmin,Jmax
-                    LapT(Istr-1,j)=0.0_r8
-                  END DO
-                ELSE
-                  DO j=Jmin,Jmax
-                    LapT(Istr-1,j)=LapT(Istr,j)
-                  END DO
-                END IF
-              END IF
-              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-                IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
-                  DO j=Jmin,Jmax
-                    LapT(Iend+1,j)=0.0_r8
-                  END DO
-                ELSE
-                  DO j=Jmin,Jmax
-                    LapT(Iend+1,j)=LapT(Iend,j)
-                  END DO
-                END IF
+          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
+                DO j=Jmin,Jmax
+                  LapT(Istr-1,j)=0.0_r8
+                END DO
+              ELSE
+                DO j=Jmin,Jmax
+                  LapT(Istr-1,j)=LapT(Istr,j)
+                END DO
               END IF
             END IF
-
-            IF (.not.NSperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-                IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
-                  DO i=Imin,Imax
-                    LapT(i,Jstr-1)=0.0_r8
-                  END DO
-                ELSE
-                  DO i=Imin,Imax
-                    LapT(i,Jstr-1)=LapT(i,Jstr)
-                  END DO
-                END IF
+          END IF
+!
+          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
+                DO j=Jmin,Jmax
+                  LapT(Iend+1,j)=0.0_r8
+                END DO
+              ELSE
+                DO j=Jmin,Jmax
+                  LapT(Iend+1,j)=LapT(Iend,j)
+                END DO
               END IF
-              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-                IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
-                  DO i=Imin,Imax
-                    LapT(i,Jend+1)=0.0_r8
-                  END DO
-                ELSE
-                  DO i=Imin,Imax
-                    LapT(i,Jend+1)=LapT(i,Jend)
-                  END DO
-                END IF
+            END IF
+          END IF
+!
+          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
+                DO i=Imin,Imax
+                  LapT(i,Jstr-1)=0.0_r8
+                END DO
+              ELSE
+                DO i=Imin,Imax
+                  LapT(i,Jstr-1)=LapT(i,Jstr)
+                END DO
+              END IF
+            END IF
+          END IF
+!
+          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
+                DO i=Imin,Imax
+                  LapT(i,Jend+1)=0.0_r8
+                END DO
+              ELSE
+                DO i=Imin,Imax
+                  LapT(i,Jend+1)=LapT(i,Jend)
+                END DO
               END IF
             END IF
           END IF
@@ -365,76 +369,78 @@
 !  Apply boundary conditions (except periodic; closed or gradient)
 !  to the first harmonic operator.
 !
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.NSperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-                IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
-                  DO i=Imin,Imax
-!>                  tl_LapT(i,Jend+1)=0.0_r8
+          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              IF (ad_LBC(inorth,isTvar(itrc),ng)%closed) THEN
+                DO i=Imin,Imax
+!>                tl_LapT(i,Jend+1)=0.0_r8
 !>
-                    ad_LapT(i,Jend+1)=0.0_r8
-                  END DO
-                ELSE
-                  DO i=Imin,Imax
-!>                  tl_LapT(i,Jend+1)=tl_LapT(i,Jend)
+                  ad_LapT(i,Jend+1)=0.0_r8
+                END DO
+              ELSE
+                DO i=Imin,Imax
+!>                tl_LapT(i,Jend+1)=tl_LapT(i,Jend)
 !>
-                    ad_LapT(i,Jend)=ad_LapT(i,Jend)+ad_LapT(i,Jend+1)
-                    ad_LapT(i,Jend+1)=0.0_r8
-                  END DO
-                END IF
-              END IF
-
-              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-                IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
-                  DO i=Imin,Imax
-!>                  tl_LapT(i,Jstr-1)=0.0_r8
-!>
-                    ad_LapT(i,Jstr-1)=0.0_r8
-                  END DO
-                ELSE
-                  DO i=Imin,Imax
-!>                  tl_LapT(i,Jstr-1)=tl_LapT(i,Jstr)
-!>
-                    ad_LapT(i,Jstr)=ad_LapT(i,Jstr)+ad_LapT(i,Jstr-1)
-                    ad_LapT(i,Jstr-1)=0.0_r8
-                  END DO
-                END IF
+                  ad_LapT(i,Jend)=ad_LapT(i,Jend)+ad_LapT(i,Jend+1)
+                  ad_LapT(i,Jend+1)=0.0_r8
+                END DO
               END IF
             END IF
-
-            IF (.not.EWperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-                IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
-                  DO j=Jmin,Jmax
-!>                  tl_LapT(Iend+1,j)=0.0_r8
+          END IF
+!
+          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              IF (ad_LBC(isouth,isTvar(itrc),ng)%closed) THEN
+                DO i=Imin,Imax
+!>                tl_LapT(i,Jstr-1)=0.0_r8
 !>
-                    ad_LapT(Iend+1,j)=0.0_r8
-                  END DO
-                ELSE
-                  DO j=Jmin,Jmax
-!>                  tl_LapT(Iend+1,j)=tl_LapT(Iend,j)
+                  ad_LapT(i,Jstr-1)=0.0_r8
+                END DO
+              ELSE
+                DO i=Imin,Imax
+!>                tl_LapT(i,Jstr-1)=tl_LapT(i,Jstr)
 !>
-                    ad_LapT(Iend,j)=ad_LapT(Iend,j)+ad_LapT(Iend+1,j)
-                    ad_LapT(Iend+1,j)=0.0_r8
-                  END DO
-                END IF
+                  ad_LapT(i,Jstr)=ad_LapT(i,Jstr)+ad_LapT(i,Jstr-1)
+                  ad_LapT(i,Jstr-1)=0.0_r8
+                END DO
               END IF
-
-              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-                IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
-                  DO j=Jmin,Jmax
-!>                  tl_LapT(Istr-1,j)=0.0_r8
+            END IF
+          END IF
+!
+          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              IF (ad_LBC(ieast,isTvar(itrc),ng)%closed) THEN
+                DO j=Jmin,Jmax
+!>                tl_LapT(Iend+1,j)=0.0_r8
 !>
-                    ad_LapT(Istr-1,j)=0.0_r8
-                  END DO
-                ELSE
-                  DO j=Jmin,Jmax
-!>                  tl_LapT(Istr-1,j)=tl_LapT(Istr,j)
+                  ad_LapT(Iend+1,j)=0.0_r8
+                END DO
+              ELSE
+                DO j=Jmin,Jmax
+!>                tl_LapT(Iend+1,j)=tl_LapT(Iend,j)
 !>
-                    ad_LapT(Istr,j)=ad_LapT(Istr,j)+ad_LapT(Istr-1,j)
-                    ad_LapT(Istr-1,j)=0.0_r8
-                  END DO
-                END IF
+                  ad_LapT(Iend,j)=ad_LapT(Iend,j)+ad_LapT(Iend+1,j)
+                  ad_LapT(Iend+1,j)=0.0_r8
+                END DO
+              END IF
+            END IF
+          END IF
+!
+          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              IF (ad_LBC(iwest,isTvar(itrc),ng)%closed) THEN
+                DO j=Jmin,Jmax
+!>                tl_LapT(Istr-1,j)=0.0_r8
+!>
+                  ad_LapT(Istr-1,j)=0.0_r8
+                END DO
+              ELSE
+                DO j=Jmin,Jmax
+!>                tl_LapT(Istr-1,j)=tl_LapT(Istr,j)
+!>
+                  ad_LapT(Istr,j)=ad_LapT(Istr,j)+ad_LapT(Istr-1,j)
+                  ad_LapT(Istr-1,j)=0.0_r8
+                END DO
               END IF
             END IF
           END IF

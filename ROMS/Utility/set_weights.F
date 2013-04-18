@@ -197,7 +197,7 @@
 !  Report weights.
 !
       IF (Master.and.LwrtInfo(ng)) THEN
-        WRITE (stdout,10) ndtfast(ng), nfast(ng)
+        WRITE (stdout,10) ng, ndtfast(ng), nfast(ng)
         cff=0.0_r16
         cff1=0.0_r8
         cff2=0.0_r8
@@ -222,8 +222,10 @@
 # endif
       END IF
 !
-  10  FORMAT (/,' Time Splitting Weights: ndtfast = ',i3,4x,'nfast = ', &
-     &        i3,/,/,4x,'Primary',12x,'Secondary',12x,                  &
+  10  FORMAT (/,' Time Splitting Weights for Grid ',i2.2,               &
+     &        ':',4x,'ndtfast = ',i3,4x,'nfast = ',i3,/,                &
+     &          ' ==================================',/,                &
+     &        /,4x,'Primary',12x,'Secondary',12x,                       &
      &        'Accumulated to Current Step',/)
   20  FORMAT (i3,4f19.16)
   30  FORMAT (/,1x,'ndtfast, nfast = ',2i4,3x,'nfast/ndtfast = ',f8.5)

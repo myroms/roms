@@ -79,9 +79,9 @@
 !
       IF (Master) THEN
         IF (ldef) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -754,8 +754,10 @@
      &              0.5_r8*REAL(nDIA(ng),r8)*dt(ng)
       END IF
 !
-  10  FORMAT (6x,'DEF_DIAGS - creating diagnostics file: ',a)
-  20  FORMAT (6x,'DEF_DIAGS - inquiring diagnostics file: ',a)
+  10  FORMAT (6x,'DEF_DIAGS - creating diagnostics file, Grid ',i2.2,   &
+     &        ': ',a)
+  20  FORMAT (6x,'DEF_DIAGS - inquiring diagnostics file, Grid ',i2.2,  &
+     &        ': ',a)
   30  FORMAT (/,' DEF_DIAGS - unable to create diagnostics NetCDF',     &
      &        ' file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')

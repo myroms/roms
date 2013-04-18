@@ -112,10 +112,10 @@
       IF (LBC(ieast,isUbar,ng)%acquire.and.                             &
      &    LBC(ieast,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           BOUNDARY(ng)%ubar_east(j)=???
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_east(j)=???
         END DO
       END IF
@@ -123,10 +123,10 @@
       IF (LBC(iwest,isUbar,ng)%acquire.and.                             &
      &    LBC(iwest,isVbar,ng)%acquire.and.                             &
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
-        DO j=JstrR,JendR
+        DO j=JstrT,JendT
           BOUNDARY(ng)%ubar_west(j)=???
         END DO
-        DO j=Jstr,JendR
+        DO j=JstrP,JendT
           BOUNDARY(ng)%vbar_west(j)=???
         END DO
       END IF
@@ -134,10 +134,10 @@
       IF (LBC(isouth,isUbar,ng)%acquire.and.                            &
      &    LBC(isouth,isVbar,ng)%acquire.and.                            &
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
-        DO i=Istr,IendR
+        DO i=IstrP,IendT
           BOUNDARY(ng)%ubar_south(i)=???
         END DO
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           BOUNDARY(ng)%vbar_south(i)=???
         END DO
       END IF
@@ -145,10 +145,10 @@
       IF (LBC(inorth,isUbar,ng)%acquire.and.                            &
      &    LBC(inorth,isVbar,ng)%acquire.and.                            &
      &    DOMAIN(ng)%Northern_Edge(tile)) THEN
-        DO i=Istr,IendR
+        DO i=IstrP,IendT
           BOUNDARY(ng)%ubar_north(i)=???
         END DO
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           BOUNDARY(ng)%vbar_north(i)=???
         END DO
       END IF

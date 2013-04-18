@@ -90,7 +90,7 @@
      &    DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO j=JstrR,JendR
+            DO j=JstrT,JendT
               BOUNDARY(ng)%t_east(j,k,itrc)=???
             END DO
           END DO
@@ -101,7 +101,7 @@
      &    DOMAIN(ng)%Western_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO j=JstrR,JendR
+            DO j=JstrT,JendT
               BOUNDARY(ng)%t_west(j,k,itrc)=???
             END DO
           END DO
@@ -112,7 +112,7 @@
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               BOUNDARY(ng)%t_south(i,k,itrc)=???
             END DO
           END DO
@@ -123,7 +123,7 @@
      &    DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO i=IstrR,IendR
+            DO i=IstrT,IendT
               BOUNDARY(ng)%t_north(i,k,itrc)=???
             END DO
           END DO

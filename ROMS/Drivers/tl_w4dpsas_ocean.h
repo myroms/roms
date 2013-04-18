@@ -293,10 +293,11 @@
       logical :: Lcgini, Linner, Lposterior
 
       integer :: my_inner, my_outer
-      integer :: Lbck, Lini, Rec1, Rec2, indxSave
+      integer :: Lbck, Lini, Rec1, Rec2
       integer :: i, ng, status, tile
       integer :: Fcount, Mstr, NRMrec
 
+      integer, dimension(Ngrids) :: indxSave
       integer, dimension(Ngrids) :: Nrec
 
       character (len=10) :: driver
@@ -347,11 +348,12 @@
         wrtNLmod(ng)=.TRUE.
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
-!$OMP PARALLEL
-        CALL initial (ng)
-!$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
       END DO
+
+!$OMP PARALLEL
+      CALL initial
+!$OMP END PARALLEL
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Save nonlinear initial conditions (currently in time index 1,
 !  background) into record "Lbck" of INI(ng)%name NetCDF file. The
@@ -964,13 +966,17 @@
 !  counter is used to write initial conditions.
 !
         DO ng=1,Ngrids
-          indxSave=INI(ng)%Rindex
+          indxSave(ng)=INI(ng)%Rindex
           INI(ng)%Rindex=outer+2
+        END DO
+
 !$OMP PARALLEL
-          CALL initial (ng)
+        CALL initial
 !$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
-          INI(ng)%Rindex=indxSave
+        IF (exit_flag.ne.NoError) RETURN
+
+        DO ng=1,Ngrids
+          INI(ng)%Rindex=indxSave(ng)
         END DO
 !
 !  Activate switch to write out final misfit between model and

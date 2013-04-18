@@ -678,20 +678,20 @@
             Huxx(i,j)=Huon(i-1,j,k)-2.0_r8*Huon(i,j,k)+Huon(i+1,j,k)
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                uxx (Istr,j)=uxx (Istr+1,j)
-                Huxx(Istr,j)=Huxx(Istr+1,j)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                uxx (Iend+1,j)=uxx (Iend,j)
-                Huxx(Iend+1,j)=Huxx(Iend,j)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              uxx (Istr,j)=uxx (Istr+1,j)
+              Huxx(Istr,j)=Huxx(Istr+1,j)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=Jstr,Jend
+              uxx (Iend+1,j)=uxx (Iend,j)
+              Huxx(Iend+1,j)=Huxx(Iend,j)
+            END DO
           END IF
         END IF
 #   ifdef UV_C4ADVECTION
@@ -751,18 +751,18 @@
      &               u(i,j+1,k,nrhs)
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=IstrU,Iend
-                uee(i,Jstr-1)=uee(i,Jstr)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=IstrU,Iend
-                uee(i,Jend+1)=uee(i,Jend)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=IstrU,Iend
+              uee(i,Jstr-1)=uee(i,Jstr)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=IstrU,Iend
+              uee(i,Jend+1)=uee(i,Jend)
+            END DO
           END IF
         END IF
         DO j=Jstr,Jend+1
@@ -819,18 +819,18 @@
      &               v(i+1,j,k,nrhs)
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=JstrV,Jend
-                vxx(Istr-1,j)=vxx(Istr,j)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=JstrV,Jend
-                vxx(Iend+1,j)=vxx(Iend,j)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=JstrV,Jend
+              vxx(Istr-1,j)=vxx(Istr,j)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=JstrV,Jend
+              vxx(Iend+1,j)=vxx(Iend,j)
+            END DO
           END IF
         END IF
         DO j=JstrV-1,Jend
@@ -895,20 +895,20 @@
             Hvee(i,j)=Hvom(i,j-1,k)-2.0_r8*Hvom(i,j,k)+Hvom(i,j+1,k)
           END DO
         END DO
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                vee (i,Jstr)=vee (i,Jstr+1)
-                Hvee(i,Jstr)=Hvee(i,Jstr+1)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                vee (i,Jend+1)=vee (i,Jend)
-                Hvee(i,Jend+1)=Hvee(i,Jend)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              vee (i,Jstr)=vee (i,Jstr+1)
+              Hvee(i,Jstr)=Hvee(i,Jstr+1)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=Istr,Iend
+              vee (i,Jend+1)=vee (i,Jend)
+              Hvee(i,Jend+1)=Hvee(i,Jend)
+            END DO
           END IF
         END IF
 #   ifdef UV_C4ADVECTION

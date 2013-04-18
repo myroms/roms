@@ -150,8 +150,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IminU, IminV, ImaxU, ImaxV
-      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: i, j, k
 
       real(r8) :: adfac, adfac1
@@ -161,46 +159,6 @@
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes, Hz*u/n and Hz*v/m.
 !-----------------------------------------------------------------------
-!
-!  Set local I- and J-ranges.
-!
-      IF (EWperiodic(ng)) THEN
-        IminU=Istr
-        ImaxU=Iend
-        IminV=Istr
-        ImaxV=Iend
-      ELSE
-        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
-          IminU=IstrP+1
-          ImaxU=IendT
-          IminV=IstrT
-          ImaxV=IendT
-        ELSE
-          IminU=Istr
-          ImaxU=IendR
-          IminV=IstrR
-          ImaxV=IendR
-        END IF
-      END IF
-
-      IF (NSperiodic(ng)) THEN
-        JminU=Jstr
-        JmaxU=Jend
-        JminV=Jstr
-        JmaxV=Jend
-      ELSE
-        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
-          JminU=JstrT
-          JmaxU=JendT
-          JminV=JstrP+1
-          JmaxV=JendT
-        ELSE
-          JminU=JstrR
-          JmaxU=JendR
-          JminV=Jstr
-          JmaxV=JendR
-        END IF
-      END IF
 !
 !  Exchange boundary information.
 !
@@ -239,8 +197,8 @@
 !  Compute adjoint horizontal mass fluxes.
 !
       DO k=1,N(ng)
-        DO j=JminV,JmaxV
-          DO i=IminV,ImaxV
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
 # ifdef NEARSHORE_MELLOR
 !>          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
 !>   &                     0.5_r8*om_v(i,j)*                            &
@@ -271,8 +229,8 @@
             ad_Hvom(i,j,k)=0.0_r8
           END DO
         END DO
-        DO j=JminU,JmaxU
-          DO i=IminU,ImaxU
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
 # ifdef NEARSHORE_MELLOR
 !>          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
 !>   &                     0.5_r8*on_u(i,j)*                            &

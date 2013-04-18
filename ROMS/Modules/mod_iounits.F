@@ -52,6 +52,7 @@
 !  Standard input files:                                               !
 !                                                                      !
 !  Iname       Physical parameters standard input script file name.    !
+!  NGCname     Nested grids contact point information file name.       !
 !  USRname     USER input/output generic file name.                    !
 !  Wname       Wave model stadard input file name.                     !
 !  aparnam     Input assimilation parameters file name.                !
@@ -142,6 +143,7 @@
 !
       character (len=256) :: Iname          ! ROMS physical parameters
       character (len=256) :: Wname          ! wave model standard input
+      character (len=256) :: NGCname        ! contact points file name
       character (len=256) :: USRname        ! use generic file name
       character (len=256) :: aparnam        ! assimilation parameters
       character (len=256) :: bparnam        ! biology model parameters
@@ -169,6 +171,12 @@
 !  on the number of nested grids.                                      !
 !                                                                      !
 !=======================================================================
+!
+!  Local variable declarations.
+!
+      integer :: i
+
+      character (len=1), parameter :: blank = ' '
 !
 !-----------------------------------------------------------------------
 !  Allocate I/O files management, derived type structures.
@@ -208,6 +216,23 @@
 !-----------------------------------------------------------------------
 !
       allocate ( nFfiles(Ngrids) )
+!
+!-----------------------------------------------------------------------
+!  Initialize file names to blanks.
+!-----------------------------------------------------------------------
+!
+      DO i=1,LEN(Iname)
+        Iname(i:i)=blank
+        Wname(i:i)=blank
+        NGCname(i:i)=blank
+        USRname(i:i)=blank
+        aparnam(i:i)=blank
+        bparnam(i:i)=blank
+        fbionam(i:i)=blank
+        fposnam(i:i)=blank
+        sparnam(i:i)=blank
+        sposnam(i:i)=blank
+      END DO
 
       RETURN
       END SUBROUTINE allocate_iounits

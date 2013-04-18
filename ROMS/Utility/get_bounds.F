@@ -46,12 +46,11 @@
 !
       integer, intent(in) :: ng, tile, gtype, Nghost
       integer, intent(out) :: Itile, Jtile, LBi, UBi, LBj, UBj
-
-#ifdef DISTRIBUTE
 !
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
+#ifdef DISTRIBUTE
       integer :: Iend, Istr, Jend, Jstr
       integer :: IstrM, IstrR, IstrU, IendR
       integer :: JstrM, JstrR, JstrV, JendR
@@ -76,28 +75,28 @@
       MyType=ABS(gtype)
       IF (MyType.eq.0) THEN
 # ifdef NESTING
-        IF (RefinedGrid(ng)) THEN
+        IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0) ) THEN
           Imin=-NghostPoints
           Imax=Lm(ng)+NghostPoints
           Jmin=-NghostPoints
           Jmax=Mm(ng)+NghostPoints
-        ELSE IF (ComposedGrid(ng)) THEN
-          IF (ContactRegion(iwest,ng).or.EWperiodic(ng)) THEN
+        ELSE
+          IF (CompositeGrid(iwest,ng).or.EWperiodic(ng)) THEN
             Imin=-NghostPoints
           ELSE
             Imin=0
           END IF
-          IF (ContactRegion(ieast,ng).or.EWperiodic(ng)) THEN
+          IF (CompositeGrid(ieast,ng).or.EWperiodic(ng)) THEN
             Imax=Lm(ng)+NghostPoints
           ELSE
             Imax=Im(ng)+1
           END IF
-          IF (ContactRegion(isouth,ng).or.NSperiodic(ng)) THEN
+          IF (CompositeGrid(isouth,ng).or.NSperiodic(ng)) THEN
             Jmin=-NghostPoints
           ELSE
             Jmin=0
           END IF
-          IF (ContactRegion(inorth,ng).or.NSperiodic(ng)) THEN
+          IF (CompositeGrid(inorth,ng).or.NSperiodic(ng)) THEN
             Jmax=Mm(ng)+NghostPoints
           ELSE
             Jmax=Jm(ng)+1
@@ -198,31 +197,31 @@
       END IF
 !
 # ifdef NESTING
-      IF (RefinedGrid(ng)) THEN
-        Imin=-NghostPoints
-        Imax=Lm(ng)+NghostPoints
-        Jmin=-NghostPoints
-        Jmax=Mm(ng)+NghostPoints
-      ELSE IF (ComposedGrid(ng)) THEN
-        IF (ContactRegion(iwest,ng).or.EWperiodic(ng)) THEN
-          Imin=-NghostPoints
+      IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0) ) THEN
+        LBi=-NghostPoints
+        UBi=Lm(ng)+NghostPoints
+        LBj=-NghostPoints
+        UBj=Mm(ng)+NghostPoints
+      ELSE
+        IF (CompositeGrid(iwest,ng).or.EWperiodic(ng)) THEN
+          LBi=-NghostPoints
         ELSE
-          Imin=0
+          LBi=0
         END IF
-        IF (ContactRegion(ieast,ng).or.EWperiodic(ng)) THEN
-          Imax=Lm(ng)+NghostPoints
+        IF (CompositeGrid(ieast,ng).or.EWperiodic(ng)) THEN
+          UBi=Lm(ng)+NghostPoints
         ELSE
-          Imax=Im(ng)+1
+          UBi=Im(ng)+1
         END IF
-        IF (ContactRegion(isouth,ng).or.NSperiodic(ng)) THEN
-          Jmin=-NghostPoints
+        IF (CompositeGrid(isouth,ng).or.NSperiodic(ng)) THEN
+          LBj=-NghostPoints
         ELSE
-          Jmin=0
+          LBj=0
         END IF
-        IF (ContactRegion(inorth,ng).or.NSperiodic(ng)) THEN
-          Jmax=Mm(ng)+NghostPoints
+        IF (CompositeGrid(inorth,ng).or.NSperiodic(ng)) THEN
+          UBj=Mm(ng)+NghostPoints
         ELSE
-          Jmax=Jm(ng)+1
+          UBj=Jm(ng)+1
         END IF
       END IF
 # else
@@ -834,7 +833,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ChunkSizeI, ChunkSizeJ, MarginI, MarginJ
+      integer :: my_Istr, my_Iend, my_Jstr, my_Jend
 !
 !-----------------------------------------------------------------------
 !  Set physical non-overlapping grid bounds according to tile rank.
@@ -847,21 +846,22 @@
       IF (tile.eq.-1) THEN
         Itile=-1
         Jtile=-1
-        Istr=1
-        Iend=Lm(ng)
-        Jstr=1
-        Jend=Mm(ng)
+        my_Istr=1
+        my_Iend=Lm(ng)
+        my_Jstr=1
+        my_Jend=Mm(ng)
 !
 ! Tiled grids bounds.
 !
       ELSE
         CALL tile_bounds_2d (ng, tile, Lm(ng), Mm(ng), Itile, Jtile,    &
-     &                       Istr, Iend, Jstr, Jend)
+     &                       my_Istr, my_Iend, my_Jstr, my_Jend)
       END IF
 !
 !  Compute C-staggered variables bounds from tile bounds.
 !
-      CALL var_bounds (ng, tile, Istr, Iend, Jstr, Jend,                &
+      CALL var_bounds (ng, tile, my_Istr, my_Iend, my_Jstr, my_Jend,    &
+     &                 Istr, Iend, Jstr, Jend,                          &
      &                 IstrM, IstrR, IstrU, IendR,                      &
      &                 JstrM, JstrR, JstrV, JendR,                      &
      &                 IstrB, IendB, IstrP, IendP, IstrT, IendT,        &
@@ -1006,7 +1006,9 @@
       RETURN
       END SUBROUTINE tile_bounds_2d
 
-      SUBROUTINE var_bounds (ng, tile, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE var_bounds (ng, tile,                                  &
+     &                       my_Istr, my_Iend, my_Jstr, my_Jend,        &
+     &                       Istr,  Iend,  Jstr,  Jend,                 &
      &                       IstrM, IstrR, IstrU, IendR,                &
      &                       JstrM, JstrR, JstrV, JendR,                &
      &                       IstrB, IendB, IstrP, IendP, IstrT, IendT,  &
@@ -1018,20 +1020,25 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine computes the starting and ending horizontal indices    !
-!  for each  C-staggered variable  from the sub-domain partition or    !
-!  tile.                                                               !
+!  This routine computes the computational grid starting and ending    !
+!  horizontal indices for each C-staggered variable in terms of the    !
+!  physical grid sub-domain partition or tile.                         !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     tile       Domain partition.                                     !
-!     Istr       Starting tile index in the I-direction.               !
-!     Iend       Ending   tile index in the I-direction.               !
-!     Jstr       Starting tile index in the J-direction.               !
-!     Jend       Ending   tile index in the J-direction.               !
+!     ng         Nested grid number                                    !
+!     tile       Domain partition                                      !
+!     my_Istr    Physical grid starting tile index in the I-direction  !
+!     my_Iend    Physical grid ending   tile index in the I-direction  !
+!     my_Jstr    Physical grid starting tile index in the J-direction  !
+!     my_Jend    Physical grid ending   tile index in the J-direction  !
 !                                                                      !
 !  On Output:                                                          !
+!                                                                      !
+!     Istr       Starting tile index in the I-direction                !
+!     Iend       Ending   tile index in the I-direction                !
+!     Jstr       Starting tile index in the J-direction                !
+!     Jend       Ending   tile index in the J-direction                !
 !                                                                      !
 !     IstrR      Starting tile index in the I-direction (RHO-points)   !
 !     IstrU      Starting tile index in the I-direction (U-points)     !
@@ -1080,13 +1087,19 @@
 !======================================================================!
 !
       USE mod_param
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_scalars
 !
       implicit none
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: my_Istr, my_Iend, my_Jstr, my_Jend
+!
+      integer, intent(out) :: Iend,  Istr,  Jend,  Jstr
       integer, intent(out) :: IstrM, IstrR, IstrU, IendR
       integer, intent(out) :: JstrM, JstrR, JstrV, JendR
       integer, intent(out) :: IstrB, IendB, IstrP, IendP, IstrT, IendT
@@ -1337,97 +1350,97 @@
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
-          IstrP=Istr
-          IstrR=Istr
+          Istr =my_Istr
+          IstrP=my_Istr
+          IstrR=my_Istr
           IstrT=IstrR
-          IstrU=Istr
-          IstrB=Istr
+          IstrU=my_Istr
+          IstrB=my_Istr
           IstrM=IstrU
-        ELSE IF (ComposedGrid(ng)) THEN
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          Istr =my_Istr
           IstrP=-NghostPoints+1
-          IstrR=Istr
+          IstrR=my_Istr
           IstrT=-NghostPoints
-          IstrU=Istr
-          IstrB=IstrT+1
-          IstrM=IstrP+1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IstrR=Istr-1
-          IstrU=Istr+1
-          IF (ng.eq.1) THEN
-            IstrP=IstrR
-            IstrT=IstrR
-            IstrB=Istr
-            IstrM=IstrU
-          ELSE
-            IstrP=-NghostPoints+1
-            IstrT=-NghostPoints
-            IstrB=IstrT              ! boundary conditions are avoided
-            IstrM=IstrP              ! boundary conditions are avoided
-          END IF
+          IstrU=my_Istr
+          IstrB=IstrT                ! boundary conditions maybe avoided
+          IstrM=IstrP                ! boundary conditions maybe avoided
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Istr =my_Istr
+          IstrR=my_Istr-1
+          IstrU=my_Istr+1
+          IstrP=-NghostPoints+1
+          IstrT=-NghostPoints
+          IstrB=IstrT                ! boundary conditions are avoided
+          IstrM=IstrP                ! boundary conditions are avoided
+#endif
         ELSE
-          IstrP=Istr
-          IstrR=Istr-1
+          Istr =my_Istr
+          IstrP=my_Istr
+          IstrR=my_Istr-1
           IstrT=IstrR
-          IstrU=Istr+1
+          IstrU=my_Istr+1
           IstrB=IstrT+1
           IstrM=IstrP+1
         END IF
       ELSE
-        IstrP=Istr
-        IstrR=Istr
+        Istr =my_Istr
+        IstrP=my_Istr
+        IstrR=my_Istr
         IstrT=IstrR
-        IstrU=Istr
-        IstrB=Istr
+        IstrU=my_Istr
+        IstrB=my_Istr
         IstrM=IstrU
       END IF
 !
 !  Special case, Istrm3: used when MAX(0,Istr-3) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Istrm3=Istr-3
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Istrm3=MAX(0,Istr-3)
-          ELSE
-            Istrm3=Istr-3
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Istrm3=my_Istr-3
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          Istrm3=my_Istr-3
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Istrm3=my_Istr-3
+#endif
         ELSE
-          Istrm3=MAX(0,Istr-3)
+          Istrm3=MAX(0,my_Istr-3)
         END IF
       ELSE
-        Istrm3=Istr-3
+        Istrm3=my_Istr-3
       END IF
 !
 !  Special case, Istrm2: used when MAX(0,Istr-2) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Istrm2=Istr-2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Istrm2=MAX(0,Istr-2)
-          ELSE
-            Istrm2=Istr-2
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Istrm2=my_Istr-2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          Istrm2=my_Istr-2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Istrm2=my_Istr-2
+#endif
         ELSE
-          Istrm2=MAX(0,Istr-2)
+          Istrm2=MAX(0,my_Istr-2)
         END IF
       ELSE
-        Istrm2=Istr-2
+        Istrm2=my_Istr-2
       END IF
 !
 !  Special case, IstrUm2: used when MAX(1,IstrU-2) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
+        IF (EWperiodic(ng)) THEN
           IstrUm2=IstrU-2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            IstrUm2=MAX(1,IstrU-2)
-          ELSE
-            IstrUm2=IstrU-2
-          END IF
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          IstrUm2=IstrU-2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          IstrUm2=IstrU-2
+#endif
         ELSE
           IstrUm2=MAX(1,IstrU-2)
         END IF
@@ -1438,32 +1451,32 @@
 !  Special case, Istrm1: used when MAX(1,Istr-1) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Istrm1=Istr-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Istrm1=MAX(1,Istr-1)
-          ELSE
-            Istrm1=Istr-1
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Istrm1=my_Istr-1
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          Istrm1=my_Istr-1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Istrm1=my_Istr-1
+#endif
         ELSE
-          Istrm1=MAX(1,Istr-1)
+          Istrm1=MAX(1,my_Istr-1)
         END IF
       ELSE
-        Istrm1=Istr-1
+        Istrm1=my_Istr-1
       END IF
 !
 !  Special case, IstrUm1: used when MAX(2,IstrU-1) is needed.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
+        IF (EWperiodic(ng)) THEN
           IstrUm1=IstrU-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            IstrUm1=MAX(2,IstrU-1)
-          ELSE
-            IstrUm1=IstrU-1
-          END IF
+#ifdef NESTING
+        ELSE IF (CompositeGrid(iwest,ng)) THEN
+          IstrUm1=IstrU-1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          IstrUm1=IstrU-1
+#endif
         ELSE
           IstrUm1=MAX(2,IstrU-1)
         END IF
@@ -1477,109 +1490,110 @@
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
-          IendR=Iend
+          Iend =my_Iend
+          IendR=my_Iend
           IendP=IendR                ! check this one, same as IendR?
           IendT=IendR
-          IendB=Iend
-        ELSE IF (ComposedGrid(ng)) THEN
-          IendR=Iend
-          IendP=Iend+NghostPoints    ! check this one, same as IendT?
-          IendT=Iend+NghostPoints
-          IendB=IendT-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IendR=Iend+1
-          IF (ng.eq.1) THEN
-            IendP=IendR
-            IendT=IendR
-            IendB=Iend
-          ELSE
-            IendP=Iend+NghostPoints  ! check this one, same as IendT
-            IendT=Iend+NghostPoints
-            IendB=IendT              ! boundary conditions are avoided
-          END IF
+          IendB=my_Iend
+#ifdef NESTING
+        ELSE IF (CompositeGrid(ieast,ng)) THEN
+          Iend =my_Iend
+          IendR=my_Iend
+          IendP=my_Iend+NghostPoints ! check this one, same as IendT?
+          IendT=my_Iend+NghostPoints
+          IendB=IendT                ! boundary conditions maybe avoided
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Iend =my_Iend
+          IendR=my_Iend+1
+          IendP=my_Iend+NghostPoints ! check this one, same as IendT
+          IendT=my_Iend+NghostPoints
+          IendB=IendT                ! boundary conditions are avoided
+#endif
         ELSE
-          IendR=Iend+1
+          Iend =my_Iend
+          IendR=my_Iend+1
           IendP=IendR
           IendT=IendR
           IendB=IendT-1
         END IF
       ELSE
-        IendR=Iend
+        Iend =my_Iend
+        IendR=my_Iend
         IendP=IendR
         IendT=IendR
-        IendB=Iend
+        IendB=my_Iend
       END IF
 !
 !  Special case, Iendp1: used when MIN(Iend+1,Lm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Iendp1=Iend+1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Iendp1=MIN(Iend+1,Lm(ng))
-          ELSE
-            Iendp1=Iend+1
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Iendp1=my_Iend+1
+#ifdef NESTING
+        ELSE IF (CompositeGrid(ieast,ng)) THEN
+          Iendp1=my_Iend+1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Iendp1=my_Iend+1
+#endif
         ELSE
-          Iendp1=MIN(Iend+1,Lm(ng))
+          Iendp1=MIN(my_Iend+1,Lm(ng))
         END IF
       ELSE
-        Iendp1=Iend+1
+        Iendp1=my_Iend+1
       END IF
 !
 !  Special case, Iendp2i: used when MIN(Iend+2,Lm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Iendp2i=Iend+2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Iendp2i=MIN(Iend+2,Lm(ng))
-          ELSE
-            Iendp2i=Iend+2
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Iendp2i=my_Iend+2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(ieast,ng)) THEN
+          Iendp2i=my_Iend+2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Iendp2i=my_Iend+2
+#endif
         ELSE
-          Iendp2i=MIN(Iend+2,Lm(ng))
+          Iendp2i=MIN(my_Iend+2,Lm(ng))
         END IF
       ELSE
-        Iendp2i=Iend+2
+        Iendp2i=my_Iend+2
       END IF
 !
 !  Special case, Iendp2: used when MIN(Iend+2,Lm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Iendp2=Iend+2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Iendp2=MIN(Iend+2,Lm(ng)+1)
-          ELSE
-            Iendp2=Iend+2
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Iendp2=my_Iend+2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(ieast,ng)) THEN
+          Iendp2=my_Iend+2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Iendp2=my_Iend+2
+#endif
         ELSE
-          Iendp2=MIN(Iend+2,Lm(ng)+1)
+          Iendp2=MIN(my_Iend+2,Lm(ng)+1)
         END IF
       ELSE
-        Iendp2=Iend+2
+        Iendp2=my_Iend+2
       END IF
 !
 !  Special case, Iendp3: used when MIN(Iend+3,Lm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-        IF (EWperiodic(ng).or.ComposedGrid(ng)) THEN
-          Iendp3=Iend+3
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Iendp3=MIN(Iend+2,Lm(ng)+1)
-          ELSE
-            Iendp3=Iend+3
-          END IF
+        IF (EWperiodic(ng)) THEN
+          Iendp3=my_Iend+3
+#ifdef NESTING
+        ELSE IF (CompositeGrid(ieast,ng)) THEN
+          Iendp3=my_Iend+3
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Iendp3=my_Iend+3
+#endif
         ELSE
-          Iendp3=MIN(Iend+3,Lm(ng)+1)
+          Iendp3=MIN(my_Iend+3,Lm(ng)+1)
         END IF
       ELSE
-        Iendp3=Iend+3
+        Iendp3=my_Iend+3
       END IF
 !
 !-----------------------------------------------------------------------
@@ -1588,97 +1602,97 @@
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
-          JstrP=Jstr
-          JstrR=Jstr
+          Jstr =my_Jstr
+          JstrP=my_Jstr
+          JstrR=my_Jstr
           JstrT=JstrR
-          JstrV=Jstr
-          JstrB=Jstr
+          JstrV=my_Jstr
+          JstrB=my_Jstr
           JstrM=JstrV
-        ELSE IF (ComposedGrid(ng)) THEN
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          Jstr =my_Jstr
           JstrP=-NghostPoints+1
-          JstrR=Jstr
+          JstrR=my_Jstr
           JstrT=-NghostPoints
-          JstrV=Jstr
-          JstrB=JstrT+1
-          JstrM=JstrP+1
-        ELSE IF (RefinedGrid(ng)) THEN
-          JstrR=Jstr-1
-          JstrV=Jstr+1
-          IF (ng.eq.1) THEN
-            JstrP=JstrR
-            JstrT=JstrR
-            JstrB=Jstr
-            JstrM=JstrV
-          ELSE
-            JstrP=-NghostPoints+1
-            JstrT=-NghostPoints
-            JstrB=JstrT              ! boundary conditions are avoided
-            JstrM=JstrP              ! boundary conditions are avoided
-          END IF
+          JstrV=my_Jstr
+          JstrB=JstrT                ! boundary conditions maybe avoided
+          JstrM=JstrP                ! boundary conditions maybe avoided
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jstr =my_Jstr
+          JstrR=my_Jstr-1
+          JstrV=my_Jstr+1
+          JstrP=-NghostPoints+1
+          JstrT=-NghostPoints
+          JstrB=JstrT                ! boundary conditions are avoided
+          JstrM=JstrP                ! boundary conditions are avoided
+#endif
         ELSE
-          JstrP=Jstr
-          JstrR=Jstr-1
+          Jstr =my_Jstr
+          JstrP=my_Jstr
+          JstrR=my_Jstr-1
           JstrT=JstrR
-          JstrV=Jstr+1
+          JstrV=my_Jstr+1
           JstrB=JstrT+1
           JstrM=JstrP+1
         END IF
       ELSE
-        JstrP=Jstr
-        JstrR=Jstr
+        Jstr =my_Jstr
+        JstrP=my_Jstr
+        JstrR=my_Jstr
         JstrT=JstrR
-        JstrV=Jstr
-        JstrB=Jstr
+        JstrV=my_Jstr
+        JstrB=my_Jstr
         JstrM=JstrV
       END IF
 !
 !  Special case, Jstrm3: used when MAX(0,Jstr-3) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jstrm3=Jstr-3
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jstrm3=MAX(0,Jstr-3)
-          ELSE
-            Jstrm3=Jstr-3
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jstrm3=my_Jstr-3
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          Jstrm3=my_Jstr-3
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jstrm3=my_Jstr-3
+#endif
         ELSE
-          Jstrm3=MAX(0,Jstr-3)
+          Jstrm3=MAX(0,my_Jstr-3)
         END IF
       ELSE
-        Jstrm3=Jstr-3
+        Jstrm3=my_Jstr-3
       END IF
 !
 !  Special case, Jstrm2: used when MAX(0,Jstr-2) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jstrm2=Jstr-2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jstrm2=MAX(0,Jstr-2)
-          ELSE
-            Jstrm2=Jstr-2
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jstrm2=my_Jstr-2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          Jstrm2=my_Jstr-2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jstrm2=my_Jstr-2
+#endif
         ELSE
-          Jstrm2=MAX(0,Jstr-2)
+          Jstrm2=MAX(0,my_Jstr-2)
         END IF
       ELSE
-        Jstrm2=Jstr-2
+        Jstrm2=my_Jstr-2
       END IF
 !
 !  Special case, JstrVm2: used when MAX(1,JstrV-2) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
+        IF (NSperiodic(ng)) THEN
           JstrVm2=JstrV-2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            JstrVm2=MAX(1,JstrV-2)
-          ELSE
-            JstrVm2=JstrV-2
-          END IF
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          JstrVm2=JstrV-2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          JstrVm2=JstrV-2
+#endif
         ELSE
           JstrVm2=MAX(1,JstrV-2)
         END IF
@@ -1689,32 +1703,32 @@
 !  Special case, Jstrm1: used when MAX(1,Jstr-1) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jstrm1=Jstr-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jstrm1=MAX(1,Jstr-1)
-          ELSE
-            Jstrm1=Jstr-1
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jstrm1=my_Jstr-1
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          Jstrm1=my_Jstr-1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jstrm1=my_Jstr-1
+#endif
         ELSE
-          Jstrm1=MAX(1,Jstr-1)
+          Jstrm1=MAX(1,my_Jstr-1)
         END IF
       ELSE
-        Jstrm1=Jstr-1
+        Jstrm1=my_Jstr-1
       END IF
 !
 !  Special case, JstrVm1: used when MAX(2,JstrV-1) is needed.
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
+        IF (NSperiodic(ng)) THEN
           JstrVm1=JstrV-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            JstrVm1=MAX(2,JstrV-1)
-          ELSE
-            JstrVm1=JstrV-1
-          END IF
+#ifdef NESTING
+        ELSE IF (CompositeGrid(isouth,ng)) THEN
+          JstrVm1=JstrV-1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          JstrVm1=JstrV-1
+#endif
         ELSE
           JstrVm1=MAX(2,JstrV-1)
         END IF
@@ -1728,110 +1742,111 @@
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
-          JendR=Jend
+          Jend =my_Jend
+          JendR=my_Jend
           JendP=JendR                ! check this one, same as JendR?
           JendT=JendR
-          JendB=Jend
-        ELSE IF (ComposedGrid(ng)) THEN
-          JendR=Jend
-          JendP=Jend+NghostPoints    ! check this one, same as JendT?
-          JendT=Jend+NghostPoints
-          JendB=JendT-1
-        ELSE IF (RefinedGrid(ng)) THEN
-          JendR=Jend+1
-          IF (ng.eq.1) THEN
-            JendP=JendR
-            JendT=JendR
-            JendB=Jend
-          ELSE
-            JendP=Jend+NghostPoints  ! check this one, same as JendT
-            JendT=Jend+NghostPoints
-            JendB=JendT              ! boundary conditions are avoided
-          END IF
+          JendB=my_Jend
+#ifdef NESTING
+        ELSE IF (CompositeGrid(inorth,ng)) THEN
+          Jend =my_Jend
+          JendR=my_Jend
+          JendP=my_Jend+NghostPoints ! check this one, same as JendT?
+          JendT=my_Jend+NghostPoints
+          JendB=JendT                ! boundary conditions maybe avoided
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jend =my_Jend
+          JendR=my_Jend+1
+          JendP=my_Jend+NghostPoints ! check this one, same as JendT
+          JendT=my_Jend+NghostPoints
+          JendB=JendT                ! boundary conditions are avoided
+#endif
         ELSE
-          JendR=Jend+1
+          Jend =my_Jend
+          JendR=my_Jend+1
           JendP=JendR
           JendT=JendR
           JendB=JendT-1
         END IF
       ELSE
-        JendR=Jend
+        Jend =my_Jend
+        JendR=my_Jend
         JendP=JendR
         JendP=JendR
         JendT=JendR
-        JendB=Jend
+        JendB=my_Jend
       END IF
 !
 !  Special case, Jendp1: used when MIN(Jend+1,Mm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jendp1=Jend+1
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jendp1=MIN(Jend+1,Mm(ng))
-          ELSE
-            Jendp1=Jend+1
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jendp1=my_Jend+1
+#ifdef NESTING
+        ELSE IF (CompositeGrid(inorth,ng)) THEN
+          Jendp1=my_Jend+1
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jendp1=my_Jend+1
+#endif
         ELSE
-          Jendp1=MIN(Jend+1,Mm(ng))
+          Jendp1=MIN(my_Jend+1,Mm(ng))
         END IF
       ELSE
-        Jendp1=Jend+1
+        Jendp1=my_Jend+1
       END IF
 !
 !  Special case, Jendp2i: used when MIN(Jend+2,Mm(ng)) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jendp2i=Jend+2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jendp2i=MIN(Jend+2,Mm(ng))
-          ELSE
-            Jendp2i=Jend+2
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jendp2i=my_Jend+2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(inorth,ng)) THEN
+          Jendp2i=my_Jend+2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jendp2i=my_Jend+2
+#endif
         ELSE
-          Jendp2i=MIN(Jend+2,Mm(ng))
+          Jendp2i=MIN(my_Jend+2,Mm(ng))
         END IF
       ELSE
-        Jendp2i=Jend+2
+        Jendp2i=my_Jend+2
       END IF
 !
 !  Special case, Jendp2: used when MIN(Jend+2,Mm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jendp2=Jend+2
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jendp2=MIN(Jend+2,Mm(ng)+1)
-          ELSE
-            Jendp2=Jend+2
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jendp2=my_Jend+2
+#ifdef NESTING
+        ELSE IF (CompositeGrid(inorth,ng)) THEN
+          Jendp2=my_Jend+2
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jendp2=my_Jend+2
+#endif
         ELSE
-          Jendp2=MIN(Jend+2,Mm(ng)+1)
+          Jendp2=MIN(my_Jend+2,Mm(ng)+1)
         END IF
       ELSE
-        Jendp2=Jend+2
+        Jendp2=my_Jend+2
       END IF
 !
 !  Special case, Jendp3: used when MIN(Jend+3,Mm(ng)+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-        IF (NSperiodic(ng).or.ComposedGrid(ng)) THEN
-          Jendp3=Jend+3
-        ELSE IF (RefinedGrid(ng)) THEN
-          IF (ng.eq.1) THEN
-            Jendp3=MIN(Jend+3,Mm(ng)+1)
-          ELSE
-            Jendp3=Jend+3
-          END IF
+        IF (NSperiodic(ng)) THEN
+          Jendp3=my_Jend+3
+#ifdef NESTING
+        ELSE IF (CompositeGrid(inorth,ng)) THEN
+          Jendp3=my_Jend+3
+        ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+          Jendp3=my_Jend+3
+#endif
         ELSE
-          Jendp3=MIN(Jend+3,Mm(ng)+1)
+          Jendp3=MIN(my_Jend+3,Mm(ng)+1)
         END IF
       ELSE
-        Jendp3=Jend+3
+        Jendp3=my_Jend+3
       END IF
 
       RETURN

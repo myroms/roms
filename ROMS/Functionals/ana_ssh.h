@@ -76,8 +76,8 @@
 !  Set sea surface height (meters).
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           ssh(i,j)=???
         END DO
       END DO

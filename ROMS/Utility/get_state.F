@@ -203,7 +203,7 @@
 
 #ifdef NO_LBC_ATT
 !
-!  Lateral boundary conditions attributed not checked in restart file.
+!  Lateral boundary conditions attribute not checked in restart file.
 !
       IF (((model.eq.0).or.(model.eq.iNLM)).and.(nrrec(ng).ne.0)) THEN
         IF (Master) WRITE (stdout,20) string, 'NLM_LBC', TRIM(ncname)
@@ -335,10 +335,10 @@
       IF (Master) THEN
         CALL time_string (INPtime, t_code)
         IF (ERend.gt.ERstr) THEN
-          WRITE (stdout,40) string, TRIM(StateMsg(msg)), t_code, Nrun,  &
-     &                      ncname(lstr:lend), InpRec, Tindex
+          WRITE (stdout,40) string, TRIM(StateMsg(msg)), t_code, ng,    &
+     &                      Nrun, ncname(lstr:lend), InpRec, Tindex
         ELSE
-          WRITE (stdout,50) string, TRIM(StateMsg(msg)), t_code,        &
+          WRITE (stdout,50) string, TRIM(StateMsg(msg)), t_code, ng,    &
      &                      ncname(lstr:lend), InpRec, Tindex
         END IF
       END IF
@@ -4349,10 +4349,11 @@
      &        18x,'not found in input NetCDF: ',a,/,                    &
      &        18x,'number of available records = ',i3)
   40  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
-     &        /,19x,'(Iter=',i4.4,', File: ',a,', Rec=',i4.4,           &
-     &        ', Index=',i1,')')
+     &        /,19x,'(Grid ',i2.2,', Iter=',i4.4,', File: ',a,          &
+     &        ', Rec=',i4.4,', Index=',i1,')')
   50  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
-     &        /,19x,'(File: ',a,', Rec=',i4.4,', Index=',i1,')')
+     &        /,19x,'(Grid ',i2.2,', File: ',a,', Rec=',i4.4,           &
+     &        ', Index=',i1,')')
   60  FORMAT (/,a,'GET_STATE - error while reading variable: ',a,2x,    &
      &        'at time record = ',i3,/,18x,'in input NetCDF file: ',a)
   70  FORMAT (16x,'- ',a,/,19x,'(Min = ',1p,e15.8,                      &

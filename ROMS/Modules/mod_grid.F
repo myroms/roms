@@ -38,7 +38,6 @@
 !  grdscl     Grid scale used to adjust horizontal mixing according    !
 !               to grid area.                                          !
 !  h          Bottom depth (m) at RHO-points.                          !
-!  hinv       Inverse of Bottom depth (1/m) at RHO-points.             !
 !  latp       Latitude (degrees_north) at PSI-points.                  !
 !  latr       Latitude (degrees_north) at RHO-points.                  !
 !  latu       Latitude (degrees_north) at U-points.                    !
@@ -155,7 +154,6 @@
           real(r8), pointer :: fomn(:,:)
           real(r8), pointer :: grdscl(:,:)
           real(r8), pointer :: h(:,:)
-          real(r8), pointer :: hinv(:,:)
           real(r8), pointer :: latp(:,:)
           real(r8), pointer :: latr(:,:)
           real(r8), pointer :: latu(:,:)
@@ -340,7 +338,6 @@
       allocate ( GRID(ng) % fomn(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % grdscl(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % h(LBi:UBi,LBj:UBj) )
-      allocate ( GRID(ng) % hinv(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % latp(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % latr(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % latu(LBi:UBi,LBj:UBj) )
@@ -515,6 +512,7 @@
 #endif
 
       real(r8), parameter :: IniVal = 0.0_r8
+      real(r8) :: IniMetricVal
 
 #include "set_bounds.h"
 !
@@ -548,6 +546,18 @@
       END IF
 #endif
 !
+!  Set initialization value that it is special in nexting to just
+!  load contact points that have not been initialized from the
+!  regular physical grid. This is done to make sure that all these
+!  important metric values have been set-up correctly.
+!
+#ifdef NESTING
+      IniMetricVal=spval                   ! very large value
+      IniMetricVal=IniVal
+#else
+      IniMetricVal=IniVal
+#endif
+!
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
@@ -562,29 +572,28 @@
             GRID(ng) % IJwaterU(i,j) = 0
             GRID(ng) % IJwaterV(i,j) = 0
 #endif
-            GRID(ng) % angler(i,j) = IniVal
+            GRID(ng) % angler(i,j) = IniMetricVal
             GRID(ng) % CosAngler(i,j) = IniVal
             GRID(ng) % SinAngler(i,j) = IniVal
 
 #if defined CURVGRID && defined UV_ADV
-            GRID(ng) % dmde(i,j) = IniVal
-            GRID(ng) % dndx(i,j) = IniVal
+            GRID(ng) % dmde(i,j) = IniMetricVal
+            GRID(ng) % dndx(i,j) = IniMetricVal
 #endif
-            GRID(ng) % f(i,j) = IniVal
+            GRID(ng) % f(i,j) = IniMetricVal
             GRID(ng) % fomn(i,j) = IniVal
             GRID(ng) % grdscl(i,j) = IniVal
 
-            GRID(ng) % h(i,j) = IniVal
-            GRID(ng) % hinv(i,j) = IniVal
+            GRID(ng) % h(i,j) = IniMetricVal
 
             GRID(ng) % latp(i,j) = IniVal
-            GRID(ng) % latr(i,j) = IniVal
-            GRID(ng) % latu(i,j) = IniVal
-            GRID(ng) % latv(i,j) = IniVal
+            GRID(ng) % latr(i,j) = IniMetricVal
+            GRID(ng) % latu(i,j) = IniMetricVal
+            GRID(ng) % latv(i,j) = IniMetricVal
             GRID(ng) % lonp(i,j) = IniVal
-            GRID(ng) % lonr(i,j) = IniVal
-            GRID(ng) % lonu(i,j) = IniVal
-            GRID(ng) % lonv(i,j) = IniVal
+            GRID(ng) % lonr(i,j) = IniMetricVal
+            GRID(ng) % lonu(i,j) = IniMetricVal
+            GRID(ng) % lonv(i,j) = IniMetricVal
 
             GRID(ng) % omn(i,j) = IniVal
             GRID(ng) % om_p(i,j) = IniVal
@@ -596,8 +605,8 @@
             GRID(ng) % on_u(i,j) = IniVal
             GRID(ng) % on_v(i,j) = IniVal
 
-            GRID(ng) % pm(i,j) = IniVal
-            GRID(ng) % pn(i,j) = IniVal
+            GRID(ng) % pm(i,j) = IniMetricVal
+            GRID(ng) % pn(i,j) = IniMetricVal
 
             GRID(ng) % pmon_p(i,j) = IniVal
             GRID(ng) % pmon_r(i,j) = IniVal
@@ -619,12 +628,13 @@
 #endif
 
             GRID(ng) % xp(i,j) = IniVal
-            GRID(ng) % xr(i,j) = IniVal
-            GRID(ng) % xu(i,j) = IniVal
-            GRID(ng) % xv(i,j) = IniVal
+            GRID(ng) % xr(i,j) = IniMetricVal
+            GRID(ng) % xu(i,j) = IniMetricVal
+            GRID(ng) % xv(i,j) = IniMetricVal
             GRID(ng) % yp(i,j) = IniVal
-            GRID(ng) % yu(i,j) = IniVal
-            GRID(ng) % yv(i,j) = IniVal
+            GRID(ng) % yr(i,j) = IniMetricVal
+            GRID(ng) % yu(i,j) = IniMetricVal
+            GRID(ng) % yv(i,j) = IniMetricVal
 
 #if defined ICESHELF && defined SOLVE3D
             GRID(ng) % IcePress(i,j) = IniVal
@@ -633,9 +643,9 @@
 
 #ifdef MASKING
             GRID(ng) % pmask(i,j) = IniVal
-            GRID(ng) % rmask(i,j) = IniVal
-            GRID(ng) % umask(i,j) = IniVal
-            GRID(ng) % vmask(i,j) = IniVal
+            GRID(ng) % rmask(i,j) = IniMetricVal
+            GRID(ng) % umask(i,j) = IniMetricVal
+            GRID(ng) % vmask(i,j) = IniMetricVal
 # if defined AVERAGES    || \
     (defined AD_AVERAGES && defined ADJOINT) || \
     (defined RP_AVERAGES && defined TL_IOMS) || \
@@ -651,10 +661,10 @@
             GRID(ng) % umask_dia(i,j) = IniVal
             GRID(ng) % vmask_dia(i,j) = IniVal
 # endif
-            GRID(ng) % pmask_io(i,j) = 1.0_r8
-            GRID(ng) % rmask_io(i,j) = 1.0_r8
-            GRID(ng) % umask_io(i,j) = 1.0_r8
-            GRID(ng) % vmask_io(i,j) = 1.0_r8
+            GRID(ng) % pmask_io(i,j) = IniVal
+            GRID(ng) % rmask_io(i,j) = IniVal
+            GRID(ng) % umask_io(i,j) = IniVal
+            GRID(ng) % vmask_io(i,j) = IniVal
 #endif
 
 #ifdef WET_DRY

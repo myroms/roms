@@ -104,14 +104,14 @@
 !
       IF (itrc.eq.itemp) THEN
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=???
           END DO
         END DO
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=0.0_r8
           END DO
         END DO
@@ -124,14 +124,14 @@
 !
       ELSE IF (itrc.eq.isalt) THEN
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=???
           END DO
         END DO
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=0.0_r8
           END DO
         END DO
@@ -143,15 +143,15 @@
 !
       ELSE
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=???
           END DO
         END DO
       END IF
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             stflx(i,j,itrc)=0.0_r8
           END DO
         END DO

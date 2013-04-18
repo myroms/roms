@@ -82,8 +82,8 @@
       val1=(44.69_r8/39.382_r8)**2
       val2=val1*(rho0*100.0_r8/g)*(5.0E-5_r8/((42.689_r8/44.69_r8)**2))
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             val3=T0(ng)+val2*EXP(GRID(ng)%z_r(i,j,k)/100.0_r8)*         &
      &           (10.0_r8-0.4_r8*TANH(GRID(ng)%z_r(i,j,k)/100.0_r8))
             val4=GRID(ng)%yr(i,j)/el(ng)
@@ -96,8 +96,8 @@
       END DO
 #else
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             tclm(i,j,k,itemp)=???
             tclm(i,j,k,isalt)=???
           END DO

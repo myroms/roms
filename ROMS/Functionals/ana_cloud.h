@@ -109,8 +109,8 @@
       Cval=0.0_r8
 #endif
 
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           cloud(i,j)=Cval
         END DO
       END DO

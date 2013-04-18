@@ -200,7 +200,7 @@
 !  On Ouput:                                                           !
 !                                                                      !
 !     DimSize      Size of requested dimension (integer, OPTIONAL)     !
-!     DimID        ID od requested dimension (integer, OPTIONAL)       !
+!     DimID        ID of requested dimension (integer, OPTIONAL)       !
 !                                                                      !
 !  Other information stored in this module:                            !
 !                                                                      !

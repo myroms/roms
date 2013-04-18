@@ -4795,8 +4795,8 @@
       integer,  dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: my_bounds
 
       real(r8), dimension(TileSize(ng)) :: Asend
-      real(r8), dimension(TileSize(ng),                                 &
-     &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), dimension(TileSize(ng)*                                 &
+     &                    NtileI(ng)*NtileJ(ng)) :: Arecv
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -4865,7 +4865,7 @@
         Npts=MAX(Npts, np)
       END DO
 
-      IF (Npts.lt.TileSize(ng)) THEN
+      IF (Npts.gt.TileSize(ng)) THEN
         IF (Master) THEN
           WRITE (stdout,10) ' TileSize = ', TileSize(ng), Npts
  10       FORMAT (/,' MP_AGGREGATE2D - communication buffer to small,', &
@@ -4897,12 +4897,12 @@
 !  Aggregate data from all nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mpi_alltoall (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,  &
-     &                   OCN_COMM_WORLD, MyError)
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
+     &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,20) 'MPI_ALLTOALL', MyRank, MyError,              &
+        WRITE (stdout,20) 'MPI_ALLGATHER', MyRank, MyError,             &
      &                    string(1:Lstr)
  20     FORMAT (/,' MP_AGGREGATE2D - error during ',a,' call, Node = ', &
      &          i3.3,' Error = ',i3,/,18x,a)
@@ -4915,11 +4915,11 @@
 !-----------------------------------------------------------------------
 !
       DO rank=0,Nnodes
-        np=0
+        np=rank*Npts
         DO j=my_bounds(3,rank),my_bounds(4,rank)
           DO i=my_bounds(1,rank),my_bounds(2,rank)
             np=np+1
-            Aglobal(i,j)=Arecv(np,rank)
+            Aglobal(i,j)=Arecv(np)
           END DO
         END DO
       END DO
@@ -4993,15 +4993,15 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lstr, MyError, MyType, Nnodes, Npts, Serror
+      integer :: Klen, Lstr, MyError, MyType, Nnodes, Npts, Serror
       integer :: i, j, k, np, rank
 
       integer,  dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: my_bounds
 
       real(r8), dimension(TileSize(ng)*(UBk-LBk+1)) :: Asend
 
-      real(r8), dimension(TileSize(ng)*(UBk-LBk+1),                     &
-     &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), dimension(TileSize(ng)*(UBk-LBk+1)*                     &
+     &                    NtileI(ng)*NtileJ(ng)) :: Arecv
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -5058,6 +5058,7 @@
             my_bounds(4,rank)=BOUNDS(ng) % JendP(rank)
           END DO
       END SELECT
+      Klen=UBk-LBk+1
 !
 !  Determine the maximum number of points to process between all tiles.
 !  In collective communications, the amount of data sent must be equal
@@ -5067,13 +5068,13 @@
       DO rank=0,Nnodes
         np=(my_bounds(2,rank)-my_bounds(1,rank)+1)*                     &
      &     (my_bounds(4,rank)-my_bounds(3,rank)+1)*                     &
-     &     (UBk-LBk+1)
+     &     Klen
         Npts=MAX(Npts, np)
       END DO
 
-      IF (Npts.lt.TileSize(ng)) THEN
+      IF (Npts.gt.TileSize(ng)*Klen) THEN
         IF (Master) THEN
-          WRITE (stdout,10) ' TileSize = ', TileSize(ng), Npts
+          WRITE (stdout,10) ' TileSize = ', TileSize(ng)*Klen, Npts
  10       FORMAT (/,' MP_AGGREGATE3D - communication buffer to small,', &
      &            a, 2i8)
         END IF
@@ -5105,12 +5106,12 @@
 !  Aggregate data from all nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mpi_alltoall (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,  &
-     &                   OCN_COMM_WORLD, MyError)
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
+     &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,20) 'MPI_ALLTOALL', MyRank, MyError,              &
+        WRITE (stdout,20) 'MPI_ALLGATHER', MyRank, MyError,             &
      &                    string(1:Lstr)
  20     FORMAT (/,' MP_AGGREGATE3D - error during ',a,' call, Node = ', &
      &          i3.3,' Error = ',i3,/,18x,a)
@@ -5123,12 +5124,12 @@
 !-----------------------------------------------------------------------
 !
       DO rank=0,Nnodes
-        np=0
+        np=rank*Npts
         DO k=LBk,UBk
           DO j=my_bounds(3,rank),my_bounds(4,rank)
             DO i=my_bounds(1,rank),my_bounds(2,rank)
               np=np+1
-              Aglobal(i,j,k)=Arecv(np,rank)
+              Aglobal(i,j,k)=Arecv(np)
             END DO
           END DO
         END DO

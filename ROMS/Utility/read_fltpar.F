@@ -197,7 +197,7 @@
 
 # ifdef FLOAT_BIOLOGY
       fname=fbionam
-      IF (.not.find_file(1, fname)) GO TO 40
+      IF (.not.find_file(1, fname, 'FBIONAM')) GO TO 40
       GO TO 50
  40   IF (Master) WRITE (out,110) TRIM(fname)
       exit_flag=4

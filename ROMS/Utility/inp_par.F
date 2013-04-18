@@ -134,6 +134,14 @@
       CALL mp_bcasti (1, model, exit_flag)
 #endif
       IF (exit_flag.ne.NoError) RETURN
+#ifdef NESTING
+!
+!  Read in nesting contact points NetCDF file and allocate and
+!  initialize several structures and variables.
+!
+      CALL set_contact (1, model)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
 !
 !-----------------------------------------------------------------------
 !  Set lower and upper bounds indices per domain partition for all
@@ -147,7 +155,7 @@
 #else
       NghostPoints=2
 #endif
-      IF (ANY(ComposedGrid).or.ANY(RefinedGrid)) THEN
+      IF (ANY(CompositeGrid).or.ANY(RefinedGrid)) THEN
         NghostPoints=MAX(3,NghostPoints)
       END IF
 !
@@ -627,7 +635,7 @@
 !
       DO ng=1,Ngrids
         IF (Master) THEN
-          WRITE (stdout,90)
+          WRITE (stdout,90) ng
           DO tile=0,NtileI(ng)*NtileJ(ng)-1
             WRITE (stdout,100) tile,                                    &
      &                         DOMAIN(ng)%Xmin_rho(tile),               &
@@ -651,8 +659,8 @@
      &                         DOMAIN(ng)%Ymin_v(tile),                 &
      &                         DOMAIN(ng)%Ymax_v(tile), '  V-points'
           END DO
- 90       FORMAT (/,' Tile minimum and maximum fractional grid ',       &
-     &            'coordinates:',/,                                     &
+ 90       FORMAT (/,' Tile minimum and maximum fractional coordinates', &
+     &            ' for Grid ',i2.2,':'/,                               &
 #ifdef FULL_GRID
      &            '   (interior and boundary points)',/,/,              &
 #else
@@ -1126,7 +1134,7 @@
       RETURN
       END FUNCTION decode_line
 
-      FUNCTION find_file (ng, fname) RESULT (foundit)
+      FUNCTION find_file (ng, fname, KeyWord) RESULT (foundit)
 !
 !=======================================================================
 !                                                                      !
@@ -1136,6 +1144,7 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     fname      File name (path and name).                            !
+!     KeyWord    Keyword associated with file name (string,OPTIONAL).  !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -1146,6 +1155,7 @@
 !
       USE mod_kinds
       USE mod_param
+      USE mod_parallel
       USE mod_iounits
       USE mod_netcdf
       USE mod_scalars
@@ -1157,6 +1167,7 @@
       integer, intent(in) :: ng
 
       character (len=*), intent(in) :: fname
+      character (len=*), intent(in), optional :: KeyWord
 !
 !  Local variable declarations.
 !
@@ -1171,6 +1182,27 @@
 !-----------------------------------------------------------------------
 !
       foundit=.FALSE.
+!
+!  Check for empty file name string.
+!
+      IF (LEN_TRIM(fname).eq.0) THEN
+        IF (PRESENT(KeyWord)) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(KeyWord)
+ 10         FORMAT (/,' INP_PAR - empty file name string for ',         &
+     &              'input script KeyWord: ',a)
+            exit_flag=5
+          END IF
+        ELSE
+          IF (Master) THEN
+            WRITE (stdout,20)
+ 20         FORMAT (/,' INP_PAR - empty file name string for ',         &
+     &              'an unknown input script KeyWord.',/,               &
+     &              11x,'Check input script file name KeyWords...')
+            exit_flag=5
+          END IF
+        END IF
+      END IF
 !
 !  Check if provided file is a URL.  This implies the file is a NetCDF
 !  file on Data Access Protocol (DAP) server (like OPeNDAP).
@@ -1473,8 +1505,8 @@
 !  unspecified tracer values to the last tracer entry.
 !
         IF ((iTrcStr.gt.0).and.(iTrcEnd.gt.0)) THEN
-          IF ((Icont.eq.0).and.(ifield.lt.iTrcEnd)) THEN
-            DO i=ifield+1,iTrcEnd
+          IF ((Icont.eq.0).and.(ifield.lt.isTvar(iTrcEnd))) THEN
+            DO i=ifield+1,isTvar(iTrcEnd)
               DO ibry=1,4
                 S(ibry,i,igrid)%clamped   = S(ibry,ifield,igrid)%clamped
                 S(ibry,i,igrid)%closed    = S(ibry,ifield,igrid)%closed
@@ -1495,7 +1527,7 @@
 !
       IF ((Icont.gt.0).and.(Ngrids.gt.1)) THEN
         IF ((iTrcStr.gt.0).and.(iTrcEnd.gt.0)) THEN
-          IF ((ifield.eq.iTrcEnd).or.(ic.gt.1)) THEN
+          IF ((ifield.eq.isTvar(iTrcEnd)).or.(ic.gt.1)) THEN
             igrid=igrid+MIN(1,Icont)
           END IF
         ELSE
@@ -1631,9 +1663,9 @@
 !
 !  Local variable declarations.
 !
-      logical :: load
+      logical :: load, persist
 
-      integer :: Icont, Ipipe, i, j, lstr, ng
+      integer :: Icont, Ipipe, i, j, lstr, my_Ngrids, ng
       integer :: load_s1d
 
       character (len=1 ), parameter :: blank = ' '
@@ -1679,6 +1711,21 @@
 !
       IF (load) THEN
 !
+!  If nesting and the number of file name entries is less than Ngrids,
+!  persist the last values provided.  This is the case when not enough
+!  entries are provided by "==" plural symbol after the KEYWORD.
+!
+        IF (igrid.lt.Ngrids) THEN
+          DO i=igrid+1,Ngrids
+            Nfiles(i)=Nfiles(igrid)
+          END DO
+          my_Ngrids=igrid
+          persist=.TRUE.
+        ELSE
+          my_Ngrids=Ngrids
+          persist=.FALSE.
+        END IF
+!
 !  Allocate various fields in structure, if not continuation or pipe
 !  symbol is found which indicates end of input data.
 !
@@ -1717,7 +1764,7 @@
 !  Initialize and load fields into structure.
 !
         i=0
-        DO ng=1,Ngrids
+        DO ng=1,my_Ngrids
           S(ng)%Nfiles=Nfiles(ng)              ! number of multi-files
           S(ng)%Fcount=1                       ! multi-file counter
           S(ng)%Rindex=0                       ! time index
@@ -1737,6 +1784,29 @@
           S(ng)%base=S(ng)%name(1:lstr-3)      ! do not include ".nc"
           Nfiles(ng)=0                         ! clean file counter
         END DO
+!
+!  If appropriate, persist last value(s).
+!
+        IF (persist) THEN
+          DO ng=igrid+1,Ngrids
+            S(ng)%Nfiles=S(igrid)%Nfiles
+            S(ng)%Fcount=1
+            S(ng)%Rindex=0
+            S(ng)%ncid=-1
+            S(ng)%Vid=-1
+            S(ng)%Tid=-1
+            DO j=1,S(igrid)%Nfiles
+              S(ng)%files(j)=S(igrid)%files(j)
+              S(ng)%Nrec(j)=0
+              S(ng)%time_min(j)=0.0_r8
+              S(ng)%time_max(j)=0.0_r8
+            END DO
+            S(ng)%label=TRIM(label)
+            S(ng)%name=S(igrid)%name
+            S(ng)%base=S(igrid)%base
+            Nfiles(ng)=0
+          END DO
+        END IF
 !
 !  Reset counters and clean label.
 !
@@ -1807,9 +1877,9 @@
 !
 !  Local variable declarations.
 !
-      logical :: load
+      logical :: load, persist
 
-      integer :: Icont, Ipipe, i, j, k, lstr, ng
+      integer :: Icont, Ipipe, i, j, k, lstr, my_Ngrids, ng
       integer :: load_s2d
 
       character (len=1 ), parameter :: blank = ' '
@@ -1840,7 +1910,7 @@
 !  symbol in the input "line" is used to advance the counters.
 !
       IF (.not.load) THEN
-        IF (ifile.lt.nFfiles(igrid)) THEN
+        IF (ifile.le.nFfiles(igrid)) THEN
           ifile=ifile+MIN(1,Icont)
         ELSE
           ifile=1
@@ -1867,6 +1937,24 @@
 !-----------------------------------------------------------------------
 !
       IF (load) THEN
+!
+!  If nesting and the number of file name entries is less than Ngrids,
+!  persist the last values provided.  This is the case when not enough
+!  entries are provided by "==" plural symbol after the KEYWORD.
+!
+        IF (igrid.lt.Ngrids) THEN
+          DO j=igrid+1,Ngrids
+            DO i=1,idim
+              Nfiles(i,j)=Nfiles(i,igrid)
+            END DO
+          END DO
+          my_Ngrids=igrid
+          persist=.TRUE.
+        ELSE
+          my_Ngrids=Ngrids
+          persist=.FALSE.
+        END IF
+
 !
 !  Allocate various fields in structure, if not continuation or pipe
 !  symbol is found which indicates end of input data.
@@ -1902,7 +1990,7 @@
 !  Initialize and load fields into structure.
 !
         k=0
-        DO ng=1,Ngrids
+        DO ng=1,my_Ngrids
           DO i=1,idim
             S(i,ng)%Nfiles=Nfiles(i,ng)         ! number of multi-files
             S(i,ng)%Fcount=1                    ! multi-file counter
@@ -1923,6 +2011,32 @@
             S(i,ng)%base=S(i,ng)%name(1:lstr-3) ! do not include ".nc"
           END DO
         END DO
+
+!
+!  If appropriate, persist last value(s).
+!
+        IF (persist) THEN
+          DO ng=igrid+1,Ngrids
+            DO i=1,idim
+              S(i,ng)%Nfiles=S(i,igrid)%Nfiles
+              S(i,ng)%Fcount=1
+              S(i,ng)%Rindex=0
+              S(i,ng)%ncid=-1
+              S(i,ng)%Vid=-1
+              S(i,ng)%Tid=-1
+              DO j=1,S(i,igrid)%Nfiles
+                S(i,ng)%files(j)=S(i,igrid)%files(j)
+                S(i,ng)%Nrec(j)=0
+                S(i,ng)%time_min(j)=0.0_r8
+                S(i,ng)%time_max(j)=0.0_r8
+              END DO
+              S(i,ng)%label=TRIM(label)
+              S(i,ng)%name=S(i,igrid)%name
+              S(i,ng)%base=S(i,igrid)%base
+              Nfiles(i,ng)=0
+            END DO
+          END DO
+        END IF
 !
 !  Reset counters and clean label.
 !

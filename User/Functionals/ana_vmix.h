@@ -100,8 +100,8 @@
 !
 #if defined MY_APPLICATION
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=???
           END DO
         END DO
@@ -132,8 +132,8 @@
 !
 #if defined MY_APPLICATION
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=???
           END DO
         END DO

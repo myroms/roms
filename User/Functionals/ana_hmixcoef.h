@@ -168,14 +168,14 @@
 !!
 # ifdef UV_VIS2
       cff=visc2(ng)/grdmax(ng)
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           visc2_r(i,j)=cff*grdscl(i,j)
         END DO
       END DO
       cff=0.25_r8*cff
-      DO j=Jstr,JendR
-        DO i=Istr,IendR
+      DO j=JstrP,JendT
+        DO i=IstrP,IendT
           visc2_p(i,j)=cff*(grdscl(i,j  )+grdscl(i-1,j  )+              &
      &                      grdscl(i,j-1)+grdscl(i-1,j-1))
         END DO
@@ -183,14 +183,14 @@
 # endif
 # ifdef UV_VIS4
       cff=visc4(ng)/(grdmax(ng)**3)
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           visc4_r(i,j)=cff*grdscl(i,j)**3
         END DO
       END DO
       cff=0.25_r8*cff
-      DO j=Jstr,JendR
-        DO i=Istr,IendR
+      DO j=JstrP,JendT
+        DO i=IstrP,IendT
           visc4_p(i,j)=cff*(grdscl(i,j  )**3+grdscl(i-1,j  )**3+        &
      &                      grdscl(i,j-1)**3+grdscl(i-1,j-1)**3)
         END DO
@@ -209,8 +209,8 @@
 # ifdef TS_DIF2
       DO itrc=1,NT(ng)
         cff=tnu2(itrc,ng)/grdmax(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             diff2(i,j,itrc)=cff*grdscl(i,j)
           END DO
         END DO
@@ -219,8 +219,8 @@
 # ifdef TS_DIF4
       DO itrc=1,NT(ng)
         cff=tnu4(itrc,ng)/(grdmax(ng)**3)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             diff4(i,j,itrc)=cff*grdscl(i,j)**3
           END DO
         END DO
@@ -250,23 +250,23 @@
 !  boundary point.
 !
       fac=4.0_r8
-      DO j=JstrR,MIN(6,JendR)
+      DO j=JstrT,MIN(6,JendT)
         cff=visc2(ng)+REAL(6-j,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           visc2_r(i,j)=cff
           visc2_p(i,j)=cff
         END DO
       END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+      DO j=MAX(JstrT,Mm(ng)+1-6),JendT
         cff=fac*visc2(ng)+                                              &
      &      REAL(Mm(ng)+1-j,r8)*(visc2(ng)-fac*visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           visc2_r(i,j)=cff
           visc2_p(i,j)=cff
         END DO
       END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+      DO i=IstrT,MIN(6,IendT)
+        DO j=MAX(JstrT,i),MIN(Mm(ng)+1-i,JendT)
           cff=visc2(ng)+REAL(6-i,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
           visc2_r(i,j)=cff
           visc2_p(i,j)=cff
@@ -282,30 +282,30 @@
 !  boundary point.
 !
       fac=4.0_r8
-      DO j=JstrR,MIN(6,JendR)
+      DO j=JstrT,MIN(6,JendT)
         cff1=tnu2(itemp,ng)+                                            &
      &       REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
         cff2=tnu2(isalt,ng)+                                            &
      &       REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           diff2(i,j,itemp)=cff1
           diff2(i,j,isalt)=cff2
         END DO
       END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+      DO j=MAX(JstrT,Mm(ng)+1-6),JendT
         cff1=fac*tnu2(itemp,ng)+                                        &
      &       REAL(Mm(ng)+1-j,r8)*(tnu2(itemp,ng)-                       &
      &                            fac*tnu2(itemp,ng))/6.0_r8
         cff2=fac*tnu2(isalt,ng)+                                        &
      &       REAL(Mm(ng)+1-j,r8)*(tnu2(isalt,ng)-                       &
      &                            fac*tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           diff2(i,j,itemp)=cff1
           diff2(i,j,isalt)=cff2
         END DO
       END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+      DO i=IstrT,MIN(6,IendT)
+        DO j=MAX(JstrT,i),MIN(Mm(ng)+1-i,JendT)
           cff1=tnu2(itemp,ng)+                                          &
      &         REAL(6-i,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
           cff2=tnu2(isalt,ng)+                                          &
@@ -327,24 +327,24 @@
 #  endif
       fac=10.0_r8     ! max factor by which nu2 is increased at boundary
 #  if defined UV_VIS2
-      DO j=JstrR,MIN(Iwrk,JendR) ! South boundary
+      DO j=JstrT,MIN(Iwrk,JendT) ! South boundary
         cff=visc2(ng)*                                                  &
      &      (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           visc2_r(i,j)=cff
           visc2_p(i,j)=cff
         END DO
       END DO
-      DO i=IstrR,MIN(Iwrk,IendR) ! West boundary
-        DO j=JstrR,JendR
+      DO i=IstrT,MIN(Iwrk,IendT) ! West boundary
+        DO j=JstrT,JendT
           cff=MAX(visc2_r(i,j),visc2(ng)*                               &
      &        (1.0_r8+REAL(Iwrk-i,r8)/REAL(Iwrk,r8)*(fac-1.0_r8)))
           visc2_r(i,j)=cff
           visc2_p(i,j)=cff
         END DO
       END DO
-      DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR ! East boundary
-        DO j=JstrR,JendR
+      DO i=MAX(IstrT,Lm(ng)+1-Iwrk),IendT ! East boundary
+        DO j=JstrT,JendT
           cff=MAX(visc2_r(i,j),visc2(ng)*                               &
      &        (fac-(fac-1.0_r8)*REAL(Lm(ng)+1-i,r8)/REAL(Iwrk,r8)))
           visc2_r(i,j)=cff
@@ -353,18 +353,18 @@
       END DO
 #  endif
 #  if defined TS_DIF2
-      DO j=JstrR,MIN(Iwrk,JendR) ! South boundary
+      DO j=JstrT,MIN(Iwrk,JendT) ! South boundary
         cff1=tnu2(itemp,ng)*                                            &
      &       (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
         cff2=tnu2(isalt,ng)*                                            &
      &       (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
-        DO i=IstrR,IendR
+        DO i=IstrT,IendT
           diff2(i,j,itemp)=cff1
           diff2(i,j,isalt)=cff2
         END DO
       END DO
-      DO i=IstrR,MIN(Iwrk,IendR) ! West boundary
-        DO j=JstrR,JendR
+      DO i=IstrT,MIN(Iwrk,IendT) ! West boundary
+        DO j=JstrT,JendT
           cff1=MAX(diff2(i,j,itemp),tnu2(itemp,ng)*                     &
      &         (1.0_r8+REAL(Iwrk-i,r8)/REAL(Iwrk,r8)*(fac-1.0_r8)))
           cff2=MAX(diff2(i,j,isalt),tnu2(isalt,ng)*                     &
@@ -373,8 +373,8 @@
           diff2(i,j,isalt)=cff2
         END DO
       END DO
-      DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR ! East boundary
-        DO j=JstrR,JendR
+      DO i=MAX(IstrT,Lm(ng)+1-Iwrk),IendT ! East boundary
+        DO j=JstrT,JendT
           cff1=MAX(diff2(i,j,itemp),tnu2(itemp,ng)*                     &
      &         (fac-(fac-1.0_r8)*REAL(Lm(ng)+1-i,r8)/REAL(Iwrk,r8)))
           cff2=MAX(diff2(i,j,isalt),tnu2(isalt,ng)*                     &
@@ -438,6 +438,7 @@
       END IF
 # endif
 #endif
+
 #ifdef DISTRIBUTE
 # ifdef UV_VIS2
       CALL mp_exchange2d (ng, tile, model, 2,                           &

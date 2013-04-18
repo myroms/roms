@@ -78,8 +78,8 @@
 !  Set analytical precipitation rate (kg/m2/s).
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           rain(i,j)=0.0_r8
         END DO
       END DO

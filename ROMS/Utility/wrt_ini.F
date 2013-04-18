@@ -309,9 +309,17 @@
 
       IF (Master) THEN
 # ifdef SOLVE3D
+#  ifdef NESTING
+        WRITE (stdout,20) Nrun, Tindex, Tindex, INI(ng)%Rindex, ng
+#  else
         WRITE (stdout,20) Nrun, Tindex, Tindex, INI(ng)%Rindex
+#  endif
 # else
+#  ifdef NESTING
+        WRITE (stdout,20) Nrun, Tindex, INI(ng)%Rindex, ng
+#  else
         WRITE (stdout,20) Nrun, Tindex, INI(ng)%Rindex
+#  endif
 # endif
       END IF
 !
@@ -319,10 +327,18 @@
      &        'into initial NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
   20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
+#  ifdef NESTING
+     &           ', Index=',i1,',',i1,', Rec=',i4.4,', Grid 'i2.2,')')
+#  else
      &           ', Index=',i1,',',i1,', Rec=',i4.4,')')
+#  endif
 # else
   20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
+#  ifdef NESTING
+     &           ', Index=',i1,', Rec=',i4.4,', Grid ',i2.2,')')
+#  else
      &           ', Index=',i1,', Rec=',i4.4,')')
+#  endif
 # endif
       RETURN
       END SUBROUTINE wrt_ini
@@ -643,13 +659,21 @@
       IF (exit_flag.ne.NoError) RETURN
 
       IF (Master) THEN
+#  ifdef NESTING
+        WRITE (stdout,20) Nrun, Tindex, OutRec, ng
+#  else
         WRITE (stdout,20) Nrun, Tindex, OutRec
+#  endif
       END IF
 !
   10  FORMAT (/,' WRT_FRC - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_FRC   - wrote initial  fields (Iter=',i4.4,       &
+#  ifdef NESTING
+     &           ', Index=',i1,', Rec=',i4.4,', Grid ',i2.2,')')
+#  else
      &           ', Index=',i1,', Rec=',i4.4,')')
+#  endif
 
       RETURN
       END SUBROUTINE wrt_frc
@@ -964,14 +988,21 @@
       IF (exit_flag.ne.NoError) RETURN
 
       IF (Master) THEN
+# ifdef NESTING
+        WRITE (stdout,20) Nrun, Tindex, OutRec, ng
+# else
         WRITE (stdout,20) Nrun, Tindex, OutRec
+# endif
       END IF
 !
   10  FORMAT (/,' WRT_FRC_AD - error while writing variable: ',a,/,11x, &
      &        'into initial NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_FRC_AD   - wrote initial  fields (Iter=',i4.4,    &
+# ifdef NESTING
+     &           ', Index=',i1,', Rec=',i4.4,', Grid ',i2.2,')')
+# else
      &           ', Index=',i1,', Rec=',i4.4,')')
-
+# endif
       RETURN
       END SUBROUTINE wrt_frc_AD
 # endif

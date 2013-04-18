@@ -25,6 +25,9 @@
       CALL ana_btflux_tile (ng, tile, model, itrc,                      &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
+#ifdef TL_IOMS
+     &                      FORCES(ng) % tl_btflx,                      &
+#endif
      &                      FORCES(ng) % btflx)
 !
 ! Set analytical header file name used.
@@ -44,6 +47,9 @@
       SUBROUTINE ana_btflux_tile (ng, tile, model, itrc,                &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
+#ifdef TL_IOMS
+     &                            tl_btflx,                             &
+#endif
      &                            btflx)
 !***********************************************************************
 !
@@ -58,8 +64,14 @@
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: btflx(LBi:,LBj:,:)
+# ifdef TL_IOMS
+      real(r8), intent(inout) :: tl_btflx(LBi:,LBj:,:)
+# endif
 #else
       real(r8), intent(inout) :: btflx(LBi:UBi,LBj:UBj,NT(ng))
+# ifdef TL_IOMS
+      real(r8), intent(inout) :: tl_btflx(LBi:UBi,LBj:UBj,NT(ng))
+# endif
 #endif
 !
 !  Local variable declarations.
@@ -74,15 +86,18 @@
 !
       IF (itrc.eq.itemp) THEN
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=???
           END DO
         END DO
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=0.0_r8
+# ifdef TL_IOMS
+            tl_btflx(i,j,itrc)=0.0_r8
+# endif
           END DO
         END DO
 #endif
@@ -94,15 +109,18 @@
 !
       ELSE IF (itrc.eq.isalt) THEN
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=???
           END DO
         END DO
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=0.0_r8
+# ifdef TL_IOMS
+            tl_btflx(i,j,itrc)=0.0_r8
+# endif
           END DO
         END DO
 #endif
@@ -113,16 +131,19 @@
 !
       ELSE
 #if defined MY_APPLICATION
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=???
           END DO
         END DO
       END IF
 #else
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             btflx(i,j,itrc)=0.0_r8
+# ifdef TL_IOMS
+            tl_btflx(i,j,itrc)=0.0_r8
+# endif
           END DO
         END DO
       END IF

@@ -80,6 +80,15 @@
 
       Ngrids =  1
 
+! Number of grid nesting layers.  This parameter is used to allow refinement
+! and composite grid combinations.
+
+  NestLayers =  1
+
+! Number of grids in each nesting layer [1:NestLayers].
+
+GridsInLayer =  1
+
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
 
@@ -365,9 +374,9 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
           R0 == 1027.0d0                   ! kg/m3
           T0 == 10.0d0                     ! Celsius
-          S0 == 35.0d0                     ! PSU
+          S0 == 35.0d0                     ! nondimensional
        TCOEF == 1.7d-4                     ! 1/Celsius
-       SCOEF == 7.6d-4                     ! 1/PSU
+       SCOEF == 7.6d-4                     ! nondimensional
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
@@ -540,7 +549,7 @@ Hout(idMtls) == F       ! gls                turbulent length scale
 ! idBott( 1=isd50)   grain_diameter          mean grain diameter
 ! idBott( 2=idens)   grain_density           mean grain density
 ! idBott( 3=iwsed)   settling_vel            mean settling velocity
-! idBott( 4=itauc)   erosion_stres           critical erosion stress
+! idBott( 4=itauc)   erosion_stress          critical erosion stress
 ! idBott( 5=irlen)   ripple_length           ripple length
 ! idBott( 6=irhgt)   ripple_height           ripple height
 ! idBott( 7=ibwav)   bed_wave_amp            wave excursion amplitude
@@ -720,6 +729,12 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
      FWDNAME == ocean_fwd.nc
      ADSNAME == ocean_ads.nc
 
+! Nesting grids connectivity data: contact points information. This
+! NetCDF file is special and complex. It is currently generated using
+! script "matlab/grid/contact.m" from the Matlab repository.
+
+     NGCNAME =  ocean_ngc.nc
+
 ! Input lateral boundary conditions and climatology file names.  The
 ! USER has the option to split input data time records into several
 ! NetCDF files (see prologue instructions above). If so, use a single
@@ -789,11 +804,63 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !              initialized properly in "mod_ncparam.F".
 !
 !------------------------------------------------------------------------------
-! Nested grid parameters.
+! Nested grid parameters (processing order of these parameters is important).
 !------------------------------------------------------------------------------
 !
 !  Ngrids      Number of nested grids. It needs to be read at the top of all
-!              other parameters in order to allocate all model variables.
+!                other parameters in order to allocate all model variables.
+!
+!  NestLayers  Number of grid nesting layers. It is used to allow applications
+!                with both composite and refinement grid combinations, as shown
+!                in WikiROMS diagrams for the Refinement and Partial Boundary
+!                Composite Sub-Classes. See,
+!
+!                https://www.myroms.org/wiki/index.php/Nested_Grids
+!
+!                In non-nesting applications, set NestLayers = 1.
+!
+! GridsInLayer Number of grids in each nested layer, a vector of size
+!                [1:NestLayers]. Notice that,
+!
+!                SUM(GridsInLayer)    = Ngrids
+!                LENGHT(GridsInLayer) = NestLayers
+!
+!                The order of grids and nesting layers is extremely important.
+!                It determines the order of the sequential solution at every
+!                sub-time step.  See WikiROMS nesting Sub-Classes diagrams.
+!
+!                In non-nesting applications, set GridsInLayer = 1.
+!
+!                NOTE:  In main3d, we use these parameters to determine which
+!                ====   grid index, ng, to solve when calling the routines of
+!                       the computational kernel:
+!
+!                  NEST_LAYER : DO nl=1,NestLayers
+!                    ...
+!                    STEP_LOOP : DO istep=1,Nsteps
+!                      ...
+!                      DO ig=1,GridsInLayer(nl)
+!                        ng=GridNumber(ig,nl)
+!                        ...
+!                      END DO
+!                      ...
+!                    END DO STEP_LOOP
+!                  END DO NEST_LAYER
+!
+!                Here, the grid order "ng" for the computations is determined
+!                from array "GridNumber", which is computed at initialization
+!                in "read_phypar.F". It can be computed on the flight as:
+!
+!                  ng=Ngrids+1
+!                  DO j=NestLayers,nl,-1
+!                    DO i=GridsInLayer(j),1,-1
+!                      ng=ng-1
+!                      IF ((j.eq.nl).and.(i.eq.ig)) EXIT
+!                    END DO
+!                  END DO
+!
+!                but it is too inefficient. This information is provided here
+!                to help you configure the order of nested grids.
 !
 !------------------------------------------------------------------------------
 ! Grid dimension parameters.
@@ -1624,16 +1691,22 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !
 !              Typical values:     R0 = 1027.0  kg/m3
 !                                  T0 = 10.0    Celsius
-!                                  S0 = 35.0    PSU
+!                                  S0 = 35.0    nondimensional
 !                               TCOEF = 1.7d-4  1/Celsius
-!                               SCOEF = 7.6d-4  1/PSU
+!                               SCOEF = 7.6d-4  1/nondimensional
+!
+!              Notice that salinity has NO UNITS, it is nondimensional. Many
+!              people use PSU (Practical Salinity Unit).  However, salinity
+!              has always been defined as a conductivity ratio and does not
+!              have physical units. For details, check the following forum
+!              post:  www.myroms.org/forum/viewtopic.php?f=30&t=294
 !
 !  R0          Background density value (Kg/m3) used in Linear Equation of
 !              State.
 !
 !  T0          Background potential temperature (Celsius) constant.
 !
-!  S0          Background salinity (PSU) constant.
+!  S0          Background salinity (nondimensional) constant.
 !
 !  TCOEF       Thermal expansion coefficient in Linear Equation of State.
 !
@@ -2086,6 +2159,21 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !
 !  FWDNAME     Input forward solution fields file name.
 !  ADSNAME     Input adjoint sensitivity functional file name.
+!
+! Nesting grids connectivity data:
+!
+!  NGCNAME     Input nested grids contact points information file name. This
+!                NetCDF file is currently generated using script:
+!
+!                matlab/grid/contact.m
+!
+!                from the ROMS Matlab repository.  The nesting information
+!                is not trivial and this Matlab scripts is quite complex. See
+!
+!                https://www.myroms.org/wiki/index.php/Nested_Grids
+!                https://www.myroms.org/wiki/index.php/Grid_Processing_Scripts
+!
+!                for more information.
 !
 ! Input lateral boundary conditions and climatology file names:
 !

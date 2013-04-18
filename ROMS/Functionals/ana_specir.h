@@ -179,8 +179,8 @@
 !
 !  Compute spectral irradiance.
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 
           LatRad=latr(i,j)*deg2rad
           LonRad=lonr(i,j)*deg2rad

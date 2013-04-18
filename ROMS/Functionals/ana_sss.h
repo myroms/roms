@@ -77,8 +77,8 @@
 !  Set sea surface salinity (PSU).
 !-----------------------------------------------------------------------
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           sss(i,j)=???
         END DO
       END DO

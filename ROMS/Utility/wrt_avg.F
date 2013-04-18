@@ -1941,12 +1941,20 @@
       CALL netcdf_sync (ng, iNLM, AVG(ng)%name, AVG(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
+#ifdef NESTING
+      IF (Master) WRITE (stdout,20) AVG(ng)%Rindex, ng
+#else
       IF (Master) WRITE (stdout,20) AVG(ng)%Rindex
+#endif
 !
   10  FORMAT (/,' WRT_AVG - error while writing variable: ',a,/,11x,    &
      &        'into averages NetCDF file for time record: ',i4)
   20  FORMAT (6x,'WRT_AVG   - wrote averaged fields into time ',        &
+# ifdef NESTING
+     &        'record =',t72,i7.7,2x,i2.2)
+# else
      &        'record =',t72,i7.7)
+# endif
 #else
       SUBROUTINE wrt_avg
 #endif

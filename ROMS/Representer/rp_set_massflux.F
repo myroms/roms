@@ -144,8 +144,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IminU, IminV, ImaxU, ImaxV
-      integer :: JminU, JminV, JmaxU, JmaxV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -154,51 +152,11 @@
 !  Compute horizontal mass fluxes, Hz*u/n and Hz*v/m.
 !-----------------------------------------------------------------------
 !
-!  Set local I- and J-ranges.
-!
-      IF (EWperiodic(ng)) THEN
-        IminU=Istr
-        ImaxU=Iend
-        IminV=Istr
-        ImaxV=Iend
-      ELSE
-        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
-          IminU=IstrP+1
-          ImaxU=IendT
-          IminV=IstrT
-          ImaxV=IendT
-        ELSE
-          IminU=Istr
-          ImaxU=IendR
-          IminV=IstrR
-          ImaxV=IendR
-        END IF
-      END IF
-
-      IF (NSperiodic(ng)) THEN
-        JminU=Jstr
-        JmaxU=Jend
-        JminV=Jstr
-        JmaxV=Jend
-      ELSE
-        IF (ComposedGrid(ng).or.RefinedGrid(ng)) THEN
-          JminU=JstrT
-          JmaxU=JendT
-          JminV=JstrP+1
-          JmaxV=JendT
-        ELSE
-          JminU=JstrR
-          JmaxU=JendR
-          JminV=Jstr
-          JmaxV=JendR
-        END IF
-      END IF
-!
 !  Compute horizontal mass fluxes.
 !
       DO k=1,N(ng)
-        DO j=JminU,JmaxU
-          DO i=IminU,ImaxU
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
 !>          Huon(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)*   &
 !>   &                  on_u(i,j)
 !>
@@ -229,8 +187,8 @@
 # endif
           END DO
         END DO
-        DO j=JminV,JmaxV
-          DO i=IminV,ImaxV
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
 !>          Hvom(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)*   &
 !>   &                  om_v(i,j)
 !>
@@ -300,4 +258,3 @@
       END SUBROUTINE rp_set_massflux_tile
 #endif
       END MODULE rp_set_massflux_mod
-

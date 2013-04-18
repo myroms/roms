@@ -586,62 +586,77 @@
 !
 !  Apply boundary conditions (gradient).
 !
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstrm1,Jendp1
-                FX_r(Istr-1,j)=FX_r(Istr,j)
-                FE_r(Istr-1,j)=FE_r(Istr,j)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstrm1,Jendp1
-                FX_r(Iend+1,j)=FX_r(Iend,j)
-                FE_r(Iend+1,j)=FE_r(Iend,j)
-              END DO
-            END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            DO j=Jstrm1,Jendp1
+              FX_r(Istr-1,j)=FX_r(Istr,j)
+              FE_r(Istr-1,j)=FE_r(Istr,j)
+            END DO
           END IF
-
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=Istrm1,Iendp1
-                FX_r(i,Jstr-1)=FX_r(i,Jstr)
-                FE_r(i,Jstr-1)=FE_r(i,Jstr)
-              END DO
-            END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istrm1,Iendp1
-                FX_r(i,Jend+1)=FX_r(i,Jend)
-                FE_r(i,Jend+1)=FE_r(i,Jend)
-              END DO
-            END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            DO j=Jstrm1,Jendp1
+              FX_r(Iend+1,j)=FX_r(Iend,j)
+              FE_r(Iend+1,j)=FE_r(Iend,j)
+            END DO
           END IF
+        END IF
+!
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO i=Istrm1,Iendp1
+              FX_r(i,Jstr-1)=FX_r(i,Jstr)
+              FE_r(i,Jstr-1)=FE_r(i,Jstr)
+            END DO
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            DO i=Istrm1,Iendp1
+              FX_r(i,Jend+1)=FX_r(i,Jend)
+              FE_r(i,Jend+1)=FE_r(i,Jend)
+            END DO
+          END IF
+        END IF
+!
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng).or.        &
+     &            CompositeGrid(iwest ,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+            FX_r(Istr-1,Jstr-1)=0.5_r8*(FX_r(Istr  ,Jstr-1)+            &
+     &                                  FX_r(Istr-1,Jstr  ))
+            FE_r(Istr-1,Jstr-1)=0.5_r8*(FE_r(Istr  ,Jstr-1)+            &
+     &                                  FE_r(Istr-1,Jstr  ))
+          END IF
+        END IF
 
-          IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
-            IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-              FX_r(Istr-1,Jstr-1)=0.5_r8*(FX_r(Istr  ,Jstr-1)+          &
-     &                                    FX_r(Istr-1,Jstr  ))
-              FE_r(Istr-1,Jstr-1)=0.5_r8*(FE_r(Istr  ,Jstr-1)+          &
-     &                                    FE_r(Istr-1,Jstr  ))
-            END IF
-            IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-              FX_r(Iend+1,Jstr-1)=0.5_r8*(FX_r(Iend  ,Jstr-1)+          &
-     &                                    FX_r(Iend+1,Jstr  ))
-              FE_r(Iend+1,Jstr-1)=0.5_r8*(FE_r(Iend  ,Jstr-1)+          &
-     &                                    FE_r(Iend+1,Jstr  ))
-            END IF
-            IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-              FX_r(Istr-1,Jend+1)=0.5_r8*(FX_r(Istr-1,Jend  )+          &
-     &                                    FX_r(Istr  ,Jend+1))
-              FE_r(Istr-1,Jend+1)=0.5_r8*(FE_r(Istr-1,Jend  )+          &
-     &                                    FE_r(Istr  ,Jend+1))
-            END IF
-            IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-              FX_r(Iend+1,Jend+1)=0.5_r8*(FX_r(Iend+1,Jend  )+          &
-     &                                    FX_r(Iend  ,Jend+1))
-              FE_r(Iend+1,Jend+1)=0.5_r8*(FE_r(Iend+1,Jend  )+          &
-     &                                    FE_r(Iend  ,Jend+1))
-            END IF
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng).or.        &
+     &            CompositeGrid(ieast ,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+            FX_r(Iend+1,Jstr-1)=0.5_r8*(FX_r(Iend  ,Jstr-1)+            &
+     &                                  FX_r(Iend+1,Jstr  ))
+            FE_r(Iend+1,Jstr-1)=0.5_r8*(FE_r(Iend  ,Jstr-1)+            &
+     &                                  FE_r(Iend+1,Jstr  ))
+          END IF
+        END IF
+
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng).or.        &
+     &            CompositeGrid(iwest ,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+            FX_r(Istr-1,Jend+1)=0.5_r8*(FX_r(Istr-1,Jend  )+            &
+     &                                  FX_r(Istr  ,Jend+1))
+            FE_r(Istr-1,Jend+1)=0.5_r8*(FE_r(Istr-1,Jend  )+            &
+     &                                  FE_r(Istr  ,Jend+1))
+          END IF
+        END IF
+
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng).or.        &
+     &            CompositeGrid(ieast ,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+            FX_r(Iend+1,Jend+1)=0.5_r8*(FX_r(Iend+1,Jend  )+            &
+     &                                  FX_r(Iend  ,Jend+1))
+            FE_r(Iend+1,Jend+1)=0.5_r8*(FE_r(Iend+1,Jend  )+            &
+     &                                  FE_r(Iend  ,Jend+1))
           END IF
         END IF
 !
@@ -700,38 +715,40 @@
 !
 !  Apply boundary conditions (gradient).
 !
-        IF (.not.ComposedGrid(ng)) THEN
-          IF (.not.EWperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              IF (LBC(iwest,isTvar(idsed(ised)),ng)%closed) THEN
-                DO j=Jstr-1,Jend+1
-                  FX(Istr,j)=0.0_r8
-                END DO
-              END IF
-            END IF
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              IF (LBC(ieast,isTvar(idsed(ised)),ng)%closed) THEN
-                DO j=Jstr-1,Jend+1
-                  FX(Iend+1,j)=0.0_r8
-                END DO
-              END IF
+        IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+            IF (LBC(iwest,isTvar(idsed(ised)),ng)%closed) THEN
+              DO j=Jstr-1,Jend+1
+                FX(Istr,j)=0.0_r8
+              END DO
             END IF
           END IF
-
-          IF (.not.NSperiodic(ng)) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              IF (LBC(isouth,isTvar(idsed(ised)),ng)%closed) THEN
-                DO i=Istr-1,Iend+1
-                  FE(i,Jstr)=0.0_r8
-                END DO
-              END IF
+        END IF
+        IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+            IF (LBC(ieast,isTvar(idsed(ised)),ng)%closed) THEN
+              DO j=Jstr-1,Jend+1
+                FX(Iend+1,j)=0.0_r8
+              END DO
             END IF
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              IF (LBC(inorth,isTvar(idsed(ised)),ng)%closed) THEN
-                DO i=Istr-1,Iend+1
-                  FE(i,Jend+1)=0.0_r8
-                END DO
-              END IF
+          END IF
+        END IF
+!
+        IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            IF (LBC(isouth,isTvar(idsed(ised)),ng)%closed) THEN
+              DO i=Istr-1,Iend+1
+                FE(i,Jstr)=0.0_r8
+              END DO
+            END IF
+          END IF
+        END IF
+        IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+          IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+            IF (LBC(inorth,isTvar(idsed(ised)),ng)%closed) THEN
+              DO i=Istr-1,Iend+1
+                FE(i,Jend+1)=0.0_r8
+              END DO
             END IF
           END IF
         END IF

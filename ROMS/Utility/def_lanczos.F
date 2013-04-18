@@ -93,9 +93,9 @@
 !
       IF (Master) THEN
         IF (LdefLCZ(ng)) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -1023,8 +1023,10 @@
         LCZ(ng)%Rindex=rec_size
       END IF QUERY
 !
-  10  FORMAT (3x,'DEF_LANCZOS  - creating Lanczos  file: ',a)
-  20  FORMAT (3x,'DEF_LANCZOS  - inquiring Lanczos file: ',a)
+  10  FORMAT (3x,'DEF_LANCZOS  - creating Lanczos file, Grid ',i2.2,    &
+     &        ': ',a)
+  20  FORMAT (3x,'DEF_LANCZOS  - inquiring Lanczos file, Grid ',i2.2,   &
+     &        ': ',a)
   30  FORMAT (/,' DEF_LANCZOS - unable to create Lanczos NetCDF file:', &
      &        1x,a)
   40  FORMAT (a,', Lanczos vectors')

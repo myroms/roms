@@ -154,8 +154,8 @@
 # ifdef ALBEDO
       Rsolar=Csolar/(rho0*Cp)
 # endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
 !
 !  Local daylight is a function of the declination (Dangle) and hour
 !  angle adjusted for the local meridian (Hangle-lonr(i,j)/15.0).
@@ -235,14 +235,14 @@
 !
       cff=1.0_r8/(rho0*cp)
 # if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           srflx(i,j)=???
         END DO
       END DO
 # else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           srflx(i,j)=0.0_r8
         END DO
       END DO

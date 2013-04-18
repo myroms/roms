@@ -90,9 +90,9 @@
 !
       IF (Master) THEN
         IF (LdefERR(ng)) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 !
@@ -1025,8 +1025,10 @@
         ERR(ng)%Rindex=rec_size
       END IF QUERY
 !
-  10  FORMAT (3x,'DEF_ERROR    - creating error  file: ',a)
-  20  FORMAT (3x,'DEF_ERROR    - inquiring error file: ',a)
+  10  FORMAT (3x,'DEF_ERROR    - creating error file, Grid ',i2.2,      &
+     &        ': ',a)
+  20  FORMAT (3x,'DEF_ERROR    - inquiring error file, Grid ',i2.2,     &
+     &        ': ',a)
   30  FORMAT (/,' DEF_ERROR - unable to create 4DVar error NetCDF'      &
      &          ' file:',1x,a)
 # if defined POSTERIOR_ERROR_I

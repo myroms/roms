@@ -110,8 +110,8 @@
 !
 #if defined BENCHMARK
       Wmag=15.0_r8
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           cff=0.2_r8*(60.0_r8+latr(i,j))
           Uwind(i,j)=Wmag*EXP(-cff*cff)
           Vwind(i,j)=0.0_r8
@@ -123,8 +123,8 @@
 !!      v_wind=4.7936_r8
         v_wind=10.0_r8
       END IF
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           Uwind(i,j)=u_wind
           Vwind(i,j)=v_wind
         END DO

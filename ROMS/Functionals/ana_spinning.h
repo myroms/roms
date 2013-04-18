@@ -126,8 +126,8 @@
       Omega1_of_t=Omega1*SIN(little_omega*time(ng))
       d_Omega1_dt=Omega1*little_omega*COS(little_omega*time(ng))
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           fomn(i,j)=(f(i,j)*time_fac+                                   &
      &               SQRT(xr(i,j)*xr(i,j)+yr(i,j)*yr(i,j))*             &
      &               ((2.0_r8*Omega0+Omega1_of_t)*Omega1_of_t))*        &
@@ -135,5 +135,6 @@
         END DO
       END DO
 #endif
+
       RETURN
       END SUBROUTINE ana_spinning_tile

@@ -135,8 +135,8 @@
       val1=5.0E-05_r8*(1.0_r8+TANH((time(ng)-6.0_r8*86400.0_r8)/        &
      &                 (3.0_r8*86400.0_r8)))
       val2=2.0_r8*pi/el(ng)
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=-val1*COS(val2*yr(i,j))
 # ifdef TL_IOMS
           tl_sustr(i,j)=-val1*COS(val2*yr(i,j))
@@ -146,8 +146,8 @@
 #elif defined BL_TEST
       Ewind=0.0_r8/rho0
       Nwind=0.3_r8/rho0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           sustr(i,j)=Ewind
 # ifdef TL_IOMS
           tl_sustr(i,j)=Ewind
@@ -155,8 +155,8 @@
         END DO
       END DO
 #elif defined CANYON
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=5.0E-05_r8*SIN(2.0_r8*pi*tdays(ng)/10.0_r8)*       &
      &               (1.0_r8-TANH((yr(i,j)-0.5_r8*el(ng))/10000.0_r8))
 # ifdef TL_IOMS
@@ -171,8 +171,8 @@
 !!    ELSE
         windamp=-0.01_r8/rho0
 !!    END IF
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=windamp
 # ifdef TL_IOMS
           tl_sustr(i,j)=windamp
@@ -180,8 +180,8 @@
         END DO
       END DO
 #elif defined MIXED_LAYER
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
+      DO j=JstrT,JendT
+         DO i=IstrP,IendT
            sustr(i,j)=0.0001_r8        ! m2/s2
 # ifdef TL_IOMS
            tl_sustr(i,j)=0.0001_r8     ! m2/s2
@@ -192,8 +192,8 @@
 !!    windamp=user(1)/rho0
       windamp=-0.05_r8/rho0
       val1=2.0_r8*pi/el(ng)
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=windamp*COS(val1*yr(i,j))
 # ifdef TL_IOMS
           tl_sustr(i,j)=windamp*COS(val1*yr(i,j))
@@ -201,8 +201,8 @@
         END DO
       END DO
 #elif defined FLT_TEST
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=1.0E-03_r8
 # ifdef TL_IOMS
           tl_sustr(i,j)=1.0E-03_r8
@@ -214,8 +214,8 @@
       ramp_u=15.0_r8           ! start ramp UP at RAMP_UP hours
       ramp_time=10.0_r8       ! ramp from 0 to 1 over RAMP_TIME hours
       ramp_d=50.0_r8          ! start ramp DOWN at RAMP_DOWN hours
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
+      DO j=JstrT,JendT
+         DO i=IstrP,IendT
            cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
      &                            (ramp_time/5.0_r8))+1.0_r8)),         &
      &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
@@ -233,8 +233,8 @@
       ELSE
         windamp=0.0_r8
       END IF
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=windamp
 # ifdef TL_IOMS
           tl_sustr(i,j)=windamp
@@ -265,8 +265,8 @@
       END IF
       Ewind=windamp*COS(pi*winddir/180.0_r8)/rho0
       Nwind=windamp*SIN(pi*winddir/180.0_r8)/rho0
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           val1=0.5_r8*(angler(i-1,j)+angler(i,j))
           sustr(i,j)=Ewind*COS(val1)+Nwind*SIN(val1)
 # ifdef TL_IOMS
@@ -275,8 +275,8 @@
         END DO
       END DO
 #elif defined SED_TOY
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
+      DO j=JstrT,JendT
+         DO i=IstrP,IendT
            cff=0.0001_r8
            IF (time(ng).gt.3000.0_r8) THEN
              cff=0.0_r8
@@ -288,8 +288,8 @@
          END DO
       END DO
 #elif defined SHOREFACE
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
+      DO j=JstrT,JendT
+         DO i=IstrP,IendT
           sustr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_sustr(i,j)=0.0_r8
@@ -298,8 +298,8 @@
       END DO
 #elif defined UPWELLING
       IF (NSperiodic(ng)) THEN
-        DO j=JstrR,JendR
-           DO i=Istr,IendR
+        DO j=JstrT,JendT
+           DO i=IstrP,IendT
             sustr(i,j)=0.0_r8
 # ifdef TL_IOMS
             tl_sustr(i,j)=0.0_r8
@@ -312,8 +312,8 @@
         ELSE
           windamp=-0.1_r8/rho0
         END IF
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             sustr(i,j)=windamp
 # ifdef TL_IOMS
             tl_sustr(i,j)=windamp
@@ -327,8 +327,8 @@
       ELSE
         windamp=-0.1_r8/rho0
       END IF
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=windamp
 # ifdef TL_IOMS
           tl_sustr(i,j)=windamp
@@ -336,8 +336,8 @@
         END DO
       END DO
 #else
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           sustr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_sustr(i,j)=0.0_r8
@@ -352,8 +352,8 @@
 !-----------------------------------------------------------------------
 !
 #if defined BL_TEST
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=Nwind
 # ifdef TL_IOMS
           tl_svstr(i,j)=Nwind
@@ -367,8 +367,8 @@
       ELSE
         windamp=0.0_r8
       END IF
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=windamp
 # ifdef TL_IOMS
           tl_svstr(i,j)=windamp
@@ -376,8 +376,8 @@
         END DO
       END DO
 #elif defined NJ_BIGHT
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           val1=0.5_r8*(angler(i,j)+angler(i,j-1))
           svstr(i,j)=-Ewind*SIN(val1)+Nwind*COS(val1)
 # ifdef TL_IOMS
@@ -386,8 +386,8 @@
         END DO
       END DO
 #elif defined SED_TOY
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_svstr(i,j)=0.0_r8
@@ -395,8 +395,8 @@
         END DO
       END DO
 #elif defined SHOREFACE
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_svstr(i,j)=0.0_r8
@@ -410,8 +410,8 @@
         ELSE
           windamp=-0.1_r8/rho0
         END IF
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             svstr(i,j)=windamp
 # ifdef TL_IOMS
             tl_svstr(i,j)=windamp
@@ -419,8 +419,8 @@
           END DO
         END DO
       ELSE IF (EWperiodic(ng)) THEN
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             svstr(i,j)=0.0_r8
 # ifdef TL_IOMS
             tl_svstr(i,j)=0.0_r8
@@ -429,8 +429,8 @@
         END DO
       END IF
 #else
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           svstr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_svstr(i,j)=0.0_r8

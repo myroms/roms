@@ -1003,23 +1003,23 @@
         defined TL_W4DPSAS        || defined TL_W4DVAR || \
         defined W4DPSAS           || defined W4DVAR
           fname=STD(2,ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
           WRITE (out,160) '               Model STD File:  ',           &
      &                    TRIM(fname)
 #    endif
           fname=STD(1,ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'STDnameI')) GO TO 30
           WRITE (out,160) '  Initial Conditions STD File:  ',           &
      &                    TRIM(fname)
 #    ifdef ADJUST_BOUNDARY
           fname=STD(3,ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'STDnameB')) GO TO 30
           WRITE (out,160) ' Boundary Conditions STD File:  ',           &
      &                    TRIM(fname)
 #    endif
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
           fname=STD(4,ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'STDnameF')) GO TO 30
           WRITE (out,160) '     Surface Forcing STD File:  ',           &
      &                    TRIM(fname)
 #    endif
@@ -1031,14 +1031,14 @@
           WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameM')) GO TO 30
           END IF
 #   elif defined CORRELATION
           fname=NRM(2,ng)%name
           WRITE (out,160) '              Model Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng).and.LwrtNRM(2,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameM')) GO TO 30
           END IF
 #   endif
 #   if defined CORRELATION
@@ -1046,14 +1046,14 @@
           WRITE (out,160) ' Initial Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng).and.LwrtNRM(1,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameI')) GO TO 30
           END IF
 #   else
           fname=NRM(1,ng)%name
           WRITE (out,160) ' Initial Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameI')) GO TO 30
           END IF
 #   endif
 #   ifdef ADJUST_BOUNDARY
@@ -1062,14 +1062,14 @@
           WRITE (out,160) 'Boundary Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng).and.LwrtNRM(3,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameB')) GO TO 30
           END IF
 #    else
           fname=NRM(3,ng)%name
           WRITE (out,160) 'Boundary Conditions Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameB')) GO TO 30
           END IF
 #    endif
 #   endif
@@ -1079,20 +1079,20 @@
           WRITE (out,160) '    Surface Forcing Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng).and.LwrtNRM(4,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameF')) GO TO 30
           END IF
 #    else
           fname=NRM(4,ng)%name
           WRITE (out,160) '    Surface Forcing Norm File:  ',           &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng)) THEN
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'NRMnameF')) GO TO 30
           END IF
 #    endif
 #   endif
 #   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
           fname=OBS(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'OBSname')) GO TO 30
           WRITE (out,160) '            Observations File:  ',           &
      &                    TRIM(fname)
 #   endif

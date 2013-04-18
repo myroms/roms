@@ -80,13 +80,13 @@
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
             uclm(i,j,k)=???
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             vclm(i,j,k)=???
           END DO
         END DO

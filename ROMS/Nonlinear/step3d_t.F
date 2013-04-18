@@ -163,6 +163,9 @@
 !
       USE mod_param
       USE mod_ncparam
+# ifdef NESTING
+      USE mod_nesting
+# endif
       USE mod_scalars
 !
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
@@ -174,6 +177,9 @@
 # endif
 # ifdef TS_MPDATA
       USE mpdata_adiff_mod
+# endif
+# ifdef NESTING
+      USE nesting_mod, ONLY : bry_fluxes
 # endif
       USE t3dbc_mod, ONLY : t3dbc_tile
 !
@@ -302,6 +308,10 @@
 !
 !  Local variable declarations.
 !
+# ifdef NESTING
+      integer :: ILB, IUB, JLB, JUB
+      integer :: dg, cr, rg
+# endif
       integer :: i, ic, is, itrc, j, k, ltrc
 # ifdef DIAGNOSTICS_TS
       integer :: idiag
@@ -333,6 +343,17 @@
 # endif
 
 # include "set_bounds.h"
+
+# ifdef NESTING
+!
+!  Notice that the trace flux boundary arrays are dimensioned with the
+!  global dimensions of grid to facilitate processing.
+!
+      ILB=BOUNDS(ng)%LBi(-1)
+      IUB=BOUNDS(ng)%UBi(-1)
+      JLB=BOUNDS(ng)%LBj(-1)
+      JUB=BOUNDS(ng)%UBj(-1)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step horizontal advection term.
@@ -444,18 +465,18 @@
 #  endif
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.EWperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-                DO j=Jstr,Jend
-                  FX(Istr-1,j)=FX(Istr,j)
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-                DO j=Jstr,Jend
-                  FX(Iend+2,j)=FX(Iend+1,j)
-                END DO
-              END IF
+          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                FX(Istr-1,j)=FX(Istr,j)
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                FX(Iend+2,j)=FX(Iend+1,j)
+              END DO
             END IF
           END IF
 !
@@ -505,18 +526,18 @@
 #  endif
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.NSperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-                DO i=Istr,Iend
-                  FE(i,Jstr-1)=FE(i,Jstr)
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-                DO i=Istr,Iend
-                  FE(i,Jend+2)=FE(i,Jend+1)
-                END DO
-              END IF
+          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                FE(i,Jstr-1)=FE(i,Jstr)
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                FE(i,Jend+2)=FE(i,Jend+1)
+              END DO
             END IF
           END IF
 !
@@ -610,6 +631,30 @@
               END IF
             END IF
           END DO
+# endif
+
+# ifdef NESTING
+!
+!  If refinement grids, extract tracer horizontal advection fluxes
+!  (Hz*u*T/n, Hz*v*T/m) at the grid contact boundary (physical
+!  domain period) to be used in two-way nesting.
+!
+         IF (RefinedGrid(ng)) THEN
+           DO cr=1,Ncontact
+             dg=Rcontact(cr)%donor_grid
+             rg=Rcontact(cr)%receiver_grid
+             IF (ng.eq.rg) THEN
+               CALL bry_fluxes (dg, rg, cr, iNLM, tile,                 &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          ILB, IUB, JLB, JUB,                     &
+     &                          dt(ng), FX, FE,                         &
+     &                          BRY_CONTACT(iwest, cr)%Tflux(:,k,itrc), &
+     &                          BRY_CONTACT(ieast, cr)%Tflux(:,k,itrc), &
+     &                          BRY_CONTACT(isouth,cr)%Tflux(:,k,itrc), &
+     &                          BRY_CONTACT(inorth,cr)%Tflux(:,k,itrc))
+             END IF
+           END DO
+         END IF
 # endif
 !
 # ifdef TS_MPDATA

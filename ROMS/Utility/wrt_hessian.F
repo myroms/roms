@@ -464,19 +464,35 @@
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
+#  ifdef NESTING
+      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex, ng
+#  else
       IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex
+#  endif
 # else
+#  ifdef NESTING
+      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex, ng
+#  else
       IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex
+#  endif
 # endif
 !
   10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
      &        15x,'into Hessian NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
   20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+#  ifdef NESTING
+     &        ',',i1,') into time record = ',i7.7,2x,i2.2)
+#  else
      &        ',',i1,') into time record = ',i7.7)
+#  endif
 # else
   20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+#  ifdef NESTING
+     &        ') into time record = ',i7.7,2x,i2.2)
+#  else
      &        ') into time record = ',i7.7)
+#  endif
 # endif
       RETURN
       END SUBROUTINE wrt_hessian

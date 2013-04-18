@@ -138,24 +138,24 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           ubar(i,j,1)=???
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           vbar(i,j,1)=???
         END DO
       END DO
 #else
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
+      DO j=JstrT,JendT
+        DO i=IstrP,IendT
           ubar(i,j,1)=0.0_r8
         END DO
       END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
+      DO j=JstrP,JendT
+        DO i=IstrT,IendT
           vbar(i,j,1)=0.0_r8
         END DO
       END DO
@@ -166,14 +166,14 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           zeta(i,j,1)=???
         END DO
       END DO
 #else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           zeta(i,j,1)=0.0_r8
         END DO
       END DO
@@ -187,26 +187,26 @@
 !
 # if defined MY_APPLICATION
       DO k=1,N(ng)
-       DO j=JstrR,JendR
-         DO i=Istr,IendR
+       DO j=JstrT,JendT
+         DO i=IstrP,IendT
             u(i,j,k,1)=???
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             v(i,j,k,1)=???
           END DO
         END DO
       END DO
 # else
       DO k=1,N(ng)
-       DO j=JstrR,JendR
-         DO i=Istr,IendR
+       DO j=JstrT,JendT
+         DO i=IstrP,IendT
             u(i,j,k,1)=0.0_r8
           END DO
         END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
             v(i,j,k,1)=0.0_r8
           END DO
         END DO
@@ -222,8 +222,8 @@
 !
 # if defined MY_APPLICATION
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             t(i,j,k,1,itemp)=???
 #  ifdef SALINITY
             t(i,j,k,1,isalt)=???
@@ -233,8 +233,8 @@
       END DO
 # else
       DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             t(i,j,k,1,itemp)=T0(ng)
 #  ifdef SALINITY
             t(i,j,k,1,isalt)=S0(ng)

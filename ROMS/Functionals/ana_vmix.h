@@ -100,8 +100,8 @@
 !
 #if defined CANYON
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=1.0E-03_r8+95.0E-04_r8*EXP(z_w(i,j,k)/50.0_r8)+  &
      &                 95.0E-04_r8*EXP(-(z_w(i,j,k)+h(i,j))/50.0_r8)
           END DO
@@ -109,48 +109,48 @@
       END DO
 #elif defined CHANNEL_NECK
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=2.0E-04_r8+8.0E-04_r8*EXP(z_w(i,j,k)/5.0_r8)
           END DO
         END DO
       END DO
 #elif defined COUPLING_TEST
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=2.0E-03_r8+8.0E-03_r8*EXP(z_w(i,j,k)/1500.0_r8)
           END DO
         END DO
       END DO
 #elif defined ESTUARY_TEST
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.002_r8
           END DO
         END DO
       END DO
 #elif defined LAKE_SIGNELL
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.0005_r8
           END DO
         END DO
       END DO
 #elif defined NJ_BIGHT
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=1.0E-03_r8+2.0E-04_r8*EXP(z_r(i,j,k)/10.0_r8)
           END DO
         END DO
       END DO
 #elif defined SED_TEST1
       DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.025_r8*(h(i,j)+z_w(i,j,k))*                    &
      &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
      &                  (h(i,j)+zeta(i,j,knew)))
@@ -161,8 +161,8 @@
       END DO
 #elif defined SED_TOY
       DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.41_r8*0.01_r8*(h(i,j)+z_w(i,j,k))*             &
      &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
      &                  (h(i,j)+zeta(i,j,knew)))
@@ -171,8 +171,8 @@
       END DO
 #elif defined SHOREFACE
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.025_r8*(h(i,j)+z_w(i,j,k))*                    &
      &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
      &                  (h(i,j)+zeta(i,j,knew)))
@@ -181,8 +181,8 @@
       END DO
 #elif defined TEST_CHAN
       DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=0.41_r8*0.0625_r8*(h(i,j)+z_w(i,j,k))*           &
      &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
      &                  (h(i,j)+zeta(i,j,knew)))
@@ -191,8 +191,8 @@
       END DO
 #elif defined UPWELLING
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akv(i,j,k)=2.0E-03_r8+8.0E-03_r8*EXP(z_w(i,j,k)/150.0_r8)
           END DO
         END DO
@@ -223,16 +223,16 @@
 !
 #if defined CANYON
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akt_bak(itemp,ng)
           END DO
         END DO
       END DO
 #elif defined CHANNEL_NECK
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=2.0E-06_r8+                                &
      &                       8.0E-06_r8*EXP(z_w(i,j,k)/5.0_r8)
           END DO
@@ -240,8 +240,8 @@
       END DO
 #elif defined COUPLING_TEST
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akt_bak(itemp,ng)
             Akt(i,j,k,isalt)=Akt_bak(isalt,ng)
           END DO
@@ -249,8 +249,8 @@
       END DO
 #elif defined ESTUARY_TEST
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akv(i,j,k)
             Akt(i,j,k,isalt)=Akv(i,j,k)
           END DO
@@ -258,8 +258,8 @@
       END DO
 #elif defined LAKE_SIGNELL
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akt_bak(itemp,ng)
             Akt(i,j,k,isalt)=Akt_bak(isalt,ng)
           END DO
@@ -267,8 +267,8 @@
       END DO
 #elif defined NJ_BIGHT
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=1.0E-05_r8+                                &
      &                       2.0E-06_r8*EXP(z_r(i,j,k)/10.0_r8)
             Akt(i,j,k,isalt)=Akt(i,j,k,itemp)
@@ -277,8 +277,8 @@
       END DO
 #elif defined SED_TOY
       DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akv(i,j,k)
             Akt(i,j,k,isalt)=Akv(i,j,k)
           END DO
@@ -286,8 +286,8 @@
       END DO
 #elif defined SHOREFACE
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akv(i,j,k)
             Akt(i,j,k,isalt)=Akv(i,j,k)
           END DO
@@ -295,8 +295,8 @@
       END DO
 #elif defined TEST_CHAN
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akv(i,j,k)*0.49_r8/0.39_r8
             Akt(i,j,k,isalt)=Akt(i,j,k,itemp)
           END DO
@@ -304,8 +304,8 @@
       END DO
 #elif defined UPWELLING
       DO k=1,N(ng)-1
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
             Akt(i,j,k,itemp)=Akt_bak(itemp,ng)
             Akt(i,j,k,isalt)=Akt_bak(isalt,ng)
           END DO

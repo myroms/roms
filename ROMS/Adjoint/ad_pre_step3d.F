@@ -1968,18 +1968,18 @@
 #   endif
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.NSperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-                DO i=Istr,Iend
-                  FE(i,Jstr-1)=FE(i,Jstr)
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-                DO i=Istr,Iend
-                  FE(i,Jend+2)=FE(i,Jend+1)
-                END DO
-              END IF
+          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                FE(i,Jstr-1)=FE(i,Jstr)
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+                FE(i,Jend+2)=FE(i,Jend+1)
+              END DO
             END IF
           END IF
 !
@@ -2113,24 +2113,24 @@
 #   endif
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.NSperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-                DO i=Istr,Iend
-!>                tl_FE(i,Jend+2)=tl_FE(i,Jend+1)
+          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+              DO i=Istr,Iend
+!>              tl_FE(i,Jend+2)=tl_FE(i,Jend+1)
 !>
-                  ad_FE(i,Jend+1)=ad_FE(i,Jend+1)+ad_FE(i,Jend+2)
-                  ad_FE(i,Jend+2)=0.0_r8
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-                DO i=Istr,Iend
-!>                tl_FE(i,Jstr-1)=tl_FE(i,Jstr)
+                ad_FE(i,Jend+1)=ad_FE(i,Jend+1)+ad_FE(i,Jend+2)
+                ad_FE(i,Jend+2)=0.0_r8
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+              DO i=Istr,Iend
+!>              tl_FE(i,Jstr-1)=tl_FE(i,Jstr)
 !>
-                  ad_FE(i,Jstr)=ad_FE(i,Jstr)+ad_FE(i,Jstr-1)
-                  ad_FE(i,Jstr-1)=0.0_r8
-                END DO
-              END IF
+                ad_FE(i,Jstr)=ad_FE(i,Jstr)+ad_FE(i,Jstr-1)
+                ad_FE(i,Jstr-1)=0.0_r8
+              END DO
             END IF
           END IF
 !
@@ -2159,18 +2159,18 @@
 #   endif
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.EWperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-                DO j=Jstr,Jend
-                  FX(Istr-1,j)=FX(Istr,j)
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-                DO j=Jstr,Jend
-                  FX(Iend+2,j)=FX(Iend+1,j)
-                END DO
-              END IF
+          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                FX(Istr-1,j)=FX(Istr,j)
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+                FX(Iend+2,j)=FX(Iend+1,j)
+              END DO
             END IF
           END IF
 !
@@ -2305,24 +2305,24 @@
               ad_cff=0.0_r8
             END DO
           END DO
-          IF (.not.ComposedGrid(ng)) THEN
-            IF (.not.EWperiodic(ng)) THEN
-              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-                DO j=Jstr,Jend
-!>                tl_FX(Iend+2,j)=tl_FX(Iend+1,j)
+          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+              DO j=Jstr,Jend
+!>              tl_FX(Iend+2,j)=tl_FX(Iend+1,j)
 !>
-                  ad_FX(Iend+1,j)=ad_FX(Iend+1,j)+ad_FX(Iend+2,j)
-                  ad_FX(Iend+2,j)=0.0_r8
-                END DO
-              END IF
-              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-                DO j=Jstr,Jend
-!>                tl_FX(Istr-1,j)=tl_FX(Istr,j)
+                ad_FX(Iend+1,j)=ad_FX(Iend+1,j)+ad_FX(Iend+2,j)
+                ad_FX(Iend+2,j)=0.0_r8
+              END DO
+            END IF
+          END IF
+          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+              DO j=Jstr,Jend
+!>              tl_FX(Istr-1,j)=tl_FX(Istr,j)
 !>
-                  ad_FX(Istr,j)=ad_FX(Istr,j)+ad_FX(Istr-1,j)
-                  ad_FX(Istr-1,j)=0.0_r8
-                END DO
-              END IF
+                ad_FX(Istr,j)=ad_FX(Istr,j)+ad_FX(Istr-1,j)
+                ad_FX(Istr-1,j)=0.0_r8
+              END DO
             END IF
           END IF
 !

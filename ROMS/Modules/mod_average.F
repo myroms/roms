@@ -558,20 +558,20 @@
       END IF
 
       IF (ANY(Aout(idTTav(:),ng))) THEN
-        allocate ( AVERAGE(ng) % avgTT(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        allocate ( AVERAGE(ng) % avgTT(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       END IF
       IF (ANY(Aout(idUTav(:),ng))) THEN
-        allocate ( AVERAGE(ng) % avgUT(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        allocate ( AVERAGE(ng) % avgUT(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       END IF
       IF (ANY(Aout(idVTav(:),ng))) THEN
-        allocate ( AVERAGE(ng) % avgVT(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        allocate ( AVERAGE(ng) % avgVT(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       END IF
 
       IF (ANY(Aout(iHUTav(:),ng))) THEN
-        allocate ( AVERAGE(ng) % avgHuonT(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        allocate ( AVERAGE(ng)% avgHuonT(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       END IF
       IF (ANY(Aout(iHVTav(:),ng))) THEN
-        allocate ( AVERAGE(ng) % avgHvomT(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        allocate ( AVERAGE(ng)% avgHvomT(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       END IF
 # endif
 !

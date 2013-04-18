@@ -88,9 +88,9 @@
 !
       IF (Master) THEN
         IF (ldef) THEN
-          WRITE (stdout,10) TRIM(ncname)
+          WRITE (stdout,10) ng, TRIM(ncname)
         ELSE
-          WRITE (stdout,20) TRIM(ncname)
+          WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
 # ifdef ADJOINT
@@ -2841,8 +2841,10 @@
       END IF
 # endif
 !
-  10  FORMAT (6x,'DEF_AVG   - creating average file: ',a)
-  20  FORMAT (6x,'DEF_AVG   - inquiring average file: ',a)
+  10  FORMAT (6x,'DEF_AVG   - creating average file, Grid ',i2.2,': ',  &
+     &        a)
+  20  FORMAT (6x,'DEF_AVG   - inquiring average file, Grid ',i2.2,': ', &
+     &        a)
   30  FORMAT (/,' DEF_AVG - unable to create averages NetCDF file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_AVG - unable to open averages NetCDF file: ',a)

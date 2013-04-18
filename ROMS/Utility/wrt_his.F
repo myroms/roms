@@ -2429,19 +2429,35 @@
       IF (exit_flag.ne.NoError) RETURN
 
 #ifdef SOLVE3D
+# ifdef NESTING
+      IF (Master) WRITE (stdout,20) KOUT, NOUT, HIS(ng)%Rindex, ng
+# else
       IF (Master) WRITE (stdout,20) KOUT, NOUT, HIS(ng)%Rindex
+# endif
 #else
+# ifdef NESTING
+      IF (Master) WRITE (stdout,20) KOUT, HIS(ng)%Rindex, ng
+# else
       IF (Master) WRITE (stdout,20) KOUT, HIS(ng)%Rindex
+# endif
 #endif
 !
   10  FORMAT (/,' WRT_HIS - error while writing variable: ',a,/,11x,    &
      &        'into history NetCDF file for time record: ',i4)
 #ifdef SOLVE3D
   20  FORMAT (6x,'WRT_HIS   - wrote history  fields (Index=', i1,       &
+# ifdef NESTING
+     &        ',',i1,') into time record = ',i7.7,2x,i2.2)
+# else
      &        ',',i1,') into time record = ',i7.7)
+# endif
 #else
   20  FORMAT (6x,'WRT_HIS   - wrote history  fields (Index=', i1,       &
+# ifdef NESTING
+     &        ') into time record = ',i7.7,2x,i2.2)
+# else
      &        ') into time record = ',i7.7)
+# endif
 #endif
       RETURN
       END SUBROUTINE wrt_his

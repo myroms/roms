@@ -25,6 +25,9 @@
 #endif
       USE mod_iounits
       USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_netcdf
       USE mod_scalars
 #if defined SEDIMENT || defined BBL_MODEL
@@ -45,7 +48,8 @@
 !
 !  Local variable declarations.
 !
-      logical :: find_file, got_Ngrids, obc_data
+      logical :: got_Ngrids, got_NestLayers
+      logical :: find_file, obc_data
       logical :: Lvalue(1)
 #if defined SOLVE3D && defined SEDIMENT
       logical :: LreadNCS = .FALSE.
@@ -68,7 +72,7 @@
       logical, allocatable :: Ldiag(:)
 #endif
 
-      integer :: Lstr, Npts, Nval, i, itrc, ivar, k, ng, status
+      integer :: Lstr, Npts, Nval, i, itrc, ivar, k, ng, nl, status
       integer :: ifield, ifile, igrid, itracer, nline, mFfiles
       integer :: Ivalue(1)
 
@@ -104,6 +108,7 @@
         label(i:i)=blank
       END DO
       got_Ngrids=.FALSE.
+      got_NestLayers=.FALSE.
 !
 !-----------------------------------------------------------------------
 !  Read in physical model parameters. Then, load input data into module.
@@ -163,6 +168,49 @@
                 allocate ( Nfiles(Ngrids) )
                 Nfiles(1:Ngrids)=0
               END IF
+            CASE ('NestLayers')
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              NestLayers=Ivalue(1)
+              IF (NestLayers.lt.1) THEN
+                IF (Master) WRITE (out,290) 'NestLayers', NestLayers,   &
+     &            'must be greater or equal than one.'
+                exit_flag=5
+                RETURN
+              END IF
+#ifndef NESTING
+              IF (NestLayers.gt.1) THEN
+                IF (Master) WRITE (out,290) 'NestLayers', NestLayers,   &
+     &            'must be equal to one in non-nesting applications.'
+                exit_flag=5
+                RETURN
+              END IF
+#endif
+              got_NestLayers=.TRUE.
+              IF (.not.allocated(GridsInLayer)) THEN
+                allocate ( GridsInLayer(NestLayers) )
+#ifndef NESTING
+                GridsInLayer(1:NestLayers)=1
+#endif
+              END IF
+              IF (.not.allocated(GridNumber)) THEN
+                allocate ( GridNumber(Ngrids,NestLayers) )
+                GridNumber(1:Ngrids,1:NestLayers)=0        ! Important
+              END IF
+            CASE ('GridsInLayer')
+              IF (.not.got_NestLayers) THEN
+                IF (Master) WRITE (out,320) 'NestLayers',               &
+     &            'Add "NestLayers" keyword before GridsInLayer.'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_i(Nval, Rval, NestLayers, GridsInLayer)
+              ng=0
+              DO nl=1,NestLayers
+                DO i=1,GridsInLayer(nl)
+                  ng=ng+1                  ! order of grids are very in
+                  GridNumber(i,nl)=ng      ! nesting applications. See
+                END DO                     ! WikiROMS for details.
+              END DO
             CASE ('Lm')
               IF (.not.got_Ngrids) THEN
                 IF (Master) WRITE (out,320) 'Ngrids',                   &
@@ -2496,6 +2544,11 @@
               label='FRC - forcing fields'
               Npts=load_s2d(Nval, Cval, line, label, ifile, igrid,      &
      &                      Ncount, mFfiles, FRC)
+            CASE ('NGCNAME')
+              DO i=1,LEN(NGCname)
+                NGCname(i:i)=blank
+              END DO
+              NGCname=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('CLMNAME')
               label='CLM - climatology fields'
               Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, CLM)
@@ -2550,6 +2603,41 @@
 !-----------------------------------------------------------------------
 !  Process input parameters.
 !-----------------------------------------------------------------------
+!
+!  Check if nesting parameters "NestLayers", "GridsInLayer", and
+!  "GridNumber" have been assigned.  The code below is necessary
+!  for compatability with old "ocean.in" input scripts.
+!
+#ifndef NESTING
+      IF (.not.got_NestLayers) THEN
+        NestLayers=1
+        IF (.not.allocated(GridsInLayer)) THEN
+          allocate ( GridsInLayer(NestLayers) )
+          GridsInLayer=1
+        END IF
+        IF (.not.allocated(GridNumber)) THEN
+          allocate ( GridNumber(Ngrids,NestLayers) )
+          GridNumber=1
+        END IF
+      END IF
+#else
+      IF (.not.got_NestLayers) THEN
+        IF (Master) THEN
+          WRITE (out,320) 'NestLayers',                                 &
+     &            'Add "NestLayers" keyword after "Ngrids".'
+          exit_flag=5
+          RETURN
+        END IF
+      END IF
+      IF (.not.allocated(GridsInLayer)) THEN
+        IF (Master) THEN
+          WRITE (out,320) 'GridsInLayer',                               &
+     &            'Add "GridsInLayer" keyword after "NestLayers".'
+          exit_flag=5
+          RETURN
+        END IF
+      END IF
+#endif
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
@@ -4458,14 +4546,20 @@
 #endif
 #ifndef ANA_GRID
           fname=GRD(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'GRDNAME')) GO TO 30
           WRITE (out,230) '               Input Grid File:  ',          &
+     &                    TRIM(fname)
+#endif
+#ifdef NESTING
+          fname=NGCname
+          IF (.not.find_file(ng, fname, 'NGCNAME')) GO TO 30
+          WRITE (out,230) 'Nesting grid connectivity File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef INI_FILE
 # ifdef NONLINEAR
           fname=INI(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'ININAME')) GO TO 30
           WRITE (out,230) '  Input Nonlinear Initial File:  ',          &
      &                    TRIM(fname)
 # endif
@@ -4474,14 +4568,14 @@
       defined OPT_OBSERVATIONS  || defined SANITY_CHECK        || \
       defined SENSITIVITY_4DVAR || defined TLM_CHECK)
           fname=ITL(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'ITLNAME')) GO TO 30
           WRITE (out,230) '    Input Tangent Initial File:  ',          &
      &                    TRIM(fname)
 # endif
 # if defined WEAK_CONSTRAINT && \
     !(defined W4DPSAS        || defined W4DPSAS_SENSITIVITY)
           fname=IRP(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'IRPNAME')) GO TO 30
           WRITE (out,230) 'Input Representer Initial File:  ',          &
      &                    TRIM(fname)
 # endif
@@ -4494,7 +4588,7 @@
       defined HESSIAN_SV          || defined HESSIAN_SO        || \
       defined HESSIAN_FSV)
           fname=IAD(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'IADNAME')) GO TO 30
           WRITE (out,230) '    Input Adjoint Initial File:  ',          &
      &                    TRIM(fname)
 # endif
@@ -4503,7 +4597,7 @@
           DO i=1,nFfiles(ng)
             DO ifile=1,FRC(i,ng)%Nfiles
               fname=FRC(i,ng)%files(ifile)
-              IF (.not.find_file(ng, fname)) GO TO 30
+              IF (.not.find_file(ng, fname, 'FRCNAME')) GO TO 30
               IF (ifile.eq.1) THEN
                 WRITE (out,310) '         Input Forcing File ', i,      &
      &                          ':  ', TRIM(fname)
@@ -4516,7 +4610,7 @@
 #ifdef CLM_FILE
           DO ifile=1,CLM(ng)%Nfiles
             fname=CLM(ng)%files(ifile)
-            IF (.not.find_file(ng, fname)) GO TO 30
+            IF (.not.find_file(ng, fname, 'CLMNAME')) GO TO 30
             IF (ifile.eq.1) THEN
               WRITE (out,230) '        Input Climatology File:  ',      &
      &                        TRIM(fname)
@@ -4527,7 +4621,7 @@
 #endif
 #if defined FORWARD_READ && !(defined FOUR_DVAR || defined PICARD_TEST)
           fname=FWD(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'FWDNAME')) GO TO 30
           WRITE (out,230) '      Input Forward State File:  ',          &
      &                    TRIM(fname)
 #endif
@@ -4535,7 +4629,7 @@
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
     defined SO_SEMI
           fname=ADS(ng)%name
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'ADSNAME')) GO TO 30
           WRITE (out,230) 'Input Adjoint Sensitivity File:  ',          &
      &                    TRIM(fname)
 #endif
@@ -4573,7 +4667,7 @@
           IF (ObcData(ng)) THEN
             DO ifile=1,BRY(ng)%Nfiles
               fname=BRY(ng)%files(ifile)
-              IF (.not.find_file(ng, fname)) GO TO 30
+              IF (.not.find_file(ng, fname, 'BRYNAME')) GO TO 30
               IF (ifile.eq.1) THEN
                 WRITE (out,230) '           Input Boundary File:  ',    &
      &                          TRIM(fname)
@@ -4584,30 +4678,30 @@
           END IF
 #ifdef STATIONS
           fname=sposnam
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'SPOSNAM')) GO TO 30
           WRITE (out,230) '        Station positions File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef FOUR_DVAR
           fname=aparnam
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'APARNAM')) GO TO 30
           WRITE (out,230) '  Assimilation Parameters File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef FLOATS
           fname=fposnam
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'FPOSNAM')) GO TO 30
           WRITE (out,230) ' Initial Floats Positions File:  ',          &
      &                    TRIM(fname)
 #endif
 #ifdef BIOLOGY
           fname=bparnam
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'BPARNAM')) GO TO 30
           WRITE (out,230) '       Biology Parameters File:  ',          &
      &                    TRIM(fname)
 #endif
           fname=varname
-          IF (.not.find_file(ng, fname)) GO TO 30
+          IF (.not.find_file(ng, fname, 'VARNAME')) GO TO 30
           GO TO 40
   30      IF (Master) WRITE (out,270) TRIM(fname)
           exit_flag=4

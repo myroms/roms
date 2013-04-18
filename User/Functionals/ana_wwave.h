@@ -173,8 +173,8 @@
 !-----------------------------------------------------------------------
 !
 #if defined MY_APPLICATION
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
           Hwave(i,j)=2.0_r8
           Dwave(i,j)=90.0_r8*deg2rad
           Pwave_bot(i,j)=8.0_r8

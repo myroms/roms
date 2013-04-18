@@ -130,7 +130,7 @@ Sout(idMtls) == F       ! gls                turbulent length scale
 ! idBott( 1=isd50)   grain_diameter          mean grain diameter
 ! idBott( 2=idens)   grain_density           mean grain density
 ! idBott( 3=iwsed)   settling_vel            mean settling velocity
-! idBott( 4=itauc)   erosion_stres           critical erosion stress
+! idBott( 4=itauc)   erosion_stress          critical erosion stress
 ! idBott( 5=irlen)   ripple_length           ripple length
 ! idBott( 6=irhgt)   ripple_height           ripple height
 ! idBott( 7=ibwav)   bed_wave_amp            wave excursion amplitude
