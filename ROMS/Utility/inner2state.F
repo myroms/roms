@@ -220,7 +220,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lwrk, i, j, lstr, ndefLCZ, outLoop, rec, info
+      integer :: Lwrk, i, j, lstr, outLoop, rec, info
+      integer :: ndefLCZ = 1
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
@@ -705,7 +706,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lwrk, i, j, lstr, ndefLCZ, outLoop, rec, info
+      integer :: Lwrk, i, j, lstr, outLoop, rec, info
+      integer :: ndefLCZ = 1
       integer :: kin
 # ifdef SOLVE3D
       integer :: itrc, k, nin
@@ -1247,7 +1249,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lwrk1, Lwrk2, i, j, lstr, ndefLCZ, outLoop, rec
+      integer :: Lwrk1, Lwrk2, i, j, lstr, outLoop, rec
+      integer :: ndefLCZ = 1
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
