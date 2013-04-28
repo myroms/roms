@@ -233,7 +233,7 @@
 !  when designing and generating the application grids.
 !
 !  It is recommended to build an intermediary fine resolution grid
-!  encompasing the study area first and extract/sample all the ROMS
+!  encompassing the study area first and extract/sample all the ROMS
 !  application nested grids from it.  This would give a better handle
 !  on volume conservation, bathymetry, land/sea masking and other
 !  issues.

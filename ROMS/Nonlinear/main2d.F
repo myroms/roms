@@ -80,7 +80,7 @@
 
       integer :: Nsteps, Rsteps
       integer :: ig, istep, ng, nl, tile
-      integer :: next_indx1, tile
+      integer :: next_indx1
 # ifdef FLOATS
       integer :: Lend, Lstr, chunk_size
 # endif

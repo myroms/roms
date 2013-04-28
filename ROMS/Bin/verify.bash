@@ -22,7 +22,7 @@
 #    [-nobuild]   Do not compile the code (optional)                    :::
 #    [-j [N]]     Compile in parallel using N CPUs (optional)           :::
 #                   omit argument for all available CPUs                :::
-#    [-noclean]   Do not clean already compiled objects                 :::
+#    [-cleanup]   Remove all traces that comparison tests were run      :::
 #    -in          ROMS/TOMS input script (ocean.in)                     :::
 #    <src_dir1>   ROMS/TOMS source directory 1                          :::
 #    <src_dir2>   ROMS/TOMS source directory 2, used when comparing     :::
@@ -60,6 +60,7 @@
 
 declare -x src
 declare -x config
+declare -x cpps
 
 # Set variables that get passed to the build script that will not change
 # for the duration of the tests
@@ -69,22 +70,28 @@ which_mpi="openmpi"
 
 # Serial build configuration
 
-serial_config=" setenv FORT          $fort
- setenv USE_LARGE     on"
+serial_config="#####STARTCONFIG#####
+ setenv FORT          $fort
+ setenv USE_LARGE     on
+#####ENDCONFIG#####"
 
 # MPI build configuation
 
-mpi_config=" setenv USE_MPI       on
+mpi_config="#####STARTCONFIG#####
+ setenv USE_MPI       on
  setenv USE_MPIF90    on
  setenv which_MPI     $which_mpi
  setenv FORT          $fort
- setenv USE_LARGE     on"
+ setenv USE_LARGE     on
+#####ENDCONFIG#####"
 
 # OpenMP build configuration
 
-openmp_config=" setenv USE_OpenMP    on
+openmp_config="#####STARTCONFIG#####
+ setenv USE_OpenMP    on
  setenv FORT          $fort
- setenv USE_LARGE     on"
+ setenv USE_LARGE     on
+#####ENDCONFIG#####"
 
 # Set unchanging variables local to this script.
 
@@ -92,10 +99,39 @@ log="log.01"
 infile=""
 
 
-# Explaination of perl line:
+# Explaination of perl lines:
 #
-# perl -p0777 -e 's/^[^#](setenv\s+MY_ROMS_SRC\s+).*$|
-#  $1ENV{src}/m;s/^(#| |)setenv USE_MPI(.*|\n)*
+# perl -p0777 -i -e
+#
+#    -p tells perl to print results of the -e statements to stdout.
+#
+#    0777 tells perl to treat the entire file as if it were one long string.
+#    This facilitates replacing blocks of text.
+#
+#    -i tells perl to operate on the file in place
+#
+#    -e tells per to execute the following command
+#
+# 's|^\s*[^#]\s*(setenv MY_CPP_FLAGS)(.*)$| $1$2\n$ENV{cpps}\n|m' build_tpl.sh
+#
+#    ^ means start of line, \s* means 0 or more white space, and [^#] means
+#    not # (not commented)
+#
+#    $1 and $2 hold "setenv MY_CPP_FLAGS" and the first CPP flag respectively
+#
+#    $ENV{cpps} holds needed additional MY_CPP_FLAGS.
+#
+#    The "m" modifier allows ^ and $ to correspond to the begining and end of
+#    lines instead of the entire string (the whole file).
+#
+#    build_tpl.sh is the file you are modifying in place
+#
+# 's/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/#####STARTCONFIG#####\n
+# #####ENDCONFIG#####/m' build_tpl.sh
+#
+#
+
+# 's/^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1ENV{src}/m;s/^(#| |)setenv USE_MPI(.*|\n)*
 #  setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
 #
 # Notice that the semicolon at the end of the first -e statement is
@@ -125,8 +161,8 @@ infile=""
 # Processes command line options.
 
 parallel=1
-clean=1
 build=1
+cleanup=0
 cnt=0
 ncpus=""
 dir1=""
@@ -140,6 +176,11 @@ do
       build=0
       ;;
 
+    -cleanup )
+      shift
+      cleanup=1
+      ;;
+
     -j )
       shift
       parallel=1
@@ -150,11 +191,6 @@ do
       else
         ncpus="-j"
       fi
-      ;;
-
-    -noclean )
-      shift
-      clean=0
       ;;
 
     -in )
@@ -171,11 +207,12 @@ do
       echo ""
       echo "-nobuild    Do not build roms if executable already"
       echo "              exist, only run and compare"
-      echo "-in infile  Set the ocean.in file to infile"
       echo "-j [N]      Compile in parallel using N CPUs"
       echo "              set N to 1 for serial compile"
       echo "              omit argument for all avaliable CPUs"
-      echo "-noclean    Do not clean already compiled objects"
+      echo "-cleanup    Remove all traces that comparison tests"
+      echo "              were run"
+      echo "-in infile  Set the ocean.in file to infile"
       echo ""
       exit 1
       ;;
@@ -215,14 +252,61 @@ fi
 
 # Determine build script options.
 
-bld_opts="-j 4"
-
-if [ $ncpus != ""]; then
+if [[ $ncpus != "" ]]; then
   bld_opts=$ncpus
+else
+  bld_opts="-j 4"
 fi
 
-if [ $clean -eq 0 ]; then
-  bld_opts="${bld_opts} -noclean"
+#************************************************************************
+#***********************   Build script template   **********************
+#************************************************************************
+
+# Copy build script for manipulation
+
+cp -p build.sh build_tpl.sh
+
+# These lines determine what MY_CPP_FLAGS are already set in the build script
+
+my_cpp=`grep -c '^\s*[^#]\s*setenv MY_CPP_FLAGS' build_tpl.sh`
+dbg=`grep -c '^\s*[^#].*-DDEBUGGING' build_tpl.sh`
+doub=`grep -c '^\s*[^#].*-DOUT_DOUBLE' build_tpl.sh`
+p0=`grep -c '^\s*[^#].*-DPOSITIVE_ZERO' build_tpl.sh`
+
+cpps=''
+
+# If there are no uncommented setenv MY_CPP_FLAGS lines use export to
+# set them outside of the build script. These values will persist for
+# all model comparison builds.
+
+if [[ $my_cpp == 0 ]]; then
+  export MY_CPP_FLAGS="-DDEBUGGING -DOUT_DOUBLE -DPOSITIVE_ZERO"
+
+# If there are active MY_CPP_FLAGS lines assemble debugging/comparison flags
+
+else
+
+  # if -DDEBUGGING is not set add to $cpps
+  if [[ $dbg == 0 ]]; then
+    cpps='
+ setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DDEBUGGING"'
+  fi
+
+  # if -DOUT_DOUBLE is not set add to $cpps
+  if [[ $doub == 0 ]]; then
+    cpps=${cpps}'
+ setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DOUT_DOUBLE"'
+  fi
+
+  # if -DPOSITIVE_ZERO is not set add to $cpps
+  if [[ $p0 == 0 ]]; then
+    cpps=${cpps}'
+ setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DPOSITIVE_ZERO"'
+  fi
+
+  # Set proper CPP flags and setup config section
+  perl -p0777 -i -e 's|^\s*[^#]\s*(setenv MY_CPP_FLAGS)(.*)$| $1$2\n$ENV{cpps}\n|m' build_tpl.sh
+  perl -p0777 -i -e 's/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/#####STARTCONFIG#####\n#####ENDCONFIG#####/m' build_tpl.sh
 fi
 
 #************************************************************************
@@ -235,17 +319,18 @@ fi
 
 pre1=`echo ${dir1} | perl -pe 's|.*/(?!.*/)([a-zA-Z]).*|$1|'`
 
-# Set build script variables to compile in serial.
+# Set directory and executable identifier.
 
 run_pfx="${pre1}s"
 
-# Generate build script and make executable.
+# Configure build script
 
 src=$dir1
 config=$serial_config
 
-perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-chmod u+x build_tpl.sh
+# Set ROMS source code location and configuration
+
+perl -p0777 -i -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
 # Build $dir1 in serial then rename the resulting executable.
 
@@ -299,6 +384,7 @@ sed -i '' -e "s|NtileI == [0-9+]|NtileI == $i|g" ${infile}
 sed -i '' -e "s|NtileJ == [0-9+]|NtileJ == $j|g" ${infile}
 
 # Run test case
+
 echo -n "   Running ${i}x${j} . . . "
 ./oceanS_${run_pfx} < ${infile} &> ${log}
 echo "Done."
@@ -340,16 +426,15 @@ echo
 
 #********  MPI runs with $dir1  ********
 
-# Set build script variables to compile in MPI.
+# Set directory and executable identifier.
 
 run_pfx="${pre1}m"
 
-# Generate build script.
+# Configure build script.
 
 config=$mpi_config
 
-perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-chmod u+x build_tpl.sh
+perl -p0777 -i -e 's/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
 # Build $dir1 with MPI then rename the resulting executable.
 
@@ -447,16 +532,15 @@ echo
 
 #********  OpenMP runs with $dir1  ********
 
-# Set build script variables to compile in MPI.
+# Set directory and executable identifier.
 
 run_pfx="${pre1}o"
 
-# Generate build script.
+# Configure build script.
 
 config=$openmp_config
 
-perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-chmod u+x build_tpl.sh
+perl -p0777 -i -e 's/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
 # Build $dir1 with OpenMP then rename the resulting executable.
 
@@ -570,17 +654,17 @@ if [[ $dir2 != "" ]]; then
 
   pre2=`echo ${dir2} | perl -pe 's|.*/(?!.*/)([a-zA-Z]).*|$1|'`
 
-  # Set build script variables to compile in serial.
+  # Set directory and executable identifier.
 
   run_pfx="${pre2}s"
 
-  # Generate build script.
+  # Configure build script.
 
   src=$dir2
   config=$serial_config
 
-  perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-  chmod u+x build_tpl.sh
+  # Set ROMS source code location and configuration
+  perl -p0777 -i -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
   # Build $dir2 in serial then rename the resulting executable.
 
@@ -675,16 +759,15 @@ if [[ $dir2 != "" ]]; then
 
   #********  MPI runs with $dir2  ********
 
-  # Set build script variables to compile in MPI.
+  # Set directory and executable identifier.
 
   run_pfx="${pre2}m"
 
-  # Generate build script.
+  # Configure build script.
 
   config=$mpi_config
 
-  perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-  chmod u+x build_tpl.sh
+  perl -p0777 -i -e 's/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
   # Build $dir2 with MPI then rename the resulting executable.
 
@@ -782,16 +865,15 @@ if [[ $dir2 != "" ]]; then
 
   #********  OpenMP runs with $dir2  ********
 
-  # Set build script variables to compile in serial.
+  # Set directory and executable identifier.
 
   run_pfx="${pre2}o"
 
-  # Generate build script.
+  # Configure build script.
 
   config=$openmp_config
 
-  perl -p0777 -e 's|^[^#](setenv\s+MY_ROMS_SRC\s+).*$| $1$ENV{src}|m;s/^(#| |)setenv USE_MPI(.*|\n)*setenv USE_MY_LIBS(.*)$/$ENV{config}/m' build.sh > build_tpl.sh
-  chmod u+x build_tpl.sh
+  perl -p0777 -i -e 's/^#####STARTCONFIG#####(.*|\n)*#####ENDCONFIG#####$/$ENV{config}/m' build_tpl.sh
 
   # Build $dir2 with OpenMP then rename the resulting executable.
 
@@ -969,4 +1051,18 @@ echo "There were ${diffs} differing files found"
 
 if [[ $diffs == 0 ]]; then
   /bin/rm build_*.log
+
+  # if cleanup flag set remove all traces that test were run
+  if [[ $cleanup == 1 ]]; then
+    echo -n "  Cleaning up . . . "
+    /bin/rm -rf Build ${pre1}s1 ${pre1}s2 ${pre1}s3 ${pre1}m1 ${pre1}m2 ${pre1}m3 ${pre1}o1 ${pre1}o2 ${pre1}o3
+    /bin/rm oceanS_${pre1}s oceanM_${pre1}m oceanO_${pre1}o
+
+    if [[ $dir2 != "" ]]; then
+      /bin/rm -rf ${pre2}s1 ${pre2}s2 ${pre2}s3 ${pre2}m1 ${pre2}m2 ${pre2}m3 ${pre2}o1 ${pre2}o2 ${pre2}o3
+      /bin/rm oceanS_${pre2}s oceanM_${pre2}m oceanO_${pre2}o
+    fi
+    echo "Done."
+    echo
+  fi
 fi

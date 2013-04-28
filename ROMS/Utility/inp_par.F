@@ -1167,7 +1167,7 @@
       integer, intent(in) :: ng
 
       character (len=*), intent(in) :: fname
-      character (len=*), intent(in), optional :: KeyWord
+      character (len=*), intent(in) :: KeyWord
 !
 !  Local variable declarations.
 !
@@ -1186,22 +1186,12 @@
 !  Check for empty file name string.
 !
       IF (LEN_TRIM(fname).eq.0) THEN
-        IF (PRESENT(KeyWord)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(KeyWord)
- 10         FORMAT (/,' INP_PAR - empty file name string for ',         &
-     &              'input script KeyWord: ',a)
-            exit_flag=5
-          END IF
-        ELSE
-          IF (Master) THEN
-            WRITE (stdout,20)
- 20         FORMAT (/,' INP_PAR - empty file name string for ',         &
-     &              'an unknown input script KeyWord.',/,               &
-     &              11x,'Check input script file name KeyWords...')
-            exit_flag=5
-          END IF
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(KeyWord)
+ 10       FORMAT (/,' INP_PAR - empty file name string for ',           &
+     &            'input script KeyWord: ',a)
         END IF
+        exit_flag=5
       END IF
 !
 !  Check if provided file is a URL.  This implies the file is a NetCDF

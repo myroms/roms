@@ -276,7 +276,7 @@
 !                                                                      !
 !  This routine extracts tracer horizontal advective fluxes (Hz*u*T/n, !
 !  Hz*v*T/m) at the grid contact boundary (physical domain perimeter). !
-!  The data source is either the coarse or finer grid.  These fluxesb  !
+!  The data source is either the coarse or finer grid.  These fluxes   !
 !  are used for in two-way nesting.         b                          !
 !                                                                      !
 !  On Input:                                                           !
@@ -910,8 +910,8 @@
 !  contact points of the  current  refinement  grid. It extracts       !
 !  the donor cell points containing each contact point.                !
 !                                                                      !
-!  The extracted data is stored in two-time rolling record which       !
-!  are needed for the space and time interpolatio in 'put_refine'.     !
+!  The extracted data is stored in two-time rolling records which      !
+!  are needed for the space and time interpolation in 'put_refine'.    !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -1089,7 +1089,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine interpolates composite grid contact points from donor  !
-!  grid data extracted in rouinte 'get_composite'.                     !
+!  grid data extracted in routine 'get_composite'.                     !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -1446,7 +1446,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine interpolates composite grid contact points from donor  !
-!  grid data extracted in rouinte 'get_composite'.                     !
+!  grid data extracted in routine 'get_composite'.                     !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -3203,7 +3203,7 @@
 !                                                                      !
 !  This routine uses extracted donor grid data (Ac) to spatially       !
 !  interpolate a 2D state variable  at the receiver grid contact       !
-!  points.  If the donor and receiver grids  are concident,  the       !
+!  points.  If the donor and receiver grids are coincident,  the       !
 !  Hweight(1,:) is unity and Hweight(2:4,:) are zero.                  !
 !                                                                      !
 !  On Input:                                                           !

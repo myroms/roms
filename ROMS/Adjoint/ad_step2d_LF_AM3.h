@@ -4974,14 +4974,15 @@
      &                             ad_DVom)
       END IF
 # endif
+# if defined DISTRIBUTE && !defined NESTING
 !
 !  Compute adjoint adjoint vertically integrated mass fluxes.
 !
-      DO j=JstrVm2,Jendp2
-        DO i=IstrUm2-1,Iendp2
+      DO j=JstrV-1,Jendp2
+        DO i=IstrU-2,Iendp2
           cff=0.5_r8*om_v(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
-# ifdef NEARSHORE_MELLOR
+#  ifdef NEARSHORE_MELLOR
 !>        tl_DVom(i,j)=tl_DVom(i,j)+tl_DVSom(i,j)
 !>
           ad_DVSom(i,j)=ad_DVSom(i,j)+ad_DVom(i,j)
@@ -4991,7 +4992,80 @@
           ad_cff1=ad_cff1+vbar_stokes(i,j)*ad_DVSom(i,j)
           ad_vbar_stokes(i,j)=ad_vbar_stokes(i,j)+cff1*ad_DVSom(i,j)
           ad_DVSom(i,j)=0.0_r8
-# endif
+#  endif
+!>        tl_DVom(i,j)=tl_vbar(i,j,krhs)*cff1+                          &
+!>   &                 vbar(i,j,krhs)*tl_cff1
+!>
+          ad_cff1=ad_cff1+vbar(i,j,krhs)*ad_DVom(i,j)
+          ad_vbar(i,j,krhs)=ad_vbar(i,j,krhs)+cff1*ad_DVom(i,j)
+          ad_DVom(i,j)=0.0_r8
+!>        tl_cff1=cff*(tl_Drhs(i,j)+tl_Drhs(i,j-1))
+!>
+          adfac=cff*ad_cff1
+          ad_Drhs(i,j-1)=ad_Drhs(i,j-1)+adfac
+          ad_Drhs(i,j  )=ad_Drhs(i,j  )+adfac
+          ad_cff1=0.0_r8
+        END DO
+      END DO
+      DO j=JstrV-2,Jendp2
+        DO i=IstrU-1,Iendp2
+          cff=0.5_r8*on_u(i,j)
+          cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
+#  ifdef NEARSHORE_MELLOR
+!>        tl_DUon(i,j)=tl_DUon(i,j)+tl_DUSon(i,j)
+!>
+          ad_DUSon(i,j)=ad_DUSon(i,j)+ad_DUon(i,j)
+!>        tl_DUSon(i,j)=tl_ubar_stokes(i,j)*cff1+                       &
+!>   &                  ubar_stokes(i,j)*tl_cff1
+!>
+          ad_cff1=ad_cff1+ubar_stokes(i,j)*ad_DUSon(i,j)
+          ad_ubar_stokes(i,j)=ad_ubar_stokes(i,j)+cff1*ad_DUSon(i,j)
+          ad_DUSon(i,j)=0.0_r8
+#  endif
+!>        tl_DUon(i,j)=tl_ubar(i,j,krhs)*cff1+                          &
+!>   &                 ubar(i,j,krhs)*tl_cff1
+!>
+          ad_cff1=ad_cff1+ubar(i,j,krhs)*ad_DUon(i,j)
+          ad_ubar(i,j,krhs)=ad_ubar(i,j,krhs)+cff1*ad_DUon(i,j)
+          ad_DUon(i,j)=0.0_r8
+!>        tl_cff1=cff*(tl_Drhs(i,j)+tl_Drhs(i-1,j))
+!>
+          adfac=cff*ad_cff1
+          ad_Drhs(i-1,j)=ad_Drhs(i-1,j)+adfac
+          ad_Drhs(i  ,j)=ad_Drhs(i  ,j)+adfac
+          ad_cff1=0.0_r8
+        END DO
+      END DO
+!
+!  Compute adjoint total depth.
+!
+      DO j=JstrV-2,Jendp2
+        DO i=IstrU-2,Iendp2
+!>        tl_Drhs(i,j)=tl_zeta(i,j,krhs)+tl_h(i,j)
+!>
+          ad_zeta(i,j,krhs)=ad_zeta(i,j,krhs)+ad_Drhs(i,j)
+          ad_h(i,j)=ad_h(i,j)+ad_Drhs(i,j)
+          ad_Drhs(i,j)=0.0_r8
+        END DO
+      END DO
+
+# else
+
+      DO j=JstrVm2,Jendp2
+        DO i=IstrUm2-1,Iendp2
+          cff=0.5_r8*om_v(i,j)
+          cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
+#  ifdef NEARSHORE_MELLOR
+!>        tl_DVom(i,j)=tl_DVom(i,j)+tl_DVSom(i,j)
+!>
+          ad_DVSom(i,j)=ad_DVSom(i,j)+ad_DVom(i,j)
+!>        tl_DVSom(i,j)=tl_vbar_stokes(i,j)*cff1+                       &
+!>   &                  vbar_stokes(i,j)*tl_cff1
+!>
+          ad_cff1=ad_cff1+vbar_stokes(i,j)*ad_DVSom(i,j)
+          ad_vbar_stokes(i,j)=ad_vbar_stokes(i,j)+cff1*ad_DVSom(i,j)
+          ad_DVSom(i,j)=0.0_r8
+#  endif
 !>        tl_DVom(i,j)=tl_vbar(i,j,krhs)*cff1+                          &
 !>   &                 vbar(i,j,krhs)*tl_cff1
 !>
@@ -5010,7 +5084,7 @@
         DO i=IstrUm2,Iendp2
           cff=0.5_r8*on_u(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
-# ifdef NEARSHORE_MELLOR
+#  ifdef NEARSHORE_MELLOR
 !>        tl_DUon(i,j)=tl_DUon(i,j)+tl_DUSon(i,j)
 !>
           ad_DUSon(i,j)=ad_DUSon(i,j)+ad_DUon(i,j)
@@ -5020,7 +5094,7 @@
           ad_cff1=ad_cff1+ubar_stokes(i,j)*ad_DUSon(i,j)
           ad_ubar_stokes(i,j)=ad_ubar_stokes(i,j)+cff1*ad_DUSon(i,j)
           ad_DUSon(i,j)=0.0_r8
-# endif
+#  endif
 !>        tl_DUon(i,j)=tl_ubar(i,j,krhs)*cff1+                          &
 !>   &                 ubar(i,j,krhs)*tl_cff1
 !>
@@ -5047,7 +5121,7 @@
           ad_Drhs(i,j)=0.0_r8
         END DO
       END DO
-
+# endif
       RETURN
       END SUBROUTINE ad_step2d_tile
 #else
