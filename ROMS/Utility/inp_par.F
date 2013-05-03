@@ -1900,7 +1900,7 @@
 !  symbol in the input "line" is used to advance the counters.
 !
       IF (.not.load) THEN
-        IF (ifile.le.nFfiles(igrid)) THEN
+        IF ((ifile.lt.nFfiles(igrid)).or.(Ipipe.ne.0)) THEN
           ifile=ifile+MIN(1,Icont)
         ELSE
           ifile=1
