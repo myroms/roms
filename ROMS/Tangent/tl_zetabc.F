@@ -177,9 +177,38 @@
             END DO
           END IF
 !
-!  Western edge, Chapman boundary condition.
+!  Western edge, explicit Chapman boundary condition.
 !
-        ELSE IF (tl_LBC(iwest,isFsur,ng)%Chapman) THEN
+        ELSE IF (tl_LBC(iwest,isFsur,ng)%Chapman_explicit) THEN
+          DO j=Jstr,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              cff=dt2d*GRID(ng)%pm(Istr,j)
+              cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                          &
+     &                     zeta(Istr,j,know)))
+              tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(Istr,j)+                  &
+     &                          tl_zeta(Istr,j,know))/cff1
+              Cx=cff*cff1
+              tl_Cx=cff*tl_cff1
+!>            zeta(Istr-1,j,kout)=(1.0_r8-Cx)*zeta(Istr-1,j,know)+      &
+!>   &                            Cx*zeta(Istr,j,know)
+!>
+              tl_zeta(Istr-1,j,kout)=(1.0_r8-Cx)*tl_zeta(Istr-1,j,know)+&
+     &                               tl_Cx*(zeta(Istr-1,j,know)+        &
+     &                                      zeta(Istr  ,j,know))+       &
+     &                               Cx*tl_zeta(Istr,j,know)
+# ifdef MASKING
+!>            zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                  &
+!>   &                            GRID(ng)%rmask(Istr-1,j)
+!>
+              tl_zeta(Istr-1,j,kout)=tl_zeta(Istr-1,j,kout)*            &
+     &                               GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, implicit Chapman boundary condition.
+!
+        ELSE IF (tl_LBC(iwest,isFsur,ng)%Chapman_implicit) THEN
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%west(j)) THEN
               cff=dt2d*GRID(ng)%pm(Istr,j)
@@ -341,9 +370,38 @@
             END DO
           END IF
 !
-!  Eastern edge, Chapman boundary condition.
+!  Eastern edge, explicit Chapman boundary condition.
 !
-        ELSE IF (tl_LBC(ieast,isFsur,ng)%Chapman) THEN
+        ELSE IF (tl_LBC(ieast,isFsur,ng)%Chapman_explicit) THEN
+          DO j=Jstr,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              cff=dt2d*GRID(ng)%pm(Iend,j)
+              cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                          &
+     &                     zeta(Iend,j,know)))
+              tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(Iend,j)+                  &
+     &                          tl_zeta(Iend,j,know))/cff1
+              Cx=cff*cff1
+              tl_Cx=cff*tl_cff1
+!>            zeta(Iend+1,j,kout)=(1.0_r8-Cx)*zeta(Iend+1,j,know)+      &
+!>   &                            Cx*zeta(Iend,j,know)
+!>
+              tl_zeta(Iend+1,j,kout)=(1.0_r8-Cx)*tl_zeta(Iend+1,j,know)+&
+     &                               tl_Cx*(zeta(Iend+1,j,know)+        &
+     &                                      zeta(Iend  ,j,know))+       &
+     &                               Cx*tl_zeta(Iend,j,know)
+# ifdef MASKING
+!>            zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                  &
+!>   &                            GRID(ng)%rmask(Iend+1,j)
+!>
+              tl_zeta(Iend+1,j,kout)=tl_zeta(Iend+1,j,kout)*            &
+     &                               GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (tl_LBC(ieast,isFsur,ng)%Chapman_implicit) THEN
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%east(j)) THEN
               cff=dt2d*GRID(ng)%pm(Iend,j)
@@ -505,9 +563,38 @@
             END DO
           END IF
 !
-!  Southern edge, Chapman boundary condition.
+!  Southern edge, explicit Chapman boundary condition.
 !
-        ELSE IF (tl_LBC(isouth,isFsur,ng)%Chapman) THEN
+        ELSE IF (tl_LBC(isouth,isFsur,ng)%Chapman_explicit) THEN
+          DO i=Istr,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              cff=dt2d*GRID(ng)%pn(i,Jstr)
+              cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                          &
+     &                     zeta(i,Jstr,know)))
+              tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(i,Jstr)+                  &
+     &                          tl_zeta(i,Jstr,know))/cff1
+              Ce=cff*cff1
+              tl_Ce=cff*tl_cff1
+!>            zeta(i,Jstr-1,kout)=(1.0_r8-Ce)*zeta(i,Jstr-1,know)+      &
+!>   &                            Ce*zeta(i,Jstr,know)
+!>
+              tl_zeta(i,Jstr-1,kout)=(1.0_r8-Ce)*tl_zeta(i,Jstr-1,know)+&
+     &                               tl_Ce*(zeta(i,Jstr-1,know)+        &
+     &                                      zeta(i,Jstr  ,know))+       &
+     &                               Ce*tl_zeta(i,Jstr,know)
+# ifdef MASKING
+!>            zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                  &
+!>   &                            GRID(ng)%rmask(i,Jstr-1)
+!>
+              tl_zeta(i,Jstr-1,kout)=tl_zeta(i,Jstr-1,kout)*            &
+     &                               GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (tl_LBC(isouth,isFsur,ng)%Chapman_implicit) THEN
           DO i=Istr,Iend
             IF (LBC_apply(ng)%south(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jstr)
@@ -669,9 +756,38 @@
             END DO
           END IF
 !
-!  Northern edge, Chapman boundary condition.
+!  Northern edge, explicit Chapman boundary condition.
 !
-        ELSE IF (tl_LBC(inorth,isFsur,ng)%Chapman) THEN
+        ELSE IF (tl_LBC(inorth,isFsur,ng)%Chapman_explicit) THEN
+          DO i=Istr,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              cff=dt2d*GRID(ng)%pn(i,Jend)
+              cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                          &
+     &                     zeta(i,Jend,know)))
+              tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(i,Jend)+                  &
+     &                          tl_zeta(i,Jend,know))/cff1
+              Ce=cff*cff1
+              tl_Ce=cff*tl_cff1
+!>            zeta(i,Jend+1,kout)=(1.0_r8-Ce)*zeta(i,Jend+1,know)+      &
+!>   &                            Ce*zeta(i,Jend,know)
+!>
+              tl_zeta(i,Jend+1,kout)=(1.0_r8-Ce)*tl_zeta(i,Jend+1,know)+&
+     &                               tl_Ce*(zeta(i,Jend+1,know)+        &
+     &                                      zeta(i,Jend  ,know))+       &
+     &                               Ce*tl_zeta(i,Jend,know)
+# ifdef MASKING
+!>            zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                  &
+!>   &                            GRID(ng)%rmask(i,Jend+1)
+!>
+              tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*            &
+     &                               GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (tl_LBC(inorth,isFsur,ng)%Chapman_implicit) THEN
           DO i=Istr,Iend
             IF (LBC_apply(ng)%north(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jend)

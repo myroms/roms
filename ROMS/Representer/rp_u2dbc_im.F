@@ -100,13 +100,15 @@
       integer :: Imin, Imax
       integer :: i, j, know
 
-      real(r8) :: Ce, Cx
-      real(r8) :: bry_pgr, bry_cor, bry_str
-      real(r8) :: cff, cff1, cff2, dt2d, tau
+      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
 
-      real(r8) :: tl_Ce, tl_Cx
+      real(r8) :: Ce, Cx, Zx
+      real(r8) :: bry_pgr, bry_cor, bry_str
+      real(r8) :: cff, cff1, cff2, cff3, dt2d, tau
+
+      real(r8) :: tl_Ce, tl_Cx, tl_Zx
       real(r8) :: tl_bry_pgr, tl_bry_cor, tl_bry_str, tl_bry_val
-      real(r8) :: tl_cff, tl_cff1, tl_cff2
+      real(r8) :: tl_cff, tl_cff1, tl_cff2, tl_cff3
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
@@ -269,8 +271,8 @@
      &                                 GRID(ng)%h(Istr  ,j)+            &
      &                                 zeta(Istr  ,j,know))
 #  endif
-!>            cff2=GRID(ng)%om_u(Istr,j)*Cx
-!>            tl_cff2=GRID(ng)%om_u(Istr,j)*tl_Cx
+              cff2=GRID(ng)%om_u(Istr,j)*Cx
+              tl_cff2=GRID(ng)%om_u(Istr,j)*tl_Cx
 !>            bry_val=ubar(Istr+1,j,know)+                              &
 !>   &                cff2*(bry_pgr+                                    &
 !>   &                      bry_cor+                                    &
@@ -326,6 +328,193 @@
      &                             (0.5_r8*(zeta(Istr-1,j,know)+        &
      &                                      zeta(Istr  ,j,know))-       &
      &                              BOUNDARY(ng)%zeta_west(j))
+# endif
+# ifdef MASKING
+!>            ubar(Istr,j,kout)=ubar(Istr,j,kout)*                      &
+!>   &                          GRID(ng)%umask(Istr,j)
+!>
+              tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)*                &
+     &                             GRID(ng)%umask(Istr,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, Shchepetkin boundary condition (Maison et al., 2010).
+!
+        ELSE IF (tl_LBC(iwest,isUbar,ng)%Shchepetkin) THEN
+          DO j=Jstr,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+# if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
+              IF (tl_LBC(iwest,isFsur,ng)%acquire) THEN
+                bry_pgr=-g*(zeta(Istr,j,know)-                          &
+     &                      BOUNDARY(ng)%zeta_west(j))*                 &
+     &                  0.5_r8*GRID(ng)%pm(Istr,j)
+                tl_bry_pgr=-g*(tl_zeta(Istr,j,know)-                    &
+     &                         BOUNDARY(ng)%tl_zeta_west(j))*           &
+     &                     0.5_r8*GRID(ng)%pm(Istr,j)
+              ELSE
+                bry_pgr=-g*(zeta(Istr  ,j,know)-                        &
+     &                      zeta(Istr-1,j,know))*                       &
+     &                  0.5_r8*(GRID(ng)%pm(Istr-1,j)+                  &
+     &                          GRID(ng)%pm(Istr  ,j))
+                tl_bry_pgr=-g*(tl_zeta(Istr  ,j,know)-                  &
+     &                         tl_zeta(Istr-1,j,know))*                 &
+     &                     0.5_r8*(GRID(ng)%pm(Istr-1,j)+               &
+     &                             GRID(ng)%pm(Istr  ,j))
+              END IF
+#  ifdef UV_COR
+              bry_cor=0.125_r8*(vbar(Istr-1,j  ,know)+                  &
+     &                          vbar(Istr-1,j+1,know)+                  &
+     &                          vbar(Istr  ,j  ,know)+                  &
+     &                          vbar(Istr  ,j+1,know))*                 &
+     &                         (GRID(ng)%f(Istr-1,j)+                   &
+     &                          GRID(ng)%f(Istr  ,j))
+              tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,know)+            &
+     &                             tl_vbar(Istr-1,j+1,know)+            &
+     &                             tl_vbar(Istr  ,j  ,know)+            &
+     &                             tl_vbar(Istr  ,j+1,know))*           &
+     &                            (GRID(ng)%f(Istr-1,j)+                &
+     &                             GRID(ng)%f(Istr  ,j))
+#  else
+              bry_cor=0.0_r8
+              tl_bry_cor=0.0_r8
+#  endif
+              cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                &
+     &                             zeta(Istr-1,j,know)+                 &
+     &                             GRID(ng)%h(Istr  ,j)+                &
+     &                             zeta(Istr  ,j,know)))
+              tl_cff1=-cff1*cff1*0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+       &
+     &                                   tl_zeta(Istr-1,j,know)+        &
+     &                                   GRID(ng)%tl_h(Istr  ,j)+       &
+     &                                   tl_zeta(Istr  ,j,know))+       &
+#  ifdef TL_IOMS
+     &                2.0_r8*cff1
+#  endif
+              bry_str=cff1*(FORCES(ng)%sustr(Istr,j)-                   &
+     &                      FORCES(ng)%bustr(Istr,j))
+              tl_bry_str=tl_cff1*(FORCES(ng)%sustr(Istr,j)-             &
+     &                            FORCES(ng)%bustr(Istr,j))+            &
+     &                   cff1*(FORCES(ng)%tl_sustr(Istr,j)-             &
+     &                         FORCES(ng)%tl_bustr(Istr,j))-            &
+#  ifdef TL_IOMS
+     &                   bry_str
+#  endif
+              Cx=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(Istr-1,j)+            &
+     &                                 zeta(Istr-1,j,know)+             &
+     &                                 GRID(ng)%h(Istr  ,j)+            &
+     &                                 zeta(Istr  ,j,know)))
+              tl_Cx=-Cx*Cx*Cx*0.25_r8*g*(GRID(ng)%tl_h(Istr-1,j)+       &
+     &                                   tl_zeta(Istr-1,j,know)+        &
+     &                                   GRID(ng)%tl_h(Istr  ,j)+       &
+     &                                   tl_zeta(Istr  ,j,know))+       &
+#  ifdef TL_IOMS
+     &              g*0.5_r8*Cx*Cx*Cx*(GRID(ng)%h(Istr-1,j)+            &
+     &                                 zeta(Istr-1,j,know)+             &
+     &                                 GRID(ng)%h(Istr  ,j)+            &
+     &                                 zeta(Istr  ,j,know))
+#  endif
+              cff2=GRID(ng)%om_u(Istr,j)*Cx
+              tl_cff2=GRID(ng)%om_u(Istr,j)*tl_Cx
+!>            bry_val=ubar(Istr+1,j,know)+                              &
+!>   &                cff2*(bry_pgr+                                    &
+!>   &                      bry_cor+                                    &
+!>   &                      bry_str)
+!>
+              tl_bry_val=tl_ubar(Istr+1,j,know)+                        &
+     &                   tl_cff2*(bry_pgr+                              &
+     &                            bry_cor+                              &
+     &                            bry_str)+                             &
+     &                   cff2*(tl_bry_pgr+                              &
+     &                         tl_bry_cor+                              &
+     &                         tl_bry_str)-                             &
+#  ifdef TL_IOMS
+     &                   cff2*(bry_pgr+bry_cor+bry_str)
+#  endif
+# else
+!>            bry_val=BOUNDARY(ng)%ubar_west(j)
+!>
+              tl_bry_val=BOUNDARY(ng)%tl_ubar_west(j)
+# endif
+              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                 &
+     &                            GRID(ng)%h(Istr  ,j)))
+              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+         &
+     &                                 GRID(ng)%tl_h(Istr  ,j)))+       &
+# ifdef TL_IOMS
+     &               2.0_r8*cff
+# endif
+              cff1=SQRT(g*cff)
+              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+# ifdef TL_IOMS
+     &                0.5_r8*cff1
+# endif
+              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Istr-1,j)+               &
+     &                             GRID(ng)%pm(Istr  ,j))
+              tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Istr-1,j)+         &
+     &                                   GRID(ng)%pm(Istr  ,j))
+              Zx=(0.5_r8+Cx)*zeta(Istr  ,j,know)+                       &
+     &           (0.5_r8-Cx)*zeta(Istr-1,j,know)
+              tl_Zx=(0.5_r8+Cx)*tl_zeta(Istr  ,j,know)+                 &
+     &              (0.5_r8-Cx)*tl_zeta(Istr-1,j,know)+                 &
+     &              tl_Cx*(zeta(Istr  ,j,know)-                         &
+     &                     zeta(Istr-1,j,know))-                        &
+# ifdef TL_IOMS
+     &              Zx                                      ! HGA check
+# endif
+              IF (Cx.gt.Co) THEN
+                cff2=(1.0_r8-Co/Cx)**2
+                tl_cff2=2.0_r8*cff2*Co*tl_Cx/(Cx*Cx)-                   &
+# ifdef TL_IOMS
+     &                  cff2                                ! HGA check
+# endif
+                cff3=zeta(Istr,j,kout)+                                 &
+     &               Cx*zeta(Istr-1,j,know)-                            &
+     &               (1.0_r8-Cx)*zeta(Istr,j,know)
+                tl_cff3=tl_zeta(Istr,j,kout)+                           &
+     &                  Cx*tl_zeta(Istr-1,j,know)+                      &
+     &                  tl_Cx*(zeta(Istr-1,j,know)+                     &
+     &                         zeta(Istr  ,j,know))-                    &
+     &                  (1.0_r8-Cx)*tl_zeta(Istr,j,know)-               &
+# ifdef TL_IOMS
+     &                  Cx*zeta(Istr-1,j,know)+                         &
+     &                  (1.0_r8-Cx)*zeta(Istr,j,know)       ! HGA check
+# endif
+                Zx=Zx+cff2*cff3
+                tl_Zx=tl_Zx+cff2*tl_cff3+                               &
+     &                      tl_cff2*cff3-                               &
+# ifdef TL_IOMS
+     &                      cff2*cff3                       ! HGA check
+# endif
+              END IF
+!>            ubar(Istr,j,kout)=0.5_r8*                                 &
+!>   &                          ((1.0_r8-Cx)*ubar(Istr,j,know)+         &
+!>   &                           Cx*ubar(Istr+1,j,know)+                &
+!>   &                           bry_val-                               &
+!>   &                           cff1*(Zx-BOUNDARY(ng)%zeta_west(j)))
+!>
+              tl_ubar(Istr,j,kout)=0.5_r8*                              &
+     &                             ((1.0_r8-Cx)*                        &
+     &                              tl_ubar(Istr,j,know)-               &
+     &                              tl_Cx*(ubar(Istr  ,j,know)-         &
+     &                                     ubar(Istr+1,j,know))+        &
+     &                              Cx*tl_ubar(Istr+1,j,know)+          &
+     &                              tl_bry_val-                         &
+     &                              tl_cff1*                            &
+     &                              (Zx-BOUNDARY(ng)%zeta_west(j))-     &
+     &                              cff1*tl_Zx)-                        &
+# ifdef TL_IOMS
+     &                             0.5_r8*                              &
+     &                             ((1.0_r8-Cx)*ubar(Istr,j,know)+      &
+     &                              Cx*ubar(Istr+1,j,know)+             &
+     &                              cff1*                               &
+     &                              (Zx-BOUNDARY(ng)%zeta_west(j)))
+!!                                                          ! HGA check
+# endif
+# ifdef ADJUST_BOUNDARY
+              IF (Lobc(iwest,isUbar,ng)) THEN
+                tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)+              &
+     &                               0.5_r8*cff1*                       &
+     &                               BOUNDARY(ng)%tl_zeta_west(j)
+              END IF
 # endif
 # ifdef MASKING
 !>            ubar(Istr,j,kout)=ubar(Istr,j,kout)*                      &
@@ -680,6 +869,193 @@
             END IF
           END DO
 !
+!  Eastern edge, Shchepetkin boundary condition (Maison et al., 2010).
+!
+        ELSE IF (tl_LBC(ieast,isUbar,ng)%Shchepetkin) THEN
+          DO j=Jstr,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+# if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
+              IF (tl_LBC(ieast,isFsur,ng)%acquire) THEN
+                bry_pgr=-g*(BOUNDARY(ng)%zeta_east(j)-                  &
+     &                      zeta(Iend,j,know))*                         &
+     &                  0.5_r8*GRID(ng)%pm(Iend,j)
+                tl_bry_pgr=-g*(BOUNDARY(ng)%tl_zeta_east(j)-            &
+     &                         tl_zeta(Iend,j,know))*                   &
+     &                     0.5_r8*GRID(ng)%pm(Iend,j)
+              ELSE
+                bry_pgr=-g*(zeta(Iend+1,j,know)-                        &
+     &                      zeta(Iend  ,j,know))*                       &
+     &                  0.5_r8*(GRID(ng)%pm(Iend  ,j)+                  &
+     &                          GRID(ng)%pm(Iend+1,j))
+                tl_bry_pgr=-g*(tl_zeta(Iend+1,j,know)-                  &
+     &                         tl_zeta(Iend  ,j,know))*                 &
+     &                     0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
+     &                             GRID(ng)%pm(Iend+1,j))
+              END IF
+#  ifdef UV_COR
+              bry_cor=0.125_r8*(vbar(Iend  ,j  ,know)+                  &
+     &                          vbar(Iend  ,j+1,know)+                  &
+     &                          vbar(Iend+1,j  ,know)+                  &
+     &                          vbar(Iend+1,j+1,know))*                 &
+     &                         (GRID(ng)%f(Iend  ,j)+                   &
+     &                          GRID(ng)%f(Iend+1,j))
+              tl_bry_cor=0.125_r8*(tl_vbar(Iend  ,j  ,know)+            &
+     &                             tl_vbar(Iend  ,j+1,know)+            &
+     &                             tl_vbar(Iend+1,j  ,know)+            &
+     &                             tl_vbar(Iend+1,j+1,know))*           &
+     &                            (GRID(ng)%f(Iend  ,j)+                &
+     &                             GRID(ng)%f(Iend+1,j))
+#  else
+              bry_cor=0.0_r8
+              tl_bry_cor=0.0_r8
+#  endif
+              cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                &
+     &                             zeta(Iend  ,j,know)+                 &
+     &                             GRID(ng)%h(Iend+1,j)+                &
+     &                             zeta(Iend+1,j,know)))
+              tl_cff1=-cff1*cff1*0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+       &
+     &                                   tl_zeta(Iend  ,j,know)+        &
+     &                                   GRID(ng)%tl_h(Iend+1,j)+       &
+     &                                   tl_zeta(Iend+1,j,know))+       &
+#  ifdef TL_IOMS
+     &                2.0_r8*cff1
+#  endif
+              bry_str=cff1*(FORCES(ng)%sustr(Iend+1,j)-                 &
+     &                      FORCES(ng)%bustr(Iend+1,j))
+              tl_bry_str=tl_cff1*(FORCES(ng)%sustr(Iend+1,j)-           &
+     &                            FORCES(ng)%bustr(Iend+1,j))+          &
+     &                   cff1*(FORCES(ng)%tl_sustr(Iend+1,j)-           &
+     &                         FORCES(ng)%tl_bustr(Iend+1,j))-          &
+#  ifdef TL_IOMS
+     &                   bry_str
+#  endif
+              Cx=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(Iend+1,j)+            &
+     &                                 zeta(Iend+1,j,know)+             &
+     &                                 GRID(ng)%h(Iend  ,j)+            &
+     &                                 zeta(Iend  ,j,know)))
+              tl_Cx=-Cx*Cx*Cx*0.25_r8*g*(GRID(ng)%tl_h(Iend+1,j)+       &
+     &                                   tl_zeta(Iend+1,j,know)+        &
+     &                                   GRID(ng)%tl_h(Iend  ,j)+       &
+     &                                   tl_zeta(Iend  ,j,know))+       &
+#  ifdef TL_IOMS
+     &              g*0.5_r8*Cx*Cx*Cx*(GRID(ng)%h(Iend+1,j)+            &
+     &                                 zeta(Iend+1,j,know)+             &
+     &                                 GRID(ng)%h(Iend  ,j)+            &
+     &                                 zeta(Iend  ,j,know))
+#  endif
+              cff2=GRID(ng)%om_u(Iend+1,j)*Cx
+              tl_cff2=GRID(ng)%om_u(Iend+1,j)*tl_Cx
+!>            bry_val=ubar(Iend,j,know)+                                &
+!>   &                cff2*(bry_pgr+                                    &
+!>   &                      bry_cor+                                    &
+!>   &                      bry_str)
+!>
+              tl_bry_val=tl_ubar(Iend,j,know)+                          &
+     &                   tl_cff2*(bry_pgr+                              &
+     &                            bry_cor+                              &
+     &                            bry_str)+                             &
+     &                   cff2*(tl_bry_pgr+                              &
+     &                         tl_bry_cor+                              &
+     &                         tl_bry_str)-
+#  ifdef TL_IOMS
+     &                   cff2*(bry_pgr+bry_cor+bry_str)
+#  endif
+# else
+!>            bry_val=BOUNDARY(ng)%ubar_east(j)
+!>
+              tl_bry_val=BOUNDARY(ng)%tl_ubar_east(j)
+# endif
+              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                 &
+     &                            GRID(ng)%h(Iend+1,j)))
+              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+         &
+     &                                 GRID(ng)%tl_h(Iend+1,j)))+       &
+# ifdef TL_IOMS
+     &               2.0_r8*cff
+# endif
+              cff1=SQRT(g*cff)
+              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+# ifdef TL_IOMS
+     &                0.5_r8*cff1
+# endif
+              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
+     &                             GRID(ng)%pm(Iend+1,j))
+              tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+         &
+     &                                   GRID(ng)%pm(Iend+1,j))
+              Zx=(0.5_r8+Cx)*zeta(Iend  ,j,know)+                       &
+     &           (0.5_r8-Cx)*zeta(Iend+1,j,know)
+              tl_Zx=(0.5_r8+Cx)*tl_zeta(Iend  ,j,know)+                 &
+     &              (0.5_r8-Cx)*tl_zeta(Iend+1,j,know)+                 &
+     &              tl_Cx*(zeta(Iend  ,j,know)-                         &
+     &                     zeta(Iend+1,j,know))-                        &
+# ifdef TL_IOMS
+     &              Zx                                      ! HGA check
+# endif
+              IF (Cx.gt.Co) THEN
+                cff2=(1.0_r8-Co/Cx)**2
+                tl_cff2=2.0_r8*cff2*Co*tl_Cx/(Cx*Cx)-                   &
+# ifdef TL_IOMS
+     &                  cff2                                ! HGA check
+# endif
+                cff3=zeta(Iend,j,kout)+                                 &
+     &               Cx*zeta(Iend+1,j,know)-                            &
+     &               (1.0_r8-Cx)*zeta(Iend,j,know)
+                tl_cff3=tl_zeta(Iend,j,kout)+                           &
+     &                  Cx*tl_zeta(Iend+1,j,know)+                      &
+     &                  tl_Cx*(zeta(Iend  ,j,know)+                     &
+     &                         zeta(Iend+1,j,know))-                    &
+     &                  (1.0_r8-Cx)*tl_zeta(Iend,j,know)-               &
+# ifdef TL_IOMS
+     &                  Cx*zeta(Istr-1,j,know)+                         &
+     &                  (1.0_r8-Cx)*zeta(Istr,j,know)       ! HGA check
+# endif
+                Zx=Zx+cff2*cff3
+                tl_Zx=tl_Zx+cff2*tl_cff3+                               &
+     &                      tl_cff2*cff3-                               &
+# ifdef TL_IOMS
+     &                      cff2*cff3                       ! HGA check
+# endif
+              END IF
+!>            ubar(Iend+1,j,kout)=0.5_r8*                               &
+!>   &                            ((1.0_r8-Cx)*ubar(Iend+1,j,know)+     &
+!>   &                             Cx*ubar(Iend,j,know)+                &
+!>   &                             bry_val+                             &
+!>   &                             cff1*(Zx-BOUNDARY(ng)%zeta_east(j)))
+!>
+              tl_ubar(Iend+1,j,kout)=0.5_r8*                            &
+     &                               ((1.0_r8-Cx)*                      &
+     &                                tl_ubar(Iend+1,j,know)+           &
+     &                                tl_Cx*(ubar(Iend  ,j,know)-       &
+     &                                       ubar(Iend+1,j,know))+      &
+     &                                Cx*tl_ubar(Iend,j,know)+          &
+     &                                tl_bry_val+                       &
+     &                                tl_cff1*                          &
+     &                                (Zx-BOUNDARY(ng)%zeta_east(j))-   &
+     &                                cff1*tl_Zx)-                      &
+# ifdef TL_IOMS
+     &                               0.5_r8*                            &
+     &                               ((1.0_r8-Cx)*ubar(Iend+1,j,know)+  &
+     &                                Cx*ubar(Iend,j,know)+             &
+     &                                cff1*                             &
+     &                                (Zx-BOUNDARY(ng)%zeta_east(j)))
+!!                                                          ! HGA check
+# endif
+# ifdef ADJUST_BOUNDARY
+              IF (Lobc(ieast,isUbar,ng)) THEN
+                tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)-          &
+     &                                 0.5_r8*cff1*                     &
+     &                                 BOUNDARY(ng)%tl_zeta_east(j)
+              END IF
+# endif
+# ifdef MASKING
+!>   &        ubar(Iend+1,j,kout)=ubar(Iend+1,j,kout)*                  &
+!>   &                            GRID(ng)%umask(Iend+1,j)
+!>
+              tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)*            &
+     &                               GRID(ng)%umask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
 !  Eastern edge, clamped boundary condition.
 !
         ELSE IF (tl_LBC(ieast,isUbar,ng)%clamped) THEN
@@ -884,7 +1260,8 @@
 !  Southern edge, Chapman boundary condition.
 !
         ELSE IF (tl_LBC(isouth,isUbar,ng)%Flather.or.                   &
-     &           tl_LBC(isouth,isUbar,ng)%reduced) THEN
+     &           tl_LBC(isouth,isUbar,ng)%reduced.or.                   &
+     &           tl_LBC(isouth,isUbar,ng)%Shchepetkin) THEN
           DO i=IstrU,Iend
             IF (LBC_apply(ng)%south(i)) THEN
               cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jstr)+                   &
@@ -1064,7 +1441,8 @@
 !  Northern edge, Chapman boundary condition.
 !
         ELSE IF (tl_LBC(inorth,isUbar,ng)%Flather.or.                   &
-     &           tl_LBC(inorth,isUbar,ng)%reduced) THEN
+     &           tl_LBC(inorth,isUbar,ng)%reduced.or.                   &
+     &           tl_LBC(inorth,isUbar,ng)%Shchepetkin) THEN
           DO i=IstrU,Iend
             IF (LBC_apply(ng)%north(i)) THEN
               cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jend)+                   &

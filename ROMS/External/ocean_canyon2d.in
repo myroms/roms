@@ -125,17 +125,19 @@ GridsInLayer =  1
 !
 !   Keyword    Lateral Boundary Condition Type
 !
-!   Cha        Chapman
+!   Cha        Chapman_implicit (free-surface)
+!   Che        Chapman_explicit (free-surface)
 !   Cla        Clamped
 !   Clo        Closed
-!   Fla        Flather                                _____N_____     j=Mm
+!   Fla        Flather (2D momentum)                  _____N_____     j=Mm
 !   Gra        Gradient                              |     4     |
-!   Nes        Nested                                |           |
+!   Nes        Nested (refinement)                   |           |
 !   Nud        Nudging                             1 W           E 3
 !   Per        Periodic                              |           |
 !   Rad        Radiation                             |_____S_____|
-!   Red        Reduced Physics                             2          j=1
-!                                                   i=1         i=Lm
+!   Red        Reduced Physics (2D momentum)               2          j=1
+!   Shc        Shchepetkin (2D momentum)            i=1         i=Lm
+!
 !                   W       S       E       N
 !                   e       o       a       o
 !                   s       u       s       r
@@ -979,17 +981,18 @@ Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 !
 !   Keyword    Lateral Boundary Condition Type
 !
-!   Cha        Chapman
+!   Cha        Chapman_implicit (free-surface only)
+!   Che        Chapman_explicit (free-surface only)
 !   Cla        Clamped
 !   Clo        Closed
-!   Fla        Flather                                _____N_____     j=Mm
+!   Fla        Flather (2D momentum only)             _____N_____     j=Mm
 !   Gra        Gradient                              |     4     |
-!   Nes        Nested                                |           |
+!   Nes        Nested (refinement only)              |           |
 !   Nud        Nudging                             1 W           E 3
 !   Per        Periodic                              |           |
 !   Rad        Radiation                             |_____S_____|
-!   Red        Reduced Physics                             2          j=1
-!                                                   i=1         i=Lm
+!   Red        Reduced Physics (2D momentum only)          2          j=1
+!   Shc        Shchepetkin (2D momentum only)       i=1         i=Lm
 !
 !  LBC(isFsur) Free-surface,  [1:4, Ngrids] values are expected.
 !  LBC(isUbar) 2D U-momentum, [1:4, Ngrids] values are expected.

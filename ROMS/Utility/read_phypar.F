@@ -370,24 +370,24 @@
               END IF
             CASE ('LBC(isFsur)')
               Npts=load_lbc(Nval, Cval, line, nline, isFsur, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idFsur), LBC)
             CASE ('LBC(isUbar)')
               Npts=load_lbc(Nval, Cval, line, nline, isUbar, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idUbar), LBC)
             CASE ('LBC(isVbar)')
               Npts=load_lbc(Nval, Cval, line, nline, isVbar, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idVbar), LBC)
 #ifdef SOLVE3D
             CASE ('LBC(isUvel)')
               Npts=load_lbc(Nval, Cval, line, nline, isUvel, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idUvel), LBC)
             CASE ('LBC(isVvel)')
               Npts=load_lbc(Nval, Cval, line, nline, isVvel, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idVvel), LBC)
 # if defined GLS_MIXING || defined MY25_MIXING
             CASE ('LBC(isMtke)')
               Npts=load_lbc(Nval, Cval, line, nline, isMtke, igrid,     &
-     &                      0, 0, LBC)
+     &                      0, 0, Vname(1,idMtke), LBC)
 # endif
             CASE ('LBC(isTvar)')
               IF (itracer.lt.(NAT+NPT)) THEN
@@ -397,29 +397,29 @@
               END IF
               ifield=isTvar(itracer)
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                      1, NAT+NPT, LBC)
+     &                      1, NAT+NPT, Vname(1,idTvar(itracer)), LBC)
 #endif
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isFsur)')
               Npts=load_lbc(Nval, Cval, line, nline, isFsur, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idFsur), ad_LBC)
             CASE ('ad_LBC(isUbar)')
               Npts=load_lbc(Nval, Cval, line, nline, isUbar, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idUbar), ad_LBC)
             CASE ('ad_LBC(isVbar)')
               Npts=load_lbc(Nval, Cval, line, nline, isVbar, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idVbar), ad_LBC)
 # ifdef SOLVE3D
             CASE ('ad_LBC(isUvel)')
               Npts=load_lbc(Nval, Cval, line, nline, isUvel, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idUvel), ad_LBC)
             CASE ('ad_LBC(isVvel)')
               Npts=load_lbc(Nval, Cval, line, nline, isVvel, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idVvel), ad_LBC)
 #  if defined GLS_MIXING || defined MY25_MIXING
             CASE ('ad_LBC(isMtke)')
               Npts=load_lbc(Nval, Cval, line, nline, isMtke, igrid,     &
-     &                      0, 0, ad_LBC)
+     &                      0, 0, Vname(1,idMtke), ad_LBC)
 #  endif
             CASE ('ad_LBC(isTvar)')
               IF (itracer.lt.(NAT+NPT)) THEN
@@ -429,7 +429,8 @@
               END IF
               ifield=isTvar(itracer)
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                      1, NAT+NPT, ad_LBC)
+     &                      1, NAT+NPT, Vname(1,idTvar(itracer)),       &
+     &                      ad_LBC)
 # endif
 #endif
             CASE ('VolCons(west)')

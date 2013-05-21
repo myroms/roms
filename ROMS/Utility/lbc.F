@@ -152,26 +152,39 @@
           DO ibry=1,4
             SELECT CASE (TRIM(string(ibry)))
               CASE ('Cha')
-                IF (.not.S(ibry,ifield,ng)%Chapman) THEN
+                IF (.not.S(ibry,ifield,ng)%Chapman_implicit) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%Chapman',  &
-     &                                S(ibry,ifield,ng)%Chapman,        &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%Chapman_implicit',     &
+     &                    S(ibry,ifield,ng)%Chapman_implicit,           &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
+              CASE ('Che')
+                IF (.not.S(ibry,ifield,ng)%Chapman_explicit) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,20) B(ibry),                          &
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%Chapman_explicit',     &
+     &                    S(ibry,ifield,ng)%Chapman_explicit,           &
+     &                    TRIM(ncname)
+                  END IF
+                  exit_flag=5
+                END IF
+
               CASE ('Cla')
                 IF (.not.S(ibry,ifield,ng)%clamped) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%Chapman',  &
-     &                                S(ibry,ifield,ng)%Chapman,        &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%clamped',              &
+     &                    S(ibry,ifield,ng)%clamped,                    &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -179,11 +192,11 @@
                 IF (.not.S(ibry,ifield,ng)%closed) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%closed',   &
-     &                                S(ibry,ifield,ng)%closed,         &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%closed',               &
+     &                    S(ibry,ifield,ng)%closed,                     &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -191,11 +204,11 @@
                 IF (.not.S(ibry,ifield,ng)%Flather) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%Flather',  &
-     &                                S(ibry,ifield,ng)%Flather,        &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%Flather',              &
+     &                    S(ibry,ifield,ng)%Flather,                    &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -203,11 +216,11 @@
                 IF (.not.S(ibry,ifield,ng)%gradient) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%gradient', &
-     &                                S(ibry,ifield,ng)%gradient,       &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%gradient',             &
+     &                    S(ibry,ifield,ng)%gradient,                   &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -215,11 +228,11 @@
                 IF (.not.S(ibry,ifield,ng)%nested) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%nested',   &
-     &                                S(ibry,ifield,ng)%nested,         &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%nested',               &
+     &                    S(ibry,ifield,ng)%nested,                     &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -227,11 +240,11 @@
                 IF (.not.S(ibry,ifield,ng)%periodic) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%periodic', &
-     &                                S(ibry,ifield,ng)%periodic,       &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%periodic',             &
+     &                    S(ibry,ifield,ng)%periodic,                   &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -239,11 +252,11 @@
                 IF (.not.S(ibry,ifield,ng)%radiation) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%radiation',&
-     &                                S(ibry,ifield,ng)%radiation,      &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%radiation',            &
+     &                    S(ibry,ifield,ng)%radiation,                  &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -252,11 +265,11 @@
      &                    S(ibry,ifield,ng)%nudging)) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%radiation',&
-     &                                S(ibry,ifield,ng)%radiation,      &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%radiation',            &
+     &                    S(ibry,ifield,ng)%radiation,                  &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -264,11 +277,23 @@
                 IF (.not.S(ibry,ifield,ng)%reduced) THEN
                   IF (Master) THEN
                     WRITE (stdout,20) B(ibry),                          &
-     &                                TRIM(Vname(1,idBvar(ifield))),    &
-     &                                TRIM(string(ibry)),               &
-     &                                'S(',ibry,ifield,ng,')%reduced',  &
-     &                                S(ibry,ifield,ng)%reduced,        &
-     &                                TRIM(ncname)
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%reduced',              &
+     &                    S(ibry,ifield,ng)%reduced,                    &
+     &                    TRIM(ncname)
+                  END IF
+                  exit_flag=5
+                END IF
+              CASE ('Shc')
+                IF (.not.S(ibry,ifield,ng)%Shchepetkin) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,20) B(ibry),                          &
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%Shchepetkin',          &
+     &                    S(ibry,ifield,ng)%Shchepetkin,                &
+     &                    TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -409,7 +434,9 @@
 !
       DO ifield=1,nLBCvar
         DO ibry=1,4
-          IF (S(ibry,ifield,ng)%Chapman) THEN
+          IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
+            string(ibry)='Che    '
+          ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
             string(ibry)='Cha    '
           ELSE IF (S(ibry,ifield,ng)%clamped) THEN
             string(ibry)='Cla    '
@@ -431,6 +458,8 @@
             END IF
           ELSE IF (S(ibry,ifield,ng)%reduced) THEN
             string(ibry)='Red    '
+          ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
+            string(ibry)='Shc    '
           END IF
         END DO
         IF (ifield.eq.nLBCvar) newline=' '
@@ -448,7 +477,7 @@
 !
 !  Write attribute to NetCDF file.
 !
-      status=nf90_put_att(ncid, nf90_global, TRIM(aname),              &
+      status=nf90_put_att(ncid, nf90_global, TRIM(aname),               &
      &                    TRIM(lbc_att))
 
       RETURN
@@ -484,7 +513,7 @@
 !
       integer :: ibry, ng
 
-      character (len=10) :: string(4,Ngrids)
+      character (len=11) :: string(4,Ngrids)
 !
 !-----------------------------------------------------------------------
 !  Report lateral boundary conditions.
@@ -494,28 +523,32 @@
 !
       DO ng=1,Ngrids
         DO ibry=1,4
-          IF (S(ibry,ifield,ng)%Chapman) THEN
-            string(ibry,ng)='Chapman   '
+          IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
+            string(ibry,ng)='Chapman Exp'
+          ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
+            string(ibry,ng)='Chapman Imp'
           ELSE IF (S(ibry,ifield,ng)%clamped) THEN
-            string(ibry,ng)='Clamped   '
+            string(ibry,ng)='Clamped    '
           ELSE IF (S(ibry,ifield,ng)%closed) THEN
-            string(ibry,ng)='Closed    '
+            string(ibry,ng)='Closed     '
           ELSE IF (S(ibry,ifield,ng)%Flather) THEN
-            string(ibry,ng)='Flather   '
+            string(ibry,ng)='Flather    '
           ELSE IF (S(ibry,ifield,ng)%gradient) THEN
-            string(ibry,ng)='Gradient  '
+            string(ibry,ng)='Gradient   '
           ELSE IF (S(ibry,ifield,ng)%nested) THEN
-            string(ibry,ng)='Nested    '
+            string(ibry,ng)='Nested     '
           ELSE IF (S(ibry,ifield,ng)%periodic) THEN
-            string(ibry,ng)='Periodic  '
+            string(ibry,ng)='Periodic   '
           ELSE IF (S(ibry,ifield,ng)%radiation) THEN
             IF (S(ibry,ifield,ng)%nudging) THEN
-              string(ibry,ng)='Rad + Nud '
+              string(ibry,ng)='Rad + Nud  '
             ELSE
-              string(ibry,ng)='Radiation '
+              string(ibry,ng)='Radiation  '
             END IF
           ELSE IF (S(ibry,ifield,ng)%reduced) THEN
-            string(ibry,ng)='Reduced   '
+            string(ibry,ng)='Reduced    '
+          ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
+            string(ibry,ng)='Shchepetkin'
           END IF
         END DO
       END DO
@@ -538,8 +571,8 @@
         END IF
       END DO
 
- 10   FORMAT (/,1x,a,t26,i2,t33,a,t45,a,t57,a,t69,a)
- 20   FORMAT (t26,i2,t33,a,t45,a,t57,a,t69,a)
+ 10   FORMAT (/,1x,a,t26,i2,t31,a,t44,a,t57,a,t70,a)
+ 20   FORMAT (t26,i2,t31,a,t44,a,t57,a,t70,a)
 
       RETURN
       END SUBROUTINE lbc_report

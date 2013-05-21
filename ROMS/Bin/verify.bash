@@ -1040,7 +1040,7 @@ if [[ $dir2 != "" ]]; then
   diffs=`expr ${diffs} + $?`
 fi
 
-# output the total number of dirreing files. The actualy files that
+# Output the total number of differing files. The actual files that
 # differ, if any, will be displayed in standard out as they are found
 
 echo "There were ${diffs} differing files found"

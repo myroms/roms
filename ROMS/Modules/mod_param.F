@@ -350,7 +350,8 @@
       TYPE T_LBC
         logical :: acquire        ! process lateral boundary data
 
-        logical :: Chapman
+        logical :: Chapman_explicit
+        logical :: Chapman_implicit
         logical :: clamped
         logical :: closed
         logical :: Flather
@@ -360,6 +361,7 @@
         logical :: periodic
         logical :: radiation
         logical :: reduced
+        logical :: Shchepetkin
       END TYPE T_LBC
 
       TYPE (T_LBC), allocatable :: LBC(:,:,:)
@@ -958,17 +960,18 @@
         DO ng=1,Ngrids
           DO ivar=1,nLBCvar
             DO ibry=1,4
-              LBC(ibry,ivar,ng)%acquire  =.FALSE.
-              LBC(ibry,ivar,ng)%Chapman  =.FALSE.
-              LBC(ibry,ivar,ng)%clamped  =.FALSE.
-              LBC(ibry,ivar,ng)%closed   =.FALSE.
-              LBC(ibry,ivar,ng)%Flather  =.FALSE.
-              LBC(ibry,ivar,ng)%gradient =.FALSE.
-              LBC(ibry,ivar,ng)%nested   =.FALSE.
-              LBC(ibry,ivar,ng)%nudging  =.FALSE.
-              LBC(ibry,ivar,ng)%periodic =.FALSE.
-              LBC(ibry,ivar,ng)%radiation=.FALSE.
-              LBC(ibry,ivar,ng)%reduced  =.FALSE.
+              LBC(ibry,ivar,ng)%acquire = .FALSE.
+              LBC(ibry,ivar,ng)%Chapman_explicit = .FALSE.
+              LBC(ibry,ivar,ng)%Chapman_implicit = .FALSE.
+              LBC(ibry,ivar,ng)%clamped = .FALSE.
+              LBC(ibry,ivar,ng)%closed = .FALSE.
+              LBC(ibry,ivar,ng)%Flather = .FALSE.
+              LBC(ibry,ivar,ng)%gradient = .FALSE.
+              LBC(ibry,ivar,ng)%nested = .FALSE.
+              LBC(ibry,ivar,ng)%nudging = .FALSE.
+              LBC(ibry,ivar,ng)%periodic = .FALSE.
+              LBC(ibry,ivar,ng)%radiation = .FALSE.
+              LBC(ibry,ivar,ng)%Shchepetkin = .FALSE.
             END DO
           END DO
         END DO
@@ -979,17 +982,19 @@
         DO ng=1,Ngrids
           DO ivar=1,nLBCvar
             DO ibry=1,4
-              ad_LBC(ibry,ivar,ng)%acquire  =.FALSE.
-              ad_LBC(ibry,ivar,ng)%Chapman  =.FALSE.
-              ad_LBC(ibry,ivar,ng)%clamped  =.FALSE.
-              ad_LBC(ibry,ivar,ng)%closed   =.FALSE.
-              ad_LBC(ibry,ivar,ng)%Flather  =.FALSE.
-              ad_LBC(ibry,ivar,ng)%gradient =.FALSE.
-              ad_LBC(ibry,ivar,ng)%nested   =.FALSE.
-              ad_LBC(ibry,ivar,ng)%nudging  =.FALSE.
-              ad_LBC(ibry,ivar,ng)%periodic =.FALSE.
-              ad_LBC(ibry,ivar,ng)%radiation=.FALSE.
-              ad_LBC(ibry,ivar,ng)%reduced  =.FALSE.
+              ad_LBC(ibry,ivar,ng)%acquire = .FALSE.
+              ad_LBC(ibry,ivar,ng)%Chapman_implicit = .FALSE.
+              ad_LBC(ibry,ivar,ng)%Chapman_explicit = .FALSE.
+              ad_LBC(ibry,ivar,ng)%clamped = .FALSE.
+              ad_LBC(ibry,ivar,ng)%closed = .FALSE.
+              ad_LBC(ibry,ivar,ng)%Flather = .FALSE.
+              ad_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              ad_LBC(ibry,ivar,ng)%nested = .FALSE.
+              ad_LBC(ibry,ivar,ng)%nudging = .FALSE.
+              ad_LBC(ibry,ivar,ng)%periodic = .FALSE.
+              ad_LBC(ibry,ivar,ng)%radiation = .FALSE.
+              ad_LBC(ibry,ivar,ng)%reduced = .FALSE.
+              ad_LBC(ibry,ivar,ng)%Shchepetkin = .FALSE.
             END DO
           END DO
         END DO
@@ -1001,17 +1006,19 @@
         DO ng=1,Ngrids
           DO ivar=1,nLBCvar
             DO ibry=1,4
-              tl_LBC(ibry,ivar,ng)%acquire  =.FALSE.
-              tl_LBC(ibry,ivar,ng)%Chapman  =.FALSE.
-              tl_LBC(ibry,ivar,ng)%clamped  =.FALSE.
-              tl_LBC(ibry,ivar,ng)%closed   =.FALSE.
-              tl_LBC(ibry,ivar,ng)%Flather  =.FALSE.
-              tl_LBC(ibry,ivar,ng)%gradient =.FALSE.
-              tl_LBC(ibry,ivar,ng)%nested   =.FALSE.
-              tl_LBC(ibry,ivar,ng)%nudging  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%acquire = .FALSE.
+              tl_LBC(ibry,ivar,ng)%Chapman_implicit = .FALSE.
+              tl_LBC(ibry,ivar,ng)%Chapman_explicit = .FALSE.
+              tl_LBC(ibry,ivar,ng)%clamped = .FALSE.
+              tl_LBC(ibry,ivar,ng)%closed = .FALSE.
+              tl_LBC(ibry,ivar,ng)%Flather = .FALSE.
+              tl_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              tl_LBC(ibry,ivar,ng)%nested = .FALSE.
+              tl_LBC(ibry,ivar,ng)%nudging = .FALSE.
               tl_LBC(ibry,ivar,ng)%periodic =.FALSE.
-              tl_LBC(ibry,ivar,ng)%radiation=.FALSE.
-              tl_LBC(ibry,ivar,ng)%reduced  =.FALSE.
+              tl_LBC(ibry,ivar,ng)%radiation = .FALSE.
+              tl_LBC(ibry,ivar,ng)%reduced = .FALSE.
+              tl_LBC(ibry,ivar,ng)%Shchepetkin = .FALSE.
             END DO
           END DO
         END DO

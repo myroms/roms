@@ -99,7 +99,8 @@
               END IF
               ifield=isTvar(idsed(itracer))
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                        iTrcStr, iTrcEnd, LBC)
+     &                      iTrcStr, iTrcEnd,                           &
+     &                      Vname(1,idTvar(idsed(itracer))), LBC)
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isTvar)')
               IF (itracer.lt.NBT) THEN
@@ -109,9 +110,9 @@
               END IF
               ifield=isTvar(idbio(itracer))
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                      iTrcStr, iTrcEnd, ad_LBC)
+     &                      iTrcStr, iTrcEnd,                           &
+     &                      Vname(1,idTvar(idsed(itracer))), ad_LBC)
 #endif
-
             CASE ('MUD_SD50')
               IF (.not.allocated(Sd50)) allocate (Sd50(NST,Ngrids))
               Npts=load_r(Nval, Rval, NCS*Ngrids, Rmud)

@@ -1228,7 +1228,8 @@
        defined SENSITIVITY_4DVAR || defined SO_SEMI)
 !
       IF (.not.(ANY(ad_LBC(:,isFsur,ng)%radiation).or.                  &
-     &          ANY(ad_LBC(:,isFsur,ng)%Chapman))) THEN
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_explicit).or.           &
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_implicit))) THEN
 #  ifdef SOLVE3D
 !>      CALL tl_zetabc_tile (ng, tile,                                  &
 !>   &                       LBi, UBi, LBj, UBj,                        &
@@ -1277,7 +1278,8 @@
 !  Adjoint of free-surface initialization.
 !
       IF (.not.(ANY(ad_LBC(:,isFsur,ng)%radiation).or.                  &
-     &          ANY(ad_LBC(:,isFsur,ng)%Chapman))) THEN
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_explicit).or.           &
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_implicit))) THEN
         Imin=IstrB
         Imax=IendB
         Jmin=JstrB
@@ -1947,7 +1949,8 @@
       END IF
 !
       IF (.not.(ANY(ad_LBC(:,isFsur,ng)%radiation).or.                  &
-     &          ANY(ad_LBC(:,isFsur,ng)%Chapman))) THEN
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_explicit).or.           &
+     &          ANY(ad_LBC(:,isFsur,ng)%Chapman_implicit))) THEN
         CALL ad_zetabc_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       IminS, ImaxS, JminS, JmaxS,                &

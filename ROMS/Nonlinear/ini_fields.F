@@ -883,7 +883,8 @@
 !
       IF (.not.PerfectRST(ng)) THEN
         IF (.not.(ANY(LBC(:,isFsur,ng)%radiation).or.                   &
-     &            ANY(LBC(:,isFsur,ng)%Chapman))) THEN
+     &            ANY(LBC(:,isFsur,ng)%Chapman_explicit).or.            &
+     &            ANY(LBC(:,isFsur,ng)%Chapman_implicit))) THEN
           Imin=IstrB
           Imax=IendB
           Jmin=JstrB
@@ -920,7 +921,8 @@
 !  Apply boundary conditions.
 !
         IF (.not.(ANY(LBC(:,isFsur,ng)%radiation).or.                   &
-     &            ANY(LBC(:,isFsur,ng)%Chapman))) THEN
+     &            ANY(LBC(:,isFsur,ng)%Chapman_explicit).or.            &
+     &            ANY(LBC(:,isFsur,ng)%Chapman_implicit))) THEN
           CALL zetabc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &

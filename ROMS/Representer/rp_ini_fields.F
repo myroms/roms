@@ -940,7 +940,8 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.(ANY(tl_LBC(:,isFsur,ng)%radiation).or.                  &
-     &          ANY(tl_LBC(:,isFsur,ng)%Chapman))) THEN
+     &          ANY(tl_LBC(:,isFsur,ng)%Chapman_explicit).or.           &
+     &          ANY(tl_LBC(:,isFsur,ng)%Chapman_implicit))) THEN
         Imin=IstrB
         Imax=IendB
         Jmin=JstrB
@@ -979,7 +980,8 @@
 !  Apply boundary conditions.
 !
       IF (.not.(ANY(tl_LBC(:,isFsur,ng)%radiation).or.                  &
-     &          ANY(tl_LBC(:,isFsur,ng)%Chapman))) THEN
+     &          ANY(tl_LBC(:,isFsur,ng)%Chapman_explicit).or.           &
+     &          ANY(tl_LBC(:,isFsur,ng)%Chapman_implicit))) THEN
 !>      CALL zetabc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    IminS, ImaxS, JminS, JmaxS,                   &
