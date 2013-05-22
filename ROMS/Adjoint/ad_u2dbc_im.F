@@ -101,8 +101,6 @@
       integer :: Imin, Imax
       integer :: i, j, know
 
-      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
-
       real(r8) :: Ce, Cx, Zx
       real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
       real(r8) :: cff, cff1, cff2, cff3, dt2d, tau

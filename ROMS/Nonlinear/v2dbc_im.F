@@ -87,7 +87,6 @@
       integer :: Jmin, Jmax
       integer :: i, j, know
 
-      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
       real(r8), parameter :: eps = 1.0E-20_r8
 
       real(r8) :: Ce, Cx, Ze
@@ -289,7 +288,7 @@
      &                            GRID(ng)%h(i,Jstr  )))
               cff1=SQRT(g*cff)
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Istr  ))
+     &                             GRID(ng)%pn(i,Jstr  ))
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               IF (Ce.gt.Co) THEN
@@ -566,7 +565,7 @@
      &                            GRID(ng)%h(i,Jend+1)))
               cff1=SQRT(g*cff)
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Iend+1))
+     &                             GRID(ng)%pn(i,Jend+1))
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               IF (Ce.gt.Co) THEN

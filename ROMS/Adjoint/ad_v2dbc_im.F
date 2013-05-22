@@ -101,8 +101,6 @@
       integer :: Jmin, Jmax
       integer :: i, j, know
 
-      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
-
       real(r8) :: Ce, Cx, Ze
       real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
       real(r8) :: cff, cff1, cff2, cff3, dt2d, tau
@@ -1033,7 +1031,7 @@
      &                            GRID(ng)%h(i,Jend+1)))
               cff1=SQRT(g*cff)
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Iend+1))
+     &                             GRID(ng)%pn(i,Jend+1))
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               IF (Ce.gt.Co) THEN
@@ -1126,11 +1124,11 @@
      &               zeta(i,Jend+1,know))*ad_Ze
               ad_Ze=0.0_r8
 !>            tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+         &
-!>   &                                   GRID(ng)%pn(i,Iend+1))
+!>   &                                   GRID(ng)%pn(i,Jend+1))
 !>
               ad_cff1=ad_cff1+                                          &
      &                dt2d*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Iend+1))*ad_Ce
+     &                             GRID(ng)%pn(i,Jend+1))*ad_Ce
               ad_Ce=0.0_r8
 !>            tl_cff1=0.5_r8*g*tl_cff/cff1
 !>
@@ -1782,7 +1780,7 @@
      &                            GRID(ng)%h(i,Jstr  )))
               cff1=SQRT(g*cff)
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Istr  ))
+     &                             GRID(ng)%pn(i,Jstr  ))
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               IF (Ce.gt.Co) THEN
@@ -1875,11 +1873,11 @@
      &               zeta(i,Jstr-1,know))*ad_Ze
               ad_Ze=0.0_r8
 !>            tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+         &
-!>   &                                   GRID(ng)%pn(i,Istr  ))
+!>   &                                   GRID(ng)%pn(i,Jstr  ))
 !>
               ad_cff1=ad_cff1+                                          &
      &                dt2d*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Istr  ))*ad_Ce
+     &                             GRID(ng)%pn(i,Jstr  ))*ad_Ce
               ad_Ce=0.0_r8
 !>            tl_cff1=0.5_r8*g*tl_cff/cff1
 !>

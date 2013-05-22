@@ -86,7 +86,6 @@
       integer :: Imin, Imax
       integer :: i, j, know
 
-      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
       real(r8), parameter :: eps = 1.0E-20_r8
 
       real(r8) :: Ce, Cx, Zx

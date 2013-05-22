@@ -100,8 +100,6 @@
       integer :: Jmin, Jmax
       integer :: i, j, know
 
-      real(r8), parameter :: Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8))
-
       real(r8) :: Ce, Cx, Ze
       real(r8) :: bry_pgr, bry_cor, bry_str
       real(r8) :: cff, cff1, cff2, cff3, dt2d, tau
@@ -448,9 +446,9 @@
      &                0.5_r8*cff1
 # endif
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Istr  ))
+     &                             GRID(ng)%pn(i,Jstr  ))
               tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+         &
-     &                                   GRID(ng)%pn(i,Istr  ))
+     &                                   GRID(ng)%pn(i,Jstr  ))
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jstr  ,know)+                 &
@@ -978,9 +976,9 @@
      &                0.5_r8*cff1
 # endif
               Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Iend+1))
+     &                             GRID(ng)%pn(i,Jend+1))
               tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+         &
-     &                                   GRID(ng)%pn(i,Iend+1))
+     &                                   GRID(ng)%pn(i,Jend+1))
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jend  ,know)+                 &

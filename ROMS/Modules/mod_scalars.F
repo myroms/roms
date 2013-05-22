@@ -355,7 +355,7 @@
 !
 !  Refinement grid scale factor from donor grid.
 !
-      integer, allocatable :: RefineScale(:)
+        integer, allocatable :: RefineScale(:)
 !
 !  Switch to extract donor grid (coarse) data at the refinement grid
 !  contact point locations. The coarse data is extracted at the first
@@ -363,7 +363,7 @@
 !  smaller than the coarser grid by a factor of RefineScale(:). This
 !  switch is only relevant during refinement nesting.
 !
-      logical, allocatable :: GetDonorData(:)
+        logical, allocatable :: GetDonorData(:)
 !
 !  Periodic boundary swiches for distributed-memory exchanges.
 !
@@ -481,6 +481,11 @@
         real(r8), allocatable :: LonMax(:)      ! degrees east
         real(r8), allocatable :: LatMin(:)      ! degrees north
         real(r8), allocatable :: LatMax(:)      ! degrees north
+!
+!  Constant used in the Shchepetkin boundary conditions for 2D momentum,
+!  Co = 1.0_r8/(2.0_r8+SQRT(2.0_r8)).
+!
+        real(r8) :: Co
 !
 !  Number of digits in grid size for format statements.
 !
@@ -2156,6 +2161,7 @@
 #ifdef SWAN_COUPLING
       Infinity=one/zero
 #endif
+      Co=1.0_r8/(2.0_r8+SQRT(2.0_r8))
       gorho0=g/rho0
       DO ng=1,Ngrids
         EWperiodic(ng)=.FALSE.
