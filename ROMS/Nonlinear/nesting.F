@@ -2415,9 +2415,9 @@
       IF (Rscale.eq.3) THEN
         DO m=1,Npoints
           i=contact(cr)%Idg(m)
-          j=contact(cr)%Idg(m)
+          j=contact(cr)%Jdg(m)
           Ic=contact(cr)%Irg(m)
-          Jc=contact(cr)%Irg(m)
+          Jc=contact(cr)%Jrg(m)
           IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
      &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
             my_sum=F(i-1,j+1)+F(i  ,j+1)+F(i+1,j+1)+                    &
@@ -2440,9 +2440,9 @@
       ELSE IF (Rscale.eq.5) THEN
         DO m=1,Npoints
           i=contact(cr)%Idg(m)
-          j=contact(cr)%Idg(m)
+          j=contact(cr)%Jdg(m)
           Ic=contact(cr)%Irg(m)
-          Jc=contact(cr)%Irg(m)
+          Jc=contact(cr)%Jrg(m)
           IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
      &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
             my_sum=F(i-2,j+2)+F(i-1,j+2)+F(i,j+2)+                      &
@@ -2479,9 +2479,9 @@
       ELSE IF (Rscale.eq.7) THEN
         DO m=1,Npoints
           i=contact(cr)%Idg(m)
-          j=contact(cr)%Idg(m)
+          j=contact(cr)%Jdg(m)
           Ic=contact(cr)%Irg(m)
-          Jc=contact(cr)%Irg(m)
+          Jc=contact(cr)%Jrg(m)
           IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
      &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
             my_sum=F(i-3,j+3)+F(i-2,j+3)+F(i-1,j+3)+F(i,j+3)+           &
@@ -2734,9 +2734,9 @@
         DO k=LBkC,UBkC
           DO m=1,Npoints
             i=contact(cr)%Idg(m)
-            j=contact(cr)%Idg(m)
+            j=contact(cr)%Jdg(m)
             Ic=contact(cr)%Irg(m)
-            Jc=contact(cr)%Irg(m)
+            Jc=contact(cr)%Jrg(m)
             IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
      &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
               my_sum=F(i-1,j+1,k)+F(i  ,j+1,k)+F(i+1,j+1,k)+            &
@@ -2758,9 +2758,9 @@
         DO k=LBkC,UBkC
           DO m=1,Npoints
             i=contact(cr)%Idg(m)
-            j=contact(cr)%Idg(m)
+            j=contact(cr)%Jdg(m)
             Ic=contact(cr)%Irg(m)
-            Jc=contact(cr)%Irg(m)
+            Jc=contact(cr)%Jrg(m)
             IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
      &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
               my_sum=F(i-2,j+2,k)+F(i-1,j+2,k)+F(i,j+2,k)+              &
@@ -2796,9 +2796,9 @@
         DO k=LBkC,UBkC
           DO m=1,Npoints
             i=contact(cr)%Idg(m)
-            j=contact(cr)%Idg(m)
+            j=contact(cr)%Jdg(m)
             Ic=contact(cr)%Irg(m)
-            Jc=contact(cr)%Irg(m)
+            Jc=contact(cr)%Jrg(m)
             IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
      &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
               my_sum=F(i-3,j+3,k)+F(i-2,j+3,k)+F(i-1,j+3,k)+F(i,j+3,k)+ &
