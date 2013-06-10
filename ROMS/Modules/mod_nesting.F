@@ -492,11 +492,13 @@
 !
       DO cr=1,Ncontact
         rg=receiver_grid(cr)
-        IF (RefinedGrid(rg).and.(RefineScale(rg).gt.0) ) THEN
-          LBC_apply(rg) % west  = .FALSE.      ! This is a refinement
-          LBC_apply(rg) % south = .FALSE.      ! grid, so we need to
-          LBC_apply(rg) % east  = .FALSE.      ! avoid applying lateral
-          LBC_apply(rg) % north = .FALSE.      ! boundary conditions
+        IF (RefinedGrid(rg)) THEN
+          IF (RefineScale(rg).gt.0) THEN
+            LBC_apply(rg) % west  = .FALSE.    ! This is a refinement
+            LBC_apply(rg) % south = .FALSE.    ! grid, so we need to
+            LBC_apply(rg) % east  = .FALSE.    ! avoid applying lateral
+            LBC_apply(rg) % north = .FALSE.    ! boundary conditions
+          END IF
         ELSE
           DO ibry=1,4
             Imin=BRY_CONTACT(ibry,cr) % Ibmin  ! Deactivate full or

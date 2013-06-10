@@ -220,7 +220,7 @@
 # ifdef SOLVE3D
 !
 !  Update coarse grid depth variables. We have a new coarse grid
-!  adjusted free-surface.
+!  adjusted free-surface, Zt_avg1.
 !
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL set_depth (ng, tile)
@@ -1445,12 +1445,12 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine interpolates composite grid contact points from donor  !
-!  grid data extracted in routine 'get_composite'.                     !
+!  This routine interpolates refinement grid contact points from donor !
+!  grid data extracted in routine 'get_refine'.                        !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Composite grid number (integer)                       !
+!     ng         Refinement grid number (integer)                      !
 !     model      Calling model identifier (integer)                    !
 !     tile       Domain tile partition (integer)                       !
 !                                                                      !
@@ -1944,7 +1944,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Composite grid number (integer)                       !
+!     ng         Refinement grid number (integer)                      !
 !     model      Calling model identifier (integer)                    !
 !     vtype      State variables to process (integer):                 !
 !                  vtype = r2dvar      2D state variables              !
@@ -1985,6 +1985,7 @@
 !
 !  Local variable declarations.
 !
+      logical :: AreaAvg
       integer :: cr, dg, k, rg, nrec, rec
 
 # ifdef SOLVE3D
@@ -2006,8 +2007,8 @@
         dg=Rcontact(cr)%donor_grid
         rg=Rcontact(cr)%receiver_grid
 !
-!  Process only contact region if the current refinement grid "ng" is
-!  the donor grid.  The coarse grid "rg" is the receiver grid and the
+!  Process contact region if the current refinement grid "ng" is the
+!  donor grid.  The coarse grid "rg" is the receiver grid and the
 !  contact structure has all the information necessary for fine to
 !  coarse coupling.
 !
@@ -2033,12 +2034,18 @@
 !
 !  Free-surface.
 !
+            AreaAvg=.TRUE.
 # ifdef SOLVE3D
             CALL fine2coarse2d (rg, dg, model, tile,                    &
-     &                          r2dvar, RefineScale(dg),                &
+     &                          r2dvar, 'Zt_avg1',                      &
+     &                          AreaAvg, RefineScale(dg),               &
      &                          cr, Rcontact(cr)%Npoints, Rcontact,     &
      &                          LBiD, UBiD, LBjD, UBjD,                 &
      &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          GRID(dg)%om_r,                          &
+     &                          GRID(dg)%on_r,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
      &                          GRID(dg)%rmask,                         &
      &                          GRID(rg)%rmask,                         &
@@ -2047,10 +2054,15 @@
      &                          COUPLING(rg)%Zt_avg1)
 # else
             CALL fine2coarse2d (rg, dg, model, tile,                    &
-     &                          r2dvar, RefineScale(dg),                &
+     &                          r2dvar, Vname(1,idFsur),                &
+     &                          AreaAvg, RefineScale(dg),               &
      &                          cr, Rcontact(cr)%Npoints, Rcontact,     &
      &                          LBiD, UBiD, LBjD, UBjD,                 &
      &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          GRID(dg)%om_r,                          &
+     &                          GRID(dg)%on_r,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
      &                          GRID(dg)%rmask,                         &
      &                          GRID(rg)%rmask,                         &
@@ -2063,11 +2075,17 @@
 !
 !  Process 2D momentum components (ubar,vbar).
 !
+            AreaAvg=.FALSE.
             CALL fine2coarse2d (rg, dg, model, tile,                    &
-     &                          u2dvar, RefineScale(dg),                &
+     &                          u2dvar, Vname(1,idUbar),                &
+     &                          AreaAvg, RefineScale(dg),               &
      &                          cr, Ucontact(cr)%Npoints, Ucontact,     &
      &                          LBiD, UBiD, LBjD, UBjD,                 &
      &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          GRID(dg)%om_u,                          &
+     &                          GRID(dg)%on_u,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 # ifdef MASKING
      &                          GRID(dg)%umask,                         &
      &                          GRID(rg)%umask,                         &
@@ -2078,10 +2096,15 @@
             IF (exit_flag.ne.NoError) RETURN
 !
             CALL fine2coarse2d (rg, dg, model, tile,                    &
-     &                          v2dvar, RefineScale(dg),                &
+     &                          v2dvar, Vname(1,idVbar),                &
+     &                          AreaAvg, RefineScale(dg),               &
      &                          cr, Vcontact(cr)%Npoints, Vcontact,     &
      &                          LBiD, UBiD, LBjD, UBjD,                 &
      &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          GRID(dg)%om_v,                          &
+     &                          GRID(dg)%on_v,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 # ifdef MASKING
      &                          GRID(dg)%vmask,                         &
      &                          GRID(rg)%vmask,                         &
@@ -2101,12 +2124,18 @@
 !
 !  Tracer type-variables.
 !
+            AreaAvg=.FALSE.
             DO itrc=1,NT(rg)
               CALL fine2coarse3d (rg, dg, model, tile,                  &
-     &                            r3dvar, RefineScale(dg),              &
+     &                            r3dvar, Vname(1,idTvar(itrc)),        &
+     &                            AreaAvg, RefineScale(dg),             &
      &                            cr, Rcontact(cr)%Npoints, Rcontact,   &
      &                            LBiD, UBiD, LBjD, UBjD, 1, N(dg),     &
      &                            LBiR, UBiR, LBjR, UBjR, 1, N(rg),     &
+     &                            GRID(dg)%om_r,                        &
+     &                            GRID(dg)%on_r,                        &
+     &                            GRID(rg)%pm,                          &
+     &                            GRID(rg)%pn,                          &
 #  ifdef MASKING
      &                            GRID(dg)%rmask,                       &
      &                            GRID(rg)%rmask,                       &
@@ -2118,11 +2147,17 @@
 !
 !  Process 3D momentum components (u, v).
 !
+            AreaAvg=.FALSE.
             CALL fine2coarse3d (rg, dg, model, tile,                    &
-     &                          u3dvar, RefineScale(dg),                &
+     &                          u3dvar, Vname(1,idUvel),                &
+     &                          AreaAvg, RefineScale(dg),               &
      &                          cr, Ucontact(cr)%Npoints, Ucontact,     &
      &                          LBiD, UBiD, LBjD, UBjD, 1, N(dg),       &
      &                          LBiR, UBiR, LBjR, UBjR, 1, N(rg),       &
+     &                          GRID(dg)%om_u,                          &
+     &                          GRID(dg)%on_u,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
      &                          GRID(dg)%umask,                         &
      &                          GRID(rg)%umask,                         &
@@ -2132,10 +2167,15 @@
             IF (exit_flag.ne.NoError) RETURN
 !
             CALL fine2coarse3d (rg, dg, model, tile,                    &
-     &                          v3dvar, RefineScale(dg),                &
-     &                          cr, Ucontact(cr)%Npoints, Ucontact,     &
+     &                          v3dvar, Vname(1,idVvel),                &
+     &                          AreaAvg, RefineScale(dg),               &
+     &                          cr, Vcontact(cr)%Npoints, Vcontact,     &
      &                          LBiD, UBiD, LBjD, UBjD, 1, N(dg),       &
      &                          LBiR, UBiR, LBjR, UBjR, 1, N(rg),       &
+     &                          GRID(dg)%om_v,                          &
+     &                          GRID(dg)%on_v,                          &
+     &                          GRID(rg)%pm,                            &
+     &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
      &                          GRID(dg)%vmask,                         &
      &                          GRID(rg)%vmask,                         &
@@ -2160,7 +2200,7 @@
               CALL exchange_r2d_tile (rg, tile,                         &
      &                                LBiR, UBiR, LBjR, UBjR,           &
      &                                OCEAN(rg)%zeta(:,:,k))
-            END IF
+            END DO
 # endif
             DO k=1,2
               CALL exchange_u2d_tile (rg, tile,                         &
@@ -2231,10 +2271,17 @@
       END SUBROUTINE fine2coarse
 !
       SUBROUTINE fine2coarse2D (ng, dg, model, tile,                    &
-     &                          gtype, Rscale,                          &
+     &                          gtype, svname,                          &
+     &                          AreaAvg, Rscale,                        &
      &                          cr, Npoints, contact,                   &
      &                          LBiF, UBiF, LBjF, UBjF,                 &
      &                          LBiC, UBiC, LBjC, UBjC,                 &
+# ifdef DISTRIBUTE
+     &                          Adx, Ady,                               &
+# else
+     &                          dxF, dyF,                               &
+# endif
+     &                          pmC, pnC,                               &
 # ifdef MASKING
 #  ifdef DISTRIBUTE
      &                          Amsk,                                   &
@@ -2263,6 +2310,8 @@
 !     model      Calling model identifier (integer)                    !
 !     tile       Domain tile partition (integer)                       !
 !     gtype      C-grid variable type (integer)                        !
+!     svname     State variable name (string)                          !
+!     AreaAvg    Switch for area averaging (logical)                   !
 !     Rscale     Refinement grid scale (integer)                       !
 !     cr         Contact region number to process (integer)            !
 !     Npoints    Number of points in the contact zone (integer)        !
@@ -2275,6 +2324,15 @@
 !     UBiC       Coarser grid, I-dimension Upper bound (integer)       !
 !     LBjC       Coarser grid, J-dimension Lower bound (integer)       !
 !     UBjC       Coarser grid, J-dimension Upper bound (integer)       !
+# ifdef DISTRIBUTE
+!     Adx        Finer grid, X-grid spacing (1/pm: om_r, om_u, om_v)   !
+!     Ady        Finer grid, Y-grid spacing (1/pn: on_r, on_u, on_v)   !
+# else
+!     dxF        Finer grid, X-grid spacing (1/pm: om_r, om_u, om_v)   !
+!     dyF        Finer grid, Y-grid spacing (1/pn: on_r, on_u, on_v)   !
+# endif
+!     pmC        Coarser grid, inverse X-grid spacing (1/dx) at RHO    !
+!     pnC        Coarser grid, inverse Y-grid spacing (1/dy) at RHO    !
 # ifdef MASKING
 #  ifdef DISTRIBUTE
 !     Amsk       Finer grid land/sea masking (2D array)                !
@@ -2299,6 +2357,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
 
@@ -2309,14 +2368,19 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: AreaAvg
       integer, intent(in) :: ng, dg, model, tile
       integer, intent(in) :: gtype, cr, Npoints, Rscale
       integer, intent(in) :: LBiF, UBiF, LBjF, UBjF
       integer, intent(in) :: LBiC, UBiC, LBjC, UBjC
 !
+      character(len=*), intent(in) :: svname
+!
       TYPE (T_NGC), intent(in) :: contact(:)
 !
 # ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: pmC(LBiC:,LBjC:)
+      real(r8), intent(in) :: pnC(LBiC:,LBjC:)
 #  ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:,LBjC:)
 #   ifdef DISTRIBUTE
@@ -2327,12 +2391,18 @@
 #  endif
 #  ifdef DISTRIBUTE
       real(r8), intent(in) :: A(LBiF:,LBjF:)
+      real(r8), intent(in) :: Adx(LBiF:,LBjF:)
+      real(r8), intent(in) :: Ady(LBiF:,LBjF:)
 #  else
       real(r8), intent(in) :: F(LBiF:,LBjF:)
+      real(r8), intent(in) :: dxF(LBiF:,LBjF:)
+      real(r8), intent(in) :: dyF(LBiF:,LBjF:)
 #  endif
       real(r8), intent(inout) :: C1(LBiC:,LBjC:)
       real(r8), intent(inout), optional :: C2(LBiC:,LBjC:)
 # else
+      real(r8), intent(in) :: pmC(LBiC:UBiC,LBjC:UBjC)
+      real(r8), intent(in) :: pnC(LBiC:UBiC,LBjC:UBjC)
 #  ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:UBiC,LBjC:UBjC)
 #   ifdef DISTRIBUTE
@@ -2343,8 +2413,12 @@
 #  endif
 #  ifdef DISTRIBUTE
       real(r8), intent(in) :: A(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: Adx(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: Adx(LBiF:UBiF,LBjF:UBjF)
 #  else
       real(r8), intent(in) :: F(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: dxF(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: dyF(LBiF:UBiF,LBjF:UBjF)
 #  endif
       real(r8), intent(inout) :: C1(LBiC:UBiC,LBjC:UBjC)
       real(r8), intent(inout), optional :: C2(LBiC:UBiC,LBjC:UBjC)
@@ -2352,15 +2426,17 @@
 !
 !  Local variable declarations.
 !
-      integer :: Ic, Jc, i, j, m
+      integer :: Iadd, Ic, Jadd, Jc, half, i, j, m
 # ifdef DISTRIBUTE
       integer :: LBi, UBi, LBj, UBj
 # endif
 
-      real(r8) :: cff, fac, my_avg, my_sum
+      real(r8) :: my_avg, my_count, my_sum
 
 # ifdef DISTRIBUTE
       real(r8), allocatable :: F(:,:)
+      real(r8), allocatable :: dxF(:,:)
+      real(r8), allocatable :: dyF(:,:)
 #  ifdef MASKING
       real(r8), allocatable :: Fmsk(:,:)
 #  endif
@@ -2384,6 +2460,14 @@
       IF (.not.allocated(F)) THEN
         allocate ( F(LBi:UBi,LBj:UBj) )
       END IF
+      IF (AreaAvg) THEN
+        IF (.not.allocated(dxF)) THEN
+          allocate ( dxF(LBi:UBi,LBj:UBj) )
+        END IF
+        IF (.not.allocated(dyF)) THEN
+          allocate ( dyF(LBi:UBi,LBj:UBj) )
+        END IF
+      END IF
 #  ifdef MASKING
       IF (.not.allocated(Fmsk)) THEN
         allocate ( Fmsk(LBi:UBi,LBj:UBj) )
@@ -2398,7 +2482,22 @@
      &                     LBi,  UBi,  LBj,  UBj,                       &
      &                     A, F)
       IF (exit_flag.ne.NoError) RETURN
+!
+      IF (AreaAvg) THEN
+        CALL mp_aggregate2d (dg, model, gtype,                          &
+     &                       LBiF, UBiF, LBjF, UBjF,                    &
+     &                       LBi,  UBi,  LBj,  UBj,                     &
+     &                       Adx, dxF)
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL mp_aggregate2d (dg, model, gtype,                          &
+     &                       LBiF, UBiF, LBjF, UBjF,                    &
+     &                       LBi,  UBi,  LBj,  UBj,                     &
+     &                       Ady, dyF)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 #  ifdef MASKING
+!
       CALL mp_aggregate2d (dg, model, gtype,                            &
      &                     LBiF, UBiF, LBjF, UBjF,                      &
      &                     LBi,  UBi,  LBj,  UBj,                       &
@@ -2409,10 +2508,9 @@
 !
 !  Average finer grid data to coarse grid according to the refinement
 !  ratio.
-
-      fac=1.0_r8/(REAL(Rscale, r8)**2)
-
-      IF (Rscale.eq.3) THEN
+!
+      half=(Rscale-1)/2
+      IF (AreaAvg) THEN               ! area averaging
         DO m=1,Npoints
           i=contact(cr)%Idg(m)
           j=contact(cr)%Jdg(m)
@@ -2420,24 +2518,52 @@
           Jc=contact(cr)%Jrg(m)
           IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
      &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-            my_sum=F(i-1,j+1)+F(i  ,j+1)+F(i+1,j+1)+                    &
-     &             F(i-1,j  )+F(i  ,j  )+F(i+1,j  )+                    &
-     &             F(i-1,j-1)+F(i  ,j-1)+F(i+1,j-1)
+            my_count=0.0_r8
+            my_sum=0.0_r8
+            DO Jadd=-half,half
+              DO Iadd=-half,half
 # ifdef MASKING
-            cff=Fmsk(i-1,j+1)+Fmsk(i  ,j+1)+Fmsk(i+1,j+1)+              &
-     &          Fmsk(i-1,j  )+Fmsk(i  ,j  )+Fmsk(i+1,j  )+              &
-     &          Fmsk(i-1,j-1)+Fmsk(i  ,j-1)+Fmsk(i+1,j-1)
-            IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-            my_sum=my_sum*Cmsk(Ic,Jc)
+                my_sum=my_sum+                                          &
+     &                 F(i+Iadd,j+Jadd)*                                &
+     &                 dxF(i+Iadd,j+Jadd)*dyF(i+Iadd,j+Jadd)*           &
+     &                 Fmsk(i+Iadd,j+Jadd)
+                my_count=my_count+Fmsk(i+Iadd,j+Jadd)
+# else
+                my_sum=my_sum+                                          &
+     &                 F(i+Iadd,j+Jadd)*                                &
+     &                 dxF(i+Iadd,j+Jadd)*dyF(i+Iadd,j+Jadd)
 # endif
-            my_avg=my_sum*fac
+              END DO
+            END DO
+            SELECT CASE (gtype)
+              CASE (r2dvar)
+                my_avg=my_sum*                                          &
+     &                 pmC(Ic,Jc)*pnC(Ic,Jc)
+              CASE (u2dvar)
+                my_avg=my_sum*                                          &
+     &                 0.25_r8*(pmC(Ic-1,Jc)+pmC(Ic,Jc))*               &
+     &                         (pnC(Ic-1,Jc)+pnC(Ic,Jc))
+              CASE (v2dvar)
+                my_avg=my_sum*                                          &
+     &                 0.25_r8*(pmC(Ic,Jc-1)+pmC(Ic,Jc))*               &
+     &                         (pnC(Ic,Jc-1)+pnC(Ic,Jc))
+              CASE DEFAULT
+                my_avg=my_sum*                                          &
+     &                 pmC(Ic,Jc)*pnC(Ic,Jc)
+            END SELECT
+# ifdef MASKING
+            IF (my_count.gt.0.0_r8) THEN
+              my_avg=my_avg*Rscale*Rscale/my_count
+            END IF
+            my_avg=my_avg*Cmsk(Ic,Jc)
+# endif
             C1(Ic,Jc)=my_avg
             IF (PRESENT(C2)) THEN
               C2(Ic,Jc)=my_avg
             END IF
           END IF
         END DO
-      ELSE IF (Rscale.eq.5) THEN
+      ELSE                            ! simple averaging
         DO m=1,Npoints
           i=contact(cr)%Idg(m)
           j=contact(cr)%Jdg(m)
@@ -2445,79 +2571,26 @@
           Jc=contact(cr)%Jrg(m)
           IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
      &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-            my_sum=F(i-2,j+2)+F(i-1,j+2)+F(i,j+2)+                      &
-     &             F(i+1,j+2)+F(i+2,j+2)+                               &
-     &             F(i-2,j+1)+F(i-1,j+1)+F(i,j+1)+                      &
-     &             F(i+1,j+1)+F(i+2,j+1)+                               &
-     &             F(i-2,j  )+F(i-1,j  )+F(i,j  )+                      &
-     &             F(i+1,j  )+F(i+2,j  )+                               &
-     &             F(i-2,j-1)+F(i-1,j-1)+F(i,j-1)+                      &
-     &             F(i+1,j-1)+F(i+2,j-1)+                               &
-     &             F(i-2,j-2)+F(i-1,j-2)+F(i,j-2)+                      &
-     &             F(i+1,j-2)+F(i+2,j-2)
+            my_count=0.0_r8
+            my_avg=0.0_r8
+            my_sum=0.0_r8
+            DO Jadd=-half,half
+              DO Iadd=-half,half
 # ifdef MASKING
-            cff=Fmsk(i-2,j+2)+Fmsk(i-1,j+2)+Fmsk(i,j+2)+                &
-     &          Fmsk(i+1,j+2)+Fmsk(i+2,j+2)+                            &
-     &          Fmsk(i-2,j+1)+Fmsk(i-1,j+1)+Fmsk(i,j+1)+                &
-     &          Fmsk(i+1,j+1)+Fmsk(i+2,j+1)+                            &
-     &          Fmsk(i-2,j  )+Fmsk(i-1,j  )+Fmsk(i,j  )+                &
-     &          Fmsk(i+1,j  )+Fmsk(i+2,j  )+                            &
-     &          Fmsk(i-2,j-1)+Fmsk(i-1,j-1)+Fmsk(i,j-1)+                &
-     &          Fmsk(i+1,j-1)+Fmsk(i+2,j-1)+                            &
-     &          Fmsk(i-2,j-2)+Fmsk(i-1,j-2)+Fmsk(i,j-2)+                &
-     &          Fmsk(i+1,j-2)+Fmsk(i+2,j-2)
-            IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-            my_sum=my_sum*Cmsk(Ic,Jc)
+                my_sum=my_sum+                                          &
+     &                 F(i+Iadd,j+Jadd)*Fmsk(i+Iadd,j+Jadd)
+                my_count=my_count+Fmsk(i+Iadd,j+Jadd)
+# else
+                my_sum=my_sum+                                          &
+     &                 F(i+Iadd,j+Jadd)
+                my_count=my_count+1.0_r8
 # endif
-            my_avg=my_sum*fac
-            C1(Ic,Jc)=my_avg
-            IF (PRESENT(C2)) THEN
-              C2(Ic,Jc)=my_avg
-            END IF
-          END IF
-        END DO
-      ELSE IF (Rscale.eq.7) THEN
-        DO m=1,Npoints
-          i=contact(cr)%Idg(m)
-          j=contact(cr)%Jdg(m)
-          Ic=contact(cr)%Irg(m)
-          Jc=contact(cr)%Jrg(m)
-          IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                      &
-     &        ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-            my_sum=F(i-3,j+3)+F(i-2,j+3)+F(i-1,j+3)+F(i,j+3)+           &
-     &             F(i+1,j+3)+F(i+2,j+3)+F(i+3,j+3)+                    &
-     &             F(i-3,j+2)+F(i-2,j+2)+F(i-1,j+2)+F(i,j+2)+           &
-     &             F(i+1,j+2)+F(i+2,j+2)+F(i+3,j+2)+                    &
-     &             F(i-3,j+1)+F(i-2,j+1)+F(i-1,j+1)+F(i,j+1)+           &
-     &             F(i+1,j+1)+F(i+2,j+1)+F(i+3,j+1)+                    &
-     &             F(i-3,j  )+F(i-2,j  )+F(i-1,j  )+F(i,j  )+           &
-     &             F(i+1,j  )+F(i+2,j  )+F(i+3,j  )+                    &
-     &             F(i-3,j-1)+F(i-2,j-1)+F(i-1,j-1)+F(i,j-1)+           &
-     &             F(i+1,j-1)+F(i+2,j-1)+F(i+3,j-1)+                    &
-     &             F(i-3,j-2)+F(i-2,j-2)+F(i-1,j-2)+F(i,j-2)+           &
-     &             F(i+1,j-2)+F(i+2,j-2)+F(i+3,j-2)+                    &
-     &             F(i-3,j-3)+F(i-2,j-3)+F(i-1,j-3)+F(i,j-3)+           &
-     &             F(i+1,j-3)+F(i+2,j-3)+F(i+3,j-3)
-
+              END DO
+            END DO
+            IF (my_count.gt.0.0_r8) my_avg=my_sum/my_count
 # ifdef MASKING
-            cff=Fmsk(i-3,j+3)+Fmsk(i-2,j+3)+Fmsk(i-1,j+3)+Fmsk(i,j+3)+  &
-     &          Fmsk(i+1,j+3)+Fmsk(i+2,j+3)+Fmsk(i+3,j+3)+              &
-     &          Fmsk(i-3,j+2)+Fmsk(i-2,j+2)+Fmsk(i-1,j+2)+Fmsk(i,j+2)+  &
-     &          Fmsk(i+1,j+2)+Fmsk(i+2,j+2)+Fmsk(i+3,j+2)+              &
-     &          Fmsk(i-3,j+1)+Fmsk(i-2,j+1)+Fmsk(i-1,j+1)+Fmsk(i,j+1)+  &
-     &          Fmsk(i+1,j+1)+Fmsk(i+2,j+1)+Fmsk(i+3,j+1)+              &
-     &          Fmsk(i-3,j  )+Fmsk(i-2,j  )+Fmsk(i-1,j  )+Fmsk(i,j  )+  &
-     &          Fmsk(i+1,j  )+Fmsk(i+2,j  )+Fmsk(i+3,j  )+              &
-     &          Fmsk(i-3,j-1)+Fmsk(i-2,j-1)+Fmsk(i-1,j-1)+Fmsk(i,j-1)+  &
-     &          Fmsk(i+1,j-1)+Fmsk(i+2,j-1)+Fmsk(i+3,j-1)+              &
-     &          Fmsk(i-3,j-2)+Fmsk(i-2,j-2)+Fmsk(i-1,j-2)+Fmsk(i,j-2)+  &
-     &          Fmsk(i+1,j-2)+Fmsk(i+2,j-2)+Fmsk(i+3,j-2)+              &
-     &          Fmsk(i-3,j-3)+Fmsk(i-2,j-3)+Fmsk(i-1,j-3)+Fmsk(i,j-3)+  &
-     &          Fmsk(i+1,j-3)+Fmsk(i+2,j-3)+Fmsk(i+3,j-3)
-            IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-            my_sum=my_sum*Cmsk(Ic,Jc)
+            my_avg=my_avg*Cmsk(Ic,Jc)
 # endif
-            my_avg=my_sum*fac
             C1(Ic,Jc)=my_avg
             IF (PRESENT(C2)) THEN
               C2(Ic,Jc)=my_avg
@@ -2533,6 +2606,14 @@
       IF (allocated(F)) THEN
         deallocate (F)
       END IF
+      IF (AreaAvg) THEN
+        IF (allocated(dxF)) THEN
+          deallocate (dxF)
+        END IF
+        IF (allocated(dyF)) THEN
+          deallocate (dyF)
+        END IF
+      END IF
 #  ifdef MASKING
       IF (allocated(F)) THEN
         deallocate (Fmsk)
@@ -2545,10 +2626,17 @@
 !
 # ifdef SOLVE3D
       SUBROUTINE fine2coarse3D (ng, dg, model, tile,                    &
-     &                          gtype, Rscale,                          &
+     &                          gtype, svname,                          &
+     &                          AreaAvg, Rscale,                        &
      &                          cr, Npoints, contact,                   &
      &                          LBiF, UBiF, LBjF, UBjF, LBkF, UBkF,     &
      &                          LBiC, UBiC, LBjC, UBjC, LBkC, UBkC,     &
+#  ifdef DISTRIBUTE
+     &                          Adx, Ady,                               &
+#  else
+     &                          dxF, dyF,                               &
+#  endif
+     &                          pmC, pnC,                               &
 #  ifdef MASKING
 #   ifdef DISTRIBUTE
      &                          Amsk,                                   &
@@ -2577,6 +2665,8 @@
 !     model      Calling model identifier (integer)                    !
 !     tile       Domain tile partition (integer)                       !
 !     gtype      C-grid variable type (integer)                        !
+!     svname     State variable name (string)                          !
+!     AreaAvg    Switch for area averaging (logical)                   !
 !     Rscale     Refinement grid scale (integer)                       !
 !     cr         Contact region number to process (integer)            !
 !     Npoints    Number of points in the contact zone (integer)        !
@@ -2593,6 +2683,15 @@
 !     UBjC       Coarser grid, J-dimension Upper bound (integer)       !
 !     LBkC       Coarser grid, K-dimension Lower bound (integer)       !
 !     UBkC       Coarser grid, K-dimension Upper bound (integer)       !
+#  ifdef DISTRIBUTE
+!     Adx        Finer grid, X-grid spacing (1/pm: om_r, om_u, om_v)   !
+!     Ady        Finer grid, Y-grid spacing (1/pn: on_r, on_u, on_v)   !
+#  else
+!     dxF        Finer grid, X-grid spacing (1/pm: om_r, om_u, om_v)   !
+!     dyF        Finer grid, Y-grid spacing (1/pn: on_r, on_u, on_v)   !
+#  endif
+!     pmC        Coarser grid, inverse X-grid spacing (1/dx) at RHO    !
+!     pnC        Coarser grid, inverse Y-grid spacing (1/dy) at RHO    !
 #  ifdef MASKING
 #   ifdef DISTRIBUTE
 !     Amsk       Finer grid land/sea masking (2D array)                !
@@ -2615,6 +2714,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
 
@@ -2628,14 +2728,19 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: AreaAvg
       integer, intent(in) :: ng, dg, model, tile
       integer, intent(in) :: gtype, cr, Npoints, Rscale
       integer, intent(in) :: LBiF, UBiF, LBjF, UBjF, LBkF, UBkF
       integer, intent(in) :: LBiC, UBiC, LBjC, UBjC, LBkC, UBkC
 !
+      character(len=*), intent(in) :: svname
+!
       TYPE (T_NGC), intent(in) :: contact(:)
 !
 #  ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: pmC(LBiC:,LBjC:)
+      real(r8), intent(in) :: pnC(LBiC:,LBjC:)
 #   ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:,LBjC:)
 #    ifdef DISTRIBUTE
@@ -2646,11 +2751,17 @@
 #   endif
 #   ifdef DISTRIBUTE
       real(r8), intent(in) :: A(LBiF:,LBjF:,LBkF:)
+      real(r8), intent(in) :: Adx(LBiF:,LBjF:)
+      real(r8), intent(in) :: Ady(LBiF:,LBjF:)
 #   else
       real(r8), intent(in) :: F(LBiF:,LBjF:,LBkF:)
+      real(r8), intent(in) :: dxF(LBiF:,LBjF:)
+      real(r8), intent(in) :: dyF(LBiF:,LBjF:)
 #   endif
       real(r8), intent(inout) :: C(LBiC:,LBjC:,LBkC:)
 #  else
+      real(r8), intent(in) :: pmC(LBiC:UBiC,LBjC:UBjC)
+      real(r8), intent(in) :: pnC(LBiC:UBiC,LBjC:UBjC)
 #   ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:UBiC,LBjC:UBjC)
 #    ifdef DISTRIBUTE
@@ -2661,23 +2772,29 @@
 #   endif
 #   ifdef DISTRIBUTE
       real(r8), intent(in) :: A(LBiF:UBiF,LBjF:UBjF,LBkF:UBkF)
+      real(r8), intent(in) :: Adx(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: Adx(LBiF:UBiF,LBjF:UBjF)
 #   else
       real(r8), intent(in) :: F(LBiF:UBiF,LBjF:UBjF,LBkF:UBkF)
+      real(r8), intent(in) :: dxF(LBiF:UBiF,LBjF:UBjF)
+      real(r8), intent(in) :: dyF(LBiF:UBiF,LBjF:UBjF)
 #   endif
       real(r8), intent(inout) :: C(LBiC:UBiC,LBjC:UBjC,LBkC:UBkC)
 #  endif
 !
 !  Local variable declarations.
 !
-      integer :: Ic, Jc, i, j, k, m
+      integer :: Iadd, Ic, Jadd, Jc, half, i, j, k, m
 #  ifdef DISTRIBUTE
       integer :: LBi, UBi, LBj, UBj
 #  endif
 
-      real(r8) :: cff, fac, my_avg, my_sum
+      real(r8) :: my_avg, my_count, my_sum
 
 #  ifdef DISTRIBUTE
       real(r8), allocatable :: F(:,:,:)
+      real(r8), allocatable :: dxF(:,:)
+      real(r8), allocatable :: dyF(:,:)
 #   ifdef MASKING
       real(r8), allocatable :: Fmsk(:,:)
 #   endif
@@ -2701,6 +2818,14 @@
       IF (.not.allocated(F)) THEN
         allocate ( F(LBi:UBi,LBj:UBj,LBkF:UBkF) )
       END IF
+      IF (AreaAvg) THEN
+        IF (.not.allocated(dxF)) THEN
+          allocate ( dxF(LBi:UBi,LBj:UBj) )
+        END IF
+        IF (.not.allocated(dyF)) THEN
+          allocate ( dyF(LBi:UBi,LBj:UBj) )
+        END IF
+      END IF
 #   ifdef MASKING
       IF (.not.allocated(Fmsk)) THEN
         allocate ( Fmsk(LBi:UBi,LBj:UBj) )
@@ -2716,7 +2841,22 @@
      &                     LBkF, UBkF,                                  &
      &                     A, F)
       IF (exit_flag.ne.NoError) RETURN
+!
+      IF (AreaAvg) THEN
+        CALL mp_aggregate2d (dg, model, gtype,                          &
+     &                       LBiF, UBiF, LBjF, UBjF,                    &
+     &                       LBi,  UBi,  LBj,  UBj,                     &
+     &                       Adx, dxF)
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL mp_aggregate2d (dg, model, gtype,                          &
+     &                       LBiF, UBiF, LBjF, UBjF,                    &
+     &                       LBi,  UBi,  LBj,  UBj,                     &
+     &                       Ady, dyF)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 #   ifdef MASKING
+!
       CALL mp_aggregate2d (dg, model, gtype,                            &
      &                     LBiF, UBiF, LBjF, UBjF,                      &
      &                     LBi,  UBi,  LBj,  UBj,                       &
@@ -2727,10 +2867,9 @@
 !
 !  Average finer grid data to coarse grid according to the refinement
 !  ratio.
-
-      fac=1.0_r8/(REAL(Rscale, r8)**2)
-
-      IF (Rscale.eq.3) THEN
+!
+      half=(Rscale-1)/2
+      IF (AreaAvg) THEN               ! area averaging
         DO k=LBkC,UBkC
           DO m=1,Npoints
             i=contact(cr)%Idg(m)
@@ -2739,22 +2878,50 @@
             Jc=contact(cr)%Jrg(m)
             IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
      &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-              my_sum=F(i-1,j+1,k)+F(i  ,j+1,k)+F(i+1,j+1,k)+            &
-     &               F(i-1,j  ,k)+F(i  ,j  ,k)+F(i+1,j  ,k)+            &
-     &               F(i-1,j-1,k)+F(i  ,j-1,k)+F(i+1,j-1,k)
+              my_count=0.0_r8
+              my_sum=0.0_r8
+              DO Jadd=-half,half
+                DO Iadd=-half,half
 #  ifdef MASKING
-              cff=Fmsk(i-1,j+1)+Fmsk(i  ,j+1)+Fmsk(i+1,j+1)+            &
-     &            Fmsk(i-1,j  )+Fmsk(i  ,j  )+Fmsk(i+1,j  )+            &
-     &            Fmsk(i-1,j-1)+Fmsk(i  ,j-1)+Fmsk(i+1,j-1)
-              IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-              my_sum=my_sum*Cmsk(Ic,Jc)
+                  my_sum=my_sum+                                        &
+     &                   F(i+Iadd,j+Jadd,k)*                            &
+     &                   dxF(i+Iadd,j+Jadd)*dyF(i+Iadd,j+Jadd)*         &
+     &                   Fmsk(i+Iadd,j+Jadd)
+                  my_count=my_count+Fmsk(i+Iadd,j+Jadd)
+#  else
+                  my_sum=my_sum+                                        &
+     &                   F(i+Iadd,j+Jadd,k)*                            &
+     &                   dxF(i+Iadd,j+Jadd)*dyF(i+Iadd,j+Jadd)
 #  endif
-              my_avg=my_sum*fac
+                END DO
+              END DO
+              SELECT CASE (gtype)
+                CASE (r3dvar)
+                  my_avg=my_sum*                                        &
+     &                   pmC(Ic,Jc)*pnC(Ic,Jc)
+                CASE (u3dvar)
+                  my_avg=my_sum*                                        &
+     &                   0.25_r8*(pmC(Ic-1,Jc)+pmC(Ic,Jc))*             &
+     &                           (pnC(Ic-1,Jc)+pnC(Ic,Jc))
+                CASE (v3dvar)
+                  my_avg=my_sum*                                        &
+     &                   0.25_r8*(pmC(Ic,Jc-1)+pmC(Ic,Jc))*             &
+     &                           (pnC(Ic,Jc-1)+pnC(Ic,Jc))
+                CASE DEFAULT
+                  my_avg=my_sum*                                        &
+     &                   pmC(Ic,Jc)*pnC(Ic,Jc)
+              END SELECT
+#  ifdef MASKING
+              IF (my_count.gt.0.0_r8) THEN
+                my_avg=my_avg*Rscale*Rscale/my_count
+              END IF
+              my_avg=my_avg*Cmsk(Ic,Jc)
+#  endif
               C(Ic,Jc,k)=my_avg
             END IF
           END DO
         END DO
-      ELSE IF (Rscale.eq.5) THEN
+      ELSE                            ! simple averaging
         DO k=LBkC,UBkC
           DO m=1,Npoints
             i=contact(cr)%Idg(m)
@@ -2763,78 +2930,26 @@
             Jc=contact(cr)%Jrg(m)
             IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
      &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-              my_sum=F(i-2,j+2,k)+F(i-1,j+2,k)+F(i,j+2,k)+              &
-     &               F(i+1,j+2,k)+F(i+2,j+2,k)+                         &
-     &               F(i-2,j+1,k)+F(i-1,j+1,k)+F(i,j+1,k)+              &
-     &               F(i+1,j+1,k)+F(i+2,j+1,k)+                         &
-     &               F(i-2,j  ,k)+F(i-1,j  ,k)+F(i,j  ,k)+              &
-     &               F(i+1,j  ,k)+F(i+2,j  ,k)+                         &
-     &               F(i-2,j-1,k)+F(i-1,j-1,k)+F(i,j-1,k)+              &
-     &               F(i+1,j-1,k)+F(i+2,j-1,k)+                         &
-     &               F(i-2,j-2,k)+F(i-1,j-2,k)+F(i,j-2,k)+              &
-     &               F(i+1,j-2,k)+F(i+2,j-2,k)
+              my_count=0.0_r8
+              my_avg=0.0_r8
+              my_sum=0.0_r8
+              DO Jadd=-half,half
+                DO Iadd=-half,half
 #  ifdef MASKING
-              cff=Fmsk(i-2,j+2)+Fmsk(i-1,j+2)+Fmsk(i,j+2)+              &
-     &            Fmsk(i+1,j+2)+Fmsk(i+2,j+2)+                          &
-     &            Fmsk(i-2,j+1)+Fmsk(i-1,j+1)+Fmsk(i,j+1)+              &
-     &            Fmsk(i+1,j+1)+Fmsk(i+2,j+1)+                          &
-     &            Fmsk(i-2,j  )+Fmsk(i-1,j  )+Fmsk(i,j  )+              &
-     &            Fmsk(i+1,j  )+Fmsk(i+2,j  )+                          &
-     &            Fmsk(i-2,j-1)+Fmsk(i-1,j-1)+Fmsk(i,j-1)+              &
-     &            Fmsk(i+1,j-1)+Fmsk(i+2,j-1)+                          &
-     &            Fmsk(i-2,j-2)+Fmsk(i-1,j-2)+Fmsk(i,j-2)+              &
-     &            Fmsk(i+1,j-2)+Fmsk(i+2,j-2)
-              IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-              my_sum=my_sum*Cmsk(Ic,Jc)
+                  my_sum=my_sum+                                        &
+     &                   F(i+Iadd,j+Jadd,k)*Fmsk(i+Iadd,j+Jadd)
+                  my_count=my_count+Fmsk(i+Iadd,j+Jadd)
+#  else
+                  my_sum=my_sum+                                        &
+     &                   F(i+Iadd,j+Jadd,k)
+                  my_count=my_count+1.0_r8
 #  endif
-              my_avg=my_sum*fac
-              C(Ic,Jc,k)=my_avg
-            END IF
-          END DO
-        END DO
-      ELSE IF (Rscale.eq.7) THEN
-        DO k=LBkC,UBkC
-          DO m=1,Npoints
-            i=contact(cr)%Idg(m)
-            j=contact(cr)%Jdg(m)
-            Ic=contact(cr)%Irg(m)
-            Jc=contact(cr)%Jrg(m)
-            IF (((Istr.le.Ic).and.(Ic.le.Iend)).and.                    &
-     &          ((Jstr.le.Jc).and.(Jc.le.Jend))) THEN
-              my_sum=F(i-3,j+3,k)+F(i-2,j+3,k)+F(i-1,j+3,k)+F(i,j+3,k)+ &
-     &               F(i+1,j+3,k)+F(i+2,j+3,k)+F(i+3,j+3,k)+            &
-     &               F(i-3,j+2,k)+F(i-2,j+2,k)+F(i-1,j+2,k)+F(i,j+2,k)+ &
-     &               F(i+1,j+2,k)+F(i+2,j+2,k)+F(i+3,j+2,k)+            &
-     &               F(i-3,j+1,k)+F(i-2,j+1,k)+F(i-1,j+1,k)+F(i,j+1,k)+ &
-     &               F(i+1,j+1,k)+F(i+2,j+1,k)+F(i+3,j+1,k)+            &
-     &               F(i-3,j  ,k)+F(i-2,j  ,k)+F(i-1,j  ,k)+F(i,j  ,k)+ &
-     &               F(i+1,j  ,k)+F(i+2,j  ,k)+F(i+3,j  ,k)+            &
-     &               F(i-3,j-1,k)+F(i-2,j-1,k)+F(i-1,j-1,k)+F(i,j-1,k)+ &
-     &               F(i+1,j-1,k)+F(i+2,j-1,k)+F(i+3,j-1,k)+            &
-     &               F(i-3,j-2,k)+F(i-2,j-2,k)+F(i-1,j-2,k)+F(i,j-2,k)+ &
-     &               F(i+1,j-2,k)+F(i+2,j-2,k)+F(i+3,j-2,k)+            &
-     &               F(i-3,j-3,k)+F(i-2,j-3,k)+F(i-1,j-3,k)+F(i,j-3,k)+ &
-     &               F(i+1,j-3,k)+F(i+2,j-3,k)+F(i+3,j-3,k)
-
+                END DO
+              END DO
+              IF (my_count.gt.0.0_r8) my_avg=my_sum/my_count
 #  ifdef MASKING
-              cff=Fmsk(i-3,j+3)+Fmsk(i-2,j+3)+Fmsk(i-1,j+3)+Fmsk(i,j+3)+&
-     &            Fmsk(i+1,j+3)+Fmsk(i+2,j+3)+Fmsk(i+3,j+3)+            &
-     &            Fmsk(i-3,j+2)+Fmsk(i-2,j+2)+Fmsk(i-1,j+2)+Fmsk(i,j+2)+&
-     &            Fmsk(i+1,j+2)+Fmsk(i+2,j+2)+Fmsk(i+3,j+2)+            &
-     &            Fmsk(i-3,j+1)+Fmsk(i-2,j+1)+Fmsk(i-1,j+1)+Fmsk(i,j+1)+&
-     &            Fmsk(i+1,j+1)+Fmsk(i+2,j+1)+Fmsk(i+3,j+1)+            &
-     &            Fmsk(i-3,j  )+Fmsk(i-2,j  )+Fmsk(i-1,j  )+Fmsk(i,j  )+&
-     &            Fmsk(i+1,j  )+Fmsk(i+2,j  )+Fmsk(i+3,j  )+            &
-     &            Fmsk(i-3,j-1)+Fmsk(i-2,j-1)+Fmsk(i-1,j-1)+Fmsk(i,j-1)+&
-     &            Fmsk(i+1,j-1)+Fmsk(i+2,j-1)+Fmsk(i+3,j-1)+            &
-     &            Fmsk(i-3,j-2)+Fmsk(i-2,j-2)+Fmsk(i-1,j-2)+Fmsk(i,j-2)+&
-     &            Fmsk(i+1,j-2)+Fmsk(i+2,j-2)+Fmsk(i+3,j-2)+            &
-     &            Fmsk(i-3,j-3)+Fmsk(i-2,j-3)+Fmsk(i-1,j-3)+Fmsk(i,j-3)+&
-     &            Fmsk(i+1,j-3)+Fmsk(i+2,j-3)+Fmsk(i+3,j-3)
-              IF (cff.gt.0.0_r8) my_sum=my_sum/cff
-              my_sum=my_sum*Cmsk(Ic,Jc)
+              my_avg=my_avg*Cmsk(Ic,Jc)
 #  endif
-              my_avg=my_sum*fac
               C(Ic,Jc,k)=my_avg
             END IF
           END DO
@@ -2847,6 +2962,14 @@
 !
       IF (allocated(F)) THEN
         deallocate (F)
+      END IF
+      IF (AreaAvg) THEN
+        IF (allocated(dxF)) THEN
+          deallocate (dxF)
+        END IF
+        IF (allocated(dyF)) THEN
+          deallocate (dyF)
+        END IF
       END IF
 #   ifdef MASKING
       IF (allocated(F)) THEN

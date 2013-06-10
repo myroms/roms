@@ -274,7 +274,7 @@
 !
   10  FORMAT (/,' WRT_TIDES - error while writing variable: ',a,        &
      &        /,13x,'into tide forcing NetCDF file: ',/,13x,a)
-  20  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics, ',
+  20  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics, ', &
      &        'Grid ',i2.2)
 #else
       SUBROUTINE wrt_tides
