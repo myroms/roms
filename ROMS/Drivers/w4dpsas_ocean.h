@@ -1023,7 +1023,7 @@
         DO ng=1,Ngrids
           indxSave(ng)=INI(ng)%Rindex
           INI(ng)%Rindex=outer+2
-        END IF
+        END DO
 
 !$OMP PARALLEL
         CALL initial

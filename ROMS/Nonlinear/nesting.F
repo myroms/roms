@@ -222,8 +222,8 @@
 !  Update coarse grid depth variables. We have a new coarse grid
 !  adjusted free-surface, Zt_avg1.
 !
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL set_depth (ng, tile)
+          DO tile=first_tile(ngc),last_tile(ngc),+1
+            CALL set_depth (ngc, tile)
           END DO
 !$OMP BARRIER
 !
@@ -1810,7 +1810,7 @@
         DO i=Istr,Iend
           Ibc=BRY_CONTACT(isouth,rgcr)%Ib(i)
           Jbc=BRY_CONTACT(isouth,rgcr)%Jb(i)
-          IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                   &
+          IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                    &
      &        ((Jstr.le.Jbc).and.(Jbc.le.Jend))) THEN
 !
 !  Sum vertically coarse grid horizontal advective tracer flux,
@@ -3629,10 +3629,11 @@
 !
 !  Local variable declarations.
 !
+      integer :: Ic, Jc
       integer :: i, ir, irec, j, m, t1, t2
 
-      real(r8) :: cff, fac, fac1, fac2
-      real(r8) :: my_flux, my_value
+      real(r8) :: cff, cff1, fac, fac1, fac2
+      real(r8) :: my_value
 
 # include "set_bounds.h"
 !
@@ -3808,41 +3809,25 @@
 !
 !    vbar(:,Jbry,indx1) = DV_avg2(:,Jbry) * pm(:,Jbry) / D(:,Jbry)
 !
-!  There are two options:  We are using option 2 below.
-!
-!         (1) Persist latest coarse grid mass flux. That is, we just
-!             carry out the spatial interpolation.
-!         (2) Interpolate in both space and time the coarse grid mass
-!             flux.
+!  We use the latest coarse grid mass flux, REFINED(ir)%DU_avg(1,:,t1),
+!  with a linear variation (cff1) to ensure that the sum of the refined
+!  grid fluxes equals the coarse grid flux.
 !-----------------------------------------------------------------------
 !
 !  Western edge.
 !
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         DO j=Jstr,Jend
+          m=BRY_CONTACT(iwest,cr)%C2Bindex(j)
+          Ic=Ucontact(cr)%Idg(m)
+          Jc=Ucontact(cr)%Jdg(m)
           cff=0.5_r8*GRID(ng)%on_u(Istr,j)*                             &
               (GRID(ng)%h(Istr-1,j)+                                    &
      &         OCEAN(ng)%zeta(Istr-1,j,indx1(ng))+                      &
      &         GRID(ng)%h(Istr  ,j)+                                    &
      &         OCEAN(ng)%zeta(Istr  ,j,indx1(ng)))
-          m=BRY_CONTACT(iwest,cr)%C2Bindex(j)
-          my_flux=fac1*(Ucontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DU_avg2(1,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DU_avg2(2,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DU_avg2(3,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DU_avg2(4,m,t1))+      &
-     &            fac2*(Ucontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DU_avg2(1,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DU_avg2(2,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DU_avg2(3,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DU_avg2(4,m,t2))
-          my_value=my_flux/cff
+          cff1=GRID(ng)%on_u(Istr,j)/GRID(dg)%on_u(Ic,Jc)
+          my_value=cff1*REFINED(ir)%DU_avg2(1,m,t1)/cff
 # ifdef MASKING
           my_value=my_value*GRID(ng)%umask(Istr,j)
 # endif
@@ -3857,29 +3842,16 @@
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         DO j=Jstr,Jend
+          m=BRY_CONTACT(ieast,cr)%C2Bindex(j)
+          Ic=Ucontact(cr)%Idg(m)
+          Jc=Ucontact(cr)%Jdg(m)
           cff=0.5_r8*GRID(ng)%on_u(Iend+1,j)*                           &
      &        (GRID(ng)%h(Iend+1,j)+                                    &
      &         OCEAN(ng)%zeta(Iend+1,j,indx1(ng))+                      &
      &         GRID(ng)%h(Iend  ,j)+                                    &
      &         OCEAN(ng)%zeta(Iend  ,j,indx1(ng)))
-          m=BRY_CONTACT(ieast,cr)%C2Bindex(j)
-          my_flux=fac1*(Ucontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DU_avg2(1,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DU_avg2(2,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DU_avg2(3,m,t1)+       &
-     &                  Ucontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DU_avg2(4,m,t1))+      &
-     &            fac2*(Ucontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DU_avg2(1,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DU_avg2(2,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DU_avg2(3,m,t2)+       &
-     &                  Ucontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DU_avg2(4,m,t2))
-          my_value=my_flux/cff
+          cff1=GRID(ng)%on_u(Iend+1,j)/GRID(dg)%on_u(Ic,Jc)
+          my_value=cff1*REFINED(ir)%DU_avg2(1,m,t1)/cff
 # ifdef MASKING
           my_value=my_value*GRID(ng)%umask(Iend+1,j)
 # endif
@@ -3894,29 +3866,16 @@
 !
       IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO i=Istr,Iend
+          m=BRY_CONTACT(isouth,cr)%C2Bindex(i)
+          Ic=Vcontact(cr)%Idg(m)
+          Jc=Vcontact(cr)%Jdg(m)
           cff=0.5_r8*GRID(ng)%om_v(i,Jstr)*                             &
      &        (GRID(ng)%h(i,Jstr-1)+                                    &
      &         OCEAN(ng)%zeta(i,Jstr-1,indx1(ng))+                      &
      &         GRID(ng)%h(i,Jstr  )+                                    &
      &         OCEAN(ng)%zeta(i,Jstr  ,indx1(ng)))
-          m=BRY_CONTACT(isouth,cr)%C2Bindex(i)
-          my_flux=fac1*(Vcontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DV_avg2(1,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DV_avg2(2,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DV_avg2(3,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DV_avg2(4,m,t1))+      &
-     &            fac2*(Vcontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DV_avg2(1,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DV_avg2(2,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DV_avg2(3,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DV_avg2(4,m,t2))
-          my_value=my_flux/cff
+          cff1=GRID(ng)%om_v(i,Jstr)/GRID(dg)%om_v(Ic,Jc)
+          my_value=cff1*REFINED(ir)%DV_avg2(1,m,t1)/cff
 # ifdef MASKING
           my_value=my_value*GRID(ng)%vmask(i,Jstr)
 # endif
@@ -3931,29 +3890,16 @@
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         DO i=Istr,Iend
+          m=BRY_CONTACT(inorth,cr)%C2Bindex(i)
+          Ic=Vcontact(cr)%Idg(m)
+          Jc=Vcontact(cr)%Jdg(m)
           cff=0.5_r8*GRID(ng)%om_v(i,Jend+1)*                           &
      &        (GRID(ng)%h(i,Jend+1)+                                    &
      &         OCEAN(ng)%zeta(i,Jend+1,indx1(ng))+                      &
      &         GRID(ng)%h(i,Jend  )+                                    &
      &         OCEAN(ng)%zeta(i,Jend  ,indx1(ng)))
-          m=BRY_CONTACT(inorth,cr)%C2Bindex(i)
-          my_flux=fac1*(Vcontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DV_avg2(1,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DV_avg2(2,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DV_avg2(3,m,t1)+       &
-     &                  Vcontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DV_avg2(4,m,t1))+      &
-     &            fac2*(Vcontact(cr)%Hweight(1,m)*                      &
-     &                               REFINED(ir)%DV_avg2(1,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(2,m)*                      &
-     &                               REFINED(ir)%DV_avg2(2,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(3,m)*                      &
-     &                               REFINED(ir)%DV_avg2(3,m,t2)+       &
-     &                  Vcontact(cr)%Hweight(4,m)*                      &
-     &                               REFINED(ir)%DV_avg2(4,m,t2))
-          my_value=my_flux/cff
+          cff1=GRID(ng)%om_v(i,Jend+1)/GRID(dg)%om_v(Ic,Jc)
+          my_value=cff1*REFINED(ir)%DV_avg2(1,m,t1)/cff
 # ifdef MASKING
           my_value=my_value*GRID(ng)%vmask(i,Jend+1)
 # endif

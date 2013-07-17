@@ -553,7 +553,7 @@
             WRITE (out,80) MorPS0(ng), 'MorPS0',                        &
      &            'Small phytoplankton mortality rate',                 &
      &            '(m3/mmole_N/day).'
-            WRITE (out,80) MorPS0(ng), 'MorPL0',                        &
+            WRITE (out,80) MorPL0(ng), 'MorPL0',                        &
      &            'Large phytoplankton mortality rate',                 &
      &            '(m3/mmole_N/day).'
             WRITE (out,80) KMorPS(ng), 'KMorPS',                        &
