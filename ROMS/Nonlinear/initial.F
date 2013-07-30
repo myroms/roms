@@ -733,8 +733,8 @@
 !  application time.
 !-----------------------------------------------------------------------
 !
-      IF (SporadicImpulse(ng)) THEN
-        DO ng=1,Ngrids
+      DO ng=1,Ngrids
+        IF (SporadicImpulse(ng)) THEN
           FrcRec(ng)=1
 !$OMP MASTER
           CALL get_state (ng, 7, 7, TLF(ng)%name, FrcRec(ng), 1)
@@ -744,8 +744,8 @@
           CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
           IF (exit_flag.ne.NoError) RETURN
-        END DO
-      END IF
+        END IF
+      END DO
 #endif
 
 #if defined ANA_DRAG && defined UV_DRAG_GRID
