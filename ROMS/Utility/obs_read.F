@@ -47,7 +47,11 @@
 !
       IF (ProcessObs(ng)) THEN
 # if defined TLM_OBS
+#  if defined IS4DVAR_SENSITIVITY
+        readNLmod=.FALSE.
+#  else
         readNLmod=.TRUE.
+#  endif
         readTLmod=.TRUE.
 # else
         readNLmod=.FALSE.

@@ -427,6 +427,15 @@
       Litl=1          ! TLM initial conditions record
       Lweak=.FALSE.
       DO ng=1,Ngrids
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
+        Lfinp(ng)=1         ! forcing index for input
+        Lfout(ng)=1         ! forcing index for output history files
+#endif
+#ifdef ADJUST_BOUNDARY
+        Lbinp(ng)=1         ! boundary index for input
+        Lbout(ng)=1         ! boundary index for output history files
+#endif
         Lnew(ng)=1
       END DO
 !
