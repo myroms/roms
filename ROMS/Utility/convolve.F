@@ -359,8 +359,9 @@
 !
       IF ((model.eq.iNLM).and.                                          &
      &    (INDEX(driver,'w4dpsas').ne.0)) THEN
+        BckRec=Rbck
         DO ng=1,Ngrids
-          CALL get_state (ng, iNLM, 9, INI(ng)%name, Rbck, Rnew(ng))
+          CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
           IF (exit_flag.ne.NoError) RETURN
         END DO
 !

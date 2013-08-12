@@ -102,7 +102,7 @@
 # endif
 
       integer :: ILB, IUB, JLB, JUB
-      integer :: i, itrc, j, k, my_tile
+      integer :: i, ic, itrc, j, k, my_tile
 
       real(r8) :: cff, cff1, cff2
 

@@ -34,6 +34,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_coupling
 !!#ifdef DIAGNOSTICS_UV
 !!    USE mod_diags

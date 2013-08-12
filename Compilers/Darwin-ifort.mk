@@ -77,8 +77,8 @@ endif
 
 ifdef USE_DEBUG
 #          FFLAGS += -g -traceback -check all -fp-stack-check
-#          FFLAGS += -g -check bounds -traceback -check uninit -warn interfaces,nouncalled -gen-interfaces
-           FFLAGS += -g -check bounds
+           FFLAGS += -g -check bounds -traceback -check uninit -warn interfaces,nouncalled -gen-interfaces
+#          FFLAGS += -g -check bounds
 else
 #          FFLAGS += -ip -O3 -Wl,-stack_size,0x10000000
            FFLAGS += -ip -O3

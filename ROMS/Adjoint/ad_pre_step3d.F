@@ -1601,7 +1601,8 @@
             ad_FC(i,0)=0.0_r8
 #   endif
           END DO
-            DO k=1,N(ng)-1
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
               cff1=MAX(W(i,j,k),0.0_r8)
               cff2=MIN(W(i,j,k),0.0_r8)
 !>            tl_FC(i,k)=tl_cff1*t(i,j,k  ,nstp,itrc)+                  &
@@ -1611,7 +1612,7 @@
 !>
               ad_t(i,j,k  ,nstp,itrc)=ad_t(i,j,k  ,nstp,itrc)+          &
      &                                cff1*ad_FC(i,k)
-              ad_t(i,j,k+1,nstp,itrc)=ad_t(i,j,k+1,nstp,itrc)+
+              ad_t(i,j,k+1,nstp,itrc)=ad_t(i,j,k+1,nstp,itrc)+          &
      &                                cff2*ad_FC(i,k)
               ad_cff1=ad_cff1+t(i,j,k  ,nstp,itrc)*ad_FC(i,k)
               ad_cff2=ad_cff2+t(i,j,k+1,nstp,itrc)*ad_FC(i,k)

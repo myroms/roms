@@ -11,6 +11,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
 # ifdef CLIMATOLOGY
       USE mod_clima
 # endif
