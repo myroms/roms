@@ -678,8 +678,37 @@
           FLT(ng)%Rindex=ABS(frrec(ng))
         END IF
 !
-!  Read in floats nondimentional horizontal positions.
+!  Read in floats nondimentional horizontal positions.  If the floats
+!  have not been released yet at restart time, the values of Xgrid,
+!  Ygrid, and Zgrid will be _FillValue (1.0E+37) in the FLOATS NetCDF
+!  file. The calls to 'netcdf_get_fvar' will replace such values with
+!  zero.  Therefore, we need to read Zgrid first so the bounded switch
+!  is false in such cases tp trigger release.  Then, the bounded switch
+!  is set correctly when reading Xgrid and/or Ygrid since the lower
+!  bound is 0.5 in fractional coordinates.
 !
+# ifdef SOLVE3D
+        CALL netcdf_get_fvar (ng, iNLM, ncname, 'Zgrid',                &
+     &                        Tinp,                                     &
+     &                        ncid = FLT(ng)%ncid,                      &
+     &                        start = (/1,FLT(ng)%Rindex/),             &
+     &                        total = (/Nfloats(ng),1/))
+        IF (exit_flag.ne.NoError) RETURN
+
+        DO l=1,Nfloats(ng)
+          IF ((Tinp(l).gt.REAL(N(ng),r8)).or.                           &
+     &        (Tinp(l).lt.0.0_r8)) THEN
+            DRIFTER(ng)%bounded(l)=.FALSE.
+          ELSE
+            DRIFTER(ng)%bounded(l)=.TRUE.
+            DO i=0,NFT
+              DRIFTER(ng)%track(izgrd,i,l)=Tinp(l)
+              DRIFTER(ng)%track(izrhs,i,l)=0.0_r8
+            END DO
+          END IF
+        END DO
+!
+# endif
         CALL netcdf_get_fvar (ng, iNLM, ncname, 'Xgrid',                &
      &                        Tinp,                                     &
      &                        ncid = FLT(ng)%ncid,                      &
@@ -720,28 +749,6 @@
           END IF
         END DO
 
-# ifdef SOLVE3D
-!
-        CALL netcdf_get_fvar (ng, iNLM, ncname, 'Zgrid',                &
-     &                        Tinp,                                     &
-     &                        ncid = FLT(ng)%ncid,                      &
-     &                        start = (/1,FLT(ng)%Rindex/),             &
-     &                        total = (/Nfloats(ng),1/))
-        IF (exit_flag.ne.NoError) RETURN
-
-        DO l=1,Nfloats(ng)
-          IF ((Tinp(l).gt.REAL(N(ng),r8)).or.                           &
-     &        (Tinp(l).lt.0.0_r8)) THEN
-            DRIFTER(ng)%bounded(l)=.FALSE.
-          ELSE
-            DRIFTER(ng)%bounded(l)=.TRUE.
-            DO i=0,NFT
-              DRIFTER(ng)%track(izgrd,i,l)=Tinp(l)
-              DRIFTER(ng)%track(izrhs,i,l)=0.0_r8
-            END DO
-          END IF
-        END DO
-# endif
       END IF QUERY
 !
   10  FORMAT (6x,'DEF_FLOATS  - creating floats file, Grid ',i2.2,      &
