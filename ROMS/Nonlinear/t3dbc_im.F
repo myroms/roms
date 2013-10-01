@@ -115,12 +115,12 @@
                 dTdx=t(Istr,j,k,nout,itrc)-t(Istr+1,j,k,nout,itrc)
 
                 IF (LBC(iwest,isTvar(itrc),ng)%nudging) THEN
-                  tau=Tobc_out(itrc,ng,iwest)
                   IF ((dTdt*dTdx).lt.0.0_r8) THEN
                     tau=Tobc_in(itrc,ng,iwest)
                   ELSE
-                    tau=tau*dt(ng)
+                    tau=Tobc_out(itrc,ng,iwest)
                   END IF
+                  tau=tau*dt(ng)
                 END IF
 
                 IF ((dTdt*dTdx).lt.0.0_r8) dTdt=0.0_r8
@@ -242,12 +242,12 @@
                 dTdx=t(Iend,j,k,nout,itrc)-t(Iend-1,j,k,nout,itrc)
 
                 IF (LBC(ieast,isTvar(itrc),ng)%nudging) THEN
-                  tau=Tobc_out(itrc,ng,ieast)
                   IF ((dTdt*dTdx).lt.0.0_r8) THEN
                     tau=Tobc_in(itrc,ng,ieast)
                   ELSE
-                    tau=tau*dt(ng)
+                    tau=Tobc_out(itrc,ng,ieast)
                   END IF
+                  tau=tau*dt(ng)
                 END IF
 
                 IF ((dTdt*dTdx).lt.0.0_r8) dTdt=0.0_r8
@@ -369,12 +369,12 @@
                 dTde=t(i,Jstr,k,nout,itrc)-t(i,Jstr+1,k,nout,itrc)
 
                 IF (LBC(isouth,isTvar(itrc),ng)%nudging) THEN
-                  tau=Tobc_out(itrc,ng,isouth)
                   IF ((dTdt*dTde).lt.0.0_r8) THEN
                     tau=Tobc_in(itrc,ng,isouth)
                   ELSE
-                    tau=tau*dt(ng)
+                    tau=Tobc_out(itrc,ng,isouth)
                   END IF
+                  tau=tau*dt(ng)
                 END IF
 
                 IF ((dTdt*dTde).lt.0.0_r8) dTdt=0.0_r8
@@ -496,12 +496,12 @@
                 dTde=t(i,Jend,k,nout,itrc)-t(i,Jend-1,k,nout,itrc)
 
                 IF (LBC(inorth,isTvar(itrc),ng)%nudging) THEN
-                  tau=Tobc_out(itrc,ng,inorth)
                   IF ((dTdt*dTde).lt.0.0_r8) THEN
                     tau=Tobc_in(itrc,ng,inorth)
                   ELSE
-                    tau=tau*dt(ng)
+                    tau=Tobc_out(itrc,ng,inorth)
                   END IF
+                  tau=tau*dt(ng)
                 END IF
 
                 IF ((dTdt*dTde).lt.0.0_r8) dTdt=0.0_r8
