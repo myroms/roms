@@ -3289,9 +3289,9 @@
 # if defined LMD_SKPP || defined SOLAR_SOURCE
           WRITE (out,120) lmd_Jwt(ng), 'lmd_Jwt',                       &
      &          'Jerlov water type.'
-          IF ((lmd_Jwt(ng).lt.1).or.(lmd_Jwt(ng).gt.5)) THEN
+          IF ((lmd_Jwt(ng).lt.1).or.(lmd_Jwt(ng).gt.9)) THEN
             WRITE (out,260) 'lmd_Jwt = ', lmd_Jwt(ng),                  &
-     &            'It must between one and five.'
+     &            'It must between one and nine.'
             exit_flag=5
             RETURN
           END IF

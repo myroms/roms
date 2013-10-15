@@ -350,7 +350,11 @@
      &                      FORCES(ng)%sst,                             &
      &                      update)
       IF (exit_flag.ne.NoError) RETURN
-
+#   endif
+!
+#   ifdef ANA_DQDSST
+      CALL ana_dqdsst (ng, tile, iADM)
+#   else
       CALL set_2dfldr_tile (ng, tile, iADM, iddQdT,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%dqdtG,                           &

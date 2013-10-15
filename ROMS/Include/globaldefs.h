@@ -789,6 +789,7 @@
 #if defined ANA_BIOLOGY    || defined ANA_BPFLUX     || \
     defined ANA_BSFLUX     || defined ANA_BTFLUX     || \
     defined ANA_CLOUD      || defined ANA_DIAG       || \
+    defined ANA_DQDSST     || defined ANA_DRAG       || \
     defined ANA_FSOBC      || defined ANA_GRID       || \
     defined ANA_HUMIDITY   || defined ANA_INITIAL    || \
     defined ANA_M2CLIMA    || defined ANA_M2OBC      || \

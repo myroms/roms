@@ -1229,7 +1229,7 @@
 #  ifdef SOLAR_SOURCE
 !
 !  Add in incoming solar radiation at interior W-points using decay
-!  decay penetration function based on Jerlow water type.
+!  decay penetration function based on Jerlov water type.
 !
           IF (itrc.eq.itemp) THEN
             DO k=1,N(ng)-1

@@ -21,6 +21,7 @@
 !!                       type variables.                               !
 !! ana_cloud.h         Analytical cloud fraction.                      !
 !! ana_diag.h          Customized diagnostics.                         !
+!! ana_dqdsst.h        Analytical dQdSST used for heat flux correction.!
 !! ana_drag.h          Analytical spatially varying bottom friction    !
 !!                       parameters.                                   !
 !! ana_fsobc.h         Analytical free-surface boundary conditions.    !
@@ -55,8 +56,7 @@
 !! ana_specir.h        Analytical calculation of spectral downwelling  !
 !!                       irradiance.                                   !
 !! ana_ssh.h           Analytical sea surface height climatology.      !
-!! ana_sst.h           Analytical SST and dQdSST which are used        !
-!!                       for heat flux correction.                     !
+!! ana_sst.h           Analytical SST used for heat flux correction.   !
 !! ana_sss.h           Analytical sea surface salinity.                !
 !! ana_stflux.h        Analytical kinematic surface flux of tracer     !
 !!                       type variables.                               !
@@ -66,6 +66,7 @@
 !! ana_vmix.h          Analytical vertical mixing coefficients for     !
 !!                       momentum and tracers.                         !
 !! ana_winds.h         Analytical surface winds.                       !
+!! ana_wtype.h         Analytical Jerlov water type index.             !
 !! ana_wwave.h         Analytical wind induced wave amplitude,         !
 !!                       direction and period.                         !
 !!                                                                     !
@@ -97,6 +98,10 @@
 
 # ifdef ANA_DIAG
 #  include <ana_diag.h>
+# endif
+
+# if defined ANA_DQDSST && defined QCORRECTION
+#  include <ana_dqdsst.h>
 # endif
 
 # if defined ANA_DRAG && defined UV_DRAG_GRID
@@ -231,6 +236,11 @@
 
 # if defined ANA_WINDS && (defined BULK_FLUXES || defined ECOSIM)
 #  include <ana_winds.h>
+# endif
+
+# if defined WTYPE_GRID && defined ANA_WTYPE     && \
+    (defined LMD_SKPP   || defined SOLAR_SOURCE)
+#  include <ana_wtype.h>
 # endif
 
 # if defined ANA_WWAVE
