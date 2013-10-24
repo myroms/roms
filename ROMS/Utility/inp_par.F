@@ -796,6 +796,7 @@
         END DO
 #endif
       END IF
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Check C-preprocessing options and definitions.

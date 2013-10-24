@@ -130,7 +130,7 @@ variables:
 		mask_psi:flag_values = 0., 1. ;
 		mask_psi:flag_meanings = "land water" ;
 		mask_psi:coordinates = "lon_rho lat_rho" ;
-	double wtype_grid(eta_psi, xi_psi) ;
+	double wtype_grid(eta_rho, xi_rho) ;
 		wtype_grid:long_name = "Jerlov water type index" ;
 		wtype_grid:coordinates = "lon_rho lat_rho" ;
 	double rdrag(eta_rho, xi_rho) ;

@@ -500,6 +500,7 @@
 !
       USE mod_param
       USE mod_ncparam
+      USE mod_scalars
 !
       implicit none
 !
@@ -570,9 +571,39 @@
      &                     TRIM(string(4,ng))
         END IF
       END DO
+!
+!  Check periodic bounadry conditions: both east and west or north and
+!  need to be specified.
+!
+      DO ng=1,Ngrids
+        IF (.not.S(iwest,ifield,ng)%periodic.and.                       &
+     &           S(ieast,ifield,ng)%periodic) THEN
+          WRITE (iunit,30) 'Western Edge boundary',                     &
+     &                     TRIM(Vname(1,idBvar(ifield))), ng
+          exit_flag=5
+        ELSE IF (.not.S(ieast,ifield,ng)%periodic.and.                  &
+     &                S(iwest,ifield,ng)%periodic) THEN
+          WRITE (iunit,30) 'Eastern Edge boundary',                     &
+     &                     TRIM(Vname(1,idBvar(ifield))), ng
+          exit_flag=5
+        ELSE IF (.not.S(inorth,ifield,ng)%periodic.and.                 &
+     &                S(isouth,ifield,ng)%periodic) THEN
+          WRITE (iunit,30) 'Northern Edge boundary',                    &
+     &                     TRIM(Vname(1,idBvar(ifield))), ng
+          exit_flag=5
+        ELSE IF (.not.S(isouth,ifield,ng)%periodic.and.                 &
+     &                S(inorth,ifield,ng)%periodic) THEN
+          WRITE (iunit,30) 'Southern Edge boundary',                    &
+     &                     TRIM(Vname(1,idBvar(ifield))), ng
+          exit_flag=5
+        END IF
+      END DO
 
  10   FORMAT (/,1x,a,t26,i2,t31,a,t44,a,t57,a,t70,a)
  20   FORMAT (t26,i2,t31,a,t44,a,t57,a,t70,a)
+ 30   FORMAT (/,' LBC_REPORT - illegal configuration: The ',a,          &
+     &        ' needs to be periodic too!',/,14x,'Variable: ',a,3x,     &
+     &        'Grid = ',i2.2)
 
       RETURN
       END SUBROUTINE lbc_report

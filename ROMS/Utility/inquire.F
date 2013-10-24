@@ -234,7 +234,7 @@
               DO i=1,n_dim
                 IF (TRIM(dim_name(i)).eq.Tname(ifield)(1:lstr)) THEN
                   Nrec=dim_size(i)
-                ELSE IF (TRIM(dim_name(i)).eq.                         &
+                ELSE IF (TRIM(dim_name(i)).eq.                          &
      &                   Tname(ifield)(1:lstr-1)) THEN  ! There is a C
                   Nrec=dim_size(i)                      ! language null
                   Tname(ifield)=Tname(ifield)(1:lstr-1) ! termination

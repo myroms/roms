@@ -1,0 +1,316 @@
+#include "cppdefs.h"
+      SUBROUTINE check_multifile (ng, model)
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2013 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  If applicable, this routine checks input NetCDF multi-files and     !
+!  sets several parameters in the file information structure so the    !
+!  appropriate file is selected during initialization or restart.      !
+!                                                                      !
+!  Multi-files are allowed for several input fields. That is, the      !
+!  time records for a particular input field can be split into         !
+!  several NetCDF files.                                               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+!
+!  Local variable declarations.
+!
+      logical :: foundit
+      logical :: check_file
+
+      integer :: Fcode, i, ifile
+
+      real(r8) :: Tmax, Tmin, Tscale
+
+      character(len=14 ) :: Tmin_code, Tmax_code, t_code
+      character(len=256) :: ncname
+!
+!-----------------------------------------------------------------------
+!  If applicable, initialize parameters for input multi-files.
+!-----------------------------------------------------------------------
+!
+!  Get initialization time string.
+!
+      CALL time_string(time(ng), t_code)
+!
+!  Input lateral boundary conditions data.
+!
+      IF (ObcData(ng)) THEN
+        IF (BRY(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,BRY(ng)%Nfiles
+            ncname=BRY(ng)%files(ifile)
+            foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
+            IF (exit_flag.ne.NoError) RETURN
+            BRY(ng)%time_min(ifile)=Tmin
+            BRY(ng)%time_max(ifile)=Tmax
+          END DO
+!
+          Fcount=0
+          DO ifile=1,BRY(ng)%Nfiles
+            Tmin=Tscale*BRY(ng)%time_min(ifile)
+            IF (time(ng).ge.Tmin) THEN
+              Fcount=ifile
+            END IF
+          END DO
+!
+          IF (Fcount.gt.0) THEN
+            BRY(ng)%Fcount=Fcount
+            ncname=BRY(ng)%files(Fcount)
+            lstr=LEN_TRIM(ncname)
+            BRY(ng)%name=TRIM(ncname)
+            BRY(ng)%base=ncname(1:lstr-3)
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,10) 'Lateral Boundary', t_code
+              DO ifile=1,BRY(ng)%Nfiles
+                Tmin=Tscale*BRY(ng)%time_min(ifile)
+                Tmax=Tscale*BRY(ng)%time_max(ifile)
+                CALL time_string(Tmin, Tmin_code)
+                CALL time_string(Tmax, Tmax_code)
+                WRITE (stdout,20) Tmin_code, Tmax_code,                 &
+     &                            TRIM(BRY(ng)%files(ifile))
+              END DO
+            END IF
+            exit_flag=4
+          END IF
+        END IF
+      END IF
+
+#ifdef FRC_FILE
+!
+!  Input forcing data.
+!
+      DO i=1,nFfiles(ng)
+        IF (FRC(i,ng)%Nfiles.gt.1) THEN
+          updated=.FALSE.
+          DO ifile=1,FRC(i,ng)%Nfiles
+            ncname=FRC(i,ng)%files(ifile)
+            foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
+            IF (exit_flag.ne.NoError) RETURN
+            FRC(i,ng)%time_min(ifile)=Tmin
+            FRC(i,ng)%time_max(ifile)=Tmax
+          END DO
+!
+          Fcount=0
+          DO ifile=1,FRC(i,ng)%Nfiles
+            Tmin=Tscale*FRC(i,ng)%time_min(ifile)
+            IF (time(ng).ge.Tmin) THEN
+              Fcount=ifile
+            END IF
+          END DO
+!
+          IF (Fcount.gt.0) THEN
+            FRC(i,ng)%Fcount=Fcount
+            ncname=FRC(i,ng)%files(Fcount)
+            lstr=LEN_TRIM(ncname)
+            FRC(i,ng)%name=TRIM(ncname)
+            FRC(i,ng)%base=ncname(1:lstr-3)
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,10) 'Forcing', t_code
+              DO ifile=1,FRC(i,ng)%Nfiles
+                Tmin=Tscale*FRC(i,ng)%time_min(ifile)
+                Tmax=Tscale*FRC(i,ng)%time_max(ifile)
+                CALL time_string(Tmin, Tmin_code)
+                CALL time_string(Tmax, Tmax_code)
+                WRITE (stdout,20) Tmin_code, Tmax_code,                 &
+     &                            TRIM(FRC(i,ng)%files(ifile))
+              END DO
+            END IF
+            exit_flag=4
+          END IF
+        END IF
+      END DO
+#endif
+#ifdef CLM_FILE
+!
+!  Input climatology data.
+!
+      IF (CLM(ng)%Nfiles.gt.1) THEN
+        updated=.FALSE.
+        DO ifile=1,CLM(ng)%Nfiles
+          ncname=CLM(ng)%files(ifile)
+          foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
+          IF (exit_flag.ne.NoError) RETURN
+          CLM(ng)%time_min(ifile)=Tmin
+          CLM(ng)%time_max(ifile)=Tmax
+        END DO
+!
+        Fcount=0
+        DO ifile=1,CLM(ng)%Nfiles
+          Tmin=Tscale*CLM(ng)%time_min(ifile)
+          IF (time(ng).ge.Tmin) THEN
+            Fcount=ifile
+          END IF
+        END DO
+!
+        IF (Fcount.gt.0) THEN
+          CLM(ng)%Fcount=Fcount
+          ncname=CLM(ng)%files(Fcount)
+          lstr=LEN_TRIM(ncname)
+          CLM(ng)%name=TRIM(ncname)
+          CLM(ng)%base=ncname(1:lstr-3)
+        ELSE
+          IF (Master) THEN
+            WRITE (stdout,10) 'Climatology', t_code
+            DO ifile=1,CLM(ng)%Nfiles
+              Tmin=Tscale*CLM(ng)%time_min(ifile)
+              Tmax=Tscale*CLM(ng)%time_max(ifile)
+              CALL time_string(Tmin, Tmin_code)
+              CALL time_string(Tmax, Tmax_code)
+              WRITE (stdout,20) Tmin_code, Tmax_code,                   &
+     &                          TRIM(CLM(ng)%files(ifile))
+            END DO
+          END IF
+          exit_flag=4
+        END IF
+      END IF
+#endif
+
+ 10   FORMAT (/,' CHECK_MULTIFILE - Error while processing ', a,        &
+     &        ' multi-files: ',/,19x,'data does not include',           &
+     &        ' initialization time = ', a,/)
+ 20   FORMAT (3x,a,2x,a,5x,a)
+
+      RETURN
+      END SUBROUTINE check_multifile
+!
+      FUNCTION check_file (ng, model, ncname, Tmin, Tmax, Tscale)       &
+     &                    RESULT (foundit)
+!
+!=======================================================================
+!                                                                      !
+!  This logical function scans the variables of the provided input     !
+!  NetCDF for the time record variable and gets its range of values.   !
+!  It used elsewhere to determine which input NetCDF multi-file is     !
+!  needed for initialization or restart.                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number.                                 !
+!     model        Calling model identifier.                           !
+!     ncname       NetCDF file name to process (string).               !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Tmin         Available minimum time variable value.              !
+!     Tmax         Available maximum time variable value.              !
+!     Tscale       Scale to convert time variable units to seconds     !
+!     foundit      The value of the result is TRUE/FALSE if the        !
+!                    time variable is found or not.                    !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_netcdf
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      character (*), intent(in) :: ncname
+
+      real(r8), intent(out) :: Tmin, Tmax, Tscale
+!
+!  Local variable declarations.
+!
+      logical :: foundit
+
+      integer :: Nrec, TvarID, i, nvdim, nvatt
+
+      character (len=40) :: Tunits, TvarName
+!
+      SourceFile='check_multifile.F, check_file'
+!
+!------------------------------------------------------------------------
+!  Check if requested time is within the NetCDF file dataset.
+!------------------------------------------------------------------------
+!
+!  Initialize.
+!
+      foundit=.FALSE.
+      Tscale=1.0_r8                        ! seconds
+      Tmin=0.0_r8
+      Tmax=0.0_r8
+!
+!  Inquire about all the variables
+!
+      CALL netcdf_inq_var (ng, model, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Search for the time variable: any 1D array variable with the string
+!  'time' in the variable name.
+!
+      DO i=1,n_var
+        IF ((INDEX(TRIM(var_name(i)),'time').ne.0).and.                 &
+     &            (var_ndim(i).eq.1)) THEN
+          TvarName=TRIM(var_name(i))
+          foundit=.TRUE.
+          EXIT
+        END IF
+      END DO
+      IF (.not.foundit) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(ncname)
+        END IF
+        exit_flag=4
+      END IF
+!
+!  Inquire about requested variable.
+!
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     MyVarName = TRIM(TvarName),                  &
+     &                     VarID = TvarID,                              &
+     &                     nVarDim = nvdim,                             &
+     &                     nVarAtt = nvatt)
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Set number of records available and check the 'units' attribute.
+!
+      Nrec=var_Dsize(1)              ! time is a 1D array
+      DO i=1,nvatt
+        IF (TRIM(var_Aname(i)).eq.'units') THEN
+          Tunits=TRIM(var_Achar(i))
+          IF (Tunits(1:3).eq.'day') THEN
+            Tscale=day2sec
+          END IF
+        END IF
+      END DO
+!
+!  Read in time variable minimum and maximun values (input time units).
+!
+      CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
+     &                      Tmin,                                       &
+     &                      start = (/1/),                              &
+     &                      total = (/1/))
+      IF (exit_flag.ne.NoError) RETURN
+!
+      CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
+     &                      Tmax,                                       &
+     &                      start = (/Nrec/),                           &
+     &                      total = (/1/))
+      IF (exit_flag.ne.NoError) RETURN
+
+ 10   FORMAT (/, ' CHECK_FILE - unable to find time variable in input', &
+     &        ' NetCDF file:', /, 14x, a, /, 14x,                       &
+     &        'variable name does not contains the "time" string.')
+
+      RETURN
+      END FUNCTION check_file

@@ -692,6 +692,22 @@
 !$OMP BARRIER
 # endif
 !
+!  If applicable, check input multi-files where the time records for
+!  a particular field are split into several NetCDF files.  Initialize
+!  several parameters in the file structure so the appropriate input
+!  file is selected during initialization/restart.
+!
+      DO ng=1,Ngrids
+!$OMP MASTER
+        CALL check_multifile (ng, iNLM)
+!$OMP END MASTER
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, exit_flag)
+# endif
+!$OMP BARRIER
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+!
 !  If applicable, read in input data.
 !
       DO ng=1,Ngrids
