@@ -93,9 +93,7 @@
      &                   MIXING(ng) % alfaobeta,                        &
 #  endif
 # endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                   OCEAN(ng) % pden,                              &
-# endif
      &                   OCEAN(ng) % rho)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 14)
@@ -131,9 +129,7 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                         pden,                                    &
-#  endif
      &                         rho)
 !***********************************************************************
 !
@@ -182,9 +178,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -211,9 +205,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
@@ -478,11 +470,9 @@
         DO k=1,N(ng)
           DO i=IstrT,IendT
             rho(i,j,k)=den(i,k)
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
             pden(i,j,k)=(den1(i,k)-1000.0_r8)
-#   ifdef MASKING
+#  ifdef MASKING
             pden(i,j,k)=pden(i,j,k)*rmask(i,j)
-#   endif
 #  endif
           END DO
         END DO
@@ -496,12 +486,9 @@
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          rho)
-
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          pden)
-#  endif
 
 #  if defined LMD_SKPP    || defined LMD_BKPP         || \
       defined BULK_FLUXES || defined BALANCE_OPERATOR
@@ -536,19 +523,11 @@
 
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    rho)
-
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
-      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    pden)
-#   endif
+     &                    rho, pden)
 
 #   if defined LMD_SKPP    || defined LMD_BKPP         || \
        defined BULK_FLUXES || defined BALANCE_OPERATOR
@@ -614,9 +593,7 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
      &                         pden,                                    &
-#  endif
      &                         rho)
 !***********************************************************************
 !
@@ -665,9 +642,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -694,9 +669,7 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
@@ -740,9 +713,7 @@
 #  ifdef MASKING
             rho(i,j,k)=rho(i,j,k)*rmask(i,j)
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
             pden(i,j,k)=rho(i,j,k)
-#  endif
           END DO
         END DO
 
@@ -831,12 +802,9 @@
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          rho)
-
-#  if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          pden)
-#  endif
 
 #  if defined LMD_SKPP    || defined LMD_BKPP         || \
       defined BULK_FLUXES || defined BALANCE_OPERATOR
@@ -871,19 +839,11 @@
 
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    rho)
-
-#   if defined LMD_SKPP || defined LMD_BKPP || defined DIAGNOSTICS
-      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    pden)
-#   endif
+     &                    rho, pden)
 
 #   if defined LMD_SKPP    || defined LMD_BKPP         || \
        defined BULK_FLUXES || defined BALANCE_OPERATOR

@@ -288,16 +288,14 @@
 !$OMP BARRIER
 
 # if defined WTYPE_GRID && defined ANA_WTYPE     && \
-   (defined LMD_SKPP   || defined SOLAR_SOURCE)
+    (defined LMD_SKPP   || defined SOLAR_SOURCE)
 !
 !-----------------------------------------------------------------------
 !  Set spatially varying Jerlov water type.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ana_wtype (ng, tile, iTLM)
-          END DO
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ana_wtype (ng, tile, iTLM)
         END DO
 !$OMP BARRIER
 # endif
@@ -547,16 +545,14 @@
 !  file is selected during initialization/restart.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
 !$OMP MASTER
-        CALL check_multifile (ng, iADM)
+      CALL check_multifile (ng, iADM)
 !$OMP END MASTER
 # ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iADM, exit_flag)
+      CALL mp_bcasti (ng, iADM, exit_flag)
 # endif
 !$OMP BARRIER
-        IF (exit_flag.ne.NoError) RETURN
-      END DO
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from

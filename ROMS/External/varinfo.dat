@@ -5209,11 +5209,20 @@
   1.0d0
 
 'obs_type'                                         ! Input
-  'associated model state variable type'
+  'model state variable associated with observation'
   'nondimensional'                                 ! [nondimensional]
   'nulvar'
   'datum'
   'idOtyp'
+  'nulvar'
+  1.0d0
+
+'obs_provenance'                                   ! Input
+  'observation origin'
+  'nondimensional'                                 ! [nondimensional]
+  'nulvar'
+  'datum'
+  'idOpro'
   'nulvar'
   1.0d0
 

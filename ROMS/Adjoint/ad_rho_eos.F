@@ -101,9 +101,7 @@
      &                      MIXING(ng) % ad_alfaobeta,                  &
 #  endif
 # endif
-# if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                      OCEAN(ng) % ad_pden,                        &
-# endif
      &                      OCEAN(ng) % rho,                            &
      &                      OCEAN(ng) % ad_rho)
 # ifdef PROFILE
@@ -143,9 +141,7 @@
      &                            ad_alfaobeta,                         &
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                            ad_pden,                              &
-#  endif
      &                            rho, ad_rho)
 !***********************************************************************
 !
@@ -206,9 +202,7 @@
       real(r8), intent(inout) :: ad_alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(inout) :: ad_pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(inout) :: ad_rho(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -248,9 +242,7 @@
       real(r8), intent(inout) :: ad_alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(inout) :: ad_pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(inout) :: ad_rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
@@ -419,7 +411,6 @@
      &                       ad_alfaobeta)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
@@ -431,7 +422,6 @@
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_pden)
-#   endif
 !>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        NghostPoints,                             &
@@ -498,7 +488,6 @@
      &                             ad_alfaobeta)
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          tl_pden)
@@ -506,7 +495,6 @@
         CALL ad_exchange_r3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_pden)
-#  endif
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          tl_rho)
@@ -671,17 +659,15 @@
 !
         DO k=1,N(ng)
           DO i=IstrT,IendT
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
-#   ifdef MASKING
-!>          tl_pden(i,j,k)=tl_pden(i,k)*rmask(i,j)
+#  ifdef MASKING
+!>          tl_pden(i,j,k)=tl_pden(i,j,k)*rmask(i,j)
 !>
-            ad_pden(i,j,k)=ad_pden(i,k)*rmask(i,j)
-#   endif
+            ad_pden(i,j,k)=ad_pden(i,i,k)*rmask(i,j)
+#  endif
 !>          tl_pden(i,j,k)=tl_den1(i,k)
 !>
             ad_den1(i,k)=ad_den1(i,k)+ad_pden(i,j,k)
             ad_pden(i,j,k)=0.0_r8
-#  endif
 !>          tl_rho(i,j,k)=tl_den(i,k)
 !>
             ad_den(i,k)=ad_den(i,k)+ad_rho(i,j,k)
@@ -1416,9 +1402,7 @@
      &                            ad_alfaobeta,                         &
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                            ad_pden,                              &
-#  endif
      &                            rho, ad_rho)
 !***********************************************************************
 !
@@ -1479,9 +1463,7 @@
       real(r8), intent(inout) :: ad_alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(inout) :: ad_pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(inout) :: ad_rho(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
@@ -1520,9 +1502,7 @@
       real(r8), intent(inout) :: ad_alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(inout) :: ad_pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(inout) :: ad_rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
@@ -1603,7 +1583,6 @@
      &                       ad_alfaobeta)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
@@ -1615,7 +1594,6 @@
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_pden)
-#   endif
 !>    CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
@@ -1682,7 +1660,6 @@
      &                             ad_alfaobeta)
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          tl_pden)
@@ -1690,7 +1667,6 @@
         CALL ad_exchange_r3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_pden)
-#  endif
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          tl_rho)
@@ -1883,12 +1859,10 @@
 !
         DO k=1,N(ng)
           DO i=IstrT,IendT
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>          tl_pden(i,j,k)=tl_rho(i,j,k)
 !>
             ad_rho(i,j,k)=ad_rho(i,j,k)+ad_pden(i,j,k)
             ad_pden(i,j,k)=0.0
-#  endif
 #  ifdef MASKING
 !>          tl_rho(i,j,k)=tl_rho(i,j,k)*rmask(i,j)
 !>

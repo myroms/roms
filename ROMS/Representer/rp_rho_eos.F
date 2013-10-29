@@ -101,9 +101,7 @@
      &                     MIXING(ng) % tl_alfaobeta,                   &
 #  endif
 # endif
-# if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                     OCEAN(ng) % tl_pden,                         &
-# endif
      &                     OCEAN(ng) % rho,                             &
      &                     OCEAN(ng) % tl_rho)
 # ifdef PROFILE
@@ -144,9 +142,7 @@
      &                            tl_alfaobeta,                         &
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                            tl_pden,                              &
-#  endif
      &                            rho, tl_rho)
 !***********************************************************************
 !
@@ -208,9 +204,7 @@
       real(r8), intent(out) :: tl_alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(out) :: tl_pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
       real(r8), intent(out) :: tl_rho(LBi:,LBj:,:)
 #  else
@@ -251,9 +245,7 @@
       real(r8), intent(out) :: tl_alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(out) :: tl_pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: tl_rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -907,18 +899,16 @@
           DO i=IstrT,IendT
             rho(i,j,k)=den(i,k)
             tl_rho(i,j,k)=tl_den(i,k)
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>          pden(i,j,k)=(den1(i,k)-1000.0_r8)
 !>
             tl_pden(i,j,k)=tl_den1(i,k)-                                &
 #  ifdef TL_IOMS
      &                     1000.0_r8
 #  endif
-#   ifdef MASKING
-!>          pden(i,j,k)=pden(i,k)*rmask(i,j)
+#  ifdef MASKING
+!>          pden(i,j,k)=pden(i,j,k)*rmask(i,j)
 !>
-            tl_pden(i,j,k)=tl_pden(i,k)*rmask(i,j)
-#   endif
+            tl_pden(i,j,k)=tl_pden(i,j,k)*rmask(i,j)
 #  endif
           END DO
         END DO
@@ -936,7 +926,6 @@
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_rho)
 
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          pden)
@@ -944,7 +933,6 @@
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_pden)
-#  endif
 
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
       defined BULK_FLUXES_NOT_YET
@@ -1010,7 +998,6 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_rho)
 
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
@@ -1022,7 +1009,6 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_pden)
-#   endif
 
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
        defined BULK_FLUXES
@@ -1114,9 +1100,7 @@
      &                            tl_alfaobeta,                         &
 #   endif
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
      &                            tl_pden,                              &
-#  endif
      &                            rho, tl_rho)
 !***********************************************************************
 !
@@ -1177,9 +1161,7 @@
       real(r8), intent(out) :: tl_alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(out) :: tl_pden(LBi:,LBj:,:)
-#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
       real(r8), intent(out) :: tl_rho(LBi:,LBj:,:)
 #  else
@@ -1220,9 +1202,7 @@
       real(r8), intent(out) :: tl_alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
       real(r8), intent(out) :: tl_pden(LBi:UBi,LBj:UBj,N(ng))
-#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: tl_rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -1292,11 +1272,9 @@
             rho(i,j,k)=rho(i,j,k)*rmask(i,j)
             tl_rho(i,j,k)=tl_rho(i,j,k)*rmask(i,j)
 #  endif
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>          pden(i,j,k)=rho(i,j,k)
 !>
             tl_pden(i,j,k)=tl_rho(i,j,k)
-#  endif
           END DO
         END DO
 
@@ -1461,7 +1439,6 @@
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_rho)
 
-#  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          pden)
@@ -1469,7 +1446,6 @@
         CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_pden)
-#  endif
 
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
       defined BULK_FLUXES_NOT_YET
@@ -1535,7 +1511,6 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_rho)
 
-#   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
@@ -1547,7 +1522,6 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_pden)
-#   endif
 
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
        defined BULK_FLUXES

@@ -1773,7 +1773,7 @@
  20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  30   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
-     &        1p,e16.10,0p,t68,a)
+     &        1p,e17.10,0p,t68,a)
  40   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
      &          ' Inner = ',i3.3)
  50   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
