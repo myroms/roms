@@ -1830,7 +1830,7 @@
       END FUNCTION load_s1d
 
       FUNCTION load_s2d (Nval, Fname, line, label, ifile, igrid,        &
-     &                   Nfiles, idim, S)
+     &                   Nfiles, Ncount, idim, S)
 !
 !=======================================================================
 !                                                                      !
@@ -1845,7 +1845,8 @@
 !     label      I/O structure label (string)                          !
 !     ifile      File structure counter (integer)                      !
 !     igrid      Nested grid counter (integer)                         !
-!     Nfiles     Number of files per grid counter (integer array)      !
+!     Nfiles     Number of input files per grid (integer vector)       !
+!     Ncount     Number of files per grid counter (integer array)      !
 !     idim       Size of structure inner dimension (integer)           !
 !     S          Derived type structure, TYPE(T_IO)                    !
 !                                                                      !
@@ -1869,8 +1870,9 @@
 !  Imported variable declarations.
 !
       integer, intent(in)    :: Nval, idim
+      integer, intent(in)    :: Nfiles(Ngrids)
       integer, intent(inout) :: ifile, igrid
-      integer, intent(inout) :: Nfiles(idim,Ngrids)
+      integer, intent(inout) :: Ncount(idim,Ngrids)
 
       character (len=*),   intent(in) :: line
       character (len=256), intent(in) :: Fname(100)
@@ -1907,7 +1909,7 @@
 !
 !  Accumulate number of multi-files per each grid.
 !
-      Nfiles(ifile,igrid)=Nfiles(ifile,igrid)+1
+      Ncount(ifile,igrid)=Ncount(ifile,igrid)+1
 !
 !  Set counters for next processing file, if any.  The continuation
 !  symbol in the input "line" is used to advance the counters.
@@ -1948,7 +1950,7 @@
         IF (igrid.lt.Ngrids) THEN
           DO j=igrid+1,Ngrids
             DO i=1,idim
-              Nfiles(i,j)=Nfiles(i,igrid)
+              Ncount(i,j)=Ncount(i,igrid)
             END DO
           END DO
           my_Ngrids=igrid
@@ -1964,12 +1966,12 @@
 !
         DO ng=1,Ngrids
           DO i=1,idim
-            allocate ( S(i,ng)%Nrec(Nfiles(i,ng)) )
-            allocate ( S(i,ng)%time_min(Nfiles(i,ng)) )
-            allocate ( S(i,ng)%time_max(Nfiles(i,ng)) )
+            allocate ( S(i,ng)%Nrec(Ncount(i,ng)) )
+            allocate ( S(i,ng)%time_min(Ncount(i,ng)) )
+            allocate ( S(i,ng)%time_max(Ncount(i,ng)) )
             allocate ( S(i,ng)%Vid(NV) )
             allocate ( S(i,ng)%Tid(MT) )
-            allocate ( S(i,ng)%files(Nfiles(i,ng)) )
+            allocate ( S(i,ng)%files(Ncount(i,ng)) )
           END DO
         END DO
 !
@@ -1982,7 +1984,7 @@
               S(i,ng)%base(j:j)=blank
               S(i,ng)%name(j:j)=blank
             END DO
-            DO k=1,Nfiles(i,ng)
+            DO k=1,Ncount(i,ng)
               DO j=1,lstr
                 S(i,ng)%files(k)(j:j)=blank
               END DO
@@ -1994,14 +1996,14 @@
 !
         k=0
         DO ng=1,my_Ngrids
-          DO i=1,idim
-            S(i,ng)%Nfiles=Nfiles(i,ng)         ! number of multi-files
+          DO i=1,Nfiles(ng)
+            S(i,ng)%Nfiles=Ncount(i,ng)         ! number of multi-files
             S(i,ng)%Fcount=1                    ! multi-file counter
             S(i,ng)%Rindex=0                    ! time index
             S(i,ng)%ncid=-1                     ! closed NetCDF state
             S(i,ng)%Vid=-1                      ! NetCDF variables IDs
             S(i,ng)%Tid=-1                      ! NetCDF tracers IDs
-            DO j=1,Nfiles(i,ng)
+            DO j=1,Ncount(i,ng)
               k=k+1
               S(i,ng)%files(j)=TRIM(Fname(k))   ! load multi-files
               S(i,ng)%Nrec(j)=0                 ! record counter
@@ -2014,13 +2016,12 @@
             S(i,ng)%base=S(i,ng)%name(1:lstr-3) ! do not include ".nc"
           END DO
         END DO
-
 !
 !  If appropriate, persist last value(s).
 !
         IF (persist) THEN
           DO ng=igrid+1,Ngrids
-            DO i=1,idim
+            DO i=1,Nfiles(ng)
               S(i,ng)%Nfiles=S(i,igrid)%Nfiles
               S(i,ng)%Fcount=1
               S(i,ng)%Rindex=0
@@ -2036,7 +2037,7 @@
               S(i,ng)%label=TRIM(label)
               S(i,ng)%name=S(i,igrid)%name
               S(i,ng)%base=S(i,igrid)%base
-              Nfiles(i,ng)=0
+              Ncount(i,ng)=0
             END DO
           END DO
         END IF
@@ -2047,7 +2048,7 @@
         ifile=1
         DO ng=1,Ngrids
           DO i=1,idim
-            Nfiles(i,ng)=0
+            Ncount(i,ng)=0
           END DO
         END DO
         DO i=1,LEN(label)

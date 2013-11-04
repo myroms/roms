@@ -32,7 +32,7 @@
       logical :: foundit
       logical :: check_file
 
-      integer :: Fcode, i, ifile
+      integer :: Fcount, i, ifile
 
       real(r8) :: Tmax, Tmin, Tscale
 
@@ -96,7 +96,6 @@
 !
       DO i=1,nFfiles(ng)
         IF (FRC(i,ng)%Nfiles.gt.1) THEN
-          updated=.FALSE.
           DO ifile=1,FRC(i,ng)%Nfiles
             ncname=FRC(i,ng)%files(ifile)
             foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
@@ -141,7 +140,6 @@
 !  Input climatology data.
 !
       IF (CLM(ng)%Nfiles.gt.1) THEN
-        updated=.FALSE.
         DO ifile=1,CLM(ng)%Nfiles
           ncname=CLM(ng)%files(ifile)
           foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)

@@ -73,7 +73,7 @@
 #endif
 
       integer :: Lstr, Npts, Nval, i, itrc, ivar, k, ng, nl, status
-      integer :: ifield, ifile, igrid, itracer, nline, mFfiles
+      integer :: ifield, ifile, igrid, itracer, nline, max_Ffiles
       integer :: Ivalue(1)
 
       integer :: decode_line, load_i, load_l, load_lbc, load_r
@@ -2535,16 +2535,16 @@
                   RETURN
                 END IF
               END DO
-              mFfiles=MAXVAL(nFfiles)
-              allocate ( FRC(mFfiles,Ngrids) )
-              allocate ( FRCids(mFfiles,Ngrids) )
-              allocate ( Ncount(mFfiles,Ngrids) )
-              FRCids(1:mFfiles,1:Ngrids)=-1
-              Ncount(1:mFfiles,1:Ngrids)=0
+              max_Ffiles=MAXVAL(nFfiles)
+              allocate ( FRC(max_Ffiles,Ngrids) )
+              allocate ( FRCids(max_Ffiles,Ngrids) )
+              allocate ( Ncount(max_Ffiles,Ngrids) )
+              FRCids(1:max_Ffiles,1:Ngrids)=-1
+              Ncount(1:max_Ffiles,1:Ngrids)=0
             CASE ('FRCNAME')
               label='FRC - forcing fields'
               Npts=load_s2d(Nval, Cval, line, label, ifile, igrid,      &
-     &                      Ncount, mFfiles, FRC)
+     &                      nFfiles, Ncount, max_Ffiles, FRC)
             CASE ('NGCNAME')
               DO i=1,LEN(NGCname)
                 NGCname(i:i)=blank
@@ -2870,6 +2870,40 @@
      &      (nSTA(ng).eq.0)) THEN
           LdefSTA(ng)=.FALSE.
         END IF
+!
+!  Determine switch to process boundary NetCDF file.
+!
+        ObcData(ng)=.FALSE.
+#ifndef ANA_FSOBC
+        ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isFsur,ng)%acquire)
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+        ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isFsur,ng)%acquire)
+# endif
+#endif
+#ifndef ANA_M2OBC
+        ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isUbar,ng)%acquire)        &
+     &                         .or.ANY(LBC(:,isVbar,ng)%acquire)
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+        ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isUbar,ng)%acquire)     &
+     &                         .or.ANY(ad_LBC(:,isVbar,ng)%acquire)
+# endif
+#endif
+#ifdef SOLVE3D
+# ifndef ANA_M3OBC
+        ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isUvel,ng)%acquire)        &
+     &                         .or.ANY(LBC(:,isVvel,ng)%acquire)
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+        ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isUvel,ng)%acquire)     &
+     &                         .or.ANY(ad_LBC(:,isVvel,ng)%acquire)
+#  endif
+# endif
+# ifndef ANA_TOBC
+        ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isTvar(:),ng)%acquire)
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+        ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isTvar(:),ng)%acquire)
+#  endif
+# endif
+#endif
       END DO
 !
 !-----------------------------------------------------------------------
@@ -4634,36 +4668,6 @@
           WRITE (out,230) 'Input Adjoint Sensitivity File:  ',          &
      &                    TRIM(fname)
 #endif
-#ifndef ANA_FSOBC
-          ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isFsur,ng)%acquire)
-# if defined ADJOINT || defined TANGENT || defined TL_IOMS
-          ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isFsur,ng)%acquire)
-# endif
-#endif
-#ifndef ANA_M2OBC
-          ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isUbar,ng)%acquire)      &
-     &                           .or.ANY(LBC(:,isVbar,ng)%acquire)
-# if defined ADJOINT || defined TANGENT || defined TL_IOMS
-          ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isUbar,ng)%acquire)   &
-     &                           .or.ANY(ad_LBC(:,isVbar,ng)%acquire)
-# endif
-#endif
-#ifdef SOLVE3D
-# ifndef ANA_M3OBC
-          ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isUvel,ng)%acquire)      &
-     &                           .or.ANY(LBC(:,isVvel,ng)%acquire)
-#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
-          ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isUvel,ng)%acquire)   &
-     &                           .or.ANY(ad_LBC(:,isVvel,ng)%acquire)
-#  endif
-# endif
-# ifndef ANA_TOBC
-          ObcData(ng)=ObcData(ng).or.ANY(LBC(:,isTvar(:),ng)%acquire)
-#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
-          ObcData(ng)=ObcData(ng).or.ANY(ad_LBC(:,isTvar(:),ng)%acquire)
-#  endif
-# endif
-#endif
 !
           IF (ObcData(ng)) THEN
             DO ifile=1,BRY(ng)%Nfiles
@@ -4736,14 +4740,14 @@
 !  analysis is only possible for Nouter = 1.
 !-----------------------------------------------------------------------
 !
-        IF (Nouter.gt.1) THEN
-          IF (Master) THEN
-            WRITE (out,330) 'Nouter = ', Nouter,                        &
+      IF (Nouter.gt.1) THEN
+        IF (Master) THEN
+          WRITE (out,330) 'Nouter = ', Nouter,                          &
      &        'Posterior analysis error available for Nouter=1 only.'
-          END IF
-          exit_flag=5
-          RETURN
         END IF
+        exit_flag=5
+        RETURN
+      END IF
 #endif
 
 #ifdef SOLVE3D
