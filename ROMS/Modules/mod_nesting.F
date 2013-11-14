@@ -60,11 +60,12 @@
 !  Nesting identification index of variables to process.
 !-----------------------------------------------------------------------
 !
-!  The following identification indices are used in main2d/main3d
-!  to specify the variables that are processed in each sub-timestep
-!  section.  Negative indices are used in grid refinement whereas
-!  positive indices are used in composite grids.
+!  The following identification indices are used in "initial" or
+!  "main2d/main3d" to specify the variables that are processed in
+!  each sub-timestep section.  Negative indices are used in grid
+!  refinement whereas positive indices are used in composite grids.
 !
+      integer, parameter :: ndxdy = -4    ! extract on_u and om_v
       integer, parameter :: ngetD = -3    ! extract donor grid data
       integer, parameter :: nputD = -2    ! fill contact points
       integer, parameter :: n2way = -1    ! fine to course coupling
@@ -112,6 +113,7 @@
 !  variable are used to unpack from compact vector.
 !
       integer :: NCdatum
+      integer, allocatable :: NCpoints(:)           ! [Ncontact]
       integer, allocatable :: NstrR(:), NendR(:)    ! [Ncontact]
       integer, allocatable :: NstrU(:), NendU(:)    ! [Ncontact]
       integer, allocatable :: NstrV(:), NendV(:)    ! [Ncontact]
@@ -314,6 +316,9 @@
         real(r8), pointer :: DU_avg2(:,:,:)   ! [4,Npoints,t1:t2]
         real(r8), pointer :: DV_avg2(:,:,:)   ! [4,Npoints,t1:t2]
 
+        real(r8), pointer :: on_u(:)          ! [Npoints]
+        real(r8), pointer :: om_v(:)          ! [Npoints]
+
 # ifdef SOLVE3D
         real(r8), pointer :: u(:,:,:,:)       ! [4,k,Npoints,t1:t2]
         real(r8), pointer :: v(:,:,:,:)       ! [4,k,Npoints,t1:t2]
@@ -344,7 +349,7 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: Imin, Imax, Jmin, Jmax
       integer :: cr, dg, ng, rg
-      integer :: i, ibry, j, m, my_tile
+      integer :: i, ibry, ic, j, m, my_tile
       integer :: ispval
 
       integer, allocatable :: Ibmin(:,:), Ibmax(:,:)
@@ -362,11 +367,11 @@
 !
       my_tile=-1                           ! for global values
       DO cr=1,Ncontact
-        rg=receiver_grid(cr)
-        LBi=BOUNDS(rg)%LBi(my_tile)
-        UBi=BOUNDS(rg)%UBi(my_tile)
-        LBj=BOUNDS(rg)%LBj(my_tile)
-        UBj=BOUNDS(rg)%UBj(my_tile)
+        dg=receiver_grid(cr)
+        LBi=BOUNDS(dg)%LBi(my_tile)
+        UBi=BOUNDS(dg)%UBi(my_tile)
+        LBj=BOUNDS(dg)%LBj(my_tile)
+        UBj=BOUNDS(dg)%UBj(my_tile)
         DO ibry=1,4
           SELECT CASE (ibry)
             CASE (iwest, ieast)
@@ -374,13 +379,13 @@
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBj:UBj) )
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBj:UBj) )
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBj:UBj,          &
-     &                                                N(rg),NT(rg)) )
+     &                                                N(dg),NT(dg)) )
             CASE (isouth, inorth)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBi:UBi) )
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBi:UBi) )
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBi:UBi) )
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
-     &                                                N(rg),NT(rg)) )
+     &                                                N(dg),NT(dg)) )
           END SELECT
         END DO
       END DO
@@ -416,25 +421,33 @@
         END DO
       END DO
 !
-!  Identify contact points located on the grid boundary.
+!  Identify contact points located on the grid boundary.  Notice that
+!  all the contact points are looped "Ncontact" times to determine the
+!  cell containing the finer grid physical boundary for both donor and
+!  receiver grids. In refinement grids, the contact regions are flipped
+!  for consistency with the coding logic elsewhere.
 !
       DO cr=1,Ncontact
         dg=donor_grid(cr)
         rg=receiver_grid(cr)
+        ic=1
         DO m=1,NCdatum
+          ibry=on_boundary(m)
+          IF ((m.gt.NCpoints(ic)).and.(ic.lt.Ncontact)) THEN
+            ic=ic+1
+          END IF
           IF (RefinedGrid(dg).and.RefinedGrid(rg)) THEN
-            IF (rg.lt.dg) THEN   ! rg < dg :
-              i=Idg_cp(m)        ! receiver coarser grid number, rg, is
-              j=Jdg_cp(m)        ! smaller than donor finer grid number
+            IF (rg.lt.dg) THEN
+              i=Idg_cp(m)        ! coarser donor grid cell containing
+              j=Jdg_cp(m)        ! finer grid physical boundary points
             ELSE
-              i=Irg_cp(m)        ! otherwise, rg > dg :
-              j=Jrg_cp(m)        ! receiver finer grid number, rg, is
-            END IF               ! greater than donor coarse grid number
+              i=Irg_cp(m)        ! finer receiver grid cell physical
+              j=Jrg_cp(m)        ! boundary points
+            END IF
           ELSE
             i=Irg_cp(m)          ! composite grids
             j=Jrg_cp(m)
           END IF
-          ibry=on_boundary(m)
           IF ((ibry.eq.iwest ).or.(ibry.eq.ieast )) THEN
             Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr))
             Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr))
@@ -442,7 +455,7 @@
             Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr))
             BRY_CONTACT(ibry,cr) % Ib(j) = i
             BRY_CONTACT(ibry,cr) % Jb(j) = j
-            BRY_CONTACT(ibry,cr) % C2Bindex(j) = m-NstrU(cr)+1
+            BRY_CONTACT(ibry,cr) % C2Bindex(j) = m-NstrU(ic)+1
           ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
             Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr))
             Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr))
@@ -450,7 +463,7 @@
             Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr))
             BRY_CONTACT(ibry,cr) % Ib(i) = i
             BRY_CONTACT(ibry,cr) % Jb(i) = j
-            BRY_CONTACT(ibry,cr) % C2Bindex(i) = m-NstrV(cr)+1
+            BRY_CONTACT(ibry,cr) % C2Bindex(i) = m-NstrV(ic)+1
           END IF
         END DO
       END DO
@@ -600,6 +613,9 @@
 
           REFINED(cr) % DU_avg2 = IniVal
           REFINED(cr) % DV_avg2 = IniVal
+
+          REFINED(cr) % on_u = IniVal
+          REFINED(cr) % om_v = IniVal
 
 # ifdef SOLVE3D
           REFINED(cr) % u = IniVal

@@ -225,7 +225,7 @@ ad_VolCons(north) ==  F F                          ! northern boundary
 
        NRREC == 0    0
    LcycleRST == T    T
-        NRST == 180  540
+        NRST == 30   90
         NSTA == 1    1
         NFLT == 1    1
        NINFO == 1    1
@@ -233,25 +233,25 @@ ad_VolCons(north) ==  F F                          ! northern boundary
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T    T
-        NHIS == 180  540
+        NHIS == 30   90
      NDEFHIS == 0    0
       NTSAVG == 1    1
-        NAVG == 180  540
+        NAVG == 30   90
      NDEFAVG == 0    0
       NTSDIA == 1    1
-        NDIA == 180  540
+        NDIA == 30   90
      NDEFDIA == 0    0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F    F
-        NTLM == 180  540
+        NTLM == 30   90
      NDEFTLM == 0    0
    LcycleADJ == F    F
-        NADJ == 180  540
+        NADJ == 30   90
      NDEFADJ == 0    0
-        NSFF == 180  540
-        NOBC == 180  540
+        NSFF == 30   90
+        NOBC == 30   90
 
 ! GST output and check pointing restart parameters.
 
@@ -364,16 +364,16 @@ ZOS_HSIG_ALPHA == 2*0.5d0                  ! roughness from wave amplitude
 
 ! Mean Density and Brunt-Vaisala frequency.
 
-        RHO0 =  2*1025.0d0                 ! kg/m3
-     BVF_BAK =  2*1.0d-5                   ! 1/s2
+        RHO0 =  1025.0d0                   ! kg/m3
+     BVF_BAK =  1.0d-5                     ! 1/s2
 
 ! Time-stamp assigned for model initialization, reference time
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  2*0.0d0                    ! days
-  TIDE_START =  2*0.0d0                    ! days
-    TIME_REF =  2*0.0d0                    ! yyyymmdd.dd
+      DSTART =  0.0d0                      ! days
+  TIDE_START =  0.0d0                      ! days
+    TIME_REF =  0.0d0                      ! yyyymmdd.dd
 
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
@@ -536,7 +536,7 @@ Hout(idUair) == 2*F     ! Uair               surface U-wind component
 Hout(idVair) == 2*F     ! Vair               surface V-wind component
 
 Hout(idTsur) == 2*F 2*F ! shflux, ssflux     surface net heat and salt flux
-Hout(idLhea) == 2*F 2*F ! latent             latent heat flux
+Hout(idLhea) == 2*F     ! latent             latent heat flux
 Hout(idShea) == 2*F     ! sensible           sensible heat flux
 Hout(idLrad) == 2*F     ! lwrad              longwave radiation flux
 Hout(idSrad) == 2*F     ! swrad              shortwave radiation flux

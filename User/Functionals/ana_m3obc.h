@@ -47,7 +47,10 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_grid
       USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !

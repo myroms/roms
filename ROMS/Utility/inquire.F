@@ -72,6 +72,7 @@
       real(r8) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
       real(r8) :: scale
 
+      character (len=1  ), parameter :: blank = ' '
       character (len=3  ) :: label
       character (len=256) :: Fname
 !
@@ -93,6 +94,12 @@
       got_time=.FALSE.
       label=S(1)%label(1:3)
       Vtype=Iinfo(1,ifield,ng)
+!
+!  Clear ncfile module variable.
+!
+      DO i=1,LEN(ncfile)
+        ncfile(i:i)=blank
+      END DO
 !
 !  If multi-files, increase (decrease if backward logic) file counter
 !  and set new file names.
@@ -317,8 +324,14 @@
             WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
           END DO
         ELSE
+          lstr=LEN_TRIM(ncfile)
           WRITE (stdout,50) TRIM(Vname(1,ifield)), 'file:'
-          WRITE (stdout,'(15x,a)') TRIM(ncfile)
+          IF (lstr.gt.0) THEN
+            WRITE (stdout,'(15x,a)') TRIM(ncfile)
+          ELSE
+            WRITE (stdout,'(15x,a,a)') 'file name is blank, ',          &
+     &                                 'cannot be determined.'
+          END IF
         END IF
         exit_flag=2
         RETURN

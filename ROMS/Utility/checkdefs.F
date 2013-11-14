@@ -1222,6 +1222,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' OBS_IMPACT_SPLIT,'
 #endif
+#if defined NESTING && defined ONE_WAY
+      IF (Master) WRITE (stdout,20) 'ONE_WAY',                          &
+     &   'One-way nesting in refinement grids.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' ONE_WAY,'
+#endif
 #ifdef OUT_DOUBLE
       IF (Master) WRITE (stdout,20) 'OUT_DOUBLE',                       &
      &   'Double precision output fields in NetCDF files.'

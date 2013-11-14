@@ -502,6 +502,11 @@
 ** SED_MORPH           use to allow bottom model elevation to evolve         **
 ** SUSPLOAD            use to activate suspended load transport              **
 **                                                                           **
+** OPTIONS for grid nesting:                                                 **
+**                                                                           **
+** NESTING             use to activate grid nesting: composite/refinement    **
+** ONE_WAY             use if one-way nesting in refinement grids            **
+**                                                                           **
 ** OPTIONS for two-way coupling to other models:                             **
 **                                                                           **
 ** REFDIF_COUPLING     use if coupling to REFDIT wave model                  **

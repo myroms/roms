@@ -230,7 +230,7 @@
       CALL netcdf_get_ivar (ng, model, NGCname, 'NendV', NendV)
       IF (exit_flag.ne.NoError) RETURN
 !
-!  Read in contact region number for each contact point, 1:mydatum.
+!  Read in contact region number for each contact point, 1:NCdatum.
 !
       IF (.not.allocated(contact_region)) THEN
         allocate ( contact_region(NCdatum) )
@@ -369,10 +369,14 @@
 !
 !  Determine number of contact points in each contact region.
 !
+      IF (.not.allocated(NCpoints)) THEN
+        allocate ( NCpoints(Ncontact) )
+      END IF
       DO cr=1,Ncontact
         NpointsR(cr)=NendR(cr)-NstrR(cr)+1
         NpointsU(cr)=NendU(cr)-NstrU(cr)+1
         NpointsV(cr)=NendV(cr)-NstrV(cr)+1
+        NCpoints(cr)=NpointsR(cr)+NpointsU(cr)+NpointsV(cr)
       END DO
 !
 !  Allocate grid connectivity (type T_NGC) structures.
@@ -664,6 +668,9 @@
 
           allocate ( REFINED(cr) % DU_avg2(4,NpointsU(cr),2) )
           allocate ( REFINED(cr) % DV_avg2(4,NpointsV(cr),2) )
+
+          allocate ( REFINED(cr) % on_u(NpointsU(cr)) )
+          allocate ( REFINED(cr) % om_v(NpointsV(cr)) )
 
 # ifdef SOLVE3D
           allocate ( REFINED(cr) % u(4,N(rg),NpointsU(cr),2) )

@@ -209,7 +209,7 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
        NRREC == 0
    LcycleRST == T
-        NRST == 180
+        NRST == 30
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -217,25 +217,25 @@ ad_VolCons(north) ==  F                            ! northern boundary
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 180
+        NHIS == 30
      NDEFHIS == 0
       NTSAVG == 1
-        NAVG == 180
+        NAVG == 30
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 180
+        NDIA == 30
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 180
+        NTLM == 30
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 180
+        NADJ == 30
      NDEFADJ == 0
-        NSFF == 180
-        NOBC == 180
+        NSFF == 30
+        NOBC == 30
 
 ! GST output and check pointing restart parameters.
 

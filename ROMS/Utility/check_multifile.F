@@ -23,6 +23,8 @@
       USE mod_iounits
       USE mod_scalars
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -32,7 +34,7 @@
       logical :: foundit
       logical :: check_file
 
-      integer :: Fcount, i, ifile
+      integer :: Fcount, i, ifile, lstr
 
       real(r8) :: Tmax, Tmin, Tscale
 
@@ -218,6 +220,8 @@
       USE mod_iounits
       USE mod_netcdf
       USE mod_scalars
+!
+      implicit none
 !
 !  Imported variable declarations.
 !
