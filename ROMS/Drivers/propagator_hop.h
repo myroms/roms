@@ -169,10 +169,8 @@
 !$OMP MASTER
         CALL close_inp (ng, iTLM)
         IF (exit_flag.ne.NoError) RETURN
-#ifdef TIMELESS_DATA
         CALL tl_get_idata (ng)
         IF (exit_flag.ne.NoError) RETURN
-#endif
         CALL tl_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
@@ -307,10 +305,8 @@
 !$OMP MASTER
         CALL close_inp (ng, iADM)
         IF (exit_flag.ne.NoError) RETURN
-#ifdef TIMELESS_DATA
         CALL ad_get_idata (ng)
         IF (exit_flag.ne.NoError) RETURN
-#endif
         CALL ad_get_data (ng)
 !$OMP END MASTER
         IF (exit_flag.ne.NoError) RETURN

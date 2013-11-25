@@ -16,7 +16,6 @@
 #define UV_SADVECTION
 #define UV_QDRAG
 #define UV_COR
-#undef  UV_PSOURCE
 #define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
@@ -25,7 +24,6 @@
 #undef  TS_A4VADVECTION
 #undef  TS_DIF2
 #undef  MIX_GEO_TS
-#undef  TS_PSOURCE
 #define SOLAR_SOURCE
 
 #define NONLIN_EOS

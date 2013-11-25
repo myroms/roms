@@ -41,9 +41,7 @@
       USE mod_ocean
 # endif
       USE mod_scalars
-# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources
-# endif
       USE mod_stepping
 !
       implicit none
@@ -88,39 +86,35 @@
 !
       CALL wclock_on (ng, iADM, 3)
 # endif
-# ifdef FRC_FILE
 !
 !=======================================================================
 !  Read in forcing data from FORCING NetCDF file.
 !=======================================================================
-# endif
 
-# if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
-                              defined TS_PSOURCE || defined Q_PSOURCE)
+# ifndef ANA_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Point Sources/Sinks time dependent data.
 !-----------------------------------------------------------------------
 !
-#  if defined UV_PSOURCE || defined Q_PSOURCE
-!
 !  Point Source/Sink vertically integrated mass transport.
 !
-      CALL get_ngfldr (ng, iADM, idRtra, ncFRCid(idRtra,ng),            &
-     &                 nFfiles(ng), FRC(1,ng), update(1),               &
-     &                 1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,               &
-     &                 SOURCES(ng) % QbarG(:,1))
-      IF (exit_flag.ne.NoError) RETURN
-#  endif
+      IF (LuvSrc(ng).or.LwSrc(ng)) THEN
+        CALL get_ngfldr (ng, iADM, idRtra, SSF(ng)%ncid,                &
+     &                   1, SSF(ng), update(1),                         &
+     &                   1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,             &
+     &                   SOURCES(ng) % QbarG(:,1))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 
-#  if defined TS_PSOURCE && defined SOLVE3D
+#  ifdef SOLVE3D
 !
 !  Tracer Sources/Sinks.
 !
       DO i=1,NT(ng)
         IF (LtracerSrc(i,ng)) THEN
-          CALL get_ngfldr (ng, iADM, idRtrc(i), ncFRCid(idRtrc(i),ng),  &
-     &                     nFfiles(ng), FRC(1,ng), update(1),           &
+          CALL get_ngfldr (ng, iADM, idRtrc(i), SSF(ng)%ncid,           &
+     &                     1, SSF(ng), update(1),                       &
      &                     1, Nsrc(ng), N(ng), 2, 1, Nsrc(ng), N(ng),   &
      &                     SOURCES(ng) % TsrcG(:,:,:,i))
           IF (exit_flag.ne.NoError) RETURN

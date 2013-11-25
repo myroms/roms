@@ -42,6 +42,7 @@
 !    TIDE      Input tide forcing                                      !
 !    TLF       Input/output tangent linear model impulse forcing       !
 !    TLM       Output tangent linear model history                     !
+!    SSF       Input Sources/Sinks forcing (river runoff)              !
 !    STA       Output station data                                     !
 !    STD       Input error covariance standard deviations              !
 !                STD(1,ng)  initial conditions                         !
@@ -111,14 +112,15 @@
       TYPE(T_IO), allocatable :: IRP(:)     ! RPM initial conditions
       TYPE(T_IO), allocatable :: ITL(:)     ! TLM initial conditions
       TYPE(T_IO), allocatable :: LCZ(:)     ! Lanczos vectors
+      TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: OBS(:)     ! observations
+      TYPE(T_IO), allocatable :: RST(:)     ! restart fields
+      TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
+      TYPE(T_IO), allocatable :: STA(:)     ! stations data
+      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
       TYPE(T_IO), allocatable :: TIDE(:)    ! tidal forcing
       TYPE(T_IO), allocatable :: TLF(:)     ! TLM impulse fields
       TYPE(T_IO), allocatable :: TLM(:)     ! TLM history fields
-      TYPE(T_IO), allocatable :: RST(:)     ! restart fields
-      TYPE(T_IO), allocatable :: STA(:)     ! stations data
-      TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
-      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
 !
 !  Input forcing data.
 !
@@ -203,13 +205,16 @@
       allocate ( ITL(Ngrids) )
       allocate ( LCZ(Ngrids) )
       allocate ( OBS(Ngrids) )
+      allocate ( RST(Ngrids) )
+      allocate ( SSF(Ngrids) )
+      allocate ( STA(Ngrids) )
       allocate ( TIDE(Ngrids) )
       allocate ( TLF(Ngrids) )
       allocate ( TLM(Ngrids) )
-      allocate ( RST(Ngrids) )
-      allocate ( STA(Ngrids) )
+
       allocate ( NRM(4,Ngrids) )
       allocate ( STD(4,Ngrids) )
+
 !
 !-----------------------------------------------------------------------
 !  Allocate variables.

@@ -317,9 +317,9 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo \    ! idbio( 1), nanophyto
 
   LtracerCLM == 11*F
 
-! Logical switches (TRUE/FALSE) to specify which variables to consider on
-! tracers point Sources/Sinks (like river runoff): [NBT,Ngrids] values are
-! expected. See glossary below for details.
+! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
+! (like river runoff) and to specify which tracer variables to consider:
+! [NBT,Ngrids] values are expected. See glossary below for details.
 
   LtracerSrc == 11*F
 
@@ -772,9 +772,9 @@ Dout(iTvdif) == 11*T    ! ..., NO3_vdiff, ...    vertical diffusion
 !  Tracer point Sources/Sink sources switches.
 !------------------------------------------------------------------------------
 !
-!  LtracerSrc     Logical switches (T/F) to specify which tracer variables
-!                   to consider when the option TS_PSOURCE is activated;
-!                   [1:NBT,1:Ngrids] values are expected.
+!  LtracerSrc     Logical switches (T/F) to activate biological tracer
+!                   variables point Sources/Sinks; [1:NBT,1:Ngrids] values
+!                   are expected.
 !
 !                     LtracerSrc(idbio( 1),ng)    Small Phytoplankton biomass
 !                     LtracerSrc(idbio( 2),ng)    Large Phytoplankton biomass
@@ -788,10 +788,10 @@ Dout(iTvdif) == 11*T    ! ..., NO3_vdiff, ...    vertical diffusion
 !                     LtracerSrc(idbio(10),ng)    Silicate concentration
 !                     LtracerSrc(idbio(11),ng)    Particulate organic silica
 !
-!                   Recall that TS_PSOURCE is usually activated to add river
-!                   runoff as a point source. At minimum, it is necessary to
-!                   specify both temperature and salinity for all rivers. The
-!                   other tracers are optional. The user needs to know the
+!                   Recall that these switches are usually activated to add
+!                   river runoff as a point source. At minimum, it is necessary
+!                   to specify both temperature and salinity for all rivers.
+!                   The other tracers are optional. The user needs to know the
 !                   correspondence between biological variables and indices
 !                   idbio(1:NBT) when activating one or more of these switches.
 !

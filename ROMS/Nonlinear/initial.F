@@ -643,8 +643,7 @@
       END DO
 #endif
 
-#if defined ANA_PSOURCE && \
-   (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+#ifdef ANA_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Set point Sources/Sinks position, direction, special flag, and mass
@@ -654,9 +653,11 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_psource (ng, tile, iNLM)
-        END DO
+        IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_psource (ng, tile, iNLM)
+          END DO
+        END IF
 !$OMP BARRIER
       END DO
 #endif
@@ -725,9 +726,7 @@
       DO ng=1,Ngrids
         CALL close_inp (ng, iNLM)
 !$OMP MASTER
-# ifdef TIMELESS_DATA
         CALL get_idata (ng)
-# endif
         CALL get_data (ng)
 !$OMP END MASTER
 # ifdef DISTRIBUTE

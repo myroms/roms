@@ -231,7 +231,6 @@
                 END DO
               END DO
 #endif
-#ifdef TS_PSOURCE
             CASE ('LtracerSrc')
               Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
               DO ng=1,Ngrids
@@ -240,7 +239,6 @@
                   LtracerSrc(i,ng)=Ltrc(itrc,ng)
                 END DO
               END DO
-#endif
             CASE ('Hout(idTvar)')
               Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
               DO ng=1,Ngrids
@@ -525,19 +523,23 @@
      &              'Nudging/relaxation time scale (days)',             &
      &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (LtracerSrc(i,ng)) THEN
+                WRITE (out,100) LtracerSrc(i,ng), 'LtracerSrc',         &
+     &              i, 'Turning ON  point sources/Sink on tracer ', i,  &
+     &              TRIM(Vname(1,idTvar(i)))
+              ELSE
+                WRITE (out,100) LtracerSrc(i,ng), 'LtracerSrc',         &
+     &              i, 'Turning OFF point sources/Sink on tracer ', i,  &
+     &              TRIM(Vname(1,idTvar(i)))
+              END IF
+            END DO
 #ifdef TCLIMATOLOGY
             DO itrc=1,NBT
               i=idbio(itrc)
               WRITE (out,100) LtracerCLM(i,ng), 'LtracerCLM',           &
      &              i, 'Processing climatology on tracer ', i,          &
-     &              TRIM(Vname(1,idTvar(i)))
-            END DO
-#endif
-#ifdef TS_PSOURCE
-            DO itrc=1,NBT
-              i=idbio(itrc)
-              WRITE (out,100) LtracerSrc(i,ng), 'LtracerSrc',           &
-     &              i, 'Processing point sources/Sink on tracer ', i,   &
      &              TRIM(Vname(1,idTvar(i)))
             END DO
 #endif

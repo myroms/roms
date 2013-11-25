@@ -87,7 +87,6 @@
               CASE ('idTbry(inorth,iSDet)')
                 idTbry(inorth,iSDet)=varid
 
-#ifdef TS_PSOURCE
 
 /*
 **  Biological tracers point Source/Sinks (river runoff).
@@ -102,4 +101,3 @@
                 idRtrc(iZoop)=varid
               CASE ('idRtrc(iSDet)')
                 idRtrc(iSDet)=varid
-#endif

@@ -103,12 +103,12 @@
      &                      Vname(1,idTvar(idsed(itracer))), LBC)
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isTvar)')
-              IF (itracer.lt.NBT) THEN
+              IF (itracer.lt.NST) THEN
                 itracer=itracer+1
               ELSE
                 itracer=1                      ! next nested grid
               END IF
-              ifield=isTvar(idbio(itracer))
+              ifield=isTvar(idsed(itracer))
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
      &                      iTrcStr, iTrcEnd,                           &
      &                      Vname(1,idTvar(idsed(itracer))), ad_LBC)
@@ -283,7 +283,6 @@
                 END DO
               END DO
 #endif
-#ifdef TS_PSOURCE
             CASE ('MUD_Ltsrc', 'MUD_Ltracer')
               Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
               DO ng=1,Ngrids
@@ -292,7 +291,6 @@
                   LtracerSrc(i,ng)=Lmud(itrc,ng)
                 END DO
               END DO
-#endif
             CASE ('Hout(idmud)')
               Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
               DO ng=1,Ngrids
@@ -622,7 +620,6 @@
                 END DO
               END DO
 #endif
-#ifdef TS_PSOURCE
             CASE ('SAND_Ltsrc', 'SAND_Ltracer')
               Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
               DO ng=1,Ngrids
@@ -631,7 +628,6 @@
                   LtracerSrc(i,ng)=Lsand(itrc,ng)
                 END DO
               END DO
-#endif
             CASE ('Hout(idsand)')
               Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
               DO ng=1,Ngrids
@@ -881,19 +877,23 @@
             WRITE (out,130) transC(ng)
             WRITE (out,140) transN(ng)
 #endif
+            DO itrc=1,NST
+              i=idsed(itrc)
+              IF (LtracerSrc(i,ng)) THEN
+                WRITE (out,150) LtracerSrc(i,ng), 'LtracerSrc',        &
+     &              i, 'Turning ON  point sources/Sink on tracer ', i, &
+     &              TRIM(Vname(1,idTvar(i)))
+              ELSE
+                WRITE (out,150) LtracerSrc(i,ng), 'LtracerSrc',        &
+     &              i, 'Turning OFF point sources/Sink on tracer ', i, &
+     &              TRIM(Vname(1,idTvar(i)))
+              END IF
+            END DO
 #ifdef TCLIMATOLOGY
             DO itrc=1,NST
               i=idsed(itrc)
               WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM',           &
      &              i, 'Processing climatology on tracer ', i,          &
-     &              TRIM(Vname(1,idTvar(i)))
-            END DO
-#endif
-#ifdef TS_PSOURCE
-            DO itrc=1,NST
-              i=idsed(itrc)
-              WRITE (out,150) LtracerSrc(i,ng), 'LtracerSrc',           &
-     &              i, 'Processing point sources/Sink on tracer ', i,   &
      &              TRIM(Vname(1,idTvar(i)))
             END DO
 #endif

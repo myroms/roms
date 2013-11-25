@@ -21,10 +21,6 @@
       SUBROUTINE wetdry_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
-# ifdef UV_PSOURCE
-     &                        Msrc, Nsrc,                               &
-     &                        Isrc, Jsrc, Dsrc,                         &
-# endif
 # ifdef MASKING
      &                        pmask, rmask, umask, vmask,               &
 # endif
@@ -42,6 +38,7 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
+      USE mod_sources
 !
       USE exchange_2d_mod
 # ifdef DISTRIBUTE
@@ -53,17 +50,8 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-# ifdef UV_PSOURCE
-      integer, intent(in) :: Msrc, Nsrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(:)
-      integer, intent(in) :: Jsrc(:)
-
-      real(r8), intent(in) :: Dsrc(:)
-#  endif
       real(r8), intent(in) :: h(LBi:,LBj:)
 #  ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:,LBj:)
@@ -89,12 +77,6 @@
 
 # else
 
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-
-      real(r8), intent(in) :: Dsrc(Msrc)
-#  endif
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
@@ -327,25 +309,24 @@
             vmask_io(i,j)=vmask_wet(i,j)*vmask(i,j)
           END DO
         END DO
-
-# ifdef UV_PSOURCE
 !
 !  Insure that masks at mass point source locations are set to water
 !  to avoid writting output with FillValue at those locations.
 !
-        DO is=1,Nsrc
-          i=Isrc(is)
-          j=Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            IF (INT(Dsrc(is)).eq.0) THEN
-              umask_io(i,j)=1.0_r8
-            ELSE
-              vmask_io(i,j)=1.0_r8
+        IF (LuvSrc(ng) THEN
+          DO is=1,Nsrc(ng)
+            i=SOURCES(ng)%Isrc(is)
+            j=SOURCES(ng)%Jsrc(is)
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
+                umask_io(i,j)=1.0_r8
+              ELSE
+                vmask_io(i,j)=1.0_r8
+              END IF
             END IF
-          END IF
-        END DO
-# endif
+          END DO
+        END IF
 !
 !  Exchange boundary data.
 !

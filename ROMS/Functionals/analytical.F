@@ -163,8 +163,7 @@
 #  include <ana_perturb.h>
 # endif
 
-# if (defined TS_PSOURCE || defined UV_PSOURCE || defined Q_PSOURCE) && \
-     defined ANA_PSOURCE
+# if defined ANA_PSOURCE
 #  include <ana_psource.h>
 # endif
 

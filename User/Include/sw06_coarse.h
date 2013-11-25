@@ -53,8 +53,6 @@
 # undef  AVERAGES
 # define MASKING
 # define SPLINES
-# undef  UV_PSOURCE
-# undef  TS_PSOURCE
 # define SOLAR_SOURCE
 
 # define GLS_MIXING
@@ -117,8 +115,6 @@
 # undef  AVERAGES
 # define MASKING
 # define SPLINES
-# undef  UV_PSOURCE
-# undef  TS_PSOURCE
 # define SOLAR_SOURCE
 
 # define GLS_MIXING

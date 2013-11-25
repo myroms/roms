@@ -849,7 +849,7 @@
 !  Analytical header files used.
 !
         IF (exit_flag.eq.NoError) THEN
-          CALL join_string (ANANAME, 39, string, lstr)
+          CALL join_string (ANANAME, SIZE(ANANAME), string, lstr)
           IF (lstr.gt.0) THEN
             status=nf90_put_att(ncid, nf90_global, 'ana_file',          &
      &                          string(1:lstr))
@@ -1807,8 +1807,30 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
+!
+! Logical switches to activate horizontal momentum transport
+! point Sources/Sinks (like river runoff transport) and mass point
+! Sources/Sinks (like volume vertical influx).
+!
+      Vinfo( 1)='LuvSrc'
+      Vinfo( 2)='momentum point sources and sink activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
 
-#if defined SOLVE3D && defined TS_PSOURCE
+      Vinfo( 1)='LwSrc'
+      Vinfo( 2)='mass point sources and sink activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+#ifdef SOLVE3D
 !
 !  Logical switches indicating which tracer variables are processed
 !  during point Sources/Sinks.

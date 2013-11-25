@@ -867,6 +867,25 @@
               END DO
             CASE ('GAMMA2')
               Npts=load_r(Nval, Rval, Ngrids, gamma2)
+            CASE ('LuvSrc')
+              Npts=load_l(Nval, Cval, Ngrids, LuvSrc)
+            CASE ('LwSrc')
+              Npts=load_l(Nval, Cval, Ngrids, LwSrc)
+#ifdef SOLVE3D
+            CASE ('LtracerSrc')
+              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NAT
+                  LtracerSrc(itrc,ng)=Ltracer(itrc,ng)
+                END DO
+# ifdef T_PASSIVE
+                DO i=1,NPT
+                  itrc=inert(i)
+                  LtracerSrc(itrc,ng)=Ltracer(NAT+i,ng)
+                END DO
+# endif
+              END DO
+#endif
 #if defined SOLVE3D && defined TCLIMATOLOGY
             CASE ('LtracerCLM')
               Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
@@ -878,21 +897,6 @@
                 DO i=1,NPT
                   itrc=inert(i)
                   LtracerCLM(itrc,ng)=Ltracer(NAT+i,ng)
-                END DO
-# endif
-              END DO
-#endif
-#if defined SOLVE3D && defined TS_PSOURCE
-            CASE ('LtracerSrc')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
-              DO ng=1,Ngrids
-                DO itrc=1,NAT
-                  LtracerSrc(itrc,ng)=Ltracer(itrc,ng)
-                END DO
-# ifdef T_PASSIVE
-                DO i=1,NPT
-                  itrc=inert(i)
-                  LtracerSrc(itrc,ng)=Ltracer(NAT+i,ng)
                 END DO
 # endif
               END DO
@@ -2525,6 +2529,26 @@
             CASE ('IADNAME')
               label='IAD - adjoint model initial conditions'
               Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, IAD)
+            CASE ('FWDNAME')
+              label='FWD - basic state forward trajectory'
+              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, FWD)
+            CASE ('ADSNAME')
+              label='ADS - adjoint sensitivity functional'
+              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ADS)
+            CASE ('NGCNAME')
+              DO i=1,LEN(NGCname)
+                NGCname(i:i)=blank
+              END DO
+              NGCname=TRIM(ADJUSTL(Cval(Nval)))
+            CASE ('BRYNAME')
+              label='BRY - lateral open boundary conditions'
+              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, BRY)
+            CASE ('CLMNAME')
+              label='CLM - climatology fields'
+              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, CLM)
+            CASE ('SSFNAME')
+              label='SSF - Sources/Sinks forcing fields'
+              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, SSF)
             CASE ('NFFILES')
               Npts=load_i(Nval, Rval, Ngrids, nFfiles)
               DO ng=1,Ngrids
@@ -2545,23 +2569,6 @@
               label='FRC - forcing fields'
               Npts=load_s2d(Nval, Cval, line, label, ifile, igrid,      &
      &                      nFfiles, Ncount, max_Ffiles, FRC)
-            CASE ('NGCNAME')
-              DO i=1,LEN(NGCname)
-                NGCname(i:i)=blank
-              END DO
-              NGCname=TRIM(ADJUSTL(Cval(Nval)))
-            CASE ('CLMNAME')
-              label='CLM - climatology fields'
-              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, CLM)
-            CASE ('BRYNAME')
-              label='BRY - lateral open boundary conditions'
-              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, BRY)
-            CASE ('FWDNAME')
-              label='FWD - basic state forward trajectory'
-              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, FWD)
-            CASE ('ADSNAME')
-              label='ADS - adjoint sensitivity functional'
-              Npts=load_s1d(Nval, Cval, line, label, igrid, Nfiles, ADS)
             CASE ('APARNAM')
               DO i=1,LEN(aparnam)
                 aparnam(i:i)=blank
@@ -3465,6 +3472,47 @@
           WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
+          IF (LuvSrc(ng)) THEN
+            WRITE (out,170) LuvSrc(ng), 'LuvSrc',                       &
+     &          'Turning ON  momentum point Sources/Sinks.'
+          ELSE
+            WRITE (out,170) LuvSrc(ng), 'LuvSrc',                       &
+     &          'Turning OFF momentum point Sources/Sinks.'
+          END IF
+          IF (LwSrc(ng)) THEN
+            WRITE (out,170) LwSrc(ng), 'LwSrc',                         &
+     &          'Turning ON  volume influx point Sources/Sinks.'
+          ELSE
+            WRITE (out,170) LwSrc(ng), 'LwSrc',                         &
+     &          'Turning OFF volume influx point Sources/Sinks.'
+          END IF
+#ifdef SOLVE3D
+          DO itrc=1,NAT
+            IF (LtracerSrc(itrc,ng)) THEN
+              WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,  &
+     &            'Turning ON  point Sources/Sinks on tracer ', itrc,   &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            ELSE
+              WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,  &
+     &            'Turning OFF point Sources/Sinks on tracer ', itrc,   &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END IF
+          END DO
+# ifdef T_PASSIVE
+          DO i=1,NPT
+            itrc=inert(i)
+            IF (LtracerSrc(itrc,ng)) THEN
+              WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,  &
+     &            'Turning ON  point Sources/Sinks on tracer ', itrc,   &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            ELSE
+              WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,  &
+     &            'Turning OFF  point Sources/Sinks on tracer ', itrc,  &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END IF
+          END DO
+# endif
+#endif
 #if defined SOLVE3D && defined TCLIMATOLOGY
           DO itrc=1,NAT
             WRITE (out,185) LtracerCLM(itrc,ng), 'LtracerCLM', itrc,    &
@@ -3476,21 +3524,6 @@
             itrc=inert(i)
             WRITE (out,185) LtracerCLM(itrc,ng), 'LtracerCLM', itrc,    &
      &            'Processing climatology on tracer ', itrc,            &
-     &            TRIM(Vname(1,idTvar(itrc)))
-          END DO
-# endif
-#endif
-#if defined SOLVE3D && defined TS_PSOURCE
-          DO itrc=1,NAT
-            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
-     &            'Processing point sources/Sink on tracer ', itrc,     &
-     &            TRIM(Vname(1,idTvar(itrc)))
-          END DO
-# ifdef T_PASSIVE
-          DO i=1,NPT
-            itrc=inert(i)
-            WRITE (out,185) LtracerSrc(itrc,ng), 'LtracerSrc', itrc,    &
-     &            'Processing point sources/Sink on tracer ', itrc,     &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 # endif
@@ -4627,6 +4660,14 @@
           WRITE (out,230) '    Input Adjoint Initial File:  ',          &
      &                    TRIM(fname)
 # endif
+#endif
+#ifndef ANA_PSOURCE
+          IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
+            fname=SSF(ng)%name
+            IF (.not.find_file(ng, fname, 'SSFNAME')) GO TO 30
+            WRITE (out,230) '      Input Sources/Sinks File:  ',          &
+     &                      TRIM(fname)
+          END IF
 #endif
 #ifdef FRC_FILE
           DO i=1,nFfiles(ng)

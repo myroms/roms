@@ -79,7 +79,7 @@
 ! NOTICE: It is possible to specify the lateral boundary conditions for
 ! ======  all sediment tracers (cohesive and noncohesive) in a compact
 ! form with a single entry. If so, all the sediment tracers are assumed to
-! have the same boundary in condition as in the single entry.
+! have the same boundary condition as in the single entry.
 !
 !   Keyword    Lateral Boundary Condition Type
 !
@@ -170,9 +170,9 @@ MUD_MORPH_FAC == 1.0d0 1.0d0                    ! nondimensional
 
    MUD_Ltclm == F F
 
-! Logical switches (TRUE/FALSE) to specify which variables to consider on
-! tracers point Sources/Sinks (like river runoff). See glossary below for
-! details.
+! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
+! (like river runoff) and to specify which tracer variables to consider.
+! See glossary below for details.
 
    MUD_Ltsrc == F F
 
@@ -270,9 +270,9 @@ SAND_MORPH_FAC == 1.0d0                         ! nondimensional
 
   SAND_Ltclm == F
 
-! Logical switches (TRUE/FALSE) to specify which variables to consider on
-! tracers point Sources/Sinks (like river runoff). See glossary below for
-! details.
+! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
+! (like river runoff) and to specify which tracer variables to consider.
+! See glossary below for details.
 
   SAND_Ltsrc == F
 
@@ -481,20 +481,21 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                  (specially passive tracers) needs to be processed.  So we
 !                  may reduce the memory allocation for such array.
 !
-!  MUD_Ltsrc       Logical switches (T/F) to specify which tracer variables
-!                    to consider when the option TS_PSOURCE is activated;
-!                    [1:NCS,1:Ngrids] values are expected.
+!  MUD_Ltsrc       Logical switches (T/F) to activate cohesive sediment tracer
+!                    variables point Sources/Sinks; [1:NCS,1:Ngrids] values
+!                    are expected.
 !
 !                      MUD_Ltsrc(  1,ng)           mud_01
 !                      ...                         ...
 !                      MUD_Ltsrc(NCS,ng)           ...
 !
-!                    Recall that TS_PSOURCE is usually activated to add river
-!                    runoff as a point source. At minimum, it is necessary to
-!                    specify both temperature and salinity for all rivers. The
-!                    other tracers are optional. The user needs to know the
-!                    correspondence between biological variables and indices
-!                    idbio(1:NBT) when activating one or more of these switches.
+!                    Recall that these switches are usually activated to add
+!                    river runoff as a point source.  At minimum, it is
+!                    necessary to specify both temperature and salinity for
+!                    all rivers. The other tracers are optional. The user needs
+!                    to know the correspondence between sediment variables and
+!                    indices idsed(1:NCS) when activating one or more of these
+!                    switches.
 !
 !                    This logical switch REPLACES and ELIMINATES the need to
 !                    have or read the variable "river_flag(river)" in the input
@@ -644,20 +645,21 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                  (specially passive tracers) needs to be processed.  So we
 !                  may reduce the memory allocation for such array.
 !
-!  SAND_Ltsrc      Logical switches (T/F) to specify which tracer variables
-!                    to consider when the option TS_PSOURCE is activated;
-!                    [1:NNS,1:Ngrids] values are expected.
+!  SAND_Ltsrc      Logical switches (T/F) to activate noncohesive sediment
+!                    tracer variables point Sources/Sinks; [1:NNS,1:Ngrids]
+!                    values are expected.
 !
 !                      SAND_Ltsrc(  1,ng)          sand_01
 !                      ...                         ...
 !                      SAND_Ltsrc(NNS,ng)          ...
 !
-!                    Recall that TS_PSOURCE is usually activated to add river
-!                    runoff as a point source. At minimum, it is necessary to
-!                    specify both temperature and salinity for all rivers. The
-!                    other tracers are optional. The user needs to know the
-!                    correspondence between biological variables and indices
-!                    idbio(1:NBT) when activating one or more of these switches.
+!                    Recall that these switches are usually activated to add
+!                    river runoff as a point source.  At minimum, it is
+!                    necessary to specify both temperature and salinity for
+!                    all rivers. The other tracers are optional. The user needs
+!                    to know the correspondence between sediment variables and
+!                    indices idsed(NCS+1:NST) when activating one or more
+!                    of these switches.
 !
 !                    This logical switch REPLACES and ELIMINATES the need to
 !                    have or read the variable "river_flag(river)" in the input

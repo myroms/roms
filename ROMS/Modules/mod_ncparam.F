@@ -712,7 +712,7 @@
 !  Analytical files switch and names.
 !
       Lanafile=.TRUE.
-      DO i=1,38
+      DO i=1,SIZE(ANANAME)
         DO j=1,LEN(ANANAME(1))
           ANANAME(i)(j:j)=' '
         END DO
@@ -1334,18 +1334,6 @@
               idUVav=varid
             CASE ('idVVav')
               idVVav=varid
-# ifdef SALINITY
-            CASE ('idTTav(isalt)')
-              idTTav(isalt)=varid
-            CASE ('iHUTav(isalt)')
-              iHUTav(isalt)=varid
-            CASE ('iHVTav(isalt)')
-              iHVTav(isalt)=varid
-            CASE ('idUTav(isalt)')
-              idUTav(isalt)=varid
-            CASE ('idVTav(isalt)')
-              idVTav(isalt)=varid
-# endif
 #endif
 #ifdef T_PASSIVE
             CASE ('idTvar(inert(i))')
@@ -1358,10 +1346,8 @@
               load=.TRUE.
             CASE ('idTbry(inorth,inert(i))')
               load=.TRUE.
-# ifdef TS_PSOURCE
             CASE ('idRtrc(inert(i))')
               load=.TRUE.
-# endif
 #endif
             CASE ('id2dPV')
               id2dPV=varid
@@ -1727,7 +1713,6 @@
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
                 END IF
-# ifdef TS_PSOURCE
               CASE ('idRtrc(inert(i))')
                 IF (NPT.gt.0) THEN
                   varid=varid-1
@@ -1750,7 +1735,6 @@
      &                    TRIM(ADJUSTL(Vinfo(5)))
                   END DO
                 END IF
-# endif
             END SELECT
 #endif
 #ifdef DIAGNOSTICS_TS

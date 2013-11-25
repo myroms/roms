@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#if defined TL_IOMS && defined TIMELESS_DATA
+#ifdef TL_IOMS
       SUBROUTINE rp_get_idata (ng)
 !
 !svn $Id$
@@ -22,18 +22,10 @@
       USE mod_ncparam
       USE mod_parallel
       USE mod_scalars
-# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources
-# endif
       USE mod_stepping
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
       USE mod_tides
-# endif
-
-# if defined ANA_PSOURCE && \
-    (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
-!
-      USE analytical_mod, ONLY : ana_psource
 # endif
 !
       implicit none
@@ -179,8 +171,7 @@
       END IF
 # endif
 
-# if !defined ANA_PSOURCE && \
-     (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+# ifndef ANA_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Read in point Sources/Sinks position, direction, special flag, and
@@ -188,27 +179,28 @@
 !  U- and V-points.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.0) THEN
-        CALL get_ngfld (ng, iRPM, idRxpo, ncFRCid(idRxpo,ng),           &
-     &                  nFfiles(ng), FRC(1,ng), update(1),              &
+      IF ((iic(ng).eq.0).and.                                           &
+     &    (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng)))) THEN
+        CALL get_ngfld (ng, iRPM, idRxpo, SSF(ng)%ncid,                 &
+     &                  1, SSF(ng), update(1),                          &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Xsrc)
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL get_ngfld (ng, iRPM, idRepo, ncFRCid(idRepo,ng),           &
-     &                  nFfiles(ng), FRC(1,ng), update(1),              &
+        CALL get_ngfld (ng, iRPM, idRepo, SSF(ng)%ncid,                 &
+     &                  1, SSF(ng), update(1),                          &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Ysrc)
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL get_ngfld (ng, iRPM, idRdir, ncFRCid(idRdir,ng),           &
-     &                  nFfiles(ng), FRC(1,ng), update(1),              &
+        CALL get_ngfld (ng, iRPM, idRdir, SSF(ng)%ncid,                 &
+     &                  1, SSF(ng), update(1),                          &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Dsrc)
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL get_ngfld (ng, iRPM, idRvsh, ncFRCid(idRvsh,ng),           &
-     &                  nFfiles(ng), FRC(1,ng), update(1),              &
+        CALL get_ngfld (ng, iRPM, idRvsh, SSF(ng)%ncid,                 &
+     &                  1, SSF(ng), update(1),                          &
      &                  1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),      &
      &                  SOURCES(ng) % Qshape)
         IF (exit_flag.ne.NoError) RETURN

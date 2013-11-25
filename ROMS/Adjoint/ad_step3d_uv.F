@@ -40,9 +40,6 @@
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
-# ifdef UV_PSOURCE
-      USE mod_sources
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -60,13 +57,6 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        knew(ng), nrhs(ng), nstp(ng), nnew(ng),   &
-# ifdef UV_PSOURCE
-     &                        Msrc(ng), Nsrc(ng),                       &
-     &                        SOURCES(ng) % Isrc,                       &
-     &                        SOURCES(ng) % Jsrc,                       &
-     &                        SOURCES(ng) % Dsrc,                       &
-     &                        SOURCES(ng) % Qsrc,                       &
-# endif
 # ifdef MASKING
      &                        GRID(ng) % umask,                         &
      &                        GRID(ng) % vmask,                         &
@@ -140,10 +130,6 @@
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              knew, nrhs, nstp, nnew,             &
-# ifdef UV_PSOURCE
-     &                              Msrc, Nsrc,                         &
-     &                              Isrc, Jsrc, Dsrc, Qsrc,             &
-# endif
 # ifdef MASKING
      &                              umask, vmask,                       &
 # endif
@@ -182,6 +168,7 @@
 !
       USE mod_param
       USE mod_scalars
+      USE mod_sources
 !
       USE ad_exchange_2d_mod
       USE ad_exchange_3d_mod
@@ -198,17 +185,8 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew, nrhs, nstp, nnew
-# ifdef UV_PSOURCE
-      integer, intent(in) :: Msrc, Nsrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(:)
-      integer, intent(in) :: Jsrc(:)
-      real(r8), intent(in) :: Dsrc(:)
-      real(r8), intent(in) :: Qsrc(:,:)
-#  endif
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
@@ -277,12 +255,6 @@
 
 # else
 
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
-#  endif
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
@@ -1391,62 +1363,62 @@
           ad_DC(i,0)=0.0_r8
         END DO
       END DO J_LOOP1
-
-# ifdef UV_PSOURCE
 !
 !-----------------------------------------------------------------------
-!  Apply mass point sources.
+!  Apply adjoint momentum transport point sources (like river runoff),
+!  if any.
 !-----------------------------------------------------------------------
 !
-      DO is=1,Nsrc
-        i=Isrc(is)
-        j=Jsrc(is)
-        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
-     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
-          IF (INT(Dsrc(is)).eq.0) THEN
-            DO k=1,N(ng)
-              cff1=1.0_r8/(on_u(i,j)*                                   &
-     &                     0.5_r8*(z_w(i-1,j,k)-z_w(i-1,j,k-1)+         &
-     &                             z_w(i  ,j,k)-z_w(i  ,j,k-1)))
-!>            tl_u(i,j,k,nnew)=Qsrc(is,k)*tl_cff1
+      IF (LuvSrc(ng)) THEN
+        DO is=1,Nsrc(ng)
+          i=SOURCES(ng)%Isrc(is)
+          j=SOURCES(ng)%Jsrc(is)
+          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
+     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
+              DO k=1,N(ng)
+                cff1=1.0_r8/(on_u(i,j)*                                 &
+     &                       0.5_r8*(z_w(i-1,j,k)-z_w(i-1,j,k-1)+       &
+     &                               z_w(i  ,j,k)-z_w(i  ,j,k-1)))
+!>              tl_u(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*tl_cff1
 !>
-              ad_cff1=ad_cff1+Qsrc(is,k)*ad_u(i,j,k,nnew)
-              ad_u(i,j,k,nnew)=0.0_r8
-!>            tl_cff1=-cff1*cff1*on_u(i,j)*                             &
-!>   &                0.5_r8*(tl_z_w(i-1,j,k)-tl_z_w(i-1,j,k-1)+        &
-!>   &                        tl_z_w(i  ,j,k)-tl_z_w(i  ,j,k-1))
+                ad_cff1=ad_cff1+SOURCES(ng)%Qsrc(is,k)*ad_u(i,j,k,nnew)
+                ad_u(i,j,k,nnew)=0.0_r8
+!>              tl_cff1=-cff1*cff1*on_u(i,j)*                           &
+!>   &                  0.5_r8*(tl_z_w(i-1,j,k)-tl_z_w(i-1,j,k-1)+      &
+!>   &                          tl_z_w(i  ,j,k)-tl_z_w(i  ,j,k-1))
 !>
-              adfac=-0.5_r8*cff1*cff1*on_u(i,j)*ad_cff1
-              ad_z_w(i-1,j,k-1)=ad_z_w(i-1,j,k-1)-adfac
-              ad_z_w(i  ,j,k-1)=ad_z_w(i  ,j,k-1)-adfac
-              ad_z_w(i-1,j,k  )=ad_z_w(i-1,j,k  )+adfac
-              ad_z_w(i  ,j,k  )=ad_z_w(i  ,j,k  )+adfac
-              ad_cff1=0.0_r8
-            END DO
-          ELSE
-            DO k=1,N(ng)
-              cff1=1.0_r8/(om_v(i,j)*                                   &
-     &                     0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+         &
-     &                             z_w(i,j  ,k)-z_w(i,j  ,k-1)))
-!>            tl_v(i,j,k,nnew)=Qsrc(is,k)*tl_cff1
+                adfac=-0.5_r8*cff1*cff1*on_u(i,j)*ad_cff1
+                ad_z_w(i-1,j,k-1)=ad_z_w(i-1,j,k-1)-adfac
+                ad_z_w(i  ,j,k-1)=ad_z_w(i  ,j,k-1)-adfac
+                ad_z_w(i-1,j,k  )=ad_z_w(i-1,j,k  )+adfac
+                ad_z_w(i  ,j,k  )=ad_z_w(i  ,j,k  )+adfac
+                ad_cff1=0.0_r8
+              END DO
+            ELSE
+              DO k=1,N(ng)
+                cff1=1.0_r8/(om_v(i,j)*                                 &
+     &                       0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+       &
+     &                               z_w(i,j  ,k)-z_w(i,j  ,k-1)))
+!>              tl_v(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*tl_cff1
 !>
-              ad_cff1=ad_cff1+Qsrc(is,k)*ad_v(i,j,k,nnew)
-              ad_v(i,j,k,nnew)=0.0_r8
-!>            tl_cff1=-cff1*cff1*om_v(i,j)*                             &
-!>   &                0.5_r8*(tl_z_w(i,j-1,k)-tl_z_w(i,j-1,k-1)+        &
-!>   &                        tl_z_w(i,j  ,k)-tl_z_w(i,j  ,k-1))
+                ad_cff1=ad_cff1+SOURCES(ng)%Qsrc(is,k)*ad_v(i,j,k,nnew)
+                ad_v(i,j,k,nnew)=0.0_r8
+!>              tl_cff1=-cff1*cff1*om_v(i,j)*                           &
+!>   &                  0.5_r8*(tl_z_w(i,j-1,k)-tl_z_w(i,j-1,k-1)+      &
+!>   &                          tl_z_w(i,j  ,k)-tl_z_w(i,j  ,k-1))
 !>
-              adfac=-0.5_r8*cff1*cff1*om_v(i,j)*ad_cff1
-              ad_z_w(i,j-1,k-1)=ad_z_w(i,j-1,k-1)-adfac
-              ad_z_w(i,j  ,k-1)=ad_z_w(i,j  ,k-1)-adfac
-              ad_z_w(i,j-1,k  )=ad_z_w(i,j-1,k  )+adfac
-              ad_z_w(i,j  ,k  )=ad_z_w(i,j  ,k  )+adfac
-              ad_cff1=0.0_r8
-            END DO
+                adfac=-0.5_r8*cff1*cff1*om_v(i,j)*ad_cff1
+                ad_z_w(i,j-1,k-1)=ad_z_w(i,j-1,k-1)-adfac
+                ad_z_w(i,j  ,k-1)=ad_z_w(i,j  ,k-1)-adfac
+                ad_z_w(i,j-1,k  )=ad_z_w(i,j-1,k  )+adfac
+                ad_z_w(i,j  ,k  )=ad_z_w(i,j  ,k  )+adfac
+                ad_cff1=0.0_r8
+              END DO
+            END IF
           END IF
-        END IF
-      END DO
-# endif
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Set lateral adjoint boundary conditions.

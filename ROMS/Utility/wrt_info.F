@@ -47,9 +47,7 @@
 #ifdef PROPAGATOR
       USE mod_storage
 #endif
-#if defined SOLVE3D && defined TS_PSOURCE
       USE mod_sources
-#endif
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
@@ -740,11 +738,24 @@
      &                      gamma2(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
-
-#if defined SOLVE3D && defined TS_PSOURCE
 !
-!  Logical switches indicating which tracer variables are processed
-!  during point Sources/Sinks.
+! Logical switches to activate horizontal momentum transport
+! point Sources/Sinks (like river runoff transport) and mass point
+! Sources/Sinks (like volume vertical influx).
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'LuvSrc',                &
+     &                      LuvSrc(ng), (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'LwSrc',                 &
+     &                      LwSrc(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#ifdef SOLVE3D
+!
+!  Logical switches to activate tracer point Sources/Sinks.
 !
       CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSrc',            &
      &                      LtracerSrc(:,ng), (/1/), (/NT(ng)/),        &
@@ -1955,15 +1966,23 @@
           IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_u', varid)) THEN
-              status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
-     &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % umask_io,                   &
-# if defined WRITE_WATER || defined UV_PSOURCE
-     &                           GRID(ng) % umask_io,                   &
+              IF (LuvSrc(ng)) THEN
+                status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+     &                             GRID(ng) % umask_io,                 &
+     &                             GRID(ng) % umask_io,                 &
+     &                             SetFillVal = .FALSE.)
+              ELSE
+                status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+     &                             GRID(ng) % umask_io,                 &
+# ifdef WRITE_WATER
+     &                             GRID(ng) % umask_io,                 &
 # else
-     &                           GRID(ng) % umask,                      &
+     &                             GRID(ng) % umask,                    &
 # endif
-     &                           SetFillVal = .FALSE.)
+     &                             SetFillVal = .FALSE.)
+              END IF
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
                 exit_flag=3
@@ -1981,15 +2000,23 @@
           IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_r8
             IF (find_string(var_name, n_var, 'mask_v', varid)) THEN
-              status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
-     &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % vmask_io,                   &
-# if defined WRITE_WATER || defined UV_PSOURCE
-     &                           GRID(ng) % vmask_io,                   &
+              IF (LuvSrc(ng)) THEN
+                status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+     &                             GRID(ng) % vmask_io,                 &
+     &                             GRID(ng) % vmask_io,                 &
+     &                             SetFillVal = .FALSE.)
+              ELSE
+                status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+     &                             GRID(ng) % vmask_io,                 &
+# ifdef WRITE_WATER
+     &                             GRID(ng) % vmask_io,                 &
 # else
-     &                           GRID(ng) % vmask,                      &
+     &                             GRID(ng) % vmask,                    &
 # endif
-     &                           SetFillVal = .FALSE.)
+     &                             SetFillVal = .FALSE.)
+              END IF
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
                 exit_flag=3

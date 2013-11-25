@@ -282,7 +282,9 @@
           CALL ad_variability (ng, tile, Rold(ng), Lweak)
           CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
           CALL initialize_ocean (ng, tile, iTLM)
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           CALL initialize_forces (ng, tile, iTLM)
+# endif
         END DO
 !$OMP END PARALLEL
       END DO
@@ -460,7 +462,9 @@
               CALL ad_variability (ng, tile, Rold(ng), Lweak)
               CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
               CALL initialize_ocean (ng, tile, iTLM)
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
               CALL initialize_forces (ng, tile, iTLM)
+# endif
             END DO
 !$OMP END PARALLEL
 !

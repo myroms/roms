@@ -14,10 +14,8 @@
 !  are replaced by the _FillValue in the output files to  facilitate   !
 !  post-processing with generic tools.                                 !
 !                                                                      !
-# ifdef UV_PSOURCE
 !  If point sources, insure that masks at point source locations are   !
 !  set to water to avoid masking with _FillValue at those locations.   !
-# endif
 # ifdef WET_DRY
 !
 !  If wetting and drying, masks array are time dependent and changed   !
@@ -47,9 +45,6 @@
 !
       USE mod_param
       USE mod_grid
-# ifdef UV_PSOURCE
-      USE mod_sources
-# endif
 !
 !  Imported variable declarations.
 !
@@ -65,12 +60,6 @@
       CALL set_masks_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-# ifdef UV_PSOURCE
-     &                     Msrc(ng), Nsrc(ng),                          &
-     &                     SOURCES(ng) % Isrc,                          &
-     &                     SOURCES(ng) % Jsrc,                          &
-     &                     SOURCES(ng) % Dsrc,                          &
-# endif
      &                     GRID(ng) % pmask,                            &
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
@@ -105,10 +94,6 @@
       SUBROUTINE set_masks_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-# ifdef UV_PSOURCE
-     &                           Msrc, Nsrc,                            &
-     &                           Isrc, Jsrc, Dsrc,                      &
-# endif
      &                           pmask, rmask,                          &
      &                           umask, vmask,                          &
 # if defined AVERAGES    || \
@@ -128,6 +113,7 @@
 !
       USE mod_param
       USE mod_scalars
+      USE mod_sources
 !
       USE exchange_2d_mod
 # ifdef DISTRIBUTE
@@ -139,17 +125,8 @@
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-# ifdef UV_PSOURCE
-      integer, intent(in) :: Msrc, Nsrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(:)
-      integer, intent(in) :: Jsrc(:)
-
-      real(r8), intent(in) :: Dsrc(:)
-#  endif
       real(r8), intent(in) :: pmask(LBi:,LBj:)
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
@@ -174,12 +151,6 @@
       real(r8), intent(inout) :: umask_io(LBi:,LBj:)
       real(r8), intent(inout) :: vmask_io(LBi:,LBj:)
 # else
-#  ifdef UV_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-
-      real(r8), intent(in) :: Dsrc(Msrc)
-#  endif
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -207,10 +178,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j
-# ifdef UV_PSOURCE
-      integer :: is
-# endif
+      integer :: i, is, j
 
 # include "set_bounds.h"
 !
@@ -239,25 +207,24 @@
           vmask_io(i,j)=vmask(i,j)
         END DO
       END DO
-
-# ifdef UV_PSOURCE
 !
 !  Insure that masks at mass point source locations are set to water
 !  to avoid masking with _FillValue at those locations.
 !
-      DO is=1,Nsrc
-        i=Isrc(is)
-        j=Jsrc(is)
-        IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
-     &      ((JstrT.le.j).and.(j.le.JendT))) THEN
-          IF (INT(Dsrc(is)).eq.0) THEN
-            umask_io(i,j)=1.0_r8
-          ELSE
-            vmask_io(i,j)=1.0_r8
+      IF (LuvSrc(ng)) THEN
+        DO is=1,Nsrc(ng)
+          i=SOURCES(ng)%Isrc(is)
+          j=SOURCES(ng)%Jsrc(is)
+          IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
+     &        ((JstrT.le.j).and.(j.le.JendT))) THEN
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
+              umask_io(i,j)=1.0_r8
+            ELSE
+              vmask_io(i,j)=1.0_r8
+            END IF
           END IF
-        END IF
-      END DO
-# endif
+        END DO
+      END IF
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_p2d_tile (ng, tile,                               &

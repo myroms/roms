@@ -522,8 +522,7 @@
 !!!$OMP BARRIER
 # endif
 
-#if defined ANA_PSOURCE && \
-   (defined UV_PSOURCE  || defined TS_PSOURCE || defined Q_PSOURCE)
+#ifdef ANA_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Set point Sources/Sinks position, direction, special flag, and mass
@@ -532,9 +531,11 @@
 !  to process internal Land/Sea masking arrays during initialization.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ana_psource (ng, tile, iADM)
-      END DO
+      IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ana_psource (ng, tile, iADM)
+        END DO
+      END IF
 !$OMP BARRIER
 #endif
 !
@@ -562,9 +563,7 @@
 !
 !$OMP MASTER
       CALL close_inp (ng, iADM)
-# ifdef TIMELESS_DATA
       CALL ad_get_idata (ng)
-# endif
       CALL ad_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER

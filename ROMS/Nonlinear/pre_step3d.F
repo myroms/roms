@@ -47,9 +47,6 @@
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
-# ifdef TS_PSOURCE
-      USE mod_sources
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -67,13 +64,6 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng), nstp(ng), nnew(ng),               &
-# ifdef TS_PSOURCE
-     &                      Msrc(ng), Nsrc(ng),                         &
-     &                      SOURCES(ng) % Isrc,                         &
-     &                      SOURCES(ng) % Jsrc,                         &
-     &                      SOURCES(ng) % Dsrc,                         &
-     &                      SOURCES(ng) % Tsrc,                         &
-# endif
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
@@ -127,11 +117,6 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs, nstp, nnew,                     &
-# ifdef TS_PSOURCE
-     &                            Msrc, Nsrc,                           &
-     &                            Isrc, Jsrc, Dsrc,                     &
-     &                            Tsrc,                                 &
-# endif
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
 # endif
@@ -161,6 +146,7 @@
 !
       USE mod_param
       USE mod_scalars
+      USE mod_sources
 !
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
 # ifdef DISTRIBUTE
@@ -174,18 +160,8 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
-# ifdef TS_PSOURCE
-      integer, intent(in) :: Msrc, Nsrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef TS_PSOURCE
-      integer, intent(in) :: Isrc(:)
-      integer, intent(in) :: Jsrc(:)
-
-      real(r8), intent(in) :: Dsrc(:)
-      real(r8), intent(in) :: Tsrc(:,:,:)
-#  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
@@ -238,13 +214,6 @@
 
 # else
 
-#  ifdef TS_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
-#  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -528,25 +497,27 @@
             END DO
           END DO
 #  endif
-
-#  if defined TS_PSOURCE && !defined Q_PSOURCE
 !
-!  Apply tracers point sources to the horizontal advection terms.
+!  Apply tracers point sources to the horizontal advection terms,
+!  if any.
 !
-          DO is=1,Nsrc
-            i=Isrc(is)
-            j=Jsrc(is)
-            IF (LtracerSrc(itrc,ng).and.                                &
-     &          ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
-     &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
-              IF (INT(Dsrc(is)).eq.0) THEN
-                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
-              ELSE
-                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
+          IF (.not.LwSrc(ng).and.ANY(LtracerSrc(:,ng))) THEN
+            DO is=1,Nsrc(ng)
+              i=SOURCES(ng)%Isrc(is)
+              j=SOURCES(ng)%Jsrc(is)
+              IF (LtracerSrc(itrc,ng).and.                              &
+     &            ((Istr.le.i).and.(i.le.Iend+1)).and.                  &
+     &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
+                IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
+                  FX(i,j)=Huon(i,j,k)*                                  &
+     &                    SOURCES(ng)%Tsrc(is,k,itrc)
+                ELSE
+                  FE(i,j)=Hvom(i,j,k)*                                  &
+     &                    SOURCES(ng)%Tsrc(is,k,itrc)
+                END IF
               END IF
-            END IF
-          END DO
-#  endif
+            END DO
+          END IF
 !
 !  Time-step horizontal advection (m Tunits).
 !

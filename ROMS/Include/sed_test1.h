@@ -14,7 +14,6 @@
 */
 
 #define UV_ADV
-#define UV_PSOURCE
 #define UV_LOGDRAG
 #define UV_VIS4
 #define MIX_S_UV

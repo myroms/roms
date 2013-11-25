@@ -39,11 +39,6 @@
       USE mod_ocean
 # if defined SEDIMENT && defined SED_MORPH
       USE mod_sedbed
-# endif
-# ifdef Q_PSOURCE
-      USE mod_sources
-# endif
-# if defined Q_PSOURCE || (defined SEDIMENT && defined SED_MORPH)
       USE mod_stepping
 # endif
 !
@@ -63,15 +58,6 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    nstp(ng), nnew(ng),                           &
-# endif
-# ifdef Q_PSOURCE
-     &                    Msrc(ng), Nsrc(ng),                           &
-     &                    SOURCES(ng) % Isrc,                           &
-     &                    SOURCES(ng) % Jsrc,                           &
-     &                    SOURCES(ng) % Dsrc,                           &
-     &                    SOURCES(ng) % Qsrc,                           &
-# endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    GRID(ng) % omn,                               &
      &                    SEDBED(ng) % bed_thick,                       &
      &                    SEDBED(ng) % tl_bed_thick,                    &
@@ -97,12 +83,6 @@
      &                          IminS, ImaxS, JminS, JmaxS,             &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                          nstp, nnew,                             &
-# endif
-# ifdef Q_PSOURCE
-     &                          Msrc, Nsrc,                             &
-     &                          Isrc, Jsrc, Dsrc, Qsrc,                 &
-# endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                          omn,
      &                          bed_thick, tl_bed_thick,                &
 # endif
@@ -113,6 +93,7 @@
 !
       USE mod_param
       USE mod_scalars
+      USE mod_sources
 !
       USE bc_3d_mod, ONLY : bc_w3d_tile
 # ifdef DISTRIBUTE
@@ -127,18 +108,8 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       integer, intent(in) :: nstp, nnew
 # endif
-# ifdef Q_PSOURCE
-      integer, intent(in) :: Msrc, Nsrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
-#  ifdef Q_PSOURCE
-      integer, intent(in) :: Isrc(:)
-      integer, intent(in) :: Jsrc(:)
-
-      real(r8), intent(in) :: Dsrc(:)
-      real(r8), intent(in) :: Qsrc(:,:)
-#  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in) :: omn(LBi:,LBj:)
       real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
@@ -156,13 +127,6 @@
 
 # else
 
-#  ifdef Q_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
-#  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
       real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
@@ -181,10 +145,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k
-# ifdef Q_PSOURCE
-      integer :: ii, jj, is
-# endif
+      integer :: i, ii, is, j, jj, k
       real(r8) :: cff, tl_cff
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8) :: cff1
@@ -236,23 +197,23 @@
      &                   tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k))
           END DO
         END DO
-# ifdef Q_PSOURCE
 !
-!  Apply mass point sources - Volume influx.
+!  Apply mass point sources (volume vertical influx), if any.
 !
-        DO is=1,Nsrc
-          ii=Isrc(is)
-          jj=Jsrc(is)
-          IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                    &
-     &        ((JstrR.le.jj).and.(jj.le.JendR)).and.                    &
-     &        (j.eq.jj)) THEN
-            DO k=1,N(ng)
-              W(ii,jj,k)=W(ii,jj,k)+Qsrc(is,k)
-!!            tl_W(ii,jj,k)=tl_W(ii,jj,k)+0.0_r8
-            END DO
-          END IF
-        END DO
-# endif
+        IF (LwSrc(ng)) THEN
+          DO is=1,Nsrc(ng)
+            ii=SOURCES(ng)%Isrc(is)
+            jj=SOURCES(ng)%Jsrc(is)
+            IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                  &
+     &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
+     &          (j.eq.jj)) THEN
+              DO k=1,N(ng)
+                W(ii,jj,k)=W(ii,jj,k)+SOURCES(ng)%Qsrc(is,k)
+!!              tl_W(ii,jj,k)=tl_W(ii,jj,k)+0.0_r8
+              END DO
+            END IF
+          END DO
+        END IF
 !
         DO i=Istr,Iend
           cff=1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,0))

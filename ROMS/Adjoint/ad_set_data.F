@@ -63,9 +63,7 @@
       USE mod_ocean
       USE mod_stepping
       USE mod_scalars
-# if defined TS_PSOURCE || defined UV_PSOURCE || defined Q_PSOURCE
       USE mod_sources
-# endif
 !
 # ifdef ANALYTICAL
       USE analytical_mod
@@ -692,36 +690,36 @@
 !
       CALL ana_spinning (ng, tile, iADM)
 # endif
-
-# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Set point Sources/Sinks (river runoff).
 !-----------------------------------------------------------------------
 !
-#  ifdef ANA_PSOURCE
+# ifdef ANA_PSOURCE
+      IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
         CALL ana_psource (ng, tile, iADM)
-#  else
+      END IF
+# else
       IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
-#   if defined UV_PSOURCE || defined Q_PSOURCE
-        CALL set_ngfldr (ng, iADM, idRtra, 1, Nsrc(ng), 1,              &
-     &                   1, Nsrc(ng), 1,                                &
-     &                   SOURCES(ng) % QbarG,                           &
-     &                   SOURCES(ng) % Qbar,                            &
-     &                   update)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (LuvSrc(ng).or.LwSrc(ng)) THEN
+          CALL set_ngfldr (ng, iADM, idRtra, 1, Nsrc(ng), 1,            &
+     &                     1, Nsrc(ng), 1,                              &
+     &                     SOURCES(ng) % QbarG,                         &
+     &                     SOURCES(ng) % Qbar,                          &
+     &                     update)
+          IF (exit_flag.ne.NoError) RETURN
 
-#    ifdef SOLVE3D
-        DO k=1,N(ng)
-          DO i=1,Nsrc(ng)
-            SOURCES(ng)%Qsrc(i,k)=SOURCES(ng)%Qbar(i)*                  &
-     &                            SOURCES(ng)%Qshape(i,k)
+#  ifdef SOLVE3D
+          DO k=1,N(ng)
+            DO i=1,Nsrc(ng)
+              SOURCES(ng)%Qsrc(i,k)=SOURCES(ng)%Qbar(i)*                &
+     &                              SOURCES(ng)%Qshape(i,k)
+            END DO
           END DO
-        END DO
-#    endif
-#   endif
+#  endif
+        END IF
 
-#   if defined TS_PSOURCE && defined SOLVE3D
+#  ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (LtracerSrc(itrc,ng)) THEN
             CALL set_ngfldr (ng, iADM, idRtrc(itrc), 1, Nsrc(ng), N(ng),&
@@ -732,9 +730,8 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
-#   endif
-      END IF
 #  endif
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

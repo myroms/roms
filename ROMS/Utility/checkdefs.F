@@ -1363,12 +1363,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' QCORRECTION,'
 #endif
-#if defined Q_PSOURCE
-      IF (Master) WRITE (stdout,20) 'Q_PSOURCE',                        &
-     &   'Mass point sources, volume influx.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' Q_PSOURCE,'
-#endif
 #if defined GLS_MIXING || defined MY25_MIXING
 # if defined K_C2ADVECTION
       IF (Master) WRITE (stdout,20) 'K_C2ADVECTION',                    &
@@ -1949,12 +1943,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' TS_FIXED,'
 #endif
-#if defined TS_PSOURCE && defined SOLVE3D
-      IF (Master) WRITE (stdout,20) 'TS_PSOURCE',                       &
-     &   'Tracers point sources and sinks.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' TS_PSOURCE,'
-#endif
 #if defined TS_SMAGORINSKY && (defined TS_DIF2 || defined TS_DIF4)
       IF (Master) WRITE (stdout,20) 'TS_SMAGORINSKY',                   &
      &   'Smagorinksy-like time-dependent diffusion coefficients.'
@@ -2053,12 +2041,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' UV_QDRAG,'
       ibbl=ibbl+1
-#endif
-#ifdef UV_PSOURCE
-      IF (Master) WRITE (stdout,20) 'UV_PSOURCE',                       &
-     &   'Mass point sources and sinks.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' UV_PSOURCE,'
 #endif
 #if defined UV_TIDES
       IF (Master) WRITE (stdout,20) 'UV_TIDES',                         &
@@ -2481,6 +2463,45 @@
  210    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,           &
      &          /,13x,'in serial with partitions or shared-memory...', &
      &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
+      END IF
+#endif
+#ifdef Q_PSOURCE
+!
+!  Stop if activating obsolete mass point Sources/Sinks option. This
+!  capability is now activated with standard input switch "LwSrc".
+!
+      IF (Master) THEN
+        WRITE (stdout,220) uppercase('q_psource'), 'LwSrc'
+ 220    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+     &          /,13x,'Use instead standard input switch: ',a,          &
+     &          /,13x,'Edit header file or build script!')
+        exit_flag=5
+      END IF
+#endif
+#if defined TS_PSOURCE && defined SOLVE3D
+!
+!  Stop if activating obsolete tracers point Sources/Sinks option. This
+!  capability is now activated with standard input switch "LtracerSrc".
+!
+      IF (Master) THEN
+        WRITE (stdout,230) uppercase('ts_psource'), 'LtracerSrc'
+ 230    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+     &          /,13x,'Use instead standard input switch: ',a,          &
+     &          /,13x,'Edit header file or build script!')
+        exit_flag=5
+      END IF
+#endif
+#ifdef UV_PSOURCE
+!
+!  Stop if activating obsolete mass point Sources/Sinks option. This
+!  capability is now activated with standard input switch "LwSrc".
+!
+      IF (Master) THEN
+        WRITE (stdout,240) uppercase('uv_psource'), 'LuvSrc'
+ 240    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+     &          /,13x,'Use instead standard input switch: ',a,          &
+     &          /,13x,'Edit header file or build script!')
+        exit_flag=5
       END IF
 #endif
 
