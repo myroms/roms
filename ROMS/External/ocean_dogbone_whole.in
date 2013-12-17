@@ -659,11 +659,11 @@ Aout(idU2av) == F       ! ubar2              quadratic <ubar*ubar> term
 Aout(idV2av) == F       ! vbar2              quadratic <vbar*vbar> term
 Aout(idZZav) == F       ! zeta2              quadratic <zeta*zeta> term
 
-Aout(idTTav) == 2*F     ! temp2, ...         quadratic <t*t> tracer terms
-Aout(idUTav) == 2*F     ! utemp, ...         quadratic <u*t> tracer terms
-Aout(idVTav) == 2*F     ! vtemp, ...         quadratic <v*t> tracer terms
-Aout(iHUTav) == 2*F     ! Huontemp, ...      tracer volume flux, <Huon*t>
-Aout(iHVTav) == 2*F     ! Hvomtemp, ...      tracer volume flux, <Hvom*t>
+Aout(idTTav) == 2*F     ! temp_2, ...        quadratic <t*t> tracer terms
+Aout(idUTav) == 2*F     ! u_temp, ...        quadratic <u*t> tracer terms
+Aout(idVTav) == 2*F     ! v_temp, ...        quadratic <v*t> tracer terms
+Aout(iHUTav) == 2*F     ! Huon_temp, ...     tracer volume flux, <Huon*t>
+Aout(iHVTav) == 2*F     ! Hvom_temp, ...     tracer volume flux, <Hvom*t>
 
 ! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
 ! tracers other than biological and sediment tracers into the AVERAGE file.

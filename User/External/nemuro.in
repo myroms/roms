@@ -334,6 +334,12 @@ Hout(idTsur) == 11*F    ! ..., NO3_sflux, ...    surface tracer flux
 
 Aout(idTvar) == 11*T    ! ..., NO3, ...          biological tracer
 
+Aout(idTTav) == 11*F    ! ..., NO3_2, ...        quadratic <t*t> tracer terms
+Aout(idUTav) == 11*F    ! ..., u_NO3, ...        quadratic <u*t> tracer terms
+Aout(idVTav) == 11*F    ! ..., v_NO3, ...        quadratic <v*t> tracer terms
+Aout(iHUTav) == 11*F    ! ..., Huon_NO3, ...     tracer volume flux, <Huon*t>
+Aout(iHVTav) == 11*F    ! ..., Hvom_NO3, ...     tracer volume flux, <Hvom*t>
+
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
@@ -853,6 +859,12 @@ Dout(iTvdif) == 11*T    ! ..., NO3_vdiff, ...    vertical diffusion
 !                   are expected:
 !
 !                   Aout(idTvar)               biological tracers
+!
+!                   Aout(idTTav)               quadratic <t*t> tracers terms
+!                   Aout(idUTav)               quadratic <u*t> tracers terms
+!                   Aout(idVTav)               quadratic <v*t> tracers terms
+!                   Aout(iHUTav)               tracer u-volume flux, <Huon*t>
+!                   Aout(iHVTav)               tracer v-volume flux, <Hvom*t>
 !
 !                   The idTvar(idbio(:)) are the same to those in the HISTORY
 !                   file.

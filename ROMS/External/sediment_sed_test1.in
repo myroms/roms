@@ -189,6 +189,13 @@ Hout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 ! cohesive sediment fields into AVERAGE output file.
 
 Aout(idmud)  == T       ! mud_01, ...             suspended concentration
+
+Aout(iMTTav) == F       ! mud_01_2, ...           quadratic <t*t> tracer terms
+Aout(iMUTav) == F       ! u_mud_01, ...           quadratic <u*t> tracer terms
+Aout(iMVTav) == F       ! v_mud_01, ...           quadratic <v*t> tracer terms
+Aout(MHUTav) == F       ! Huon_mud_01, ...        tracer volume flux, <Huon*t>
+Aout(MHVTav) == F       ! Hvom_mud_01, ...        tracer volume flux, <Hvom*t>
+
 Aout(iMUbld) == T       ! bedload_Umud_01, ...    bed load at U-points
 Aout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 
@@ -289,6 +296,13 @@ Hout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
 ! non-cohesive sediment fields into AVERAGE output file.
 
 Aout(idsand) == T       ! sand_01, ...            suspended concentration
+
+Aout(iSTTav) == F       ! sand_01_2, ...          quadratic <t*t> tracer terms
+Aout(iSUTav) == F       ! u_sand_01, ...          quadratic <u*t> tracer terms
+Aout(iSVTav) == F       ! v_sand_01, ...          quadratic <v*t> tracer terms
+Aout(SHUTav) == F       ! Huon_sand_01, ...       tracer volume flux, <Huon*t>
+Aout(SHVTav) == F       ! Hvom_sand_01, ...       tracer volume flux, <Hvom*t>
+
 Aout(iSUbld) == T       ! bedload_Usand_01, ...   bed load at U-points
 Aout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
 
@@ -543,17 +557,20 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    bed load at V-points into HISTORY NetCDF file,
 !                    HOUT(idsed(i)) with i=1,NCS.
 !
-!  Aout(idmud)     Logical switches to activate writing of time-averaged
+!  Aout(*M...)     Logical switches to activate writing of time-averaged
 !                    cohesive sediment concentration into AVERAGE NetCDF
 !                    file, AOUT(idTvar(idsed(i))) with i=1:NCS.
 !
-!  Aout(iMUbld)    Logical switches to activate writing of time-averaged
-!                    cohesive sediment bed load at U-points into AVERAGE
-!                    NetCDF file, AOUT(idsed(i)) with i=1,NCS.
+!                    Aout(idmud)                  suspended concentration
 !
-!  Aout(iMVbld)    Logical switches to activate writing of time-averaged
-!                    cohesive sediment bed load at V-points into AVERAGE
-!                    NetCDF file, AOUT(idsed(i)) with i=1,NCS.
+!                    Aout(iMTTav)                 quadratic <t*t> tracer terms
+!                    Aout(iMUTav)                 quadratic <u*t> tracer terms
+!                    Aout(iMVTav)                 quadratic <v*t> tracer terms
+!                    Aout(MHUTav)                 tracer volume flux, <Huon*t>
+!                    Aout(MHVTav)                 tracer volume flux, <Hvom*t>
+!
+!                    Aout(iMUbld)                 bed load at U-points
+!                    Aout(iMVbld)                 bed load at V-points
 !
 !  Dout(MT....)    Logical switches to activate writing of time-averaged
 !                    cohesive tracers diagnostic terms into DIAGNOSTIC
@@ -708,17 +725,20 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    sediment bed load at V-points into HISTORY NetCDF file,
 !                    HOUT(idsed(i)) with i=NCS+1,NST.
 !
-!  Aout(idsand)    Logical switches to activate writing of time-averaged
+!  Aout(*S...)     Logical switches to activate writing of time-averaged
 !                    non-cohesive sediment concentration into AVERAGE
 !                    NetCDF file, AOUT(idTvar(idsed(i))) with i=1:NCS+1,NST.
 !
-!  Aout(iSUbld)    Logical switches to activate writing of time-averaged
-!                    non-cohesive sediment bed load at U-points into AVERAGE
-!                    NetCDF file, AOUT(idsed(i)) with i=NCS+1,NST.
+!                    Aout(idsand)                 suspended concentration
 !
-!  Aout(iSVbld)    Logical switches to activate writing of time-averaged
-!                    non-cohesive sediment bed load at V-points into AVERAGE
-!                    NetCDF file, AOUT(idsed(i)) with i=NCS+1,NST.
+!                    Aout(iSTTav)                 quadratic <t*t> tracer terms
+!                    Aout(iSUTav)                 quadratic <u*t> tracer terms
+!                    Aout(iSVTav)                 quadratic <v*t> tracer terms
+!                    Aout(SHUTav)                 tracer volume flux, <Huon*t>
+!                    Aout(SHVTav)                 tracer volume flux, <Hvom*t>
+!
+!                    Aout(iSUbld)                 bed load at U-points
+!                    Aout(iSVbld)                 bed load at V-points
 !
 !  Dout(ST....)    Logical switches to activate writing of time-averaged
 !                    non-cohesive tracers diagnostic terms into DIAGNOSTIC

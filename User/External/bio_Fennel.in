@@ -290,28 +290,34 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo \    ! idbio( 1), NO3
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into HISTORY output file: [1:NBT,Ngrids].
 
-Hout(idTvar) == 12*T    ! NO3, ...           biological tracer
-Hout(idTsur) == 12*F    ! NO3_sflux, ...     surface tracer flux
+Hout(idTvar) == 12*T    ! ..., NO3, ...           biological tracer
+Hout(idTsur) == 12*F    ! ..., NO3_sflux, ...     surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1:NBT,Ngrids].
 
-Aout(idTvar) == 12*T    ! NO3, ...           biological tracer
+Aout(idTvar) == 12*T    ! ..., NO3, ...           biological tracer
+
+Aout(idTTav) == 12*F    ! ..., NO3_2, ...         quadratic <t*t> tracer terms
+Aout(idUTav) == 12*F    ! ..., u_NO3, ...         quadratic <u*t> tracer terms
+Aout(idVTav) == 12*F    ! ..., v_NO3, ...         quadratic <v*t> tracer terms
+Aout(iHUTav) == 12*F    ! ..., Huon_NO3, ...      tracer volume flux, <Huon*t>
+Aout(iHVTav) == 12*F    ! ..., Hvom_NO3, ...      tracer volume flux, <Hvom*t>
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological tracer diagnostic terms into DIAGNOSTIC output file:
 ! [1:NBT,Ngrids].
 
-Dout(iTrate) == 12*T    ! NO3_rate, ...      time rate of change
-Dout(iThadv) == 12*T    ! NO3_hadv, ...      horizontal total advection
-Dout(iTxadv) == 12*T    ! NO3_xadv, ...      horizontal XI-advection
-Dout(iTyadv) == 12*T    ! NO3_yadv, ...      horizontal ETA-advection
-Dout(iTvadv) == 12*T    ! NO3_vadv, ...      vertical advection
-Dout(iThdif) == 12*T    ! NO3_hdiff, ...     horizontal total diffusion
-Dout(iTxdif) == 12*T    ! NO3_xdiff, ...     horizontal XI-diffusion
-Dout(iTydif) == 12*T    ! NO3_ydiff, ...     horizontal ETA-diffusion
-Dout(iTsdif) == 12*T    ! NO3_sdiff, ...     horizontal S-diffusion
-Dout(iTvdif) == 12*T    ! NO3_vdiff, ...     vertical diffusion
+Dout(iTrate) == 12*T    ! ..., NO3_rate, ...      time rate of change
+Dout(iThadv) == 12*T    ! ..., NO3_hadv, ...      horizontal total advection
+Dout(iTxadv) == 12*T    ! ..., NO3_xadv, ...      horizontal XI-advection
+Dout(iTyadv) == 12*T    ! ..., NO3_yadv, ...      horizontal ETA-advection
+Dout(iTvadv) == 12*T    ! ..., NO3_vadv, ...      vertical advection
+Dout(iThdif) == 12*T    ! ..., NO3_hdiff, ...     horizontal total diffusion
+Dout(iTxdif) == 12*T    ! ..., NO3_xdiff, ...     horizontal XI-diffusion
+Dout(iTydif) == 12*T    ! ..., NO3_ydiff, ...     horizontal ETA-diffusion
+Dout(iTsdif) == 12*T    ! ..., NO3_sdiff, ...     horizontal S-diffusion
+Dout(iTvdif) == 12*T    ! ..., NO3_vdiff, ...     vertical diffusion
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! biological processes diagnostics terms into DIAGNOSTIC output file [Ngrids].
@@ -657,6 +663,12 @@ Dout(iNO3u) == T        ! NO3_uptake         NO3 uptake
 !                   are expected:
 !
 !                   Aout(idTvar)               biological tracers
+!
+!                   Aout(idTTav)               quadratic <t*t> tracers terms
+!                   Aout(idUTav)               quadratic <u*t> tracers terms
+!                   Aout(idVTav)               quadratic <v*t> tracers terms
+!                   Aout(iHUTav)               tracer u-volume flux, <Huon*t>
+!                   Aout(iHVTav)               tracer v-volume flux, <Hvom*t>
 !
 !                   The idTvar(idbio(:)) are the same to those in the HISTORY
 !                   file.
