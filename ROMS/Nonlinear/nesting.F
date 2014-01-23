@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !=======================================================================
-!  Copyright (c) 2002-2013 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2014 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                             John C. Warner   !
 !=======================================================================
@@ -1116,10 +1116,6 @@
 # ifdef SOLVE3D
           Tindex3d=nnew(dg)
 # endif
-!
-!  Get data donor REFINED index structure associated with current
-!  refinement grid. Recall that both refinement and composite grids
-!  are allow and this mapping is for efficient memory usage.
 !
 !  Extract free-surface.
 !
