@@ -17,6 +17,7 @@
       USE mod_parallel
       USE mod_grid
       USE mod_iounits
+      USE mod_mixing
       USE mod_ncparam
 # ifdef NESTING
       USE mod_nesting

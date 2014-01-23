@@ -104,10 +104,11 @@
         NEST_LAYER : DO nl=1,NestLayers
 !
 !  Determine number of time steps to compute in each nested grid layer
-!  based on the specified time interval (seconds), RunInterval. Notice
-!  that RunInterval is set in the calling driver. Its value may span
-!  the full period of the simulation, or a multi-model coupling
-!  interval, or just a single step.
+!  based on the specified time interval (seconds), RunInterval. Non
+!  nesting applications have NestLayers=1. Notice that RunInterval is
+!  set in the calling driver. Its value may span the full period of the
+!  simulation, or a multi-model coupling interval, or just a single
+!  step.
 !
           CALL ntimesteps (nl, GridsInLayer(nl), iNLM, RunInterval,     &
      &                     Nsteps, Rsteps)

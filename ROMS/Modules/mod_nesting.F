@@ -222,7 +222,9 @@
 
         integer, pointer :: C2Bindex(:)    ! contact to boundary index
 
+# ifdef SOLVE3D
         real(r8), pointer :: Tflux(:,:,:)  ! Perimeter tracer flux
+# endif
       END TYPE T_BCP
 
       TYPE (T_BCP), allocatable :: BRY_CONTACT(:,:)    ! [4,Ncontact]
@@ -348,8 +350,8 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: cr, dg, ng, rg
-      integer :: i, ibry, ic, j, m, my_tile
+      integer :: CCR, cr, dg, ng, rg
+      integer :: i, ibry, ic, id, ir, j, jd, jr, m, my_tile
       integer :: ispval
 
       integer, allocatable :: Ibmin(:,:), Ibmax(:,:)
@@ -367,25 +369,29 @@
 !
       my_tile=-1                           ! for global values
       DO cr=1,Ncontact
-        dg=receiver_grid(cr)
-        LBi=BOUNDS(dg)%LBi(my_tile)
-        UBi=BOUNDS(dg)%UBi(my_tile)
-        LBj=BOUNDS(dg)%LBj(my_tile)
-        UBj=BOUNDS(dg)%UBj(my_tile)
+        rg=receiver_grid(cr)
+        LBi=BOUNDS(rg)%LBi(my_tile)
+        UBi=BOUNDS(rg)%UBi(my_tile)
+        LBj=BOUNDS(rg)%LBj(my_tile)
+        UBj=BOUNDS(rg)%UBj(my_tile)
         DO ibry=1,4
           SELECT CASE (ibry)
             CASE (iwest, ieast)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBj:UBj) )
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBj:UBj) )
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBj:UBj) )
+# ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBj:UBj,          &
-     &                                                N(dg),NT(dg)) )
+     &                                                N(rg),NT(rg)) )
+# endif
             CASE (isouth, inorth)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBi:UBi) )
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBi:UBi) )
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBi:UBi) )
+# ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
-     &                                                N(dg),NT(dg)) )
+     &                                                N(rg),NT(rg)) )
+# endif
           END SELECT
         END DO
       END DO
@@ -418,54 +424,89 @@
           BRY_CONTACT(ibry,cr) % Ib = ispval
           BRY_CONTACT(ibry,cr) % Jb = ispval
           BRY_CONTACT(ibry,cr) % C2Bindex = ispval
+# ifdef SOLVE3D
+          BRY_CONTACT(ibry,cr) % Tflux = 0.0_r8
+# endif
         END DO
       END DO
 !
 !  Identify contact points located on the grid boundary.  Notice that
-!  all the contact points are looped "Ncontact" times to determine the
-!  cell containing the finer grid physical boundary for both donor and
-!  receiver grids. In refinement grids, the contact regions are flipped
-!  for consistency with the coding logic elsewhere.
+!  the conjugate contact region (CCR) is also processed in refinement
+!  grids but it is not yet used. Also, the CCR indices (Ib,Jb) are
+!  in refinement overwriten in the m-loop below because several finer
+!  grid contact points (RefineScale) are contained in the coarser grid
+!  cell. The C2Bindex in this case has the value for the last processed
+!  contact point with contact region "cr".
 !
-      DO cr=1,Ncontact
+!  In refinement grids, the contact regions are flipped for consistency
+!  with the coding logic elsewhere (HGA:  I need to check if this is
+!  still the case).
+!
+      DO m=1,NCdatum
+        cr=contact_region(m)
         dg=donor_grid(cr)
         rg=receiver_grid(cr)
-        ic=1
-        DO m=1,NCdatum
-          ibry=on_boundary(m)
-          IF ((m.gt.NCpoints(ic)).and.(ic.lt.Ncontact)) THEN
-            ic=ic+1
-          END IF
-          IF (RefinedGrid(dg).and.RefinedGrid(rg)) THEN
-            IF (rg.lt.dg) THEN
-              i=Idg_cp(m)        ! coarser donor grid cell containing
-              j=Jdg_cp(m)        ! finer grid physical boundary points
-            ELSE
-              i=Irg_cp(m)        ! finer receiver grid cell physical
-              j=Jrg_cp(m)        ! boundary points
-            END IF
-          ELSE
-            i=Irg_cp(m)          ! composite grids
-            j=Jrg_cp(m)
-          END IF
-          IF ((ibry.eq.iwest ).or.(ibry.eq.ieast )) THEN
-            Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr))
-            Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr))
-            Jbmin(ibry,cr)=MIN(j,Jbmin(ibry,cr))
-            Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr))
-            BRY_CONTACT(ibry,cr) % Ib(j) = i
-            BRY_CONTACT(ibry,cr) % Jb(j) = j
-            BRY_CONTACT(ibry,cr) % C2Bindex(j) = m-NstrU(ic)+1
-          ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-            Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr))
-            Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr))
-            Jbmin(ibry,cr)=MIN(j,Jbmin(ibry,cr))
-            Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr))
-            BRY_CONTACT(ibry,cr) % Ib(i) = i
-            BRY_CONTACT(ibry,cr) % Jb(i) = j
-            BRY_CONTACT(ibry,cr) % C2Bindex(i) = m-NstrV(ic)+1
+        ibry=on_boundary(m)
+        DO ic=1,Ncontact
+          IF ((dg.eq.receiver_grid(ic)).and.                            &
+     &        (rg.eq.donor_grid(ic))) THEN
+            CCR=ic                            ! conjugate contact region
+            EXIT
           END IF
         END DO
+        IF (RefinedGrid(dg).and.RefinedGrid(rg)) THEN
+          IF ((ibry.eq.iwest ).or.(ibry.eq.ieast )) THEN
+            ir=Irg_cp(m)
+            jr=Jrg_cp(m)
+            Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr ))
+            Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr ))
+            Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr ))
+            Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr ))
+            BRY_CONTACT(ibry,cr ) % Ib(jr) = ir
+            BRY_CONTACT(ibry,cr ) % Jb(jr) = jr
+            BRY_CONTACT(ibry,cr ) % C2Bindex(jr) = m-NstrU(cr)+1
+!
+            id=Idg_cp(m)
+            jd=Jdg_cp(m)
+            Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
+            Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
+            Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
+            Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
+            BRY_CONTACT(ibry,CCR) % Ib(jd) = id
+            BRY_CONTACT(ibry,CCR) % Jb(jd) = jd
+            BRY_CONTACT(ibry,CCR) % C2Bindex(jd) = m-NstrU(cr)+1  ! same
+          ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+            ir=Irg_cp(m)
+            jr=Jrg_cp(m)
+            Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr))
+            Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr))
+            Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr))
+            Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr))
+            BRY_CONTACT(ibry,cr ) % Ib(ir) = ir
+            BRY_CONTACT(ibry,cr ) % Jb(ir) = jr
+            BRY_CONTACT(ibry,cr ) % C2Bindex(ir) = m-NstrV(cr)+1
+!
+            id=Idg_cp(m)
+            jd=Jdg_cp(m)
+            Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
+            Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
+            Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
+            Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
+            BRY_CONTACT(ibry,CCR) % Ib(id) = id
+            BRY_CONTACT(ibry,CCR) % Jb(id) = jd
+            BRY_CONTACT(ibry,CCR) % C2Bindex(id) = m-NstrV(cr)+1  ! same
+          END IF
+        ELSE                                                 ! composite
+          i=Irg_cp(m)
+          j=Jrg_cp(m)
+          Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr ))
+          Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr ))
+          Jbmin(ibry,cr)=MIN(j,Jbmin(ibry,cr ))
+          Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr ))
+          BRY_CONTACT(ibry,cr) % Ib(j) = i
+          BRY_CONTACT(ibry,cr) % Jb(j) = j
+          BRY_CONTACT(ibry,cr) % C2Bindex(j) = m-NstrU(cr)+1
+        END IF
       END DO
 !
 !  Set minimum and maximum indices to process at each boundary.

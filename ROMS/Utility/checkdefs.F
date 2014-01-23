@@ -377,6 +377,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' ANA_WINDS,'
 #endif
+#if defined ANA_WTYPE && defined WTYPE_GRID    && \
+   (defined LMD_SKPP  || defined SOLAR_SOURCE)
+      IF (Master) WRITE (stdout,20) 'ANA_WTYPE',                        &
+     &   'Analytical spatially varying Jerlov water type index.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' ANA_WTYPE,'
+#endif
 #ifdef ANA_WWAVE
       IF (Master) WRITE (stdout,20) 'ANA_WWAVE',                        &
      &   'Analytical wind induced waves.'

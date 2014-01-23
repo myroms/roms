@@ -138,7 +138,7 @@
 !
       USE mod_param
       USE mod_ncparam
-# ifdef NESTING
+# if defined NESTING && !defined ONE_WAY
       USE mod_nesting
 # endif
       USE mod_scalars
@@ -585,7 +585,7 @@
             END DO
           END IF
 
-# ifdef NESTING
+# if defined NESTING && !defined ONE_WAY
 !
 !  If refinement grids, extract tracer horizontal advection fluxes
 !  (Hz*u*T/n, Hz*v*T/m) at the grid contact boundary (physical

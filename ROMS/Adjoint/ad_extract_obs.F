@@ -362,8 +362,8 @@
           w22=p2*q2
           w12=p1*q2
           IF (Zobs(iobs).gt.0.0_r8) THEN
-            k1=INT(Zobs(iobs))                 ! Positions in fractional
-            k2=MIN(k1+1,N(ng))                 ! levels
+            k1=MAX(1,INT(Zobs(iobs)))          ! Positions in fractional
+            k2=MIN(INT(Zobs(iobs))+1,N(ng))    ! levels
             r2=REAL(k2-k1,r8)*(Zobs(iobs)-REAL(k1,r8))
             r1=1.0_r8-r2
           ELSE

@@ -30,10 +30,10 @@
 !
 !  Local variable declarations.
 !
-      logical, dimension(Ngrids) :: Lcoincident
-      logical, dimension(Ngrids) :: Lcomposite
-      logical, dimension(Ngrids) :: Lmosaic
-      logical, dimension(Ngrids) :: Lrefinement
+      logical, dimension((Ngrids-1)*2) :: Lcoincident
+      logical, dimension((Ngrids-1)*2) :: Lcomposite
+      logical, dimension((Ngrids-1)*2) :: Lmosaic
+      logical, dimension((Ngrids-1)*2) :: Lrefinement
 
       logical, dimension((Ngrids-1)*2) :: Linterpolate
 !
@@ -577,13 +577,14 @@
 !
 !  Set composite and refinement grids switches.
 !
-      DO ig=1,Ngrids
+      DO cr=1,Ncontact
+        rg=receiver_grid(cr)
         DO ibry=1,4
-          IF (Lcomposite(ig).and.ContactRegion(ibry,ig)) THEN
-            CompositeGrid(ibry,ig)=.TRUE.
+          IF (Lcomposite(cr).and.ContactRegion(ibry,rg)) THEN
+            CompositeGrid(ibry,rg)=.TRUE.
           END IF
         END DO
-        RefinedGrid(ig)=Lrefinement(ig)
+        RefinedGrid(rg)=Lrefinement(cr)
       END DO
 !
 !  Refinement grid scale factor.
