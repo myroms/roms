@@ -99,7 +99,7 @@
               END IF
               ifield=isTvar(idsed(itracer))
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                      iTrcStr, iTrcEnd,                           &
+     &                      idsed(iTrcStr), idsed(iTrcEnd),             &
      &                      Vname(1,idTvar(idsed(itracer))), LBC)
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isTvar)')
@@ -110,7 +110,7 @@
               END IF
               ifield=isTvar(idsed(itracer))
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
-     &                      iTrcStr, iTrcEnd,                           &
+     &                      idsed(iTrcStr), idsed(iTrcEnd),             &
      &                      Vname(1,idTvar(idsed(itracer))), ad_LBC)
 #endif
             CASE ('MUD_SD50')
@@ -1197,13 +1197,13 @@
      &        'Akt_bak',6x,'Tnudg',/,9x,'(N/m2)',6x,'(N/m2)',6x,        &
      &        '(m2/s)',6x,'(m4/s)',7x,'(m2/s)',6x,'(day)',/)
   90  FORMAT (/,9x,'morph_fac',/,9x,'(nondim)',/)
- 100  FORMAT (/,' New bed layer formed when deposition exceeds ',e11.5, &
+ 100  FORMAT (/,' New bed layer formed when deposition exceeds ',e11.4, &
      &        ' (m).')
  110  FORMAT (' Two first layers are combined when 2nd layer smaller ', &
-     &         'than ',e11.5,' (m).')
- 120  FORMAT (' Rate coefficient for bed load transport = ',e11.5,/)
- 130  FORMAT (' Transition for mixed sediment =',e11.5,/)
- 140  FORMAT (' Transition for cohesive sediment =',e11.5,/)
+     &         'than ',e11.4,' (m).')
+ 120  FORMAT (' Rate coefficient for bed load transport = ',e11.4,/)
+ 130  FORMAT (' Transition for mixed sediment =',e11.4,/)
+ 140  FORMAT (' Transition for cohesive sediment =',e11.4,/)
  150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
  160  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
 

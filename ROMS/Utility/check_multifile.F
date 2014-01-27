@@ -31,61 +31,94 @@
 !
 !  Local variable declarations.
 !
-      logical :: foundit
+      logical :: Lcheck, foundit
       logical :: check_file
 
-      integer :: Fcount, i, ifile, lstr
+      integer :: Fcount, Nfiles, i, ifile, lstr
 
-      real(r8) :: Tmax, Tmin, Tscale
+      real(r8) :: Tfinal, Tmax, Tmin, Tscale
 
-      character(len=14 ) :: Tmin_code, Tmax_code, t_code
+      character(len=14 ) :: F_code, I_code, Tmin_code, Tmax_code
       character(len=256) :: ncname
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  If applicable, initialize parameters for input multi-files.
-!-----------------------------------------------------------------------
+!=======================================================================
 !
 !  Get initialization time string.
 !
-      CALL time_string(time(ng), t_code)
+      CALL time_string(time(ng), I_code)
 !
+!  Get final time string for simulation.
+!
+      Tfinal=time(ng)+ntimes(ng)*dt(ng)
+      CALL time_string(tfinal, F_code)
+!
+!-----------------------------------------------------------------------
 !  Input lateral boundary conditions data.
+!-----------------------------------------------------------------------
 !
       IF (ObcData(ng)) THEN
-        IF (BRY(ng)%Nfiles.gt.1) THEN
-          DO ifile=1,BRY(ng)%Nfiles
-            ncname=BRY(ng)%files(ifile)
-            foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
-            IF (exit_flag.ne.NoError) RETURN
-            BRY(ng)%time_min(ifile)=Tmin
-            BRY(ng)%time_max(ifile)=Tmax
-          END DO
+        Nfiles=BRY(ng)%Nfiles
+        DO ifile=1,Nfiles
+          ncname=BRY(ng)%files(ifile)
+          foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
+     &                       Lcheck)
+          IF (exit_flag.ne.NoError) RETURN
+          BRY(ng)%time_min(ifile)=Tmin
+          BRY(ng)%time_max(ifile)=Tmax
+        END DO
 !
-          Fcount=0
-          DO ifile=1,BRY(ng)%Nfiles
+!  Set the appropriate file counter to use during initialization or
+!  restart.
+!
+        Fcount=0
+        IF (Lcheck) THEN
+          DO ifile=1,Nfiles
             Tmin=Tscale*BRY(ng)%time_min(ifile)
             IF (time(ng).ge.Tmin) THEN
               Fcount=ifile
+              EXIT
             END IF
           END DO
+        ELSE
+          Fcount=1
+        END IF
 !
-          IF (Fcount.gt.0) THEN
-            BRY(ng)%Fcount=Fcount
-            ncname=BRY(ng)%files(Fcount)
-            lstr=LEN_TRIM(ncname)
-            BRY(ng)%name=TRIM(ncname)
-            BRY(ng)%base=ncname(1:lstr-3)
-          ELSE
+!  Initialize other structure parameters or issue an error if data does
+!  not include initalization time.
+!
+        IF (Fcount.gt.0) THEN
+          BRY(ng)%Fcount=Fcount
+          ncname=BRY(ng)%files(Fcount)
+          lstr=LEN_TRIM(ncname)
+          BRY(ng)%name=TRIM(ncname)
+          BRY(ng)%base=ncname(1:lstr-3)
+        ELSE
+          IF (Master.and.Lcheck) THEN
+            WRITE (stdout,10) 'Lateral Boundary', I_code
+            DO ifile=1,Nfiles
+              Tmin=Tscale*BRY(ng)%time_min(ifile)
+              Tmax=Tscale*BRY(ng)%time_max(ifile)
+              CALL time_string(Tmin, Tmin_code)
+              CALL time_string(Tmax, Tmax_code)
+              WRITE (stdout,20) Tmin_code, Tmax_code,                   &
+     &                          TRIM(BRY(ng)%files(ifile))
+            END DO
+          END IF
+          exit_flag=4
+        END IF
+!
+!  Check if there is boundary data to the end of the simulation.
+!
+        IF (Lcheck) THEN
+          Tmax=Tscale*BRY(ng)%time_max(Nfiles)
+          IF (Tfinal.gt.Tmax) THEN
+            CALL time_string(Tmax, Tmax_code)
             IF (Master) THEN
-              WRITE (stdout,10) 'Lateral Boundary', t_code
-              DO ifile=1,BRY(ng)%Nfiles
-                Tmin=Tscale*BRY(ng)%time_min(ifile)
-                Tmax=Tscale*BRY(ng)%time_max(ifile)
-                CALL time_string(Tmin, Tmin_code)
-                CALL time_string(Tmax, Tmax_code)
-                WRITE (stdout,20) Tmin_code, Tmax_code,                 &
-     &                            TRIM(BRY(ng)%files(ifile))
-              END DO
+              WRITE (stdout,30) 'Lateral Boundary',                     &
+     &                          TRIM(BRY(ng)%files(Nfiles)),            &
+     &                          Tmax_code, F_code
             END IF
             exit_flag=4
           END IF
@@ -94,43 +127,71 @@
 
 #ifdef FRC_FILE
 !
+!-----------------------------------------------------------------------
 !  Input forcing data.
+!-----------------------------------------------------------------------
 !
       DO i=1,nFfiles(ng)
-        IF (FRC(i,ng)%Nfiles.gt.1) THEN
-          DO ifile=1,FRC(i,ng)%Nfiles
-            ncname=FRC(i,ng)%files(ifile)
-            foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
-            IF (exit_flag.ne.NoError) RETURN
-            FRC(i,ng)%time_min(ifile)=Tmin
-            FRC(i,ng)%time_max(ifile)=Tmax
-          END DO
+        Nfiles=FRC(i,ng)%Nfiles
+        DO ifile=1,Nfiles
+          ncname=FRC(i,ng)%files(ifile)
+          foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
+     &                       Lcheck)
+          IF (exit_flag.ne.NoError) RETURN
+          FRC(i,ng)%time_min(ifile)=Tmin
+          FRC(i,ng)%time_max(ifile)=Tmax
+        END DO
 !
-          Fcount=0
-          DO ifile=1,FRC(i,ng)%Nfiles
+!  Set the appropriate file counter to use during initialization or
+!  restart.
+!
+        Fcount=0
+        IF (Lcheck) THEN
+          DO ifile=1,Nfiles
             Tmin=Tscale*FRC(i,ng)%time_min(ifile)
             IF (time(ng).ge.Tmin) THEN
               Fcount=ifile
+              EXIT
             END IF
           END DO
+        ELSE
+          Fcount=1
+        END IF
 !
-          IF (Fcount.gt.0) THEN
-            FRC(i,ng)%Fcount=Fcount
-            ncname=FRC(i,ng)%files(Fcount)
-            lstr=LEN_TRIM(ncname)
-            FRC(i,ng)%name=TRIM(ncname)
-            FRC(i,ng)%base=ncname(1:lstr-3)
-          ELSE
+!  Initialize other structure parameters or issue an error if data does
+!  not include initalization time.
+!
+        IF (Fcount.gt.0) THEN
+          FRC(i,ng)%Fcount=Fcount
+          ncname=FRC(i,ng)%files(Fcount)
+          lstr=LEN_TRIM(ncname)
+          FRC(i,ng)%name=TRIM(ncname)
+          FRC(i,ng)%base=ncname(1:lstr-3)
+        ELSE
+          IF (Master.and.Lcheck) THEN
+            WRITE (stdout,10) 'Forcing', I_code
+            DO ifile=1,Nfiles
+              Tmin=Tscale*FRC(i,ng)%time_min(ifile)
+              Tmax=Tscale*FRC(i,ng)%time_max(ifile)
+              CALL time_string(Tmin, Tmin_code)
+              CALL time_string(Tmax, Tmax_code)
+              WRITE (stdout,20) Tmin_code, Tmax_code,                   &
+     &                          TRIM(FRC(i,ng)%files(ifile))
+            END DO
+          END IF
+          exit_flag=4
+        END IF
+!
+!  Check if there is focing data to the end of the simulation.
+!
+        IF (Lcheck) THEN
+          Tmax=Tscale*FRC(i,ng)%time_max(Nfiles)
+          IF (Tfinal.gt.Tmax) THEN
+            CALL time_string(Tmax, Tmax_code)
             IF (Master) THEN
-              WRITE (stdout,10) 'Forcing', t_code
-              DO ifile=1,FRC(i,ng)%Nfiles
-                Tmin=Tscale*FRC(i,ng)%time_min(ifile)
-                Tmax=Tscale*FRC(i,ng)%time_max(ifile)
-                CALL time_string(Tmin, Tmin_code)
-                CALL time_string(Tmax, Tmax_code)
-                WRITE (stdout,20) Tmin_code, Tmax_code,                 &
-     &                            TRIM(FRC(i,ng)%files(ifile))
-              END DO
+              WRITE (stdout,30) 'Forcing',                              &
+     &                          TRIM(FRC(i,ng)%files(Nfiles)),          &
+     &                          Tmax_code, F_code
             END IF
             exit_flag=4
           END IF
@@ -139,42 +200,69 @@
 #endif
 #ifdef CLM_FILE
 !
+!-----------------------------------------------------------------------
 !  Input climatology data.
+!-----------------------------------------------------------------------
 !
-      IF (CLM(ng)%Nfiles.gt.1) THEN
-        DO ifile=1,CLM(ng)%Nfiles
-          ncname=CLM(ng)%files(ifile)
-          foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale)
-          IF (exit_flag.ne.NoError) RETURN
-          CLM(ng)%time_min(ifile)=Tmin
-          CLM(ng)%time_max(ifile)=Tmax
-        END DO
+      Nfiles=CLM(ng)%Nfiles
+      DO ifile=1,Nfiles
+        ncname=CLM(ng)%files(ifile)
+        foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,       &
+     &                     Lcheck)
+        IF (exit_flag.ne.NoError) RETURN
+        CLM(ng)%time_min(ifile)=Tmin
+        CLM(ng)%time_max(ifile)=Tmax
+      END DO
 !
-        Fcount=0
-        DO ifile=1,CLM(ng)%Nfiles
+!  Set the appropriate file counter to use during initialization or
+!  restart.
+!
+      Fcount=0
+      IF (Lcheck) THEN
+        DO ifile=1,Nfiles
           Tmin=Tscale*CLM(ng)%time_min(ifile)
           IF (time(ng).ge.Tmin) THEN
             Fcount=ifile
           END IF
         END DO
+      ELSE
+        Fcount=1
+      END IF
 !
-        IF (Fcount.gt.0) THEN
-          CLM(ng)%Fcount=Fcount
-          ncname=CLM(ng)%files(Fcount)
-          lstr=LEN_TRIM(ncname)
-          CLM(ng)%name=TRIM(ncname)
-          CLM(ng)%base=ncname(1:lstr-3)
-        ELSE
+!  Initialize other structure parameters or issue an error if data does
+!  not include initalization time.
+!
+      IF (Fcount.gt.0) THEN
+        CLM(ng)%Fcount=Fcount
+        ncname=CLM(ng)%files(Fcount)
+        lstr=LEN_TRIM(ncname)
+        CLM(ng)%name=TRIM(ncname)
+        CLM(ng)%base=ncname(1:lstr-3)
+      ELSE
+        IF (Master.and.Lcheck) THEN
+          WRITE (stdout,10) 'Climatology', I_code
+          DO ifile=1,Nfiles
+            Tmin=Tscale*CLM(ng)%time_min(ifile)
+            Tmax=Tscale*CLM(ng)%time_max(ifile)
+            CALL time_string(Tmin, Tmin_code)
+            CALL time_string(Tmax, Tmax_code)
+            WRITE (stdout,20) Tmin_code, Tmax_code,                     &
+     &                        TRIM(CLM(ng)%files(ifile))
+          END DO
+        END IF
+        exit_flag=4
+      END IF
+!
+!  Check if there is boundary data to the end of the simulation.
+!
+      IF (Lcheck) THEN
+        Tmax=Tscale*CLM(ng)%time_max(Nfiles)
+        IF (Tfinal.gt.Tmax) THEN
+          CALL time_string(Tmax, Tmax_code)
           IF (Master) THEN
-            WRITE (stdout,10) 'Climatology', t_code
-            DO ifile=1,CLM(ng)%Nfiles
-              Tmin=Tscale*CLM(ng)%time_min(ifile)
-              Tmax=Tscale*CLM(ng)%time_max(ifile)
-              CALL time_string(Tmin, Tmin_code)
-              CALL time_string(Tmax, Tmax_code)
-              WRITE (stdout,20) Tmin_code, Tmax_code,                   &
-     &                          TRIM(CLM(ng)%files(ifile))
-            END DO
+            WRITE (stdout,30) 'Climatology',                            &
+     &                        TRIM(CLM(ng)%files(Nfiles)),              &
+     &                        Tmax_code, F_code
           END IF
           exit_flag=4
         END IF
@@ -185,12 +273,16 @@
      &        ' multi-files: ',/,19x,'data does not include',           &
      &        ' initialization time = ', a,/)
  20   FORMAT (3x,a,2x,a,5x,a)
+ 30   FORMAT (/,' CHECK_MULTIFILE - Error while checking input ', a,    &
+     &        ' file:',/,19x,a,/,19x,                                   &
+     &        'last data time record available is for day: ',a,/,19x,   &
+     &        'but data is needed to finish run until day: ',a)
 
       RETURN
       END SUBROUTINE check_multifile
 !
-      FUNCTION check_file (ng, model, ncname, Tmin, Tmax, Tscale)       &
-     &                    RESULT (foundit)
+      FUNCTION check_file (ng, model, ncname, Tmin, Tmax, Tscale,       &
+     &                     Lcheck) RESULT (foundit)
 !
 !=======================================================================
 !                                                                      !
@@ -210,6 +302,8 @@
 !     Tmin         Available minimum time variable value.              !
 !     Tmax         Available maximum time variable value.              !
 !     Tscale       Scale to convert time variable units to seconds     !
+!     Lcheck       Switch to indicate that the time range needs to be  !
+!                    checked by the calling routine.                   !
 !     foundit      The value of the result is TRUE/FALSE if the        !
 !                    time variable is found or not.                    !
 !                                                                      !
@@ -225,6 +319,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(out) :: Lcheck
+
       integer, intent(in) :: ng, model
 
       character (*), intent(in) :: ncname
@@ -248,6 +344,7 @@
 !  Initialize.
 !
       foundit=.FALSE.
+      Lcheck=.TRUE.
       Tscale=1.0_r8                        ! seconds
       Tmin=0.0_r8
       Tmax=0.0_r8
@@ -265,6 +362,12 @@
      &            (var_ndim(i).eq.1)) THEN
           TvarName=TRIM(var_name(i))
           foundit=.TRUE.
+          EXIT
+        ELSE IF ((INDEX(TRIM(var_name(i)),'tide_period').ne.0).and.     &
+     &            (var_ndim(i).eq.1)) THEN
+          TvarName=TRIM(var_name(i))
+          foundit=.TRUE.
+          Lcheck=.FALSE.            ! we do not need to check tidal data
           EXIT
         END IF
       END DO
@@ -285,6 +388,10 @@
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Set number of records available and check the 'units' attribute.
+!  Also, set output logical switch 'Lcheck' for the calling to check
+!  the available data time range. For example, we need to check it
+!  there is enough data to finish the simulation.  Notice that for
+!  data with 'cycle_length', Lcheck = FALSE.
 !
       Nrec=var_Dsize(1)              ! time is a 1D array
       DO i=1,nvatt
@@ -292,7 +399,11 @@
           Tunits=TRIM(var_Achar(i))
           IF (Tunits(1:3).eq.'day') THEN
             Tscale=day2sec
+          ELSE IF (Tunits(1:4).eq.'hour') THEN
+            Tscale=3600.0_r8
           END IF
+        ELSE IF (TRIM(var_Aname(i)).eq.'cycle_length') THEN
+          Lcheck=.FALSE.
         END IF
       END DO
 !
