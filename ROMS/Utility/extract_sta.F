@@ -160,8 +160,8 @@
      &                     w211*A(i2,j1)+                               &
      &                     w121*A(i1,j2)+                               &
      &                     w221*A(i2,j2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -229,8 +229,8 @@
      &                     w211*A(i2,j1)+                               &
      &                     w121*A(i1,j2)+                               &
      &                     w221*A(i2,j2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -298,8 +298,8 @@
      &                     w211*A(i2,j1)+                               &
      &                     w121*A(i1,j2)+                               &
      &                     w221*A(i2,j2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -487,8 +487,8 @@
      &                     w212*A(i2,j1,k2)+                            &
      &                     w122*A(i1,j2,k2)+                            &
      &                     w222*A(i2,j2,k2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -621,8 +621,8 @@
      &                     w212*A(i2,j1,k2)+                            &
      &                     w122*A(i1,j2,k2)+                            &
      &                     w222*A(i2,j2,k2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -755,8 +755,8 @@
      &                     w212*A(i2,j1,k2)+                            &
      &                     w122*A(i1,j2,k2)+                            &
      &                     w222*A(i2,j2,k2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO
@@ -872,8 +872,8 @@
      &                     w212*A(i2,j1,k2)+                            &
      &                     w122*A(i1,j2,k2)+                            &
      &                     w222*A(i2,j2,k2))
-            IF (ABS(Apos(ng)).eq.0.0_r8) Apos(ng)=0.0_r8
-          ELSE
+            IF (ABS(Apos(np)).eq.0.0_r8) Apos(np)=0.0_r8      ! positive
+          ELSE                                                ! zero
             Apos(np)=Aspv
           END IF
         END DO

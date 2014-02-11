@@ -210,12 +210,12 @@
 !
         ELSE IF (isection.eq.n2way) THEN
 
-#  ifdef SOLVE3D
+          ngc=RefineDonor(ng)                ! coarse grid number
+
+#  if defined SOLVE3D && !defined NO_CORRECT_TRACER
 !
 !  Correct coarse grid tracer values at the refinement grid, ng,
 !  boundary with the refined accumulated fluxes (Hz*u*T/n, Hz*v*T/m).
-!
-          ngc=RefineDonor(ng)                ! coarse grid number
 !
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL correct_tracer (ngc, ng, model, tile)
@@ -1727,7 +1727,7 @@
       integer :: Jedge, Jbc, Jbc_min, Jbf, Jo
       integer :: Istr, Iend, Jstr, Jend
       integer :: Istrm2, Iendp2, Jstrm2, Jendp2
-      integer :: i, isum, itrc, j, jsum, k, half
+      integer :: i, isum, itrc, j, jsum, k, half, m
       integer :: cr, dg, dgcr, rg, rgcr
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       integer :: ic
@@ -1803,8 +1803,10 @@
 !  Finer grid western boundary.
 !-----------------------------------------------------------------------
 !
-        Jbc_min=BRY_CONTACT(iwest,rgcr)%Jbmin
+!!      Jbc_min=BRY_CONTACT(iwest,rgcr)%Jbmin
+        Jbc_min=BRY_CONTACT(iwest,rgcr)%Jbmin+1
         DO j=Jstr,Jend
+          m=BRY_CONTACT(iwest,rgcr)%C2Bindex(j)
           Ibc=BRY_CONTACT(iwest,rgcr)%Ib(j)
           Jbc=BRY_CONTACT(iwest,rgcr)%Jb(j)
           IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                    &
@@ -1860,8 +1862,10 @@
 !  Finer grid eastern boundary.
 !-----------------------------------------------------------------------
 !
-        Jbc_min=BRY_CONTACT(ieast,rgcr)%Jbmin
+!!      Jbc_min=BRY_CONTACT(ieast,rgcr)%Jbmin
+        Jbc_min=BRY_CONTACT(ieast,rgcr)%Jbmin+1
         DO j=Jstr,Jend
+          m=BRY_CONTACT(ieast,rgcr)%C2Bindex(j)
           Ibc=BRY_CONTACT(ieast,rgcr)%Ib(j)
           Jbc=BRY_CONTACT(ieast,rgcr)%Jb(j)
           IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                    &
@@ -1917,8 +1921,10 @@
 !  Finer grid southern boundary.
 !-----------------------------------------------------------------------
 !
-        Ibc_min=BRY_CONTACT(isouth,rgcr)%Ibmin
+!!      Ibc_min=BRY_CONTACT(isouth,rgcr)%Ibmin
+        Ibc_min=BRY_CONTACT(isouth,rgcr)%Ibmin+1
         DO i=Istr,Iend
+          m=BRY_CONTACT(isouth,rgcr)%C2Bindex(i)
           Ibc=BRY_CONTACT(isouth,rgcr)%Ib(i)
           Jbc=BRY_CONTACT(isouth,rgcr)%Jb(i)
           IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                    &
@@ -1974,8 +1980,10 @@
 !  Finer grid northern boundary.
 !-----------------------------------------------------------------------
 !
-        Ibc_min=BRY_CONTACT(inorth,rgcr)%Ibmin
+!!      Ibc_min=BRY_CONTACT(inorth,rgcr)%Ibmin
+        Ibc_min=BRY_CONTACT(inorth,rgcr)%Ibmin+1
         DO i=Istr,Iend
+          m=BRY_CONTACT(inorth,rgcr)%C2Bindex(i)
           Ibc=BRY_CONTACT(inorth,rgcr)%Ib(i)
           Jbc=BRY_CONTACT(inorth,rgcr)%Jb(i)
           IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                    &
@@ -3816,14 +3824,20 @@
           OCEAN(ng)%zeta(i,j,1)=my_value
           OCEAN(ng)%zeta(i,j,2)=my_value
           OCEAN(ng)%zeta(i,j,3)=my_value
+# ifdef SOLVE3D
           COUPLING(ng)%Zt_avg1(i,j)=my_value
+# endif
         END IF
       END DO
 !
-!  2D momentum in the XI-direction. Notice that contact points at the
-!  the domain western and eastern boundaries are avoided for indx1(ng)
-!  time record. They are be assigned in the mass flux computations
-!  below. This exception is done for adjoint correctness.
+!  2D momentum in the XI-direction.
+# ifdef SOLVE3D
+!
+!  Notice that contact points at the domain western and eastern
+!  boundaries are avoided for indx1(ng) time record. They are be
+!  assigned in the mass flux computations below. This exception is
+!  done for adjoint correctness.
+# endif
 !
       DO m=1,Ucontact(cr)%Npoints
         i=Ucontact(cr)%Irg(m)
@@ -3853,6 +3867,7 @@
           my_value=my_value*GRID(ng)%umask_wet(i,j)
 # endif
           DO irec=1,3
+# ifdef SOLVE3D
             Uboundary=(m.eq.BRY_CONTACT(iwest,cr)%C2Bindex(j)).or.      &
      &                (m.eq.BRY_CONTACT(ieast,cr)%C2Bindex(j))
             IF(.not.(Uboundary.and.(irec.eq.indx1(ng)))) THEN
@@ -3860,14 +3875,21 @@
 !!          ELSE                                     ! for debugging
 !!            OCEAN(ng)%ubar(i,j,irec)=0.0_r8        ! purposes
             END IF
+# else
+            OCEAN(ng)%ubar(i,j,irec)=my_value
+# endif
           END DO
         END IF
       END DO
 !
-!  2D momentum in the ETA-direction. Notice that contact points at the
-!  the domain southern and northern boundaries are avoided for indx1(ng)
-!  time record. They are be assigned in the mass flux computations
-!  below. This exception is done for adjoint correctness.
+!  2D momentum in the ETA-direction.
+# ifdef SOLVE3D
+!
+!  Notice that contact points at the domain southern and northern
+!  boundaries are avoided for indx1(ng) time record. They are be
+!  assigned in the mass flux computations below. This exception is
+!  done for adjoint correctness.
+# endif
 !
       DO m=1,Vcontact(cr)%Npoints
         i=Vcontact(cr)%Irg(m)
@@ -3897,6 +3919,7 @@
           my_value=my_value*GRID(ng)%vmask_wet(i,j)
 # endif
           DO irec=1,3
+# ifdef SOLVE3D
             Vboundary=(m.eq.BRY_CONTACT(isouth,cr)%C2Bindex(i)).or.     &
      &                (m.eq.BRY_CONTACT(inorth,cr)%C2Bindex(i))
             IF(.not.(Vboundary.and.(irec.eq.indx1(ng)))) THEN
@@ -3904,9 +3927,14 @@
 !!          ELSE                                     ! for debugging
 !!            OCEAN(ng)%vbar(i,j,irec)=0.0_r8        ! purposes
             END IF
+# else
+            OCEAN(ng)%vbar(i,j,irec)=my_value
+# endif
           END DO
         END IF
       END DO
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Impose mass flux at the finer grid physical boundaries. This is only
@@ -3936,15 +3964,18 @@
      &         GRID(ng)%h(Istr  ,j)+                                    &
      &         OCEAN(ng)%zeta(Istr  ,j,indx1(ng)))
           cff1=GRID(ng)%on_u(Istr,j)/REFINED(cr)%on_u(m)
+#  ifdef TIME_INTERP_FLUX
+          my_value=cff1*(fac1*REFINED(cr)%DU_avg2(1,m,t1)+              &
+     &                   fac2*REFINED(cr)%DU_avg2(1,m,t2))/cff
+#  else
           my_value=cff1*REFINED(cr)%DU_avg2(1,m,t2)/cff
-!!        my_value=cff1*(fac1*REFINED(cr)%DU_avg2(1,m,t1)+              &
-!!   &                   fac2*REFINED(cr)%DU_avg2(1,m,t2))/cff
-# ifdef MASKING
+#  endif
+#  ifdef MASKING
           my_value=my_value*GRID(ng)%umask(Istr,j)
-# endif
-# ifdef WET_DRY
+#  endif
+#  ifdef WET_DRY
           my_value=my_value*GRID(ng)%umask_wet(Istr,j)
-# endif
+#  endif
           OCEAN(ng)%ubar(Istr,j,indx1(ng))=my_value
         END DO
       END IF
@@ -3960,15 +3991,18 @@
      &         GRID(ng)%h(Iend  ,j)+                                    &
      &         OCEAN(ng)%zeta(Iend  ,j,indx1(ng)))
           cff1=GRID(ng)%on_u(Iend+1,j)/REFINED(cr)%on_u(m)
+#  ifdef TIME_INTERP_FLUX
+          my_value=cff1*(fac1*REFINED(cr)%DU_avg2(1,m,t1)+              &
+     &                   fac2*REFINED(cr)%DU_avg2(1,m,t2))/cff
+#  else
           my_value=cff1*REFINED(cr)%DU_avg2(1,m,t2)/cff
-!!        my_value=cff1*(fac1*REFINED(cr)%DU_avg2(1,m,t1)+              &
-!!   &                   fac2*REFINED(cr)%DU_avg2(1,m,t2))/cff
-# ifdef MASKING
+#  endif
+#  ifdef MASKING
           my_value=my_value*GRID(ng)%umask(Iend+1,j)
-# endif
-# ifdef WET_DRY
+#  endif
+#  ifdef WET_DRY
           my_value=my_value*GRID(ng)%umask_wet(Iend+1,j)
-# endif
+#  endif
           OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=my_value
         END DO
       END IF
@@ -3984,15 +4018,18 @@
      &         GRID(ng)%h(i,Jstr  )+                                    &
      &         OCEAN(ng)%zeta(i,Jstr  ,indx1(ng)))
           cff1=GRID(ng)%om_v(i,Jstr)/REFINED(cr)%om_v(m)
+#  ifdef TIME_INTERP_FLUX
+          my_value=cff1*(fac1*REFINED(cr)%DV_avg2(1,m,t1)+              &
+     &                   fac2*REFINED(cr)%DV_avg2(1,m,t2))/cff
+#  else
           my_value=cff1*REFINED(cr)%DV_avg2(1,m,t2)/cff
-!!        my_value=cff1*(fac1*REFINED(cr)%DV_avg2(1,m,t1)+              &
-!!   &                   fac2*REFINED(cr)%DV_avg2(1,m,t2))/cff
-# ifdef MASKING
+#  endif
+#  ifdef MASKING
           my_value=my_value*GRID(ng)%vmask(i,Jstr)
-# endif
-# ifdef WET_DRY
+#  endif
+#  ifdef WET_DRY
           my_value=my_value*GRID(ng)%vmask_wet(i,Jstr)
-# endif
+#  endif
           OCEAN(ng)%vbar(i,Jstr,indx1(ng))=my_value
         END DO
       END IF
@@ -4008,18 +4045,22 @@
      &         GRID(ng)%h(i,Jend  )+                                    &
      &         OCEAN(ng)%zeta(i,Jend  ,indx1(ng)))
           cff1=GRID(ng)%om_v(i,Jend+1)/REFINED(cr)%om_v(m)
+#  ifdef TIME_INTERP_FLUX
+          my_value=cff1*(fac1*REFINED(cr)%DV_avg2(1,m,t1)+              &
+     &                   fac2*REFINED(cr)%DV_avg2(1,m,t2))/cff
+#  else
           my_value=cff1*REFINED(cr)%DV_avg2(1,m,t2)/cff
-!!        my_value=cff1*(fac1*REFINED(cr)%DV_avg2(1,m,t1)+              &
-!!   &                   fac2*REFINED(cr)%DV_avg2(1,m,t2))/cff
-# ifdef MASKING
+#  endif
+#  ifdef MASKING
           my_value=my_value*GRID(ng)%vmask(i,Jend+1)
-# endif
-# ifdef WET_DRY
+#  endif
+#  ifdef WET_DRY
           my_value=my_value*GRID(ng)%vmask_wet(i,Jend+1)
-# endif
+#  endif
           OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=my_value
         END DO
       END IF
+# endif
 
 # ifdef DISTRIBUTE
 !
@@ -4291,6 +4332,7 @@
       integer :: cr, dg, rg, i, j, k, m
       integer :: Idg, Jdg, Kdg, IminD, ImaxD, JminD, JmaxD
       integer :: Irg, Jrg, Krg, IminR, ImaxR, JminR, JmaxR
+      integer :: Idgm1, Idgp1, Jdgm1, Jdgp1
       integer :: Npoints
 #  ifdef DISTRIBUTE
       integer :: Nkpts, Nwpts, Nzpts
@@ -4386,18 +4428,24 @@
             Zd=spv
 !
 !  Extract donor grid depths for each cell containing the receiver grid
-!  contact point.
+!  contact point.  Notice that indices i+1 and j+1 are bounded to the
+!  maximum possible values in contact points at the edge of the contact
+!  region.  In such cases, Hweight(1,m)=1 and Hweight(2:3,m)=0.  This is
+!  done to avoid out of range errors. We need to take care of this in
+!  the adjoint code.
 !
             DO Kdg=1,N(dg)
               DO m=1,Npoints
-                Idg=Rcontact(cr)%Idg(m)
-                Jdg=Rcontact(cr)%Jdg(m)
+                Idg  =Rcontact(cr)%Idg(m)
+                Idgp1=MIN(Idg+1, BOUNDS(dg)%UBi(-1))
+                Jdg  =Rcontact(cr)%Jdg(m)
+                Jdgp1=MIN(Jdg+1, BOUNDS(dg)%UBj(-1))
                 IF (((IminD.le.Idg).and.(Idg.le.ImaxD)).and.            &
      &              ((JminD.le.Jdg).and.(Jdg.le.JmaxD))) THEN
                   Zd(1,Kdg,m)=GRID(dg)%z_r(Idg  ,Jdg  ,Kdg)
-                  Zd(2,Kdg,m)=GRID(dg)%z_r(Idg+1,Jdg  ,Kdg)
-                  Zd(3,Kdg,m)=GRID(dg)%z_r(Idg+1,Jdg+1,Kdg)
-                  Zd(4,Kdg,m)=GRID(dg)%z_r(Idg  ,Jdg+1,Kdg)
+                  Zd(2,Kdg,m)=GRID(dg)%z_r(Idgp1,Jdg  ,Kdg)
+                  Zd(3,Kdg,m)=GRID(dg)%z_r(Idgp1,Jdgp1,Kdg)
+                  Zd(4,Kdg,m)=GRID(dg)%z_r(Idg  ,Jdgp1,Kdg)
                 END IF
               END DO
             END DO
@@ -4570,22 +4618,29 @@
             Zd=spv
 !
 !  Extract donor grid depths for each cell containing the receiver grid
-!  contact point.
+!  contact point.  Notice that indices i-1, i+1 and j-1, j+1 are bounded
+!  the minimum/maximum possible values in contact points at the edge of
+!  the contact region.  In such cases, the interpolation weights
+!  Hweight(1,m)=1 and Hweight(2:3,m)=0.  This is done to avoid out of
+!  range errors. We need to take care of this in the adjoint code.
 !
             DO Kdg=1,N(dg)
               DO m=1,Npoints
-                Idg=Ucontact(cr)%Idg(m)
-                Jdg=Ucontact(cr)%Jdg(m)
+                Idg  =Ucontact(cr)%Idg(m)
+                Idgm1=MAX(Idg-1, BOUNDS(dg)%LBi(-1))
+                Idgp1=MIN(Idg+1, BOUNDS(dg)%UBi(-1))
+                Jdg  =Ucontact(cr)%Jdg(m)
+                Jdgp1=MIN(Jdg+1, BOUNDS(dg)%UBj(-1))
                 IF (((IminD.le.Idg).and.(Idg.le.ImaxD)).and.            &
      &              ((JminD.le.Jdg).and.(Jdg.le.JmaxD))) THEN
-                  Zd(1,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg  ,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg-1,Jdg  ,Kdg))
-                  Zd(2,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg+1,Jdg  ,Kdg)+    &
+                  Zd(1,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idgm1,Jdg  ,Kdg)+    &
      &                                GRID(dg)%z_r(Idg  ,Jdg  ,Kdg))
-                  Zd(3,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg+1,Jdg+1,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg  ,Jdg+1,Kdg))
-                  Zd(4,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg+1,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg-1,Jdg+1,Kdg))
+                  Zd(2,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg  ,Kdg)+    &
+     &                                GRID(dg)%z_r(Idgp1,Jdg  ,Kdg))
+                  Zd(3,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdgp1,Kdg)+    &
+     &                                GRID(dg)%z_r(Idgp1,Jdgp1,Kdg))
+                  Zd(4,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idgm1,Jdgp1,Kdg)+    &
+     &                                GRID(dg)%z_r(Idg  ,Jdgp1,Kdg))
                 END IF
               END DO
             END DO
@@ -4764,17 +4819,20 @@
             DO Kdg=1,N(dg)
               DO m=1,Npoints
                 Idg=Vcontact(cr)%Idg(m)
+                Idgp1=MIN(Idg+1, BOUNDS(dg)%UBi(-1))
                 Jdg=Vcontact(cr)%Jdg(m)
+                Jdgm1=MAX(Jdg-1, BOUNDS(dg)%LBj(-1))
+                Jdgp1=MIN(Jdg+1, BOUNDS(dg)%UBj(-1))
                 IF (((IminD.le.Idg).and.(Idg.le.ImaxD)).and.            &
      &              ((JminD.le.Jdg).and.(Jdg.le.JmaxD))) THEN
-                  Zd(1,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg  ,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg  ,Jdg-1,Kdg))
-                  Zd(2,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg+1,Jdg  ,Kdg)+    &
+                  Zd(1,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdgm1,Kdg)+    &
      &                                GRID(dg)%z_r(Idg  ,Jdg  ,Kdg))
-                  Zd(3,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg+1,Jdg+1,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg+1,Jdg  ,Kdg))
-                  Zd(4,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg+1,Kdg)+    &
-     &                                GRID(dg)%z_r(Idg+1,Jdg  ,Kdg))
+                  Zd(2,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idgp1,Jdgm1,Kdg)+    &
+     &                                GRID(dg)%z_r(Idgp1,Jdg  ,Kdg))
+                  Zd(3,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idgp1,Jdg  ,Kdg)+    &
+     &                                GRID(dg)%z_r(Idgp1,Jdgp1,Kdg))
+                  Zd(4,Kdg,m)=0.5_r8*(GRID(dg)%z_r(Idg  ,Jdg  ,Kdg)+    &
+     &                                GRID(dg)%z_r(Idg  ,Jdgp1,Kdg))
                 END IF
               END DO
             END DO

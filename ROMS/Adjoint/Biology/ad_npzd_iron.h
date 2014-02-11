@@ -268,6 +268,8 @@
 !
         ad_PAR=0.0_r8
         ad_Att=0.0_r8
+        ad_ExpAtt=0.0_r8
+        ad_Itop=0.0_r8
         ad_dltL=0.0_r8
         ad_dltR=0.0_r8
         ad_cu=0.0_r8

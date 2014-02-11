@@ -431,16 +431,12 @@
       END DO
 !
 !  Identify contact points located on the grid boundary.  Notice that
-!  the conjugate contact region (CCR) is also processed in refinement
-!  grids but it is not yet used. Also, the CCR indices (Ib,Jb) are
-!  in refinement overwriten in the m-loop below because several finer
-!  grid contact points (RefineScale) are contained in the coarser grid
-!  cell. The C2Bindex in this case has the value for the last processed
-!  contact point with contact region "cr".
-!
-!  In refinement grids, the contact regions are flipped for consistency
-!  with the coding logic elsewhere (HGA:  I need to check if this is
-!  still the case).
+!  the conjugate contact region (CCR) is also processed but it is not
+!  yet used. Also, the CCR indices (Ib,Jb) are in refinement overwriten
+!  in the m-loop below because several finer grid contact points
+!  (RefineScale) are contained in the coarser grid cell. The C2Bindex
+!  in this case has the value for the last processed contact point
+!  with contact region "cr".
 !
       DO m=1,NCdatum
         cr=contact_region(m)
@@ -454,58 +450,46 @@
             EXIT
           END IF
         END DO
-        IF (RefinedGrid(dg).and.RefinedGrid(rg)) THEN
-          IF ((ibry.eq.iwest ).or.(ibry.eq.ieast )) THEN
-            ir=Irg_cp(m)
-            jr=Jrg_cp(m)
-            Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr ))
-            Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr ))
-            Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr ))
-            Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr ))
-            BRY_CONTACT(ibry,cr ) % Ib(jr) = ir
-            BRY_CONTACT(ibry,cr ) % Jb(jr) = jr
-            BRY_CONTACT(ibry,cr ) % C2Bindex(jr) = m-NstrU(cr)+1
+        IF ((ibry.eq.iwest ).or.(ibry.eq.ieast )) THEN
+          ir=Irg_cp(m)
+          jr=Jrg_cp(m)
+          Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr ))
+          Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr ))
+          Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr ))
+          Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr ))
+          BRY_CONTACT(ibry,cr ) % Ib(jr) = ir
+          BRY_CONTACT(ibry,cr ) % Jb(jr) = jr
+          BRY_CONTACT(ibry,cr ) % C2Bindex(jr) = m-NstrU(cr)+1
 !
-            id=Idg_cp(m)
-            jd=Jdg_cp(m)
-            Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
-            Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
-            Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
-            Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
-            BRY_CONTACT(ibry,CCR) % Ib(jd) = id
-            BRY_CONTACT(ibry,CCR) % Jb(jd) = jd
-            BRY_CONTACT(ibry,CCR) % C2Bindex(jd) = m-NstrU(cr)+1  ! same
-          ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-            ir=Irg_cp(m)
-            jr=Jrg_cp(m)
-            Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr))
-            Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr))
-            Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr))
-            Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr))
-            BRY_CONTACT(ibry,cr ) % Ib(ir) = ir
-            BRY_CONTACT(ibry,cr ) % Jb(ir) = jr
-            BRY_CONTACT(ibry,cr ) % C2Bindex(ir) = m-NstrV(cr)+1
+          id=Idg_cp(m)
+          jd=Jdg_cp(m)
+          Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
+          Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
+          Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
+          Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
+          BRY_CONTACT(ibry,CCR) % Ib(jd) = id
+          BRY_CONTACT(ibry,CCR) % Jb(jd) = jd
+          BRY_CONTACT(ibry,CCR) % C2Bindex(jd) = m-NstrU(cr)+1  ! same
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          ir=Irg_cp(m)
+          jr=Jrg_cp(m)
+          Ibmin(ibry,cr )=MIN(ir,Ibmin(ibry,cr))
+          Ibmax(ibry,cr )=MAX(ir,Ibmax(ibry,cr))
+          Jbmin(ibry,cr )=MIN(jr,Jbmin(ibry,cr))
+          Jbmax(ibry,cr )=MAX(jr,Jbmax(ibry,cr))
+          BRY_CONTACT(ibry,cr ) % Ib(ir) = ir
+          BRY_CONTACT(ibry,cr ) % Jb(ir) = jr
+          BRY_CONTACT(ibry,cr ) % C2Bindex(ir) = m-NstrV(cr)+1
 !
-            id=Idg_cp(m)
-            jd=Jdg_cp(m)
-            Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
-            Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
-            Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
-            Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
-            BRY_CONTACT(ibry,CCR) % Ib(id) = id
-            BRY_CONTACT(ibry,CCR) % Jb(id) = jd
-            BRY_CONTACT(ibry,CCR) % C2Bindex(id) = m-NstrV(cr)+1  ! same
-          END IF
-        ELSE                                                 ! composite
-          i=Irg_cp(m)
-          j=Jrg_cp(m)
-          Ibmin(ibry,cr)=MIN(i,Ibmin(ibry,cr ))
-          Ibmax(ibry,cr)=MAX(i,Ibmax(ibry,cr ))
-          Jbmin(ibry,cr)=MIN(j,Jbmin(ibry,cr ))
-          Jbmax(ibry,cr)=MAX(j,Jbmax(ibry,cr ))
-          BRY_CONTACT(ibry,cr) % Ib(j) = i
-          BRY_CONTACT(ibry,cr) % Jb(j) = j
-          BRY_CONTACT(ibry,cr) % C2Bindex(j) = m-NstrU(cr)+1
+          id=Idg_cp(m)
+          jd=Jdg_cp(m)
+          Ibmin(ibry,CCR)=MIN(id,Ibmin(ibry,CCR))
+          Ibmax(ibry,CCR)=MAX(id,Ibmax(ibry,CCR))
+          Jbmin(ibry,CCR)=MIN(jd,Jbmin(ibry,CCR))
+          Jbmax(ibry,CCR)=MAX(jd,Jbmax(ibry,CCR))
+          BRY_CONTACT(ibry,CCR) % Ib(id) = id
+          BRY_CONTACT(ibry,CCR) % Jb(id) = jd
+          BRY_CONTACT(ibry,CCR) % C2Bindex(id) = m-NstrV(cr)+1  ! same
         END IF
       END DO
 !
