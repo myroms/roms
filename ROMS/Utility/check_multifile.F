@@ -329,7 +329,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: foundit
+      logical :: Lcycle, Lperpetual, foundit
 
       integer :: Nrec, TvarID, i, nvdim, nvatt
 
@@ -345,6 +345,8 @@
 !
       foundit=.FALSE.
       Lcheck=.TRUE.
+      Lcycle=.FALSE.
+      Lperpetual=.FALSE.
       Tscale=1.0_r8                        ! seconds
       Tmin=0.0_r8
       Tmax=0.0_r8
@@ -391,7 +393,9 @@
 !  Also, set output logical switch 'Lcheck' for the calling to check
 !  the available data time range. For example, we need to check it
 !  there is enough data to finish the simulation.  Notice that for
-!  data with 'cycle_length', Lcheck = FALSE.
+!  data with 'cycle_length', Lcheck = FALSE.  Also,  Lcheck = FALSE
+!  for perpetual time axis: the 'calendar' attribute is 'none' or
+!  the number of records in the time dimension is one (Nrec=1).
 !
       Nrec=var_Dsize(1)              ! time is a 1D array
       DO i=1,nvatt
@@ -402,10 +406,18 @@
           ELSE IF (Tunits(1:4).eq.'hour') THEN
             Tscale=3600.0_r8
           END IF
+        ELSE IF (TRIM(var_Aname(i)).eq.'calendar') THEN
+          IF ((Nrec.eq.1).or.                                           &
+     &        (INDEX(TRIM(var_Achar(i)),'none').ne.0)) THEN
+            Lperpetual=.TRUE.
+          END IF
         ELSE IF (TRIM(var_Aname(i)).eq.'cycle_length') THEN
-          Lcheck=.FALSE.
+          Lcycle=.TRUE.
         END IF
       END DO
+      IF (Lcycle.or.Lperpetual) THEN
+        Lcheck=.FALSE.
+      END IF
 !
 !  Read in time variable minimum and maximun values (input time units).
 !
