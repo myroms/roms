@@ -10,9 +10,6 @@
 !=======================================================================
 !
       USE mod_param
-# ifdef CLIMATOLOGY
-      USE mod_clima
-# endif
 # ifdef SOLVE3D
       USE mod_coupling
 # endif
@@ -86,12 +83,6 @@
      &                  OCEAN(ng) % rulag2d,    OCEAN(ng) % rvlag2d,    &
      &                  OCEAN(ng) % ubar_stokes,                        &
      &                  OCEAN(ng) % vbar_stokes,                        &
-# endif
-# ifdef M2CLIMATOLOGY
-     &                  CLIMA(ng) % ubarclm,    CLIMA(ng) % vbarclm,    &
-#  ifdef M2CLM_NUDGING
-     &                  CLIMA(ng) % M2nudgcof,                          &
-#  endif
 # endif
 # ifndef SOLVE3D
      &                  FORCES(ng) % sustr,     FORCES(ng) % svstr,     &
@@ -168,12 +159,6 @@
      &                        rulag2d, rvlag2d,                         &
      &                        ubar_stokes, vbar_stokes,                 &
 # endif
-# ifdef M2CLIMATOLOGY
-     &                        ubarclm, vbarclm,                         &
-#  ifdef M2CLM_NUDGING
-     &                        M2nudgcof,                                &
-#  endif
-# endif
 # ifndef SOLVE3D
      &                        sustr, svstr, bustr, bvstr,               &
 #  ifdef ATM_PRESS
@@ -201,6 +186,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_ncparam
       USE mod_scalars
 # if defined SEDIMENT && defined SED_MORPH
@@ -275,13 +261,6 @@
       real(r8), intent(in) :: rvlag2d(LBi:,LBj:)
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(in) :: ubarclm(LBi:,LBj:)
-      real(r8), intent(in) :: vbarclm(LBi:,LBj:)
-#   ifdef M2CLM_NUDGING
-      real(r8), intent(in) :: M2nudgcof(LBi:,LBj:)
-#   endif
 #  endif
 #  ifndef SOLVE3D
       real(r8), intent(in) :: sustr(LBi:,LBj:)
@@ -385,13 +364,6 @@
       real(r8), intent(in) :: rvlag2d(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(in) :: ubarclm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vbarclm(LBi:UBi,LBj:UBj)
-#   ifdef M2CLM_NUDGING
-      real(r8), intent(in) :: M2nudgcof(LBi:UBi,LBj:UBj)
-#   endif
 #  endif
 #  ifndef SOLVE3D
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
@@ -1790,31 +1762,36 @@
       END DO
 #  endif
 # endif
-# ifdef M2CLM_NUDGING
 !
 !-----------------------------------------------------------------------
 !  Add in nudging of 2D momentum climatology.
 !-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
-          cff=0.25_r8*(M2nudgcof(i-1,j)+M2nudgcof(i,j))*                &
-     &        om_u(i,j)*on_u(i,j)
-          rhs_ubar(i,j)=rhs_ubar(i,j)+                                  &
-     &                  cff*(Drhs(i-1,j)+Drhs(i,j))*                    &
-     &                      (ubarclm(i,j)-ubar(i,j,krhs))
+      IF (LnudgeM2CLM(ng)) THEN
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            cff=0.25_r8*(CLIMA(ng)%M2nudgcof(i-1,j)+                    &
+     &                   CLIMA(ng)%M2nudgcof(i  ,j))*                   &
+     &          om_u(i,j)*on_u(i,j)
+            rhs_ubar(i,j)=rhs_ubar(i,j)+                                &
+     &                    cff*(Drhs(i-1,j)+Drhs(i,j))*                  &
+     &                        (CLIMA(ng)%ubarclm(i,j)-                  &
+     &                         ubar(i,j,krhs))
+          END DO
         END DO
-      END DO
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
-          cff=0.25_r8*(M2nudgcof(i,j-1)+M2nudgcof(i,j))*                &
-     &        om_v(i,j)*on_v(i,j)
-          rhs_vbar(i,j)=rhs_vbar(i,j)+                                  &
-     &                  cff*(Drhs(i,j-1)+Drhs(i,j))*                    &
-     &                      (vbarclm(i,j)-vbar(i,j,krhs))
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+            cff=0.25_r8*(CLIMA(ng)%M2nudgcof(i,j-1)+                    &
+     &                   CLIMA(ng)%M2nudgcof(i,j  ))*                   &
+     &          om_v(i,j)*on_v(i,j)
+            rhs_vbar(i,j)=rhs_vbar(i,j)+                                &
+     &                    cff*(Drhs(i,j-1)+Drhs(i,j))*                  &
+     &                        (CLIMA(ng)%vbarclm(i,j)-                  &
+     &                         vbar(i,j,krhs))
+          END DO
         END DO
-      END DO
-# endif
+      END IF
+
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------

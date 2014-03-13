@@ -148,6 +148,12 @@ ad_LBC(isTvar) ==   Gra     Clo     Gra     Clo      ! idsed(:), compact
  ad_MUD_TNU2 == 0.0d0                     ! m2/s
  ad_MUD_TNU4 == 0.0d0                     ! m4/s
 
+! Logical switches (TRUE/FALSE) to increase horizontal diffusivity
+! of cohesive sediment trace in specific areas of the application
+! domain (like sponge areas) for the desired grid:
+
+  MUD_Sponge == F
+
 ! Vertical mixing coefficients for tracers in nonlinear model and
 ! basic state scale factor in adjoint-based algorithms.
 
@@ -165,16 +171,24 @@ ad_LBC(isTvar) ==   Gra     Clo     Gra     Clo      ! idsed(:), compact
 
 MUD_MORPH_FAC == 10.0d0                   ! nondimensional
 
-! Logical switches (TRUE/FALSE) to specify which variables to process for
-! tracers climatology. See glossary below for details.
-
-   MUD_Ltclm == F
-
 ! Logical switches (TRUE/FALSE) to specify which variables to consider on
 ! tracers point Sources/Sinks (like river runoff). See glossary below for
 ! details.
 
    MUD_Ltsrc == F
+
+! Logical switches (TRUE/FALSE) to read and process cohesive sediment
+! tracers climatology. See glossary below for details.
+
+   MUD_Ltclm == F
+
+! Logical switches (TRUE/FALSE) to nudge the desired cohesive sediment
+! tracer climatology field. If not analytical climatology fields, users
+! need to turn on the logical switches above to process the fields from
+! the climatology NetCDF file that are needed for nudging. See glossary
+! below for details.
+
+  MUD_Tnudge == F
 
 ! Logical switches (TRUE/FALSE) to activate writing of cohesive sediment
 ! fields into HISTORY output file.
@@ -255,6 +269,12 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 ad_SAND_TNU2 == 0.0d0                           ! m2/s
 ad_SAND_TNU4 == 0.0d0                           ! m4/s
 
+! Logical switches (TRUE/FALSE) to increase horizontal diffusivity
+! of noncohesive sediment trace in specific areas of the application
+! domain (like sponge areas) for the desired grid:
+
+ SAND_Sponge == F
+
 ! Vertical mixing coefficients for tracers in nonlinear model and
 ! basic state scale factor in adjoint-based algorithms.
 
@@ -272,16 +292,24 @@ SAND_AKT_fac == 1.0d0                           ! nondimensional
 
 SAND_MORPH_FAC == 10.0d0                        ! nondimensional
 
-! Logical switches (TRUE/FALSE) to specify which variables to process for
-! tracers climatology. See glossary below for details.
-
-  SAND_Ltclm == F
-
 ! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
 ! (like river runoff) and to specify which tracer variables to consider.
 ! See glossary below for details.
 
   SAND_Ltsrc == F
+
+! Logical switches (TRUE/FALSE) to read and process noncohesive sediment
+! tracers climatology. See glossary below for details.
+
+  SAND_Ltclm == F
+
+! Logical switches (TRUE/FALSE) to nudge the desired noncohesive sediment
+! tracer climatology field. If not analytical climatology fields, users
+! need to turn on the logical switches above to process the fields from
+! the climatology NetCDF file that are needed for nudging. See glossary
+! below for details.
+
+ SAND_Tnudge == F
 
 ! Logical switches (TRUE/FALSE) to activate writing of non-cohesive
 ! sediment fields into HISTORY output file.
@@ -464,11 +492,18 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    diffusion is activated, ad_MUD_TNU4 is the mixing
 !                    coefficient for the largest grid-cell in the domain.
 !
+!  MUD_Sponge      Logical switches (TRUE/FALSE) to increase horizontal
+!                    diffusivity of cohesive sediment tracers in sponge
+!                    areas of the domain. The CPP option SPONGE is now
+!                    deprecated and replaced with this switch to
+!                    facilitate or not sponge areas of desired tracer
+!                    in a particular nested grid.
+!
 !  MUD_AKT_BAK     Background vertical mixing coefficient (m2/s),
 !                    AKT_BAK(idsed(i)) with i=1:NCS.
 !
 !  MUD_AKT_fac     Adjoint-based algorithms vertical mixing, basic state,
-!                   scale factor (nondimensional) for biological tracer
+!                   scale factor (nondimensional) for sediment tracer
 !                   variables; [1:NCS,1:Ngrids] values are expected. In
 !                   some applications, a smaller/larger values of vertical
 !                   mixing are necessary for stability. It is only used
@@ -480,20 +515,6 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !  MUD_MORPH_FAC   Morphological time scale factor (nondimensional; greater
 !                    than or equal to 1.0). A value of 1.0 has no scale
 !                    effect.
-!
-!  MUD_Ltclm       Logical switches (T/F) to specify which tracer climatology
-!                    variables to consider when the option TCLIMATOLOGY is
-!                    activated; [1:NCS,1:Ngrids] values are expected.
-!
-!                      MUD_Ltclm(  1,ng)           mud_01
-!                      ...                         ...
-!                      MUD_Ltclm(NCS,ng)           ...
-!
-!                  Recall that TCLIMATOLOGY is usually activated to nudge to
-!                  tracer climatology (TLCM_NUDGING).  The purpose of these
-!                  switches is to control which climatology tracer fields
-!                  (specially passive tracers) needs to be processed.  So we
-!                  may reduce the memory allocation for such array.
 !
 !  MUD_Ltsrc       Logical switches (T/F) to activate cohesive sediment tracer
 !                    variables point Sources/Sinks; [1:NCS,1:Ngrids] values
@@ -536,6 +557,42 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    other river(s) that do NOT require such river forcing for
 !                    that tracer. Recall that you need to specify the tracer
 !                    values for all rivers, even if their values are zero.
+!
+!  MUD_Ltclm       Logical switches (T/F) to process cohesive sediment tracer
+!                    climatology.  The CPP option TCLIMATOLOGY is now obsolete
+!                    and replaced with these switches to facilitate nesting
+!                    applications. Currently, the CLIMA(ng)%tclm is used for
+!                    horizontal mixing, sponges, and nudging.
+!
+!
+!                      MUD_Ltclm(  1,ng)           mud_01
+!                      ...                         ...
+!                      MUD_Ltclm(NCS,ng)           ...
+!
+!                    These switches also controls which climatology tracer
+!                    fields needs to be processed.  So we may reduce the
+!                    memory allocation for the CLIMA(ng)%tclm array.
+!
+!  MUD_Tnudge      Logical switches (T/F) to activate nugding of cohesive
+!                    sediment tracer climatology. These switches also control
+!                    which sediment tracer variables to nudge. The CPP option
+!                    TCLM_NUDGING is now obsolete and replaced with these
+!                    switches to facilitate nesting.
+!
+!                      MUD_Tnudge(  1,ng)          mud_01
+!                      ...                         ...
+!                      MUD_Tnudge(NCS,ng)          ...
+!
+!                    User also needs to TURN ON the respective logical switches
+!                    "MUD_Ltclm", described above, to process the required 3D
+!                    sediment tracer climatology data. This data can be set
+!                    with analytical functions (ANA_TCLIMA) or read from input
+!                    climatology NetCDF file(s).
+!
+!                    The nudging coefficients CLIMA(ng)%Tnudgcof can be set
+!                    with analytical functions in "ana_nudgcoef.h"  using CPP
+!                    option ANA_NUDGCOEF.  Otherwise, it will be read from
+!                    NetCDF file NUDNAME.
 !
 !  Hout(idmud)     Logical switches to activate writing of cohesive sediment
 !                    concentration into HISTORY NetCDF file,
@@ -632,11 +689,18 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    diffusion is activated, SAND_TNU4 is the mixing
 !                    coefficient for the largest grid-cell in the domain.
 !
+!  SAND_Sponge     Logical switches (TRUE/FALSE) to increase horizontal
+!                    diffusivity of noncohesive sediment tracers in sponge
+!                    areas of the domain. The CPP option SPONGE is now
+!                    deprecated and replaced with this switch to
+!                    facilitate or not sponge areas of desired tracer
+!                    in a particular nested grid.
+!
 !  SAND_AKT_BAK    Background vertical mixing coefficient (m2/s),
 !                    AKT_BAK(idsed(i)) with i=NCS+1:NST.
 !
 !  SAND_AKT_fac    Adjoint-based algorithms vertical mixing, basic state,
-!                   scale factor (nondimensional) for biological tracer
+!                   scale factor (nondimensional) for sediment tracer
 !                   variables; [1:NNS,1:Ngrids] values are expected.
 !                   In some applications, a smaller/larger values of
 !                   vertical mixing are necessary for stability. It is
@@ -647,20 +711,6 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !
 !  SAND_MORPH_FAC  Morphological time scale factor (nondimensional; greater
 !                    than or equal to 1.0). A value of 1.0 has no scale effect.
-!
-!  SAND_Ltclm      Logical switches (T/F) to specify which tracer climatology
-!                    variables to consider when the option TCLIMATOLOGY is
-!                    activated; [1:NNS,1:Ngrids] values are expected.
-!
-!                      SAND_Ltclm(  1,ng)          sand_01
-!                      ...                         ...
-!                      SAND_Ltclm(NNS,ng)          ...
-!
-!                  Recall that TCLIMATOLOGY is usually activated to nudge to
-!                  tracer climatology (TLCM_NUDGING).  The purpose of these
-!                  switches is to control which climatology tracer fields
-!                  (specially passive tracers) needs to be processed.  So we
-!                  may reduce the memory allocation for such array.
 !
 !  SAND_Ltsrc      Logical switches (T/F) to activate noncohesive sediment
 !                    tracer variables point Sources/Sinks; [1:NNS,1:Ngrids]
@@ -703,6 +753,41 @@ Dout(STvdif) == T       ! sand_01_vdiff, ...      vertical diffusion
 !                    other river(s) that do NOT require such river forcing for
 !                    that tracer. Recall that you need to specify the tracer
 !                    values for all rivers, even if their values are zero.
+!
+!  SAND_Ltclm      Logical switches (T/F) to process noncohesive sediment
+!                    tracer climatology.  The CPP option TCLIMATOLOGY is now
+!                    obsolete and replaced with these switches to facilitate
+!                    nesting applications. Currently, the CLIMA(ng)%tclm is
+!                    used for horizontal mixing, sponges, and nudging.
+!
+!                      SAND_Ltclm(  1,ng)          sand_01
+!                      ...                         ...
+!                      SAND_Ltclm(NNS,ng)          ...
+!
+!                    These switches also controls which climatology tracer
+!                    fields needs to be processed.  So we may reduce the
+!                    memory allocation for the CLIMA(ng)%tclm array.
+!
+!  SAND_Tnudge     Logical switches (T/F) to activate nugding of noncohesive
+!                    sediment tracer climatology. These switches also control
+!                    which sediment tracer variables to nudge. The CPP option
+!                    TCLM_NUDGING is now obsolete and replaced with these
+!                    switches to facilitate nesting.
+!
+!                      MUD_Tnudge(  1,ng)          sand_01
+!                      ...                         ...
+!                      MUD_Tnudge(NNS,ng)          ...
+!
+!                    User also needs to TURN ON the respective logical switches
+!                    "SAND_Ltclm", described above, to process the required 3D
+!                    sediment tracer climatology data. This data can be set
+!                    with analytical functions (ANA_TCLIMA) or read from input
+!                    climatology NetCDF file(s).
+!
+!                    The nudging coefficients CLIMA(ng)%Tnudgcof can be set
+!                    with analytical functions in "ana_nudgcoef.h"  using CPP
+!                    option ANA_NUDGCOEF.  Otherwise, it will be read from
+!                    NetCDF file NUDNAME.
 !
 !  Hout(idsand)    Logical switches to activate writing of non-cohesive
 !                    sediment concentration into HISTORY NetCDF file,

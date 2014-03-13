@@ -190,6 +190,24 @@
         RETURN
       END IF
 # endif
+# ifndef ANA_SPONGE
+      IF (LuvSponge(ng)) THEN
+        IF (.not.find_string(var_name,n_var,'visc_factor',vindex)) THEN
+          IF (Master) WRITE (stdout,10) 'visc_factor', TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+#  ifdef SOLVE3D
+      IF (ANY(LtracerSponge(:,ng))) THEN
+        IF (.not.find_string(var_name,n_var,'diff_factor',vindex)) THEN
+          IF (Master) WRITE (stdout,10) 'diff_factor', TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+#  endif
+# endif
 # if defined UV_DRAG_GRID && !defined ANA_DRAG
 #  ifdef UV_LOGDRAG
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idZoBL)),        &
@@ -534,6 +552,77 @@
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          MIXING(ng) % Jwtype)
+#  endif
+# endif
+# ifndef ANA_SPONGE
+!
+!  Read in horizontal, spatially varying factor to increase/decrease
+!  viscosity (nondimensional) in specific areas of the domain.
+!
+          CASE ('visc_factor')
+            IF (LuvSponge(ng)) THEN
+              gtype=r2dvar
+              status=nf_fread2d(ng, model, ncname, GRD(ng)%ncid,        &
+     &                          var_name(i), var_id(i), 0,              &
+     &                          gtype, Vsize, LBi, UBi, LBj, UBj,       &
+     &                          Fscl, Fmin, Fmax,                       &
+#  ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+#  endif
+     &                          MIXING(ng) % visc_factor)
+              IF (status.ne.nf90_noerr) THEN
+                exit_flag=2
+                ioerror=status
+                EXIT
+              END IF
+              IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+                CALL exchange_r2d_tile (ng, tile,                       &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  MIXING(ng) % visc_factor)
+              END IF
+#  ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, model, 1,                   &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
+     &                            MIXING(ng) % visc_factor)
+#  endif
+            END IF
+
+#  ifdef SOLVE3D
+!
+!  Read in horizontal, spatially varying factor to increase/decrease
+!  diffusivity (nondimensional) in specific areas of the domain.
+!
+          CASE ('diff_factor')
+            IF (ANY(LtracerSponge(:,ng))) THEN
+              gtype=r2dvar
+              status=nf_fread2d(ng, model, ncname, GRD(ng)%ncid,        &
+     &                          var_name(i), var_id(i), 0,              &
+     &                          gtype, Vsize, LBi, UBi, LBj, UBj,       &
+     &                          Fscl, Fmin, Fmax,                       &
+#   ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+#   endif
+     &                          MIXING(ng) % diff_factor)
+              IF (status.ne.nf90_noerr) THEN
+                exit_flag=2
+                ioerror=status
+                EXIT
+              END IF
+              IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+                CALL exchange_r2d_tile (ng, tile,                       &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  MIXING(ng) % diff_factor)
+              END IF
+#   ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, model, 1,                   &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
+     &                            MIXING(ng) % diff_factor)
+#   endif
+            END IF
 #  endif
 # endif
 !

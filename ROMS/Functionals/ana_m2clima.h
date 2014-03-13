@@ -12,7 +12,6 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_clima
       USE mod_ncparam
 !
 ! Imported variable declarations.
@@ -23,9 +22,7 @@
 !
       CALL ana_m2clima_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       CLIMA(ng) % ubarclm,                       &
-     &                       CLIMA(ng) % vbarclm)
+     &                       IminS, ImaxS, JminS, JmaxS)
 !
 ! Set analytical header file name used.
 !
@@ -43,11 +40,11 @@
 !***********************************************************************
       SUBROUTINE ana_m2clima_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             ubarclm, vbarclm)
+     &                             IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_scalars
 !
       USE exchange_2d_mod
@@ -61,14 +58,6 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
-#ifdef ASSUMED_SHAPE
-      real(r8), intent(out) :: ubarclm(LBi:,LBj:)
-      real(r8), intent(out) :: vbarclm(LBi:,LBj:)
-#else
-      real(r8), intent(out) :: ubarclm(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: vbarclm(LBi:UBi,LBj:UBj)
-#endif
-!
 !  Local variable declarations.
 !
       integer :: i, j
@@ -79,35 +68,38 @@
 !  Set 2D momentum climatology.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrT,JendT
-        DO i=IstrP,IendT
-          ubarclm(i,j)=???
+      IF (Lm2CLM(ng)) THEN
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
+            CLIMA(ng)%ubarclm(i,j)=???
+          END DO
         END DO
-      END DO
-      DO j=JstrP,JendT
-        DO i=IstrT,IendT
-          vbarclm(i,j)=???
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
+            CLIMA(ng)%vbarclm(i,j)=???
+          END DO
         END DO
-      END DO
 !
 !  Exchange boundary data.
 !
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          ubarclm)
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          vbarclm)
-      END IF
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          CALL exchange_u2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            CLIMA(ng) % ubarclm)
+          CALL exchange_v2d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            CLIMA(ng) % vbarclm)
+        END IF
 
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    ubarclm, vbarclm)
+        CALL mp_exchange2d (ng, tile, model, 2,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      CLIMA(ng) % ubarclm,                        &
+     %                      CLIMA(ng) % vbarclm)
 #endif
+      END IF
 
       RETURN
       END SUBROUTINE ana_m2clima_tile

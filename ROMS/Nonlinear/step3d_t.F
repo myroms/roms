@@ -37,9 +37,6 @@
 !***********************************************************************
 !
       USE mod_param
-# ifdef CLIMATOLOGY
-      USE mod_clima
-# endif
 # ifdef DIAGNOSTICS_TS
       USE mod_diags
 # endif
@@ -86,10 +83,6 @@
      &                    GRID(ng) % Huon,                              &
      &                    GRID(ng) % Hvom,                              &
      &                    GRID(ng) % z_r,                               &
-# if defined TCLM_NUDGING && defined TCLIMATOLOGY
-     &                    CLIMA(ng) % Tnudgcof,                         &
-     &                    CLIMA(ng) % tclm,                             &
-# endif
      &                    MIXING(ng) % Akt,                             &
      &                    OCEAN(ng) % W,                                &
 # if defined FLOATS && defined FLOAT_VWALK
@@ -122,9 +115,6 @@
      &                          pm, pn,                                 &
      &                          Hz, Huon, Hvom,                         &
      &                          z_r,                                    &
-# if defined TCLM_NUDGING && defined TCLIMATOLOGY
-     &                          Tnudgcof, tclm,                         &
-# endif
      &                          Akt,                                    &
      &                          W,                                      &
 # if defined FLOATS && defined FLOAT_VWALK
@@ -137,6 +127,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_ncparam
 # if defined NESTING && !defined ONE_WAY
       USE mod_nesting
@@ -186,10 +177,6 @@
 #  endif
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-      real(r8), intent(in) :: Tnudgcof(LBi:,LBj:,:)
-      real(r8), intent(in) :: tclm(LBi:,LBj:,:,:)
-#  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
@@ -233,10 +220,6 @@
 #  endif
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-      real(r8), intent(in) :: Tnudgcof(LBi:UBi,LBj:UBj,NT(ng))
-      real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng))
-#  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
@@ -1153,36 +1136,45 @@
 !  to tracer data and apply Land/Sea mask.
 !-----------------------------------------------------------------------
 !
-# if defined TCLM_NUDGING && defined TCLIMATOLOGY
+!  Initialize tracer counter index. The "tclm" array is only allocated
+!  to the NTCLM fields that need to be processed. This is done to
+!  reduce memory.
+!
       ic=0
-# endif
+!
       DO itrc=1,NT(ng)
+!
+!  Set compact reduced memory tracer index for nudging coefficients and
+!  climatology arrays.
+!
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+          ic=ic+1
+        END IF
 !
 !  Set lateral boundary conditions.
 !
-        CALL t3dbc_tile (ng, tile, itrc,                                &
+        CALL t3dbc_tile (ng, tile, itrc, ic,                            &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, nnew,                                    &
      &                   t)
-
-# if defined TCLM_NUDGING && defined TCLIMATOLOGY
 !
 !  Nudge towards tracer climatology.
 !
-        IF (LtracerCLM(itrc,ng)) THEN
-          ic=ic+1
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
           DO k=1,N(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+                  &
-     &                             dt(ng)*Tnudgcof(i,j,itrc)*           &
-     &                             (tclm(i,j,k,ic)-t(i,j,k,nnew,itrc))
+     &                             dt(ng)*                              &
+     &                             CLIMA(ng)%Tnudgcof(i,j,k,ic)*        &
+     &                             (CLIMA(ng)%tclm(i,j,k,ic)-           &
+     &                              t(i,j,k,nnew,itrc))
               END DO
             END DO
           END DO
         END IF
-# endif
+
 # ifdef MASKING
 !
 !  Apply Land/Sea mask.

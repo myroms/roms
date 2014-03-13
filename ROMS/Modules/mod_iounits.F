@@ -37,6 +37,7 @@
 !                NRM(2,ng)  model error                                !
 !                NRM(3,ng)  lateral open boundary conditions           !
 !                NRM(4,ng)  surface forcing                            !
+!    NUD       Input climatology nudging coefficients                  !
 !    OBS       Input/output 4D-Var observations                        !
 !    RST       Output restart data                                     !
 !    TIDE      Input tide forcing                                      !
@@ -113,6 +114,7 @@
       TYPE(T_IO), allocatable :: ITL(:)     ! TLM initial conditions
       TYPE(T_IO), allocatable :: LCZ(:)     ! Lanczos vectors
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
+      TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
       TYPE(T_IO), allocatable :: OBS(:)     ! observations
       TYPE(T_IO), allocatable :: RST(:)     ! restart fields
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
@@ -204,6 +206,7 @@
       allocate ( IRP(Ngrids) )
       allocate ( ITL(Ngrids) )
       allocate ( LCZ(Ngrids) )
+      allocate ( NUD(Ngrids) )
       allocate ( OBS(Ngrids) )
       allocate ( RST(Ngrids) )
       allocate ( SSF(Ngrids) )

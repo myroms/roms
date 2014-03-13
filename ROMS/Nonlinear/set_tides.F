@@ -26,9 +26,6 @@
 !***********************************************************************
 !
       USE mod_param
-# ifdef CLIMATOLOGY
-      USE mod_clima
-# endif
       USE mod_grid
       USE mod_tides
       USE mod_stepping
@@ -68,13 +65,6 @@
      &                     TIDES(ng) % SinOmega,                        &
      &                     TIDES(ng) % CosOmega,                        &
 # endif
-# ifdef ZCLIMATOLOGY
-     &                     CLIMA(ng) % ssh,                             &
-# endif
-# ifdef M2CLIMATOLOGY
-     &                     CLIMA(ng) % ubarclm,                         &
-     &                     CLIMA(ng) % vbarclm,                         &
-# endif
      &                     TIDES(ng) % Tperiod)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 11)
@@ -102,17 +92,12 @@
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                           SinOmega, CosOmega,                    &
 # endif
-# ifdef ZCLIMATOLOGY
-     &                           ssh,                                   &
-# endif
-# ifdef M2CLIMATOLOGY
-     &                           ubarclm, vbarclm,                      &
-# endif
      &                           Tperiod)
 !***********************************************************************
 !
       USE mod_param
       USE mod_boundary
+      USE mod_clima
       USE mod_ncparam
       USE mod_scalars
 !
@@ -153,13 +138,6 @@
       real(r8), intent(inout) :: SinOmega(:)
       real(r8), intent(inout) :: CosOmega(:)
 #  endif
-#  ifdef ZCLIMATOLOGY
-      real(r8), intent(inout) :: ssh(LBi:,LBj:)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(inout) :: ubarclm(LBi:,LBj:)
-      real(r8), intent(inout) :: vbarclm(LBi:,LBj:)
-#  endif
 # else
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
@@ -181,13 +159,6 @@
 #  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       real(r8), intent(inout) :: SinOmega(MTC)
       real(r8), intent(inout) :: CosOmega(MTC)
-#  endif
-#  ifdef ZCLIMATOLOGY
-      real(r8), intent(inout) :: ssh(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(inout) :: ubarclm(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: vbarclm(LBi:UBi,LBj:UBj)
 #  endif
 # endif
 !
@@ -229,7 +200,7 @@
 !  In refinement nesting applications, tidal forcing is only necessary
 !  in the coarser large scale grid.
 !
-      PROCESS : IF (.not.(RefinedGrid(ng).and.                          &
+      NEEDED : IF (.not.(RefinedGrid(ng).and.                           &
      &                    RefineScale(ng).gt.0)) THEN
 !
 !  Set time-ramping parameter.
@@ -280,27 +251,30 @@
             END DO
           END IF
         END DO
-#  if defined ZCLIMATOLOGY && defined ADD_FSOBC
+
+#  ifdef ADD_FSOBC
 !
 !  Add sub-tidal forcing and adjust climatology to include tides.
 !
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            ssh(i,j)=ssh(i,j)+Etide(i,j)
+        IF (LsshCLM(ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              CLIMA(ng)%ssh(i,j)=CLIMA(ng)%ssh(i,j)+Etide(i,j)
+            END DO
           END DO
-        END DO
-        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-          CALL exchange_r2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            ssh)
-        END IF
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              CLIMA(ng)%ssh)
+          END IF
 #   ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, tile, iNLM, 1,                          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      ssh)
+          CALL mp_exchange2d (ng, tile, iNLM, 1,                        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        CLIMA(ng)%ssh)
 #   endif
+        END IF
 #  endif
 !
 !  If appropriate, load tidal forcing into boundary arrays.  The "zeta"
@@ -407,7 +381,7 @@
      &                      ILB, IUB, 1, 1, update,                     &
      &                      BOUNDARY(ng)%zeta_north)
 #  endif
-      END IF
+        END IF
 # endif
 
 # if defined UV_TIDES
@@ -456,35 +430,39 @@
             END DO
           END IF
         END DO
-#  if defined M2CLIMATOLOGY && defined ADD_M2OBC
+
+#  ifdef ADD_M2OBC
 !
 !  Add sub-tidal forcing and adjust climatology to include tides.
 !
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ubarclm(i,j)=ubarclm(i,j)+Utide(i,j)
+        IF (Lm2CLM(ng)) THEN
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              CLIMA(ng)%ubarclm(i,j)=CLIMA(ng)%ubarclm(i,j)+Utide(i,j)
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            vbarclm(i,j)=vbarclm(i,j)+Vtide(i,j)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              CLIMA(ng)%vbarclm(i,j)=CLIMA(ng)%vbarclm(i,j)+Vtide(i,j)
+            END DO
           END DO
-        END DO
-        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-          CALL exchange_u2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            ubarclm)
-          CALL exchange_v2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            vbarclm)
-        END IF
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_u2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              CLIMA(ng)%ubarclm)
+            CALL exchange_v2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              CLIMA(ng)%vbarclm)
+          END IF
 #   ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      ubarclm, vbarclm)
+          CALL mp_exchange2d (ng, tile, iNLM, 2,                        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        CLIMA(ng)%ubarclm,                        &
+     &                        CLIMA(ng)%vbarclm)
 #   endif
+        END IF
 #  endif
 !
 !  If appropriate, load tidal forcing into boundary arrays.
@@ -617,7 +595,7 @@
 #  endif
         END IF
 # endif
-      END IF PROCESS
+      END IF NEEDED
 
       RETURN
       END SUBROUTINE set_tides_tile

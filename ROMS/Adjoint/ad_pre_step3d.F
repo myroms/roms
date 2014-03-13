@@ -352,7 +352,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, indx, is, itrc, j, k, ltrc
+      integer :: i, ic, indx, is, itrc, j, k, ltrc
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
@@ -450,8 +450,12 @@
      &                       ad_t(:,:,:,3,:))
 !
 #  endif
-
+!
+      ic=0
       DO itrc=1,NT(ng)
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+          ic=ic+1
+        END IF
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !>        CALL exchange_r3d_tile (ng, tile,                             &
 !>   &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
@@ -461,13 +465,13 @@
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                               ad_t(:,:,:,3,itrc))
         END IF
-!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
+!>      CALL tl_t3dbc_tile (ng, tile, itrc, ic,                         &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !>   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !>   &                      nstp, 3,                                    &
 !>   &                      tl_t)
 !>
-        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+        CALL ad_t3dbc_tile (ng, tile, itrc, ic,                         &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, 3,                                    &

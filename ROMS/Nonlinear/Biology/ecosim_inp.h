@@ -276,6 +276,14 @@
                   ad_tnu4(i,ng)=Rbio(itrc,ng)
                 END DO
               END DO
+            CASE ('LtracerSponge')
+              Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+              DO ng=1,Ngrids
+                DO itrc=1,NBT
+                  i=idbio(itrc)
+                  LtracerSponge(i,ng)=Ltrc(itrc,ng)
+                END DO
+              END DO
             CASE ('AKT_BAK')
               Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
               DO ng=1,Ngrids
@@ -323,7 +331,14 @@
      &                      idbio(iTrcStr), idbio(iTrcEnd),             &
      &                      Vname(1,idTvar(idbio(itracer))), ad_LBC)
 #endif
-#ifdef TCLIMATOLOGY
+            CASE ('LtracerSrc')
+              Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+              DO ng=1,Ngrids
+                DO itrc=1,NBT
+                  i=idbio(itrc)
+                  LtracerSrc(i,ng)=Ltrc(itrc,ng)
+                END DO
+              END DO
             CASE ('LtracerCLM')
               Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
               DO ng=1,Ngrids
@@ -332,13 +347,12 @@
                   LtracerCLM(i,ng)=Ltrc(itrc,ng)
                 END DO
               END DO
-#endif
-            CASE ('LtracerSrc')
+            CASE ('LnudgeTCLM')
               Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
               DO ng=1,Ngrids
                 DO itrc=1,NBT
                   i=idbio(itrc)
-                  LtracerSrc(i,ng)=Ltrc(itrc,ng)
+                  LnudgeTCLM(i,ng)=Ltrc(itrc,ng)
                 END DO
               END DO
             CASE ('Hout(idTvar)')
@@ -1143,6 +1157,18 @@
 #endif
             DO itrc=1,NBT
               i=idbio(itrc)
+              IF (LtracerSponge(i,ng)) THEN
+                WRITE (out,150) LtracerSponge(i,ng), 'LtracerSponge',   &
+     &              i, 'Turning ON  sponge on tracer ', i,              &
+     &              TRIM(Vname(1,idTvar(i)))
+              ELSE
+                WRITE (out,150) LtracerSponge(i,ng), 'LtracerSponge',   &
+     &              i, 'Turning OFF sponge on tracer ', i,              &
+     &              TRIM(Vname(1,idTvar(i)))
+              END IF
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
               WRITE (out,140) Akt_bak(i,ng), 'Akt_bak', i,              &
      &              'Background vertical mixing coefficient (m2/s)',    &
      &              'for tracer ', i, TRIM(Vname(1,idTvar(i)))
@@ -1180,14 +1206,30 @@
      &              TRIM(Vname(1,idTvar(i)))
               END IF
             END DO
-#ifdef TCLIMATOLOGY
             DO itrc=1,NBT
               i=idbio(itrc)
-              WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM',           &
-     &              i, 'Processing climatology on tracer ', i,          &
+              IF (LtracerCLM(i,ng)) THEN
+                WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM', i,      &
+     &              'Turning ON  processing of climatology tracer ', i, &
      &              TRIM(Vname(1,idTvar(i)))
+              ELSE
+                WRITE (out,150) LtracerCLM(i,ng), 'LtracerCLM', i,      &
+     &              'Turning OFF processing of climatology tracer ', i, &
+     &              TRIM(Vname(1,idTvar(i)))
+              END DO
             END DO
-#endif
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (LnudgeTCLM(i,ng)) THEN
+                WRITE (out,150) LnudgeTCLM(i,ng), 'LnudgeTCLM', i,      &
+     &              'Turning ON  nudging of climatology tracer ', i,    &
+     &              TRIM(Vname(1,idTvar(i)))
+              ELSE
+                WRITE (out,150) LnudgeTCLM(i,ng), 'LnudgeTCLM', i,      &
+     &              'Turning OFF nudging of climatology tracer ', i,    &
+     &              TRIM(Vname(1,idTvar(i)))
+              END DO
+            END DO
             DO itrc=1,NBT
               i=idbio(itrc)
               IF (Hout(idTvar(i),ng)) WRITE (out,160)                   &
@@ -1363,17 +1405,17 @@
   40  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
   50  FORMAT (/,/,' EcoSim Parameters, Grid: ',i2.2,                    &
      &        /,  ' ===========================',/)
-  60  FORMAT (1x,i10,2x,a,t30,a)
-  70  FORMAT (10x,l1,2x,a,t30,a)
-  80  FORMAT ('...........',2x,a,t30,a,/,t32,a)
+  60  FORMAT (1x,i10,2x,a,t32,a)
+  70  FORMAT (10x,l1,2x,a,t32,a)
+  80  FORMAT ('...........',2x,a,t32,a,/,t34,a)
   90  FORMAT (1p,e11.4,t33,a)
- 100  FORMAT ('...........',2x,a,t30,a)
+ 100  FORMAT ('...........',2x,a,t32,a)
  110  FORMAT (1p,e11.4,t33,'Fecal Group ',i1,', ',a)
- 120  FORMAT (1p,e11.4,2x,a,t30,a,/,t32,a)
- 130  FORMAT (1p,e11.4,2x,a,t30,a)
- 140  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,/,t32,a,i2.2,':',1x,a)
- 150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
- 160  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
+ 120  FORMAT (1p,e11.4,2x,a,t32,a,/,t34,a)
+ 130  FORMAT (1p,e11.4,2x,a,t32,a)
+ 140  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t32,a,/,t34,a,i2.2,':',1x,a)
+ 150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t32,a,i2.2,':',1x,a)
+ 160  FORMAT (10x,l1,2x,a,t32,a,i2.2,':',1x,a)
 
       RETURN
       END SUBROUTINE read_BioPar

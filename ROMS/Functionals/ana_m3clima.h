@@ -12,7 +12,6 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_clima
       USE mod_ncparam
 !
 ! Imported variable declarations.
@@ -23,9 +22,7 @@
 !
       CALL ana_m3clima_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       CLIMA(ng) % uclm,                          &
-     &                       CLIMA(ng) % vclm)
+     &                       IminS, ImaxS, JminS, JmaxS)
 !
 ! Set analytical header file name used.
 !
@@ -43,11 +40,11 @@
 !***********************************************************************
       SUBROUTINE ana_m3clima_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             uclm, vclm)
+     &                             IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_scalars
 !
       USE exchange_3d_mod
@@ -61,14 +58,6 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
-#ifdef ASSUMED_SHAPE
-      real(r8), intent(out) :: uclm(LBi:,LBj:,:)
-      real(r8), intent(out) :: vclm(LBi:,LBj:,:)
-#else
-      real(r8), intent(out) :: uclm(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: vclm(LBi:UBi,LBj:UBj,N(ng))
-#endif
-!
 !  Local variable declarations.
 !
       integer :: i, j, k
@@ -79,37 +68,40 @@
 !  Set 3D momentum climatology.
 !-----------------------------------------------------------------------
 !
-      DO k=1,N(ng)
-        DO j=JstrT,JendT
-          DO i=IstrP,IendT
-            uclm(i,j,k)=???
+      IF (Lm3CLM(ng)) THEN
+        DO k=1,N(ng)
+          DO j=JstrT,JendT
+            DO i=IstrP,IendT
+              CLIMA(ng)%uclm(i,j,k)=???
+            END DO
+          END DO
+          DO j=JstrP,JendT
+            DO i=IstrT,IendT
+              CLIMA(ng)%vclm(i,j,k)=???
+            END DO
           END DO
         END DO
-        DO j=JstrP,JendT
-          DO i=IstrT,IendT
-            vclm(i,j,k)=???
-          END DO
-        END DO
-      END DO
 !
 !  Exchange boundary data.
 !
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_u3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          uclm)
-        CALL exchange_v3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          vclm)
-      END IF
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          CALL exchange_u3d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            CLIMA(ng) % uclm)
+          CALL exchange_v3d_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            CLIMA(ng) % vclm)
+        END IF
 
 #ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    uclm, vclm)
+        CALL mp_exchange3d (ng, tile, model, 2,                         &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      CLIMA(ng) % uclm,                           &
+     &                      CLIMA(ng) % vclm)
 #endif
+      END IF
 
       RETURN
       END SUBROUTINE ana_m3clima_tile

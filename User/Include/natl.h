@@ -40,5 +40,3 @@
 # define LMD_SKPP
 # define LMD_NONLOCAL
 #endif
-#define TCLIMATOLOGY
-#define TCLM_NUDGING

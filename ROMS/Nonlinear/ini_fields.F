@@ -240,7 +240,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k
+      integer :: i, ic, itrc, j, k
 # if defined SEDIMENT || defined BBL_MODEL
       integer :: ised
 # endif
@@ -559,8 +559,12 @@
 !  If not perfect restart, initialize other time levels for tracers.
 !-----------------------------------------------------------------------
 !
+      ic=0
       IF (.not.PerfectRST(ng)) THEN
         DO itrc=1,NT(ng)
+          IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+            ic=ic+1
+          END IF
           DO k=1,N(ng)
             DO j=JstrB,JendB
               DO i=IstrB,IendB
@@ -576,12 +580,12 @@
 !
 !  Apply boundary conditions.
 !
-          CALL t3dbc_tile (ng, tile, itrc,                              &
+          CALL t3dbc_tile (ng, tile, itrc, ic,                          &
      &                     LBi, UBi, LBj, UBj, N(ng), NT(ng),           &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nstp,                                  &
      &                     t)
-          CALL t3dbc_tile (ng, tile, itrc,                              &
+          CALL t3dbc_tile (ng, tile, itrc, ic,                          &
      &                     LBi, UBi, LBj, UBj, N(ng), NT(ng),           &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &

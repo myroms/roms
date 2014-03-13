@@ -30,8 +30,6 @@
 #define ICESHELF
 #define AVERAGES
 #define RADIATION_2D
-#define ZCLIMATOLOGY
-#define M2CLIMATOLOGY
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_FSOBC

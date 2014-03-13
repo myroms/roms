@@ -24,11 +24,7 @@
       USE mod_average, ONLY : allocate_average, initialize_average
 #endif
       USE mod_boundary, ONLY : allocate_boundary, initialize_boundary
-#if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SENSITIVITY_4DVAR   || defined SO_SEMI
       USE mod_clima, ONLY : allocate_clima, initialize_clima
-#endif
 #ifdef SOLVE3D
       USE mod_coupling, ONLY : allocate_coupling, initialize_coupling
 #endif
@@ -111,11 +107,9 @@
 #ifdef BBL_MODEL
           CALL allocate_bbl (ng, LBi, UBi, LBj, UBj)
 #endif
-#if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SENSITIVITY_4DVAR   || defined SO_SEMI
-          CALL allocate_clima (ng, LBi, UBi, LBj, UBj)
-#endif
+          IF (Lclimatology(ng)) THEN
+            CALL allocate_clima (ng, LBi, UBi, LBj, UBj)
+          END IF
 #ifdef SOLVE3D
           CALL allocate_coupling (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -175,11 +169,10 @@
           CALL initialize_bbl (ng, tile)
 #endif
           CALL initialize_boundary (ng, tile, model)
-#if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SENSITIVITY_4DVAR   || defined SO_SEMI
-          CALL initialize_clima (ng, tile)
-#endif
+
+          IF (Lclimatology(ng)) THEN
+            CALL initialize_clima (ng, tile)
+          END IF
 #ifdef SOLVE3D
           CALL initialize_coupling (ng, tile, model)
 #endif

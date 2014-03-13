@@ -282,8 +282,8 @@
   50  FORMAT (/,' READ_FloatsBioPar - Error reading look table: ',a)
   60  FORMAT (/,/,' Biological Floats Behavior Parameters, Grid: ',i2.2, &
      &        /,  ' ===============================================',/)
-  70  FORMAT (1p,e11.4,2x,a,t30,a)
-  80  FORMAT (1x,i10,2x,a,t30,a)
+  70  FORMAT (1p,e11.4,2x,a,t32,a)
+  80  FORMAT (1x,i10,2x,a,t32,a)
 
       RETURN
       END SUBROUTINE read_FltBioPar

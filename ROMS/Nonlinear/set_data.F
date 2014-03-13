@@ -45,9 +45,7 @@
 !
       USE mod_param
       USE mod_boundary
-# ifdef CLIMATOLOGY
       USE mod_clima
-# endif
       USE mod_forces
       USE mod_grid
       USE mod_mixing
@@ -1126,58 +1124,82 @@
 #  endif
       END IF
 # endif
-
-# ifdef ZCLIMATOLOGY
 !
 !-----------------------------------------------------------------------
 !  Set sea surface height climatology (m).
 !-----------------------------------------------------------------------
 !
-#  ifdef ANA_SSH
-      CALL ana_ssh (ng, tile, iNLM)
-#  else
-      CALL set_2dfld_tile (ng, tile, iNLM, idSSHc,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     CLIMA(ng)%sshG,                              &
-     &                     CLIMA(ng)%ssh,                               &
-     &                     update)
-      IF (exit_flag.ne.NoError) RETURN
-#  endif
+      IF (LsshCLM(ng)) THEN
+# ifdef ANA_SSH
+        CALL ana_ssh (ng, tile, iNLM)
+# else
+        CALL set_2dfld_tile (ng, tile, iNLM, idSSHc,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       CLIMA(ng)%sshG,                            &
+     &                       CLIMA(ng)%ssh,                             &
+     &                       update)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
-
-# ifdef M2CLIMATOLOGY
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Set 2D momentum climatology (m/s).
 !-----------------------------------------------------------------------
 !
-#  ifdef ANA_M2CLIMA
-      CALL ana_m2clima (ng, tile, iNLM)
-#  else
-      CALL set_2dfld_tile (ng, tile, iNLM, idUbcl,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     CLIMA(ng)%ubarclmG,                          &
-     &                     CLIMA(ng)%ubarclm,                           &
-     &                     update)
-      IF (exit_flag.ne.NoError) RETURN
-
-      CALL set_2dfld_tile (ng, tile, iNLM, idVbcl,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     CLIMA(ng)%vbarclmG,                          &
-     &                     CLIMA(ng)%vbarclm,                           &
-     &                     update)
-      IF (exit_flag.ne.NoError) RETURN
-#  endif
+      IF (Lm2CLM(ng)) THEN
+# ifdef ANA_M2CLIMA
+        CALL ana_m2clima (ng, tile, iNLM)
+# else
+        CALL set_2dfld_tile (ng, tile, iNLM, idUbcl,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       CLIMA(ng)%ubarclmG,                        &
+     &                       CLIMA(ng)%ubarclm,                         &
+     &                       update)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idVbcl,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       CLIMA(ng)%vbarclmG,                        &
+     &                       CLIMA(ng)%vbarclm,                         &
+     &                       update)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
+      END IF
 
-# if defined SOLVE3D && defined TCLIMATOLOGY
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Set tracer climatology.
+!  Set 3D momentum climatology (m/s).
+!-----------------------------------------------------------------------
+!
+      IF (Lm3CLM(ng)) THEN
+#  ifdef ANA_M3CLIMA
+        CALL ana_m3clima (ng, tile, iNLM)
+#  else
+        CALL set_3dfld_tile (ng, tile, iNLM, idUclm,                    &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       CLIMA(ng)%uclmG,                           &
+     &                       CLIMA(ng)%uclm,                            &
+     &                       update)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL set_3dfld_tile (ng, tile, iNLM, idVclm,                    &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       CLIMA(ng)%vclmG,                           &
+     &                       CLIMA(ng)%vclm,                            &
+     &                       update)
+        IF (exit_flag.ne.NoError) RETURN
+#  endif
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Set tracers climatology.
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_TCLIMA
-      CALL ana_tclima (ng, tile, iNLM)
+      IF (ANY(LtracerCLM(:,ng))) THEN
+        CALL ana_tclima (ng, tile, iNLM)
+      END IF
 #  else
       ic=0
       DO itrc=1,NT(ng)
@@ -1191,31 +1213,6 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
-#  endif
-# endif
-
-# if defined SOLVE3D && defined M3CLIMATOLOGY
-!
-!-----------------------------------------------------------------------
-!  Set 3D momentum climatology (m/s).
-!-----------------------------------------------------------------------
-!
-#  ifdef ANA_M3CLIMA
-      CALL ana_m3clima (ng, tile, iNLM)
-#  else
-      CALL set_3dfld_tile (ng, tile, iNLM, idUclm,                      &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
-     &                     CLIMA(ng)%uclmG,                             &
-     &                     CLIMA(ng)%uclm,                              &
-     &                     update)
-      IF (exit_flag.ne.NoError) RETURN
-
-      CALL set_3dfld_tile (ng, tile, iNLM, idVclm,                      &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
-     &                     CLIMA(ng)%vclmG,                             &
-     &                     CLIMA(ng)%vclm,                              &
-     &                     update)
-      IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
 

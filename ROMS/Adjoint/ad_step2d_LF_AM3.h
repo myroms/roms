@@ -12,9 +12,6 @@
 !
       USE mod_param
       USE mod_ncparam
-# ifdef CLIMATOLOGY
-      USE mod_clima
-# endif
 # ifdef SOLVE3D
       USE mod_coupling
 # endif
@@ -93,12 +90,6 @@
      &                     OCEAN(ng) % ad_ubar_stokes,                  &
      &                     OCEAN(ng) % vbar_stokes,                     &
      &                     OCEAN(ng) % ad_vbar_stokes,                  &
-# endif
-# ifdef M2CLIMATOLOGY
-     &                     CLIMA(ng) % ubarclm,    CLIMA(ng) % vbarclm, &
-#  ifdef M2CLM_NUDGING
-     &                     CLIMA(ng) % M2nudgcof,                       &
-#  endif
 # endif
 # ifndef SOLVE3D
      &                     FORCES(ng) % ad_sustr,                       &
@@ -193,12 +184,6 @@
      &                           ubar_stokes, ad_ubar_stokes,           &
      &                           vbar_stokes, ad_vbar_stokes,           &
 # endif
-# ifdef M2CLIMATOLOGY
-     &                           ubarclm, vbarclm,                      &
-#  ifdef M2CLM_NUDGING
-     &                           M2nudgcof,                             &
-#  endif
-# endif
 # ifndef SOLVE3D
      &                           ad_sustr, ad_svstr,                    &
      &                           ad_bustr, ad_bvstr,                    &
@@ -236,6 +221,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_scalars
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       USE mod_sediment
@@ -308,13 +294,6 @@
 #  ifdef NEARSHORE_MELLOR
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(in) :: ubarclm(LBi:,LBj:)
-      real(r8), intent(in) :: vbarclm(LBi:,LBj:)
-#   ifdef M2CLM_NUDGING
-      real(r8), intent(in) :: M2nudgcof(LBi:,LBj:)
-#   endif
 #  endif
       real(r8), intent(in) :: rubar(LBi:,LBj:,:)
       real(r8), intent(in) :: rvbar(LBi:,LBj:,:)
@@ -440,13 +419,6 @@
 #  ifdef NEARSHORE_MELLOR
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef M2CLIMATOLOGY
-      real(r8), intent(in) :: ubarclm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vbarclm(LBi:UBi,LBj:UBj)
-#   ifdef M2CLM_NUDGING
-      real(r8), intent(in) :: M2nudgcof(LBi:UBi,LBj:UBj)
-#   endif
 #  endif
       real(r8), intent(in) :: rubar(LBi:UBi,LBj:UBj,2)
       real(r8), intent(in) :: rvbar(LBi:UBi,LBj:UBj,2)
@@ -1949,78 +1921,83 @@
 !>  Add in surface momentum stress.
 !>----------------------------------------------------------------------
 !>
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
 #  ifdef DIAGNOSTICS_UV
-!!        DiaU2rhs(i,j,M2sstr)=fac
+!!          DiaU2rhs(i,j,M2sstr)=fac
 #  endif
-!>        tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+tl_fac
+!>          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+tl_fac
 !>
-          ad_fac=ad_fac+ad_rhs_ubar(i,j)
-!>        tl_fac=tl_sustr(i,j)*om_u(i,j)*on_u(i,j)
+            ad_fac=ad_fac+ad_rhs_ubar(i,j)
+!>          tl_fac=tl_sustr(i,j)*om_u(i,j)*on_u(i,j)
 !>
-          ad_sustr(i,j)=ad_sustr(i,j)+om_u(i,j)*on_u(i,j)*ad_fac
-          ad_fac=0.0_r8
+            ad_sustr(i,j)=ad_sustr(i,j)+om_u(i,j)*on_u(i,j)*ad_fac
+            ad_fac=0.0_r8
+          END DO
         END DO
-      END DO
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
 #  ifdef DIAGNOSTICS_UV
-!!        DiaV2rhs(i,j,M2sstr)=fac
+!!          DiaV2rhs(i,j,M2sstr)=fac
 #  endif
-!>        tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+tl_fac
+!>          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+tl_fac
 !>
-          ad_fac=ad_fac+ad_rhs_vbar(i,j)
-!>        tl_fac=tl_svstr(i,j)*om_v(i,j)*on_v(i,j)
+            ad_fac=ad_fac+ad_rhs_vbar(i,j)
+!>          tl_fac=tl_svstr(i,j)*om_v(i,j)*on_v(i,j)
 !>
-          ad_svstr(i,j)=ad_svstr(i,j)+om_v(i,j)*on_v(i,j)*ad_fac
-          ad_fac=0.0_r8
+            ad_svstr(i,j)=ad_svstr(i,j)+om_v(i,j)*on_v(i,j)*ad_fac
+            ad_fac=0.0_r8
+          END DO
         END DO
-      END DO
 # endif
-# ifdef M2CLM_NUDGING
 !
 !-----------------------------------------------------------------------
 !  Add in adjoint nudging of 2D momentum climatology.
 !-----------------------------------------------------------------------
 !
-        DO j=JstrV,Jend
-          DO i=Istr,Iend
-            cff=0.25_r8*(M2nudgcof(i,j-1)+M2nudgcof(i,j))*              &
-     &          om_v(i,j)*on_v(i,j)
-!>          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+                          &
-!>   &                       cff*((Drhs(i,j-1)+Drhs(i,j))*              &
-!>   &                            (-tl_vbar(i,j,krhs))+                 &
-!>   &                            (tl_Drhs(i,j-1)+tl_Drhs(i,j))*        &
-!>   &                            (vbarclm(i,j)-vbar(i,j,krhs)))
+        IF (LnudgeM2CLM(ng)) THEN
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
+              cff=0.25_r8*(CLIMA(ng)%M2nudgcof(i,j-1)+                  &
+     &                     CLIMA(ng)%M2nudgcof(i,j  ))*                 &
+     &            om_v(i,j)*on_v(i,j)
+!>            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+                        &
+!>   &                         cff*((Drhs(i,j-1)+Drhs(i,j))*            &
+!>   &                              (-tl_vbar(i,j,krhs))+               &
+!>   &                              (tl_Drhs(i,j-1)+tl_Drhs(i,j))*      &
+!>   &                              (CLIMA(ng)%vbarclm(i,j)-
+!>   &                               vbar(i,j,krhs)))
 !>
-            adfac=cff*ad_rhs_vbar(i,j)
-            adfac1=adfac*(Drhs(i,j-1)+Drhs(i,j))
-            adfac2=adfac*(vbarclm(i,j)-vbar(i,j,krhs))
-            ad_vbar(i,j,krhs)=ad_vbar(i,j,krhs)-adfac1
-            ad_Drhs(i,j-1)=ad_Drhs(i,j-1)+adfac2
-            ad_Drhs(i,j  )=ad_Drhs(i,j  )+adfac2
+              adfac=cff*ad_rhs_vbar(i,j)
+              adfac1=adfac*(Drhs(i,j-1)+Drhs(i,j))
+              adfac2=adfac*(CLIMA(ng)%vbarclm(i,j)-vbar(i,j,krhs))
+              ad_vbar(i,j,krhs)=ad_vbar(i,j,krhs)-adfac1
+              ad_Drhs(i,j-1)=ad_Drhs(i,j-1)+adfac2
+              ad_Drhs(i,j  )=ad_Drhs(i,j  )+adfac2
+            END DO
           END DO
-        END DO
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
-            cff=0.25_r8*(M2nudgcof(i-1,j)+M2nudgcof(i,j))*              &
-     &          om_u(i,j)*on_u(i,j)
-!>          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                          &
-!>   &                       cff*((Drhs(i-1,j)+Drhs(i,j))*              &
-!>   &                            (-tl_ubar(i,j,krhs))+                 &
-!>   &                            (tl_Drhs(i-1,j)+tl_Drhs(i,j))*        &
-!>   &                            (ubarclm(i,j)-ubar(i,j,krhs)))
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
+              cff=0.25_r8*(CLIMA(ng)%M2nudgcof(i-1,j)+                  &
+     &                     CLIMA(ng)%M2nudgcof(i  ,j))*                 &
+     &            om_u(i,j)*on_u(i,j)
+!>            tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                        &
+!>   &                         cff*((Drhs(i-1,j)+Drhs(i,j))*            &
+!>   &                              (-tl_ubar(i,j,krhs))+               &
+!>   &                              (tl_Drhs(i-1,j)+tl_Drhs(i,j))*      &
+!>   &                              (CLIMA(ng)%ubarclm(i,j)-
+!>   &                               ubar(i,j,krhs)))
 !>
-            adfac=cff*ad_rhs_ubar(i,j)
-            adfac1=adfac*(Drhs(i-1,j)+Drhs(i,j))
-            adfac2=adfac*(ubarclm(i,j)-ubar(i,j,krhs))
-            ad_ubar(i,j,krhs)=ad_ubar(i,j,krhs)-adfac1
-            ad_Drhs(i-1,j)=ad_Drhs(i-1,j)+adfac2
-            ad_Drhs(i  ,j)=ad_Drhs(i  ,j)+adfac2
+              adfac=cff*ad_rhs_ubar(i,j)
+              adfac1=adfac*(Drhs(i-1,j)+Drhs(i,j))
+              adfac2=adfac*(CLIMA(ng)%ubarclm(i,j)-ubar(i,j,krhs))
+              ad_ubar(i,j,krhs)=ad_ubar(i,j,krhs)-adfac1
+              ad_Drhs(i-1,j)=ad_Drhs(i-1,j)+adfac2
+              ad_Drhs(i  ,j)=ad_Drhs(i  ,j)+adfac2
+            END DO
           END DO
-        END DO
-# endif
+        END IF
+
 # ifndef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -2079,50 +2056,50 @@
 !  Add in radiation stress terms.
 !-----------------------------------------------------------------------
 !
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
 #  ifdef DIAGNOSTICS_UV
-!!        DiaV2rhs(i,j,M2hrad)=-cff1
+!!          DiaV2rhs(i,j,M2hrad)=-cff1
 #  endif
 #  ifndef SOLVE3D
-!>        tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-tl_cff1-tl_cff2
+!>          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-tl_cff1-tl_cff2
 !>
-          ad_cff2=ad_cff2-ad_rhs_vbar(i,j)
-          ad_cff1=ad_cff1-ad_rhs_vbar(i,j)
+            ad_cff2=ad_cff2-ad_rhs_vbar(i,j)
+            ad_cff1=ad_cff1-ad_rhs_vbar(i,j)
 #  endif
-!>        tl_cff2=tl_rvlag2d(i,j)
+!>          tl_cff2=tl_rvlag2d(i,j)
 !>
-          ad_rvlag2d(i,j)=ad_rvlag2d(i,j)+ad_cff2
-          ad_cff2=0.0_r8
-!>        tl_cff1=tl_rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
+            ad_rvlag2d(i,j)=ad_rvlag2d(i,j)+ad_cff2
+            ad_cff2=0.0_r8
+!>          tl_cff1=tl_rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
 !>
-          ad_rvstr2d(i,j)=ad_rvstr2d(i,j)+                              &
-     &                    om_v(i,j)*on_v(i,j)*ad_cff1
-          ad_cff1=0.0_r8
+            ad_rvstr2d(i,j)=ad_rvstr2d(i,j)+                            &
+     &                      om_v(i,j)*on_v(i,j)*ad_cff1
+            ad_cff1=0.0_r8
+          END DO
         END DO
-      END DO
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
 #  ifdef DIAGNOSTICS_UV
-!!        DiaU2rhs(i,j,M2hrad)=-cff1
+!!          DiaU2rhs(i,j,M2hrad)=-cff1
 #  endif
 #  ifndef SOLVE3D
-!>        tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-tl_cff1-tl_cff2
+!>          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-tl_cff1-tl_cff2
 !>
-          ad_cff2=ad_cff2-ad_rhs_ubar(i,j)
-          ad_cff1=ad_cff1-ad_rhs_ubar(i,j)
+            ad_cff2=ad_cff2-ad_rhs_ubar(i,j)
+            ad_cff1=ad_cff1-ad_rhs_ubar(i,j)
 #  endif
-!>        tl_cff2=tl_rulag2d(i,j)
+!>          tl_cff2=tl_rulag2d(i,j)
 !>
-          ad_rulag2d(i,j)=ad_rulag2d(i,j)+ad_cff2
-          ad_cff2=0.0_r8
-!>        tl_cff1=tl_rustr2d(i,j)*om_u(i,j)*on_u(i,j)
+            ad_rulag2d(i,j)=ad_rulag2d(i,j)+ad_cff2
+            ad_cff2=0.0_r8
+!>          tl_cff1=tl_rustr2d(i,j)*om_u(i,j)*on_u(i,j)
 !>
-          ad_rustr2d(i,j)=ad_rustr2d(i,j)+                              &
-     &                    om_u(i,j)*on_u(i,j)*ad_cff1
-          ad_cff1=0.0_r8
+            ad_rustr2d(i,j)=ad_rustr2d(i,j)+                            &
+     &                      om_u(i,j)*on_u(i,j)*ad_cff1
+            ad_cff1=0.0_r8
+          END DO
         END DO
-      END DO
 # endif
 # if defined UV_VIS2 || defined UV_VIS4
 !

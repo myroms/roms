@@ -43,8 +43,8 @@
 #ifdef DISTRIBUTE
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
-      integer :: inp, out, i, ic, ifield, itrc, j, ng, npts
-      integer :: sequence
+      integer :: ibry, inp, out, i, ic, ifield, itrc, j, ng, npts
+      integer :: sequence, varid
 
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
@@ -158,16 +158,6 @@
       IF (ANY(CompositeGrid).or.ANY(RefinedGrid)) THEN
         NghostPoints=MAX(3,NghostPoints)
       END IF
-!
-!  Set switch to processing nudging coefficients for passive/active
-!  boundary conditions.
-!
-      DO ng=1,Ngrids
-        NudgingCoeff(ng)=ANY(LBC(:,:,ng)%nudging)
-#if defined ADJOINT || defined TANGENT || defined TL_IOMS
-        NudgingCoeff(ng)=NudgingCoeff(ng).or.ANY(ad_LBC(:,:,ng)%nudging)
-#endif
-      END DO
 !
 !  Set boundary edge I- or J-indices for each variable type.
 !
@@ -799,20 +789,6 @@
       IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
-!  Check C-preprocessing options and definitions.
-!-----------------------------------------------------------------------
-!
-      IF (Master) THEN
-        CALL checkdefs
-        CALL my_flush (out)
-      END IF
-#ifdef DISTRIBUTE
-      CALL mp_bcasti (1, model, exit_flag)
-      CALL mp_bcasts (1, model, Coptions)
-#endif
-      IF (exit_flag.ne.NoError) RETURN
-!
-!-----------------------------------------------------------------------
 !  Compute various constants.
 !-----------------------------------------------------------------------
 !
@@ -832,6 +808,60 @@
 #endif
         tkenu4(ng)=SQRT(ABS(tkenu4(ng)))
 !
+!  Set internal switch for activating sponge areas.
+!
+#ifdef SOLVE3D
+        IF (LuvSponge(ng).or.                                           &
+     &      ANY(LtracerSponge(:,ng))) THEN
+          Lsponge(ng)=.TRUE.
+        END IF
+#else
+        IF (LuvSponge(ng)) THEN
+          Lsponge(ng)=.TRUE.
+        END IF
+#endif
+!
+!  Set switch to processing nudging coefficients for passive/active
+!  boundary conditions.
+!
+        NudgingCoeff(ng)=ANY(LBC(:,:,ng)%nudging)
+#if defined ADJOINT || defined TANGENT || defined TL_IOMS
+        NudgingCoeff(ng)=NudgingCoeff(ng).or.ANY(ad_LBC(:,:,ng)%nudging)
+#endif
+!
+!  Set internal switch for processing climatology data.
+!
+#ifdef SOLVE3D
+# if defined CLIMA_TS_MIX && (defined TS_DIF2 || defined TS_DIF4)
+        Lclimatology(ng)=.TRUE.
+# endif
+        IF (LsshCLM(ng).or.                                             &
+            Lm2CLM (ng).or.LnudgeM2CLM(ng).or.                          &
+            Lm3CLM (ng).or.LnudgeM3CLM(ng).or.                          &
+            ANY(LtracerCLM(:,ng)).or.ANY(LnudgeTCLM(:,ng))) THEN
+          Lclimatology(ng)=.TRUE.
+        END IF
+#else
+        IF (LsshCLM(ng).or.                                             &
+            Lm2CLM (ng).or.LnudgeM2CLM(ng).or.                          &
+          Lclimatology(ng)=.TRUE.
+        END IF
+#endif
+!
+!  Set internal switch for nudging to climatology fields.
+!
+#ifdef SOLVE3D
+        IF (LnudgeM3CLM(ng).or.                                         &
+     &      LnudgeM3CLM(ng).or.                                         &
+     &      ANY(LnudgeTCLM(:,ng))) THEN
+          Lnudging(ng)=.TRUE.
+        END IF
+#else
+        IF (LnudgeM2CLM(ng)) THEN
+          Lnudging(ng)=.TRUE.
+        END IF
+#endif
+!
 !  Compute inverse nudging coefficients (1/s) used in various tasks.
 !
         IF (Znudg(ng).gt.0.0_r8) THEN
@@ -839,18 +869,58 @@
         ELSE
           Znudg(ng)=0.0_r8
         END IF
+!
         IF (M2nudg(ng).gt.0.0_r8) THEN
           M2nudg(ng)=1.0_r8/(M2nudg(ng)*86400.0_r8)
         ELSE
           M2nudg(ng)=0.0_r8
         END IF
 #ifdef SOLVE3D
+!
         IF (M3nudg(ng).gt.0.0_r8) THEN
           M3nudg(ng)=1.0_r8/(M3nudg(ng)*86400.0_r8)
         ELSE
           M3nudg(ng)=0.0_r8
         END IF
 #endif
+!
+!  Set nudging coefficients (1/s) for passive/active (outflow/inflow)
+!  open boundary conditions.  Weak nudging is expected in passive
+!  outflow conditions and strong nudging is expected in active inflow
+!  conditions. If nudging to climatology fields, these values are
+!  replaced by spatial nudging coefficients distribution in the
+!  open boundary condition routines.
+!
+        IF (NudgingCoeff(ng)) THEN
+          DO ibry=1,4
+            IF (LBC(ibry,isFsur,ng)%nudging) THEN
+              FSobc_out(ng,ibry)=Znudg(ng)
+              FSobc_in (ng,ibry)=obcfac(ng)*Znudg(ng)
+            END IF
+!
+            IF (LBC(ibry,isUbar,ng)%nudging.or.                         &
+     &          LBC(ibry,isVbar,ng)%nudging) THEN
+              M2obc_out(ng,ibry)=M2nudg(ng)
+              M2obc_in (ng,ibry)=obcfac(ng)*M2nudg(ng)
+            END IF
+#ifdef SOLVE3D
+!
+            IF (LBC(ibry,isUvel,ng)%nudging.or.                         &
+     &          LBC(ibry,isVvel,ng)%nudging) THEN
+              M3obc_out(ng,ibry)=M3nudg(ng)
+              M3obc_in (ng,ibry)=obcfac(ng)*M3nudg(ng)
+            END IF
+!
+            DO itrc=1,NT(ng)
+              IF (LBC(ibry,isTvar(itrc),ng)%nudging) THEN
+                Tobc_out(itrc,ng,ibry)=Tnudg(itrc,ng)
+                Tobc_in (itrc,ng,ibry)=obcfac(ng)*Tnudg(itrc,ng)
+              END IF
+            END DO
+#endif
+          END DO
+        END IF
+
 #if defined SO_SEMI        || \
    (defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE)
        SO_decay(ng)=SO_decay(ng)*86400.0_r8
@@ -880,17 +950,19 @@
         Fscale(idShea,ng)=cff*Fscale(idShea,ng)
         Fscale(iddQdT,ng)=cff*Fscale(iddQdT,ng)
 
-#if defined SOLVE3D && defined TCLIMATOLOGY
+#ifdef SOLVE3D
 !
 !  Determine the number of climatology tracers to process.
 !
-        ic=0
-        DO itrc=1,NT(ng)
-          IF (LtracerCLM(itrc,ng)) THEN
-            ic=ic+1
-          END IF
-        END DO
-        NTCLM(ng)=ic
+        IF (ANY(LtracerCLM(:,ng)).or.ANY(LnudgeTCLM(:,ng))) THEN
+          ic=0
+          DO itrc=1,NT(ng)
+            IF (LtracerCLM(itrc,ng)) THEN
+              ic=ic+1
+            END IF
+          END DO
+          NTCLM(ng)=ic
+        END IF
 #endif
 
 #if defined TANGENT || defined TL_IOMS
@@ -920,6 +992,93 @@
 #endif
 
       END DO
+!
+!-----------------------------------------------------------------------
+!  Set climatology tracers (active and passive) metadata.  It needs to
+!  be done here because information is needed from all input scripts.
+!  The variable name and units are the same as the basic tracers. The
+!  default time-variable name is the same as the variable name but with
+!  the "_time" suffix.  Recall that other time-variables names are
+!  allowed provided that the input NetCDF variable has the "time"
+!  attribute with the appropriate value.
+!-----------------------------------------------------------------------
+!
+      varid=last_varid
+      IF (ANY(LtracerCLM).or.ANY(LnudgeTCLM)) THEN
+        DO i=1,MT
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,130) MV, varid
+            STOP
+          END IF
+          idTclm(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8
+            Iinfo(1,varid,ng)=r3dvar
+          END DO
+          WRITE (Vname(1,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(1,idTvar(i))))
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idTvar(i)))), ' climatology'
+          WRITE (Vname(3,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(3,idTvar(i))))
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &          TRIM(Vname(1,varid)), ', scalar, series'
+          WRITE (Vname(5,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_time'
+        END DO
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Set tracers inverse nudging coeffcients metadata.  It needs to be
+!  done here because information is needed from all input scripts.
+!  The variable name is the same as the basic tracer but with the
+!  "_NudgeCoef" suffix.
+!-----------------------------------------------------------------------
+!
+      DO i=1,MT
+        IF (ANY(LnudgeTCLM(i,:))) THEN
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,130) MV, varid
+ 130        FORMAT (/,' INP_PAR - too small dimension ',                &
+     &              'parameter, MV = ',2i5,/,15x,                       &
+     &              'change file  mod_ncparam.F  and recompile.')
+            STOP
+          END IF
+          idTnud(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8/86400        ! default units: 1/day
+            Iinfo(1,varid,ng)=r3dvar
+          END DO
+          WRITE (Vname(1,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_NudgeCoef'
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idTvar(i)))),                      &
+     &          ', inverse nudging coefficients'
+          WRITE (Vname(3,varid),'(a,1x,a)')                             &
+     &          TRIM(ADJUSTL(Vname(3,idTvar(i)))), 'day-1'
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &        TRIM(Vname(1,varid)), ', scalar'
+          WRITE (Vname(5,varid),'(a)') 'nulvar'
+        ELSE
+          idTnud(i)=0
+        END IF
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Check C-preprocessing options and definitions.
+!-----------------------------------------------------------------------
+!
+      IF (Master) THEN
+        CALL checkdefs
+        CALL my_flush (out)
+      END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (1, model, exit_flag)
+      CALL mp_bcasts (1, model, Coptions)
+#endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Initialize random number sequence so we can get identical results

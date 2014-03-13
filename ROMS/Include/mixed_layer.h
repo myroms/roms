@@ -26,8 +26,6 @@
 #define ANA_SSFLUX
 #define ANA_BSFLUX
 #define TS_U3HADVECTION
-#define NORTHERN_WALL
-#define SOUTHERN_WALL
 
 #undef  MY25_MIXING
 #define GLS_MIXING

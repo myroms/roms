@@ -29,9 +29,6 @@
 !***********************************************************************
 !
       USE mod_param
-# ifdef CLIMATOLOGY
-      USE mod_clima
-# endif
       USE mod_coupling
 # ifdef DIAGNOSTICS_UV
       USE mod_diags
@@ -155,11 +152,6 @@
      &                    FORCES(ng) % tl_sustr,                        &
      &                    FORCES(ng) % svstr,                           &
      &                    FORCES(ng) % tl_svstr,                        &
-# ifdef M3CLM_NUDGING
-     &                    CLIMA(ng) % M3nudgcof,                        &
-     &                    CLIMA(ng) % uclm,                             &
-     &                    CLIMA(ng) % vclm,                             &
-# endif
      &                    OCEAN(ng) % u,                                &
      &                    OCEAN(ng) % tl_u,                             &
      &                    OCEAN(ng) % v,                                &
@@ -238,9 +230,6 @@
      &                          bvstr, tl_bvstr,                        &
      &                          sustr, tl_sustr,                        &
      &                          svstr, tl_svstr,                        &
-# ifdef M3CLM_NUDGING
-     &                          M3nudgcof, uclm, vclm,                  &
-# endif
      &                          u, tl_u,                                &
      &                          v, tl_v,                                &
      &                          W, tl_W,                                &
@@ -260,6 +249,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_clima
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -288,11 +278,6 @@
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
       real(r8), intent(in) :: sustr(LBi:,LBj:)
       real(r8), intent(in) :: svstr(LBi:,LBj:)
-#  ifdef M3CLM_NUDGING
-      real(r8), intent(in) :: M3nudgcof(LBi:,LBj:)
-      real(r8), intent(in) :: uclm(LBi:,LBj:,:)
-      real(r8), intent(in) :: vclm(LBi:,LBj:,:)
-#  endif
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
@@ -347,11 +332,6 @@
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: svstr(LBi:UBi,LBj:UBj)
-#  ifdef M3CLM_NUDGING
-      real(r8), intent(in) :: M3nudgcof(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: uclm(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: vclm(LBi:UBi,LBj:UBj,N(ng))
-#  endif
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
@@ -787,43 +767,50 @@
           END DO
         END DO
 # endif
-# ifdef M3CLM_NUDGING
 !
 !-----------------------------------------------------------------------
 !  Add in nudging of 3D momentum climatology.
 !-----------------------------------------------------------------------
 !
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
-            cff=0.25_r8*(M3nudgcof(i-1,j)+M3nudgcof(i,j))*              &
-     &          om_u(i,j)*on_u(i,j)
-!>          ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                              &
-!>   &                     cff*(Hz(i-1,j,k)+Hz(i,j,k))*                 &
-!>   &                         (uclm(i,j,k)-u(i,j,k,nrhs))
+        IF (LnudgeM3CLM(ng)) THEN
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
+              cff=0.25_r8*(CLIMA(ng)%M3nudgcof(i-1,j,k)+                &
+     &                     CLIMA(ng)%M3nudgcof(i  ,j,k))*               &
+     &            om_u(i,j)*on_u(i,j)
+!>            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                            &
+!>   &                       cff*(Hz(i-1,j,k)+Hz(i,j,k))*               &
+!>   &                           (CLIMA(ng)%uclm(i,j,k)-                &
+!>   &                            u(i,j,k,nrhs))
 !>
-            tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)+                        &
-     &                        cff*((Hz(i-1,j,k)+Hz(i,j,k))*             &
-     &                             (-tl_u(i,j,k,nrhs))+                 &
-     &                             (tl_Hz(i-1,j,k)+tl_Hz(i,j,k))*       &
-     &                             (uclm(i,j,k)-u(i,j,k,nrhs)))
+              tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)+                      &
+     &                          cff*((Hz(i-1,j,k)+Hz(i,j,k))*           &
+     &                               (-tl_u(i,j,k,nrhs))+               &
+     &                               (tl_Hz(i-1,j,k)+tl_Hz(i,j,k))*     &
+     &                               (CLIMA(ng)%uclm(i,j,k)-            &
+     &                                u(i,j,k,nrhs)))
+            END DO
           END DO
-        END DO
-        DO j=JstrV,Jend
-          DO i=Istr,Iend
-            cff=0.25_r8*(M3nudgcof(i,j-1)+M3nudgcof(i,j))*              &
-     &          om_v(i,j)*on_v(i,j)
-!>          rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+                              &
-!>   &                     cff*(Hz(i,j-1,k)+Hz(i,j,k))*                 &
-!>   &                         (vclm(i,j,k)-v(i,j,k,nrhs))
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
+              cff=0.25_r8*(CLIMA(ng)%M3nudgcof(i,j-1,k)+                &
+     &                     CLIMA(ng)%M3nudgcof(i,j  ,k))*               &
+     &            om_v(i,j)*on_v(i,j)
+!>            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+                            &
+!>   &                       cff*(Hz(i,j-1,k)+Hz(i,j,k))*               &
+!>   &                           (CLIMA(ng)%vclm(i,j,k)-                &
+!>   &                            v(i,j,k,nrhs))
 !>
-            tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)+                        &
-     &                        cff*((Hz(i,j-1,k)+Hz(i,j,k))*             &
-     &                             (-tl_v(i,j,k,nrhs))+                 &
-     &                             (tl_Hz(i,j-1,k)+tl_Hz(i,j,k))*       &
-     &                             (vclm(i,j,k)-v(i,j,k,nrhs)))
-         END DO
-       END DO
-# endif
+              tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)+                      &
+     &                          cff*((Hz(i,j-1,k)+Hz(i,j,k))*           &
+     &                               (-tl_v(i,j,k,nrhs))+               &
+     &                               (tl_Hz(i,j-1,k)+tl_Hz(i,j,k))*     &
+     &                               (CLIMA(ng)%vclm(i,j,k)-            &
+     &                                v(i,j,k,nrhs)))
+            END DO
+          END DO
+        END IF
+
 # ifdef UV_ADV
 !
 !-----------------------------------------------------------------------

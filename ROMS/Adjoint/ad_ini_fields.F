@@ -210,7 +210,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k, kbed
+      integer :: i, ic, itrc, j, k, kbed
 
       real(r8) :: cff1
       real(r8) :: adfac, ad_cff1, ad_cff2
@@ -262,7 +262,12 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_t(:,:,:,nstp,:))
 #  endif
+!
+      ic=0
       DO itrc=1,NT(ng)
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+          ic=ic+1
+        END IF
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !!        CALL exchange_r3d_tile (ng, tile,                             &
 !!   &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
@@ -280,24 +285,24 @@
      &                               ad_t(:,:,:,nstp,itrc))
         END IF
 !
-!!      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
+!!      CALL tl_t3dbc_tile (ng, tile, itrc, ic,                         &
 !!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !!   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !!   &                      nstp, nnew,                                 &
 !!   &                      tl_t)
 !!
-!!      CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+!!      CALL ad_t3dbc_tile (ng, tile, itrc, ic,                         &
 !!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !!   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !!   &                      nstp, nnew,                                 &
 !!   &                      ad_t)
-!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
+!>      CALL tl_t3dbc_tile (ng, tile, itrc, ic,                         &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !>   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !>   &                      nstp, nstp,                                 &
 !>   &                      tl_t)
 !>                                                      only nstp needed
-        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+        CALL ad_t3dbc_tile (ng, tile, itrc, ic,                         &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nstp,                                 &
@@ -1495,7 +1500,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k, kbed, kout
+      integer :: i, ic, itrc, j, k, kbed, kout
 
       real(r8) :: cff1
       real(r8) :: adfac, ad_cff1, ad_cff2
@@ -1712,7 +1717,12 @@
      &                       ad_t(:,:,:,nstp,:),                        &
      &                       ad_t(:,:,:,nnew,:))
 #  endif
+!
+      ic=0
       DO itrc=1,NT(ng)
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+          ic=ic+1
+        END IF
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
           CALL ad_exchange_r3d_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
@@ -1721,12 +1731,12 @@
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                               ad_t(:,:,:,nnew,itrc))
         END IF
-        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+        CALL ad_t3dbc_tile (ng, tile, itrc, ic,                         &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nnew,                                 &
      &                      ad_t)
-        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
+        CALL ad_t3dbc_tile (ng, tile, itrc, ic,                         &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nstp,                                 &

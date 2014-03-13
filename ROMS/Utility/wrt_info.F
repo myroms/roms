@@ -429,6 +429,20 @@
 # endif
 #endif
 
+#if defined UV_VIS2 || defined UV_VIS4
+      CALL netcdf_put_lvar (ng, model, ncname, 'LuvSponge',             &
+     &                      LuvSponge(ng), (/0/), (/0/),                &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#if (defined TS_DIF2 || defined TS_DIF4) && defined SOLVE3D
+      CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSponge',         &
+     &                      LtracerSponge(:,ng), (/1/), (/NT(ng)/),     &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
 #ifdef SOLVE3D
 !
 !  Background vertical mixing coefficients.
@@ -759,6 +773,49 @@
 !
       CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSrc',            &
      &                      LtracerSrc(:,ng), (/1/), (/NT(ng)/),        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+!
+!  Logical switches to process climatology fields.
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'LsshCLM',               &
+     &                      LsshCLM(ng), (/0/), (/0/),                  &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lm2CLM',                &
+     &                      Lm2CLM(ng), (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#ifdef SOLVE3D
+      CALL netcdf_put_lvar (ng, model, ncname, 'Lm3CLM',                &
+     &                      Lm3CLM(ng), (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'LtracerCLM',            &
+     &                      LtracerCLM(:,ng), (/1/), (/NT(ng)/),        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+!
+!  Logical switches for nudging climatology fields.
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeM2CLM',           &
+     &                      LnudgeM2CLM(ng), (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+#ifdef SOLVE3D
+      CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeM3CLM',           &
+     &                      LnudgeM3CLM(ng), (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeTCLM',            &
+     &                      LnudgeTCLM(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 #endif

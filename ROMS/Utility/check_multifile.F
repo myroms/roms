@@ -198,76 +198,76 @@
         END IF
       END DO
 #endif
-#ifdef CLM_FILE
 !
 !-----------------------------------------------------------------------
 !  Input climatology data.
 !-----------------------------------------------------------------------
 !
-      Nfiles=CLM(ng)%Nfiles
-      DO ifile=1,Nfiles
-        ncname=CLM(ng)%files(ifile)
-        foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,       &
-     &                     Lcheck)
-        IF (exit_flag.ne.NoError) RETURN
-        CLM(ng)%time_min(ifile)=Tmin
-        CLM(ng)%time_max(ifile)=Tmax
-      END DO
+      IF (CLM_FILE(ng)) THEN
+        Nfiles=CLM(ng)%Nfiles
+        DO ifile=1,Nfiles
+          ncname=CLM(ng)%files(ifile)
+          foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
+     &                       Lcheck)
+          IF (exit_flag.ne.NoError) RETURN
+          CLM(ng)%time_min(ifile)=Tmin
+          CLM(ng)%time_max(ifile)=Tmax
+        END DO
 !
 !  Set the appropriate file counter to use during initialization or
 !  restart.
 !
-      Fcount=0
-      IF (Lcheck) THEN
-        DO ifile=1,Nfiles
-          Tmin=Tscale*CLM(ng)%time_min(ifile)
-          IF (time(ng).ge.Tmin) THEN
-            Fcount=ifile
-          END IF
-        END DO
-      ELSE
-        Fcount=1
-      END IF
+        Fcount=0
+        IF (Lcheck) THEN
+          DO ifile=1,Nfiles
+            Tmin=Tscale*CLM(ng)%time_min(ifile)
+            IF (time(ng).ge.Tmin) THEN
+              Fcount=ifile
+            END IF
+          END DO
+        ELSE
+          Fcount=1
+        END IF
 !
 !  Initialize other structure parameters or issue an error if data does
 !  not include initalization time.
 !
-      IF (Fcount.gt.0) THEN
-        CLM(ng)%Fcount=Fcount
-        ncname=CLM(ng)%files(Fcount)
-        lstr=LEN_TRIM(ncname)
-        CLM(ng)%name=TRIM(ncname)
-        CLM(ng)%base=ncname(1:lstr-3)
-      ELSE
-        IF (Master.and.Lcheck) THEN
-          WRITE (stdout,10) 'Climatology', I_code
-          DO ifile=1,Nfiles
-            Tmin=Tscale*CLM(ng)%time_min(ifile)
-            Tmax=Tscale*CLM(ng)%time_max(ifile)
-            CALL time_string(Tmin, Tmin_code)
-            CALL time_string(Tmax, Tmax_code)
-            WRITE (stdout,20) Tmin_code, Tmax_code,                     &
-     &                        TRIM(CLM(ng)%files(ifile))
-          END DO
-        END IF
-        exit_flag=4
-      END IF
-!
-!  Check if there is boundary data to the end of the simulation.
-!
-      IF (Lcheck) THEN
-        Tmax=Tscale*CLM(ng)%time_max(Nfiles)
-        IF (Tfinal.gt.Tmax) THEN
-          CALL time_string(Tmax, Tmax_code)
-          IF (Master) THEN
-            WRITE (stdout,30) 'Climatology',                            &
-     &                        TRIM(CLM(ng)%files(Nfiles)),              &
-     &                        Tmax_code, F_code
+        IF (Fcount.gt.0) THEN
+          CLM(ng)%Fcount=Fcount
+          ncname=CLM(ng)%files(Fcount)
+          lstr=LEN_TRIM(ncname)
+          CLM(ng)%name=TRIM(ncname)
+          CLM(ng)%base=ncname(1:lstr-3)
+        ELSE
+          IF (Master.and.Lcheck) THEN
+            WRITE (stdout,10) 'Climatology', I_code
+            DO ifile=1,Nfiles
+              Tmin=Tscale*CLM(ng)%time_min(ifile)
+              Tmax=Tscale*CLM(ng)%time_max(ifile)
+              CALL time_string(Tmin, Tmin_code)
+              CALL time_string(Tmax, Tmax_code)
+              WRITE (stdout,20) Tmin_code, Tmax_code,                   &
+     &                          TRIM(CLM(ng)%files(ifile))
+            END DO
           END IF
           exit_flag=4
         END IF
+!
+!  Check if there is boundary data to the end of the simulation.
+!
+        IF (Lcheck) THEN
+          Tmax=Tscale*CLM(ng)%time_max(Nfiles)
+          IF (Tfinal.gt.Tmax) THEN
+            CALL time_string(Tmax, Tmax_code)
+            IF (Master) THEN
+              WRITE (stdout,30) 'Climatology',                          &
+     &                          TRIM(CLM(ng)%files(Nfiles)),            &
+     &                          Tmax_code, F_code
+            END IF
+            exit_flag=4
+          END IF
+        END IF
       END IF
-#endif
 
  10   FORMAT (/,' CHECK_MULTIFILE - Error while processing ', a,        &
      &        ' multi-files: ',/,19x,'data does not include',           &

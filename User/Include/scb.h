@@ -71,13 +71,6 @@
 # define ANA_BSFLUX
 # define ANA_BTFLUX
 
-# undef  M2CLIMATOLOGY
-# undef  M3CLIMATOLOGY
-# undef  TCLIMATOLOGY
-# undef  M2CLM_NUDGING
-# undef  M3CLM_NUDGING
-# undef  TCLM_NUDGING
-
 # define FORWARD_MIXING
 # define FORWARD_READ
 # define FORWARD_WRITE
@@ -119,36 +112,8 @@
 #  define LMD_SKPP
 # endif
 
-# undef CLOSED_OBC
-# ifdef CLOSED_OBC
-#  define NORTHERN_WALL
-#  define SOUTHERN_WALL
-#  define EASTERN_WALL
-#  define WESTERN_WALL
-# else
-#  define EASTERN_WALL
-#  define WEST_FSCHAPMAN
-#  define WEST_M2FLATHER
-#  define WEST_M3CLAMPED
-#  define WEST_TCLAMPED
-#  define SOUTH_FSCHAPMAN
-#  define SOUTH_M2FLATHER
-#  define SOUTH_M3CLAMPED
-#  define SOUTH_TCLAMPED
-#  define NORTH_FSCHAPMAN
-#  define NORTH_M2FLATHER
-#  define NORTH_M3CLAMPED
-#  define NORTH_TCLAMPED
-# endif
 # define ANA_BSFLUX
 # define ANA_BTFLUX
-
-# undef  M2CLIMATOLOGY
-# undef  M3CLIMATOLOGY
-# undef  TCLIMATOLOGY
-# undef  M2CLM_NUDGING
-# undef  M3CLM_NUDGING
-# undef  TCLM_NUDGING
 
 # if defined W4DPSAS || defined W4DVAR
 #  define CONVOLVE

@@ -24,9 +24,7 @@
 # ifdef FORWARD_READ
       USE mod_coupling
 # endif
-# ifdef CLIMATOLOGY
       USE mod_clima
-# endif
       USE mod_forces
       USE mod_grid
       USE mod_iounits
@@ -851,46 +849,79 @@
       END IF
 #  endif
 # endif
-
-# ifdef CLM_FILE
 !
 !=======================================================================
-!  Read in climatology data from CLIMATOLOGY NetCDF file.
+!  Read in data from Climatology NetCDF file.
 !=======================================================================
+
+# ifndef ANA_SSH
 !
-#  if !defined ANA_SSH && defined ZCLIMATOLOGY
-      CALL get_2dfld (ng, iRPM, idSSHc, CLM(ng)%ncid,                   &
-     &                1, CLM(ng), update(1),                            &
-     &                LBi, UBi, LBj, UBj, 2, 1,                         &
-#   ifdef MASKING
-     &                GRID(ng) % rmask,                                 &
-#   endif
-     &                CLIMA(ng) % sshG)
-      IF (exit_flag.ne.NoError) RETURN
+!  Free-surface.
+!
+      IF (LsshCLM(ng)) THEN
+        CALL get_2dfld (ng, iRPM, idSSHc, CLM(ng)%ncid,                 &
+     &                  1, CLM(ng), update(1),                          &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % rmask,                               &
 #  endif
-
-#  if !defined ANA_M2CLIMA && defined M2CLIMATOLOGY
-      CALL get_2dfld (ng, iRPM, idUbcl, CLM(ng)%ncid,                   &
-     &                1, CLM(ng), update(1),                            &
-     &                LBi, UBi, LBj, UBj, 2, 1,                         &
-#   ifdef MASKING
-     &                GRID(ng) % umask,                                 &
-#   endif
-     &                CLIMA(ng) % ubarclmG)
-      IF (exit_flag.ne.NoError) RETURN
-
-      CALL get_2dfld (ng, iRPM, idVbcl, CLM(ng)%ncid,                   &
-     &                1, CLM(ng), update(1),                            &
-     &                LBi, UBi, LBj, UBj, 2, 1,                         &
-#   ifdef MASKING
-     &                GRID(ng) % vmask,                                 &
-#   endif
-     &                CLIMA(ng) % vbarclmG)
-      IF (exit_flag.ne.NoError) RETURN
+     &                  CLIMA(ng) % sshG)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifndef ANA_M2CLIMA
+!
+!  2D momentum.
+!
+      IF (Lm2CLM(ng)) THEN
+        CALL get_2dfld (ng, iRPM, idUbcl, CLM(ng)%ncid,                 &
+     &                  1, CLM(ng), update(1),                          &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % umask,                               &
 #  endif
-
-#  ifdef SOLVE3D
-#   if !defined ANA_TCLIMA && defined TCLIMATOLOGY
+     &                  CLIMA(ng) % ubarclmG)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL get_2dfld (ng, iRPM, idVbcl, CLM(ng)%ncid,                 &
+     &                  1, CLM(ng), update(1),                          &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#  ifdef MASKING
+     &                  GRID(ng) % vmask,                               &
+#  endif
+     &                  CLIMA(ng) % vbarclmG)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+# endif
+# ifdef SOLVE3D
+#  ifndef ANA_M3CLIMA
+!
+!  3D momentum.
+!
+      IF (Lm3CLM(ng)) THEN
+        CALL get_3dfld (ng, iRPM, idUclm, CLM(ng)%ncid,                 &
+     &                  1, CLM(ng), update(1),                          &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#   ifdef MASKING
+     &                  GRID(ng) % umask,                               &
+#   endif
+     &                  CLIMA(ng) % uclmG)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL get_3dfld (ng, iRPM, idVclm, CLM(ng)%ncid,                 &
+     &                  1, CLM(ng), update(1),                          &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#   ifdef MASKING
+     &                  GRID(ng) % vmask,                               &
+#   endif
+     &                  CLIMA(ng) % vclmG)
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+#  endif
+#  ifndef ANA_TCLIMA
+!
+!  Tracers.
+!
       ic=0
       DO i=1,NT(ng)
         IF (LtracerCLM(i,ng)) THEN
@@ -898,34 +929,13 @@
           CALL get_3dfld (ng, iRPM, idTclm(i), CLM(ng)%ncid,            &
      &                    1, CLM(ng), update(1),                        &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
-#    ifdef MASKING
+#   ifdef MASKING
      &                    GRID(ng) % rmask,                             &
-#    endif
+#   endif
      &                    CLIMA(ng) % tclmG(:,:,:,:,ic))
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
-#   endif
-
-#   if !defined ANA_M3CLIMA && defined M3CLIMATOLOGY
-      CALL get_3dfld (ng, iRPM, idUclm, CLM(ng)%ncid,                   &
-     &                1, CLM(ng), update(1),                            &
-     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
-#    ifdef MASKING
-     &                GRID(ng) % umask,                                 &
-#    endif
-     &                CLIMA(ng) % uclmG)
-      IF (exit_flag.ne.NoError) RETURN
-
-      CALL get_3dfld (ng, iRPM, idVclm, CLM(ng)%ncid,                   &
-     &                1, CLM(ng), update(1),                            &
-     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
-#    ifdef MASKING
-     &                GRID(ng) % vmask,                                 &
-#    endif
-     &                CLIMA(ng) % vclmG)
-      IF (exit_flag.ne.NoError) RETURN
-#   endif
 #  endif
 # endif
 

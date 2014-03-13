@@ -25,7 +25,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE tl_t3dbc (ng, tile, nout, itrc)
+      SUBROUTINE tl_t3dbc (ng, tile, nout, itrc, ic)
 !***********************************************************************
 !
       USE mod_param
@@ -34,13 +34,13 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, nout, itrc
+      integer, intent(in) :: ng, tile, nout, itrc, ic
 !
 !  Local variable declarations.
 !
 # include "tile.h"
 !
-      CALL tl_t3dbc_tile (ng, tile, itrc,                               &
+      CALL tl_t3dbc_tile (ng, tile, itrc, ic,                           &
      &                    LBi, UBi, LBj, UBj, N(ng), NT(ng),            &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp(ng), nout,                               &
@@ -50,7 +50,7 @@
       END SUBROUTINE tl_t3dbc
 !
 !***********************************************************************
-      SUBROUTINE tl_t3dbc_tile (ng, tile, itrc,                         &
+      SUBROUTINE tl_t3dbc_tile (ng, tile, itrc, ic,                     &
      &                          LBi, UBi, LBj, UBj, UBk, UBt,           &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp, nout,                             &
@@ -59,13 +59,14 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_clima
       USE mod_grid
       USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, itrc
+      integer, intent(in) :: ng, tile, itrc, ic
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nout
@@ -80,7 +81,8 @@
 !
       integer :: i, j, k
 
-      real(r8) :: Ce, Cx, cff, tau
+      real(r8) :: Ce, Cx, cff
+      real(r8) :: obc_in, obc_out, tau
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
@@ -107,11 +109,18 @@
                 IF (LBC_apply(ng)%west(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                   IF (tl_LBC(iwest,isTvar(itrc),ng)%nudging) THEN
-                    IF (BOUNDARY(ng)%t_west_Cx(j,k,itrc)                &
-     &                  .eq.0.0_r8) THEN
-                      tau=Tobc_in(itrc,ng,iwest)
+                    IF (LnudgeTCLM(itrc,ng)) THEN
+                      obc_out=CLIMA(ng)%Tnudgcof(Istr-1,j,k,ic)
+                      obc_in =obcfac(ng)*obc_out
                     ELSE
-                      tau=Tobc_out(itrc,ng,iwest)
+                      obc_out=Tobc_out(itrc,ng,iwest)
+                      obc_in =Tobc_in (itrc,ng,iwest)
+                    END IF
+                    IF (BOUNDARY(ng)%t_west_Cx(j,k,itrc).lt.            &
+     &                  0.0_r8) THEN
+                      tau=obc_in
+                    ELSE
+                      tau=obc_out
                     END IF
                     tau=tau*dt(ng)
                   END IF
@@ -262,11 +271,18 @@
                 IF (LBC_apply(ng)%east(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                   IF (tl_LBC(ieast,isTvar(itrc),ng)%nudging) THEN
-                    IF (BOUNDARY(ng)%t_east_Cx(j,k,itrc)                &
-     &                  .eq.0.0_r8) THEN
-                      tau=Tobc_in(itrc,ng,ieast)
+                    IF (LnudgeTCLM(itrc,ng)) THEN
+                      obc_out=CLIMA(ng)%Tnudgcof(Iend+1,j,k,ic)
+                      obc_in =obcfac(ng)*obc_out
                     ELSE
-                      tau=Tobc_out(itrc,ng,ieast)
+                      obc_out=Tobc_out(itrc,ng,ieast)
+                      obc_in =Tobc_in (itrc,ng,ieast)
+                    END IF
+                    IF (BOUNDARY(ng)%t_east_Cx(j,k,itrc).lt.            &
+     &                  0.0_r8) THEN
+                      tau=obc_in
+                    ELSE
+                      tau=obc_out
                     END IF
                     tau=tau*dt(ng)
                   END IF
@@ -416,11 +432,18 @@
                 IF (LBC_apply(ng)%south(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                   IF (tl_LBC(isouth,isTvar(itrc),ng)%nudging) THEN
-                    IF (BOUNDARY(ng)%t_south_Ce(i,k,itrc)               &
-     &                  .eq.0.0_r8) THEN
-                      tau=Tobc_in(itrc,ng,isouth)
+                    IF (LnudgeTCLM(itrc,ng)) THEN
+                      obc_out=CLIMA(ng)%Tnudgcof(i,Jstr-1,k,ic)
+                      obc_in =obcfac(ng)*obc_out
                     ELSE
-                      tau=Tobc_out(itrc,ng,isouth)
+                      obc_out=Tobc_out(itrc,ng,isouth)
+                      obc_in =Tobc_in (itrc,ng,isouth)
+                    END IF
+                    IF (BOUNDARY(ng)%t_south_Ce(i,k,itrc).lt.           &
+     &                  0.0_r8) THEN
+                      tau=obc_in
+                    ELSE
+                      tau=obc_out
                     END IF
                     tau=tau*dt(ng)
                   END IF
@@ -570,11 +593,18 @@
                 IF (LBC_apply(ng)%north(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                   IF (tl_LBC(inorth,isTvar(itrc),ng)%nudging) THEN
-                    IF (BOUNDARY(ng)%t_north_Ce(i,k,itrc)               &
-     &                  .eq.0.0_r8) THEN
-                      tau=Tobc_in(itrc,ng,inorth)
+                    IF (LnudgeTCLM(itrc,ng)) THEN
+                      obc_out=CLIMA(ng)%Tnudgcof(i,Jend+1,k,ic)
+                      obc_in =obcfac(ng)*obc_out
                     ELSE
-                      tau=Tobc_out(itrc,ng,inorth)
+                      obc_out=Tobc_out(itrc,ng,inorth)
+                      obc_in =Tobc_in (itrc,ng,inorth)
+                    END IF
+                    IF (BOUNDARY(ng)%t_north_Ce(i,k,itrc).lt.           &
+     &                  0.0_r8) THEN
+                      tau=obc_in
+                    ELSE
+                      tau=obc_out
                     END IF
                     tau=tau*dt(ng)
                   END IF

@@ -20,24 +20,30 @@
 !  Hviscosity   Time invariant, horizontal viscosity (harmonic or      !
 !                 (biharmonic) term at RHO-points.                     !
 #endif
+#ifdef SOLVE3D
 !  dAktdz       Vertical gradient in mixing coefficient (m/s) for      !
 !                 tracer 1, used in float random walk calculations     !
 !  diff2        Horizontal, time invariant harmonic coefficient        !
 !                 (m2/s) for tracers.                                  !
 !  diff4        Horizontal, time invariant biharmonic coefficient      !
-#ifdef DIFF_3DCOEF
+# ifdef DIFF_3DCOEF
 !                 (m4/s) for tracers.                                  !
-#else
+# else
 !                 SQRT(m4/s) for tracers.                              !
-#endif
-#ifdef DIFF_3DCOEF
+# endif
+# ifdef DIFF_3DCOEF
 !  diff3d_r     Horizontal, time-dependent 3D diffusion coefficient at !
 !                 RHO-points.                                          !
-# ifdef TS_U3ADV_SPLIT
+#  ifdef TS_U3ADV_SPLIT
 !  diff3d_u     Horizontal, time-dependent 3D diffusion coefficient at !
 !                 U-points.                                            !
 !  diff3d_v     Horizontal, time-dependent 3D diffusiob coefficient at !
 !                 V-points.                                            !
+#  endif
+# endif
+# ifndef ANA_SPONGE
+!  diff_factor  Horizontal diffusivity factor (nondimensional) for     !
+!                 increasing mixing sponge areas at RHO-points.        !
 # endif
 #endif
 !  visc2_r      Horizontal, time invariant harmonic viscosity          !
@@ -65,6 +71,10 @@
 !  Vvis3d_r     Horizontal, time-dependent 3D V-viscosity coefficient  !
 !                 at RHO-points.                                       !
 # endif
+#endif
+#ifndef ANA_SPONGE
+!  visc_factor  Horizontal viscosity factor (nondimensional) for       !
+!                 increasing mixing in sponge areas at RHO-points.     !
 #endif
 !                                                                      !
 #ifdef FOUR_DVAR
@@ -151,7 +161,10 @@
 #if defined VISC_3DCOEF && defined SOLVE3D
           real(r8), pointer :: Hviscosity(:,:)
 #endif
-#if defined UV_VIS2 || !defined SOLVE3D
+#ifndef ANA_SPONGE
+          real(r8), pointer :: visc_factor(:,:)
+#endif
+#if defined UV_VIS2
           real(r8), pointer :: visc2_p(:,:)
           real(r8), pointer :: visc2_r(:,:)
 #endif
@@ -159,14 +172,14 @@
           real(r8), pointer :: visc4_p(:,:)
           real(r8), pointer :: visc4_r(:,:)
 #endif
-# ifdef VISC_3DCOEF
-#  ifdef UV_U3ADV_SPLIT
+#ifdef VISC_3DCOEF
+# ifdef UV_U3ADV_SPLIT
           real(r8), pointer :: Uvis3d_r(:,:,:)
           real(r8), pointer :: Vvis3d_r(:,:,:)
-#  else
+# else
           real(r8), pointer :: visc3d_r(:,:,:)
-#  endif
 # endif
+#endif
 #ifdef NEARSHORE_MELLOR
           real(r8), pointer :: Sxx_bar(:,:)
           real(r8), pointer :: Sxy_bar(:,:)
@@ -186,6 +199,9 @@
 # endif
 #endif
 #ifdef SOLVE3D
+# ifndef ANA_SPONGE
+          real(r8), pointer :: diff_factor(:,:)
+# endif
 # ifdef TS_DIF2
           real(r8), pointer :: diff2(:,:,:)
 # endif
@@ -379,6 +395,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Local variable declarations.
 !
@@ -392,7 +409,12 @@
 !
 !  Nonlinear model state.
 !
-#if defined UV_VIS2 || !defined SOLVE3D
+#ifndef ANA_SPONGE
+      IF (LuvSponge(ng)) THEN
+        allocate ( MIXING(ng) % visc_factor(LBi:UBi,LBj:UBj) )
+      END IF
+#endif
+#if defined UV_VIS2
       allocate ( MIXING(ng) % visc2_p(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % visc2_r(LBi:UBi,LBj:UBj) )
 #endif
@@ -432,6 +454,11 @@
 #endif
 
 #ifdef SOLVE3D
+# ifndef ANA_SPONGE
+      IF (ANY(LtracerSponge(:,ng))) THEN
+        allocate ( MIXING(ng) % diff_factor(LBi:UBi,LBj:UBj) )
+      END IF
+# endif
 # ifdef TS_DIF2
       allocate ( MIXING(ng) % diff2(LBi:UBi,LBj:UBj,NT(ng)) )
 # endif
@@ -714,7 +741,14 @@
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         DO j=Jmin,Jmax
-#if defined UV_VIS2 || !defined SOLVE3D
+#ifndef ANA_SPONGE
+          IF (LuvSponge(ng)) THEN
+            DO i=Imin,Imax
+              MIXING(ng) % visc_factor(i,j) = IniVal
+            END DO
+          END IF
+#endif
+#if defined UV_VIS2
           DO i=Imin,Imax
             MIXING(ng) % visc2_p(i,j) = IniVal
             MIXING(ng) % visc2_r(i,j) = IniVal
@@ -764,6 +798,13 @@
           END DO
 #endif
 #ifdef SOLVE3D
+# ifndef ANA_SPONGE
+          IF (ANY(LtracerSponge(:,ng))) THEN
+            DO i=Imin,Imax
+              MIXING(ng) % diff_factor(i,j) = IniVal
+            END DO
+          END IF
+# endif
 # ifdef TS_DIF2
           DO itrc=1,NT(ng)
             DO i=Imin,Imax

@@ -83,13 +83,6 @@
 # define KANTHA_CLAYSON
 #endif
 
-/* If you define SPONGE or allow for a nudging layer at the boundaries,
-** you need to provide the appropriate "ana_hmixcoef.h" and "ana_nudgcoef.h"
-** for your application. See examples in ROMS/Func
-*/
-
-#define SPONGE
-
 /*
 ** Surface atmospheric fluxes. Note, that we must define DIURNAL_SRFLUX
 ** when using daily averaged fields.

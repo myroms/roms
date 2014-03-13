@@ -181,6 +181,7 @@
         integer  :: idFsuD        ! detided free-surface
         integer  :: idFsuH        ! free-surface tide harmonics
         integer  :: idGhat(2)     ! KPP nonlocal transport
+        integer  :: idgTnc        ! generic tracer nudging coefficients
         integer  :: idJWTy        ! Jerlov water type
         integer  :: idHbbl        ! depth of bottom boundary layer
         integer  :: idHice        ! depth of ice cover
@@ -196,6 +197,8 @@
         integer  :: idMOMf        ! final model-observation misfit
         integer  :: idMtke        ! turbulent kinetic energy
         integer  :: idMtls        ! turbulent length scale
+        integer  :: idM2nc        ! 2D momentum nudging coefficients
+        integer  :: idM3nc        ! 2D momentum nudging coefficients
         integer  :: idNLmi        ! initial NLM at observation locations
         integer  :: idNLmo        ! NLM at observations locations
         integer  :: idNobs        ! number of observations
@@ -236,12 +239,8 @@
         integer  :: idSin2        ! SIN(omega(k)*t)*SIN(omega(l)*t)
         integer  :: idSrad        ! net shortwave radiation flux
         integer  :: idSSHc        ! SSH climatology
-        integer  :: idSSHe        ! SSH error variance
-        integer  :: idSSHo        ! SSH observations
         integer  :: idSSSc        ! SSS climatology
         integer  :: idSSTc        ! SST climatology
-        integer  :: idSSTe        ! SST error variance
-        integer  :: idSSTo        ! SST observations
         integer  :: idShea        ! net sensible heat flux
         integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
         integer  :: idsfwf        ! surface freswater flux
@@ -279,12 +278,8 @@
         integer  :: idUfx1        ! time averaged U-flux for 2D
         integer  :: idUfx2        ! time averaged U-flux for 3D
         integer  :: idUice        ! ice U-velocity
-        integer  :: idUobs        ! 3D U-velocity observations
         integer  :: idUsms        ! surface U-momentum stress
-        integer  :: idUsur        ! surface U-velocity observations
         integer  :: idUtlf        ! 3D U-velocity impulse forcing
-        integer  :: idUVer        ! 3D velocity error variance
-        integer  :: idUVse        ! surface velocity error variance
         integer  :: idUvel        ! 3D U-velocity
         integer  :: idUwet        ! wet/dry mask on U-points
         integer  :: idu2dD        ! detided 2D U-velocity
@@ -317,9 +312,7 @@
         integer  :: idVmLS        ! vertical mixing length scale
         integer  :: idVmKK        ! Kinetic energy vertical mixing
         integer  :: idVmKP        ! Length scale vertical mixing
-        integer  :: idVobs        ! 3D V-velocity observations
         integer  :: idVsms        ! surface V-momentum stress
-        integer  :: idVsur        ! surface V-velocity observations
         integer  :: idVtlf        ! 3D V-velocity impulse forcing
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
@@ -355,6 +348,10 @@
         integer  :: id3dPV        ! 3D potential vorticity
         integer  :: id3dRV        ! 3D relative vorticity
 !
+!  Last used variable ID counter.
+!
+        integer  :: last_varid
+!
 !  Input/output identification tracer indices.
 !
         integer, allocatable :: idRtrc(:)    ! river runoff for tracers
@@ -362,8 +359,7 @@
         integer, allocatable :: idTbot(:)    ! bottom flux for tracers
         integer, allocatable :: idTbry(:,:)  ! tracers boundary
         integer, allocatable :: idTclm(:)    ! tracers climatology
-        integer, allocatable :: idTerr(:)    ! tracers error variance
-        integer, allocatable :: idTobs(:)    ! tracers observations
+        integer, allocatable :: idTnud(:)    ! tracers nudge coefficient
         integer, allocatable :: idTsur(:)    ! surface flux for tracers
         integer, allocatable :: idTtlf(:)    ! tracers impulse forcing
 !
@@ -564,8 +560,7 @@
       allocate ( idTbot(MT) )
       allocate ( idTbry(4,MT) )
       allocate ( idTclm(MT) )
-      allocate ( idTerr(MT) )
-      allocate ( idTobs(MT) )
+      allocate ( idTnud(MT) )
       allocate ( idTsur(MT) )
       allocate ( idTtlf(MT) )
 
@@ -1237,34 +1232,12 @@
             CASE ('idTtlf(isalt)')
               idTtlf(isalt)=varid
 #endif
-            CASE ('idSSHo')
-              idSSHo=varid
-            CASE ('idSSHe')
-              idSSHe=varid
-            CASE ('idUobs')
-              idUobs=varid
-            CASE ('idVobs')
-              idVobs=varid
-            CASE ('idUVer')
-              idUVer=varid
-            CASE ('idUsur')
-              idUsur=varid
-            CASE ('idVsur')
-              idVsur=varid
-            CASE ('idUVse')
-              idUVse=varid
-            CASE ('idSSTo')
-              idSSTo=varid
-            CASE ('idSSTe')
-              idSSTe=varid
-            CASE ('idTobs(itemp)')
-              idTobs(itemp)=varid
-            CASE ('idTerr(itemp)')
-              idTerr(itemp)=varid
-            CASE ('idTobs(isalt)')
-              idTobs(isalt)=varid
-            CASE ('idTerr(isalt)')
-              idTerr(isalt)=varid
+            CASE ('idM2nc')
+              idM2nc=varid
+            CASE ('idM3nc')
+              idM3nc=varid
+            CASE ('idgTnc')
+              idgTnc=varid
 #ifdef AVERAGES_DETIDE
             CASE ('idCosW')
               idCosW=varid
@@ -2140,40 +2113,6 @@
   40  CLOSE (inp)
 
 #ifdef SOLVE3D
-# ifdef TCLIMATOLOGY
-!
-!-----------------------------------------------------------------------
-!  Set climatology tracers (active and passive) metadata. The variable
-!  name and units are the same as the basic tracers. The default
-!  time-variable name is the same as the variable name but with the
-!  _time suffix.  Recall that other time-variables names are allowed
-!  provided that the input NetCDF variable has the "time" attribute
-!  with the appropriate value.
-!-----------------------------------------------------------------------
-!
-      DO i=1,MT
-        varid=varid+1
-        IF (varid.gt.MV) THEN
-          WRITE (stdout,60) MV, varid
-          STOP
-        END IF
-        idTclm(i)=varid
-        DO ng=1,Ngrids
-          Fscale(varid,ng)=1.0_r8
-          Iinfo(1,varid,ng)=r3dvar
-        END DO
-        WRITE (Vname(1,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(1,idTvar(i))))
-        WRITE (Vname(2,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ' climatology'
-        WRITE (Vname(3,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
-        WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
-        WRITE (Vname(5,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_time'
-      END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Set passive tracers surface flux metadata. The variable name is the
@@ -2314,6 +2253,10 @@
      &        TRIM(ADJUSTL(Vname(5,idSvar(i))))
       END DO
 #endif
+!
+!  Save last variable ID counter used.
+!
+      last_varid=varid
 !
   50  FORMAT (/,' MOD_NCPARAM - Unable to open variable information',   &
      &        ' file: ',/,15x,a,/,15x,'Default file is located in',     &

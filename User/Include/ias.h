@@ -78,10 +78,6 @@
 # define ANA_SPFLUX
 # define ANA_BPFLUX
 #endif
-#undef  M2CLIMATOLOGY
-#undef  M3CLIMATOLOGY
-#undef  TCLIMATOLOGY
-#undef  ZCLIMATOLOGY
 
 #define BULK_FLUXES
 #ifdef BULK_FLUXES

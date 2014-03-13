@@ -1,8 +1,5 @@
 #include "cppdefs.h"
       MODULE mod_clima
-#if defined AD_SENSITIVITY      || defined CLIMATOLOGY      || \
-    defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SENSITIVITY_4DVAR   || defined SO_SEMI
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -70,8 +67,6 @@
 !                 3D momentum data.                                    !
 !   Tnudgcof    Time-scale (1/sec) coefficients for nudging towards    !
 !                 tracer data.                                         !
-!   Znudgcof    Time-scale (1/sec) coefficients for nudging towards    !
-!                 sea surface height data.                             !
 !                                                                      !
 !=======================================================================
 !
@@ -80,78 +75,68 @@
         implicit none
 
         TYPE T_CLIMA
-
-# ifdef ZCLIMATOLOGY
+!
+!  Climatology/Nudging arrays.
+!
           real(r8), pointer :: ssh(:,:)
-#  ifndef ANA_SSH
+#ifndef ANA_SSH
           real(r8), pointer :: sshG(:,:,:)
-#  endif
-# endif
-# ifdef ZCLM_NUDGING
-          real(r8), pointer :: Znudgcof(:,:)
-# endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
-          real(r8), pointer :: zeta_ads(:,:)
-          real(r8), pointer :: zeta_adsG(:,:,:)
-# endif
-# ifdef M2CLIMATOLOGY
+#endif
+
           real(r8), pointer :: ubarclm(:,:)
           real(r8), pointer :: vbarclm(:,:)
-#  ifndef ANA_M2CLIMA
+#ifndef ANA_M2CLIMA
           real(r8), pointer :: ubarclmG(:,:,:)
           real(r8), pointer :: vbarclmG(:,:,:)
-#  endif
+#endif
+
+#ifdef SOLVE3D
+          real(r8), pointer :: uclm(:,:,:)
+          real(r8), pointer :: vclm(:,:,:)
+# ifndef ANA_M3CLIMA
+          real(r8), pointer :: uclmG(:,:,:,:)
+          real(r8), pointer :: vclmG(:,:,:,:)
 # endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
+
+          real(r8), pointer :: tclm(:,:,:,:)
+# ifndef ANA_TCLIMA
+          real(r8), pointer :: tclmG(:,:,:,:,:)
+# endif
+#endif
+!
+!  Nudging coefficient arrays.
+!
+          real(r8), pointer :: M2nudgcof(:,:)
+#ifdef SOLVE3D
+          real(r8), pointer :: M3nudgcof(:,:,:)
+
+          real(r8), pointer :: Tnudgcof(:,:,:,:)
+#endif
+
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+    defined SO_SEMI
+!
+!  Adjoint-based algorithms arrays.
+!
+          real(r8), pointer :: zeta_ads(:,:)
+          real(r8), pointer :: zeta_adsG(:,:,:)
+
           real(r8), pointer :: ubar_ads(:,:)
           real(r8), pointer :: vbar_ads(:,:)
           real(r8), pointer :: ubar_adsG(:,:,:)
           real(r8), pointer :: vbar_adsG(:,:,:)
-# endif
-# ifdef M2CLM_NUDGING
-          real(r8), pointer :: M2nudgcof(:,:)
-# endif
+
 # ifdef SOLVE3D
-#  ifdef TCLIMATOLOGY
-          real(r8), pointer :: tclm(:,:,:,:)
-#   ifndef ANA_TCLIMA
-          real(r8), pointer :: tclmG(:,:,:,:,:)
-#   endif
-#  endif
-#  ifdef TCLM_NUDGING
-          real(r8), pointer :: Tnudgcof(:,:,:)
-#  endif
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
-          real(r8), pointer :: t_ads(:,:,:,:)
-          real(r8), pointer :: t_adsG(:,:,:,:,:)
-#  endif
-#  ifdef M3CLIMATOLOGY
-          real(r8), pointer :: uclm(:,:,:)
-          real(r8), pointer :: vclm(:,:,:)
-#   ifndef ANA_M3CLIMA
-          real(r8), pointer :: uclmG(:,:,:,:)
-          real(r8), pointer :: vclmG(:,:,:,:)
-#   endif
-#  endif
-#  ifdef M3CLM_NUDGING
-          real(r8), pointer :: M3nudgcof(:,:)
-#  endif
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
           real(r8), pointer :: u_ads(:,:,:)
           real(r8), pointer :: v_ads(:,:,:)
           real(r8), pointer :: u_adsG(:,:,:,:)
           real(r8), pointer :: v_adsG(:,:,:,:)
-#  endif
 
+          real(r8), pointer :: t_ads(:,:,:,:)
+          real(r8), pointer :: t_adsG(:,:,:,:,:)
 # endif
+#endif
 
         END TYPE T_CLIMA
 
@@ -169,6 +154,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Local variable declarations.
 !
@@ -180,91 +166,84 @@
 !
       IF (ng.eq.1) allocate ( CLIMA(Ngrids) )
 !
-# ifdef ZCLIMATOLOGY
-      allocate ( CLIMA(ng) % ssh(LBi:UBi,LBj:UBj) )
-#  ifndef ANA_SSH
-      allocate ( CLIMA(ng) % sshG(LBi:UBi,LBj:UBj,2) )
-#  endif
-# endif
+!  Climatology/Nudging arrays.
+!
+      IF (LsshCLM(ng)) THEN
+        allocate ( CLIMA(ng) % ssh(LBi:UBi,LBj:UBj) )
+#ifndef ANA_SSH
+        allocate ( CLIMA(ng) % sshG(LBi:UBi,LBj:UBj,2) )
+#endif
+      END IF
+!
+      IF (Lm2CLM(ng)) THEN
+        allocate ( CLIMA(ng) % ubarclm(LBi:UBi,LBj:UBj) )
+        allocate ( CLIMA(ng) % vbarclm(LBi:UBi,LBj:UBj) )
+#ifndef ANA_M2CLIMA
+        allocate ( CLIMA(ng) % ubarclmG(LBi:UBi,LBj:UBj,2) )
+        allocate ( CLIMA(ng) % vbarclmG(LBi:UBi,LBj:UBj,2) )
+#endif
+      END IF
 
-# ifdef ZCLM_NUDGING
-      allocate ( CLIMA(ng) % Znudgcof(LBi:UBi,LBj:UBj) )
+#ifdef SOLVE3D
+!
+      IF (Lm3CLM(ng)) THEN
+        allocate ( CLIMA(ng) % uclm(LBi:UBi,LBj:UBj,N(ng)) )
+        allocate ( CLIMA(ng) % vclm(LBi:UBi,LBj:UBj,N(ng)) )
+# ifndef ANA_M3CLIMA
+        allocate ( CLIMA(ng) % uclmG(LBi:UBi,LBj:UBj,N(ng),2) )
+        allocate ( CLIMA(ng) % vclmG(LBi:UBi,LBj:UBj,N(ng),2) )
 # endif
+      END IF
+!
+      IF (ANY(LtracerCLM(:,ng)).or.ANY(LnudgeTCLM(:,ng))) THEN
+        allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
+# ifndef ANA_TCLIMA
+        allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,          &
+     &                               NTCLM(ng)) )
+# endif
+      END IF
+#endif
+!
+!  Nudging coefficient arrays.
+!
+      IF (LnudgeM2CLM(ng)) THEN
+        allocate ( CLIMA(ng) % M2nudgcof(LBi:UBi,LBj:UBj) )
+      END IF
 
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
+#ifdef SOLVE3D
+      IF (LnudgeM3CLM(ng)) THEN
+        allocate ( CLIMA(ng) % M3nudgcof(LBi:UBi,LBj:UBj,N(ng)) )
+      END IF
+
+      IF (ANY(LnudgeTCLM(:,ng))) THEN
+        allocate ( CLIMA(ng) % Tnudgcof(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
+      END IF
+#endif
+
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+    defined SO_SEMI
+!
+!  Adjoint-based algorithms arrays.
+!
       allocate ( CLIMA(ng) % zeta_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % zeta_adsG(LBi:UBi,LBj:UBj,2) )
-# endif
 
-# ifdef M2CLIMATOLOGY
-      allocate ( CLIMA(ng) % ubarclm(LBi:UBi,LBj:UBj) )
-      allocate ( CLIMA(ng) % vbarclm(LBi:UBi,LBj:UBj) )
-#  ifndef ANA_M2CLIMA
-      allocate ( CLIMA(ng) % ubarclmG(LBi:UBi,LBj:UBj,2) )
-      allocate ( CLIMA(ng) % vbarclmG(LBi:UBi,LBj:UBj,2) )
-#  endif
-# endif
-
-# ifdef M2CLM_NUDGING
-      allocate ( CLIMA(ng) % M2nudgcof(LBi:UBi,LBj:UBj) )
-# endif
-
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
       allocate ( CLIMA(ng) % ubar_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % vbar_ads(LBi:UBi,LBj:UBj) )
       allocate ( CLIMA(ng) % ubar_adsG(LBi:UBi,LBj:UBj,2) )
       allocate ( CLIMA(ng) % vbar_adsG(LBi:UBi,LBj:UBj,2) )
-# endif
 
 # ifdef SOLVE3D
-#  ifdef TCLIMATOLOGY
-      IF (NTCLM(ng).gt.0) THEN
-        allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
-#   ifndef ANA_TCLIMA
-        allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,          &
-     &                               NTCLM(ng)) )
-#   endif
-      END IF
-#  endif
-
-#  ifdef TCLM_NUDGING
-      allocate ( CLIMA(ng) % Tnudgcof(LBi:UBi,LBj:UBj,NT(ng)) )
-#  endif
-
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
-      allocate ( CLIMA(ng) % t_ads(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
-      allocate ( CLIMA(ng) % t_adsG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
-#  endif
-
-#  ifdef M3CLIMATOLOGY
-      allocate ( CLIMA(ng) % uclm(LBi:UBi,LBj:UBj,N(ng)) )
-      allocate ( CLIMA(ng) % vclm(LBi:UBi,LBj:UBj,N(ng)) )
-#   ifndef ANA_M3CLIMA
-      allocate ( CLIMA(ng) % uclmG(LBi:UBi,LBj:UBj,N(ng),2) )
-      allocate ( CLIMA(ng) % vclmG(LBi:UBi,LBj:UBj,N(ng),2) )
-#   endif
-#  endif
-
-#  ifdef M3CLM_NUDGING
-      allocate ( CLIMA(ng) % M3nudgcof(LBi:UBi,LBj:UBj) )
-#  endif
-
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
       allocate ( CLIMA(ng) % u_ads(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( CLIMA(ng) % v_ads(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( CLIMA(ng) % u_adsG(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( CLIMA(ng) % v_adsG(LBi:UBi,LBj:UBj,N(ng),2) )
-#  endif
 
+      allocate ( CLIMA(ng) % t_ads(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
+      allocate ( CLIMA(ng) % t_adsG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
 # endif
+#endif
 
       RETURN
       END SUBROUTINE allocate_clima
@@ -282,6 +261,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -291,22 +271,22 @@
 !
       integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j
-# ifdef SOLVE3D
+#ifdef SOLVE3D
       integer :: itrc, k
-# endif
+#endif
 
       real(r8), parameter :: IniVal = 0.0_r8
 
-# include "set_bounds.h"
+#include "set_bounds.h"
 !
 !  Set array initialization range.
 !
-# ifdef DISTRIBUTE
+#ifdef DISTRIBUTE
       Imin=BOUNDS(ng)%LBi(tile)
       Imax=BOUNDS(ng)%UBi(tile)
       Jmin=BOUNDS(ng)%LBj(tile)
       Jmax=BOUNDS(ng)%UBj(tile)
-# else
+#else
       IF (DOMAIN(ng)%Western_Edge(tile)) THEN
         Imin=BOUNDS(ng)%LBi(tile)
       ELSE
@@ -327,102 +307,145 @@
       ELSE
         Jmax=Jend
       END IF
-# endif
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
+!  Climatology/Nudging arrays.
+!
+      IF (LsshCLM(ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            CLIMA(ng) % ssh(i,j) = IniVal
+#ifndef ANA_SSH
+            CLIMA(ng) % sshG(i,j,1) = IniVal
+            CLIMA(ng) % sshG(i,j,2) = IniVal
+#endif
+          END DO
+        END DO
+      END IF
+!
+      IF (Lm2CLM(ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            CLIMA(ng) % ubarclm(i,j) = IniVal
+            CLIMA(ng) % vbarclm(i,j) = IniVal
+#ifndef ANA_M2CLIMA
+            CLIMA(ng) % ubarclmG(i,j,1) = IniVal
+            CLIMA(ng) % ubarclmG(i,j,2) = IniVal
+            CLIMA(ng) % vbarclmG(i,j,1) = IniVal
+            CLIMA(ng) % vbarclmG(i,j,2) = IniVal
+#endif
+          END DO
+        END DO
+      END IF
+
+#ifdef SOLVE3D
+!
+      IF (Lm3CLM(ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              CLIMA(ng) % uclm(i,j,k) = IniVal
+              CLIMA(ng) % vclm(i,j,k) = IniVal
+# ifndef ANA_M3CLIMA
+              CLIMA(ng) % uclmG(i,j,k,1) = IniVal
+              CLIMA(ng) % uclmG(i,j,k,2) = IniVal
+              CLIMA(ng) % vclmG(i,j,k,1) = IniVal
+              CLIMA(ng) % vclmG(i,j,k,2) = IniVal
+# endif
+            END DO
+          END DO
+        END DO
+      END IF
+!
+      IF (ANY(LtracerCLM(:,ng)).or.ANY(LnudgeTCLM(:,ng))) THEN
+        DO itrc=1,NTCLM(ng)
+          DO k=1,N(ng)
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                CLIMA(ng) % tclm(i,j,k,itrc) = IniVal
+# ifndef ANA_TCLIMA
+                CLIMA(ng) % tclmG(i,j,k,1,itrc) = IniVal
+                CLIMA(ng) % tclmG(i,j,k,2,itrc) = IniVal
+# endif
+              END DO
+            END DO
+          END DO
+        END DO
+      END IF
+#endif
+!
+!  Nudging coefficient arrays.
+!
+      IF (LnudgeM2CLM(ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            CLIMA(ng) % M2nudgcof(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+#ifdef SOLVE3D
+!
+      IF (LnudgeM3CLM(ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              CLIMA(ng) % M3nudgcof(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+!
+      IF (ANY(LnudgeTCLM(:,ng))) THEN
+        DO itrc=1,NTCLM(ng)
+          DO k=1,N(ng)
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                CLIMA(ng) % Tnudgcof(i,j,k,itrc) = IniVal
+              END DO
+            END DO
+          END DO
+        END DO
+      END IF
+#endif
+
+#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+    defined SO_SEMI
+!
+!  Adjoint-based algorithms arrays.
+!
       DO j=Jmin,Jmax
         DO i=Imin,Imax
-# ifdef ZCLIMATOLOGY
-          CLIMA(ng) % ssh(i,j) = IniVal
-#  ifndef ANA_SSH
-          CLIMA(ng) % sshG(i,j,1) = IniVal
-          CLIMA(ng) % sshG(i,j,2) = IniVal
-#  endif
-# endif
-# ifdef ZCLM_NUDGING
-          CLIMA(ng) % Znudgcof(i,j) = IniVal
-# endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
           CLIMA(ng) % zeta_ads(i,j) = IniVal
           CLIMA(ng) % zeta_adsG(i,j,1) = IniVal
           CLIMA(ng) % zeta_adsG(i,j,2) = IniVal
-# endif
-# ifdef M2CLIMATOLOGY
-          CLIMA(ng) % ubarclm(i,j) = IniVal
-          CLIMA(ng) % vbarclm(i,j) = IniVal
-#  ifndef ANA_M2CLIMA
-          CLIMA(ng) % ubarclmG(i,j,1) = IniVal
-          CLIMA(ng) % ubarclmG(i,j,2) = IniVal
-          CLIMA(ng) % vbarclmG(i,j,1) = IniVal
-          CLIMA(ng) % vbarclmG(i,j,2) = IniVal
-#  endif
-# endif
-# ifdef M2CLM_NUDGING
-          CLIMA(ng) % M2nudgcof(i,j) = IniVal
-# endif
-# if defined M3CLM_NUDGING && defined SOLVE3D
-          CLIMA(ng) % M3nudgcof(i,j) = IniVal
-# endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-     defined SO_SEMI
+!
           CLIMA(ng) % ubar_ads(i,j) = IniVal
           CLIMA(ng) % vbar_ads(i,j) = IniVal
           CLIMA(ng) % ubar_adsG(i,j,1) = IniVal
           CLIMA(ng) % ubar_adsG(i,j,2) = IniVal
           CLIMA(ng) % vbar_adsG(i,j,1) = IniVal
           CLIMA(ng) % vbar_adsG(i,j,2) = IniVal
-# endif
         END DO
 
 # ifdef SOLVE3D
+!
         DO k=1,N(ng)
           DO i=Imin,Imax
-#  ifdef M3CLIMATOLOGY
-            CLIMA(ng) % uclm(i,j,k) = IniVal
-            CLIMA(ng) % vclm(i,j,k) = IniVal
-#   ifndef ANA_M3CLIMA
-            CLIMA(ng) % uclmG(i,j,k,1) = IniVal
-            CLIMA(ng) % uclmG(i,j,k,2) = IniVal
-            CLIMA(ng) % vclmG(i,j,k,1) = IniVal
-            CLIMA(ng) % vclmG(i,j,k,2) = IniVal
-#   endif
-#  endif
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
             CLIMA(ng) % u_ads(i,j,k) = IniVal
             CLIMA(ng) % v_ads(i,j,k) = IniVal
             CLIMA(ng) % u_adsG(i,j,k,1) = IniVal
             CLIMA(ng) % u_adsG(i,j,k,2) = IniVal
             CLIMA(ng) % v_adsG(i,j,k,1) = IniVal
             CLIMA(ng) % v_adsG(i,j,k,2) = IniVal
-#  endif
           END DO
         END DO
-
-#  ifdef TCLIMATOLOGY
-        DO itrc=1,NTCLM(ng)
-          DO k=1,N(ng)
-            DO i=Imin,Imax
-              CLIMA(ng) % tclm(i,j,k,itrc) = IniVal
-#   ifndef ANA_TCLIMA
-              CLIMA(ng) % tclmG(i,j,k,1,itrc) = IniVal
-              CLIMA(ng) % tclmG(i,j,k,2,itrc) = IniVal
-#   endif
-            END DO
-          END DO
-        END DO
-#  endif
-
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
-      defined SO_SEMI
+!
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
             DO i=Imin,Imax
@@ -432,19 +455,10 @@
             END DO
           END DO
         END DO
-#  endif
-
-#  ifdef TCLM_NUDGING
-        DO itrc=1,NT(ng)
-          DO i=Imin,Imax
-            CLIMA(ng) % Tnudgcof(i,j,itrc) = IniVal
-          END DO
-        END DO
-#  endif
 # endif
       END DO
+#endif
 
       RETURN
       END SUBROUTINE initialize_clima
-#endif
       END MODULE mod_clima

@@ -49,7 +49,6 @@
 # define SALINITY
 # define NONLIN_EOS
 # define CURVGRID
-# define SPONGE
 # undef  AVERAGES
 # define MASKING
 # define SPLINES
@@ -80,10 +79,6 @@
 #  define ADD_M2OBC
 # endif
 
-# undef  TCLIMATOLOGY
-# undef  TCLM_NUDGING
-# undef  M3CLM_NUDGING
-
 # define ANA_BSFLUX
 # define ANA_BTFLUX
 # define ANA_SSFLUX
@@ -111,7 +106,6 @@
 # define SALINITY
 # define NONLIN_EOS
 # define CURVGRID
-# define SPONGE
 # undef  AVERAGES
 # define MASKING
 # define SPLINES
@@ -133,10 +127,6 @@
 # if defined UV_TIDES || defined SSH_TIDES
 #  define ADD_M2OBC
 # endif
-
-# undef  TCLIMATOLOGY
-# undef  TCLM_NUDGING
-# undef  M3CLM_NUDGING
 
 # define ANA_BSFLUX
 # define ANA_BTFLUX

@@ -574,18 +574,33 @@
           END IF
         END IF
 
-#if (defined  ZCLIMATOLOGY && !defined ANA_SSH)     || \
-    (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
-    (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
-    (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
-        IF (exit_flag.eq.NoError) THEN
-          CALL join_string (CLM(ng)%files, CLM(ng)%Nfiles, string, lstr)
-          status=nf90_put_att(ncid, nf90_global, 'clm_file',            &
-     &                        TRIM(CLM(ng)%name))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) WRITE (stdout,20) 'clm_file', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
+#if !(defined ANA_SSH     || defined ANA_M2CLIMA || \
+      defined ANA_M3CLIMA || defined ANA_TCLIMA)
+        IF (Lclimatology(ng)) THEN
+          IF (exit_flag.eq.NoError) THEN
+            CALL join_string (CLM(ng)%files, CLM(ng)%Nfiles,            &
+     &                        string,lstr)
+            status=nf90_put_att(ncid, nf90_global, 'clm_file',          &
+     &                          TRIM(CLM(ng)%name))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'clm_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+#endif
+
+#ifndef ANA_NUDGCOEF
+        IF (Lnudging(ng)) THEN
+          IF (exit_flag.eq.NoError) THEN
+            status=nf90_put_att(ncid, nf90_global, 'nud_file',          &
+     &                        TRIM(NUD(ng)%name))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'nud_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
           END IF
         END IF
 #endif
@@ -1375,7 +1390,6 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
-
 # ifdef TKE_DIF4
       Vinfo( 1)='tkenu4'
       Vinfo( 2)='biharmonic mixing coefficient for turbulent energy'
@@ -1385,6 +1399,26 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 # endif
+#endif
+#if defined UV_VIS2 || defined UV_VIS4
+      Vinfo( 1)='LuvSponge'
+      Vinfo( 2)='horizontal viscosity sponge activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+#if (defined TS_DIF2 || defined TS_DIF4) && defined SOLVE3D
+      Vinfo( 1)='LtracerSponge'
+      Vinfo( 2)='horizontal diffusivity sponge activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 #ifdef SOLVE3D
 !
@@ -1844,7 +1878,77 @@
      &               SetParAccess = .FALSE.)
       IF (exit_flag.ne.NoError) RETURN
 #endif
+!
+!  Logical switches to process climatology fields.
+!
+      Vinfo( 1)='LsshCLM'
+      Vinfo( 2)='sea surface height climatology processing switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
 
+      Vinfo( 1)='Lm2CLM'
+      Vinfo( 2)='2D momentum climatology processing switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+#ifdef SOLVE3D
+      Vinfo( 1)='Lm3CLM'
+      Vinfo( 2)='3D momentum climatology processing switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='LtracerCLM'
+      Vinfo( 2)='tracer climatology processing switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+!
+!  Logical switches for nudging of climatology fields.
+!
+      Vinfo( 1)='LnudgeM2CLM'
+      Vinfo( 2)='2D momentum climatology nudging activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#ifdef SOLVE3D
+!
+      Vinfo( 1)='LnudgeM3CLM'
+      Vinfo( 2)='3D momentum climatology nudging activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+!
+      Vinfo( 1)='LnudgeTCLM'
+      Vinfo( 2)='tracer climatology nudging activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
 #ifdef FOUR_DVAR
 !
 !  4DVAR assimilation parameters.

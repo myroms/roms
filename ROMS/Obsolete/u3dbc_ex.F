@@ -56,6 +56,7 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_clima
       USE mod_grid
       USE mod_ncparam
       USE mod_scalars
@@ -80,7 +81,8 @@
 
       real(r8), parameter :: eps = 1.0E-20_r8
 
-      real(r8) :: Ce, Cx, cff, dUde, dUdt, dUdx, tau
+      real(r8) :: Ce, Cx, cff, dUde, dUdt, dUdx
+      real(r8) :: obc_in, obc_out, tau
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
@@ -108,10 +110,19 @@
                 dUdx=u(Istr+1,j,k,nstp)-u(Istr+2,j,k,nstp)
 
                 IF (LBC(iwest,isUvel,ng)%nudging) THEN
-                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
-                    tau=M3obc_in(ng,iwest)
+                  IF (LnudgeM3CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M3nudgcof(Istr-1,j,k)+           &
+     &                       CLIMA(ng)%M3nudgcof(Istr  ,j,k))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M3obc_out(ng,iwest)
+                    obc_out=M3obc_out(ng,iwest)
+                    obc_in =M3obc_in (ng,iwest)
+                  END IF
+                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt(ng)
                 END IF
@@ -230,10 +241,19 @@
                 dUdx=u(Iend,j,k,nstp)-u(Iend-1,j,k,nstp)
 
                 IF (LBC(ieast,isUvel,ng)%nudging) THEN
-                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
-                    tau=M3obc_in(ng,ieast)
+                  IF (LnudgeM3CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M3nudgcof(Iend  ,j,k)+           &
+     &                       CLIMA(ng)%M3nudgcof(Iend+1,j,k))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M3obc_out(ng,ieast)
+                    obc_out=M3obc_out(ng,ieast)
+                    obc_in =M3obc_in (ng,ieast)
+                  END IF
+                  IF ((dUdt*dUdx).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt(ng)
                 END IF
@@ -352,10 +372,19 @@
                 dUde=u(i,Jstr,k,nstp)-u(i,Jstr+1,k,nstp)
 
                 IF (LBC(isouth,isUvel,ng)%nudging) THEN
-                  IF ((dUdt*dUde).lt.0.0_r8) THEN
-                    tau=M3obc_in(ng,isouth)
+                  IF (LnudgeM3CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M3nudgcof(i-1,Jstr-1,k)+         &
+     &                       CLIMA(ng)%M3nudgcof(i  ,Jstr-1,k))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M3obc_out(ng,isouth)
+                    obc_out=M3obc_out(ng,isouth)
+                    obc_in =M3obc_in (ng,isouth)
+                  END IF
+                  IF ((dUdt*dUde).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt(ng)
                 END IF
@@ -490,10 +519,19 @@
                 dUde=u(i,Jend,k,nstp)-u(i,Jend-1,k,nstp)
 
                 IF (LBC(inorth,isUvel,ng)%nudging) THEN
-                  IF ((dUdt*dUde).lt.0.0_r8) THEN
-                    tau=M3obc_in(ng,inorth)
+                  IF (LnudgeM3CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M3nudgcof(i-1,Jend+1,k)+         &
+     &                       CLIMA(ng)%M3nudgcof(i  ,Jend+1,k))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M3obc_out(ng,inorth)
+                    obc_out=M3obc_out(ng,inorth)
+                    obc_in =M3obc_in (ng,inorth)
+                  END IF
+                  IF ((dUdt*dUde).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt(ng)
                 END IF

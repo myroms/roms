@@ -66,6 +66,7 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_clima
       USE mod_forces
       USE mod_grid
       USE mod_ncparam
@@ -103,7 +104,8 @@
 
       real(r8) :: Ce, Cx, Ze
       real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
-      real(r8) :: cff, cff1, cff2, cff3, dt2d, tau
+      real(r8) :: cff, cff1, cff2, cff3, dt2d
+      real(r8) :: obc_in, obc_out, tau
 
       real(r8) :: ad_Ce, ad_Cx
       real(r8) :: ad_bry_pgr, ad_bry_cor, ad_bry_str, ad_bry_val, ad_Ze
@@ -338,10 +340,19 @@
               IF (LBC_apply(ng)%east(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                 IF (ad_LBC(ieast,isVbar,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%vbar_east_Cx(j).eq.0.0_r8) THEN
-                    tau=M2obc_in(ng,ieast)
+                  IF (LnudgeM2CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M2nudgcof(Iend+1,j-1)+           &
+     &                       CLIMA(ng)%M2nudgcof(Iend+1,j  ))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M2obc_out(ng,ieast)
+                    obc_out=M2obc_out(ng,ieast)
+                    obc_in =M2obc_in (ng,ieast)
+                  END IF
+                  IF (BOUNDARY(ng)%vbar_east_Cx(j).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt2d
                 END IF
@@ -542,10 +553,19 @@
               IF (LBC_apply(ng)%west(j)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                 IF (ad_LBC(iwest,isVbar,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%vbar_west_Cx(j).eq.0.0_r8) THEN
-                    tau=M2obc_in(ng,iwest)
+                  IF (LnudgeM2CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M2nudgcof(Istr-1,j-1)+           &
+     &                       CLIMA(ng)%M2nudgcof(Istr-1,j  ))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M2obc_out(ng,iwest)
+                    obc_out=M2obc_out(ng,iwest)
+                    obc_in =M2obc_in (ng,iwest)
+                  END IF
+                  IF (BOUNDARY(ng)%vbar_west_Cx(j).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt2d
                 END IF
@@ -746,10 +766,19 @@
               IF (LBC_apply(ng)%north(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                 IF (ad_LBC(inorth,isVbar,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%vbar_north_Ce(i).eq.0.0_r8) THEN
-                    tau=M2obc_in(ng,inorth)
+                  IF (LnudgeM2CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M2nudgcof(i,Jend  )+             &
+     &                       CLIMA(ng)%M2nudgcof(i,Jend+1))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M2obc_out(ng,inorth)
+                    obc_out=M2obc_out(ng,inorth)
+                    obc_in =M2obc_in (ng,inorth)
+                  END IF
+                  IF (BOUNDARY(ng)%vbar_north_Ce(i).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt2d
                 END IF
@@ -1499,10 +1528,19 @@
               IF (LBC_apply(ng)%south(i)) THEN
 # if defined CELERITY_READ && defined FORWARD_READ
                 IF (ad_LBC(isouth,isVbar,ng)%nudging) THEN
-                  IF (BOUNDARY(ng)%vbar_south_Ce(i).eq.0.0_r8) THEN
-                    tau=M2obc_in(ng,isouth)
+                  IF (LnudgeM2CLM(ng)) THEN
+                    obc_out=0.5_r8*                                     &
+     &                      (CLIMA(ng)%M2nudgcof(i,Jstr-1)+             &
+     &                       CLIMA(ng)%M2nudgcof(i,Jstr  ))
+                    obc_in =obcfac(ng)*obc_out
                   ELSE
-                    tau=M2obc_out(ng,isouth)
+                    obc_out=M2obc_out(ng,isouth)
+                    obc_in =M2obc_in (ng,isouth)
+                  END IF
+                  IF (BOUNDARY(ng)%vbar_south_Ce(i).lt.0.0_r8) THEN
+                    tau=obc_in
+                  ELSE
+                    tau=obc_out
                   END IF
                   tau=tau*dt2d
                 END IF

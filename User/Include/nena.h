@@ -49,10 +49,6 @@
 # define ANA_SPFLUX
 # define ANA_BPFLUX
 #endif
-#undef  M2CLIMATOLOGY
-#undef  M3CLIMATOLOGY
-#undef  TCLIMATOLOGY
-#undef  ZCLIMATOLOGY
 
 #define ANA_BSFLUX
 #define ANA_BTFLUX

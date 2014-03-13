@@ -347,7 +347,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, indx, is, itrc, j, k, ltrc
+      integer :: i, ic, indx, is, itrc, j, k, ltrc
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
@@ -1747,14 +1747,18 @@
 !  Apply intermediate tracers lateral boundary conditions.
 !=======================================================================
 !
+      ic=0
       DO itrc=1,NT(ng)
-!>      CALL t3dbc_tile (ng, tile, itrc,                                &
+        IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
+          ic=ic+1
+        END IF
+!>      CALL t3dbc_tile (ng, tile, itrc, ic,                            &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
 !>   &                   IminS, ImaxS, JminS, JmaxS,                    &
 !>   &                   nstp, 3,                                       &
 !>   &                   t)
 !>
-        CALL rp_t3dbc_tile (ng, tile, itrc,                             &
+        CALL rp_t3dbc_tile (ng, tile, itrc, ic,                         &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, 3,                                    &

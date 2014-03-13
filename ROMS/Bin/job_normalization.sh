@@ -7,7 +7,7 @@
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# 4D-Var error covariance normalization coeficients job script:       #
+# 4D-Var error covariance normalization coefficients job script:      #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #

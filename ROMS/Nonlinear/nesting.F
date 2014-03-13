@@ -1701,9 +1701,7 @@
 !***********************************************************************
 !
       USE mod_param
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       USE mod_clima
-#  endif
       USE mod_grid
       USE mod_ocean
       USE mod_nesting
@@ -1727,11 +1725,8 @@
       integer :: Jedge, Jbc, Jbc_min, Jbf, Jo
       integer :: Istr, Iend, Jstr, Jend
       integer :: Istrm2, Iendp2, Jstrm2, Jendp2
-      integer :: i, isum, itrc, j, jsum, k, half, m
+      integer :: i, ic, isum, itrc, j, jsum, k, half, m
       integer :: cr, dg, dgcr, rg, rgcr
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-      integer :: ic
-#  endif
 
       real(r8) :: TFC, TFF, Tvalue, cff
 
@@ -1791,13 +1786,14 @@
 !  grid tracer values at that boundary.
 !=======================================================================
 !
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
+!  Initialize tracer counter index. The "tclm" array is only allocated
+!  to the NTCLM fields that need to be processed. This is done to
+!  reduce memory.
+!
       ic=0
-#  endif
+!
       T_LOOP : DO itrc=1,NT(ngc)
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
         ic=ic+1
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Finer grid western boundary.
@@ -1843,13 +1839,11 @@
               Tvalue=MAX(0.0_r8,                                        &
      &                   OCEAN(ngc)%t(Ibc-1,Jbc,k,nstp(ngc),itrc)-      &
      &                   cff*(TFF-TFC))
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-              IF (LtracerCLM(itrc,ngc)) THEN
+              IF (LtracerCLM(itrc,ngc).and.LnudgeTCLM(itrc,ngc)) THEN
                 Tvalue=Tvalue+                                          &
-     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc-1,Jbc,itrc)*     &
+     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc-1,Jbc,k,itrc)*   &
      &                 (CLIMA(ngc)%tclm(Ibc-1,Jbc,k,ic)-Tvalue)
               END IF
-#  endif
 #  ifdef MASKING
               Tvalue=Tvalue*GRID(ngc)%rmask(Ibc-1,Jbc)
 #  endif
@@ -1902,13 +1896,11 @@
               Tvalue=MAX(0.0_r8,                                        &
      &                   OCEAN(ngc)%t(Ibc,Jbc,k,nstp(ngc),itrc)-        &
      &                   cff*(TFF-TFC))
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-              IF (LtracerCLM(itrc,ngc)) THEN
+              IF (LtracerCLM(itrc,ngc).and.LnudgeTCLM(itrc,ngc)) THEN
                 Tvalue=Tvalue+                                          &
-     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc,itrc)*       &
+     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc,k,itrc)*     &
      &                 (CLIMA(ngc)%tclm(Ibc,Jbc,k,ic)-Tvalue)
               END IF
-#  endif
 #  ifdef MASKING
               Tvalue=Tvalue*GRID(ngc)%rmask(Ibc,Jbc)
 #  endif
@@ -1961,13 +1953,11 @@
               Tvalue=MAX(0.0_r8,                                        &
      &                   OCEAN(ngc)%t(Ibc,Jbc-1,k,nstp(ngc),itrc)-      &
      &                   cff*(TFF-TFC))
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-              IF (LtracerCLM(itrc,ngc)) THEN
+              IF (LtracerCLM(itrc,ngc).and.LnudgeTCLM(itrc,ngc)) THEN
                 Tvalue=Tvalue+                                          &
-     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc-1,itrc)*     &
+     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc-1,k,itrc)*   &
      &                 (CLIMA(ngc)%tclm(Ibc,Jbc-1,k,ic)-Tvalue)
               END IF
-#  endif
 #  ifdef MASKING
               Tvalue=Tvalue*GRID(ngc)%rmask(Ibc,Jbc-1)
 #  endif
@@ -2020,13 +2010,11 @@
               Tvalue=MAX(0.0_r8,                                        &
      &                   OCEAN(ngc)%t(Ibc,Jbc,k,nstp(ngc),itrc)-        &
      &                   cff*(TFF-TFC))
-#  if defined TCLM_NUDGING && defined TCLIMATOLOGY
-              IF (LtracerCLM(itrc,ngc)) THEN
+              IF (LtracerCLM(itrc,ngc).and.LnudgeTCLM(itrc,ngc)) THEN
                 Tvalue=Tvalue+                                          &
-     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc,itrc)*       &
+     &                 dt(ngc)*CLIMA(ngc)%Tnudgcof(Ibc,Jbc,k,itrc)*     &
      &                 (CLIMA(ngc)%tclm(Ibc,Jbc,k,ic)-Tvalue)
               END IF
-#  endif
 #  ifdef MASKING
               Tvalue=Tvalue*GRID(ngc)%rmask(Ibc,Jbc)
 #  endif
