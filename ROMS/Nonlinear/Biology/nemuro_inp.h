@@ -865,7 +865,7 @@
                 WRITE (out,100) LtracerCLM(i,ng), 'LtracerCLM', i,      &
      &              'Turning OFF processing of climatology tracer ', i, &
      &              TRIM(Vname(1,idTvar(i)))
-              END DO
+              END IF
             END DO
             DO itrc=1,NBT
               i=idbio(itrc)
@@ -877,7 +877,7 @@
                 WRITE (out,100) LnudgeTCLM(i,ng), 'LnudgeTCLM', i,      &
      &              'Turning OFF nudging of climatology tracer ', i,    &
      &              TRIM(Vname(1,idTvar(i)))
-              END DO
+              END IF
             END DO
             DO itrc=1,NBT
               i=idbio(itrc)
