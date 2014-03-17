@@ -126,17 +126,18 @@
       nfm3(ng)=2
 # endif
 !
-!$OMP MASTER
       synchro_flag(ng)=.TRUE.
       first_time(ng)=0
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
+!$OMP MASTER
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
       ntend(ng)=ntimes(ng)
       ntfirst(ng)=ntstart(ng)
-      CALL time_string (time(ng), time_code(ng))
 !$OMP END MASTER
 !$OMP BARRIER
+
+      CALL time_string (time(ng), time_code(ng))
 
       IniRec=nrrec(ng)
       Tindex=1
@@ -445,12 +446,14 @@
       CALL get_state (ng, iRPM, 1, IRP(ng)%name, IniRec, Tindex)
 !$OMP END MASTER
 !$OMP BARRIER
+      time(ng)=io_time                       ! needed for shared-memory
 # else
       IF (nrrec(ng).ne.0) THEN
 !$OMP MASTER
         CALL get_state (ng, iRPM, 1, IRP(ng)name, IniRec, Tindex)
 !$OMP END MASTER
 !$OMP BARRIER
+        time(ng)=io_time                     ! needed for shared-memory
 # ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, exit_flag)
 # endif

@@ -100,7 +100,7 @@
 
       real(r8) :: Fmax, Fmin, INPtime, Tmax, scale, time_scale
 
-      real(r8), allocatable :: myTime(:)
+      real(r8), allocatable :: TimeVar(:)
 
       character (len=6 ) :: string
       character (len=14) :: t_code
@@ -234,8 +234,8 @@
 !  values.
 !
       mySize=var_Dsize(1)
-      IF (.not.allocated(myTime)) allocate (myTime(mySize))
-      CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam), myTime)
+      IF (.not.allocated(TimeVar)) allocate (TimeVar(mySize))
+      CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam), TimeVar)
       IF (exit_flag.ne.NoError) RETURN
 !
 !  If using the latest time record from input NetCDF file as the
@@ -244,8 +244,8 @@
       IF (LastRec(ng)) THEN
         Tmax=-1.0_r8
         DO i=1,mySize
-          IF (myTime(i).gt.Tmax) THEN
-            Tmax=myTime(i)
+          IF (TimeVar(i).gt.Tmax) THEN
+            Tmax=TimeVar(i)
             IniRec=i
           END IF
         END DO
@@ -263,9 +263,9 @@
         ELSE
           InpRec=1
         END IF
-        INPtime=myTime(InpRec)
+        INPtime=TimeVar(InpRec)
       END IF
-      IF (allocated(myTime)) deallocate ( myTime )
+      IF (allocated(TimeVar)) deallocate ( TimeVar )
 !
 !  Set input time scale by looking at the "units" attribute.
 !
@@ -327,6 +327,15 @@
       IF (model.eq.iNLM) THEN
         IniRec=InpRec
       END IF
+!
+!  Set current input time, io_time .  Notice that the model time,
+!  time(ng), is reset above.  This is a THREADPRIVATE variable in
+!  shared-memory and this routine is only processed by the MASTER
+!  thread since it is an I/O routine. Therefore, we need to update
+!  time(ng) somewhere else in a parallel region. This will be done
+!  with io_time variable.
+!
+      io_time=INPtime
 !
 !  Report information.
 !

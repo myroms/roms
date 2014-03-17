@@ -87,10 +87,10 @@
         nrhs(ng)=1
         nnew(ng)=1
 !
-!$OMP MASTER
         synchro_flag(ng)=.TRUE.
         tdays(ng)=dstart
         time(ng)=tdays(ng)*day2sec
+!$OMP MASTER
         ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
         ntend(ng)=ntimes(ng)
         ntfirst(ng)=ntstart(ng)
@@ -270,10 +270,10 @@
         nrhs(ng)=1
         nnew(ng)=2
 !
-!$OMP MASTER
         synchro_flag(ng)=.TRUE.
         tdays(ng)=dstart+dt(ng)*REAL(ntimes(ng),r8)*sec2day
         time(ng)=tdays(ng)*day2sec
+!$OMP MASTER
         ntstart(ng)=ntimes(ng)+1
         ntend(ng)=1
         ntfirst(ng)=ntend(ng)

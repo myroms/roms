@@ -133,9 +133,12 @@
         first_time(ng)=0
         tdays(ng)=dstart
         time(ng)=tdays(ng)*day2sec
+!$OMP MASTER
         ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
         ntend(ng)=ntimes(ng)
         ntfirst(ng)=ntstart(ng)
+!$OMP END MASTER
+!$OMP BARRIER
         step_counter(ng)=0
         CALL time_string (time(ng), time_code(ng))
       END DO
@@ -517,6 +520,7 @@
 # endif
 !$OMP BARRIER
         IF (exit_flag.ne.NoError) RETURN
+        time(ng)=io_time                     ! needed for shared-memory
       END DO
 #else
 !
@@ -533,6 +537,7 @@
 # endif
 !$OMP BARRIER
           IF (exit_flag.ne.NoError) RETURN
+          time(ng)=io_time                   ! needed for shared-memory
         END IF
       END DO
 #endif

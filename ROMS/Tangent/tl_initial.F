@@ -132,7 +132,6 @@
       nfm3(ng)=2
 # endif
 !
-!$OMP MASTER
       synchro_flag(ng)=.TRUE.
       first_time(ng)=0
       IF (ANY(tl_VolCons(:,ng))) THEN
@@ -140,12 +139,14 @@
       END IF
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
+!$OMP MASTER
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
       ntend(ng)=ntimes(ng)
       ntfirst(ng)=ntstart(ng)
-      CALL time_string (time(ng), time_code(ng))
 !$OMP END MASTER
 !$OMP BARRIER
+
+      CALL time_string (time(ng), time_code(ng))
 
       IniRec=nrrec(ng)
       Tindex=1
@@ -557,6 +558,7 @@
 !$OMP END MASTER
 !$OMP BARRIER
       IF (exit_flag.ne.NoError) RETURN
+      time(ng)=io_time                       ! needed for shared-memory
 #  else
       IF (nrrec(ng).ne.0) THEN
 !$OMP MASTER
@@ -564,6 +566,7 @@
 !$OMP END MASTER
 !$OMP BARRIER
         IF (exit_flag.ne.NoError) RETURN
+        time(ng)=io_time                     ! needed for shared-memory
       END IF
 #  endif
 # endif
