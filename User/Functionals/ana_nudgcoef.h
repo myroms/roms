@@ -73,6 +73,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # ifdef SOLVE3D
       USE mp_exchange_mod, ONLY : mp_exchange3d
+      USE mp_exchange_mod, ONLY : mp_exchange4d
 # endif
 #endif
 !
@@ -251,15 +252,15 @@
 # ifdef SOLVE3D
 !
       IF (LnudgeM3CLM(ng)) THEN
-        CALL mp_exchange2d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj,                         &
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      CLIMA(ng)%M3nudgcof)
       END IF
 !
       IF (ANY(LnudgeTCLM(:,ng))) THEN
         CALL mp_exchange3d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj, 1, NTCLM(ng),           &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NTCLM(ng), &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      CLIMA(ng)%Tnudgcof)
       END IF
