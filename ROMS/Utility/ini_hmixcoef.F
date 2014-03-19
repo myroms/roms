@@ -315,8 +315,8 @@
       cff=0.25_r8*cff
       DO j=JstrP,JendT
         DO i=IstrP,IendT
-          visc2_p(i,j)=cff*(grdscl(i-1,j-1)+grdscl(i,j-1))+             &
-     &                      grdscl(i-1,j  )+grdscl(i,j  )+              &
+          visc2_p(i,j)=cff*(grdscl(i-1,j-1)+grdscl(i,j-1)+              &
+     &                      grdscl(i-1,j  )+grdscl(i,j  ))
         END DO
       END DO
 # endif

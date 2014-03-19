@@ -329,7 +329,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lcycle, Lperpetual, foundit
+      logical :: Lcycle, Lperpetual, Lspectral, foundit
 
       integer :: Nrec, TvarID, i, nvdim, nvatt
 
@@ -347,6 +347,7 @@
       Lcheck=.TRUE.
       Lcycle=.FALSE.
       Lperpetual=.FALSE.
+      Lspectral =.FALSE.
       Tscale=1.0_r8                        ! seconds
       Tmin=0.0_r8
       Tmax=0.0_r8
@@ -369,7 +370,7 @@
      &            (var_ndim(i).eq.1)) THEN
           TvarName=TRIM(var_name(i))
           foundit=.TRUE.
-          Lcheck=.FALSE.            ! we do not need to check tidal data
+          Lspectral=.TRUE.          ! we do not need to check tidal data
           EXIT
         END IF
       END DO
@@ -401,10 +402,12 @@
       DO i=1,nvatt
         IF (TRIM(var_Aname(i)).eq.'units') THEN
           Tunits=TRIM(var_Achar(i))
-          IF (Tunits(1:3).eq.'day') THEN
-            Tscale=day2sec
-          ELSE IF (Tunits(1:4).eq.'hour') THEN
+          IF (INDEX(TRIM(var_Achar(i)),'day').ne.0) THEN
+            Tscale=86400.0_r8
+          ELSE IF (INDEX(TRIM(var_Achar(i)),'hour').ne.0) THEN
             Tscale=3600.0_r8
+          ELSE IF (INDEX(TRIM(var_Achar(i)),'second').ne.0) THEN
+            Tscale=1.0_r8
           END IF
         ELSE IF (TRIM(var_Aname(i)).eq.'calendar') THEN
           IF ((Nrec.eq.1).or.                                           &
@@ -415,7 +418,11 @@
           Lcycle=.TRUE.
         END IF
       END DO
-      IF (Lcycle.or.Lperpetual) THEN
+!
+!  Turn off the checking of time range if cycling, perpectual, or
+!  spectral time axis.
+!
+      IF (Lcycle.or.Lperpetual.or.Lspectral) THEN
         Lcheck=.FALSE.
       END IF
 !
