@@ -306,7 +306,7 @@
 # endif
 #endif
 !
-!  Define dimension vectors for staggered u-momemtum type variables.
+!  Define dimension vectors for staggered u-momentum type variables.
 !
 #if !defined PERFECT_RESTART && \
     (defined WRITE_WATER && defined MASKING)
@@ -338,7 +338,7 @@
 # endif
 #endif
 !
-!  Define dimension vectors for staggered v-momemtum type variables.
+!  Define dimension vectors for staggered v-momentum type variables.
 !
 #if !defined PERFECT_RESTART && \
     (defined WRITE_WATER && defined MASKING)
@@ -384,7 +384,7 @@
         r2dgrd(4)=DimIDs(12)
 # endif
 !
-!  Define dimension vectors for RHS u-momemtum equation.
+!  Define dimension vectors for RHS u-momentum equation.
 !
 # if !defined PERFECT_RESTART && \
      (defined WRITE_WATER && defined MASKING)
@@ -408,7 +408,7 @@
 #  endif
 # endif
 !
-!  Define dimension vectors for RHS v-momemtum equation.
+!  Define dimension vectors for RHS v-momentum equation.
 !
 # if !defined PERFECT_RESTART && \
      (defined WRITE_WATER && defined MASKING)
@@ -434,7 +434,7 @@
 #endif
 #ifdef SOLVE3D
 !
-!  Define dimension vector for staggered w-momemtum type variables.
+!  Define dimension vector for staggered w-momentum type variables.
 !
 # if !defined PERFECT_RESTART && \
      (defined WRITE_WATER && defined MASKING)

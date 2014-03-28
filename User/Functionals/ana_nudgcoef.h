@@ -259,7 +259,7 @@
       END IF
 !
       IF (ANY(LnudgeTCLM(:,ng))) THEN
-        CALL mp_exchange3d (ng, tile, model, 1,                         &
+        CALL mp_exchange4d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NTCLM(ng), &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      CLIMA(ng)%Tnudgcof)

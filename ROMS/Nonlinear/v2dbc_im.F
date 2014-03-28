@@ -295,18 +295,18 @@
 #else
               bry_val=BOUNDARY(ng)%vbar_south(i)
 #endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                 &
-     &                            GRID(ng)%h(i,Jstr  )))
-              cff1=SQRT(g*cff)
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Jstr  ))
+              cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
+     &                    GRID(ng)%h(i,Jstr  ))
+              cff1=SQRT(g/cff)
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+           &
+     &                                 GRID(ng)%pn(i,Jstr  ))
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               IF (Ce.gt.Co) THEN
                 cff2=(1.0_r8-Co/Ce)**2
                 cff3=zeta(i,Jstr,kout)+                                 &
      &               Ce*zeta(i,Jstr-1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jstr,know)
+     &               (1.0_r8+Ce)*zeta(i,Jstr,know)
                 Ze=Ze+cff2*cff3
               END IF
               vbar(i,Jstr,kout)=0.5_r8*                                 &
@@ -581,18 +581,18 @@
 #else
               bry_val=BOUNDARY(ng)%vbar_north(i)
 #endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                 &
-     &                            GRID(ng)%h(i,Jend+1)))
-              cff1=SQRT(g*cff)
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Jend+1))
+              cff=0.5_r8*(GRID(ng)%h(i,Jend  )+                         &
+     &                    GRID(ng)%h(i,Jend+1))
+              cff1=SQRT(g/cff)
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jend  )+           &
+     &                                 GRID(ng)%pn(i,Jend+1))
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               IF (Ce.gt.Co) THEN
                 cff2=(1.0_r8-Co/Ce)**2
                 cff3=zeta(i,Jend,kout)+                                 &
      &               Ce*zeta(i,Jend+1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jend,know)
+     &               (1.0_r8+Ce)*zeta(i,Jend,know)
                 Ze=Ze+cff2*cff3
               END IF
               vbar(i,Jend+1,kout)=0.5_r8*                               &

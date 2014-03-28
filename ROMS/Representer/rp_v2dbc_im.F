@@ -444,22 +444,24 @@
 !>
               tl_bry_val=BOUNDARY(ng)%tl_vbar_south(i)
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                 &
-     &                            GRID(ng)%h(i,Jstr  )))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+         &
-     &                                 GRID(ng)%tl_h(i,Jstr  )))+       &
-# ifdef TL_IOMS
-     &               0.5_r8*cff
-# endif
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+              cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
+     &                    GRID(ng)%h(i,Jstr  ))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+                   &
+     &                       GRID(ng)%tl_h(i,Jstr  ))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff+                          &
 # ifdef TL_IOMS
      &                0.5_r8*cff1
 # endif
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Jstr  ))
-              tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+         &
-     &                                   GRID(ng)%pn(i,Jstr  ))
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+           &
+     &                                 GRID(ng)%pn(i,Jstr  ))
+              tl_Ce=dt2d*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                 &
+     &                           GRID(ng)%pn(i,Jstr  ))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)-                                      &
+# ifdef TL_IOMS
+     &              Ce
+# endif
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jstr  ,know)+                 &
@@ -477,15 +479,15 @@
 # endif
                 cff3=zeta(i,Jstr,kout)+                                 &
      &               Ce*zeta(i,Jstr-1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jstr,know)
+     &               (1.0_r8+Ce)*zeta(i,Jstr,know)
                 tl_cff3=tl_zeta(i,Jstr,kout)+                           &
      &                  Ce*tl_zeta(i,Jstr-1,know)+                      &
      &                  tl_Ce*(zeta(i,Jstr-1,know)+                     &
      &                         zeta(i,Jstr  ,know))-                    &
-     &                  (1.0_r8-Ce)*tl_zeta(i,Jstr,know)-               &
+     &                  (1.0_r8+Ce)*tl_zeta(i,Jstr,know)-               &
 # ifdef TL_IOMS
      &                  Ce*zeta(i,Jstr-1,know)+                         &
-     &                  (1.0_r8-Ce)*zeta(i,Jstr,know)       ! HGA check
+     &                  (1.0_r8+Ce)*zeta(i,Jstr,know)       ! HGA check
 # endif
                 Ze=Ze+cff2*cff3
                 tl_Ze=tl_Ze+cff2*tl_cff3+                               &
@@ -983,22 +985,24 @@
 !>
               tl_bry_val=BOUNDARY(ng)%tl_vbar_north(i)
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                 &
-     &                            GRID(ng)%h(i,Jend+1)))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(i,Jend  )+         &
-     &                                 GRID(ng)%tl_h(i,Jend+1)))+       &
-# ifdef TL_IOMS
-     &               2.0_r8*cff
-# endif
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+              cff=0.5_r8*(GRID(ng)%h(i,Jend  )+                         &
+     &                    GRID(ng)%h(i,Jend+1))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jend  )+                   &
+     &                       GRID(ng)%tl_h(i,Jend+1))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff+                          &
 # ifdef TL_IOMS
      &                0.5_r8*cff1
 # endif
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Jend+1))
-              tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+         &
-     &                                   GRID(ng)%pn(i,Jend+1))
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jend  )+           &
+     &                                 GRID(ng)%pn(i,Jend+1))
+              tl_Ce=dt2d*0.5_r8*(GRID(ng)%pn(i,Jend  )+                 &
+     &                           GRID(ng)%pn(i,Jend+1))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)-                                      &
+# ifdef TL_IOMS
+     &              Ce
+# endif
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jend  ,know)+                 &
@@ -1016,15 +1020,15 @@
 # endif
                 cff3=zeta(i,Jend,kout)+                                 &
      &               Ce*zeta(i,Jend+1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jend,know)
+     &               (1.0_r8+Ce)*zeta(i,Jend,know)
                 tl_cff3=tl_zeta(i,Jend,kout)+                           &
      &                  Ce*tl_zeta(i,Jend+1,know)+                      &
      &                  tl_Ce*(zeta(i,Jend  ,know)+                     &
      &                         zeta(i,Jend+1,know))-                    &
-     &                  (1.0_r8-Ce)*tl_zeta(i,Jend,know)-               &
+     &                  (1.0_r8+Ce)*tl_zeta(i,Jend,know)-               &
 # ifdef TL_IOMS
      &                  Ce*zeta(i,Jend+1,know)+                         &
-     &                  (1.0_r8-Ce)*zeta(i,Jend,know)       ! HGA check
+     &                  (1.0_r8+Ce)*zeta(i,Jend,know)       ! HGA check
 # endif
                 Ze=Ze+cff2*cff3
                 tl_Ze=tl_Ze+cff2*tl_cff3+                               &

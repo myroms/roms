@@ -4446,7 +4446,7 @@
           WRITE (out,'(1x)')
           IF (Dout(idDu2d(M2rate),ng).or.Dout(idDv2d(M2rate),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M2rate)',                    &
-     &       'Write out 2D momentun acceleration.'
+     &       'Write out 2D momentum acceleration.'
           IF (Dout(idDu2d(M2pgrd),ng).or.Dout(idDv2d(M2pgrd),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M2pgrd)',                    &
      &       'Write out 2D momentum pressure gradient.'
@@ -4492,7 +4492,7 @@
           WRITE (out,'(1x)')
           IF (Dout(idDu3d(M3rate),ng).or.Dout(idDv3d(M3rate),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3rate)',                    &
-     &       'Write out 3D momentun acceleration.'
+     &       'Write out 3D momentum acceleration.'
           IF (Dout(idDu3d(M3pgrd),ng).or.Dout(idDv3d(M3pgrd),ng))       &
      &       WRITE (out,170) .TRUE., 'Dout(M3pgrd)',                    &
      &       'Write out 3D momentum pressure gradient.'

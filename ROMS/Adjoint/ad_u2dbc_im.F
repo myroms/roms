@@ -1056,18 +1056,18 @@
         ELSE IF (ad_LBC(ieast,isUbar,ng)%Shchepetkin) THEN
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%east(j)) THEN
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                 &
-     &                            GRID(ng)%h(Iend+1,j)))
-              cff1=SQRT(g*cff)
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))
+              cff=0.5_r8*(GRID(ng)%h(Iend  ,j)+                         &
+     &                    GRID(ng)%h(Iend+1,j))
+              cff1=SQRT(g/cff)
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Iend  ,j)+           &
+     &                                 GRID(ng)%pm(Iend+1,j))
               Zx=(0.5_r8+Cx)*zeta(Iend  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Iend+1,j,know)
               IF (Cx.gt.Co) THEN
                 cff2=(1.0_r8-Co/Cx)**2
                 cff3=zeta(Iend,j,kout)+                                 &
      &               Cx*zeta(Iend+1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Iend,j,know)
+     &               (1.0_r8+Cx)*zeta(Iend,j,know)
                 Zx=Zx+cff2*cff3
               END IF
 # ifdef MASKING
@@ -1123,12 +1123,12 @@
 !>   &                  Cx*tl_zeta(Iend+1,j,know)+                      &
 !>   &                  tl_Cx*(zeta(Iend  ,j,know)+                     &
 !>   &                         zeta(Iend+1,j,know))-                    &
-!>   &                  (1.0_r8-Cx)*tl_zeta(Iend,j,know)
+!>   &                  (1.0_r8+Cx)*tl_zeta(Iend,j,know)
 !>
                 ad_zeta(Iend  ,j,kout)=ad_zeta(Iend  ,j,kout)+          &
      &                                 ad_cff3
                 ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)-          &
-     &                                 (1.0_r8-Cx)*ad_cff3
+     &                                 (1.0_r8+Cx)*ad_cff3
                 ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+          &
      &                                 Cx*ad_cff3
                 ad_Cx=ad_Cx+                                            &
@@ -1154,22 +1154,25 @@
      &              (zeta(Iend  ,j,know)-                               &
      &               zeta(Iend+1,j,know))*ad_Zx
               ad_Zx=0.0_r8
-!>            tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+         &
-!>   &                                   GRID(ng)%pm(Iend+1,j))
+!>            tl_Cx=dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                 &
+!>   &                           GRID(ng)%pm(Iend+1,j))*                &
+!>   &              (cff1*tl_cff+                                       &
+!>   &               tl_cff1*cff)
 !>
-              ad_cff1=ad_cff1+                                          &
-     &                dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))*ad_Cx
+              adfac=dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                 &
+     &                           GRID(ng)%pm(Iend+1,j))*ad_Cx
+              ad_cff=ad_cff+cff1*adfac
+              ad_cff1=ad_cff1+cff*adfac
               ad_Cx=0.0_r8
-!>            tl_cff1=0.5_r8*g*tl_cff/cff1
+!>            tl_cff1=-0.5_r8*cff1*tl_cff/cff
 !>
-              ad_cff=ad_cff+                                            &
-     &               0.5_r8*g*ad_cff1/cff1
+              ad_cff=ad_cff-                                            &
+     &               0.5_r8*cff1*ad_cff/cff
               ad_cff1=0.0_r8
-!>            tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+         &
-!>   &                                 GRID(ng)%tl_h(Iend+1,j)))
+!>            tl_cff=0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+                   &
+!>   &                       GRID(ng)%tl_h(Iend+1,j))
 !>
-              adfac=-cff*cff*0.5_r8*ad_cff
+              adfac=0.5_r8*ad_cff
               GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%tl_h(Iend  ,j)+adfac
               GRID(ng)%tl_h(Iend+1,j)=GRID(ng)%tl_h(Iend+1,j)+adfac
               ad_cff=0.0_r8
@@ -1805,18 +1808,18 @@
         ELSE IF (ad_LBC(iwest,isUbar,ng)%Shchepetkin) THEN
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%west(j)) THEN
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                 &
-     &                            GRID(ng)%h(Iend+1,j)))
-              cff1=SQRT(g*cff)
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))
+              cff=0.5_r8*(GRID(ng)%h(Iend  ,j)+                         &
+     &                    GRID(ng)%h(Iend+1,j))
+              cff1=SQRT(g/cff)
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Iend  ,j)+           &
+     &                                 GRID(ng)%pm(Iend+1,j))
               Zx=(0.5_r8+Cx)*zeta(Iend  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Iend+1,j,know)
               IF (Cx.gt.Co) THEN
                 cff2=(1.0_r8-Co/Cx)**2
                 cff3=zeta(Iend,j,kout)+                                 &
      &               Cx*zeta(Iend+1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Iend,j,know)
+     &               (1.0_r8+Cx)*zeta(Iend,j,know)
                 Zx=Zx+cff2*cff3
               END IF
 # ifdef MASKING
@@ -1870,12 +1873,12 @@
 !>   &                  Cx*tl_zeta(Iend+1,j,know)+                      &
 !>   &                  tl_Cx*(zeta(Iend  ,j,know)+                     &
 !>   &                         zeta(Iend+1,j,know))-                    &
-!>   &                  (1.0_r8-Cx)*tl_zeta(Iend,j,know)
+!>   &                  (1.0_r8+Cx)*tl_zeta(Iend,j,know)
 !>
                 ad_zeta(Iend  ,j,kout)=ad_zeta(Iend,j,kout)+            &
      &                                 ad_cff3
                 ad_zeta(Iend  ,j,know)=ad_zeta(Iend,j,know)-            &
-     &                                 (1.0_r8-Cx)*ad_cff3
+     &                                 (1.0_r8+Cx)*ad_cff3
                 ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+          &
      &                                 Cx*ad_cff3
                 ad_Cx=ad_Cx+                                            &
@@ -1901,22 +1904,25 @@
      &              (zeta(Iend  ,j,know)-                               &
      &               zeta(Iend+1,j,know))*ad_Zx
               ad_Zx=0.0_r8
-!>            tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+         &
-!>   &                                   GRID(ng)%pm(Iend+1,j))
+!>            tl_Cx=dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                 &
+!>   &                           GRID(ng)%pm(Iend+1,j))*                &
+!>   &              (cff1*tl_cff+                                       &
+!>   &               tl_cff1*cff)
 !>
-              ad_cff1=ad_cff1+                                          &
-     &                dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))*ad_Cx
+              adfac=dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                 &
+     &                           GRID(ng)%pm(Iend+1,j))*ad_Cx
+              ad_cff=ad_cff+cff1*adfac
+              ad_cff1=ad_cff1+cff*adfac
               ad_Cx=0.0_r8
-!>            tl_cff1=0.5_r8*g*tl_cff/cff1
+!>            tl_cff1=-0.5_r8*cff1*tl_cff/cff
 !>
-              ad_cff=ad_cff+                                            &
-     &               0.5_r8*g*ad_cff1/cff1
+              ad_cff=ad_cff-                                            &
+     &               0.5_r8*cff1*ad_cff/cff
               ad_cff1=0.0_r8
-!>            tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+         &
-!>   &                                 GRID(ng)%tl_h(Iend+1,j)))
+!>            tl_cff=0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+                   &
+!>   &                       GRID(ng)%tl_h(Iend+1,j))
 !>
-              adfac=-cff*cff*0.5_r8*ad_cff
+              adfac=0.5_r8*ad_cff
               GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac
               GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
               ad_cff=0.0_r8

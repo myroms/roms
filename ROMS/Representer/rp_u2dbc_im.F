@@ -444,22 +444,24 @@
 !>
               tl_bry_val=BOUNDARY(ng)%tl_ubar_west(j)
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                 &
-     &                            GRID(ng)%h(Istr  ,j)))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+         &
-     &                                 GRID(ng)%tl_h(Istr  ,j)))+       &
-# ifdef TL_IOMS
-     &               2.0_r8*cff
-# endif
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+              cff=0.5_r8*(GRID(ng)%h(Istr-1,j)+                         &
+     &                    GRID(ng)%h(Istr  ,j))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+                   &
+     &                       GRID(ng)%tl_h(Istr  ,j))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff+                          &
 # ifdef TL_IOMS
      &                0.5_r8*cff1
 # endif
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Istr-1,j)+               &
-     &                             GRID(ng)%pm(Istr  ,j))
-              tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Istr-1,j)+         &
-     &                                   GRID(ng)%pm(Istr  ,j))
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Istr-1,j)+           &
+     &                                 GRID(ng)%pm(Istr  ,j))
+              tl_Cx=dt2d*0.5_r8*(GRID(ng)%pm(Istr-1,j)+                 &
+     &                           GRID(ng)%pm(Istr  ,j))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)-                                      &
+# ifdef TL_IOMS
+     &              Cx
+# endif
               Zx=(0.5_r8+Cx)*zeta(Istr  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Istr-1,j,know)
               tl_Zx=(0.5_r8+Cx)*tl_zeta(Istr  ,j,know)+                 &
@@ -477,15 +479,15 @@
 # endif
                 cff3=zeta(Istr,j,kout)+                                 &
      &               Cx*zeta(Istr-1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Istr,j,know)
+     &               (1.0_r8+Cx)*zeta(Istr,j,know)
                 tl_cff3=tl_zeta(Istr,j,kout)+                           &
      &                  Cx*tl_zeta(Istr-1,j,know)+                      &
      &                  tl_Cx*(zeta(Istr-1,j,know)+                     &
      &                         zeta(Istr  ,j,know))-                    &
-     &                  (1.0_r8-Cx)*tl_zeta(Istr,j,know)-               &
+     &                  (1.0_r8+Cx)*tl_zeta(Istr,j,know)-               &
 # ifdef TL_IOMS
      &                  Cx*zeta(Istr-1,j,know)+                         &
-     &                  (1.0_r8-Cx)*zeta(Istr,j,know)       ! HGA check
+     &                  (1.0_r8+Cx)*zeta(Istr,j,know)       ! HGA check
 # endif
                 Zx=Zx+cff2*cff3
                 tl_Zx=tl_Zx+cff2*tl_cff3+                               &
@@ -983,22 +985,24 @@
 !>
               tl_bry_val=BOUNDARY(ng)%tl_ubar_east(j)
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                 &
-     &                            GRID(ng)%h(Iend+1,j)))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+         &
-     &                                 GRID(ng)%tl_h(Iend+1,j)))+       &
-# ifdef TL_IOMS
-     &               2.0_r8*cff
-# endif
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1+                             &
+              cff=0.5_r8*(GRID(ng)%h(Iend  ,j)+                         &
+     &                    GRID(ng)%h(Iend+1,j))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+                   &
+     &                       GRID(ng)%tl_h(Iend+1,j))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff+                          &
 # ifdef TL_IOMS
      &                0.5_r8*cff1
 # endif
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))
-              tl_Cx=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+         &
-     &                                   GRID(ng)%pm(Iend+1,j))
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Iend  ,j)+           &
+     &                                 GRID(ng)%pm(Iend+1,j))
+              tl_Cx=dt2d*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                 &
+     &                           GRID(ng)%pm(Iend+1,j))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)-                                      &
+# ifdef TL_IOMS
+     &              Cx
+# endif
               Zx=(0.5_r8+Cx)*zeta(Iend  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Iend+1,j,know)
               tl_Zx=(0.5_r8+Cx)*tl_zeta(Iend  ,j,know)+                 &
@@ -1016,15 +1020,15 @@
 # endif
                 cff3=zeta(Iend,j,kout)+                                 &
      &               Cx*zeta(Iend+1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Iend,j,know)
+     &               (1.0_r8+Cx)*zeta(Iend,j,know)
                 tl_cff3=tl_zeta(Iend,j,kout)+                           &
      &                  Cx*tl_zeta(Iend+1,j,know)+                      &
      &                  tl_Cx*(zeta(Iend  ,j,know)+                     &
      &                         zeta(Iend+1,j,know))-                    &
-     &                  (1.0_r8-Cx)*tl_zeta(Iend,j,know)-               &
+     &                  (1.0_r8+Cx)*tl_zeta(Iend,j,know)-               &
 # ifdef TL_IOMS
      &                  Cx*zeta(Istr-1,j,know)+                         &
-     &                  (1.0_r8-Cx)*zeta(Istr,j,know)       ! HGA check
+     &                  (1.0_r8+Cx)*zeta(Istr,j,know)       ! HGA check
 # endif
                 Zx=Zx+cff2*cff3
                 tl_Zx=tl_Zx+cff2*tl_cff3+                               &

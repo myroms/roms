@@ -730,7 +730,7 @@
           END IF
 # endif
 !
-!  Compute balanced, interior V-momemtum from baroclinic pressure
+!  Compute balanced, interior V-momentum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
 !>        DO k=N(ng)-1,1,-1
@@ -877,7 +877,7 @@
           END IF
 # endif
 !
-!  Compute balanced, interior U-momemtum from baroclinic pressure
+!  Compute balanced, interior U-momentum from baroclinic pressure
 !  gradient (differentiate and then vertically integrate).
 !
 !>        DO k=N(ng)-1,1,-1

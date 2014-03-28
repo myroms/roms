@@ -144,6 +144,14 @@ variables:
 		ZoBot:long_name = "time invariant, bottom roughness length" ;
 		ZoBot:units = "meter" ;
 		ZoBot:coordinates = "lon_rho lat_rho" ;
+	double diff_factor(eta_rho, xi_rho) ;
+		diff_factor:long_name = "horizontal diffusivity factor" ;
+		diff_factor:valid_min = 0. ;
+		diff_factor:coordinates = "lon_rho lat_rho" ;
+	double visc_factor(eta_rho, xi_rho) ;
+		visc_factor:long_name = "horizontal viscosity factor" ;
+		visc_factor:valid_min = 0. ;
+		visc_factor:coordinates = "lon_rho lat_rho" ;
 
 // global attributes:
 		:type = "ROMS GRID file" ;

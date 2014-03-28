@@ -313,7 +313,7 @@
 !  Insure that masks at mass point source locations are set to water
 !  to avoid writting output with FillValue at those locations.
 !
-        IF (LuvSrc(ng) THEN
+        IF (LuvSrc(ng)) THEN
           DO is=1,Nsrc(ng)
             i=SOURCES(ng)%Isrc(is)
             j=SOURCES(ng)%Jsrc(is)

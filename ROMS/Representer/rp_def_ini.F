@@ -300,7 +300,7 @@
 #  endif
 #  ifdef ADJUST_WSTRESS
 !
-!  Define dimension vectors for staggered u-momemtum type variables.
+!  Define dimension vectors for staggered u-momentum type variables.
 !
         u4dfrc(1)=DimIDs( 2)
         u4dfrc(2)=DimIDs( 6)
@@ -309,7 +309,7 @@
 #  endif
 #  ifdef ADJUST_WSTRESS
 !
-!  Define dimension vectors for staggered v-momemtum type variables.
+!  Define dimension vectors for staggered v-momentum type variables.
 !
         v4dfrc(1)=DimIDs( 3)
         v4dfrc(2)=DimIDs( 7)

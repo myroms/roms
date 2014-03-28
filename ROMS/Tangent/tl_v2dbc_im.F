@@ -435,16 +435,18 @@
               tl_bry_val=0.0_r8
 #  endif
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                 &
-     &                            GRID(ng)%h(i,Jstr  )))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+         &
-     &                                 GRID(ng)%tl_h(i,Jstr  )))
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+               &
-     &                             GRID(ng)%pn(i,Jstr  ))
-              tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+         &
-     &                                   GRID(ng)%pn(i,Jstr  ))
+              cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
+     &                    GRID(ng)%h(i,Jstr  ))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+                   &
+     &                       GRID(ng)%tl_h(i,Jstr  ))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+           &
+     &                                 GRID(ng)%pn(i,Jstr  ))
+              tl_Ce=dt2d*0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                 &
+     &                           GRID(ng)%pn(i,Jstr  ))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)
               Ze=(0.5_r8+Ce)*zeta(i,Jstr  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jstr-1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jstr  ,know)+                 &
@@ -456,12 +458,12 @@
                 tl_cff2=2.0_r8*cff2*Co*tl_Ce/(Ce*Ce)
                 cff3=zeta(i,Jstr,kout)+                                 &
      &               Ce*zeta(i,Jstr-1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jstr,know)
+     &               (1.0_r8+Ce)*zeta(i,Jstr,know)
                 tl_cff3=tl_zeta(i,Jstr,kout)+                           &
      &                  Ce*tl_zeta(i,Jstr-1,know)+                      &
      &                  tl_Ce*(zeta(i,Jstr-1,know)+                     &
      &                         zeta(i,Jstr  ,know))-                    &
-     &                  (1.0_r8-Ce)*tl_zeta(i,Jstr,know)
+     &                  (1.0_r8+Ce)*tl_zeta(i,Jstr,know)
                 Ze=Ze+cff2*cff3
                 tl_Ze=tl_Ze+cff2*tl_cff3+                               &
      &                      tl_cff2*cff3
@@ -946,16 +948,18 @@
               tl_bry_val=0.0_r8
 #  endif
 # endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                 &
-     &                            GRID(ng)%h(i,Jend+1)))
-              tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(i,Jend  )+         &
-     &                                 GRID(ng)%tl_h(i,Jend+1)))
-              cff1=SQRT(g*cff)
-              tl_cff1=0.5_r8*g*tl_cff/cff1
-              Ce=dt2d*cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+               &
-     &                             GRID(ng)%pn(i,Jend+1))
-              tl_Ce=dt2d*tl_cff1*0.5_r8*(GRID(ng)%pn(i,Jend  )+         &
-     &                                   GRID(ng)%pn(i,Jend+1))
+              cff=0.5_r8*(GRID(ng)%h(i,Jend  )+                         &
+     &                    GRID(ng)%h(i,Jend+1))
+              tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jend  )+                   &
+     &                       GRID(ng)%tl_h(i,Jend+1))
+              cff1=SQRT(g/cff)
+              tl_cff1=-0.5_r8*cff1*tl_cff/cff
+              Ce=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pn(i,Jend  )+           &
+     &                                 GRID(ng)%pn(i,Jend+1))
+              tl_Ce=dt2d*0.5_r8*(GRID(ng)%pn(i,Jend  )+                 &
+     &                           GRID(ng)%pn(i,Jend+1))*                &
+     &              (cff1*tl_cff+                                       &
+     &               tl_cff1*cff)
               Ze=(0.5_r8+Ce)*zeta(i,Jend  ,know)+                       &
      &           (0.5_r8-Ce)*zeta(i,Jend+1,know)
               tl_Ze=(0.5_r8+Ce)*tl_zeta(i,Jend  ,know)+                 &
@@ -967,12 +971,12 @@
                 tl_cff2=2.0_r8*cff2*Co*tl_Ce/(Ce*Ce)
                 cff3=zeta(i,Jend,kout)+                                 &
      &               Ce*zeta(i,Jend+1,know)-                            &
-     &               (1.0_r8-Ce)*zeta(i,Jend,know)
+     &               (1.0_r8+Ce)*zeta(i,Jend,know)
                 tl_cff3=tl_zeta(i,Jend,kout)+                           &
      &                  Ce*tl_zeta(i,Jend+1,know)+                      &
      &                  tl_Ce*(zeta(i,Jend  ,know)+                     &
      &                         zeta(i,Jend+1,know))-                    &
-     &                  (1.0_r8-Ce)*tl_zeta(i,Jend,know)
+     &                  (1.0_r8+Ce)*tl_zeta(i,Jend,know)
                 Ze=Ze+cff2*cff3
                 tl_Ze=tl_Ze+cff2*tl_cff3+                               &
      &                      tl_cff2*cff3

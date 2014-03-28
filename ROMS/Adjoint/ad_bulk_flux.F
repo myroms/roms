@@ -1063,7 +1063,7 @@
 !
         DO i=Istr-1,IendR
 !
-!  Compute transfer coefficients for momentun (Cd).
+!  Compute transfer coefficients for momentum (Cd).
 !
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
           Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)
@@ -1219,7 +1219,7 @@
             ad_Hs=0.0_r8
 
 !
-!  Adjoint transfer coefficients for momentun (Cd).
+!  Adjoint transfer coefficients for momentum (Cd).
 !
 !>        tl_Cd=2.0_r8*(tl_Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)        &
 !>   &          -tl_Wspeed*Wspeed*Cd/(Wspeed*Wspeed+eps))

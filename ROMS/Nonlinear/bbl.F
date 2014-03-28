@@ -9,7 +9,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine computes bottom momentun stress via a bottom boundary  !
+!  This routine computes bottom momentum stress via a bottom boundary  !
 !  layer formulation.                                                  !
 !                                                                      !
 !=======================================================================

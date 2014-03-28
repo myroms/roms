@@ -399,7 +399,7 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_bvstr)
 !
-!  Save adjoint bottom momentun flux for output purposes.
+!  Save adjoint bottom momentum flux for output purposes.
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
@@ -1272,7 +1272,7 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_bustr)
 !
-!  Save adjoint bottom momentun flux for output purposes.
+!  Save adjoint bottom momentum flux for output purposes.
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR

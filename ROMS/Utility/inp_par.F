@@ -843,7 +843,7 @@
         END IF
 #else
         IF (LsshCLM(ng).or.                                             &
-            Lm2CLM (ng).or.LnudgeM2CLM(ng).or.                          &
+            Lm2CLM (ng).or.LnudgeM2CLM(ng)) THEN
           Lclimatology(ng)=.TRUE.
         END IF
 #endif

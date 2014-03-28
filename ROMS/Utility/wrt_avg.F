@@ -1757,7 +1757,7 @@
 #  endif
 # endif
 !
-!  Write out surface u-momentun stress.
+!  Write out surface u-momentum stress.
 !
       IF (Aout(idUsms,ng)) THEN
 # ifdef ADJOINT
@@ -1788,7 +1788,7 @@
         END IF
       END IF
 !
-!  Write out surface v-momentun stress.
+!  Write out surface v-momentum stress.
 !
       IF (Aout(idVsms,ng)) THEN
 # ifdef ADJOINT
@@ -1819,7 +1819,7 @@
         END IF
       END IF
 !
-!  Write out bottom u-momentun stress.
+!  Write out bottom u-momentum stress.
 !
       IF (Aout(idUbms,ng)) THEN
 # ifdef ADJOINT
@@ -1850,7 +1850,7 @@
         END IF
       END IF
 !
-!  Write out bottom v-momentun stress.
+!  Write out bottom v-momentum stress.
 !
       IF (Aout(idVbms,ng)) THEN
 # ifdef ADJOINT

@@ -294,18 +294,18 @@
 #else
               bry_val=BOUNDARY(ng)%ubar_west(j)
 #endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                 &
-     &                            GRID(ng)%h(Istr  ,j)))
-              cff1=SQRT(g*cff)
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Istr-1,j)+               &
-     &                             GRID(ng)%pm(Istr  ,j))
+              cff=0.5_r8*(GRID(ng)%h(Istr-1,j)+                         &
+     &                    GRID(ng)%h(Istr  ,j))
+              cff1=SQRT(g/cff)
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Istr-1,j)+           &
+     &                                 GRID(ng)%pm(Istr  ,j))
               Zx=(0.5_r8+Cx)*zeta(Istr  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Istr-1,j,know)
               IF (Cx.gt.Co) THEN
                 cff2=(1.0_r8-Co/Cx)**2
                 cff3=zeta(Istr,j,kout)+                                 &
      &               Cx*zeta(Istr-1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Istr,j,know)
+     &               (1.0_r8+Cx)*zeta(Istr,j,know)
                 Zx=Zx+cff2*cff3
               END IF
               ubar(Istr,j,kout)=0.5_r8*                                 &
@@ -580,18 +580,18 @@
 #else
               bry_val=BOUNDARY(ng)%ubar_east(j)
 #endif
-              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                 &
-     &                            GRID(ng)%h(Iend+1,j)))
-              cff1=SQRT(g*cff)
-              Cx=dt2d*cff1*0.5_r8*(GRID(ng)%pm(Iend  ,j)+               &
-     &                             GRID(ng)%pm(Iend+1,j))
+              cff=0.5_r8*(GRID(ng)%h(Iend  ,j)+                         &
+     &                    GRID(ng)%h(Iend+1,j))
+              cff1=SQRT(g/cff)
+              Cx=dt2d*cff1*cff*0.5_r8*(GRID(ng)%pm(Iend  ,j)+           &
+     &                                 GRID(ng)%pm(Iend+1,j))
               Zx=(0.5_r8+Cx)*zeta(Iend  ,j,know)+                       &
      &           (0.5_r8-Cx)*zeta(Iend+1,j,know)
               IF (Cx.gt.Co) THEN
                 cff2=(1.0_r8-Co/Cx)**2
                 cff3=zeta(Iend,j,kout)+                                 &
      &               Cx*zeta(Iend+1,j,know)-                            &
-     &               (1.0_r8-Cx)*zeta(Iend,j,know)
+     &               (1.0_r8+Cx)*zeta(Iend,j,know)
                 Zx=Zx+cff2*cff3
               END IF
               ubar(Iend+1,j,kout)=0.5_r8*                               &

@@ -1573,7 +1573,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     varid        Variabke ID of the attribute's variable, or         !
+!     varid        Variable ID for variable attribute or               !
 !                    NF90_GLOBAL for a global attribute (integer)      !
 !     AttName      Attribute name to read (string array)               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
