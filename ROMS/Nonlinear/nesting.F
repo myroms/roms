@@ -2315,7 +2315,7 @@
      &                                OCEAN(rg)%ubar(:,:,k))
               CALL exchange_v2d_tile (rg, tile,                         &
      &                                LBiR, UBiR, LBjR, UBjR,           &
-     &                                OCEAN(rg)%ubar(:,:,k))
+     &                                OCEAN(rg)%vbar(:,:,k))
             END DO
 # ifdef SOLVE3D
             CALL exchange_u3d_tile (rg, tile,                           &
@@ -2362,7 +2362,7 @@
      &                        NghostPoints,                             &
      &                        EWperiodic(rg), NSperiodic(rg),           &
      &                        OCEAN(rg)%u(:,:,:,nstp(rg)),              &
-     &                        OCEAN(rg)%u(:,:,:,nstp(rg)))
+     &                        OCEAN(rg)%v(:,:,:,nstp(rg)))
           CALL mp_exchange4d (rg, tile, model, 1,                       &
      &                        LBiR, UBiR, LBjR, UBjR, 1, N(rg),         &
      &                        1, NT(rg),                                &
