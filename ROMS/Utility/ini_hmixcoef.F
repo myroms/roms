@@ -337,7 +337,7 @@
 # endif
 #endif
 
-#if defined DIFF_GRID && defined SOLV3D
+#if defined DIFF_GRID && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Scale horizontal diffusion according to the grid size.
@@ -355,7 +355,7 @@
 # endif
 # ifdef TS_DIF4
       DO itrc=1,NT(ng)
-        cff=diffusion4/(grdmax(ng)**3)
+        cff=diffusion4(itrc)/(grdmax(ng)**3)
         DO j=JstrT,JendT
           DO i=IstrT,IendT
             diff4(i,j,itrc)=cff*grdscl(i,j)**3
