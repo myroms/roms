@@ -127,7 +127,7 @@
 */
 
 #if !defined _OPENMP
-# define OMP !
+# define $OMP !
 #endif
 
 /*

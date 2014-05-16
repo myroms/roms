@@ -104,7 +104,7 @@
 !
       IF (LnudgeM3CLM(ng)) THEN
         IF (.not.find_string(var_name,n_var,Vname(1,idM3nc),            &
-     &                       NUD(ng)%Vid(idM2nc))) THEN
+     &                       NUD(ng)%Vid(idM3nc))) THEN
           IF (Master) WRITE (stdout,10) TRIM(Vname(1,idM3nc)),          &
      &                                  TRIM(ncname)
           exit_flag=2

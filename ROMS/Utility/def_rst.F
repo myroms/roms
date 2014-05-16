@@ -9,7 +9,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine creates restart NetCDF file, it defines its            !
-!  dimensions, attributes, and variables.                              !
+!  dimensions, attributes, and fvariables.                             !
 !                                                                      !
 #if defined PERFECT_RESTART && defined WRITE_WATER && defined MASKING
 !  Currently, perfect restart is not compatible with writing           !
@@ -627,7 +627,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUwet,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idUwet),     &
-     &                 NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname,      &
+     &                 NF_FOUT, nvd3, su2dgrd, Aval, Vinfo, ncname,     &
      &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -643,7 +643,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVwet,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVwet),     &
-     &                 NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname,      &
+     &                 NF_FOUT, nvd3, sv2dgrd, Aval, Vinfo, ncname,     &
      &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #endif
