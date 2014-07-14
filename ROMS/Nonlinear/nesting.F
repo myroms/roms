@@ -14,7 +14,7 @@
 !  between nested grids. It process the contact region points between  !
 !  data donor and data receiver grids.                                 !
 !                                                                      !
-!  The locations of the spatial interpolation weights in the donor     !
+!  The locations of the spatial interpolation weights in the dgetonor  !
 !  grid with respect the receiver grid contact region at contat        !
 !  point x(Irg,Jrg,Krg) are:                                           !
 !                                                                      !
@@ -848,7 +848,7 @@
      &                          COUPLING(dg) % DU_avg1,                 &
      &                          COMPOSITE(cr) % DU_avg1)
             CALL get_contact2d (dg, model, tile,                        &
-     &                          v2dvar, 'DU_avg1',                      &
+     &                          v2dvar, 'DV_avg1',                      &
      &                          cr, Vcontact(cr)%Npoints, Vcontact,     &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          COUPLING(dg) % DV_avg1,                 &
