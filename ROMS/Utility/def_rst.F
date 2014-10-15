@@ -53,7 +53,7 @@
 
       integer :: DimIDs(32)
       integer :: r2dgrd(4), ru2dgrd(4), rv2dgrd(4)
-      integer :: sr2dgrd(3), su2dgrd(3), sv2dgrd(3)
+      integer :: sp2dgrd(3), sr2dgrd(3), su2dgrd(3), sv2dgrd(3)
       integer :: sr3dgrd(4), su3dgrd(4), sv3dgrd(4)
       integer :: t2dgrd(4), u2dgrd(4), v2dgrd(4)
       integer :: Vsize(4)
@@ -305,6 +305,12 @@
         r3dgrd(4)=DimIDs(12)
 # endif
 #endif
+!
+!  Define dimension vectors for staggered type variables at PSI-points.
+!
+        sp2dgrd(1)=DimIDs( 4)
+        sp2dgrd(2)=DimIDs( 8)
+        sp2dgrd(3)=DimIDs(12)
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -598,6 +604,22 @@
         IF (exit_flag.ne.NoError) RETURN
 
 #ifdef WET_DRY
+!
+!  Define wet/dry mask on PSI-points.
+!
+        Vinfo( 1)=Vname(1,idPwet)
+        Vinfo( 2)=Vname(2,idPwet)
+        Vinfo( 3)=Vname(3,idPwet)
+        Vinfo( 9)='land'
+        Vinfo(10)='water'
+        Vinfo(14)=Vname(4,idPwet)
+        Vinfo(16)=Vname(1,idtime)
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idRwet,ng),r8)
+        status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idPwet),     &
+     &                 NF_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname,     &
+     &                 SetFillVal = .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Define wet/dry mask on RHO-points.
 !
@@ -1517,6 +1539,9 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwet))) THEN
             got_var(idVwet)=.TRUE.
             RST(ng)%Vid(idVwet)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPwet))) THEN
+            got_var(idPwet)=.TRUE.
+            RST(ng)%Vid(idPwet)=var_id(i)
 #endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
@@ -1708,6 +1733,12 @@
         END IF
         IF (.not.got_var(idVwet)) THEN
           IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idPwet)) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idPwet)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN

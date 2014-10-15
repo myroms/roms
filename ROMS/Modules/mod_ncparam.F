@@ -217,6 +217,7 @@
         integer  :: idQair        ! surface air humidity
         integer  :: idPair        ! surface air pressure
         integer  :: idPbar        ! streamfunction
+        integer  :: idPwet        ! wet/dry mask on PSI-points
         integer  :: idRdir        ! river runoff direction
         integer  :: idRepo        ! river runoff ETA-positions
         integer  :: idRflg        ! river runoff flag
@@ -1048,6 +1049,8 @@
               idTbry(isouth,isalt)=varid
             CASE ('idTbry(inorth,isalt)')
               idTbry(inorth,isalt)=varid
+            CASE ('idPwet')
+              idPwet=varid
             CASE ('idRwet')
               idRwet=varid
             CASE ('idUwet')

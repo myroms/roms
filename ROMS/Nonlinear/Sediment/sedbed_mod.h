@@ -262,8 +262,8 @@
 !                                                                      !
 !  This routine initialize structure variables in the module using     !
 !  first touch distribution policy. In shared-memory configuration,    !
-!  this operation actually performs the propagation of the "shared     !
-!  arrays" across the cluster,  unless another policy is specified     !
+!  this operation actually performs the propagation of the  shared     !
+!  arrays  across the cluster,  unless another policy is specified     !
 !  to  override the default.                                           !
 !                                                                      !
 !=======================================================================

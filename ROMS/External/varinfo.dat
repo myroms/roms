@@ -220,6 +220,15 @@
 !------------------------------------------------------------------------------
 !
 
+'wetdry_mask_psi'                                  ! Input/Output
+  'wet/dry mask on PSI-points'
+  'nondimensional'
+  'wetdry_mask_psi, scalar, series'
+  'ocean_time'
+  'idPwet'
+  'p2dvar'
+  1.0d0
+
 'wetdry_mask_rho'                                  ! Input/Output
   'wet/dry mask on RHO-points'
   'nondimensional'
@@ -4027,8 +4036,8 @@
 
 'SdeC_north'                                       ! Input
   'small fraction carbon detritus northern boundary condition'
-  'millimole_carbon meter-3'
-  'SdeC_north, scalar, series'                     ! [millimole/m3]
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'SdeC_north, scalar, series'
   'SdeC_time'
   'idTbry(inorth,iSDeC)'
   'nulvar'

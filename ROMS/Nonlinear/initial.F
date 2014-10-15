@@ -55,6 +55,9 @@
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : ocn2wav_coupling
 #endif
+#ifdef WET_DRY
+      USE wetdry_mod, ONLY : wetdry
+#endif
 #if defined PROPAGATOR || \
     (defined MASKING    && (defined READ_WATER || defined WRITE_WATER))
       USE wpoints_mod, ONLY : wpoints
@@ -541,6 +544,35 @@
         END IF
       END DO
 #endif
+
+#ifdef WET_DRY
+!
+!-----------------------------------------------------------------------
+!  Process initial wet/dry masks.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+!
+!  If restart, read in wet/dry masks.
+!
+        IF (nrrec(ng).ne.0) THEN
+!$OMP MASTER
+          CALL get_wetdry (ng, iNLM, IniRec(ng))
+!$OMP END MASTER
+# ifdef DISTRIBUTE
+          CALL mp_bcasti (ng, iNLM, exit_flag)
+# endif
+!$OMP BARRIER
+          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
+          END DO
+!$OMP BARRIER
+        END IF
+      END DO
+#endif
+
 #if (defined W4DPSAS || defined TL_W4DPSAS || \
      defined W4DPSAS_SENSITIVITY)          && \
     (defined ADJUST_BOUNDARY || defined ADJUST_WSTRESS ||\

@@ -99,6 +99,14 @@
 #endif
 
 /*
+** If wetting and drying, activate limiting of bottom stress.
+*/
+
+#if !defined LIMIT_BSTRESS && defined WET_DRY
+# define LIMIT_BSTRESS
+#endif
+
+/*
 ** Define macro for the first 2D time-step.
 */
 
@@ -668,7 +676,7 @@
     ( defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
     ( defined SALINITY     && !defined ANA_SSFLUX)   || \
     ( defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
-    ( defined  SSH_TIDES   || defined UV_TIDES)      || \
+    ( defined SSH_TIDES    || defined UV_TIDES)      || \
     ( defined BBL_MODEL    && (!defined ANA_WWAVE    && \
      !defined WAVES_OCEAN))                          || \
     ( defined SEDIMENT     && !defined ANA_SPFLUX)   || \

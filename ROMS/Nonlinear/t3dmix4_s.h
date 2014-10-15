@@ -45,6 +45,10 @@
      &                   GRID(ng) % umask,                              &
      &                   GRID(ng) % vmask,                              &
 #endif
+#ifdef WET_DRY
+     &                   GRID(ng) % umask_wet,                          &
+     &                   GRID(ng) % vmask_wet,                          &
+#endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % pmon_u,                             &
      &                   GRID(ng) % pnom_v,                             &
@@ -82,6 +86,9 @@
 #ifdef MASKING
      &                         umask, vmask,                            &
 #endif
+#ifdef WET_DRY
+     &                         umask_wet, vmask_wet,                    &
+#endif
      &                         Hz, pmon_u, pnom_v, pm, pn,              &
 #ifdef DIFF_3DCOEF
 # ifdef TS_U3ADV_SPLIT
@@ -117,6 +124,10 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef WET_DRY
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
+# endif
 # ifdef DIFF_3DCOEF
 #  ifdef TS_U3ADV_SPLIT
       real(r8), intent(in) :: diff3d_u(LBi:,LBj:,:)
@@ -143,6 +154,10 @@
 # ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef WET_DRY
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 # endif
 # ifdef DIFF_3DCOEF
 #  ifdef TS_U3ADV_SPLIT
@@ -229,6 +244,9 @@
 #ifdef MASKING
               cff=cff*umask(i,j)
 #endif
+#ifdef WET_DRY
+              cff=cff*umask_wet(i,j)
+#endif
               FX(i,j)=cff*(Hz(i,j,k)+Hz(i-1,j,k))*                      &
 #ifdef MIX_STABILITY
      &                (0.75_r8*(t(i  ,j,k,nrhs,itrc)-                   &
@@ -259,6 +277,9 @@
 #endif
 #ifdef MASKING
               cff=cff*vmask(i,j)
+#endif
+#ifdef WET_DRY
+              cff=cff*vmask_wet(i,j)
 #endif
               FE(i,j)=cff*(Hz(i,j,k)+Hz(i,j-1,k))*                      &
 #ifdef MIX_STABILITY
@@ -368,6 +389,9 @@
 #ifdef MASKING
               FX(i,j)=FX(i,j)*umask(i,j)
 #endif
+#ifdef WET_DRY
+              FX(i,j)=FX(i,j)*umask_wet(i,j)
+#endif
             END DO
           END DO
           DO j=Jstr,Jend+1
@@ -388,6 +412,9 @@
      &                (LapT(i,j)-LapT(i,j-1))
 #ifdef MASKING
               FE(i,j)=FE(i,j)*vmask(i,j)
+#endif
+#ifdef WET_DRY
+              FE(i,j)=FE(i,j)*vmask_wet(i,j)
 #endif
             END DO
           END DO

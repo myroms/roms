@@ -61,6 +61,11 @@
      &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
+# ifdef WET_DRY
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
+     &                      GRID(ng) % vmask_wet,                       &
+# endif
 # ifdef PERFECT_RESTART
 #  ifdef SOLVE3D
      &                      OCEAN(ng) % ru,                             &
@@ -103,6 +108,9 @@
 # endif
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
+# endif
+# ifdef WET_DRY
+     &                            rmask_wet, umask_wet, vmask_wet,      &
 # endif
 # ifdef PERFECT_RESTART
 #  ifdef SOLVE3D
@@ -168,6 +176,11 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in)    :: rmask_wet(LBi:,LBj:)
+      real(r8), intent(inout) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(inout) :: vmask_wet(LBi:,LBj:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #  endif
@@ -205,6 +218,11 @@
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef WET_DRY
+      real(r8), intent(in)    :: rmask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: vmask_wet(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
@@ -267,6 +285,9 @@
 #  ifdef MASKING
               cff1=cff1*umask(i,j)
 #  endif
+#  ifdef WET_DRY
+              cff1=cff1*umask_wet(i,j)
+#  endif
               u(i,j,k,nstp)=cff1
               u(i,j,k,nnew)=cff1
             END DO
@@ -278,6 +299,9 @@
                 cff2=v(i,j,k,nstp)
 #  ifdef MASKING
                 cff2=cff2*vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+                cff2=cff2*vmask_wet(i,j)
 #  endif
                 v(i,j,k,nstp)=cff2
                 v(i,j,k,nnew)=cff2
@@ -367,6 +391,9 @@
 #  ifdef MASKING
             cff2=cff2*umask(i,j)
 #  endif
+#  ifdef WET_DRY
+            cff2=cff2*umask_wet(i,j)
+#  endif
             ubar(i,j,kstp)=cff2
             ubar(i,j,knew)=cff2
           END DO
@@ -388,6 +415,9 @@
               cff2=CF(i,0)*cff1
 #  ifdef MASKING
               cff2=cff2*vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+              cff2=cff2*vmask_wet(i,j)
 #  endif
               vbar(i,j,kstp)=cff2
               vbar(i,j,knew)=cff2
@@ -464,6 +494,9 @@
 #  ifdef MASKING
             cff1=cff1*umask(i,j)
 #  endif
+#  ifdef WET_DRY
+            cff1=cff1*umask_wet(i,j)
+#  endif
             ubar(i,j,kstp)=cff1
             ubar(i,j,krhs)=cff1
           END DO
@@ -472,6 +505,9 @@
               cff2=vbar(i,j,kstp)
 #  ifdef MASKING
               cff2=cff2*vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+              cff2=cff2*vmask_wet(i,j)
 #  endif
               vbar(i,j,kstp)=cff2
               vbar(i,j,krhs)=cff2
@@ -908,9 +944,9 @@
 # ifdef WET_DRY
             IF (cff1.le.(Dcrit(ng)-h(i,j))) THEN
               cff1=Dcrit(ng)-h(i,j)
-              rmask_wet(i,j)=0.0_r8
-            ELSE
-              rmask_wet(i,j)=1.0_r8*rmask(i,j)
+!!            rmask_wet(i,j)=0.0_r8
+!!          ELSE
+!!            rmask_wet(i,j)=1.0_r8*rmask(i,j)
             END IF
 # endif
             zeta(i,j,kstp)=cff1
