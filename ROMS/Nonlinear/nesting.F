@@ -14,8 +14,8 @@
 !  between nested grids. It process the contact region points between  !
 !  data donor and data receiver grids.                                 !
 !                                                                      !
-!  The locations of the spatial interpolation weights in the dgetonor  !
-!  grid with respect the receiver grid contact region at contat        !
+!  The locations of the linear interpolation weights in the donor      !
+!  grid with respect the receiver grid contact region at contact       !
 !  point x(Irg,Jrg,Krg) are:                                           !
 !                                                                      !
 !                       8___________7   (Idg+1,Jdg+1,Kdg)              !
@@ -61,7 +61,7 @@
 !  put_refine3d     Interpolate (space-time) 3D state variables        !
 !                                                                      !
 !  z_weights        Set donor grid vertical indices (cell holding      !
-!                     contact point) and verical interpolation         !
+!                     contact point) and vertical interpolation        !
 !                     weights                                          !
 !                                                                      !
 !  WARNINGS:                                                           !
@@ -1086,8 +1086,7 @@
 !
 !  Process only contact region data for requested nested grid "ng".
 !
-        IF (((rg.eq.ng).and.(RefineScale(rg).gt.0)).or.                 &
-     &      (RefineDonor(rg).eq.ng)) THEN
+        IF ((dg.eq.RefineDonor(rg)).and.((dg.eq.ng).or.(rg.eq.ng))) THEN
 !
 !  Set donor grid lower and upper array indices.
 !
@@ -1602,9 +1601,11 @@
         dg=Rcontact(cr)%donor_grid
         rg=Rcontact(cr)%receiver_grid
 !
-!  Process only contact region data for requested nested grid "ng".
+!  Process only contact region data for requested nested grid "ng", if
+!  donor grid is coarser than receiver grid.  That is, we are only
+!  processing external contact points areas.
 !
-        IF (rg.eq.ng) THEN
+        IF ((rg.eq.ng).and.(DXmax(dg).gt.DXmax(rg))) THEN
 !
 !  Set receiver grid lower and upper array indices.
 !
@@ -3434,7 +3435,7 @@
 !  This routine uses extracted donor grid data (Ac) to spatially       !
 !  interpolate a 2D state variable  at the receiver grid contact       !
 !  points.  If the donor and receiver grids are coincident,  the       !
-!  Hweight(1,:) is unity and Hweight(2:4,:) are zero.                  !
+!  Lweight(1,:) is unity and Lweight(2:4,:) are zero.                  !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -3525,10 +3526,10 @@
         j=contact(cr)%Jrg(m)
         IF (((Istr.le.i).and.(i.le.Iend)).and.                          &
      &      ((Jstr.le.j).and.(j.le.Jend))) THEN
-          Ar(i,j)=contact(cr)%Hweight(1,m)*Ac(1,m)+                     &
-     &            contact(cr)%Hweight(2,m)*Ac(2,m)+                     &
-     &            contact(cr)%Hweight(3,m)*Ac(3,m)+                     &
-     &            contact(cr)%Hweight(4,m)*Ac(4,m)
+          Ar(i,j)=contact(cr)%Lweight(1,m)*Ac(1,m)+                     &
+     &            contact(cr)%Lweight(2,m)*Ac(2,m)+                     &
+     &            contact(cr)%Lweight(3,m)*Ac(3,m)+                     &
+     &            contact(cr)%Lweight(4,m)*Ac(4,m)
 # ifdef MASKING
           Ar(i,j)=Ar(i,j)*Amask(i,j)
 # endif
@@ -3554,7 +3555,7 @@
 !  This routine uses extracted donor grid data (Ac) to spatially       !
 !  interpolate a 3D state variable  at the receiver grid contact       !
 !  points.  If the donor and receiver grids  are concident,  the       !
-!  Hweight(1,:) is unity and Hweight(2:4,:) are zero.                  !
+!  Lweight(1,:) is unity and Lweight(2:4,:) are zero.                  !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -3661,14 +3662,14 @@
           kdgm1=MAX(kdg-1,Kmin)
           IF (((Istr.le.i).and.(i.le.Iend)).and.                        &
      &        ((Jstr.le.j).and.(j.le.Jend))) THEN
-            cff(1)=contact(cr)%Hweight(1,m)*contact(cr)%Vweight(1,k,m)
-            cff(2)=contact(cr)%Hweight(2,m)*contact(cr)%Vweight(1,k,m)
-            cff(3)=contact(cr)%Hweight(3,m)*contact(cr)%Vweight(1,k,m)
-            cff(4)=contact(cr)%Hweight(4,m)*contact(cr)%Vweight(1,k,m)
-            cff(5)=contact(cr)%Hweight(1,m)*contact(cr)%Vweight(2,k,m)
-            cff(6)=contact(cr)%Hweight(2,m)*contact(cr)%Vweight(2,k,m)
-            cff(7)=contact(cr)%Hweight(3,m)*contact(cr)%Vweight(2,k,m)
-            cff(8)=contact(cr)%Hweight(4,m)*contact(cr)%Vweight(2,k,m)
+            cff(1)=contact(cr)%Lweight(1,m)*contact(cr)%Vweight(1,k,m)
+            cff(2)=contact(cr)%Lweight(2,m)*contact(cr)%Vweight(1,k,m)
+            cff(3)=contact(cr)%Lweight(3,m)*contact(cr)%Vweight(1,k,m)
+            cff(4)=contact(cr)%Lweight(4,m)*contact(cr)%Vweight(1,k,m)
+            cff(5)=contact(cr)%Lweight(1,m)*contact(cr)%Vweight(2,k,m)
+            cff(6)=contact(cr)%Lweight(2,m)*contact(cr)%Vweight(2,k,m)
+            cff(7)=contact(cr)%Lweight(3,m)*contact(cr)%Vweight(2,k,m)
+            cff(8)=contact(cr)%Lweight(4,m)*contact(cr)%Vweight(2,k,m)
             Ar(i,j,k)=cff(1)*Ac(1,kdgm1,m)+                             &
      &                cff(2)*Ac(2,kdgm1,m)+                             &
      &                cff(3)*Ac(3,kdgm1,m)+                             &
@@ -3717,6 +3718,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
       USE mod_coupling
       USE mod_grid
       USE mod_nesting
@@ -3727,6 +3729,9 @@
 # ifdef DISTRIBUTE
 !
       USE mp_exchange_mod, ONLY : mp_exchange2d
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+      USE distribute_mod, ONLY : mp_reduce
+#  endif
 # endif
 !
 !  Imported variable declarations.
@@ -3738,11 +3743,17 @@
 !
       logical :: Uboundary, Vboundary
 
-      integer :: i, irec, j, m, t1, t2
+      integer :: NSUB, i, irec, j, m, t1, t2
 
       real(r8) :: cff, cff1, fac, fac1, fac2
       real(r8) :: my_value
-
+# if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+      real(r8) :: my_area, my_flux
+#  ifdef DISTRIBUTE
+      real(r8), dimension(2) :: buffer
+      character (len=3), dimension(2) :: op_handle
+#  endif
+# endif
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -3785,21 +3796,21 @@
         j=Rcontact(cr)%Jrg(m)
         IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
      &      ((JstrT.le.j).and.(j.le.JendT))) THEN
-          my_value=fac1*(Rcontact(cr)%Hweight(1,m)*                     &
+          my_value=fac1*(Rcontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%zeta(1,m,t1)+         &
-     &                   Rcontact(cr)%Hweight(2,m)*                     &
+     &                   Rcontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%zeta(2,m,t1)+         &
-     &                   Rcontact(cr)%Hweight(3,m)*                     &
+     &                   Rcontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%zeta(3,m,t1)+         &
-     &                   Rcontact(cr)%Hweight(4,m)*                     &
+     &                   Rcontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%zeta(4,m,t1))+        &
-     &             fac2*(Rcontact(cr)%Hweight(1,m)*                     &
+     &             fac2*(Rcontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%zeta(1,m,t2)+         &
-     &                   Rcontact(cr)%Hweight(2,m)*                     &
+     &                   Rcontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%zeta(2,m,t2)+         &
-     &                   Rcontact(cr)%Hweight(3,m)*                     &
+     &                   Rcontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%zeta(3,m,t2)+         &
-     &                   Rcontact(cr)%Hweight(4,m)*                     &
+     &                   Rcontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%zeta(4,m,t2))
 # ifdef MASKING
           my_value=my_value*GRID(ng)%rmask(i,j)
@@ -3832,21 +3843,21 @@
         j=Ucontact(cr)%Jrg(m)
         IF (((IstrP.le.i).and.(i.le.IendT)).and.                        &
      &      ((JstrT.le.j).and.(j.le.JendT))) THEN
-          my_value=fac1*(Ucontact(cr)%Hweight(1,m)*                     &
+          my_value=fac1*(Ucontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%ubar(1,m,t1)+         &
-     &                   Ucontact(cr)%Hweight(2,m)*                     &
+     &                   Ucontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%ubar(2,m,t1)+         &
-     &                   Ucontact(cr)%Hweight(3,m)*                     &
+     &                   Ucontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%ubar(3,m,t1)+         &
-     &                   Ucontact(cr)%Hweight(4,m)*                     &
+     &                   Ucontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%ubar(4,m,t1))+        &
-     &             fac2*(Ucontact(cr)%Hweight(1,m)*                     &
+     &             fac2*(Ucontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%ubar(1,m,t2)+         &
-     &                   Ucontact(cr)%Hweight(2,m)*                     &
+     &                   Ucontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%ubar(2,m,t2)+         &
-     &                   Ucontact(cr)%Hweight(3,m)*                     &
+     &                   Ucontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%ubar(3,m,t2)+         &
-     &                   Ucontact(cr)%Hweight(4,m)*                     &
+     &                   Ucontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%ubar(4,m,t2))
 # ifdef MASKING
           my_value=my_value*GRID(ng)%umask(i,j)
@@ -3884,21 +3895,21 @@
         j=Vcontact(cr)%Jrg(m)
         IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
      &      ((JstrP.le.j).and.(j.le.JendT))) THEN
-          my_value=fac1*(Vcontact(cr)%Hweight(1,m)*                     &
+          my_value=fac1*(Vcontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%vbar(1,m,t1)+         &
-     &                   Vcontact(cr)%Hweight(2,m)*                     &
+     &                   Vcontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%vbar(2,m,t1)+         &
-     &                   Vcontact(cr)%Hweight(3,m)*                     &
+     &                   Vcontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%vbar(3,m,t1)+         &
-     &                   Vcontact(cr)%Hweight(4,m)*                     &
+     &                   Vcontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%vbar(4,m,t1))+        &
-     &             fac2*(Vcontact(cr)%Hweight(1,m)*                     &
+     &             fac2*(Vcontact(cr)%Lweight(1,m)*                     &
      &                                REFINED(cr)%vbar(1,m,t2)+         &
-     &                   Vcontact(cr)%Hweight(2,m)*                     &
+     &                   Vcontact(cr)%Lweight(2,m)*                     &
      &                                REFINED(cr)%vbar(2,m,t2)+         &
-     &                   Vcontact(cr)%Hweight(3,m)*                     &
+     &                   Vcontact(cr)%Lweight(3,m)*                     &
      &                                REFINED(cr)%vbar(3,m,t2)+         &
-     &                   Vcontact(cr)%Hweight(4,m)*                     &
+     &                   Vcontact(cr)%Lweight(4,m)*                     &
      &                                REFINED(cr)%vbar(4,m,t2))
 # ifdef MASKING
           my_value=my_value*GRID(ng)%vmask(i,j)
@@ -3940,6 +3951,14 @@
 !  with a linear variation (cff1) to ensure that the sum of the refined
 !  grid fluxes equals the coarse grid flux.
 !-----------------------------------------------------------------------
+
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+!
+!  Initialize local area and flux variables for volume conservation.
+!
+      my_area=0.0_r8
+      my_flux=0.0_r8
+#  endif
 !
 !  Western edge.
 !
@@ -3963,6 +3982,10 @@
 #  endif
 #  ifdef WET_DRY
           my_value=my_value*GRID(ng)%umask_wet(Istr,j)
+#  endif
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+          my_area=my_area+cff
+          my_flux=my_flux+my_value*cff
 #  endif
           OCEAN(ng)%ubar(Istr,j,indx1(ng))=my_value
         END DO
@@ -3991,6 +4014,10 @@
 #  ifdef WET_DRY
           my_value=my_value*GRID(ng)%umask_wet(Iend+1,j)
 #  endif
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+          my_area=my_area+cff
+          my_flux=my_flux-my_value*cff
+#  endif
           OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=my_value
         END DO
       END IF
@@ -4017,6 +4044,10 @@
 #  endif
 #  ifdef WET_DRY
           my_value=my_value*GRID(ng)%vmask_wet(i,Jstr)
+#  endif
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+          my_area=my_area+cff
+          my_flux=my_flux+my_value*cff
 #  endif
           OCEAN(ng)%vbar(i,Jstr,indx1(ng))=my_value
         END DO
@@ -4045,9 +4076,103 @@
 #  ifdef WET_DRY
           my_value=my_value*GRID(ng)%vmask_wet(i,Jend+1)
 #  endif
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+          my_area=my_area+cff
+          my_flux=my_flux-my_value*cff
+#  endif
           OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=my_value
         END DO
       END IF
+
+#  if defined ONE_WAY && !(defined SSH_TIDES || defined UV_TIDES)
+!
+!-----------------------------------------------------------------------
+!  If one-way nesting, impose volume conservation.
+!-----------------------------------------------------------------------
+!
+!  Perform global summation and compute correction velocity.
+!
+#   ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#   else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+#   endif
+!$OMP CRITICAL (ONEWAY_VOLUME)
+      IF (tile_count.eq.0) THEN
+        bc_flux=0.0_r8
+        bc_area=0.0_r8
+      END IF
+      bc_area=bc_area+my_area
+      bc_flux=bc_flux+my_flux
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+#   ifdef DISTRIBUTE
+        buffer(1)=bc_area
+        buffer(2)=bc_flux
+        op_handle(1)='SUM'
+        op_handle(2)='SUM'
+        CALL mp_reduce (ng, model, 2, buffer, op_handle)
+        bc_area=buffer(1)
+        bc_flux=buffer(2)
+#   endif
+        ubar_xs=bc_flux/bc_area
+      END IF
+!$OMP END CRITICAL (ONEWAY_VOLUME)
+!
+!  If one-way nesting, correct finer grid physical boundary velocity
+!  to conserve volume.
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+        DO j=Jstr,Jend
+          OCEAN(ng)%ubar(Istr,j,indx1(ng))=                             &
+     &                  OCEAN(ng)%ubar(Istr,j,indx1(ng))-ubar_xs
+#   ifdef MASKING
+          OCEAN(ng)%ubar(Istr,j,indx1(ng))=                             &
+     &                  OCEAN(ng)%ubar(Istr,j,indx1(ng))*               &
+     &                  GRID(ng)%umask(Istr,j)
+#   endif
+        END DO
+      END IF
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+        DO j=Jstr,Jend
+          OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=                           &
+     &                  OCEAN(ng)%ubar(Iend+1,j,indx1(ng))+ubar_xs
+#   ifdef MASKING
+          OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=                           &
+     &                  OCEAN(ng)%ubar(Iend+1,j,indx1(ng))*             &
+     &                  GRID(ng)%umask(Iend+1,j)
+#   endif
+        END DO
+      END IF
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+        DO i=Istr,Iend
+          OCEAN(ng)%vbar(i,Jstr,indx1(ng))=                             &
+     &                  OCEAN(ng)%vbar(i,Jstr,indx1(ng))-ubar_xs
+#   ifdef MASKING
+          OCEAN(ng)%vbar(i,Jstr,indx1(ng))=                             &
+     &                  OCEAN(ng)%vbar(i,Jstr,indx1(ng))*               &
+     &                  GRID(ng)%vmask(i,Jstr)
+#   endif
+        END DO
+      END IF
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+        DO i=Istr,Iend
+          OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=                           &
+     &                  OCEAN(ng)%vbar(i,Jend+1,indx1(ng))+ubar_xs
+#   ifdef MASKING
+          OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=                           &
+     &                  OCEAN(ng)%vbar(i,Jend+1,indx1(ng))*             &
+     &                  GRID(ng)%vmask(i,Jend+1)
+#   endif
+        END DO
+      END IF
+#  endif
 # endif
 
 # ifdef DISTRIBUTE
@@ -4158,21 +4283,21 @@
      &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           DO itrc=1,NT(ng)
             DO k=1,N(ng)
-              my_value=fac1*(Rcontact(cr)%Hweight(1,m)*                 &
+              my_value=fac1*(Rcontact(cr)%Lweight(1,m)*                 &
      &                                    REFINED(cr)%t(1,k,m,t1,itrc)+ &
-     &                       Rcontact(cr)%Hweight(2,m)*                 &
+     &                       Rcontact(cr)%Lweight(2,m)*                 &
      &                                    REFINED(cr)%t(2,k,m,t1,itrc)+ &
-     &                       Rcontact(cr)%Hweight(3,m)*                 &
+     &                       Rcontact(cr)%Lweight(3,m)*                 &
      &                                    REFINED(cr)%t(3,k,m,t1,itrc)+ &
-     &                       Rcontact(cr)%Hweight(4,m)*                 &
+     &                       Rcontact(cr)%Lweight(4,m)*                 &
      &                                    REFINED(cr)%t(4,k,m,t1,itrc))+&
-     &                 fac2*(Rcontact(cr)%Hweight(1,m)*                 &
+     &                 fac2*(Rcontact(cr)%Lweight(1,m)*                 &
      &                                    REFINED(cr)%t(1,k,m,t2,itrc)+ &
-     &                       Rcontact(cr)%Hweight(2,m)*                 &
+     &                       Rcontact(cr)%Lweight(2,m)*                 &
      &                                    REFINED(cr)%t(2,k,m,t2,itrc)+ &
-     &                       Rcontact(cr)%Hweight(3,m)*                 &
+     &                       Rcontact(cr)%Lweight(3,m)*                 &
      &                                    REFINED(cr)%t(3,k,m,t2,itrc)+ &
-     &                       Rcontact(cr)%Hweight(4,m)*                 &
+     &                       Rcontact(cr)%Lweight(4,m)*                 &
      &                                    REFINED(cr)%t(4,k,m,t2,itrc))
 #  ifdef MASKING
               my_value=my_value*GRID(ng)%rmask(i,j)
@@ -4193,21 +4318,21 @@
         IF (((IstrP.le.i).and.(i.le.IendT)).and.                        &
      &      ((JstrT.le.j).and.(j.le.JendT))) THEN
           DO k=1,N(ng)
-            my_value=fac1*(Ucontact(cr)%Hweight(1,m)*                   &
+            my_value=fac1*(Ucontact(cr)%Lweight(1,m)*                   &
      &                                  REFINED(cr)%u(1,k,m,t1)+        &
-     &                     Ucontact(cr)%Hweight(2,m)*                   &
+     &                     Ucontact(cr)%Lweight(2,m)*                   &
      &                                  REFINED(cr)%u(2,k,m,t1)+        &
-     &                     Ucontact(cr)%Hweight(3,m)*                   &
+     &                     Ucontact(cr)%Lweight(3,m)*                   &
      &                                  REFINED(cr)%u(3,k,m,t1)+        &
-     &                     Ucontact(cr)%Hweight(4,m)*                   &
+     &                     Ucontact(cr)%Lweight(4,m)*                   &
      &                                  REFINED(cr)%u(4,k,m,t1))+       &
-     &               fac2*(Ucontact(cr)%Hweight(1,m)*                   &
+     &               fac2*(Ucontact(cr)%Lweight(1,m)*                   &
      &                                  REFINED(cr)%u(1,k,m,t2)+        &
-     &                     Ucontact(cr)%Hweight(2,m)*                   &
+     &                     Ucontact(cr)%Lweight(2,m)*                   &
      &                                  REFINED(cr)%u(2,k,m,t2)+        &
-     &                     Ucontact(cr)%Hweight(3,m)*                   &
+     &                     Ucontact(cr)%Lweight(3,m)*                   &
      &                                  REFINED(cr)%u(3,k,m,t2)+        &
-     &                     Ucontact(cr)%Hweight(4,m)*                   &
+     &                     Ucontact(cr)%Lweight(4,m)*                   &
      &                                  REFINED(cr)%u(4,k,m,t2))
 #  ifdef MASKING
             my_value=my_value*GRID(ng)%umask(i,j)
@@ -4226,21 +4351,21 @@
         IF (((IstrT.le.i).and.(i.le.IendT)).and.                        &
      &      ((JstrP.le.j).and.(j.le.JendT))) THEN
           DO k=1,N(ng)
-            my_value=fac1*(Vcontact(cr)%Hweight(1,m)*                   &
+            my_value=fac1*(Vcontact(cr)%Lweight(1,m)*                   &
      &                                  REFINED(cr)%v(1,k,m,t1)+        &
-     &                     Vcontact(cr)%Hweight(2,m)*                   &
+     &                     Vcontact(cr)%Lweight(2,m)*                   &
      &                                  REFINED(cr)%v(2,k,m,t1)+        &
-     &                     Vcontact(cr)%Hweight(3,m)*                   &
+     &                     Vcontact(cr)%Lweight(3,m)*                   &
      &                                  REFINED(cr)%v(3,k,m,t1)+        &
-     &                     Vcontact(cr)%Hweight(4,m)*                   &
+     &                     Vcontact(cr)%Lweight(4,m)*                   &
      &                                  REFINED(cr)%v(4,k,m,t1))+       &
-     &               fac2*(Vcontact(cr)%Hweight(1,m)*                   &
+     &               fac2*(Vcontact(cr)%Lweight(1,m)*                   &
      &                                  REFINED(cr)%v(1,k,m,t2)+        &
-     &                     Vcontact(cr)%Hweight(2,m)*                   &
+     &                     Vcontact(cr)%Lweight(2,m)*                   &
      &                                  REFINED(cr)%v(2,k,m,t2)+        &
-     &                     Vcontact(cr)%Hweight(3,m)*                   &
+     &                     Vcontact(cr)%Lweight(3,m)*                   &
      &                                  REFINED(cr)%v(3,k,m,t2)+        &
-     &                     Vcontact(cr)%Hweight(4,m)*                   &
+     &                     Vcontact(cr)%Lweight(4,m)*                   &
      &                                  REFINED(cr)%v(4,k,m,t2))
 #  ifdef MASKING
             my_value=my_value*GRID(ng)%vmask(i,j)
@@ -4418,7 +4543,7 @@
 !  Extract donor grid depths for each cell containing the receiver grid
 !  contact point.  Notice that indices i+1 and j+1 are bounded to the
 !  maximum possible values in contact points at the edge of the contact
-!  region.  In such cases, Hweight(1,m)=1 and Hweight(2:3,m)=0.  This is
+!  region.  In such cases, Lweight(1,m)=1 and Lweight(2:3,m)=0.  This is
 !  done to avoid out of range errors. We need to take care of this in
 !  the adjoint code.
 !
@@ -4462,14 +4587,14 @@
                 Jrg=Rcontact(cr)%Jrg(m)
                 IF (((IminR.le.Irg).and.(Irg.le.ImaxR)).and.            &
      &              ((JminR.le.Jrg).and.(Jrg.le.JmaxR))) THEN
-                  Ztop=Rcontact(cr)%Hweight(1,m)*Zd(1,N(dg),m)+         &
-     &                 Rcontact(cr)%Hweight(2,m)*Zd(2,N(dg),m)+         &
-     &                 Rcontact(cr)%Hweight(3,m)*Zd(3,N(dg),m)+         &
-     &                 Rcontact(cr)%Hweight(4,m)*Zd(4,N(dg),m)
-                  Zbot=Rcontact(cr)%Hweight(1,m)*Zd(1,1    ,m)+         &
-     &                 Rcontact(cr)%Hweight(2,m)*Zd(2,1    ,m)+         &
-     &                 Rcontact(cr)%Hweight(3,m)*Zd(3,1    ,m)+         &
-     &                 Rcontact(cr)%Hweight(4,m)*Zd(4,1    ,m)
+                  Ztop=Rcontact(cr)%Lweight(1,m)*Zd(1,N(dg),m)+         &
+     &                 Rcontact(cr)%Lweight(2,m)*Zd(2,N(dg),m)+         &
+     &                 Rcontact(cr)%Lweight(3,m)*Zd(3,N(dg),m)+         &
+     &                 Rcontact(cr)%Lweight(4,m)*Zd(4,N(dg),m)
+                  Zbot=Rcontact(cr)%Lweight(1,m)*Zd(1,1    ,m)+         &
+     &                 Rcontact(cr)%Lweight(2,m)*Zd(2,1    ,m)+         &
+     &                 Rcontact(cr)%Lweight(3,m)*Zd(3,1    ,m)+         &
+     &                 Rcontact(cr)%Lweight(4,m)*Zd(4,1    ,m)
                   Zr=GRID(rg)%z_r(Irg,Jrg,Krg)
                   IF (Zr.ge.Ztop) THEN           ! If shallower, use top
                     Rcontact(cr)%Kdg(Krg,m)=N(dg)! donor grid cell value
@@ -4481,14 +4606,14 @@
                     Rcontact(cr)%Vweight(2,Krg,m)=1.0_r8
                   ELSE                           ! bounded, interpolate
                     DO Kdg=N(dg),2,-1
-                      Ztop=Rcontact(cr)%Hweight(1,m)*Zd(1,Kdg  ,m)+     &
-     &                     Rcontact(cr)%Hweight(2,m)*Zd(2,Kdg  ,m)+     &
-     &                     Rcontact(cr)%Hweight(3,m)*Zd(3,Kdg  ,m)+     &
-     &                     Rcontact(cr)%Hweight(4,m)*Zd(4,Kdg  ,m)
-                      Zbot=Rcontact(cr)%Hweight(1,m)*Zd(1,Kdg-1,m)+     &
-     &                     Rcontact(cr)%Hweight(2,m)*Zd(2,Kdg-1,m)+     &
-     &                     Rcontact(cr)%Hweight(3,m)*Zd(3,Kdg-1,m)+     &
-     &                     Rcontact(cr)%Hweight(4,m)*Zd(4,Kdg-1,m)
+                      Ztop=Rcontact(cr)%Lweight(1,m)*Zd(1,Kdg  ,m)+     &
+     &                     Rcontact(cr)%Lweight(2,m)*Zd(2,Kdg  ,m)+     &
+     &                     Rcontact(cr)%Lweight(3,m)*Zd(3,Kdg  ,m)+     &
+     &                     Rcontact(cr)%Lweight(4,m)*Zd(4,Kdg  ,m)
+                      Zbot=Rcontact(cr)%Lweight(1,m)*Zd(1,Kdg-1,m)+     &
+     &                     Rcontact(cr)%Lweight(2,m)*Zd(2,Kdg-1,m)+     &
+     &                     Rcontact(cr)%Lweight(3,m)*Zd(3,Kdg-1,m)+     &
+     &                     Rcontact(cr)%Lweight(4,m)*Zd(4,Kdg-1,m)
                       IF ((Ztop.gt.Zr).and.(Zr.ge.Zbot)) THEN
                         dz=Ztop-Zbot
                         r2=(Zr-Zbot)/dz
@@ -4609,7 +4734,7 @@
 !  contact point.  Notice that indices i-1, i+1 and j-1, j+1 are bounded
 !  the minimum/maximum possible values in contact points at the edge of
 !  the contact region.  In such cases, the interpolation weights
-!  Hweight(1,m)=1 and Hweight(2:3,m)=0.  This is done to avoid out of
+!  Lweight(1,m)=1 and Lweight(2:3,m)=0.  This is done to avoid out of
 !  range errors. We need to take care of this in the adjoint code.
 !
             DO Kdg=1,N(dg)
@@ -4657,14 +4782,14 @@
                 Jrg=Ucontact(cr)%Jrg(m)
                 IF (((IminR.le.Irg).and.(Irg.le.ImaxR)).and.            &
      &              ((JminR.le.Jrg).and.(Jrg.le.JmaxR))) THEN
-                  Ztop=Ucontact(cr)%Hweight(1,m)*Zd(1,N(dg),m)+         &
-     &                 Ucontact(cr)%Hweight(2,m)*Zd(2,N(dg),m)+         &
-     &                 Ucontact(cr)%Hweight(3,m)*Zd(3,N(dg),m)+         &
-     &                 Ucontact(cr)%Hweight(4,m)*Zd(4,N(dg),m)
-                  Zbot=Ucontact(cr)%Hweight(1,m)*Zd(1,1    ,m)+         &
-     &                 Ucontact(cr)%Hweight(2,m)*Zd(2,1    ,m)+         &
-     &                 Ucontact(cr)%Hweight(3,m)*Zd(3,1    ,m)+         &
-     &                 Ucontact(cr)%Hweight(4,m)*Zd(4,1    ,m)
+                  Ztop=Ucontact(cr)%Lweight(1,m)*Zd(1,N(dg),m)+         &
+     &                 Ucontact(cr)%Lweight(2,m)*Zd(2,N(dg),m)+         &
+     &                 Ucontact(cr)%Lweight(3,m)*Zd(3,N(dg),m)+         &
+     &                 Ucontact(cr)%Lweight(4,m)*Zd(4,N(dg),m)
+                  Zbot=Ucontact(cr)%Lweight(1,m)*Zd(1,1    ,m)+         &
+     &                 Ucontact(cr)%Lweight(2,m)*Zd(2,1    ,m)+         &
+     &                 Ucontact(cr)%Lweight(3,m)*Zd(3,1    ,m)+         &
+     &                 Ucontact(cr)%Lweight(4,m)*Zd(4,1    ,m)
                   Zr=0.5_r8*(GRID(rg)%z_r(Irg  ,Jrg,Krg)+               &
      &                       GRID(rg)%z_r(Irg-1,Jrg,Krg))
                   IF (Zr.ge.Ztop) THEN           ! If shallower, use top
@@ -4677,14 +4802,14 @@
                     Ucontact(cr)%Vweight(2,Krg,m)=1.0_r8
                   ELSE                           ! bounded, interpolate
                     DO Kdg=N(dg),2,-1
-                      Ztop=Ucontact(cr)%Hweight(1,m)*Zd(1,Kdg  ,m)+     &
-     &                     Ucontact(cr)%Hweight(2,m)*Zd(2,Kdg  ,m)+     &
-     &                     Ucontact(cr)%Hweight(3,m)*Zd(3,Kdg  ,m)+     &
-     &                     Ucontact(cr)%Hweight(4,m)*Zd(4,Kdg  ,m)
-                      Zbot=Ucontact(cr)%Hweight(1,m)*Zd(1,Kdg-1,m)+     &
-     &                     Ucontact(cr)%Hweight(2,m)*Zd(2,Kdg-1,m)+     &
-     &                     Ucontact(cr)%Hweight(3,m)*Zd(3,Kdg-1,m)+     &
-     &                     Ucontact(cr)%Hweight(4,m)*Zd(4,Kdg-1,m)
+                      Ztop=Ucontact(cr)%Lweight(1,m)*Zd(1,Kdg  ,m)+     &
+     &                     Ucontact(cr)%Lweight(2,m)*Zd(2,Kdg  ,m)+     &
+     &                     Ucontact(cr)%Lweight(3,m)*Zd(3,Kdg  ,m)+     &
+     &                     Ucontact(cr)%Lweight(4,m)*Zd(4,Kdg  ,m)
+                      Zbot=Ucontact(cr)%Lweight(1,m)*Zd(1,Kdg-1,m)+     &
+     &                     Ucontact(cr)%Lweight(2,m)*Zd(2,Kdg-1,m)+     &
+     &                     Ucontact(cr)%Lweight(3,m)*Zd(3,Kdg-1,m)+     &
+     &                     Ucontact(cr)%Lweight(4,m)*Zd(4,Kdg-1,m)
                       IF ((Ztop.gt.Zr).and.(Zr.ge.Zbot)) THEN
                         dz=Ztop-Zbot
                         r2=(Zr-Zbot)/dz
@@ -4849,14 +4974,14 @@
                 Jrg=Vcontact(cr)%Jrg(m)
                 IF (((IminR.le.Irg).and.(Irg.le.ImaxR)).and.            &
      &              ((JminR.le.Jrg).and.(Jrg.le.JmaxR))) THEN
-                  Ztop=Vcontact(cr)%Hweight(1,m)*Zd(1,N(dg),m)+         &
-     &                 Vcontact(cr)%Hweight(2,m)*Zd(2,N(dg),m)+         &
-     &                 Vcontact(cr)%Hweight(3,m)*Zd(3,N(dg),m)+         &
-     &                 Vcontact(cr)%Hweight(4,m)*Zd(4,N(dg),m)
-                  Zbot=Vcontact(cr)%Hweight(1,m)*Zd(1,1    ,m)+         &
-     &                 Vcontact(cr)%Hweight(2,m)*Zd(2,1    ,m)+         &
-     &                 Vcontact(cr)%Hweight(3,m)*Zd(3,1    ,m)+         &
-     &                 Vcontact(cr)%Hweight(4,m)*Zd(4,1    ,m)
+                  Ztop=Vcontact(cr)%Lweight(1,m)*Zd(1,N(dg),m)+         &
+     &                 Vcontact(cr)%Lweight(2,m)*Zd(2,N(dg),m)+         &
+     &                 Vcontact(cr)%Lweight(3,m)*Zd(3,N(dg),m)+         &
+     &                 Vcontact(cr)%Lweight(4,m)*Zd(4,N(dg),m)
+                  Zbot=Vcontact(cr)%Lweight(1,m)*Zd(1,1    ,m)+         &
+     &                 Vcontact(cr)%Lweight(2,m)*Zd(2,1    ,m)+         &
+     &                 Vcontact(cr)%Lweight(3,m)*Zd(3,1    ,m)+         &
+     &                 Vcontact(cr)%Lweight(4,m)*Zd(4,1    ,m)
                   Zr=0.5_r8*(GRID(rg)%z_r(Irg,Jrg  ,Krg)+               &
      &                       GRID(rg)%z_r(Irg,Jrg-1,Krg))
                   IF (Zr.ge.Ztop) THEN           ! If shallower, use top
@@ -4869,14 +4994,14 @@
                     Vcontact(cr)%Vweight(2,Krg,m)=1.0_r8
                   ELSE                           ! bounded, interpolate
                     DO Kdg=N(dg),2,-1
-                      Ztop=Vcontact(cr)%Hweight(1,m)*Zd(1,Kdg  ,m)+     &
-     &                     Vcontact(cr)%Hweight(2,m)*Zd(2,Kdg  ,m)+     &
-     &                     Vcontact(cr)%Hweight(3,m)*Zd(3,Kdg  ,m)+     &
-     &                     Vcontact(cr)%Hweight(4,m)*Zd(4,Kdg  ,m)
-                      Zbot=Vcontact(cr)%Hweight(1,m)*Zd(1,Kdg-1,m)+     &
-     &                     Vcontact(cr)%Hweight(2,m)*Zd(2,Kdg-1,m)+     &
-     &                     Vcontact(cr)%Hweight(3,m)*Zd(3,Kdg-1,m)+     &
-     &                     Vcontact(cr)%Hweight(4,m)*Zd(4,Kdg-1,m)
+                      Ztop=Vcontact(cr)%Lweight(1,m)*Zd(1,Kdg  ,m)+     &
+     &                     Vcontact(cr)%Lweight(2,m)*Zd(2,Kdg  ,m)+     &
+     &                     Vcontact(cr)%Lweight(3,m)*Zd(3,Kdg  ,m)+     &
+     &                     Vcontact(cr)%Lweight(4,m)*Zd(4,Kdg  ,m)
+                      Zbot=Vcontact(cr)%Lweight(1,m)*Zd(1,Kdg-1,m)+     &
+     &                     Vcontact(cr)%Lweight(2,m)*Zd(2,Kdg-1,m)+     &
+     &                     Vcontact(cr)%Lweight(3,m)*Zd(3,Kdg-1,m)+     &
+     &                     Vcontact(cr)%Lweight(4,m)*Zd(4,Kdg-1,m)
                       IF ((Ztop.gt.Zr).and.(Zr.ge.Zbot)) THEN
                         dz=Ztop-Zbot
                         r2=(Zr-Zbot)/dz

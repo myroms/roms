@@ -175,9 +175,9 @@
 # ifdef SOLVE3D
         integer, pointer :: Kdg(:,:)         ! donor grid, cell K-index
 # endif
-        real(r8), pointer :: Hweight(:,:)          ! horizontal weights
+        real(r8), pointer :: Lweight(:,:)          ! linear weights
 # ifdef SOLVE3D
-        real(r8), pointer :: Vweight(:,:,:)        ! vertical   weights
+        real(r8), pointer :: Vweight(:,:,:)        ! vertical weights
 # endif
       END TYPE T_NGC
 

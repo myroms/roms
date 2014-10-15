@@ -22,6 +22,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE strings_mod, ONLY : find_string
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -30,6 +32,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: got_newfile
+
       logical, dimension((Ngrids-1)*2) :: Lcoincident
       logical, dimension((Ngrids-1)*2) :: Lcomposite
       logical, dimension((Ngrids-1)*2) :: Lmosaic
@@ -37,8 +41,8 @@
 
       logical, dimension((Ngrids-1)*2) :: Linterpolate
 !
-      integer :: cr, dg, ibry, ig, ip,  m, rg
-      integer :: my_Ncontact, my_Ngrids, my_Nweights
+      integer :: cr, dg, ibry, ig, ip,  m, rg, vindex
+      integer :: my_Ncontact, my_Ngrids, my_nLweights, my_nQweights
 
       integer, dimension(Ngrids) :: my_Lm, my_Mm
       integer, dimension(Ngrids) :: refine_factor
@@ -47,7 +51,8 @@
       integer, dimension((Ngrids-1)*2) :: NpointsU
       integer, dimension((Ngrids-1)*2) :: NpointsV
 !
-      real(r8), allocatable :: Hweight(:,:)
+      real(r8), allocatable :: Lweight(:,:)
+      real(r8), allocatable :: Qweight(:,:)
       real(r8), allocatable :: Xrg(:), Yrg(:)
       real(r8), allocatable :: angle(:)
       real(r8), allocatable :: dmde(:), dndx(:)
@@ -60,6 +65,21 @@
 !  Read in nesting grids contact point packed information into local
 !  arrays.
 !-----------------------------------------------------------------------
+!
+!  Inquire about the variables.
+!
+      CALL netcdf_inq_var (ng, model, NGCname)
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Check if processing the new NCG file.  The bilinear interpolation
+!  weights in the new file are stored in variable "Lweight" instead of
+!  "Hweight". The new file contains the weights for conservative
+!  quadratic interpolation "Qweight".
+!
+      got_newfile=.FALSE.
+      IF (find_string(var_name, n_var, 'Lweight', vindex)) THEN
+        got_newfile=.TRUE.
+      END IF
 !
 !  Check if the number of nested grids is correct.
 !
@@ -94,20 +114,41 @@
       END IF
       Ncontact=(Ngrids-1)*2
 !
-!  Check number of contact points interpolation weights. Currently,
-!  only linear interpolation is allowed and four weights are needed.
+!  Check number of contact points for bilinear interpolation weights.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'Nweights',              &
-     &                     my_Nweights)
+      IF (got_newfile) THEN
+        CALL netcdf_get_dim (ng, model, NGCname, 'nLweights',           &
+     &                       my_nLweights)
+      ELSE
+        CALL netcdf_get_dim (ng, model, NGCname, 'Nweights',            &
+     &                       my_nLweights)
+      END IF
       IF (exit_flag.ne.NoError) RETURN
 
-      IF (my_Nweights.ne.4) THEN
+      IF (my_nLweights.ne.4) THEN
         IF (Master) THEN
-          WRITE (stdout,10) 'inconsistent parameter, Nweights = ',      &
-     &                      4, my_Nweights
+          WRITE (stdout,10) 'inconsistent parameter, nLweights = ',     &
+     &                      4, my_nLweights
         END IF
         exit_flag=5
         RETURN
+      END IF
+!
+!  Check number of contact points for quadratic interpolation weights.
+!
+      IF (got_newfile) THEN
+        CALL netcdf_get_dim (ng, model, NGCname, 'nQweights',           &
+     &                       my_nQweights)
+        IF (exit_flag.ne.NoError) RETURN
+
+        IF (my_nQweights.ne.9) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) 'inconsistent parameter, nQweights = ',   &
+     &                        4, my_nQweights
+          END IF
+          exit_flag=5
+          RETURN
+        END IF
       END IF
 !
 !  Get number of contact points in input NetCDF file.  It may include
@@ -295,10 +336,14 @@
 !
 !  Read in contact point horizontal interpolation weights, 1:NCdatum.
 !
-      IF (.not.allocated(Hweight)) THEN
-        allocate ( Hweight(my_Nweights,NCdatum) )
+      IF (.not.allocated(Lweight)) THEN
+        allocate ( Lweight(my_nLweights,NCdatum) )
       END IF
-      CALL netcdf_get_fvar (ng, model, NGCname, 'Hweight', Hweight)
+      IF (got_newfile) THEN
+        CALL netcdf_get_fvar (ng, model, NGCname, 'Lweight', Lweight)
+      ELSE
+        CALL netcdf_get_fvar (ng, model, NGCname, 'Hweight', Lweight)
+      END IF
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in contact point bathymetry at RHO-points, 1:NCdatum.
@@ -413,9 +458,9 @@
         allocate ( Vcontact(cr) % Kdg(N(dg),NpointsV(cr)) )
 # endif
 
-        allocate ( Rcontact(cr) % Hweight(4,NpointsR(cr)) )
-        allocate ( Ucontact(cr) % Hweight(4,NpointsU(cr)) )
-        allocate ( Vcontact(cr) % Hweight(4,NpointsV(cr)) )
+        allocate ( Rcontact(cr) % Lweight(4,NpointsR(cr)) )
+        allocate ( Ucontact(cr) % Lweight(4,NpointsU(cr)) )
+        allocate ( Vcontact(cr) % Lweight(4,NpointsV(cr)) )
 
 # ifdef SOLVE3D
         allocate ( Rcontact(cr) % Vweight(2,N(dg),NpointsR(cr)) )
@@ -456,10 +501,10 @@
           Rcontact(cr) % Jrg(m) = Jrg_cp(ip)
           Rcontact(cr) % Idg(m) = Idg_cp(ip)
           Rcontact(cr) % Jdg(m) = Jdg_cp(ip)
-          Rcontact(cr) % Hweight(1,m) = Hweight(1,ip)
-          Rcontact(cr) % Hweight(2,m) = Hweight(2,ip)
-          Rcontact(cr) % Hweight(3,m) = Hweight(3,ip)
-          Rcontact(cr) % Hweight(4,m) = Hweight(4,ip)
+          Rcontact(cr) % Lweight(1,m) = Lweight(1,ip)
+          Rcontact(cr) % Lweight(2,m) = Lweight(2,ip)
+          Rcontact(cr) % Lweight(3,m) = Lweight(3,ip)
+          Rcontact(cr) % Lweight(4,m) = Lweight(4,ip)
         END DO
 
         DO m=1,NpointsU(cr)
@@ -468,10 +513,10 @@
           Ucontact(cr) % Jrg(m) = Jrg_cp(ip)
           Ucontact(cr) % Idg(m) = Idg_cp(ip)
           Ucontact(cr) % Jdg(m) = Jdg_cp(ip)
-          Ucontact(cr) % Hweight(1,m) = Hweight(1,ip)
-          Ucontact(cr) % Hweight(2,m) = Hweight(2,ip)
-          Ucontact(cr) % Hweight(3,m) = Hweight(3,ip)
-          Ucontact(cr) % Hweight(4,m) = Hweight(4,ip)
+          Ucontact(cr) % Lweight(1,m) = Lweight(1,ip)
+          Ucontact(cr) % Lweight(2,m) = Lweight(2,ip)
+          Ucontact(cr) % Lweight(3,m) = Lweight(3,ip)
+          Ucontact(cr) % Lweight(4,m) = Lweight(4,ip)
         END DO
 
         DO m=1,NpointsV(cr)
@@ -480,10 +525,10 @@
           Vcontact(cr) % Jrg(m) = Jrg_cp(ip)
           Vcontact(cr) % Idg(m) = Idg_cp(ip)
           Vcontact(cr) % Jdg(m) = Jdg_cp(ip)
-          Vcontact(cr) % Hweight(1,m) = Hweight(1,ip)
-          Vcontact(cr) % Hweight(2,m) = Hweight(2,ip)
-          Vcontact(cr) % Hweight(3,m) = Hweight(3,ip)
-          Vcontact(cr) % Hweight(4,m) = Hweight(4,ip)
+          Vcontact(cr) % Lweight(1,m) = Lweight(1,ip)
+          Vcontact(cr) % Lweight(2,m) = Lweight(2,ip)
+          Vcontact(cr) % Lweight(3,m) = Lweight(3,ip)
+          Vcontact(cr) % Lweight(4,m) = Lweight(4,ip)
         END DO
 
       END DO
@@ -593,20 +638,15 @@
         RefineScale(ig)=Refine_factor(ig)
       END DO
 !
-!  Data donor for refined grid.
+!  Data donor for refined grid contact points.  Their values are
+!  set-up in "metrics.F" when the maximum grid spacing is computed.
+!  The maximum grid spacing is used to distinguish contact areas
+!  for more than two layers of nesting.
 !
       IF (.not.allocated(RefineDonor)) THEN
         allocate ( RefineDonor(Ngrids) )
         RefineDonor = 0
       END IF
-
-      DO cr=1,Ncontact
-        dg=donor_grid(cr)
-        rg=receiver_grid(cr)
-        IF (RefinedGrid(rg).and.(RefineScale(rg).gt.0) ) THEN
-          RefineDonor(rg)=dg
-        END IF
-      END DO
 !
 !-----------------------------------------------------------------------
 !  Allocate composite grids contact regions structure and arrays.

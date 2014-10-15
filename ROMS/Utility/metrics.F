@@ -142,6 +142,9 @@
 #endif
       USE mod_iounits
       USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_scalars
       USE mod_iounits
 !
@@ -277,7 +280,9 @@
 !  Local variable declarations.
 !
       integer :: NSUB, i, ibry, is, j, k, rec
-
+#ifdef NESTING
+      integer :: cr, dg, rg
+#endif
       real(r8), parameter :: Large = 1.0E+20_r8
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
       real(r8), parameter :: PecletCoef = 1.0_r8 / 12.0_r8
@@ -987,7 +992,25 @@
       END IF
 !$OMP END CRITICAL (REDUCTIONS)
 
-#if defined FOUR_DVAR
+#ifdef NESTING
+!
+!-----------------------------------------------------------------------
+!  Determine data donor for refined grid external contact points. The
+!  donor grid is always coarser than the refiner grid.
+!-----------------------------------------------------------------------
+!
+      DO cr=1,Ncontact
+        dg=donor_grid(cr)
+        rg=receiver_grid(cr)
+        IF (RefinedGrid(rg).and.                                        &
+     &      (RefineScale(rg).gt.0).and.                                 &
+     &       DXmax(dg).gt.DXmax(rg)) THEN
+          RefineDonor(rg)=dg
+        END IF
+      END DO
+#endif
+
+#ifdef FOUR_DVAR
 !
 !-----------------------------------------------------------------------
 !  Spatial convolution parameters.
