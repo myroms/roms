@@ -851,7 +851,7 @@
 !  Set internal switch for nudging to climatology fields.
 !
 #ifdef SOLVE3D
-        IF (LnudgeM3CLM(ng).or.                                         &
+        IF (LnudgeM2CLM(ng).or.                                         &
      &      LnudgeM3CLM(ng).or.                                         &
      &      ANY(LnudgeTCLM(:,ng))) THEN
           Lnudging(ng)=.TRUE.
@@ -1677,6 +1677,7 @@
                 S(ibry,i,igrid)%periodic  = S(ibry,ifield,igrid)%periodic
                 S(ibry,i,igrid)%radiation = S(ibry,ifield,igrid)%radiation
                 S(ibry,i,igrid)%nudging   = S(ibry,ifield,igrid)%nudging
+                S(ibry,i,igrid)%acquire   = S(ibry,ifield,igrid)%acquire
               END DO
               ic=ic+1
             END DO

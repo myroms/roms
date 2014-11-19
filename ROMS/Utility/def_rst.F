@@ -615,7 +615,7 @@
         Vinfo(14)=Vname(4,idPwet)
         Vinfo(16)=Vname(1,idtime)
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idRwet,ng),r8)
+        Aval(5)=REAL(Iinfo(1,idPwet,ng),r8)
         status=def_var(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idPwet),     &
      &                 NF_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname,     &
      &                 SetFillVal = .FALSE.)

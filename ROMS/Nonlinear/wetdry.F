@@ -717,6 +717,8 @@
 
       RETURN
       END SUBROUTINE wetdry_mask_tile
+
+# ifdef SOLVE3D
 !
 !***********************************************************************
       SUBROUTINE wetdry_avg_mask_tile (ng, tile,                        &
@@ -732,9 +734,9 @@
       USE mod_scalars
 !
       USE exchange_2d_mod
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -742,7 +744,7 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
-# ifdef ASSUMED_SHAPE
+#  ifdef ASSUMED_SHAPE
       real(r8), intent(in)  :: wetdry(IminS:,JminS:)
       real(r8), intent(in)  :: DU_avg1(LBi:,LBj:)
       real(r8), intent(in)  :: DV_avg1(LBi:,LBj:)
@@ -750,7 +752,7 @@
       real(r8), intent(out) :: rmask_wet(LBi:,LBj:)
       real(r8), intent(out) :: umask_wet(LBi:,LBj:)
       real(r8), intent(out) :: vmask_wet(LBi:,LBj:)
-# else
+#  else
       real(r8), intent(in)  :: wetdry(IminS:ImaxS,JminS:JmaxS)
       real(r8), intent(in)  :: DU_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(in)  :: DV_avg1(LBi:UBi,LBj:UBj)
@@ -758,7 +760,7 @@
       real(r8), intent(out) :: rmask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: umask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: vmask_wet(LBi:UBi,LBj:UBj)
-# endif
+#  endif
 !
 !  Local variable declarations.
 !
@@ -766,7 +768,7 @@
 
       real(r8) :: cff1, cff2, cff5, cff6
 
-# include "set_bounds.h"
+#  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute time-averaged wet/dry masks in terms of RHO-points mask
@@ -895,16 +897,17 @@
      &                          vmask_wet)
       END IF
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       CALL mp_exchange2d (ng, tile, iNLM, 4,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    pmask_wet, rmask_wet, umask_wet, vmask_wet)
-# endif
+#  endif
 
       RETURN
       END SUBROUTINE wetdry_avg_mask_tile
+# endif
 #endif
       END MODULE wetdry_mod
