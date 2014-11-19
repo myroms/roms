@@ -1772,6 +1772,12 @@
       Coptions(is:is+11)=' TS_MPDATA,'
       itrcHadv=itrcHadv+1
       itrcVadv=itrcVadv+1
+#  ifdef TS_MPDATA_LIMIT
+      IF (Master) WRITE (stdout,20) 'TS_MPDATA_LIMIT',                  &
+     &   'Further limiter in upwind corrector fluxes for stability.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' TS_MPDATA_LIMIT,'
+#  endif
 # endif
 # ifdef TS_A4HADVECTION
       IF (Master) WRITE (stdout,20) 'TS_A4HADVECTION',                  &

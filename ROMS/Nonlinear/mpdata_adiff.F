@@ -135,6 +135,12 @@
       real(r8) :: sig_a, sig_b, sig_c, sig_d, sig_e, sig_f
 # endif
 
+# ifdef TS_MPDATA_LIMIT
+      real(r8), parameter :: fac = 0.25_r8
+# else
+      real(r8), parameter :: fac = 1.0_r8
+# endif
+
       real(r8), dimension(IminS:ImaxS,N(ng)) :: C
       real(r8), dimension(IminS:ImaxS,N(ng)) :: Wm
 
@@ -230,7 +236,7 @@
 !
       DO j=JstrV-1,Jendp1
         k=1
-        DO i=IstrU-1,Iendp2
+        DO i=IstrUm1,Iendp2
           C(i,k)=0.25_r8*                                               &
      &           ((Ta(i  ,j,k+1)-Ta(i  ,j,k  ))*odz(i  ,j,k  )+         &
      &            (Ta(i-1,j,k+1)-Ta(i-1,j,k  ))*odz(i-1,j,k  ))*        &
@@ -384,7 +390,7 @@
 !
 !  Limit by physical velocity.
 !
-              Ua(i,j,k)=MIN(ABS(Ua(i,j,k)),ABS(Um))*                    &
+              Ua(i,j,k)=MIN(ABS(Ua(i,j,k)),fac*ABS(Um))*                &
      &                  SIGN(1.0_r8,Ua(i,j,k))
 # ifdef MASKING
               Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
@@ -400,7 +406,7 @@
 !  Compute nondimensional V-antidiffusive velocities, Va. If applicable,
 !  retain up to third-order terms of the power series.
 !
-      DO j=JstrV-1,Jendp2
+      DO j=JstrVm1,Jendp2
         k=1
         DO i=IstrU-1,Iendp1
           C(i,k)=0.25_r8*                                               &
@@ -557,7 +563,7 @@
 !
 !  Limit by physical velocity.
 !
-              Va(i,j,k)=MIN(ABS(Va(i,j,k)),ABS(Vm))*                    &
+              Va(i,j,k)=MIN(ABS(Va(i,j,k)),fac*ABS(Vm))*                &
      &                  SIGN(1.0_r8,Va(i,j,k))
 # ifdef MASKING
               Va(i,j,k)=Va(i,j,k)*vmask(i,j)
@@ -570,6 +576,76 @@
         END DO
       END DO
 !
+!  Apply boundary conditions to anti-diffusive velocities.
+!
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          IF (LBC(iwest,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=Jstrm1,Jendp1
+                Ua(Istr,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=Jstrm1,Jendp1
+                Ua(Istr,j,k)=Ua(Istr+1,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
+
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          IF (LBC(ieast,isBu3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO j=Jstrm1,Jendp1
+                Ua(Iend+1,j,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO j=Jstrm1,Jendp1
+                Ua(Iend+1,j,k)=Ua(Iend,j,k)
+              END DO
+            END DO
+          END IF
+        END IF
+      END IF
+
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          IF (LBC(isouth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=Istrm1,Iendp1
+                Va(i,Jstr,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=Istrm1,Iendp1
+                Va(i,Jstr,k)=Va(i,Jstr+1,k)
+              END DO
+            END DO
+          END IF
+        END IF
+
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          IF (LBC(inorth,isBv3d,ng)%closed) THEN
+            DO k=1,N(ng)
+              DO i=Istrm1,Iendp1
+                Va(i,Jend+1,k)=0.0_r8
+              END DO
+            END DO
+          ELSE
+            DO k=1,N(ng)
+              DO i=Istrm1,Iendp1
+                Va(i,Jend+1,k)=Va(i,Jend,k)
+              END DO
+            END DO
+          END IF
+        END IF
+      END IF
+!
 !  Compute nondimensional W-antidiffusive velocities, Wa. If applicable,
 !  retain up to third-order terms of the power series.
 !
@@ -577,7 +653,8 @@
         DO k=1,N(ng)-1
           DO i=IstrU-1,Iendp1
             IF ((Ta(i,j,k  ).le.0.0_r8).or.                             &
-     &          (Ta(i,j,k+1).le.0.0_r8)) THEN
+     &          (Ta(i,j,k+1).le.0.0_r8).or.                             &
+     &          (ABS(Ta(i,j,k)-Ta(i,j,k+1)).le.eps2)) THEN
               Wa(i,j,k)=0.0_r8
             ELSE
               C(i,k)=(Ta(i,j,k+1)-Ta(i,j,k))/                           &
@@ -719,7 +796,7 @@
 !
 !  Limit by physical velocity.
 !
-              Wa(i,j,k)=MIN(ABS(Wa(i,j,k)),ABS(Wm(i,k)))*               &
+              Wa(i,j,k)=MIN(ABS(Wa(i,j,k)),fac*ABS(Wm(i,k)))*           &
      &                  SIGN(1.0_r8,Wa(i,j,k))
 # ifdef MASKING
               Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
