@@ -158,7 +158,7 @@
       Lfinp(1:Ngrids)=1
 
       allocate ( Lfout(Ngrids) )
-      Lbout(1:Ngrids)=1
+      Lfout(1:Ngrids)=1
 #endif
 
       allocate ( Lnew(Ngrids) )
