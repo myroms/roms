@@ -74,6 +74,7 @@
       integer :: ng, thread, tile
 #ifdef NESTING
       integer :: ig, nl
+      integer :: cr, i, m
 #endif
 
       integer, dimension(Ngrids) :: IniRec, Tindex
@@ -617,26 +618,6 @@
       END IF
 #endif
 
-#ifdef NESTING
-!
-!-----------------------------------------------------------------------
-!  If nesting, process 2D state fields initial conditons in the contact
-!  regions.
-!-----------------------------------------------------------------------
-!
-      DO nl=1,NestLayers
-        DO ig=1,GridsInLayer(nl)
-          ng=GridNumber(ig,nl)
-          IF (ANY(CompositeGrid(:,ng))) THEN
-            CALL nesting (ng, iNLM, nFSIC)        ! free-surface
-#  ifndef SOLVE3D
-            CALL nesting (ng, iNLM, n2dIC)        ! 2d momentum
-#  endif
-          END IF
-        END DO
-      END DO
-#endif
-
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -650,33 +631,6 @@
         END DO
 !$OMP BARRIER
       END DO
-
-# ifdef NESTING
-!
-!-----------------------------------------------------------------------
-!  If nesting, process 3D state fields initial conditons in the contact
-!  regions.
-!-----------------------------------------------------------------------
-!
-!  Determine vertical indices and vertical interpolation weights in
-!  the contact zone using initial unperturbed depth arrays.
-!
-      DO ng=1,Ngrids
-        CALL nesting (ng, iNLM, nzwgt)
-      END DO
-!
-!  3D state variables.
-!
-      DO nl=1,NestLayers
-        DO ig=1,GridsInLayer(nl)
-          ng=GridNumber(ig,nl)
-          IF (ANY(CompositeGrid(:,ng))) THEN
-            CALL nesting (ng, iNLM, n3dIC)        ! 3D momentum
-            CALL nesting (ng, iNLM, nTVIC)        ! Tracer variables
-          END IF
-        END DO
-      END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Compute initial horizontal mass fluxes, Hz*u/n and Hz*v/m.
@@ -811,6 +765,64 @@
         END DO
 !$OMP BARRIER
       END DO
+#endif
+
+#ifdef NESTING
+# if defined MASKING || defined WET_DRY
+!
+!-----------------------------------------------------------------------
+!  If nesting and Land/Sea masking, scale horizontal interpolation
+!  weights to account for land contact points.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL nesting (ng, iNLM, nmask)
+        END DO
+!$OMP BARRIER
+      END DO
+# endif
+!
+!-----------------------------------------------------------------------
+!  If nesting, process state fields initial conditons in the contact
+!  regions.
+!-----------------------------------------------------------------------
+!
+!  Free-surface and 2D-momentum.
+!
+      DO nl=1,NestLayers
+        DO ig=1,GridsInLayer(nl)
+          ng=GridNumber(ig,nl)
+          IF (ANY(CompositeGrid(:,ng))) THEN
+            CALL nesting (ng, iNLM, nFSIC)        ! free-surface
+# ifndef SOLVE3D
+            CALL nesting (ng, iNLM, n2dIC)        ! 2d momentum
+# endif
+          END IF
+        END DO
+      END DO
+
+# ifdef SOLVE3D
+!
+!  Determine vertical indices and vertical interpolation weights in
+!  the contact zone using initial unperturbed depth arrays.
+!
+      DO ng=1,Ngrids
+        CALL nesting (ng, iNLM, nzwgt)
+      END DO
+!
+!  3D-momentum and tracers.
+!
+      DO nl=1,NestLayers
+        DO ig=1,GridsInLayer(nl)
+          ng=GridNumber(ig,nl)
+          IF (ANY(CompositeGrid(:,ng))) THEN
+            CALL nesting (ng, iNLM, n3dIC)        ! 3D momentum
+            CALL nesting (ng, iNLM, nTVIC)        ! Tracer variables
+          END IF
+        END DO
+      END DO
+# endif
 #endif
 
 #if defined PROPAGATOR || \
