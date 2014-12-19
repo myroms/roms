@@ -727,7 +727,7 @@
 !  If refinement grid and northern edge, impose mass flux from donor
 !  coaser grid for volume and mass conservation.
 !
-        ELSE IF (LBC(isouth,isVbar,ng)%nested) THEN
+        ELSE IF (LBC(inorth,isVbar,ng)%nested) THEN
           DO cr=1,Ncontact
             dg=Vcontact(cr)%donor_grid
             rg=Vcontact(cr)%receiver_grid
