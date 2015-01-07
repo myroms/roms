@@ -356,7 +356,7 @@
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
       real(r8), parameter :: Gamma = 0.5_r8
 # else
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
@@ -1159,7 +1159,7 @@
             FC(i,N(ng))=0.0_r8
           END DO
 
-#  elif defined TS_MPDATA
+#  elif defined TS_MPDATA_NOT_YET
 !
 !  First_order, BASIC STATE upstream differences vertical advective
 !  flux.
@@ -1553,7 +1553,7 @@
             END DO
           END DO
 
-#  elif defined TS_MPDATA
+#  elif defined TS_MPDATA_NOT_YET
 !
 !  First_order, upstream differences vertical advective flux.
 !
@@ -1867,7 +1867,7 @@
             END DO
           END DO
 
-#  elif defined TS_MPDATA
+#  elif defined TS_MPDATA_NOT_YET
 !
 !  First-order, upstream differences horizontal advective fluxes.
 !

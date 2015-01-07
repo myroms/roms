@@ -1173,8 +1173,8 @@
 !>   &                       GRID(ng)%tl_h(Iend+1,j))
 !>
               adfac=0.5_r8*ad_cff
-              GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%tl_h(Iend  ,j)+adfac
-              GRID(ng)%tl_h(Iend+1,j)=GRID(ng)%tl_h(Iend+1,j)+adfac
+              GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac
+              GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
               ad_cff=0.0_r8
 
 # if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
