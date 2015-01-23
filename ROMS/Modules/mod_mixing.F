@@ -1145,7 +1145,7 @@
 # endif
 #endif
 
-#if defined FORWARD_READ && defined FOWARD_MIXING && defined SOLVE3D && \
+#if defined FORWARD_READ && defined FORWARD_MIXING && defined SOLVE3D && \
    (defined TANGENT || defined TL_IOMS || defined ADJOINT)
 !
 !  Latest two records of the nonlinear trajectory used to interpolate
