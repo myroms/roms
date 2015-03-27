@@ -148,7 +148,7 @@
      &    (iic(ng).eq.ntstart(ng))) THEN
         IF (Liocycle) THEN
           Trec=MOD(Trec,Nrec)-1
-          IF (Trec.le.0) Trec=Nrec-Trec
+          IF (Trec.le.0) Trec=Nrec+Trec
         ELSE
           Trec=Trec-1
         END IF
