@@ -11,7 +11,7 @@
 !  Fennel et at. (2006) ecosystem model. Then, it adds those terms     !
 !  to the global biological fields.                                    !
 !                                                                      !
-!  This model is loosly based on the model by Fasham et al. (1990)     !
+!  This model is loosely based on the model by Fasham et al. (1990)    !
 !  but it differs in many respects.  The detailed equations of the     !
 !  nitrogen cycling component  are given in  Fennel et al. (2006).     !
 !  Nitrogen is the  fundamental elemental  currency in this model.     !
@@ -78,6 +78,8 @@
       USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
+!
+      implicit none
 !
 !  Imported variable declarations.
 !
@@ -242,12 +244,8 @@
 !
 #ifdef CARBON
       integer, parameter :: Nsink = 6
-      real(r8) :: u10squ
 #else
       integer, parameter :: Nsink = 4
-# ifdef OXYGEN
-      real(r8) :: u10squ
-# endif
 #endif
 
       integer :: Iter, i, ibio, isink, itrc, ivar, j, k, ks
@@ -256,6 +254,9 @@
 
       real(r8), parameter :: eps = 1.0e-20_r8
 
+#if defined CARBON || defined OXYGEN
+      real(r8) :: u10squ
+#endif
 #ifdef OXYGEN
       real(r8), parameter :: OA0 = 2.00907_r8       ! Oxygen
       real(r8), parameter :: OA1 = 3.22014_r8       ! saturation
@@ -315,13 +316,17 @@
 
       real(r8) :: total_N
 
+#ifdef DIAGNOSTICS_BIO
+      real(r8) :: fiter
+#endif
+
 #ifdef OXYGEN
       real(r8) :: SchmidtN_Ox, O2satu, O2_Flux
       real(r8) :: TS, AA
 #endif
 
 #ifdef CARBON
-      real(r8) :: C_Flux_RemineL, C_Flux_RemineS
+      real(r8) :: C_Flux_Remine
       real(r8) :: CO2_Flux, CO2_sol, SchmidtN, TempK
 #endif
 
@@ -331,7 +336,7 @@
       real(r8) :: N_Flux_NewProd, N_Flux_RegProd
       real(r8) :: N_Flux_Nitrifi
       real(r8) :: N_Flux_Pmortal, N_Flux_Zmortal
-      real(r8) :: N_Flux_RemineL, N_Flux_RemineS
+      real(r8) :: N_Flux_Remine
       real(r8) :: N_Flux_Zexcret, N_Flux_Zmetabo
 
       real(r8), dimension(Nsink) :: Wbio
@@ -398,6 +403,13 @@
 !  Set time-stepping according to the number of iterations.
 !
       dtdays=dt(ng)*sec2day/REAL(BioIter(ng),r8)
+#ifdef DIAGNOSTICS_BIO
+!
+!  A factor to account for the number of iterations in accumulating
+!  diagnostic rate variables.
+!
+      fiter=1.0_r8/REAL(BioIter(ng),r8)
+#endif
 !
 !  Set vertical sinking indentification vector.
 !
@@ -619,12 +631,13 @@
 # ifdef WET_DRY
      &                                rmask_full(i,j)*                  &
 # endif
-     &                                (N_Flux_NewProd+N_Flux_RegProd)
+     &                                (N_Flux_NewProd+N_Flux_RegProd)*  &
+     &                                fiter
                 DiaBio3d(i,j,k,iNO3u)=DiaBio3d(i,j,k,iNO3u)+            &
 # ifdef WET_DRY
      &                                rmask_full(i,j)*                  &
 # endif
-     &                                N_Flux_NewProd
+     &                                N_Flux_NewProd*fiter
 #endif
 #ifdef OXYGEN
                 Bio(i,k,iOxyg)=Bio(i,k,iOxyg)+                          &
@@ -830,12 +843,11 @@
               cff4=1.0_r8/(1.0_r8+cff3)
               Bio(i,k,iSDeN)=Bio(i,k,iSDeN)*cff2
               Bio(i,k,iLDeN)=Bio(i,k,iLDeN)*cff4
-              N_Flux_RemineS=Bio(i,k,iSDeN)*cff1
-              N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
-              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
-     &                       N_Flux_RemineS+N_Flux_RemineL
-              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
-     &                       (N_Flux_RemineS+N_Flux_RemineL)*rOxNH4
+              N_Flux_Remine=Bio(i,k,iSDeN)*cff1+Bio(i,k,iLDeN)*cff3
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Remine
+              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-N_Flux_Remine*rOxNH4
+            END DO
+          END DO
 #else
           cff1=dtdays*SDeRRN(ng)
           cff2=1.0_r8/(1.0_r8+cff1)
@@ -845,13 +857,11 @@
             DO i=Istr,Iend
               Bio(i,k,iSDeN)=Bio(i,k,iSDeN)*cff2
               Bio(i,k,iLDeN)=Bio(i,k,iLDeN)*cff4
-              N_Flux_RemineS=Bio(i,k,iSDeN)*cff1
-              N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
-              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
-     &                       N_Flux_RemineS+N_Flux_RemineL
-#endif
+              N_Flux_Remine=Bio(i,k,iSDeN)*cff1+Bio(i,k,iLDeN)*cff3
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Remine
             END DO
           END DO
+#endif
 #ifdef OXYGEN
 !
 !-----------------------------------------------------------------------
@@ -922,7 +932,7 @@
 #  ifdef WET_DRY
      &                          rmask_full(i,j)*                        &
 #  endif
-     &                          O2_Flux
+     &                          O2_Flux*fiter
 # endif
 
           END DO
@@ -942,10 +952,8 @@
             DO i=Istr,Iend
               Bio(i,k,iSDeC)=Bio(i,k,iSDeC)*cff2
               Bio(i,k,iLDeC)=Bio(i,k,iLDeC)*cff4
-              C_Flux_RemineS=Bio(i,k,iSDeC)*cff1
-              C_Flux_RemineL=Bio(i,k,iLDeC)*cff3
-              Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+                            &
-     &                       C_Flux_RemineS+C_Flux_RemineL
+              C_Flux_Remine=Bio(i,k,iSDeC)*cff1+Bio(i,k,iLDeC)*cff3
+              Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+C_Flux_Remine
             END DO
           END DO
 !
@@ -1023,7 +1031,7 @@
 #  ifdef WET_DRY
      &                          rmask_full(i,j)*                        &
 #  endif
-     &                          CO2_Flux
+     &                          CO2_Flux*fiter
             DiaBio2d(i,j,ipCO2)=pCO2(i)
 #  ifdef WET_DRY
             DiaBio2d(i,j,ipCO2)=DiaBio2d(i,j,ipCO2)*rmask_full(i,j)
@@ -1236,7 +1244,7 @@
 #   ifdef WET_DRY
      &                              rmask_full(i,j)*                    &
 #   endif
-     &                              (1.0_r8-cff2)*cff1*Hz(i,j,1)
+     &                              (1.0_r8-cff2)*cff1*Hz(i,j,1)*fiter
 #  endif
 #  ifdef OXYGEN
                 Bio(i,1,iOxyg)=Bio(i,1,iOxyg)-cff1*cff3
