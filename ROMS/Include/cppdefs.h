@@ -90,6 +90,11 @@
 ** SRELAXATION         use if salinity relaxation as a freshwater flux       **
 ** WTYPE_GRID          use to turn ON spatially varying Jerlov water type    **
 **                                                                           **
+** OPTION to suppress further surface cooling if the SST is at freezing      **
+** point or below and the net surface heat flux is cooling:                  **
+**                                                                           **
+** LIMIT_STFLX_COOLING use to suppress SST cooling below freezing point      **
+**                                                                           **
 ** OPTIONS for MPDATA 3D Advection:                                          **
 **                                                                           **
 ** TS_MPDATA_LIMIT     use to limit upwind corrector fluxes for stability    **

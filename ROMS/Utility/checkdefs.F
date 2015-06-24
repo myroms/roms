@@ -860,6 +860,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' LIMIT_BSTRESS,'
 #endif
+#if defined LIMIT_STFLX_COOLING && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'LIMIT_STFLX_COOLING',              &
+     &   'Suppress further cooling if SST is at freezing point.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+21)=' LIMIT_STFLX_COOLING,'
+#endif
 #if defined NPZD_IRON && defined IRON_LIMIT
       IF (Master) WRITE (stdout,20) 'IRON_LIMIT',                       &
      &   'Include dissolved iron limitation on phytoplankton growth.'
