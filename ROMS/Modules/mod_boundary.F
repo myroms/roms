@@ -1097,7 +1097,7 @@
         allocate ( BOUNDARY(ng) % tl_ubar_south(LBi:UBi) )
       END IF
 
-      IF (tl_LBC(isouth,isUbar,ng)%acquire) THEN
+      IF (tl_LBC(inorth,isUbar,ng)%acquire) THEN
         allocate ( BOUNDARY(ng) % tl_ubar_north(LBi:UBi) )
       END IF
 !
