@@ -1814,7 +1814,7 @@
 !
 !  Southern edge, Shchepetkin boundary condition (Maison et al., 2010).
 !
-        ELSE IF (tl_LBC(isouth,isVbar,ng)%Shchepetkin) THEN
+        ELSE IF (ad_LBC(isouth,isVbar,ng)%Shchepetkin) THEN
           DO i=Istr,Iend
             IF (LBC_apply(ng)%south(i)) THEN
               cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
