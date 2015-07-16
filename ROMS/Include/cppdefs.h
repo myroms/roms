@@ -82,6 +82,7 @@
 ** TS_SMAGORINSKY      use to turn ON or OFF Smagorinsky-like diffusion      **
 ** TS_FIXED            use if diagnostic run, no evolution of tracers        **
 ** T_PASSIVE           use if inert passive tracers (dyes, etc)              **
+** AGE_MEAN            use if computing Mean Age of inert passive tracers    **
 ** SALINITY            use if having salinity                                **
 ** NONLIN_EOS          use if using nonlinear equation of state              **
 ** QCORRECTION         use if net heat flux correction                       **

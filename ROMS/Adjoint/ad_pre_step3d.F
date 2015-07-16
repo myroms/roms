@@ -353,6 +353,9 @@
 !  Local variable declarations.
 !
       integer :: i, ic, indx, is, itrc, j, k, ltrc
+# if defined AGE_MEAN && defined T_PASSIVE
+      integer :: iage
+# endif
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
@@ -1746,6 +1749,42 @@
           END DO
         END DO
       END DO J_LOOP1
+
+#  if (defined AGE_MEAN && defined T_PASSIVE) && !defined TS_MPDATA
+!
+!  If inert passive tracer and Mean Age, compute age concentration (even
+!  inert index) forced by the right-hand-side term that is concentration
+!  of an associated conservative passive tracer (odd inert index).
+!  Implemented and tested by W.G. Zhang and J. Wilkin. (m Tunits)
+!
+      IF (iic(ng).eq.ntfirst(ng)) THEN
+        cff=0.5_r8*dt(ng)
+      ELSE
+        cff=(1.0_r8-Gamma)*dt(ng)
+      END IF
+!
+      DO itrc=1,NPT,2
+        iage=inert(itrc+1)                     ! even inert tracer index
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            tl_t(i,j,k,3,iage)=tl_t(i,j,k,3,iage)+                    &
+!>   &                           cff*                                   &
+!>   &                           (Hz(i,j,k)*                            &
+!>   &                            tl_t(i,j,k,nnew,inert(itrc))+         &
+!>   &                            tl_Hz(i,j,k)*                         &
+!>   &                            t(i,j,k,nnew,inert(itrc)))
+!>
+              adfac=cff*ad_t(i,j,k,3,iage)
+              ad_t(i,j,k,nnew,inert(itrc))=ad_t(i,j,k,nnew,inert(itrc))+&
+     &                                     Hz(i,j,k)*adfac
+              ad_Hz(i,j,k)=ad_Hz(i,j,k)+                                &
+     &                     t(i,j,k,nnew,inert(itrc))*adfac
+            END DO
+          END DO
+        END DO
+      END DO
+#  endif
 !
 !  Compute adjoint time rate of change of intermediate tracer due to
 !  horizontal advection.

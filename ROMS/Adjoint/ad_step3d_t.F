@@ -265,7 +265,12 @@
 !  Local variable declarations.
 !
       integer :: i, ic, is, itrc, j, k, ltrc
+# if defined AGE_MEAN && defined T_PASSIVE
+      integer :: iage
+# endif
+# ifdef DIAGNOSTICS_TS
       integer :: idiag
+# endif
 
       real(r8), parameter :: eps = 1.0E-16_r8
 
@@ -514,6 +519,48 @@
      &                      nstp, nnew,                                 &
      &                      ad_t)
       END DO
+
+# if defined AGE_MEAN && defined T_PASSIVE
+!
+!-----------------------------------------------------------------------
+!  If inert passive tracer and Mean Age, compute age concentration (even
+!  inert index) forced by the right-hand-side term that is concentration
+!  of an associated conservative passive tracer (odd inert index). Mean
+!  Age is age concentration divided by conservative passive tracer
+!  concentration. Code implements NPT/2 mean age tracer pairs.
+!
+!  Implemented and tested by W.G. Zhang and J. Wilkin. See following
+!  reference for details.
+!
+!   Zhang et al. (2010): Simulation of water age and residence time in
+!      the New York Bight, JPO, 40,965-982, doi:10.1175/2009JPO4249.1
+!-----------------------------------------------------------------------
+!
+      DO itrc=1,NPT,2
+        iage=inert(itrc+1)                     ! even inert tracer index
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            tl_t(i,j,k,nnew,iage)=tl_t(i,j,k,nnew,iage)+              &
+!>   &                              dt(ng)*                             &
+#  ifdef TS_MPDATA
+!>   &                              tl_t(i,j,k,nnew,inert(itrc))
+#  else
+!>   &                              tl_t(i,j,k,3,inert(itrc))
+#  endif
+!>
+#  ifdef TS_MPDATA
+              ad_t(i,j,k,nnew,inert(itrc))=ad_t(i,j,k,nnew,inert(itrc))+&
+     &                                     dt(ng)*ad_t(i,j,k,nnew,iage)
+#  else
+              ad_t(i,j,k,3,inert(itrc))=ad_t(i,j,k,3,inert(itrc))+      &
+     &                                  dt(ng)*ad_t(i,j,k,nnew,iage)
+#  endif
+            END DO
+          END DO
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step adjoint vertical diffusion term.

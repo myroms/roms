@@ -316,6 +316,9 @@
 !  Local variable declarations.
 !
       integer :: i, ic, indx, is, itrc, j, k, ltrc
+# if defined AGE_MEAN && defined T_PASSIVE
+      integer :: iage
+# endif
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
@@ -716,11 +719,11 @@
 !
 !  Time-step horizontal advection (m Tunits).
 !
-#   if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
           IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
-#   else
+#  else
           IF (iic(ng).eq.ntfirst(ng)) THEN
-#   endif
+#  endif
             cff=0.5_r8*dt(ng)
             cff1=1.0_r8
             cff2=0.0_r8
@@ -750,16 +753,50 @@
           END DO
         END DO K_LOOP
       END DO T_LOOP1
+
+#  if (defined AGE_MEAN && defined T_PASSIVE) && !defined TS_MPDATA
+!
+!  If inert passive tracer and Mean Age, compute age concentration (even
+!  inert index) forced by the right-hand-side term that is concentration
+!  of an associated conservative passive tracer (odd inert index).
+!  Implemented and tested by W.G. Zhang and J. Wilkin. (m Tunits)
+!
+      IF (iic(ng).eq.ntfirst(ng)) THEN
+        cff=0.5_r8*dt(ng)
+      ELSE
+        cff=(1.0_r8-Gamma)*dt(ng)
+      END IF
+!
+      DO itrc=1,NPT,2
+        iage=inert(itrc+1)                     ! even inert tracer index
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            t(i,j,k,3,iage)=t(i,j,k,3,iage)+                          &
+!>   &                        cff*Hz(i,j,k)*                            &
+!>   &                        t(i,j,k,nnew,iage)
+!>
+              tl_t(i,j,k,3,iage)=tl_t(i,j,k,3,iage)+                    &
+     &                           cff*                                   &
+     &                           (Hz(i,j,k)*                            &
+     &                            tl_t(i,j,k,nnew,inert(itrc))+         &
+     &                            tl_Hz(i,j,k)*                         &
+     &                            t(i,j,k,nnew,inert(itrc)))
+            END DO
+          END DO
+        END DO
+      END DO
+#  endif
 !
 !  Compute artificial continuity equation (same for all tracers) and
 !  load it into private array DC (1/m). Notice pipelined J-loop.
 !
       J_LOOP1 : DO j=Jstr,Jend
-#   if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
         IF (iic(ng).eq.ntfirst(ng).and.SOinitial(ng)) THEN
-#   else
+#  else
         IF (iic(ng).eq.ntfirst(ng)) THEN
-#   endif
+#  endif
           cff=0.5_r8*dt(ng)
         ELSE
           cff=(1.0_r8-Gamma)*dt(ng)

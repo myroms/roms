@@ -135,6 +135,13 @@
       Coptions(is:is+16)=' AFT_EIGENMODES,'
       idriver=idriver+1
 #endif
+#if defined AGE_MEAN && defined T_PASSIVE && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'AGE_MEAN',                         &
+     &   'Computing Mean Age of inert passive tracer.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' AGE_MEAN,'
+      idriver=idriver+1
+#endif
 #if defined ALBEDO && defined ANA_SRFLUX
       IF (Master) WRITE (stdout,20) 'ALBEDO',                           &
      &   'Shortwave radiation from albedo equation.'
