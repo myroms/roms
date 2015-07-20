@@ -674,7 +674,8 @@
     ( defined BULK_FLUXES  && !defined ANA_WINDS)    || \
     ( defined BULK_FLUXES  && !defined ANA_SRFLUX)   || \
     ( defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
-    ( defined SALINITY     && !defined ANA_SSFLUX)   || \
+    ( defined SALINITY     && !defined ANA_SSFLUX    && \
+     (defined BULK_FLUXES  && !defined EMINUSP))     || \
     ( defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
     ( defined SSH_TIDES    || defined UV_TIDES)      || \
     ( defined BBL_MODEL    && (!defined ANA_WWAVE    && \

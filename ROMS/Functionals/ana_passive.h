@@ -74,7 +74,7 @@
 !
 #if defined MY_APPLICATION
 # ifdef AGE_MEAN
-      DO ip=1,NPT
+      DO ip=1,NPT,2
         itrc=inert(ip)
         iage=inert(ip+1)
         DO k=1,N(ng)
