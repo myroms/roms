@@ -17,6 +17,8 @@
 #define UV_LOGDRAG
 #define UV_VIS4
 #define MIX_S_UV
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #define TS_DIF4
@@ -27,11 +29,11 @@
 #ifdef SEDIMENT
 # define SUSPLOAD
 #endif
-#define  SPLINES
 #define MY25_MIXING
 #ifdef MY25_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
+# define RI_SPLINES
 #endif
 #define ANA_BPFLUX
 #define ANA_BSFLUX

@@ -20,13 +20,14 @@
 #undef  TS_C2VADVECTION
 #define TS_MPDATA
 #undef  SALINITY
-#define SPLINES
 #define OUT_DOUBLE
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX
 #define SOLVE3D
 #ifdef SOLVE3D
+# define SPLINES_VDIFF
+# define SPLINES_VVISC
 # define ANA_SEDIMENT
 # define ANA_BPFLUX
 # define ANA_BSFLUX
@@ -67,6 +68,7 @@
 #ifdef GLS_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
+# define RI_SPLINES
 # undef  CRAIG_BANNER
 # undef  CHARNOK
 # undef  ZOS_HSIG

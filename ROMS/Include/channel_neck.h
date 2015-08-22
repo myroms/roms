@@ -32,7 +32,6 @@
 #undef  MIX_GEO_TS
 #define SOLVE3D
 #define MASKING
-#undef  SPLINES
 #undef  ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_STFLUX

@@ -44,6 +44,8 @@
 # define TS_DIF2
 # define MIX_GEO_TS
 # define DJ_GRADPS
+# define SPLINES_VDIFF
+# define SPLINES_VVISC
 # define TS_U3HADVECTION
 # define SOLVE3D
 # define SALINITY
@@ -51,7 +53,6 @@
 # define CURVGRID
 # undef  AVERAGES
 # define MASKING
-# define SPLINES
 # define SOLAR_SOURCE
 
 # define GLS_MIXING
@@ -59,6 +60,7 @@
 #  define KANTHA_CLAYSON
 #  undef  CANUTO_A
 #  define N2S2_HORAVG
+#  define RI_SPLINES
 # endif
 
 # define BULK_FLUXES
@@ -101,6 +103,8 @@
 # define TS_DIF2
 # define MIX_GEO_TS
 # define DJ_GRADPS
+# define SPLINES_VDIFF
+# define SPLINES_VVISC
 # define TS_U3HADVECTION
 # define SOLVE3D
 # define SALINITY
@@ -108,7 +112,6 @@
 # define CURVGRID
 # undef  AVERAGES
 # define MASKING
-# define SPLINES
 # define SOLAR_SOURCE
 
 # define GLS_MIXING
@@ -116,6 +119,7 @@
 #  define KANTHA_CLAYSON
 #  undef  CANUTO_A
 #  define N2S2_HORAVG
+#  define RI_SPLINES
 # endif
 
 # undef  RAMP_TIDES

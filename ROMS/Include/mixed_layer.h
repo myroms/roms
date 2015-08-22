@@ -18,7 +18,8 @@
 #define ANA_GRID
 #define SALINITY
 #define SOLVE3D
-#define SPLINES
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_STFLUX
@@ -33,6 +34,7 @@
 #if defined GLS_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
+# define RI_SPLINES
 # define CRAIG_BANNER
 # define CHARNOK
 # undef  ZOS_HSIG

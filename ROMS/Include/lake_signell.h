@@ -17,10 +17,11 @@
 #define UV_ADV
 #undef  UV_COR
 #define DJ_GRADPS
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_MPDATA
 #define SALINITY
 #define SOLVE3D
-#define SPLINES
 #define MASKING
 #define AVERAGES
 #define FLOATS
@@ -83,6 +84,7 @@
 #if defined GLS_MIXING || defined MY25_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
+# define RI_SPLINES
 # undef CRAIG_BANNER
 # undef CHARNOK
 #endif

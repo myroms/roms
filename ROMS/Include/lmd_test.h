@@ -18,6 +18,8 @@
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_A4HADVECTION
 #define TS_A4VADVECTION
 #define NONLIN_EOS
@@ -25,7 +27,6 @@
 #define AVERAGES
 #define STATIONS
 #define SOLVE3D
-#define SPLINES
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
@@ -34,6 +35,7 @@
 # define LMD_SKPP
 # define LMD_BKPP
 # define LMD_NONLOCAL
+# define RI_SPLINES
 #endif
 #define ANA_GRID
 #define ANA_INITIAL

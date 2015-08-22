@@ -16,6 +16,8 @@
 #define UV_COR
 #define UV_QDRAG
 #undef  UV_VIS2
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #define DJ_GRADPS
@@ -23,7 +25,6 @@
 #undef  MIX_GEO_TS
 #define SALINITY
 #define SOLVE3D
-#define SPLINES
 #define AVERAGES
 #define AIR_OCEAN
 #define ANA_GRID
