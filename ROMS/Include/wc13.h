@@ -1,5 +1,5 @@
 /*
-** svn $Id: wc13.h 100 2011-08-17 18:22:46Z arango $
+** svn $Id: wc13.h 1610 2015-01-07 22:48:23Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2015 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -57,6 +57,8 @@
 #define UV_VIS2
 #define MIX_S_UV
 #define MIX_GEO_TS
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_DIF2
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
@@ -66,7 +68,6 @@
 #define CURVGRID
 #define PROFILE
 #define SPHERICAL
-#define SPLINES
 #define MASKING
 
 #ifdef NLM_DRIVER
@@ -81,6 +82,7 @@
 #ifdef GLS_MIXING
 # define N2S2_HORAVG
 # define KANTHA_CLAYSON
+# define RI_SPLINES
 #endif
 
 /*

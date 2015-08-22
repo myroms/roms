@@ -290,7 +290,7 @@
      &                      Akv(i  ,j,k))
             Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+                               &
      &                       Hz(i  ,j,k))
-# if defined SPLINES || defined DIAGNOSTICS_UV
+# if defined SPLINES_VVISC || defined DIAGNOSTICS_UV
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
@@ -312,7 +312,7 @@
           DO i=IstrU,Iend
             u(i,j,k,nnew)=u(i,j,k,nnew)+                                &
      &                    DC(i,0)*ru(i,j,k,nrhs)
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
             u(i,j,k,nnew)=u(i,j,k,nnew)*oHz(i,k)
 # endif
 # ifdef DIAGNOSTICS_UV
@@ -337,7 +337,7 @@
           END DO
         END DO
 
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
 !
 !  Use conservative, parabolic spline reconstruction of vertical
 !  viscosity derivatives.  Then, time step vertical viscosity term
@@ -623,7 +623,7 @@
      &                        Akv(i,j  ,k))
               Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+                             &
      &                         Hz(i,j  ,k))
-# if defined SPLINES || defined DIAGNOSTICS_UV
+# if defined SPLINES_VVISC || defined DIAGNOSTICS_UV
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
@@ -644,7 +644,7 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               v(i,j,k,nnew)=v(i,j,k,nnew)+DC(i,0)*rv(i,j,k,nrhs)
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
               v(i,j,k,nnew)=v(i,j,k,nnew)*oHz(i,k)
 # endif
 # ifdef DIAGNOSTICS_UV
@@ -670,7 +670,7 @@
             END DO
           END DO
 
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
 !
 !  Use conservative, parabolic spline reconstruction of vertical
 !  viscosity derivatives.  Then, time step vertical viscosity term

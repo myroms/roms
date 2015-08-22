@@ -489,7 +489,7 @@
 ** Richardson number horizontally and/or vertically.
 */
 
-#ifdef SPLINES
+#ifdef RI_SPLINES
 # if defined LMD_MIXING
 #  undef RI_HORAVG
 #  undef RI_VERAVG

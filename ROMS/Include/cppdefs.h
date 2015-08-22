@@ -43,6 +43,7 @@
 ** UV_LOGDRAG          use to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG            use to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG            use to turn ON or OFF quadratic bottom friction       **
+** SPLINES_VVISC       use if splines reconstruction of vertical viscosity   **
 **                                                                           **
 ** OPTION to not allow the bottom stress components to change the direction  **
 ** of bottom momentum (change sign of velocity components.                   **
@@ -83,11 +84,12 @@
 ** TS_FIXED            use if diagnostic run, no evolution of tracers        **
 ** T_PASSIVE           use if inert passive tracers (dyes, etc)              **
 ** AGE_MEAN            use if computing Mean Age of inert passive tracers    **
-** SALINITY            use if having salinity                                **
 ** NONLIN_EOS          use if using nonlinear equation of state              **
 ** QCORRECTION         use if net heat flux correction                       **
+** SALINITY            use if having salinity                                **
 ** SCORRECTION         use if freshwater flux correction                     **
 ** SOLAR_SOURCE        use if solar radiation source term                    **
+** SPLINES_VDIFF       use if splines reconstruction of vertical diffusion   **
 ** SRELAXATION         use if salinity relaxation as a freshwater flux       **
 ** WTYPE_GRID          use to turn ON spatially varying Jerlov water type    **
 **                                                                           **
@@ -207,12 +209,6 @@
 ** FLOAT_VWALK         use if vertical random walk                           **
 ** VWALK_FORWARD       use if forward time stepping vertical random walk     **
 **                                                                           **
-** OPTION to activate conservative, parabolic spline reconstruction of       **
-** vertical derivatives. Notice that there also options (see above) for      **
-** vertical advection of momentum and tracers using splines.                 **
-**                                                                           **
-** SPLINES             use to activate parabolic splines reconstruction      **
-**                                                                           **
 ** OPTIONS for analytical fields configuration:                              **
 **                                                                           **
 **    Any of the analytical expressions are coded in "analytical.F".         **
@@ -293,6 +289,7 @@
 ** K_C2ADVECTION       use if 2nd-order centered advection                   **
 ** K_C4ADVECTION       use if 4th-order centered advection                   **
 ** N2S2_HORAVG         use if horizontal smoothing of buoyancy/shear         **
+** RI_SPLINES          use if splines reconstruction for vertical sheer      **
 ** ZOS_HSIG            use if surface roughness from wave amplitude          **
 ** TKE_WAVEDISS        use if wave breaking surface flux from wave amplitude **
 **                                                                           **
@@ -305,6 +302,7 @@
 ** KANTHA_CLAYSON      use if Kantha and Clayson stability function          **
 ** K_C2ADVECTION       use if 2nd-order centered advection                   **
 ** K_C4ADVECTION       use if 4th-order centered advection                   **
+** RI_SPLINES          use if splines reconstruction for vertical sheer      **
 **                                                                           **
 ** OPTIONS for the Large et al. (1994) K-profile parameterization mixing:    **
 ** mixing:                                                                   **
@@ -316,9 +314,10 @@
 ** LMD_RIMIX           use to add diffusivity due to shear instability       **
 ** LMD_SHAPIRO         use if Shapiro filtering boundary layer depth         **
 ** LMD_SKPP            use if surface boundary layer KPP mixing              **
+** RI_SPLINES          use if splines reconstruction for Richardson Number   **
 **                                                                           **
-** OPTIONS to activate smoothing of Richardson number, if SPLINES is not     **
-** activated:                                                                **
+** OPTIONS in the K-profile parameterization to activate smoothing of        **
+** Richardson number, if RI_SPLINES is not activated:                        **
 **                                                                           **
 ** RI_HORAVG           use if horizontal Richardson number smoothing         **
 ** RI_VERAVG           use if vertical   Richardson number smoothing         **

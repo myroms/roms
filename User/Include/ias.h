@@ -44,13 +44,14 @@
 #define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #define SOLVE3D
 #define SALINITY
 #define NONLIN_EOS
 #define CURVGRID
-#define SPLINES
 #define MASKING
 #define SRELAXATION
 
@@ -60,6 +61,7 @@
 # define LMD_CONVEC
 # define LMD_SKPP
 # define LMD_NONLOCAL
+# define RI_SPLINES
 #endif
 
 #define  GLS_MIXING
@@ -67,6 +69,7 @@
 # undef  LMD_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
+# define RI_SPLINES
 #endif
 
 #undef  BIO_FENNEL

@@ -25,8 +25,9 @@
 #define TS_MPDATA
 #define DJ_GRADPS
 #define SALINITY
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define SOLVE3D
-#define SPLINES
 
 #define MASKING
 #ifdef MASKING
@@ -70,6 +71,7 @@
 # if defined GLS_MIXING
 #  define KANTHA_CLAYSON
 #  define N2S2_HORAVG
+#  define RI_SPLINES
 #  undef CRAIG_BANNER
 #  undef CHARNOK
 #  undef ZOS_HSIG

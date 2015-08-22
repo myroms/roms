@@ -817,7 +817,7 @@
 !  Time-step vertical advection for intermediate diffusive tracer, Ta
 !  (Tunits).
 # else
-#  ifdef SPLINES
+#  ifdef SPLINES_VDIFF
 !  Time-step vertical advection term (Tunits).
 #  else
 !  Time-step vertical advection term (m Tunits).
@@ -866,7 +866,7 @@
 #  endif
 # else
               t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
-#  ifdef SPLINES
+#  ifdef SPLINES_VDIFF
               t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)*oHz(i,j,k)
 #  endif
 #  ifdef DIAGNOSTICS_TS
@@ -1002,7 +1002,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES && !defined TS_MPDATA
+# if defined SPLINES_VDIFF && !defined TS_MPDATA
 !
 !  Use conservative, parabolic spline reconstruction of vertical
 !  diffusion derivatives.  Then, time step vertical diffusion term

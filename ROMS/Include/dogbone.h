@@ -25,8 +25,9 @@
 # define DJ_GRADPS
 # define TS_U3HADVECTION
 # define TS_C4VADVECTION
-# define SPLINES
 # define SALINITY
+# define SPLINES_VDIFF
+# define SPLINES_VVISC
 # define ANA_STFLUX
 # define ANA_SSFLUX
 # define ANA_BTFLUX
@@ -35,6 +36,7 @@
 # if defined GLS_MIXING
 #  define KANTHA_CLAYSON
 #  define N2S2_HORAVG
+#  define RI_SPLINES
 # endif
 #endif
 

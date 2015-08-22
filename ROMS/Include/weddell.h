@@ -18,6 +18,8 @@
 #define UV_QDRAG
 #undef  UV_VIS4
 #undef  MIX_S_UV
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_A4HADVECTION
 #define TS_A4VADVECTION
 #undef  TS_DIF4
@@ -26,7 +28,6 @@
 #define SALINITY
 #define NONLIN_EOS
 #define CURVGRID
-#define SPLINES
 #define ICESHELF
 #define AVERAGES
 #define RADIATION_2D

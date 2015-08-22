@@ -1463,6 +1463,15 @@
       Coptions(is:is+11)=' RI_VERAVG,'
 # endif
 #endif
+#if defined SOLVE3D    && \
+   (defined GLS_MIXING || defined LMD_MIXING || defined MY25_MIXING)
+# ifdef RI_SPLINES
+      IF (Master) WRITE (stdout,20) 'RI_SPLINES',                       &
+     &   'Parabolic Spline Reconstruction for Richardson Number.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' RI_SPLINES,'
+# endif
+#endif
 #if !(defined PJ_GRADPQ4 || defined PJ_GRADPQ2 || defined PJ_GRADP || \
       defined DJ_GRADPS) && defined RHO_SURF   && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'RHO_SURF',                         &
@@ -1613,17 +1622,23 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
-#ifdef SPLINES
-      IF (Master) WRITE (stdout,20) 'SPLINES',                          &
-     &   'Conservative parabolic spline reconstruction.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' SPLINES,'
-#endif
 #if defined SPLINES_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
      &   'Implicit, Parabolic Splines Vertical Convolution Algorithm.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' SPLINES_VCONV,'
+#endif
+#if defined SPLINES_VDIFF && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'SPLINES_VDIFF',                    &
+     &   'Parabolic Spline Reconstruction for Vertical Diffusion.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SPLINES_VDIFF,'
+#endif
+#if defined SPLINES_VVISC && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'SPLINES_VVISC',                    &
+     &   'Parabolic Spline Reconstruction for Vertical Viscosity.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SPLINES_VVISC,'
 #endif
 #ifdef SPHERICAL
       IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &
@@ -2517,6 +2532,21 @@
         exit_flag=5
       END IF
 #endif
+#if defined SPLINES && defined SOLVE3D
+!
+!  Stop if activating parabolic splines reconstruction with deprecated
+!  option. See https://www.myroms.org/projects/src/ticket/681 for more
+!  details.
+!
+      IF (Master) THEN
+        WRITE (stdout,250) uppercase('splines'),                        &
+     &        'https://www.myroms.org/projects/src/ticket/681'
+ 250    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+     &          /,13x,'See following trac ticket for details: ',        &
+     &          /,13x,a,/,13x,'please change header file accordingly.')
+        exit_flag=5
+      END IF
+#endif
 #if !defined DISTRIBUTE && defined NESTING
 !
 !  Stop if activating nesting in serial with partitions or shared-
@@ -2525,17 +2555,18 @@
       IF (Master) THEN
         DO ng=1,Ngrids
           IF (NtileX(ng)*NtileE(ng).gt.1) THEN
-            WRITE (stdout,250) uppercase('nesting')
+            WRITE (stdout,260) uppercase('nesting')
             exit_flag=5
             EXIT
           END IF
         END DO
- 250    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,           &
+ 260    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,           &
      &          /,13x,'in serial with partitions or shared-memory...', &
      &          /,13x,'There bugs in shared-memory that need fixing.', &
      &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
       END IF
 #endif
+
 
       RETURN
       END SUBROUTINE checkdefs

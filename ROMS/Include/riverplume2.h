@@ -17,6 +17,8 @@
 #define UV_COR
 #define UV_QDRAG
 #define DJ_GRADPS
+#define SPLINES_VDIFF
+#define SPLINES_VVISC
 #define TS_A4HADVECTION
 #define TS_A4VADVECTION
 #define TS_DIF2
@@ -25,7 +27,6 @@
 #define SALINITY
 #define MASKING
 #define SOLVE3D
-#define SPLINES
 #define AVERAGES
 
 #define LMD_MIXING
@@ -35,6 +36,7 @@
 # define LMD_SKPP
 # define LMD_BKPP
 # define LMD_NONLOCAL
+# define RI_SPLINES
 #endif
 
 #define ANA_GRID

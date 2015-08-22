@@ -1464,7 +1464,7 @@
      &                        Akv(i,j  ,k))
               Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+                             &
      &                         Hz(i,j  ,k))
-# if defined SPLINES || defined DIAGNOSTICS_UV
+# if defined SPLINES_VVISC || defined DIAGNOSTICS_UV
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
@@ -1701,7 +1701,7 @@
             ad_CF(i,0)=0.0_r8
           END DO
 
-# if defined SPLINES
+# if defined SPLINES_VVISC
 !
 !  Apply spline algorithm to BASIC STATE "v" which should be
 !  in units of velocity (m/s). DC will be used in the tangent
@@ -2087,7 +2087,7 @@
 !!   &                                oHz(i,k)
 !!            END DO
 # endif
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
 !>            tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*oHz(i,k)+               &
 !>   &                         (v(i,j,k,nnew)*Hzk(i,k))*tl_oHz(i,k)
 !>
@@ -2104,7 +2104,7 @@
           END DO
           DO i=Istr,Iend
             DO k=1,N(ng)
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
               oHz(i,k)=1.0_r8/Hzk(i,k)
 !>            tl_oHz(i,k)=-oHz(i,k)*oHz(i,k)*tl_Hzk(i,k)
 !>
@@ -2150,7 +2150,7 @@
      &                      Akv(i  ,j,k))
             Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+                               &
      &                       Hz(i  ,j,k))
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
@@ -2393,7 +2393,7 @@
           ad_CF(i,0)=0.0_r8
         END DO
 
-# if defined SPLINES
+# if defined SPLINES_VVISC
 !
 !  Apply spline algorithm to BASIC STATE "u" which should be
 !  in units of velocity (m/s). DC will be used in the tangent
@@ -2778,7 +2778,7 @@
 !!   &                              oHz(i,k)
 !!          END DO
 # endif
-# ifdef SPLINES
+# ifdef SPLINES_VVISC
 !>          tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*oHz(i,k)+                 &
 !>   &                       (u(i,j,k,nnew)*Hzk(i,k))*tl_oHz(i,k)
 !>
@@ -2795,7 +2795,7 @@
         END DO
         DO i=IstrU,Iend
           DO k=1,N(ng)
-# if defined SPLINES || defined DIAGNOSTICS_UV
+# if defined SPLINES_VVISC || defined DIAGNOSTICS_UV
             oHz(i,k)=1.0_r8/Hzk(i,k)
 !>          tl_oHz(i,k)=-oHz(i,k)*oHz(i,k)*tl_Hzk(i,k)
 !>

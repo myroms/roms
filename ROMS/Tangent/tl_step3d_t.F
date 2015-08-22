@@ -1128,7 +1128,7 @@
 !  Time-step vertical advection for intermediate diffusive tracer, Ta
 !  (Tunits).
 # else
-#  ifdef SPLINES
+#  ifdef SPLINES_VDIFF
 !  Time-step vertical advection term (Tunits).
 !  The BASIC STATE "t" used below must be in transport units, but "t"
 !  retrived is in Tunits so we multiply by "Hz".
@@ -1184,7 +1184,7 @@
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff1
-#  ifdef SPLINES
+#  ifdef SPLINES_VDIFF
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)*oHz(i,j,k)
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)*              &
@@ -1393,7 +1393,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES && !defined TS_MPDATA_NOT_YET
+# if defined SPLINES_VDIFF && !defined TS_MPDATA_NOT_YET
 !
 !  Use conservative, parabolic spline reconstruction of BASIC STATE
 !  vertical diffusion derivatives.  Solve BASIC STATE tridiagonal

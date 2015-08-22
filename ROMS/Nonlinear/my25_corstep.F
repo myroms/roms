@@ -212,7 +212,7 @@
 !  Compute vertical velocity shear at W-points.
 !-----------------------------------------------------------------------
 !
-# ifdef SPLINES
+# ifdef RI_SPLINES
       DO j=Jstrm1,Jendp1
         DO i=Istrm1,Iendp1
           CF(i,0)=0.0_r8

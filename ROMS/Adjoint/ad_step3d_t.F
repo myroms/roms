@@ -281,7 +281,7 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
-# ifdef SPLINES
+# ifdef SPLINES_VDIFF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC1
 # endif
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
@@ -592,7 +592,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES && !defined TS_MPDATA_NOT_YET
+# if defined SPLINES_VDIFF && !defined TS_MPDATA_NOT_YET
 !
 !  Use conservative, parabolic spline reconstruction of BASIC STATE
 !  vertical diffusion derivatives.  Solve BASIC STATE tridiagonal
@@ -1707,7 +1707,7 @@
 # endif
 !
 !  Time-step vertical advection term.
-# ifdef SPLINES
+# ifdef SPLINES_VDIFF
 !  The BASIC STATE "t" used below must be in transport units, but "t"
 !  retrived is in Tunits so we multiply by "Hz".
 # endif
@@ -1740,7 +1740,7 @@
 !!            END DO
 !!            DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
 #  endif
-#  ifdef SPLINES
+#  ifdef SPLINES_VDIFF
 !>            tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)*              &
 !>   &                              oHz(i,j,k)+                         &
 !>   &                              (t(i,j,k,nnew,itrc)*Hz(i,j,k))*     &
