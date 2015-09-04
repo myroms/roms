@@ -683,7 +683,7 @@
           Jbc_max=J_top(ngf)-1            ! interior points, no top
 !                                           left corner
 # ifdef NESTING_DEBUG
-          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+          IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,10) 'Western Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
@@ -734,7 +734,7 @@
           Jbc_max=J_top(ngf)-1            ! interior points, no top
 !                                           right corner
 # ifdef NESTING_DEBUG
-          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+          IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,10) 'Eastern Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
@@ -785,7 +785,7 @@
           Ibc_max=I_right(ngf)-1          ! interior points, no bottom
 !                                           right corner
 # ifdef NESTING_DEBUG
-          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+          IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,20) 'Southern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
@@ -837,7 +837,7 @@
           Ibc_max=I_right(ngf)-1          ! interior points, no top
 !                                           right corner
 # ifdef NESTING_DEBUG
-          IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+          IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,20) 'Northern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
