@@ -807,9 +807,12 @@
 !-----------------------------------------------------------------------
 !
             DO il=NestLayers,1,-1
-              IF (do_twoway(nl,il,istep,ng)) THEN
-                CALL nesting (ng, iNLM, n2way)
-              END IF
+              DO ig=1,GridsInLayer(il)
+                ng=GridNumber(ig,il)
+                IF (do_twoway(nl,il,ng,istep)) THEN
+                  CALL nesting (ng, iNLM, n2way)
+                END IF
+              END DO
             END DO
 #  endif
 !
