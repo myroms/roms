@@ -832,7 +832,7 @@
 !  Set internal switch for processing climatology data.
 !
 #ifdef SOLVE3D
-# if defined CLIMA_TS_MIX && (defined TS_DIF2 || defined TS_DIF4)
+# if defined TS_MIX_CLIMA && (defined TS_DIF2 || defined TS_DIF4)
         Lclimatology(ng)=.TRUE.
 # endif
         IF (LsshCLM(ng).or.                                             &

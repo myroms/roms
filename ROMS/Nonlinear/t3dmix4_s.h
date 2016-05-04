@@ -1,5 +1,3 @@
-#define MIX_STABILITY
-
       SUBROUTINE t3dmix4 (ng, tile)
 !
 !svn $Id$
@@ -15,7 +13,7 @@
 !***********************************************************************
 !
       USE mod_param
-#ifdef CLIMA_TS_MIX
+#ifdef TS_MIX_CLIMA
       USE mod_clima
 #endif
 #ifdef DIAGNOSTICS_TS
@@ -64,7 +62,7 @@
 #else
      &                   MIXING(ng) % diff4,                            &
 #endif
-#ifdef CLIMA_TS_MIX
+#ifdef TS_MIX_CLIMA
      &                   CLIMA(ng) % tclm,                              &
 #endif
 #ifdef DIAGNOSTICS_TS
@@ -99,7 +97,7 @@
 #else
      &                         diff4,                                   &
 #endif
-#ifdef CLIMA_TS_MIX
+#ifdef TS_MIX_CLIMA
      &                         tclm,                                    &
 #endif
 #ifdef DIAGNOSTICS_TS
@@ -143,7 +141,7 @@
       real(r8), intent(in) :: pnom_v(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
-# ifdef CLIMA_TS_MIX
+# ifdef TS_MIX_CLIMA
       real(r8), intent(in) :: tclm(LBi:,LBj:,:,:)
 # endif
 # ifdef DIAGNOSTICS_TS
@@ -174,7 +172,7 @@
       real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-# ifdef CLIMA_TS_MIX
+# ifdef TS_MIX_CLIMA
       real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NT(ng))
 # endif
 # ifdef DIAGNOSTICS_TS
@@ -201,7 +199,7 @@
 !  Compute horizontal biharmonic diffusion along constant S-surfaces.
 !  The biharmonic operator is computed by applying the harmonic
 !  operator twice.
-#ifdef MIX_STABILITY
+#ifdef TS_MIX_STABILITY
 !  In order to increase stability, the biharmonic operator is applied
 !  as: 3/4 t(:,:,:,nrhs,:) + 1/4 t(:,:,:,nstp,:).
 #endif
@@ -247,16 +245,28 @@
 #ifdef WET_DRY
               cff=cff*umask_wet(i,j)
 #endif
-              FX(i,j)=cff*(Hz(i,j,k)+Hz(i-1,j,k))*                      &
-#ifdef MIX_STABILITY
+#if defined TS_MIX_STABILITY
+              FX(i,j)=cff*                                              &
+     &                (Hz(i,j,k)+Hz(i-1,j,k))*                          &
      &                (0.75_r8*(t(i  ,j,k,nrhs,itrc)-                   &
      &                          t(i-1,j,k,nrhs,itrc))+                  &
      &                 0.25_r8*(t(i  ,j,k,nstp,itrc)-                   &
      &                          t(i-1,j,k,nstp,itrc)))
-#elif defined CLIMA_TS_MIX
-     &                ((t(i  ,j,k,nrhs,itrc)-tclm(i  ,j,k,itrc))-       &
-     &                 (t(i-1,j,k,nrhs,itrc)-tclm(i-1,j,k,itrc)))
+#elif defined TS_MIX_CLIMA
+              IF (LtracerCLM(itrc,ng)) THEN
+                FX(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
+     &                  ((t(i  ,j,k,nrhs,itrc)-tclm(i  ,j,k,itrc))-     &
+     &                   (t(i-1,j,k,nrhs,itrc)-tclm(i-1,j,k,itrc)))
+              ELSE
+                FX(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
+     &                  (t(i  ,j,k,nrhs,itrc)-                          &
+     &                   t(i-1,j,k,nrhs,itrc))
+              END IF
 #else
+              FX(i,j)=cff*                                              &
+     &                (Hz(i,j,k)+Hz(i-1,j,k))*                          &
      &                (t(i  ,j,k,nrhs,itrc)-                            &
      &                 t(i-1,j,k,nrhs,itrc))
 #endif
@@ -281,16 +291,28 @@
 #ifdef WET_DRY
               cff=cff*vmask_wet(i,j)
 #endif
-              FE(i,j)=cff*(Hz(i,j,k)+Hz(i,j-1,k))*                      &
-#ifdef MIX_STABILITY
+#if defined TS_MIX_STABILITY
+              FE(i,j)=cff*                                              &
+     &                (Hz(i,j,k)+Hz(i,j-1,k))*                          &
      &                (0.75_r8*(t(i,j  ,k,nrhs,itrc)-                   &
      &                          t(i,j-1,k,nrhs,itrc))+                  &
      &                 0.25_r8*(t(i,j  ,k,nstp,itrc)-                   &
      &                          t(i,j-1,k,nstp,itrc)))
-#elif defined CLIMA_TS_MIX
-     &                ((t(i,j  ,k,nrhs,itrc)-tclm(i,j  ,k,itrc))-       &
-     &                 (t(i,j-1,k,nrhs,itrc)-tclm(i,j-1,k,itrc)))
+#elif defined TS_MIX_CLIMA
+              IF (LtracerCLM(itrc,ng)) THEN
+                FE(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
+     &                  ((t(i,j  ,k,nrhs,itrc)-tclm(i,j  ,k,itrc))-     &
+     &                   (t(i,j-1,k,nrhs,itrc)-tclm(i,j-1,k,itrc)))
+              ELSE
+                FE(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
+     &                  (t(i,j  ,k,nrhs,itrc)-                          &
+     &                   t(i,j-1,k,nrhs,itrc))
+              END IF
 #else
+              FE(i,j)=cff*                                              &
+     &                (Hz(i,j,k)+Hz(i,j-1,k))*                          &
      &                (t(i,j  ,k,nrhs,itrc)-                            &
      &                 t(i,j-1,k,nrhs,itrc))
 #endif
