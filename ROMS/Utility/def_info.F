@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2015 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -325,6 +325,16 @@
           END IF
         END IF
 
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'var_info',            &
+     &                        TRIM(varname))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'var_info', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+
 #ifdef FOUR_DVAR
         IF (exit_flag.eq.NoError) THEN
           lstr=LEN_TRIM(state_vector)-1
@@ -581,7 +591,7 @@
             CALL join_string (CLM(ng)%files, CLM(ng)%Nfiles,            &
      &                        string,lstr)
             status=nf90_put_att(ncid, nf90_global, 'clm_file',          &
-     &                          TRIM(CLM(ng)%name))
+     &                          string(1:lstr))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) WRITE (stdout,20) 'clm_file', TRIM(ncname)
               exit_flag=3
