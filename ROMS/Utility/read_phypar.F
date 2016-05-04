@@ -2733,6 +2733,21 @@
         END IF
       END IF
 #endif
+!
+!  Check if both point sources methodologies are activated.  Only one
+!  method is allowed for a particular grid.  Otherwise, the point
+!  source will be applies twice.
+
+       IF (LuvSrc(ng).and.LwSrc(ng)) THEN
+         IF (Master) THEN
+           WRITE (out,260) 'LuvSrc', LuvSrc(ng),                        &
+     &           'Because LwSrc  is also ON; only one method is legal.'
+           WRITE (out,260) 'LwSrc', LwSrc(ng),                          &
+     &           'Because LuvSrc is also ON; only one method is legal.'
+           exit_flag=4
+           RETURN
+         END IF
+       END IF
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
