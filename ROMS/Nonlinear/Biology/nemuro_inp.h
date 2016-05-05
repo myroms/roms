@@ -722,7 +722,7 @@
             WRITE (out,80) AlphaZS(ng), 'AlphaZS',                      &
      &            'Small zooplankton assimilation efficiency',          &
      &            '(nondimensional).'
-            WRITE (out,80) AlphaZS(ng), 'AlphaZL',                      &
+            WRITE (out,80) AlphaZL(ng), 'AlphaZL',                      &
      &            'Large zooplankton assimilation efficiency',          &
      &            '(nondimensional).'
             WRITE (out,80) AlphaZP(ng), 'AlphaZP',                      &
@@ -745,7 +745,7 @@
      &            'PON to DON decomposition rate (1/day).'
             WRITE (out,70) VD2N0(ng), 'VD2N0',                          &
      &            'DON to NH4 decomposition rate (1/day).'
-            WRITE (out,70) VP2N0(ng), 'VO2S0',                          &
+            WRITE (out,70) VO2S0(ng), 'VO2S0',                          &
      &            'Opal to SiOH4 decomposition rate (1/day).'
             WRITE (out,80) KNit(ng), 'KNit',                            &
      &            'Temperature coefficient for NH4 to NO3',             &
@@ -756,7 +756,7 @@
             WRITE (out,80) KP2N(ng), 'KP2N',                            &
      &            'Temperature coefficient for PON to NH4',             &
      &            'decomposition (1/Celsius).'
-            WRITE (out,80) KP2N(ng), 'KD2N',                            &
+            WRITE (out,80) KD2N(ng), 'KD2N',                            &
      &            'Temperature coefficient for DON to NH4',             &
      &            'decomposition (1/Celsius).'
             WRITE (out,80) KO2S(ng), 'KO2S',                            &
