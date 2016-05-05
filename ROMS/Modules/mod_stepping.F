@@ -10,7 +10,7 @@
 !                                                                      !
 !  This MODULE contains time stepping indices.                         !
 !                                                                      !
-#ifdef BOUNDARY
+#ifdef ADJUST_BOUNDARY
 !  Lbinp     Open boundary adjustment input  fields index.             !
 !  Lbout     Open boundary adjustment output fields index.             !
 #endif
