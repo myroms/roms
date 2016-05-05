@@ -5239,6 +5239,12 @@
       DO i=Mstr,Mend
         Awrk(i)=A(i)
       END DO
+!
+!  Deallocate receive buffer.
+!
+      IF (allocated(Arecv).and.(MyRank.eq.MyMaster)) THEN
+        deallocate (Arecv)
+      END IF
 
 # ifdef PROFILE
 !

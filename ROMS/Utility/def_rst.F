@@ -9,7 +9,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine creates restart NetCDF file, it defines its            !
-!  dimensions, attributes, and fvariables.                             !
+!  dimensions, attributes, and variables.                              !
 !                                                                      !
 #if defined PERFECT_RESTART && defined WRITE_WATER && defined MASKING
 !  Currently, perfect restart is not compatible with writing           !
