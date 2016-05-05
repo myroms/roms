@@ -488,6 +488,10 @@
 ** HOLLING_GRAZING     use Holling-type s-shaped curve grazing (implicit)    **
 ** IVLEV_EXPLICIT      use Ivlev explicit grazing algorithm                  **
 **                                                                           **
+** Red tide biological model OPTIONS:                                        **
+**                                                                           **
+** RED_TIDE            use if red tide biological model.                     **
+**                                                                           **
 ** Sediment transport model OPTIONS:                                         **
 **                                                                           **
 ** SEDIMENT            use to activate sediment transport model              **

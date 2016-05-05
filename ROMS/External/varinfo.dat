@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2015 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2016 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -4040,6 +4040,88 @@
   'SdeC_north, scalar, series'
   'SdeC_time'
   'idTbry(inorth,iSDeC)'
+  'nulvar'
+  1.0d0
+
+!
+!-----------------------------------------------------------------------
+!  Define names of variables associated with Red Tide module.
+!-----------------------------------------------------------------------
+!
+
+'dinoflagellate'                                   ! Input/Output
+  'red tide dinoflagellate concentration'
+  'cell meter-3'                                   ! [cell/m3]
+  'dinoflagellate, scalar, series'
+  'ocean_time'
+  'idTvar(iDino)'
+  'r3dvar'
+  1.0d0
+
+'cyst_bottom'                                      ! Input
+  'red tide dinoflagellate bottom cyst concentration'
+  'cell meter-2'                                   ! [cell/m2]
+  'cyst_bottom, scalar, series'
+  'cyst_time'
+  'idCyst'
+  'r2dvar'
+  1.0d0
+
+'swrad_avg'                                        ! Input/Output
+  'averaged solar shortwave radiation flux'
+  'watt meter-2'                                   ! Input:  [Watt/m2]
+  'averaged shortwave radiation, scalar, series'   ! [Celsius m/s]
+  'srf_time'                                       ! Output: [Watt/m2]
+  'idAsrf'
+  'r2dvar'
+  1.0d0
+
+'DIN_obs'                                          ! Input
+  'observed dissolved inorganic nutrient'
+  'millimole meter-3'                              ! [millimole/m3]
+  'DIN_obs, scalar, series'
+  'DIN_time'
+  'idODIN'
+  'r3dvar'
+  1.0d0
+
+!
+!  Boundary variables.
+!
+
+'dinoflagellate_east'                              ! Input
+  'red tide dinoflagellate eastern boundary condition'
+  'cells meter-3'                                  ! [cell/m3]
+  'dinoflagellate_east, scalar, series'
+  'dinoflagellate_time'
+  'idTbry(ieast,iDino)'
+  'nulvar'
+  1.0d0
+
+'dinoflagellate_west'                              ! Input
+  'red tide dinoflagellate western boundary condition'
+  'cells meter-3'                                  ! [cell/m3]
+  'dinoflagellate_west, scalar, series'
+  'dinoflagellate_time'
+  'idTbry(iwest,iDino)'
+  'nulvar'
+  1.0d0
+
+'dinoflagellate_south'                             ! Input
+  'red tide dinoflagellate southern boundary condition'
+  'cells meter-3'                                  ! [cell/m3]
+  'dinoflagellate_south, scalar, series'
+  'dinoflagellate_time'
+  'idTbry(isouth,iDino)'
+  'nulvar'
+  1.0d0
+
+'dinoflagellate_north'                             ! Input
+  'red tide dinoflagellate northern boundary condition'
+  'cells meter-3'                                  ! [cell/m3]
+  'dinoflagellate_north, scalar, series'
+  'dinoflagellate_time'
+  'idTbry(inorth,iDino)'
   'nulvar'
   1.0d0
 

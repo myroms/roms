@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2015 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -27,10 +27,19 @@
 !  u            3D U-momentum component (m/s).                         !
 !  v            3D V-momentum component (m/s).                         !
 !  W            S-coordinate (omega*Hz/mn) vertical velocity (m3/s).   !
+#ifdef BIOLOGY
 !                                                                      !
 !  Biology Variables.                                                  !
 !                                                                      !
+# if defined BIO_FENNEL && defined CARBON
 !  pH           Surface concentration of hydrogen ions.                !
+# endif
+# ifdef RED_TIDE
+!  CystIni      Red tide dinoflagellate bottom cyst initial            !
+!                 concentration (cysts/m2).                            !
+!  DIN_obs      Observed Dissolved Inorganic Nutrient (micromoles).    !
+# endif
+#endif
 !                                                                      !
 #ifdef NEARSHORE_MELLOR
 !  Nearshore radiation stresses:                                       !
@@ -85,6 +94,11 @@
 # endif
 # if defined BIO_FENNEL && defined CARBON
           real(r8), pointer :: pH(:,:)
+# endif
+# ifdef RED_TIDE
+          real(r8), pointer :: CystIni(:,:)
+          real(r8), pointer :: DIN_obs(:,:,:)
+          real(r8), pointer :: DIN_obsG(:,:,:,:)
 # endif
 #endif
 
@@ -319,6 +333,11 @@
       allocate ( OCEAN(ng) % pH(LBi:UBi,LBj:UBj) )
 # endif
 
+# ifdef RED_TIDE
+      allocate ( OCEAN(ng) % CystIni(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % DIN_obs(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % DIN_obsG(LBi:UBi,LBj:UBj,N(ng),2) )
+# endif
 #endif
 
 #if defined TANGENT || defined TL_IOMS
@@ -605,6 +624,9 @@
 # if defined BIO_FENNEL && defined CARBON && defined SOLVE3D
             OCEAN(ng) % pH(i,j) = 8.0_r8
 # endif
+# ifdef RED_TIDE
+            OCEAN(ng) % CystIni(i,j) = IniVal
+# endif
           END DO
 #ifdef SOLVE3D
           DO k=1,N(ng)
@@ -621,6 +643,11 @@
               OCEAN(ng) % rvlag3d(i,j,k) = IniVal
               OCEAN(ng) % u_stokes(i,j,k) = IniVal
               OCEAN(ng) % v_stokes(i,j,k) = IniVal
+# endif
+# ifdef RED_TIDE
+              OCEAN(ng) % DIN_obs(i,j,k) = IniVal
+              OCEAN(ng) % DIN_obsG(i,j,k,1) = IniVal
+              OCEAN(ng) % DIN_obsG(i,j,k,2) = IniVal
 # endif
             END DO
           END DO

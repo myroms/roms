@@ -1547,6 +1547,8 @@
 #  include <npzd_Powell_var.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_var.h>
+# elif defined RED_TIDE
+#  include <red_tide_var.h>
 # endif
 #endif
 

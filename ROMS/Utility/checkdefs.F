@@ -611,6 +611,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' CURVGRID,'
 #endif
+#if defined DAILY_SHORTWAVE && defined RED_TIDE
+      IF (Master) WRITE (stdout,20) 'DAILY_SHORTWAVE',                  &
+     &   'Daily-averaged surface solar shortwave radiation flux.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' DAILY_SHORTWAVE,'
+#endif
 #ifdef DEBUGGING
       IF (Master) WRITE (stdout,20) 'DEBUGGING',                        &
      &   'Internal debugging switch activated.'
@@ -1420,6 +1426,13 @@
      &   'Recomputing 4DVar during data assimilation analysis.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' RECOMPUTE_4DVAR,'
+#endif
+#ifdef RED_TIDE
+      IF (Master) WRITE (stdout,20) 'RED_TIDE',                         &
+     &   'Red tide biological model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' RED_TIDE,'
+      ibiology=ibiology+1
 #endif
 #ifdef R_SYMMETRY
       IF (Master) WRITE (stdout,20) 'REP_MATRIX',                       &

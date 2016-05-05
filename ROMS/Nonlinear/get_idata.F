@@ -16,11 +16,17 @@
 !=======================================================================
 !
       USE mod_param
+#ifdef RED_TIDE
+      USE mod_biology
+#endif
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
 #if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       USE mod_netcdf
+#endif
+#ifdef RED_TIDE
+      USE mod_ocean
 #endif
       USE mod_parallel
       USE mod_scalars
@@ -496,6 +502,27 @@
           SOURCES(ng)%Jsrc(is)=                                         &
      &                MAX(1,MIN(NINT(SOURCES(ng)%Ysrc(is)),Mm(ng)+1))
         END DO
+      END IF
+#endif
+
+#ifdef RED_TIDE
+!
+!-----------------------------------------------------------------------
+!  Red tides.
+!-----------------------------------------------------------------------
+!
+!  Read initial dynoflagellate bottom cyst concentration.
+!
+      CALL get_2dfld (ng, iNLM, idCyst, ncFRCid(idCyst,ng),             &
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 1, 1,                         &
+# ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+# endif
+     &                OCEAN(ng) % CystIni)
+      IF (exit_flag.ne.NoError) RETURN
+      IF (.not.Linfo(1,idCyst,ng)) THEN             ! if not gridded,
+        OCEAN(ng) % CystIni = Fpoint(1,idCyst,ng)   ! load point data
       END IF
 #endif
 

@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2015 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -19,13 +19,17 @@
 !=======================================================================
 !
       USE mod_param
+#if defined RED_TIDE
+      USE mod_biology
+#endif
       USE mod_boundary
       USE mod_clima
       USE mod_forces
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
-#if defined NLM_OUTER || defined TLM_CHECK || defined TL_W4DPSAS || \
+#if defined NLM_OUTER || defined RED_TIDE            || \
+    defined TLM_CHECK || defined TL_W4DPSAS          || \
     defined W4DPSAS   || defined W4DPSAS_SENSITIVITY
       USE mod_ocean
 #endif
@@ -334,6 +338,22 @@
       IF (exit_flag.ne.NoError) RETURN
 # endif
 
+# if defined RED_TIDE && defined DAILY_SHORTWAVE
+!
+!-----------------------------------------------------------------------
+!  Daily-averaged Surface solar shortwave radiation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, iNLM, idAsrf, ncFRCid(idAsrf,ng),             &
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % srflxG_avg)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+
 # if defined BULK_FLUXES && !defined LONGWAVE && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
@@ -626,6 +646,22 @@
       END DO
 #  endif
 # endif
+#endif
+
+#ifdef RED_TIDE
+!
+!-----------------------------------------------------------------------
+!  Red tide Observed Dissolved Inorganic Nutrient.
+!-----------------------------------------------------------------------
+!
+      CALL get_3dfld (ng, iNLM, idODIN, ncFRCid(idODIN,ng),             &
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                OCEAN(ng) % DIN_obsG)
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !=======================================================================
