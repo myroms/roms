@@ -2737,7 +2737,8 @@
 !  Check if both point sources methodologies are activated.  Only one
 !  method is allowed for a particular grid.  Otherwise, the point
 !  source will be applies twice.
-
+!
+      DO ng=1,Ngrids
        IF (LuvSrc(ng).and.LwSrc(ng)) THEN
          IF (Master) THEN
            WRITE (out,260) 'LuvSrc', LuvSrc(ng),                        &
@@ -2748,6 +2749,7 @@
            RETURN
          END IF
        END IF
+     END DO
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
