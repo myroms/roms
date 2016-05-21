@@ -1,5 +1,6 @@
 #include "cppdefs.h"
-      MODULE ad_convolution_m
+      MODULE ad_convolution_mod
+
 #if defined ADJOINT && defined FOUR_DVAR
 !
 !svn $Id$
@@ -1313,13 +1314,13 @@
                 i=BOUNDS(ng)%edge(ib,r2dvar)
                 DO j=JstrT,JendT
                   ad_zeta_obc(j,ib,ir,Linp)=ad_zeta_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(on_r(i,j))
+     &                                      SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,r2dvar)
                 DO i=IstrT,IendT
                   ad_zeta_obc(i,ib,ir,Linp)=ad_zeta_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_r(i,j))
+     &                                      SQRT(om_r(i,j)*on_r(i,j))
                 END DO
               END IF
             END IF
@@ -1344,13 +1345,13 @@
                 i=BOUNDS(ng)%edge(ib,u2dvar)
                 DO j=JstrT,JendT
                   ad_ubar_obc(j,ib,ir,Linp)=ad_ubar_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(on_u(i,j))
+     &                                      SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,u2dvar)
                 DO i=IstrP,IendT
                   ad_ubar_obc(i,ib,ir,Linp)=ad_ubar_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_u(i,j))
+     &                                      SQRT(om_u(i,j)*on_u(i,j))
                 END DO
               END IF
             END IF
@@ -1375,13 +1376,13 @@
                 i=BOUNDS(ng)%edge(ib,v2dvar)
                 DO j=JstrP,JendT
                   ad_vbar_obc(j,ib,ir,Linp)=ad_vbar_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(on_v(i,j))
+     &                                      SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,v2dvar)
                 DO i=IstrT,IendT
                   ad_vbar_obc(i,ib,ir,Linp)=ad_vbar_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_v(i,j))
+     &                                      SQRT(om_v(i,j)*on_v(i,j))
                 END DO
               END IF
             END IF
@@ -1407,7 +1408,7 @@
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
                 DO j=JstrT,JendT
-                  cff=on_u(i,j)*0.5_r8
+                  cff=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     ad_u_obc(j,k,ib,ir,Linp)=ad_u_obc(j,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -1418,7 +1419,7 @@
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,u2dvar)
                 DO i=IstrP,IendT
-                  cff=om_u(i,j)*0.5_r8
+                  cff=om_u(i,j)*on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     ad_u_obc(i,k,ib,ir,Linp)=ad_u_obc(i,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -1448,7 +1449,7 @@
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
                 DO j=JstrP,JendT
-                  cff=on_v(i,j)*0.5_r8
+                  cff=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     ad_v_obc(j,k,ib,ir,Linp)=ad_v_obc(j,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -1459,7 +1460,7 @@
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,v2dvar)
                 DO i=IstrT,IendT
-                  cff=om_v(i,j)*0.5_r8
+                  cff=om_v(i,j)*on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     ad_v_obc(i,k,ib,ir,Linp)=ad_v_obc(i,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -1490,7 +1491,7 @@
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   i=BOUNDS(ng)%edge(ib,r2dvar)
                   DO j=JstrT,JendT
-                    cff=on_r(i,j)
+                    cff=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       ad_t_obc(j,k,ib,ir,Linp,it)=                      &
      &                                   ad_t_obc(j,k,ib,ir,Linp,it)/   &
@@ -1500,7 +1501,7 @@
                 ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                   j=BOUNDS(ng)%edge(ib,r2dvar)
                   DO i=IstrT,IendT
-                    cff=om_r(i,j)
+                    cff=om_r(i,j)*on_r(i,j)
                     DO k=1,N(ng)
                       ad_t_obc(i,k,ib,ir,Linp,it)=                      &
      &                                   ad_t_obc(i,k,ib,ir,Linp,it)/   &

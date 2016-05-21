@@ -79,7 +79,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE ad_bc_3d_mod, ONLY: ad_dabc_r3d_tile
+      USE ad_bc_3d_mod, ONLY: ad_bc_r3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange3d
 # endif
@@ -227,13 +227,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_r3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_r3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_r3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_r3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -553,13 +553,13 @@
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
 # endif
-!>      CALL dabc_r3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      tl_Awrk(:,:,:,Nnew))
+!>      CALL bc_r3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    tl_Awrk(:,:,:,Nnew))
 !>
-        CALL ad_dabc_r3d_tile (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
-     &                         ad_Awrk(:,:,:,Nnew))
+        CALL ad_bc_r3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
+     &                       ad_Awrk(:,:,:,Nnew))
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -646,13 +646,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_r3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_r3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_r3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_r3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
 
       RETURN
       END SUBROUTINE ad_conv_r3d_tile
@@ -675,7 +675,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE ad_bc_3d_mod, ONLY: ad_dabc_u3d_tile
+      USE ad_bc_3d_mod, ONLY: ad_bc_u3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange3d
 # endif
@@ -827,13 +827,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_u3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_u3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_u3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_u3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
@@ -1154,13 +1154,13 @@
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
 # endif
-!>      CALL dabc_u3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      tl_Awrk(:,:,:,Nnew))
+!>      CALL bc_u3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    tl_Awrk(:,:,:,Nnew))
 !>
-        CALL ad_dabc_u3d_tile (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
-     &                         ad_Awrk(:,:,:,Nnew))
+        CALL ad_bc_u3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
+     &                       ad_Awrk(:,:,:,Nnew))
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -1245,13 +1245,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_u3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_u3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_u3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_u3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
 
       RETURN
       END SUBROUTINE ad_conv_u3d_tile
@@ -1274,7 +1274,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE ad_bc_3d_mod, ONLY: ad_dabc_v3d_tile
+      USE ad_bc_3d_mod, ONLY: ad_bc_v3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange3d
 # endif
@@ -1427,13 +1427,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_v3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_v3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_v3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_v3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
       DO k=1,N(ng)
         DO j=JstrV,Jend
           DO i=Istr,Iend
@@ -1753,13 +1753,13 @@
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
 # endif
-!>      CALL dabc_v3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      tl_Awrk(:,:,:,Nnew))
+!>      CALL bc_v3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    tl_Awrk(:,:,:,Nnew))
 !>
-        CALL ad_dabc_v3d_tile (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
-     &                         ad_Awrk(:,:,:,Nnew))
+        CALL ad_bc_v3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
+     &                       ad_Awrk(:,:,:,Nnew))
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -1844,13 +1844,13 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-!>    CALL dabc_v3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    tl_A)
+!>    CALL bc_v3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  tl_A)
 !>
-      CALL ad_dabc_v3d_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
-     &                       ad_A)
+      CALL ad_bc_v3d_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     ad_A)
 
       RETURN
       END SUBROUTINE ad_conv_v3d_tile

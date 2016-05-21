@@ -258,7 +258,6 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
-      USE mod_mixing
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
@@ -343,16 +342,6 @@
 !
       DO ng=1,Ngrids
         WRTforce(ng)=.FALSE.
-      END DO
-!
-!  Clear nonlinear mixing arrays.
-!
-      DO ng=1,Ngrids
-!$OMP PARALLEL
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL initialize_mixing (ng, tile, iTLM)
-        END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Initialize and set nonlinear model initial conditions.
@@ -647,9 +636,6 @@
 !$OMP PARALLEL
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL initialize_forces (ng, tile, iTLM)
-# ifdef ADJUST_BOUNDARY
-            CALL initialize_boundary (ng, tile, iTLM)
-# endif
           END DO
 !$OMP END PARALLEL
         END DO
@@ -1016,8 +1002,7 @@
           END IF
         END DO
 !
-!  Clear tangent arrays and the nonlinear model mixing arrays
-!  before running nonlinear model (important).
+!  Clear tangent arrays before running nonlinear model (important).
 !
         DO ng=1,Ngrids
 !$OMP PARALLEL
@@ -1027,7 +1012,6 @@
 # ifdef ADJUST_BOUNDARY
             CALL initialize_boundary (ng, tile, iTLM)
 # endif
-            CALL initialize_mixing (ng, tile, iNLM)
           END DO
 !$OMF END PARALLEL
         END DO

@@ -79,7 +79,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE bc_3d_mod, ONLY: dabc_r3d_tile
+      USE bc_3d_mod, ONLY: bc_r3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -197,13 +197,13 @@
 !
       Nold=1
       Nnew=2
-!>    CALL dabc_r3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_r3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_r3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-     &                    tl_A)
+      CALL bc_r3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
@@ -284,13 +284,13 @@
 !
 !  Apply boundary conditions.
 !
-!>      CALL dabc_r3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      Awrk(:,:,:,Nnew))
+!>      CALL bc_r3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    Awrk(:,:,:,Nnew))
 !>
-        CALL dabc_r3d_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-     &                      tl_Awrk(:,:,:,Nnew))
+        CALL bc_r3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+     &                    tl_Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
@@ -555,13 +555,13 @@
           END DO
         END DO
       END DO
-!>    CALL dabc_r3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_r3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_r3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-     &                    tl_A)
+      CALL bc_r3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
@@ -597,7 +597,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE bc_3d_mod, ONLY: dabc_u3d_tile
+      USE bc_3d_mod, ONLY: bc_u3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -719,13 +719,13 @@
 !
       Nold=1
       Nnew=2
-!>    CALL dabc_u3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_u3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_u3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-     &                    tl_A)
+      CALL bc_u3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
@@ -803,13 +803,13 @@
 !
 !  Apply boundary conditions.
 !
-!>      CALL dabc_u3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      Awrk(:,:,:,Nnew))
+!>      CALL bc_u3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    Awrk(:,:,:,Nnew))
 !>
-        CALL dabc_u3d_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-     &                      tl_Awrk(:,:,:,Nnew))
+        CALL bc_u3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+     &                    tl_Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
@@ -1079,13 +1079,13 @@
           END DO
         END DO
       END DO
-!>    CALL dabc_u3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_u3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_u3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                    tl_A)
+      CALL bc_u3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
@@ -1121,7 +1121,7 @@
       USE mod_param
       USE mod_scalars
 !
-      USE bc_3d_mod, ONLY: dabc_v3d_tile
+      USE bc_3d_mod, ONLY: bc_v3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange3d
 # endif
@@ -1244,13 +1244,13 @@
 !
       Nold=1
       Nnew=2
-!>    CALL dabc_v3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_v3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_v3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-     &                    tl_A)
+      CALL bc_v3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
@@ -1328,13 +1328,13 @@
 !
 !  Apply boundary conditions.
 !
-!>      CALL dabc_v3d_tile (ng, tile,                                   &
-!>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-!>   &                      Awrk(:,:,:,Nnew))
+!>      CALL bc_v3d_tile (ng, tile,                                     &
+!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+!>   &                    Awrk(:,:,:,Nnew))
 !>
-        CALL dabc_v3d_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
-     &                      tl_Awrk(:,:,:,Nnew))
+        CALL bc_v3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
+     &                    tl_Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
 !>      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
@@ -1605,13 +1605,13 @@
           END DO
         END DO
       END DO
-!>    CALL dabc_v3d_tile (ng, tile,                                     &
-!>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-!>   &                    A)
+!>    CALL bc_v3d_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+!>   &                  A)
 !>
-      CALL dabc_v3d_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
-     &                    tl_A)
+      CALL bc_v3d_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
+     &                  tl_A)
 # ifdef DISTRIBUTE
 !>    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
