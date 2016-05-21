@@ -1,6 +1,7 @@
 #include "cppdefs.h"
-#if defined FOUR_DVAR  && defined OBSERVATIONS && \
-    defined DISTRIBUTE && defined SOLVE3D
+#if (defined FOUR_DVAR    || defined VERIFICATION) && \
+     defined OBSERVATIONS && \
+     defined DISTRIBUTE   && defined SOLVE3D
       SUBROUTINE obs_depth (ng, tile, model)
 !
 !svn $Id$

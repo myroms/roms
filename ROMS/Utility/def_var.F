@@ -645,7 +645,8 @@
               END IF
             END IF
             latt=LEN_TRIM(text)
-            IF (nVdim.gt.2) THEN
+            IF (((ABS(INT(Aval(5))).le.4).and.(nVdim.gt.2)).or.         &
+     &          ((ABS(INT(Aval(5))).gt.4).and.(nVdim.gt.3))) THEN
               text=text(1:latt)//' ocean_time'
               latt=LEN_TRIM(text)
             END IF

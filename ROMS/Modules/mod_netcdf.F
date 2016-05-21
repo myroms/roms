@@ -108,9 +108,9 @@
       integer :: var_Aint(NvarA)        ! attribute integer values
       real(r8) :: var_Afloat(NvarA)     ! attribute float values
 !
-      character (len=40) :: var_Aname(NvarA)     ! Attribute names
-      character (len=40) :: var_Dname(NvarD)     ! dimension names
-      character (len=80) :: var_Achar(NvarA)     ! Attribute char values
+      character (len=40)   :: var_Aname(NvarA)   ! Attribute names
+      character (len=40)   :: var_Dname(NvarD)   ! dimension names
+      character (len=1024) :: var_Achar(NvarA)   ! Attribute char values
 !
 !  External data representation for floating-point variables.
 !
@@ -1162,7 +1162,7 @@
       integer, dimension(4) :: ibuffer
 #endif
 
-      character (len=80) :: text
+      character (len=1024) :: text
 !
 !-----------------------------------------------------------------------
 !  Inquire about the NetCDF dimensions (names and values).
@@ -1566,7 +1566,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine gets requested floating-point variable attribute(s).   !
+!  This routine gets requested variable floating-point attribute(s).   !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !

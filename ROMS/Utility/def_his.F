@@ -530,6 +530,84 @@
      &                 SetFillVal = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #endif
+#ifdef SOLVE3D
+!
+!  Define time-varying depth of RHO-points.
+!
+        IF (Hout(idpthR,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthR)
+          WRITE (Vinfo( 2),40) Vname(2,idpthR)
+          Vinfo( 3)=Vname(3,idpthR)
+          Vinfo(14)=Vname(4,idpthR)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthR,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idpthR),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define time-varying depth of U-points.
+!
+        IF (Hout(idpthU,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthU)
+          WRITE (Vinfo( 2),40) Vname(2,idpthU)
+          Vinfo( 3)=Vname(3,idpthU)
+          Vinfo(14)=Vname(4,idpthU)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthU,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idpthU),   &
+     &                   NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define time-varying depth of V-points.
+!
+        IF (Hout(idpthV,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthV)
+          WRITE (Vinfo( 2),40) Vname(2,idpthV)
+          Vinfo( 3)=Vname(3,idpthV)
+          Vinfo(14)=Vname(4,idpthV)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthV,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idpthV),   &
+     &                   NF_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+!
+!  Define time-varying depth of W-points.
+!
+        IF (Hout(idpthW,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthW)
+          WRITE (Vinfo( 2),40) Vname(2,idpthW)
+          Vinfo( 3)=Vname(3,idpthW)
+          Vinfo(14)=Vname(4,idpthW)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthW,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idpthW),   &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
+#endif
 !
 !  Define free-surface.
 !
@@ -1002,7 +1080,7 @@
 # ifdef SEDIMENT
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
 # endif
@@ -1031,7 +1109,7 @@
 #  ifdef SEDIMENT
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),60) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
 #  endif
@@ -1826,7 +1904,7 @@
             Vinfo( 3)=Vname(3,idfrac(i))
             Vinfo(14)=Vname(4,idfrac(i))
             Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+            WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
@@ -1848,7 +1926,7 @@
             Vinfo( 3)=Vname(3,idBmas(i))
             Vinfo(14)=Vname(4,idBmas(i))
             Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+            WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
@@ -2382,7 +2460,7 @@
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, HIS(ng)%ncid)
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,60) TRIM(ncname)
           RETURN
         END IF
 !
@@ -2417,6 +2495,20 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwet))) THEN
             got_var(idVwet)=.TRUE.
             HIS(ng)%Vid(idVwet)=var_id(i)
+#endif
+#ifdef SOLVE3D
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthR))) THEN
+            got_var(idpthR)=.TRUE.
+            HIS(ng)%Vid(idpthR)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthU))) THEN
+            got_var(idpthU)=.TRUE.
+            HIS(ng)%Vid(idpthU)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthV))) THEN
+            got_var(idpthV)=.TRUE.
+            HIS(ng)%Vid(idpthV)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthW))) THEN
+            got_var(idpthW)=.TRUE.
+            HIS(ng)%Vid(idpthW)=var_id(i)
 #endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
@@ -2797,14 +2889,14 @@
 !  Check if history variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #if defined SEDIMENT && defined SED_MORPH
         IF (.not.got_var(idbath).and.Hout(idbath,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idbath)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idbath)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2812,140 +2904,166 @@
 #endif
 #if defined WET_DRY
         IF (.not.got_var(idPwet)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idPwet)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPwet)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRwet)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idRwet)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idRwet)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUwet)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUwet)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUwet)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVwet)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVwet)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef SOLVE3D
+        IF (.not.got_var(idpthR).and.Hout(idpthR,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthR)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpthU).and.Hout(idpthU,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthU)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpthV).and.Hout(idpthV,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthV)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpthW).and.Hout(idpthW,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthW)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #endif
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.Hout(idUbar,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.Hout(idVbar,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSbry(isFsur))) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbry(isFsur))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isFsur))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isUbar))) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbry(isUbar))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isVbar))) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbry(isVbar))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isVbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #endif
         IF (.not.got_var(idu2dE).and.Hout(idu2dE,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idu2dE)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu2dE)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idv2dN).and.Hout(idv2dN,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idv2dN)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idv2dN)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.Hout(idVvel,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSbry(isUvel))) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbry(isUvel))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isVvel))) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbry(isVvel))),  &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isVvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # endif
         IF (.not.got_var(idu3dE).and.Hout(idu3dE,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idu3dE)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu3dE)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idv3dN).and.Hout(idv3dN,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idv3dN)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idv3dN)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idWvel).and.Hout(idWvel,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idOvel).and.Hout(idOvel,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idOvel)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idDano)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef LMD_SKPP
         IF (.not.got_var(idHsbl).and.Hout(idHsbl,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idHsbl)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idHsbl)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2953,27 +3071,27 @@
 # endif
 # ifdef LMD_BKPP
         IF (.not.got_var(idHbbl).and.Hout(idHbbl,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idHbbl)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idHbbl)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # endif
         IF (.not.got_var(idVvis).and.Hout(idVvis,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVvis)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVvis)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idTdif).and.Hout(idTdif,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTdif)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTdif)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SALINITY
         IF (.not.got_var(idSdif).and.Hout(idSdif,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSdif)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSdif)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2981,13 +3099,13 @@
 # endif
 # if defined GLS_MIXING || defined MY25_MIXING
         IF (.not.got_var(idMtke).and.Hout(idMtke,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMtke)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtke)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idMtls).and.Hout(idMtls,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMtls)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtls)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2995,7 +3113,7 @@
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idPair)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3003,13 +3121,13 @@
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
         IF (.not.got_var(idUair).and.Hout(idUair,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUair)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVair).and.Hout(idVair,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVair)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3017,44 +3135,44 @@
 # endif
 # ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Hout(idLhea,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idLhea)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idLhea)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idShea).and.Hout(idShea,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idShea)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idShea)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idLrad).and.Hout(idLrad,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idLrad)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idLrad)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idTair).and.Hout(idTair,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTair)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef EMINUSP
         IF (.not.got_var(idEmPf).and.Hout(idEmPf,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idEmPf)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idEmPf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idevap).and.Hout(idevap,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idevap)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idevap)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idrain).and.Hout(idrain,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idrain)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idrain)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3063,7 +3181,7 @@
 # endif
 # ifdef SHORTWAVE
         IF (.not.got_var(idSrad).and.Hout(idSrad,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSrad)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSrad)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3071,25 +3189,25 @@
 # endif
 #endif
         IF (.not.got_var(idUsms).and.Hout(idUsms,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUsms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms).and.Hout(idVsms,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVsms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbms).and.Hout(idUbms,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbms).and.Hout(idVbms,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbms)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3097,61 +3215,61 @@
 #ifdef SOLVE3D
 # ifdef BBL_MODEL
         IF (.not.got_var(idUbrs).and.Hout(idUbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbrs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbrs).and.Hout(idVbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbrs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbrs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbws).and.Hout(idUbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbws)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbws)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbws).and.Hout(idVbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbws)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbws)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbcs).and.Hout(idUbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbcs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbcs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbcs).and.Hout(idVbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbcs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbcs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbot).and.Hout(idUbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbot)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbot)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbot).and.Hout(idVbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbot)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbot)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbur).and.Hout(idUbur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbur)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbvr).and.Hout(idVbvr,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbvr)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbvr)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3160,100 +3278,100 @@
 #endif
 #if defined NEARSHORE_MELLOR
         IF (.not.got_var(idW2xx).and.Hout(idW2xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xx)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW2xx)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idW2xy).and.Hout(idW2xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xy)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW2xy)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idW2yy).and.Hout(idW2yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2yy)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW2yy)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idU2rs).and.Hout(idU2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2rs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idU2rs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idV2rs).and.Hout(idV2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2rs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idV2rs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idU2Sd).and.Hout(idU2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2Sd)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idU2Sd)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idV2Sd).and.Hout(idV2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2Sd)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idV2Sd)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idW3xx).and.Hout(idW3xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xx)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW3xx)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idW3xy).and.Hout(idW3xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xy)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW3xy)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idW3yy).and.Hout(idW3yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3yy)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW3yy)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef NEARSHORE_MELLOR05
         IF (.not.got_var(idW3zx).and.Hout(idW3zx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW3zx)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idW3zy).and.Hout(idW3zy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zy)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idW3zy)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idU3Sd).and.Hout(idU3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idU3rs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idV3rs).and.Hout(idV3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3rs)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idV3rs)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idU3Sd).and.Hout(idU3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3Sd)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idU3Sd)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idV3Sd).and.Hout(idV3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3Sd)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idV3Sd)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3262,7 +3380,7 @@
 #endif
 #ifdef WAVES_HEIGHT
         IF (.not.got_var(idWamp).and.Hout(idWamp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWamp)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3270,7 +3388,7 @@
 #endif
 #ifdef WAVES_LENGTH
         IF (.not.got_var(idWlen).and.Hout(idWlen,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWlen)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3278,7 +3396,7 @@
 #endif
 #ifdef WAVES_DIR
         IF (.not.got_var(idWdir).and.Hout(idWdir,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWdir)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3286,7 +3404,7 @@
 #endif
 #ifdef WAVES_TOP_PERIOD
         IF (.not.got_var(idWptp).and.Hout(idWptp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWptp)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3294,7 +3412,7 @@
 #endif
 #ifdef WAVES_BOT_PERIOD
         IF (.not.got_var(idWpbt).and.Hout(idWpbt,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWpbt)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3302,7 +3420,7 @@
 #endif
 #ifdef WAVES_UB
         IF (.not.got_var(idWorb).and.Hout(idWorb,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWorb)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3310,7 +3428,7 @@
 #endif
 #if defined TKE_WAVEDISS || defined WAVES_OCEAN
         IF (.not.got_var(idWdis).and.Hout(idWdis,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdis)),          &
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWdis)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3319,13 +3437,13 @@
 #ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
 # ifdef ADJUST_BOUNDARY
           ELSE IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
-            IF (Master) WRITE (stdout,60)                               &
+            IF (Master) WRITE (stdout,70)                               &
      &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
@@ -3335,14 +3453,14 @@
         END DO
         DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTsur(itrc))),  &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
 # if defined FORWARD_WRITE && defined LMD_NONLOCAL
           IF (.not.got_var(idGhat(itrc)).and.Hout(idGhat(itrc),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idGhat(itrc))),  &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idGhat(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -3352,27 +3470,27 @@
 # ifdef SEDIMENT
         DO i=1,NST
           IF (.not.got_var(idfrac(i)).and.Hout(idfrac(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idfrac(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idfrac(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
 
           IF(.not.got_var(idBmas(i)).and.Hout(idBmas(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBmas(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idBmas(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
 #  ifdef BEDLOAD
           IF (.not.got_var(idUbld(i)).and.Hout(idUbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbld(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUbld(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
           IF (.not.got_var(idVbld(i)).and.Hout(idVbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbld(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVbld(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -3381,7 +3499,7 @@
         END DO
         DO i=1,MBEDP
           IF (.not.got_var(idSbed(i)).and.Hout(idSbed(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbed(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbed(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -3391,7 +3509,7 @@
 # if defined SEDIMENT || defined BBL_MODEL
         DO i=1,MBOTP
           IF (.not.got_var(idBott(i)).and.Hout(idBott(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBott(i))),     &
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idBott(i))),     &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -3417,9 +3535,10 @@
   20  FORMAT (6x,'DEF_HIS   - inquiring history file, Grid ',i2.2,': ', &
      &        a)
   30  FORMAT (/,' DEF_HIS - unable to create history NetCDF file: ',a)
-  40  FORMAT (1pe11.4,1x,'millimeter')
-  50  FORMAT (/,' DEF_HIS - unable to open history NetCDF file: ',a)
-  60  FORMAT (/,' DEF_HIS - unable to find variable: ',a,2x,            &
+  40  FORMAT ('time dependent',1x,a)
+  50  FORMAT (1pe11.4,1x,'millimeter')
+  60  FORMAT (/,' DEF_HIS - unable to open history NetCDF file: ',a)
+  70  FORMAT (/,' DEF_HIS - unable to find variable: ',a,2x,            &
      &        ' in history NetCDF file: ',a)
 
       RETURN

@@ -426,6 +426,7 @@
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
 ** CLIPPING_SPLIT      use to separate analysis due to IC, forcing, and OBC  **
 ** DATALESS_LOOPS      use if testing convergence of Picard iterations       **
+** ENKF_RESTART        use if writting restart fields for EnKF               **
 ** FORWARD_MIXING      use if processing forward vertical mixing coefficient **
 ** FORWARD_WRITE       use if writing out forward solution, basic state      **
 ** FORWARD_READ        use if reading in  forward solution, basic state      **

@@ -65,7 +65,9 @@
 !!    USE tl_gls_corstep_mod, ONLY : tl_gls_corstep
 !!    USE tl_gls_prestep_mod, ONLY : tl_gls_prestep
 # endif
+# ifndef FORCING_SV
       USE tl_ini_fields_mod, ONLY : tl_ini_fields, tl_ini_zeta
+# endif
 # ifdef LMD_MIXING_NOT_YET
 !!    USE tl_lmd_vmix_mod, ONLY : tl_lmd_vmix
 # endif
@@ -206,17 +208,20 @@
           IF (FrequentImpulse(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+              CALL tl_set_depth (ng, tile)
             END DO
 !$OMP BARRIER
           END IF
 #  else
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+            CALL tl_set_depth (ng, tile)
           END DO
 !$OMP BARRIER
 #  endif
         END DO
 # endif
+# ifndef FORCING_SV
 !
 !-----------------------------------------------------------------------
 !  If not a restart, initialize all time levels and compute other
@@ -243,6 +248,7 @@
 !$OMP BARRIER
           END IF
         END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related

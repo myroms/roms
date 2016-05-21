@@ -638,13 +638,14 @@
                 i=BOUNDS(ng)%edge(ib,r2dvar)
                 DO j=JstrT,JendT
                   tl_zeta_obc(j,ib,ir,Linp)=tl_zeta_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(om_r(i,j)*on_r(i,j))
+     &                                      SQRT(on_r(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,r2dvar)
                 DO i=IstrT,IendT
                   tl_zeta_obc(i,ib,ir,Linp)=tl_zeta_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_r(i,j)*on_r(i,j))
+     &                                      SQRT(om_r(i,j))
+
                 END DO
               END IF
             END IF
@@ -669,13 +670,13 @@
                 i=BOUNDS(ng)%edge(ib,u2dvar)
                 DO j=JstrT,JendT
                   tl_ubar_obc(j,ib,ir,Linp)=tl_ubar_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(om_u(i,j)*on_u(i,j))
+     &                                      SQRT(on_u(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,u2dvar)
                 DO i=IstrP,IendT
                   tl_ubar_obc(i,ib,ir,Linp)=tl_ubar_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_u(i,j)*on_u(i,j))
+     &                                      SQRT(om_u(i,j))
                 END DO
               END IF
             END IF
@@ -700,13 +701,13 @@
                 i=BOUNDS(ng)%edge(ib,v2dvar)
                 DO j=JstrP,JendT
                   tl_vbar_obc(j,ib,ir,Linp)=tl_vbar_obc(j,ib,ir,Linp)/  &
-     &                                      SQRT(om_v(i,j)*on_v(i,j))
+     &                                      SQRT(on_v(i,j))
                 END DO
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,v2dvar)
                 DO i=IstrT,IendT
                   tl_vbar_obc(i,ib,ir,Linp)=tl_vbar_obc(i,ib,ir,Linp)/  &
-     &                                      SQRT(om_v(i,j)*on_v(i,j))
+     &                                      SQRT(om_v(i,j))
                 END DO
               END IF
             END IF
@@ -732,7 +733,7 @@
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,u2dvar)
                 DO j=JstrT,JendT
-                  cff=om_u(i,j)*on_u(i,j)*0.5_r8
+                  cff=on_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     tl_u_obc(j,k,ib,ir,Linp)=tl_u_obc(j,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -743,7 +744,7 @@
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,u2dvar)
                 DO i=IstrP,IendT
-                  cff=om_u(i,j)*on_u(i,j)*0.5_r8
+                  cff=om_u(i,j)*0.5_r8
                   DO k=1,N(ng)
                     tl_u_obc(i,k,ib,ir,Linp)=tl_u_obc(i,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -773,7 +774,7 @@
               IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                 i=BOUNDS(ng)%edge(ib,v2dvar)
                 DO j=JstrP,JendT
-                  cff=om_v(i,j)*on_v(i,j)*0.5_r8
+                  cff=on_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     tl_v_obc(j,k,ib,ir,Linp)=tl_v_obc(j,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -784,7 +785,7 @@
               ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                 j=BOUNDS(ng)%edge(ib,v2dvar)
                 DO i=IstrT,IendT
-                  cff=om_v(i,j)*on_v(i,j)*0.5_r8
+                  cff=om_v(i,j)*0.5_r8
                   DO k=1,N(ng)
                     tl_v_obc(i,k,ib,ir,Linp)=tl_v_obc(i,k,ib,ir,Linp)/  &
      &                                       SQRT(cff*                  &
@@ -815,7 +816,7 @@
                 IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
                   i=BOUNDS(ng)%edge(ib,r2dvar)
                   DO j=JstrT,JendT
-                    cff=om_r(i,j)*on_r(i,j)
+                    cff=on_r(i,j)
                     DO k=1,N(ng)
                       tl_t_obc(j,k,ib,ir,Linp,it)=                      &
      &                                   tl_t_obc(j,k,ib,ir,Linp,it)/   &
@@ -825,7 +826,7 @@
                 ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
                   j=BOUNDS(ng)%edge(ib,r2dvar)
                   DO i=IstrT,IendT
-                    cff=om_r(i,j)*on_r(i,j)
+                    cff=om_r(i,j)
                     DO k=1,N(ng)
                       tl_t_obc(i,k,ib,ir,Linp,it)=                      &
      &                                   tl_t_obc(i,k,ib,ir,Linp,it)/   &

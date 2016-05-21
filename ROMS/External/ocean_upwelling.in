@@ -497,6 +497,11 @@ Hout(idBath) == T       ! bath               time-dependent bathymetry
 
 Hout(idTvar) == T T     ! temp, salt         temperature and salinity
 
+Hout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
+Hout(idpthU) == F       ! z_u                time-varying depths of U-points
+Hout(idpthV) == F       ! z_v                time-varying depths of V-points
+Hout(idpthW) == F       ! z_w                time-varying depths of W-points
+
 Hout(idUsms) == F       ! sustr              surface U-stress
 Hout(idVsms) == F       ! svstr              surface V-stress
 Hout(idUbms) == F       ! bustr              bottom U-stress
@@ -799,6 +804,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
 ! Output NetCDF file names, [1:Ngrids].
 
+     DAINAME == ocean_dai.nc
      GSTNAME == ocean_gst.nc
      RSTNAME == ocean_rst.nc
      HISNAME == ocean_his.nc
@@ -2086,6 +2092,11 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !
 ! Hout(idTvar)   Write out active (NAT) tracers: temperature and salinity.
 !
+! Hout(idpthR)   Write out time-varying depths of RHO-points.
+! Hout(idpthU)   Write out time-varying depths of U-points.
+! Hout(idpthV)   Write out time-varying depths of V-points.
+! Hout(idpthW)   Write out time-varying depths of W-points.
+!
 ! Hout(idUsms)   Write out surface U-momentum stress.
 ! Hout(idVsms)   Write out surface V-momentum stress.
 ! Hout(idUbms)   Write out bottom  U-momentum stress.
@@ -2472,6 +2483,8 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !
 ! Output file names:
 !
+! DAINAME      Output data assimilation next cycle initial conditions (4D-Var
+!                analysis) or restart (Ensemble Kalman Filter, EnKF) file name.
 ! GSTNAME      Output GST analysis re-start file name.
 ! RSTNAME      Output re-start file name.
 ! HISNAME      Output history file name.

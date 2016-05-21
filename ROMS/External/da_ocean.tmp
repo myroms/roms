@@ -497,6 +497,11 @@ Hout(idBath) == T       ! bath               time-dependent bathymetry
 
 Hout(idTvar) == T T     ! temp, salt         temperature and salinity
 
+Hout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
+Hout(idpthU) == F       ! z_u                time-varying depths of U-points
+Hout(idpthV) == F       ! z_v                time-varying depths of V-points
+Hout(idpthW) == F       ! z_w                time-varying depths of W-points
+
 Hout(idUsms) == F       ! sustr              surface U-stress
 Hout(idVsms) == F       ! svstr              surface V-stress
 Hout(idUbms) == F       ! bustr              bottom U-stress
