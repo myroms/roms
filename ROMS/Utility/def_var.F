@@ -381,7 +381,7 @@
               ioerror=status
             END IF
           END IF
-        END IF!
+        END IF
 !
 !  If applicable, define "positive_value" attribute.
 !
@@ -696,7 +696,6 @@
             END IF
           END IF
         END IF
-      END IF
 
 #if defined MASKING && !defined WRITE_WATER
 !
@@ -759,6 +758,7 @@
           END IF
         END IF
 #endif
+      END IF
 !
 !  Clean information variables.
 !

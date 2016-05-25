@@ -227,6 +227,7 @@
               exit_flag=3
               ioerror=status
             END IF
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  Observations provenance IDs. Copy global attribute from
@@ -242,6 +243,7 @@
               exit_flag=3
               ioerror=status
             END IF
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  SVN repository information.
@@ -916,7 +918,7 @@
      &                   nf90_int, 1, (/datumDim/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
 !                                       copy attribute from observations
-          IF (exit_flag.eq.NoError) THEN
+          IF (OutThread) THEN
             status=nf90_copy_att(OBSncid, vindex,                       &
      &                           'flag_values',                         &
      &                           DAV(ng)%ncid, DAV(ng)%Vid(idOpro))
@@ -927,8 +929,16 @@
                ioerror=status
             END IF
           END IF
+# ifdef DISTRIBUTE
+          ibuffer(1)=exit_flag
+          ibuffer(2)=ioerror
+          CALL mp_bcasti (ng, iNLM, ibuffer)
+          exit_flag=ibuffer(1)
+          ioerror=ibuffer(2)
+# endif
+          IF (exit_flag.ne.NoError) RETURN
 !                                       copy attribute from observations
-          IF (exit_flag.eq.NoError) THEN
+          IF (OutThread) THEN
             status=nf90_copy_att(OBSncid, vindex,                       &
      &                           'flag_meanings',                       &
      &                           DAV(ng)%ncid, DAV(ng)%Vid(idOpro))
@@ -939,6 +949,14 @@
                ioerror=status
             END IF
           END IF
+# ifdef DISTRIBUTE
+          ibuffer(1)=exit_flag
+          ibuffer(2)=ioerror
+          CALL mp_bcasti (ng, iNLM, ibuffer)
+          exit_flag=ibuffer(1)
+          ioerror=ibuffer(2)
+# endif
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Observations time.
@@ -1130,6 +1148,8 @@
 !
         Vinfo( 1)=Vname(1,idObsS)
         Vinfo( 2)=Vname(2,idObsS)
+        Vinfo(24)='_FillValue'
+        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsS),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1140,6 +1160,8 @@
 !
         Vinfo( 1)=Vname(1,idNLmi)
         Vinfo( 2)=Vname(2,idNLmi)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmi),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1151,6 +1173,8 @@
         haveNLmod(ng)=.FALSE.
         Vinfo( 1)=Vname(1,idNLmo)
         Vinfo( 2)=Vname(2,idNLmo)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmo),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1167,6 +1191,8 @@
 #  else
         Vinfo( 2)=Vname(2,idTLmo)
 #  endif
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idTLmo),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1177,6 +1203,8 @@
 !
         Vinfo( 1)=Vname(1,idMOMi)
         Vinfo( 2)=Vname(2,idMOMi)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idMOMi),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1185,6 +1213,8 @@
 !
         Vinfo( 1)=Vname(1,idMOMf)
         Vinfo( 2)=Vname(2,idMOMf)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idMOMf),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1239,6 +1269,8 @@
         Vinfo( 2)='initial gradient for minimization, observation space'
         vardim(1)=datumDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1250,6 +1282,8 @@
         vardim(1)=datumDim
         vardim(2)=MinnerDim
         vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1261,6 +1295,8 @@
         vardim(1)=datumDim
         vardim(2)=NinnerDim
         vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1273,6 +1309,8 @@
         Vinfo( 1)='RPmodel_initial'
         Vinfo( 2)='initial representer model at observation locations'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1286,6 +1324,8 @@
         Vinfo( 1)='ObsImpact_total'
         Vinfo( 2)='total observation impact'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1296,6 +1336,8 @@
         Vinfo( 1)='ObsSens_total'
         Vinfo( 2)='total observation sensitivity'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1310,6 +1352,8 @@
         Vinfo( 1)='ObsImpact_IC'
         Vinfo( 2)='observation impact due to initial conditions'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1321,6 +1365,8 @@
         Vinfo( 1)='ObsImpact_FC'
         Vinfo( 2)='observation impact due to surface forcing'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -1332,6 +1378,8 @@
         Vinfo( 1)='ObsImpact_BC'
         Vinfo( 2)='observation impact due to open boundary conditions'
         vardim(1)=datumDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN

@@ -20,6 +20,9 @@
 # ifdef BIOLOGY
       USE mod_biology
 # endif
+# ifdef FOUR_DVAR
+      USE mod_fourdvar
+# endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
@@ -169,6 +172,17 @@
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
+
+        status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'boundary',      &
+     &                 4, DimIDs(14))
+        IF (exit_flag.ne.NoError) RETURN
+
+#ifdef FOUR_DVAR
+        status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nstate',        &
+     &                 NstateVar(ng), DimIDs(29))
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname,                  &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 nf90_unlimited, DimIDs(12))
