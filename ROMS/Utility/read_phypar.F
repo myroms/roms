@@ -58,9 +58,6 @@
 #if defined SOLVE3D && defined T_PASSIVE
       logical, allocatable :: Linert(:,:)
 #endif
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-      logical, allocatable :: Lbottom(:,:)
-#endif
       logical, allocatable :: Ltracer(:,:)
 #if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
@@ -157,11 +154,6 @@
               CALL allocate_stepping
 #if defined FOUR_DVAR || defined VERIFICATION
               CALL allocate_fourdvar
-#endif
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-              IF (.not.allocated(Lbottom)) THEN
-                allocate ( Lbottom(MBOTP,Ngrids) )
-              END IF
 #endif
 #if defined DIAGNOSTICS_UV
               IF (.not.allocated(Ldiag)) THEN
@@ -1348,6 +1340,7 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idVbms,:))
+#ifdef BBL_MODEL
             CASE ('Hout(idUbrs)')
               IF (idUbrs.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idUbrs'
@@ -1418,6 +1411,7 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idVbvr,:))
+#endif
             CASE ('Hout(idW2xx)')
               IF (idW2xx.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idW2xx'
@@ -1739,21 +1733,6 @@
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
                   Hout(itrc,ng)=Linert(i,ng)
-                END DO
-              END DO
-#endif
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-            CASE ('Hout(idBott)')
-              IF (MAXVAL(idBott).eq.0) THEN
-                WRITE (out,280) 'idBott'
-                exit_flag=5
-                RETURN
-              END IF
-              Npts=load_l(Nval, Cval, MBOTP*Ngrids, Lbottom)
-              DO ng=1,Ngrids
-                DO itrc=1,MBOTP
-                  i=idBott(itrc)
-                  Hout(i,ng)=Lbottom(itrc,ng)
                 END DO
               END DO
 #endif
@@ -2962,6 +2941,8 @@
 !  we are estimating initial conditions.
 !
         nADJ(ng)=ntimes(ng)
+#endif
+#if defined IS4DVAR || defined W4DPSAS || defined W4DVAR
 !
 !  Insure that restart file is written only at the end.  In sequential
 !  data assimilation the restart file is used as the first guess for
@@ -4173,14 +4154,6 @@
      &          Hout(idTvar(inert(itrc)),ng), 'Hout(inert)',            &
      &          'Write out inert passive tracer ', itrc,                &
      &          TRIM(Vname(1,idTvar(inert(itrc))))
-          END DO
-#endif
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-          DO itrc=1,MBOTP
-            IF (Hout(idBott(itrc),ng)) WRITE (out,180)                  &
-     &          Hout(idBott(itrc),ng), 'Hout(idBott)',                  &
-     &          'Write out bottom property ', itrc,                     &
-     &          TRIM(Vname(1,idBott(itrc)))
           END DO
 #endif
 #ifdef SOLVE3D

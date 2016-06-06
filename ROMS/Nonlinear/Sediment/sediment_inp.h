@@ -29,7 +29,7 @@
       integer :: decode_line, load_i, load_l, load_lbc, load_r
 
       logical, dimension(Ngrids) :: Lbed
-      logical, dimension(MBOTP,Ngrids) :: Lbottom
+      logical, dimension(Ngrids) :: Lbottom
       logical, dimension(NCS,Ngrids) :: Lmud
       logical, dimension(NNS,Ngrids) :: Lsand
 
@@ -945,6 +945,102 @@
               DO ng=1,Ngrids
                 Hout(i,ng)=Lbed(ng)
               END DO
+            CASE ('Hout(isd50)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(isd50)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(idens)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(idens)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+             END DO
+            CASE ('Hout(iwsed)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(iwsed)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(itauc)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(itauc)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(irlen)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(irlen)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(irhgt)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(irhgt)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(ibwav)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(ibwav)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izdef)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izdef)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izapp)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izapp)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izNik)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izNik)
+             DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izbio)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izbio)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izbfm)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izbfm)
+              DO ng=1,Ngrids
+               Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izbld)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izbld)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(izwbl)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(izwbl)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(iactv)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(iactv)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
+            CASE ('Hout(ishgt)')
+              Npts=load_l(Nval, Cval, Ngrids, Lbottom)
+              i=idBott(ishgt)
+              DO ng=1,Ngrids
+                Hout(i,ng)=Lbottom(ng)
+              END DO
           END SELECT
         END IF
       END DO
@@ -1058,12 +1154,12 @@
               i=idUbld(itrc)
               IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idUbld)',                                       &
-     &            'Write out U-bedload, sediment ', itrc,               &
+     &            'Write out bed load at U-points, sediment ', itrc,    &
      &            TRIM(Vname(1,i))
               i=idVbld(itrc)
               IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idVbld)',                                       &
-     &            'Write out V-bedload, sediment ', itrc,               &
+     &            'Write out bed load at V-points, sediment ', itrc,    &
      &            TRIM(Vname(1,i))
             END DO
 #endif
@@ -1072,6 +1168,12 @@
               IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &            'Hout(idSbed)',                                       &
      &            'Write out BED property ', itrc, TRIM(Vname(1,i))
+            END DO
+            DO itrc=1,MBOTP
+              i=idBott(itrc)
+              IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
+     &           'Hout(idBott)',                                        &
+     &           'Write out BOTTOM property', itrc, TRIM(Vname(1,i))
             END DO
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \
@@ -1253,13 +1355,13 @@
      &        'Akt_bak',6x,'Tnudg',/,9x,'(N/m2)',6x,'(N/m2)',6x,        &
      &        '(m2/s)',6x,'(m4/s)',7x,'(m2/s)',6x,'(day)',/)
   90  FORMAT (/,9x,'morph_fac',/,9x,'(nondim)',/)
- 100  FORMAT (/,' New bed layer formed when deposition exceeds ',e11.4, &
+ 100  FORMAT (/,' New bed layer formed when deposition exceeds ',e12.5, &
      &        ' (m).')
  110  FORMAT (' Two first layers are combined when 2nd layer smaller ', &
-     &         'than ',e11.4,' (m).')
- 120  FORMAT (' Rate coefficient for bed load transport = ',e11.4,/)
- 130  FORMAT (' Transition for mixed sediment =',e11.4,/)
- 140  FORMAT (' Transition for cohesive sediment =',e11.4,/)
+     &         'than ',e12.5,' (m).')
+ 120  FORMAT (' Rate coefficient for bed load transport = ',e12.5,/)
+ 130  FORMAT (' Transition for mixed sediment =',e12.5,/)
+ 140  FORMAT (' Transition for cohesive sediment =',e12.5,/)
  150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
  160  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
 

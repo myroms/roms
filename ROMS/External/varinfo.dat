@@ -767,7 +767,7 @@
 
 'tisrf'
   'temperature of ice surface'
-  'degrees Kelvin'
+  'degrees Celcius'
   'surface temperature, scalar, series'
   'ocean_time'
   'idTice'
@@ -794,7 +794,7 @@
 
 'chu_iw'
   'ice-water momentum transfer coefficient'
-  'metre second-1'
+  'meter second-1'
   'transfer coefficient, scalar, series'
   'ocean_time'
   'idChuiw'
@@ -830,7 +830,7 @@
 
 'iomflx'
   'ice-ocean mass flux'
-  'metre/sec'
+  'meter second-1'
   'ice-ocean mass flux, scalar, series'
   'ocean_time'
   'idIomflx'
@@ -1450,7 +1450,7 @@
   1.0
 
 'Pwave_top'                                        ! Input
-  'wind-induced surface wave Period'
+  'wind-induced peak surface wave period'
   'second'                                         ! [s]
   'Pwave_top, scalar, series'
   'wave_time'
@@ -5416,5 +5416,23 @@
   'nulvar'
   'datum'
   'idMOMf'
+  'nulvar'
+  1.0d0
+
+'BgError_value'                                    ! Output
+  'Background error at observation locations'
+  'nulvar'
+  'nulvar'
+  'datum'
+  'idBgEr'
+  'nulvar'
+  1.0d0
+
+'BgThresh_value'                                   ! Output
+  'Threshold for background quality control check of observations'
+  'nulvar'
+  'nulvar'
+  'datum'
+  'idBgTh'
   'nulvar'
   1.0d0
