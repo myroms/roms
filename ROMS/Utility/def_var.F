@@ -116,6 +116,7 @@
 
       integer :: def_var
 
+      character (len=  5) location
       character (len=160) text
 !
 !-----------------------------------------------------------------------
@@ -167,6 +168,171 @@
           END IF
         END IF
 #endif
+!
+!  Define special attributes for SGRID conventions variable "grid".
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (TRIM(Vinfo(1)).eq.'grid') THEN
+            status=nf90_put_att(ncid, Vid, 'cf_role',                   &
+     &                          'grid_topology')
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'cf_role',                  &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            status=nf90_put_att(ncid, Vid, 'topology_dimension',        &
+     &                          (/2/))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'topology_dimension',       &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            status=nf90_put_att(ncid, Vid, 'node_dimensions',           &
+     &                          'xi_psi eta_psi')
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'node_dimensions',          &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            text='xi_rho: xi_psi (padding: both) '//                    &
+     &           'eta_rho: eta_psi (padding: both)'
+            status=nf90_put_att(ncid, Vid, 'face_dimensions',           &
+     &                          TRIM(text))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'face_dimensions',          &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            text='xi_u: xi_psi eta_u: eta_psi (padding: both)'
+            status=nf90_put_att(ncid, Vid, 'edge1_dimensions',          &
+     &                          TRIM(text))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'edge1_dimensions',         &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            text='xi_v: xi_psi (padding: both) eta_v: eta_psi'
+            status=nf90_put_att(ncid, Vid, 'edge2_dimensions',          &
+     &                          TRIM(text))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'edge2_dimensions',         &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            IF (spherical) THEN
+              status=nf90_put_att(ncid, Vid, 'node_coordinates',        &
+     &                            'lon_psi lat_psi')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'node_coordinates',       &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'face_coordinates',        &
+     &                            'lon_rho lat_rho')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'face_coordinates',       &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'edge1_coordinates',       &
+     &                            'lon_u lat_u')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'edge1_coordinates',      &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'edge2_coordinates',       &
+     &                            'lon_v lat_v')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'edge2_coordinates',      &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              status=nf90_put_att(ncid, Vid, 'node_coordinates',        &
+     &                            'x_psi y_psi')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'node_coordinates',       &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'face_coordinates',        &
+     &                            'x_rho y_rho')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'face_coordinates',       &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'edge1_coordinates',       &
+     &                            'x_u y_u')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'edge1_coordinates',      &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+
+              status=nf90_put_att(ncid, Vid, 'edge2_coordinates',       &
+     &                            'x_v y_v')
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,30) 'edge2_coordinates',      &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            END IF
+#ifdef SOLVE3D
+!
+            status=nf90_put_att(ncid, Vid, 'vertical_dimensions',       &
+     &                          's_rho: s_w (padding: none)')
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'vertical_dimensions',      &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+#endif
+          END IF
+        END IF
+
 !
 !  Define "longname" attribute.
 !
@@ -594,56 +760,101 @@
             IF (spherical) THEN
               IF (INT(Aval(5)).eq.r2dvar) THEN
                 text='lon_rho lat_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
                 text='lon_rho lat_rho s_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='lon_rho lat_rho s_w'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
                 text='lon_rho lat_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
                 text='lon_u lat_u'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
                 text='lon_u lat_u s_rho'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
                 text='lon_u lat_u s_w'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
                 text='lon_v lat_v'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
                 text='lon_v lat_v s_rho'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
                 text='lon_v lat_v s_w'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
                 text='lon_psi lat_psi'
+                location='node'
               ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
                 text='lon_psi lat_psi s_rho'
+                location='node'
               END IF
             ELSE
               IF (INT(Aval(5)).eq.r2dvar) THEN
                 text='x_rho y_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
                 text='x_rho y_rho s_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='x_rho y_rho s_w'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
                 text='x_rho y_rho'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
                 text='x_u y_u'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
                 text='x_u y_u s_rho'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
                 text='x_u y_u s_w'
+                location='edge1'
               ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
                 text='x_v y_v'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
                 text='x_v y_v s_rho'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
                 text='x_v y_v s_w'
+                location='edge2'
               ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
                 text='x_psi y_psi'
+                location='node'
               ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
                 text='x_psi y_psi s_rho'
+                location='node'
               END IF
             END IF
+
+            status=nf90_put_att(ncid, Vid, 'grid',                      &
+     &                          'grid')
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'grid',                     &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
+            status=nf90_put_att(ncid, Vid, 'location',                  &
+     &                          TRIM(location))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,30) 'location',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+!
             latt=LEN_TRIM(text)
             IF (((ABS(INT(Aval(5))).le.4).and.(nVdim.gt.2)).or.         &
      &          ((ABS(INT(Aval(5))).gt.4).and.(nVdim.gt.3))) THEN

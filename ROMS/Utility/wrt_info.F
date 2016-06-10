@@ -1321,6 +1321,15 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
+!  SGRID conventions for staggered data on structured grids. The value
+!  is arbitrary but is set to unity so it can be used as logical during
+!  post-processing.
+!
+      CALL netcdf_put_ivar (ng, model, ncname, 'grid',                  &
+     &                      (/1/), (/0/), (/0/),                        &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+!
 !  S-coordinate non-dimensional independent variables.
 !
       CALL netcdf_put_fvar (ng, model, ncname, 's_rho',                 &
