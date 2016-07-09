@@ -214,19 +214,6 @@
      &                      ncid = DAV(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 !
-!  Read in and write out Z-fractional coordinate.
-!
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name, Vname(1,idObsZ),    &
-     &                      obs_work,                                   &
-     &                      ncid = OBS(ng)%ncid,                        &
-     &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (exit_flag.ne. NoError) RETURN
-
-      CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsZ),    &
-     &                      obs_work, (/1/), (/Ndatum(ng)/),            &
-     &                      ncid = DAV(ng)%ncid)
-      IF (exit_flag.ne.NoError) RETURN
-!
 !  Read in and write out observations total error
 !  (instrument + sampling + representation).
 !
@@ -271,10 +258,18 @@
      &                      ncid = DAV(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
 # else
+#  ifdef VERIFICATION
       CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmo),    &
      &                      mod_value,                                  &
      &                      ncid = DAV(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
+#  else
+      CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmo),    &
+     &                      mod_value,                                  &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,outer/),                        &
+     &                      total = (/Ndatum(ng),1/))
+#  endif
 # endif
       IF (exit_flag.ne. NoError) RETURN
 !

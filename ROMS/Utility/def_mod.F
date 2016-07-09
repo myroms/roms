@@ -47,6 +47,9 @@
       integer, parameter :: Natt = 25
 
       integer :: iterDim, datumDim, recordDim, stateDim, surveyDim
+# ifdef RPCG
+      integer :: datumDimp, NouterDimp
+# endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
       integer :: MinnerDim, MouterDim, NinnerDim, NouterDim, threeDim
 # endif
@@ -149,6 +152,16 @@
         status=def_dim(ng, iNLM, DAV(ng)%ncid, ncname, 'datum',         &
      &                 Ndatum(ng), datumDim)
         IF (exit_flag.ne.NoError) RETURN
+
+# ifdef RPCG
+        status=def_dim(ng, iNLM, DAV(ng)%ncid, ncname, 'datum+1',       &
+     &                 Ndatum(ng)+1, datumDimp)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iNLM, DAV(ng)%ncid, ncname, 'Nouter+1',      &
+     &                 Nouter+1, NouterDimp)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
 
 # ifdef FOUR_DVAR
 #  if defined IS4DVAR || defined WEAK_CONSTRAINT
@@ -534,6 +547,8 @@
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -547,6 +562,8 @@
         Vinfo( 2)='conjugate gradient beta coefficient'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -560,6 +577,8 @@
         Vinfo( 2)='Lanczos algorithm delta coefficient'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -571,6 +590,8 @@
         Vinfo( 2)='normalization coefficients for Lanczos vectors'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -582,6 +603,8 @@
         Vinfo( 2)='Lanczos algorithm gamma coefficient'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -624,6 +647,8 @@
         Vinfo( 2)='Lanczos vector normalization factor'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -637,6 +662,8 @@
         Vinfo( 2)='reduction in the gradient norm'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -649,6 +676,8 @@
         Vinfo( 2)='reduction in the gradient norm, v-space'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -658,6 +687,8 @@
         Vinfo( 2)='reduction in the gradient norm, y-space'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -682,6 +713,8 @@
         Vinfo( 2)='tridiagonal matrix, upper diagonal elements'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -695,6 +728,8 @@
         Vinfo( 2)='Lanczos recurrence eigenvalues'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -706,6 +741,8 @@
         Vinfo( 2)='Ritz eigenvalues relative error'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -719,6 +756,8 @@
         Vinfo( 2)='Lanczos recurrence eigenvectors'
         vardim(1)=NinnerDim
         vardim(2)=NinnerDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -732,6 +771,8 @@
         vardim(1)=NinnerDim
         vardim(2)=NinnerDim
         vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, NF_FRST,          &
      &                 3, vardim, Aval, Vinfo, ncname,                  &
      &                 SetFillVal = .FALSE.,                            &
@@ -786,6 +827,8 @@
         Vinfo( 2)='first guess initial data misfit'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -797,6 +840,8 @@
         Vinfo( 2)='state estimate data misfit'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -808,6 +853,8 @@
         Vinfo( 2)='model penalty function'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -819,6 +866,8 @@
         Vinfo( 2)='optimal penalty function'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -830,6 +879,8 @@
         Vinfo( 2)='actual model penalty function'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -841,6 +892,8 @@
         Vinfo( 2)='actual data penalty function'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -852,6 +905,8 @@
         Vinfo( 2)='actual total penalty function'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 2, vardim, Aval, Vinfo, ncname,                  &
      &                 SetParAccess = .FALSE.)
@@ -1165,8 +1220,32 @@
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmi),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+#  ifdef BGQC
+!
+!  Background error at observation locations.
+!
+        Vinfo( 1)=Vname(1,idBgEr)
+        Vinfo( 2)=Vname(2,idBgEr)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idBgEr),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Threshold for background quality control check of observations.
+!
+        Vinfo( 1)=Vname(1,idBgTh)
+        Vinfo( 2)=Vname(2,idBgTh)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idBgTh),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
-# ifndef IS4DVAR_SENSITIVITY
+# if !defined IS4DVAR_SENSITIVITY && \
+     (defined IS4DVAR             || defined VERIFICATION || \
+      defined WEAK_CONSTRAINT)
 !
 !  Nonlinear model at observation points.
 !
@@ -1175,9 +1254,16 @@
         Vinfo( 2)=Vname(2,idNLmo)
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+#  ifdef VERIFICATION
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmo),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+#  else
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmo),     &
+     &                 NF_FRST, 2, (/datumDim,NouterDim/), Aval, Vinfo, &
+     &                 ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 # if defined IS4DVAR         || defined IS4DVAR_SENSITIVITY || \
      defined WEAK_CONSTRAINT
@@ -1267,6 +1353,34 @@
 !
         Vinfo( 1)='zgrad0'
         Vinfo( 2)='initial gradient for minimization, observation space'
+# ifdef RPCG
+        vardim(1)=datumDimp
+# else
+        vardim(1)=datumDim
+# endif
+        vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# ifdef RPCG
+!
+!  Define initial gradient for minimization.
+!
+        Vinfo( 1)='vgrad0'
+        Vinfo( 2)='initial gradient for minimization, v space'
+        vardim(1)=datumDimp
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define sum of evolved outer-loop increments in observation space.
+!
+        Vinfo( 1)='Hbk'
+        Vinfo( 2)='evolved sum of increments in observation space'
         vardim(1)=datumDim
         vardim(2)=NouterDim
         Vinfo(24)='_FillValue'
@@ -1275,8 +1389,42 @@
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
+!  Define outer-loop background cost function.
+!
+        Vinfo( 1)='Jb0'
+        Vinfo( 2)='Outer-loop background cost function'
+        vardim(1)=NouterDimp
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 1, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+!
 !  Define Lanczos vectors in observation space.
 !
+# ifdef RPCG
+        Vinfo( 1)='vcglwk'
+        Vinfo( 2)='Preconditioned Lanczos vectors, observation space'
+        vardim(1)=datumDimp
+        vardim(2)=MinnerDim
+        vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 3, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+        Vinfo( 1)='zcglwk'
+        Vinfo( 2)='Lanczos vectors, observation space'
+        vardim(1)=datumDimp
+        vardim(2)=MinnerDim
+        vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 3, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# else
         Vinfo( 1)='zcglwk'
         Vinfo( 2)='Lanczos vectors, observation space'
         vardim(1)=datumDim
@@ -1287,6 +1435,7 @@
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
 !
 !  Define previous values of TLmodVal.
 !

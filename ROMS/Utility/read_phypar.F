@@ -2867,9 +2867,12 @@
 #endif
       END DO
 !
-!  Set switch to create NetCDF file.
+!  Set various parameters.
 !
       DO ng=1,Ngrids
+!
+!  Set switch to craeate NetCDF file.
+!
 #ifdef SOLVE3D
         DO i=1,NV
           IF (Hout(i,ng)) LdefHIS(ng)=.TRUE.
@@ -2980,6 +2983,12 @@
 !
         nTLM(ng)=nHIS(ng)
         LcycleTLM(ng)=.FALSE.
+#endif
+#if defined TIME_CONV && defined WEAK_CONSTRAINT
+!
+!  Set number of full state records needed for time convolutions.
+!
+        NrecTC(ng)=(ntimes(ng)/nADJ(ng))+1
 #endif
 #if defined FOUR_DVAR
 !

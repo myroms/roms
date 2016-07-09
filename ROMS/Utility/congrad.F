@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 
-#ifdef WEAK_CONSTRAINT
+#if defined WEAK_CONSTRAINT && !defined RPCG
       SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
      &                    Lcgini)
 !
@@ -1570,7 +1570,7 @@
 !
       IF (innLoop.gt.0) THEN
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_QG',         &
-     &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
+     &                        cg_QG, (/1,1/), (/Ninner+1,Nouter/),      &
      &                        ncid = DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
       END IF

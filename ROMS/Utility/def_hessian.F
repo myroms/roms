@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-#if defined IS4DVAR              || \
-    (defined WEAK_CONSTRAINT     && \
-     (defined POSTERIOR_EOFS     || defined POSTERIOR_ERROR_I || \
-      defined POSTERIOR_ERROR_F))
+#if defined IS4DVAR               || \
+    (defined WEAK_CONSTRAINT      && \
+     (defined POSTERIOR_EOFS      || defined POSTERIOR_ERROR_I || \
+      defined POSTERIOR_ERROR_F)) ||  defined LCZ_FINAL
       SUBROUTINE def_hessian (ng)
 !
 !svn $Id$
@@ -66,6 +66,11 @@
       integer :: Vsize(4)
 
       integer :: def_dim
+
+# ifdef EVOLVED_LCZ
+      integer :: MinnerDim, NinnerDim, NouterDim
+      integer :: vardim(2)
+# endif
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -169,6 +174,22 @@
         status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'xy_v',          &
      &                 IOBOUNDS(ng)%xy_v, DimIDs(19))
         IF (exit_flag.ne.NoError) RETURN
+# endif
+
+# ifdef EVOLVED_LCZ
+
+        status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'Ninner',        &
+     &                 Ninner, NinnerDim)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'Minner',        &
+     &                 Ninner+1, MinnerDim)
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'Nouter',        &
+     &                 Nouter, NouterDim)
+        IF (exit_flag.ne.NoError) RETURN
+
 # endif
 
 # ifdef SOLVE3D

@@ -1173,7 +1173,7 @@
               i=idBott(itrc)
               IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),               &
      &           'Hout(idBott)',                                        &
-     &           'Write out BOTTOM property', itrc, TRIM(Vname(1,i))
+     &           'Write out BOTTOM property ', itrc, TRIM(Vname(1,i))
             END DO
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \

@@ -474,12 +474,30 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' BEDLOAD_SOULSBY,'
 #endif
+#if defined BGQC && defined FOUR_DVAR
+      IF (Master) WRITE (stdout,20) 'BGQC',                             &
+     &   'Background quality control of observations.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+6)=' BGQC,'
+#endif
+#if defined BEOFS_ONLY && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'BEOFS_ONLY',                       &
+     &   'Compute EOFs of the background error covariance matrix.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' BEOFS_ONLY,'
+#endif
 #ifdef BIO_FENNEL
       IF (Master) WRITE (stdout,20) 'BIO_FENNEL',                       &
      &   'Fennel et al. (2006) nitrogen-based model.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' BIO_FENNEL,'
       ibiology=ibiology+1
+#endif
+#if defined BNORM && defined HESSIAN_SV
+      IF (Master) WRITE (stdout,20) 'BNORM',                            &
+     &   'Background normalization of Hessian singular vectors.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' BNORM,'
 #endif
 #if defined BIO_SEDIMENT && \
    (defined BIO_FENNEL   || defined NEMURO || defined ECOSIM)
@@ -722,6 +740,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ENSEMBLE,'
 #endif
+#if defined EVOLVED_LCZ && defined FOUR_DVAR
+      IF (Master) WRITE (stdout,20) 'EVOLVED_LCZ',                      &
+     &   'Compute 4D-Var evolved Hessian singular vectors.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' EVOLVED_LCZ,'
+#endif
 #ifdef FLOATS
       IF (Master) WRITE (stdout,20) 'FLOATS',                           &
      &   'Simulated Lagrangian drifters.'
@@ -816,6 +840,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' !FULL_GRID,'
 # endif
+#endif
+#if defined GEOPOTENTIAL_HCONV && defined FOUR_DVAR && defined SOLVE3D
+      IF (Master) WRITE (stdout,20) 'GEOPOTENTIAL_HCONV',               &
+     &   'Horizontal convolutions along geopetential surfaces.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' GEOPOTENTIAL_HCONV,'
 #endif
 #ifdef GLS_MIXING
       IF (Master) WRITE (stdout,20) 'GLS_MIXING',                       &
@@ -934,6 +964,12 @@
      &   'Kantha and Clayson stability function formulation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' KANTHA_CLAYSON,'
+#endif
+#if defined LCZ_FINAL && defined FOUR_DVAR
+      IF (Master) WRITE (stdout,20) 'LCZ_FINAL',                        &
+     &   'Compute 4D-Var Hessian singular vectors.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' LCZ_FINAL,'
 #endif
 #ifdef LMD_BKPP
       IF (Master) WRITE (stdout,20) 'LMD_BKPP',                         &
@@ -1477,6 +1513,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' RHO_SURF,'
 #endif
+#if defined RPCG && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'RPCG',                             &
+     &   'Restricted B-preconditioned Lanczos minimization.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+6)=' RPCG,'
+#endif
 #if defined RP_AVERAGES && defined TL_IOMS
       IF (Master) WRITE (stdout,20) 'RP_AVERAGES',                      &
      &   'Writing out time-averaged representer model fields.'
@@ -1753,6 +1795,12 @@
      &   'Tangent Linear Model.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' TANGENT,'
+#endif
+#if defined TIME_CONV && defined WEAK_CONSTRAINT
+      IF (Master) WRITE (stdout,20) 'TIME_CONV',                        &
+     &   'Weak-constraint 4D-Var time convolution.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' TIME_CONV,'
 #endif
 #if defined TIME_INTERP_FLUX && defined NESTING && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'TIME_INTERP_FLUX',                 &

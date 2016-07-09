@@ -805,7 +805,8 @@
         logical, allocatable :: LdefINI(:)       ! Initial file
         logical, allocatable :: LdefIRP(:)       ! Initial RPM file
         logical, allocatable :: LdefITL(:)       ! Initial TLM file
-        logical, allocatable :: LdefLCZ(:)       ! Lanczos file
+        logical, allocatable :: LdefLCZ(:)       ! Lanczos Vectors file
+        logical, allocatable :: LdefLZE(:)       ! Evolved Lanczos file
         logical, allocatable :: LdefMOD(:)       ! 4DVAR file
         logical, allocatable :: LdefRST(:)       ! Restart file
         logical, allocatable :: LdefSTA(:)       ! Stations file
@@ -1088,6 +1089,11 @@
         real(r8), allocatable :: Hdecay(:,:,:)
 !
 !  Initial conditions, model and surface forcing error covariance
+!  temporal decorrelation scales (second).
+!
+        real(r8), allocatable :: Tdecay(:,:)
+!
+!  Initial conditions, model and surface forcing error covariance
 !  vertical decorrelation scales (m).
 !
         real(r8), allocatable :: Vdecay(:,:,:)
@@ -1101,6 +1107,38 @@
 !  scales (m).
 !
         real(r8), allocatable :: VdecayB(:,:,:)
+!
+!  Method for background quality control of observations, [Ngrids].
+!
+!      [1] Quality control in terms of state variable indices
+!      [2] Quality control in terms of observation provenance
+!
+        integer, allocatable :: bgqc_type(:)
+!
+!  Background quality control standard deviation value for not
+!  rejection of observations.
+!
+        real(r8) :: bgqc_large = 1.0E+5_r8
+!
+!  Number of observation provenances used in background quality control,
+!  [Ngrids]. Only used when bgqc_type(ng)=2.
+!
+        integer, allocatable :: Nprovenance(:)
+!
+!  Observation provenance indices to process during background quality
+!  control of observations, [MAXVAL(Nprovenance),Ngrids].
+!
+        integer, allocatable :: Iprovenance(:,:)
+!
+!  Background quality control threshold standard deviations in terms
+!  of observation provenance indices, [MAXVAL(Nprovenance),Ngrids].
+!
+        real(r8), allocatable :: P_bgqc(:,:)
+!
+!  Background quality control threshold standard deviations in terms
+!  of state variable indices, [MstateVar,Ngrids]
+!
+        real(r8), allocatable :: S_bgqc(:,:)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1879,6 +1917,7 @@
       allocate ( LdefIRP(Ngrids) )
       allocate ( LdefITL(Ngrids) )
       allocate ( LdefLCZ(Ngrids) )
+      allocate ( LdefLZE(Ngrids) )
       allocate ( LdefMOD(Ngrids) )
       allocate ( LdefRST(Ngrids) )
       allocate ( LdefSTA(Ngrids) )
@@ -1992,8 +2031,14 @@
       allocate ( Hdecay(2,MstateVar,Ngrids) )
       allocate ( Vdecay(2,MstateVar,Ngrids) )
 
+      allocate ( Tdecay(MstateVar,Ngrids) )
+
       allocate ( HdecayB(MstateVar,4,Ngrids) )
       allocate ( VdecayB(MstateVar,4,Ngrids) )
+
+      allocate ( bgqc_type(Ngrids) )
+      allocate ( Nprovenance(Ngrids) )
+      allocate ( S_bgqc(MstateVar,Ngrids) )
 #endif
 
       allocate ( obcfac(Ngrids) )
@@ -2352,6 +2397,7 @@
 
       Cnorm=.FALSE.
       Hdecay=IniVal
+      Tdecay=IniVal
       Vdecay=IniVal
 
       CnormB=.FALSE.

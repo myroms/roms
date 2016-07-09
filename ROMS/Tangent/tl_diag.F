@@ -239,9 +239,9 @@
 # endif
 !$OMP CRITICAL (TL_DIAGNOSTICS)
         IF (tile_count.eq.0) THEN
-          volume=my_volume
-          avgke=my_avgke
-          avgpe=my_avgpe
+          volume=0.0_r8
+          avgke=0.0_r8
+          avgpe=0.0_r8
         END IF
         volume=volume+my_volume
         avgke=avgke+my_avgke

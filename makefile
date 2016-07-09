@@ -28,9 +28,10 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-NEED_VERSION := 3.80 3.81 3.82 3.82.90 4.0 4.1 4.2
-$(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
- $(error This makefile requires one of GNU make version $(NEED_VERSION).))
+ifneq (3.80,$(firstword $(sort $(MAKE_VERSION) 3.80)))
+ $(error This makefile requires GNU make version 3.80 or higher. \
+		Your current version is: $(MAKE_VERSION))
+endif
 
 #--------------------------------------------------------------------------
 #  Initialize some things.

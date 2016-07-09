@@ -288,7 +288,11 @@
      &                     OCEAN(ng) % tl_zeta(:,:,KOUT),               &
      &                     SetFillVal = .FALSE.)
 # else
+#  ifdef FORCING_SV
+     &                     OCEAN(ng) % f_zeta(:,:))
+#  else
      &                     OCEAN(ng) % tl_zeta(:,:,KOUT))
+#  endif
 # endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -353,7 +357,11 @@
 # ifdef MASKING
      &                     GRID(ng) % umask_full,                       &
 # endif
+# ifdef FORCING_SV
+     &                     OCEAN(ng) % f_ubar(:,:))
+# else
      &                     OCEAN(ng) % tl_ubar(:,:,KOUT))
+# endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbar)), TLM(ng)%Rindex
@@ -468,7 +476,11 @@
 # ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 # endif
+# ifdef FORCING_SV
+     &                     OCEAN(ng) % f_vbar(:,:))
+# else
      &                     OCEAN(ng) % tl_vbar(:,:,KOUT))
+# endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbar)), TLM(ng)%Rindex
@@ -584,7 +596,11 @@
 #  ifdef MASKING
      &                     GRID(ng) % umask_full,                       &
 #  endif
+#  ifdef FORCING_SV
+     &                     OCEAN(ng) % f_u(:,:,:))
+#  else
      &                     OCEAN(ng) % tl_u(:,:,:,NOUT))
+#  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUvel)), TLM(ng)%Rindex
@@ -648,7 +664,11 @@
 #  ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 #  endif
+#  ifdef FORCING_SV
+     &                     OCEAN(ng) % f_v(:,:,:))
+#  else
      &                     OCEAN(ng) % tl_v(:,:,:,NOUT))
+#  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvel)), TLM(ng)%Rindex
@@ -713,7 +733,11 @@
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #  endif
+#  ifdef FORCING_SV
+     &                       OCEAN(ng) % f_t(:,:,:,itrc))
+#  else
      &                       OCEAN(ng) % tl_t(:,:,:,NOUT,itrc))
+#  endif
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),            &

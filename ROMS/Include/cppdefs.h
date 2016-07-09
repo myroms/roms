@@ -387,27 +387,35 @@
 ** AD_SENSITIVITY      use if adjoint sensitivity driver                     **
 ** AFT_EIGENMODES      use if adjoint finite time eingenmodes driver         **
 ** ARRAY_MODES         use if W4DVAR representer matrix array modes          **
+** BEOFS_ONLY          use to compute EOFs of background error covariance    **
+** BGQC                use if background quality control of observations     **
+** BNORM               use if Background norm for Hessian singular vectors   **
 ** CLIPPING            use if W4DVAR representer matrix clipping analysis    **
 ** CORRELATION         use if background-error correlation model driver      **
 ** ENSEMBLE            use if ensemble prediction driver                     **
+** EVOLVED_LCZ         use to Compute 4DVar evolved Hessian singular vectors **
 ** FORCING_SV          use if forcing singular vectors driver                **
 ** FT_EIGENMODES       use if finite time eingenmodes driver: normal modes   **
-** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
-** IS4DVAR             use if incremental 4DVar data assimilation            **
-** IS4DVAR_SENSITIVITY use if I4DVar observations sensitivity driver         **
+** GEOPOTENTIAL_HCONV  use if horizontal convolutions along geopotentials    **
 ** HESSIAN_FSV         use if Hessian forcing singular vectors               **
 ** HESSIAN_SO          use if Hessian stochastic optimals                    **
 ** HESSIAN_SV          use if Hessian singular vectors                       **
+** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
+** IS4DVAR             use if incremental 4DVar data assimilation            **
+** IS4DVAR_SENSITIVITY use if I4DVar observations sensitivity driver         **
+** LCZ_FINAL           use to compute 4DVar Hessian singular vectors         **
 ** OPT_OBSERVATIONS    use if optimal observations driver                    **
 ** OPT_PERTURBATION    use if optimal perturbations driver, singular vectors **
 ** PICARD_TEST         use if representer tangent linear model test          **
 ** PSEUDOSPECTRA       use if pseudospectra of tangent linear resolvant      **
 ** R_SYMMETRY          use if representer matrix symmetry test               **
+** RPCG                use if Restricted B-preconditioned Lanczos solver     **
 ** RPM_DRIVER          use if generic representers model driver              **
 ** SANITY_CHECK        use if tangent linear and adjoint codes sanity check  **
 ** SO_SEMI             use if stochastic optimals driver, semi-norm          **
 ** SO_TRACE            use if stochastic optimals, randomized trace          **
 ** STOCHASTIC_OPT      use if stochastic optimals                            **
+** TIME_CONV           use if weak-constraint 4DVar time convolutions        **
 ** TLM_CHECK           use if tangent linear model linearization check       **
 ** TLM_DRIVER          use if generic tangent linear model driver            **
 ** W4DPSAS             use if weak constraint 4DPSAS data assimilation       **

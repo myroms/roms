@@ -34,6 +34,7 @@
 !    IPR       Input representer model initial conditions              !
 !    ITL       Input tangent linear model initial conditions           !
 !    LCZ       Input/output Lanczos vectors                            !
+!    LZE       Input/output time-evolved Lanczos vectors               !
 !    NRM       Input/output error covariance normalization data        !
 !                NRM(1,ng)  initial conditions                         !
 !                NRM(2,ng)  model error                                !
@@ -116,6 +117,7 @@
       TYPE(T_IO), allocatable :: IRP(:)     ! RPM initial conditions
       TYPE(T_IO), allocatable :: ITL(:)     ! TLM initial conditions
       TYPE(T_IO), allocatable :: LCZ(:)     ! Lanczos vectors
+      TYPE(T_IO), allocatable :: LZE(:)     ! evolved Lanczos vectors
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
       TYPE(T_IO), allocatable :: OBS(:)     ! observations
@@ -210,6 +212,7 @@
       allocate ( IRP(Ngrids) )
       allocate ( ITL(Ngrids) )
       allocate ( LCZ(Ngrids) )
+      allocate ( LZE(Ngrids) )
       allocate ( NUD(Ngrids) )
       allocate ( OBS(Ngrids) )
       allocate ( RST(Ngrids) )

@@ -1,6 +1,6 @@
 #include "cppdefs.h"
-#if defined ADJOINT && defined IMPULSE
-      SUBROUTINE wrt_impulse (ng, tile, model, INPncname)
+#if defined WEAK_CONSTRAINT && defined RPCG
+      SUBROUTINE wrt_aug_imp (ng, tile, model, Iinp, Iout, INPncname)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -9,21 +9,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  These subroutine read in requested adjoint solution from input      !
-!  NetCDF (saved at nADJ time-step intervals) and then writes  to      !
-!  output  impulse  forcing  NetCDF  file in ascending time order      !
-!  since it is processed by the TL and RP models.                      !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng              Nested grid number.                              !
-!     tile            Domain partition.                                !
-!     model           Calling model identifier.                        !
-!     INPncname       Input adjoint solution NetCDF file name.         !
-!                                                                      !
-!  Notice that only momentum is affected by the full time-averaged     !
-!  masks.  If applicable, these mask contains information about        !
-!  river runoff and time-dependent wetting and drying variations.      !
+!  This routine writes augmented impulse state variables.              !
 !                                                                      !
 !=======================================================================
 !
@@ -50,14 +36,14 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: ng, tile, model, Iinp, Iout
 
       character (len=*), intent(in) :: INPncname
 !
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
-      integer :: Iinp, Iout, Irec, MyType, Nrec
+      integer :: Irec, MyType, Nrec
       integer :: INPncid, INPvid
       integer :: i, gtype, status, varid
       integer :: ibuffer(2), Vsize(4)
@@ -67,7 +53,7 @@
 
 # include "set_bounds.h"
 !
-      SourceFile='wrt_impulse.F'
+      SourceFile='wrt_aug_imp.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -96,76 +82,13 @@
         Vsize(i)=0
       END DO
 !
-!-----------------------------------------------------------------------
-!  Read adjoint solution and convert to impulse forcing.  Then, write
-!  impulse forcing into output NetCDF file.
-!-----------------------------------------------------------------------
-!
-!  Open input NetCDF file.
-!
-      CALL netcdf_open (ng, model, INPncname, 0, INPncid)
-      IF (exit_flag.ne.NoError) THEN
-        WRITE (stdout,10) TRIM(INPncname)
-        RETURN
-      END IF
-!
-!  Process each record in input adjoint NetCDF except last. Note that
-!  the adjoint records are processed backwards (Nrec-1:1) and written
-!  in ascending time order (Iout initialized to 0) since the weak
-!  constraint forcing will be read by the TL and RP models. Record
-!  Nrec is not processed since it is not needed.
-!
-      Iinp=1
-      Iout=0
       scale=1.0_r8
 
-      DO Irec=Nrec-1,1,-1
-        Iout=Iout+1
-!
-!  Process time.
-!
-        IF (find_string(var_name, n_var, Vname(1,idtime), INPvid)) THEN
-          CALL netcdf_get_fvar (ng, model, INPncname, Vname(1,idtime),  &
-     &                          inp_time,                               &
-     &                          ncid = INPncid,                         &
-     &                          start = (/Irec/), total = (/1/))
-          IF (exit_flag.ne.NoError) RETURN
-!
-          CALL netcdf_put_fvar (ng, model, TLF(ng)%name,                &
-     &                          Vname(1,idtime), inp_time,              &
-     &                          (/Iout/), (/1/),                        &
-     &                          ncid = TLF(ng)%ncid)
-          IF (exit_flag.ne.NoError) RETURN
-        ELSE
-          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idtime)),          &
-     &                                  TRIM(INPncname)
-          exit_flag=2
-        END IF
 !
 !  Process free-surface weak-constraint impulse forcing.
 !
         IF (find_string(var_name, n_var, Vname(1,idZtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*r2dvar
-          MyType=gtype
-          status=nf_fread2d(ng, model, INPncname, INPncid,              &
-     &                      Vname(1,idZtlf), INPvid,                    &
-     &                      Irec, MyType, Vsize,                        &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, Fmin, Fmax,                          &
-# ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
-# endif
-     &                      OCEAN(ng) % ad_zeta(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idZtlf)), Irec,            &
-     &                          TRIM(INPncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
           MyType=gtype
           status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
      &                       TLF(ng)%Vid(idZtlf),                       &
@@ -174,7 +97,7 @@
 # ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 # endif
-     &                       OCEAN(ng) % ad_zeta(:,:,Iinp))
+     &                       OCEAN(ng) % tl_zeta(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idZtlf)), Irec,            &
@@ -198,26 +121,6 @@
         IF (find_string(var_name, n_var, Vname(1,idUbtf), INPvid)) THEN
           gtype=var_flag(INPvid)*u2dvar
           MyType=gtype
-          status=nf_fread2d(ng, model, INPncname, INPncid,              &
-     &                      Vname(1,idUbtf), INPvid,                    &
-     &                      Irec, MyType, Vsize,                        &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % umask_full,                      &
-#  endif
-     &                      OCEAN(ng) % ad_ubar(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUbtf)), Irec,            &
-     &                          TRIM(INPncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          MyType=gtype
           status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
      &                       TLF(ng)%Vid(idUbtf),                       &
      &                       Iout, MyType,                              &
@@ -225,7 +128,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % umask_full,                     &
 #  endif
-     &                       OCEAN(ng) % ad_ubar(:,:,Iinp))
+     &                       OCEAN(ng) % tl_ubar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idUbtf)), Irec,            &
@@ -247,26 +150,6 @@
         IF (find_string(var_name, n_var, Vname(1,idVbtf), INPvid)) THEN
           gtype=var_flag(INPvid)*v2dvar
           MyType=gtype
-          status=nf_fread2d(ng, model, INPncname, INPncid,              &
-     &                      Vname(1,idVbtf), INPvid,                    &
-     &                      Irec, MyType, Vsize,                        &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % vmask_full,                      &
-#  endif
-     &                      OCEAN(ng) % ad_vbar(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idVbtf)), Irec,            &
-     &                          TRIM(INPncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
-          MyType=gtype
           status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
      &                       TLF(ng)%Vid(idVbtf),                       &
      &                       Iout, MyType,                              &
@@ -274,7 +157,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % vmask_full,                     &
 #  endif
-     &                       OCEAN(ng) % ad_vbar(:,:,Iinp))
+     &                       OCEAN(ng) % tl_vbar(:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idVbtf)), Irec,            &
@@ -298,25 +181,6 @@
         IF (find_string(var_name, n_var, Vname(1,idUtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*u3dvar
           MyType=gtype
-          status=nf_fread3d(ng, model, INPncname, INPncid,              &
-     &                      Vname(1,idUtlf), INPvid,                    &
-     &                      Irec, MyType, Vsize,                        &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % umask_full,                      &
-#  endif
-     &                      OCEAN(ng) % ad_u(:,:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUtlf)), Irec,            &
-     &                          TRIM(INPncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
           status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
      &                       TLF(ng)%Vid(idUtlf),                       &
      &                       Iout, MyType,                              &
@@ -324,7 +188,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % umask_full,                     &
 #  endif
-     &                       OCEAN(ng) % ad_u(:,:,:,Iinp))
+     &                       OCEAN(ng) % tl_u(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idUtlf)), Irec,            &
@@ -346,25 +210,6 @@
         IF (find_string(var_name, n_var, Vname(1,idVtlf), INPvid)) THEN
           gtype=var_flag(INPvid)*v3dvar
           MyType=gtype
-          status=nf_fread3d(ng, model, INPncname, INPncid,              &
-     &                      Vname(1,idVtlf), INPvid,                    &
-     &                      Irec, MyType, Vsize,                        &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % vmask_full,                      &
-#  endif
-     &                      OCEAN(ng) % ad_v(:,:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idVtlf)), Irec,            &
-     &                          TRIM(INPncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-!
           status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
      &                       TLF(ng)%Vid(idVtlf),                       &
      &                       Iout, MyType,                              &
@@ -372,7 +217,7 @@
 #  ifdef MASKING
      &                       GRID(ng) % vmask_full,                     &
 #  endif
-     &                       OCEAN(ng) % ad_v(:,:,:,Iinp))
+     &                       OCEAN(ng) % tl_v(:,:,:,Iinp))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) TRIM(Vname(1,idVtlf)), Irec,            &
@@ -396,32 +241,14 @@
      &                    INPvid)) THEN
             gtype=var_flag(INPvid)*r3dvar
             MyType=gtype
-            status=nf_fread3d(ng, model, INPncname, INPncid,            &
-     &                        Vname(1,idTtlf(i)), INPvid,               &
-     &                        Irec, MyType, Vsize,                      &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        scale, Fmin, Fmax,                        &
-#  ifdef MASKING
-     &                        GRID(ng) % rmask,                         &
-#  endif
-     &                        OCEAN(ng) % ad_t(:,:,:,Iinp,i))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) THEN
-                WRITE (stdout,20) TRIM(Vname(1,idTtlf(i))), Irec,       &
-     &                            TRIM(INPncname)
-              END IF
-              exit_flag=2
-              ioerror=status
-              RETURN
-            END IF
-!
-            status=nf_fwrite3d(ng, model, TLF(ng)%ncid, TLF(ng)%Tid(i), &
+            status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                 &
+     &                         TLF(ng)%Tid(i),                          &
      &                         Iout, MyType,                            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
 #  ifdef MASKING
-     &                         GRID(ng) % rmask,                        &
+     &                         GRID(ng) % rmask_full,                   &
 #  endif
-     &                         OCEAN(ng) % ad_t(:,:,:,Iinp,i))
+     &                         OCEAN(ng) % tl_t(:,:,:,Iinp,i))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) TRIM(Vname(1,idTtlf(i))), Irec,       &
@@ -439,15 +266,6 @@
           END IF
         END DO
 # endif
-      END DO
-!
-!  Close input NetCDF file.
-!
-      CALL netcdf_close (ng, model, INPncid, INPncname, .FALSE.)
-      IF (exit_flag.ne.NoError) THEN
-        WRITE (stdout,50) TRIM(INPncname)
-        RETURN
-      END IF
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes
@@ -457,7 +275,7 @@
       CALL netcdf_sync (ng, model, INPncname, TLF(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      IF (Master)  WRITE (stdout,60) Nrec-1, TRIM(TLF(ng)%name)
+      IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLF(ng)%name)
 !
   10  FORMAT (/,' WRT_IMPULSE - unable to open input NetCDF file: ',a)
   20  FORMAT (/,' WRT_IMPULSE - error while reading variable: ',a,2x,   &
@@ -466,13 +284,12 @@
      &        'at time record = ',i3,/,17x,'into NetCDF file: ',a)
   40  FORMAT (/,' WRT_IMPULSE - cannot find state variable: ',a,        &
      &        /,12x,'in input NetCDF file: ',a)
-  50  FORMAT (/,' WRT_IMPULSE - unable to close input NetCDF file: ',a)
-  60  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
+  50  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
      &           'records: 001 to ',i3.3,/,18x,'file: ',a)
 
       RETURN
-      END SUBROUTINE wrt_impulse
+      END SUBROUTINE wrt_aug_imp
 #else
-      SUBROUTINE wrt_impulse
-      END SUBROUTINE wrt_impulse
+      SUBROUTINE wrt_aug_imp
+      END SUBROUTINE wrt_aug_imp
 #endif

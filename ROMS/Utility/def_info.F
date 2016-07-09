@@ -272,6 +272,8 @@
           type='ROMS/TOMS tangent linear model initial file'
         ELSE IF (ncid.eq.LCZ(ng)%ncid) THEN
           type='ROMS/TOMS 4DVAR Lanczos vectors file'
+        ELSE IF (ncid.eq.LZE(ng)%ncid) THEN
+          type='ROMS/TOMS 4DVAR Evolved Lanczos vectors file'
         ELSE IF (ncid.eq.NRM(1,ng)%ncid) THEN
           type='ROMS/TOMS initial conditions error covariance norm file'
         ELSE IF (ncid.eq.NRM(2,ng)%ncid) THEN

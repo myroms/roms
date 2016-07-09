@@ -6593,6 +6593,22 @@
      &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
      &                        ncid = ADM(ng)%ncid)
         IF (exit_flag.ne.NoError) RETURN
+# ifdef EVOLVED_LCZ
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_beta',       &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = HSS(ng)%ncid)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_delta',      &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = HSS(ng)%ncid)
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_zv',         &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = HSS(ng)%ncid)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
       END IF
 !
 !-----------------------------------------------------------------------

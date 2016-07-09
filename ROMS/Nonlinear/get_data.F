@@ -1080,28 +1080,27 @@
 # endif
      &                  OCEAN(ng) % zetaG)
         IF (exit_flag.ne.NoError) RETURN
-# ifndef SOLVE3D
 !
 !  Read 2D momentum.
 !
         CALL get_2dfld (ng, iNLM, idUbar, TLF(ng)%ncid,                 &
      &                  1, TLF(ng), update(1),                          &
      &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#  ifdef MASKING
+# ifdef MASKING
      &                  GRID(ng) % umask,                               &
-#  endif
+# endif
      &                  OCEAN(ng) % ubarG)
         IF (exit_flag.ne.NoError) RETURN
 
         CALL get_2dfld (ng, iNLM, idVbar, TLF(ng)%ncid,                 &
      &                  1, TLF(ng), update(1),                          &
      &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#  ifdef MASKING
+# ifdef MASKING
      &                  GRID(ng) % vmask,                               &
-#  endif
+# endif
      &                  OCEAN(ng) % vbarG)
         IF (exit_flag.ne.NoError) RETURN
-# endif
+
 # ifdef SOLVE3D
 !
 !  Read in 3D momentum.

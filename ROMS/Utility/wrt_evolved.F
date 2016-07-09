@@ -1,22 +1,16 @@
 #include "cppdefs.h"
-#if defined IS4DVAR               || \
-    (defined WEAK_CONSTRAINT      && \
-     (defined POSTERIOR_EOFS      || defined POSTERIOR_ERROR_I ||\
-      defined POSTERIOR_ERROR_F)) || defined LCZ_FINAL
-      SUBROUTINE wrt_hessian (ng, kout, nout)
+
+#if (defined IS4DVAR && defined EVOLVED_LCZ) || defined LCZ_FINAL
+      SUBROUTINE wrt_evolved (ng, kout, nout)
 !
-!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine writes Hessian eigenvectors into output NetCDF file.   !
-!                                                                      !
-!  Notice that only momentum is affected by the full time-averaged     !
-!  masks.  If applicable, these mask contains information about        !
-!  river runoff and time-dependent wetting and drying variations.      !
+!  This routine writes the volved Lanczos vectors into the HSS NetCDF  !
+!  file.                                                               !
 !                                                                      !
 !=======================================================================
 !
@@ -64,7 +58,7 @@
 # endif
       real(r8) :: scale
 !
-      SourceFile='wrt_hessian.F'
+      SourceFile='wrt_evolved.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -76,7 +70,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out Hessian eigenvectors.
+!  Write out evolved Lanczos vectors.
 !-----------------------------------------------------------------------
 !
       IF (exit_flag.ne.NoError) RETURN
@@ -92,33 +86,33 @@
 !
 !  Set time record index.
 !
-      HSS(ng)%Rindex=HSS(ng)%Rindex+1
-      Fcount=HSS(ng)%Fcount
-      HSS(ng)%Nrec(Fcount)=HSS(ng)%Nrec(Fcount)+1
+      LZE(ng)%Rindex=LZE(ng)%Rindex+1
+      Fcount=LZE(ng)%Fcount
+      LZE(ng)%Nrec(Fcount)=LZE(ng)%Nrec(Fcount)+1
 !
 !  Write out model time (s).
 !
-      CALL netcdf_put_fvar (ng, iADM, HSS(ng)%name,                     &
+      CALL netcdf_put_fvar (ng, iADM, LZE(ng)%name,                     &
      &                      TRIM(Vname(1,idtime)), time(ng:),           &
-     &                      (/HSS(ng)%Rindex/), (/1/),                  &
-     &                      ncid = HSS(ng)%ncid,                        &
-     &                      varid = HSS(ng)%Vid(idtime))
+     &                      (/LZE(ng)%Rindex/), (/1/),                  &
+     &                      ncid = LZE(ng)%ncid,                        &
+     &                      varid = LZE(ng)%Vid(idtime))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface.
 !
       scale=1.0_r8
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idFsur),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite2d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idFsur),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-     &                   OCEAN(ng)% ad_zeta(:,:,kout))
+     &                   OCEAN(ng)% tl_zeta(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idFsur)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -131,17 +125,17 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid,   &
+        status=nf_fwrite2d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
-     &                          HSS(ng)%Vid(idSbry(isFsur)),            &
-     &                          HSS(ng)%Rindex, r2dvar,                 &
+     &                          LZE(ng)%Vid(idSbry(isFsur)),            &
+     &                          LZE(ng)%Rindex, r2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))),            &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -154,16 +148,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUbar),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite2d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idUbar),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   GRID(ng) % umask_full,                         &
 # endif
-     &                   OCEAN(ng) % ad_ubar(:,:,kout))
+     &                   OCEAN(ng) % tl_ubar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbar)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idUbar)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -176,17 +170,17 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid,   &
+        status=nf_fwrite2d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
-     &                          HSS(ng)%Vid(idSbry(isUbar)),            &
-     &                          HSS(ng)%Rindex, u2dvar,                 &
+     &                          LZE(ng)%Vid(idSbry(isUbar)),            &
+     &                          LZE(ng)%Rindex, u2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_ubar_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))),            &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -199,16 +193,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVbar),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite2d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idVbar),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   GRID(ng) % vmask_full,                         &
 # endif
-     &                   OCEAN(ng) % ad_vbar(:,:,kout))
+     &                   OCEAN(ng) % tl_vbar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbar)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idVbar)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -221,17 +215,17 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite2d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid,   &
+        status=nf_fwrite2d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
-     &                          HSS(ng)%Vid(idSbry(isVbar)),            &
-     &                          HSS(ng)%Rindex, v2dvar,                 &
+     &                          LZE(ng)%Vid(idSbry(isVbar)),            &
+     &                          LZE(ng)%Rindex, v2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
-     &                          BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,   &
+     &                          BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,   &
      &                                                     kout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))),            &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -246,16 +240,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUvel),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idUvel),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
      &                   GRID(ng) % umask_full,                         &
 #  endif
-     &                   OCEAN(ng) % ad_u(:,:,:,nout))
+     &                   OCEAN(ng) % tl_u(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUvel)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idUvel)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -268,17 +262,17 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid,   &
+        status=nf_fwrite3d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
-     &                          HSS(ng)%Vid(idSbry(isUvel)),            &
-     &                          HSS(ng)%Rindex, u3dvar,                 &
+     &                          LZE(ng)%Vid(idSbry(isUvel)),            &
+     &                          LZE(ng)%Rindex, u3dvar,                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
-     &                          BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,    &
+     &                          BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,    &
      &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))),            &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -291,16 +285,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVvel),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idVvel),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
      &                   GRID(ng) % vmask_full,                         &
 #  endif
-     &                   OCEAN(ng) % ad_v(:,:,:,nout))
+     &                   OCEAN(ng) % tl_v(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVvel)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idVvel)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -313,17 +307,17 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_r8
-        status=nf_fwrite3d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid,   &
+        status=nf_fwrite3d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
-     &                          HSS(ng)%Vid(idSbry(isVvel)),            &
-     &                          HSS(ng)%Rindex, v3dvar,                 &
+     &                          LZE(ng)%Vid(idSbry(isVvel)),            &
+     &                          LZE(ng)%Rindex, v3dvar,                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
-     &                          BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,    &
+     &                          BOUNDARY(ng) % tl_v_obc(LBij:,:,:,:,    &
      &                                                  nout))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))),            &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -337,17 +331,17 @@
       DO itrc=1,NT(ng)
         scale=1.0_r8
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Tid(itrc),   &
-     &                     HSS(ng)%Rindex, gtype,                       &
+        status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Tid(itrc),   &
+     &                     LZE(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     OCEAN(ng) % ad_t(:,:,:,nout,itrc))
+     &                     OCEAN(ng) % tl_t(:,:,:,nout,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
-     &                        HSS(ng)%Rindex
+     &                        LZE(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
@@ -362,18 +356,18 @@
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_r8
-          status=nf_fwrite3d_bry (ng, iADM, HSS(ng)%name, HSS(ng)%ncid, &
+          status=nf_fwrite3d_bry (ng, iADM, LZE(ng)%name, LZE(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
-     &                            HSS(ng)%Vid(idSbry(isTvar(itrc))),    &
-     &                            HSS(ng)%Rindex, r3dvar,               &
+     &                            LZE(ng)%Vid(idSbry(isTvar(itrc))),    &
+     &                            LZE(ng)%Rindex, r3dvar,               &
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
-     &                            BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,  &
+     &                            BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,  &
      &                                                    nout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
-     &                          HSS(ng)%Rindex
+     &                          LZE(ng)%Rindex
             END IF
             exit_flag=3
             ioerror=status
@@ -393,18 +387,18 @@
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_r8
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid,                    &
-     &                       HSS(ng)%Vid(idTsur(itrc)),                 &
-     &                       HSS(ng)%Rindex, gtype,                     &
+          status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid,                    &
+     &                       LZE(ng)%Vid(idTsur(itrc)),                 &
+     &                       LZE(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
 #   ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #   endif
-     &                       FORCES(ng) % ad_tflux(:,:,:,kout,itrc))
+     &                       FORCES(ng) % tl_tflux(:,:,:,kout,itrc))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
-     &                          HSS(ng)%Rindex
+     &                          LZE(ng)%Rindex
             END IF
             exit_flag=3
             ioerror=status
@@ -422,16 +416,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUsms),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idUsms),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % umask_full,                         &
 #  endif
-     &                   FORCES(ng) % ad_ustr(:,:,:,kout))
+     &                   FORCES(ng) % tl_ustr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUsms)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -442,16 +436,16 @@
 !
       scale=1.0_r8
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVsms),   &
-     &                   HSS(ng)%Rindex, gtype,                         &
+      status=nf_fwrite3d(ng, iADM, LZE(ng)%ncid, LZE(ng)%Vid(idVsms),   &
+     &                   LZE(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask,                              &
+     &                   GRID(ng) % vmask_full,                         &
 #  endif
-     &                   FORCES(ng) % ad_vstr(:,:,:,kout))
+     &                   FORCES(ng) % tl_vstr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVsms)), HSS(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), LZE(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -460,38 +454,38 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize Hessian eigenvectors NetCDF file to disk to allow other
+!  Synchronize evolved vectors NetCDF file to disk to allow other
 !  processes to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%ncid)
+      CALL netcdf_sync (ng, iADM, LZE(ng)%name, LZE(ng)%ncid)
       IF (exit_flag.ne.NoError) RETURN
 
 # ifdef SOLVE3D
 #  ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex, ng
+      IF (Master) WRITE (stdout,20) kout, nout, LZE(ng)%Rindex, ng
 #  else
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex
+      IF (Master) WRITE (stdout,20) kout, nout, LZE(ng)%Rindex
 #  endif
 # else
 #  ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex, ng
+      IF (Master) WRITE (stdout,20) kout, LZE(ng)%Rindex, ng
 #  else
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex
+      IF (Master) WRITE (stdout,20) kout, LZE(ng)%Rindex
 #  endif
 # endif
 !
-  10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
-     &        15x,'into Hessian NetCDF file for time record: ',i4)
+  10  FORMAT (/,' WRT_EVOLVED - error while writing variable: ',a,/,    &
+     &        15x,'into evolved LCZ NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_EVOLVED  - wrote evolved LCZ vecs (Index=', i1,   &
 #  ifdef NESTING
      &        ',',i1,') into time record = ',i7.7,2x,i2.2)
 #  else
      &        ',',i1,') into time record = ',i7.7)
 #  endif
 # else
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (3x,'WRT_EVOLVED  - wrote evolved LCZ vecs (Index=', i1,   &
 #  ifdef NESTING
      &        ') into time record = ',i7.7,2x,i2.2)
 #  else
@@ -499,9 +493,9 @@
 #  endif
 # endif
       RETURN
-      END SUBROUTINE wrt_hessian
+      END SUBROUTINE wrt_evolved
 #else
-      SUBROUTINE wrt_hessian
+      SUBROUTINE wrt_evolved
       RETURN
-      END SUBROUTINE wrt_hessian
+      END SUBROUTINE wrt_evolved
 #endif

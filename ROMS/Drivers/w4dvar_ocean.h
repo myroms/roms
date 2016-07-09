@@ -241,6 +241,17 @@
         IF (exit_flag.ne.NoError) RETURN
       END DO
 #endif
+!
+!-----------------------------------------------------------------------
+!  Create 4D-Var analysis file that used as initial conditions for the
+!  next data assimilation cycle.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        LdefDAI(ng)=.TRUE.
+        CALL def_dai (ng)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
 
       RETURN
       END SUBROUTINE ROMS_initialize
@@ -1468,7 +1479,24 @@
 !
 !  Local variable declarations.
 !
-      integer :: Fcount, ng, thread
+      integer :: Fcount, ng, tile, thread
+!
+!-----------------------------------------------------------------------
+!  Write out 4D-Var analysis fields that used as initial conditions for
+!  the next data assimilation cycle.
+!-----------------------------------------------------------------------
+!
+#ifdef DISTRIBUTE
+      tile=MyRank
+#else
+      tile=-1
+#endif
+!
+      IF (exit_flag.eq.NoError) THEN
+        DO ng=1,Ngrids
+          CALL wrt_dai (ng, tile)
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Compute and report model-observation comparison statistics.

@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 
-#ifdef SENSITIVITY_4DVAR
+#if defined SENSITIVITY_4DVAR && !defined RPCG
       SUBROUTINE ad_congrad (ng, model, outLoop, innLoop, NinnLoop,     &
      &                       Lcgini)
 !
