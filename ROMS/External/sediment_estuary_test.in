@@ -106,8 +106,8 @@ ad_LBC(isTvar) ==   RadNud  Clo     Cla     Clo      ! idsed(:), compact
 
     BEDLOAD_COEFF == 0.05d0
 
-! Logical switches (TRUE/FALSE) to activate writing of bed layer parameters,
-! [1:Ngrids] values expected.
+! Logical switches (TRUE/FALSE) to activate writing of bed layer parameters
+! into HISTORY output files, [1:Ngrids] values expected.
 
  Hout(ithck) == T       ! bed_thickness           sediment layer thickness
  Hout(iaged) == T       ! bed_age                 sediment layer age
@@ -115,7 +115,7 @@ ad_LBC(isTvar) ==   RadNud  Clo     Cla     Clo      ! idsed(:), compact
  Hout(idiff) == F       ! bed_biodiff             biodiffusivity
 
 ! Logical switches (TRUE/FALSE) to activate writing of bed bottom sediment
-! parameters, [1:Ngrids] values expected.
+! parameters into HISTORY output files, [1:Ngrids] values expected.
 
  Hout(isd50) == T       ! grain_diameter          mean grain diameter
  Hout(idens) == T       ! grain_density           mean grain density
@@ -133,6 +133,34 @@ ad_LBC(isTvar) ==   RadNud  Clo     Cla     Clo      ! idsed(:), compact
  Hout(izwbl) == F       ! Zo_wbl                  wave bottom roughness
  Hout(iactv) == F       ! active_layer_thickness  active layer thickness
  Hout(ishgt) == F       ! saltation               saltation height
+
+! Logical switches (TRUE/FALSE) to activate writing of bed layer parameters
+! into QUICKSAVE output files, [1:Ngrids] values expected.
+
+ Qout(ithck) == F       ! bed_thickness           sediment layer thickness
+ Qout(iaged) == F       ! bed_age                 sediment layer age
+ Qout(iporo) == F       ! bed_porosity            sediment layer porosity
+ Qout(idiff) == F       ! bed_biodiff             biodiffusivity
+
+! Logical switches (TRUE/FALSE) to activate writing of bed bottom sediment
+! parameters into HISTORY output files, [1:Ngrids] values expected.
+
+ Qout(isd50) == F       ! grain_diameter          mean grain diameter
+ Qout(idens) == F       ! grain_density           mean grain density
+ Qout(iwsed) == F       ! settling_vel            mean settling velocity
+ Qout(itauc) == F       ! erosion_stress          critical erosion stress
+ Qout(irlen) == F       ! ripple_length           ripple length
+ Qout(irhgt) == F       ! ripple_height           ripple height
+ Qout(ibwav) == F       ! bed_wave_amp            wave excursion amplitude
+ Qout(izdef) == F       ! Zo_def                  default bottom roughness
+ Qout(izapp) == F       ! Zo_app                  apparent bottom roughness
+ Qout(izNik) == F       ! Zo_Nik                  Nikuradse bottom roughness
+ Qout(izbio) == F       ! Zo_bio                  biological bottom roughness
+ Qout(izbfm) == F       ! Zo_bedform              bed form bottom roughness
+ Qout(izbld) == F       ! Zo_bedload              bed load bottom roughness
+ Qout(izwbl) == F       ! Zo_wbl                  wave bottom roughness
+ Qout(iactv) == F       ! active_layer_thickness  active layer thickness
+ Qout(ishgt) == F       ! saltation               saltation height
 
 !------------------------------------------------------------------------------
 ! Non-cohesive Sediment Parameters, [1:NNS,1:Ngrids] values expected.
@@ -226,6 +254,16 @@ Hout(iSfrac) == T       ! sandfrac_01, ...        bed layer fraction
 Hout(iSmass) == T       ! sandmass_01, ...        bed layer mass
 Hout(iSUbld) == T       ! bedload_Usand_01, ...   bed load at U-points
 Hout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
+
+! Logical switches (TRUE/FALSE) to activate writing of non-cohesive
+! sediment fields into QUICKSAVE output file.
+
+Qout(idsand) == F       ! sand_01, ...            suspended concentration
+Qout(iSsand) == F       ! sand_01_sur, ...        surface concentration
+Qout(iSfrac) == F       ! sandfrac_01, ...        bed layer fraction
+Qout(iSmass) == F       ! sandmass_01, ...        bed layer mass
+Qout(iSUbld) == F       ! bedload_Usand_01, ...   bed load at U-points
+Qout(iSVbld) == F       ! bedload_Vsand_01, ...   bed load at V-points
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! non-cohesive sediment fields into AVERAGE output file.
@@ -348,6 +386,16 @@ Hout(iMmass) == T       ! mudmass_01, ...         bed layer mass
 Hout(iMUbld) == T       ! bedload_Umud_01, ...    bed load at U-points
 Hout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 
+! Logical switches (TRUE/FALSE) to activate writing of cohesive sediment
+! fields into QUICKSAVE output file.
+
+Qout(idmud)  == F       ! mud_01, ...             suspended concentration
+Qout(iSmud)  == F       ! mud_01_sur, ...         surface concentration
+Qout(iMfrac) == F       ! mudfrac_01, ...         bed layer fraction
+Qout(iMmass) == F       ! mudmass_01, ...         bed layer mass
+Qout(iMUbld) == F       ! bedload_Umud_01, ...    bed load at U-points
+Qout(iMVbld) == F       ! bedload_Vmud_01, ...    bed load at V-points
+
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! cohesive sediment fields into AVERAGE output file.
 
@@ -469,7 +517,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !  BEDLOAD_COEFF   Bed load transport rate coefficient.
 !
 ! Logical switches (TRUE/FALSE) to activate writing of bed layer parameters
-! into output history NetCDF file:
+! into output HISTORY NetCDF file:
 !
 !  Hout(ithck)     Write out sediment layer thickness.
 !
@@ -480,7 +528,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !  Hout(idiff)     Write out Biodiffusivity at the bottom of each layer.
 !
 ! Logical switches (TRUE/FALSE) to activate writing of bed bottom sediment
-! parameters into output history NetCDF file:
+! parameters into output HISTORY NetCDF file:
 !
 !  Hout(isd50)     Write out mean grain diameter.
 !
@@ -513,6 +561,52 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !  Hout(iactv)     Write out active layer thickness.
 !
 !  Hout(ishgt)     Write out saltation height.
+!
+! Logical switches (TRUE/FALSE) to activate writing of bed layer parameters
+! into output QUICKSAVE NetCDF file:
+!
+!  Qout(ithck)     Write out sediment layer thickness.
+!
+!  Qout(iaged)     Write out sediment layer age.
+!
+!  Qout(iporo)     Write out sediment layer porosity.
+!
+!  Qout(idiff)     Write out Biodiffusivity at the bottom of each layer.
+!
+! Logical switches (TRUE/FALSE) to activate writing of bed bottom sediment
+! parameters into output QUICKSAVE NetCDF file:
+!
+!  Qout(isd50)     Write out mean grain diameter.
+!
+!  Qout(idens)     Write out mean grain density.
+!
+!  Qout(iwsed)     Write out mean settling velocity.
+!
+!  Qout(itauc)     Write out critical erosion stress.
+!
+!  Qout(irlen)     Write out ripple length.
+!
+!  Qout(irhgt)     Write out ripple height.
+!
+!  Qout(ibwav)     Write out wave excursion amplitude.
+!
+!  Qout(izdef)     Write out default bottom roughness.
+!
+!  Qout(izapp)     Write out apparent bottom roughness.
+!
+!  Qout(izNik)     Write out Nikuradse bottom roughness.
+!
+!  Qout(izbio)     Write out biological bottom roughness.
+!
+!  Qout(izbfm)     Write out bed form bottom roughness.
+!
+!  Qout(izbld)     Write out bed load bottom roughness.
+!
+!  Qout(izwbl)     Write out wave bottom roughness.
+!
+!  Qout(iactv)     Write out active layer thickness.
+!
+!  Qout(ishgt)     Write out saltation height.
 !
 !------------------------------------------------------------------------------
 ! Suspended Non-cohesive Sediment KEYWORDS, [1:NNS,1:Ngrids] values expected.
@@ -661,28 +755,49 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !
 !  Hout(idsand)    Logical switches to activate writing of non-cohesive
 !                    sediment concentration into HISTORY NetCDF file,
-!                    HOUT(idTvar(idsed(i))) with i=1:NCS+1,NST.
+!                    Hout(idTvar(idsed(i))) with i=1:NCS+1,NST.
 !
 !  Hout(iSfrac)    Logical switches to activate writing of non-cohesive
 !                    sediment class fraction composition of each bed layer
-!                    into HISTORY NetCDF file, HOUT(idfrac(i)) with
+!                    into HISTORY NetCDF file, Hout(idfrac(i)) with
 !                    i=NCS+1,NST.
 !
 !  Hout(iSmass)    Logical switches to activate writing of non-cohesive
 !                    sediment mass of each bed layer into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=NCS+1,NST.
+!                    Hout(idsed(i)) with i=NCS+1,NST.
 !
 !  Hout(iSUbld)    Logical switches to activate writing of non-cohesive
 !                    sediment bed load at U-points into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=NCS+1,NST.
+!                    Hout(idsed(i)) with i=NCS+1,NST.
 !
 !  Hout(iSVbld)    Logical switches to activate writing of non-cohesive
 !                    sediment bed load at V-points into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=NCS+1,NST.
+!                    Hout(idsed(i)) with i=NCS+1,NST.
+!
+!  Qout(idsand)    Logical switches to activate writing of non-cohesive
+!                    sediment concentration into QUICKSAVE NetCDF file,
+!                    Qout(idTvar(idsed(i))) with i=1:NCS+1,NST.
+!
+!  Qout(iSfrac)    Logical switches to activate writing of non-cohesive
+!                    sediment class fraction composition of each bed layer
+!                    into QUICKSAVE NetCDF file, Qout(idfrac(i)) with
+!                    i=NCS+1,NST.
+!
+!  Qout(iSmass)    Logical switches to activate writing of non-cohesive
+!                    sediment mass of each bed layer into QUICKSAVE NetCDF
+!                     file, Qout(idsed(i)) with i=NCS+1,NST.
+!
+!  Qout(iSUbld)    Logical switches to activate writing of non-cohesive
+!                    sediment bed load at U-points into QUICKSAVE NetCDF
+!                    file, Qout(idsed(i)) with i=NCS+1,NST.
+!
+!  Qout(iSVbld)    Logical switches to activate writing of non-cohesive
+!                    sediment bed load at V-points into QUICKSAVE NetCDF
+!                    file, Qout(idsed(i)) with i=NCS+1,NST.
 !
 !  Aout(*S...)     Logical switches to activate writing of time-averaged
 !                    non-cohesive sediment concentration into AVERAGE
-!                    NetCDF file, AOUT(idTvar(idsed(i))) with i=1:NCS+1,NST.
+!                    NetCDF file, Aout(idTvar(idsed(i))) with i=1:NCS+1,NST.
 !
 !                    Aout(idsand)                 suspended concentration
 !
@@ -697,7 +812,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !
 !  Dout(ST....)    Logical switches to activate writing of time-averaged
 !                    non-cohesive tracers diagnostic terms into DIAGNOSTIC
-!                    NetCDF file, DOUT(idsed(i),ST....) with i=NCS+1,NST.
+!                    NetCDF file, Dout(idsed(i),ST....) with i=NCS+1,NST.
 !
 !                    Dout(STrate)   Time rate of change
 !                    Dout(SThadv)   Horizontal total advection
@@ -859,27 +974,47 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !
 !  Hout(idmud)     Logical switches to activate writing of cohesive sediment
 !                    concentration into HISTORY NetCDF file,
-!                    HOUT(idTvar(idsed(i))) with i=1:NCS.
+!                    Hout(idTvar(idsed(i))) with i=1:NCS.
 !
 !  Hout(iMfrac)    Logical switches to activate writing of cohesive sediment
 !                    class fraction composition of each bed layer into HISTORY
-!                    NetCDF file, HOUT(idfrac(i)) with i=1,NCS.
+!                    NetCDF file, Hout(idfrac(i)) with i=1,NCS.
 !
 !  Hout(iMmass)    Logical switches to activate writing of cohesive sediment
 !                    mass of each bed layer into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=1,NCS.
+!                    Hout(idsed(i)) with i=1,NCS.
 !
 !  Hout(iMUbld)    Logical switches to activate writing of cohesive sediment
 !                    bed load at U-points into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=1,NCS.
+!                    Hout(idsed(i)) with i=1,NCS.
 !
 !  Hout(iMVbld)    Logical switches to activate writing of cohesive sediment
 !                    bed load at V-points into HISTORY NetCDF file,
-!                    HOUT(idsed(i)) with i=1,NCS.
+!                    Hout(idsed(i)) with i=1,NCS.
+!
+!  Qout(idmud)     Logical switches to activate writing of cohesive sediment
+!                    concentration into QUICKSAVE NetCDF file,
+!                    Qout(idTvar(idsed(i))) with i=1:NCS.
+!
+!  Qout(iMfrac)    Logical switches to activate writing of cohesive sediment
+!                    class fraction composition of each bed layer into
+!                     QUICKSAVE NetCDF file, Qout(idfrac(i)) with i=1,NCS.
+!
+!  Qout(iMmass)    Logical switches to activate writing of cohesive sediment
+!                    mass of each bed layer into QUICKSAVE NetCDF file,
+!                    Qout(idsed(i)) with i=1,NCS.
+!
+!  Qout(iMUbld)    Logical switches to activate writing of cohesive sediment
+!                    bed load at U-points into QUICKSAVE NetCDF file,
+!                    Qout(idsed(i)) with i=1,NCS.
+!
+!  Qout(iMVbld)    Logical switches to activate writing of cohesive sediment
+!                    bed load at V-points into QUICKSAVE NetCDF file,
+!                    Qout(idsed(i)) with i=1,NCS.
 !
 !  Aout(*M...)     Logical switches to activate writing of time-averaged
 !                    cohesive sediment concentration into AVERAGE NetCDF
-!                    file, AOUT(idTvar(idsed(i))) with i=1:NCS.
+!                    file, Aout(idTvar(idsed(i))) with i=1:NCS.
 !
 !                    Aout(idmud)                  suspended concentration
 !
@@ -894,7 +1029,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !
 !  Dout(MT....)    Logical switches to activate writing of time-averaged
 !                    cohesive tracers diagnostic terms into DIAGNOSTIC
-!                    NetCDF file, DOUT(idsed(i),MT....) with i=1,NCS.
+!                    NetCDF file, Dout(idsed(i),MT....) with i=1,NCS.
 !
 !                    Dout(MTrate)   Time rate of change
 !                    Dout(MThadv)   Horizontal total advection
@@ -907,4 +1042,3 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !                    Dout(MTsdif)   Horizontal   S-diffusion
 !                    Dout(MTvdif)   Vertical diffusion
 !
-

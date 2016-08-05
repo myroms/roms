@@ -282,6 +282,8 @@
          type='ROMS/TOMS boundary conditions error covariance norm file'
         ELSE IF (ncid.eq.NRM(4,ng)%ncid) THEN
           type='ROMS/TOMS surface forcing error covariance norm file'
+        ELSE IF (ncid.eq.QCK(ng)%ncid) THEN
+          type='ROMS/TOMS quicksave file'
         ELSE IF (ncid.eq.RST(ng)%ncid) THEN
           type='ROMS/TOMS restart file'
         ELSE IF (ncid.eq.STA(ng)%ncid) THEN

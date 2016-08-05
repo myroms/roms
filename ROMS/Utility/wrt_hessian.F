@@ -484,18 +484,18 @@
   10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
      &        15x,'into Hessian NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (6x,'WRT_HESSIAN - wrote Hessian', t39,                    &
 #  ifdef NESTING
-     &        ',',i1,') into time record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,',',i1,') in record = ',i7.7,2x,i2.2)
 #  else
-     &        ',',i1,') into time record = ',i7.7)
+     &        'fields (Index=',i1,',',i1,') in record = ',i7.7)
 #  endif
 # else
-  20  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
+  20  FORMAT (6x,'WRT_HESSIAN - wrote Hessian', t39,                    &
 #  ifdef NESTING
-     &        ') into time record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,')   in record = ',i7.7,2x,i2.2)
 #  else
-     &        ') into time record = ',i7.7)
+     &        'fields (Index=',i1,')   in record = ',i7.7)
 #  endif
 # endif
       RETURN

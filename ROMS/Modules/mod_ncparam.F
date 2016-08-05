@@ -71,8 +71,8 @@
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-        integer, parameter :: MV = 1300
-        integer, parameter :: NV = 1300
+        integer, parameter :: MV = 1400
+        integer, parameter :: NV = 1400
 !
 !  Input/output grid-type variables.
 !
@@ -144,6 +144,7 @@
         logical, allocatable :: Aout(:,:)     ! average file switches
         logical, allocatable :: Dout(:,:)     ! diagnostic file switches
         logical, allocatable :: Hout(:,:)     ! history file switches
+        logical, allocatable :: Qout(:,:)     ! quicksave file switches
         logical, allocatable :: Sout(:,:)     ! station file switches
 !
 !  Grid identification indices.
@@ -289,6 +290,8 @@
         integer  :: idUfx2        ! time averaged U-flux for 3D
         integer  :: idUice        ! ice U-velocity
         integer  :: idUsms        ! surface U-momentum stress
+        integer  :: idUsuE        ! model surface eastward velocity
+        integer  :: idUsur        ! surface U-velocity
         integer  :: idUtlf        ! 3D U-velocity impulse forcing
         integer  :: idUvel        ! 3D U-velocity
         integer  :: idUwet        ! wet/dry mask on U-points
@@ -323,6 +326,8 @@
         integer  :: idVmKK        ! Kinetic energy vertical mixing
         integer  :: idVmKP        ! Length scale vertical mixing
         integer  :: idVsms        ! surface V-momentum stress
+        integer  :: idVsuN        ! model surface northward velocity
+        integer  :: idVsur        ! surface V-velocity
         integer  :: idVtlf        ! 3D V-velocity impulse forcing
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
@@ -365,6 +370,7 @@
 !  Input/output identification tracer indices.
 !
         integer, allocatable :: idRtrc(:)    ! river runoff for tracers
+        integer, allocatable :: idsurT(:)    ! model surface tracers
         integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
         integer, allocatable :: idTbot(:)    ! bottom flux for tracers
         integer, allocatable :: idTbry(:,:)  ! tracers boundary
@@ -448,6 +454,7 @@
         integer, allocatable :: idefAVG(:)    ! averages file
         integer, allocatable :: idefDIA(:)    ! diagnostics file
         integer, allocatable :: idefHIS(:)    ! history file
+        integer, allocatable :: idefQCK(:)    ! quicksave file
         integer, allocatable :: idefTLM(:)    ! tangent file
 !
 !  Output NetCDF variables IDs.
@@ -563,9 +570,11 @@
       allocate ( Aout(NV,Ngrids) )
       allocate ( Dout(NV,Ngrids) )
       allocate ( Hout(NV,Ngrids) )
+      allocate ( Qout(NV,Ngrids) )
       allocate ( Sout(NV,Ngrids) )
 
       allocate ( idRtrc(MT) )
+      allocate ( idsurT(MT) )
       allocate ( idTads(MT) )
       allocate ( idTbot(MT) )
       allocate ( idTbry(4,MT) )
@@ -787,6 +796,7 @@
           Aout(i,ng)=.FALSE.
           Dout(i,ng)=.FALSE.
           Hout(i,ng)=.FALSE.
+          Qout(i,ng)=.FALSE.
           Sout(i,ng)=.FALSE.
           Iinfo(1,i,ng)=0
           Iinfo(2,i,ng)=-1
@@ -938,12 +948,20 @@
               idv2dN=varid
             CASE ('idRv2d')
               idRv2d=varid
+            CASE ('idUsur')
+              idUsur=varid
+            CASE ('idUsuE')
+              idUsuE=varid
             CASE ('idUvel')
               idUvel=varid
             CASE ('idu3dE')
               idu3dE=varid
             CASE ('idRu3d')
               idRu3d=varid
+            CASE ('idVsur')
+              idVsur=varid
+            CASE ('idVsuN')
+              idVsuN=varid
             CASE ('idVvel')
               idVvel=varid
             CASE ('idv3dN')
@@ -956,6 +974,10 @@
               idOvel=varid
             CASE ('idDano')
               idDano=varid
+            CASE ('idsurT(itemp)')
+              idsurT(itemp)=varid
+            CASE ('idsurT(isalt)')
+              idsurT(isalt)=varid
             CASE ('idTvar(itemp)')
               idTvar(itemp)=varid
             CASE ('idTvar(isalt)')
@@ -2212,6 +2234,34 @@
      &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ', surface flux'
         WRITE (Vname(3,varid),'(a,1x,a)')                               &
      &        TRIM(ADJUSTL(Vname(3,idTvar(i)))), 'meter second-1'
+        WRITE (Vname(4,varid),'(a,a)')                                  &
+     &        TRIM(Vname(1,varid)), ', scalar, series'
+        WRITE (Vname(5,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(5,idTvar(i))))
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Set passive model surface tracers metadata. The variable name is the
+!  same as the basic tracer but with the _sflux suffix.
+!-----------------------------------------------------------------------
+!
+      DO i=NAT+1,MT
+        varid=varid+1
+        IF (varid.gt.MV) THEN
+          WRITE (stdout,60) MV, varid
+          STOP
+        END IF
+        idsurT(i)=varid
+        DO ng=1,Ngrids
+          Fscale(varid,ng)=1.0_r8
+          Iinfo(1,varid,ng)=r2dvar
+        END DO
+        WRITE (Vname(1,varid),'(a,a)')                                  &
+     &        TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_sur'
+        WRITE (Vname(2,varid),'(a,1x,a)') 'model surface',              &
+     &        TRIM(ADJUSTL(Vname(2,idTvar(i))))
+        WRITE (Vname(3,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
         WRITE (Vname(4,varid),'(a,a)')                                  &
      &        TRIM(Vname(1,varid)), ', scalar, series'
         WRITE (Vname(5,varid),'(a)')                                    &

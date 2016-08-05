@@ -808,6 +808,7 @@
         logical, allocatable :: LdefLCZ(:)       ! Lanczos Vectors file
         logical, allocatable :: LdefLZE(:)       ! Evolved Lanczos file
         logical, allocatable :: LdefMOD(:)       ! 4DVAR file
+        logical, allocatable :: LdefQCK(:)       ! Quicksave file
         logical, allocatable :: LdefRST(:)       ! Restart file
         logical, allocatable :: LdefSTA(:)       ! Stations file
         logical, allocatable :: LdefTIDE(:)      ! tide forcing file
@@ -819,6 +820,7 @@
         logical, allocatable :: LwrtDIA(:)       ! Write diagnostic file
         logical, allocatable :: LwrtHIS(:)       ! Write history file
         logical, allocatable :: LwrtPER(:)       ! Write during ensemble
+        logical, allocatable :: LwrtQCK(:)       ! write quicksave file
         logical, allocatable :: LwrtRST(:)       ! Write restart file
         logical, allocatable :: LwrtTLM(:)       ! Write tangent file
         logical, allocatable :: LwrtTLF(:)       ! Write impulse file
@@ -858,6 +860,7 @@
         integer, allocatable :: ndefAVG(:)       ! Average file
         integer, allocatable :: ndefDIA(:)       ! Diagnostics file
         integer, allocatable :: ndefHIS(:)       ! History file
+        integer, allocatable :: ndefQCK(:)       ! Quicksave file
         integer, allocatable :: ndefTLM(:)       ! Tangent linear file
 !
 !  Starting timestep for accumulation of output.
@@ -872,6 +875,7 @@
         integer, allocatable :: nDIA(:)          ! Diagnostics file
         integer, allocatable :: nFLT(:)          ! Floats file
         integer, allocatable :: nHIS(:)          ! History file
+        integer, allocatable :: nQCK(:)          ! Quicksave file
         integer, allocatable :: nRST(:)          ! Restart file
         integer, allocatable :: nSTA(:)          ! Stations file
         integer, allocatable :: nTLM(:)          ! Tangent linear file
@@ -1919,6 +1923,7 @@
       allocate ( LdefLCZ(Ngrids) )
       allocate ( LdefLZE(Ngrids) )
       allocate ( LdefMOD(Ngrids) )
+      allocate ( LdefQCK(Ngrids) )
       allocate ( LdefRST(Ngrids) )
       allocate ( LdefSTA(Ngrids) )
       allocate ( LdefTIDE(Ngrids) )
@@ -1930,6 +1935,7 @@
       allocate ( LwrtDIA(Ngrids) )
       allocate ( LwrtHIS(Ngrids) )
       allocate ( LwrtPER(Ngrids) )
+      allocate ( LwrtQCK(Ngrids) )
       allocate ( LwrtRST(Ngrids) )
       allocate ( LwrtTLM(Ngrids) )
       allocate ( LwrtTLF(Ngrids) )
@@ -1955,6 +1961,7 @@
       allocate ( ndefAVG(Ngrids) )
       allocate ( ndefDIA(Ngrids) )
       allocate ( ndefHIS(Ngrids) )
+      allocate ( ndefQCK(Ngrids) )
       allocate ( ndefTLM(Ngrids) )
 
       allocate ( ntsAVG(Ngrids) )
@@ -1965,6 +1972,7 @@
       allocate ( nDIA(Ngrids) )
       allocate ( nFLT(Ngrids) )
       allocate ( nHIS(Ngrids) )
+      allocate ( nQCK(Ngrids) )
       allocate ( nRST(Ngrids) )
       allocate ( nSTA(Ngrids) )
       allocate ( nTLM(Ngrids) )

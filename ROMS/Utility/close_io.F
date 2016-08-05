@@ -174,6 +174,9 @@
         IF (HIS(ng)%ncid.ne.-1) THEN
           CALL netcdf_close (ng, iNLM, HIS(ng)%ncid)
         END IF
+        IF (QCK(ng)%ncid.ne.-1) THEN
+          CALL netcdf_close (ng, iNLM, QCK(ng)%ncid)
+        END IF
 #ifdef ADJOINT
         IF (ADM(ng)%ncid.ne.-1) THEN
           CALL netcdf_close (ng, iADM, ADM(ng)%ncid)

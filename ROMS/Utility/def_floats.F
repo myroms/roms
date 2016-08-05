@@ -751,10 +751,10 @@
 
       END IF QUERY
 !
-  10  FORMAT (6x,'DEF_FLOATS  - creating floats file, Grid ',i2.2,      &
-     &        ': ',a)
-  20  FORMAT (6x,'DEF_FLOATS  - inquiring floats file, Grid ',i2.2,     &
-     &        ': ',a)
+  10  FORMAT (6x,'DEF_FLOATS  - creating  floats', t43,                 &
+     &        ' file, Grid ',i2.2,': ', a)
+  20  FORMAT (6x,'DEF_AVG     - inquiring floats', t43,                 &
+     &        ' file, Grid ',i2.2,': ', a)
   30  FORMAT (/,' DEF_FLOATS - unable to create floats NetCDF',         &
      &        ' file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')

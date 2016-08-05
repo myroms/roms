@@ -576,10 +576,10 @@
         DAI(ng)%Rindex=rec_size
       END IF QUERY
 !
-  10  FORMAT (6x,'DEF_DAI   - creating DA initial or restart  file',    &
-     &        ', Grid ',i2.2 ': ',a)
-  20  FORMAT (6x,'DEF_DAI   - inquiring DA initial/restart file',       &
-     &        ', Grid ',i2.2,': ',a)
+  10  FORMAT (6x,'DEF_AVG     - creating  DA INI/RST', t43,             &
+     &        ' file, Grid ',i2.2,': ', a)
+  20  FORMAT (6x,'DEF_AVG     - inquiring DA INI/RST', t43,             &
+     &        ' file, Grid ',i2.2,': ', a)
   30  FORMAT (/,' DEF_DAI - unable to create DA initial/restart',       &
      &        ' NetCDF file: ',a)
   40  FORMAT ('time independent',1x,a)

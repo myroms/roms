@@ -1052,10 +1052,10 @@
         HSS(ng)%Rindex=rec_size
       END IF QUERY
 !
-  10  FORMAT (3x,'DEF_HESSIAN  - creating Hessian file, Grid ',i2.2,    &
-     &        ': ',a)
-  20  FORMAT (3x,'DEF_HESSIAN  - inquiring Hessian file, Grid ',i2.2,   &
-     &        ': ',a)
+  10  FORMAT (6x,'DEF_HESSIAN - creating  Hessian', t43,                &
+     &        ' file, Grid ',i2.2,': ', a)
+  20  FORMAT (6x,'DEF_HESSIAN - inquiring Hessian', t43,                &
+     &        ' file, Grid ',i2.2,': ', a)
   30  FORMAT (/,' DEF_HESSIAN - unable to create Hessian NetCDF file:', &
      &        1x,a)
   40  FORMAT (a,', Hessian eigenvectors')

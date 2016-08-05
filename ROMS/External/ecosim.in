@@ -625,6 +625,13 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo      ! idbio(:), compact
   Hout(idTvar) == 61*T   ! ..., DIC, ...           biological tracer
   Hout(idTsur) == 61*F   ! ..., DIC_sflux, ...     surface tracer flux
 
+! Logical switches (TRUE/FALSE) to write biological fields into QUICKSAVE
+! output file, [NBT,Ngrids] values are expected.
+
+  Qout(idTvar) == 61*F   ! ..., DIC, ...           biological tracer
+  Qout(idsurT) == 61*F   ! ..., DIC_sur, ...       surface bological tracer
+  Qout(idTsur) == 61*F   ! ..., DIC_sflux, ...     surface tracer flux
+
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file, [NBT,Ngrids] values are expected.
 
@@ -1307,6 +1314,21 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo      ! idbio(:), compact
 !
 !                     The idTvar(idbio(:)) and idTsur(idbio(:)) indices are
 !                     provided above.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into QUICKSAVE file.
+!------------------------------------------------------------------------------
+!
+!  Qout             Logical switches to write out biological fields into
+!                     output QUICKSAVE NetCDF file, [1:NBT,1:Ngrids] values
+!                     are expected:
+!
+!                     Qout(idTvar)      biological tracers
+!                     Qout(idsurT)      surface biological tracers
+!                     Qout(idTsur)      biological tracers surface flux
+!
+!                     The idTvar(idbio(:)), idsurR(idbio(:)), and
+!                     idTsur(idbio(:)) indices are provided above.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of fields into AVERAGE file.

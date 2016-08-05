@@ -42,6 +42,7 @@
 !                NRM(4,ng)  surface forcing                            !
 !    NUD       Input climatology nudging coefficients                  !
 !    OBS       Input/output 4D-Var observations                        !
+!    QCK       Output nonlinear model brief snpashots data             !
 !    RST       Output restart data                                     !
 !    TIDE      Input tide forcing                                      !
 !    TLF       Input/output tangent linear model impulse forcing       !
@@ -121,6 +122,7 @@
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
       TYPE(T_IO), allocatable :: OBS(:)     ! observations
+      TYPE(T_IO), allocatable :: QCK(:)     ! quicksave fields
       TYPE(T_IO), allocatable :: RST(:)     ! restart fields
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
@@ -215,6 +217,7 @@
       allocate ( LZE(Ngrids) )
       allocate ( NUD(Ngrids) )
       allocate ( OBS(Ngrids) )
+      allocate ( QCK(Ngrids) )
       allocate ( RST(Ngrids) )
       allocate ( SSF(Ngrids) )
       allocate ( STA(Ngrids) )

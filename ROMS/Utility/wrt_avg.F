@@ -1953,11 +1953,11 @@
 !
   10  FORMAT (/,' WRT_AVG - error while writing variable: ',a,/,11x,    &
      &        'into averages NetCDF file for time record: ',i4)
-  20  FORMAT (6x,'WRT_AVG   - wrote averaged fields into time ',        &
+  20  FORMAT (6x,'WRT_AVG     - wrote averaged',t39,'fields',t58,       &
 # ifdef NESTING
-     &        'record =',t72,i7.7,2x,i2.2)
+     &        'in record = ',i7.7,2x,i2.2)
 # else
-     &        'record =',t72,i7.7)
+     &        'in record = ',i7.7)
 # endif
 #else
       SUBROUTINE wrt_avg

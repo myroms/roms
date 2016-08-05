@@ -2846,10 +2846,10 @@
       END IF
 # endif
 !
-  10  FORMAT (6x,'DEF_AVG   - creating average file, Grid ',i2.2,': ',  &
-     &        a)
-  20  FORMAT (6x,'DEF_AVG   - inquiring average file, Grid ',i2.2,': ', &
-     &        a)
+  10  FORMAT (6x,'DEF_AVG     - creating  average', t43,                &
+     &        ' file, Grid ',i2.2,': ', a)
+  20  FORMAT (6x,'DEF_AVG     - inquiring average', t43,                &
+     &        ' file, Grid ',i2.2,': ', a)
   30  FORMAT (/,' DEF_AVG - unable to create averages NetCDF file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_AVG - unable to open averages NetCDF file: ',a)
