@@ -348,7 +348,6 @@
         Vinfo( 3)=Vname(3,idFsur)
         Vinfo(14)=Vname(4,idFsur)
         Vinfo(16)=Vname(1,idtime)
-        Vinfo(20)='mask_rho'
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idFsur),     &
