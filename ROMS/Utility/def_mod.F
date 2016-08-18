@@ -66,7 +66,7 @@
 
       real(r8) :: Aval(6)
 
-      character (len=40 )  :: AttName(2)
+      character (len=40 )  :: Aname, AttName(2)
       character (len=80 )  :: type
       character (len=120)  :: Vinfo(Natt)
       character (len=256)  :: ncname
@@ -248,8 +248,7 @@
      &                             'state_variables',                   &
      &                             DAV(ng)%ncid, nf90_global)
               IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,60) 'state_variables', 'nf90_global',     &
-     &                            TRIM(ncname)
+                WRITE (stdout,50) 'state_variables', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
               END IF
@@ -266,8 +265,7 @@
      &                             'obs_provenance',                    &
      &                             DAV(ng)%ncid, nf90_global)
               IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,60) 'obs_provenance', 'nf90_global',      &
-     &                            TRIM(ncname)
+                WRITE (stdout,50) 'obs_provenance', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
               END IF
@@ -961,14 +959,35 @@
      &                         nVarAtt = nvatt)
           IF (exit_flag.ne.NoError) RETURN
           Vinfo(1)=TRIM(Vname(1,idOTyp))
-          DO i=1,nvatt
-            IF (TRIM(var_Aname(i)).eq.'long_name') THEN
-              Vinfo(2)=TRIM(var_Achar(i))
-            END IF
-          END DO
           status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOTyp),   &
      &                   nf90_int, 1, (/datumDim/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
+!                                      copy attributes from observations
+          IF (OutThread) THEN
+            DO i=1,nvatt
+              status=nf90_inq_attname(OBSncid, vindex, i, Aname)
+              IF (status.eq.nf90_noerr) THEN
+                status=nf90_copy_att(OBSncid, vindex, TRIM(Aname),      &
+     &                               DAV(ng)%ncid, DAV(ng)%Vid(idOTyp))
+                IF (status.ne.nf90_noerr) THEN
+                  WRITE (stdout,60) TRIM(Aname), TRIM(Vname(1,idOTyp)), &
+     &                              TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                WRITE (stdout,70) i, TRIM(Vname(1,idOpro)),             &
+     &                           TRIM(OBS(ng)%name)
+              END IF
+            END DO
+          END IF
+# ifdef DISTRIBUTE
+          ibuffer(1)=exit_flag
+          ibuffer(2)=ioerror
+          CALL mp_bcasti (ng, iNLM, ibuffer)
+          exit_flag=ibuffer(1)
+          ioerror=ibuffer(2)
+# endif
         END IF
 !
 !  Observations provenance.
@@ -980,45 +999,27 @@
      &                         nVarAtt = nvatt)
           IF (exit_flag.ne.NoError) RETURN
           Vinfo(1)=TRIM(Vname(1,idOpro))
-          DO i=1,nvatt
-            IF (TRIM(var_Aname(i)).eq.'long_name') THEN
-              Vinfo(2)=TRIM(var_Achar(i))
-            END IF
-          END DO
           status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOpro),   &
      &                   nf90_int, 1, (/datumDim/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
-!                                       copy attribute from observations
+!                                      copy attributes from observations
           IF (OutThread) THEN
-            status=nf90_copy_att(OBSncid, vindex,                       &
-     &                           'flag_values',                         &
-     &                           DAV(ng)%ncid, DAV(ng)%Vid(idOpro))
-            IF (status.ne.nf90_noerr) THEN
-               WRITE (stdout,50) 'flag_values', TRIM(Vname(1,idOpro)),  &
-     &                           TRIM(ncname)
-               exit_flag=3
-               ioerror=status
-            END IF
-          END IF
-# ifdef DISTRIBUTE
-          ibuffer(1)=exit_flag
-          ibuffer(2)=ioerror
-          CALL mp_bcasti (ng, iNLM, ibuffer)
-          exit_flag=ibuffer(1)
-          ioerror=ibuffer(2)
-# endif
-          IF (exit_flag.ne.NoError) RETURN
-!                                       copy attribute from observations
-          IF (OutThread) THEN
-            status=nf90_copy_att(OBSncid, vindex,                       &
-     &                           'flag_meanings',                       &
-     &                           DAV(ng)%ncid, DAV(ng)%Vid(idOpro))
-            IF (status.ne.nf90_noerr) THEN
-               WRITE (stdout,50) 'flag_meanings', TRIM(Vname(1,idOpro)),&
-     &                           TRIM(ncname)
-               exit_flag=3
-               ioerror=status
-            END IF
+            DO i=1,nvatt
+              status=nf90_inq_attname(OBSncid, vindex, i, Aname)
+              IF (status.eq.nf90_noerr) THEN
+                status=nf90_copy_att(OBSncid, vindex, TRIM(Aname),      &
+     &                               DAV(ng)%ncid, DAV(ng)%Vid(idOpro))
+                IF (status.ne.nf90_noerr) THEN
+                  WRITE (stdout,60) TRIM(Aname), TRIM(Vname(1,idOpro)), &
+     &                              TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                WRITE (stdout,70) i, TRIM(Vname(1,idOpro)),             &
+     &                           TRIM(OBS(ng)%name)
+              END IF
+            END DO
           END IF
 # ifdef DISTRIBUTE
           ibuffer(1)=exit_flag
@@ -1599,7 +1600,7 @@
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, DAV(ng)%ncid)
         IF (exit_flag.ne.NoError) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
 !
@@ -1681,89 +1682,89 @@
 !  Check if needed variables are available.
 !
         IF (.not.got_var(idOday)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOday)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOday)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOpro)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOpro)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOpro)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsT)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsT)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsT)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOlon)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOlon)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOlon)),          &
      &                                  TRIM(DAV(ng)%name)
 !!        exit_flag=2
 !!        RETURN
         END IF
         IF (.not.got_var(idOlat)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOlat)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOlat)),          &
      &                                  TRIM(DAV(ng)%name)
 !!        exit_flag=2
 !!        RETURN
         END IF
         IF (.not.got_var(idObsD)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsD)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsD)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsX)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsX)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsX)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsY)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsY)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsY)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOerr)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOerr)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOerr)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOval)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOval)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOval)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
 
         IF (.not.got_var(idObsS)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idObsS)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsS)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
 # ifdef FOUR_DVAR
         IF (.not.got_var(idNLmi)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idNLmi)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
 # endif
         IF (.not.got_var(idNLmo)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idNLmo)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmo)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
         IF (.not.got_var(idTLmo)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTLmo)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idTLmo)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
@@ -1771,13 +1772,13 @@
 # endif
 # if defined IS4DVAR || defined WEAK_CONSTRAINT
         IF (.not.got_var(idMOMi)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMi)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idMOMi)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idMOMf)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMf)),          &
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idMOMf)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
@@ -1794,9 +1795,13 @@
      &        1x,a)
   50  FORMAT (/,' DEF_MOD - unable to create global attribute: ',       &
      &        a,/,11x,a)
-  60  FORMAT (/,' DEF_MOD - unable to copy attribute: ',1x,a,2x,        &
+  60  FORMAT (/,' DEF_MOD - unable to copy attribute; ',a,1x,           &
+     &        'for variable: ',a,/,11x,'in file: 'a)
+  70  FORMAT (/,' DEF_MOD - unable to inquire attribute ',i2.2,1x,      &
+     &        'name for variable: ',a,/,11x,'in file: 'a)
+  80  FORMAT (/,' DEF_MOD - unable to copy attribute: ',1x,a,2x,        &
      &        'for variable: ',1x,a,/,11x,a)
-  70  FORMAT (/,' DEF_MOD - unable to find model/observation variable:',&
+  90  FORMAT (/,' DEF_MOD - unable to find model/observation variable:',&
      &        1x,a,/,11x,'in file: ',a)
 
       RETURN
