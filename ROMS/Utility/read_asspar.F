@@ -1127,7 +1127,7 @@
      &                    TRIM(aparnam)
 #  endif
 #  if defined FOUR_DVAR || (defined HESSIAN_SV && defined BNORM)
-#   if defined IS4DVAR          || defined OBS_SENSITIBITY || \
+#   if defined IS4DVAR          || defined OBS_SENSITIVITY || \
        defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
 #    if defined SENSITIVITY_4DVAR || \
         defined TL_W4DPSAS        || defined TL_W4DVAR || \
@@ -1223,21 +1223,25 @@
 #   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
           fname=OBS(ng)%name
           IF (.not.find_file(ng, fname, 'OBSname')) GO TO 30
-          WRITE (out,160) '            Observations File:  ',           &
+          WRITE (out,160) '      Input observations File:  ',           &
      &                    TRIM(fname)
 #   endif
-#  endif
           WRITE (out,160) '    Input/Output Lanczos File:  ',           &
      &                    TRIM(LCZ(ng)%name)
-#  ifndef IS4DVAR_SENSITIVITY
+#   ifndef IS4DVAR_SENSITIVITY
           WRITE (out,160) '    Input/Output Hessian File:  ',           &
      &                    TRIM(HSS(ng)%name)
-#  endif
-#  ifdef EVOLVED_LCZ
+#   endif
+#   ifdef EVOLVED_LCZ
           WRITE (out,160) '  Output evolved Lanczos File:  ',           &
      &                    TRIM(LZE(ng)%name)
+#   endif
 #  endif
 #  ifdef VERIFICATION
+          fname=OBS(ng)%name
+          IF (.not.find_file(ng, fname, 'OBSname')) GO TO 30
+          WRITE (out,160) '      Input observations File:  ',           &
+     &                    TRIM(fname)
           WRITE (out,160) '     Output verification File:  ',           &
      &                    TRIM(DAV(ng)%name)
 #  else
@@ -1281,7 +1285,11 @@
  110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
  120  FORMAT (f11.3,2x,a,t30,a)
  130  FORMAT (f11.3,2x,a,t30,a,a,'.')
- 150  FORMAT (/,' Input Assimilation Files:',/)
+#  ifdef VERIFICATION
+ 150  FORMAT (/,' Input/Output Verification Files:',/)
+#  else
+ 150  FORMAT (/,' Input/Output Assimilation Files:',/)
+#  endif
  160  FORMAT (2x,a,a)
  170  FORMAT (3x,4(1x,l1),2x,a,t30,a)
  180  FORMAT (3x,4(1x,l1),2x,a,t30,a,i2.2,':',1x,a)

@@ -42,7 +42,7 @@
 !  Local variable declarations.
 !
       logical, dimension(NV) :: got_var(NV)
-      logical :: foundit
+      logical :: foundAtt(2), foundit
 
       integer, parameter :: Natt = 25
 
@@ -66,9 +66,11 @@
 
       real(r8) :: Aval(6)
 
+      character (len=40 )  :: AttName(2)
       character (len=80 )  :: type
       character (len=120)  :: Vinfo(Natt)
       character (len=256)  :: ncname
+      character (len=2048) :: AttValue(2)
 !
       SourceFile='def_mod.F'
 !
@@ -110,6 +112,16 @@
 !
       CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid)
       IF (exit_flag.ne.NoError) RETURN
+!
+!  Inquire if the 'state_variables' and 'obs_provenance' attributes
+!  are available in the observations file.
+!
+      AttName(1)='state_variables'
+      AttName(2)='obs_provenance'
+!
+      CALL netcdf_get_satt (ng, iNLM, OBS(ng)%name, nf90_global,        &
+     &                      AttName, AttValue, foundAtt,                &
+     &                      ncid = OBSncid)
 !
 !=======================================================================
 !  Create a new model/observation file.
@@ -231,32 +243,36 @@
 !  observation file.
 !
           IF (exit_flag.eq.NoError) THEN
-            status=nf90_copy_att(OBSncid, nf90_global,                  &
-     &                           'state_variables',                     &
-     &                           DAV(ng)%ncid, nf90_global)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,60) 'state_variables', 'nf90_global',       &
-     &                          TRIM(ncname)
-              exit_flag=3
-              ioerror=status
+            IF (foundAtt(1)) THEN
+              status=nf90_copy_att(OBSncid, nf90_global,                &
+     &                             'state_variables',                   &
+     &                             DAV(ng)%ncid, nf90_global)
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,60) 'state_variables', 'nf90_global',     &
+     &                            TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+              IF (exit_flag.ne.NoError) RETURN
             END IF
-            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  Observations provenance IDs. Copy global attribute from
 !  observation file.
 !
           IF (exit_flag.eq.NoError) THEN
-            status=nf90_copy_att(OBSncid, nf90_global,                  &
-     &                           'obs_provenance',                      &
-     &                           DAV(ng)%ncid, nf90_global)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,60) 'obs_provenance', 'nf90_global',        &
-     &                          TRIM(ncname)
-              exit_flag=3
-              ioerror=status
+            IF (foundAtt(2)) THEN
+              status=nf90_copy_att(OBSncid, nf90_global,                &
+     &                             'obs_provenance',                    &
+     &                             DAV(ng)%ncid, nf90_global)
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,60) 'obs_provenance', 'nf90_global',      &
+     &                            TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+              IF (exit_flag.ne.NoError) RETURN
             END IF
-            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  SVN repository information.
