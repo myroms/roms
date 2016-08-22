@@ -74,7 +74,7 @@
 
 # include "set_bounds.h"
 !
-      SourceFile='wrt_brief.F'
+      SourceFile='wrt_quick.F'
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -741,7 +741,8 @@
         IF (Qout(idsurT(itrc),ng)) THEN
           scale=1.0_r8
           gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid, QCK(ng)%Tid(itrc), &
+          status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid,                    &
+     &                       QCK(ng)%Vid(idsurT(itrc)),                 &
      &                       QCK(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 # ifdef MASKING

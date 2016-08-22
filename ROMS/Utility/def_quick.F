@@ -63,7 +63,7 @@
       character (len=120) :: Vinfo(Natt)
       character (len=256) :: ncname
 !
-      SourceFile='def_his.F'
+      SourceFile='def_quick.F'
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
@@ -876,7 +876,8 @@
 # endif
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r2dvar,r8)
-            status=def_var(ng, iNLM, QCK(ng)%ncid, QCK(ng)%Tid(itrc),   &
+            status=def_var(ng, iNLM, QCK(ng)%ncid,                      &
+     &                     QCK(ng)%Vid(idsurT(itrc)),                   &
      &                     NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -2224,12 +2225,24 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
             QCK(ng)%Vid(idVvel)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsur))) THEN
+            got_var(idUsur)=.TRUE.
+            QCK(ng)%Vid(idUsur)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsur))) THEN
+            got_var(idVsur)=.TRUE.
+            QCK(ng)%Vid(idVsur)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idu3dE))) THEN
             got_var(idu3dE)=.TRUE.
             QCK(ng)%Vid(idu3dE)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idv3dN))) THEN
             got_var(idv3dN)=.TRUE.
             QCK(ng)%Vid(idv3dN)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsuE))) THEN
+            got_var(idUsuE)=.TRUE.
+            QCK(ng)%Vid(idUsuE)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsuN))) THEN
+            got_var(idVsuN)=.TRUE.
+            QCK(ng)%Vid(idVsuN)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             QCK(ng)%Vid(idWvel)=var_id(i)
@@ -2451,6 +2464,10 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
               got_var(idTvar(itrc))=.TRUE.
               QCK(ng)%Tid(itrc)=var_id(i)
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idsurT(itrc)))) THEN
+              got_var(idsurT(itrc))=.TRUE.
+              QCK(ng)%Vid(idsurT(itrc))=var_id(i)
 # ifdef ADJUST_BOUNDARY
             ELSE IF (TRIM(var_name(i)).eq.                              &
      &               TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
@@ -2643,6 +2660,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUsur).and.Qout(idUsur,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUsur)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVsur).and.Qout(idVsur,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVsur)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 # ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSbry(isUvel))) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUvel))),  &
@@ -2665,6 +2694,18 @@
         END IF
         IF (.not.got_var(idv3dN).and.Qout(idv3dN,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idv3dN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUsuE).and.Qout(idUsuE,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUsuE)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVsuN).and.Qout(idVsuN,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVsuN)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3067,15 +3108,22 @@
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
+          END IF
+          IF (.not.got_var(idsurT(itrc)).and.Qout(idsurT(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idsurT(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
 # ifdef ADJUST_BOUNDARY
-          ELSE IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
+          IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
             IF (Master) WRITE (stdout,70)                               &
      &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
             RETURN
-# endif
           END IF
+# endif
         END DO
         DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Qout(idTsur(itrc),ng)) THEN

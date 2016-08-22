@@ -340,18 +340,18 @@
   20  FORMAT (/,' WRT_DAI - error while writing variable: ',a,/,11x,    &
      &        'into DA initial/rstart NetCDF file for time record: ',i4)
 # ifdef SOLVE3D
-  30  FORMAT (6x,'WRT_DAI   - wrote DA IC    fields (Index=', i1,       &
+  30  FORMAT (6x,'WRT_DAI     - wrote DA IC', t39,                      &
 #  ifdef NESTING
-     &        ',',i1,') into time record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,',',i1,') in record = ',i7.7,2x,i2.2)
 #  else
-     &        ',',i1,') into time record = ',i7.7)
+     &        'fields (Index=',i1,',',i1,') in record = ',i7.7)
 #  endif
 # else
-  30  FORMAT (6x,'WRT_DAI   - wrote DA IC    fields (Index=', i1,       &
+  30  FORMAT (6x,'WRT_DAI     - wrote DA IC', t39,                      &
 #  ifdef NESTING
-     &        ') into time record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,')   in record = ',i7.7,2x,i2.2)
 #  else
-     &        ') into time record = ',i7.7)
+     &        'fields (Index=',i1,')   in record = ',i7.7)
 #  endif
 # endif
 

@@ -3446,15 +3446,16 @@
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
+          END IF
 # ifdef ADJUST_BOUNDARY
-          ELSE IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
+          IF (.not.got_var(idSbry(isTvar(itrc)))) THEN
             IF (Master) WRITE (stdout,70)                               &
      &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
             RETURN
-# endif
           END IF
+# endif
         END DO
         DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN

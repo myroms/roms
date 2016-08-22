@@ -204,7 +204,7 @@
         RETURN
       END IF
 
-#ifdef NO_LBC_ATT
+#if defined DEBUGGING || defined NO_LBC_ATT
 !
 !  Lateral boundary conditions attribute not checked in restart file.
 !
