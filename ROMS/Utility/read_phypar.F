@@ -3188,6 +3188,15 @@
 !
         nADJ(ng)=ntimes(ng)
 #endif
+#if defined W4DPSAS || defined W4DVAR
+!
+!  If dual formulation and strong constraint, limit writing the adjoint
+!  solution to the end of time-stepping.
+!
+        IF (nADJ(ng).gt.ntimes(ng)) THEN
+          nADJ(ng)=ntimes(ng)
+        END IF
+#endif
 #if defined IS4DVAR || defined W4DPSAS || defined W4DVAR
 !
 !  Insure that restart file is written only at the end.  In sequential
