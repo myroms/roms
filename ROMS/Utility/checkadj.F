@@ -124,7 +124,7 @@
       string=uppercase('clima_ts_mix')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
-        IF (Master) WRITE(stdout,20) TRIM(string),                      &
+        IF (Master) WRITE(stdout,10) TRIM(string),                      &
      &                               'not tested, WARNING'
       END IF
 
@@ -280,6 +280,14 @@
         ic=ic+1
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not coded, FATAL ERROR'
+      END IF
+
+      string=uppercase('geopotential_hconv')
+      ifound=INDEX(TRIM(Coptions), TRIM(string))
+      IF (ifound.ne.0) THEN
+        ic=ic+1
+        IF (Master) WRITE(stdout,10) TRIM(string),                      &
+     &                               'experimental, AVOID USAGE'
       END IF
 
 # ifndef FORWARD_MIXING

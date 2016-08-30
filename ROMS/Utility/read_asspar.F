@@ -23,6 +23,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE strings_mod, ONLY : uppercase
+!
       implicit none
 !
 !  Imported variable declarations
@@ -1261,6 +1263,25 @@
         END DO
       END IF
 
+#  if defined WEAK_CONSTRAINT && defined RPCG
+!
+!  Stop if activating pre-conditioning for the RBLanczos minimization
+!  algorithm. It does not work yet.
+!
+      DO ng=1,Ngrids
+        IF (Lprecond) THEN
+          IF (Master) THEN
+            WRITE (out,230) 'Lprecond', Lprecond,                       &
+     &            'pre-conditioning does not work yet with ' //         &
+     &            uppercase('rpcg') // ' algorithm.',                   &
+     &            'Set Lprecond to F in ' // TRIM(aparnam)
+          END IF
+          exit_flag=5
+          RETURN
+        END IF
+      END DO
+#  endif
+
 #  if defined WEAK_CONSTRAINT && defined TIME_CONV
 !
 !-----------------------------------------------------------------------
@@ -1297,6 +1318,8 @@
  200  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,':',1x,i6)
  210  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
  220  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
+ 230  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, l1, &
+     &        /,15x,a,/,15x,a)
 # endif
 
       RETURN
