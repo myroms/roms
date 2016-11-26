@@ -289,13 +289,7 @@
       DO i=1,Mobs
         NLmodVal(i)=IniVal
         TLmodVal(i)=IniVal
-# ifdef BGQC
-        IF ((inner.eq.0).and.(outer.eq.0)) THEN
-          ObsScale(i)=IniVal
-        END IF
-# else
-        ObsScale(i)=IniVal
-# endif
+        ObsVetting(i)=IniVal
       END DO
 # endif
 !

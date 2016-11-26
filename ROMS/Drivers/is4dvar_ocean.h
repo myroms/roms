@@ -493,7 +493,9 @@
 !
 !  Run nonlinear model. Save nonlinear tracjectory needed by the
 !  adjoint and tangent linear models. Interpolate nonlinear model
-!  to boservation locations (compute and save H x).
+!  to observation locations (compute and save H x). It processes
+!  and writes the observations accept/reject flag (ObsScale) once
+!  to allow background quality control, if any.
 !
         DO ng=1,Ngrids
 #ifdef AVERAGES
@@ -506,6 +508,7 @@
           LwrtDIA(ng)=.TRUE.
           WRITE (DIA(ng)%name,10) TRIM(DIA(ng)%base), outer
 #endif
+          wrtObsScale(ng)=.TRUE.
           IF (Master) THEN
             WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
           END IF
@@ -530,6 +533,7 @@
           LwrtDIA(ng)=.FALSE.
 #endif
           wrtNLmod(ng)=.FALSE.
+          wrtObsScale(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
         END DO
 

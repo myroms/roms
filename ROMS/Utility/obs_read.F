@@ -234,7 +234,7 @@
      &                          total = (/Nobs(ng),1/))
           IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifdef BGQC
+# ifdef BGQC_NOT_NEEDED
           CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idBgEr),                        &
      &                          BgErr(Mstr:),                           &

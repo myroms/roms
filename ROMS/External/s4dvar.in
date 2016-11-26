@@ -123,6 +123,11 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
          NpostI = 50
 
+! If observations impact or observations sensitivity, set the 4D-Var
+! outer loop to process. It must be less or equal that Nouter.
+
+         Nimpact = 1
+
 ! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
@@ -545,6 +550,17 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  NpostI         If weak constraint 4DVar (W4DPSAS or W4DVAR), set number of
 !                 iterations in the Lanczos algorithm used to estimate the
 !                 posterior analysis error covariance matrix.
+!
+!------------------------------------------------------------------------------
+! Observations impact or observations sensitivity.
+!------------------------------------------------------------------------------
+!
+!  Nimpact        Outer loop to consider in the computation of the observations
+!                 impact or observation sensitivity, Nimpact =< Nouter.  This
+!                 facilitates the computations with multiple outer loop 4D-Var
+!                 applications.  The observation analysis needs to be computed
+!                 separately for each outer loop.  The full analysis for all
+!                 outer loops is combined offline.
 !
 !------------------------------------------------------------------------------
 ! Diffusive relaxation coefficients.

@@ -873,6 +873,12 @@
      &                        NpostI, (/0/), (/0/),                     &
      &                        ncid = ncid)
 # endif
+# if defined IS4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
+     defined W4DVAR_SENSITIVITY
+        CALL netcdf_put_ivar (ng, model, ncname, 'Nimpact',             &
+     &                        Nimpact, (/0/), (/0/),                    &
+     &                        ncid = ncid)
+# endif
 # ifndef IS4DVAR_SENSITIVITY
       CALL netcdf_put_fvar (ng, model, ncname, 'GradErr',               &
      &                      GradErr, (/0/), (/0/),                      &

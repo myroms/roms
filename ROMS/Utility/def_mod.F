@@ -438,6 +438,18 @@
      &                 SetParAccess = .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
+# if defined IS4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
+     defined W4DVAR_SENSITIVITY
+!
+!  Observations impact/sensitivity outer loop beeing processed.
+!
+      Vinfo( 1)='Nimpact'
+      Vinfo( 2)='Observations impact/sensitivity outer loop to use'
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_int,         &
+     &                 1, (/0/), Aval, Vinfo, ncname,                   &
+     &                 SetParAccess = .FALSE.)
+      IF (exit_flag.ne.NoError) RETURN
+# endif
 # ifndef IS4DVAR_SENSITIVITY
 !
 !  Define model-observation comparison statistics.
@@ -1786,10 +1798,10 @@
 # endif
       END IF QUERY
 
-  10  FORMAT (/,6x,'DEF_MOD   - creating model/observation data file,', &
-     &        ' Grid ',i2.2,': ',a)
-  20  FORMAT (/,6x,'DEF_MOD   - inquiring model/observation data file,',&
-     &        ' Grid ',i2.2,': ',a)
+  10  FORMAT (/,6x,'DEF_MOD     - creating model/observation data',     &
+     &        ' file, Grid ',i2.2,': ',a)
+  20  FORMAT (/,6x,'DEF_MOD     - inquiring model/observation data',    &
+     &        ' file Grid ',i2.2,': ',a)
   30  FORMAT (/,' DEF_MOD - unable to open observation/model file: ',a)
   40  FORMAT (/,' DEF_MOD - unable to create model/observation file:',  &
      &        1x,a)
