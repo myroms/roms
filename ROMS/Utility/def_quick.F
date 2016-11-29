@@ -18,6 +18,9 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
+#ifdef FOUR_DVAR
+      USE mod_fourdvar
+#endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
@@ -44,6 +47,9 @@
 
       integer :: i, j, ifield, itrc, nvd3, nvd4, varid
       integer :: recdim, status
+#ifdef ADJUST_BOUNDARY
+      integer :: IorJdim
+#endif
       integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -128,6 +134,12 @@
         status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'eta_psi',       &
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
         IF (exit_flag.ne.NoError) RETURN
+
+#ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'IorJ',          &
+     &                 IOBOUNDS(ng)%IorJ, IorJdim)
+        IF (exit_flag.ne.NoError) RETURN
+#endif
 
 #if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'xy_rho',        &
@@ -216,6 +228,18 @@
         status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'boundary',      &
      &                 4, DimIDs(14))
         IF (exit_flag.ne.NoError) RETURN
+
+#ifdef FOUR_DVAR
+        status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'Nstate',        &
+     &                 NstateVar(ng), DimIDs(29))
+        IF (exit_flag.ne.NoError) RETURN
+#endif
+
+#ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'obc_adjust',    &
+     &                 Nbrec(ng), DimIDs(31))
+        IF (exit_flag.ne.NoError) RETURN
+#endif
 
         status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname,                  &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &

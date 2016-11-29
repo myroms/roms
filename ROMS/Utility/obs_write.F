@@ -585,18 +585,26 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Scale extracted tangent linear data at observations location.
+!  Scale extracted data at observations location.
 !-----------------------------------------------------------------------
 !
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+        IF (wrtNLmod(ng)) THEN
           DO iobs=Mstr,Mend
-# ifdef IS4DVAR_SENSITIVITY
-            TLmodVal(iobs)=ObsScale(iobs)*TLmodVal(iobs)*ObsErr(iobs)
-# else
-            TLmodVal(iobs)=ObsScale(iobs)*TLmodVal(iobs)
-# endif
+            NLmodVal(iobs)=ObsScale(iobs)*NLmodVal(iobs)
           END DO
         END IF
+
+# ifdef TLM_OBS
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+          DO iobs=Mstr,Mend
+#  ifdef IS4DVAR_SENSITIVITY
+            TLmodVal(iobs)=ObsScale(iobs)*TLmodVal(iobs)*ObsErr(iobs)
+#  else
+            TLmodVal(iobs)=ObsScale(iobs)*TLmodVal(iobs)
+#  endif
+          END DO
+        END IF
+# endif
 
 # ifdef DISTRIBUTE
 !
