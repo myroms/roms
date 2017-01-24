@@ -96,7 +96,7 @@
         CALL get_ngfld (ng, iRPM, idRtra, SSF(ng)%ncid,                 &
      &                  1, SSF(ng), update(1),                          &
      &                  1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,              &
-     &                  SOURCES(ng) % QbarG(:,1))
+     &                  SOURCES(ng) % QbarG)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 
