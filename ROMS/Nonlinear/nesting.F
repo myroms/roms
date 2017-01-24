@@ -687,6 +687,7 @@
             IF (Master) THEN
               WRITE (300,10) 'Western Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
+              CALL my_flush (300)
             END IF
           END IF
 !
@@ -720,6 +721,7 @@
               END IF
               WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       WestSum, MFratio
+              CALL my_flush (300)
 # endif
             END IF
           END DO
@@ -738,6 +740,7 @@
             IF (Master) THEN
               WRITE (300,10) 'Eastern Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
+              CALL my_flush (300)
             END IF
           END IF
 !
@@ -771,6 +774,7 @@
               END IF
               WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       EastSum, MFratio
+              CALL my_flush (300)
 # endif
             END IF
           END DO
@@ -789,6 +793,7 @@
             IF (Master) THEN
               WRITE (300,20) 'Southern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
+              CALL my_flush (300)
             END IF
           END IF
 !
@@ -823,6 +828,7 @@
               END IF
               WRITE (300,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       SouthSum, MFratio
+              CALL my_flush (300)
 # endif
             END IF
           END DO
@@ -841,6 +847,7 @@
             IF (Master) THEN
               WRITE (300,20) 'Northern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
+              CALL my_flush (300)
             END IF
           END IF
 !
@@ -3137,6 +3144,10 @@
               END DO
             END DO
 !
+!  Zeroth order correction to fine grid time integral (RIL, 2016).
+!
+            TFF=TFF*dt(ngc)/dt(ngf)
+!
 !  Correct coarse grid tracer at the finer grid western boundary.
 !
             cff=GRID(ngc)%pm(Ibc-1,Jbc)*                                &
@@ -3192,6 +3203,10 @@
                 TFF=TFF+BRY_CONTACT(ieast,dgcr)%Tflux(Jbf,k,itrc)
               END DO
             END DO
+!
+!  Zeroth order correction to fine grid time integral (RIL, 2016).
+!
+            TFF=TFF*dt(ngc)/dt(ngf)
 !
 !  Correct coarse grid tracer at the finer grid eastern boundary.
 !
@@ -3249,6 +3264,10 @@
               END DO
             END DO
 !
+!  Zeroth order correction to fine grid time integral (RIL, 2016).
+!
+            TFF=TFF*dt(ngc)/dt(ngf)
+!
 !  Correct coarse grid tracer at the finer grid southern boundary.
 !
             cff=GRID(ngc)%pm(Ibc,Jbc-1)*                                &
@@ -3304,6 +3323,10 @@
                 TFF=TFF+BRY_CONTACT(inorth,dgcr)%Tflux(Ibf,k,itrc)
               END DO
             END DO
+!
+!  Zeroth order correction to fine grid time integral.
+!
+            TFF=TFF*dt(ngc)/dt(ngf)
 !
 !  Correct coarse grid tracer at the finer grid northern boundary.
 !
