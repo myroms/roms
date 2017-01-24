@@ -210,14 +210,6 @@
 !
       SFcount(ng)=Nfrec(ng)+1
 #  endif
-#  ifdef OBSERVATIONS
-!
-!  Initialize various variables needed for processing observations
-!  backwards in time.
-!
-      CALL obs_initial (ng, iADM, .TRUE.)
-      IF (exit_flag.ne.NoError) RETURN
-#  endif
 !$OMP END MASTER
 !$OMP BARRIER
 # endif
@@ -526,6 +518,22 @@
         END DO
 !$OMP BARRIER
       END IF
+# endif
+
+# ifdef OBSERVATIONS
+!
+!-----------------------------------------------------------------------
+!  Initialize various variables needed for processing observations
+!  backwards in time. Need to be done after processing initial
+!  conditions since the correct initial time is needed to determine
+!  the first "ObsTime" to process.
+!-----------------------------------------------------------------------
+!
+!$OMP MASTER
+      CALL obs_initial (ng, iADM, .TRUE.)
+!$OMP MASTER
+!$OMP BARRIER
+      IF (exit_flag.ne.NoError) RETURN
 # endif
 
 # if defined ANA_PERTURB  && \
