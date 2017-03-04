@@ -1350,7 +1350,7 @@
         Vinfo( 1)='NLcost_function'
         Vinfo( 2)='nonlinear model misfit cost function'
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
-     &                 2, (/stateDim,MouterDim/), Aval, Vinfo, ncname)
+     &                 2, (/stateDimp,MouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define model minus observations misfit TLM cost function.
