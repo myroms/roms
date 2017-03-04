@@ -297,7 +297,7 @@
 !
   10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,13x,  &
      &        'into diagnostics NetCDF file for time record: ',i4)
-  20  FORMAT (6x,'WRT_AVG     - wrote diagnostics fields',t58,          &
+  20  FORMAT (6x,'WRT_DIAGS   - wrote diagnostics fields',t58,          &
 # ifdef NESTING
      &        'in record = ',i7.7,2x,i2.2)
 # else
