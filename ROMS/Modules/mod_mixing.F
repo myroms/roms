@@ -229,9 +229,6 @@
 # ifdef BV_FREQUENCY
           real(r8), pointer :: bvf(:,:,:)
 # endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-          real(r8), pointer :: neutral(:,:,:)
-# endif
 # if defined GLS_MIXING || defined MY25_MIXING
           real(r8), pointer :: tke(:,:,:,:)
           real(r8), pointer :: gls(:,:,:,:)
@@ -492,10 +489,6 @@
 
 # ifdef BV_FREQUENCY
       allocate ( MIXING(ng) % bvf(LBi:UBi,LBj:UBj,0:N(ng)) )
-# endif
-
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      allocate ( MIXING(ng) % neutral(LBi:UBi,LBj:UBj,0:N(ng)) )
 # endif
 
 # if defined GLS_MIXING || defined MY25_MIXING
@@ -870,13 +863,6 @@
           DO k=0,N(ng)
             DO i=Imin,Imax
               MIXING(ng) % bvf(i,j,k) = IniVal
-            END DO
-          END DO
-# endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-          DO k=1,N(ng)
-            DO i=Imin,Imax
-              MIXING(ng) % neutral(i,j,k) = IniVal
             END DO
           END DO
 # endif

@@ -227,11 +227,10 @@ fi
 if [ -n "${USE_MY_LIBS:+1}" ]; then
   case "$FORT" in
     ifort )
-      export             ESMF_OS=Linux
-      export       ESMF_COMPILER=ifort
+      export       ESMF_COMPILER=intelgcc
       export           ESMF_BOPT=O
       export            ESMF_ABI=64
-      export           ESMF_COMM=mpich
+      export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
 
       export       ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
@@ -277,11 +276,10 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       ;;
 
     pgi )
-      export             ESMF_OS=Linux
       export       ESMF_COMPILER=pgi
       export           ESMF_BOPT=O
       export            ESMF_ABI=64
-      export           ESMF_COMM=mpich
+      export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
 
       export       ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
@@ -327,11 +325,10 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
       ;;
 
     gfortran )
-      export             ESMF_OS=Linux
       export       ESMF_COMPILER=gfortran
       export           ESMF_BOPT=O
       export            ESMF_ABI=64
-      export           ESMF_COMM=mpich
+      export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
 
       export       ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK

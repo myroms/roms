@@ -169,8 +169,8 @@
 !
       logical :: LputFsur
       integer :: subs, tile, thread
-# ifdef SOLVE3D
       integer :: ngc
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Process vertical indices and interpolation weigths associated with
@@ -2414,12 +2414,21 @@
 !
 !  Extract free-surface.
 !
+# ifdef SOLVE3D
           CALL get_contact2d (dg, model, tile,                          &
      &                        r2dvar, 'Zt_avg1',                        &
      &                        cr, Rcontact(cr)%Npoints, Rcontact,       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        COUPLING(dg) % Zt_avg1,                   &
      &                        REFINED(cr) % zeta(:,:,tnew))
+# else
+          CALL get_contact2d (dg, model, tile,                          &
+     &                        r2dvar, 'zeta',                           &
+     &                        cr, Rcontact(cr)%Npoints, Rcontact,       &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        OCEAN(dg) % zeta(:,:,Tindex2d),           &
+     &                        REFINED(cr) % zeta(:,:,tnew))
+# endif
 !
 !  Extract 2D momentum components (ubar, vbar).
 !

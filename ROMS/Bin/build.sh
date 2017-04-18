@@ -228,11 +228,10 @@ if ($?USE_MY_LIBS) then
   switch ($FORT)
 
     case "ifort"
-      setenv ESMF_OS              Linux
-      setenv ESMF_COMPILER        ifort
+      setenv ESMF_COMPILER        intelgcc
       setenv ESMF_BOPT            O
       setenv ESMF_ABI             64
-      setenv ESMF_COMM            mpich
+      setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
 
       setenv ARPACK_LIBDIR        /opt/intelsoft/serial/ARPACK
@@ -278,11 +277,10 @@ if ($?USE_MY_LIBS) then
     breaksw
 
     case "pgi"
-      setenv ESMF_OS              Linux
       setenv ESMF_COMPILER        pgi
       setenv ESMF_BOPT            O
       setenv ESMF_ABI             64
-      setenv ESMF_COMM            mpich
+      setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
 
       setenv ARPACK_LIBDIR        /opt/pgisoft/serial/ARPACK
@@ -328,11 +326,10 @@ if ($?USE_MY_LIBS) then
     breaksw
 
     case "gfortran"
-      setenv ESMF_OS              Linux
       setenv ESMF_COMPILER        gfortran
       setenv ESMF_BOPT            O
       setenv ESMF_ABI             64
-      setenv ESMF_COMM            mpich
+      setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
 
       setenv ARPACK_LIBDIR        /opt/gfortransoft/serial/ARPACK

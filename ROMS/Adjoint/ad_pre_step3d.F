@@ -76,6 +76,9 @@
      &                         GRID(ng) % rmask,                        &
      &                         GRID(ng) % umask,                        &
      &                         GRID(ng) % vmask,                        &
+#  if defined SOLAR_SOURCE && defined WET_DRY
+     &                         GRID(ng) % rmask_wet,                    &
+#  endif
 # endif
 # ifdef FOUR_DVAR
      &                         GRID(ng) % om_v,                         &
@@ -148,6 +151,9 @@
      &                               nrhs, nstp, nnew,                  &
 # ifdef MASKING
      &                               rmask, umask, vmask,               &
+#  if defined SOLAR_SOURCE && defined WET_DRY
+     &                               rmask_wet,                         &
+#  endif
 # endif
 # ifdef FOUR_DVAR
      &                               om_v, on_u,                        &
@@ -210,6 +216,9 @@
       real(r8), intent(in) :: rmask(LBi:,LBj:)
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
+#   if defined SOLAR_SOURCE && defined WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#   endif
 #  endif
 #  ifdef FOUR_DVAR
       real(r8), intent(in) :: om_v(LBi:,LBj:)
@@ -290,6 +299,9 @@
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#   if defined SOLAR_SOURCE && defined WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+#   endif
 #  endif
 #  ifdef FOUR_DVAR
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
@@ -958,10 +970,19 @@
           IF (itrc.eq.itemp) THEN
             DO k=1,N(ng)-1
               DO i=Istr,Iend
-!>              tl_FC(i,k)=tl_FC(i,k)+dt(ng)*srflx(i,j)*tl_swdk(i,j,k)
+!>              tl_FC(i,k)=tl_FC(i,k)+                                  &
+!>   &                     dt(ng)*srflx(i,j)*                           &
+#   ifdef WET_DRY_NOT_YET
+!>   &                     rmask_wet(i,j)*                              &
+#   endif
+!>   &                     tl_swdk(i,j,k)
 !>
                 ad_swdk(i,j,k)=ad_swdk(i,j,k)+                          &
-     &                         dt(ng)*srflx(i,j)*ad_FC(i,k)
+     &                         dt(ng)*srflx(i,j)*                       &
+#   ifdef WET_DRY_NOT_YET
+     &                         rmask_wet(i,j)*                          &
+#   endif
+     &                         ad_FC(i,k)
               END DO
             END DO
           END IF

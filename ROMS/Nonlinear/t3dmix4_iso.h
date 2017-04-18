@@ -63,7 +63,7 @@
 #else
      &                   MIXING(ng) % diff4,                            &
 #endif
-     &                   OCEAN(ng) % rho,                               &
+     &                   OCEAN(ng) % pden,                              &
 #ifdef TS_MIX_CLIMA
      &                   CLIMA(ng) % tclm,                              &
 #endif
@@ -100,7 +100,7 @@
 #else
      &                         diff4,                                   &
 #endif
-     &                         rho,                                     &
+     &                         pden,                                    &
 #ifdef TS_MIX_CLIMA
      &                         tclm,                                    &
 #endif
@@ -146,7 +146,7 @@
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(in) :: rho(LBi:,LBj:,:)
+      real(r8), intent(in) :: pden(LBi:,LBj:,:)
 # ifdef TS_MIX_CLIMA
       real(r8), intent(in) :: tclm(LBi:,LBj:,:,:)
 # endif
@@ -179,7 +179,7 @@
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: pden(LBi:UBi,LBj:UBj,N(ng))
 # ifdef TS_MIX_CLIMA
       real(r8), intent(in) :: tclm(LBi:UBi,LBj:UBj,N(ng),NT(ng))
 # endif
@@ -268,8 +268,8 @@
 #ifdef WET_DRY
                 cff=cff*umask_wet(i,j)
 #endif
-                dRdx(i,j,k2)=cff*(rho(i  ,j,k+1)-                       &
-     &                            rho(i-1,j,k+1))
+                dRdx(i,j,k2)=cff*(pden(i  ,j,k+1)-                      &
+     &                            pden(i-1,j,k+1))
 #if defined TS_MIX_STABILITY
                 dTdx(i,j,k2)=cff*(0.75_r8*(t(i  ,j,k+1,nrhs,itrc)-      &
      &                                     t(i-1,j,k+1,nrhs,itrc))+     &
@@ -300,8 +300,8 @@
 #ifdef WET_DRY
                 cff=cff*vmask_wet(i,j)
 #endif
-                dRde(i,j,k2)=cff*(rho(i,j  ,k+1)-                       &
-     &                            rho(i,j-1,k+1))
+                dRde(i,j,k2)=cff*(pden(i,j  ,k+1)-                      &
+     &                            pden(i,j-1,k+1))
 #if defined TS_MIX_STABILITY
                 dTde(i,j,k2)=cff*(0.75_r8*(t(i,j  ,k+1,nrhs,itrc)-      &
      &                                     t(i,j-1,k+1,nrhs,itrc))+     &
@@ -341,15 +341,15 @@
      &                    dRde(i,j,k1)**2+dRde(i,j+1,k1)**2)
                 cff2=0.25_r8*slope_max*                                 &
      &               (z_r(i,j,k+1)-z_r(i,j,k))*cff1
-                cff3=MAX(rho(i,j,k)-rho(i,j,k+1),small)
+                cff3=MAX(pden(i,j,k)-pden(i,j,k+1),small)
                 cff4=MAX(cff2,cff3)
                 cff=-1.0_r8/cff4
 #elif defined TS_MIX_MIN_STRAT
-                cff1=MAX(rho(i,j,k)-rho(i,j,k+1),                       &
+                cff1=MAX(pden(i,j,k)-pden(i,j,k+1),                     &
      &                   strat_min*(z_r(i,j,k+1)-z_r(i,j,k)))
                 cff=-1.0_r8/cff1
 #else
-                cff1=MAX(rho(i,j,k)-rho(i,j,k+1),eps)
+                cff1=MAX(pden(i,j,k)-pden(i,j,k+1),eps)
                 cff=-1.0_r8/cff1
 #endif
 #if defined TS_MIX_STABILITY
@@ -620,8 +620,8 @@
 #ifdef WET_DRY
                 cff=cff*umask_wet(i,j)
 #endif
-                dRdx(i,j,k2)=cff*(rho(i  ,j,k+1)-                       &
-     &                            rho(i-1,j,k+1))
+                dRdx(i,j,k2)=cff*(pden(i  ,j,k+1)-                      &
+     &                            pden(i-1,j,k+1))
                 dTdx(i,j,k2)=cff*(LapT(i  ,j,k+1)-                      &
      &                            LapT(i-1,j,k+1))
               END DO
@@ -635,8 +635,8 @@
 #ifdef WET_DRY
                 cff=cff*vmask_wet(i,j)
 #endif
-                dRde(i,j,k2)=cff*(rho(i,j  ,k+1)-                       &
-     &                            rho(i,j-1,k+1))
+                dRde(i,j,k2)=cff*(pden(i,j  ,k+1)-                      &
+     &                            pden(i,j-1,k+1))
                 dTde(i,j,k2)=cff*(LapT(i,j  ,k+1)-                      &
      &                            LapT(i,j-1,k+1))
               END DO
@@ -659,15 +659,15 @@
      &                    dRde(i,j,k1)**2+dRde(i,j+1,k1)**2)
                 cff2=0.25_r8*slope_max*                                 &
      &               (z_r(i,j,k+1)-z_r(i,j,k))*cff1
-                cff3=MAX(rho(i,j,k)-rho(i,j,k+1),small)
+                cff3=MAX(pden(i,j,k)-pden(i,j,k+1),small)
                 cff4=MAX(cff2,cff3)
                 cff=-1.0_r8/cff4
 #elif defined TS_MIX_MIN_STRAT
-                cff1=MAX(rho(i,j,k)-rho(i,j,k+1),                       &
+                cff1=MAX(pden(i,j,k)-pden(i,j,k+1),                     &
      &                   strat_min*(z_r(i,j,k+1)-z_r(i,j,k)))
                 cff=-1.0_r8/cff1
 #else
-                cff1=MAX(rho(i,j,k)-rho(i,j,k+1),eps)
+                cff1=MAX(pden(i,j,k)-pden(i,j,k+1),eps)
                 cff=-1.0_r8/cff1
 #endif
                 dTdr(i,j,k2)=cff*(LapT(i,j,k+1)-                        &

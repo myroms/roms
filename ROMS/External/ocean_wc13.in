@@ -1,7 +1,7 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!svn $Id: ocean_wc13.in 1690 2016-06-06 23:01:56Z arango $
+!svn $Id: ocean_wc13.in 1710 2017-01-24 21:17:37Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2017 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -269,7 +269,7 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
 ! Logical switches (TRUE/FALSE) to increase/decrease horizontal viscosity
 ! and/or diffusivity in specific areas of the application domain (like
-! sponge areas) for the desired application applica.
+! sponge areas) for the desired application grid.
 
     LuvSponge == T                              ! horizontal momentum
 LtracerSponge == T T                            ! temperature, salinity, inert
@@ -681,7 +681,7 @@ Qout(idMtls) == F       ! gls                turbulent length scale
 ! switches can be activated using compact parameter specification.
 
  Qout(inert) == F       ! dye_01, ...        inert passive tracers
- Qout(Snert) == F       ! dye_01_sur, ..     surface inert passive tracers
+ Qout(Snert) == F       ! dye_01_sur, ...    surface inert passive tracers
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! fields into AVERAGE output file.
