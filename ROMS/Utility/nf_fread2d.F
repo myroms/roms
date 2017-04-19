@@ -34,6 +34,8 @@
 !     Amin       Field minimum value (real)                            !
 !     Amax       Field maximum value (real)                            !
 !     A          Field to read in (real 2D array)                      !
+!     Lregrid    Field regrid interpolation switch (logical; LOGICAL)  !
+!                                                                      !
 !     nf_fread2d Error flag (integer)                                  !
 !                                                                      !
 !=======================================================================
@@ -53,7 +55,7 @@
 # ifdef MASKING
      &                     Amask,                                       &
 # endif
-     &                     A)
+     &                     A, Lregrid)
 !***********************************************************************
 !
       USE mod_param
@@ -70,6 +72,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(out), optional :: Lregrid
+
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Vsize(4)
@@ -195,6 +199,9 @@
         interpolate=.TRUE.
         Ilen=Vsize(1)
         Jlen=Vsize(2)
+      END IF
+      IF (PRESENT(Lregrid)) THEN
+        Lregrid=interpolate
       END IF
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
@@ -565,7 +572,7 @@
 # ifdef MASKING
      &                     Amask,                                       &
 # endif
-     &                     A)
+     &                     A, Lregrid)
 !***********************************************************************
 !
       USE mod_param
@@ -585,6 +592,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(out), optional :: Lregrid
+
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Vsize(4)
@@ -702,6 +711,9 @@
         interpolate=.TRUE.
         Ilen=Vsize(1)
         Jlen=Vsize(2)
+      END IF
+      IF (PRESENT(Lregrid)) THEN
+        Lregrid=interpolate
       END IF
       IJlen=Ilen*Jlen
 !

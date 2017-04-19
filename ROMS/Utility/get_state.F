@@ -50,6 +50,7 @@
       USE mod_stepping
       USE mod_strings
 !
+      USE dateclock_mod, ONLY : time_string
 #ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # ifdef SOLVE3D
@@ -103,8 +104,8 @@
       real(r8), allocatable :: TimeVar(:)
 
       character (len=6 ) :: string
-      character (len=14) :: t_code
-      character (len=15) :: attnam, tvarnam
+      character (len=15) :: Tstring, attnam, tvarnam
+      character (len=22) :: t_code
       character (len=40) :: tunits
 
 #ifdef ADJUST_BOUNDARY
@@ -346,11 +347,14 @@
       lend=LEN_TRIM(ncname)
       IF (Master) THEN
         CALL time_string (INPtime, t_code)
+        WRITE (Tstring,'(f15.4)') tdays(ng)
         IF (ERend.gt.ERstr) THEN
           WRITE (stdout,40) string, TRIM(StateMsg(msg)), t_code, ng,    &
-     &                      Nrun, ncname(lstr:lend), InpRec, Tindex
+     &                      Nrun, TRIM(ADJUSTL(Tstring)),               &
+     &                      ncname(lstr:lend), InpRec, Tindex
         ELSE
           WRITE (stdout,50) string, TRIM(StateMsg(msg)), t_code, ng,    &
+     &                      TRIM(ADJUSTL(Tstring)),                     &
      &                      ncname(lstr:lend), InpRec, Tindex
         END IF
       END IF
@@ -4571,12 +4575,12 @@
   30  FORMAT (/,a,'GET_STATE - requested input time record = ',i3,/,    &
      &        18x,'not found in input NetCDF: ',a,/,                    &
      &        18x,'number of available records = ',i3)
-  40  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
-     &        /,19x,'(Grid ',i2.2,', Iter=',i4.4,', File: ',a,          &
-     &        ', Rec=',i4.4,', Index=',i1,')')
-  50  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
-     &        /,19x,'(Grid ',i2.2,', File: ',a,', Rec=',i4.4,           &
-     &        ', Index=',i1,')')
+  40  FORMAT (/,a,'GET_STATE - ',a,t68,a,                               &
+     &        /,19x,'(Grid ',i2.2,', Iter=',i4.4, ', t = ',a,           &
+     &        ', File: ',a, ', Rec=',i4.4,', Index=',i1,')')
+  50  FORMAT (/,a,'GET_STATE - ',a,t68,a,                               &
+     &        /,19x,'(Grid ',i2.2, ', t = ',a,                          &
+     &        ', File: ',a,', Rec=',i4.4, ', Index=',i1,')')
   60  FORMAT (/,a,'GET_STATE - error while reading variable: ',a,2x,    &
      &        'at time record = ',i3,/,18x,'in input NetCDF file: ',a)
   70  FORMAT (16x,'- ',a,/,19x,'(Min = ',1p,e15.8,                      &

@@ -486,14 +486,14 @@
 # ifdef SOLVE3D
   20  FORMAT (6x,'WRT_HESSIAN - wrote Hessian', t39,                    &
 #  ifdef NESTING
-     &        'fields (Index=',i1,',',i1,') in record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,',',i1,') in record = ',i7.7,t92,i2.2)
 #  else
      &        'fields (Index=',i1,',',i1,') in record = ',i7.7)
 #  endif
 # else
   20  FORMAT (6x,'WRT_HESSIAN - wrote Hessian', t39,                    &
 #  ifdef NESTING
-     &        'fields (Index=',i1,')   in record = ',i7.7,2x,i2.2)
+     &        'fields (Index=',i1,')   in record = ',i7.7,t92,i2.2)
 #  else
      &        'fields (Index=',i1,')   in record = ',i7.7)
 #  endif

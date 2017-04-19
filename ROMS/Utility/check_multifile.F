@@ -23,6 +23,8 @@
       USE mod_iounits
       USE mod_scalars
 !
+      USE dateclock_mod, ONLY : time_string
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -38,7 +40,7 @@
 
       real(r8) :: Tfinal, Tmax, Tmin, Tscale
 
-      character(len=14 ) :: F_code, I_code, Tmin_code, Tmax_code
+      character(len= 22) :: F_code, I_code, Tmin_code, Tmax_code
       character(len=256) :: ncname
 !
 !=======================================================================
@@ -47,12 +49,12 @@
 !
 !  Get initialization time string.
 !
-      CALL time_string(time(ng), I_code)
+      CALL time_string (time(ng), I_code)
 !
 !  Get final time string for simulation.
 !
       Tfinal=dstart*day2sec+ntimes(ng)*dt(ng)
-      CALL time_string(tfinal, F_code)
+      CALL time_string (tfinal, F_code)
 !
 !-----------------------------------------------------------------------
 !  Input lateral boundary conditions data.
@@ -102,8 +104,8 @@
             DO ifile=1,Nfiles
               Tmin=Tscale*BRY(ng)%time_min(ifile)
               Tmax=Tscale*BRY(ng)%time_max(ifile)
-              CALL time_string(Tmin, Tmin_code)
-              CALL time_string(Tmax, Tmax_code)
+              CALL time_string (Tmin, Tmin_code)
+              CALL time_string (Tmax, Tmax_code)
               WRITE (stdout,20) Tmin_code, Tmax_code,                   &
      &                          TRIM(BRY(ng)%files(ifile))
             END DO
@@ -116,7 +118,7 @@
         IF (Lcheck) THEN
           Tmax=Tscale*BRY(ng)%time_max(Nfiles)
           IF (Tfinal.gt.Tmax) THEN
-            CALL time_string(Tmax, Tmax_code)
+            CALL time_string (Tmax, Tmax_code)
             IF (Master) THEN
               WRITE (stdout,30) 'Lateral Boundary',                     &
      &                          TRIM(BRY(ng)%files(Nfiles)),            &
@@ -177,8 +179,8 @@
             DO ifile=1,Nfiles
               Tmin=Tscale*FRC(i,ng)%time_min(ifile)
               Tmax=Tscale*FRC(i,ng)%time_max(ifile)
-              CALL time_string(Tmin, Tmin_code)
-              CALL time_string(Tmax, Tmax_code)
+              CALL time_string (Tmin, Tmin_code)
+              CALL time_string (Tmax, Tmax_code)
               WRITE (stdout,20) Tmin_code, Tmax_code,                   &
      &                          TRIM(FRC(i,ng)%files(ifile))
             END DO
@@ -191,7 +193,7 @@
         IF (Lcheck) THEN
           Tmax=Tscale*FRC(i,ng)%time_max(Nfiles)
           IF (Tfinal.gt.Tmax) THEN
-            CALL time_string(Tmax, Tmax_code)
+            CALL time_string (Tmax, Tmax_code)
             IF (Master) THEN
               WRITE (stdout,30) 'Forcing',                              &
      &                          TRIM(FRC(i,ng)%files(Nfiles)),          &
@@ -248,8 +250,8 @@
             DO ifile=1,Nfiles
               Tmin=Tscale*CLM(ng)%time_min(ifile)
               Tmax=Tscale*CLM(ng)%time_max(ifile)
-              CALL time_string(Tmin, Tmin_code)
-              CALL time_string(Tmax, Tmax_code)
+              CALL time_string (Tmin, Tmin_code)
+              CALL time_string (Tmax, Tmax_code)
               WRITE (stdout,20) Tmin_code, Tmax_code,                   &
      &                          TRIM(CLM(ng)%files(ifile))
             END DO
@@ -262,7 +264,7 @@
         IF (Lcheck) THEN
           Tmax=Tscale*CLM(ng)%time_max(Nfiles)
           IF (Tfinal.gt.Tmax) THEN
-            CALL time_string(Tmax, Tmax_code)
+            CALL time_string (Tmax, Tmax_code)
             IF (Master) THEN
               WRITE (stdout,30) 'Climatology',                          &
      &                          TRIM(CLM(ng)%files(Nfiles)),            &

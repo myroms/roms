@@ -104,6 +104,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE dateclock_mod, ONLY : caldate
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -148,7 +150,6 @@
       integer, parameter :: NsedLayers = 10
 
       integer :: Iter, i, ibio, iswim, itrc, j, k, ks, ksed
-      integer :: iday, month, year
 
       integer, dimension(Nswim) :: idswim
 
@@ -157,7 +158,7 @@
       real(r8) :: GermD, GermL, G_DIN, G_light, G_rate, M_rate
       real(r8) :: G_fac, S_fac, T_fac
       real(r8) :: dtdays, oNsedLayers, salt, temp, wmig
-      real(r8) :: hour, yday
+      real(r8) :: yday
 
       real(r8) :: alpha, cff, cffL, cffR, deltaL, deltaR, dz, wdt
 
@@ -280,7 +281,7 @@
 !  term. The cysts germination rates are regulated by an endogenous
 !  circannual clock.
 !
-        CALL caldate (r_date, tdays(ng), year, yday, month, iday, hour)
+        CALL caldate (tdays(ng), yd_r8=yday)
 !
         IF (yday.lt.Month_MidDay(1)) THEN
           cff=(365.0_r8-Month_MidDay(12)+yday)/                         &

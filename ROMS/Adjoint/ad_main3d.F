@@ -120,6 +120,7 @@
 # if defined BULK_FLUXES && !defined NL_BULK_FLUXES
       USE bulk_flux_mod, ONLY : bulk_flux
 # endif
+      USE dateclock_mod, ONLY : time_string
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif

@@ -63,6 +63,7 @@
       USE mod_param
       USE mod_scalars
 !
+      USE dateclock_mod,   ONLY : caldate
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
 #ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
@@ -100,7 +101,6 @@
 !
       integer :: i, j
 #if defined ALBEDO || defined DIURNAL_SRFLUX
-      integer :: iday, month, year
       real(r8) :: Dangle, Hangle, LatRad
       real(r8) :: cff1, cff2, hour, yday
 # ifdef ALBEDO
@@ -138,9 +138,9 @@
 !
 !-----------------------------------------------------------------------
 !
-!  Assume time is in modified Julian day.  Get hour and year day.
+!  Get time clock day-of-year and hour.
 !
-      CALL caldate (r_date, tdays(ng), year, yday, month, iday, hour)
+      CALL caldate (tdays(ng), yd_r8=yday, h_r8=hour)
 !
 !  Estimate solar declination angle (radians).
 !

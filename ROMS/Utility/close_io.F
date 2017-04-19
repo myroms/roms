@@ -140,6 +140,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE dateclock_mod, ONLY : get_date
+!
       implicit none
 !
 !  Local variable declarations.

@@ -32,6 +32,7 @@
       USE mod_stepping
 !
       USE analytical_mod
+      USE dateclock_mod, ONLY : time_string
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif

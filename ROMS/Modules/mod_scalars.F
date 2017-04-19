@@ -16,7 +16,7 @@
         implicit none
 !
 !-----------------------------------------------------------------------
-! Multiple grid structure.
+!  Multiple grid structure.
 !-----------------------------------------------------------------------
 !
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
@@ -43,7 +43,6 @@
 !                    vertical W-points.
 !
         TYPE T_SCALARS
-
           logical, pointer :: Fstate(:)
           logical, pointer :: Lstate(:)
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
@@ -59,10 +58,63 @@
           real(r8), pointer :: Cs_w(:)
           real(r8), pointer :: sc_r(:)
           real(r8), pointer :: sc_w(:)
-
         END TYPE T_SCALARS
-
+!
         TYPE (T_SCALARS), allocatable :: SCALARS(:)
+!
+!-----------------------------------------------------------------------
+!  Time clock structure.
+!-----------------------------------------------------------------------
+!
+!  Reference time (yyyymmdd.f) used to compute relative time. The
+!  application date clock is measured ad elapsed time interval since
+!  reference-time. This parameter also provides information about the
+!  calendar used:
+!
+!    If TIME_REF = -2, the model time and DSTART are in modified Julian
+!                  days units.  The time "units" attribute is:
+!
+!                  'time-units since 1968-05-23 00:00:00 GMT'
+!
+!    If TIME_REF = -1, the model time and DSTART are in a calendar
+!                  with 360 days in every year (30 days each month).
+!                  The time "units" attribute is:
+!
+!                  'time-units since 0001-01-01 00:00:00'
+!
+!    If TIME_REF = 0, the model time and DSTART are in a common year
+!                  calendar with 365.2524 days.  The "units" attribute
+!                  is:
+!
+!                  'time-units since 0001-01-01 00:00:00'
+!
+!    If TIME_REF > 0, the model time and DSTART are the elapsed time
+!                  units since specified reference time.  For example,
+!                  TIME_REF=20020115.5 will yield the following
+!                  time "units" attribute:
+!
+!                  'time-units since 2002-01-15 12:00:00'
+!
+        real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
+!
+      TYPE T_CLOCK
+        integer :: yday                ! day of the year
+        integer :: year                ! year including century (YYYY)
+        integer :: month               ! month of the year (1,...,12)
+        integer :: day                 ! day of the month
+        integer :: hour                ! hour of the day (1,...,23)
+        integer :: minutes             ! minutes of the hour
+
+        real(r8) :: seconds            ! frational seconds of the minute
+        real(r8) :: base               ! reference date (YYYYMMDD.dd)
+        real(r8) :: Dnumber            ! date number, fractional days
+        real(r8) :: Snumber            ! date number, fractional seconds
+
+        character (len=22) :: string   ! YYYY-MM-DD hh:mm:ss.ss
+        character (len=25) :: calendar ! date calendar
+      END TYPE T_CLOCK
+!
+        TYPE (T_CLOCK) :: Rclock       ! reference/base date
 !
 !-----------------------------------------------------------------------
 !  Tracer identification indices.
@@ -145,26 +197,15 @@
 !    io_time       Current I/O time (s) processed in "get_state".
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
-!    time_code     Model time clock (string, Day HH:MM:SS)
+!    time_code     Model time clock (string, YYYY-MM-DD hh:mm:ss.s)
 !    AVGtime       Model time clock for averages output (s).
 !    DIAtime       Model time clock for diagnostics output (s).
 !    IMPtime       Impulse forcing time (s) to process.
 !    ObsTime       Observation time (s) to process.
 !    FrcTime       Adjoint or tangent linear Impulse forcing time (s).
-!    r_date        Model initialization reference date (vector):
-!                    r_date(1) => reference date (YYYYMMDD.dd).
-!                    r_date(2) => year.
-!                    r_date(3) => year day.
-!                    r_date(4) => month.
-!                    r_date(5) => day.
-!                    r_date(6) => hour.
-!                    r_date(7) => minute.
-!                    r_date(8) => second.
 !    dstart        Time stamp assigned to model initialization (usually
 !                    a Calendar day, like modified Julian Day).
 !    tide_start    Reference time for tidal forcing (days).
-!    time_ref      Reference time for "units" attribute (YYYYMMDD.dd).
-!    r_text        Model initialization reference text (string).
 !
         logical, allocatable :: PerfectRST(:)
         logical, allocatable :: PREDICTOR_2D_STEP(:)
@@ -192,17 +233,13 @@
         real(r8), allocatable :: ObsTime(:)              ! seconds
         real(r8), allocatable :: FrcTime(:)              ! seconds
 
-        real(r8), dimension(8) :: r_date
         real(r8) :: dstart = 0.0_r8                      ! days
         real(r8) :: io_time = 0.0_r8                     ! seconds
         real(r8) :: run_time = 0.0_r8                    ! seconds
         real(r8) :: tide_start = 0.0_r8                  ! days
-        real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
 
-        character (len=14), allocatable :: time_code(:)  ! DD HH:MM:SS
+        character (len=22), allocatable :: time_code(:)  ! date string
 !$OMP THREADPRIVATE (time_code)
-
-        character (len=19) :: r_text
 
 #if defined POWER_LAW && defined SOLVE3D
 !

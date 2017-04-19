@@ -25,6 +25,7 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE dateclock_mod, ONLY : time_string
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : tl_dotproduct
 # endif

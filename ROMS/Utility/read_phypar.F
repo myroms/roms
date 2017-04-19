@@ -39,6 +39,8 @@
 #endif
       USE mod_strings
 !
+      USE dateclock_mod, ONLY : ref_clock
+!
       implicit none
 !
 !  Imported variable declarations
@@ -88,7 +90,6 @@
       real(r8), dimension(100) :: Rval
 
       character (len=1  ), parameter :: blank = ' '
-      character (len=19 ) :: ref_att
       character (len=40 ) :: KeyWord, text
       character (len=50 ) :: label
       character (len=256) :: fname, line
@@ -858,7 +859,7 @@
             CASE ('TIME_REF')
               Npts=load_r(Nval, Rval, 1, Rvalue)
               time_ref=Rvalue(1)
-              r_text=ref_att(time_ref,r_date)
+              CALL ref_clock (time_ref)
             CASE ('TNUDG')
               Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
               DO ng=1,Ngrids

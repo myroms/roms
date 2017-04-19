@@ -43,6 +43,7 @@
 # ifdef BVF_MIXING
       USE bvf_mix_mod, ONLY : bvf_mix
 # endif
+      USE dateclock_mod, ONLY : time_string
       USE diag_mod, ONLY : diag
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : nl_dotproduct
@@ -78,10 +79,10 @@
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod, ONLY : obc_adjust, load_obc
 # endif
-# ifdef AIR_OCEAN
+# if defined AIR_OCEAN && defined MCT_LIB
       USE ocean_coupler_mod, ONLY : ocn2atm_coupling
 # endif
-# ifdef WAVES_OCEAN
+# if defined WAVES_OCEAN && defined MCT_LIB
       USE ocean_coupler_mod, ONLY : ocn2wav_coupling
 # endif
       USE omega_mod, ONLY : omega
@@ -182,7 +183,11 @@
               time(ng)=time(ng)+dt(ng)
               tdays(ng)=time(ng)*sec2day
               CALL time_string (time(ng), time_code(ng))
+# ifdef REGCM_COUPLING
+              IF (MOD(step_counter(ng),Rsteps).eq.0) Time_Step=.FALSE.
+# else
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
+# endif
             END DO
 !
 !-----------------------------------------------------------------------
@@ -292,7 +297,7 @@
             END DO
             IF (exit_flag.ne.NoError) RETURN
 
-# ifdef AIR_OCEAN
+# if defined ATM_COUPLING && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple ocean to atmosphere model every "CoupleSteps(Iatmos)"
@@ -311,7 +316,7 @@
             END DO
 # endif
 
-# ifdef WAVES_OCEAN
+# if defined WAV_COUPLING && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple to ocean to waves model every "CoupleSteps(Iwaves)"

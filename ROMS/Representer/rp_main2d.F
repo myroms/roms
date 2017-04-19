@@ -26,6 +26,7 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE dateclock_mod, ONLY : time_string
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif

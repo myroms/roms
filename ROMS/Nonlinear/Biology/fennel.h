@@ -175,6 +175,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE dateclock_mod, ONLY : caldate
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -274,8 +276,6 @@
       real(r8) :: l2mol = 1000.0_r8/22.3916_r8      ! liter to mol
 #endif
 #ifdef CARBON
-      integer :: iday, month, year
-
       integer, parameter :: DoNewton = 0            ! pCO2 solver
 
       real(r8), parameter :: Acoef = 2073.1_r8      ! Schmidt
@@ -292,7 +292,7 @@
 
       real(r8) :: pmonth                         ! months since Jan 1951
       real(r8) :: pCO2air_secular
-      real(r8) :: yday, hour
+      real(r8) :: yday
 
       real(r8), parameter :: pi2 = 6.2831853071796_r8
 
@@ -1015,8 +1015,7 @@
 !
 !  Add in CO2 gas exchange.
 !
-            CALL caldate (r_date, tdays(ng), year, yday, month, iday,   &
-     &                    hour)
+            CALL caldate (tdays(ng), yd_r8=yday)
             pmonth=2003.0_r8-1951.0_r8+yday/365.0_r8
 !!          pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
 !!   &                         D2*SIN(pi2*pmonth+D3)+                   &

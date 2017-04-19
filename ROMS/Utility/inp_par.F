@@ -22,6 +22,7 @@
       USE mod_strings
 #endif
 !
+      USE dateclock_mod, ONLY : get_date
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
 #endif

@@ -48,6 +48,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE dateclock_mod,  ONLY : time_string
       USE nf_fread2d_mod, ONLY : nf_fread2d
       USE nf_fread3d_mod, ONLY : nf_fread3d
 !
@@ -70,7 +71,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lgridded, Linquire, Liocycle, Lmulti, Lonerec
+      logical :: Lgridded, Linquire, Liocycle, Lmulti, Lonerec, Lregrid
       logical :: special
 
       integer :: Nrec, Tid, Tindex, Trec, Vid, Vtype
@@ -79,9 +80,10 @@
 
       real(r8) :: Clength, Fmax, Fmin, Tdelta, Tend
       real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr
-      real(r8) :: Fval, Tval
+      real(r8) :: Fval, Tsec, Tval
 
-      character (len=14) :: t_code
+      character (len= 1) :: Rswitch
+      character (len=22) :: t_code
 !
       SourceFile='get_2dfld.F'
 !
@@ -141,6 +143,7 @@
 !-----------------------------------------------------------------------
 !
       update=.FALSE.
+      Lregrid=.FALSE.
       IF ((Tmono.lt.time(ng)).or.(iic(ng).eq.0).or.                     &
      &    (iic(ng).eq.ntstart(ng))) THEN
         IF (Liocycle) THEN
@@ -211,7 +214,7 @@
 #ifdef MASKING
      &                            Fmask,                                &
 #endif
-     &                            Fout(:,:,Tindex))
+     &                            Fout(:,:,Tindex), Lregrid)
               END IF
             ELSE
               CALL netcdf_get_fvar (ng, model, ncfile, Vname(1,ifield), &
@@ -232,16 +235,21 @@
             Finfo(9,ifield,ng)=Fmax
             IF (Master) THEN
               IF (special) THEN
-                WRITE (stdout,50) TRIM(Vname(2,ifield)), Fmin, Fmax
+                WRITE (stdout,50) TRIM(Vname(2,ifield)), ng, Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
                 lvar=MIN(43,LEN_TRIM(Vname(2,ifield)))
-                Tval=Tval*day2sec
-                CALL time_string (Tval, t_code)
+                Tsec=Tval*day2sec
+                CALL time_string (Tsec, t_code)
+                IF (Lregrid) THEN
+                  Rswitch='T'
+                ELSE
+                  Rswitch='F'
+                END IF
                 WRITE (stdout,60) Vname(2,ifield)(1:lvar), t_code,      &
-     &                            Trec, Tindex, ncfile(lstr:lend),      &
-     &                            Tmin, Tmax, Fmin, Fmax
+     &                            ng, Trec, Tindex, ncfile(lstr:lend),  &
+     &                            Tmin, Tmax, Tval, Fmin, Fmax, Rswitch
               END IF
             END IF
             update=.TRUE.
@@ -273,12 +281,15 @@
   30  FORMAT (/,' GET_2DFLD   - unable to open input NetCDF file: ',a)
   40  FORMAT (/,' GET_2DFLD   - error while reading variable: ',a,2x,   &
      &        ' at TIME index = ',i7)
-  50  FORMAT (3x,' GET_2DFLD   - ',a,/,19x,'(Min = ',1p,e15.8,0p,       &
-     &        ' Max = ',1p,e15.8,0p,')')
-  60  FORMAT (3x,' GET_2DFLD   - ',a,',',t62,'t = ',a,/,19x,            &
-     &        '(Rec=',i7.7,', Index=',i1,', File: ',a,')',/,19x,        &
-     &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
-     &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
+  50  FORMAT (3x,' GET_2DFLD   - ',a,/,19x,'(Grid = ',i2.2,             &
+     &        ', Min = ',1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
+  60  FORMAT (3x,' GET_2DFLD   - ',a,',',t68,a,/,19x,                   &
+     &        '(Grid=',i2.2,', Rec=',i7.7,', Index=',i1,                &
+     &          ', File: ',a,')',/,19x,                                 &
+     &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',                   &
+     &        t71, 't = ', f15.4 ,/, 19x,                               &
+     &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')',         &
+     &        t71, 'regrid = ',a)
 
       RETURN
       END SUBROUTINE get_2dfld

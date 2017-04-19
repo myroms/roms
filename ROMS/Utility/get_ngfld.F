@@ -49,6 +49,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE dateclock_mod, ONLY : time_string
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -72,11 +74,11 @@
 
       real(r8) :: Aval, Clength, Fmax, Fmin, Tdelta, Tend
       real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr
-      real(r8) :: Tval
+      real(r8) :: Tsec, Tval
 
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
 
-      character (len=14 ) :: t_code
+      character (len=22) :: t_code
 !
       SourceFile='get_ngfld.F'
 !
@@ -212,15 +214,15 @@
             Finfo(9,ifield,ng)=Fmax
             IF (Master) THEN
               IF (UBk.eq.1) THEN
-                WRITE (stdout,60) TRIM(Vname(2,ifield)), Fmin, Fmax
+                WRITE (stdout,60) TRIM(Vname(2,ifield)), ng, Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
-                Tval=Tval*day2sec
-                CALL time_string (Tval, t_code)
+                Tsec=Tval*day2sec
+                CALL time_string (Tsec, t_code)
                 WRITE (stdout,70) TRIM(Vname(2,ifield)), t_code,        &
-     &                            Trec, Tindex, ncfile(lstr:lend),      &
-     &                            Tmin, Tmax, Fmin, Fmax
+     &                            ng, Trec, Tindex, ncfile(lstr:lend),  &
+     &                            Tmin, Tmax, Tval, Fmin, Fmax
               END IF
             END IF
             update=.TRUE.
@@ -253,11 +255,13 @@
   40  FORMAT (/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
   50  FORMAT (/,' GET_NGFLD   - error while reading variable: ',a,2x,   &
      &          ' at TIME index = ',i7)
-  60  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
-     &        1pe15.8,')')
-  70  FORMAT (3x,' GET_NGFLD   - ',a,',',t62,'t = ',a,/,19x,            &
-     &        '(Rec=',i7.7,', Index=',i1,', File: ',a,')',/,19x,        &
-     &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
+  60  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Grid = ',i2.2,             &
+     &        ', Min = ',1pe15.8,' Max = ', 1pe15.8,')')
+  70  FORMAT (3x,' GET_NGFLD   - ',a,',',t68,a,/,19x,                   &
+     &        '(Grid= ',i2.2,', Rec=',i7.7,', Index=',i1,               &
+     &        ', File: ',a,')',/,19x,                                   &
+     &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',                   &
+     &        t71, 't = ', f15.4 ,/, 19x,                               &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
 
       RETURN

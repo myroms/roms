@@ -70,6 +70,7 @@
 # ifdef FLOATS_NOT_YET
 !!    USE ad_step_floats_mod, ONLY : tl_step_floats
 # endif
+      USE dateclock_mod, ONLY : time_string
 # ifdef WEAK_CONSTRAINT
       USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
 # endif

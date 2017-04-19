@@ -28,6 +28,7 @@
 # ifdef ANA_VMIX
       USE analytical_mod, ONLY : ana_vmix
 # endif
+      USE dateclock_mod, ONLY : time_string
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : tl_dotproduct
 # endif
