@@ -289,8 +289,8 @@
         Vinfo( 1)=Vname(1,idtime)
         WRITE (Vinfo( 2),'(a,a)') 'accumulated harmonics ',             &
      &                            TRIM(Vname(2,idtime))
-        WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock.string)
-        Vinfo( 4)=TRIM(Rclock.calendar)
+        WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
+        Vinfo( 4)=TRIM(Rclock%calendar)
         status=def_var(ng, iNLM, TIDE(ng)%ncid, TIDE(ng)%Vid(idtime),   &
      &                 NF_FRST, 1, (/0/), Aval, Vinfo, ncname,          &
      &                 SetParAccess = .FALSE.)

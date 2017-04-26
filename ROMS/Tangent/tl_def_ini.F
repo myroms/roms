@@ -388,8 +388,8 @@
 !
         Vinfo( 1)=Vname(1,idtime)
         Vinfo( 2)=Vname(2,idtime)
-        WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock.string)
-        Vinfo( 4)=TRIM(Rclock.calendar)
+        WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
+        Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idtime),     &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &

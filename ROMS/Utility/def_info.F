@@ -981,8 +981,8 @@
 
       Vinfo( 1)='dstart'
       Vinfo( 2)='time stamp assigned to model initilization'
-      WRITE (Vinfo( 3),'(a,a)') 'days since ', TRIM(Rclock.string)
-      Vinfo( 4)=TRIM(Rclock.calendar)
+      WRITE (Vinfo( 3),'(a,a)') 'days since ', TRIM(Rclock%string)
+      Vinfo( 4)=TRIM(Rclock%calendar)
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)

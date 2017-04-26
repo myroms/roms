@@ -138,7 +138,7 @@
 !  Proleptic Calendar.
 !
       IF (INT(time_ref).gt.0) THEN
-        DateNumber=Rclock.Dnumber+CurrentTime         ! fractional days
+        DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
         DayFraction=DateNumber-AINT(DateNumber)
         HourFraction=DayFraction*24.0_r8
         MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
@@ -155,7 +155,7 @@
 !  Proleptic Calendar.
 !
       ELSE IF (INT(time_ref).eq.0) THEN
-        DateNumber=Rclock.Dnumber+CurrentTime         ! fractional days
+        DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
         DayFraction=DateNumber-AINT(DateNumber)
         HourFraction=DayFraction*24.0_r8
         MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
@@ -172,7 +172,7 @@
 !  numerical modelers.
 !
       ELSE IF (INT(time_ref).eq.-1) THEN
-        DateNumber=Rclock.Dnumber+CurrentTime
+        DateNumber=Rclock%Dnumber+CurrentTime
         DayFraction=DateNumber-AINT(DateNumber)
         HourFraction=DayFraction*24.0_r8
         MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
@@ -212,10 +212,10 @@
         HourFraction=DayFraction*24.0_r8
         MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
 !
-        IF (CurrentTime.ge.Rclock.Dnumber) THEN
+        IF (CurrentTime.ge.Rclock%Dnumber) THEN
           jday=INT(CurrentTime)                 ! Origin: Jan 1, 4713 BC
         ELSE
-          jday=INT(Rclock.Dnumber+CurrentTime)  ! Truncated Julian Day
+          jday=INT(Rclock%Dnumber+CurrentTime)  ! Truncated Julian Day
         END IF                                  ! add 2440000 offset
         IF (jday.ge.gregorian) THEN
           jalpha=INT(((jday-1867216)-0.25_r8)/36524.25_r8)  ! Gregorian
@@ -720,18 +720,18 @@
 !     Rclock     The time clock base/reference is loaded into module   !
 !                  (mod_scalars.F)  structure:                         !
 !                                                                      !
-!                  Rclock.yday     => day of the year                  !
-!                  Rclock.year     => year including century (YYYY)    !
-!                  Rclock.month    => month of the year                !
-!                  Rclock.day      => day of the month                 !
-!                  Rclock.hour     => hour of the day (1,...,23)       !
-!                  Rclock.minutes  => minutes of the hour              !
-!                  Rclock.seconds  => fractionak seconds of the minute !
-!                  Rclock.base     => reference date (YYYYMMDD.dd)     !
-!                  Rclock.Dnumber  => date number, fractional days     !
-!                  Rclock.Snumber  => date number, fractional seconds  !
-!                  Rclock.string   => attribute (YYYY-MM-DD hh:ss:mm)  !
-!                  Rclock.calendar => date calendar                    !
+!                  Rclock%yday     => day of the year                  !
+!                  Rclock%year     => year including century (YYYY)    !
+!                  Rclock%month    => month of the year                !
+!                  Rclock%day      => day of the month                 !
+!                  Rclock%hour     => hour of the day (1,...,23)       !
+!                  Rclock%minutes  => minutes of the hour              !
+!                  Rclock%seconds  => fractionak seconds of the minute !
+!                  Rclock%base     => reference date (YYYYMMDD.dd)     !
+!                  Rclock%Dnumber  => date number, fractional days     !
+!                  Rclock%Snumber  => date number, fractional seconds  !
+!                  Rclock%string   => attribute (YYYY-MM-DD hh:ss:mm)  !
+!                  Rclock%calendar => date calendar                    !
 !                                                                      !
 !***********************************************************************
 !
@@ -840,18 +840,18 @@
 !  Load time reference clock information into structure.
 !-----------------------------------------------------------------------
 !
-      Rclock.yday    =yday
-      Rclock.year    =iyear
-      Rclock.month   =month
-      Rclock.day     =iday
-      Rclock.hour    =ihour
-      Rclock.minutes =minute
-      Rclock.seconds =isec
-      Rclock.base    =r_time
-      Rclock.Dnumber =DateNumber(1)
-      Rclock.Snumber =DateNumber(2)
-      Rclock.string  =string
-      Rclock.calendar=TRIM(calendar)
+      Rclock%yday    =yday
+      Rclock%year    =iyear
+      Rclock%month   =month
+      Rclock%day     =iday
+      Rclock%hour    =ihour
+      Rclock%minutes =minute
+      Rclock%seconds =isec
+      Rclock%base    =r_time
+      Rclock%Dnumber =DateNumber(1)
+      Rclock%Snumber =DateNumber(2)
+      Rclock%string  =string
+      Rclock%calendar=TRIM(calendar)
 !
       RETURN
       END SUBROUTINE ref_clock
@@ -911,7 +911,7 @@
 !
 !  Compute ROMS clock ellapsed time in seconds.
 !
-      ClockTime=DateNumber(2)-Rclock.Snumber
+      ClockTime=DateNumber(2)-Rclock%Snumber
 !
       RETURN
       END SUBROUTINE ROMS_clock
