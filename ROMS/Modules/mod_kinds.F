@@ -14,26 +14,27 @@
         implicit none
 !
 #ifdef ESMF_LIB
-        integer, parameter :: i1b= ESMF_KIND_I1                !  1-byte
-        integer, parameter :: i2b= ESMF_KIND_I2                !  2-byte
-        integer, parameter :: i4b= ESMF_KIND_I4                !  4-byte
-        integer, parameter :: i8b= ESMF_KIND_I8                !  8-byte
-        integer, parameter :: c8 = selected_real_kind(6,30)    ! 32-bit
+        integer, parameter :: i1b= ESMF_KIND_I1                !  8-bit
+        integer, parameter :: i2b= ESMF_KIND_I2                !  8-bit
+        integer, parameter :: i4b= ESMF_KIND_I4                ! 16-bit
+        integer, parameter :: i8b= ESMF_KIND_I8                ! 32-bit
+        integer, parameter :: c8 = SELECTED_REAL_KIND(6,30)    ! 32-bit
         integer, parameter :: r4 = ESMF_KIND_R4                ! 32-bit
         integer, parameter :: r8 = ESMF_KIND_R8                ! 64-bit
 #else
-        integer, parameter :: i1b= selected_int_kind(2)        !  1-byte
-        integer, parameter :: i2b= selected_int_kind(4)        !  2-byte
-        integer, parameter :: i4b= selected_int_kind(9)        !  4-byte
-        integer, parameter :: c8 = selected_real_kind(6,30)    ! 32-bit
-        integer, parameter :: r4 = selected_real_kind(6,30)    ! 32-bit
-        integer, parameter :: r8 = selected_real_kind(12,300)  ! 64-bit
+        integer, parameter :: i1b= SELECTED_INT_KIND(1)        !  8-bit
+        integer, parameter :: i2b= SELECTED_INT_KIND(2)        !  8-bit
+        integer, parameter :: i4b= SELECTED_INT_KIND(4)        ! 16-bit
+        integer, parameter :: i8b= SELECTED_INT_KIND(8)        ! 32-bit
+        integer, parameter :: c8 = SELECTED_REAL_KIND(6,30)    ! 32-bit
+        integer, parameter :: r4 = SELECTED_REAL_KIND(6,30)    ! 32-bit
+        integer, parameter :: r8 = SELECTED_REAL_KIND(12,300)  ! 64-bit
 #endif
 #if defined SUN || defined AIX || defined NEC || defined SGI || \
     defined CRAYX1 || defined DEC
-        integer, parameter :: r16 = selected_real_kind(24,270) !128-bit
+        integer, parameter :: r16 = SELECTED_REAL_KIND(24,270) !128-bit
 #else
-        integer, parameter :: r16 = selected_real_kind(15,300) !128-bit
+        integer, parameter :: r16 = SELECTED_REAL_KIND(15,300) !128-bit
 #endif
 
       END MODULE mod_kinds
