@@ -123,9 +123,7 @@
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                  real(r8), dimension(8), intent(in) :: r_date
-      real(r8), dimension(8), intent(in) :: r_date
-              cloud)
+     &                          cloud)
       END IF
 
 #ifdef DISTRIBUTE

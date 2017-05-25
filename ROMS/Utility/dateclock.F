@@ -474,10 +474,11 @@
       seconds=DayFraction*86400.0_r8
       CT=3.0_r8*EPSILON(seconds)             ! comparison tolerance
       seconds=ROUND(seconds, CT)             ! tolerant round function
+!
       hour=INT(seconds/3600.0_r8)
-      seconds=seconds-REAL(hour*3600,r8)
+      seconds=ABS(seconds-REAL(hour*3600,r8))
       minutes=INT(seconds/60.0_r8)
-      seconds=seconds-REAL(minutes*60,r8)
+      seconds=ABS(seconds-REAL(minutes*60,r8))
 !
       RETURN
       END SUBROUTINE datevec

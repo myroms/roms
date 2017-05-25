@@ -1083,7 +1083,7 @@
 #     else
             WRITE (out,100) S_bgqc(isUvel,ng), 'S_bgqc(isUvel)',        &
      &            'Quality control reject threshold, 3D U-momentum.'
-            WRITE (out,100) S_bgqc(isVbar,ng), 'S_bgqc(isVvel)',        &
+            WRITE (out,100) S_bgqc(isVvel,ng), 'S_bgqc(isVvel)',        &
      &            'Quality control reject threshold, 3D V-momentum.'
             DO itrc=1,NT(ng)
               WRITE (out,190) S_bgqc(isTvar(itrc),ng),                  &
