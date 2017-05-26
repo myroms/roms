@@ -139,9 +139,9 @@
 !
       IF (INT(time_ref).gt.0) THEN
         DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
-        DayFraction=DateNumber-AINT(DateNumber)
+        DayFraction=ABS(DateNumber-AINT(DateNumber))
         HourFraction=DayFraction*24.0_r8
-        MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
+        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IsDayUnits=.TRUE.
         CALL datevec (DateNumber, IsDayUnits, MyYear, MyMonth, MyDay,   &
@@ -156,9 +156,9 @@
 !
       ELSE IF (INT(time_ref).eq.0) THEN
         DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
-        DayFraction=DateNumber-AINT(DateNumber)
+        DayFraction=ABS(DateNumber-AINT(DateNumber))
         HourFraction=DayFraction*24.0_r8
-        MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
+        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IsDayUnits=.TRUE.
         CALL datevec (DateNumber, IsDayUnits, MyYear, MyMonth, MyDay,   &
@@ -173,9 +173,9 @@
 !
       ELSE IF (INT(time_ref).eq.-1) THEN
         DateNumber=Rclock%Dnumber+CurrentTime
-        DayFraction=DateNumber-AINT(DateNumber)
+        DayFraction=ABS(DateNumber-AINT(DateNumber))
         HourFraction=DayFraction*24.0_r8
-        MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
+        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         MyYear=INT(DateNumber/360.0_r8)
         MyYday=INT(MOD(DateNumber,360.0_r8))
@@ -195,9 +195,9 @@
         CT=3.0_r8*EPSILON(MySeconds)           ! comparison tolerance
         MySeconds=ROUND(MySeconds, CT)         ! tolerant round function
         MyHour=INT(MySeconds/3600.0_r8)
-        MySeconds=MySeconds-REAL(MyHour*3600,r8)
+        MySeconds=ABS(MySeconds-REAL(MyHour*3600,r8))
         MyMinutes=INT(MySeconds/60.0_r8)
-        MySeconds=MySeconds-REAL(MyMinutes*60,r8)
+        MySeconds=ABS(MySeconds-REAL(MyMinutes*60,r8))
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 1968-05-23 00:00:00 GMT'. It is a Truncated Julian
@@ -208,9 +208,9 @@
 !  the Gregorian Calendar.
 !
       ELSE IF (INT(time_ref).eq.-2) THEN
-        DayFraction=CurrentTime-AINT(CurrentTime)
+        DayFraction=ABS(CurrentTime-AINT(CurrentTime))
         HourFraction=DayFraction*24.0_r8
-        MinuteFraction=(HourFraction-AINT(HourFraction))*60.0_r8
+        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IF (CurrentTime.ge.Rclock%Dnumber) THEN
           jday=INT(CurrentTime)                 ! Origin: Jan 1, 4713 BC
@@ -239,9 +239,9 @@
         CT=3.0_r8*EPSILON(MySeconds)           ! comparison tolerance
         MySeconds=ROUND(MySeconds, CT)         ! tolerant round function
         MyHour=INT(MySeconds/3600.0_r8)
-        MySeconds=MySeconds-REAL(MyHour*3600,r8)
+        MySeconds=ABS(MySeconds-REAL(MyHour*3600,r8))
         MyMinutes=INT(MySeconds/60.0_r8)
-        MySeconds=MySeconds-REAL(MyMinutes*60,r8)
+        MySeconds=ABS(MySeconds-REAL(MyMinutes*60,r8))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -331,7 +331,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: DaysPerYear, MyDay, MyHour, MyMinutes, MyMonth, MyYear
+      integer :: MyDay, MyHour, MyMinutes, MyMonth, MyYear
 
       real(r8) :: MySeconds
 !
@@ -364,11 +364,10 @@
       MyMonth=MOD(month+9, 12)                    ! Mar=0, ..., Feb=11
       MyYear=year-INT(0.1_r8*REAL(MyMonth,r8))    ! if Jan or Feb,
 !                                                   substract 1
-      DaysPerYear=INT(365.0_r8*REAL(MyYear,r8))+                        &
-     &            INT(0.25_r8*REAL(MyYear,r8))-                         &
-     &            INT(0.01_r8*REAL(MyYear,r8))+                         &
-     &            INT(0.0025_r8*REAL(MyYear,r8))
-      MyDay=DaysPerYear+                                                &
+      MyDay=INT(365.0_r8*REAL(MyYear,r8))+                              &
+     &      INT(0.25_r8*REAL(MyYear,r8))-                               &
+     &      INT(0.01_r8*REAL(MyYear,r8))+                               &
+     &      INT(0.0025_r8*REAL(MyYear,r8))+                             &
      &      INT(0.1_r8*(REAL(MyMonth,r8)*306.0_r8 + 5.0_r8))+           &
      &      (day - 1)
 !
@@ -433,7 +432,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: DaysPerYear, MyDay, MyMonth, MyYear
+      integer :: MyDay, MyMonth, MyYear
 
       real(r8) :: CT, DayFraction, MyDateNumber
 !
@@ -446,21 +445,26 @@
       ELSE                                          ! fractional seconds
         MyDateNumber=DateNumber/86400.0_r8
       END IF
-      DayFraction=MyDateNumber-AINT(MyDateNumber)
+      DayFraction=ABS(MyDateNumber-AINT(MyDateNumber))
 !
 !-----------------------------------------------------------------------
 !  Compute date vector (year, month, day, hour, minutes, seconds).
 !-----------------------------------------------------------------------
 !
-      MyYear=INT((10000.0_r8*MyDateNumber + 14780.0_r8)/3652425.0_r8)
-      DaysPerYear=INT(365.0_r8*REAL(MyYear,r8))+                        &
-     &            INT(0.25_r8*REAL(MyYear,r8))-                         &
-     &            INT(0.01_r8*REAL(MyYear,r8))+                         &
-     &            INT(0.0025_r8*REAL(MyYear,r8))
-      MyDay=INT(MyDateNumber)-DaysPerYear
+      MyYear=INT((10000.0_r8*AINT(MyDateNumber)+14780.0_r8)/            &
+     &           3652425.0_r8)
+      MyDay=INT(MyDateNumber)-                                          &
+     &      (INT(365.0_r8*REAL(MyYear,r8))+                             &
+     &       INT(0.25_r8*REAL(MyYear,r8))-                              &
+     &       INT(0.01_r8*REAL(MyYear,r8))+                              &
+     &       INT(0.0025_r8*REAL(MyYear,r8)))
       IF (MyDay.lt.0) THEN                          ! if less than Mar 1
         MyYear=MyYear-1
-        MyDay=INT(MyDateNumber)-DaysPerYear
+        MyDay=INT(MyDateNumber)-                                        &
+     &        (INT(365.0_r8*REAL(MyYear,r8))+                           &
+     &         INT(0.25_r8*REAL(MyYear,r8))-                            &
+     &         INT(0.01_r8*REAL(MyYear,r8))+                            &
+     &         INT(0.0025_r8*REAL(MyYear,r8)))
       END IF
       MyMonth=INT((100.0_r8*REAL(MyDay,r8)+ 52.0_r8)/3060.0_r8)
       month=MOD(MyMonth+2, 12) + 1
