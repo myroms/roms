@@ -40,6 +40,9 @@
 !  DIN_obs      Observed Dissolved Inorganic Nutrient (micromoles).    !
 # endif
 #endif
+# ifdef HYPOXIA_SRM
+!  repiration   Total biological respiration rate (1/day).             !
+# endif
 !                                                                      !
 #ifdef NEARSHORE_MELLOR
 !  Nearshore radiation stresses:                                       !
@@ -99,6 +102,12 @@
           real(r8), pointer :: CystIni(:,:)
           real(r8), pointer :: DIN_obs(:,:,:)
           real(r8), pointer :: DIN_obsG(:,:,:,:)
+# endif
+# ifdef HYPOXIA_SRM
+          real(r8), pointer :: respiration(:,:,:)
+#  ifndef ANA_RESPIRATION
+          real(r8), pointer :: respirationG(:,:,:,:)
+#  endif
 # endif
 #endif
 
@@ -347,6 +356,13 @@
       allocate ( OCEAN(ng) % CystIni(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % DIN_obs(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % DIN_obsG(LBi:UBi,LBj:UBj,N(ng),2) )
+# endif
+
+# ifdef HYPOXIA_SRM
+      allocate ( OCEAN(ng) % respiration(LBi:UBi,LBj:UBj,N(ng)) )
+#  ifndef ANA_RESPIRATION
+      allocate ( OCEAN(ng) % respirationG(LBi:UBi,LBj:UBj,N(ng),2) )
+#  endif
 # endif
 #endif
 
@@ -668,6 +684,13 @@
               OCEAN(ng) % DIN_obs(i,j,k) = IniVal
               OCEAN(ng) % DIN_obsG(i,j,k,1) = IniVal
               OCEAN(ng) % DIN_obsG(i,j,k,2) = IniVal
+# endif
+# ifdef HYPOXIA_SRM
+              OCEAN(ng) % respiration(i,j,k) = IniVal
+#  ifndef ANA_RESPIRATION
+              OCEAN(ng) % respirationG(i,j,k,1) = IniVal
+              OCEAN(ng) % respirationG(i,j,k,2) = IniVal
+#  endif
 # endif
             END DO
           END DO

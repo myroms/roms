@@ -19,7 +19,7 @@
 !=======================================================================
 !
       USE mod_param
-#if defined RED_TIDE
+#if defined HYPOXIA_SRM || defined RED_TIDE
       USE mod_biology
 #endif
       USE mod_boundary
@@ -28,9 +28,10 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
-#if defined NLM_OUTER || defined RED_TIDE            || \
-    defined TLM_CHECK || defined TL_W4DPSAS          || \
-    defined W4DPSAS   || defined W4DPSAS_SENSITIVITY
+#if defined HYPOXIA_SRM         || defined NLM_OUTER || \
+    defined RED_TIDE            || defined TLM_CHECK || \
+    defined TL_W4DPSAS          || defined W4DPSAS   || \
+    defined W4DPSAS_SENSITIVITY
       USE mod_ocean
 #endif
       USE mod_scalars
@@ -646,6 +647,22 @@
       END DO
 #  endif
 # endif
+#endif
+
+#if !defined ANA_RESPIRATION && defined HYPOXIA_SRM
+!
+!-----------------------------------------------------------------------
+!  Total respiration rate for hypoxia.
+!-----------------------------------------------------------------------
+!
+      CALL get_3dfld (ng, iNLM, idResR, ncFRCid(idResR,ng),             &
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                OCEAN(ng) % respirationG)
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 
 #ifdef RED_TIDE

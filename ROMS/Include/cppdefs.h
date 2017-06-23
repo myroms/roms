@@ -475,6 +475,10 @@
 ** OCMIP_OXYGEN_SC     use if Schmidt number from Keeling et al. (1998)      **
 ** TALK_NONCONSERV     use if nonconservative computation of alkalinity      **
 **                                                                           **
+** Hypoxia ecosysten model OPTIONS:                                          **
+**                                                                           **
+** HYPOXIA_SRM         use if Hypoxia Simple Respiration Model               **
+**                                                                           **
 ** NPZD biology model OPTIONS:                                               **
 **                                                                           **
 ** NPZD_FRANKS         use if NPZD Biology model, Franks et al. (1986)       **

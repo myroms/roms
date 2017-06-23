@@ -332,6 +332,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ANA_RAIN,'
 #endif
+#if defined ANA_RESPIRATION && defined HYPOXIA_SRM
+!
+      IF (Master) WRITE (stdout,20) 'ANA_RESPIRATION',                  &
+     &   'Analytical respiration rate.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' ANA_RESPIRATION,'
+#endif
 #if defined ANA_SCOPE        && \
    (defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
@@ -1013,6 +1020,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' HOLLING_GRAZING,'
 #endif
+#ifdef HYPOXIA_SRM
+!
+      IF (Master) WRITE (stdout,20) 'HYPOXIA_SRM',                      &
+     &   'Hypoxia Simple Respiration Model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' HYPOXIA_SRM,'
+      ibiology=ibiology+1
+#endif
 #ifdef ICESHELF
 !
       IF (Master) WRITE (stdout,20) 'ICESHELF',                         &
@@ -1521,6 +1536,20 @@
      &   'Add oxygen dynamics.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' OXYGEN,'
+#elseif !defined SURFACE_DO_SATURATION && defined HYPOXIA_SRM
+# ifdef OCMIP_OXYGEN_SC
+!
+      IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
+     &   'Schmidt number from Keeling et al. (1998).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' OCMIP_OXYGEN_SC,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!OCMIP_OXYGEN_SC',                 &
+     &   'Schmidt number from Wanninkhof (1992).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !OCMIP_OXYGEN_SC,'
+# endif
 #endif
 #if defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -2048,6 +2077,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' !STOCH_OPT_WHITE,'
 # endif
+#endif
+#if defined SURFACE_DO_SATURATION && defined HYPOXIA_SRM
+!
+      IF (Master) WRITE (stdout,20) 'SURFACE_DO_SATURATION',            &
+     &   'Use surface dissolved oxygen saturation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+23)=' SURFACE_DO_SATURATION,'
 #endif
 #ifdef SWAN_COUPLING
 !

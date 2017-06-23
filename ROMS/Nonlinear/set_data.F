@@ -44,7 +44,7 @@
 !***********************************************************************
 !
       USE mod_param
-#if defined RED_TIDE
+#if defined HYPOXIA_SRM || defined RED_TIDE
       USE mod_biology
 #endif
       USE mod_boundary
@@ -797,6 +797,24 @@
         END DO
 #  endif
       END IF
+# endif
+
+# ifdef HYPOXIA_SRM
+!
+!-----------------------------------------------------------------------
+!  Total respiration rate for hypoxia.
+!-----------------------------------------------------------------------
+!
+#  ifdef ANA_RESPIRATION
+      CALL ana_respiration (ng, tile, iNLM)
+#  else
+      CALL set_3dfld_tile (ng, tile, iNLM, idResR,                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
+     &                     OCEAN(ng)%respirationG,                      &
+     &                     OCEAN(ng)%respiration,                       &
+     &                     update)
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 
 # ifdef RED_TIDE

@@ -1245,6 +1245,8 @@
 #  include <fennel_wrt.h>
 # elif defined ECOSIM
 #  include <ecosim_wrt.h>
+# elif defined HYPOXIA_SRM
+#  include <hypoxia_srm_wrt.h>
 # elif defined NEMURO
 #  include <nemuro_wrt.h>
 # elif defined NPZD_FRANKS

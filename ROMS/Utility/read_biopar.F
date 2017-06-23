@@ -17,6 +17,8 @@
 #  include <fennel_inp.h>
 # elif defined ECOSIM
 #  include <ecosim_inp.h>
+# elif defined HYPOXIA_SRM
+#  include <hypoxia_srm_inp.h>
 # elif defined NEMURO
 #  include <nemuro_inp.h>
 # elif defined NPZD_FRANKS
