@@ -23,6 +23,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE dateclock_mod,  ONLY : time_string
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -37,6 +39,8 @@
 
       integer :: Mstr, Mend
       integer :: i, iobs, itrc, status
+
+      character (len=22) :: t_code
 !
       SourceFile='obs_read.F'
 !
@@ -317,7 +321,8 @@
 !-----------------------------------------------------------------------
 !
         IF (Master) THEN
-          WRITE (stdout,10) ObsTime(ng)*sec2day
+          CALL time_string (ObsTime(ng), t_code)
+          WRITE (stdout,10) ObsTime(ng)*sec2day, t_code
         END IF
         IF (backward) THEN
           IF ((ObsSurvey(ng)-1).ge.1) THEN
@@ -330,8 +335,8 @@
         END IF
       END IF
 !
-  10  FORMAT (/,' Number of State Observations Processed:',             &
-     &        t58,'ObsTime = ',f12.4,/,/,                               &
+  10  FORMAT (/,' Number of State Observations Processed:',2x,          &
+     &        'ObsTime = ',f12.4,',',t68,a,/,/,                         &
      &        10x,'Variable',10x,'IstrObs',4x,'IendObs',6x,'Count',     &
      &        3x,'Rejected',/)
 

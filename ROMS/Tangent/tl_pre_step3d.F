@@ -1285,6 +1285,7 @@
 #   ifdef WET_DRY
 !>   &                  rmask_wet(i,j)*                                 &
 #   endif
+!>   &                  swdk(i,j,k)
 !>
                 tl_FC(i,k)=tl_FC(i,k)+                                  &
      &                     dt(ng)*srflx(i,j)*                           &

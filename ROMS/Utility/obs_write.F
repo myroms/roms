@@ -630,18 +630,11 @@
 
 #   ifdef BGQC
         IF (wrtObsScale(ng).and.wrtNLmod(ng)) THEN
-
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
 #    if defined WEAK_CONSTRAINT
      &                     BgErr(Mstr:))
 #    else
      &                     BgErr)
-#    endif
-          CALL mp_collect (ng, model, Ncollect, IniVal,                 &
-#    if defined WEAK_CONSTRAINT
-     &                     BgThresh(Mstr:))
-#    else
-     &                     BgThresh)
 #    endif
         END IF
 #   endif

@@ -194,7 +194,7 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
-!  Read in and write out observation depth.
+!  Read in observation depth.
 !
       CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name, Vname(1,idObsD),    &
      &                      obs_depths,                                 &

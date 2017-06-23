@@ -495,7 +495,7 @@
   20        FORMAT (/,10x,'Total',t47,2(1x,i10),                        &
      &              /,10x,'Obs Tally',t47,2(1x,i10),/)
   30        FORMAT (3x,' AD_HTOBS    - Computed adjoint observations ', &
-     &              'forcing,',t62,'t = ',a,/,19x,'(Observation ',      &
+     &              'forcing,',t68,a,/,19x,'(Observation ',      &
      &              'records = ',i7.7,' - ',i7.7,', iic = ',i7.7,')')
           END IF
         END IF
