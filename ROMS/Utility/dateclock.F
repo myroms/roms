@@ -123,11 +123,12 @@
 
       integer, parameter :: gregorian = 2299161  ! 15 Oct, 1582 A.D.
 
-      integer :: MyDay, MyHour, MyMinutes, MyMonth, MyYday, MyYear
+      integer :: MyDay, MyHour, MyMinutes, MySeconds
+      integer :: MyMonth, MyYday, MyYear
       integer :: ja, jalpha, jb, jc, jd, jday, je
 
-      real(r8) :: CT, DateNumber, MySeconds
-      real(r8) :: DayFraction, HourFraction, MinuteFraction
+      real(r8) :: CT, DateNumber
+      real(r8) :: DayFraction, Hour, Minutes, Seconds
 !
 !-----------------------------------------------------------------------
 !  Get calendar date from model current time (days).
@@ -140,13 +141,12 @@
       IF (INT(time_ref).gt.0) THEN
         DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
         DayFraction=ABS(DateNumber-AINT(DateNumber))
-        HourFraction=DayFraction*24.0_r8
-        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IsDayUnits=.TRUE.
         CALL datevec (DateNumber, IsDayUnits, MyYear, MyMonth, MyDay,   &
-     &                MyHour, MyMinutes, MySeconds)
+     &                MyHour, MyMinutes, Seconds, Minutes, Hour)
         MyYday=yearday(MyYear, MyMonth, MyDay)
+        MySeconds=INT(Seconds)
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 0001-01-01 00:00:00'.  It is used in analytical
@@ -157,13 +157,12 @@
       ELSE IF (INT(time_ref).eq.0) THEN
         DateNumber=Rclock%Dnumber+CurrentTime         ! fractional days
         DayFraction=ABS(DateNumber-AINT(DateNumber))
-        HourFraction=DayFraction*24.0_r8
-        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IsDayUnits=.TRUE.
         CALL datevec (DateNumber, IsDayUnits, MyYear, MyMonth, MyDay,   &
-     &                MyHour, MyMinutes, MySeconds)
+     &                MyHour, MyMinutes, Seconds, Minutes, Hour)
         MyYday=yearday(MyYear, MyMonth, MyDay)
+        MySeconds=INT(Seconds)
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 0001-01-01 00:00:00'.  It can be used for
@@ -174,8 +173,6 @@
       ELSE IF (INT(time_ref).eq.-1) THEN
         DateNumber=Rclock%Dnumber+CurrentTime
         DayFraction=ABS(DateNumber-AINT(DateNumber))
-        HourFraction=DayFraction*24.0_r8
-        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         MyYear=INT(DateNumber/360.0_r8)
         MyYday=INT(MOD(DateNumber,360.0_r8))
@@ -191,13 +188,16 @@
           MyDay=MOD(MyYday,30)
         END IF
 !
-        MySeconds=DayFraction*86400.0_r8
-        CT=3.0_r8*EPSILON(MySeconds)           ! comparison tolerance
-        MySeconds=ROUND(MySeconds, CT)         ! tolerant round function
-        MyHour=INT(MySeconds/3600.0_r8)
-        MySeconds=ABS(MySeconds-REAL(MyHour*3600,r8))
-        MyMinutes=INT(MySeconds/60.0_r8)
-        MySeconds=ABS(MySeconds-REAL(MyMinutes*60,r8))
+        Seconds=DayFraction*86400.0_r8
+        CT=3.0_r8*EPSILON(Seconds)           ! comparison tolerance
+        Seconds=ROUND(Seconds, CT)           ! tolerant round function
+        Hour=Seconds/3600.0_r8
+        MyHour=INT(Hour)
+        Seconds=ABS(Seconds-REAL(MyHour*3600,r8))
+        Minutes=Seconds/60.0_r8
+        MyMinutes=INT(Minutes)
+        Seconds=ABS(Seconds-REAL(MyMinutes*60,r8))
+        MySeconds=INT(Seconds)
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 1968-05-23 00:00:00 GMT'. It is a Truncated Julian
@@ -209,8 +209,6 @@
 !
       ELSE IF (INT(time_ref).eq.-2) THEN
         DayFraction=ABS(CurrentTime-AINT(CurrentTime))
-        HourFraction=DayFraction*24.0_r8
-        MinuteFraction=ABS(HourFraction-AINT(HourFraction))*60.0_r8
 !
         IF (CurrentTime.ge.Rclock%Dnumber) THEN
           jday=INT(CurrentTime)                 ! Origin: Jan 1, 4713 BC
@@ -235,13 +233,16 @@
         IF (MyYear .le.0) MyYear=MyYear-1
         MyYday=yearday(MyYear, MyMonth, MyDay)
 !
-        MySeconds=DayFraction*86400.0_r8
-        CT=3.0_r8*EPSILON(MySeconds)           ! comparison tolerance
-        MySeconds=ROUND(MySeconds, CT)         ! tolerant round function
-        MyHour=INT(MySeconds/3600.0_r8)
-        MySeconds=ABS(MySeconds-REAL(MyHour*3600,r8))
-        MyMinutes=INT(MySeconds/60.0_r8)
-        MySeconds=ABS(MySeconds-REAL(MyMinutes*60,r8))
+        Seconds=DayFraction*86400.0_r8
+        CT=3.0_r8*EPSILON(Seconds)           ! comparison tolerance
+        Seconds=ROUND(Seconds, CT)           ! tolerant round function
+        Hour=Seconds/3600.0_r8
+        MyHour=INT(Hour)
+        Seconds=ABS(Seconds-REAL(MyHour*3600,r8))
+        Minutes=Seconds/60.0_r8
+        MyMinutes=INT(Minutes)
+        Seconds=ABS(Seconds-REAL(MyMinutes*60,r8))
+        MySeconds=INT(Seconds)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -254,13 +255,13 @@
       IF (PRESENT(dd_i))  dd_i=MyDay
       IF (PRESENT(h_i ))  h_i =MyHour
       IF (PRESENT(m_i ))  m_i =MyMinutes
-      IF (PRESENT(s_i ))  s_i =INT(MySeconds)
+      IF (PRESENT(s_i ))  s_i =MySeconds
 !
       IF (PRESENT(yd_r8)) yd_r8=REAL(MyYday,r8)+DayFraction
       IF (PRESENT(dd_r8)) dd_r8=REAL(MyDay,r8)+DayFraction
-      IF (PRESENT(h_r8 )) h_r8 =REAL(MyHour,r8)+HourFraction
-      IF (PRESENT(m_r8 )) m_r8 =REAL(MyMinutes,r8)+MinuteFraction
-      IF (PRESENT(s_r8 )) s_r8 =MySeconds
+      IF (PRESENT(h_r8 )) h_r8 =Hour
+      IF (PRESENT(m_r8 )) m_r8 =Minutes
+      IF (PRESENT(s_r8 )) s_r8 =Seconds
 !
       RETURN
       END SUBROUTINE caldate
@@ -390,7 +391,8 @@
 !
 !***********************************************************************
       SUBROUTINE datevec (DateNumber, IsDayUnits,                       &
-     &                    year, month, day, hour, minutes, seconds)
+     &                    year, month, day, hour, minutes, seconds,     &
+     &                    F_minutes, F_hour)
 !***********************************************************************
 !                                                                      !
 !  Converts a given date number as computed by "datenum" to a date     !
@@ -414,6 +416,9 @@
 !     minutes      Minutes of the hour (integer)                       !
 !     seconds      Seconds of the minute (real)                        !
 !                                                                      !
+!     F_minutes    Fractional minutes (real)                           !
+!     F_hour       Fractional hours (real)                             !
+!                                                                      !
 !  Adapted from Gary Katch, Concordia University, Canada.              !
 !                                                                      !
 !***********************************************************************
@@ -428,7 +433,7 @@
 
       integer,  intent(out) :: year, month, day, hour, minutes
 
-      real(r8), intent(out) :: seconds
+      real(r8), intent(out) :: F_hour, F_minutes, seconds
 !
 !  Local variable declarations.
 !
@@ -479,9 +484,11 @@
       CT=3.0_r8*EPSILON(seconds)             ! comparison tolerance
       seconds=ROUND(seconds, CT)             ! tolerant round function
 !
-      hour=INT(seconds/3600.0_r8)
+      F_hour=seconds/3600.0_r8
+      hour=INT(F_hour)
       seconds=ABS(seconds-REAL(hour*3600,r8))
-      minutes=INT(seconds/60.0_r8)
+      F_minutes=seconds/60.0_r8
+      minutes=INT(F_minutes)
       seconds=ABS(seconds-REAL(minutes*60,r8))
 !
       RETURN
@@ -935,7 +942,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     MyTime        Current model time (days)                          !
+!     MyTime        Current model time (seconds)                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -965,7 +972,7 @@
 !
 !  Convert current model time to calendar date.
 !
-      CurrentTime=MyTime/86400.0_r8
+      CurrentTime=MyTime/86400.0_r8                  ! seconds to days
 !
       CALL caldate (CurrentTime,                                        &
      &              yy_i=year,                                          &
