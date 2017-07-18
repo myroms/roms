@@ -77,8 +77,12 @@
 !    Cstr          Starting time for program region.
 !    Cend          Ending time for program region.
 !    Csum          Accumulated time for progam region.
+!    Ctotal        Total time profiled
+!    total_cpu     Total elapsed CPU
 !
       integer, allocatable :: proc(:,:,:)
+
+      real(r8) :: Ctotal, total_cpu, total_model(4)
 
       real(r8), allocatable :: Cstr(:,:,:)
       real(r8), allocatable :: Cend(:,:,:)
@@ -170,6 +174,12 @@
 !$OMP END PARALLEL
       allocate ( Csum(0:Nregion,4,Ngrids) )
       Csum(0:Nregion,1:4,1:Ngrids)=0.0_r8
+!
+! Initialize other profiling variables.
+!
+      Ctotal=0.0_r8
+      total_cpu=0.0_r8
+      total_model=0.0_r8
 
 #if defined DISTRIBUTE && defined PROFILE
 !

@@ -170,7 +170,7 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL rp_set_data (ng, tile)
 # ifdef FORWARD_READ
-            CALL set_depth (ng, tile)
+            CALL set_depth (ng, tile, iRPM)
 # endif
           END DO
 !$OMP BARRIER
@@ -185,7 +185,7 @@
 !
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
-            CALL set_massflux (ng, tile)
+            CALL set_massflux (ng, tile, iRPM)
           END DO
 !$OMP BARRIER
         END DO
@@ -223,7 +223,7 @@
 !
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL rp_ini_zeta (ng, tile, iRPM)
-              CALL rp_set_depth (ng, tile)
+              CALL rp_set_depth (ng, tile, iRPM)
             END DO
 !$OMP BARRIER
 !
@@ -244,13 +244,13 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL rp_set_massflux (ng, tile)
+            CALL rp_set_massflux (ng, tile, iRPM)
 # ifndef TS_FIXED
-            CALL rp_rho_eos (ng, tile)
+            CALL rp_rho_eos (ng, tile, iRPM)
 # endif
             CALL rp_diag (ng, tile)
 # ifdef FORWARD_READ
-            CALL omega (ng, tile)
+            CALL omega (ng, tile, iRPM)
 # endif
           END DO
 !$OMP BARRIER
@@ -339,7 +339,7 @@
           IF ((Nrun.ne.1).and.(iic(ng).lt.(ntend(ng)+1))) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL rp_obc_adjust (ng, tile, Lbinp(ng))
-              CALL rp_set_depth_bry (ng, tile)
+              CALL rp_set_depth_bry (ng, tile, iRPM)
               CALL rp_obc2d_adjust (ng, tile, Lbinp(ng))
             END DO
 !$OMP BARRIER
@@ -379,7 +379,7 @@
 # elif defined BVF_MIXING_NOT_YET
             CALL rp_bvf_mix (ng, tile)
 # endif
-            CALL rp_omega (ng, tile)
+            CALL rp_omega (ng, tile, iRPM)
 !!          CALL wvelocity (ng, tile, nstp(ng))
           END DO
 !$OMP BARRIER
@@ -506,7 +506,7 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL rp_set_depth (ng, tile)
+            CALL rp_set_depth (ng, tile, iRPM)
           END DO
 !$OMP BARRIER
         END DO
@@ -532,7 +532,7 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL rp_omega (ng, tile)
+            CALL rp_omega (ng, tile, iRPM)
 # ifdef MY25_MIXING_NOT_YET
             CALL rp_my25_corstep (ng, tile)
 # elif defined GLS_MIXING_NOT_YET

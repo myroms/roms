@@ -62,7 +62,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 22)
+      CALL wclock_on (ng, iTLM, 22, __LINE__, __FILE__)
 # endif
       CALL tl_pre_step3d_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -124,7 +124,7 @@
      &                         OCEAN(ng) % v,                           &
      &                         OCEAN(ng) % tl_v)
 # ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 22)
+      CALL wclock_off (ng, iTLM, 22, __LINE__, __FILE__)
 # endif
 
       RETURN

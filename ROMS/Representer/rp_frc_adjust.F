@@ -45,7 +45,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 7)
+      CALL wclock_on (ng, iRPM, 7, __LINE__, __FILE__)
 # endif
       CALL rp_frc_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -62,7 +62,7 @@
 # endif
      &                         Linp)
 # ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 7)
+      CALL wclock_off (ng, iRPM, 7, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE rp_frc_adjust

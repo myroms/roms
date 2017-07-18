@@ -201,7 +201,7 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL ad_set_data (ng, tile)
 # ifdef FORWARD_READ
-            CALL set_depth (ng, tile)
+            CALL set_depth (ng, tile, iADM)
 # endif
           END DO
 !$OMP BARRIER
@@ -216,8 +216,8 @@
 !
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
-            CALL set_massflux (ng, tile)
-            CALL rho_eos (ng, tile)
+            CALL set_massflux (ng, tile, iADM)
+            CALL rho_eos (ng, tile, iADM)
 #  if defined BULK_FLUXES && !defined NL_BULK_FLUXES
             CALL bulk_flux (ng, tile)
 #  endif
@@ -276,7 +276,7 @@
 !
           DO ng=1,Ngrids
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL reset_massflux (ng, tile)       ! intermediate fluxes
+              CALL reset_massflux (ng, tile, iADM) ! intermediate fluxes
             END DO
 !$OMP BARRIER
           END DO
@@ -286,7 +286,7 @@
 !
           DO ng=1,Ngrids
             DO tile=last_tile(ng),first_tile(ng),-1
-              CALL omega (ng, tile)             ! BASIC STATE w-velocity
+              CALL omega (ng, tile, iADM)       ! BASIC STATE w-velocity
               CALL ad_step3d_t (ng, tile)
             END DO
 !$OMP BARRIER
@@ -312,9 +312,9 @@
 # elif defined GLS_MIXING_NOT_YET
               CALL ad_gls_corstep (ng, tile)
 # endif
-              CALL ad_omega (ng, tile)
-              CALL set_massflux (ng, tile)     ! BASIC STATE mass fluxes
-            END DO
+              CALL ad_omega (ng, tile, iADM)
+              CALL set_massflux (ng, tile, iADM)    ! BASIC STATE
+            END DO                                  ! mass fluxes
 !$OMP BARRIER
           END DO
 !
@@ -328,7 +328,7 @@
 !
           DO ng=1,Ngrids
             DO tile=last_tile(ng),first_tile(ng),-1
-              CALL omega (ng, tile)             ! BASIC STATE w-velocity
+              CALL omega (ng, tile, iADM)       ! BASIC STATE w-velocity
               CALL ad_step3d_uv (ng, tile)
             END DO
 !$OMP BARRIER
@@ -341,7 +341,7 @@
 !
           DO ng=1,Ngrids
             DO tile=last_tile(ng),first_tile(ng),-1
-              CALL ad_set_depth (ng, tile)
+              CALL ad_set_depth (ng, tile, iADM)
             END DO
 !$OMP BARRIER
           END DO
@@ -519,7 +519,7 @@
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
 !!          CALL wvelocity (ng, tile, nstp(ng))
-            CALL ad_omega (ng, tile)
+            CALL ad_omega (ng, tile, iADM)
 # if defined ANA_VMIX_NOT_YET
             CALL ad_ana_vmix (ng, tile, iADM)
 # elif defined LMD_MIXING_NOT_YET
@@ -632,9 +632,9 @@
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1         ! irreversible
 # ifndef TS_FIXED
-            CALL ad_rho_eos (ng, tile)
+            CALL ad_rho_eos (ng, tile, iADM)
 # endif
-            CALL ad_set_massflux (ng, tile)
+            CALL ad_set_massflux (ng, tile, iADM)
             CALL ad_diag (ng, tile)
 # ifdef AD_AVERAGES
             CALL ad_set_avg (ng, tile)
@@ -652,7 +652,7 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ad_set_depth (ng, tile)
+            CALL ad_set_depth (ng, tile, iADM)
             CALL ad_forcing (ng, tile, kstp(ng), nstp(ng))
           END DO
 !$OMP BARRIER
@@ -709,7 +709,7 @@
             END DO
 !$OMP BARRIER
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ad_set_depth (ng, tile)
+              CALL ad_set_depth (ng, tile, iADM)
               CALL ad_out_zeta (ng, tile, iADM)
             END DO
 !$OMP BARRIER
@@ -737,7 +737,7 @@
 !  thicknesses and depths.
 !
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ad_set_depth (ng, tile)
+              CALL ad_set_depth (ng, tile, iADM)
               CALL ad_ini_zeta (ng, tile, iADM)
             END DO
 !$OMP BARRIER
@@ -773,7 +773,7 @@
           IF (iic(ng).ne.ntstart(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL ad_obc2d_adjust (ng, tile, Lbout(ng))
-              CALL ad_set_depth_bry (ng, tile)
+              CALL ad_set_depth_bry (ng, tile, iADM)
               CALL ad_obc_adjust (ng, tile, Lbout(ng))
             END DO
 !$OMP BARRIER
@@ -790,7 +790,7 @@
         DO ng=1,Ngrids
           IF (iic(ng).ne.ntstart(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ad_set_depth (ng, tile)
+              CALL ad_set_depth (ng, tile, iADM)
               CALL frc_ADgather (ng, tile)
             END DO
 !$OMP BARRIER

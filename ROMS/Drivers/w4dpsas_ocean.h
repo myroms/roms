@@ -160,7 +160,7 @@
         DO ng=1,Ngrids
 !$OMP PARALLEL
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iNLM, 0)
+            CALL wclock_on (ng, iNLM, 0, __LINE__, __FILE__)
           END DO
 !$OMP END PARALLEL
         END DO
@@ -766,7 +766,7 @@
 !
           IF (inner.eq.0) Lcgini=.TRUE.
           DO ng=1,Ngrids
-            CALL rpcg_lanczos (ng, iRPM, outer, inner, Ninner, Lcgini)
+            CALL rpcg_lanczos (ng, iTLM, outer, inner, Ninner, Lcgini)
           END DO
 #else
 !
@@ -2055,7 +2055,7 @@
       DO ng=1,Ngrids
 !$OMP PARALLEL
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 0)
+          CALL wclock_off (ng, iNLM, 0, __LINE__, __FILE__)
         END DO
 !$OMP END PARALLEL
       END DO

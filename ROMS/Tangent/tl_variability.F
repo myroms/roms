@@ -711,7 +711,7 @@
 #   ifdef DISTRIBUTE
           DO ib=1,4
             IF (Lobc(ib,isVvel,ng)) THEN
-              CALL mp_exchange3d_bry (ng, tile, iADM, 1, ib,            &
+              CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,            &
      &                                LBij, UBij, 1, N(ng),             &
      &                                NghostPoints,                     &
      &                                EWperiodic(ng), NSperiodic(ng),   &
@@ -774,7 +774,7 @@
 #   ifdef DISTRIBUTE
             DO ib=1,4
               IF (Lobc(ib,isTvar(it),ng)) THEN
-                CALL mp_exchange3d_bry (ng, tile, iADM, 1, ib,          &
+                CALL mp_exchange3d_bry (ng, tile, iTLM, 1, ib,          &
      &                                  LBij, UBij, 1, N(ng),           &
      &                                  NghostPoints,                   &
      &                                  EWperiodic(ng), NSperiodic(ng), &

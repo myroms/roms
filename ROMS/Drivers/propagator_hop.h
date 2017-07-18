@@ -123,7 +123,7 @@
 !
       DO ng=1,Ngrids
         DO tile=last_tile(ng),first_tile(ng),-1
-          CALL set_depth (ng, tile)
+          CALL set_depth (ng, tile, iTLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -225,7 +225,7 @@
 !
       DO ng=1,Ngrids
         DO tile=last_tile(ng),first_tile(ng),-1
-          CALL set_depth (ng, tile)
+          CALL set_depth (ng, tile, iTLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -362,7 +362,7 @@
 !
       DO ng=1,Ngrids
         DO tile=last_tile(ng),first_tile(ng),-1
-          CALL set_depth (ng, tile)
+          CALL set_depth (ng, tile, iADM)
         END DO
 !$OMP BARRIER
       END DO

@@ -51,7 +51,7 @@
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iADM, 33)
+      CALL wclock_on (ng, iADM, 33, __LINE__, __FILE__)
 #endif
       CALL ad_uv3dmix4_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -104,7 +104,7 @@
      &                       COUPLING(ng) % ad_rufrc,                   &
      &                       COUPLING(ng) % ad_rvfrc)
 #ifdef PROFILE
-      CALL wclock_off (ng, iADM, 33)
+      CALL wclock_off (ng, iADM, 33, __LINE__, __FILE__)
 #endif
       RETURN
       END SUBROUTINE ad_uv3dmix4

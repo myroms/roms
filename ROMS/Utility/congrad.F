@@ -123,6 +123,7 @@
 !
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
+!
       implicit none
 !
 !  Imported variable declarations
@@ -158,6 +159,13 @@
 !=======================================================================
 !  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
 !=======================================================================
+
+# ifdef PROFILE
+!
+!  Turn on time clock.
+!
+      CALL wclock_on (ng, model, 43, __LINE__, __FILE__)
+# endif
 !
 !  This conjugate gradient algorithm is not run in parallel since the
 !  weak constraint is done in observation space. Mostly all the
@@ -1170,6 +1178,13 @@
       CALL cg_write (ng, model, innLoop, outLoop,                       &
      &               Jf, Jdata, Jmod, Jopt, Jb, Jobs, Jact,             &
      &               preducv, preducy)
+
+# ifdef PROFILE
+!
+!  Turn off time clock.
+!
+      CALL wclock_off (ng, model, 43, __LINE__, __FILE__)
+# endif
 !
  20   FORMAT (/,' CONGRAD - Fatal error, not possitive definite',       &
      &        ' algorithm:',/,                                          &

@@ -25,13 +25,13 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 4)
+      CALL wclock_on (ng, iNLM, 4, __LINE__, __FILE__)
 # endif
       CALL set_data_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 4)
+      CALL wclock_off (ng, iNLM, 4, __LINE__, __FILE__)
 # endif
 
       RETURN

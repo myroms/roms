@@ -170,6 +170,15 @@
       logical :: LputFsur
       integer :: subs, tile, thread
       integer :: ngc
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 36, __LINE__, __FILE__)
+# endif
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -288,7 +297,7 @@
 !  adjusted free-surface, Zt_avg1.
 !
           DO tile=first_tile(ngc),last_tile(ngc),+1
-            CALL set_depth (ngc, tile)
+            CALL set_depth (ngc, tile, model)
           END DO
 !$OMP BARRIER
 !
@@ -333,6 +342,15 @@
 !$OMP BARRIER
 
       END IF
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 36, __LINE__, __FILE__)
+# endif
 
       RETURN
       END SUBROUTINE nesting

@@ -161,6 +161,13 @@
         string=' TLM: '                    ! tangent model error forcing
         IDmod=iTLM
       END IF
+
+#ifdef PROFILE
+!
+!  Turn on time wall clock.
+!
+      CALL wclock_on (ng, IDmod, 42, __LINE__, __FILE__)
+#endif
 !
 !  Set switch to process variables for nonlinear model perfect restart.
 !
@@ -302,6 +309,7 @@
           tdays(ng)=time(ng)*sec2day
           ntstart(ng)=NINT((time(ng)-dstart*day2sec)/dt(ng))+1
           IF (ntstart(ng).lt.1) ntstart(ng)=1
+          ntend(ng)=ntstart(ng)+ntimes(ng)-1
           IF (PerfectRST(ng)) THEN
             ntfirst(ng)=1
           ELSE
@@ -4567,6 +4575,13 @@
 !-----------------------------------------------------------------------
 !
       CALL netcdf_close (ng, IDmod, ncINPid, ncname, .FALSE.)
+
+#ifdef PROFILE
+!
+!  Turn off time wall clock.
+!
+      CALL wclock_off (ng, IDmod, 42, __LINE__, __FILE__)
+#endif
 !
   10  FORMAT (/,a,'GET_STATE - unable to open input NetCDF file: ',a)
   20  FORMAT (/,a,'GET_STATE - Warning - NetCDF global attribute: ',a,  &

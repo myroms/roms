@@ -212,7 +212,7 @@
         END IF
       ELSE
         Ifirst=Nsurvey(ng)
-        tend=(time(ng)+ntend(ng)*dt(ng))*sec2day
+        tend=(time(ng)+ntimes(ng)*dt(ng))*sec2day
         DO i=1,Nsurvey(ng)
           IF ((tdays(ng).le.FOURDVAR(ng)%SurveyTime(i)).and.            &
      &        (FOURDVAR(ng)%SurveyTime(i).le.tend)) THEN

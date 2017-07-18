@@ -140,7 +140,7 @@
         time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
         ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-        ntend(ng)=ntimes(ng)
+        ntend(ng)=ntstart(ng)+ntimes(ng)-1
         ntfirst(ng)=ntstart(ng)
 !$OMP END MASTER
 !$OMP BARRIER
@@ -156,7 +156,7 @@
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_on (ng, iNLM, 2)
+          CALL wclock_on (ng, iNLM, 2, __LINE__, __FILE__)
         END DO
       END DO
 !$OMP BARRIER
@@ -428,7 +428,7 @@
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL set_depth (ng, tile)
+          CALL set_depth (ng, tile, iNLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -631,8 +631,8 @@
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL set_depth0 (ng, tile)
-          CALL set_depth  (ng, tile)
+          CALL set_depth0 (ng, tile, iNLM)
+          CALL set_depth  (ng, tile, iNLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -643,7 +643,7 @@
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL set_massflux (ng, tile)
+          CALL set_massflux (ng, tile, iNLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -657,8 +657,8 @@
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL omega (ng, tile)
-          CALL rho_eos (ng, tile)
+          CALL omega (ng, tile, iNLM)
+          CALL rho_eos (ng, tile, iNLM)
         END DO
 !$OMP BARRIER
       END DO
@@ -949,7 +949,7 @@
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 2)
+          CALL wclock_off (ng, iNLM, 2, __LINE__, __FILE__)
         END DO
 !$OMP BARRIER
       END DO

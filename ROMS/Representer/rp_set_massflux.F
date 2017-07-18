@@ -27,7 +27,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE rp_set_massflux (ng, tile)
+      SUBROUTINE rp_set_massflux (ng, tile, model)
 !***********************************************************************
 !
       USE mod_param
@@ -37,16 +37,16 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 12)
+      CALL wclock_on (ng, model, 12, __LINE__, __FILE__)
 # endif
-      CALL rp_set_massflux_tile (ng, tile,                              &
+      CALL rp_set_massflux_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs(ng),                              &
@@ -67,14 +67,14 @@
      &                           GRID(ng) % tl_Huon,                    &
      &                           GRID(ng) % tl_Hvom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 12)
+      CALL wclock_off (ng, model, 12, __LINE__, __FILE__)
 # endif
 
       RETURN
       END SUBROUTINE rp_set_massflux
 !
 !***********************************************************************
-      SUBROUTINE rp_set_massflux_tile (ng, tile,                        &
+      SUBROUTINE rp_set_massflux_tile (ng, tile, model,                 &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 nrhs,                            &
@@ -99,7 +99,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
@@ -241,13 +241,13 @@
       END IF
 
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
+!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints,                                 &
 !>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    Huon, Hvom)
 !>
-      CALL mp_exchange3d (ng, tile, iRPM, 2,                            &
+      CALL mp_exchange3d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &

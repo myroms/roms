@@ -81,9 +81,9 @@
 !
       COUPLING(ng) % Zt_avg1 = 0.0_r8
 
-      CALL set_depth (ng, tile)
+      CALL set_depth (ng, tile, iNLM)
       nrhs(ng)=Lbck
-      CALL rho_eos (ng, tile)
+      CALL rho_eos (ng, tile, iNLM)
 !
 # endif
       CALL balance_ref_tile (ng, tile,                                  &
@@ -400,11 +400,6 @@
       USE mod_fourdvar
       USE mod_ocean
       USE mod_stepping
-# ifdef SOLVE3D
-!
-      USE rho_eos_mod
-      USE set_depth_mod
-# endif
 !
 !  Imported variable declarations.
 !

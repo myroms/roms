@@ -2,9 +2,11 @@
       MODULE distribute_mod
 #ifdef DISTRIBUTE
 
+# undef  ASSEMBLE_ALLGATHER /* use mpi_allgather im mp_assemble */
+# undef  ASSEMBLE_ALLREDUCE /* use mpi_allreduce in mp_assemble */
 # define BOUNDARY_ALLREDUCE /* use mpi_allreduce in mp_boundary */
 # undef  COLLECT_ALLGATHER  /* use mpi_allgather in mp_collect  */
-# define COLLECT_ALLREDUCE  /* use mpi_allreduce in mp_collect  */
+# undef  COLLECT_ALLREDUCE  /* use mpi_allreduce in mp_collect  */
 # define REDUCE_ALLGATHER   /* use mpi_allgather in mp_reduce   */
 # undef  REDUCE_ALLREDUCE   /* use mpi_allreduce in mp_reduce   */
 !
@@ -98,7 +100,7 @@
 !
       CONTAINS
 !
-      SUBROUTINE mp_barrier (ng)
+      SUBROUTINE mp_barrier (ng, model)
 !
 !***********************************************************************
 !                                                                      !
@@ -114,11 +116,20 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 !
 !  Local variable declarations.
 !
       integer :: MyError
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 72, __LINE__, __FILE__)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize all distribute-memory nodes in the group.
@@ -126,6 +137,14 @@
 !
 # ifdef MPI
       CALL mpi_barrier (OCN_COMM_WORLD, MyError)
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 72, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -176,7 +195,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -201,7 +220,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -252,7 +271,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -280,7 +299,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -333,7 +352,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -363,7 +382,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -416,7 +435,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -447,7 +466,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -500,7 +519,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -532,7 +551,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -582,7 +601,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -607,7 +626,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -658,7 +677,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -686,7 +705,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -738,7 +757,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -768,7 +787,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -819,7 +838,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -845,7 +864,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -896,7 +915,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -924,7 +943,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -976,7 +995,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1006,7 +1025,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -1057,7 +1076,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwclock) THEN
-        CALL wclock_on (ng, model, 44)
+        CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
       END IF
 # endif
 !
@@ -1086,7 +1105,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwclock) THEN
-        CALL wclock_off (ng, model, 44)
+        CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
       END IF
 # endif
 
@@ -1138,7 +1157,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 44)
+      CALL wclock_on (ng, model, 64, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1167,7 +1186,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 44)
+      CALL wclock_off (ng, model, 64, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -1243,7 +1262,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 48)
+      CALL wclock_on (ng, model, 68, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1340,7 +1359,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 48)
+      CALL wclock_off (ng, model, 68, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -1387,11 +1406,18 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lstr, MyError, MyNpts, Nnodes, Serror, i
+      integer :: Lstr, MyError, MyNpts, Nnodes, Serror
+      integer :: i, rank, request
 
       integer, dimension(MPI_STATUS_SIZE) :: status
 
+# if defined ASSEMBLE_ALLGATHER
+      real(r8), dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+# elif defined ASSEMBLE_ALLREDUCE
       real(r8), dimension(Npts) :: Asend
+# else
+      real(r8), allocatable :: Arecv(:)
+# endif
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1401,7 +1427,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1427,7 +1453,41 @@
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
-!  Set input data to process.
+# if defined ASSEMBLE_ALLGATHER
+      CALL mpi_allgather (A, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,     &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0.0_r8) THEN
+        DO i=1,Npts
+          A(i)=0.0_r8
+          DO rank=0,Nnodes
+            A(i)=A(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              A(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+
+# elif defined ASSEMBLE_ALLREDUCE
+!
+!  Coppy data to send.
 !
       DO i=1,Npts
         Asend(i)=A(i)
@@ -1446,13 +1506,70 @@
         RETURN
       END IF
 
+# else
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MP_FLOAT, rank, rank+5,          &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,30) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            A(i)=A(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (A, Npts, MP_FLOAT, MyMaster, MyRank+5,          &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,30) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
  10   FORMAT (/,' MP_ASSEMBLEF_1D - inconsistent array size, Npts = ',  &
@@ -1509,12 +1626,21 @@
 !  Local variable declarations.
 !
       integer :: Lstr, MyError, MyNpts, Nnodes, Serror
+      integer :: i, rank, request
 
       integer :: Asize(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
 
-      real(r8), dimension(Npts) :: Asend, Arecv
+# if defined ASSEMBLE_ALLGATHER
+      real(r8), dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), dimension(Npts) :: Asend
+# elif defined ASSEMBLE_ALLREDUCE
+      real(r8), dimension(Npts) :: Arecv, Asend
+# else
+      real(r8), allocatable :: Arecv(:)
+      real(r8), dimension(Npts) :: Asend
+# endif
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1524,7 +1650,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1552,9 +1678,50 @@
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
-!  Set input data to process.
+!  Reshape input 2D data into 1D array to facilitate communications.
 !
       Asend=RESHAPE(A, (/Npts/))
+
+# if defined ASSEMBLE_ALLGATHER
+!
+!  Collect data from all nodes.
+!
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0.0_r8) THEN
+        DO i=1,Npts
+          Asend(i)=0.0_r8
+          DO rank=0,Nnodes
+            Asend(i)=Asend(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              Asend(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+!
+!  Load collected data in output 2D array.
+!
+      A=RESHAPE(Asend, Asize)
+
+# elif defined ASSEMBLE_ALLREDUCE
 !
 !  Collect data from all nodes as a reduced sum.
 !
@@ -1569,17 +1736,78 @@
         RETURN
       END IF
 !
-!  Load collected data.
+!  Load collected data into output 2D array.
 !
       A=RESHAPE(Arecv, Asize)
 
+# else
+!
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MP_FLOAT, rank, rank+5,          &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,30) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            Asend(i)=Asend(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Load collected data in output 2D array.
+!
+        A=RESHAPE(Asend, Asize)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (Asend, Npts, MP_FLOAT, MyMaster, MyRank+5,      &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,30) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
  10   FORMAT (/,' MP_ASSEMBLEF_2D - inconsistent array size, Npts = ',  &
@@ -1636,12 +1864,21 @@
 !  Local variable declarations.
 !
       integer :: Lstr, MyError, MyNpts, Nnodes, Serror
+      integer :: i, rank, request
 
       integer :: Asize(3)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
 
-      real(r8), dimension(Npts) :: Asend, Arecv
+# if defined ASSEMBLE_ALLGATHER
+      real(r8), dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), dimension(Npts) :: Asend
+# elif defined ASSEMBLE_ALLREDUCE
+      real(r8), dimension(Npts) :: Arecv, Asend
+# else
+      real(r8), allocatable :: Arecv(:)
+      real(r8), dimension(Npts) :: Asend
+# endif
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1651,7 +1888,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1680,9 +1917,50 @@
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
-!  Set input data to process.
+!  Reshape input 3D data into 1D array to facilitate communications.
 !
       Asend=RESHAPE(A, (/Npts/))
+
+# if defined ASSEMBLE_ALLGATHER
+!
+!  Collect data from all nodes.
+!
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0.0_r8) THEN
+        DO i=1,Npts
+          Asend(i)=0.0_r8
+          DO rank=0,Nnodes
+            Asend(i)=Asend(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              Asend(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+!
+!  Load collected data into output 3D array.
+!
+      A=RESHAPE(Asend, Asize)
+
+# elif defined ASSEMBLE_ALLREDUCE
 !
 !  Collect data from all nodes as a reduced sum.
 !
@@ -1697,17 +1975,78 @@
         RETURN
       END IF
 !
-!  Load collected data.
+!  Load collected data into output 3D array.
 !
       A=RESHAPE(Arecv, Asize)
 
+# else
+!
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MP_FLOAT, rank, rank+5,          &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,30) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            Asend(i)=Asend(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Load collected data into output 3D array.
+!
+        A=RESHAPE(Asend, Asize)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (Asend, Npts, MP_FLOAT, MyMaster, MyRank+5,      &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,30) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
  10   FORMAT (/,' MP_ASSEMBLEF_3D - inconsistent array size, Npts = ',  &
@@ -1721,7 +2060,6 @@
 
       RETURN
       END SUBROUTINE mp_assemblef_3d
-!
 !
       SUBROUTINE mp_assemblei_1d (ng, model, Npts, Aspv, A)
 !
@@ -1764,11 +2102,18 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lstr, MyError, MyNpts, Nnodes, Serror, i
+      integer :: Lstr, MyError, MyNpts, Nnodes, Serror
+      integer :: i, rank, request
 
       integer, dimension(MPI_STATUS_SIZE) :: status
 
+# if defined ASSEMBLE_ALLGATHER
+      integer, dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+# elif defined ASSEMBLE_ALLREDUCE
       integer, dimension(Npts) :: Asend
+# else
+      integer, allocatable :: Arecv(:)
+# endif
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1778,7 +2123,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1804,7 +2149,42 @@
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
-!  Set input data to process.
+# if defined ASSEMBLE_ALLGATHER
+      CALL mpi_allgather (A, Npts, MPI_INTEGER,                         &
+     &                    Arecv, Npts, MPI_INTEGER,                     &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0.0_r8) THEN
+        DO i=1,Npts
+          A(i)=0.0_r8
+          DO rank=0,Nnodes
+            A(i)=A(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              A(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+
+# elif defined ASSEMBLE_ALLREDUCE
+!
+!  Copy data to send.
 !
       DO i=1,Npts
         Asend(i)=A(i)
@@ -1823,13 +2203,69 @@
         RETURN
       END IF
 
+# else
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MPI_INTEGER, rank, rank+5,       &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,30) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            A(i)=A(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (A, Npts, MPI_INTEGER, MyMaster, MyRank+5,       &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,30) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
  10   FORMAT (/,' MP_ASSEMBLEI_1D - inconsistent array size, Npts = ',  &
@@ -1885,12 +2321,21 @@
 !  Local variable declarations.
 !
       integer :: Lstr, MyError, MyNpts, Nnodes, Serror
+      integer :: i, rank, request
 
       integer :: Asize(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
 
-      integer, dimension(Npts) :: Asend, Arecv
+# if defined ASSEMBLE_ALLGATHER
+      integer, dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      integer, dimension(Npts) :: Asend
+# elif defined ASSEMBLE_ALLREDUCE
+      integer, dimension(Npts) :: Arecv, Asend
+# else
+      integer, allocatable :: Arecv(:)
+      integer, dimension(Npts) :: Asend
+# endif
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1900,7 +2345,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1928,9 +2373,51 @@
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
-!  Set input data to process.
+!  Reshape input 2D data into 1D array to facilitate communications.
 !
       Asend=RESHAPE(A, (/Npts/))
+
+# if defined ASSEMBLE_ALLGATHER
+!
+!  Collect data from all nodes.
+!
+      CALL mpi_allgather (Asend, Npts, MPI_INTEGER,                     &
+     &                    Arecv, Npts, MPI_INTEGER,                     &
+     &                    OCN_COMM_WORLD, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  Pack data according to special values: sum or ignore.
+!
+      Nnodes=NtileI(ng)*NtileJ(ng)-1
+      IF (Aspv.eq.0.0_r8) THEN
+        DO i=1,Npts
+          Asend(i)=0.0_r8
+          DO rank=0,Nnodes
+            Asend(i)=Asend(i)+Arecv(i,rank)
+          END DO
+        END DO
+      ELSE
+        DO i=1,Npts
+          DO rank=0,Nnodes
+            IF (Arecv(i,rank).ne.Aspv) THEN
+              Asend(i)=Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      END IF
+!
+!  Load collected data in output 2D array.
+!
+      A=RESHAPE(Asend, Asize)
+
+# elif defined ASSEMBLE_ALLREDUCE
 !
 !  Collect data from all nodes as a reduced sum.
 !
@@ -1949,13 +2436,74 @@
 !
       A=RESHAPE(Arecv, Asize)
 
+# else
+!
+      IF (MyRank.eq.MyMaster) THEN
+!
+!  If master node, allocate and receive buffer.
+!
+        IF (.not.allocated(Arecv)) THEN
+          allocate (Arecv(Npts))
+        END IF
+!
+!  If master node, loop over other nodes to receive and accumulate the
+!  data.
+!
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv, Npts, MPI_INTEGER, rank, rank+5,       &
+     &                    OCN_COMM_WORLD, request, MyError)
+          CALL mpi_wait (request, status, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,30) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Npts
+            Asend(i)=Asend(i)+Arecv(i)
+          END DO
+        END DO
+        deallocate (Arecv)
+!
+!  Load collected data in output 2D array.
+!
+        A=RESHAPE(Asend, Asize)
+!
+!  Otherwise, send data to master node.
+!
+      ELSE
+        CALL mpi_isend (Asend, Npts, MPI_INTEGER, MyMaster, MyRank+5,   &
+     &                  OCN_COMM_WORLD, request, MyError)
+        CALL mpi_wait (request, status, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,30) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast accumulated (full) data to all nodes.
+!
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 70, __LINE__, __FILE__)
 # endif
 !
  10   FORMAT (/,' MP_ASSEMBLEI_2D - inconsistent array size, Npts = ',  &
@@ -2031,14 +2579,15 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 69, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
-!
+
 # if defined COLLECT_ALLGATHER
+!
       CALL mpi_allgather (A, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,     &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2090,6 +2639,7 @@
         RETURN
       END IF
 # else
+!
       IF (MyRank.eq.MyMaster) THEN
 !
 !  If master node, allocate and receive buffer.
@@ -2154,7 +2704,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 69, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2222,14 +2772,15 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 49)
+      CALL wclock_on (ng, model, 69, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
-!
+
 # if defined COLLECT_ALLGATHER
+!
       CALL mpi_allgather (A, Npts, MPI_INTEGER, Arecv, Npts,            &
      &                    MPI_INTEGER, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2281,6 +2832,7 @@
         RETURN
       END IF
 # else
+!
       IF (MyRank.eq.MyMaster) THEN
 !
 !  If master node, allocate and receive buffer.
@@ -2345,7 +2897,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 49)
+      CALL wclock_off (ng, model, 69, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2446,7 +2998,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 66, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2672,7 +3224,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 66, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2775,7 +3327,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 66, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3022,7 +3574,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 66, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -3086,7 +3638,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 66, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3168,7 +3720,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 66, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -3248,7 +3800,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 67, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3372,7 +3924,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 67, __LINE__, __FILE__)
 # endif
 
  10   FORMAT (/,' MP_NCREAD1D- error during ',a,' call, Node = ',       &
@@ -3461,7 +4013,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 67, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3595,7 +4147,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 67, __LINE__, __FILE__)
 # endif
 
  10   FORMAT (/,' MP_NCREAD2D - error during ',a,' call, Node = ',      &
@@ -3682,7 +4234,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 66, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3812,7 +4364,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 66, __LINE__, __FILE__)
 # endif
 
  10   FORMAT (/,' MP_NCWRITE1D - error during ',a,' call, Node = ',     &
@@ -3901,7 +4453,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 66, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4041,7 +4593,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 66, __LINE__, __FILE__)
 # endif
 
  10   FORMAT (/,' MP_NCWRITE2D - error during ',a,' call, Node = ',     &
@@ -4115,7 +4667,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 65, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4231,7 +4783,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 65, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -4298,7 +4850,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 65, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4426,7 +4978,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 65, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -4490,7 +5042,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 45)
+      CALL wclock_on (ng, model, 65, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4541,7 +5093,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 45)
+      CALL wclock_off (ng, model, 65, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -4630,7 +5182,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 67, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -4808,7 +5360,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 67, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -4899,7 +5451,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 67, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -5090,7 +5642,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 67, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -5159,7 +5711,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 47)
+      CALL wclock_on (ng, model, 67, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -5252,7 +5804,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 47)
+      CALL wclock_off (ng, model, 67, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -5450,7 +6002,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 71, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -5574,7 +6126,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 71, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -5655,7 +6207,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 46)
+      CALL wclock_on (ng, model, 71, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -5785,7 +6337,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 46)
+      CALL wclock_off (ng, model, 71, __LINE__, __FILE__)
 # endif
 
       RETURN

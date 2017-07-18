@@ -37,7 +37,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 9)
+      CALL wclock_on (ng, iRPM, 9, __LINE__, __FILE__)
 # endif
       CALL rp_step2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, N(ng),                   &
@@ -137,7 +137,7 @@
      &                     OCEAN(ng) % vbar,       OCEAN(ng) % tl_vbar, &
      &                     OCEAN(ng) % zeta,       OCEAN(ng) % tl_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 9)
+      CALL wclock_off (ng, iRPM, 9, __LINE__, __FILE__)
 # endif
 
       RETURN

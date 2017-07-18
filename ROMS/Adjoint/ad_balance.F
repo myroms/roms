@@ -90,9 +90,9 @@
 !
       COUPLING(ng) % Zt_avg1 =0.0_r8
 
-      CALL set_depth (ng, tile)
+      CALL set_depth (ng, tile, iADM)
       nrhs(ng)=Lbck
-      CALL rho_eos (ng, tile)
+      CALL rho_eos (ng, tile, iADM)
 !
 # endif
       CALL ad_balance_tile (ng, tile,                                   &

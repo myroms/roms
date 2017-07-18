@@ -35,7 +35,7 @@
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 25)
+      CALL wclock_on (ng, iRPM, 25, __LINE__, __FILE__)
 #endif
       CALL rp_t3dmix2_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -71,7 +71,7 @@
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % tl_t)
 #ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 25)
+      CALL wclock_off (ng, iRPM, 25, __LINE__, __FILE__)
 #endif
       RETURN
       END SUBROUTINE rp_t3dmix2

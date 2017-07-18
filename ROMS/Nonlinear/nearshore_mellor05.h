@@ -37,7 +37,7 @@
 #include "tile.h"
 
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 21)
+      CALL wclock_on (ng, iNLM, 21, __LINE__, __FILE__)
 #endif
       CALL radiation_stress_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, N(ng),            &
@@ -106,7 +106,7 @@
      &                            OCEAN(ng) % ubar_stokes,              &
      &                            OCEAN(ng) % vbar_stokes)
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 21)
+      CALL wclock_off (ng, iNLM, 21, __LINE__, __FILE__)
 #endif
       RETURN
       END SUBROUTINE radiation_stress

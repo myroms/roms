@@ -77,7 +77,7 @@
 !  Turn on input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iTLM, 3)
+      CALL wclock_on (ng, iTLM, 3, __LINE__, __FILE__)
 # endif
 !
 !=======================================================================
@@ -927,7 +927,7 @@
       DO i=1,NT(ng)
         IF (LtracerCLM(i,ng)) THEN
           ic=ic+1
-          CALL get_3dfld (ng, iRPM, idTclm(i), CLM(ng)%ncid,            &
+          CALL get_3dfld (ng, iTLM, idTclm(i), CLM(ng)%ncid,            &
      &                    1, CLM(ng), update(1),                        &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
 #   ifdef MASKING
@@ -1341,7 +1341,7 @@
 !  Turn off input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iTLM, 3)
+      CALL wclock_off (ng, iTLM, 3, __LINE__, __FILE__)
 # endif
 
       RETURN

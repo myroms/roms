@@ -49,7 +49,7 @@
 !  Turn on output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iTLM, 8)
+      CALL wclock_on (ng, iTLM, 8, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -205,10 +205,10 @@
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
 #  ifdef DISTRIBUTE
-            CALL mp_bcasts (ng, iNLM, AVG(ng)%name)
+            CALL mp_bcasts (ng, iTLM, AVG(ng)%name)
 #  endif
             IF (AVG(ng)%ncid.ne.-1) THEN
-              CALL netcdf_close (ng, iNLM, AVG(ng)%ncid)
+              CALL netcdf_close (ng, iTLM, AVG(ng)%ncid)
             END IF
             CALL def_avg (ng, Newfile)
             IF (exit_flag.ne.NoError) RETURN
@@ -267,7 +267,7 @@
 !  Turn off output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iTLM, 8)
+      CALL wclock_off (ng, iTLM, 8, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE tl_output

@@ -44,7 +44,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 20)
+      CALL wclock_on (ng, iNLM, 20, __LINE__, __FILE__)
 # endif
       CALL my25_prestep_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -63,7 +63,7 @@
      &                        MIXING(ng) % gls,                         &
      &                        MIXING(ng) % tke)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 20)
+      CALL wclock_off (ng, iNLM, 20, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE my25_prestep

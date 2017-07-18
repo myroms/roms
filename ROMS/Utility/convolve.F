@@ -107,6 +107,9 @@
       Lweak=.FALSE.
       add=.FALSE.
       DO ng=1,Ngrids
+# ifdef PROFILE
+        CALL wclock_on (ng, iADM, 44, __LINE__, __FILE__)
+# endif
 !$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -117,6 +120,9 @@
           CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
         END DO
 !$OMP END PARALLEL
+# ifdef PROFILE
+        CALL wclock_off (ng, iADM, 44, __LINE__, __FILE__)
+# endif
       END DO
 !
 !  Since we wish to preserve what is in tl_var(Rold), load resulting
@@ -128,6 +134,9 @@
 !
       add=.FALSE.
       DO ng=1,Ngrids
+# ifdef PROFILE
+        CALL wclock_on (ng, iTLM, 44, __LINE__, __FILE__)
+# endif
 !$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
@@ -138,6 +147,9 @@
 # endif
         END DO
 !$OMP END PARALLEL
+# ifdef PROFILE
+        CALL wclock_off (ng, iTLM, 44, __LINE__, __FILE__)
+# endif
       END DO
 
       RETURN
@@ -282,6 +294,9 @@
       Lweak=.FALSE.
       add=.FALSE.
       DO ng=1,Ngrids
+# ifdef PROFILE
+        CALL wclock_on (ng, model, 44, __LINE__, __FILE__)
+# endif
 !$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -297,6 +312,9 @@
 # endif
         END DO
 !$OMP END PARALLEL
+# ifdef PROFILE
+        CALL wclock_off (ng, model, 44, __LINE__, __FILE__)
+# endif
       END DO
 !
 !  To insure symmetry, convolve resulting filtered adjoint solution
@@ -309,6 +327,9 @@
       Lweak=.FALSE.
       add=.FALSE.
       DO ng=1,Ngrids
+# ifdef PROFILE
+        CALL wclock_on (ng, model, 44, __LINE__, __FILE__)
+# endif
 !$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rold(ng), add)
@@ -332,6 +353,9 @@
           END DO
 !$OMP END PARALLEL
         END IF
+# endif
+# ifdef PROFILE
+        CALL wclock_off (ng, model, 44, __LINE__, __FILE__)
 # endif
       END DO
 
@@ -526,6 +550,9 @@
 !
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
+# ifdef PROFILE
+          CALL wclock_on (ng, model, 44, __LINE__, __FILE__)
+# endif
           DO irec=1,Nrec(ng)-1
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
@@ -574,6 +601,9 @@
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
+# ifdef PROFILE
+        CALL wclock_off (ng, model, 44, __LINE__, __FILE__)
+# endif
         END IF
       END DO
 !
@@ -592,6 +622,9 @@
 !
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
+# ifdef PROFILE
+          CALL wclock_on (ng, model, 44, __LINE__, __FILE__)
+# endif
           ADM(ng)%Rindex=0
           LwrtState2d(ng)=.TRUE.
           DO irec=Nrec(ng)-1,1,-1
@@ -630,6 +663,9 @@
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
+# ifdef PROFILE
+          CALL wclock_off (ng, model, 44, __LINE__, __FILE__)
+# endif
         END IF
       END DO
 
@@ -644,6 +680,9 @@
 !
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
+# ifdef PROFILE
+          CALL wclock_on (ng, model, 44, __LINE__, __FILE__)
+# endif
           DO irec=1,Nrec(ng)-1
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
@@ -713,6 +752,9 @@
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
+# ifdef PROFILE
+          CALL wclock_off (ng, model, 44, __LINE__, __FILE__)
+# endif
         END IF
       END DO
 # endif

@@ -46,14 +46,14 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 7)
+      CALL wclock_on (ng, iNLM, 7, __LINE__, __FILE__)
 # endif
       CALL obc_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, LBij, UBij,             &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Linp)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 7)
+      CALL wclock_off (ng, iNLM, 7, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE obc_adjust
@@ -519,14 +519,14 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 8)
+      CALL wclock_on (ng, iNLM, 8, __LINE__, __FILE__)
 # endif
       CALL load_obc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 8)
+      CALL wclock_off (ng, iNLM, 8, __LINE__, __FILE__)
 # endif
 
       RETURN

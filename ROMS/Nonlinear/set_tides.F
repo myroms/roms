@@ -39,7 +39,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 11)
+      CALL wclock_on (ng, iNLM, 11, __LINE__, __FILE__)
 # endif
       CALL set_tides_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -67,7 +67,7 @@
 # endif
      &                     TIDES(ng) % Tperiod)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 11)
+      CALL wclock_off (ng, iNLM, 11, __LINE__, __FILE__)
 # endif
 
       RETURN

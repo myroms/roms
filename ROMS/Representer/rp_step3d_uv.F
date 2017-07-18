@@ -51,7 +51,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 34)
+      CALL wclock_on (ng, iRPM, 34, __LINE__, __FILE__)
 # endif
       CALL rp_step3d_uv_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -118,7 +118,7 @@
      &                        GRID(ng) % Hvom,                          &
      &                        GRID(ng) % tl_Hvom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 34)
+      CALL wclock_off (ng, iRPM, 34, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2338,7 +2338,7 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_u(:,:,:,nnew), tl_v(:,:,:,nnew),           &
      &                    tl_Huon, tl_Hvom)
-      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
+      CALL mp_exchange3d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &

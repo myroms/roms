@@ -38,7 +38,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 7)
+      CALL wclock_on (ng, iADM, 7, __LINE__, __FILE__)
 # endif
       CALL ad_diag_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -58,7 +58,7 @@
      &                   OCEAN(ng) % ad_vbar,                           &
      &                   OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 7)
+      CALL wclock_off (ng, iADM, 7, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE ad_diag

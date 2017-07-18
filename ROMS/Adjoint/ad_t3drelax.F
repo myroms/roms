@@ -42,7 +42,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 24)
+      CALL wclock_on (ng, iADM, 24, __LINE__, __FILE__)
 # endif
       CALL ad_t3drelax_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -60,7 +60,7 @@
      &                       OCEAN(ng) % t,                             &
      &                       OCEAN(ng) % ad_t)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 24)
+      CALL wclock_off (ng, iADM, 24, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE ad_t3drelax

@@ -51,7 +51,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 34)
+      CALL wclock_on (ng, iADM, 34, __LINE__, __FILE__)
 # endif
       CALL ad_step3d_uv_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -120,7 +120,7 @@
      &                        GRID(ng) % Hvom,                          &
      &                        GRID(ng) % ad_Hvom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 34)
+      CALL wclock_off (ng, iADM, 34, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE ad_step3d_uv

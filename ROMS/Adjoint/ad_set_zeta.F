@@ -39,7 +39,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 12)
+      CALL wclock_on (ng, iADM, 12, __LINE__, __FILE__)
 # endif
       CALL ad_set_zeta_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -48,7 +48,7 @@
      &                       OCEAN(ng) % ad_zeta,                       &
      &                       OCEAN(ng) % ad_zeta_sol)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 12)
+      CALL wclock_off (ng, iADM, 12, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE ad_set_zeta

@@ -174,7 +174,7 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL tl_set_data (ng, tile)
 # ifdef FORWARD_READ
-            CALL set_depth (ng, tile)
+            CALL set_depth (ng, tile, iTLM)
 # endif
           END DO
 !$OMP BARRIER
@@ -189,7 +189,7 @@
 !
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
-            CALL set_massflux (ng, tile)
+            CALL set_massflux (ng, tile, iTLM)
           END DO
 !$OMP BARRIER
         END DO
@@ -209,14 +209,14 @@
           IF (FrequentImpulse(ng)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
-              CALL tl_set_depth (ng, tile)
+              CALL tl_set_depth (ng, tile, iTLM)
             END DO
 !$OMP BARRIER
           END IF
 #  else
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
-            CALL tl_set_depth (ng, tile)
+            CALL tl_set_depth (ng, tile, iTLM)
           END DO
 !$OMP BARRIER
 #  endif
@@ -237,7 +237,7 @@
 !
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_ini_zeta (ng, tile, iTLM)
-              CALL tl_set_depth (ng, tile)
+              CALL tl_set_depth (ng, tile, iTLM)
             END DO
 !$OMP BARRIER
 !
@@ -259,13 +259,13 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL tl_set_massflux (ng, tile)
+            CALL tl_set_massflux (ng, tile, iTLM)
 # ifndef TS_FIXED
-            CALL tl_rho_eos (ng, tile)
+            CALL tl_rho_eos (ng, tile, iTLM)
 # endif
             CALL tl_diag (ng, tile)
 # ifdef FORWARD_READ
-            CALL omega (ng, tile)
+            CALL omega (ng, tile, iTLM)
 # endif
           END DO
 !$OMP BARRIER
@@ -354,7 +354,7 @@
           IF (iic(ng).lt.(ntend(ng)+1)) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL tl_obc_adjust (ng, tile, Lbinp(ng))
-              CALL tl_set_depth_bry (ng, tile)
+              CALL tl_set_depth_bry (ng, tile, iTLM)
               CALL tl_obc2d_adjust (ng, tile, Lbinp(ng))
             END DO
 !$OMP BARRIER
@@ -394,7 +394,7 @@
 # elif defined BVF_MIXING_NOT_YET
             CALL tl_bvf_mix (ng, tile)
 # endif
-            CALL tl_omega (ng, tile)
+            CALL tl_omega (ng, tile, iTLM)
 !!          CALL wvelocity (ng, tile, nstp(ng))
           END DO
 !$OMP BARRIER
@@ -521,7 +521,7 @@
 !
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
-            CALL tl_set_depth (ng, tile)
+            CALL tl_set_depth (ng, tile, iTLM)
           END DO
 !$OMP BARRIER
         END DO
@@ -547,7 +547,7 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL tl_omega (ng, tile)
+            CALL tl_omega (ng, tile, iTLM)
 # ifdef MY25_MIXING_NOT_YET
             CALL tl_my25_corstep (ng, tile)
 # elif defined GLS_MIXING_NOT_YET

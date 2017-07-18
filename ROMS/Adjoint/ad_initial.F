@@ -160,7 +160,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iADM, 2)
+        CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
       END DO
 !$OMP BARRIER
 # endif
@@ -292,7 +292,7 @@
 !-----------------------------------------------------------------------
 !
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_wtype (ng, tile, iTLM)
+          CALL ana_wtype (ng, tile, iADM)
         END DO
 !$OMP BARRIER
 # endif
@@ -412,7 +412,7 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile)
+        CALL set_depth (ng, tile, iADM)
       END DO
 !$OMP BARRIER
 #  endif
@@ -557,7 +557,7 @@
 !!----------------------------------------------------------------------
 !!
 !!    DO tile=first_tile(ng),last_tile(ng),+1
-!!      CALL ad_set_depth (ng, tile)
+!!      CALL ad_set_depth (ng, tile, iADM)
 !!    END DO
 !!$OMP BARRIER
 !!
@@ -566,7 +566,7 @@
 !!----------------------------------------------------------------------
 !!
 !!    DO tile=first_tile(ng),last_tile(ng),+1
-!!      CALL ad_set_massflux (ng, tile)
+!!      CALL ad_set_massflux (ng, tile, iADM)
 !!    END DO
 !!$OMP BARRIER
 !!
@@ -578,8 +578,8 @@
 !!----------------------------------------------------------------------
 !!
 !!    DO tile=first_tile(ng),last_tile(ng),+1
-!!      CALL ad_omega (ng, tile)
-!!      CALL ad_rho_eos (ng, tile)
+!!      CALL ad_omega (ng, tile, iADM)
+!!      CALL ad_rho_eos (ng, tile, iADM)
 !!    END DO
 !!!$OMP BARRIER
 # endif
@@ -754,7 +754,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iADM, 2)
+        CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
       END DO
 !$OMP BARRIER
 # endif

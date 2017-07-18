@@ -489,6 +489,27 @@
       Coptions(is:is+19)=' ARRAY_MODES_SPLIT,'
 # endif
 #endif
+#if defined DISTRIBUTE && defined NESTING
+# if defined ASSEMBLE_ALLGATHER
+!
+      IF (Master) WRITE (stdout,20) 'ASSEMBLE_ALLGATHER',               &
+     &   'Using mpi_allgather in mp_assemble routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' ASSEMBLE_ALLGATHER,'
+# elif defined ASSEMBLE_ALLREDUCE
+!
+      IF (Master) WRITE (stdout,20) 'ASSEMBLE_ALLREDUCE',               &
+     &   'Using mpi_allreduce in mp_assemble routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' ASSEMBLE_ALLGATHER,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!ASSEMBLE_ALL...',                 &
+     &   'Using mpi_isend/mpi_recv in mp_assemble routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !ASSEMBLE_ALL...,'
+# endif
+#endif
 #ifdef ASSUMED_SHAPE
 !
       IF (Master) WRITE (stdout,20) 'ASSUMED_SHAPE',                    &
@@ -652,6 +673,27 @@
      &   'Separate analysis due to IC, surface forcing, and OBC'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CLIPPING_SPLIT,'
+# endif
+#endif
+#if defined DISTRIBUTE
+# if defined COLLECT_ALLGATHER
+!
+      IF (Master) WRITE (stdout,20) 'COLLECT_ALLGATHER',                &
+     &   'Using mpi_allgather in mp_collect routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' COLLECT_ALLGATHER,'
+# elif defined COLLECT_ALLREDUCE
+!
+      IF (Master) WRITE (stdout,20) 'COLLECT_ALLREDUCE',                &
+     &   'Using mpi_allreduce in mp_collect routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' COLLECT_ALLGATHER,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!COLLECT_ALL...',                  &
+     &   'Using mpi_isend/mpi_recv in mp_collect routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' !COLLECT_ALL...,'
 # endif
 #endif
 #ifdef CORRELATION

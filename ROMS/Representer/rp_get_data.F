@@ -77,7 +77,7 @@
 !  Turn on input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iRPM, 3)
+      CALL wclock_on (ng, iRPM, 3, __LINE__, __FILE__)
 # endif
 !
 !=======================================================================
@@ -1343,7 +1343,7 @@
 !  Turn off input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iRPM, 3)
+      CALL wclock_off (ng, iRPM, 3, __LINE__, __FILE__)
 # endif
 
       RETURN

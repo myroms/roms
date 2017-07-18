@@ -54,7 +54,7 @@
 !  Turn on output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iNLM, 8)
+      CALL wclock_on (ng, iNLM, 8, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -522,7 +522,7 @@
 !  Turn off output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iNLM, 8)
+      CALL wclock_off (ng, iNLM, 8, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE output

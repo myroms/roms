@@ -89,7 +89,7 @@
 !  Turn on input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iNLM, 3)
+      CALL wclock_on (ng, iNLM, 3, __LINE__, __FILE__)
 #endif
 
 #if defined SSH_TIDES || defined UV_TIDES
@@ -532,7 +532,7 @@
 !  Turn off input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iNLM, 3)
+      CALL wclock_off (ng, iNLM, 3, __LINE__, __FILE__)
 #endif
 
 #if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)

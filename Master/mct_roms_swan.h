@@ -183,12 +183,12 @@
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 48)
+      CALL wclock_on (ng, iNLM, 41, __LINE__, __FILE__)
 #endif
       CALL ocn2wav_coupling_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj)
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 48)
+      CALL wclock_off (ng, iNLM, 41, __LINE__, __FILE__)
 #endif
 
       RETURN

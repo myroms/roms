@@ -47,7 +47,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 19)
+      CALL wclock_on (ng, iNLM, 19, __LINE__, __FILE__)
 # endif
       CALL gls_corstep_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -87,7 +87,7 @@
      &                       MIXING(ng) % gls,                          &
      &                       MIXING(ng) % tke)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 19)
+      CALL wclock_off (ng, iNLM, 19, __LINE__, __FILE__)
 # endif
       RETURN
       END SUBROUTINE gls_corstep

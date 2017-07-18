@@ -395,12 +395,11 @@
         DO ng=1,Ngrids
           IF (iic(ng).ne.ntend(ng)) THEN
             DO tile=last_tile(ng),first_tile(ng),-1
-                CALL ad_out_fields (ng, tile, iADM)
+              CALL ad_out_fields (ng, tile, iADM)
             END DO
 !$OMP BARRIER
             DO tile=first_tile(ng),last_tile(ng),+1
-                CALL ad_set_depth (ng, tile)
-                CALL ad_out_zeta (ng, tile, iADM)
+              CALL ad_out_zeta (ng, tile, iADM)
             END DO
 !$OMP BARRIER
           END IF

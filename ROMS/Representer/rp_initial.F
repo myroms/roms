@@ -136,7 +136,7 @@
       time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend(ng)=ntimes(ng)
+      ntend(ng)=ntstart(ng)+ntimes(ng)-1
       ntfirst(ng)=ntstart(ng)
 !$OMP END MASTER
 !$OMP BARRIER
@@ -158,7 +158,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iRPM, 2)
+        CALL wclock_on (ng, iRPM, 2, __LINE__, __FILE__)
       END DO
 !$OMP BARRIER
 # endif
@@ -369,7 +369,7 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile)
+        CALL set_depth (ng, tile, iRPM)
       END DO
 !$OMP BARRIER
 # endif
@@ -521,8 +521,8 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile)
-        CALL rp_set_depth (ng, tile)
+        CALL set_depth (ng, tile, iRPM)
+        CALL rp_set_depth (ng, tile, iRPM)
       END DO
 !$OMP BARRIER
 !
@@ -531,8 +531,8 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL rp_set_massflux (ng, tile)
-        CALL set_massflux (ng, tile)
+        CALL rp_set_massflux (ng, tile, iRPM)
+        CALL set_massflux (ng, tile, iRPM)
       END DO
 !$OMP BARRIER
 !
@@ -542,8 +542,8 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL rp_omega (ng, tile)
-        CALL omega (ng, tile)
+        CALL rp_omega (ng, tile, iRPM)
+        CALL omega (ng, tile, iRPM)
       END DO
 !$OMP BARRIER
 # endif
@@ -628,8 +628,8 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL rp_rho_eos (ng, tile)
-        CALL rho_eos (ng, tile)
+        CALL rp_rho_eos (ng, tile, iRPM)
+        CALL rho_eos (ng, tile, iRPM)
       END DO
 !$OMP BARRIER
 # endif
@@ -705,7 +705,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iRPM, 2)
+        CALL wclock_off (ng, iRPM, 2, __LINE__, __FILE__)
       END DO
 !$OMP BARRIER
 # endif

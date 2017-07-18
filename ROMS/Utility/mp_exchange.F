@@ -356,7 +356,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 60, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -886,7 +886,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 60, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -962,7 +962,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 63, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1386,7 +1386,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 63, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -1466,7 +1466,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 41)
+      CALL wclock_on (ng, model, 61, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2095,7 +2095,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 41)
+      CALL wclock_off (ng, model, 61, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2171,7 +2171,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 63, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2708,7 +2708,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 63, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -2791,7 +2791,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 62, __LINE__, __FILE__)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3379,7 +3379,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 62, __LINE__, __FILE__)
 # endif
 
       RETURN
@@ -3456,7 +3456,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 40)
+      CALL wclock_on (ng, model, 60, __LINE__, __FILE__)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -4120,7 +4120,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 40)
+      CALL wclock_off (ng, model, 60, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -4196,7 +4196,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 63, __LINE__, __FILE__)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -4754,7 +4754,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 63, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -4834,7 +4834,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 41)
+      CALL wclock_on (ng, model, 61, __LINE__, __FILE__)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -5597,7 +5597,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 41)
+      CALL wclock_off (ng, model, 61, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -5672,7 +5672,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 43)
+      CALL wclock_on (ng, model, 63, __LINE__, __FILE__)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -6343,7 +6343,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 43)
+      CALL wclock_off (ng, model, 63, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -6424,7 +6424,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 42)
+      CALL wclock_on (ng, model, 62, __LINE__, __FILE__)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -7122,7 +7122,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 42)
+      CALL wclock_off (ng, model, 62, __LINE__, __FILE__)
 #  endif
 
       RETURN

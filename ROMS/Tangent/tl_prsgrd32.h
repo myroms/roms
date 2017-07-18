@@ -49,7 +49,7 @@
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 23)
+      CALL wclock_on (ng, iTLM, 23, __LINE__, __FILE__)
 #endif
       CALL tl_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -79,7 +79,7 @@
      &                     OCEAN(ng) % tl_ru,                           &
      &                     OCEAN(ng) % tl_rv)
 #ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 23)
+      CALL wclock_off (ng, iTLM, 23, __LINE__, __FILE__)
 #endif
       RETURN
       END SUBROUTINE tl_prsgrd

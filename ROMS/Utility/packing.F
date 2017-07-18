@@ -374,7 +374,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       CALL ad_pack_tile (ng, tile,                                      &
@@ -412,7 +412,7 @@
      &                   FORCES(ng) % ad_svstr)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -1301,7 +1301,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       CALL ad_so_pack_tile (ng, tile,                                   &
@@ -1341,7 +1341,7 @@
      &                      FORCES(ng) % ad_svstr)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -2138,7 +2138,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       CALL ad_so_pack_red_tile (ng, tile,                               &
@@ -2178,7 +2178,7 @@
      &                          FORCES(ng) % ad_svstr)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -3205,7 +3205,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       CALL ad_pack_tile (ng, tile,                                      &
@@ -3241,7 +3241,7 @@
      &                   OCEAN(ng) % ad_zeta)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -3757,7 +3757,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       CALL ad_unpack_tile (ng, tile,                                    &
@@ -3792,7 +3792,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -4491,7 +4491,6 @@
 !
       USE distribute_mod, ONLY : mp_gather_state
 #  endif
-
 !
 !  Imported variable declarations.
 !
@@ -4508,7 +4507,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2)
+      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -4552,7 +4551,7 @@
 #  endif
      &                     OCEAN(ng) % ad_zeta)
 #  ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2)
+      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
 #  endif
       RETURN
       END SUBROUTINE ad_unpack
@@ -5043,7 +5042,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 2)
+      CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
       CALL tl_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -5087,7 +5086,7 @@
 #  endif
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 2)
+      CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
       RETURN
       END SUBROUTINE tl_pack
@@ -5587,7 +5586,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 2)
+      CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -5637,7 +5636,7 @@
      &                     FORCES(ng) % tl_svstr)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 2)
+      CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -6373,7 +6372,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 2)
+      CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -6422,7 +6421,7 @@
      &                     FORCES(ng) % tl_svstr)
 
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 2)
+      CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
 
       RETURN
@@ -7264,7 +7263,7 @@
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 2)
+      CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
 
 #  ifdef DISTRIBUTE
@@ -7308,7 +7307,7 @@
 #  endif
      &                     OCEAN(ng) % tl_zeta)
 #  ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 2)
+      CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
 #  endif
       RETURN
       END SUBROUTINE tl_unpack

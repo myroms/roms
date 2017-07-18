@@ -146,7 +146,7 @@
         DO ng=1,Ngrids
 !$OMP PARALLEL
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iTLM, 0)
+            CALL wclock_on (ng, iTLM, 0, __LINE__, __FILE__)
           END DO
 !$OMP END PARALLEL
         END DO
@@ -383,7 +383,7 @@
 !
         DO ng=1,Ngrids
 #ifdef PROFILE
-          CALL wclock_on (ng, iTLM, 38)
+          CALL wclock_on (ng, iTLM, 38, __LINE__, __FILE__)
 #endif
           IF (Master) THEN
             CALL dsaupd (ido(ng), bmat, Nsize(ng), which, NEV,          &
@@ -396,7 +396,7 @@
             Nconv(ng)=iaup2(4)
           END IF
 #ifdef PROFILE
-          CALL wclock_off (ng, iTLM, 38)
+          CALL wclock_off (ng, iTLM, 38, __LINE__, __FILE__)
 #endif
 #ifdef DISTRIBUTE
 !
@@ -490,7 +490,7 @@
      &                            iparam(3,ng)
               END IF
 #ifdef PROFILE
-              CALL wclock_on (ng, iTLM, 38)
+              CALL wclock_on (ng, iTLM, 38, __LINE__, __FILE__)
 #endif
               IF (Master) THEN
                 CALL dseupd (Lrvec, howmany, select(1,ng),              &
@@ -515,7 +515,7 @@
               CALL mp_bcastf (ng, iTLM, STORAGE(ng)%Rvector)
 #endif
 #ifdef PROFILE
-              CALL wclock_off (ng, iTLM, 38)
+              CALL wclock_off (ng, iTLM, 38, __LINE__, __FILE__)
 #endif
             END DO
 
@@ -696,7 +696,7 @@
       DO ng=1,Ngrids
 !$OMP PARALLEL
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iTLM, 0)
+          CALL wclock_off (ng, iTLM, 0, __LINE__, __FILE__)
         END DO
 !$OMP END PARALLEL
 
