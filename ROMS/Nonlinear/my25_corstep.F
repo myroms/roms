@@ -745,6 +745,23 @@
 !  Save limited length scale.
 !
             Lscale(i,j,k)=Ls_lmt
+
+# if defined LIMIT_VDIFF || defined LIMIT_VVISC
+!
+!  Limit vertical mixing coefficients with the upper threshold value.
+!  This is an engineering fix but it can be based on the fact that
+!  vertical mixing in the ocean from indirect observations are not
+!  higher than the threshold value.
+!
+#  ifdef LIMIT_VDIFF
+            DO itrc=1,NAT
+              Akt(i,j,k,itrc)=MIN(Akt_limit(itrc,ng), Akt(i,j,k,itrc))
+            END DO
+#  endif
+#  ifdef LIMIT_VVISC
+            Akv(i,j,k)=MIN(Akv_limit(ng), Akv(i,j,k))
+#  endif
+# endif
           END DO
         END DO
       END DO

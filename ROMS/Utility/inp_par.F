@@ -22,11 +22,12 @@
       USE mod_strings
 #endif
 !
-      USE dateclock_mod, ONLY : get_date
+      USE dateclock_mod,  ONLY : get_date
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
 #endif
-      USE ran_state, ONLY: ran_seed
+      USE ran_state,      ONLY : ran_seed
+      USE strings_mod,    ONLY : FoundError
 !
       implicit none
 !
@@ -134,14 +135,16 @@
 #ifdef DISTRIBUTE
       CALL mp_bcasti (1, model, exit_flag)
 #endif
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #ifdef NESTING
 !
 !  Read in nesting contact points NetCDF file and allocate and
 !  initialize several structures and variables.
 !
       CALL set_contact (1, model)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 !
 !-----------------------------------------------------------------------
@@ -159,6 +162,32 @@
       IF (ANY(CompositeGrid).or.ANY(RefinedGrid)) THEN
         NghostPoints=MAX(3,NghostPoints)
       END IF
+!
+!  Determine the switch to process input open boundary conditions data.
+!
+!  In nesting applications, the lateral boundary conditions data is
+!  is needed only by the main coarser grid (RefineScale(ng)=0).
+!
+      DO ng=1,Ngrids
+        IF (.not.(RefinedGrid(ng).and.RefineScale(ng).gt.0)) THEN
+          LprocessOBC(ng)=.TRUE.
+        END IF
+      END DO
+
+#if defined SSH_TIDES || defined UV_TIDES
+!
+!  Determine the switch to process input tidal forcing data.
+!
+!  In nesting applications, the tides are processed only by the main
+!  coarser grid (RefineScale(ng)=0) and the other grids get tidal
+!  forcing from the contact areas.
+!
+      DO ng=1,Ngrids
+        IF (.not.(RefinedGrid(ng).and.RefineScale(ng).gt.0)) THEN
+          LprocessTides(ng)=.TRUE.
+        END IF
+      END DO
+#endif
 !
 !  Set boundary edge I- or J-indices for each variable type.
 !
@@ -620,7 +649,8 @@
 #ifdef DISTRIBUTE
       CALL mp_bcasti (1, model, exit_flag)
 #endif
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Report tile minimum and maximum fractional grid coordinates.
 !
@@ -787,7 +817,8 @@
         END DO
 #endif
       END IF
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute various constants.
@@ -1079,7 +1110,8 @@
       CALL mp_bcasti (1, model, exit_flag)
       CALL mp_bcasts (1, model, Coptions)
 #endif
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Initialize random number sequence so we can get identical results
@@ -1340,7 +1372,7 @@
 
       integer :: ncid
 !
-      SourceFile='inp_par.F, find_file'
+      SourceFile=__FILE__ // ", find_file"
 !
 !-----------------------------------------------------------------------
 !  Check if the file exit.

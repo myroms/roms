@@ -729,6 +729,10 @@
 !                    tracers.
 !    Akv_bak       Background vertical mixing coefficient (m2/s) for
 !                    momentum.
+!    Akt_limit     Upper threshold vertical mixing coefficient (m2/s)
+!                    for tracers.
+!    Akv_limit     Upper threshold vertical mixing coefficient (m2/s)
+!                    for momentum.
 !    Kdiff         Isopycnal mixing thickness diffusivity (m2/s) for
 !                    tracers.
 !    ad_visc2      ADM lateral harmonic constant mixing coefficient
@@ -771,6 +775,7 @@
         real(r8), allocatable :: Akk_bak(:)          ! m2/s
         real(r8), allocatable :: Akp_bak(:)          ! m2/s
         real(r8), allocatable :: Akv_bak(:)          ! m2/s
+        real(r8), allocatable :: Akv_limit(:)        ! m2/s
 
         real(r8), allocatable :: ad_visc2(:)         ! m2/s
         real(r8), allocatable :: nl_visc2(:)         ! m2/s
@@ -786,6 +791,7 @@
         real(r8), allocatable :: tkenu4(:)           ! m2 s-1/2
 
         real(r8), allocatable :: Akt_bak(:,:)        ! m2/s
+        real(r8), allocatable :: Akt_limit(:,:)      ! m2/s
         real(r8), allocatable :: Kdiff(:,:)          ! m2/s
 
         real(r8), allocatable :: ad_tnu2(:,:)        ! m2/s
@@ -880,6 +886,14 @@
 !  4DVAR algorithms.
 !
         logical, allocatable :: Ladjusted(:)
+!
+!  Switch to read input open boundary conditions data.
+!
+        logical, allocatable :: LprocessOBC(:)
+!
+!  Switch to read input tidal forcing data.
+!
+        logical, allocatable :: LprocessTides(:)
 !
 !  Switch to write application set-up information to standard output.
 !
@@ -1017,7 +1031,8 @@
         logical, allocatable :: LcycleRST(:)
         logical, allocatable :: LcycleTLM(:)
 
-#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#if defined AVERAGES  && defined AVERAGES_DETIDE && \
+   (defined SSH_TIDES || defined UV_TIDES)
 !
 !  Counter storing the number of accumulated harmonic records used
 !  for detiding.
@@ -1909,6 +1924,7 @@
       allocate ( Akk_bak(Ngrids) )
       allocate ( Akp_bak(Ngrids) )
       allocate ( Akv_bak(Ngrids) )
+      allocate ( Akv_limit(Ngrids) )
 
       allocate ( ad_visc2(Ngrids) )
       allocate ( nl_visc2(Ngrids) )
@@ -1924,6 +1940,7 @@
       allocate ( tkenu4(Ngrids) )
 
       allocate ( Akt_bak(MT,Ngrids) )
+      allocate ( Akt_limit(NAT,Ngrids) )
       allocate ( Kdiff(MT,Ngrids) )
 
       allocate ( ad_tnu2(MT,Ngrids) )
@@ -1990,6 +2007,9 @@
 
       allocate ( Ladjusted(Ngrids) )
 
+      allocate ( LprocessOBC(Ngrids) )
+      allocate ( LprocessTides(Ngrids) )
+
       allocate ( LwrtInfo(Ngrids) )
 
       allocate ( ldefout(Ngrids) )
@@ -2040,7 +2060,8 @@
       allocate ( LcycleRST(Ngrids) )
       allocate ( LcycleTLM(Ngrids) )
 
-#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#if defined AVERAGES  && defined AVERAGES_DETIDE && \
+   (defined SSH_TIDES || defined UV_TIDES)
       allocate ( Hcount(Ngrids) )
 #endif
 
@@ -2335,7 +2356,8 @@
         gamma2(ng)=-1.0_r8
         Vtransform(ng)=1
         Vstretching(ng)=1
-#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#if defined AVERAGES  && defined AVERAGES_DETIDE && \
+   (defined SSH_TIDES || defined UV_TIDES)
         Hcount(ng)=0
 #endif
 #ifdef ADJUST_BOUNDARY
@@ -2378,6 +2400,10 @@
           tl_tnu4(itrc,ng)=IniVal
           tnu4(itrc,ng)=IniVal
         END DO
+        DO itrc=1,NAT
+          Akt_limit(itrc,ng)=1.0E-3_r8
+        END DO
+        Akv_limit(ng)=1.0E-3_r8
         ad_Akv_fac(ng)=1.0_r8
         tl_Akv_fac(ng)=1.0_r8
         ad_visc2(ng)=IniVal
@@ -2461,6 +2487,9 @@
 
         Ladjusted(ng)=.FALSE.
 
+        LprocessOBC(ng)=.FALSE.
+        LprocessTides(ng)=.FALSE.
+
         LdefADJ(ng)=.FALSE.
         LdefAVG(ng)=.TRUE.
         LdefDAI(ng)=.FALSE.
@@ -2478,8 +2507,11 @@
         LdefRST(ng)=.TRUE.
         LdefSTA(ng)=.TRUE.
         LdefTLM(ng)=.FALSE.
-#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#if defined AVERAGES  && defined AVERAGES_DETIDE && \
+   (defined SSH_TIDES || defined UV_TIDES)
         LdefTIDE(ng)=.TRUE.
+#else
+        LdefTIDE(ng)=.FALSE.
 #endif
         LwrtADJ(ng)=.FALSE.
         LwrtAVG(ng)=.FALSE.

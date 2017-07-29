@@ -534,6 +534,23 @@
 # ifdef SALINITY
             Akt(i,j,k,isalt)=Akt(i,j,k,isalt)+lmd_nu0c*nu_sxc
 # endif
+# if defined LIMIT_VDIFF || defined LIMIT_VVISC
+!
+!  Limit vertical mixing coefficients with the upper threshold value.
+!  This is an engineering fix but it can be based on the fact that
+!  vertical mixing in the ocean from indirect observations is not
+!  higher than the threshold value.
+!
+#  ifdef LIMIT_VVISC
+            Akv(i,j,k)=MIN(Akv_limit(ng), Akv(i,j,k))
+#  endif
+#  ifdef LIMIT_VDIFF
+            Akt(i,j,k,itemp)=MIN(Akt_limit(itemp,ng), Akt(i,j,k,itemp))
+#   ifdef SALINITY
+            Akt(i,j,k,isalt)=MIN(Akt_limit(isalt,ng), Akt(i,j,k,isalt))
+#   endif
+#  endif
+# endif
           END DO
         END DO
       END DO

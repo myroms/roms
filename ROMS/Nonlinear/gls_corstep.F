@@ -1072,6 +1072,25 @@
             Akt(i,j,N(ng),itrc)=Akt_bak(itrc,ng)
             Akt(i,j,0,itrc)=Akt_bak(itrc,ng)
           END DO
+
+# if defined LIMIT_VDIFF || defined LIMIT_VVISC
+!
+!  Limit vertical mixing coefficients with the upper threshold value.
+!  This is an engineering fix but it can be based on the fact that
+!  vertical mixing in the ocean from indirect observations are not
+!  higher than the threshold value.
+!
+          DO k=0,N(ng)
+#  ifdef LIMIT_VDIFF
+            DO itrc=1,NAT
+              Akt(i,j,k,itrc)=MIN(Akt_limit(itrc,ng), Akt(i,j,k,itrc))
+            END DO
+#  endif
+#  ifdef LIMIT_VVISC
+            Akv(i,j,k)=MIN(Akv_limit(ng), Akv(i,j,k))
+#  endif
+          END DO
+# endif
         END DO
       END DO
 !

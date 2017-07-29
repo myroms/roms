@@ -275,9 +275,12 @@
 ** (activate only one closure):                                              **
 **                                                                           **
 ** BVF_MIXING          use if Brunt-Vaisala frequency mixing                 **
-** GLS_MIXING          use if Generic Length-Scale mixing                    **
+** GLS_MIXING          use if Generic Length-Scale mixing closure            **
 ** MY25_MIXING         use if Mellor/Yamada Level-2.5 closure                **
 ** LMD_MIXING          use if Large et al. (1994) interior closure           **
+**                                                                           **
+** LIMIT_VDIFF         use to impose an upper limit on vertical diffusion    **
+** LIMIT_VVISC         use to impose an upper limit on vertical viscosity    **
 **                                                                           **
 ** OPTIONS for the Generic Length-Scale closure (Warner et al., 2005):       **
 **                                                                           **

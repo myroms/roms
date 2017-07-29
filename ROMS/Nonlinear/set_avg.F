@@ -15,7 +15,7 @@
 !  beggining of the next time-step.                                    !
 !                                                                      !
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
-!  It computes leas-squares coefficients to detide time-averaged       !
+!  It computes least-squares coefficients to detide time-averaged      !
 !  fields. Notice that "set_detide" is called last since we need       !
 !  the regular time-averages for those fields to detide.               !
 !                                                                      !

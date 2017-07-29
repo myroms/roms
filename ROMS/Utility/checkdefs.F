@@ -1171,6 +1171,22 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' LCZ_FINAL,'
 #endif
+#if defined LIMIT_VDIFF && \
+   (defined GLS_MIXING  || defined LMD_MIXING || defined MY25_MIXING)
+!
+      IF (Master) WRITE (stdout,20) 'LIMIT_VDIFF',                      &
+     &   'Impose an upper limit on vertical diffusion coefficient.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' LIMIT_VDIFF,'
+#endif
+#if defined LIMIT_VVISC && \
+   (defined GLS_MIXING  || defined LMD_MIXING || defined MY25_MIXING)
+!
+      IF (Master) WRITE (stdout,20) 'LIMIT_VVISC',                      &
+     &   'Impose an upper limit on vertical viscosity coefficient.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' LIMIT_VVISC,'
+#endif
 #ifdef LMD_BKPP
 !
       IF (Master) WRITE (stdout,20) 'LMD_BKPP',                         &

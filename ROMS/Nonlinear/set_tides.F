@@ -28,6 +28,12 @@
       USE mod_param
       USE mod_grid
       USE mod_tides
+# ifdef NESTING
+#  if defined AVERAGES  && defined AVERAGES_DETIDE && \
+     (defined SSH_TIDES || defined UV_TIDES)
+      USE mod_scalars
+#  endif
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -36,6 +42,13 @@
 !
 !  Local variable declarations.
 !
+# ifdef NESTING
+#  if defined AVERAGES  && defined AVERAGES_DETIDE && \
+     (defined SSH_TIDES || defined UV_TIDES)
+       integer :: itide, mg
+!
+#  endif
+# endif
 # include "tile.h"
 !
 # ifdef PROFILE
@@ -61,11 +74,33 @@
      &                     TIDES(ng) % UV_Tmajor,                       &
      &                     TIDES(ng) % UV_Tminor,                       &
 # endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+# if defined AVERAGES  && defined AVERAGES_DETIDE && \
+    (defined SSH_TIDES || defined UV_TIDES)
      &                     TIDES(ng) % SinOmega,                        &
      &                     TIDES(ng) % CosOmega,                        &
 # endif
      &                     TIDES(ng) % Tperiod)
+
+# ifdef NESTING
+#  if defined AVERAGES  && defined AVERAGES_DETIDE && \
+     (defined SSH_TIDES || defined UV_TIDES)
+!
+! If nested grids and detiding, load period and harmonics to other
+! grids.
+!
+      IF (LprocessTides(ng)) THEN
+        DO mg=1,Ngrids
+          IF (ng.ne.mg) THEN
+            DO itide=1,NTC(ng)
+              TIDES(mg)%Tperiod (1:NTC(ng))=TIDES(ng)%Tperiod (1:NTC(ng))
+              TIDES(mg)%SinOmega(1:NTC(ng))=TIDES(ng)%SinOmega(1:NTC(ng))
+              TIDES(mg)%CosOmega(1:NTC(ng))=TIDES(ng)%SinOmega(1:NTC(ng))
+            END DO
+          END IF
+        END DO
+      END IF
+#  endif
+# endif
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 11, __LINE__, __FILE__)
 # endif
@@ -89,7 +124,8 @@
      &                           UV_Tangle, UV_Tphase,                  &
      &                           UV_Tmajor, UV_Tminor,                  &
 # endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+# if defined AVERAGES  && defined AVERAGES_DETIDE && \
+    (defined SSH_TIDES || defined UV_TIDES)
      &                           SinOmega, CosOmega,                    &
 # endif
      &                           Tperiod)
@@ -134,7 +170,8 @@
       real(r8), intent(in) :: UV_Tminor(LBi:,LBj:,:)
       real(r8), intent(in) :: UV_Tphase(LBi:,LBj:,:)
 #  endif
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#  if defined AVERAGES  && defined AVERAGES_DETIDE && \
+     (defined SSH_TIDES || defined UV_TIDES)
       real(r8), intent(inout) :: SinOmega(:)
       real(r8), intent(inout) :: CosOmega(:)
 #  endif
@@ -156,7 +193,8 @@
       real(r8), intent(in) :: UV_Tminor(LBi:UBi,LBj:UBj,MTC)
       real(r8), intent(in) :: UV_Tphase(LBi:UBi,LBj:UBj,MTC)
 #  endif
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+#  if defined AVERAGES  && defined AVERAGES_DETIDE && \
+     (defined SSH_TIDES || defined UV_TIDES)
       real(r8), intent(inout) :: SinOmega(MTC)
       real(r8), intent(inout) :: CosOmega(MTC)
 #  endif
@@ -200,8 +238,7 @@
 !  In refinement nesting applications, tidal forcing is only necessary
 !  in the coarser large scale grid.
 !
-      NEEDED : IF (.not.(RefinedGrid(ng).and.                           &
-     &                    RefineScale(ng).gt.0)) THEN
+      NEEDED : IF (LprocessTides(ng)) THEN
 !
 !  Set time-ramping parameter.
 !
@@ -210,7 +247,8 @@
 # else
         ramp=1.0_r8
 # endif
-# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+# if defined AVERAGES  && defined AVERAGES_DETIDE && \
+    (defined SSH_TIDES || defined UV_TIDES)
 !
 !-----------------------------------------------------------------------
 !  Compute harmonic used to detide output fields.

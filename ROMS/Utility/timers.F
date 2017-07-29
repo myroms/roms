@@ -84,15 +84,17 @@
         proc(0,MyModel,ng)=my_getpid()
 
 !$OMP CRITICAL (START_WCLOCK)
+        IF (ng.eq.1) THEN
 #ifdef DISTRIBUTE
-        CALL mp_barrier (ng, model)
-        WRITE (stdout,10) ' Node #', MyRank,                            &
-     &                    ' (pid=',proc(0,MyModel,ng),') is active.'
-        CALL my_flush (stdout)
+          CALL mp_barrier (ng, model)
+          WRITE (stdout,10) ' Node #', MyRank,                          &
+     &                      ' (pid=',proc(0,MyModel,ng),') is active.'
+          CALL my_flush (stdout)
 #else
-        WRITE (stdout,10) ' Thread #', MyThread,                        &
-     &                    ' (pid=',proc(0,MyModel,ng),') is active.'
+          WRITE (stdout,10) ' Thread #', MyThread,                      &
+     &                      ' (pid=',proc(0,MyModel,ng),') is active.'
 #endif
+        END IF
  10     FORMAT (a,i3,a,i8,a)
         thread_count=thread_count+1
         IF (thread_count.eq.NSUB) thread_count=0
