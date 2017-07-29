@@ -53,9 +53,8 @@
       USE mod_iounits
       USE mod_scalars
       USE mod_storage
-
-#ifdef MCT_LIB
 !
+#ifdef MCT_LIB
 # ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 # endif
@@ -63,6 +62,7 @@
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE strings_mod,       ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -117,7 +117,8 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iTLM)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
@@ -192,7 +193,8 @@
 !$OMP PARALLEL
         CALL tl_initial (ng)
 !$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END DO
 !
 !  Allocate arrays associated with Generalized Stability Theory (GST)
@@ -267,7 +269,8 @@
         ELSE
           CALL def_gst (ng, iTLM)
         END IF
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END DO
 #endif
 
@@ -306,7 +309,8 @@
       USE mod_storage
 !
       USE propagator_mod
-      USE packing_mod, ONLY : r_norm2
+      USE packing_mod,   ONLY : r_norm2
+      USE strings_mod,   ONLY : FoundError
 !
 !  Imported variable declarations
 !
@@ -395,7 +399,8 @@
           IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
      &        (ANY(ido.eq.99))) THEN
             CALL wrt_gst (ng, iTLM)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 #endif
         END DO
@@ -443,7 +448,8 @@
 !$OMP PARALLEL
           CALL propagator (RunInterval, state, ad_state)
 !$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         ELSE
           IF (ANY(info.ne.0)) THEN
             DO ng=1,Ngrids
@@ -557,7 +563,8 @@
 !$OMP PARALLEL
                 CALL propagator (RunInterval, state, ad_state)
 !$OMP END PARALLEL
-                IF (exit_flag.ne.NoError) RETURN
+                IF (FoundError(exit_flag, NoError, __LINE__,            &
+     &                         __FILE__)) RETURN
 !
                 DO ng=1,Ngrids
                   CALL r_norm2 (ng, iTLM, Nstr(ng), Nend(ng),           &
@@ -575,8 +582,9 @@
 !  twice in the TLM file for the initial and final perturbation of
 !  the eigenvector.
 !
+                SourceFile=__FILE__ // ", ROMS_run"
+
                 DO ng=1,Ngrids
-                  SourceFile='op_ocean.h, ROMS_run'
                   my_norm(1)=norm(i,ng)
                   my_norm(2)=my_norm(1)
                   my_value(1)=RvalueR(i,ng)
@@ -589,7 +597,8 @@
      &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
      &                                    ncid = TLM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
+                    IF (FoundError(exit_flag, NoError, __LINE__,        &
+     &                             __FILE__)) RETURN
 
                     CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
      &                                    'Ritz_norm',                  &
@@ -597,12 +606,14 @@
      &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
      &                                    ncid = TLM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
+                    IF (FoundError(exit_flag, NoError, __LINE__,        &
+     &                             __FILE__)) RETURN
 
                     IF (LmultiGST) THEN
                       CALL netcdf_close (ng, iTLM, TLM(ng)%ncid,        &
      &                                   TLM(ng)%name)
-                      IF (exit_flag.ne.NoError) RETURN
+                      IF (FoundError(exit_flag, NoError, __LINE__,      &
+     &                               __FILE__)) RETURN
                     END IF
                   END IF
                   IF (LwrtADJ(ng)) THEN
@@ -612,7 +623,8 @@
      &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
      &                                    ncid = ADM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
+                    IF (FoundError(exit_flag, NoError, __LINE__,        &
+     &                             __FILE__)) RETURN
 
                     CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,       &
      &                                    'Ritz_norm',                  &
@@ -620,12 +632,14 @@
      &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
      &                                    ncid = ADM(ng)%ncid)
-                    IF (exit_flag.ne. NoError) RETURN
+                    IF (FoundError(exit_flag, NoError, __LINE__,        &
+     &                             __FILE__)) RETURN
 
                     IF (LmultiGST) THEN
                       CALL netcdf_close (ng, iADM, ADM(ng)%ncid,        &
      &                                   ADM(ng)%name)
-                      IF (exit_flag.ne.NoError) RETURN
+                      IF (FoundError(exit_flag, NoError, __LINE__,      &
+     &                               __FILE__)) RETURN
                     END IF
                   END IF
                 END DO

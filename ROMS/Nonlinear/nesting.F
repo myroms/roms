@@ -155,11 +155,11 @@
       USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
-
-# ifdef SOLVE3D
 !
+# ifdef SOLVE3D
       USE set_depth_mod, ONLY : set_depth
 # endif
+      USE strings_mod,   ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -289,7 +289,8 @@
             CALL fine2coarse (ng, model, r2dvar, tile)
           END DO
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 #  ifdef SOLVE3D
 !
@@ -308,7 +309,8 @@
             CALL fine2coarse (ng, model, r3dvar, tile)
           END DO
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
 # else
 !
@@ -400,11 +402,12 @@
       USE mod_parallel
       USE mod_nesting
       USE mod_scalars
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
+
       USE distribute_mod, ONLY : mp_assemble
 # endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -557,16 +560,20 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_assemble (dg, model, NptsWE, Fspv, F_west (JLB:))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
       CALL mp_assemble (dg, model, NptsWE, Fspv, F_east (JLB:))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
       CALL mp_assemble (dg, model, NptsSN, Fspv, F_south(ILB:))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
       CALL mp_assemble (dg, model, NptsSN, Fspv, F_north(ILB:))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 # endif
 
       RETURN
@@ -1177,11 +1184,11 @@
       USE mod_grid
       USE mod_nesting
       USE mod_scalars
-
-#  ifdef DISTRIBUTE
 !
+#  ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_assemble
 #  endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -1440,11 +1447,13 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (dg, model, Lpoints, spv, LW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 #   ifdef QUADRATIC_WEIGHTS
           CALL mp_assemble (dg, model, Qpoints, spv, QW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #   endif
 !
 !  Load exchanged weights.
@@ -1669,11 +1678,13 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (dg, model, Lpoints, spv, LW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 #   ifdef QUADRATIC_WEIGHTS
           CALL mp_assemble (dg, model, Qpoints, spv, QW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #   endif
 !
 !  Load exchanged weights.
@@ -1899,11 +1910,13 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (dg, model, Lpoints, spv, LW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 #   ifdef QUADRATIC_WEIGHTS
           CALL mp_assemble (dg, model, Qpoints, spv, QW)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #   endif
 !
 !  Load exchanged weights.
@@ -2215,11 +2228,11 @@
       USE mod_grid
       USE mod_nesting
       USE mod_scalars
-
-#  ifdef DISTRIBUTE
 !
+#  ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_assemble
 #  endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -2286,10 +2299,12 @@
 !  Exchange data between all nodes.
 !
         CALL mp_assemble (dg, model, NpointsU, spv, REFINED(cr) % on_u)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         CALL mp_assemble (dg, model, NpointsV, spv, REFINED(cr) % om_v)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #  endif
 
       END DO
@@ -3441,6 +3456,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
 #  endif
 # endif
+      USE strings_mod,     ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -3557,7 +3573,8 @@
      &                          OCEAN(dg)%zeta(:,:,Dindex2d),           &
      &                          OCEAN(rg)%zeta(:,:,Rindex2d))
 # endif
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
 !  Process 2D momentum components (ubar,vbar).
 !
@@ -3583,7 +3600,8 @@
 # else
      &                          OCEAN(rg)%ubar(:,:,Rindex2d))
 # endif
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
             CALL fine2coarse2d (rg, dg, model, tile,                    &
      &                          v2dvar, Vname(1,idVbar),                &
@@ -3606,7 +3624,8 @@
 # else
      &                          OCEAN(rg)%vbar(:,:,Rindex2d))
 # endif
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -3636,7 +3655,8 @@
 #  endif
      &                            OCEAN(dg)%t(:,:,:,Dindex3d,itrc),     &
      &                            OCEAN(rg)%t(:,:,:,Rindex3d,itrc))
-              IF (exit_flag.ne.NoError) RETURN
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
             END DO
 !
 !  Process 3D momentum components (u, v).
@@ -3658,7 +3678,8 @@
 #  endif
      &                          OCEAN(dg)%u(:,:,:,Dindex3d),            &
      &                          OCEAN(rg)%u(:,:,:,Rindex3d))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
             CALL fine2coarse3d (rg, dg, model, tile,                    &
      &                          v3dvar, Vname(1,idVvel),                &
@@ -3676,7 +3697,8 @@
 #  endif
      &                          OCEAN(dg)%v(:,:,:,Dindex3d),            &
      &                          OCEAN(rg)%v(:,:,:,Rindex3d))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 # endif
           END IF
 !
@@ -3860,11 +3882,11 @@
       USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_aggregate2d
 # endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -3982,20 +4004,23 @@
      &                     LBiF, UBiF, LBjF, UBjF,                      &
      &                     LBi,  UBi,  LBj,  UBj,                       &
      &                     A, F)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
       IF (AreaAvg) THEN
         CALL mp_aggregate2d (dg, model, gtype,                          &
      &                       LBiF, UBiF, LBjF, UBjF,                    &
      &                       LBi,  UBi,  LBj,  UBj,                     &
      &                       Adx, dxF)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         CALL mp_aggregate2d (dg, model, gtype,                          &
      &                       LBiF, UBiF, LBjF, UBjF,                    &
      &                       LBi,  UBi,  LBj,  UBj,                     &
      &                       Ady, dyF)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 #  ifdef MASKING
 !
@@ -4003,7 +4028,8 @@
      &                     LBiF, UBiF, LBjF, UBjF,                      &
      &                     LBi,  UBi,  LBj,  UBj,                       &
      &                     Amsk, Fmsk)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #  endif
 # endif
 !
@@ -4217,12 +4243,12 @@
       USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
-
-#  ifdef DISTRIBUTE
 !
+#  ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_aggregate2d
       USE distribute_mod, ONLY : mp_aggregate3d
 #  endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -4339,20 +4365,23 @@
      &                     LBi,  UBi,  LBj,  UBj,                       &
      &                     LBkF, UBkF,                                  &
      &                     A, F)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
       IF (AreaAvg) THEN
         CALL mp_aggregate2d (dg, model, gtype,                          &
      &                       LBiF, UBiF, LBjF, UBjF,                    &
      &                       LBi,  UBi,  LBj,  UBj,                     &
      &                       Adx, dxF)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         CALL mp_aggregate2d (dg, model, gtype,                          &
      &                       LBiF, UBiF, LBjF, UBjF,                    &
      &                       LBi,  UBi,  LBj,  UBj,                     &
      &                       Ady, dyF)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 #   ifdef MASKING
 !
@@ -4360,7 +4389,8 @@
      &                     LBiF, UBiF, LBjF, UBjF,                      &
      &                     LBi,  UBi,  LBj,  UBj,                       &
      &                     Amsk, Fmsk)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #   endif
 #  endif
 !
@@ -4849,11 +4879,11 @@
       USE mod_ncparam
       USE mod_nesting
       USE mod_scalars
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_assemble
 # endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -4995,7 +5025,8 @@
 !  Gather and broadcast data from all nodes.
 !
       CALL mp_assemble (dg, model, Npts, Aspv, Ac)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 # endif
 
       RETURN
@@ -6061,11 +6092,11 @@
       USE mod_grid
       USE mod_nesting
       USE mod_scalars
-
-#  ifdef DISTRIBUTE
 !
+#  ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_assemble
 #  endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -6196,7 +6227,8 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -6256,10 +6288,12 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Rcontact(cr)%Kdg)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Rcontact(cr)%Vweight)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.
@@ -6365,7 +6399,8 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -6426,10 +6461,12 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Ucontact(cr)%Kdg)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Ucontact(cr)%Vweight)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.
@@ -6531,7 +6568,8 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -6592,10 +6630,12 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Vcontact(cr)%Kdg)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Vcontact(cr)%Vweight)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.

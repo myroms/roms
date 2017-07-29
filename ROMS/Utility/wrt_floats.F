@@ -23,6 +23,8 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -35,13 +37,14 @@
 
       real(r8), dimension(Nfloats(ng)) :: Tout
 !
-      SourceFile='wrt_floats.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Write out station data at RHO-points.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Set time record index.
 !
@@ -56,7 +59,8 @@
      &                      (/FLT(ng)%Rindex/), (/1/),                  &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idtime))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out floats X-grid locations.
 !
@@ -72,7 +76,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idXgrd))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out floats Y-grid locations.
 !
@@ -88,7 +93,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idYgrd))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -106,7 +112,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idZgrd))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 # endif
 !
 !  Write out floats (lon,lat) or (x,y) locations.
@@ -131,7 +138,8 @@
      &                        ncid = FLT(ng)%ncid,                      &
      &                        varid = FLT(ng)%Vid(idglon))
       END IF
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
       DO l=1,Nfloats(ng)
         IF (DRIFTER(ng)%bounded(l)) THEN
@@ -153,7 +161,8 @@
      &                        ncid = FLT(ng)%ncid,                      &
      &                        varid = FLT(ng)%Vid(idglat))
       END IF
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -171,7 +180,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(iddpth))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out density anomaly.
 !
@@ -187,7 +197,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idDano))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out tracer type variables.
 !
@@ -204,7 +215,8 @@
      &                        (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),  &
      &                        ncid = FLT(ng)%ncid,                      &
      &                        varid = FLT(ng)%Tid(itrc))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END DO
 # endif
 
@@ -224,7 +236,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = Flt(ng)%Vid(idswim))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out biological float vertical velocity.
 !
@@ -240,7 +253,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idwbio))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out biological float size (length).
 !
@@ -256,7 +270,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idsize))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Write out biological float sinking velocity.
 !
@@ -272,7 +287,8 @@
      &                      (/1,FLT(ng)%Rindex/), (/Nfloats(ng),1/),    &
      &                      ncid = FLT(ng)%ncid,                        &
      &                      varid = FLT(ng)%Vid(idwsin))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 # endif
 !
 !-----------------------------------------------------------------------

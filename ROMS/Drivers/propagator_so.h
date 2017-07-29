@@ -24,15 +24,16 @@
 !
       USE dotproduct_mod, ONLY : tl_statenorm
       USE ini_adjust_mod, ONLY : ad_ini_perturb
-      USE mod_forces, ONLY : initialize_forces
+      USE mod_forces,     ONLY : initialize_forces
 #ifdef STOCH_OPT_WHITE
-      USE packing_mod, ONLY : ad_so_pack, tl_unpack
+      USE packing_mod,    ONLY : ad_so_pack, tl_unpack
 #else
-      USE packing_mod, ONLY : ad_so_pack_red, tl_unpack
+      USE packing_mod,    ONLY : ad_so_pack_red, tl_unpack
 #endif
 #ifdef SOLVE3D
-      USE set_depth_mod, ONLY: set_depth
+      USE set_depth_mod,  ONLY : set_depth
 #endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -252,13 +253,16 @@
           DO ng=1,Ngrids
 !$OMP MASTER
             CALL close_inp (ng, iTLM)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             CALL tl_get_idata (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             CALL tl_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END DO
 !
 !-----------------------------------------------------------------------
@@ -282,7 +286,8 @@
           CALL tl_main2d (so_run_time)
 #endif
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
 !
 !-----------------------------------------------------------------------
@@ -412,12 +417,15 @@
           DO ng=1,Ngrids
 !$OMP MASTER
             CALL close_inp (ng, iADM)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             CALL ad_get_idata (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             CALL ad_get_data (ng)
 !$OMP END MASTER
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END DO
 !$OMP BARRIER
 !
@@ -450,7 +458,8 @@
 # endif
 #endif
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #ifdef STOCH_OPT_WHITE
         END IF
 #endif
@@ -505,7 +514,8 @@
         END DO
 !
 !$OMP BARRIER
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear forcing variables for next iteration.

@@ -34,11 +34,11 @@
       USE mp_exchange_mod, ONLY : mp_exchange4d
 #  endif
 # endif
-      USE nf_fread2d_mod, ONLY : nf_fread2d
+      USE nf_fread2d_mod,  ONLY : nf_fread2d
 # ifdef SOLVE3D
-      USE nf_fread3d_mod, ONLY : nf_fread3d
+      USE nf_fread3d_mod,  ONLY : nf_fread3d
 # endif
-      USE strings_mod, ONLY : find_string
+      USE strings_mod,     ONLY : FoundError, find_string
 !
       implicit none
 !
@@ -62,25 +62,28 @@
       character (len=40 ) :: tunits
       character (len=256) :: ncname
 !
-      SourceFile='get_nudgcoef.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Inquire about the contents of grid NetCDF file:  Inquire about
 !  the dimensions and variables.  Check for consistency.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
       ncname=NUD(ng)%name
 !
 !  Check grid file dimensions for consitency
 !
       CALL netcdf_check_dim (ng, model, ncname)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
       CALL netcdf_inq_var (ng, model, ncname)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Check if required variables are available.
@@ -139,7 +142,8 @@
 !
       IF (NUD(ng)%ncid.eq.-1) THEN
         CALL netcdf_open (ng, model, ncname, 0, NUD(ng)%ncid)
-        IF (exit_flag.ne.NoError) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
           WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
@@ -181,7 +185,8 @@
      &                       VarID = NUD(ng)%Vid(vindex),               &
      &                       nVarDim = nvdim,                           &
      &                       nVarAtt = nvatt)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
         DO i=1,nvatt
           IF (TRIM(var_Aname(i)).eq.'units') THEN
             tunits=TRIM(var_Achar(i))
@@ -202,7 +207,8 @@
      &                    GRID(ng) % rmask,                             &
 # endif
      &                    CLIMA(ng) % M2nudgcof)
-        IF (status.ne.nf90_noerr) THEN
+        IF (FoundError(status, nf90_noerr, __LINE__,                    &
+     &                 __FILE__)) THEN
           exit_flag=2
           ioerror=status
           RETURN
@@ -237,7 +243,8 @@
      &                       VarID = NUD(ng)%Vid(vindex),               &
      &                       nVarDim = nvdim,                           &
      &                       nVarAtt = nvatt)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
         DO i=1,nvatt
           IF (TRIM(var_Aname(i)).eq.'units') THEN
             tunits=TRIM(var_Achar(i))
@@ -258,7 +265,8 @@
      &                    GRID(ng) % rmask,                             &
 #  endif
      &                    CLIMA(ng) % M3nudgcof)
-        IF (status.ne.nf90_noerr) THEN
+        IF (FoundError(status, nf90_noerr, __LINE__,                    &
+     &                 __FILE__)) THEN
           exit_flag=2
           ioerror=status
           RETURN
@@ -302,7 +310,8 @@
      &                         VarID = NUD(ng)%Vid(vindex),             &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
           DO i=1,nvatt
             IF (TRIM(var_Aname(i)).eq.'units') THEN
               tunits=TRIM(var_Achar(i))
@@ -323,7 +332,8 @@
      &                      GRID(ng) % rmask,                           &
 #  endif
      &                      CLIMA(ng) % Tnudgcof(:,:,:,ic))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             exit_flag=2
             ioerror=status
             RETURN

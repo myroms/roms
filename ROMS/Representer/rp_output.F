@@ -25,11 +25,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
+      USE strings_mod,    ONLY : FoundError
 !
       implicit none
 !
@@ -44,7 +44,7 @@
 
       integer :: Fcount, ifile, status, tile
 !
-      SourceFile='rp_output.F'
+      SourceFile=__FILE__
 
 # ifdef PROFILE
 !
@@ -110,7 +110,8 @@
               CALL netcdf_close (ng, iRPM, TLM(ng)%ncid)
             END IF
             CALL tl_def_his (ng, NewFile)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
           IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
             LwrtTLM(ng)=.FALSE.                 ! avoid writing initial
@@ -120,7 +121,8 @@
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL tl_def_his (ng, ldefout(ng))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             LwrtTLM(ng)=.TRUE.
             LdefTLM(ng)=.FALSE.
           END IF
@@ -135,13 +137,15 @@
           IF ((iic(ng).gt.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nTLM(ng)).eq.0)) THEN
             CALL tl_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
         ELSE
           IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                       &
      &        ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
             CALL tl_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
         END IF
       END IF
@@ -203,13 +207,15 @@
               CALL netcdf_close (ng, iRPM, AVG(ng)%ncid)
             END IF
             CALL def_avg (ng, Newfile)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             LwrtAVG(ng)=.TRUE.
           END IF
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_avg (ng, ldefout(ng))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
             LwrtAVG(ng)=.TRUE.
             LdefAVG(ng)=.FALSE.
           END IF
@@ -222,7 +228,8 @@
         IF ((iic(ng).gt.ntstart(ng)).and.                               &
      &      (MOD(iic(ng)-1,nAVG(ng)).eq.0)) THEN
           CALL wrt_avg (ng)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
       END IF
 # endif
@@ -240,7 +247,8 @@
       IF (First) THEN
         First=.FALSE.
         CALL tl_def_ini (ng)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 #  endif
 #  ifdef OBSERVATIONS

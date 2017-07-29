@@ -24,6 +24,7 @@
       USE mod_scalars
 !
       USE dateclock_mod, ONLY : time_string
+      USE strings_mod,   ONLY : FoundError
 !
       implicit none
 !
@@ -42,6 +43,8 @@
 
       character(len= 22) :: F_code, I_code, Tmin_code, Tmax_code
       character(len=256) :: ncname
+!
+      SourceFile=__FILE__
 !
 !=======================================================================
 !  If applicable, initialize parameters for input multi-files.
@@ -66,7 +69,8 @@
           ncname=BRY(ng)%files(ifile)
           foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
      &                       Lcheck)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
           BRY(ng)%time_min(ifile)=Tmin
           BRY(ng)%time_max(ifile)=Tmax
         END DO
@@ -141,7 +145,8 @@
           ncname=FRC(i,ng)%files(ifile)
           foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
      &                       Lcheck)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
           FRC(i,ng)%time_min(ifile)=Tmin
           FRC(i,ng)%time_max(ifile)=Tmax
         END DO
@@ -215,7 +220,8 @@
           ncname=CLM(ng)%files(ifile)
           foundit=check_file(ng, model, ncname, Tmin, Tmax, Tscale,     &
      &                       Lcheck)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
           CLM(ng)%time_min(ifile)=Tmin
           CLM(ng)%time_max(ifile)=Tmax
         END DO
@@ -321,6 +327,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -341,7 +349,7 @@
 
       character (len=40) :: Tunits, TvarName
 !
-      SourceFile='check_multifile.F, check_file'
+      SourceFile=__FILE__ // ", check_file"
 !
 !------------------------------------------------------------------------
 !  Check if requested time is within the NetCDF file dataset.
@@ -361,7 +369,8 @@
 !  Inquire about all the variables
 !
       CALL netcdf_inq_var (ng, model, ncname)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Search for the time variable: any 1D array variable with the string
 !  'time' in the variable name.
@@ -394,7 +403,8 @@
      &                     VarID = TvarID,                              &
      &                     nVarDim = nvdim,                             &
      &                     nVarAtt = nvatt)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Set number of records available and check the 'units' attribute.
 !  Also, set output logical switch 'Lcheck' for the calling to check
@@ -438,13 +448,15 @@
      &                      Tmin,                                       &
      &                      start = (/1/),                              &
      &                      total = (/1/))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
       CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
      &                      Tmax,                                       &
      &                      start = (/Nrec/),                           &
      &                      total = (/1/))
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 
  10   FORMAT (/, ' CHECK_FILE - unable to find time variable in input', &
      &        ' NetCDF file:', /, 14x, a, /, 14x,                       &

@@ -33,111 +33,112 @@
 !
 # if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
-      USE adsen_force_mod, ONLY : adsen_force
+      USE adsen_force_mod,         ONLY : adsen_force
 # endif
 # ifdef ANA_VMIX
-      USE analytical_mod, ONLY : ana_vmix
+      USE analytical_mod,          ONLY : ana_vmix
 # endif
 # ifdef BIOLOGY
-      USE ad_biology_mod, ONLY : ad_biology
+      USE ad_biology_mod,          ONLY : ad_biology
 # endif
 # ifdef BBL_MODEL_NOT_YET
-!!    USE ad_bbl_mod, ONLY : ad_bblm
+!!    USE ad_bbl_mod,              ONLY : ad_bblm
 # endif
 # if defined BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
-!!    USE ad_bulk_flux_mod, ONLY : ad_bulk_flux
+!!    USE ad_bulk_flux_mod,        ONLY : ad_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
-!!    USE ad_bvf_mix_mod, ONLY : ad_bvf_mix
+!!    USE ad_bvf_mix_mod,          ONLY : ad_bvf_mix
 # endif
       USE ad_diag_mod, ONLY : ad_diag
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE ad_frc_adjust_mod, ONLY : ad_frc_adjust
+      USE ad_frc_adjust_mod,       ONLY : ad_frc_adjust
 # endif
-      USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
+      USE ad_ini_fields_mod,       ONLY : ad_ini_fields, ad_ini_zeta
 # if (defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE) || \
       defined FORCING_SV
-      USE ad_ini_fields_mod, ONLY : ad_out_fields, ad_out_zeta
+      USE ad_ini_fields_mod,       ONLY : ad_out_fields, ad_out_zeta
 # endif
 # ifdef WEAK_CONSTRAINT
-      USE ad_force_dual_mod, ONLY : ad_force_dual
+      USE ad_force_dual_mod,       ONLY : ad_force_dual
 # endif
 # ifdef FORCING_SV
-      USE ad_forcing_mod, ONLY : ad_forcing
+      USE ad_forcing_mod,          ONLY : ad_forcing
 # endif
 # ifdef GLS_MIXING_NOT_YET
-!!    USE ad_gls_corstep_mod, ONLY : ad_gls_corstep
-!!    USE ad_gls_prestep_mod, ONLY : ad_gls_prestep
+!!    USE ad_gls_corstep_mod,      ONLY : ad_gls_corstep
+!!    USE ad_gls_prestep_mod,      ONLY : ad_gls_prestep
 # endif
 # ifdef LMD_MIXING_NOT_YET
-!!    USE ad_lmd_vmix_mod, ONLY : ad_lmd_vmix
+!!    USE ad_lmd_vmix_mod,         ONLY : ad_lmd_vmix
 # endif
 # if defined FOUR_DVAR && defined OBSERVATIONS
 #  ifdef WEAK_CONSTRAINT
-      USE ad_htobs_mod, ONLY : ad_htobs
+      USE ad_htobs_mod,            ONLY : ad_htobs
 #  else
-      USE ad_misfit_mod, ONLY : ad_misfit
+      USE ad_misfit_mod,           ONLY : ad_misfit
 #  endif
 # endif
 # ifdef MY25_MIXING
-!!    USE ad_my25_corstep_mod, ONLY : ad_my25_corstep
-!!    USE ad_my25_prestep_mod, ONLY : ad_my25_prestep
+!!    USE ad_my25_corstep_mod,     ONLY : ad_my25_corstep
+!!    USE ad_my25_prestep_mod,     ONLY : ad_my25_prestep
 # endif
 # ifdef ADJUST_BOUNDARY
-      USE ad_obc_adjust_mod, ONLY : ad_obc_adjust
-      USE ad_obc_adjust_mod, ONLY : ad_obc2d_adjust
-      USE ad_set_depth_mod, ONLY : ad_set_depth_bry
+      USE ad_obc_adjust_mod,       ONLY : ad_obc_adjust
+      USE ad_obc_adjust_mod,       ONLY : ad_obc2d_adjust
+      USE ad_set_depth_mod,        ONLY : ad_set_depth_bry
 # endif
-      USE ad_omega_mod, ONLY : ad_omega
+      USE ad_omega_mod,            ONLY : ad_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
 # endif
 # ifndef TS_FIXED
-      USE ad_rho_eos_mod, ONLY : ad_rho_eos
+      USE ad_rho_eos_mod,          ONLY : ad_rho_eos
 # endif
-      USE ad_rhs3d_mod, ONLY : ad_rhs3d
+      USE ad_rhs3d_mod,            ONLY : ad_rhs3d
 # ifdef SEDIMENT_NOT_YET
-!!    USE ad_sediment_mod, ONLY : ad_sediment
+!!    USE ad_sediment_mod,         ONLY : ad_sediment
 # endif
 # ifdef AD_AVERAGES
-      USE ad_set_avg_mod, ONLY : ad_set_avg
+      USE ad_set_avg_mod,          ONLY : ad_set_avg
 # endif
-      USE ad_set_depth_mod, ONLY : ad_set_depth
-      USE ad_set_massflux_mod, ONLY : ad_set_massflux
+      USE ad_set_depth_mod,        ONLY : ad_set_depth
+      USE ad_set_massflux_mod,     ONLY : ad_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
-!!    USE ad_set_tides_mod, ONLY : ad_set_tides
+!!    USE ad_set_tides_mod,        ONLY : ad_set_tides
 # endif
-      USE ad_set_vbc_mod, ONLY : ad_set_vbc
-      USE ad_set_zeta_mod, ONLY : ad_set_zeta
-      USE ad_step2d_mod, ONLY : ad_step2d
+      USE ad_set_vbc_mod,          ONLY : ad_set_vbc
+      USE ad_set_zeta_mod,         ONLY : ad_set_zeta
+      USE ad_step2d_mod,           ONLY : ad_step2d
 # ifndef TS_FIXED
-      USE ad_step3d_t_mod, ONLY : ad_step3d_t
+      USE ad_step3d_t_mod,         ONLY : ad_step3d_t
 # endif
-      USE ad_step3d_uv_mod, ONLY : ad_step3d_uv
+      USE ad_step3d_uv_mod,        ONLY : ad_step3d_uv
 # ifdef FLOATS_NOT_YET
-!!    USE ad_step_floats_mod, ONLY : ad_step_floats
+!!    USE ad_step_floats_mod,      ONLY : ad_step_floats
 # endif
 # if defined BULK_FLUXES && !defined NL_BULK_FLUXES
-      USE bulk_flux_mod, ONLY : bulk_flux
+      USE bulk_flux_mod,           ONLY : bulk_flux
 # endif
-      USE dateclock_mod, ONLY : time_string
+      USE dateclock_mod,           ONLY : time_string
 # ifdef AIR_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : atmos_coupling
+      USE ocean_coupler_mod,       ONLY : atmos_coupling
 # endif
 # ifdef WEAK_CONSTRAINT
-      USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
+      USE frc_weak_mod,            ONLY : frc_ADgather, frc_clear
 # endif
 # ifdef WAVES_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : waves_coupling
+      USE ocean_coupler_mod,       ONLY : waves_coupling
 # endif
-      USE omega_mod, ONLY : omega
+      USE omega_mod,               ONLY : omega
 # ifdef SO_SEMI
-      USE packing_mod, ONLY : ad_pack
+      USE packing_mod,             ONLY : ad_pack
 # endif
-      USE rho_eos_mod, ONLY : rho_eos
-      USE set_depth_mod, ONLY : set_depth
+      USE rho_eos_mod,             ONLY : rho_eos
+      USE set_depth_mod,           ONLY : set_depth
       USE set_massflux_mod
-!!    USE wvelocity_mod, ONLY : wvelocity
+      USE strings_mod,             ONLY : FoundError
+!!    USE wvelocity_mod,           ONLY : wvelocity
 !
       implicit none
 !
@@ -190,7 +191,8 @@
           CALL ad_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
 !-----------------------------------------------------------------------
@@ -206,7 +208,8 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef FORWARD_READ
 !
@@ -455,7 +458,8 @@
 #  endif
             END DO
 !$OMP BARRIER
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 #  ifdef SENSITIVITY_4DVAR
           END IF
 #  endif
@@ -642,7 +646,8 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef FORCING_SV
 !
@@ -808,7 +813,8 @@
           CALL ad_output (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 
 # ifdef WEAK_CONSTRAINT

@@ -26,91 +26,92 @@
       USE mod_stepping
 !
 # ifdef ANA_VMIX
-      USE analytical_mod, ONLY : ana_vmix
+      USE analytical_mod,      ONLY : ana_vmix
 # endif
-      USE dateclock_mod, ONLY : time_string
+      USE dateclock_mod,       ONLY : time_string
 # ifdef TLM_CHECK
-      USE dotproduct_mod, ONLY : tl_dotproduct
+      USE dotproduct_mod,      ONLY : tl_dotproduct
 # endif
 # ifdef AIR_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : atmos_coupling
+      USE ocean_coupler_mod,   ONLY : atmos_coupling
 # endif
 # ifdef WAVES_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : waves_coupling
+      USE ocean_coupler_mod,   ONLY : waves_coupling
 # endif
 # ifdef FORWARD_READ
-      USE omega_mod, ONLY : omega
-      USE set_depth_mod, ONLY : set_depth
-      USE set_massflux_mod, ONLY : set_massflux
+      USE omega_mod,           ONLY : omega
+      USE set_depth_mod,       ONLY : set_depth
+      USE set_massflux_mod,    ONLY : set_massflux
 # endif
+      USE strings_mod,         ONLY : FoundError
 # ifdef BIOLOGY
-      USE tl_biology_mod, ONLY : tl_biology
+      USE tl_biology_mod,      ONLY : tl_biology
 # endif
 # ifdef BBL_MODEL_NOT_YET
 !!    USE tl_bbl_mod, ONLY : tl_bblm
 # endif
 # if defined BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
-!!    USE tl_bulk_flux_mod, ONLY : tl_bulk_flux
+!!    USE tl_bulk_flux_mod,    ONLY : tl_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
-!!    USE tl_bvf_mix_mod, ONLY : tl_bvf_mix
+!!    USE tl_bvf_mix_mod,      ONLY : tl_bvf_mix
 # endif
-      USE tl_diag_mod, ONLY : tl_diag
+      USE tl_diag_mod,         ONLY : tl_diag
 # if defined WEAK_CONSTRAINT || defined FORCING_SV
-      USE tl_forcing_mod, ONLY : tl_forcing
+      USE tl_forcing_mod,      ONLY : tl_forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE tl_frc_adjust_mod, ONLY : tl_frc_adjust
+      USE tl_frc_adjust_mod,   ONLY : tl_frc_adjust
 # endif
 # ifdef GLS_MIXING_NOT_YET
-!!    USE tl_gls_corstep_mod, ONLY : tl_gls_corstep
-!!    USE tl_gls_prestep_mod, ONLY : tl_gls_prestep
+!!    USE tl_gls_corstep_mod,  ONLY : tl_gls_corstep
+!!    USE tl_gls_prestep_mod,  ONLY : tl_gls_prestep
 # endif
 # ifndef FORCING_SV
-      USE tl_ini_fields_mod, ONLY : tl_ini_fields, tl_ini_zeta
+      USE tl_ini_fields_mod,   ONLY : tl_ini_fields, tl_ini_zeta
 # endif
 # ifdef LMD_MIXING_NOT_YET
-!!    USE tl_lmd_vmix_mod, ONLY : tl_lmd_vmix
+!!    USE tl_lmd_vmix_mod,     ONLY : tl_lmd_vmix
 # endif
 # ifdef MY25_MIXING_NOT_YET
 !!    USE tl_my25_corstep_mod, ONLY : tl_my25_corstep
 !!    USE tl_my25_prestep_mod, ONLY : tl_my25_prestep
 # endif
 # ifdef ADJUST_BOUNDARY
-      USE tl_obc_adjust_mod, ONLY : tl_obc_adjust
-      USE tl_obc_adjust_mod, ONLY : tl_obc2d_adjust
-      USE tl_set_depth_mod, ONLY : tl_set_depth_bry
+      USE tl_obc_adjust_mod,   ONLY : tl_obc_adjust
+      USE tl_obc_adjust_mod,   ONLY : tl_obc2d_adjust
+      USE tl_set_depth_mod,    ONLY : tl_set_depth_bry
 # endif
-      USE tl_omega_mod, ONLY : tl_omega
+      USE tl_omega_mod,        ONLY : tl_omega
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
 # endif
 # ifndef TS_FIXED
-      USE tl_rho_eos_mod, ONLY : tl_rho_eos
+      USE tl_rho_eos_mod,      ONLY : tl_rho_eos
 # endif
-      USE tl_rhs3d_mod, ONLY : tl_rhs3d
+      USE tl_rhs3d_mod,        ONLY : tl_rhs3d
 # ifdef SEDIMENT_NOT_YET
-!!    USE tl_sediment_mod, ONLY : tl_sediment
+!!    USE tl_sediment_mod,     ONLY : tl_sediment
 # endif
 # ifdef TL_AVERAGES
-      USE tl_set_avg_mod, ONLY : tl_set_avg
+      USE tl_set_avg_mod,      ONLY : tl_set_avg
 # endif
-      USE tl_set_depth_mod, ONLY : tl_set_depth
+      USE tl_set_depth_mod,    ONLY : tl_set_depth
       USE tl_set_massflux_mod, ONLY : tl_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
-!!    USE tl_set_tides_mod, ONLY : tl_set_tides
+!!    USE tl_set_tides_mod,    ONLY : tl_set_tides
 # endif
-      USE tl_set_vbc_mod, ONLY : tl_set_vbc
-      USE tl_set_zeta_mod, ONLY : tl_set_zeta
-      USE tl_step2d_mod, ONLY : tl_step2d
+      USE tl_set_vbc_mod,      ONLY : tl_set_vbc
+      USE tl_set_zeta_mod,     ONLY : tl_set_zeta
+      USE tl_step2d_mod,       ONLY : tl_step2d
 # ifndef TS_FIXED
-      USE tl_step3d_t_mod, ONLY : tl_step3d_t
+      USE tl_step3d_t_mod,     ONLY : tl_step3d_t
 # endif
-      USE tl_step3d_uv_mod, ONLY : tl_step3d_uv
+      USE tl_step3d_uv_mod,    ONLY : tl_step3d_uv
 # ifdef FLOATS_NOT_YET
-!!    USE tl_step_floats_mod, ONLY : tl_step_floats
+!!    USE tl_step_floats_mod,  ONLY : tl_step_floats
 # endif
-!!    USE wvelocity_mod, ONLY : wvelocity
+!!    USE wvelocity_mod,       ONLY : wvelocity
 !
       implicit none
 !
@@ -162,7 +163,8 @@
           CALL tl_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
 !-----------------------------------------------------------------------
@@ -179,7 +181,8 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef FORWARD_READ
 !
@@ -270,7 +273,8 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef AIR_OCEAN_NOT_YET
 !
@@ -430,7 +434,8 @@
           CALL tl_output (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF ((exit_flag.ne.NoError).or.                                &
+          IF ((FoundError(exit_flag, NoError, __LINE__,                 &
+     &                    __FILE__)).or.                                &
      &        ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) RETURN
         END DO
 !

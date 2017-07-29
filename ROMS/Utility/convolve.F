@@ -54,15 +54,16 @@
       USE mod_stepping
 !
 # ifdef BALANCE_OPERATOR
-      USE ad_balance_mod, ONLY: ad_balance
-      USE tl_balance_mod, ONLY: tl_balance
+      USE ad_balance_mod,     ONLY : ad_balance
+      USE tl_balance_mod,     ONLY : tl_balance
 # endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE tl_convolution_mod, ONLY : tl_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE tl_variability_mod, ONLY : tl_variability
-      USE ini_adjust_mod, ONLY : load_ADtoTL
-      USE ini_adjust_mod, ONLY : load_TLtoAD
+      USE ini_adjust_mod,     ONLY : load_ADtoTL
+      USE ini_adjust_mod,     ONLY : load_TLtoAD
+      USE strings_mod,        ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -78,6 +79,9 @@
       integer :: IniRec
       integer :: ng, tile
 !
+!
+      SourceFile=__FILE__ // ", convolve"
+!
 !-----------------------------------------------------------------------
 !  Specify spatial error covariance on the TLM control vector, at time
 !  index "Rold", via convolutions of a pseudo-diffusion operator.  The
@@ -92,7 +96,8 @@
       IniRec=Rini
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
         nrhs(ng)=Rini
       END DO
 # endif
@@ -172,28 +177,29 @@
 # endif
 !
 # ifdef BALANCE_OPERATOR
-      USE ad_balance_mod, ONLY: ad_balance
-      USE tl_balance_mod, ONLY: tl_balance
+      USE ad_balance_mod,     ONLY : ad_balance
+      USE tl_balance_mod,     ONLY : tl_balance
 # endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE tl_convolution_mod, ONLY : tl_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE tl_variability_mod, ONLY : tl_variability
-      USE ini_adjust_mod, ONLY : load_ADtoTL
-      USE ini_adjust_mod, ONLY : load_TLtoAD
+      USE ini_adjust_mod,     ONLY : load_ADtoTL
+      USE ini_adjust_mod,     ONLY : load_TLtoAD
 # if defined ARRAY_MODES        || defined W4DVAR || \
      defined W4DVAR_SENSITIVITY
-      USE ini_adjust_mod, ONLY : rp_ini_adjust
+      USE ini_adjust_mod,     ONLY : rp_ini_adjust
 # elif defined W4DPSAS  || defined W4DPSAS_SENSITIVITY
-      USE ini_adjust_mod, ONLY : ini_adjust
+      USE ini_adjust_mod,     ONLY : ini_adjust
 # endif
-      USE mod_forces, ONLY : initialize_forces
-      USE mod_ocean, ONLY : initialize_ocean
-      USE mod_boundary, ONLY : initialize_boundary
+      USE mod_forces,         ONLY : initialize_forces
+      USE mod_ocean,          ONLY : initialize_ocean
+      USE mod_boundary,       ONLY : initialize_boundary
 # ifdef RPCG
-      USE sum_grad_mod, ONLY : sum_grad
-      USE comp_Jb0_mod, ONLY : aug_oper
+      USE sum_grad_mod,       ONLY : sum_grad
+      USE comp_Jb0_mod,       ONLY : aug_oper
 # endif
+      USE strings_mod,        ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -215,6 +221,8 @@
 # endif
 
       integer, dimension(Ngrids) :: Nrec
+!
+      SourceFile=__FILE__ // ", error_covariance"
 !
 !-----------------------------------------------------------------------
 !  Convolve adjoint trajectory.
@@ -267,7 +275,8 @@
         ADrec=Nrec(ng)
         FrcRec(ng)=Nrec(ng)
         CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END DO
 
 # ifdef BALANCE_OPERATOR
@@ -278,7 +287,8 @@
       IniRec=Rini
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
         nrhs(ng)=Rini
       END DO
 # endif
@@ -372,7 +382,8 @@
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
         add=.FALSE.
@@ -399,7 +410,8 @@
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
         add=.FALSE.
@@ -423,25 +435,29 @@
       IF (model.eq.iTLM) THEN
         DO ng=1,Ngrids
           CALL tl_wrt_ini (ng, Rold(ng), Rec1)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 # if defined ARRAY_MODES        || defined W4DVAR || \
      defined W4DVAR_SENSITIVITY
       ELSE IF (model.eq.iRPM) THEN
         DO ng=1,Ngrids
           CALL rp_wrt_ini (ng, Rold(ng), Rec2)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 # elif (defined W4DPSAS || defined W4DPSAS_SENSITIVITY) && \
        !defined RPCG
       ELSE IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
           CALL wrt_ini (ng, Rnew(ng))
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
       defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Rold(ng), INI(ng)%Rindex)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
         END DO
 # endif
@@ -456,7 +472,8 @@
       IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
           CALL tl_wrt_ini (ng, Rold(ng), Rec2)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
       END IF
 # endif
@@ -470,7 +487,8 @@
       IF (Lposterior.and.(inner.ne.0)) THEN
         DO ng=1,Ngrids
           CALL wrt_hessian (ng, Rold(ng), Rold(ng))
-          IF (exit_flag.ne.NoERRor) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
       END IF
 # endif
@@ -498,7 +516,8 @@
 !  sum.
 !
             CALL get_state (ng, iTLM, 4, ITL(ng)%name, jrec, LTLM1)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
 !$OMP PARALLEL
             DO tile=first_tile(ng),last_tile(ng),+1
@@ -516,7 +535,8 @@
 !
             ADrec=(Nrec(ng)-1)-(irec-1)
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, LTLM1)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
 !$OMP PARALLEL
             DO tile=first_tile(ng),last_tile(ng),+1
@@ -528,7 +548,8 @@
 !  ITL file.
 !
             CALL tl_wrt_ini (ng, LTLM2, jrec)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
           END DO
         END DO
@@ -561,7 +582,8 @@
 !
             ADrec=irec
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
@@ -597,7 +619,8 @@
             nstp(ng)=Rold(ng)
 # endif
             CALL ad_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
@@ -615,7 +638,8 @@
 !$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL time_corr (ng, tile, iADM, ADM(ng)%name)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !$OMP END PARALLEL
       END DO
@@ -629,14 +653,16 @@
           LwrtState2d(ng)=.TRUE.
           DO irec=Nrec(ng)-1,1,-1
 !
-!  Read the latest TLF solution. We need to read the TLF file in reverse order
-!  since the final solution is written into the adjoint netcdf file which
-!  will be rewritten in ascending order of time in the TLF file by wrt_impulse.
+!  Read the latest TLF solution. We need to read the TLF file in reverse
+!  order since the final solution is written into the adjoint netcdf
+!  file which will be rewritten in ascending order of time in the TLF
+!  file by wrt_impulse.
 !  NOTE: model=14 here so as to only read the state variables.
 !
             ADrec=irec
             CALL get_state (ng, 14, 4, TLF(ng)%name, ADrec, Rold(ng))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
             Lweak=.TRUE.
             add=.FALSE.
@@ -659,7 +685,8 @@
             nstp(ng)=Rold(ng)
 # endif
             CALL ad_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
@@ -691,7 +718,8 @@
 !
             ADrec=irec
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
@@ -748,7 +776,8 @@
             nstp(ng)=Rold(ng)
 # endif
             CALL ad_wrt_his (ng)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.

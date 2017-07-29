@@ -53,9 +53,8 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-
-#ifdef MCT_LIB
 !
+#ifdef MCT_LIB
 # ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 # endif
@@ -63,6 +62,7 @@
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE strings_mod,       ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -117,7 +117,8 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
@@ -244,7 +245,8 @@
 !$OMP PARALLEL
           CALL rp_initial (ng)
 !$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
 !  Time-step representers tangent linear model
@@ -262,19 +264,22 @@
         CALL rp_main2d (RunInterval)
 #endif
 !$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Close IO and re-initialize NetCDF switches.
 !
         DO ng=1,Ngrids
           IF (TLM(ng)%ncid.ne.-1) THEN
             CALL netcdf_close (ng, iRPM, TLM(ng)%ncid)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 
           IF (FWD(ng)%ncid.ne.-1) THEN
             CALL netcdf_close (ng, iRPM, FWD(ng)%ncid)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
         END DO
 

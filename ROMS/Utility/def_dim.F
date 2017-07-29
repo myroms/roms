@@ -32,11 +32,11 @@
       USE mod_iounits
       USE mod_netcdf
       USE mod_scalars
-
-#if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 #endif
+      USE strings_mod, ONLY : FoundError
 !
       implicit none
 !
@@ -68,7 +68,8 @@
 
       IF (OutThread) THEN
         status=nf90_def_dim(ncid, TRIM(DimName), DimSize, DimId)
-        IF (status.ne.nf90_noerr) THEN
+        IF (FoundError(status, nf90_noerr, __LINE__,                    &
+     &                 __FILE__)) THEN
           IF (Master) WRITE (stdout,10) TRIM(DimName), TRIM(ncname)
           exit_flag=3
           ioerror=status

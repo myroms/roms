@@ -23,6 +23,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -43,7 +45,7 @@
 # endif
       real(r8) :: tend
 !
-      SourceFile='obs_initial.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Inquire about the contents of observation NetCDF file:  Inquire about
@@ -55,7 +57,8 @@
 !  Inquire about the variables.
 !
         CALL netcdf_inq_var (ng, model, OBS(ng)%name)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !
@@ -183,7 +186,8 @@
 !  Open observations NetCDF file.
 !
         CALL netcdf_open (ng, model, OBS(ng)%name, 1, OBS(ng)%ncid)
-        IF (exit_flag.ne.NoError) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
           WRITE (stdout,20) TRIM(OBS(ng)%name)
           RETURN
         END IF

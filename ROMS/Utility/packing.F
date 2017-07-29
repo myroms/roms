@@ -2232,6 +2232,7 @@
 # ifdef SOLVE3D
       USE nf_fread3d_mod, ONLY : nf_fread3d
 # endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -2569,7 +2570,8 @@
      &                      GRID(ng) % rmask,                           &
 # endif
      &                      ad_zeta(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idFsur)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -2630,7 +2632,8 @@
      &                      GRID(ng) % umask,                           &
 #  endif
      &                      ad_ubar(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idUbar)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -2693,7 +2696,8 @@
      &                      GRID(ng) % vmask,                           &
 #  endif
      &                      ad_vbar(:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idVbar)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -2758,7 +2762,8 @@
      &                      GRID(ng) % umask,                           &
 #  endif
      &                      ad_u(:,:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idUvel)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -2835,7 +2840,8 @@
      &                      GRID(ng) % vmask,                           &
 #  endif
      &                      ad_v(:,:,:,Iinp))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idVvel)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -2913,7 +2919,8 @@
      &                        GRID(ng) % rmask,                         &
 #  endif
      &                        ad_t(:,:,:,Iinp,itrc))
-            IF (status.ne.nf90_noerr) THEN
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
               IF (Master) THEN
                 WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))), Irec,    &
      &                            TRIM(ADM(ng)%name)
@@ -2998,7 +3005,8 @@
      &                      GRID(ng) % umask,                           &
 #  endif
      &                      ad_sustr(:,:))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idUsms)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -3053,7 +3061,8 @@
      &                      GRID(ng) % vmask,                           &
 #  endif
      &                      ad_svstr(:,:))
-          IF (status.ne.nf90_noerr) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idVsms)), Irec,            &
      &                          TRIM(ADM(ng)%name)
@@ -3112,7 +3121,8 @@
      &                        GRID(ng) % rmask,                         &
 # endif
      &                        ad_stflx(:,:,itrc))
-            IF (status.ne.nf90_noerr) THEN
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
               IF (Master) THEN
                 WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Irec,    &
      &                            TRIM(ADM(ng)%name)

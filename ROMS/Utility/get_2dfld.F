@@ -51,6 +51,7 @@
       USE dateclock_mod,  ONLY : time_string
       USE nf_fread2d_mod, ONLY : nf_fread2d
       USE nf_fread3d_mod, ONLY : nf_fread3d
+      USE strings_mod,    ONLY : FoundError
 !
       implicit none
 !
@@ -85,13 +86,14 @@
       character (len= 1) :: Rswitch
       character (len=22) :: t_code
 !
-      SourceFile='get_2dfld.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Initialize.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Determine if inquiring about the field to process in input NetCDF
 !  file(s).  This usually happens on first call or when the field
@@ -114,7 +116,8 @@
         job=2
         CALL inquire (ng, model, job, Iout, Irec, 1, ifield, ncid,      &
      &                Lmulti, nfiles, S)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 !
 !  Load properties for requested field from information arrays.
@@ -177,7 +180,8 @@
      &                            ncid = ncid,                          &
      &                            start = (/Trec/),                     &
      &                            total = (/1/))
-            IF (exit_flag.ne.NoError) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) THEN
               IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               RETURN
             END IF
@@ -227,7 +231,8 @@
               Fmin=Fval
               Fmax=Fval
             END IF
-            IF (exit_flag.ne.NoError) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) THEN
               IF (Master) WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF

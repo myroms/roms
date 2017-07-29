@@ -50,6 +50,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -79,7 +81,7 @@
 
       character (len=40) :: tunits
 !
-      SourceFile='get_cycle.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Find time cycling parameters, if any.
@@ -110,7 +112,8 @@
      &                       VarID = Tid,                               &
      &                       nVarDim = nvdim,                           &
      &                       nVarAtt = nvatt)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Check if time cycling attribute is present and then read in time
 !  cycle length.  Check time coordinate units and determine time
@@ -147,6 +150,8 @@
      &                      total = (/ntime/),                          &
      &                      min_val = Tmin,                             &
      &                      max_val = Tmax)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Scale time variable to days.  Determine the minimum and maximum time
 !  values available

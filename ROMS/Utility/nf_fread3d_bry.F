@@ -57,11 +57,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#if !defined PARALLEL_IO && defined DISTRIBUTE
 !
+#if !defined PARALLEL_IO && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf
 #endif
+      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -201,7 +201,8 @@
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (exit_flag.ne.NoError) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) THEN
         status=ioerror
         RETURN
       END IF
@@ -256,7 +257,8 @@
       Amax=buffer(3)
 #endif
 
-      IF (status.ne.nf90_noerr) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
         exit_flag=2
         ioerror=status
         RETURN

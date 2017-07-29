@@ -26,8 +26,9 @@
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
-      USE nf_fread2d_mod, ONLY : nf_fread2d
-      USE strings_mod, ONLY : find_string
+      USE nf_fread2d_mod,  ONLY : nf_fread2d
+      USE strings_mod,     ONLY : find_string
+      USE strings_mod,     ONLY : FoundError
 !
       implicit none
 !
@@ -48,25 +49,28 @@
 
       character (len=256) :: ncname
 !
-      SourceFile='get_wetdry.F'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Inquire about the contents of restart NetCDF file:  Inquire about
 !  the dimensions and variables.  Check for consistency.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
       ncname=INI(ng)%name
 !
 !  Check grid file dimensions for consitency
 !
       CALL netcdf_check_dim (ng, model, ncname)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
       CALL netcdf_inq_var (ng, model, ncname)
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Check if required variables are available.
@@ -105,7 +109,8 @@
 !
       IF (INI(ng)%ncid.eq.-1) THEN
         CALL netcdf_open (ng, model, ncname, 0, INI(ng)%ncid)
-        IF (exit_flag.ne.NoError) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
           WRITE (stdout,20) TRIM(ncname)
           RETURN
         END IF
@@ -144,7 +149,8 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % pmask,                               &
      &                  GRID(ng) % pmask_wet)
-      IF (status.ne.nf90_noerr) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
         IF (Master) WRITE (stdout,30) TRIM(Vname(1,idPwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
@@ -162,7 +168,8 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % rmask,                               &
      &                  GRID(ng) % rmask_wet)
-      IF (status.ne.nf90_noerr) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
         IF (Master) WRITE (stdout,30) TRIM(Vname(1,idRwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
@@ -180,7 +187,8 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % umask,                               &
      &                  GRID(ng) % umask_wet)
-      IF (status.ne.nf90_noerr) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
         IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
@@ -198,7 +206,8 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % vmask,                               &
      &                  GRID(ng) % vmask_wet)
-      IF (status.ne.nf90_noerr) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
         IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVwet)),            &
      &                                TRIM(ncname)
         exit_flag=2

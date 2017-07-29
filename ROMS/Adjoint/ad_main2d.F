@@ -33,56 +33,57 @@
 !
 # if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR
-      USE adsen_force_mod, ONLY : adsen_force
+      USE adsen_force_mod,         ONLY : adsen_force
 # endif
-      USE ad_diag_mod, ONLY : ad_diag
+      USE ad_diag_mod,             ONLY : ad_diag
 # if defined WEAK_CONSTRAINT || defined FORCING_SV
-      USE ad_forcing_mod, ONLY : ad_forcing
+      USE ad_forcing_mod,          ONLY : ad_forcing
 # endif
 # ifdef ADJUST_WSTRESS
-      USE ad_frc_adjust_mod, ONLY : ad_frc_adjust
+      USE ad_frc_adjust_mod,       ONLY : ad_frc_adjust
 # endif
-      USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
+      USE ad_ini_fields_mod,       ONLY : ad_ini_fields, ad_ini_zeta
 # if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
-      USE ad_ini_fields_mod, ONLY : ad_out_fields, ad_out_zeta
+      USE ad_ini_fields_mod,       ONLY : ad_out_fields, ad_out_zeta
 # endif
 # if defined FOUR_DVAR && defined OBSERVATIONS
 #  ifdef WEAK_CONSTRAINT
-      USE ad_htobs_mod, ONLY : ad_htobs
+      USE ad_htobs_mod,            ONLY : ad_htobs
 #  else
-      USE ad_misfit_mod, ONLY : ad_misfit
+      USE ad_misfit_mod,           ONLY : ad_misfit
 #  endif
 # endif
 # ifdef ADJUST_BOUNDARY
-      USE ad_obc_adjust_mod, ONLY : ad_obc_adjust
+      USE ad_obc_adjust_mod,       ONLY : ad_obc_adjust
 # endif
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
 # endif
 # ifdef AD_AVERAGES
-      USE ad_set_avg_mod, ONLY : ad_set_avg
+      USE ad_set_avg_mod,          ONLY : ad_set_avg
 # endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
-!!    USE ad_set_tides_mod, ONLY : ad_set_tides
+!!    USE ad_set_tides_mod,        ONLY : ad_set_tides
 # endif
-      USE ad_set_vbc_mod, ONLY: ad_set_vbc
-      USE ad_step2d_mod, ONLY : ad_step2d
+      USE ad_set_vbc_mod,          ONLY : ad_set_vbc
+      USE ad_step2d_mod,           ONLY : ad_step2d
 # ifdef FLOATS_NOT_YET
-!!    USE ad_step_floats_mod, ONLY : tl_step_floats
+!!    USE ad_step_floats_mod,      ONLY : tl_step_floats
 # endif
-      USE dateclock_mod, ONLY : time_string
+      USE dateclock_mod,           ONLY : time_string
 # ifdef WEAK_CONSTRAINT
-      USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
+      USE frc_weak_mod,            ONLY : frc_ADgather, frc_clear
 # endif
 # ifdef AIR_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : atmos_coupling
+      USE ocean_coupler_mod,       ONLY : atmos_coupling
 # endif
 # ifdef WAVES_OCEAN_NOT_YET
-      USE ocean_coupler_mod, ONLY : waves_coupling
+      USE ocean_coupler_mod,       ONLY : waves_coupling
 # endif
 # ifdef SO_SEMI
-      USE packing_mod, ONLY : ad_pack
+      USE packing_mod,             ONLY : ad_pack
 # endif
+      USE strings_mod,             ONLY : FoundError
 !
       implicit none
 !
@@ -134,7 +135,8 @@
           CALL ad_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
 !-----------------------------------------------------------------------
@@ -155,7 +157,8 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # if (defined FOUR_DVAR    && !defined IS4DVAR_SENSITIVITY) && \
       defined OBSERVATIONS
@@ -175,7 +178,8 @@
      &          (ObsTime(ng).lt.(time(ng)+HalfDT))) THEN
               ProcessObs(ng)=.TRUE.
               CALL obs_read (ng, iADM, backward)
-              IF (exit_flag.ne.NoError) RETURN
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
             ELSE
               ProcessObs(ng)=.FALSE.
             END IF
@@ -190,7 +194,8 @@
 #  endif
             END DO
 !$OMP BARRIER
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
 #  ifdef SENSITIVITY_4DVAR
           END IF
 #  endif
@@ -511,7 +516,8 @@
           CALL ad_output (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 
 # ifdef WEAK_CONSTRAINT

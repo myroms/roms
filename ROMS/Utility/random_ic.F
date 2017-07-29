@@ -251,7 +251,7 @@
 
 # include "set_bounds.h"
 !
-      SourceFile='random_ic.F, random_ic_tile'
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Generates random initial vectors for computation of the posterior

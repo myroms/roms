@@ -93,6 +93,8 @@
       USE mod_scalars
 #endif
 !
+      USE strings_mod, ONLY : FoundError
+!
 !  Imported variable declarations.
 !
       integer :: ng
@@ -131,7 +133,8 @@
      &                           VarID = Vid,                           &
      &                           nVardim = nvdim,                       &
      &                           nVarAtt = nvatt)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__//", allocate_sources")) RETURN
 
             IF (foundit) THEN
               Nsrc(mg)=var_Dsize(1)         ! first dimension

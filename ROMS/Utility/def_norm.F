@@ -30,6 +30,7 @@
 # endif
 !
       USE def_var_mod, ONLY : def_var
+      USE strings_mod, ONLY : FoundError
 !
       implicit none
 !
@@ -71,18 +72,20 @@
       character (len=120) :: Vinfo(Natt)
       character (len=256) :: ncname
 !
-      SourceFile='def_norm.F'
+      SourceFile=__FILE__
 !
 !=======================================================================
 !  Create a new background covariace normalization file.
 !=======================================================================
 !
-      IF (exit_flag.ne.NoError) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
       ncname=NRM(ifile,ng)%name
 !
       DEFINE : IF (LdefNRM(ifile,ng)) THEN
         CALL netcdf_create (ng, iTLM, TRIM(ncname), NRM(ifile,ng)%ncid)
-        IF (exit_flag.ne.NoError) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
           IF (Master) WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
@@ -95,138 +98,167 @@
 !
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xi_rho',  &
      &                 IOBOUNDS(ng)%xi_rho, DimIDs( 1))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xi_u',    &
      &                 IOBOUNDS(ng)%xi_u, DimIDs( 2))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xi_v',    &
      &                 IOBOUNDS(ng)%xi_v, DimIDs( 3))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xi_psi',  &
      &                 IOBOUNDS(ng)%xi_psi, DimIDs( 4))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'eta_rho', &
      &                 IOBOUNDS(ng)%eta_rho, DimIDs( 5))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'eta_u',   &
      &                 IOBOUNDS(ng)%eta_u, DimIDs( 6))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'eta_v',   &
      &                 IOBOUNDS(ng)%eta_v, DimIDs( 7))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'eta_psi', &
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef ADJUST_BOUNDARY
         IF (ifile.eq.3) THEN
           status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'IorJ',  &
      &                   IOBOUNDS(ng)%IorJ, IorJdim)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
 # endif
 
 # if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xy_rho',  &
      &                 IOBOUNDS(ng)%xy_rho, DimIDs(17))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xy_u',    &
      &                 IOBOUNDS(ng)%xy_u, DimIDs(18))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xy_v',    &
      &                 IOBOUNDS(ng)%xy_v, DimIDs(19))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 # endif
 
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xyz_rho', &
      &                 IOBOUNDS(ng)%xy_rho*N(ng), DimIDs(20))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xyz_u',   &
      &                 IOBOUNDS(ng)%xy_u*N(ng), DimIDs(21))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xyz_v',   &
      &                 IOBOUNDS(ng)%xy_v*N(ng), DimIDs(22))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xyz_w',   &
      &                 IOBOUNDS(ng)%xy_rho*(N(ng)+1), DimIDs(23))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #  endif
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 's_rho',   &
      &                 N(ng), DimIDs( 9))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 's_w',     &
      &                 N(ng)+1, DimIDs(10))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'tracer',  &
      &                 NT(ng), DimIDs(11))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 #  ifdef SEDIMENT
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'NST',     &
      &                 NST, DimIDs(32))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Nbed',    &
      &                 Nbed, DimIDs(16))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 #   if defined WRITE_WATER && defined MASKING
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'xybed',   &
      &                 IOBOUNDS(ng)%xy_rho*Nbed, DimIDs(24))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #   endif
 #  endif
 
 #  ifdef ECOSIM
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Nphy',    &
      &                 Nphy, DimIDs(25))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Nbac',    &
      &                 Nbac, DimIDs(26))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Ndom',    &
      &                 Ndom, DimIDs(27))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Nfec',    &
      &                 Nfec, DimIDs(28))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #  endif
 # endif
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'boundary',&
      &                 4, DimIDs(14))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef FOUR_DVAR
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname, 'Nstate',  &
      &                 NstateVar(ng), DimIDs(29))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 # endif
 
         status=def_dim(ng, iTLM, NRM(ifile,ng)%ncid, ncname,            &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 nf90_unlimited, DimIDs(12))
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
         recdim=DimIDs(12)
 !
@@ -336,7 +368,8 @@
 !-----------------------------------------------------------------------
 !
         CALL def_info (ng, iTLM, NRM(ifile,ng)%ncid, ncname, DimIDs)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define background covariance normalization variables.
@@ -353,7 +386,8 @@
      &                 NRM(ifile,ng)%Vid(idtime),                       &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .FALSE.)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Initial conditions or model error covariance normalization factors.
@@ -381,7 +415,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idFsur),                     &
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Define 2D U-momentum normalization factor.
 !
@@ -398,7 +433,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idUbar),                     &
      &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Define 2D V-momentum normalization factor.
 !
@@ -415,7 +451,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idVbar),                     &
      &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -434,7 +471,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idUvel),                     &
      &                   NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Define 3D V-momentum normalization factor.
 !
@@ -451,7 +489,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idVvel),                     &
      &                 NF_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Define tracer type normalization factors.
 !
@@ -477,7 +516,8 @@
      &                     NRM(ifile,ng)%Vid(idTvar(itrc)),             &
      &                     NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           END DO
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 # endif
 
 # ifdef ADJUST_BOUNDARY
@@ -503,7 +543,8 @@
      &                     NRM(ifile,ng)%Vid(ifield),                   &
      &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
      &                   SetFillVal = .FALSE.)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 !
 !  Define 2D U-momentum component open boundaries.
@@ -520,7 +561,8 @@
      &                     NRM(ifile,ng)%Vid(ifield),                   &
      &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
      &                     SetFillVal = .FALSE.)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 !
 !  Define 2D V-momentum component open boundaries.
@@ -537,7 +579,8 @@
      &                     NRM(ifile,ng)%Vid(ifield),                   &
      &                     NF_FOUT, 3, t2dobc, Aval, Vinfo, ncname,     &
      &                     SetFillVal = .FALSE.)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 
 #  ifdef SOLVE3D
@@ -556,7 +599,8 @@
      &                     NRM(ifile,ng)%Vid(ifield),                   &
      &                     NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,     &
      &                     SetFillVal = .FALSE.)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 !
 !  Define 3D V-momentum component open boundaries.
@@ -573,7 +617,8 @@
      &                     NRM(ifile,ng)%Vid(ifield),                   &
      &                     NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,     &
      &                     SetFillVal = .FALSE.)
-            IF (exit_flag.ne.NoError) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
 !
 !  Define tracer type variables open boundaries.
@@ -598,7 +643,8 @@
      &                       NRM(ifile,ng)%Vid(ifield),                 &
      &                       NF_FOUT, 4, t3dobc, Aval, Vinfo, ncname,   &
      &                       SetFillVal = .FALSE.)
-              IF (exit_flag.ne.NoError) RETURN
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
             END IF
           END DO
 #  endif
@@ -630,7 +676,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idUsms),                     &
      &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Define surface V-momentum stress normalization factors.
 !
@@ -648,7 +695,8 @@
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
      &                   NRM(ifile,ng)%Vid(idVsms),                     &
      &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #  endif
 
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -671,7 +719,8 @@
               status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,              &
      &                       NRM(ifile,ng)%Vid(idTsur(itrc)), NF_FOUT,  &
      &                       nvd3, t2dgrd, Aval, Vinfo, ncname)
-              IF (exit_flag.ne.NoError) RETURN
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
             END IF
           END DO
 #  endif
@@ -683,7 +732,8 @@
 !-----------------------------------------------------------------------
 !
         CALL netcdf_enddef (ng, model, ncname, NRM(ifile,ng)%ncid)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.  Deactive file
@@ -691,7 +741,8 @@
 !-----------------------------------------------------------------------
 !
         CALL wrt_info (ng, model, NRM(ifile,ng)%ncid, ncname)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
         LdefNRM(ifile,ng)=.FALSE.
       END IF DEFINE
 !
@@ -706,17 +757,20 @@
 !  Inquire about the dimensions and check for consistency.
 !
         CALL netcdf_check_dim (ng, model, ncname)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
         CALL netcdf_inq_var (ng, model, ncname)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Open normalization file for read/write.
 !
         CALL netcdf_open (ng, model, ncname, 1, NRM(ifile,ng)%ncid)
-        IF (exit_flag.ne.NoError) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
           WRITE (stdout,40) TRIM(ncname)
           RETURN
         END IF

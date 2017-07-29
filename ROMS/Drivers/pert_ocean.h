@@ -75,9 +75,8 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-
-#ifdef MCT_LIB
 !
+#ifdef MCT_LIB
 # ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 # endif
@@ -85,6 +84,7 @@
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE strings_mod,       ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -139,7 +139,8 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
@@ -335,7 +336,8 @@
 !$OMP PARALLEL
           CALL tl_initial (ng)
 !$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
           IF (Master) THEN
             WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
@@ -349,7 +351,8 @@
         CALL tl_main2d (RunInterval)
 #endif
 !$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 #ifdef SANITY_CHECK
 !
@@ -456,7 +459,8 @@
 !$OMP PARALLEL
           CALL ad_initial (ng)
 !$OMP END PARALLEL
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
           IF (Master) THEN
             WRITE (stdout,10) 'AD', ng, ntstart(ng), ntend(ng)
@@ -470,7 +474,8 @@
         CALL ad_main2d (RunInterval)
 #endif
 !$OMP END PARALLEL
-        IF (exit_flag.ne.NoError) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 #ifdef SANITY_CHECK
 !
@@ -637,11 +642,12 @@
 !
 !  Close current forward NetCDF file.
 !
-        SourceFile='pert_ocean.h, ROMS_run'
+        SourceFile=__FILE__ // ", ROMS_run"
 
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iTLM, FWD(ng)%ncid, Lupdate = .FALSE.)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 
       END DO PERT_LOOP

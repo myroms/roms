@@ -21,6 +21,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
 !  Imported variable declarations.
@@ -31,7 +33,7 @@
 !
       integer :: Fcount, i, j, lstr
 !
-      SourceFile='close_inp, close_io.F'
+      SourceFile=__FILE__ // ", close_io.F"
 !
 !-----------------------------------------------------------------------
 !  If multi-file input fields, close several input files.
@@ -67,7 +69,8 @@
           FRC(i,ng)%base=FRC(i,ng)%name(1:lstr-3)
           CALL netcdf_close (ng, model, FRC(i,ng)%ncid,                 &
      &                       FRC(i,ng)%files(i), .FALSE.)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
       END DO
 #endif
@@ -93,7 +96,8 @@
           BRY(ng)%base=BRY(ng)%name(1:lstr-3)
           CALL netcdf_close (ng, model, BRY(ng)%ncid,                   &
      &                       BRY(ng)%files(i),  .FALSE.)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
       END IF
 !
@@ -118,7 +122,8 @@
           CLM(ng)%base=CLM(ng)%name(1:lstr-3)
           CALL netcdf_close (ng, model, CLM(ng)%ncid,                   &
      &                       CLM(ng)%files(i),  .FALSE.)
-          IF (exit_flag.ne.NoError) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END IF
       END IF
 
@@ -139,6 +144,7 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+      USE strings_mod, ONLY : FoundError
 !
       USE dateclock_mod, ONLY : get_date
 !
@@ -150,7 +156,7 @@
 
       integer :: Fcount, MyError, i, ng
 !
-      SourceFile='close_out, close_io.F'
+      SourceFile=__FILE__ // ", close_out"
 !
 !-----------------------------------------------------------------------
 !  Close output NetCDF files. Set file indices to closed state.
@@ -341,7 +347,8 @@
 !  If applicable, report internal exit errors.
 !-----------------------------------------------------------------------
 !
-      IF (Master.and.(exit_flag.ne.NoError)) THEN
+      IF (Master.and.(FoundError(exit_flag, NoError, __LINE__,          &
+     &               __FILE__))) THEN
         WRITE (stdout,40) Rerror(exit_flag), exit_flag
       END IF
       IF (exit_flag.eq.NoError) THEN
