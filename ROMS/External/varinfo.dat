@@ -1422,18 +1422,18 @@
   'r2dvar'
   1.0d0
 
-'latent'                                           ! Input/Output
+'latent'                                           ! Output
   'net latent heat flux'
-  'watt meter-2'                                   ! Input:  [Watt/m2]
+  'watt meter-2'
   'latent heat flux, scalar, series'               ! [Celsius m/s]
   'lhf_time'                                       ! Output: [Watt/m2]
   'idLhea'
   'r2dvar'
   1.0d0
 
-'sensible'                                         ! Input/Output
+'sensible'                                         ! Output
   'net sensible heat flux'
-  'watt meter-2'                                   ! Input:  [Watt/m2]
+  'watt meter-2'
   'sensible heat flux, scalar, series'             ! [Celsius m/s]
   'shf_time'                                       ! Output: [Watt/m2]
   'idShea'

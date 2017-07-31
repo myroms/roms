@@ -173,7 +173,7 @@
             CASE ('Sout(idWorb)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idWorb,:))
 # endif
-# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+# if defined TKE_WAVEDISS || defined WAV_COUPLING
             CASE ('Sout(idWdis)')
               Npts=load_l(Nval, Cval, Ngrids, Sout(idWdis,:))
 # endif
@@ -588,7 +588,7 @@
      &         'Sout(idWorb)',                                          &
      &         'Write out wave bottom orbital velocity.'
 # endif
-# if defined TKE_WAVEDISS || defined WAVES_OCEAN
+# if defined TKE_WAVEDISS || defined WAV_COUPLING
             IF (Sout(idWdis,ng)) WRITE (out,90) Sout(idWdis,ng),        &
      &         'Sout(idWdis)',                                          &
      &         'Write out wave dissipation.'

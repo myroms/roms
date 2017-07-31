@@ -25,6 +25,7 @@
 !
 !  Local variable declarations.
 !
+      integer :: iatms = 0
       integer :: ibbl = 0
       integer :: ibiology = 0
       integer :: idriver = 0
@@ -675,6 +676,14 @@
       Coptions(is:is+16)=' CLIPPING_SPLIT,'
 # endif
 #endif
+#ifdef COAMPS_COUPLING
+!
+      IF (Master) WRITE (stdout,20) 'COAMPS_COUPLING',                   &
+     &   'Atmosphere coupling with COAMPS.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' COAMPS_COUPLING,'
+      iatms=iatms+1
+#endif
 #if defined DISTRIBUTE
 # if defined COLLECT_ALLGATHER
 !
@@ -703,6 +712,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' CORRELATION,'
       idriver=idriver+1
+#endif
+#if defined COUPLING_INTERP && defined MODEL_COUPLING
+!
+      IF (Master) WRITE (stdout,20) 'COUPLING_INTERP',                  &
+     &   'Time interpolation from coupling snapshots arrays.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' COUPLING_INTERP,'
+      iatms=iatms+1
 #endif
 #if defined DATALESS_LOOPS && defined W4DVAR
 !
@@ -1779,6 +1796,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' RECOMPUTE_4DVAR,'
 #endif
+#ifdef REGCM_COUPLING
+!
+      IF (Master) WRITE (stdout,20) 'COAMPS_COUPLING',                   &
+     &   'Atmosphere coupling with RegCM.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' REGCM_COUPLING,'
+      iatms=iatms+1
+#endif
 #ifdef RED_TIDE
 !
       IF (Master) WRITE (stdout,20) 'RED_TIDE',                         &
@@ -2687,12 +2712,12 @@
       Coptions(is:is+20)=' W4DVAR_SENSITIVITY,'
       idriver=idriver+1
 #endif
-#ifdef WAVES_OCEAN
+#ifdef WAV_COUPLING
 !
-      IF (Master) WRITE (stdout,20) 'WAVES_OCEAN',                      &
+      IF (Master) WRITE (stdout,20) 'WAV_COUPLING',                      &
      &   'Two-way wave-ocean models coupling.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' WAVES_OCEAN,'
+      Coptions(is:is+13)=' WAV_COUPLING,'
 #endif
 #ifdef WEAK_CONSTRAINT
 !
@@ -2733,9 +2758,10 @@
 #ifdef WRF_COUPLING
 !
       IF (Master) WRITE (stdout,20) 'WRF_COUPLING',                     &
-     &   'Two-way WRF/ROMS coupling.'
+     &   'Atmosphere coupling with WRF.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' WRF_COUPLING,'
+      iatms=iatms+1
 #endif
 #if defined WTYPE_GRID && \
    (defined LMD_SKPP   || defined SOLAR_SOURCE) && \
@@ -3088,6 +3114,17 @@
      &          /,13x,'in serial with partitions or shared-memory...', &
      &          /,13x,'There bugs in shared-memory that need fixing.', &
      &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
+      END IF
+#endif
+#ifdef ATM_COUPLING
+!
+!  Stop if more than one vertical closure scheme is selected.
+!
+      IF (Master.and.(iatms.gt.1)) THEN
+        WRITE (stdout,270)
+ 270    FORMAT (/,' CHECKDEFS - only one atmosphere model coupling',   &
+     &            ' is allowed.')
+        exit_flag=5
       END IF
 #endif
 

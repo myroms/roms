@@ -19,7 +19,7 @@
 !
       USE mod_param
       USE mod_parallel
-# ifdef MODEL_COUPLING
+# if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
 # endif
       USE mod_iounits
@@ -51,10 +51,10 @@
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
 # endif
-# ifdef AIR_OCEAN
+# if defined ATM_COUPLING && defined MCT_LIB
       USE ocean_coupler_mod,    ONLY : ocn2atm_coupling
 # endif
-# ifdef WAVES_OCEAN
+# if defined WAV_COUPLING && defined MCT_LIB
       USE ocean_coupler_mod,    ONLY : ocn2wav_coupling
 # endif
 # ifdef NEARSHORE_MELLOR
@@ -251,7 +251,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 
-# ifdef AIR_OCEAN
+# if defined ATM_COUPLING && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple ocean to atmosphere model every "CoupleSteps(Iatmos)"
@@ -308,7 +308,7 @@
             END DO
 # endif
 
-# ifdef WAVES_OCEAN
+# if defined WAV_COUPLING && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple ocean to waves model every "CoupleSteps(Iwaves)"

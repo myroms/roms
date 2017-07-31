@@ -555,7 +555,7 @@
 #  endif
 # endif
 
-# ifndef AIR_OCEAN
+# ifndef ATM_COUPLING
 #  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------

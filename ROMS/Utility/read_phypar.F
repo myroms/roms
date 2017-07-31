@@ -17,7 +17,7 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
-#ifdef MODEL_COUPLING
+#if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
@@ -473,7 +473,7 @@
               Npts=load_i(Nval, Rval, Ngrids, ntimes)
             CASE ('DT')
               Npts=load_r(Nval, Rval, Ngrids, dt)
-#ifdef MODEL_COUPLING
+#if defined MODEL_COUPLING && defined MCT_LIB
               IF (.not.allocated(CoupleSteps)) THEN
                 allocate (CoupleSteps(Nmodels,Ngrids))
                 CoupleSteps=0
@@ -1587,7 +1587,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idWorb,:))
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
             CASE ('Hout(idWdis)')
               IF (idWdis.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idWdis'
@@ -1914,7 +1914,7 @@
             CASE ('Qout(idWorb)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idWorb,:))
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
             CASE ('Qout(idWdis)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idWdis,:))
 #endif
@@ -4468,7 +4468,7 @@
      &         'Hout(idWorb)',                                          &
      &         'Write out wave bottom orbital velocity.'
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
             IF (Hout(idWdis,ng)) WRITE (out,170) Hout(idWdis,ng),       &
      &         'Hout(idWdis)',                                          &
      &         'Write out wave dissipation.'
@@ -4766,7 +4766,7 @@
      &         'Qout(idWorb)',                                          &
      &         'Write out wave bottom orbital velocity.'
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
             IF (Qout(idWdis,ng)) WRITE (out,170) Qout(idWdis,ng),       &
      &         'Qout(idWdis)',                                          &
      &         'Write out wave dissipation.'

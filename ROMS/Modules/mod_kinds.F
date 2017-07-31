@@ -8,14 +8,16 @@
 !=======================================================================
 !
 #ifdef ESMF_LIB
-        USE ESMF_mod
+        USE ESMF
 !
 #endif
         implicit none
 !
 #ifdef ESMF_LIB
-        integer, parameter :: i1b= ESMF_KIND_I1                !  8-bit
-        integer, parameter :: i2b= ESMF_KIND_I2                !  8-bit
+!!      integer, parameter :: i1b= ESMF_KIND_I1                !  8-bit
+        integer, parameter :: i1b= SELECTED_INT_KIND(1)        !  8-bit
+!!      integer, parameter :: i2b= ESMF_KIND_I2                !  8-bit
+        integer, parameter :: i2b= SELECTED_INT_KIND(2)        !  8-bit
         integer, parameter :: i4b= ESMF_KIND_I4                ! 16-bit
         integer, parameter :: i8b= ESMF_KIND_I8                ! 32-bit
         integer, parameter :: c8 = SELECTED_REAL_KIND(6,30)    ! 32-bit

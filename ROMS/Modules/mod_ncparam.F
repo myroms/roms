@@ -807,7 +807,7 @@
           Iinfo(5,i,ng)=0
           Iinfo(6,i,ng)=0
           Iinfo(7,i,ng)=0
-          Iinfo(8,i,ng)=0
+          Iinfo(8,i,ng)=2
           Iinfo(9,i,ng)=0
           Iinfo(10,i,ng)=0
           Finfo(1,i,ng)=0.0_r8

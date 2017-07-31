@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE mod_coupler
 
-#if defined MODEL_COUPLING || defined ESMF_LIB
+#if defined MODEL_COUPLING && defined MCT_LIB
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -10,9 +10,6 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !
-# if defined ESMF_COUPLING || defined ESMF_LIB
-      USE ESMF_mod
-# endif
       USE mod_param
 !
       implicit none
@@ -76,15 +73,6 @@
         integer :: TimeZone             ! time zone, hours offset
         character (len=30) :: string    ! time string
       END TYPE T_CLOCK
-
-# if defined ESMF_COUPLING || defined ESMF_LIB
-!
-!   Two-dimensinal data pointers.
-!
-      TYPE T_DATA2D
-        real(r8), dimension(:,:), pointer :: field
-      END TYPE
-# endif
 !
 !-----------------------------------------------------------------------
 !  Set various variables used to couple ROMS/TOMS to other modeling
@@ -174,45 +162,6 @@
 !  Export fields attribute string.
 !
       character (len=240), allocatable :: ExportList(:)
-
-# if defined ESMF_COUPLING || defined ESMF_LIB
-!
-!  Gridded components objects handle.
-!
-      TYPE (ESMF_GridComp), allocatable :: GridComp(:)
-!
-!  Gridded component State Import and Export objects handle.
-!
-      TYPE (ESMF_State), allocatable :: StateExport(:)
-      TYPE (ESMF_State), allocatable :: StateImport(:)
-!
-!  ESMF Virtual Machine (VM) object which manage the computational
-!  resources for each coupled component. The value returned from
-!  ESMF initialization is stored in index 0.
-!
-      TYPE (ESMF_VM), allocatable :: VM(:)
-!
-!  ESMF time calendar and clock objects.
-!
-      TYPE (ESMF_Calendar), allocatable :: TimeCalendar(:)
-
-      TYPE (ESMF_Time), allocatable :: ReferenceTime(:)
-      TYPE (ESMF_Time), allocatable :: StartTime(:)
-      TYPE (ESMF_Time), allocatable :: StopTime(:)
-      TYPE (ESMF_Time), allocatable :: CurrTime(:)
-
-      TYPE (ESMF_TimeInterval), allocatable :: TimeStep(:)
-
-      TYPE (ESMF_Clock), allocatable :: TimeClock(:)
-!
-!  Current time clock in each coupled model clock
-!
-      TYPE (T_CLOCK), allocatable :: CurrentTime(:)
-!
-!  ESMF configuration object.
-!
-      TYPE (ESMF_Config) :: config
-# endif
 
       CONTAINS
 
@@ -376,7 +325,7 @@
         END DO
       END DO
       DO model=1,Nmodels
-        ExportList(model)=''
+        ExportList(model)=' '
         DO ifield=1,Nexport(model)
           id=ExportID(model)%val(ifield)
           IF (id.gt.0) THEN
@@ -457,65 +406,6 @@
         WRITE (stdout,'(/)')
       END IF
 
-# if defined ESMF_COUPLING || defined ESMF_LIB
-!
-!-----------------------------------------------------------------------
-!  Allocate various coupling models arrays.
-!-----------------------------------------------------------------------
-!
-!  Gridded components objects handle.
-!
-      IF (.not.allocated(GridComp)) THEN
-        allocate ( GridComp(Nmodels) )
-      END IF
-!
-!  Gridded component State Import and Export objects handle.
-!
-      IF (.not.allocated(StateExport)) THEN
-        allocate ( StateExport(Nmodels) )
-      END IF
-      IF (.not.allocated(StateImport)) THEN
-        allocate ( StateImport(Nmodels) )
-      END IF
-!
-!  ESMF Virtual Machine (VM) object.
-!
-      IF (.not.allocated(VM)) THEN
-        allocate ( VM(0:Nmodels) )
-      END IF
-!
-!  ESMF clock objects. The index zero is use for ESMF external value
-!  whereas the other values are the internal values for each coupled
-!  model.
-!
-      IF (.not.allocated(TimeCalendar)) THEN
-        allocate ( TimeCalendar(0:Nmodels) )
-      END IF
-      IF (.not.allocated(ReferenceTime)) THEN
-        allocate ( ReferenceTime(0:Nmodels) )
-      END IF
-      IF (.not.allocated(StartTime)) THEN
-        allocate ( StartTime(0:Nmodels) )
-      END IF
-      IF (.not.allocated(StopTime)) THEN
-        allocate ( StopTime(0:Nmodels) )
-      END IF
-      IF (.not.allocated(CurrTime)) THEN
-        allocate ( CurrTime(0:Nmodels) )
-      END IF
-      IF (.not.allocated(TimeStep)) THEN
-        allocate ( TimeStep(0:Nmodels) )
-      END IF
-      IF (.not.allocated(TimeClock)) THEN
-        allocate ( TimeClock(0:Nmodels) )
-      END IF
-!
-!  Current time clock in each coupled model clock
-!
-      IF (.not.allocated(CurrentTime)) THEN
-        allocate ( CurrentTime(0:Nmodels) )
-      END IF
-# endif
 !
  50   FORMAT (/,' MOD_COUPLER - Unable to open variable information',   &
      &        ' file: ',/,15x,a,/,15x,'Default file is located in',     &
@@ -533,5 +423,6 @@
 110   FORMAT (3x,a,1x,a)
 
       END SUBROUTINE allocate_coupler
+!
 #endif
       END MODULE mod_coupler

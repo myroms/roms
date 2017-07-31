@@ -149,7 +149,7 @@
      &               __FILE__)) RETURN
 # endif
 
-# ifndef AIR_OCEAN
+# ifndef ATM_COUPLING
 #  if !defined ANA_SMFLUX  && \
       !defined BULK_FLUXES && !defined NL_BULK_FLUXES
 !

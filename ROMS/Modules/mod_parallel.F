@@ -45,14 +45,14 @@
 
 !$OMP THREADPRIVATE (first_tile, last_tile)
 
-#ifdef AIR_OCEAN
+#if defined ATM_COUPLING && defined MCT_LIB
 !
 !  Parallel nodes assined to the atmosphere model.
 !
       integer :: peATM_frst            ! first atmosphere parallel node
       integer :: peATM_last            ! last  atmosphere parallel node
 #endif
-#ifdef WAVES_OCEAN
+#if defined WAV_COUPLING && defined MCT_LIB
 !
 !  Parallel nodes assined to the wave model.
 !

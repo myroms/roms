@@ -18,7 +18,7 @@
 !
       USE mod_param
       USE mod_parallel
-# ifdef MODEL_COUPLING
+# if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
 # endif
       USE mod_iounits
@@ -79,10 +79,10 @@
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
 # endif
-# if defined AIR_OCEAN && defined MCT_LIB
+# if defined ATM_COUPLING && defined MCT_LIB
       USE ocean_coupler_mod,    ONLY : ocn2atm_coupling
 # endif
-# if defined WAVES_OCEAN && defined MCT_LIB
+# if defined WAV_COUPLING && defined MCT_LIB
       USE ocean_coupler_mod,    ONLY : ocn2wav_coupling
 # endif
       USE omega_mod,            ONLY : omega
@@ -185,7 +185,11 @@
               time(ng)=time(ng)+dt(ng)
               tdays(ng)=time(ng)*sec2day
               CALL time_string (time(ng), time_code(ng))
+# ifdef REGCM_COUPLING
+              IF (MOD(step_counter(ng),Rsteps).eq.0) Time_Step=.FALSE.
+# else
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
+# endif
             END DO
 !
 !-----------------------------------------------------------------------

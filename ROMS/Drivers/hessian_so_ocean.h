@@ -51,10 +51,10 @@
       USE mod_netcdf
 !
 #ifdef MCT_LIB
-# ifdef AIR_OCEAN
+# ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 # endif
-# ifdef WAVES_OCEAN
+# ifdef WAV_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
@@ -164,17 +164,17 @@
 
       END IF
 
-#if defined MCT_LIB && (defined AIR_OCEAN || defined WAVES_OCEAN)
+#if defined MCT_LIB && (defined ATM_COUPLING || defined WAV_COUPLING)
 !
 !-----------------------------------------------------------------------
 !  Initialize coupling streams between model(s).
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-# ifdef AIR_OCEAN
+# ifdef ATM_COUPLING
         CALL initialize_ocn2atm_coupling (ng, MyRank)
 # endif
-# ifdef WAVES_OCEAN
+# ifdef WAV_COUPLING
         CALL initialize_ocn2wav_coupling (ng, MyRank)
 # endif
       END DO
@@ -208,7 +208,6 @@
 !-----------------------------------------------------------------------
 !
       SourceFile=__FILE__ // ", ROMS_initialize"
-
       DO ng=1,Ngrids
         CALL netcdf_get_fvar (ng, iADM, LCZ(ng)%name, 'cg_beta',        &
      &                        cg_beta)
@@ -590,9 +589,8 @@
 !  twice in the TLM file for the initial and final perturbation of
 !  the eigenvector.
 !
+                SourceFile=__FILE__ // ", ROMS_run"
                 DO ng=1,Ngrids
-                  SourceFile=__FILE__ // ", ROMS_run"
-
                   CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,         &
      &                                  'Ritz_rvalue',                  &
      &                                  RvalueR(i:,ng),                 &

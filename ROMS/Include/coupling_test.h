@@ -26,7 +26,6 @@
 #define SALINITY
 #define SOLVE3D
 #define AVERAGES
-#define AIR_OCEAN
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_STFLUX

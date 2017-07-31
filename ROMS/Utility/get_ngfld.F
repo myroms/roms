@@ -109,7 +109,7 @@
 !
       IF (Linquire) THEN
         job=1
-        CALL inquire (ng, model, job, UBk, Iend, UBi, ifield, ncid,     &
+        CALL inquiry (ng, model, job, UBk, Iend, UBi, ifield, ncid,     &
      &                Lmulti, nfiles, S)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN

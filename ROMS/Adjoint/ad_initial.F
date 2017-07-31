@@ -60,8 +60,8 @@
       USE set_masks_mod,     ONLY : set_masks
 # endif
       USE stiffness_mod,     ONLY : stiffness
-# ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : waves_coupling
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
+      USE ocean_coupler_mod, ONLY : ocn2wav_coupling
 # endif
       USE strings_mod,       ONLY : FoundError
 # ifdef WET_DRY
@@ -731,14 +731,14 @@
 !$OMP BARRIER
 # endif
 
-# ifdef WAVES_OCEAN_NOT_YET
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing from coupled wave model.
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL waves_coupling (ng, tile)
+        CALL ocn2wav_coupling (ng, tile)
       END DO
 !$OMP BARRIER
 # endif

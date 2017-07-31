@@ -18,7 +18,7 @@
 !
       USE mod_param
       USE mod_parallel
-# ifdef MODEL_COUPLING
+# if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
 # endif
       USE mod_iounits
@@ -29,10 +29,10 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod,     ONLY : tl_dotproduct
 # endif
-# ifdef AIR_OCEAN_NOT_YET
+# if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
       USE ocean_coupler_mod,  ONLY : atmos_coupling
 # endif
-# ifdef WAVES_OCEAN_NOT_YET
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE ocean_coupler_mod,  ONLY : waves_coupling
 # endif
       USE strings_mod,        ONLY : FoundError
@@ -200,7 +200,7 @@
 !$OMP BARRIER
         END DO
 
-# ifdef AIR_OCEAN_NOT_YET
+# if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple to atmospheric model every CoupleSteps(Iatmos) timesteps: get
@@ -252,7 +252,7 @@
         END DO
 # endif
 
-# ifdef WAVES_OCEAN_NOT_YET
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
 !  Couple to waves model every CoupleSteps(Iwaves) timesteps: get

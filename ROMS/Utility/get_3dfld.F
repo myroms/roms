@@ -116,7 +116,7 @@
 !
       IF (Linquire) THEN
         job=3
-        CALL inquire (ng, model, job, Iout, Irec, 1, ifield, ncid,      &
+        CALL inquiry (ng, model, job, Iout, Irec, 1, ifield, ncid,      &
      &                Lmulti, nfiles, S)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN

@@ -73,10 +73,10 @@
       USE mod_scalars
 !
 #ifdef MCT_LIB
-# ifdef AIR_OCEAN
+# ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 # endif
-# ifdef WAVES_OCEAN
+# ifdef WAV_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
@@ -187,17 +187,17 @@
 
       END IF
 
-#if defined MCT_LIB && (defined AIR_OCEAN || defined WAVES_OCEAN)
+#if defined MCT_LIB && (defined ATM_COUPLING || defined WAV_COUPLING)
 !
 !-----------------------------------------------------------------------
 !  Initialize coupling streams between model(s).
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-# ifdef AIR_OCEAN
+# ifdef ATM_COUPLING
         CALL initialize_ocn2atm_coupling (ng, MyRank)
 # endif
-# ifdef WAVES_OCEAN
+# ifdef WAV_COUPLING
         CALL initialize_ocn2wav_coupling (ng, MyRank)
 # endif
       END DO
@@ -646,7 +646,6 @@
 !  Write out initial data penalty function to NetCDF file.
 !
           SourceFile=__FILE__ // ", ROMS_run"
-
           CALL netcdf_put_fvar (ng, iRPM, DAV(ng)%name,                 &
      &                          'RP_iDataPenalty',                      &
      &                          FOURDVAR(ng)%DataPenalty(0:),           &
@@ -934,7 +933,6 @@
 !  Close tangent linear NetCDF file.
 !
         SourceFile=__FILE__ // ", ROMS_run"
-
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iTLM, TLM(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
@@ -1146,7 +1144,6 @@
 !  Write out final data penalty function to NetCDF file.
 !
         SourceFile=__FILE__ // ", ROMS_run"
-
         DO ng=1,Ngrids
           CALL netcdf_put_fvar (ng, iRPM, DAV(ng)%name,                 &
      &                          'RP_fDataPenalty',                      &
@@ -1200,7 +1197,6 @@
 !  Read in observations.
 !
       SourceFile=__FILE__ // ", ROMS_run"
-
       DO ng=1,Ngrids
         Mstr=NstrObs(ng)
         CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                   &
@@ -1654,7 +1650,6 @@
 !  Close tangent linear NetCDF file.
 !
         SourceFile=__FILE__ // ", ROMS_run"
-
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iTLM, TLM(ng)%ncid)
           TLM(ng)%ncid=-1

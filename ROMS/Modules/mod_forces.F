@@ -213,14 +213,14 @@
 # endif
 #endif
 
-#if defined BBL_MODEL || defined WAVES_OCEAN
+#if defined BBL_MODEL || defined WAV_COUPLING
           real(r8), pointer :: Ub_swan(:,:)
 # ifndef ANA_WWAVE
           real(r8), pointer :: Ub_swanG(:,:,:)
 # endif
 #endif
 
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
           real(r8), pointer :: wave_dissip(:,:)
 # ifndef ANA_WWAVE
           real(r8), pointer :: wave_dissipG(:,:,:)
@@ -518,14 +518,14 @@
 # endif
 #endif
 
-#if defined BBL_MODEL || defined WAVES_OCEAN
+#if defined BBL_MODEL || defined WAV_COUPLING
       allocate ( FORCES(ng) % Ub_swan(LBi:UBi,LBj:UBj) )
 # ifndef ANA_WWAVE
       allocate ( FORCES(ng) % Ub_swanG(LBi:UBi,LBj:UBj,2) )
 # endif
 #endif
 
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
       allocate ( FORCES(ng) % wave_dissip(LBi:UBi,LBj:UBj) )
 # ifndef ANA_WWAVE
       allocate ( FORCES(ng) % Wave_dissipG(LBi:UBi,LBj:UBj,2) )
@@ -889,14 +889,14 @@
             FORCES(ng) % Pwave_botG(i,j,2) = IniVal
 # endif
 #endif
-#if defined BBL_MODEL || defined WAVES_OCEAN
+#if defined BBL_MODEL || defined WAV_COUPLING
             FORCES(ng) % Ub_swan(i,j) = IniVal
 # ifndef ANA_WWAVE
             FORCES(ng) % Ub_swanG(i,j,1) = IniVal
             FORCES(ng) % Ub_swanG(i,j,2) = IniVal
 # endif
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
             FORCES(ng) % Wave_dissip(i,j) = IniVal
 # ifndef ANA_WWAVE
             FORCES(ng) % Wave_dissipG(i,j,1) = IniVal

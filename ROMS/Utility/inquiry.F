@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      SUBROUTINE inquire (ng, model, job, Iout, Irec, Mrec, ifield,     &
+      SUBROUTINE inquiry (ng, model, job, Iout, Irec, Mrec, ifield,     &
      &                    ncid, Lmulti, nfiles, S)
 !
 !svn $Id$
@@ -493,22 +493,22 @@
         Vtime(Tindex,ifield,ng)=Finfo(3,ifield,ng)
       END IF
 !
-  10  FORMAT (/,' INQUIRE     - out of range multi-files counter for ', &
+  10  FORMAT (/,' INQUIRY     - out of range multi-files counter for ', &
      &        'variable; ',a,/,15x,'Fcount = ',i2.2,                    &
      &        ',   Expected range: 1 - ',i2.2)
-  20  FORMAT (/,' INQUIRE     - unable to assign file counter, ',       &
+  20  FORMAT (/,' INQUIRY     - unable to assign file counter, ',       &
      &        'Fcount = ',i4,/,15x,'while processing structure: ',a,    &
      &        /,15x,'and variable; ',a)
-  30  FORMAT (/,' INQUIRE     - unable to find dimension ',a,           &
+  30  FORMAT (/,' INQUIRY     - unable to find dimension ',a,           &
      &        /,15x,'for variable: ',a,/,15x,'in file: ',a,             &
      &        /,15x,'file is not CF compliant...')
-  40  FORMAT (/,' INQUIRE     - too small dimension for variable ',a,   &
+  40  FORMAT (/,' INQUIRY     - too small dimension for variable ',a,   &
      &        ': ',2i5)
-  50  FORMAT (/,' INQUIRE     - unable to find requested variable: ',a, &
+  50  FORMAT (/,' INQUIRY     - unable to find requested variable: ',a, &
      &        /,15x,'in ',a)
-  60  FORMAT (/,' INQUIRE     - unable to open input NetCDF file: ',a)
-  70  FORMAT (/,' INQUIRE     - error while reading variable: ',a,2x,   &
+  60  FORMAT (/,' INQUIRY     - unable to open input NetCDF file: ',a)
+  70  FORMAT (/,' INQUIRY     - error while reading variable: ',a,2x,   &
      &        ' at TIME index = ',i4)
 
       RETURN
-      END SUBROUTINE inquire
+      END SUBROUTINE inquiry

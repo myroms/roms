@@ -7,21 +7,19 @@
 **   See License_ROMS.txt                                             **
 ************************************************************************
 **                                                                    **
-**  Master program to run ROMS/TOMS as single ocean model or coupled  **
-**  to other models using the MCT or ESMF libraries.                  **
+**  Module include several routines used for the couplig of ROMS/TOMS **
+**  to other models using the ESMF/NUOPC or MCT libraries.            **
 **                                                                    **
 ************************************************************************
 */
 
 #if defined MODEL_COUPLING
 # if defined MCT_LIB
-#  include "mct_driver.h"
+#  include "mct_coupler.h"
 # elif defined ESMF_LIB
-#  include "esmf_driver.h"
-# else
-      PROGRAM master         !  ROMS is coupled with other external
-      END PROGRAM master     !  software and drivers not written by us
+#  include "esmf_coupler.h"
 # endif
 #else
-# include "ocean.h"
+      MODULE coupler_mod
+      END MODULE coupler_mod
 #endif

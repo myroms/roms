@@ -14,7 +14,7 @@
 !=======================================================================
 !
 #ifdef ESMF_LIB
-      USE ESMF_Mod
+      USE ESMF
 #endif
       USE mod_param
       USE mod_parallel

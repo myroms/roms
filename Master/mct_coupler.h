@@ -1,168 +1,122 @@
-      PROGRAM mct_coupler
+#include "cppdefs.h"
+      MODULE ocean_coupler_mod
+
+#if defined MODEL_COUPLING && defined MCT_LIB
 !
 !svn $Id$
-!=======================================================================
-!  Copyright (c) 2002-2017 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
 !==================================================== John C. Warner ===
+!  Copyright (c) 2002-2017 The ROMS/TOMS Group      Hernan G. Arango   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
 !                                                                      !
-!  Master program to couple ROMS/TOMS to other models using the Model  !
-!  Coupling Toolkit (MCT) library.                                     !
+!  This module is used to communicate and exchange data between        !
+!  ROMS/TOMS and other coupled model(s)  via the Model Coupling        !
+!  Toolkit (MCT), developed at the Argonne National Laboratory.        !
 !                                                                      !
-!  The following models are coupled to ROMS/TOMS:                      !
-!                                                                      !
-#ifdef WRF_COUPLING
-!  WRF, Weather Research and Forecasting model:                        !
-!       http://www.wrf-model.org                                       !
-!                                                                      !
-#endif
-#ifdef SWAN_COUPLING
-!  SWAN, Simulating WAves Nearshore model:                             !
-!        http://vlm089.citg.tudelft.nl/swan/index.htm                  !
-!                                                                      !
-#endif
 !=======================================================================
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_coupler
-      USE mod_iounits
-      USE mod_scalars
+!  Component Model Registry.
 !
+      USE m_MCTWorld, ONLY : MCTWorld_init => init
       USE m_MCTWorld, ONLY : MCTWorld_clean => clean
-
-      USE ocean_control_mod, ONLY : ROMS_initialize
-      USE ocean_control_mod, ONLY : ROMS_run
-      USE ocean_control_mod, ONLY : ROMS_finalize
-#ifdef WRF_COUPLING
-      USE ocean_coupler_mod, ONLY : finalize_ocn2atm_coupling
-#endif
-#if defined SWAN_COUPLING || defined REFDIF_COUPLING
-      USE ocean_coupler_mod, ONLY : finalize_ocn2wav_coupling
-#endif
+!
+!  Domain Decomposition Descriptor DataType and associated methods.
+!
+      USE m_GlobalSegMap, ONLY : GlobalSegMap
+      USE m_GlobalSegMap, ONLY : GlobalSegMap_init => init
+      USE m_GlobalSegMap, ONLY : GlobalSegMap_lsize => lsize
+      USE m_GlobalSegMap, ONLY : GlobalSegMap_clean => clean
+      USE m_GlobalSegMap, ONLY : GlobalSegMap_Ordpnts => OrderedPoints
+!
+!  Field Storage DataType and associated methods.
+!
+      USE m_AttrVect, ONLY : AttrVect
+      USE m_AttrVect, ONLY : AttrVect_init => init
+      USE m_AttrVect, ONLY : AttrVect_zero => zero
+      USE m_AttrVect, ONLY : AttrVect_lsize => lsize
+      USE m_AttrVect, ONLY : AttrVect_clean => clean
+      USE m_AttrVect, ONLY : AttrVect_importRAttr => importRAttr
+      USE m_AttrVect, ONLY : AttrVect_exportRAttr => exportRAttr
+!
+!  Intercomponent communications scheduler.
+!
+      USE m_Router, ONLY : Router
+      USE m_Router, ONLY : Router_init => init
+      USE m_Router, ONLY : Router_clean => clean
+!
+!  Intercomponent transfer.
+!
+      USE m_Transfer, ONLY: MCT_Send => send
+      USE m_Transfer, ONLY: MCT_Recv => recv
+!
+!  Sparse Matrix DataType and associated methods.
+!
+      USE m_SparseMatrix, ONLY : SparseMatrix
+      USE m_SparseMatrix, ONLY : SparseMatrix_init => init
+      USE m_SparseMatrix, ONLY : SparseMatrix_importGRowInd =>          &
+     &                           importGlobalRowIndices
+      USE m_SparseMatrix, ONLY : SparseMatrix_importGColInd =>          &
+     &                           importGlobalColumnIndices
+      USE m_SparseMatrix, ONLY : SparseMatrix_importMatrixElts =>       &
+     &                           importMatrixElements
+      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus
+      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus_init => init
+      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus_clean => clean
+!
+!  Decompose matrix by row.
+!
+      USE m_SparseMatrixPlus, ONLY : Xonly
+!
+!  Matrix-Vector multiply methods.
+!
+      USE m_MatAttrVectMul, ONLY : MCT_MatVecMul => sMatAvMult
 !
       implicit none
 !
-!  Local variable declarations.
-!
-      logical, save :: first
+      PRIVATE
 
-      integer :: MyColor, MyCOMM, MyError, MyKey, Nnodes
-      integer :: ng
+# ifdef SWAN_COUPLING
+      PUBLIC :: initialize_ocn2wav_coupling
+      PUBLIC :: ocn2wav_coupling
+      PUBLIC :: finalize_ocn2wav_coupling
+# endif
+# ifdef WRF_COUPLING
+      PUBLIC :: initialize_ocn2atm_coupling
+      PUBLIC :: ocn2atm_coupling
+      PUBLIC :: finalize_ocn2atm_coupling
+# endif
+!
+!  Declarations.
+!
+# ifdef SWAN_COUPLING
+      TYPE(AttrVect) :: wav2ocn_AV            ! AttrVect variables
+      TYPE(AttrVect) :: ocn2wav_AV
+      TYPE(Router)   :: ROMStoSWAN            ! Router variables
+# endif
+# ifdef WRF_COUPLING
+      TYPE(AttrVect) :: atm2ocn_AV            ! AttrVect variables
+      TYPE(AttrVect) :: ocn2atm_AV
+      TYPE(Router)   :: ROMStoWRF             ! Router variables
+# endif
+      TYPE(GlobalSegMap) :: GSMapROMS         ! GloabalSegMap variables
 
-      real(r4) :: CouplingTime             ! single precision
-!
-!-----------------------------------------------------------------------
-!  Initialize distributed-memory (MPI) configuration
-!-----------------------------------------------------------------------
-!
-!  Initialize MPI execution environment.
-!
-      CALL mpi_init (MyError)
-!
-!  Get rank of the local process in the group associated with the
-!  comminicator.
-!
-      CALL mpi_comm_size (MPI_COMM_WORLD, Nnodes, MyError)
-      CALL mpi_comm_rank (MPI_COMM_WORLD, MyRank, MyError)
-!
-!  Set temporarily the ocean communicator to current handle before
-!  splitting so the input coupling script name can be broadcasted to
-!  all the nodes.
-!
-      OCN_COMM_WORLD=MPI_COMM_WORLD
-!
-!  Read in coupled model parameters from standard input.
-!
-      CALL read_CouplePar (iNLM)
-!
-!  Allocate several coupling variables.
-!
-      CALL allocate_coupler (Nnodes)
-!
-!  Split the communicator into coupled models sub-groups based
-!  on color and key.
-!
-      MyKey=0
-      IF ((pets(Iocean)%val(1).le.MyRank).and.                          &
-     &    (MyRank.le.pets(Iocean)%val(Nthreads(Iocean)))) THEN
-        MyColor=OCNid
-      END IF
-#ifdef AIR_OCEAN
-      IF ((pets(Iatmos)%val(1).le.MyRank).and.                          &
-     &    (MyRank.le.pets(Iatmos)%val(Nthreads(Iatmos)))) THEN
-        MyColor=ATMid
-      END IF
-#endif
-#ifdef WAVES_OCEAN
-      IF ((pets(Iwaves)%val(1).le.MyRank).and.                          &
-     &    (MyRank.le.pets(Iwaves)%val(Nthreads(Iwaves)))) THEN
-        MyColor=WAVid
-      END IF
-#endif
-      CALL mpi_comm_split (MPI_COMM_WORLD, MyColor, MyKey, MyCOMM,      &
-     &                     MyError)
-!
-!-----------------------------------------------------------------------
-!  Run coupled models according to the processor rank.
-!-----------------------------------------------------------------------
-!
-#if defined SWAN_COUPLING
-      IF (MyColor.eq.WAVid) THEN
-        CouplingTime=REAL(TimeInterval(Iocean,Iwaves))
-        CALL SWAN_INITIALIZE (MyCOMM, INPname(Iwaves))
-        CALL SWAN_RUN (CouplingTime)
-        CALL SWAN_FINALIZE
-      END IF
-#elif defined REFDIF_COUPLING
-      IF (MyColor.eq.WAVid) THEN
-        CouplingTime=REAL(TimeInterval(Iocean,Iwaves))
-        CALL refdif_initialize (MyCOMM)
-        CALL refdif_run (CouplingTime, INPname(Iwaves))
-        CALL refdif_finalize
-      END IF
-#endif
-#ifdef WRF_COUPLING
-      IF (MyColor.eq.ATMid) THEN
-        CouplingTime=REAL(TimeInterval(Iocean,Iatmos))
-!!      CALL module_wrf_top_mp_wrf_init (MyCOMM)
-!!      CALL module_wrf_top_mp_wrf_run (TimeInterval(Iocean,Iwaves))
-!!      CALL module_wrf_top_mp_wrf_finalize
-        CALL module_wrf_top_wrf_init (MyCOMM)
-        CALL module_wrf_top_wrf_run (CouplingTime)
-        CALL module_wrf_top_wrf_finalize
-      END IF
-#endif
-      IF (MyColor.eq.OCNid) THEN
-        first=.TRUE.
-        IF (exit_flag.eq.NoError) THEN
-          CALL ROMS_initialize (first, mpiCOMM=MyCOMM)
-          run_time=0.0_r8
-          DO ng=1,Ngrids
-            run_time=MAX(run_time, dt(ng)*ntimes(ng))
-          END DO
-        END IF
-        IF (exit_flag.eq.NoError) THEN
-          CALL ROMS_run (run_time)
-        END IF
-        CALL ROMS_finalize
-#if defined SWAN_COUPLING || defined REFDIF_COUPLING
-        CALL finalize_ocn2wav_coupling
-#endif
-#ifdef WRF_COUPLING
-        CALL finalize_ocn2atm_coupling
-#endif
-      END IF
-!
-!-----------------------------------------------------------------------
-!  Terminates all the mpi-processing and coupling.
-!-----------------------------------------------------------------------
-!
-      CALL mpi_barrier (MPI_COMM_WORLD, MyError)
-      CALL MCTWorld_clean ()
-      CALL mpi_finalize (MyError)
+      CONTAINS
+/*
+************************************************************************
+*  Include model specific communication routines.
+************************************************************************
+*/
 
-      STOP
+# ifdef SWAN_COUPLING
+#  include "mct_roms_swan.h"
+# endif
+# ifdef REFDIF_COUPLING
+#  include "mct_roms_refdif.h"
+# endif
+# ifdef WRF_COUPLING
+#  include "mct_roms_wrf.h"
+# endif
 
-      END PROGRAM mct_coupler
+#endif
+      END MODULE ocean_coupler_mod

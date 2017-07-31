@@ -82,8 +82,9 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwrite) WRITE (out,10) version, TRIM(date_str)
- 10   FORMAT (/,' Model Input Parameters:  ROMS/TOMS version ',a,/,     &
-     &       26x,a,/,1x,77('-'))
+ 10   FORMAT (80('-'),/,                                                &
+              ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
+     &        26x,a,/,1x,80('-'))
 
 #ifdef MODEL_COUPLING
 !

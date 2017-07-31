@@ -2277,7 +2277,7 @@
         END IF
       END IF
 #endif
-#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+#if defined TKE_WAVEDISS || defined WAV_COUPLING
 !
 !  Write out wave dissipation.
 !

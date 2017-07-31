@@ -120,7 +120,8 @@
 !
 #   ifdef ANA_CLOUD
       CALL ana_cloud (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idCfra,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%cloudG,                           &
@@ -131,7 +132,7 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || \
+#  if defined BULK_FLUXES || defined ECOSIM  || \
     (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
@@ -140,7 +141,8 @@
 !
 #   ifdef ANA_TAIR
       CALL ana_tair (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idTair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%TairG,                            &
@@ -151,7 +153,7 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || \
+#  if defined BULK_FLUXES || defined ECOSIM   || \
      (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
@@ -160,7 +162,8 @@
 !
 #   ifdef ANA_HUMIDITY
       CALL ana_humid (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idQair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%HairG,                            &
@@ -179,7 +182,8 @@
 !
 #   ifdef ANA_SRFLUX
       CALL ana_srflux (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idSrad,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%srflxG,                           &
@@ -214,7 +218,10 @@
      &               __FILE__)) RETURN
 #  endif
 
-#  if defined BULK_FLUXES && !defined LONGWAVE && !defined LONGWAVE_OUT
+#  if defined BULK_FLUXES     && \
+    !(defined LONGWAVE        || defined LONGWAVE_OUT)    && \
+     ( (defined ATM_COUPLING  && defined COUPLING_INTERP) || \
+       !defined ATM_COUPLING )
 !
 !-----------------------------------------------------------------------
 !  Surface net longwave radiation (degC m/s).
@@ -229,7 +236,9 @@
      &               __FILE__)) RETURN
 #  endif
 
-#  if defined LONGWAVE_OUT && defined BULK_FLUXES
+#  if defined LONGWAVE_OUT   && defined BULK_FLUXES      && \
+     ( (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+       !defined ATM_COUPLING )
 !
 !-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation (degC m/s).
@@ -252,7 +261,8 @@
 !
 #   ifdef ANA_WINDS
       CALL ana_winds (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idUair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%UwindG,                           &
@@ -318,7 +328,8 @@
 !
 #   ifdef ANA_RAIN
       CALL ana_rain (ng, tile, iNLM)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idrain,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%rainG,                            &
@@ -337,7 +348,8 @@
 !
 #   ifdef ANA_STFLUX
       CALL ana_stflux (ng, tile, iNLM, itemp)
-#   else
+#   elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+         !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,itemp),              &
@@ -442,7 +454,10 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-#    elif !(defined EMINUSP || defined SRELAXATION)
+#    elif !(defined EMINUSP      || defined SRELAXATION)     && \
+         ( (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+           !defined ATM_COUPLING )
+
       CALL set_2dfld_tile (ng, tile, iNLM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
@@ -535,16 +550,16 @@
 #  endif
 # endif
 
-# ifndef AIR_OCEAN
-#  ifndef BULK_FLUXES
+# ifndef BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
 !-----------------------------------------------------------------------
 !
-#   ifdef ANA_SMFLUX
+#  ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iNLM)
-#   else
+#  elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+        !defined ATM_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idUsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sustrG,                           &
@@ -561,7 +576,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-#    ifdef CURVGRID
+#   ifdef CURVGRID
 !
 !  If input point wind stress, rotate to curvilinear grid.  Notice
 !  that rotation is done at RHO-points. It does not matter.
@@ -589,22 +604,21 @@
      &                            FORCES(ng)%svstr)
         END IF
 
-#     ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      FORCES(ng)%sustr,                           &
      &                      FORCES(ng)%svstr)
-#     endif
-      END IF
 #    endif
+      END IF
 #   endif
 #  endif
 # endif
 
-# if !defined AIR_OCEAN   && defined FOUR_DVAR      && \
-      defined BULK_FLUXES && defined NL_BULK_FLUXES
+# if !defined ATM_COUPLING && defined FOUR_DVAR      && \
+      defined BULK_FLUXES  && defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  If not first NLM run, set surface wind stress components from first
@@ -638,7 +652,8 @@
 !
 #  ifdef ANA_PAIR
       CALL ana_pair (ng, tile, iNLM)
-#  else
+#  elif (defined ATM_COUPLING && defined COUPLING_INTERP) || \
+        !defined ATM_COUPLING
       SetBC=.TRUE.
 !     SetBC=.FALSE.
       CALL set_2dfld_tile (ng, tile, iNLM, idPair,                      &

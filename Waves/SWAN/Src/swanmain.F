@@ -143,7 +143,7 @@
       USE OUTP_DATA                                                       40.51
       USE M_GENARR                                                        40.31
       USE M_PARALL                                                        40.31
-#ifdef WAVES_OCEAN
+#ifdef WAV_COUPLING
       USE M_PARALL2
       USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_WAV2OCN_COUPLING
 #endif
@@ -531,7 +531,7 @@
              ALLOCATE (OURQT(MAX_OUTP_REQ))
              OURQT = -9999.
           ENDIF
-# ifdef WAVES_OCEAN
+# ifdef WAV_COUPLING
 !
 !         --- initialize MCT coupling
 !
@@ -4713,7 +4713,7 @@
 !
 !     fields 5 and 6: wind
 
-#ifndef AIR_OCEAN
+#ifndef ATM_COUPLING
       IF (IFLDYN(5) .EQ. 1) THEN
         CALL FLFILE ( 5, 6, WXI, WYI,                                     40.31
      &               0, JWX2, JWX3, 0, JWY2, JWY3,

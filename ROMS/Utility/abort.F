@@ -14,7 +14,7 @@
 !=======================================================================
 !
 #ifdef ESMF_LIB
-      USE ESMF_Mod
+      USE ESMF
 #endif
       USE ocean_control_mod, ONLY : ROMS_finalize
 !
@@ -36,7 +36,7 @@
 !
 !  Finalize ESMF and flush buffers.
 !
-      CALL ESMF_Finalize (terminationflag=ESMF_ABORT)
+      CALL ESMF_Finalize (endflag=ESMF_END_ABORT)
 #endif
 !
 !  Stop execution.
