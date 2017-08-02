@@ -41,12 +41,6 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'Mor',                   &
-     &                      Mor(ng), (/0/), (/0/),                      &
-     &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-
       CALL netcdf_put_fvar (ng, model, ncname, 'G_eff',                 &
      &                      G_eff(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
@@ -97,6 +91,30 @@
 
       CALL netcdf_put_fvar (ng, model, ncname, 'wDino',                 &
      &                      wDino(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Mor_a',                 &
+     &                      Mor_a(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Mor_b',                 &
+     &                      Mor_b(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Mor_Q10',               &
+     &                      Mor_Q10(ng), (/0/), (/0/),                  &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Mor_T0',                &
+     &                      Mor_T0(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

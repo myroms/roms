@@ -363,9 +363,10 @@
             END DO
 !
 !  Multiply by endogenous clock factor. The cyst germination are
-!  regulated by an endogenous circannual clock.
+!  regulated by an endogenous circannual clock.  The 100 factor here
+!  is because "Dg" is meters and we need centimeters.
 !
-            Germ(i)=Germ(i)*EndoScale
+            Germ(i)=Germ(i)*Dg(ng)*100.0_r8*EndoScale
 !
 !  Convert percentage cysts/day into decimal fraction of cysts.
 !
@@ -460,14 +461,14 @@
 !-----------------------------------------------------------------------
 !
 !  The mortality is modeled as function dependent on temperature
-!  (implicit).  The simple input mortality rate is not used.
+!  (implicit).  Use a Q10 mortality rate equation.
 !
           DO k=1,N(ng)
             DO i=Istr,Iend
               temp=Bio(i,k,itemp)
-!!            M_rate=Mor(ng)
-              M_rate=0.019_r8+                                          &
-     &               0.066_r8*21.76_r8**((temp-10.35_r8)*0.1_r8)
+              M_rate=Mor_a(ng)*                                         &
+     &               Mor_Q10(ng)**((temp-Mor_T0(ng))*0.1_r8)+           &
+     &               Mor_b(ng)
               Bio(i,k,iDino)=Bio(i,k,iDino)/(1.0_r8+M_rate*dtdays)
             END DO
           END DO
