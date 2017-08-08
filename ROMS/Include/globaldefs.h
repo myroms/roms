@@ -688,7 +688,7 @@
       defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
     ( defined SSH_TIDES    || defined UV_TIDES)      || \
     ( defined BBL_MODEL    && (!defined ANA_WWAVE    && \
-     !defined WAV_COUPLING))                          || \
+     !defined WAV_COUPLING))                         || \
     ( defined SEDIMENT     && !defined ANA_SPFLUX)   || \
     ( defined SEDIMENT     && !defined ANA_BPFLUX)   || \
     ( defined WAVE_DATA    && (!defined ANA_WWAVE    && \
@@ -762,8 +762,7 @@
 #   undef DIAGNOSTICS_TS
 # endif
 #endif
-#if (!defined BIO_FENNEL  && defined DIAGNOSTICS_BIO) || \
-    (!defined HYPOXIA_SRM && defined DIAGNOSTICS_BIO)
+#if defined DIAGNOSTICS_BIO && !(defined BIO_FENNEL || HYPOXIA_SRM)
 #  undef DIAGNOSTICS_BIO
 #endif
 #if defined DIAGNOSTICS_BIO || defined DIAGNOSTICS_TS || \
