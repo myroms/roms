@@ -1611,7 +1611,7 @@
      &   'Add oxygen dynamics.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' OXYGEN,'
-#elseif !defined SURFACE_DO_SATURATION && defined HYPOXIA_SRM
+#elif !defined SURFACE_DO_SATURATION && defined HYPOXIA_SRM
 # ifdef OCMIP_OXYGEN_SC
 !
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
