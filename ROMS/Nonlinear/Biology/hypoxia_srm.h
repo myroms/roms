@@ -94,7 +94,6 @@
      &                   OCEAN(ng) % respiration,                       &
 #ifdef DIAGNOSTICS_BIO
      &                   DIAGS(ng) % DiaBio2d,                          &
-     &                   DIAGS(ng) % DiaBio3d,                          &
 #endif
      &                   OCEAN(ng) % t)
 
@@ -179,7 +178,6 @@
       real(r8), intent(inout) :: repiration(LBi:UBi,LBj:UBj,UBk)
 # ifdef DIAGNOSTICS_BIO
       real(r8), intent(inout) :: DiaBio2d(LBi:UBi,LBj:UBj,NDbio2d)
-      real(r8), intent(inout) :: DiaBio3d(LBi:UBi,LBj:UBj,UBk,NDbio3d)
 # endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
 #endif

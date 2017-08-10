@@ -538,7 +538,7 @@
 !
 !$OMP MASTER
       CALL obs_initial (ng, iADM, .TRUE.)
-!$OMP MASTER
+!$OMP END MASTER
 !$OMP BARRIER
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

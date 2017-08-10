@@ -174,7 +174,6 @@
 !  Set switch to create (TRUE) representer model initial conditions
 !  NetCDF file or append (FALSE) to existing NetCDF files.
 !
-!$OMP MASTER
       IF (Nrun.eq.ERstr) THEN
 #  ifdef ANA_INITIAL
         LdefIRP(ng)=.TRUE.
@@ -207,7 +206,6 @@
       TLM(ng)%Rindex=0
       Fcount=TLM(ng)%Fcount
       TLM(ng)%Nrec(Fcount)=0
-!$OMP END MASTER
 !$OMP BARRIER
 # endif
 !
@@ -502,7 +500,7 @@
 !
 !$OMP MASTER
       CALL obs_initial (ng, iRPM, .FALSE.)
-!$OMP MASTER
+!$OMP END MASTER
 !$OMP BARRIER
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

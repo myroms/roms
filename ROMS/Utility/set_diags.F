@@ -56,7 +56,7 @@
 !***********************************************************************
 !
       USE mod_param
-# if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+# ifdef DIAGNOSTICS_BIO
       USE mod_biology
 # endif
       USE mod_diags
@@ -72,8 +72,7 @@
       USE exchange_2d_mod
 # endif
 # ifdef DISTRIBUTE
-#  if defined WET_DRY         || \
-     (defined DIAGNOSTICS_BIO && defined BIO_FENNEL)
+#  if defined WET_DRY || defined DIAGNOSTICS_BIO
       USE mp_exchange_mod, ONLY : mp_exchange2d
 #  endif
       USE mp_exchange_mod, ONLY : mp_exchange3d
@@ -459,7 +458,8 @@
           END DO
         END DO
 # endif
-# if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+# ifdef DIAGNOSTICS_BIO
+#  if defined BIO_FENNEL || defined HYPOXIA_SRM
         DO idiag=1,NDbio2d
           IF (idiag.ne.ipCO2) THEN
             DO j=JstrR,JendR
@@ -470,6 +470,8 @@
             END DO
           END IF
         END DO
+#  endif
+#  if defined BIO_FENNEL
         DO idiag=1,NDbio3d
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -480,6 +482,7 @@
             END DO
           END DO
         END DO
+#  endif
 # endif
 # ifdef DIAGNOSTICS_UV
         DO idiag=1,NDM2d
@@ -517,7 +520,7 @@
 # endif
 
 # if defined DIAGNOSTICS_TS  || defined DIAGNOSTICS_UV || \
-    (defined DIAGNOSTICS_BIO && defined BIO_FENNEL)
+     defined DIAGNOSTICS_BIO
 !
 !-----------------------------------------------------------------------
 !  Apply periodic or gradient boundary conditions for output purposes.
@@ -584,7 +587,8 @@
 #    endif
 #   endif
 #  endif
-#  if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+#  ifdef DIAGNOSTICS_BIO
+#   if defined BIO_FENNEL || defined HYPOXIA_SRM
 !
 !  Biological terms 2D diagnostics.
 !
@@ -593,13 +597,15 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      DIAGS(ng)%DiaBio2d(:,:,idiag))
         END DO
-#   ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, iNLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, NDbio2d,             &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      DIAGS(ng)%DiaBio2d)
+#    endif
 #   endif
+#   if defined BIO_FENNEL
 !
 !  Biological terms 3D diagnostics.
 !
@@ -608,12 +614,13 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      DIAGS(ng)%DiaBio3d(:,:,:,idiag))
         END DO
-#   ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange4d (ng, tile, iNLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDbio3d,   &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      DIAGS(ng)%DiaBio3d)
+#    endif
 #   endif
 #  endif
 # endif

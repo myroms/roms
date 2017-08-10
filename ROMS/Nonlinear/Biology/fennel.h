@@ -52,11 +52,11 @@
 !  used, in addition to "OXYGEN",  the Schmidt number of oxygen in     !
 !  seawater will be  computed  using the  formulation  proposed by     !
 !  Keeling et al. (1998, Global Biogeochem. Cycles,  12, 141-163).     !
-!  Otherwise, the Wanninkhof's (1992) formula will be used.            !
+!  Otherwise, the Wanninkhof^s (1992) formula will be used.            !
 !                                                                      !
 !  References:                                                         !
 !                                                                      !
-!    Fennel, K., Wilkin, J., Levin, J., Moisan, J., O'Reilly, J.,      !
+!    Fennel, K., Wilkin, J., Levin, J., Moisan, J., O^Reilly, J.,      !
 !      Haidvogel, D., 2006: Nitrogen cycling in the Mid Atlantic       !
 !      Bight and implications for the North Atlantic nitrogen          !
 !      budget: Results from a three-dimensional model.  Global         !

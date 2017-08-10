@@ -191,8 +191,6 @@
 !  If variational data assimilation, reset several IO switches and
 !  variables.
 !-----------------------------------------------------------------------
-!
-!$OMP MASTER
 
 #  ifndef IS4DVAR_SENSITIVITY
 #   ifdef IS4DVAR
@@ -264,7 +262,6 @@
 #    endif
 #   endif
 #  endif
-!$OMP END MASTER
 !$OMP BARRIER
 # endif
 !
@@ -613,7 +610,7 @@
 !
 !$OMP MASTER
       CALL obs_initial (ng, iTLM, .FALSE.)
-!$OMP MASTER
+!$OMP END MASTER
 !$OMP BARRIER
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
