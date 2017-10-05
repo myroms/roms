@@ -72,15 +72,28 @@
      &               __FILE__)) RETURN
       ncname=GRD(ng)%name
 !
-!  Check grid file dimensions for consitency
+!  Open grid NetCDF file for reading.
 !
-      CALL netcdf_check_dim (ng, model, ncname)
+      IF (GRD(ng)%ncid.eq.-1) THEN
+        CALL netcdf_open (ng, model, ncname, 0, GRD(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
+        END IF
+      END IF
+!
+!  Check grid file dimensions for consitency.
+!
+      CALL netcdf_check_dim (ng, model, ncname,                         &
+     &                       ncid = GRD(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, ncname)
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     ncid = GRD(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -102,84 +115,84 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.find_string(var_name,n_var,'xl',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'xl', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'xl', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'el',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'el', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'el', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'spherical',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'spherical', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'spherical', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'h',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'h', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'h', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # ifdef ICESHELF
       IF (.not.find_string(var_name,n_var,'zice',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'zice', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'zice', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
       IF (.not.find_string(var_name,n_var,'f',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'f', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'f', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'pm',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'pm', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'pm', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'pn',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'pn', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'pn', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # if (defined CURVGRID && defined UV_ADV)
       IF (.not.find_string(var_name,n_var,'dndx',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'dndx', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'dndx', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'dmde',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'dmde', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'dmde', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
 # ifdef CURVGRID
       IF (.not.find_string(var_name,n_var,'angle',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'angle', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'angle', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
 # ifdef MASKING
       IF (.not.find_string(var_name,n_var,'mask_rho',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'mask_rho', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'mask_u',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'mask_u', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'mask_v',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'mask_v', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'mask_psi',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'mask_psi', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'mask_psi', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -188,7 +201,7 @@
     (defined LMD_SKPP   || defined SOLAR_SOURCE) && \
     !defined ANA_WTYPE
       IF (.not.find_string(var_name,n_var,'wtype_grid',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'wtype_grid', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'wtype_grid', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -196,7 +209,7 @@
 # ifndef ANA_SPONGE
       IF (LuvSponge(ng)) THEN
         IF (.not.find_string(var_name,n_var,'visc_factor',vindex)) THEN
-          IF (Master) WRITE (stdout,10) 'visc_factor', TRIM(ncname)
+          IF (Master) WRITE (stdout,20) 'visc_factor', TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
@@ -204,7 +217,7 @@
 #  ifdef SOLVE3D
       IF (ANY(LtracerSponge(:,ng))) THEN
         IF (.not.find_string(var_name,n_var,'diff_factor',vindex)) THEN
-          IF (Master) WRITE (stdout,10) 'diff_factor', TRIM(ncname)
+          IF (Master) WRITE (stdout,20) 'diff_factor', TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
@@ -215,7 +228,7 @@
 #  ifdef UV_LOGDRAG
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idZoBL)),        &
      &                     varid_ZoBL)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idZoBL)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idZoBL)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
@@ -224,7 +237,7 @@
 #  ifdef UV_LDRAG
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idragL)),        &
      &                     varid_dragL)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragL)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idragL)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
@@ -233,24 +246,13 @@
 #  ifdef UV_QDRAG
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idragQ)),        &
      &                     varid_dragQ)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragQ)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idragQ)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 #  endif
 # endif
-!
-!  Open grid NetCDF file for reading.
-!
-      IF (GRD(ng)%ncid.eq.-1) THEN
-        CALL netcdf_open (ng, model, ncname, 0, GRD(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,20) TRIM(ncname)
-          RETURN
-        END IF
-      END IF
 !
 !  Read in logical switch for spherical grid configuration.
 !
@@ -1717,15 +1719,28 @@
 !
       ncname=ADS(ng)%name
 !
+!  Open adjoint sensitivity NetCDF file for reading.
+!
+      IF (GotScope(4).and.(ADS(ng)%ncid.eq.-1)) THEN
+        CALL netcdf_open (ng, model, ncname, 0, ADS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,10) TRIM(ncname)
+          RETURN
+        END IF
+      END IF
+!
 !  Check grid file dimensions for consitency
 !
-      CALL netcdf_check_dim (ng, model, ncname)
+      CALL netcdf_check_dim (ng, model, ncname,                         &
+     &                       ncid = ADS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, ncname)
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     ncid = ADS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -1736,17 +1751,17 @@
       GotScope(6)=find_string(var_name,n_var,'scope_v',vindex)
 !
       IF ((.not.GotScope(1)).and.(.not.GotScope(4))) THEN
-        IF (Master) WRITE (stdout,10) 'scope_rho', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'scope_rho', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF ((.not.GotScope(2)).and.(.not.GotScope(5))) THEN
-        IF (Master) WRITE (stdout,10) 'scope_u', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'scope_u', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF ((.not.GotScope(3)).and.(.not.GotScope(6))) THEN
-        IF (Master) WRITE (stdout,10) 'scope_v', TRIM(ncname)
+        IF (Master) WRITE (stdout,20) 'scope_v', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -1755,17 +1770,6 @@
           WRITE (stdout,40) TRIM(ADS(ng)%name)
         ELSE
           WRITE (stdout,40) TRIM(GRD(ng)%name)
-        END IF
-      END IF
-!
-!  Open adjoint sensitivity NetCDF file for reading.
-!
-      IF (GotScope(4).and.(ADS(ng)%ncid.eq.-1)) THEN
-        CALL netcdf_open (ng, model, ncname, 0, ADS(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,20) TRIM(ncname)
-          RETURN
         END IF
       END IF
 !
@@ -1879,9 +1883,9 @@
       END IF
 # endif
 !
-  10  FORMAT (/,' GET_GRID - unable to find grid variable: ',a,         &
+  10  FORMAT (/,' GET_GRID - unable to open grid NetCDF file: ',a)
+  20  FORMAT (/,' GET_GRID - unable to find grid variable: ',a,         &
      &        /,12x,'in grid NetCDF file: ',a)
-  20  FORMAT (/,' GET_GRID - unable to open grid NetCDF file: ',a)
   30  FORMAT (/,' GET_GRID - error while reading variable: ',a,         &
      &        /,12x,'in grid NetCDF file: ',a)
   40  FORMAT (/,' GET_GRID - Reading adjoint sensitivity scope arrays', &

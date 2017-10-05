@@ -96,7 +96,8 @@
 !
 !  Inquire about input observations variables.
 !
-      CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name)
+      CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                      &
+     &                     ncid = OBS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !

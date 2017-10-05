@@ -1097,18 +1097,6 @@
       QUERY : IF (.not.ldef) THEN
         ncname=ADM(ng)%name
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, iADM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, iADM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open adjoint file for read/write.
 !
         CALL netcdf_open (ng, iADM, ncname, 1, ADM(ng)%ncid)
@@ -1117,6 +1105,20 @@
           WRITE (stdout,60) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, iADM, ncname,                        &
+     &                         ncid = ADM(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iADM, ncname,                          &
+     &                       ncid = ADM(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

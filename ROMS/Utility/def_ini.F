@@ -82,15 +82,26 @@
      &               __FILE__)) RETURN
       ncname=INI(ng)%name
 !
+!  Open initialization file for read/write.
+!
+      CALL netcdf_open (ng, iNLM, ncname, 1, INI(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) THEN
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        RETURN
+      END IF
+!
 !  Inquire about the dimensions and check for consistency.
 !
-      CALL netcdf_check_dim (ng, iNLM, ncname)
+      CALL netcdf_check_dim (ng, iNLM, ncname,                          &
+     &                       ncid = INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, iNLM, ncname)
+      CALL netcdf_inq_var (ng, iNLM, ncname,                            &
+     &                     ncid = INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -179,15 +190,6 @@
         END IF
       END DO
 #  endif
-!
-!  Open initialization file for read/write.
-!
-      CALL netcdf_open (ng, iNLM, ncname, 1, INI(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(ncname)
-        RETURN
-      END IF
 !
 !  Put existing file into define mode so new variables can be added.
 !
@@ -540,18 +542,6 @@
 
 # if !(defined ADJUST_STFLUX || defined ADJUST_WSTRESS)
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, iNLM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, iNLM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open initialization file for read/write.
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, INI(ng)%ncid)
@@ -560,6 +550,20 @@
           WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, iNLM, ncname,                        &
+     &                         ncid = INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iNLM, ncname,                          &
+     &                       ncid = INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

@@ -611,6 +611,20 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' BODYFORCE,'
 #endif
+#ifdef DISTRIBUTE
+# if defined BOUNDARY_ALLGATHER
+!
+      IF (Master) WRITE (stdout,20) 'BOUNDARY_ALLGATHER',               &
+     &   'Using mpi_allgather in mp_boundary routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' BOUNDARY_ALLGATHER,'
+# else
+      IF (Master) WRITE (stdout,20) '!BOUNDARY_ALLGATHER',               &
+     &   'Using mpi_allreduce in mp_boundary routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' !BOUNDARY_ALLGATHER,'
+# endif
+#endif
 #ifdef BULK_FLUXES
 !
       IF (Master) WRITE (stdout,20) 'BULK_FLUXES',                      &
@@ -1796,9 +1810,30 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' RECOMPUTE_4DVAR,'
 #endif
+#if defined DISTRIBUTE
+# if defined REDUCE_ALLGATHER
+!
+      IF (Master) WRITE (stdout,20) 'REDUCE_ALLGATHER',                 &
+     &   'Using mpi_allgather in mp_reduce routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' REDUCE_ALLGATHER,'
+# elif defined REDUCE_ALLREDUCE
+!
+      IF (Master) WRITE (stdout,20) 'REDUCE_ALLREDUCE',                 &
+     &   'Using mpi_allreduce in mp_reduce routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' REDUCE_ALLREDUCE,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!REDUCE_ALL...',                   &
+     &   'Using mpi_isend/mpi_recv in mp_reduce routine.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' !REDUCE_ALL...,'
+# endif
+#endif
 #ifdef REGCM_COUPLING
 !
-      IF (Master) WRITE (stdout,20) 'COAMPS_COUPLING',                   &
+      IF (Master) WRITE (stdout,20) 'COAMPS_COUPLING',                  &
      &   'Atmosphere coupling with RegCM.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' REGCM_COUPLING,'

@@ -288,7 +288,7 @@
           END IF
           IF (.not.allocated(wrk)) THEN
             allocate ( wrk(Npts) )
-            wrk=0.0_r8
+            wrk=IniVal
           END IF
         ELSE
           IF (.not.allocated(wrk)) THEN
@@ -349,6 +349,7 @@
 !  model array.
 !
           IF (interpolate) THEN
+            CALL mp_collect (ng, model, Npts, IniVal, wrk)
             ic=0
             DO j=Jstr,Jend
               DO i=Istr,Iend
@@ -356,7 +357,6 @@
                 Awrk(i,j)=wrk(ic)
               END DO
             END DO
-            CALL mp_collect (ng, model, Npts, IniVal, Awrk)
           ELSE
             ic=0
             DO j=Jmin,Jmax

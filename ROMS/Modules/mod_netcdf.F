@@ -134,8 +134,7 @@
 !  in "netcdf_create" using the IOR function to include additional
 !  flags, like "nf90_clobber" to overwrite existing file.
 !
-#if defined HDF5
-!     integer :: CMODE = nf90_hdf5         ! NetCDF-4/HDF5 format file
+#if defined HDF5 || defined PARALLEL_IO
       integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
 #else
       integer :: CMODE = nf90_64bit_offset ! NetCDF 64-bit offset format
@@ -160,6 +159,10 @@
 !  variables: each node in the group reads/writes their own tile
 !  data when parallel I/O is activated.
 !
+!  New versions of the NetCDF4/HDF5 libraries require that all
+!  variables with unlimited dimension collective I/O access including
+!  scalar variables like "ocean_time".
+!
 !  It is more efficient to use collective access for both non-tiled
 !  and tiled variables.
 !
@@ -170,17 +173,14 @@
 !            nf_independent = 0,    nf90_independent = 0
 !            nf_collective  = 1,    nf90_collective  = 1
 !
-!!    integer, parameter :: IO_nontiled_access = 0   ! nf90_independent
-!!    integer, parameter :: IO_tiled_access    = 1   ! nf90_independent
-!!
       integer, parameter :: IO_nontiled_access = nf90_independent
       integer, parameter :: IO_tiled_access    = nf90_collective
 #endif
 !
       CONTAINS
 !
-      SUBROUTINE netcdf_get_dim (ng, model, ncname, DimName, DimSize,   &
-     &                           DimID)
+      SUBROUTINE netcdf_get_dim (ng, model, ncname, ncid, DimName,      &
+     &                           DimSize, DimID)
 !
 !=======================================================================
 !                                                                      !
@@ -195,6 +195,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     DimName      Requested dimension name (string, OPTIONAL)         !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -230,6 +231,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
+      integer, intent(in), optional :: ncid
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in), optional :: DimName
@@ -241,7 +243,7 @@
 !
       logical :: foundit
 
-      integer :: ncid, i, j, status
+      integer :: my_ncid, i, j, status
       integer :: myID, myValue
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
@@ -269,19 +271,23 @@
 !
 !  Open file for reading.
 !
-      CALL netcdf_open (ng, model, TRIM(ncname), 0, ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__ //                                        &
-     &               ", netcdf_get_dim")) RETURN
+      IF (.not.PRESENT(ncid)) THEN
+         CALL netcdf_open (ng, model, TRIM(ncname), 0, my_ncid)
+         IF (FoundError(exit_flag, NoError, __LINE__,                   &
+     &                  __FILE__ //                                     &
+     &                  ", netcdf_get_dim")) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
 !
 !  Inquire file.
 !
       IF (InpThread) THEN
 #ifdef HDF5
-        status=nf90_inquire(ncid, n_dim, n_var, n_gatt, rec_id,         &
+        status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id,      &
      &                      ncformat)
 #else
-        status=nf90_inquire(ncid, n_dim, n_var, n_gatt, rec_id)
+        status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id)
         ncformat=-1
 #endif
         IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN
@@ -297,7 +303,7 @@
           rec_size=-1
           DO i=1,n_dim
             dim_id(i)=i
-            status=nf90_inquire_dimension(ncid, dim_id(i),              &
+            status=nf90_inquire_dimension(my_ncid, dim_id(i),           &
      &                                    dim_name(i), dim_size(i))
             IF (FoundError(status, nf90_noerr, __LINE__,                &
      &                     __FILE__ //                                  &
@@ -378,7 +384,9 @@
 !
 !  Close input NetCDF file.
 !
-      CALL netcdf_close (ng, model, ncid, ncname, .FALSE.)
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
+      END IF
 !
   10  FORMAT (/,' NETCDF_GET_DIM - error while reading dimension ID:',  &
      &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
@@ -392,7 +400,7 @@
       RETURN
       END SUBROUTINE netcdf_get_dim
 
-      SUBROUTINE netcdf_check_dim (ng, model, ncname)
+      SUBROUTINE netcdf_check_dim (ng, model, ncname, ncid)
 !
 !=======================================================================
 !                                                                      !
@@ -406,6 +414,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !                                                                      !
 !  On output the following information is stored in this module:       !
 !                                                                      !
@@ -432,18 +441,24 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
+      integer, intent(in), optional :: ncid
 
       character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
 !
-      integer :: ncid, i, status
+      integer :: i, status
 !
 !-----------------------------------------------------------------------
 !  Inquire about the NetCDF dimensions (names and values).
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_get_dim (ng, model, ncname)
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_get_dim (ng, model, ncname)
+      ELSE
+        CALL netcdf_get_dim (ng, model, ncname,                         &
+     &                       ncid = ncid)
+      END IF
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__ //                                        &
      &               ", netcdf_check_dim")) RETURN
@@ -574,7 +589,7 @@
       RETURN
       END SUBROUTINE netcdf_check_dim
 
-      SUBROUTINE netcdf_check_var (ng, model, ncname)
+      SUBROUTINE netcdf_check_var (ng, model, ncname, ncid)
 !
 !=======================================================================
 !                                                                      !
@@ -588,6 +603,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !                                                                      !
 !  On output the following information is stored in this module:       !
 !                                                                      !
@@ -621,12 +637,13 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
+      integer, intent(in), optional :: ncid
 
       character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
 !
-      integer :: IDmod, Npts, i, ib, ic, j, j1, j2, ncid, status
+      integer :: IDmod, Npts, i, ib, ic, j, j1, j2, status
       integer :: IvarS
 
       real(r8), parameter :: RoundOff = 1.0e-7_r8
@@ -650,7 +667,12 @@
 !
 ! Inquire about all variables.
 !
-      CALL netcdf_inq_var (ng, IDmod, ncname)
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_inq_var (ng, IDmod, ncname)
+      ELSE
+        CALL netcdf_inq_var (ng, IDmod, ncname,                         &
+     &                       ncid = ncid)
+      END IF
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__ //                                        &
      &               ", netcdf_check_var")) RETURN
@@ -664,8 +686,14 @@
 
 #ifdef SOLVE3D
           CASE ('Vtransform')
-            CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),       &
-     &                            IvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),     &
+     &                              IvarS)
+            ELSE
+              CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),     &
+     &                              IvarS,                              &
+     &                              ncid = ncid)
+            END IF
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__ //                                  &
      &                     ", netcdf_check_var")) RETURN
@@ -678,8 +706,15 @@
               EXIT
             END IF
           CASE ('Vstretching')
-            CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),       &
-     &                            IvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),     &
+     &                              IvarS)
+            ELSE
+              CALL netcdf_get_ivar (ng, IDmod, ncname, var_name(i),     &
+     &                              IvarS,                              &
+     &                              ncid = ncid)
+            END IF
+
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__ //                                  &
      &                     ", netcdf_check_var")) RETURN
@@ -692,8 +727,15 @@
               EXIT
             END IF
           CASE ('hc')
-            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
-     &                            FvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+            ELSE
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS,                              &
+     &                              ncid = ncid)
+            END IF
+
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__ //                                  &
      &                     ", netcdf_check_var")) RETURN
@@ -706,8 +748,18 @@
               EXIT
             END IF
           CASE ('theta_s')
-            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
-     &                            FvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+            ELSE
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS,                              &
+     &                              ncid = ncid)
+            END IF
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__ //                                  &
+     &                     ", netcdf_check_var")) RETURN
+
             IF (ABS(theta_s(ng)-FvarS).gt.RoundOff) THEN
               IF (Master) WRITE (stdout,20) TRIM(var_name(i)),          &
      &                                      FvarS, theta_s(ng),         &
@@ -716,8 +768,14 @@
               EXIT
             END IF
           CASE ('theta_b')
-            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
-     &                            FvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+            ELSE
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS,                              &
+     &                              ncid = ncid)
+            END IF
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__ //                                  &
      &                     ", netcdf_check_var")) RETURN
@@ -730,8 +788,14 @@
               EXIT
             END IF
           CASE ('Tcline')
-            CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),       &
-     &                            FvarS)
+            IF (.not.PRESENT(ncid)) THEN
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS)
+            ELSE
+              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
+     &                              FvarS,                              &
+     &                              ncid = ncid)
+            END IF
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__ //                                  &
      &                     ", netcdf_check_var")) RETURN
@@ -763,8 +827,14 @@
               ELSE                   ! Backward compatability logic
                 VarVal=Hgamma(1)     ! for a single Hgamma value
               END IF
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -780,8 +850,14 @@
 # ifdef WEAK_CONSTRAINT
           CASE ('HgammaM')
             IF (model.eq.5) THEN
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -798,8 +874,14 @@
 # ifdef ADJUST_BOUNDARY
           CASE ('HgammaB')
             IF (model.eq.10) THEN
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -816,8 +898,14 @@
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
           CASE ('HgammaF')
             IF (model.eq.11) THEN
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -845,8 +933,14 @@
               ELSE                   ! Backward compatability logic
                 VarVal=Vgamma(1)     ! for a single Vgamma value
               END IF
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -862,8 +956,14 @@
 #  ifdef WEAK_CONSTRAINT
           CASE ('VgammaM')
             IF (model.eq.5) THEN
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -880,8 +980,14 @@
 #  ifdef ADJUST_BOUNDARY
           CASE ('VgammaB')
             IF (model.eq.5) THEN
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarS)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS)
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarS,                            &
+     &                                ncid = ncid)
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -899,9 +1005,17 @@
           CASE ('Hdecay')
             IF ((model.eq.5).or.(model.eq.11)) THEN
               Npts=UBOUND(Hdecay,DIM=2)
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1/), total = (/Npts/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
+
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -939,9 +1053,16 @@
           CASE ('Vdecay')
             IF ((model.eq.5).or.(model.eq.11)) THEN
               Npts=UBOUND(Vdecay,DIM=2)
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1/), total = (/Npts/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -972,9 +1093,16 @@
           CASE ('HdecayM')
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
               Npts=UBOUND(Hdecay,DIM=2)
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1/), total = (/Npts/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -1002,9 +1130,16 @@
           CASE ('VdecayM')
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
               Npts=UBOUND(Vdecay,DIM=2)
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1/), total = (/Npts/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -1035,9 +1170,18 @@
 #  else
               Npts=3
 #  endif
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1,1/), total = (/Npts,4/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1,1/),                  &
+     &                                total = (/Npts,4/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1,1/),                  &
+     &                                total = (/Npts,4/))
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -1070,9 +1214,18 @@
           CASE ('VdecayB')
             IF (model.eq.10) THEN
               Npts=isTvar(NT(ng))
-              CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),     &
-     &                              FvarV,                              &
-     &                              start = (/1,1/), total = (/Npts,4/))
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1,1/),                  &
+     &                                total = (/Npts,4/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1,1/),                  &
+     &                                total = (/Npts,4/))
+              END IF
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__ //                                &
      &                       ", netcdf_check_var")) RETURN
@@ -6178,8 +6331,8 @@
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
 !
-      my_cmode=IOR(nf90_mpiio, nf90_clobber)
-      my_cmode=IOR(my_cmode, CMODE)
+      my_cmode=IOR(CMODE, nf90_mpiio)
+      my_cmode=IOR(my_cmode, nf90_clobber)
       status=nf90_create(path = TRIM(ncname),                           &
      &                   cmode = my_cmode,                              &
      &                   ncid = ncid,                                   &
@@ -6362,29 +6515,35 @@
 #if defined PARALLEL_IO && defined DISTRIBUTE
       SELECT CASE (omode)
         CASE (0)
-!!        status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
-!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+# ifdef NF_OPEN_SERIAL
+          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+# else
           status=nf90_open(path = TRIM(ncname),                         &
-     &                     mode = nf90_nowrite,                         &
+     &                     mode = IOR(nf90_nowrite, nf90_mpiio),        &
      &                     ncid = ncid,                                 &
      &                     comm = OCN_COMM_WORLD,                       &
      &                     info = MP_INFO)
+# endif
         CASE (1)
-!!        status=nf90_open_par(TRIM(ncname), nf90_write,                &
-!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+# ifdef NF_OPEN_SERIAL
+          status=nf90_open(TRIM(ncname), nf90_write, ncid)
+# else
           status=nf90_open(path = TRIM(ncname),                         &
-     &                     mode = nf90_write,                           &
+     &                     mode = IOR(nf90_write, nf90_mpiio),          &
      &                     ncid = ncid,                                 &
      &                     comm = OCN_COMM_WORLD,                       &
      &                     info = MP_INFO)
+# endif
         CASE DEFAULT
-!!        status=nf90_open_par(TRIM(ncname), nf90_nowrite,              &
-!!   &                         OCN_COMM_WORLD, MP_INFO, ncid)
+# ifdef NF_OPEN_SERIAL
+          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+# else
           status=nf90_open(path = TRIM(ncname),                         &
-     &                     mode = nf90_nowrite,                         &
+     &                     mode = IOR(nf90_nowrite, nf90_mpiio),        &
      &                     ncid = ncid,                                 &
      &                     comm = OCN_COMM_WORLD,                       &
      &                     info = MP_INFO)
+# endif
       END SELECT
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__ //                                        &

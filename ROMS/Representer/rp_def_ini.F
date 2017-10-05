@@ -82,15 +82,26 @@
      &               __FILE__)) RETURN
       ncname=IRP(ng)%name
 !
+!  Open representer model initialization file for read/write.
+!
+      CALL netcdf_open (ng, iRPM, ncname, 1, IRP(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) THEN
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        RETURN
+      END IF
+!
 !  Inquire about the dimensions and check for consistency.
 !
-      CALL netcdf_check_dim (ng, iRPM, ncname)
+      CALL netcdf_check_dim (ng, iRPM, ncname,                          &
+     &                       ncid = IRP(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, iRPM, ncname)
+      CALL netcdf_inq_var (ng, iRPM, ncname,                            &
+     &                     ncid = IRP(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -179,15 +190,6 @@
         END IF
       END DO
 #  endif
-!
-!  Open representer model initialization file for read/write.
-!
-      CALL netcdf_open (ng, iRPM, ncname, 1, IRP(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(ncname)
-        RETURN
-      END IF
 !
 !  Put existing file into define mode so new variables can be added.
 !
@@ -540,18 +542,6 @@
 
 # if !(defined ADJUST_STFLUX || defined ADJUST_WSTRESS)
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, iRPM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, iRPM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open representer model initialization file for read/write.
 !
         CALL netcdf_open (ng, iRPM, TRIM(ncname), 1, IRP(ng)%ncid)
@@ -560,6 +550,20 @@
           WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, iRPM, ncname,                        &
+     &                         ncid = IRP(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iRPM, ncname,                          &
+     &                         ncid = IRP(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

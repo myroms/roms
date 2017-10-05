@@ -385,7 +385,7 @@
         status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                    &
      &                 NRM(ifile,ng)%Vid(idtime),                       &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -754,18 +754,6 @@
       QUERY : IF (.not.LdefNRM(ifile,ng)) THEN
         ncname=NRM(ifile,ng)%name
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, model, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, model, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open normalization file for read/write.
 !
         CALL netcdf_open (ng, model, ncname, 1, NRM(ifile,ng)%ncid)
@@ -774,6 +762,20 @@
           WRITE (stdout,40) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, model, ncname,                       &
+     &                         ncid = NRM(ifile,ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, model, ncname,                         &
+     &                       ncid = NRM(ifile,ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

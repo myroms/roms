@@ -48,6 +48,17 @@
 #endif
 
 /*
+** Make sure that either "mpi_allgather" or "mpi_allreduce" is used
+** in mp_reduce.  Low-level routines give an error.
+*/
+
+#ifdef DISTRIBUTE
+# if !(defined REDUCE_ALLGATHER || defined REDUCE_ALLREDUCE)
+#  define REDUCE_ALLGATHER
+# endif
+#endif
+
+/*
 ** Turn ON/OFF time profiling.
 */
 

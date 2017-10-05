@@ -54,9 +54,19 @@
 !
       QUERY : IF (OBS(ng)%ncid.eq.-1) THEN
 !
+!  Open observations NetCDF file.
+!
+        CALL netcdf_open (ng, model, OBS(ng)%name, 1, OBS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,10) TRIM(OBS(ng)%name)
+          RETURN
+        END IF
+!
 !  Inquire about the variables.
 !
-        CALL netcdf_inq_var (ng, model, OBS(ng)%name)
+        CALL netcdf_inq_var (ng, model, OBS(ng)%name,                   &
+     &                       OBS(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -113,85 +123,75 @@
 !  Check if needed obsrvation variables are available.
 !
         IF (.not.got_var(idOday)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idOday)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOday)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idNobs)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idNobs)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idNobs)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOtyp)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idOtyp)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOtyp)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsT)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idObsT)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsT)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idObsD)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idObsD)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsD)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idObsX)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idObsX)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsX)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsY)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idObsY)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsY)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idObsZ)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idObsZ)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsZ)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idOvar)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idOvar)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOvar)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOerr)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idOerr)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOerr)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOval)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idOval)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOval)),          &
      &                                  TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
-!
-!  Open observations NetCDF file.
-!
-        CALL netcdf_open (ng, model, OBS(ng)%name, 1, OBS(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,20) TRIM(OBS(ng)%name)
-          RETURN
-        END IF
-
       END IF QUERY
 !
 !-----------------------------------------------------------------------
@@ -297,9 +297,9 @@
       END DO
 # endif
 !
+  20  FORMAT (/,' OBS_INITIAL - unable to open input NetCDF file: ',a)
   10  FORMAT (/,' OBS_INITIAL - unable to find model variable: ',a,     &
      &        /,12x,'in input NetCDF file: ',a)
-  20  FORMAT (/,' OBS_INITIAL - unable to open input NetCDF file: ',a)
   30  FORMAT (/,' OBS_INITIAL - No are observations available for',     &
      &          ' time window (days): ',/,12x,f12.4,' - ',f12.4,/)
       RETURN

@@ -114,7 +114,8 @@
 !
 !  Inquire about input observations variables.
 !
-      CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid)
+      CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                      &
+     &                     ncid = OBSncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -1035,7 +1036,8 @@
 !  Observations survey time.
 !
         IF (find_string(var_name,n_var,Vname(1,idOday),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOday)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1060,7 +1062,8 @@
 !  Observation type.
 !
         IF (find_string(var_name,n_var,Vname(1,idOtyp),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOTyp)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1103,7 +1106,8 @@
 !  Observations provenance.
 !
         IF (find_string(var_name,n_var,Vname(1,idOpro),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOpro)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1148,7 +1152,8 @@
 !  Observations time.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsT),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsT)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1174,6 +1179,7 @@
 !
         IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
           CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOlon)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1197,6 +1203,7 @@
 !
         IF (find_string(var_name,n_var,Vname(1,idOlat),vindex)) THEN
           CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOlat)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1220,6 +1227,7 @@
 !
         IF (find_string(var_name,n_var,Vname(1,idObsD),vindex)) THEN
           CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsD)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1246,7 +1254,8 @@
 !  Observations X-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsX),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsX)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1267,7 +1276,8 @@
 !  Observations Y-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsY),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsY)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1288,7 +1298,8 @@
 !  Observations Z-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsZ),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsZ)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1309,7 +1320,8 @@
 !  Observations total error (instrument + sampling + representation).
 !
         IF (find_string(var_name,n_var,Vname(1,idOerr),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOerr)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1330,7 +1342,8 @@
 !  Observations value.
 !
         IF (find_string(var_name,n_var,Vname(1,idOval),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name, OBSncid,         &
+          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+     &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOval)),       &
      &                         nVarDim = nvdim,                         &
      &                         nVarAtt = nvatt)
@@ -1480,7 +1493,7 @@
         Vinfo( 2)='tangent linear model misfit cost function'
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
@@ -1492,7 +1505,7 @@
         Vinfo( 2)='model minus background misfit cost function'
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
@@ -1505,7 +1518,7 @@
         Vinfo( 2)='normalized, optimal cost function minimum'
         status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
      &                 1, (/iterDim/), Aval, Vinfo, ncname,             &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
@@ -1747,18 +1760,6 @@
       QUERY : IF (.not.LdefMOD(ng)) THEN
         ncname=DAV(ng)%name
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, iNLM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, iNLM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open model/observation for read/write.
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, DAV(ng)%ncid)
@@ -1767,6 +1768,20 @@
           WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, iNLM, ncname,                        &
+     &                         ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iNLM, ncname,                          &
+     &                       ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

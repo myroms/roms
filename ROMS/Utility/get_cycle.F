@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       SUBROUTINE get_cycle (ng, model, ifield, job, Lmulti,             &
-     &                      ncname, TvarName, ntime, smday,             &
+     &                      ncname, ncid, TvarName, ntime, smday,       &
      &                      Tid, Lcycle, clength, Tindex,               &
      &                      Tstr, Tend, Tmin, Tmax, Tscale)
 !
@@ -25,6 +25,7 @@
 !     Lmulti     Switch to process a multi-file field. That is, the    !
 !                  time records are split in several NetCDF files.     !
 !     ncname     NetCDF file name (string)                             !
+!     ncid       NetCDF file ID (integer)
 !     TvarName   Requested time variable name (string)                 !
 !     ntime      Size of time dimension (integer)                      !
 !     smday      Starting model day (real)                             !
@@ -59,7 +60,7 @@
       logical, intent(in) :: Lmulti
       logical, intent(out) :: Lcycle
 
-      integer, intent(in) :: ng, model, ifield, job, ntime
+      integer, intent(in) :: ng, model, ifield, job, ncid, ntime
 
       integer, intent(out) :: Tindex, Tid
 
@@ -108,6 +109,7 @@
 !
       IF (ntime.ge.1) THEN
         CALL netcdf_inq_var (ng, model, ncname,                         &
+     &                       ncid = ncid,                               &
      &                       MyVarName = TRIM(TvarName),                &
      &                       VarID = Tid,                               &
      &                       nVarDim = nvdim,                           &
@@ -146,6 +148,7 @@
 !
       CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
      &                      Tval,                                       &
+     &                      ncid = ncid,                                &
      &                      start = (/1/),                              &
      &                      total = (/ntime/),                          &
      &                      min_val = Tmin,                             &

@@ -73,15 +73,28 @@
      &               __FILE__)) RETURN
       ncname=NUD(ng)%name
 !
+!  Open grid NetCDF file for reading.
+!
+      IF (NUD(ng)%ncid.eq.-1) THEN
+        CALL netcdf_open (ng, model, ncname, 0, NUD(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,30) TRIM(ncname)
+          RETURN
+        END IF
+      END IF
+!
 !  Check grid file dimensions for consitency
 !
-      CALL netcdf_check_dim (ng, model, ncname)
+      CALL netcdf_check_dim (ng, model, ncname,                         &
+     &                       ncid = NUD(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, ncname)
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     ncid = NUD(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -138,17 +151,6 @@
       END IF
 # endif
 !
-!  Open grid NetCDF file for reading.
-!
-      IF (NUD(ng)%ncid.eq.-1) THEN
-        CALL netcdf_open (ng, model, ncname, 0, NUD(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,30) TRIM(ncname)
-          RETURN
-        END IF
-      END IF
-!
 !-----------------------------------------------------------------------
 !  Read in nudging coefficients.
 !-----------------------------------------------------------------------
@@ -181,6 +183,7 @@
         Fscl=1.0_r8/day2sec                    ! default units: 1/day
 !
         CALL netcdf_inq_var (ng, model, ncname,                         &
+     &                       ncid = NUD(ng)%ncid,                       &
      &                       MyVarName = TRIM(Vname(1,vindex)),         &
      &                       VarID = NUD(ng)%Vid(vindex),               &
      &                       nVarDim = nvdim,                           &
@@ -239,6 +242,7 @@
         Fscl=1.0_r8/day2sec                    ! default units: 1/day
 !
         CALL netcdf_inq_var (ng, model, ncname,                         &
+     &                       ncid = NUD(ng)%ncid,                       &
      &                       MyVarName = TRIM(Vname(1,vindex)),         &
      &                       VarID = NUD(ng)%Vid(vindex),               &
      &                       nVarDim = nvdim,                           &
@@ -306,6 +310,7 @@
           END IF
 !
           CALL netcdf_inq_var (ng, model, ncname,                       &
+     &                         ncid = NUD(ng)%ncid,                     &
      &                         MyVarName = TRIM(Vname(1,vindex)),       &
      &                         VarID = NUD(ng)%Vid(vindex),             &
      &                         nVarDim = nvdim,                         &

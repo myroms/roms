@@ -503,7 +503,7 @@
         Vinfo( 2)='Ritz eigenvalues'
         status=def_var(ng, iADM, HSS(ng)%ncid, varid, NF_TYPE,          &
      &                 1, (/recdim/), Aval, Vinfo, ncname,              &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -513,7 +513,7 @@
         Vinfo( 2)='accuracy of Ritz eigenvalues'
         status=def_var(ng, iADM, HSS(ng)%ncid, varid, NF_TYPE,          &
      &                 1, (/recdim/), Aval, Vinfo, ncname,              &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 
@@ -539,7 +539,7 @@
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idtime),     &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo,ncname,      &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -878,18 +878,6 @@
       QUERY: IF (.not.LdefHSS(ng)) THEN
         ncname=HSS(ng)%name
 !
-!  Inquire about the dimensions and check for consistency.
-!
-        CALL netcdf_check_dim (ng, iADM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-!  Inquire about the variables.
-!
-        CALL netcdf_inq_var (ng, iADM, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
 !  Open Hessian eigenvectors file for read/write.
 !
         CALL netcdf_open (ng, iADM, ncname, 1, HSS(ng)%ncid)
@@ -898,6 +886,20 @@
           WRITE (stdout,60) TRIM(ncname)
           RETURN
         END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+        CALL netcdf_check_dim (ng, iADM, ncname,                        &
+     &                         ncid = HSS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iADM, ncname,                          &
+     &                       ncid = HSS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 !
 !  Initialize logical switches.
 !

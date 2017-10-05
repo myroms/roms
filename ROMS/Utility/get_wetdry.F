@@ -9,8 +9,8 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This subroutine reads wetting and drying masks from restart NetCDF  !
-!  file.
+!  If restart, reads wetting and drying masks from restart (initial)   !
+!  NetCDF file.
 !                                                                      !
 !=======================================================================
 !
@@ -60,15 +60,28 @@
      &               __FILE__)) RETURN
       ncname=INI(ng)%name
 !
+!  Open restart (initial) NetCDF for read/write.
+!
+      IF (INI(ng)%ncid.eq.-1) THEN
+        CALL netcdf_open (ng, model, ncname, 1, INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,50) TRIM(ncname)
+          RETURN
+        END IF
+      END IF
+!
 !  Check grid file dimensions for consitency
 !
-      CALL netcdf_check_dim (ng, model, ncname)
+      CALL netcdf_check_dim (ng, model, ncname,                         &
+     &                       ncid = INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, ncname)
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     ncid = INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !

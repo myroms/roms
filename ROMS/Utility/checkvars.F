@@ -1,6 +1,6 @@
 #include "cppdefs.h"
-      SUBROUTINE checkvars (ng, model, ncname, string, Nrec, Nvar,      &
-     &                      tvarnam, get_var, have_var)
+      SUBROUTINE checkvars (ng, model, ncname, ncid, string, Nrec,      &
+     &                      Nvar,tvarnam, get_var, have_var)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -17,6 +17,7 @@
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
 !     ncname     NetCDF file name.                                     !
+!     ncid       NetCDF file ID.                                       !
 !     string     Identification string.                                !
 !     Nvar       Size of logical switches arrays.                      !
 !                                                                      !
@@ -82,14 +83,16 @@
 !
 !  Inquire about the dimensions and check for consistency.
 !
-      CALL netcdf_check_dim (ng, IDmod, ncname)
+      CALL netcdf_check_dim (ng, IDmod, ncname,                         &
+     &                       ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       Nrec=rec_size
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_check_var (ng, model, ncname)
+      CALL netcdf_check_var (ng, IDmod, ncname,                         &
+     &                       ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !

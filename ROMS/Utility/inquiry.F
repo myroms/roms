@@ -64,11 +64,11 @@
 !
 !  Local variable declarations.
 !
-      logical :: Liocycle, Lgridded, Lonerec
+      logical :: CloseFile, Liocycle, Lgridded, Lonerec
       logical :: foundit, got_var, got_time, special
 
       integer :: Fcount, Nrec, Tid, Tindex, Trec, Vid, Vtype
-      integer :: i, ifile, lstr, nvatt, nvdim
+      integer :: i, ifile, lstr, my_ncid, nvatt, nvdim
       integer :: Vsize(4)
 
       real(r8) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
@@ -154,15 +154,32 @@
       QUERY: DO ifile=1,nfiles
         Fname=S(ifile)%name
 !
+!  Open NetCDF file for reading.
+!
+        IF (S(ifile)%ncid.eq.-1) THEN
+          CALL netcdf_open (ng, model, Fname, 0, my_ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) THEN
+            WRITE (stdout,60) TRIM(Fname)
+            RETURN
+          END IF
+          CloseFile=.TRUE.
+        ELSE
+          my_ncid=S(ifile)%ncid
+          CloseFile=.FALSE.
+        END IF
+!
 !  Inquire about the dimensions and check for consistency.
 !
-        CALL netcdf_check_dim (ng, model, Fname)
+        CALL netcdf_check_dim (ng, model, Fname,                        &
+     &                         ncid = my_ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
 !  Inquire about requested variable.
 !
         CALL netcdf_inq_var (ng, model, Fname,                          &
+     &                       ncid = my_ncid,                            &
      &                       MyVarName = TRIM(Vname(1,ifield)),         &
      &                       SearchVar = foundit,                       &
      &                       VarID = Vid,                               &
@@ -286,8 +303,8 @@
 !
         IF (foundit) THEN
           CALL get_cycle (ng, model, ifield, job, Lmulti,               &
-     &                    ncfile, Tname(ifield), Nrec, tdays(ng),       &
-     &                    Tid, Liocycle, Clength, Trec,                 &
+     &                    ncfile, my_ncid, Tname(ifield), Nrec,         &
+     &                    tdays(ng), Tid, Liocycle, Clength, Trec,      &
      &                    Tstr, Tend, Tmin, Tmax,  Tscale)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
@@ -318,6 +335,14 @@
           S(ifile)%time_min(Fcount)=Tmin
           S(ifile)%time_max(Fcount)=Tmax
           EXIT QUERY
+        END IF
+!
+!  Close input NetCDF file if opened during the query.  Files opened
+!  outside the query loop remain open.  This is done to avoid opening
+!  too many files.
+!
+        IF (CloseFile) THEN
+          CALL netcdf_close (ng, model, my_ncid, Fname, .FALSE.)
         END IF
       END DO QUERY
 !

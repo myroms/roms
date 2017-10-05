@@ -1,14 +1,6 @@
 #include "cppdefs.h"
       MODULE distribute_mod
 #ifdef DISTRIBUTE
-
-# undef  ASSEMBLE_ALLGATHER /* use mpi_allgather im mp_assemble */
-# undef  ASSEMBLE_ALLREDUCE /* use mpi_allreduce in mp_assemble */
-# define BOUNDARY_ALLREDUCE /* use mpi_allreduce in mp_boundary */
-# undef  COLLECT_ALLGATHER  /* use mpi_allgather in mp_collect  */
-# undef  COLLECT_ALLREDUCE  /* use mpi_allreduce in mp_collect  */
-# define REDUCE_ALLGATHER   /* use mpi_allgather in mp_reduce   */
-# undef  REDUCE_ALLREDUCE   /* use mpi_allreduce in mp_reduce   */
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -1277,11 +1269,11 @@
 
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Asend
 
-# ifdef BOUNDARY_ALLREDUCE
-      real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Arecv
-# else
+# ifdef BOUNDARY_ALLGAHTER
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1),                      &
      &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+# else
+      real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Arecv
 # endif
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1329,13 +1321,13 @@
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-#  ifdef BOUNDARY_ALLREDUCE
-      CALL mpi_allreduce (Asend, Arecv, Npts, MP_FLOAT, MPI_SUM,        &
+#  ifdef BOUNDARY_ALLGAHTER
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,10) 'MPI_ALLREDUCE', MyRank, MyError,             &
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
      &                    string(1:Lstr)
  10     FORMAT (/,' MP_BOUNDARY - error during ',a,' call, Node = ',    &
      &          i3.3,' Error = ',i3,/,15x,a)
@@ -1343,12 +1335,12 @@
         RETURN
       END IF
 #  else
-      CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
+      CALL mpi_allreduce (Asend, Arecv, Npts, MP_FLOAT, MPI_SUM,        &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
-        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
+        WRITE (stdout,10) 'MPI_ALLREDUCE', MyRank, MyError,             &
      &                    string(1:Lstr)
  10     FORMAT (/,' MP_BOUNDARY - error during ',a,' call, Node = ',    &
      &          i3.3,' Error = ',i3,/,15x,a)
@@ -1362,15 +1354,7 @@
 !  Unpack data: reduction sum.
 !-----------------------------------------------------------------------
 !
-# ifdef BOUNDARY_ALLREDUCE
-      ik=0
-      DO k=LBk,UBk
-        DO i=LBi,UBi
-          ik=ik+1
-          A(i,k)=Arecv(ik)
-        END DO
-      END DO
-# else
+# ifdef BOUNDARY_ALLGAHTER
       Nnodes=NtileI(ng)*NtileJ(ng)-1
       ik=0
       DO k=LBk,UBk
@@ -1380,6 +1364,14 @@
           DO rank=0,Nnodes
             A(i,k)=A(i,k)+Arecv(ik,rank)
           END DO
+        END DO
+      END DO
+# else
+      ik=0
+      DO k=LBk,UBk
+        DO i=LBi,UBi
+          ik=ik+1
+          A(i,k)=Arecv(ik)
         END DO
       END DO
 # endif

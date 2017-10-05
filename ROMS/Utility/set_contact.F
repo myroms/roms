@@ -67,16 +67,30 @@
 !  arrays.
 !-----------------------------------------------------------------------
 !
+!  Open contact points NetCDF file for reading.
+!
+      CALL netcdf_open (ng, model, NGCname, 0, NGCid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) THEN
+        WRITE (stdout,20) TRIM(NGCname)
+  20    FORMAT (/,' READ_CONTACT - unable to open contact points ',     &
+     &            ' NetCDF file: ',a)
+        RETURN
+      END IF
+!
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, NGCname)
+      CALL netcdf_inq_var (ng, model, NGCname,                          &
+     &                     ncid = NGCid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
 !  Check if the number of nested grids is correct.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'Ngrids',                &
-     &                     my_Ngrids)
+      CALL netcdf_get_dim (ng, model, NGCname,                          &
+     &                     ncid = NGCid,                                &
+     &                     DimName = 'Ngrids',                          &
+     &                     DimSize = my_Ngrids)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -93,8 +107,10 @@
 !
 !  Check number of contact regions, Ncontact = (Ngrids-1)*2.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'Ncontact',              &
-     &                     my_Ncontact)
+      CALL netcdf_get_dim (ng, model, NGCname,                          &
+     &                     ncid = NGCid,                                &
+     &                     DimName = 'Ncontact',                        &
+     &                     DimSize = my_Ncontact)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -110,8 +126,10 @@
 !
 !  Check number of contact points for bilinear interpolation weights.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'nLweights',             &
-     &                     my_nLweights)
+      CALL netcdf_get_dim (ng, model, NGCname,                          &
+     &                     ncid = NGCid,                                &
+     &                     DimName = 'nLweights',                       &
+     &                     DimSize = my_nLweights)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -128,8 +146,10 @@
 !
 !  Check number of contact points for quadratic interpolation weights.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'nQweights',             &
-     &                     my_nQweights)
+      CALL netcdf_get_dim (ng, model, NGCname,                          &
+     &                     ncid = NGCid,                                &
+     &                     DimName = 'nQweights',                       &
+     &                     DimSize = my_nQweights)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -146,21 +166,12 @@
 !  Get number of contact points in input NetCDF file.  It may include
 !  or not contact point over land when land/sea masking is activated.
 !
-      CALL netcdf_get_dim (ng, model, NGCname, 'datum',                 &
-     &                     NCdatum)
+      CALL netcdf_get_dim (ng, model, NGCname,                          &
+     &                     ncid = NGCid,                                &
+     &                     DimName = 'datum',                           &
+     &                     DimSize = NCdatum)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-!
-!  Open contact points NetCDF file for reading.
-!
-      CALL netcdf_open (ng, model, NGCname, 0, NGCid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
-        WRITE (stdout,20) TRIM(NGCname)
-  20    FORMAT (/,' READ_CONTACT - unable to open contact points ',     &
-     &            ' NetCDF file: ',a)
-        RETURN
-      END IF
 !
 !  Read in grid dimensions and if the grid order is correct.  The order
 !  of the grids is important in nesting.

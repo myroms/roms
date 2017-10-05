@@ -216,7 +216,7 @@
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iNLM, FLT(ng)%ncid, FLT(ng)%Vid(idtime),     &
      &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname,     &
-     &                 SetParAccess = .FALSE.)
+     &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -504,9 +504,19 @@
       QUERY : IF (.not.ldef) THEN
         ncname=FLT(ng)%name
 !
+!  Open floats file for read/write.
+!
+        CALL netcdf_open (ng, iNLM, ncname, 1, FLT(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,50) TRIM(ncname)
+          RETURN
+        END IF
+!
 !  Inquire about the dimensions and check for consistency.
 !
-        CALL netcdf_check_dim (ng, iNLM, ncname)
+        CALL netcdf_check_dim (ng, iNLM, ncname,                        &
+     &                         ncid = FLT(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -521,18 +531,10 @@
 !
 !  Inquire about the variables.
 !
-        CALL netcdf_inq_var (ng, iNLM, ncname)
+        CALL netcdf_inq_var (ng, iNLM, ncname,                          &
+     &                       ncid = FLT(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-!
-!  Open floats file for read/write.
-!
-        CALL netcdf_open (ng, iNLM, ncname, 1, FLT(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,50) TRIM(ncname)
-          RETURN
-        END IF
 !
 !  Initialize logical switches.
 !
