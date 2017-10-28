@@ -66,7 +66,7 @@
         CALL netcdf_open (ng, model, ncname, 1, INI(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
       END IF
@@ -91,42 +91,31 @@
 !
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idPwet)),        &
      &                     varid_pmask)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idPwet)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idPwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idRwet)),        &
      &                     varid_rmask)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idRwet)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idRwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idUwet)),        &
      &                     varid_umask)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idUwet)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idUwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idVwet)),        &
      &                     varid_vmask)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(Vname(1,idVwet)),            &
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idVwet)),            &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
-      END IF
-!
-!  Open grid NetCDF file for reading.
-!
-      IF (INI(ng)%ncid.eq.-1) THEN
-        CALL netcdf_open (ng, model, ncname, 0, INI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,20) TRIM(ncname)
-          RETURN
-        END IF
       END IF
 !
 !-----------------------------------------------------------------------
@@ -257,9 +246,9 @@
      &                    GRID(ng) % vmask_wet)
 # endif
 !
-  10  FORMAT (/,' GET_WETDRY - unable to find grid variable: ',a,       &
+  10  FORMAT (/,' GET_WETDRY - unable to open grid NetCDF file: ',a)
+  20  FORMAT (/,' GET_WETDRY - unable to find grid variable: ',a,       &
      &        /,14x,'in grid NetCDF file: ',a)
-  20  FORMAT (/,' GET_WETDRY - unable to open grid NetCDF file: ',a)
   30  FORMAT (/,' GET_WETDRY - error while reading variable: ',a,       &
      &        /,12x,'in grid NetCDF file: ',a)
 #else
