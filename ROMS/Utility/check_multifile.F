@@ -449,7 +449,7 @@
 !  Turn off the checking of time range if cycling, perpectual, or
 !  spectral time axis.
 !
-      IF (Lcycle.or.Lperpetual.or.Lspectral) THEN
+      IF (Lcycle.or.Lperpetual.or.Lspectral.or.(Nrec.eq.1)) THEN
         Lcheck=.FALSE.
       END IF
 !

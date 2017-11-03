@@ -5662,9 +5662,17 @@
           fname=varname
           IF (.not.find_file(ng, fname, 'VARNAME')) GO TO 30
           GO TO 40
-  30      IF (Master) WRITE (out,270) ng, TRIM(fname)
+  30      IF (Master) THEN
+            IF (LEN_TRIM(fname).eq.0) THEN
+              WRITE (out,270) ng, 'Oops unassigned file name. '//       &
+     &                            'Check standard input script...'
+            ELSE
+              WRITE (out,270) ng, TRIM(fname)
+            END IF
+          END IF
           exit_flag=4
-          RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
   40      CONTINUE
         END DO
         IF (Nuser.gt.0) THEN

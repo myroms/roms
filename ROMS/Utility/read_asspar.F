@@ -23,6 +23,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
       USE strings_mod, ONLY : uppercase
 !
       implicit none
@@ -1271,9 +1272,17 @@
      &                    TRIM(ERR(ng)%name)
 #  endif
           GO TO 40
-  30      WRITE (out,220) TRIM(fname)
+  30      IF (Master) THEN
+            IF (LEN_TRIM(fname).eq.0) THEN
+              WRITE (out,220) ng, 'Oops unassigned file name. '//       &
+     &                            'Check assimilation input script...'
+            ELSE
+              WRITE (out,220) ng, TRIM(fname)
+            END IF
+          END IF
           exit_flag=4
-          RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
   40      CONTINUE
         END DO
       END IF
@@ -1332,7 +1341,8 @@
  190  FORMAT (1p,e11.4,2x,a,t30,a,a,'.')
  200  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,':',1x,i6)
  210  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
- 220  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
+ 220  FORMAT (/,' READ_ASSPAR - Grid ', i2.2,                           &
+     &        ', could not find input file:  ',a)
  230  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, l1, &
      &        /,15x,a,/,15x,a)
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i2, &

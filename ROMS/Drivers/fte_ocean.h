@@ -584,7 +584,7 @@
                       nullify (tl_state(ng)%vector)
                     END IF
                     state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
-                    tl_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+                    tl_state(ng)%vector => SworkR(Is:Ie)
                   END DO
 
 !$OMP PARALLEL
@@ -613,7 +613,7 @@
                       nullify (tl_state(ng)%vector)
                     END IF
                     state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i+1)
-                    tl_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
+                    tl_state(ng)%vector => SworkR(Is:Ie)
                   END DO
 
 !$OMP PARALLEL

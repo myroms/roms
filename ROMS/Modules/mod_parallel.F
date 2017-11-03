@@ -32,6 +32,8 @@
 !
       logical :: InpThread
       logical :: OutThread
+
+!$OMP THREADPRIVATE (InpThread, OutThread)
 !
 !  Number of shared-memory parallel threads or distributed-memory
 !  parallel nodes.
@@ -211,30 +213,34 @@
 #ifdef DISTRIBUTE
       integer :: MyError
 #else
-      integer :: my_numthreads
+      integer :: my_numthreads, my_threadnum
 #endif
+
+#if defined _OPENMP
 !
 !-----------------------------------------------------------------------
-!  Initialize shared-memory (OpenMP) or serial configuration.
+!  Initialize shared-memory (OpenMP) configuration.
 !-----------------------------------------------------------------------
-
-#ifdef _OPENMP
 !
 !  Disable dynamic adjustment, by the run-time environment, of the
 !  number of threads available to execute parallel regions.
 !
       CALL omp_set_dynamic (.FALSE.)
-#endif
-#ifndef DISTRIBUTE
 !
-!  Inquire number of threads in parallel region.
+!  Inquire number of threads in parallel region.  Set master and I/O
+!  switches.
 !
       numthreads=my_numthreads()
+      IF (my_threadnum().eq.0) THEN
+        InpThread=.TRUE.
+        OutThread=.TRUE.
+      ELSE
+        InpThread=.FALSE.
+        OutThread=.FALSE.
+      END IF
       Master=.TRUE.
-      InpThread=.TRUE.
-      OutThread=.TRUE.
-#endif
-#ifdef DISTRIBUTE
+
+#elif defined DISTRIBUTE
 # ifdef MPI
 !
 !-----------------------------------------------------------------------
@@ -273,6 +279,16 @@
       END IF
 #  endif
 # endif
+#else
+!
+!-----------------------------------------------------------------------
+!  Initialize serial configuration.
+!-----------------------------------------------------------------------
+!
+      numthreads=my_numthreads()
+      Master=.TRUE.
+      InpThread=.TRUE.
+      OutThread=.TRUE.
 #endif
 
       RETURN

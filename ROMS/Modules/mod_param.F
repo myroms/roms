@@ -369,6 +369,18 @@
       TYPE (T_LBC), allocatable :: ad_LBC(:,:,:)
       TYPE (T_LBC), allocatable :: tl_LBC(:,:,:)
 #endif
+!
+!-----------------------------------------------------------------------
+!  Field statistics STATS structure.
+!-----------------------------------------------------------------------
+!
+      TYPE T_STATS
+        real(r8) :: count         ! processed values count
+        real(r8) :: min           ! minimum value
+        real(r8) :: max           ! maximum value
+        real(r8) :: avg           ! arithmetic mean
+        real(r8) :: rms           ! root mean square
+      END TYPE T_STATS
 
 #ifdef PROPAGATOR
 !

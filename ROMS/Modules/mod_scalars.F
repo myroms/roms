@@ -559,10 +559,11 @@
         real(r8) :: avgpe = 0.0_r8              ! Potential energy
         real(r8) :: avgkp = 0.0_r8              ! Total energy
         real(r8) :: volume = 0.0_r8             ! diagnostics volume
-        real(r8) :: ad_volume                   ! adjoint volume
-        real(r8) :: TotVolume                   ! Total volume
-        real(r8) :: MaxVolume                   ! Minimum cell volume
-        real(r8) :: MinVolume                   ! Maximum cell volume
+        real(r8) :: ad_volume = 0.0_r8          ! adjoint volume
+
+        real(r8), allocatable :: TotVolume(:)   ! Total volume
+        real(r8), allocatable :: MinVolume(:)   ! Minimum cell volume
+        real(r8), allocatable :: MaxVolume(:)   ! Maximum cell volume
 !
 !  Minimun and maximum grid spacing
 !
@@ -573,10 +574,6 @@
 #ifdef SOLVE3D
         real(r8), allocatable :: DZmin(:)
         real(r8), allocatable :: DZmax(:)
-#endif
-!$OMP THREADPRIVATE (DXmin, DXmax, DYmin, DYmax)
-#ifdef SOLVE3D
-!$OMP THREADPRIVATE (DZmin, DZmax)
 #endif
 !
 !  Maximum size of a grid node (m) over the whole curvilinear grid
@@ -594,19 +591,21 @@
 !
 !  Courant Numbers due to gravity wave speed limits.
 !
-        real(r8) :: Cg_min                      ! Minimun barotropic
-        real(r8) :: Cg_max                      ! Maximun barotropic
-        real(r8) :: Cg_Cor                      ! Maximun Coriolis
+        real(r8), allocatable :: Cg_min(:)      ! Minimun barotropic
+        real(r8), allocatable :: Cg_max(:)      ! Maximun barotropic
+        real(r8), allocatable :: Cg_Cor(:)      ! Maximun Coriolis
 !
 !  Time dependent Counrant Numbers due to velocity components and
 !  indices location of maximum value.
 !
-        integer :: max_Ci, max_Cj, max_Ck       ! maximum location
-        real(r8) :: max_C                       ! maximum total
-        real(r8) :: max_Cu                      ! maximum I-component
-        real(r8) :: max_Cv                      ! maximum J-component
+        integer :: max_Ci = 0                   ! maximum I-location
+        integer :: max_Cj = 0                   ! maximum J-location
+        integer :: max_Ck = 0                   ! maximum K-location
+        real(r8) :: max_C = 0.0_r8              ! maximum total
+        real(r8) :: max_Cu = 0.0_r8             ! maximum I-component
+        real(r8) :: max_Cv = 0.0_r8             ! maximum J-component
 #ifdef SOLVE3D
-        real(r8) :: max_Cw                      ! maximum K-component
+        real(r8) :: max_Cw = 0.0_r8             ! maximum K-component
 #endif
 !
 !  Linear equation of state parameters.
@@ -646,8 +645,8 @@
 !
 !  Grid r-factor (non-dimensional).
 !
-        real(r8) :: rx0 = 0.0_r8                ! Beckmann and Haidvogel
-        real(r8) :: rx1 = 0.0_r8                ! Haney
+        real(r8), allocatable :: rx0(:)         ! Beckmann and Haidvogel
+        real(r8), allocatable :: rx1(:)         ! Haney
 !
 !  Linear (m/s) and quadratic (nondimensional) bottom drag coefficients.
 !
@@ -707,6 +706,7 @@
 #else
         real(r8), parameter :: spval = 1.0E+37_r8
 #endif
+        real(r8), parameter :: Large = 1.0E+20_r8
         real(r8), parameter :: jul_off = 2440000.0_r8
 !
 !  Set special check value.  Notice that a smaller value is assigned
@@ -1749,15 +1749,6 @@
       allocate ( iic(Ngrids) )
       allocate ( iif(Ngrids) )
 
-      allocate ( DXmin(Ngrids) )
-      allocate ( DXmax(Ngrids) )
-      allocate ( DYmin(Ngrids) )
-      allocate ( DYmax(Ngrids) )
-#ifdef SOLVE3D
-      allocate ( DZmin(Ngrids) )
-      allocate ( DZmax(Ngrids) )
-#endif
-
       allocate ( FrcRec(Ngrids) )
       allocate ( SOrec(Ngrids) )
 !$OMP END PARALLEL
@@ -1883,6 +1874,18 @@
 #ifdef SOLVE3D
       allocate ( Kdigits(Ngrids) )
 #endif
+      allocate ( TotVolume(Ngrids) )
+      allocate ( MinVolume(Ngrids) )
+      allocate ( MaxVolume(Ngrids) )
+
+      allocate ( DXmin(Ngrids) )
+      allocate ( DXmax(Ngrids) )
+      allocate ( DYmin(Ngrids) )
+      allocate ( DYmax(Ngrids) )
+#ifdef SOLVE3D
+      allocate ( DZmin(Ngrids) )
+      allocate ( DZmax(Ngrids) )
+#endif
 
       allocate ( grdmax(Ngrids) )
 
@@ -1890,6 +1893,10 @@
       allocate ( DiffMin(Ngrids) )
       allocate ( DiffMax(Ngrids) )
 #endif
+
+      allocate ( Cg_min(Ngrids) )
+      allocate ( Cg_max(Ngrids) )
+      allocate ( Cg_Cor(Ngrids) )
 
 #ifdef VISC_3DCOEF
       allocate ( ViscMin(Ngrids) )
@@ -1906,6 +1913,9 @@
       allocate ( gamma2(Ngrids) )
 
       allocate ( lmd_Jwt(Ngrids) )
+
+      allocate ( rx0(Ngrids) )
+      allocate ( rx1(Ngrids) )
 
       allocate ( rdrg(Ngrids) )
       allocate ( rdrg2(Ngrids) )
@@ -2372,6 +2382,33 @@
 #ifdef SOLVE3D
         Kdigits(ng)=INT(LOG10(REAL(N (ng),r8)))+1
 #endif
+        maxspeed(ng)=-Large
+        maxrho(ng)=-Large
+        TotVolume(ng)=0.0_r8
+        MinVolume(ng)= Large
+        MaxVolume(ng)=-Large
+        DXmin(ng)= Large
+        DXmax(ng)=-Large
+        DYmin(ng)= Large
+        DYmax(ng)=-Large
+#ifdef SOLVE3D
+        DZmin(ng)= Large
+        DZmax(ng)=-Large
+#endif
+        grdmax(ng)=-Large
+#ifdef DIFF_3DCOEF
+        DiffMin(ng)= Large
+        DiffMax(ng)=-Large
+#endif
+        Cg_min(ng)= Large
+        Cg_max(ng)=-Large
+        Cg_Cor(ng)=-Large
+#ifdef VISC_3DCOEF
+        ViscMin(ng)= Large
+        ViscMax(ng)= Large
+#endif
+        rx0(ng)=-Large
+        rx1(ng)=-Large
         CLM_FILE(ng)=.FALSE.
         Lnudging(ng)=.FALSE.
         LnudgeM2CLM(ng)=.FALSE.

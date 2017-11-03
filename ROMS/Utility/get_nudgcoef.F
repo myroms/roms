@@ -79,7 +79,7 @@
         CALL netcdf_open (ng, model, ncname, 0, NUD(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) THEN
-          WRITE (stdout,30) TRIM(ncname)
+          WRITE (stdout,10) TRIM(ncname)
           RETURN
         END IF
       END IF
@@ -107,7 +107,7 @@
       IF (LnudgeM2CLM(ng)) THEN
         IF (.not.find_string(var_name,n_var,Vname(1,idM2nc),            &
      &                       NUD(ng)%Vid(idM2nc))) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idM2nc)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idM2nc)),          &
      &                                  TRIM(ncname)
           exit_flag=2
           RETURN
@@ -121,7 +121,7 @@
       IF (LnudgeM3CLM(ng)) THEN
         IF (.not.find_string(var_name,n_var,Vname(1,idM3nc),            &
      &                       NUD(ng)%Vid(idM3nc))) THEN
-          IF (Master) WRITE (stdout,10) TRIM(Vname(1,idM3nc)),          &
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idM3nc)),          &
      &                                  TRIM(ncname)
           exit_flag=2
           RETURN
@@ -140,7 +140,7 @@
      &                                     Vname(1,vindex),             &
      &                                     NUD(ng)%Vid(vindex))
             IF (.not.(got_generic.or.got_specific(itrc))) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idgTnc)),      &
+              IF (Master) WRITE (stdout,30) TRIM(Vname(1,idgTnc)),      &
      &                                      TRIM(Vname(1,vindex)),      &
      &                                      TRIM(ncname)
               exit_flag=2
@@ -176,6 +176,8 @@
 !
 !  If appropriate, read nudging coefficients for 2D momentum  (inverse
 !  time scales, 1/day).
+!
+      IF (Master) WRITE (stdout,'(1x)')
 !
       IF (LnudgeM2CLM(ng)) THEN
         gtype=r2dvar
@@ -215,6 +217,12 @@
           exit_flag=2
           ioerror=status
           RETURN
+        ELSE
+          IF (Master) THEN
+            WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//             &
+     &                        TRIM(Vname(1,vindex)),                    &
+     &                        ng, TRIM(ncname), Fmin, Fmax
+          END IF
         END IF
 !
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -274,6 +282,12 @@
           exit_flag=2
           ioerror=status
           RETURN
+        ELSE
+          IF (Master) THEN
+            WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//             &
+     &                        TRIM(Vname(1,vindex)),                    &
+     &                        ng, TRIM(ncname), Fmin, Fmax
+          END IF
         END IF
 !
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -342,6 +356,12 @@
             exit_flag=2
             ioerror=status
             RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//           &
+     &                          TRIM(Vname(1,vindex)),                  &
+     &                          ng, TRIM(ncname), Fmin, Fmax
+            END IF
           END IF
 !
           IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -362,12 +382,15 @@
 #  endif
 # endif
 !
-  10  FORMAT (/,' GET_NUDGCOEF - unable to find nudging variable: ',a,  &
-     &        /,16x,'in NetCDF file: ',a)
+  10  FORMAT (/,' GET_NUDGCOEF - unable to open nudging NetCDF file: ',a)
   20  FORMAT (/,' GET_NUDGCOEF - unable to find nudging variable: ',a,  &
+     &        /,16x,'in NetCDF file: ',a)
+  30  FORMAT (/,' GET_NUDGCOEF - unable to find nudging variable: ',a,  &
      &        /,16x,            '     or generc nudging variable: ',a,  &
      &        /,16x,'in nudging NetCDF file: ',a)
-  30  FORMAT (/,' GET_NUDGCOEF - unable to open nudging NetCDF file: ',a)
+  40  FORMAT(2x,' GET_NUDGCOEF - ',a,/,19x,                             &
+     &        '(Grid = ',i2.2,', File: ',a,')',/,19x,                   &
+     &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
 #else
       SUBROUTINE get_nudgcoef
 #endif

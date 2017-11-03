@@ -122,7 +122,6 @@
 !
       integer :: i, is, j, k
 
-      real(r8), parameter :: Large = 1.0E+20_r8
       real(r8), parameter :: eps  = 1.0E-18_r8
       real(r8), parameter :: eps2 = 1.0E-10_r8
 

@@ -64,7 +64,6 @@
 
       real(r8) :: cff1, cff2
       real(r8), parameter :: IniVal = 0.0_r8
-      real(r8), parameter :: LARGE = 1.0e+10_r8
 
       real(r8), dimension(NstateVar(ng)) :: CC, MB, MSE, SDE
       real(r8), dimension(NstateVar(ng)) :: mod_min, mod_max
@@ -356,11 +355,11 @@
         MB(i)=0.0_r8
         MSE(i)=0.0_r8
         SDE(i)=0.0_r8
-        mod_min(i)=LARGE
-        mod_max(i)=-LARGE
+        mod_min(i)=Large
+        mod_max(i)=-Large
         mod_mean(i)=0.0_r8
-        obs_min(i)=LARGE
-        obs_max(i)=-LARGE
+        obs_min(i)=Large
+        obs_max(i)=-Large
         obs_mean(i)=0.0_r8
         mod_std(i)=0.0_r8
         obs_std(i)=0.0_r8
