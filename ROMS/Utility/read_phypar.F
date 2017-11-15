@@ -839,10 +839,10 @@
               Npts=load_i(Nval, Rval, Ngrids, Vstretching)
               DO ng=1,Ngrids
                 IF ((Vstretching(ng).lt.0).or.                          &
-     &              (Vstretching(ng).gt.4)) THEN
+     &              (Vstretching(ng).gt.5)) THEN
                   IF (Master) WRITE (out,260) 'Vstretching = ',         &
      &                                        Vstretching(ng),          &
-     &                                        'Must between 1 and 4'
+     &                                        'Must between 1 and 5'
                   exit_flag=5
                   RETURN
                 END IF

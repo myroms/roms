@@ -1806,7 +1806,19 @@ Dout(iTvdif) == 2*T     ! temp_vdiff, ...    vertical diffusion
 !                      0 <  theta_s <= 10.0
 !                      0 <= theta_b <=  4.0
 !
-!              Many other stretching functions (Vstretching>4) are possible
+!                 (5) Souza et al. (2015) quadratic Legendre polynomial function
+!                     that allows higher resolution near the surface,
+!                     Vstretching=5. It is similar to Vstretching=4, but the
+!                     fractional stretched vertical coordinate (s) is re-defined
+!                     as:
+!
+!                       s(k)=- [(k*k - 2*k*N + k + N*N - N) / (N*N - N)]
+!                            - weight * [(k*k - k*N) / (1 - N)]
+!
+!                     at vertical W-points, k=0,...,N and weight=0.01. To get
+!                     the equation at vertical RHO-points, replace k with k-0.5.
+!
+!              Many other stretching functions (Vstretching>5) are possible
 !              provided that:
 !
 !                * C(s) is a dimensionless, nonlinear, monotonic function.
