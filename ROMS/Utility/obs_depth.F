@@ -74,17 +74,17 @@
      &             (Xobs(iobs).lt.vXmax(ng))).and.                      &
      &            ((vYmin(ng) .le.Yobs(iobs)).and.                      &
      &             (Yobs(iobs).lt.vYmax(ng)))
-          IF (ObsType(iobs).eq.isUvel) THEN
+          IF (ObsType(iobs).eq.ObsState2Type(isUvel)) THEN
             IF (.not.u_bound) THEN
               Zobs(iobs)=IniVal
             END IF
-          ELSE IF (ObsType(iobs).eq.isVvel) THEN
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isVvel)) THEN
             IF (.not.v_bound) THEN
               Zobs(iobs)=IniVal
             END IF
           ELSE
             DO itrc=1,NT(ng)
-              IF (ObsType(iobs).eq.isTvar(itrc)) THEN
+              IF (ObsType(iobs).eq.ObsState2Type(isTvar(itrc))) THEN
                 IF (.not.r_bound) THEN
                   Zobs(iobs)=IniVal
                 END IF

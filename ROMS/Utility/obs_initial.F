@@ -117,6 +117,10 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOval))) THEN
             got_var(idOval)=.TRUE.
             OBS(ng)%Vid(idOval)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOmet))) THEN
+            got_var(idOmet)=.TRUE.
+            haveObsMeta(ng)=.TRUE.
+            OBS(ng)%Vid(idOmet)=var_id(i)
           END IF
         END DO
 !
@@ -252,7 +256,7 @@
 !  written into the initial NetCDF file.
 !
       IF (.not.backward) THEN
-        DO i=0,NstateVar(ng)
+        DO i=0,NobsVar(ng)
           FOURDVAR(ng)%ObsCost(i)=0.0_r8
         END DO
       END IF

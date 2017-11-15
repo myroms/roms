@@ -215,6 +215,7 @@
         integer  :: idOerr        ! observations error
         integer  :: idOlat        ! observations latitude
         integer  :: idOlon        ! observations longitude
+        integer  :: idOmet        ! observations meta value
         integer  :: idOpro        ! observations provenance
         integer  :: idOtyp        ! observations type
         integer  :: idOval        ! observations value
@@ -416,13 +417,16 @@
         integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
 #endif
 !
-!  State variables indices (order is important).
+!  State variables indices (order is important). Notice that current
+!  extra-observations index (isRadial) needs to be initialized to zero
+!  here and reset elsewhere to the value provided by the user.
 !
         integer  :: isFsur = 1                ! free-surface
         integer  :: isUbar = 2                ! 2D U-velocity
         integer  :: isVbar = 3                ! 2D V-velocity
         integer  :: isUvel = 4                ! 3D U-velocity
         integer  :: isVvel = 5                ! 3D V-velocity
+        integer  :: isRadial = 0              ! HF radial-velocity
         integer  :: isUstr                    ! surface u-stress
         integer  :: isVstr                    ! surface v-stress
         integer  :: isMtke                    ! turbulent kinetic energy
@@ -1565,6 +1569,8 @@
               idOlat=varid
             CASE ('idOlon')
               idOlon=varid
+            CASE ('idOmet')
+              idOmet=varid
             CASE ('idOpro')
               idOpro=varid
             CASE ('idOtyp')

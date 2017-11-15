@@ -5392,6 +5392,15 @@
   'nulvar'
   1.0d0
 
+'obs_meta'                                         ! Input
+  'observation meta value'
+  'nondimensional'                                 ! [Meta units]
+  'nulvar'
+  'datum'
+  'idOmet'
+  'nulvar'
+  1.0d0
+
 'obs_variance'                                     ! Input
   'observation global variance'
   'squared state variable units'                   ! [squared state units]

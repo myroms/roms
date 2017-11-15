@@ -629,11 +629,11 @@
 !
         DO ng=1,Ngrids
           IF (Master) THEN
-            DO i=0,NstateVar(ng)
+            DO i=0,NobsVar(ng)
               IF (i.eq.0) THEN
                 string='Total'
               ELSE
-                string=Vname(1,idSvar(i))
+                string=ObsName(i)
               END IF
               IF (FOURDVAR(ng)%DataPenalty(i).ne.0.0_r8) THEN
                 WRITE (stdout,30) outer, inner, 'RPM',                  &
@@ -649,7 +649,7 @@
           CALL netcdf_put_fvar (ng, iRPM, DAV(ng)%name,                 &
      &                          'RP_iDataPenalty',                      &
      &                          FOURDVAR(ng)%DataPenalty(0:),           &
-     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
+     &                          (/1,outer/), (/NobsVar(ng)+1,1/),       &
      &                          ncid = DAV(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
@@ -1121,11 +1121,11 @@
 !
         DO ng=1,Ngrids
           IF (Master) THEN
-            DO i=0,NstateVar(ng)
+            DO i=0,NobsVar(ng)
               IF (i.eq.0) THEN
                 string='Total'
               ELSE
-                string=Vname(1,idSvar(i))
+                string=ObsName(i)
               END IF
               IF (FOURDVAR(ng)%DataPenalty(i).ne.0.0_r8) THEN
                 WRITE (stdout,30) outer, inner, 'RPM',                  &
@@ -1148,7 +1148,7 @@
           CALL netcdf_put_fvar (ng, iRPM, DAV(ng)%name,                 &
      &                          'RP_fDataPenalty',                      &
      &                          FOURDVAR(ng)%DataPenalty(0:),           &
-     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
+     &                          (/1,outer/), (/NobsVar(ng)+1,1/),       &
      &                          ncid = DAV(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN

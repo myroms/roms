@@ -65,7 +65,7 @@
 !
 !  Initialize observations processing counters.
 !
-        DO i=1,NstateVar(ng)
+        DO i=1,NobsVar(ng)
           FOURDVAR(ng)%ObsCount(i)=0
           FOURDVAR(ng)%ObsReject(i)=0
         END DO
@@ -207,6 +207,19 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
+!  If appropriate, read in observation meta values.
+!
+        IF (haveObsMeta(ng)) THEN
+          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+     &                          Vname(1,idOmet),                        &
+     &                          ObsMeta(Mstr:),                         &
+     &                          ncid = OBS(ng)%ncid,                    &
+     &                          start = (/NstrObs(ng)/),                &
+     &                          total = (/Nobs(ng)/))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END IF
+!
 # ifdef WEAK_CONSTRAINT
 !  Read in observation error covariance.
 # else
@@ -304,25 +317,29 @@
 !-----------------------------------------------------------------------
 !
         DO iobs=Mstr,Mend
-          IF  (ObsType(iobs).eq.isFsur) THEN
+          IF  (ObsType(iobs).eq.ObsState2Type(isFsur)) THEN
             FOURDVAR(ng)%ObsCount(isFsur)=                              &
      &                           FOURDVAR(ng)%ObsCount(isFsur)+1
-          ELSE IF (ObsType(iobs).eq.isUbar) THEN
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isUbar)) THEN
             FOURDVAR(ng)%ObsCount(isUbar)=                              &
      &                           FOURDVAR(ng)%ObsCount(isUbar)+1
-          ELSE IF (ObsType(iobs).eq.isVbar) THEN
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isVbar)) THEN
             FOURDVAR(ng)%ObsCount(isVbar)=                              &
      &                           FOURDVAR(ng)%ObsCount(isVbar)+1
 # ifdef SOLVE3D
-          ELSE IF (ObsType(iobs).eq.isUvel) THEN
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isUvel)) THEN
             FOURDVAR(ng)%ObsCount(isUvel)=                              &
      &                           FOURDVAR(ng)%ObsCount(isUvel)+1
-          ELSE IF (ObsType(iobs).eq.isVvel) THEN
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isVvel)) THEN
             FOURDVAR(ng)%ObsCount(isVvel)=                              &
      &                           FOURDVAR(ng)%ObsCount(isVvel)+1
+          ELSE IF (ObsType(iobs).eq.ObsState2Type(isRadial)) THEN
+            haveObsMeta(ng)=.TRUE.
+            FOURDVAR(ng)%ObsCount(isRadial)=                            &
+     &                           FOURDVAR(ng)%ObsCount(isRadial)+1
           ELSE
             DO itrc=1,NT(ng)
-              IF (ObsType(iobs).eq.isTvar(itrc)) THEN
+              IF (ObsType(iobs).eq.ObsState2Type(isTvar(itrc))) THEN
                 i=isTvar(itrc)
                 FOURDVAR(ng)%ObsCount(i)=FOURDVAR(ng)%ObsCount(i)+1
               END IF

@@ -56,7 +56,7 @@
       integer :: i, ic, iobs, status, varid, vindex
       integer :: LBi, UBi, LBj, UBj
       integer, dimension(2) :: start, total
-      integer, dimension(NstateVar(ng)) :: Ncount, is
+      integer, dimension(NobsVar(ng)) :: Ncount, is
 
       integer, dimension(Ndatum(ng)) :: obs_type
       integer, dimension(Ndatum(ng)) :: provenance
@@ -65,11 +65,11 @@
       real(r8) :: cff1, cff2
       real(r8), parameter :: IniVal = 0.0_r8
 
-      real(r8), dimension(NstateVar(ng)) :: CC, MB, MSE, SDE
-      real(r8), dimension(NstateVar(ng)) :: mod_min, mod_max
-      real(r8), dimension(NstateVar(ng)) :: mod_mean, mod_std
-      real(r8), dimension(NstateVar(ng)) :: obs_min, obs_max
-      real(r8), dimension(NstateVar(ng)) :: obs_mean, obs_std
+      real(r8), dimension(NobsVar(ng)) :: CC, MB, MSE, SDE
+      real(r8), dimension(NobsVar(ng)) :: mod_min, mod_max
+      real(r8), dimension(NobsVar(ng)) :: mod_mean, mod_std
+      real(r8), dimension(NobsVar(ng)) :: obs_min, obs_max
+      real(r8), dimension(NobsVar(ng)) :: obs_mean, obs_std
 
       real(r8), dimension(Ndatum(ng)) :: mod_value
       real(r8), dimension(Ndatum(ng)) :: obs_depths
@@ -80,7 +80,9 @@
       real(r8), dimension(Ndatum(ng)) :: obs_work
       real(r8), dimension(Nsurvey(ng)) :: survey
 
-      character (len=11), dimension(NstateVar(ng)) :: text, svar_name
+      character (len=11), dimension(NobsVar(ng)) :: text, svar_name
+
+      character (len=30) :: F1, F2, F3, F4
 !
       SourceFile=__FILE__
 !
@@ -279,6 +281,23 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
+!  Read in and write out observation meta values.
+!
+      IF (haveObsMeta(ng)) THEN
+        CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name, Vname(1,idOmet),  &
+     &                        obs_work,                                 &
+     &                        ncid = OBS(ng)%ncid,                      &
+     &                        start = (/1/), total = (/Ndatum(ng)/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
+        CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOmet),  &
+     &                        obs_work, (/1/), (/Ndatum(ng)/),          &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
 !  Read in observation screening flag.
 !
       CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsS),    &
@@ -350,7 +369,7 @@
 !
 !  Initialize.
 !
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         CC(i)=0.0_r8
         MB(i)=0.0_r8
         MSE(i)=0.0_r8
@@ -370,7 +389,7 @@
 !
       DO iobs=1,Ndatum(ng)
         IF (obs_scale(iobs).eq.1.0_r8) THEN
-          i=obs_type(iobs)
+          i=ObsType2State(obs_type(iobs))
           Ncount(i)=Ncount(i)+1
           mod_min(i)=MIN(mod_min(i),mod_value(iobs))
           obs_min(i)=MIN(obs_min(i),obs_value(iobs))
@@ -380,7 +399,7 @@
           obs_mean(i)=obs_mean(i)+obs_value(iobs)
         END IF
       END DO
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         IF (Ncount(i).gt.0) THEN
           mod_mean(i)=mod_mean(i)/REAL(Ncount(i),r8)
           obs_mean(i)=obs_mean(i)/REAL(Ncount(i),r8)
@@ -392,7 +411,7 @@
 !
       DO iobs=1,Ndatum(ng)
         IF (obs_scale(iobs).eq.1.0_r8) THEN
-          i=obs_type(iobs)
+          i=ObsType2State(obs_type(iobs))
           cff1=mod_value(iobs)-mod_mean(i)
           cff2=obs_value(iobs)-obs_mean(i)
           mod_std(i)=mod_std(i)+cff1*cff1
@@ -400,7 +419,7 @@
           CC(i)=CC(i)+cff1*cff2
         END IF
       END DO
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         IF (Ncount(i).gt.1) THEN
           mod_std(i)=SQRT(mod_std(i)/REAL(Ncount(i)-1,r8))
           obs_std(i)=SQRT(obs_std(i)/REAL(Ncount(i)-1,r8))
@@ -411,7 +430,7 @@
 !  Compute model bias (MB), standard deviation error (SDE), and mean
 !  squared error (MSE).
 !
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         IF (Ncount(i).gt.0) THEN
           MB(i)=mod_mean(i)-obs_mean(i)
           SDE(i)=mod_std(i)-obs_std(i)
@@ -423,88 +442,93 @@
 !
 !  Report model and observations comparison statistics.
 !
+
       IF (Master) THEN
         ic=0
-        DO i=1,NstateVar(ng)
+        DO i=1,NobsVar(ng)
           svar_name(i)='           '
           text(i)='           '
           IF (Ncount(i).gt.0) THEN
             ic=ic+1
             is(ic)=i
-            svar_name(ic)=TRIM(Vname(1,idSvar(i)))
+            svar_name(ic)=TRIM(ObsName(i))
             text(ic)='-----------'
           END IF
         END DO
-        WRITE (stdout,10)
-        WRITE (stdout,20) (svar_name(i),i=1,ic)
-        WRITE (stdout,30) (text(i),i=1,ic)
-        WRITE (stdout,40) 'Observation Min   ', (obs_min (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Observation Max   ', (obs_max (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Observation Mean  ', (obs_mean(is(i)),i=1,ic)
-        WRITE (stdout,40) 'Observation STD   ', (obs_std (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Model Min         ', (mod_min (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Model Max         ', (mod_max (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Model Mean        ', (mod_mean(is(i)),i=1,ic)
-        WRITE (stdout,40) 'Model STD         ', (mod_std (is(i)),i=1,ic)
-        WRITE (stdout,40) 'Model Bias        ', (MB(is(i)),i=1,ic)
-        WRITE (stdout,40) 'STD Error         ', (SDE(is(i)),i=1,ic)
-        WRITE (stdout,40) 'Cross-Correlation ', (CC(is(i)),i=1,ic)
-        WRITE (stdout,40) 'Mean Squared Error', (MSE(is(i)),i=1,ic)
-        WRITE (stdout,50) 'Observation Count ', (Ncount(is(i)),i=1,ic)
+        WRITE (F1,10) MAX(1,ic)
+        WRITE (F2,20) MAX(1,ic)
+        WRITE (F3,30) MAX(1,ic)
+        WRITE (F4,40) MAX(1,ic)
+        WRITE (stdout,50)
+        WRITE (stdout,F1) (svar_name(i),i=1,ic)
+        WRITE (stdout,F2) (text(i),i=1,ic)
+        WRITE (stdout,F3) 'Observation Min   ', (obs_min (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Observation Max   ', (obs_max (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Observation Mean  ', (obs_mean(is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Observation STD   ', (obs_std (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Model Min         ', (mod_min (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Model Max         ', (mod_max (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Model Mean        ', (mod_mean(is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Model STD         ', (mod_std (is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Model Bias        ', (MB(is(i)),i=1,ic)
+        WRITE (stdout,F3) 'STD Error         ', (SDE(is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Cross-Correlation ', (CC(is(i)),i=1,ic)
+        WRITE (stdout,F3) 'Mean Squared Error', (MSE(is(i)),i=1,ic)
+        WRITE (stdout,F4) 'Observation Count ', (Ncount(is(i)),i=1,ic)
       END IF
 !
 !  Write comparison statistics to NetCDF file.
 !
       CALL netcdf_put_ivar (ng, iNLM, DAV(ng)%name, 'Nused_obs',        &
-     &                      Ncount, (/1/), (/NstateVar(ng)/),           &
+     &                      Ncount, (/1/), (/NobsVar(ng)/),             &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'obs_mean',         &
-     &                      obs_mean, (/1/), (/NstateVar(ng)/),         &
+     &                      obs_mean, (/1/), (/NobsVar(ng)/),           &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'obs_std',          &
-     &                      obs_std, (/1/), (/NstateVar(ng)/),          &
+     &                      obs_std, (/1/), (/NobsVar(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_mean',       &
-     &                      mod_mean, (/1/), (/NstateVar(ng)/),         &
+     &                      mod_mean, (/1/), (/NobsVar(ng)/),           &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_std',        &
-     &                      mod_std, (/1/), (/NstateVar(ng)/),          &
+     &                      mod_std, (/1/), (/NobsVar(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_bias',       &
-     &                      MB, (/1/), (/NstateVar(ng)/),               &
+     &                      MB, (/1/), (/NobsVar(ng)/),                 &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'SDE',              &
-     &                      SDE, (/1/), (/NstateVar(ng)/),              &
+     &                      SDE, (/1/), (/NobsVar(ng)/),                &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'CC',               &
-     &                      CC, (/1/), (/NstateVar(ng)/),               &
+     &                      CC, (/1/), (/NobsVar(ng)/),                 &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'MSE',              &
-     &                      MSE, (/1/), (/NstateVar(ng)/),              &
+     &                      MSE, (/1/), (/NobsVar(ng)/),                &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -512,14 +536,14 @@
 !  Synchronize NetCDF file to disk.
 !
       CALL netcdf_sync (ng, iNLM, DAV(ng)%name, DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 !
- 10   FORMAT (/,' Model-Observations Comparison Statistics:',/)
- 20   FORMAT (t22,5(a11,1x))
- 30   FORMAT (t22,5(a11,1x),/)
- 40   FORMAT (a,3x,5(1p,e11.4,0p,1x))
- 50   FORMAT (a,3x,5(i11,1x))
- 60   FORMAT (/,' STATS_4DVAR - unable to synchronize 4DVAR',           &
-     &        1x,'NetCDF file to disk.')
+ 10   FORMAT ('(t22,',i2,'(a11,1x))')
+ 20   FORMAT ('(t22,',i2,'(a11,1x),/)')
+ 30   FORMAT ('(a,3x,',i2,'(1p,e11.4,0p,1x))')
+ 40   FORMAT ('(a,3x,',i2,'(i11,1x))')
+ 50   FORMAT (/,' Model-Observations Comparison Statistics:',/)
 
       RETURN
       END SUBROUTINE stats_modobs

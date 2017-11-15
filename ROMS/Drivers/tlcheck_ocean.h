@@ -281,19 +281,19 @@
 !  observations.
 !
       DO ng=1,Ngrids
-        DO i=0,NstateVar(ng)
+        DO i=0,NobsVar(ng)
           FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
         END DO
         IF (Master) THEN
           WRITE (stdout,40) FOURDVAR(ng)%CostFunOld(0)
-          DO i=1,NstateVar(ng)
+          DO i=1,NobsVar(ng)
             IF (FOURDVAR(ng)%CostFunOld(i).gt.0.0_r8) THEN
               IF (i.eq.1) THEN
                 WRITE (stdout,50) FOURDVAR(ng)%CostFunOld(i),           &
-     &                            TRIM(Vname(1,idSvar(i)))
+     &                            TRIM(ObsName(i))
               ELSE
                 WRITE (stdout,60) FOURDVAR(ng)%CostFunOld(i),           &
-     &                            TRIM(Vname(1,idSvar(i)))
+     &                            TRIM(ObsName(i))
               END IF
             END IF
           END DO

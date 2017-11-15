@@ -7056,7 +7056,7 @@
 !
       FOURDVAR(ng)%CostFun(0)=FOURDVAR(ng)%Cost0(outLoop)+              &
      &                        0.5_r8*dot(0)*cg_Gnorm(outLoop)
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         FOURDVAR(ng)%CostFun(i)=0.0_r8
       END DO
 !
@@ -7219,7 +7219,7 @@
       FOURDVAR(ng)%BackCost(0)=0.5_r8*dot(0)
       FOURDVAR(ng)%ObsCost(0)=FOURDVAR(ng)%CostFun(0)-                  &
      &                        FOURDVAR(ng)%BackCost(0)
-      DO i=1,NstateVar(ng)
+      DO i=1,NobsVar(ng)
         FOURDVAR(ng)%BackCost(i)=0.0_r8
         FOURDVAR(ng)%ObsCost(i)=0.0_r8
       END DO

@@ -157,6 +157,25 @@
             CASE ('Nimpact')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nimpact=Ivalue(1)
+            CASE ('NextraObs')
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              NextraObs=Ivalue(1)
+              IF (NextraObs.gt.0) THEN
+                IF (.not.allocated(ExtraIndex)) THEN
+                  allocate ( ExtraIndex(NextraObs) )
+                END IF
+                IF (.not.allocated(ExtraName)) THEN
+                  allocate ( ExtraName(NextraObs) )
+                END IF
+              END IF
+            CASE ('ExtraIndex')
+              IF (NextraObs.gt.0) THEN
+                Npts=load_i(Nval, Rval, NextraObs, ExtraIndex)
+              END IF
+            CASE ('ExtraName')
+              IF (NextraObs.gt.0) THEN
+                ExtraName(Nval)=TRIM(Cval(Nval))
+              END IF
             CASE ('tl_M2diff')
               Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
             CASE ('tl_M3diff')
@@ -689,8 +708,10 @@
 !
       IF (Lwrite) THEN
         DO ng=1,Ngrids
-#  if defined FOUR_DVAR
+#  if defined FOUR_DVAR || defined VERIFICATION
           WRITE (out,60) ng
+#  endif
+#  if defined FOUR_DVAR
 #   ifdef WEAK_CONSTRAINT
 #    ifdef RPM_RELAXATION
           WRITE (out,120) tl_M2diff, 'tl_M2diff',                       &
@@ -1131,6 +1152,15 @@
 #    endif
 #   endif
 #  endif
+          IF (NextraObs.gt.0) THEN
+            WRITE (out,80) NextraObs, 'NextraObs',                       &
+     &            'Number of extra-observations classes to process.'
+            DO i=1,NextraObs
+              WRITE (out,85) ExtraIndex(i), 'ExtraIndex', i,             &
+     &            'Extra-observation type index for: '//                 &
+     &            TRIM(ExtraName(i))
+            END DO
+          END IF
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
@@ -1321,10 +1351,17 @@
 !
   50  FORMAT (/,' READ_AssPar - Error while processing line: ',/,a)
   55  FORMAT (/,' READ_AssPar - ',a,i4,2x,i4,/,15x,a)
+#  ifdef VERIFICATION
+  60  FORMAT (/,/,' Observation Parameters, Grid: ',i2.2,               &
+     &        /,  ' ================================',/)
+#  else
   60  FORMAT (/,/,' Assimilation Parameters, Grid: ',i2.2,              &
      &        /,  ' =================================',/)
+#  endif
   70  FORMAT (10x,l1,2x,a,t30,a)
   80  FORMAT (1x,i10,2x,a,t30,a)
+  85  FORMAT (1x,i10,2x,a,'(',i2.2,')',t30,a)
+
   90  FORMAT (1x,i10,2x,a,t30,a,/,t32,a)
  100  FORMAT (1p,e11.4,2x,a,t30,a)
  110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
