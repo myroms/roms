@@ -609,13 +609,16 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  If applicable, check input multi-files where the time records for
-!  a particular field are split into several NetCDF files.  Initialize
-!  several parameters in the file structure so the appropriate input
-!  file is selected during initialization/restart.
+!  If applicable, close all input boundary, climatology, and forcing
+!  NetCDF files and set associated parameters to the closed state. This
+!  step is essential in iterative algorithms that run the full TLM
+!  repetitively. Then, Initialize several parameters in their file
+!  structure, so the appropriate input single or multi-file is selected
+!  during initialization/restart.
 !-----------------------------------------------------------------------
 !
 !$OMP MASTER
+      CALL close_inp (ng, iADM)
       CALL check_multifile (ng, iADM)
 !$OMP END MASTER
 # ifdef DISTRIBUTE
@@ -632,7 +635,6 @@
 !-----------------------------------------------------------------------
 !
 !$OMP MASTER
-      CALL close_inp (ng, iADM)
       CALL ad_get_idata (ng)
       CALL ad_get_data (ng)
 !$OMP END MASTER
