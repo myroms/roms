@@ -28,8 +28,12 @@
 !               Linfo(2,*)  => switch indicating time cycling.         !
 !               Linfo(3,*)  => switch indicating only one-time         !
 !                              record available.                       !
-!               Linfo(4,*)  => switch indication special record        !
+!               Linfo(4,*)  => switch indicating special record        !
 !                              processing (like tides)                 !
+!               Linfo(5,*)  => switch to indicate processing the first !
+!                              record of a file or multi-file.         !
+!               Linfo(6,*)  => switch to indicate processing the last  !
+!                              record of a file or multi-file.         !
 !                                                                      !
 !  Iinfo      Input/output fields integer information:                 !
 !               Iinfo( 1,*) => variable grid type.                     !
@@ -620,7 +624,7 @@
       allocate ( idTrcD(NAT) )
       allocate ( idTrcH(NAT) )
 
-      allocate ( Linfo(4,NV,Ngrids) )
+      allocate ( Linfo(6,NV,Ngrids) )
 
       allocate ( Iinfo(10,NV,Ngrids) )
 
@@ -799,6 +803,8 @@
           Linfo(2,i,ng)=.FALSE.
           Linfo(3,i,ng)=.FALSE.
           Linfo(4,i,ng)=.FALSE.
+          Linfo(5,i,ng)=.FALSE.
+          Linfo(6,i,ng)=.FALSE.
           Aout(i,ng)=.FALSE.
           Dout(i,ng)=.FALSE.
           Hout(i,ng)=.FALSE.

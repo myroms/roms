@@ -106,13 +106,20 @@
       IF (iic(ng).eq.0) Linquire=.TRUE.
       IF (.not.Linquire.and.                                            &
      &    ((Iinfo(10,ifield,ng).gt.1).and.                              &
-     &     (Finfo( 1,ifield,ng)*day2sec.gt.time(ng)))) THEN
+     &     (Linfo( 5,ifield,ng).or.                                     &
+     &     (Finfo( 1,ifield,ng)*day2sec.gt.time(ng))))) THEN
         Linquire=.TRUE.
         Lmulti=.TRUE.
       END IF
 !
-!  On first call, inquire about the contents of input NetCDF file and
+!  If appropriate, inquire about the contents of input NetCDF file and
 !  fill information arrays.
+!
+!  Also, if appropriate, deactivate the Linfo(5,ifield,ng) switch after
+!  the query for the LOWER snapshot interpolant from previous multifile
+!  in the list. The switch was activated previously to indicate the
+!  processing of the FIRST record of the file for the UPPER snapshot
+!  interpolant.
 !
       IF (Linquire) THEN
         job=-3
@@ -120,36 +127,41 @@
      &                Lmulti, nfiles, S)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+        IF (Linfo(5,ifield,ng)) THEN
+          Linfo(5,ifield,ng)=.FALSE.
+        END IF
       END IF
-!
-!  Load properties for requested field from information arrays.
-!
-      Lgridded=Linfo(1,ifield,ng)
-      Liocycle=Linfo(2,ifield,ng)
-      Lonerec =Linfo(3,ifield,ng)
-      Vtype   =Iinfo(1,ifield,ng)
-      Vid     =Iinfo(2,ifield,ng)
-      Tid     =Iinfo(3,ifield,ng)
-      Nrec    =Iinfo(4,ifield,ng)
-      Vsize(1)=Iinfo(5,ifield,ng)
-      Vsize(2)=Iinfo(6,ifield,ng)
-      Vsize(3)=Iinfo(7,ifield,ng)
-      Tindex  =Iinfo(8,ifield,ng)
-      Trec    =Iinfo(9,ifield,ng)
-      Tmin    =Finfo(1,ifield,ng)
-      Tmax    =Finfo(2,ifield,ng)
-      Clength =Finfo(5,ifield,ng)
-      Tscale  =Finfo(6,ifield,ng)
-      Tmono   =Finfo(7,ifield,ng)
-      ncfile  =Cinfo(ifield,ng)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, read in new data.
 !-----------------------------------------------------------------------
 !
       update=.FALSE.
+      Tmono=Finfo(7,ifield,ng)
+!
       IF ((Tmono.gt.time(ng)).or.(iic(ng).eq.0).or.                     &
      &    (iic(ng).eq.ntstart(ng))) THEN
+!
+!  Load properties for requested field from information arrays.
+!
+        Lgridded=Linfo(1,ifield,ng)
+        Liocycle=Linfo(2,ifield,ng)
+        Lonerec =Linfo(3,ifield,ng)
+        Vtype   =Iinfo(1,ifield,ng)
+        Vid     =Iinfo(2,ifield,ng)
+        Tid     =Iinfo(3,ifield,ng)
+        Nrec    =Iinfo(4,ifield,ng)
+        Vsize(1)=Iinfo(5,ifield,ng)
+        Vsize(2)=Iinfo(6,ifield,ng)
+        Vsize(3)=Iinfo(7,ifield,ng)
+        Tindex  =Iinfo(8,ifield,ng)
+        Trec    =Iinfo(9,ifield,ng)
+        Tmin    =Finfo(1,ifield,ng)
+        Tmax    =Finfo(2,ifield,ng)
+        Clength =Finfo(5,ifield,ng)
+        Tscale  =Finfo(6,ifield,ng)
+        ncfile  =Cinfo(ifield,ng)
+!
         IF (Liocycle) THEN
           Trec=MOD(Trec,Nrec)-1
           IF (Trec.le.0) Trec=Nrec+Trec
@@ -157,7 +169,7 @@
           Trec=Trec-1
         END IF
         Iinfo(9,ifield,ng)=Trec
-
+!
         IF ((1.le.Trec).and.(Trec.le.Nrec)) THEN
 !
 !  Set rolling index for two-time record storage of input data.  If
@@ -190,6 +202,14 @@
           END IF
           Tval=Tval*Tscale
           Vtime(Tindex,ifield,ng)=Tval
+!
+!  Activate switch Linfo(5,ifield,ng) if processing the FIRST record of
+!  the file for the UPPER time snapshot. We need to get the LOWER time
+!  snapshot from previous multifile.
+!
+          IF ((Trec.eq.1).and.(Tval*day2sec.ge.time(ng))) THEN
+            Linfo(5,ifield,ng)=.TRUE.
+          END IF
 !
 !  Read in 3D-grided or point data.
 !

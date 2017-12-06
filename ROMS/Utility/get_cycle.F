@@ -25,7 +25,7 @@
 !     Lmulti     Switch to process a multi-file field. That is, the    !
 !                  time records are split in several NetCDF files.     !
 !     ncname     NetCDF file name (string)                             !
-!     ncid       NetCDF file ID (integer)
+!     ncid       NetCDF file ID (integer)                              !
 !     TvarName   Requested time variable name (string)                 !
 !     ntime      Size of time dimension (integer)                      !
 !     smday      Starting model day (real)                             !
@@ -35,12 +35,28 @@
 !     Tid        NetCDF field time variable ID (integer)               !
 !     Lcycle     Switch indicating cycling of input fields (logical)   !
 !     clength    Length of field time cycle (real)                     !
-!     Tindex     Starting field time index to read (integer)           !
+!     Tindex     Starting field time index plus/minus one to read      !
+!                  according job flag (integer)                        !
+!                    job > 0       read Tindex+1   (NLM, TLM, RPM)     !
+!                    job < 0       read Tindex-1   (ADM)               !
 !     Tstr       Data time lower bound enclosing "smday" (real)        !
 !     Tend       Data time upper bound enclosing "smday" (real)        !
 !     Tmin       Data starting (first record) day (real)               !
 !     Tmax       Data ending (last record) day (real)                  !
 !     Tscale     Scale to convert time coordinate to day units (real)  !
+!                                                                      !
+!                                                                      !
+! Notice that during initialization (initial, tl_initial, rp_initial,  !
+! or ad_initial) this routine process the information for the first    !
+! snapshot of the time interpolation. In the forward time stepping     !
+! (NLM, TLM, and RPM), the first data snapshot corresponds to the      !
+! LOWER interpolant.  Contrarily, in backward time stepping (ADM),     !
+! the first data snapshot corresponds to the UPPER interpolant.  At    !
+! initialization, there is no information yet if a particular field is !
+! from a multifile or not.  So the strategy is to treat such field     !
+! differently and resolve it multifile status latter elsewhere when    !
+! processing the second snapshot (UPPER interpolant for the forward    !
+! and LOWER interpolant for the backward time stepping).               !
 !                                                                      !
 !=======================================================================
 !
@@ -74,6 +90,7 @@
 !  Local variable declarations.
 !
       logical :: TimeLess
+      logical :: Linside, LowerBound, Upperbound
 
       integer :: i, nvatt, nvdim
 
@@ -91,7 +108,10 @@
 !  Initialize.
 !
       Lcycle=.FALSE.
+      Linside=.FALSE.
+      LowerBound=.FALSE.
       TimeLess=.FALSE.
+      UpperBound=.FALSE.
       Tindex=0
       clength=0.0_r8
       Tstr=0.0_r8
@@ -170,11 +190,31 @@
         mday=smday
       END IF
 !
-!  If processing field split in several files, find upper time-snapshot
-!  (Tend) and its associated record (Tindex).
+!  Is the model time inside the data time range? If not, check if the
+!  data just has the LOWER- or the UPPER-snapshot interpolant.
+!
+      IF ((Tmin.le.mday).and.(mday.le.Tmax)) THEN
+        Linside=.TRUE.
+      ELSE IF (mday.ge.Tmax) THEN
+        LowerBound=.TRUE.
+      ELSE IF (mday.le.Tmin) THEN
+        UpperBound=.TRUE.
+      END IF
+!
+!  If processing timeless variable, set processing parameter.
+!
+      IF (TimeLess) THEN
+        Tstr=Tmin
+        Tend=Tmax
+        Tindex=ntime
+        RETURN
+      END IF
+!
+!  If processing field split in several files, find UPPER time-snapshot
+!  and its associated time record (Tindex).
 !
       IF (Lmulti) THEN
-        IF (job.gt.0) THEN          ! forward  time logic
+        IF (job.gt.0) THEN          ! forward  time-stepping logic
           DO i=1,ntime
             IF (Tval(i).gt.mday) THEN
               Tindex=i-1
@@ -182,7 +222,7 @@
               EXIT
             END IF
           END DO
-        ELSE                        ! backward time logic
+        ELSE                        ! backward time-stepping logic
           DO i=ntime,1,-1
             IF (Tval(i).le.mday) THEN
               Tindex=i+1
@@ -192,40 +232,49 @@
           END DO
         END IF
 !
-!  If not processing a multi-file field, find lower time-snapshot
-!  (Tend) and its associated record (Tindex).
+!  If not processing a multi-file field, find LOWER time-snapshot
+!  and its associated time record (Tindex).
 !
       ELSE
-        IF ((mday.lt.Tmin).or.(mday.ge.Tmax)) THEN
-          Tindex=ntime
-          Tstr=Tmax
-        ELSE
-          tstart=Tmin
-          IF (job.gt.0) THEN        ! forward  time logic
+        IF (job.gt.0) THEN     ! forward:   Tval(i) =< mday =< Tval(i+1)
+          IF (Linside) THEN
+            tstart=Tmin
             DO i=2,ntime
-              IF ((tstart.le.mday).and.(mday.lt.Tval(i))) THEN
-                Tindex=i-1
+              IF ((tstart.le.mday).and.(mday.le.Tval(i))) THEN
                 Tstr=tstart
+                Tindex=i-1     ! one is added when processing
                 EXIT
               END IF
               tstart=Tval(i)
             END DO
-          ELSE                      ! backward time logic
+          ELSE IF (LowerBound) THEN
+            Tstr=Tmax
+            Tindex=ntime
+          END IF
+        ELSE                   ! backward:  Tval(i) =< mday =< Tval(i+1)
+          IF (Linside) THEN
+            tstart=Tmin
             DO i=2,ntime
-              IF ((tstart.lt.mday).and.(mday.le.Tval(i))) THEN
-                Tindex=i-1
-                Tstr=tstart
+              IF ((tstart.le.mday).and.(mday.le.Tval(i))) THEN
+                Tstr=Tval(i)
+                Tindex=i
                 EXIT
               END IF
               tstart=Tval(i)
             END DO
+          ELSE IF (LowerBound) THEN
+            Tstr=Tmax
+            Tindex=ntime
+          ELSE IF (UpperBound) THEN
+            Tstr=Tmin
+            Tindex=1
           END IF
         END IF
       END IF
 !
-!  If processing a multi-file field, set lower time-snapshot (Tstr).
-!  This is the last value from previous file. Otherwise, set upper
-!  time-snapshot (Tend).
+!  If processing a multi-file field, set LOWER time-snapshot. It
+!  is the last value from previous file. Otherwise, set UPPER
+!  time-snapshot.
 !
       IF (Lmulti) THEN
         IF (job.gt.0) THEN
@@ -237,8 +286,13 @@
         IF (Lcycle.and.(Tindex.eq.ntime)) THEN
           Tend=Tmin
         ELSE
-          i=MIN(ntime,Tindex+1)
-          Tend=Tval(i)
+          IF (job.gt.0) THEN
+            i=MIN(ntime,Tindex+1)
+            Tend=Tval(i)
+          ELSE
+            i=MAX(1,Tindex-1)
+            Tend=Tval(i)
+          END IF
         END IF
       END IF
 !
@@ -255,18 +309,54 @@
      &                                        Tmax, smday
                 exit_flag=2
                 RETURN
+              ELSE IF (Linfo(6,ifield,ng)) THEN
+                IF (Tmin.lt.smday) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,30)                                   &
+     &                  'Upper snapshot time for multi-file variable:', &
+     &                                TRIM(TvarName),                   &
+     &                                TRIM(Vname(1,ifield)),            &
+     &                  'is less than current model time.',             &
+     &                                'Tmin = ', Tmin, smday
+                  END IF
+                  exit_flag=2
+                  RETURN
+                END IF
               END IF
             ELSE
-              IF (smday.lt.Tmax) THEN
-                IF (Master) WRITE (stdout,30) TRIM(TvarName),           &
-     &                                        Tmax, smday
-                exit_flag=2
-                RETURN
+              IF (Linfo(5,ifield,ng)) THEN
+                IF (Tmin.gt.smday) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,30)                                   &
+     &                  'Lower snapshot time for multi-file variable:', &
+     &                                TRIM(TvarName),                   &
+     &                                TRIM(Vname(1,ifield)),            &
+     &                  'is greater than current model time.',          &
+     &                                'Tmin = ', Tmin, smday
+                  END IF
+                  exit_flag=2
+                  RETURN
+                END IF
+              ELSE
+                IF (smday.lt.Tmax) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,30)                                   &
+     &                    'starting time for multi-file variable:',     &
+     &                                TRIM(TvarName),                   &
+     &                                TRIM(Vname(1,ifield)),            &
+     &                    'is greater than current model time.',        &
+     &                                'Tmax = ', Tmax, smday
+                  END IF
+                  exit_flag=2
+                  RETURN
+                END IF
               END IF
             END IF
           ELSE
-            IF (smday.lt.Tmin) THEN
-              IF (Master) WRITE (stdout,40) TRIM(TvarName), Tmin, smday
+            IF (.not.UpperBound.and.(smday.lt.Tmin)) THEN
+              IF (Master) WRITE (stdout,40) TRIM(TvarName),             &
+     &                                      TRIM(Vname(1,ifield)),      &
+     &                                      Tmin, smday
               exit_flag=2
               RETURN
             END IF
@@ -281,11 +371,10 @@
   20  FORMAT (/,' GET_CYCLE - ending time for multi-file variable: ',a, &
      &        /,13x,'is less than current model time. ',                &
      &        /,13x,'TMAX = ',f15.4,2x,'TDAYS = ',f15.4)
-  30  FORMAT (/,' GET_CYCLE - starting time for multi-file variable: ', &
-     &        a,/,13x,'is greater than current model time. ',           &
-     &        /,13x,'TMAX = ',f15.4,2x,'TDAYS = ',f15.4)
-  40  FORMAT (/,' GET_CYCLE - starting time for variable: ',a,          &
-     &        /,13x,'is greater than current model time. ',             &
+  30  FORMAT (/,' GET_CYCLE - ',a,1x,a,2x,'(',a,')',/,13x,a,            &
+     &        /,13x,a,f15.4,2x,'TDAYS = ',f15.4)
+  40  FORMAT (/,' GET_CYCLE - starting time for variable: ',a,2x,       &
+     &        '(',a,')',/,13x,'is greater than current model time.',    &
      &        /,13x,'TMIN = ',f15.4,2x,'TDAYS = ',f15.4)
 
       RETURN
