@@ -206,7 +206,7 @@
       CALL netcdf_open (ng, IDmod, ncname, 0, ncINPid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) THEN
-        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        IF (Master) WRITE (stdout,10) string, TRIM(ncname)
         RETURN
       END IF
 !

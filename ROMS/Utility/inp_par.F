@@ -1129,7 +1129,16 @@
 !
 !=======================================================================
 !                                                                      !
-!  This function decodes lines of text from input script files.        !
+!  This function decodes lines of text from input script files. It is  !
+!  to evaluate ROMS unique namelist parameters.                        !
+!                                                                      !
+!  Arguments:                                                          !
+!                                                                      !
+!    line_text      Input scripts lines as text (string)               !
+!    KeyWord        Input parameter keyword (string)                   !
+!    Nval           Number of values processed (integer)               !
+!    Cval           Input values as characters (string array)          !
+!    Rval           Input values as mumbers (real array)               !
 !                                                                      !
 !=======================================================================
 !
