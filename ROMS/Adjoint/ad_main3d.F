@@ -25,6 +25,9 @@
       USE mod_fourdvar
 # endif
       USE mod_iounits
+# ifdef SENSITIVITY_4DVAR
+      USE mod_ncparam
+# endif
       USE mod_scalars
       USE mod_stepping
 # ifdef SO_SEMI
@@ -138,7 +141,9 @@
       USE set_depth_mod,           ONLY : set_depth
       USE set_massflux_mod
       USE strings_mod,             ONLY : FoundError
-!!    USE wvelocity_mod,           ONLY : wvelocity
+# ifdef SENSITIVITY_4DVAR
+      USE ad_wvelocity_mod,        ONLY : ad_wvelocity
+# endif
 !
       implicit none
 !
@@ -522,7 +527,11 @@
 !
         DO ng=1,Ngrids
           DO tile=last_tile(ng),first_tile(ng),-1
-!!          CALL wvelocity (ng, tile, nstp(ng))
+# ifdef SENSITIVITY_4DVAR
+            IF (SCALARS(ng)%Lstate(isWvel)) THEN
+              CALL ad_wvelocity (ng, tile, nstp(ng))
+            END IF
+# endif
             CALL ad_omega (ng, tile, iADM)
 # if defined ANA_VMIX_NOT_YET
             CALL ad_ana_vmix (ng, tile, iADM)

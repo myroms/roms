@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE ad_extract_obs_mod
-#if defined ADJOINT && defined FOUR_DVAR
+#if defined ADJOINT && defined FOUR_DVAR && defined OBSERVATIONS
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

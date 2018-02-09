@@ -1108,6 +1108,15 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ICESHELF,'
 #endif
+#if defined IMPACT_INNER        && defined OBS_IMPACT          && \
+   (defined W4DVAR_SENSITIVITY  || defined W4DPSAS_SENSITIVITY || \
+    defined IS4DVAR_SENSITIVITY)
+!
+      IF (Master) WRITE (stdout,20) 'IMPACT_INNER',                     &
+     &   'Writing observations impacts for each inner loop.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' IMPACT_INNER,'
+#endif
 #if defined IMPLICIT_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
 !
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &

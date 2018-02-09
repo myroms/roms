@@ -1708,10 +1708,10 @@
       DO ng=1,Ngrids
 
 #ifdef SOLVE3D
-        allocate ( SCALARS(ng) % Fstate(7+2*MT) )
+        allocate ( SCALARS(ng) % Fstate(8+2*MT) )
         SCALARS(ng) % Fstate(1:7+2*MT) = .FALSE.
 
-        allocate ( SCALARS(ng) % Lstate(5+MT) )
+        allocate ( SCALARS(ng) % Lstate(8+2*MT) )
         SCALARS(ng) % Lstate(1:5+MT) = .FALSE.
 #else
         allocate ( SCALARS(ng) % Fstate(5) )

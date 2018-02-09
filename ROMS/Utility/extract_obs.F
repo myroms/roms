@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE extract_obs_mod
-#if defined FOUR_DVAR || defined VERIFICATION
+#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

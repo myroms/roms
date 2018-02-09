@@ -2148,6 +2148,15 @@
   'v3dvar'
   1.0d0
 
+'w'                                                ! Input
+  'w-momentum component functional'
+  'meter second-1'                                 ! [m/s]
+  'w-velocity, scalar, series'
+  'v3d_time'
+  'idWads'
+  'w3dvar'
+  1.0d0
+
 'temp'                                             ! Input
   'potential temperature functional'
   'Celsius'                                        ! [Celsius]

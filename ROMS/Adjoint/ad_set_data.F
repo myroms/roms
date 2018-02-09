@@ -1591,6 +1591,16 @@
      &                   __FILE__)) RETURN
         END IF
 !
+        IF (SCALARS(ng)%Lstate(isWvel)) THEN
+          CALL set_3dfldr_tile (ng, tile, iADM, idWads,                 &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          CLIMA(ng)%wvel_adsG,                    &
+     &                          CLIMA(ng)%wvel_ads,                     &
+     &                          update)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END IF
+!
 !  Set 3D tracers.
 !
         DO itrc=1,NT(ng)

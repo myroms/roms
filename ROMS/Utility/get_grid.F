@@ -1917,7 +1917,7 @@
 !
 !  Open adjoint sensitivity NetCDF file for reading.
 !
-      IF (GotScope(4).and.(ADS(ng)%ncid.eq.-1)) THEN
+      IF (ADS(ng)%ncid.eq.-1) THEN
         CALL netcdf_open (ng, model, ncname, 0, ADS(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) THEN

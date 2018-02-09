@@ -104,11 +104,13 @@
       END DO
 !
 !  Determine state variables to read from input NetCDF file.  Notice
-!  that these state variable are only assigned if input flag model < 8.
-!  Higher values are used to process only boundary condition or
-!  surface forcing in the variational data assimilation algorithms.
+!  that these state variable are only assigned if input flag model < 12,
+!  model = 14, or model = 15. That is, all the state variables associated
+!  with ROMS prognostic equations.  The remaining values are used to
+!  process open boundary condition or surface forcing variable in the
+!  4D-Var control vector.
 !
-      IF (model.lt.8.or.model.eq.14) THEN
+      IF ((model.le.11).or.(model.eq.14).or.(model.eq.15)) THEN
 #ifdef ANA_INITIAL
         IF (nrrec(ng).ne.0) THEN
           get_var(idFsur)=.TRUE.
@@ -234,8 +236,8 @@
 !  Determine 4DVar boundary variables to adjust.
 !
       IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.     &
-     &    (model.eq.iRPM).or.(model.eq.8).or.(model.eq.10).or.          &
-     &    (model.eq.12)) THEN
+     &    (model.eq.iRPM).or.(model.eq.5).or.(model.eq.12).or.          &
+     &    (model.eq.16)) THEN
         IF (ANY(Lobc(:,isFsur,ng))) THEN
           get_var(idSbry(isFsur))=.TRUE.
         END IF
@@ -265,8 +267,8 @@
 !  Determine 4DVar surface forcing variables to adjust.
 !
       IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.     &
-     &    (model.eq.iRPM).or.(model.eq.9).or.(model.eq.11).or.          &
-     &    (model.eq.12)) THEN
+     &    (model.eq.iRPM).or.(model.eq.5).or.(model.eq.13).or.          &
+     &    (model.eq.17)) THEN
 # ifdef ADJUST_STFLUX
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
@@ -277,26 +279,6 @@
 # ifdef ADJUST_WSTRESS
         get_var(idUsms)=.TRUE.
         get_var(idVsms)=.TRUE.
-# endif
-      END IF
-#endif
-#ifdef BNORM
-!
-!  Determine variables for Hessian singular vectors with background
-!  normalization.
-!  (HGA: This is not needed because already accounted above when
-!        model < 8).
-!
-      IF (model.eq.6) THEN
-        get_var(idFsur)=.TRUE.
-        get_var(idUbar)=.TRUE.
-        get_var(idVbar)=.TRUE.
-# ifdef SOLVE3D
-        get_var(idUvel)=.TRUE.
-        get_var(idVvel)=.TRUE.
-        DO itrc=1,NAT
-          get_var(idTvar(itrc))=.TRUE.
-        END DO
 # endif
       END IF
 #endif

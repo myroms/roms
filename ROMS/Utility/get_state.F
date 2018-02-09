@@ -137,32 +137,44 @@
         string=' ADM: '                    ! adjoint model
         IDmod=iADM
       ELSE IF (model.eq.5) THEN
-        string=' NRM: '                    ! normalization factor
-        IDmod=iNLM                         ! model or initial conditions
+        string=' NLM: '                    ! surface forcing and
+        IDmod=iNLM                         ! OBC increments
       ELSE IF (model.eq.6) THEN
-        string=' STD: '                    ! standard deviation
-        IDmod=iNLM                         ! model or initial conditions
+        string=' TLM: '                    ! tangent linear error
+        IDmod=iTLM                         ! forcing (time covariance)
       ELSE IF (model.eq.7) THEN
         string=' FRC: '                    ! impulse forcing
         IDmod=iNLM
       ELSE IF (model.eq.8) THEN
-        string=' STD: '                    ! standard deviation
-        IDmod=iNLM                         ! boundary conditions
+        string=' TLM: '                    ! v-space increments
+        IDmod=iTLM                         ! I4D-Var
       ELSE IF (model.eq.9) THEN
+        string=' NLM: '                    ! nonlinear model
+        IDmod=iNLM                         ! background state
+      ELSE IF (model.eq.10) THEN
+        string=' STD: '                    ! standard deviation
+        IDmod=iNLM                         ! initial conditions
+      ELSE IF (model.eq.11) THEN
+        string=' STD: '                    ! standard deviation
+        IDmod=iNLM                         ! model error
+      ELSE IF (model.eq.12) THEN
+        string=' STD: '                    ! standard deviation
+        IDmod=iNLM                         ! boundary conditions
+      ELSE IF (model.eq.13) THEN
         string=' STD: '                    ! standard deviation
         IDmod=iNLM                         ! surface forcing
-      ELSE IF (model.eq.10) THEN
+      ELSE IF (model.eq.14) THEN
+        string=' NRM: '                    ! normalization factors
+        IDmod=iNLM                         ! initial conditions
+      ELSE IF (model.eq.15) THEN
+        string=' NRM: '                    ! normalization factors
+        IDmod=iNLM                         ! model error
+      ELSE IF (model.eq.16) THEN
         string=' NRM: '                    ! normalization factor
         IDmod=iNLM                         ! boundary conditions
-      ELSE IF (model.eq.11) THEN
+      ELSE IF (model.eq.17) THEN
         string=' NRM: '                    ! normalization factor
         IDmod=iNLM                         ! surface forcing
-      ELSE IF (model.eq.12) THEN
-        string=' NLM: '                    ! tangent linear forcing and
-        IDmod=iNLM                         ! obc increments
-      ELSE IF (model.eq.14) THEN
-        string=' TLM: '                    ! tangent model error forcing
-        IDmod=iTLM
       END IF
 
 #ifdef PROFILE
@@ -365,14 +377,17 @@
       lend=LEN_TRIM(ncname)
       IF (Master) THEN
         CALL time_string (INPtime, t_code)
+        IF ((10.le.model).and.(model.le.17)) THEN
+          t_code=' '              ! time is meaningless for these fields
+        END IF
         WRITE (Tstring,'(f15.4)') tdays(ng)
         IF (ERend.gt.ERstr) THEN
-          WRITE (stdout,40) string, TRIM(StateMsg(msg)), t_code, ng,    &
-     &                      Nrun, TRIM(ADJUSTL(Tstring)),               &
+          WRITE (stdout,40) string, 'Reading '//TRIM(StateMsg(msg)),    &
+     &                      t_code, ng, Nrun, TRIM(ADJUSTL(Tstring)),   &
      &                      ncname(lstr:lend), InpRec, Tindex
         ELSE
-          WRITE (stdout,50) string, TRIM(StateMsg(msg)), t_code, ng,    &
-     &                      TRIM(ADJUSTL(Tstring)),                     &
+          WRITE (stdout,50) string, 'Reading '//TRIM(StateMsg(msg)),    &
+     &                      t_code, ng, TRIM(ADJUSTL(Tstring)),         &
      &                      ncname(lstr:lend), InpRec, Tindex
         END IF
       END IF
@@ -384,8 +399,7 @@
 !  restart variables.
 !-----------------------------------------------------------------------
 !
-      NLM_STATE: IF ((model.eq.iNLM).or.(model.eq.0).or.                &
-     &               (model.eq.13)) THEN
+      NLM_STATE: IF ((model.eq.iNLM).or.(model.eq.0)) THEN
 
 # ifdef PERFECT_RESTART
 !
@@ -2904,16 +2918,17 @@
 #ifdef FOUR_DVAR
 !
 !-----------------------------------------------------------------------
-!  Read in error covariance normalization (nondimensional) factor.
+!  Read in error covariance normalization (nondimensional) factors.
 !-----------------------------------------------------------------------
 !
-      NRM_STATE: IF ((model.eq. 5).or.                                  &
-     &               (model.eq.10).or.                                  &
-     &               (model.eq.11)) THEN
+      NRM_STATE: IF ((model.eq.14).or.                                  &
+     &               (model.eq.15).or.                                  &
+     &               (model.eq.16).or.                                  &
+     &               (model.eq.17)) THEN
 !
 !  Read in free-surface normalization factor.
 !
-        IF (get_var(idFsur).and.(model.eq.5)) THEN
+        IF (get_var(idFsur).and.((model.eq.14).or.(model.eq.15))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
@@ -2951,7 +2966,7 @@
 !
 !  Read in 2D U-momentum component normalization factor.
 !
-        IF (get_var(idUbar).and.(model.eq.5)) THEN
+        IF (get_var(idUbar).and.((model.eq.14).or.(model.eq.15))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
@@ -2989,7 +3004,7 @@
 !
 !  Read in 2D V-momentum component normalization factor.
 !
-        IF (get_var(idVbar).and.(model.eq.5)) THEN
+        IF (get_var(idVbar).and.((model.eq.14).or.(model.eq.15))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
@@ -3028,7 +3043,7 @@
 !
 !  Read in 3D U-momentum component normalization factor.
 !
-        IF (get_var(idUvel).and.(model.eq.5)) THEN
+        IF (get_var(idUvel).and.((model.eq.14).or.(model.eq.15))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
@@ -3066,7 +3081,7 @@
 !
 !  Read in 3D V-momentum component normalization factor.
 !
-        IF (get_var(idVvel).and.(model.eq.5)) THEN
+        IF (get_var(idVvel).and.((model.eq.14).or.(model.eq.15))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
@@ -3105,7 +3120,8 @@
 !  Read in tracer type variables normalization factor.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTvar(itrc)).and.(model.eq.5)) THEN
+          IF (get_var(idTvar(itrc)).and.                                &
+     &        ((model.eq.14).or.(model.eq.15))) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
@@ -3147,7 +3163,7 @@
 !
 !  Read in free-surface open boundaries normalization factor.
 !
-        IF (get_var(idSbry(isFsur)).and.(model.eq.10).and.              &
+        IF (get_var(idSbry(isFsur)).and.(model.eq.16).and.              &
      &      ANY(Lobc(:,isFsur,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isFsur)),                &
@@ -3166,7 +3182,7 @@
 !
 !  Read in 2D U-momentum component open boundaries normalization factor.
 !
-        IF (get_var(idSbry(isUbar)).and.(model.eq.10).and.              &
+        IF (get_var(idSbry(isUbar)).and.(model.eq.16).and.              &
      &        ANY(Lobc(:,isUbar,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isUbar)),                &
@@ -3185,7 +3201,7 @@
 !
 !  Read in 2D V-momentum component open boundaries normalization factor.
 !
-        IF (get_var(idSbry(isVbar)).and.(model.eq.10).and.              &
+        IF (get_var(idSbry(isVbar)).and.(model.eq.16).and.              &
      &      ANY(Lobc(:,isVbar,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isVbar)),                &
@@ -3205,7 +3221,7 @@
 !
 !  Read in 3D U-momentum component open boundaries normalization factor.
 !
-        IF (get_var(idSbry(isUvel)).and.(model.eq.10).and.              &
+        IF (get_var(idSbry(isUvel)).and.(model.eq.16).and.              &
      &      ANY(Lobc(:,isUvel,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isUvel)),                &
@@ -3224,7 +3240,7 @@
 !
 !  Read in 3D V-momentum component open boundaries normalization factor.
 !
-        IF (get_var(idSbry(isVvel)).and.(model.eq.10).and.              &
+        IF (get_var(idSbry(isVvel)).and.(model.eq.16).and.              &
      &      ANY(Lobc(:,isVvel,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isVvel)),                &
@@ -3244,7 +3260,7 @@
 !  Read in 3D tracers open boundaries normalization factor.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.10).and.      &
+          IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.16).and.      &
      &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
@@ -3268,7 +3284,7 @@
 !
 !  Read in surface U-momentum stress normalization factors.
 !
-        IF (get_var(idUsms).and.(model.eq.11)) THEN
+        IF (get_var(idUsms).and.(model.eq.17)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
@@ -3306,7 +3322,7 @@
 !
 !  Read in surface V-momentum stress normalization factors.
 !
-        IF (get_var(idVsms).and.(model.eq.11)) THEN
+        IF (get_var(idVsms).and.(model.eq.17)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
@@ -3347,7 +3363,7 @@
 !  Read in surface tracer flux normalization factors.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.(model.eq.11).and.              &
+          IF (get_var(idTsur(itrc)).and.(model.eq.17).and.              &
      &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
@@ -3395,13 +3411,14 @@
 !  Read in error covariance standard deviation factors.
 !-----------------------------------------------------------------------
 !
-      STD_STATE: IF ((model.eq.6).or.                                   &
-     &               (model.eq.8).or.                                   &
-     &               (model.eq.9)) THEN
+      STD_STATE: IF ((model.eq.10).or.                                  &
+     &               (model.eq.11).or.                                  &
+     &               (model.eq.12).or.                                  &
+     &               (model.eq.13)) THEN
 !
 !  Read in free-surface standard deviation.
 !
-        IF (get_var(idFsur).and.(model.eq.6)) THEN
+        IF (get_var(idFsur).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
@@ -3439,7 +3456,7 @@
 !
 !  Read in 2D U-momentum component standard deviation.
 !
-        IF (get_var(idUbar).and.(model.eq.6)) THEN
+        IF (get_var(idUbar).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
@@ -3477,7 +3494,7 @@
 !
 !  Read in 2D V-momentum component standard deviation.
 !
-        IF (get_var(idVbar).and.(model.eq.6)) THEN
+        IF (get_var(idVbar).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
@@ -3516,7 +3533,7 @@
 !
 !  Read in 3D U-momentum component standard deviation.
 !
-        IF (get_var(idUvel).and.(model.eq.6)) THEN
+        IF (get_var(idUvel).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
@@ -3554,7 +3571,7 @@
 !
 !  Read in 3D V-momentum standard deviation.
 !
-        IF (get_var(idVvel).and.(model.eq.6)) THEN
+        IF (get_var(idVvel).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
@@ -3593,7 +3610,8 @@
 !  Read in tracer type variables standard deviation.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTvar(itrc)).and.(model.eq.6)) THEN
+          IF (get_var(idTvar(itrc)).and.                                &
+     &        ((model.eq.10).or.(model.eq.11))) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTvar(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
@@ -3634,7 +3652,7 @@
 !
 !  Read in convolution horizontal diffusion coefficients.
 !
-        IF (have_var(idKhor).and.(model.eq.6)) THEN
+        IF (have_var(idKhor).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idKhor)),   &
      &                        varid)
           gtype=var_flag(varid)*r2dvar
@@ -3674,7 +3692,7 @@
 !
 !  Read in convolution vertical diffusion coefficient.
 !
-        IF (have_var(idKver).and.(model.eq.6)) THEN
+        IF (have_var(idKver).and.((model.eq.10).or.(model.eq.11))) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idKver)),   &
      &                        varid)
           gtype=var_flag(varid)*w3dvar
@@ -3715,7 +3733,7 @@
 !
 !  Read in free-surface open boundaries standard deviation.
 !
-        IF (get_var(idSbry(isFsur)).and.(model.eq.8).and.               &
+        IF (get_var(idSbry(isFsur)).and.(model.eq.12).and.              &
      &      ANY(Lobc(:,isFsur,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isFsur)),                &
@@ -3734,7 +3752,7 @@
 !
 !  Read in 2D U-momentum component open boundaries standard deviation.
 !
-        IF (get_var(idSbry(isUbar)).and.(model.eq.8).and.               &
+        IF (get_var(idSbry(isUbar)).and.(model.eq.12).and.              &
      &        ANY(Lobc(:,isUbar,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isUbar)),                &
@@ -3753,7 +3771,7 @@
 !
 !  Read in 2D V-momentum component open boundaries standard deviation.
 !
-        IF (get_var(idSbry(isVbar)).and.(model.eq.8).and.               &
+        IF (get_var(idSbry(isVbar)).and.(model.eq.12).and.              &
      &      ANY(Lobc(:,isVbar,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isVbar)),                &
@@ -3773,7 +3791,7 @@
 !
 !  Read in 3D U-momentum component open boundaries standard deviation.
 !
-        IF (get_var(idSbry(isUvel)).and.(model.eq.8).and.               &
+        IF (get_var(idSbry(isUvel)).and.(model.eq.12).and.              &
      &      ANY(Lobc(:,isUvel,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isUvel)),                &
@@ -3792,7 +3810,7 @@
 !
 !  Read in 3D V-momentum component open boundaries standard deviation.
 !
-        IF (get_var(idSbry(isVvel)).and.(model.eq.8).and.               &
+        IF (get_var(idSbry(isVvel)).and.(model.eq.12).and.              &
      &      ANY(Lobc(:,isVvel,ng))) THEN
           CALL netcdf_get_fvar (ng, IDmod, ncname,                      &
      &                          Vname(1,idSbry(isVvel)),                &
@@ -3812,7 +3830,7 @@
 !  Read in 3D tracers open boundaries standard deviation.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.8).and.       &
+          IF (get_var(idSbry(isTvar(itrc))).and.(model.eq.12).and.      &
      &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             CALL netcdf_get_fvar (ng, IDmod, ncname,                    &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
@@ -3836,7 +3854,7 @@
 !
 !  Read in surface U-momentum stress standard deviation.
 !
-        IF (get_var(idUsms).and.(model.eq.9)) THEN
+        IF (get_var(idUsms).and.(model.eq.13)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
@@ -3875,7 +3893,7 @@
 !
 !  Read in surface V-momentum stress standard deviation.
 !
-        IF (get_var(idVsms).and.(model.eq.9)) THEN
+        IF (get_var(idVsms).and.(model.eq.13)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
@@ -3917,7 +3935,7 @@
 !  Read in surface tracer flux standard deviations.
 !
         DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc)).and.(model.eq.9).and.               &
+          IF (get_var(idTsur(itrc)).and.(model.eq.13).and.              &
      &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
@@ -4191,7 +4209,7 @@
 !  Read in tangent linear forcing corrections.
 !-----------------------------------------------------------------------
 !
-      TLM_FORCING: IF (model.eq.12) THEN
+      TLM_FORCING: IF (model.eq.5) THEN
 !
 !  Set switch to process surface forcing and/or open boundaries during
 !  4DVar minimization.
@@ -4497,10 +4515,11 @@
 #if defined TIME_CONV
 !
 !-----------------------------------------------------------------------
-!  Read in tangent linear model error forcing terms.
+!  Read in tangent linear model error forcing terms used in the time
+!  convolutions.
 !-----------------------------------------------------------------------
 !
-      TCS_STATE: IF (model.eq.14) THEN
+      TCS_STATE: IF (model.eq.6) THEN
 !
 !  Set number of records available.
 !
@@ -4732,10 +4751,10 @@
   30  FORMAT (/,a,'GET_STATE - requested input time record = ',i3,/,    &
      &        18x,'not found in input NetCDF: ',a,/,                    &
      &        18x,'number of available records = ',i3)
-  40  FORMAT (/,a,'GET_STATE - ',a,t68,a,                               &
+  40  FORMAT (/,a,'GET_STATE - ',a,t75,a,                               &
      &        /,19x,'(Grid ',i2.2,', Iter=',i4.4, ', t = ',a,           &
      &        ', File: ',a, ', Rec=',i4.4,', Index=',i1,')')
-  50  FORMAT (/,a,'GET_STATE - ',a,t68,a,                               &
+  50  FORMAT (/,a,'GET_STATE - ',a,t75,a,                               &
      &        /,19x,'(Grid ',i2.2, ', t = ',a,                          &
      &        ', File: ',a,', Rec=',i4.4, ', Index=',i1,')')
   60  FORMAT (/,a,'GET_STATE - error while reading variable: ',a,2x,    &

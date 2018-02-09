@@ -201,6 +201,10 @@
           DO i=1,nvdim
             Vsize(i)=var_Dsize(i)
           END DO
+        ELSE
+          IF (.not.Lmulti) THEN
+            ncfile=Fname                    ! need for error report
+          END IF
         END IF
 !
 !  If "scale_factor" attribute is present for a variable, the data are

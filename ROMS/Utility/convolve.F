@@ -657,10 +657,10 @@
 !  order since the final solution is written into the adjoint netcdf
 !  file which will be rewritten in ascending order of time in the TLF
 !  file by wrt_impulse.
-!  NOTE: model=14 here so as to only read the state variables.
+!  NOTE: model=6 here so as to only read the state variables.
 !
             ADrec=irec
-            CALL get_state (ng, 14, 4, TLF(ng)%name, ADrec, Rold(ng))
+            CALL get_state (ng, 6, 6, TLF(ng)%name, ADrec, Rold(ng))
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 !
