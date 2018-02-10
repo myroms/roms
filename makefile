@@ -224,21 +224,17 @@ endif
 
 MAKE_MACROS := $(shell echo ${HOME} | sed 's| |\\ |g')/make_macros.mk
 
-ifneq "$(MAKECMDGOALS)" "clean"
- MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
-		$(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
+ifneq ($(MAKECMDGOALS),clean)
+  MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
+              $(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
 
- GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
+  GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
 
- ifdef GET_MACROS
-  include $(SCRATCH_DIR)/make_macros.mk
-  $(if ,, $(warning INCLUDING FILE $(SCRATCH_DIR)/make_macros.mk \
-                    WHICH CONTAINS APPLICATION-DEPENDENT MAKE DEFINITIONS))
- else
-  include $(MAKE_MACROS)
-  $(if ,, $(warning INCLUDING FILE $(MAKE_MACROS) \
-                   WHICH CONTAINS APPLICATION-DEPENDENT MAKE DEFINITIONS))
- endif
+  ifdef GET_MACROS
+    include $(SCRATCH_DIR)/make_macros.mk
+  else
+    include $(MAKE_MACROS)
+  endif
 endif
 
 clean_list += $(MAKE_MACROS)
@@ -334,7 +330,7 @@ ifndef FORT
   $(error Variable FORT not set)
 endif
 
-ifneq "$(MAKECMDGOALS)" "clean"
+ifneq ($(MAKECMDGOALS),clean)
   include $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
 endif
 
@@ -513,7 +509,7 @@ $(SCRATCH_DIR)/MakeDepend: makefile \
                            $(SCRATCH_DIR)/$(NETCDF_MODFILE) \
                            $(SCRATCH_DIR)/$(TYPESIZES_MODFILE) \
                            | $(SCRATCH_DIR)
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
+	@ $(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
 	cp -p $(MAKE_MACROS) $(SCRATCH_DIR)
 
 .PHONY: depend
@@ -523,7 +519,7 @@ SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 depend: $(SCRATCH_DIR)
 	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
 
-ifneq "$(MAKECMDGOALS)" "clean"
+ifneq ($(MAKECMDGOALS),clean)
   -include $(SCRATCH_DIR)/MakeDepend
 endif
 

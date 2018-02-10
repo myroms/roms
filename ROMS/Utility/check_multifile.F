@@ -247,7 +247,7 @@
           SSF(ng)%base=ncname(1:lstr-3)
         ELSE
           IF (Master.and.Lcheck) THEN
-            WRITE (stdout,10) 'Sources/Sinks DataQ', I_code
+            WRITE (stdout,10) 'Sources/Sinks Data', I_code
             DO ifile=1,Nfiles
               Tmin=Tscale*SSF(ng)%time_min(ifile)
               Tmax=Tscale*SSF(ng)%time_max(ifile)

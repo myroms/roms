@@ -2943,7 +2943,8 @@
             CASE ('FRCNAME')
               label='FRC - forcing fields'
               Npts=load_s2d(Nval, Cval, Cdim, line, label, ifile,       &
-     &                      igrid, nFfiles, Ncount, max_Ffiles, FRC)
+     &                      igrid, Ngrids, nFfiles, Ncount, max_Ffiles, &
+     &                      FRC)
             CASE ('APARNAM')
               DO i=1,LEN(aparnam)
                 aparnam(i:i)=blank
