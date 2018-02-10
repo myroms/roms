@@ -735,6 +735,13 @@
       Coptions(is:is+17)=' COUPLING_INTERP,'
       iatms=iatms+1
 #endif
+#ifdef DATA_COUPLING
+!
+      IF (Master) WRITE (stdout,20) 'DATA_COUPLING',                     &
+     &   'DATA model included in coupling.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' DATA_COUPLING,'
+#endif
 #if defined DATALESS_LOOPS && defined W4DVAR
 !
       IF (Master) WRITE (stdout,20) 'DATALESS_LOOPS',                   &
@@ -2783,6 +2790,13 @@
      &   'Wetting and drying activated.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' WET_DRY,'
+#endif
+#ifdef WIND_MINUS_CURRENT && defined BULK_FLUXES && defined SOLVE3D
+!
+      IF (Master) WRITE (stdout,20) 'WIND_MINUS_CURRENT',               &
+     &   'Compute effective wind by removing surface ocean current.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' WIND_MINUS_CURRENT,'
 #endif
 #ifdef WIND_WAVES
 !

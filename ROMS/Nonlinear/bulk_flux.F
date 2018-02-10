@@ -35,7 +35,7 @@
 !  (10/2004).                                                          !
 !                                                                      !
 !  Modified by Kate Hedstrom for COARE version 3.0 (03/2005).          !
-!  Modified by Jim Edson to correct specific hunidities.               !
+!  Modified by Jim Edson to correct specific humidities.               !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -99,6 +99,10 @@
      &                     MIXING(ng) % beta,                           &
      &                     OCEAN(ng) % rho,                             &
      &                     OCEAN(ng) % t,                               &
+# ifdef WIND_MINUS_CURRENT
+     &                     OCEAN(ng) % u,                               &
+     &                     OCEAN(ng) % v,                               &
+# endif
      &                     FORCES(ng) % Hair,                           &
      &                     FORCES(ng) % Pair,                           &
      &                     FORCES(ng) % Tair,                           &
@@ -148,6 +152,9 @@
      &                           rmask_wet, umask_wet, vmask_wet,       &
 # endif
      &                           alpha, beta, rho, t,                   &
+# ifdef WIND_MINUS_CURRENT
+     &                           u, v,                                  &
+# endif
      &                           Hair, Pair, Tair, Uwind, Vwind,        &
 # ifdef CLOUDS
      &                           cloud,                                 &
@@ -200,11 +207,20 @@
       real(r8), intent(in) :: beta(LBi:,LBj:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
+#  ifdef WIND_MINUS_CURRENT
+      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(in) :: Hair(LBi:,LBj:)
       real(r8), intent(in) :: Pair(LBi:,LBj:)
       real(r8), intent(in) :: Tair(LBi:,LBj:)
+#  ifdef WIND_MINUS_CURRENT
+      real(r8), intent(inout) :: Uwind(LBi:,LBj:)
+      real(r8), intent(inout) :: Vwind(LBi:,LBj:)
+#  else
       real(r8), intent(in) :: Uwind(LBi:,LBj:)
       real(r8), intent(in) :: Vwind(LBi:,LBj:)
+#  endif
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:,LBj:)
 #  endif
@@ -247,11 +263,20 @@
       real(r8), intent(in) :: beta(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+#  ifdef WIND_MINUS_CURRENT
+      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),3)
+      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),3)
+#  endif
       real(r8), intent(in) :: Hair(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Tair(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Uwind(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Vwind(LBi:UBi,LBj:UBj)
+#  ifdef WIND_MINUS_CURRENT
+      real(r8), intent(inout) :: Uwind(LBi:,LBj:)
+      real(r8), intent(inout) :: Vwind(LBi:,LBj:)
+#  else
+      real(r8), intent(in) :: Uwind(LBi:,LBj:)
+      real(r8), intent(in) :: Vwind(LBi:,LBj:)
+#  endif
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
@@ -364,6 +389,26 @@
 !=======================================================================
 !  Atmosphere-Ocean bulk fluxes parameterization.
 !=======================================================================
+!
+#ifdef WIND_MINUS_CURRENT
+!
+!  Modify near-surface (2m or 10m) effective winds by subtracting the
+!  ocean surface current (J Wilkin). See:
+!
+!  Bye, J.A.T. and J.-O. Wolff, 1999: Atmosphere-ocean momentum exchange
+!     in general circulation models. J. Phys. Oceanogr. 29, 671-691.
+!
+      DO j=Jstr-1,JendR
+        DO i=Istr-1,IendR
+          Uwind(i,j)=Uwind(i,j)-                                        &
+     &               0.5_r8*(u(i,j,N(ng),nrhs)+u(i+1,j,N(ng),nrhs))
+          Vwind(i,j)=Vwind(i,j)-                                        &
+     &               0.5_r8*(v(i,j,N(ng),nrhs)+v(i,j+1,N(ng),nrhs))
+        END DO
+      END DO
+#endif
+!
+!  Compute Atmosphere-ocean fluxes using a bulk flux parameterization.
 !
       Hscale=rho0*Cp
       twopi_inv=0.5_r8/pi
