@@ -34,7 +34,7 @@
 #                                                                       :::
 #    -p macro    Prints any Makefile macro value. For example,          :::
 #                                                                       :::
-#                  build.sh -p FFLAGS                                   :::
+#                  build.bash -p FFLAGS                                 :::
 #                                                                       :::
 #    -noclean    Do not clean already compiled objects                  :::
 #                                                                       :::
@@ -43,9 +43,11 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+which_MPI=openmpi                            # default, overwriten below
+
 parallel=0
 clean=1
-set dprint = 0
+dprint=0
 
 while [ $# -gt 0 ]
 do
@@ -62,6 +64,14 @@ do
       fi
       ;;
 
+    -p )
+      shift
+      clean=0
+      dprint=1
+      debug="print-$1"
+      shift
+      ;;
+
     -noclean )
       shift
       clean=0
@@ -75,6 +85,10 @@ do
       echo ""
       echo "-j [N]      Compile in parallel using N CPUs"
       echo "              omit argument for all avaliable CPUs"
+      echo ""
+      echo "-p macro    Prints any Makefile macro value"
+      echo "              For example:  build.bash -p FFLAGS"
+      echo ""
       echo "-noclean    Do not clean already compiled objects"
       echo ""
       exit 1

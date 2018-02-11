@@ -43,6 +43,8 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+set which_MPI = openmpi                      #  default, overwritten below
+
 set parallel = 0
 set clean = 1
 set dprint = 0
