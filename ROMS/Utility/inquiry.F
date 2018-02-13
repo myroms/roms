@@ -120,7 +120,8 @@
      &                            Fcount, S(ifile)%Nfiles
               END IF
               exit_flag=4
-              RETURN
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
             END IF
             S(ifile)%Fcount=Fcount
             S(ifile)%name=TRIM(S(ifile)%files(Fcount))
@@ -146,6 +147,8 @@
           WRITE (stdout,20) Fcount, label, TRIM(Vname(1,ifield))
         END IF
         exit_flag=4
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 !
 !  If several input NetCDF files (nfiles>1), scan files until the
@@ -161,7 +164,7 @@
           CALL netcdf_open (ng, model, Fname, 0, my_ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) THEN
-            WRITE (stdout,60) TRIM(Fname)
+            IF (Master) WRITE (stdout,60) TRIM(Fname)
             RETURN
           END IF
           CloseFile=.TRUE.
@@ -292,7 +295,8 @@
      &                                    TRIM(Vname(1,ifield)),        &
      &                                    TRIM(Fname)
             exit_flag=4
-            RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
         END IF
         IF (ABS(job).eq.1) THEN
@@ -300,7 +304,8 @@
             IF (Master) WRITE (stdout,40) TRIM(Vname(1,ifield)),        &
      &                                    Mrec, Nrec
             exit_flag=4
-            RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
           END IF
         END IF
 !
@@ -355,35 +360,51 @@
 !
       IF (.not.got_var) THEN
         IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
-          DO i=1,nfiles
-            WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-          END DO
+          IF (Master) THEN
+            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
+            DO i=1,nfiles
+              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
+            END DO
+          END IF
         ELSE
           lstr=LEN_TRIM(ncfile)
-          WRITE (stdout,50) TRIM(Vname(1,ifield)), 'file:'
-          IF (lstr.gt.0) THEN
-            WRITE (stdout,'(15x,a)') TRIM(ncfile)
-          ELSE
-            WRITE (stdout,'(15x,a,a)') 'file name is blank, ',          &
-     &                                 'cannot be determined.'
+          IF (Master) THEN
+            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'file:'
+            IF (lstr.gt.0) THEN
+              WRITE (stdout,'(15x,a)') TRIM(ncfile)
+            ELSE
+              WRITE (stdout,'(15x,a,a)') 'file name is blank, ',        &
+     &                                   'cannot be determined.'
+            END IF
           END IF
         END IF
         exit_flag=2
-        RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
       IF (.not.got_time) THEN
         IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
-          DO i=1,nfiles
-            WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-          END DO
+          IF (Master) THEN
+            WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
+            DO i=1,nfiles
+              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
+            END DO
+          END IF
         ELSE
-          WRITE (stdout,50) TRIM(Tname(ifield)), 'file:'
-          WRITE (stdout,'(15x,a)') TRIM(ncfile)
+          lstr=LEN_TRIM(ncfile)
+          IF (Master) THEN
+            WRITE (stdout,50) TRIM(Tname(ifield)), 'file:'
+            IF (lstr.gt.0) THEN
+               WRITE (stdout,'(15x,a)') TRIM(ncfile)
+            ELSE
+              WRITE (stdout,'(15x,a,a)') 'file name is blank, ',        &
+     &                                   'cannot be determined.'
+            END IF
+          END IF
         END IF
         exit_flag=2
-        RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
       END IF
 !
 !  If processing model forcing (multiple files allowed), check if file
@@ -406,7 +427,7 @@
         CALL netcdf_open (ng, model, ncfile, 0, ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) THEN
-          WRITE (stdout,60) TRIM(ncfile)
+           IF (Master) WRITE (stdout,60) TRIM(ncfile)
           RETURN
         END IF
 !
