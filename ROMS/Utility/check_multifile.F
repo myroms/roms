@@ -590,7 +590,7 @@
       CALL netcdf_open (ng, model, ncname, 0, ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) THEN
-        WRITE (stdout,10) TRIM(ncname)
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
         RETURN
       END IF
 !

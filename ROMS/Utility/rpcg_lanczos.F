@@ -944,7 +944,8 @@
             CALL DSTEQR ('I', innLoop-1, cg_Ritz(1,outLoop), zwork(1,1),&
      &                   zgv, Ninner, work, info)
             IF (info.ne.0) THEN
-              PRINT *,' RPCG_LANCZOS - Error in DSTEQR: info = ',info
+              WRITE (stdout,*) ' RPCG_LANCZOS - Error in DSTEQR:',      &
+     &                         ' info = ',info
               exit_flag=8
               GO TO 10
             END IF
@@ -958,7 +959,7 @@
 !  Estimate the Ritz value error bounds.
 !
             DO ivec=1,innLoop-1
-              cg_RitzErr(ivec,outLoop)=ABS(cg_beta(innLoop,outLoop)*  &
+              cg_RitzErr(ivec,outLoop)=ABS(cg_beta(innLoop,outLoop)*    &
      &                                 cg_zv(innLoop-1,ivec,outLoop))
             END DO
 !
@@ -966,7 +967,8 @@
 !
             DO ivec=1,innLoop-1
               IF (cg_RitzErr(ivec,outLoop).lt.0.0_r8) THEN
-                PRINT *,'RPCG_LANCZOS - negative Ritz value found.'
+                WRITE (stdout,*) ' RPCG_LANCZOS - negative Ritz value', &
+     &                           ' found.'
                 exit_flag=8
                 GO TO 10
               END IF

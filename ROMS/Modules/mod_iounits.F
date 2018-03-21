@@ -56,17 +56,17 @@
 !                STD(3,ng)  lateral open boundary conditions           !
 !                STD(4,ng)  surface forcing                            !
 !                                                                      !
-!  Standard input files:                                               !
+!  Input/output information files:                                     !
 !                                                                      !
-!  Iname       Physical parameters standard input script file name.    !
-!  NGCname     Nested grids contact point information file name.       !
-!  USRname     USER input/output generic file name.                    !
-!  Wname       Wave model stadard input file name.                     !
-!  aparnam     Input assimilation parameters file name.                !
-!  bparnam     Input biology parameters file name.                     !
-!  fbionam     Input floats biological behavior parameters file name.  !
-!  fposnam     Input initial floats positions file name.               !
-!  sparnam     Input sediment transport parameters file name.          !
+!  Iname       Physical parameters standard input script filename.     !
+!  NGCname     Nested grids contact point information filename.        !
+!  USRname     USER input/output generic filename.                     !
+!  Wname       Wave model stadard input filename.                      !
+!  aparnam     Input assimilation parameters filename.                 !
+!  bparnam     Input biology parameters filename.                      !
+!  fbionam     Input floats biological behavior parameters filename.   !
+!  fposnam     Input initial floats positions filename.                !
+!  sparnam     Input sediment transport parameters filename.           !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
 !                                                                      !
@@ -92,9 +92,9 @@
 !
 !  I/O units.
 !
-      integer, parameter :: stdinp = 5      ! standard input
-      integer, parameter :: stdout = 6      ! standard output
-      integer, parameter :: usrout = 10     ! generic user unit
+      integer :: stdinp = 5                 ! standard input
+      integer :: stdout = 6                 ! standard output
+      integer :: usrout = 10                ! generic user unit
 !
 !  I/O files management, derived type structures.
 !
@@ -142,7 +142,7 @@
 !
 !  Error messages.
 !
-      character (len=50), dimension(8) :: Rerror =                      &
+      character (len=50), dimension(9) :: Rerror =                      &
      &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
      &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &
      &          ' ROMS/TOMS - Output error ............ exit_flag: ',   &
@@ -150,14 +150,15 @@
      &          ' ROMS/TOMS - Configuration error ..... exit_flag: ',   &
      &          ' ROMS/TOMS - Partition error ......... exit_flag: ',   &
      &          ' ROMS/TOMS - Illegal input parameter . exit_flag: ',   &
-     &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ' /)
+     &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ',   &
+     &          ' ROMS/TOMS - Coupling error .......... exit_flag: ' /)
 !
 !  Standard input scripts file names.
 !
       character (len=256) :: Iname          ! ROMS physical parameters
       character (len=256) :: Wname          ! wave model standard input
-      character (len=256) :: NGCname        ! contact points file name
-      character (len=256) :: USRname        ! use generic file name
+      character (len=256) :: NGCname        ! contact points filename
+      character (len=256) :: USRname        ! use generic filename
       character (len=256) :: aparnam        ! assimilation parameters
       character (len=256) :: bparnam        ! biology model parameters
       character (len=256) :: fbionam        ! floats behavior parameters

@@ -455,6 +455,7 @@
 !    exit_flag = 6   Partition error
 !    exit_flag = 7   Illegal input parameter
 !    exit_flag = 8   Fatal algorithm result
+!    exit_flag = 9   coupling error
 !
         integer :: exit_flag = 0
         integer :: blowup = 0

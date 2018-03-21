@@ -34,26 +34,54 @@
 ! USER may follow the above guidelines for specifying his/her values.  These  !
 ! parameters are marked by "==" plural symbol after the KEYWORD.              !
 !                                                                             !
+! If the DATA Model is activated, the user needs to specify all the filenames !
+! containing export fields required by a particular ESM component. Currently, !
+! multiple NetCDF files are allowed for export fields. Often, it is useful to !
+! split import data time records into several files (say monthly, annual, and !
+! so on). In this case, each multiple filename entry lines need to end with   !
+! the vertical bar (|) symbol. For example:                                   !
+!                                                                             !
+! nDataFiles(seaice) == 5                ! number of NetCDF files to process  !
+!                                                                             !
+!  DataFiles(seaice) == my_swrad_year1.nc   |                                 !
+!                       my_swrad_year2.nc   \                                 !
+!                       my_wstress_year1.nc |                                 !
+!                       my_wstress_year2.nc \                                 !
+!                       my_Pair_year1.nc    |                                 !
+!                       my_Pair_year2.nc    \                                 !
+!                       my_Qair_year1.nc    |                                 !
+!                       my_Qair_year2.nc    \                                 !
+!                       my_Tair_year1.nc    |                                 !
+!                       my_Tair_year2.nc                                      !
+!                                                                             !
+! Notice that "nDataFiles(seaice)" is 5 and not 10. There are 5 uniquely      !
+! different fields in the file list; we DO NOT count entries followed by      !
+! the vertical bar (|) symbol. Multiple file entries are processed with       !
+! derived type structures.                                                    !
+!                                                                             !
 !==============================================================================
 !
-! Coupling import/export variables metadata file name.
+! Coupling import/export variables metadata filename.
 
            CPLname = ROMS/External/coupling_esmf.dat
 
-! Coupled models standard input file name.
+! Coupled models standard input script or namelist filename.
 
    INPname(roms)   = ocean.in
    INPname(atmos)  = atmos.in
    INPname(seaice) = seaice.in
    INPname(waves)  = waves.in
 
-! Active coupled Earth System Models (ESM) switch (T/F).  Each ROMS nested
-! grid is considered an independent component ("Ngrids" values expected)
+! Active coupled Earth System Models (ESM) switch (T/F).  If a component
+! is nested, each grid is considered an independent component. Specify
+! which nested grids are coupled. The first grid of active ESM componets
+! needs to be coupled always.
 
-  IsActive(roms)   == T F                    ! ROMS, provide "Ngrids" values
-  IsActive(atmos)  =  T                      ! atmosphere model
-  IsActive(seaice) =  F                      ! sea-ice model
-  IsActive(waves)  =  F                      ! wave model
+  IsActive(roms)   == T F                    ! ROMS (NgridsR)
+  IsActive(atmos)  == F F                    ! atmosphere model (NgridsA)
+  IsActive(seaice) == F                      ! sea-ice model (NgridsI)
+  IsActive(waves)  == F                      ! wave model (NgridsW)
+  IsActive(data)   =  T                      ! data model
 
 ! Model coupling type (check Glossary):
 !
@@ -69,15 +97,20 @@
 
    PETlayoutOption = 0
 
+! Data Model parallel distributed-memory domain decomposition.
+
+            ItileD = 2                      ! I-direction partition
+            JtileD = 2                      ! J-direction partition
+
 ! Number of PETs assigned to each model in the coupled system. If sequential
 ! layout, assign the same number of PETs to all coupled models. If concurrent
 ! layout, the number of PETs needed is the sum of all coupled model components.
 ! Only the PET values for IsActive(...)=T are processed and considered.
 
   Nthreads(roms)   == 4                     ! ocean model PETs
-  Nthreads(atmos)  =  4                     ! atmosphere model PETs
-  Nthreads(seaice) =  4                     ! sea-ice model PETs
-  Nthreads(waves)  =  4                     ! wave model PETs
+  Nthreads(atmos)  == 1                     ! atmosphere model PETs
+  Nthreads(seaice) =  1                     ! sea-ice model PETs
+  Nthreads(waves)  =  1                     ! wave model PETs
 
 ! Set ESM coupling driver clock. If not re-starting, set StartTime and
 ! RestartTime to the same values.  Set coupling time interval (TimeStep)
@@ -86,10 +119,11 @@
 !
 !                     YYYY MM DD hh mm ss
 
-         StartTime =  2004 01 03 00 00 00   ! Simulation start time
-       RestartTime =  2004 01 03 00 00 00   ! Simulation restart time
-          StopTime =  2004 01 30 00 00 00   ! Simulation stop time
-          TimeStep =  0000 00 00 00 05 00   ! Coupler driver interval
+     ReferenceTime =  2006 01 01 00 00 00   ! Simulation reference time
+         StartTime =  2014 01 01 00 00 00   ! Simulation start time
+       RestartTime =  2014 01 01 00 00 00   ! Simulation restart time
+          StopTime =  2014 01 06 00 00 00   ! Simulation stop time
+          TimeStep =  0000 00 00 03 00 00   ! Coupler driver interval
 
           Calendar =  gregorian             ! date calendar
 
@@ -102,135 +136,137 @@
  TimeFrac(OCN-ATM) == 1                     ! ROMS-atmosphere coupling [Ngrids]
  TimeFrac(OCN-ICE) == 1                     ! ROMS-seaice coupling [Ngrids]
  TimeFrac(OCN-WAV) == 1                     ! ROMS-wave coupling [Ngrids]
- TimeFrac(ATM-ICE) =  1                     ! atmosphere-seaice coupling
- TimeFrac(ATM-WAV) =  1                     ! atmosphere-wave coupling
+ TimeFrac(DAT-ATM) == 1                     ! data-atmosphere coupling
+ TimeFrac(DAT-ICE) =  1                     ! data-seaice coupling
+ TimeFrac(ATM-ICE) == 1                     ! atmosphere-seaice coupling
+ TimeFrac(ATM-WAV) == 1                     ! atmosphere-wave coupling
 
-! Debugging flag:    [0] no debug
+! Debugging flags:   [0] no debug
 !                    [1] report informative messages
 !                    [2] <1> and write grid information in VTK format
 !                    [3] <2> and write exchange fields into NetCDF files
 !
         DebugLevel = 1
 
+! Set trace switch (T/F) for the ESMF library.  It writes voluminous tracing
+! information into the log file, which slowdown performance. Use only for
+! debugging.
+
+        LtraceESMF = F
+
 ! Export/Import fields: Use the following string codes to set the fields
 !                       to export/import for each coupled model.
 !
 !                       (*) Computed from an exchanged field, not regridded
 !
-! Field      Export  Import
+! Field       Export  Import
 !
-! NONE       -       -                  No field to import or export
+! NONE        -       -                  No field to import or export
 !
-! heat       atmos   roms               surface net heat flux
-! cloud      atmos   roms               cloud fraction
-! Hair       atmos   roms, cice         surface specific humidity
-! Tair       atmos   roms, cice         surface air temperature
-! Pair       atmos   roms, cice         surface air pressure
-! Qair       atmos   roms               surface relative humidity
-! SWrad      atmos   roms               shortwave radiation flux
-! LWrad      atmos   roms               surface net longwave radiation flux
-! dLWrad     atmos   roms               surface downward longwave radiation flux
-! rain       atmos   roms               rain fall rate
-! Uwind      atmos   roms, cice, waves  surface U-wind component
-! Vwind      atmos   roms, cice, waves  surface V-wind component
-! Ustr       atmos   roms, cice         surface U-momentum stress
-! Vstr       atmos   roms, cice         surface V-momentum stress
+! shflx       atmos   roms               surface net heat flux
+! cloud       atmos   roms               cloud fraction
+! Hair        atmos   roms, cice         surface specific humidity
+! Tair        atmos   roms, cice         surface air temperature
+! Pair        atmos   roms, cice         surface air pressure
+! Qair        atmos   roms               surface relative humidity
+! SWrad       atmos   roms               shortwave radiation flux
+! SWrad_daily atmos   roms               daily averaged shortwave radiation flux
+! LWrad       atmos   roms               surface net longwave radiation flux
+! dLWrad      atmos   roms               surface downward longwave radiation flux
+! rain        atmos   roms               rain fall rate
+! Uwind       atmos   roms, cice, waves  surface U-wind component
+! Vwind       atmos   roms, cice, waves  surface V-wind component
+! Ustr        atmos   roms, cice         surface U-momentum stress
+! Vstr        atmos   roms, cice         surface V-momentum stress
 !
-! zlvl       atmos   cice               atmspheric height lowest level
-! rhoa       atmos   cice               surface air density
-! potT       atmos   cice             * surface air potential temperature
-! flw        atmos   cice               mean downwelling longwave flux
-! swvdr      atmos   cice               visible direct downward shortwave flux
-! swvdf      atmos   cice               visible diffusive downward shortwave flux
-! swidr      atmos   cice               infrared direct downward shortwave flux
-! swidf      atmos   cice               infrared diffusive downward shortwave flux
-! frain      atmos   cice               mean liquid precipitation rate
-! fsnow      atmos   cice               mean frozen/snow precipitation rate
-! aero_atm   atmos   cice               meam aerosol deposition rate
+! zlvl        atmos   cice               atmspheric height lowest level
+! rhoa        atmos   cice               surface air density
+! potT        atmos   cice             * surface air potential temperature
+! flw         atmos   cice               mean downwelling longwave flux
+! swvdr       atmos   cice               visible direct downward shortwave flux
+! swvdf       atmos   cice               visible diffusive downward shortwave flux
+! swidr       atmos   cice               infrared direct downward shortwave flux
+! swidf       atmos   cice               infrared diffusive downward shortwave flux
+! frain       atmos   cice               mean liquid precipitation rate
+! fsnow       atmos   cice               mean frozen/snow precipitation rate
+! aero_atm    atmos   cice               meam aerosol deposition rate
 !
-! ifrac      cice    atmos              fractional ice area
-! vice       cice    atmos              ice volume per unit area
-! vsno       cice    atmos              snow volume per unit area
-! sit        cice    atmos              surface ice/snow temperature
-! alvdr      cice    atmos              fractional visible band direct albedo
-! alvdf      cice    atmos              fractional visible band diffusive albedo
-! alidr      cice    atmos              fractional near-infrared band direct albedo
-! alidf      cice    atmos              fractional near-infrared band diffusive albedo
-! strairxT   cice    atmos              zonal stress on ice by air
-! strairyT   cice    atmos              meridional stress on ice by air
-! fsens      cice    atmos              ice sensible heat flux
-! flat       cice    atmos              ice latent heat flux
-! evap       cice    atmos              mean evaporative water flux
-! flwout     cice    atmos              mean outgoing upward longwave radiation
+! ifrac       cice    atmos              fractional ice area
+! vice        cice    atmos              ice volume per unit area
+! vsno        cice    atmos              snow volume per unit area
+! sit         cice    atmos              surface ice/snow temperature
+! alvdr       cice    atmos              fractional visible band direct albedo
+! alvdf       cice    atmos              fractional visible band diffusive albedo
+! alidr       cice    atmos              fractional near-infrared band direct albedo
+! alidf       cice    atmos              fractional near-infrared band diffusive albedo
+! strairxT    cice    atmos              zonal stress on ice by air
+! strairyT    cice    atmos              meridional stress on ice by air
+! fsens       cice    atmos              ice sensible heat flux
+! flat        cice    atmos              ice latent heat flux
+! evap        cice    atmos              mean evaporative water flux
+! flwout      cice    atmos              mean outgoing upward longwave radiation
 !
-! fhocn      cice    roms               net heat flux to ocean
-! fresh      cice    roms               fresh water flux to ocean
-! fpond      cice    roms               fresh water flux to ice ponds
-! fsalt      cice    roms               salt flux to ocean
-! strocnxT   cice    roms               zonal stress on ice by ocean
-! strocnyT   cice    roms               meridional stress on ice by ocean
-! fswthru    cice    roms               shortwave flux, ice to ocean
-! fswthruvdr cice    roms               visible direct band net shortwave, ice to ocean
-! fswthruvdf cice    roms               visible diffusive band net shortwave, ice to ocean
-! fswthruidr cice    roms               infrared direct band net shortwave, ice to ocean
-! fswthruidf cice    roms               infrared diffusive band net shortwave, ice to ocean
+! fhocn       cice    roms               net heat flux to ocean
+! fresh       cice    roms               fresh water flux to ocean
+! fpond       cice    roms               fresh water flux to ice ponds
+! fsalt       cice    roms               salt flux to ocean
+! strocnxT    cice    roms               zonal stress on ice by ocean
+! strocnyT    cice    roms               meridional stress on ice by ocean
+! fswthru     cice    roms               shortwave flux, ice to ocean
+! fswthruvdr  cice    roms               visible direct band net shortwave, ice to ocean
+! fswthruvdf  cice    roms               visible diffusive band net shortwave, ice to ocean
+! fswthruidr  cice    roms               infrared direct band net shortwave, ice to ocean
+! fswthruidf  cice    roms               infrared diffusive band net shortwave, ice to ocean
 !
-! frzmlt     roms    cice               freezing/melting potential
-! hmix       roms    cice               mixed layer depth
-! SSH        roms    cice,  waves       sea surface height
-! SST        roms    atmos, cice        sea surface temperature
-! SSS        roms    cice               sea surface salinity
-! ss_tltx    roms    cice             * sea surface slope, x-direction
-! ss_tlty    roms    cice             * sea surface slope, y-direction'
-! Tf         roms    cice               freezing temperature
-! Ubar       roms    waves              vertically integrated U-momentum
-! Vbar       roms    waves              vertically integrated V-momentum
-! Usur       roms    cice               zonal surface ocean curent
-! Vsur       roms    cice               meridional surface ocean curent
-! ZO         roms    waves              bottom roughness
+! frzmlt      roms    cice               freezing/melting potential
+! hmix        roms    cice               mixed layer depth
+! SSH         roms    cice,  waves       sea surface height
+! SST         roms    atmos, cice        sea surface temperature
+! SSS         roms    cice               sea surface salinity
+! ss_tltx     roms    cice             * sea surface slope, x-direction
+! ss_tlty     roms    cice             * sea surface slope, y-direction'
+! Tf          roms    cice               freezing temperature
+! Ubar        roms    waves              vertically integrated U-momentum
+! Vbar        roms    waves              vertically integrated V-momentum
+! Usur        roms    cice               zonal surface ocean curent
+! Vsur        roms    cice               meridional surface ocean curent
+! ZO          roms    waves              bottom roughness
 !
-! Wdir       waves   roms               wave direction
-! Wamp       waves   roms               significant wave height
-! Wlen       waves   roms               average wave length
-! Wptop      waves   roms               surface wave relative peak period
-! Wpbot      waves   roms               bottom wave period
-! Wdiss      waves   roms               wave energy dissipation
-! Wbrk       waves   roms               percent wave breaking
-! Wubot      waves   roms               wave bottom orbital velocity
+! Wdir        waves   roms               wave direction
+! Wamp        waves   roms               significant wave height
+! Wlen        waves   roms               average wave length
+! Wptop       waves   roms               surface wave relative peak period
+! Wpbot       waves   roms               bottom wave period
+! Wdiss       waves   roms               wave energy dissipation
+! Wbrk        waves   roms               percent wave breaking
+! Wubot       waves   roms               wave bottom orbital velocity
 
 ! Ocean model (ROMS) Import and Export fields: Import(1:Nimport) and
 ! Export(1:Nexport).
 
      Nimport(roms) = 8
-     Nexport(roms) = 1
+     Nexport(roms) = 0
 
-      Import(roms) = Pair  \
-                     Tair  \
-                     Hair  \
-                     LWrad \
-                     SWrad \
-                     rain  \
-                     Uwind \
+      Import(roms) = dLWrad \
+                     SWrad  \
+                     Pair   \
+                     Tair   \
+                     Qair   \
+                     rain   \
+                     Uwind  \
                      Vwind
 
-      Export(roms) = SST
+      Export(roms) = NONE
 
 ! Atmospheric model Import and Export fields: Import(1:Nimport) and
 ! Export(1:Nexport).
 
-    Nimport(atmos) = 1
-    Nexport(atmos) = 8
+    Nimport(atmos) = 0
+    Nexport(atmos) = 0
 
-     Import(atmos) = SST
+     Import(atmos) = NONE
 
-     Export(atmos) = Pair  \
-                     Tair  \
-                     Hair  \
-                     LWrad \
-                     SWrad \
-                     rain  \
-                     Uwind \
-                     Vwind
+     Export(atmos) = NONE
 
 ! Sea-ice model Import and Export fields: Import(1:Nimport) and
 ! Export(1:Nexport).
@@ -252,9 +288,142 @@
 
      Export(waves) = NONE
 
+!::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
+! DATA Model Set-up
+!
+! For each ESM component, specify the following information:
+!
+!   nDataExport(...)          The number of fields to export from DATA Model
+!                             to specified ESM component. If zero value,
+!                             exporting of fields to ESM component do not
+!                             take place and the values in "DataExport" and
+!                             "DataFiles" are ignored.
+!
+!    nDataFiles(...)          The number of NetCDF files that the DATA Model
+!                             needs to process and read exporting fields.
+!
+!    DataExport(...)          Field short name string (see above table) to
+!                             read and export to the specified ESM component,
+!                             "nDataExport" values are expected for activated
+!                             ESM component.
+!
+!     DataFiles(...)          NetCDF filenames containing the field to export
+!                             to specified ESM component, nDataFiles are
+!                             expected. The order of files in the list is
+!                             essential. See information about multi-files
+!                             below.
+!
+! Currently, the DATA model only EXPORTS fields. It is improbable that the
+! DATA needs to import fields to itself.
+!
+! If applicable, the USER has the option to enter several sets of filenames
+! for each nested grid.  Alternatively, if all the export fields are the same
+! for each nesting grid, and the data is in its native resolution, we could
+! enter only one set of filenames, and the DATA model will replicate those
+! files internally to the remaining grids using the plural KEYWORD protocol.
+! The USER may have different filenames for each export field.
+!
+! The DATA model will scan the files and will read the needed data from the
+! first file in the list containing the export field. Therefore, the order of
+! the filenames is critical. If using multiple files per nested grid, first
+! enter all the filenames for grid one followed by two, and so on. It is also
+! possible to split input data time records into several files (see Prolog
+! instructions above). Use a single line per entry with a continuation (\)
+! or a vertical bar (|) symbol after each entry, except the last one.
+!
+!::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+!------------------------------------------------------------------------------
+! DATA model export to ROMS.
+!------------------------------------------------------------------------------
+
+  nDataExport(roms) == 8                ! number of fields to export
+
+   nDataFiles(roms) == 8                ! number of NetCDF files to process
+
+   DataExport(roms) == dLWrad \
+                       SWrad  \
+                       Pair   \
+                       Tair   \
+                       Qair   \
+                       rain   \
+                       Uwind  \
+                       Vwind
+
+    DataFiles(roms) == ../om/lwrad_down_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/lwrad_down_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/lwrad_down_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/swrad_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/swrad_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/swrad_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/Pair_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/Pair_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/Pair_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/Tair_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/Tair_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/Tair_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/Qair_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/Qair_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/Qair_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/rain_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/rain_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/rain_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/Uwind_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/Uwind_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/Uwind_nam_3hourly_MAB_and_GoM_2016.nc \
+
+                       ../om/Vwind_nam_3hourly_MAB_and_GoM_2014.nc |
+                       ../om/Vwind_nam_3hourly_MAB_and_GoM_2015.nc |
+                       ../om/Vwind_nam_3hourly_MAB_and_GoM_2016.nc
+
+!------------------------------------------------------------------------------
+! DATA model export to the Atmosphere Model.
+!------------------------------------------------------------------------------
+
+ nDataExport(atmos) == 0                ! number of fields to export
+
+  nDataFiles(atmos) == 0                ! number of NetCDF files to process
+
+  DataExport(atmos) == NONE
+
+   DataFiles(atmos) == data2atm.nc
+
+!------------------------------------------------------------------------------
+! DATA model Export to the Sea Ice Model.
+!------------------------------------------------------------------------------
+
+nDataExport(seaice) == 0                ! number of fields to export
+
+ nDataFiles(seaice) == 0                ! number of NetCDF files to process
+
+ DataExport(seaice) == NONE
+
+  DataFiles(seaice) == data2ice.nc
+
+!------------------------------------------------------------------------------
+! DATA model Export to the Wave Model.
+!------------------------------------------------------------------------------
+
+ nDataExport(waves) == 0                ! number of fields to export
+
+  nDataFiles(waves) == 0                ! number of NetCDF files to process
+
+  DataExport(waves) == NONE
+
+   DataFiles(waves) == data2wav.nc
+
+
+!
+!==============================================================================
 !  GLOSSARY:
-!  =========
+!==============================================================================
 !
 !  Currently, coupling is only possible with four Earth System model (ESM)
 !  components: ocean, atmosphere, sea-ice, wave models.  Other type models
@@ -265,14 +434,16 @@
 !    Keyword(atmos)       atmosphere model    COAMPS, RegCM, WRF
 !    Keyword(seaice)      sea-ice model       CICE
 !    Keyword(waves)       wave model          RED/DIF, SWAN, WAM
+!    Keyword(data)        data model
 !
 !------------------------------------------------------------------------------
-! Input file names.
+! Input filenames.
 !------------------------------------------------------------------------------
 !
-! CPL_name       Coupling import/export variables metadata file name.
+! CPL_name       Coupling import/export variables metadata filename.
 !
-! INPname        Coupled models components standard input file names:
+! INPname        Coupled models components standard input script or namelist
+!                  filenames:
 !
 !                  INPname(roms)       ROMS input script
 !                  INPname(atmos)      Atmosphere model input script
@@ -289,28 +460,58 @@
 !                    input script.
 !
 !                    IsActive(roms)    Activate coupling to ROMS. If nesting,
-!                                      enter Ngrids values. The first value
+!                                      enter NgridsR values. The first value
 !                                      must be TRUE always. The user has the
 !                                      choice to activate or not a particular
-!                                      nested grid.
+!                                      nested grid. By the default, NgridsR=1.
 !
-!                    IsActive(atmos)   Activate coupling to atmosphere model
-!                    IsActive(seaice)  Activate coupling to sea-ice model
-!                    IsActive(waves)   Activate coupling to wave model
+!                    IsActive(atmos)   Activate coupling to atmosphere model.
+!                                      If nesting, enter NgridsA values. The
+!                                      first value must be TRUE always. The
+!                                      user has the choice to activate or not
+!                                      a particular nested grid. By default,
+!                                      NgridsA=1.
+!
+!                    IsActive(seaice)  Activate coupling to sea-ice model.
+!                                      If nesting, enter NgridsI values. The
+!                                      first value must be TRUE always. The
+!                                      user has the choice to activate or not
+!                                      a particular nested grid. By default,
+!                                      NgridsI=1.
+!
+!                    IsActive(waves)   Activate coupling to wave model. If
+!                                      If nesting, enter NgridsW values. The
+!                                      first value must be TRUE always. The
+!                                      user has the choice to activate or not
+!                                      a particular nested grid. By default,
+!                                      NgridsW=1.
+!
+!                    IsActive(data)    Activate coupling to a DATA model. It is
+!                                      used to provide data to ESM components
+!                                      uncoupled fields or to provide values at
+!                                      locations not imported because of
+!                                      noncoincident grids.
+!
+!                                      For example:
+!
+!                                        If just coupling ROMS-CICE, the DATA
+!                                        model provides all the atmosphere
+!                                        forcing fields required by CICE.
+!
+!                                        If atmosphere and ocean models grids
+!                                        are not coincident, the DATA model
+!                                        provides SST on locations not covered
+!                                        by the usually smaller ocean grid.
 !
 !                  ESMF/NUOPC does not provide an elegant and straight way to
 !                  coupled nested grids. The current design is to treat each
-!                  nested grid in ROMS as a unique coupled ESM component (see
-!                  esmf_esm.F and esmf_roms.F).
+!                  nested grid as a unique coupled ESM component (see
+!                  esmf_esm.F, esmf_roms.F, etc).
 !
-!                  If nesting, provide as many values to IsActive(roms) as
+!                  If nesting, provide as many values to IsActive(xxxx) as
 !                  needed for each nested grid. The order of the values is
 !                  important. If only one value is set, only the application
 !                  main grid is coupled.
-!
-!                  Currently, only nested logic for the ROMS component has
-!                  been coded. Knowledge of the numerical kernel for the other
-!                  ESM components is required to implement nesting, if any.
 !
 ! CouplingType     Model coupling type (check Glossary):
 !
@@ -343,6 +544,13 @@
 !                    PETlayoutOption = 1   Concurrent, coupled models are
 !                                          executed on non-overlapping set of
 !                                          PETs
+!
+! ItileD             Number of domain partitions in the I-direction (lon axis).
+!                    It must be equal to or greater than one.
+!
+! JtileD             Number of domain partitions in the J-direction (lat axis).
+!                    It must be equal to or greater than one.
+!
 ! Nthreads         Number of PETs assigned to each model in the coupled system:
 !
 !                    Nthreads(roms)        ROMS PETs
@@ -367,6 +575,10 @@
 !                    [2] <1> and write grid information in VTK format
 !                    [3] <2> and write exchange fields into NetCDF files
 !
+! LtraceESMF       Sets trace switch (T/F) for the ESMF library. It writes
+!                    voluminous tracing information into the log file, which
+!                    slowdown performance. Use only for debugging.
+!
 !------------------------------------------------------------------------------
 ! Time Managing.
 !------------------------------------------------------------------------------
@@ -380,6 +592,10 @@
 !                    hh           hour of the day: 1 - 23 (integer)
 !                    mm           minutes of the hour: 1 - 59 (integer)
 !                    ss           secound of the minute: 1 - 59 (integer)
+!
+! ReferenceTime    ESM driver reference time for simulation. Usually, the
+!                    ESM component measure time in seconds or days since
+!                    the reference date [YYYY MM DD hh mm ss]
 !
 ! StartTime        ESM driver starting time of coupling simulation.
 !                    [YYYY MM DD hh mm ss]
@@ -412,6 +628,8 @@
 !                    TimeFrac(OCN-ATM)   ROMS-Atmosphere coupling interval
 !                    TimeFrac(OCN-ICE)   ROMS-Seaice coupling interval
 !                    TimeFrac(OCN-WAV)   ROMS-Wave coupling interval
+!                    TimeFrac(DAT-ATM)   DATA-atmosphere coupling
+!                    TimeFrac(DAT-ICE)   DATA-seaice coupling
 !                    TimeFrac(ATM-ICE)   Atmosphere-Seaice coupling interval
 !                    TimeFrac(ATM-WAV)   Atmosphere-Wave coupling interval
 !
@@ -435,7 +653,7 @@
 !                    resolved with larger DT.
 !
 !------------------------------------------------------------------------------
-! Export/Import fields to process.
+! Export/Import fields name codes to process.
 !------------------------------------------------------------------------------
 !
 ! Export/Import fields names (abbreviated string codes). Currently, the
@@ -448,7 +666,7 @@
 !                   entries are expected with the label code in parenthesis.
 !                   Set to zero if no fields to import by a particular model.
 !
-!                   Nimport(ocean)  = ?             Ocean model!
+!                   Nimport(ocean)  = ?             Ocean model
 !                   Nimport(atmos)  = ?             Atmosphere model
 !                   Nimport(seaice) = ?             Sea-ice model
 !                   Nimport(waves)  = ?             Wave model
@@ -467,4 +685,146 @@
 !
 ! Export(...)     Export fields codes per model, Nexport(...) string codes
 !                   are expected. If Nexport(...) = 0, set Export = NONE.
+!
+!==============================================================================
+! DATA Model parameters.
+!
+! The USER has the option to enter a filename for each export field and
+! further split data by time records into multiple files. If nested grids,
+! the USER may provide a different set of filenames for each grid. The DATA
+! model will scan the file list and will read the needed data from the first
+! file in the list containing the export field. Therefore, the order of the
+! filenames is critical.
+!==============================================================================
+!
+! nDataExport(roms)      The number of fields to export from DATA Model to
+!                          ROMS component. If zero value, exporting of fields
+!                          to ROMS is not needed and the associated values in
+!                          DataExport(roms) and DataFiles(roms) are ignored.
+!
+! nDataFiles(roms)       The number of NetCDF files that the DATA Model needs
+!                          to process to export fields to ROMS.
+!
+! DataExport(roms)       Field short name string to read and export to ROMS
+!                          component, nDataExport(roms) values are expected.
+!
+! DataFiles(roms)        NetCDF filenames containing the field to export to
+!                          ROMS component, nDataFiles(roms) are expected.
+!
+! Currently, this feature is used to debug the Data Model since ROMS has its
+! own data managing infrastructure via input NetCDF files.  It will be use
+! in the future for hybrid nesting to get export open boundary data from
+! larger scale ocean component.
+!
+!------------------------------------------------------------------------------
+!
+! nDataExport(atmos)     The number of fields to export from DATA Model to the
+!                          Atmosphere Model component. If zero value, exporting
+!                          of fields to Atmosphere Model is not needed and the
+!                          associated values in  DataExport(atmos) and
+!                          DataFiles(atmos) are ignored.
+!
+! nDataFiles(atmos)      The number of NetCDF files that the DATA Model needs
+!                          to process to export fields to the Atmosphere Model
+!                          component
+!
+! DataExport(atmos)      Field short name string to read and export to the
+!                          Atmosphere Model component, nDataExport(atmos)
+!                          values are expected.
+!
+! DataFiles(atmos)       NetCDF filenames containing the field to export to
+!                          the Atmosphere Model component, nDataFiles(atmos)
+!                          are expected.
+!
+! For Example, we may need sea surface temperature at atmosphere model grid
+!              points not covered by ROMS application.
+!
+!      nDataExport(atmos) == 1
+!
+!       nDataFiles(atmos) == 1
+!
+!       DataExport(atmos) == SST
+!
+!         DataFiles(atmos) == sst_day1.nc |
+!                             sst_day2.nc |
+!                             sst_day3.nc
+!
+!------------------------------------------------------------------------------
+!
+! nDataExport(seaice)    The number of fields to export from DATA Model to the
+!                          Sea Ice Model component. If zero value, exporting
+!                          of fields to Sea Ice Model is not needed and the
+!                          associated values in  DataExport(seaice) and
+!                          DataFiles(seaice) are ignored.
+!
+! nDataFiles(seaice)     The number of NetCDF files that the DATA Model needs
+!                          to process to export fields to the Sea Ice Model
+!                          component.
+!
+! DataExport(seaice)     Field short name string to read and export to the
+!                          Sea Ice Model component, nDataExport(seaice)
+!                          values are expected.
+!
+! DataFiles(seaice)      NetCDF filenames containing the field to export to
+!                          the Sea Ice Model component, nDataFiles(seaice)
+!                          are expected.
+!
+! For Example, CICE does not have an input data infrastructure and need the
+! atmospheric forcing fields when coupling only to th ROMS component.
+!
+!     nDataExport(seaice) == 9
+!
+!      nDataFiles(seaice) == 2
+!
+!      DataExport(seaice) == rhoa  \
+!                            potT  \
+!                            flw   \
+!                            swvdr \
+!                            swvdf \
+!                            swidr \
+!                            swidf \
+!                            frain \
+!                            fsnow
+!
+!       DataFiles(seaice) ==  cice_forcing1.nc \
+!                             cice_forcing2.nc
+!
+!------------------------------------------------------------------------------
+!
+! nDataExport(waves)     The number of fields to export from DATA Model to the
+!                          Wave Model component. If zero value, exporting of
+!                          fields to Wave Model is not needed and the
+!                          associated values in  DataExport(waves) and
+!                          DataFiles(waves) are ignored.
+!
+! nDataFiles(waves)      The number of NetCDF files that the DATA Model needs
+!                          to process to export fields to the Wave Model
+!                          component.
+!
+! DataExport(waves)      Field short name string to read and export to the
+!                          Wave Model component, nDataExport(waves)
+!                          values are expected.
+!
+! DataFiles(waves)       NetCDF filenames containing the field to export to
+!                          the Wave Model component, nDataFiles(waves)
+!                          are expected.
+!
+! For Example, the wave model needs to get wind and wind stress component from
+!              the DATA Model:
+!
+!      nDataExport(waves) == 4
+!
+!       nDataFiles(waves) == 2
+!
+!       DataExport(waves) == Uwind \
+!                            Vwind \
+!                            Ustr  \
+!                            Vstr
+!
+!         DataFiles(waves) == wind_month1.nc   |
+!                             wind_month2.nc   |
+!                             wind_month3.nc   \
+!                             stress_month1.nc |
+!                             stress_month2.nc |
+!                             stress_month3.nc
 !

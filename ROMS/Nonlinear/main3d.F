@@ -162,8 +162,8 @@
 !  based on the specified time interval (seconds), RunInterval. Non
 !  nesting applications have NestLayers=1. Notice that RunInterval is
 !  set in the calling driver. Its value may span the full period of the
-!  simulation, or a multi-model coupling interval, or just a single
-!  step.
+!  simulation, a multi-model coupling interval (RunInterval > ifac*dt),
+!  or just a single step (RunInterval=0).
 !
           CALL ntimesteps (iNLM, RunInterval, nl, Nsteps, Rsteps)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
@@ -185,11 +185,7 @@
               time(ng)=time(ng)+dt(ng)
               tdays(ng)=time(ng)*sec2day
               CALL time_string (time(ng), time_code(ng))
-# ifdef REGCM_COUPLING
-              IF (MOD(step_counter(ng),Rsteps).eq.0) Time_Step=.FALSE.
-# else
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
-# endif
             END DO
 !
 !-----------------------------------------------------------------------

@@ -82,7 +82,8 @@
       Tindex =Iinfo(8,ifield,ng)
       update=.TRUE.
 !
-!  Set linear-interpolation factors.
+!  Set linear, time interpolation factors. Fractional seconds are
+!  rounded to the nearest integer towards zero in the weights.
 !
       it1=3-Tindex
       it2=Tindex

@@ -55,6 +55,18 @@
 !-----------------------------------------------------------------------
 !  Read in and report input model parameters.
 !-----------------------------------------------------------------------
+
+#ifdef ROMS_STDOUT
+!
+!  Change default Fortran standard out unit, so ROMS run information is
+!  directed to a file. This is advantageous in coupling applications to
+!  ROMS information separated from other models.
+!
+       stdout=20                      ! overwite Fortran default unit 6
+!
+       OPEN (stdout, FILE='log.roms', FORM='formatted',                 &
+     &       STATUS='replace')
+#endif
 !
 !  Set input units.
 !

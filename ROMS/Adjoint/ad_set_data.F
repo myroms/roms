@@ -487,7 +487,7 @@
 #  endif
 # endif
 
-# ifndef ATM_COUPLING
+# ifndef FRC_COUPLING
 #  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
 !
 !-----------------------------------------------------------------------

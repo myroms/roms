@@ -295,6 +295,8 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_iounits, ONLY : stdout
+!
 !  Imported variable declarations.
 !
       character(len=*), intent(in) :: string
@@ -303,7 +305,7 @@
 !  Report error message to standard output and terminate execution.
 !-----------------------------------------------------------------------
 !
-      PRINT 10, string, 'program terminated by NRERROR'
+      WRITE (stdout,10) string, 'program terminated by NRERROR'
  10   FORMAT (/,1x,a,/20x,a)
       STOP
 

@@ -853,9 +853,9 @@
           RETURN
         END IF
         IF (ae_delta(innLoop,outLoop).le.0.0_r8) THEN
-          PRINT *, ' AE_DELTA not positive.'
-          PRINT *, ' AE_DELTA = ', ae_delta(innLoop,outLoop),           &
-     &             ', outer = ', outLoop, ', inner = ', innLoop
+          WRITE (stdout,*) ' AE_DELTA not positive.'
+          WRITE (stdout,*) ' AE_DELTA = ', ae_delta(innLoop,outLoop),   &
+     &                     ', outer = ', outLoop, ', inner = ', innLoop
           exit_flag=8
           RETURN
         END IF
@@ -993,7 +993,7 @@
         CALL mp_bcasti (ng, model, info)
 # endif
         IF (info.ne.0) THEN
-          PRINT *, ' Error in DSTEQR: info=', info
+          WRITE (stdout,*) ' Error in DSTEQR: info = ', info
           exit_flag=8
           RETURN
         END IF
@@ -1013,7 +1013,7 @@
 !
         DO i=1,innLoop
           IF (ae_Ritz(i,outLoop).lt.0.0_r8) THEN
-            PRINT *, ' Negative Ritz value found.'
+            WRITE (stdout,*) ' Negative Ritz value found.'
             exit_flag=8
             RETURN
           END IF
@@ -1098,7 +1098,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
           IF (Master.and.(nConvRitz.eq.0)) THEN
-            PRINT *, ' No converged Hesssian eigenvectors found.'
+            WRITE(stdout,*) ' No converged Hesssian eigenvectors found.'
           END IF
         END IF
       END IF

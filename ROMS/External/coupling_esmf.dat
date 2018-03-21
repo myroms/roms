@@ -14,7 +14,7 @@
 !                                                                             !
 !       Cinfo( 1)     Field short name (string)                               !
 !       Cinfo( 2)     Field standard name (string)                            !
-!       Cinfo( 3)     Field long descritive name (string)                     !
+!       Cinfo( 3)     Field long descriptive name (string)                    !
 !       Cinfo( 4)     Field source variable name (string)                     !
 !       Cinfo( 5)     Field source units (string)                             !
 !       Cinfo( 6)     Field source grid-cell location (string):               !
@@ -29,7 +29,8 @@
 !                       'Corner'        => cell corners                       !
 !                       'U'             => right and left  cell faces         !
 !                       'V'             => upper and lower cell faces         !
-!       Cinfo(10)     Field regridding method from source to destination:     !
+!       Cinfo(10)     DATA Model file variable name (only NetCDF files)       !
+!       Cinfo(11)     Field regridding method from source to destination:     !
 !                       'bilinear'      => bilinear interpolation             !
 !                       'conservative'  => conservative interpolation         !
 !                       'nearest'       => nearest neighbor interpolation     !
@@ -76,6 +77,7 @@
   'Pair', 'ROMS'                                   ! destination variable, ROMS
   'mb'                                             ! destination units
   'Center'                                         ! destination grid-cell
+  'Pair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -91,6 +93,7 @@
   'Tair', 'ROMS'                                   ! destination variable, ROMS
   'Celsius'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'Tair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -106,6 +109,7 @@
   'Hair', 'ROMS'                                   ! destination variable, ROMS
   'percentage'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'Qair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -121,6 +125,7 @@
   'Hair', 'ROMS'                                   ! destination variable, ROMS
   'kg kg-1'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'Hair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -136,6 +141,7 @@
   'lwrad', 'ROMS'                                  ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'lwrad'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -151,6 +157,7 @@
   'lwrad_down', 'ROMS'                             ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'lwrad_down'                                     ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -158,7 +165,7 @@
   1.0d0                                            ! importing scale
 
 'SWrad'
-  'surface_net_shortwavw_flux'                     ! standard name
+  'surface_net_shortwave_flux'                     ! standard name
   'surface net shortwave radiation flux'
   'swrd', 'RegCM'                                  ! source variable, RegCM
   'W m-2'                                          ! source units
@@ -166,6 +173,39 @@
   'swrad', 'ROMS'                                  ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'swrad'                                          ! DATA Model file variable
+  'bilinear'                                       ! regridding method
+  .FALSE.                                          ! extrapolation support
+  .TRUE.                                           ! connected to coupler
+  0.0d0                                            ! importing add offset
+  1.0d0                                            ! importing scale
+
+'SWrad_daily'
+  'daily_surface_net_shortwave_flux'               ! standard name
+  'daily-averaged surface net shortwave radiation flux'
+  'swrad_daily', 'ATM'                             ! source variable, ATM
+  'W m-2'                                          ! source units
+  'Center'                                         ! source grid-cell
+  'swrad', 'ROMS'                                  ! destination variable, ROMS
+  'W m-2'                                          ! destination units
+  'Center'                                         ! destination grid-cell
+  'swrad_daily'                                    ! DATA Model file variable
+  'bilinear'                                       ! regridding method
+  .FALSE.                                          ! extrapolation support
+  .TRUE.                                           ! connected to coupler
+  0.0d0                                            ! importing add offset
+  1.0d0                                            ! importing scale
+
+'shflux'
+  'surface_net_heat_flux'                          ! standard name
+  'surface net heat flux'
+  'shflux', 'ATM'                                  ! source variable, ATM
+  'W m-2'                                          ! source units
+  'Center'                                         ! source grid-cell
+  'shflux', 'ROMS'                                 ! destination variable, ROMS
+  'W m-2'                                          ! destination units
+  'Center'                                         ! destination grid-cell
+  'shflux'                                         ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -181,6 +221,7 @@
   'cloud', 'ROMS'                                  ! destination variable, CICE
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'cloud'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -196,6 +237,7 @@
   'rain', 'ROMS'                                   ! destination variable, CICE
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'rain'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -207,10 +249,11 @@
   'near surface zonal wind component'
   'wndu', 'RegCM'                                  ! source variable, ATM
   'm s-1'                                          ! source units
-  'U'                                              ! source grid-cell
+  'Center'                                         ! source grid-cell
   'Uair', 'ROMS'                                   ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'Uwind'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -222,10 +265,43 @@
   'near surface meridional wind component'
   'wndv', 'RegCM'                                  ! source variable, ATM
   'm s-1'                                          ! source units
-  'V'                                              ! source grid-cell
+  'Center'                                         ! source grid-cell
   'Vwind', 'ROMS'                                  ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'Vwind'                                          ! DATA Model file variable
+  'bilinear'                                       ! regridding method
+  .FALSE.                                          ! extrapolation support
+  .TRUE.                                           ! connected to coupler
+  0.0d0                                            ! importing add offset
+  1.0d0                                            ! importing scale
+
+'sustr'                                            ! short name
+  'surface_zonal_wind_stress'                      ! standard name
+  'surface zonal wind stress component'
+  'sustr', 'RegCM'                                 ! source variable, ATM
+  'N m-2'                                          ! source units
+  'U'                                              ! source grid-cell
+  'sustr', 'ROMS'                                  ! destination variable, CICE
+  'N m-2'                                          ! destination units
+  'U'                                              ! destination grid-cell
+  'sustr'                                          ! DATA Model file variable
+  'bilinear'                                       ! regridding method
+  .FALSE.                                          ! extrapolation support
+  .TRUE.                                           ! connected to coupler
+  0.0d0                                            ! importing add offset
+  1.0d0                                            ! importing scale
+
+'svstr'                                            ! short name
+  'surface_meridional_wind_stress'                 ! standard name
+  'surface meridional wind stress component'
+  'svstr', 'RegCM'                                 ! source variable, ATM
+  'N m-2'                                          ! source units
+  'V'                                              ! source grid-cell
+  'svstr', 'ROMS'                                  ! destination variable, CICE
+  'N m-2'                                          ! destination units
+  'V'                                              ! destination grid-cell
+  'svstr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -243,6 +319,7 @@
   't(:,:,N,itemp)', 'ROMS'                         ! destination variable, CICE
   'C'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'SST'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -267,6 +344,7 @@
   'zlvl', 'CICE'                                   ! destination variable, CICE
   'm'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'zlvl'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -282,6 +360,7 @@
   'rhoa', 'CICE'                                   ! destination variable, CICE
   'kg m-3'                                         ! destination units
   'Center'                                         ! destination grid-cell
+  'rhoa'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -297,6 +376,7 @@
   'Pair', 'CICE'                                   ! destination variable, CICE
   'N m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'Pair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -312,6 +392,7 @@
   'Tair', 'CICE'                                   ! destination variable, CICE
   'Celsius'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'Tair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -327,6 +408,7 @@
   'potT', 'CICE'                                   ! destination variable, CICE
   'Celsius'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'potT'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -342,6 +424,7 @@
   'Qa', 'CICE'                                     ! destination variable, CICE
   'kg kg-1'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'Hair'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -357,6 +440,7 @@
   'flw', 'CICE'                                    ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'flw'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -372,6 +456,7 @@
   'swvdr', 'CICE'                                  ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'swvdr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -387,6 +472,7 @@
   'swvdf', 'CICE'                                  ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'swvdf'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -402,6 +488,7 @@
   'swidr', 'CICE'                                  ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'swidr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -417,6 +504,7 @@
   'swidf', 'CICE'                                  ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'swidf'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -432,6 +520,7 @@
   'uatm', 'CICE'                                   ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'Uwind'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -447,6 +536,7 @@
   'vatm', 'CICE'                                   ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'Vwind'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -462,6 +552,7 @@
   'strax', 'CICE'                                  ! destination variable, CICE
   'N m-2'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'sustr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -477,6 +568,7 @@
   'stray', 'CICE'                                  ! destination variable, CICE
   'N m-2'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'svstr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -492,6 +584,7 @@
   'frain', 'CICE'                                  ! destination variable, CICE
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'rain'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -507,6 +600,7 @@
   'fsnow', 'CICE'                                  ! destination variable, CICE
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'snow'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -522,6 +616,7 @@
   'faero_atm', 'CICE'                              ! destination variable, CICE
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'faero_atm'                                      ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -541,6 +636,7 @@
   'sl', 'CICE'                                     ! destination variable, CICE
   'm'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'SSH'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -556,6 +652,7 @@
   'ss_tltx', 'CICE'                                ! destination variable, CICE
   'm m-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'ss_tltx'                                        ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -571,6 +668,7 @@
   'ss_tlty', 'CICE'                                ! destination variable, CICE
   'm m-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'ss_tlty'                                        ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -586,6 +684,7 @@
   'hmix', 'CICE'                                   ! destination variable, CICE
   'm'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'hbl'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -601,6 +700,7 @@
   'frzmlt', 'CICE'                                 ! destination variable, CICE
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'frzmlt'                                         ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -616,6 +716,7 @@
   'Tf', 'CICE'                                     ! destination variable, CICE
   'Celsius'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'Tf'                                             ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -631,6 +732,7 @@
   'sst', 'CICE'                                    ! destination variable, CICE
   'Celsius'                                        ! destination units
   'Center'                                         ! destination grid-cell
+  'SST'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -646,6 +748,7 @@
   'sss', 'CICE'                                    ! destination variable, CICE
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'SSS'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -661,6 +764,7 @@
   'uocn', 'CICE'                                   ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'Usur'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -676,6 +780,7 @@
   'vocn', 'CICE'                                   ! destination variable, CICE
   'm s-1'                                          ! destination units
   'Corner'                                         ! destination grid-cell
+  'Vsur'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -696,6 +801,7 @@
   'ifrac', 'ATM'                                   ! destination variable, ATM
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'ifrac'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -711,6 +817,7 @@
   'vice', 'ATM'                                    ! destination variable, ATM
   'm'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'vice'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -726,6 +833,7 @@
   'vsno', 'ATM'                                    ! destination variable, ATM
   'm'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'vsno'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -741,6 +849,7 @@
   'sit', 'ATM'                                     ! destination variable, ATM
   'K'                                              ! destination units
   'Center'                                         ! destination grid-cell
+  'sit'                                            ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -756,6 +865,7 @@
   'alvdr', 'ATM'                                   ! destination variable, ATM
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'alvdr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -771,6 +881,7 @@
   'alvdf', 'ATM'                                   ! destination variable, ATM
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'alvdf'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -786,6 +897,7 @@
   'alidr', 'ATM'                                   ! destination variable, ATM
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'alidr'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -801,6 +913,7 @@
   'alidf', 'ATM'                                   ! destination variable, ATM
   'nondimensional'                                 ! destination units
   'Center'                                         ! destination grid-cell
+  'alidf'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -816,6 +929,7 @@
   'strairxT', 'ATM'                                ! destination variable, ATM
   'N m-2'                                          ! destination units
   'U'                                              ! destination grid-cell
+  'strairxT'                                       ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -831,6 +945,7 @@
   'strairyT', 'ATM'                                ! destination variable, ATM
   'N m-2'                                          ! destination units
   'V'                                              ! destination grid-cell
+  'strairyT'                                       ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -846,6 +961,7 @@
   'fsens', 'ATM'                                   ! destination variable, ATM
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fsens'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -861,6 +977,7 @@
   'flat', 'ATM'                                    ! destination variable, ATM
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'flat'                                           ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -876,6 +993,7 @@
   'evap', 'ATM'                                    ! destination variable, ATM
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'evaporation'                                    ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -891,6 +1009,7 @@
   'flwout', 'ATM'                                  ! destination variable, ATM
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'flwout'                                         ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -910,6 +1029,7 @@
   'fhocn', 'ROMS'                                  ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fhocn'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -925,6 +1045,7 @@
   'fresh', 'ROMS'                                  ! destination variable, ROMS
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'fresh'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -940,6 +1061,7 @@
   'fpond', 'ROMS'                                  ! destination variable, ROMS
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'fpond'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .FALSE.                                          ! connected to coupler
@@ -955,6 +1077,7 @@
   'fsalt', 'ROMS'                                  ! destination variable, ROMS
   'kg m-2 s-1'                                     ! destination units
   'Center'                                         ! destination grid-cell
+  'fsalt'                                          ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -970,6 +1093,7 @@
   'strocnxT', 'ROMS'                               ! destination variable, OCN
   'N m-2'                                          ! destination units
   'U'                                              ! destination grid-cell
+  'strocnxT'                                       ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -985,6 +1109,7 @@
   'strocnyT', 'ROMS'                               ! destination variable, ROMS
   'N m-2'                                          ! destination units
   'V'                                              ! destination grid-cell
+  'strocnyT'                                       ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -1000,6 +1125,7 @@
   'fswthru', 'ROMS'                                ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fswthru'                                        ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -1015,6 +1141,7 @@
   'fswthruvdr', 'ROMS'                             ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fswthruvdr'                                     ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -1030,6 +1157,7 @@
   'fswthruvdf', 'ROMS'                             ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fswthruvdf'                                     ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -1045,6 +1173,7 @@
   'fswthruidr', 'ROMS'                             ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fswthruidr'                                     ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
@@ -1060,6 +1189,7 @@
   'fswthruidf', 'ROMS'                             ! destination variable, ROMS
   'W m-2'                                          ! destination units
   'Center'                                         ! destination grid-cell
+  'fswthruidf'                                     ! DATA Model file variable
   'bilinear'                                       ! regridding method
   .FALSE.                                          ! extrapolation support
   .TRUE.                                           ! connected to coupler
