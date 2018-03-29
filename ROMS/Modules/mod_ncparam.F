@@ -2071,7 +2071,7 @@
                 END DO
             END SELECT
 #endif
-#if defined SOLVE3D && defined AVERAGES
+#if defined SOLVE3D && (defined AVERAGES || defined AD_AVERAGES)
 !
 !  Determine metadata for quadratic tracer averages.
 !

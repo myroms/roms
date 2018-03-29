@@ -70,8 +70,9 @@
 !
       SourceFile=__FILE__
 
-# if defined ADJUST_BOUNDARY || \
-     defined ADJUST_STFLUX   || defined ADJUST_WSTRESS
+# if !defined CORRELATION     && \
+     (defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+      defined ADJUST_WSTRESS)
 !
 !=======================================================================
 !  Open existing nonlinear model initial conditions and define new
@@ -539,8 +540,6 @@
 !
       IF (.not.LdefINI(ng)) THEN
         ncname=INI(ng)%name
-
-# if !(defined ADJUST_STFLUX || defined ADJUST_WSTRESS)
 !
 !  Open initialization file for read/write.
 !
@@ -570,7 +569,6 @@
         DO i=1,NV
           got_var(i)=.FALSE.
         END DO
-# endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  initialization variables. Get variable IDs.

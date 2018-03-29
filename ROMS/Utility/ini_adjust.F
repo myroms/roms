@@ -954,7 +954,8 @@
 !
       USE mod_param
       USE mod_ncparam
-#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#  if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+      defined ADJUST_WSTRESS
       USE mod_scalars
 #  endif
 !
@@ -1766,7 +1767,8 @@
 !
       USE mod_param
       USE mod_ncparam
-#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#  if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+      defined ADJUST_WSTRESS
       USE mod_scalars
 #  endif
 !
