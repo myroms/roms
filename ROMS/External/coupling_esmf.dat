@@ -30,9 +30,11 @@
 !                       'U'             => right and left  cell faces         !
 !                       'V'             => upper and lower cell faces         !
 !       Cinfo(10)     DATA Model file variable name (only NetCDF files)       !
-!       Cinfo(11)     Field regridding method from source to destination:     !
-!                       'bilinear'      => bilinear interpolation             !
-!                       'conservative'  => conservative interpolation         !
+!       Cinfo(11)     Field interpolation method from source to destination:  !
+!                       'bilinear'      => bilinear                           !
+!                       'patch'         => high-order patch recovery          !
+!                       'conservative1' => first-order conservative           !
+!                       'conservative2' => second-order conservative          !
 !                       'nearest'       => nearest neighbor interpolation     !
 !       extrapolate   Field regridding with extrapolation support (logical):  !
 !                       .FALSE.         => none, normal regridding            !

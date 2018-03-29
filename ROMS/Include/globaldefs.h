@@ -589,6 +589,10 @@
 # define MODEL_COUPLING
 #endif
 
+#if defined MODEL_COUPLING && defined ESMF_LIB
+# define REGRESS_STARTCLOCK
+#endif
+
 /*
 ** Define internal option for radiation stress forcing.
 */

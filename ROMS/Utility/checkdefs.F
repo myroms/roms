@@ -1862,6 +1862,14 @@
       Coptions(is:is+10)=' RED_TIDE,'
       ibiology=ibiology+1
 #endif
+#if defined REGRESS_STARTCLOCK && defined MODEL_COUPLING && \
+    defined ESMF_LIB
+!
+      IF (Master) WRITE (stdout,20) 'REGRESS_STARTCLOCK',               &
+     &   'Regressing start clock by one coupling interval.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' REGRESS_STARTCLOCK,'
+#endif
 #ifdef ROMS_STDOUT
 !
       IF (Master) WRITE (stdout,20) 'ROMS_STDOUT',                      &
