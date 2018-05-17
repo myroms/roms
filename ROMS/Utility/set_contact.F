@@ -958,11 +958,11 @@
         RefineStepsCounter = 0
       END IF
 !
-!  Counter for two-way exchange between fine and coarse grids.
+!  Interval used in the two-way exchange between fine and coarse grids.
 !
-      IF (.not.allocated(TwoWayCounter)) THEN
-        allocate ( TwoWayCounter(Ngrids) )
-        TwoWayCounter = 0
+      IF (.not.allocated(TwoWayInterval)) THEN
+        allocate ( TwoWayInterval(Ngrids) )
+        TwoWayInterval = 0.0_r8
       END IF
 !
 !  Switch indicating which refined grid(s) include finer refined grids:

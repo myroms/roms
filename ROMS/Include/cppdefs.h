@@ -360,6 +360,7 @@
 **                                                                           **
 ** Lateral boundary conditions OPTIONS:                                      **
 **                                                                           **
+** IMPLICIT_NUDGING    use if implicit nudging term in momentum radiation    **
 ** RADIATION_2D        use if tangential phase speed in radiation conditions **
 **                                                                           **
 ** OPTIONS for tidal forcing at open boundaries:                             **

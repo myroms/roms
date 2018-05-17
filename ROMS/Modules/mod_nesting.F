@@ -141,9 +141,10 @@
 !
       integer, allocatable :: RefineStepsCounter(:) ! [Ngrids]
 !
-!  Counter for two-way exchange between fine and coarse grids.
+!  Interval used in the two-way exchange between fine and coarse
+!  grids.
 !
-      integer, allocatable :: TwoWayCounter(:)      ! [Ngrids]
+      real(r8), allocatable :: TwoWayInterval(:)    ! [Ngrids]
 !
 !  Donor and reciver grids for each contact region. These paremeters
 !  are also duplicated in the T_NGC structure.

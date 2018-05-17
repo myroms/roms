@@ -24,7 +24,8 @@
 # First the defaults
 #
                FC := ifort
-           FFLAGS := -heap-arrays -fp-model precise
+           FFLAGS := -fp-model precise
+#          FFLAGS += -heap-arrays
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
           LDFLAGS :=
@@ -76,11 +77,19 @@ ifdef USE_OpenMP
 endif
 
 ifdef USE_DEBUG
-#          FFLAGS += -g -check bounds -traceback
-           FFLAGS += -g -check bounds -traceback -check uninit -warn interfaces,nouncalled -gen-interfaces
-#          FFLAGS += -g -check uninit -ftrapuv -traceback
+           FFLAGS += -g
+#          FFLAGS += -O3
+#          FFLAGS += -check all
+           FFLAGS += -check bounds
+           FFLAGS += -check uninit
+#          FFLAGS += -fp-stack-check
+           FFLAGS += -traceback
+           FFLAGS += -warn interfaces,nouncalled -gen-interfaces
+           FFLAGS += -Wl,-no_compact_unwind
+           FFLAGS += -Wl,-stack_size,0x64000000
 else
            FFLAGS += -ip -O3
+           FFLAGS += -Wl,-stack_size,0x64000000
 endif
 
 ifdef USE_MCT

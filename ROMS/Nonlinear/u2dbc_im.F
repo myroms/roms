@@ -98,7 +98,7 @@
       real(r8) :: Ce, Cx, Zx
       real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
       real(r8) :: cff, cff1, cff2, cff3, dt2d, dUde, dUdt, dUdx
-      real(r8) :: obc_in, obc_out, tau
+      real(r8) :: obc_in, obc_out, phi, tau
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
@@ -154,7 +154,11 @@
                 ELSE
                   tau=obc_out
                 END IF
+#ifdef IMPLICIT_NUDGING
+                IF (tau.gt.0.0_r8) tau=1.0_r8/tau
+#else
                 tau=tau*dt2d
+#endif
               END IF
 
               IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
@@ -183,9 +187,15 @@
      &                          (cff+Cx)
 
               IF (LBC(iwest,isUbar,ng)%nudging) THEN
+#ifdef IMPLICIT_NUDGING
+                phi=dt(ng)/(tau+dt(ng))
+                ubar(Istr,j,kout)=(1.0_r8-phi)*ubar(Istr,j,kout)+       &
+     &                             phi*BOUNDARY(ng)%ubar_west(j)
+#else
                 ubar(Istr,j,kout)=ubar(Istr,j,kout)+                    &
      &                            tau*(BOUNDARY(ng)%ubar_west(j)-       &
      &                                 ubar(Istr,j,know))
+#endif
               END IF
 #ifdef MASKING
               ubar(Istr,j,kout)=ubar(Istr,j,kout)*                      &
@@ -472,7 +482,11 @@
                 ELSE
                   tau=obc_out
                 END IF
+#ifdef IMPLICIT_NUDGING
+                IF (tau.gt.0.0_r8) tau=1.0_r8/tau
+#else
                 tau=tau*dt2d
+#endif
               END IF
 
               IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
@@ -501,9 +515,15 @@
      &                            (cff+Cx)
 
               IF (LBC(ieast,isUbar,ng)%nudging) THEN
+#ifdef IMPLICIT_NUDGING
+                phi=dt(ng)/(tau+dt(ng))
+                ubar(Iend+1,j,kout)=(1.0_r8-phi)*ubar(Iend+1,j,kout)+   &
+     &                              phi*BOUNDARY(ng)%ubar_east(j)
+#else
                 ubar(Iend+1,j,kout)=ubar(Iend+1,j,kout)+                &
      &                              tau*(BOUNDARY(ng)%ubar_east(j)-     &
      &                                   ubar(Iend+1,j,know))
+#endif
               END IF
 #ifdef MASKING
               ubar(Iend+1,j,kout)=ubar(Iend+1,j,kout)*                  &
@@ -790,7 +810,11 @@
                 ELSE
                   tau=obc_out
                 END IF
+#ifdef IMPLICIT_NUDGING
+                IF (tau.gt.0.0_r8) tau=1.0_r8/tau
+#else
                 tau=tau*dt2d
+#endif
               END IF
 
               IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
@@ -819,9 +843,15 @@
      &                            (cff+Ce)
 
               IF (LBC(isouth,isUbar,ng)%nudging) THEN
+#ifdef IMPLICIT_NUDGING
+                phi=dt(ng)/(tau+dt(ng))
+                ubar(i,Jstr-1,kout)=(1.0_r8-phi)*ubar(i,Jstr-1,kout)+   &
+     &                              phi*BOUNDARY(ng)%ubar_south(i)
+#else
                 ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)+                &
      &                              tau*(BOUNDARY(ng)%ubar_south(i)-    &
      &                                   ubar(i,Jstr-1,know))
+#endif
               END IF
 #ifdef MASKING
               ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)*                  &
@@ -938,7 +968,11 @@
                 ELSE
                   tau=obc_out
                 END IF
+#ifdef IMPLICIT_NUDGING
+                IF (tau.gt.0.0_r8) tau=1.0_r8/tau
+#else
                 tau=tau*dt2d
+#endif
               END IF
 
               IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
@@ -967,9 +1001,15 @@
      &                            (cff+Ce)
 
               IF (LBC(inorth,isUbar,ng)%nudging) THEN
+#ifdef IMPLICIT_NUDGING
+                phi=dt(ng)/(tau+dt(ng))
+                ubar(i,Jend+1,kout)=(1.0_r8-phi)*ubar(i,Jend+1,kout)+   &
+     &                              phi*BOUNDARY(ng)%ubar_north(i)
+#else
                 ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)+                &
      &                              tau*(BOUNDARY(ng)%ubar_north(i)-    &
      &                                   ubar(i,Jend+1,know))
+#endif
               END IF
 #ifdef MASKING
               ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)*                  &

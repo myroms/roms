@@ -1123,6 +1123,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' IMPACT_INNER,'
 #endif
+#ifdef IMPLICIT_NUDGING
+!
+      IF (Master) WRITE (stdout,20) 'IMPLICIT_NUDGING',                 &
+     &   'Implicit nudging term in momentum radiation conditions.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' IMPLICIT_NUDGING,'
+#endif
 #if defined IMPLICIT_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
 !
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &

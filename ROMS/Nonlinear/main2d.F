@@ -109,7 +109,7 @@
 !
         nl=0
 #ifdef NESTING
-        TwoWayCounter(1:Ngrids)=0
+        TwoWayInterval(1:Ngrids)=0.0_r8
 #endif
 !
         NEST_LAYER : DO WHILE (DoNestLayer)
@@ -542,7 +542,7 @@
             DO il=NestLayers,1,-1
               DO ig=1,GridsInLayer(il)
                 ng=GridNumber(ig,il)
-                IF (do_twoway(nl,il,ng,istep)) THEN
+                IF (do_twoway(iNLM, nl, il, ng, istep)) THEN
                   CALL nesting (ng, iNLM, n2way)
                 END IF
               END DO
