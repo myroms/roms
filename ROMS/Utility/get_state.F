@@ -1747,7 +1747,7 @@
               END IF
             ELSE
               IF (Master) THEN
-                WRITE (stdout,80) string, TRIM(Vname(1,idUbld)i))),     &
+                WRITE (stdout,80) string, TRIM(Vname(1,idUbld(i))),     &
      &                            TRIM(ncname)
               END IF
               exit_flag=4
