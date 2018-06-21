@@ -479,8 +479,8 @@
           ELSE
             Tmono=Tend
             Trec=Trec+1
-            CALL netcdf_get_fvar (ng, model, ncfile, Tname(ifield),     &
-     &                            Tval,                                 &
+            CALL netcdf_get_time (ng, model, ncfile, Tname(ifield),     &
+     &                            Rclock%DateNumber, Tval,              &
      &                            ncid = ncid,                          &
      &                            start = (/Trec-1/),                   &
      &                            total = (/1/))

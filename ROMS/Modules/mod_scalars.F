@@ -107,8 +107,8 @@
 
         real(r8) :: seconds            ! frational seconds of the minute
         real(r8) :: base               ! reference date (YYYYMMDD.dd)
-        real(r8) :: Dnumber            ! date number, fractional days
-        real(r8) :: Snumber            ! date number, fractional seconds
+        real(r8) :: DateNumber(2)      ! date number, [1]: days
+                                       !              [2]: seconds
 
         character (len=22) :: string   ! YYYY-MM-DD hh:mm:ss.ss
         character (len=25) :: calendar ! date calendar

@@ -188,8 +188,8 @@
 !  Read in time coordinate and scale it to day units.
 !
           IF (Tid.ge.0) THEN
-            CALL netcdf_get_fvar (ng, model, ncfile, Tname(ifield),     &
-     &                            Tval,                                 &
+            CALL netcdf_get_time (ng, model, ncfile, Tname(ifield),     &
+     &                            Rclock%DateNumber, Tval,              &
      &                            ncid = ncid,                          &
      &                            start = (/Trec/),                     &
      &                            total = (/1/))

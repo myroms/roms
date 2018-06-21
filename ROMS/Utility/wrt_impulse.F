@@ -128,8 +128,8 @@
 !  Process time.
 !
         IF (find_string(var_name, n_var, Vname(1,idtime), INPvid)) THEN
-          CALL netcdf_get_fvar (ng, model, INPncname, Vname(1,idtime),  &
-     &                          inp_time,                               &
+          CALL netcdf_get_time (ng, model, INPncname, Vname(1,idtime),  &
+     &                          Rclock%DateNumber, inp_time,            &
      &                          ncid = INPncid,                         &
      &                          start = (/Irec/), total = (/1/))
           IF (FoundError(exit_flag, NoError, __LINE__,                  &

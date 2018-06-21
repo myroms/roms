@@ -676,16 +676,16 @@
 !
 !  Read in time variable minimum and maximun values (input time units).
 !
-      CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
-     &                      Tmin,                                       &
+      CALL netcdf_get_time (ng, model, ncname, TvarName,                &
+     &                      Rclock%DateNumber, Tmin,                    &
      &                      ncid = ncid,                                &
      &                      start = (/1/),                              &
      &                      total = (/1/))
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-      CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
-     &                      Tmax,                                       &
+      CALL netcdf_get_time (ng, model, ncname, TvarName,                &
+     &                      Rclock%DateNumber, Tmax,                    &
      &                      ncid = ncid,                                &
      &                      start = (/Nrec/),                           &
      &                      total = (/1/))

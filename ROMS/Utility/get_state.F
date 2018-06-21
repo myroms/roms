@@ -266,7 +266,8 @@
 !
       mySize=var_Dsize(1)
       IF (.not.allocated(TimeVar)) allocate (TimeVar(mySize))
-      CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam), TimeVar,  &
+      CALL netcdf_get_time (ng, IDmod, ncname, TRIM(tvarnam),           &
+     &                      Rclock%DateNumber, TimeVar,                 &
      &                      ncid = ncINPid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -5099,8 +5100,8 @@
 !
 !  Read in next impulse forcing time to process.
 !
-        CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam),         &
-     &                        FrcTime(ng:),                             &
+        CALL netcdf_get_time (ng, IDmod, ncname, TRIM(tvarnam),         &
+     &                        Rclock%DateNumber, FrcTime(ng:),          &
      &                        ncid = ncINPid,                           &
      &                        start = (/InpRec/),                       &
      &                        total = (/1/))
@@ -5810,8 +5811,8 @@
 !
 !  Read in next impulse forcing time to process.
 !
-        CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam),         &
-     &                        ForceTime(ng:),                           &
+        CALL netcdf_get_time (ng, IDmod, ncname, TRIM(tvarnam),         &
+     &                        Rclock%DateNumber, ForceTime(ng:),        &
      &                        ncid = ncINPid,                           &
      &                        start = (/InpRec/),                       &
      &                        total = (/1/))

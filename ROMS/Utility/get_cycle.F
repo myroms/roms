@@ -166,8 +166,8 @@
 !
 !  Read in time variable values.
 !
-      CALL netcdf_get_fvar (ng, model, ncname, TvarName,                &
-     &                      Tval,                                       &
+      CALL netcdf_get_time (ng, model, ncname, TvarName,                &
+     &                      Rclock%DateNumber, Tval,                    &
      &                      ncid = ncid,                                &
      &                      start = (/1/),                              &
      &                      total = (/ntime/),                          &

@@ -124,8 +124,8 @@
 !
 !  Read in observation time (days).
 !
-        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsT), &
-     &                        Tobs(Mstr:),                              &
+        CALL netcdf_get_time (ng, model, OBS(ng)%name, Vname(1,idObsT), &
+     &                        Rclock%DateNumber, Tobs(Mstr:),           &
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))

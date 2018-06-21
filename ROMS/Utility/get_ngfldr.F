@@ -180,8 +180,8 @@
 !  Read in time coordinate.
 !
           IF ((Tid.ge.0).and.(Tid.ne.Vid)) THEN
-            CALL netcdf_get_fvar (ng, model, ncfile, Tname(ifield),     &
-     &                            Tval,                                 &
+            CALL netcdf_get_time (ng, model, ncfile, Tname(ifield),     &
+     &                            Rclock%DateNumber, Tval,              &
      &                            ncid = ncid,                          &
      &                            start = (/Trec/),                     &
      &                            total = (/1/))

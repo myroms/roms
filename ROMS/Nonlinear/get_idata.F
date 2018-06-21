@@ -232,8 +232,8 @@
 !  For consistency, check time of written accumulate harmonics and
 !  compare to current time.
 !
-        CALL netcdf_get_fvar (ng, iNLM, HAR(ng)%name, Vname(1,idtime),  &
-     &                        Htime,                                    &
+        CALL netcdf_get_time (ng, iNLM, HAR(ng)%name, Vname(1,idtime),  &
+     &                        Rclock%DateNumber, Htime,                 &
      &                        ncid = HAR(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
