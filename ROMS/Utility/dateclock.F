@@ -586,7 +586,7 @@
             MyDateNumber=DateNumber+Rclock%DateNumber(1)
           END IF
         ELSE
-          IF (DateNumber.ge.REAL(gregorian*86400,r8)) THEN
+          IF (DateNumber.ge.(REAL(gregorian,r8)*86400.0_r8)) THEN
             MyDateNumber=DateNumber/86400.0_r8
           ELSE
             MyDateNumber=(DateNumber+Rclock%DateNumber(2))/86400.0_r8
