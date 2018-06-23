@@ -994,6 +994,7 @@
               LBC(ibry,ivar,ng)%nudging = .FALSE.
               LBC(ibry,ivar,ng)%periodic = .FALSE.
               LBC(ibry,ivar,ng)%radiation = .FALSE.
+              LBC(ibry,ivar,ng)%reduced = .FALSE.
               LBC(ibry,ivar,ng)%Shchepetkin = .FALSE.
             END DO
           END DO

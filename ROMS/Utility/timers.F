@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      SUBROUTINE wclock_on (ng, model, region, line, routine)
+      RECURSIVE SUBROUTINE wclock_on (ng, model, region, line, routine)
 !
 
 !svn $Id$
@@ -103,7 +103,7 @@
       RETURN
       END SUBROUTINE wclock_on
 !
-      SUBROUTINE wclock_off (ng, model, region, line, routine)
+      RECURSIVE SUBROUTINE wclock_off (ng, model, region, line, routine)
 !
 !=======================================================================
 !                                                                      !

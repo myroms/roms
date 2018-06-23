@@ -86,10 +86,8 @@ ifdef USE_DEBUG
            FFLAGS += -traceback
            FFLAGS += -warn interfaces,nouncalled -gen-interfaces
            FFLAGS += -Wl,-no_compact_unwind
-           FFLAGS += -Wl,-stack_size,0x64000000
 else
            FFLAGS += -ip -O3
-           FFLAGS += -Wl,-stack_size,0x64000000
 endif
 
 ifdef USE_MCT
