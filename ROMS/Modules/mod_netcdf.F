@@ -81,6 +81,7 @@
 !
 !  Local dimension parameters.
 !
+      integer, parameter :: Matts = 50  ! maximum number of attributes
       integer, parameter :: Mdims = 50  ! maximum number of dimensions
       integer, parameter :: Mvars = 900 ! maximum number of variables
       integer, parameter :: NvarD = 5   ! number of variable dimensions
@@ -95,6 +96,7 @@
       integer :: ncformat               ! file format number (version)
       integer :: rec_id                 ! unlimited dimension ID
       integer :: rec_size               ! unlimited dimension value
+      integer :: att_kind(Matts)        ! attribute data type
       integer :: dim_id(Mdims)          ! dimensions ID
       integer :: dim_size(Mdims)        ! dimensions value
       integer :: var_id(Mvars)          ! variables ID
@@ -104,8 +106,9 @@
       integer :: var_ndim(Mvars)        ! variables number of dimensions
       integer :: var_dim(NvarD,Mvars)   ! variables dimensions ID
 !
-      character (len=40) :: dim_name(Mdims)      ! dimensions name
-      character (len=40) :: var_name(Mvars)      ! variables name
+      character (len=40) :: att_name(Matts)      ! attribute names
+      character (len=40) :: dim_name(Mdims)      ! dimension names
+      character (len=40) :: var_name(Mvars)      ! variable names
 !
 !  Generic information about requested current variable.
 !
@@ -268,6 +271,7 @@
       n_dim=0
       n_var=0
       n_gatt=0
+      ncformat=-1
       rec_id=-1
       rec_size=0
       dim_id=0
@@ -297,7 +301,6 @@
      &                      ncformat)
 #else
         status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id)
-        ncformat=-1
 #endif
         IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
@@ -1366,7 +1369,7 @@
       logical :: foundit, WriteError
 
       integer :: i, j, status
-      integer :: my_Alen, my_Atype, my_id, my_ncid
+      integer :: att_id, my_Alen, my_Atype, my_id, my_ncid
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer, dimension(4) :: ibuffer
@@ -1384,12 +1387,18 @@
       n_var=0
       n_gatt=0
       rec_id=-1
+      att_kind=-1
       var_id=0
       var_natt=0
       var_flag=0
       var_type=0
       var_ndim=0
       var_dim=0
+      DO i=1,Matts
+        DO j=1,LEN(att_name(1))
+          att_name(i)(j:j)=' '
+        END DO
+      END DO
       DO i=1,Mvars
         DO j=1,LEN(var_name(1))
           var_name(i)(j:j)=' '
@@ -1419,41 +1428,68 @@
           ibuffer(4)=rec_id
 #endif
 !
-!  Inquire about variables: name, ID, dimensions, data type, and number
-!  of attributes.
+!  Inquire global attribute names and their external data type.
 !
-          DO i=1,n_var
-            var_id(i)=i
-            var_flag(i)=1
-            status=nf90_inquire_variable(my_ncid, var_id(i),            &
-     &                                   var_name(i), var_type(i),      &
-     &                                   var_ndim(i), var_dim(:,i),     &
-     &                                   var_natt(i))
+          DO i=1,MIN(Matts,n_gatt)
+            att_id=i
+            status=nf90_inq_attname(ncid, nf90_global, att_id,          &
+      &                             att_name(i))
             IF (status.eq.nf90_noerr) THEN
-              DO j=1,MIN(NvarA,var_natt(i))
-                status=nf90_inq_attname(my_ncid, var_id(i), j,          &
-     &                                  var_Aname(j))
-                IF (status.eq.nf90_noerr) THEN
-                  IF (TRIM(var_Aname(j)).eq.'water_points'.and.         &
-     &                (var_ndim(i).gt.0)) THEN
-                    var_flag(i)=-1
-                  END IF
-                ELSE
-                  WRITE (stdout,10) j, TRIM(var_name(i)),               &
-     &                              TRIM(ncname), TRIM(SourceFile)
-                  exit_flag=2
-                  ioerror=status
-                  EXIT
-                END IF
-              END DO
+              status=nf90_inquire_attribute(ncid, nf90_global,          &
+      &                                     TRIM(att_name(i)),          &
+      &                                     xtype = att_kind(i),        &
+      &                                     attnum = att_id)
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile)
+                exit_flag=2
+                ioerror=status
+                EXIT
+              END IF
             ELSE
-              WRITE (stdout,20) var_id(i), TRIM(ncname),                &
-     &                          TRIM(SourceFile)
+              WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile)
               exit_flag=2
               ioerror=status
               EXIT
             END IF
           END DO
+!
+!  Inquire about variables: name, ID, dimensions, data type, and number
+!  of attributes.
+!
+          IF (status.eq.nf90_noerr) THEN
+            DO i=1,n_var
+              var_id(i)=i
+              var_flag(i)=1
+              status=nf90_inquire_variable(my_ncid, var_id(i),          &
+     &                                     var_name(i), var_type(i),    &
+     &                                     var_ndim(i), var_dim(:,i),   &
+     &                                     var_natt(i))
+              IF (status.eq.nf90_noerr) THEN
+                DO j=1,MIN(NvarA,var_natt(i))
+                  status=nf90_inq_attname(my_ncid, var_id(i), j,        &
+     &                                    var_Aname(j))
+                  IF (status.eq.nf90_noerr) THEN
+                    IF (TRIM(var_Aname(j)).eq.'water_points'.and.       &
+     &                  (var_ndim(i).gt.0)) THEN
+                      var_flag(i)=-1
+                    END IF
+                  ELSE
+                    WRITE (stdout,10) j, TRIM(var_name(i)),             &
+     &                                TRIM(ncname), TRIM(SourceFile)
+                    exit_flag=2
+                    ioerror=status
+                    EXIT
+                  END IF
+                END DO
+              ELSE
+                WRITE (stdout,20) var_id(i), TRIM(ncname),              &
+     &                            TRIM(SourceFile)
+                exit_flag=2
+                ioerror=status
+                EXIT
+              END IF
+            END DO
+          END IF
         ELSE
           IF (n_var.gt.Mvars) THEN
             WRITE (stdout,30) 'Mvars = ', Mvars, n_var
@@ -1480,12 +1516,14 @@
         n_var=ibuffer(2)
         n_gatt=ibuffer(3)
         rec_id=ibuffer(4)
+        CALL mp_bcasti (ng, model, att_kind)
         CALL mp_bcasti (ng, model, var_id)
         CALL mp_bcasti (ng, model, var_flag)
         CALL mp_bcasti (ng, model, var_type)
         CALL mp_bcasti (ng, model, var_ndim)
         CALL mp_bcasti (ng, model, var_natt)
         CALL mp_bcasti (ng, model, var_dim)
+        CALL mp_bcasts (ng, model, att_name)
         CALL mp_bcasts (ng, model, var_name)
       END IF
 #endif
@@ -1681,6 +1719,9 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
+   5  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring global',       &
+     &        ' attribute: ',i2.2,/,18x,'in input file:',2x,a,          &
+     &        /,18x,'call from:',2x,a)
   10  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring attribute ',   &
      &        i1,' for variable: ',a,/,18x,'in input file:',2x,a,       &
      &        /,18x,'call from:',2x,a)
@@ -1816,7 +1857,7 @@
       USE mod_scalars
 !
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcastf
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #endif
       USE strings_mod,    ONLY : FoundError
 !
@@ -1835,10 +1876,10 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, my_natts, my_ncid, nvatts, status
+      integer :: i, j, my_natts, my_ncid, natts, status
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
-      real(r8), dimension(20) :: buffer
+      real(r8), allocatable :: buffer(:)
 #endif
 
       character (len=40) :: my_Aname
@@ -1847,6 +1888,19 @@
 !-----------------------------------------------------------------------
 !  Inquire ID of requested variable.
 !-----------------------------------------------------------------------
+!
+!  Get number of variable attributes to process.
+!
+      natts=UBOUND(AttName, DIM=1)
+      DO i=1,natts
+        foundit(i)=.FALSE.
+        AttValue(i)=0.0_r8
+      END DO
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      IF (.not.allocated(buffer)) THEN
+        allocate ( buffer(2*natts+1) )
+      END IF
+#endif
 !
 !  If appropriate, open file for reading.
 !
@@ -1859,17 +1913,8 @@
         my_ncid=ncid
       END IF
 !
-!  Get number of variable attributes to process.
-!
-      nvatts=UBOUND(AttValue, DIM=1)
-!
 !  Inquire about requested attribute value.
 !
-      DO i=1,nvatts
-        foundit(i)=.FALSE.
-        AttValue(i)=0.0_r8
-      END DO
-
       IF (InpThread) THEN
         IF (varid.eq.nf90_global) THEN
           status=nf90_inquire(my_ncid,                                  &
@@ -1883,7 +1928,7 @@
           DO j=1,my_natts
             status=nf90_inq_attname(my_ncid, varid, j, my_Aname)
             IF (status.eq.nf90_noerr) THEN
-              DO i=1,nvatts
+              DO i=1,natts
                 IF (TRIM(my_Aname).eq.TRIM(AttName(i))) THEN
                   status=nf90_get_att(my_ncid, varid, TRIM(AttName(i)), &
      &                                AttValue(i))
@@ -1911,6 +1956,17 @@
               EXIT
             END IF
           END DO
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+          buffer=0.0_r8
+          DO i=1,natts
+            buffer(i)=AttValue(i)
+            IF (foundit(i)) THEN
+               buffer(i+natts)=1.0_r8
+            END IF
+          END DO
+          buffer(2*natts+1)=REAL(ioerror, r8)
+#endif
         ELSE
           IF (Master) WRITE (stdout,30) TRIM(my_Vname),                 &
      &                                  TRIM(ncname),                   &
@@ -1925,28 +1981,20 @@
 !  Broadcast information to all processors in the group. Pack all
 !  data into a real array for efficient communications.
 !
-      buffer=0.0_r8
-      j=0
-      DO i=1,nvatts
-        buffer(i)=AttValue(i)
-        IF (foundit(i)) THEN
-          buffer(i+nvatts)=1.0_r8
+      CALL mp_bcasti (ng, model, exit_flag)
+      IF (exit_flag.eq.NoError) THEN
+        CALL mp_bcastf (ng, model, buffer)
+        DO i=1,natts
+          AttValue(i)=buffer(i)
+          IF (buffer(i+natts).gt.0.0_r8) THEN
+            foundit(i)=.TRUE.
+          END IF
+        END DO
+        ioerror=INT(buffer(2*natts+1))
+        IF (allocated(buffer)) THEN
+          deallocate (buffer)
         END IF
-        j=j+2
-      END DO
-      buffer(j+1)=REAL(exit_flag, r8)
-      buffer(j+2)=REAL(ioerror, r8)
-      CALL mp_bcastf (ng, model, buffer)
-      j=0
-      DO i=1,nvatts
-        AttValue(i)=buffer(i)
-        IF (buffer(i+nvatts).gt.0.0_r8) THEN
-          foundit(i)=.TRUE.
-        END IF
-        j=j+2
-      END DO
-      exit_flag=INT(buffer(j+1))
-      ioerror=INT(buffer(j+2))
+      END IF
 #endif
 !
 !  If applicable, close input NetCDF file.
@@ -2018,10 +2066,10 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, my_natts, my_ncid, nvatts, status
+      integer :: i, j, my_natts, my_ncid, natts, status
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
-      integer, dimension(20) :: ibuffer
+      integer, allocatable :: ibuffer(:)
 #endif
 
       character (len=40) :: my_Aname
@@ -2030,6 +2078,19 @@
 !-----------------------------------------------------------------------
 !  Inquire ID of requested variable.
 !-----------------------------------------------------------------------
+!
+!  Get number of variable attributes to process and initialize.
+!
+      natts=UBOUND(AttName, DIM=1)
+      DO i=1,natts
+        foundit(i)=.FALSE.
+        AttValue(i)=' '
+      END DO
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+      IF (.not.allocated(ibuffer)) THEN
+        allocate ( ibuffer(natts+1) )
+      END IF
+#endif
 !
 !  If appropriate, open file for reading.
 !
@@ -2042,17 +2103,8 @@
         my_ncid=ncid
       END IF
 !
-!  Get number of variable attributes to process.
-!
-      nvatts=UBOUND(AttValue, DIM=1)
-!
 !  Inquire about requested attribute value.
 !
-      DO i=1,nvatts
-        foundit(i)=.FALSE.
-        AttValue(i)=' '
-      END DO
-
       IF (InpThread) THEN
         IF (varid.eq.nf90_global) THEN
           status=nf90_inquire(my_ncid,                                  &
@@ -2066,7 +2118,7 @@
           DO j=1,my_natts
             status=nf90_inq_attname(my_ncid, varid, j, my_Aname)
             IF (status.eq.nf90_noerr) THEN
-              DO i=1,nvatts
+              DO i=1,natts
                 IF (TRIM(my_Aname).eq.TRIM(AttName(i))) THEN
                   status=nf90_get_att(my_ncid, varid, TRIM(AttName(i)), &
      &                                AttValue(i))
@@ -2094,6 +2146,16 @@
               EXIT
             END IF
           END DO
+#if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
+          ibuffer=0
+          DO i=1,natts
+            IF (foundit(i)) THEN
+              ibuffer(i)=1
+            END IF
+          END DO
+          ibuffer(natts+1)=ioerror
+#endif
         ELSE
           IF (Master) WRITE (stdout,30) TRIM(my_Vname),                 &
      &                                  TRIM(ncname),                   &
@@ -2108,27 +2170,20 @@
 !  Broadcast information to all processors in the group. Pack all
 !  data into a real array for efficient communications.
 !
-      ibuffer=0
-      j=0
-      DO i=1,nvatts
-        IF (foundit(i)) THEN
-          ibuffer(i)=1
-        END IF
-        j=j+1
-      END DO
-      ibuffer(j+1)=exit_flag
-      ibuffer(j+2)=ioerror
-      CALL mp_bcasti (ng, model, ibuffer)
-      CALL mp_bcasts (ng, model, AttValue)
-      j=0
-      DO i=1,nvatts
-        IF (ibuffer(i).gt.0) THEN
-          foundit(i)=.TRUE.
-        END IF
-        j=j+1
-      END DO
-      exit_flag=ibuffer(j+1)
-      ioerror=ibuffer(j+2)
+      CALL mp_bcasti (ng, model, exit_flag)
+      IF (exit_flag.eq.NoError) THEN
+        CALL mp_bcasti (ng, model, ibuffer)
+        DO i=1,natts
+          IF (ibuffer(i).gt.0) THEN
+            foundit(i)=.TRUE.
+          END IF
+        END DO
+        ioerror=ibuffer(natts+1)
+        CALL mp_bcasts (ng, model, AttValue)
+      END IF
+      IF (allocated(ibuffer)) THEN
+        deallocate (ibuffer)
+      END IF
 #endif
 !
 !  If applicable, close input NetCDF file.
@@ -4646,6 +4701,7 @@
       logical :: JulianOffset = .FALSE.
       logical :: Ldebug = .FALSE.
 
+      logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
 
       integer :: ind, lstr, my_ncid, status, varid
@@ -4771,11 +4827,11 @@
       UnitsAtt(1)='units'
 
       CALL netcdf_get_satt (ng, model, ncname, varid, UnitsAtt,         &
-     &                      UnitsValue, foundit,                        &
+     &                      UnitsValue, got_units,                      &
      &                      ncid = ncid)
 
       IF (exit_flag.eq.NoError) THEN
-        IF (foundit(1)) THEN
+        IF (got_units(1)) THEN
           Units=TRIM(lowercase(UnitsValue(1)))
           lstr=LEN_TRIM(Units)
           ind=INDEX(Units,'since')
@@ -4933,6 +4989,7 @@
       logical :: JulianOffset = .FALSE.
       logical :: Ldebug = .FALSE.
 
+      logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
 
       integer :: i, ind, lstr, my_ncid, status, varid
@@ -5069,11 +5126,11 @@
       UnitsAtt(1)='units'
 
       CALL netcdf_get_satt (ng, model, ncname, varid, UnitsAtt,         &
-     &                      UnitsValue, foundit,                        &
+     &                      UnitsValue, got_units,                      &
      &                      ncid = ncid)
 
       IF (exit_flag.eq.NoError) THEN
-        IF (foundit(1)) THEN
+        IF (got_units(1)) THEN
           Units=TRIM(lowercase(UnitsValue(1)))
           lstr=LEN_TRIM(Units)
           ind=INDEX(Units,'since')
@@ -7766,11 +7823,13 @@
           exit_flag=3
           ioerror=status
         END IF
+# ifdef DISTRIBUTE
+        ibuffer(1)=exit_flag
+        ibuffer(2)=ioerror
+        ibuffer(3)=ncid
+# endif
       END IF
 # ifdef DISTRIBUTE
-      ibuffer(1)=exit_flag
-      ibuffer(2)=ioerror
-      ibuffer(3)=ncid
       CALL mp_bcasti (ng, model, ibuffer)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
