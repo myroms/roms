@@ -1432,10 +1432,10 @@
 !
           DO i=1,MIN(Matts,n_gatt)
             att_id=i
-            status=nf90_inq_attname(ncid, nf90_global, att_id,          &
+            status=nf90_inq_attname(my_ncid, nf90_global, att_id,       &
       &                             att_name(i))
             IF (status.eq.nf90_noerr) THEN
-              status=nf90_inquire_attribute(ncid, nf90_global,          &
+              status=nf90_inquire_attribute(my_ncid, nf90_global,       &
       &                                     TRIM(att_name(i)),          &
       &                                     xtype = att_kind(i),        &
       &                                     attnum = att_id)
