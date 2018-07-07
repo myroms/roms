@@ -49,6 +49,8 @@ parallel=0
 clean=1
 dprint=0
 
+MY_CPP_FLAGS=
+
 while [ $# -gt 0 ]
 do
   case "$1" in
@@ -118,7 +120,6 @@ export     MY_PROJECT_DIR=${PWD}
 # machine. This script is designed to more easily allow for differing paths
 # to the code and inputs on differing machines.
 
-#export       MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
  export       MY_ROMS_SRC=${MY_ROOT_DIR}/trunk
 
 # Set path of the directory containing makefile configuration (*.mk) files.
@@ -128,7 +129,7 @@ export     MY_PROJECT_DIR=${PWD}
 # these configurations files up-to-date.
 
  export         COMPILERS=${MY_ROMS_SRC}/Compilers
-#export         COMPILERS=${HOME}/Compilers
+#export         COMPILERS=${HOME}/Compilers/ROMS
 
 # Set tunable CPP options.
 #
@@ -138,13 +139,13 @@ export     MY_PROJECT_DIR=${PWD}
 # Notice also that you need to use shell's quoting syntax to enclose the
 # definition.  Both single or double quotes work. For example,
 #
-#export      MY_CPP_FLAGS="-DAVERAGES"
+#export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -DAVERAGES"
 #export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -DDEBUGGING"
 #
 # can be used to write time-averaged fields. Notice that you can have as
 # many definitions as you want by appending values.
 
-#export      MY_CPP_FLAGS="-D"
+#export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -D"
 
 # Other user defined environmental variables. See the ROMS makefile for
 # details on other options the user might want to set here. Be sure to
@@ -246,13 +247,19 @@ fi
 # Recall also that the MPI library comes in several flavors:
 # MPICH, MPICH2, OpenMPI, etc.
 
-#export USE_MY_LIBS=on            # use my library paths below
+ export USE_MY_LIBS=no            # don't use my library paths below
+#export USE_MY_LIBS=yes           # use my library paths below
 
-if [ -n "${USE_MY_LIBS:+1}" ]; then
+if [ "${USE_MY_LIBS}" = "yes" ]; then
   case "$FORT" in
     ifort )
       export       ESMF_COMPILER=intelgcc
-      export           ESMF_BOPT=O
+      if [ -n "${USE_DEBUG:+1}" ]; then
+#       export          ESMF_BOPT=g
+        export          ESMF_BOPT=O
+      else
+        export          ESMF_BOPT=O
+      fi
       export            ESMF_ABI=64
       export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
@@ -301,7 +308,12 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 
     pgi )
       export       ESMF_COMPILER=pgi
-      export           ESMF_BOPT=O
+      if [ -n "${USE_DEBUG:+1}" ]; then
+#       export          ESMF_BOPT=g
+        export          ESMF_BOPT=O
+      else
+        export          ESMF_BOPT=O
+      fi
       export            ESMF_ABI=64
       export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
@@ -350,7 +362,12 @@ if [ -n "${USE_MY_LIBS:+1}" ]; then
 
     gfortran )
       export       ESMF_COMPILER=gfortran
-      export           ESMF_BOPT=O
+      if [ -n "${USE_DEBUG:+1}" ]; then
+#       export          ESMF_BOPT=g
+        export          ESMF_BOPT=O
+      else
+        export          ESMF_BOPT=O
+      fi
       export            ESMF_ABI=64
       export           ESMF_COMM=%{which_MPI}
       export           ESMF_SITE=default
@@ -410,7 +427,11 @@ fi
 # Put the f90 files in a project specific Build directory to avoid conflict
 # with other projects.
 
- export       SCRATCH_DIR=${MY_PROJECT_DIR}/Build
+if [ -n "${USE_DEBUG:+1}" ]; then
+ export       SCRATCH_DIR=${MY_PROJECT_DIR}/Build_romsG
+else
+ export       SCRATCH_DIR=${MY_PROJECT_DIR}/Build_roms
+fi
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.

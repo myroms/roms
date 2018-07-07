@@ -104,7 +104,7 @@
 !
 !  Distributed-memory master process.
 !
-      integer, parameter :: MyMaster = 0
+      integer :: MyMaster = 0
 !
 !  Rank of the parallel local process.
 !

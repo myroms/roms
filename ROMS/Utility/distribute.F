@@ -181,7 +181,7 @@
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -199,8 +199,10 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=1
 # ifdef MPI
-      CALL mpi_bcast (A, 1, MP_FLOAT, MyMaster, OCN_COMM_WORLD, MyError)
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, OCN_COMM_WORLD,      &
+     &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
@@ -598,7 +600,7 @@
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -616,8 +618,9 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=1
 # ifdef MPI
-      CALL mpi_bcast (A, 1, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,      &
+      CALL mpi_bcast (A, Npts, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,   &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -841,7 +844,7 @@
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -859,8 +862,9 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Npts=1
 # ifdef MPI
-      CALL mpi_bcast (A, 1, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,      &
+      CALL mpi_bcast (A, Npts, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,   &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4869,7 +4873,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Npts, Serror
       integer :: handle, i, rank, request
 
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Rrequest
@@ -4900,6 +4904,7 @@
 !  Pack data to reduce.
 !
       Asend=A
+      Npts=1
 !
 !  Collect and reduce.
 !
@@ -4911,7 +4916,7 @@
       ELSE IF (op_handle(1:3).eq.'SUM') THEN
         handle=MPI_SUM
       END IF
-      CALL mpi_allreduce (Asend, Areduce, 1, MP_FLOAT, handle,          &
+      CALL mpi_allreduce (Asend, Areduce, Npts, MP_FLOAT, handle,       &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4922,8 +4927,8 @@
         RETURN
       END IF
 # elif defined REDUCE_ALLGATHER
-      CALL mpi_allgather (Asend, 1, MP_FLOAT,                           &
-     &                    Arecv, 1, MP_FLOAT,                           &
+      CALL mpi_allgather (Asend, Npts, MP_FLOAT,                        &
+     &                    Arecv, Npts, MP_FLOAT,                        &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4946,7 +4951,7 @@
 # else
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
-          CALL mpi_irecv (Arecv(rank), 1, MP_FLOAT, rank,               &
+          CALL mpi_irecv (Arecv(rank), Npts, MP_FLOAT, rank,            &
      &                    rank+500, OCN_COMM_WORLD, Rrequest(rank),     &
      &                    MyError)
         END DO
@@ -4969,7 +4974,7 @@
           END IF
         END DO
       ELSE
-        CALL mpi_isend (Asend, 1, MP_FLOAT, MyMaster, MyRank+500,       &
+        CALL mpi_isend (Asend, npts, MP_FLOAT, MyMaster, MyRank+500,    &
      &                  OCN_COMM_WORLD, request, MyError)
         CALL mpi_wait (request, Sstatus, MyError)
         IF (Serror.ne.MPI_SUCCESS) THEN
@@ -4984,7 +4989,7 @@
 !  Broadcast reduced variables from process to all processes in the
 !  group.
 !
-      CALL mpi_bcast (Areduce, 1, MP_FLOAT, MyMaster,                   &
+      CALL mpi_bcast (Areduce, Npts, MP_FLOAT, MyMaster,                &
      &                OCN_COMM_WORLD, MyError)
       IF (Serror.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)

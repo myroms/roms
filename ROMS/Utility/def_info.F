@@ -920,8 +920,10 @@
         END IF
 
         IF (exit_flag.eq.NoError) THEN
+          lstr=INDEX(my_fflags, 'free')-2
+          IF (lstr.le.0) lstr=LEN_TRIM(my_fflags)
           status=nf90_put_att(ncid, nf90_global, 'compiler_flags',      &
-     &                        TRIM(my_fflags))
+     &                        my_fflags(1:lstr))
           IF (FoundError(status, nf90_noerr, __LINE__,                  &
      &                   __FILE__)) THEN
             IF (Master) WRITE (stdout,20) 'compiler_flags', TRIM(ncname)

@@ -495,14 +495,6 @@
 
         character (len=256), allocatable :: Cinfo(:,:)
 !
-!  Source code root directory, cpp header file and directory, and
-!  analytical expression directory.
-!
-        character (len=256) :: Rdir
-        character (len=256) :: Hdir
-        character (len=256) :: Hfile
-        character (len=256) :: Adir
-!
 !  Analyical header file logical and names.
 !
         logical :: Lanafile
@@ -840,22 +832,6 @@
           ncFRCid(i,ng)=-1
         END DO
       END DO
-!
-!  Set source code root directory, cpp header file and directory, and
-!  analytical expression directory.
-!
-#ifdef ROOT_DIR
-      Rdir=ROOT_DIR
-#endif
-#ifdef HEADER_DIR
-      Hdir=HEADER_DIR
-#endif
-#ifdef ROMS_HEADER
-      Hfile=HEADER
-#endif
-#ifdef ANALYTICAL_DIR
-      Adir=ANALYTICAL_DIR
-#endif
 !
 !-----------------------------------------------------------------------
 !  Define names of variables for Input/Output NetCDF files.

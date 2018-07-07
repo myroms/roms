@@ -49,6 +49,8 @@ set parallel = 0
 set clean = 1
 set dprint = 0
 
+setevn MY_CPP_FLAGS ''
+
 while ( ($#argv) > 0 )
   switch ($1)
     case "-noclean"
@@ -117,7 +119,6 @@ setenv MY_PROJECT_DIR        ${PWD}
 # machine. This script is designed to more easily allow for differing paths
 # to the code and inputs on differing machines.
 
-#setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/trunk
 
 # Set path of the directory containing makefile configuration (*.mk) files.
@@ -127,7 +128,7 @@ setenv MY_PROJECT_DIR        ${PWD}
 # these configurations files up-to-date.
 
  setenv COMPILERS            ${MY_ROMS_SRC}/Compilers
-#setenv COMPILERS            ${HOME}/Compilers
+#setenv COMPILERS            ${HOME}/Compilers/ROMS
 
 # Set tunable CPP options.
 #
@@ -137,13 +138,13 @@ setenv MY_PROJECT_DIR        ${PWD}
 # Notice also that you need to use shell's quoting syntax to enclose the
 # definition.  Both single or double quotes work. For example,
 #
-#    setenv MY_CPP_FLAGS "-DAVERAGES"
+#    setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DAVERAGES"
 #    setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DDEBUGGING"
 #
 # can be use to write time-averaged fields. Notice that you can have as
 # many definitions as you want by appending values.
 
-#setenv MY_CPP_FLAGS "-D"
+#setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D"
 
 # Other user defined environmental variables. See the ROMS makefile for
 # details on other options the user might want to set here. Be sure to
@@ -246,9 +247,8 @@ endif
 # Recall also that the MPI library comes in several flavors:
 # MPICH, MPICH2, OpenMPI, etc.
 
-
-#setenv USE_MY_LIBS no           # don't use my library paths below
- setenv USE_MY_LIBS yes          # use my library paths below
+ setenv USE_MY_LIBS no           # don't use my library paths below
+#setenv USE_MY_LIBS yes          # use my library paths below
 
 if ($USE_MY_LIBS == 'yes') then
 
@@ -256,7 +256,12 @@ if ($USE_MY_LIBS == 'yes') then
 
     case "ifort"
       setenv ESMF_COMPILER        intelgcc
-      setenv ESMF_BOPT            O
+      if ($?USE_DEBUG) then
+#       setenv ESMF_BOPT          g
+        setenv ESMF_BOPT          O
+      else
+        setenv ESMF_BOPT          O
+      endif
       setenv ESMF_ABI             64
       setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
@@ -305,7 +310,12 @@ if ($USE_MY_LIBS == 'yes') then
 
     case "pgi"
       setenv ESMF_COMPILER        pgi
-      setenv ESMF_BOPT            O
+      if ($?USE_DEBUG) then
+#       setenv ESMF_BOPT          g
+        setenv ESMF_BOPT          O
+      else
+        setenv ESMF_BOPT          O
+      endif
       setenv ESMF_ABI             64
       setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
@@ -354,7 +364,12 @@ if ($USE_MY_LIBS == 'yes') then
 
     case "gfortran"
       setenv ESMF_COMPILER        gfortran
-      setenv ESMF_BOPT            O
+      if ($?USE_DEBUG) then
+#       setenv ESMF_BOPT          g
+        setenv ESMF_BOPT          O
+      else
+        setenv ESMF_BOPT          O
+      endif
       setenv ESMF_ABI             64
       setenv ESMF_COMM            ${which_MPI}
       setenv ESMF_SITE            default
@@ -414,7 +429,11 @@ endif
 # Put the f90 files in a project specific Build directory to avoid conflict
 # with other projects.
 
- setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Build
+if ($?USE_DEBUG) then
+  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/Build_romsG
+else
+  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/Build_roms
+endif
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
