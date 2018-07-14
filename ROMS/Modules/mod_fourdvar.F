@@ -1225,8 +1225,10 @@
        defined TL_W4DVAR            || defined W4DPSAS     || \
        defined W4DVAR               || defined ARRAY_MODES || \
        defined CLIPPING
-      allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
-      TLmodVal_S = IniVal
+      IF (Master) THEN                                ! Needed only
+        allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )   ! by master. It
+        TLmodVal_S = IniVal                           ! is a memory hog
+      END IF                                          ! in other nodes
 #   endif
 #   if defined TL_W4DPSAS           || defined W4DPSAS    || \
        defined W4DPSAS_SENSITIVITY

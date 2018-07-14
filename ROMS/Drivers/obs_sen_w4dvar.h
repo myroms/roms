@@ -255,7 +255,8 @@
      &                 __FILE__)) RETURN
 
         CALL netcdf_get_fvar (ng, iTLM, LCZ(ng)%name, 'TLmodVal_S',     &
-     &                        TLmodVal_S)
+     &                        TLmodVal_S,                               &
+     &                        broadcast = .FALSE.)   ! Master use only
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO

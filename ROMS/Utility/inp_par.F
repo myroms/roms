@@ -62,10 +62,12 @@
 !  directed to a file. This is advantageous in coupling applications to
 !  ROMS information separated from other models.
 !
-       stdout=20                      ! overwite Fortran default unit 6
+       stdout=66                     ! overwite Fortran default unit 6
 !
-       OPEN (stdout, FILE='log.roms', FORM='formatted',                 &
-     &       STATUS='replace')
+       IF (Master) THEN
+         OPEN (stdout, FILE='log.roms', FORM='formatted',               &
+     &         STATUS='replace')
+       END IF
 #endif
 !
 !  Set input units.

@@ -1154,7 +1154,7 @@
 #  if defined SENSITIVITY_4DVAR || \
       defined TL_W4DPSAS        || defined TL_W4DVAR || \
       defined W4DPSAS           || defined W4DVAR
-      CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))
+!!    CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))   ! not needed
 #  endif
       CALL mp_bcasti (ng, model, info)
       CALL mp_bcastf (ng, model, cg_beta(:,outLoop))
