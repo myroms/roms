@@ -819,77 +819,151 @@
 !  Allocate module structure.
 !-----------------------------------------------------------------------
 !
-      allocate ( FOURDVAR(Ngrids) )
+      IF (.not.allocated( FOURDVAR)) THEN
+        allocate ( FOURDVAR(Ngrids) )
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables due to nested grids.
 !-----------------------------------------------------------------------
 !
-      allocate ( Load_Zobs(Ngrids) )
-      allocate ( wrote_Zobs(Ngrids) )
+      IF (.not.allocated( Load_Zobs)) THEN
+        allocate ( Load_Zobs(Ngrids) )
+      END IF
+      IF (.not.allocated( wrote_Zobs)) THEN
+        allocate ( wrote_Zobs(Ngrids) )
+      END IF
 
 
-      allocate ( NstateVar(Ngrids) )
-      allocate ( NobsVar(Ngrids) )
-      allocate ( Ndatum(Ngrids) )
-      allocate ( Nsurvey(Ngrids) )
-      allocate ( ObsSurvey(Ngrids) )
-      allocate ( Nobs(Ngrids) )
+      IF (.not.allocated( NstateVar)) THEN
+        allocate ( NstateVar(Ngrids) )
+      END IF
+      IF (.not.allocated( NobsVar)) THEN
+        allocate ( NobsVar(Ngrids) )
+      END IF
+      IF (.not.allocated( Ndatum)) THEN
+        allocate ( Ndatum(Ngrids) )
+      END IF
+      IF (.not.allocated( Nsurvey)) THEN
+        allocate ( Nsurvey(Ngrids) )
+      END IF
+      IF (.not.allocated( ObsSurvey)) THEN
+        allocate ( ObsSurvey(Ngrids) )
+      END IF
+      IF (.not.allocated( Nobs)) THEN
+        allocate ( Nobs(Ngrids) )
+      END IF
 
-      allocate ( NstrObs(Ngrids) )
-      allocate ( NendObs(Ngrids) )
+      IF (.not.allocated( NstrObs)) THEN
+        allocate ( NstrObs(Ngrids) )
+      END IF
+      IF (.not.allocated( NendObs)) THEN
+        allocate ( NendObs(Ngrids) )
+      END IF
 
-      allocate ( Nmethod(Ngrids) )
-      allocate ( Rscheme(Ngrids) )
+      IF (.not.allocated( Nmethod)) THEN
+        allocate ( Nmethod(Ngrids) )
+      END IF
+      IF (.not.allocated( Rscheme)) THEN
+        allocate ( Rscheme(Ngrids) )
+      END IF
 
-      allocate ( Optimality(Ngrids) )
-      allocate ( ProcessObs(Ngrids) )
+      IF (.not.allocated( Optimality)) THEN
+        allocate ( Optimality(Ngrids) )
+      END IF
+      IF (.not.allocated( ProcessObs)) THEN
+        allocate ( ProcessObs(Ngrids) )
+      END IF
 
-      allocate ( wrtNLmod(Ngrids) )
-      allocate ( wrtObsScale(Ngrids) )
-      allocate ( wrtRPmod(Ngrids) )
-      allocate ( wrtTLmod(Ngrids) )
-      allocate ( wrtMisfit(Ngrids) )
+      IF (.not.allocated( wrtNLmod)) THEN
+        allocate ( wrtNLmod(Ngrids) )
+      END IF
+      IF (.not.allocated( wrtObsScale)) THEN
+        allocate ( wrtObsScale(Ngrids) )
+      END IF
+      IF (.not.allocated( wrtRPmod)) THEN
+        allocate ( wrtRPmod(Ngrids) )
+      END IF
+      IF (.not.allocated( wrtTLmod)) THEN
+        allocate ( wrtTLmod(Ngrids) )
+      END IF
+      IF (.not.allocated( wrtMisfit)) THEN
+        allocate ( wrtMisfit(Ngrids) )
+      END IF
 
 # if defined IS4DVAR_SENSITIVITY
 #  ifdef OBS_IMPACT
-      allocate ( wrtIMPACT_TOT(Ngrids) )
+      IF (.not.allocated( wrtIMPACT_TOT)) THEN
+        allocate ( wrtIMPACT_TOT(Ngrids) )
+      END IF
 #  endif
 #  ifdef OBS_IMPACT_SPLIT
-      allocate ( wrtIMPACT_IC(Ngrids) )
+      IF (.not.allocated( wrtIMPACT_IC)) THEN
+        allocate ( wrtIMPACT_IC(Ngrids) )
+      END IF
 #   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-      allocate ( wrtIMPACT_FC(Ngrids) )
+      IF (.not.allocated( wrtIMPACT_FC)) THEN
+        allocate ( wrtIMPACT_FC(Ngrids) )
+      END IF
 #   endif
 #   if defined ADJUST_BOUNDARY
-      allocate ( wrtIMPACT_BC(Ngrids) )
+      IF (.not.allocated( wrtIMPACT_BC)) THEN
+        allocate ( wrtIMPACT_BC(Ngrids) )
+      END IF
 #   endif
 #  endif
 # endif
 
-      allocate ( haveADmod(Ngrids) )
-      allocate ( haveNLmod(Ngrids) )
-      allocate ( haveTLmod(Ngrids) )
-      allocate ( haveObsMeta(Ngrids) )
+      IF (.not.allocated( haveADmod)) THEN
+        allocate ( haveADmod(Ngrids) )
+      END IF
+      IF (.not.allocated( haveNLmod)) THEN
+        allocate ( haveNLmod(Ngrids) )
+      END IF
+      IF (.not.allocated( haveTLmod)) THEN
+        allocate ( haveTLmod(Ngrids) )
+      END IF
+      IF (.not.allocated( haveObsMeta)) THEN
+        allocate ( haveObsMeta(Ngrids) )
+      END IF
 
-      allocate ( KhMin(Ngrids) )
-      allocate ( KhMax(Ngrids) )
-      allocate ( KvMin(Ngrids) )
-      allocate ( KvMax(Ngrids) )
+      IF (.not.allocated( KhMin)) THEN
+        allocate ( KhMin(Ngrids) )
+      END IF
+      IF (.not.allocated( KhMax)) THEN
+        allocate ( KhMax(Ngrids) )
+      END IF
+      IF (.not.allocated( KvMin)) THEN
+        allocate ( KvMin(Ngrids) )
+      END IF
+      IF (.not.allocated( KvMax)) THEN
+        allocate ( KvMax(Ngrids) )
+      END IF
 
 # if defined BALANCE_OPERATOR
-      allocate ( wrtZetaRef(Ngrids) )
+      IF (.not.allocated( wrtZetaRef)) THEN
+        allocate ( wrtZetaRef(Ngrids) )
+      END IF
 # endif
 
 # ifdef WEAK_CONSTRAINT
-      allocate ( WRTforce(Ngrids) )
+      IF (.not.allocated( WRTforce)) THEN
+        allocate ( WRTforce(Ngrids) )
+      END IF
 #  ifdef RPM_RELAXATION
-      allocate ( LweakRelax(Ngrids) )
+      IF (.not.allocated( LweakRelax)) THEN
+        allocate ( LweakRelax(Ngrids) )
+      END IF
 #  endif
 #  if defined W4DPSAS_SENSITIVITY  || defined W4DVAR_SENSITIVITY
-      allocate ( LsenPSAS(Ngrids) )
+      IF (.not.allocated( LsenPSAS)) THEN
+        allocate ( LsenPSAS(Ngrids) )
+      END IF
 #  endif
-      allocate ( ForceTime(Ngrids) )
+      IF (.not.allocated( ForceTime)) THEN
+        allocate ( ForceTime(Ngrids) )
+      END IF
 # endif
 
       RETURN
@@ -995,117 +1069,187 @@
 #  endif
         NobsVar(ng)=NstateVar(ng)+NextraObs
 
-        allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % NobsSurvey)) THEN
+          allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
+        END IF
         FOURDVAR(ng) % NobsSurvey = 0
 
-        allocate ( FOURDVAR(ng) % SurveyTime(Nsurvey(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % SurveyTime)) THEN
+          allocate ( FOURDVAR(ng) % SurveyTime(Nsurvey(ng)) )
+        END IF
         FOURDVAR(ng) % SurveyTime = IniVal
 
 #  ifdef FOUR_DVAR
-        allocate ( FOURDVAR(ng) % BackCost(0:NstateVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % BackCost)) THEN
+          allocate ( FOURDVAR(ng) % BackCost(0:NstateVar(ng)) )
+        END IF
         FOURDVAR(ng) % BackCost = IniVal
 
-        allocate ( FOURDVAR(ng) % Cost0(Nouter) )
+        IF (.not.associated(FOURDVAR(ng) % Cost0)) THEN
+          allocate ( FOURDVAR(ng) % Cost0(Nouter) )
+        END IF
         FOURDVAR(ng) % Cost0 = IniVal
 
-        allocate ( FOURDVAR(ng) % CostFun(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % CostFun)) THEN
+          allocate ( FOURDVAR(ng) % CostFun(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % CostFun = IniVal
 
-        allocate ( FOURDVAR(ng) % CostFunOld(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % CostFunOld)) THEN
+          allocate ( FOURDVAR(ng) % CostFunOld(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % CostFunOld = IniVal
 
-        allocate ( FOURDVAR(ng) % CostNorm(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % CostNorm)) THEN
+          allocate ( FOURDVAR(ng) % CostNorm(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % CostNorm = IniVal
 
-        allocate ( FOURDVAR(ng) % ObsCost(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % ObsCost)) THEN
+          allocate ( FOURDVAR(ng) % ObsCost(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % ObsCost = IniVal
 
-        allocate ( FOURDVAR(ng) % DataPenalty(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % DataPenalty)) THEN
+          allocate ( FOURDVAR(ng) % DataPenalty(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % DataPenalty = IniVal
 
 #   if defined DATALESS_LOOPS || defined TL_W4DPSAS          || \
        defined W4DPSAS        || defined W4DPSAS_SENSITIVITY
-        allocate ( FOURDVAR(ng) % NLPenalty(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % NLPenalty)) THEN
+          allocate ( FOURDVAR(ng) % NLPenalty(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % NLPenalty = IniVal
 #   endif
 
-        allocate ( FOURDVAR(ng) % NLobsCost(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % NLobsCost)) THEN
+          allocate ( FOURDVAR(ng) % NLobsCost(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % NLobsCost = IniVal
 
 #   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-        allocate ( FOURDVAR(ng) % bc_ak(Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % bc_ak)) THEN
+          allocate ( FOURDVAR(ng) % bc_ak(Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % bc_ak = IniVal
 
-        allocate ( FOURDVAR(ng) % bc_bk(Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % bc_bk)) THEN
+          allocate ( FOURDVAR(ng) % bc_bk(Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % bc_bk = IniVal
 
-        allocate ( FOURDVAR(ng) % zdf1(Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % zdf1)) THEN
+          allocate ( FOURDVAR(ng) % zdf1(Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % zdf1 = IniVal
 
-        allocate ( FOURDVAR(ng) % zdf2(Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % zdf2)) THEN
+          allocate ( FOURDVAR(ng) % zdf2(Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % zdf2 = IniVal
 
-        allocate ( FOURDVAR(ng) % zdf3(Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % zdf3)) THEN
+          allocate ( FOURDVAR(ng) % zdf3(Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % zdf3 = IniVal
 
-        allocate ( FOURDVAR(ng) % pc_r2d(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % pc_r2d)) THEN
+          allocate ( FOURDVAR(ng) % pc_r2d(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % pc_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % rhs_r2d(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % rhs_r2d)) THEN
+          allocate ( FOURDVAR(ng) % rhs_r2d(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % rhs_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % r2d_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % r2d_ref)) THEN
+          allocate ( FOURDVAR(ng) % r2d_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % r2d_ref = IniVal
 
-        allocate ( FOURDVAR(ng) % zeta_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % zeta_ref)) THEN
+          allocate ( FOURDVAR(ng) % zeta_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % zeta_ref = IniVal
 
-        allocate ( FOURDVAR(ng) % p_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % p_r2d)) THEN
+          allocate ( FOURDVAR(ng) % p_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % p_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % r_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % r_r2d)) THEN
+          allocate ( FOURDVAR(ng) % r_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % r_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % bp_r2d)) THEN
+          allocate ( FOURDVAR(ng) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % bp_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % br_r2d)) THEN
+          allocate ( FOURDVAR(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
+        END IF
         FOURDVAR(ng) % br_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % tl_rhs_r2d(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % tl_rhs_r2d)) THEN
+          allocate ( FOURDVAR(ng) % tl_rhs_r2d(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % tl_rhs_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % tl_r2d_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % tl_r2d_ref)) THEN
+          allocate ( FOURDVAR(ng) % tl_r2d_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % tl_r2d_ref = IniVal
 
-        allocate ( FOURDVAR(ng) % tl_zeta_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % tl_zeta_ref)) THEN
+          allocate ( FOURDVAR(ng) % tl_zeta_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % tl_zeta_ref = IniVal
 
-        allocate ( FOURDVAR(ng) % ad_rhs_r2d(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % ad_rhs_r2d)) THEN
+          allocate ( FOURDVAR(ng) % ad_rhs_r2d(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % ad_rhs_r2d = IniVal
 
-        allocate ( FOURDVAR(ng) % ad_r2d_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % ad_r2d_ref)) THEN
+          allocate ( FOURDVAR(ng) % ad_r2d_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % ad_r2d_ref = IniVal
 
-        allocate ( FOURDVAR(ng) % ad_zeta_ref(LBi:UBi,LBj:UBj) )
+        IF (.not.associated(FOURDVAR(ng) % ad_zeta_ref)) THEN
+          allocate ( FOURDVAR(ng) % ad_zeta_ref(LBi:UBi,LBj:UBj) )
+        END IF
         FOURDVAR(ng) % ad_zeta_ref = IniVal
 #   endif
 #  endif
 
-        allocate ( FOURDVAR(ng) % ObsCount(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % ObsCount)) THEN
+          allocate ( FOURDVAR(ng) % ObsCount(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % ObsCount = 0
 
-        allocate ( FOURDVAR(ng) % ObsReject(0:NobsVar(ng)) )
+        IF (.not.associated(FOURDVAR(ng) % ObsReject)) THEN
+          allocate ( FOURDVAR(ng) % ObsReject(0:NobsVar(ng)) )
+        END IF
         FOURDVAR(ng) % ObsReject = 0
 
 #  ifdef RPCG
-        allocate ( FOURDVAR(ng) % cg_pxsave(Ndatum(ng)+1) )
+        IF (.not.associated(FOURDVAR(ng) % cg_pxsave)) THEN
+          allocate ( FOURDVAR(ng) % cg_pxsave(Ndatum(ng)+1) )
+        END IF
         FOURDVAR(ng) % cg_pxsave = 0
 
-        allocate ( FOURDVAR(ng) % cg_pxsum(Ndatum(ng)+1) )
+        IF (.not.associated(FOURDVAR(ng) % cg_pxsum)) THEN
+          allocate ( FOURDVAR(ng) % cg_pxsum(Ndatum(ng)+1) )
+        END IF
         FOURDVAR(ng) % cg_pxsum = 0
 
-        allocate ( FOURDVAR(ng) % cg_Dpxsum(Ndatum(ng)+1) )
+        IF (.not.associated(FOURDVAR(ng) % cg_Dpxsum)) THEN
+          allocate ( FOURDVAR(ng) % cg_Dpxsum(Ndatum(ng)+1) )
+        END IF
         FOURDVAR(ng) % cg_Dpxsum = 0
 #  endif
 

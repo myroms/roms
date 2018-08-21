@@ -659,60 +659,116 @@
 !  Allocate dimension parameters.
 !-----------------------------------------------------------------------
 !
-      allocate ( Lm(Ngrids) )
-      allocate ( Mm(Ngrids) )
+      IF (.not.allocated(Lm)) THEN
+        allocate ( Lm(Ngrids) )
+      END IF
+      IF (.not.allocated(Mm)) THEN
+        allocate ( Mm(Ngrids) )
+      END IF
 
-      allocate ( Im(Ngrids) )
-      allocate ( Jm(Ngrids) )
+      IF (.not.allocated(Im)) THEN
+        allocate ( Im(Ngrids) )
+      END IF
+      IF (.not.allocated(Jm)) THEN
+        allocate ( Jm(Ngrids) )
+      END IF
 
-      allocate ( N(Ngrids) )
+      IF (.not.allocated(N)) THEN
+        allocate ( N(Ngrids) )
+      END IF
 
-      allocate ( NT(Ngrids) )
+      IF (.not.allocated(NT)) THEN
+        allocate ( NT(Ngrids) )
+      END IF
 
 #if defined TIME_CONV && defined WEAK_CONSTRAINT
-      allocate ( NrecTC(Ngrids) )
+      IF (.not.allocated(NrecTC)) THEN
+        allocate ( NrecTC(Ngrids) )
+      END IF
 #endif
 
-      allocate ( NTCLM(Ngrids) )
+      IF (.not.allocated(NTCLM)) THEN
+        allocate ( NTCLM(Ngrids) )
+      END IF
 
-      allocate ( NSV(Ngrids) )
+      IF (.not.allocated(NSV)) THEN
+        allocate ( NSV(Ngrids) )
+      END IF
 
-      allocate ( NtileI(Ngrids) )
-      allocate ( NtileJ(Ngrids) )
+      IF (.not.allocated(NtileI)) THEN
+        allocate ( NtileI(Ngrids) )
+      END IF
+      IF (.not.allocated(NtileJ)) THEN
+        allocate ( NtileJ(Ngrids) )
+      END IF
 
-      allocate ( NtileX(Ngrids) )
-      allocate ( NtileE(Ngrids) )
+      IF (.not.allocated(NtileX)) THEN
+        allocate ( NtileX(Ngrids) )
+      END IF
+      IF (.not.allocated(NtileE)) THEN
+        allocate ( NtileE(Ngrids) )
+      END IF
 
-      allocate ( HaloBry(Ngrids) )
+      IF (.not.allocated(HaloBry)) THEN
+        allocate ( HaloBry(Ngrids) )
+      END IF
 
-      allocate ( HaloSizeI(Ngrids) )
-      allocate ( HaloSizeJ(Ngrids) )
+      IF (.not.allocated(HaloSizeI)) THEN
+        allocate ( HaloSizeI(Ngrids) )
+      END IF
+      IF (.not.allocated(HaloSizeJ)) THEN
+        allocate ( HaloSizeJ(Ngrids) )
+      END IF
 
-      allocate ( TileSide(Ngrids) )
-      allocate ( TileSize(Ngrids) )
+      IF (.not.allocated(TileSide)) THEN
+        allocate ( TileSide(Ngrids) )
+      END IF
+      IF (.not.allocated(TileSize)) THEN
+        allocate ( TileSize(Ngrids) )
+      END IF
 
 #ifdef PROPAGATOR
-      allocate ( Mstate(Ngrids) )
-      allocate ( Nstate(Ngrids) )
-      allocate ( Nstr(Ngrids) )
-      allocate ( Nend(Ngrids) )
-      allocate ( Nsize(Ngrids) )
+      IF (.not.allocated(Mstate)) THEN
+        allocate ( Mstate(Ngrids) )
+      END IF
+      IF (.not.allocated(Nstate)) THEN
+        allocate ( Nstate(Ngrids) )
+      END IF
+      IF (.not.allocated(Nstr)) THEN
+        allocate ( Nstr(Ngrids) )
+      END IF
+      IF (.not.allocated(Nend)) THEN
+        allocate ( Nend(Ngrids) )
+      END IF
+      IF (.not.allocated(Nsize)) THEN
+        allocate ( Nsize(Ngrids) )
+      END IF
 # ifdef SO_SEMI
-      allocate ( Nsemi(Ngrids) )
+      IF (.not.allocated(Nsemi)) THEN
+        allocate ( Nsemi(Ngrids) )
+      END IF
 # endif
 #endif
 
 #ifdef FLOATS
-      allocate ( Nfloats(Ngrids) )
-      allocate ( NFV(Ngrids) )
+      IF (.not.allocated(Nfloats)) THEN
+        allocate ( Nfloats(Ngrids) )
+      END IF
+      IF (.not.allocated(NFV)) THEN
+        allocate ( NFV(Ngrids) )
+      END IF
 #endif
 
 #ifdef STATIONS
-      allocate ( Nstation(Ngrids) )
+      IF (.not.allocated(Nstation)) THEN
+        allocate ( Nstation(Ngrids) )
+      END IF
 #endif
 
 #if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-      allocate ( Nbico(Ngrids) )
+      IF (.not.allocated(Nbico)) THEN
+        allocate ( Nbico(Ngrids) )
+      END IF
 #endif
 
       RETURN
@@ -853,7 +909,9 @@
 !
 !  Allocate lower and upper bounds structure for I/O NetCDF files.
 !
-      allocate ( IOBOUNDS(Ngrids) )
+      IF (.not.allocated(IOBOUNDS)) THEN
+        allocate ( IOBOUNDS(Ngrids) )
+      END IF
 
 #ifdef DIAGNOSTICS
 !

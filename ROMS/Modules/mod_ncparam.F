@@ -530,110 +530,268 @@
 !  Allocate variables.
 !-----------------------------------------------------------------------
 !
-      allocate ( Nxyp(Ngrids) )
-      allocate ( Nxyr(Ngrids) )
-      allocate ( Nxyu(Ngrids) )
-      allocate ( Nxyv(Ngrids) )
+      IF (.not.allocated(Nxyp)) THEN
+        allocate ( Nxyp(Ngrids) )
+      END IF
+      IF (.not.allocated(Nxyr)) THEN
+        allocate ( Nxyr(Ngrids) )
+      END IF
+      IF (.not.allocated(Nxyu)) THEN
+        allocate ( Nxyu(Ngrids) )
+      END IF
+      IF (.not.allocated(Nxyv)) THEN
+        allocate ( Nxyv(Ngrids) )
+      END IF
 
-      allocate ( NwaterR(Ngrids) )
-      allocate ( NwaterU(Ngrids) )
-      allocate ( NwaterV(Ngrids) )
+      IF (.not.allocated(NwaterR)) THEN
+        allocate ( NwaterR(Ngrids) )
+      END IF
+      IF (.not.allocated(NwaterU)) THEN
+        allocate ( NwaterU(Ngrids) )
+      END IF
+      IF (.not.allocated(NwaterV)) THEN
+        allocate ( NwaterV(Ngrids) )
+      END IF
 
-      allocate ( rILB(Ngrids) )
-      allocate ( rIUB(Ngrids) )
-      allocate ( rJLB(Ngrids) )
-      allocate ( rJUB(Ngrids) )
+      IF (.not.allocated(rILB)) THEN
+        allocate ( rILB(Ngrids) )
+      END IF
+      IF (.not.allocated(rIUB)) THEN
+        allocate ( rIUB(Ngrids) )
+      END IF
+      IF (.not.allocated(rJLB)) THEN
+        allocate ( rJLB(Ngrids) )
+      END IF
+      IF (.not.allocated(rJUB)) THEN
+        allocate ( rJUB(Ngrids) )
+      END IF
 
-      allocate ( rXmin(Ngrids) )
-      allocate ( rXmax(Ngrids) )
-      allocate ( rYmin(Ngrids) )
-      allocate ( rYmax(Ngrids) )
+      IF (.not.allocated(rXmin)) THEN
+        allocate ( rXmin(Ngrids) )
+      END IF
+      IF (.not.allocated(rXmax)) THEN
+        allocate ( rXmax(Ngrids) )
+      END IF
+      IF (.not.allocated(rYmin)) THEN
+        allocate ( rYmin(Ngrids) )
+      END IF
+      IF (.not.allocated(rYmax)) THEN
+        allocate ( rYmax(Ngrids) )
+      END IF
 
-      allocate ( uILB(Ngrids) )
-      allocate ( uIUB(Ngrids) )
-      allocate ( uJLB(Ngrids) )
-      allocate ( uJUB(Ngrids) )
+      IF (.not.allocated(uILB)) THEN
+        allocate ( uILB(Ngrids) )
+      END IF
+      IF (.not.allocated(uIUB)) THEN
+        allocate ( uIUB(Ngrids) )
+      END IF
+      IF (.not.allocated(uJLB)) THEN
+        allocate ( uJLB(Ngrids) )
+      END IF
+      IF (.not.allocated(uJUB)) THEN
+        allocate ( uJUB(Ngrids) )
+      END IF
 
-      allocate ( uXmin(Ngrids) )
-      allocate ( uXmax(Ngrids) )
-      allocate ( uYmin(Ngrids) )
-      allocate ( uYmax(Ngrids) )
+      IF (.not.allocated(uXmin)) THEN
+        allocate ( uXmin(Ngrids) )
+      END IF
+      IF (.not.allocated(uXmax)) THEN
+        allocate ( uXmax(Ngrids) )
+      END IF
+      IF (.not.allocated(uYmin)) THEN
+        allocate ( uYmin(Ngrids) )
+      END IF
+      IF (.not.allocated(uYmax)) THEN
+        allocate ( uYmax(Ngrids) )
+      END IF
 
-      allocate ( vILB(Ngrids) )
-      allocate ( vIUB(Ngrids) )
-      allocate ( vJLB(Ngrids) )
-      allocate ( vJUB(Ngrids) )
+      IF (.not.allocated(vILB)) THEN
+        allocate ( vILB(Ngrids) )
+      END IF
+      IF (.not.allocated(vIUB)) THEN
+        allocate ( vIUB(Ngrids) )
+      END IF
+      IF (.not.allocated(vJLB)) THEN
+        allocate ( vJLB(Ngrids) )
+      END IF
+      IF (.not.allocated(vJUB)) THEN
+        allocate ( vJUB(Ngrids) )
+      END IF
 
-      allocate ( vXmin(Ngrids) )
-      allocate ( vXmax(Ngrids) )
-      allocate ( vYmin(Ngrids) )
-      allocate ( vYmax(Ngrids) )
+      IF (.not.allocated(vXmin)) THEN
+        allocate ( vXmin(Ngrids) )
+      END IF
+      IF (.not.allocated(vXmax)) THEN
+        allocate ( vXmax(Ngrids) )
+      END IF
+      IF (.not.allocated(vYmin)) THEN
+        allocate ( vYmin(Ngrids) )
+      END IF
+      IF (.not.allocated(vYmax)) THEN
+        allocate ( vYmax(Ngrids) )
+      END IF
 
-      allocate ( Aout(NV,Ngrids) )
-      allocate ( Dout(NV,Ngrids) )
-      allocate ( Hout(NV,Ngrids) )
-      allocate ( Qout(NV,Ngrids) )
-      allocate ( Sout(NV,Ngrids) )
+      IF (.not.allocated(Aout)) THEN
+        allocate ( Aout(NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Dout)) THEN
+        allocate ( Dout(NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Hout)) THEN
+        allocate ( Hout(NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Qout)) THEN
+        allocate ( Qout(NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Sout)) THEN
+        allocate ( Sout(NV,Ngrids) )
+      END IF
 
-      allocate ( idRtrc(MT) )
-      allocate ( idsurT(MT) )
-      allocate ( idTads(MT) )
-      allocate ( idTbot(MT) )
-      allocate ( idTbry(4,MT) )
-      allocate ( idTclm(MT) )
-      allocate ( idTnud(MT) )
-      allocate ( idTsur(MT) )
-      allocate ( idTtlf(MT) )
+      IF (.not.allocated(idRtrc)) THEN
+        allocate ( idRtrc(MT) )
+      END IF
+      IF (.not.allocated(idsurT)) THEN
+        allocate ( idsurT(MT) )
+      END IF
+      IF (.not.allocated(idTads)) THEN
+        allocate ( idTads(MT) )
+      END IF
+      IF (.not.allocated(idTbot)) THEN
+        allocate ( idTbot(MT) )
+      END IF
+      IF (.not.allocated(idTbry)) THEN
+        allocate ( idTbry(4,MT) )
+      END IF
+      IF (.not.allocated(idTclm)) THEN
+        allocate ( idTclm(MT) )
+      END IF
+      IF (.not.allocated(idTnud)) THEN
+        allocate ( idTnud(MT) )
+      END IF
+      IF (.not.allocated(idTsur)) THEN
+        allocate ( idTsur(MT) )
+      END IF
+      IF (.not.allocated(idTtlf)) THEN
+        allocate ( idTtlf(MT) )
+      END IF
 
-      allocate ( iHUTav(MT) )
-      allocate ( iHVTav(MT) )
-      allocate ( idTTav(MT) )
-      allocate ( idUTav(MT) )
-      allocate ( idVTav(MT) )
+      IF (.not.allocated(iHUTav)) THEN
+        allocate ( iHUTav(MT) )
+      END IF
+      IF (.not.allocated(iHVTav)) THEN
+        allocate ( iHVTav(MT) )
+      END IF
+      IF (.not.allocated(idTTav)) THEN
+        allocate ( idTTav(MT) )
+      END IF
+      IF (.not.allocated(idUTav)) THEN
+        allocate ( idUTav(MT) )
+      END IF
+      IF (.not.allocated(idVTav)) THEN
+        allocate ( idVTav(MT) )
+      END IF
 
 #ifdef DIAGNOSTICS
-      allocate ( idDtrc(MT,NDT) )
-      allocate ( idDu2d(NDM2d) )
-      allocate ( idDv2d(NDM2d) )
-      allocate ( idDu3d(NDM3d) )
-      allocate ( idDv3d(NDM3d) )
+      IF (.not.allocated(idDtrc)) THEN
+        allocate ( idDtrc(MT,NDT) )
+      END IF
+      IF (.not.allocated(idDu2d)) THEN
+        allocate ( idDu2d(NDM2d) )
+      END IF
+      IF (.not.allocated(idDv2d)) THEN
+        allocate ( idDv2d(NDM2d) )
+      END IF
+      IF (.not.allocated(idDu3d)) THEN
+        allocate ( idDu3d(NDM3d) )
+      END IF
+      IF (.not.allocated(idDv3d)) THEN
+        allocate ( idDv3d(NDM3d) )
+      END IF
 #endif
 
-      allocate ( isTsur(MT) )
-      allocate ( isTvar(MT) )
-      allocate ( idBvar(nLBCvar) )
-      allocate ( idSvar(MAXVAL(NSV)+1) )
-      allocate ( idSbry(MAXVAL(NSV)+1) )
+      IF (.not.allocated(isTsur)) THEN
+        allocate ( isTsur(MT) )
+      END IF
+      IF (.not.allocated(isTvar)) THEN
+        allocate ( isTvar(MT) )
+      END IF
+      IF (.not.allocated(idBvar)) THEN
+        allocate ( idBvar(nLBCvar) )
+      END IF
+      IF (.not.allocated(idSvar)) THEN
+        allocate ( idSvar(MAXVAL(NSV)+1) )
+      END IF
+      IF (.not.allocated(idSbry)) THEN
+        allocate ( idSbry(MAXVAL(NSV)+1) )
+      END IF
 
-      allocate ( ncFRCid(NV,Ngrids) )
+      IF (.not.allocated(ncFRCid)) THEN
+        allocate ( ncFRCid(NV,Ngrids) )
+      END IF
 
-      allocate ( idefADJ(Ngrids) )
-      allocate ( idefAVG(Ngrids) )
-      allocate ( idefDIA(Ngrids) )
-      allocate ( idefHIS(Ngrids) )
-      allocate ( idefQCK(Ngrids) )
-      allocate ( idefTLM(Ngrids) )
+      IF (.not.allocated(idefADJ)) THEN
+        allocate ( idefADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(idefAVG)) THEN
+        allocate ( idefAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(idefDIA)) THEN
+        allocate ( idefDIA(Ngrids) )
+      END IF
+      IF (.not.allocated(idefHIS)) THEN
+        allocate ( idefHIS(Ngrids) )
+      END IF
+      IF (.not.allocated(idefQCK)) THEN
+        allocate ( idefQCK(Ngrids) )
+      END IF
+      IF (.not.allocated(idefTLM)) THEN
+        allocate ( idefTLM(Ngrids) )
+      END IF
 
-      allocate ( idTvar(MT) )
-      allocate ( idTrcD(NAT) )
-      allocate ( idTrcH(NAT) )
+      IF (.not.allocated(idTvar)) THEN
+        allocate ( idTvar(MT) )
+      END IF
+      IF (.not.allocated(idTrcD)) THEN
+        allocate ( idTrcD(NAT) )
+      END IF
+      IF (.not.allocated(idTrcH)) THEN
+        allocate ( idTrcH(NAT) )
+      END IF
 
-      allocate ( Linfo(6,NV,Ngrids) )
+      IF (.not.allocated(Linfo)) THEN
+        allocate ( Linfo(6,NV,Ngrids) )
+      END IF
 
-      allocate ( Iinfo(10,NV,Ngrids) )
+      IF (.not.allocated(Iinfo)) THEN
+        allocate ( Iinfo(10,NV,Ngrids) )
+      END IF
 
-      allocate ( Finfo(10,NV,Ngrids) )
-      allocate ( Fpoint(2,NV,Ngrids) )
-      allocate ( Fscale(NV,Ngrids) )
-      allocate ( Tintrp(2,NV,Ngrids) )
+      IF (.not.allocated(Finfo)) THEN
+        allocate ( Finfo(10,NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Fpoint)) THEN
+        allocate ( Fpoint(2,NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Fscale)) THEN
+        allocate ( Fscale(NV,Ngrids) )
+      END IF
+      IF (.not.allocated(Tintrp)) THEN
+        allocate ( Tintrp(2,NV,Ngrids) )
+      END IF
 
 #if defined SSH_TIDES || defined UV_TIDES
-      allocate ( Vtime(MAX(2,MTC),NV,Ngrids) )
+      IF (.not.allocated(Vtime)) THEN
+        allocate ( Vtime(MAX(2,MTC),NV,Ngrids) )
+      END IF
 #else
-      allocate ( Vtime(2,NV,Ngrids) )
+      IF (.not.allocated(Vtime)) THEN
+        allocate ( Vtime(2,NV,Ngrids) )
+      END IF
 #endif
 
-      allocate ( Cinfo(NV,Ngrids) )
+      IF (.not.allocated(Cinfo)) THEN
+        allocate ( Cinfo(NV,Ngrids) )
+      END IF
 
       RETURN
       END SUBROUTINE allocate_ncparam
@@ -642,8 +800,8 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes all variables in module      !
-!  "mod_ncparam" for all nested grids.                                 !
+!  This routine initializes all variables in module "mod_ncparam" for  !
+!  all nested grids.                                                   !
 !                                                                      !
 !=======================================================================
 !

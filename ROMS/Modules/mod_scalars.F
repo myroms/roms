@@ -1704,38 +1704,58 @@
 !  Allocate and initialize variables in module structure.
 !-----------------------------------------------------------------------
 !
-      allocate ( SCALARS(Ngrids) )
+      IF (.not.allocated(SCALARS)) THEN
+        allocate ( SCALARS(Ngrids) )
+      END IF
 
       DO ng=1,Ngrids
 
 #ifdef SOLVE3D
-        allocate ( SCALARS(ng) % Fstate(8+2*MT) )
+        IF (.not.associated(SCALARS(ng)% Fstate)) THEN
+          allocate ( SCALARS(ng) % Fstate(8+2*MT) )
+        END IF
         SCALARS(ng) % Fstate(1:7+2*MT) = .FALSE.
 
-        allocate ( SCALARS(ng) % Lstate(8+2*MT) )
+        IF (.not.associated(SCALARS(ng) % Lstate)) THEN
+          allocate ( SCALARS(ng) % Lstate(8+2*MT) )
+        END IF
         SCALARS(ng) % Lstate(1:5+MT) = .FALSE.
 #else
-        allocate ( SCALARS(ng) % Fstate(5) )
+        IF (.not.associated(SCALARS(ng) % Fstate)) THEN
+          allocate ( SCALARS(ng) % Fstate(5) )
+        END IF
         SCALARS(ng) % Fstate(1:5) = .FALSE.
 
-        allocate ( SCALARS(ng) % Lstate(3) )
+        IF(.not.associated(SCALARS(ng) % Lstate)) THEN
+          allocate ( SCALARS(ng) % Lstate(3) )
+        END IF
         SCALARS(ng) % Lstate(1:3) = .FALSE.
 #endif
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
-        allocate ( SCALARS(ng) % IJwater((Lm(ng)+2)*(Mm(ng)+2),4) )
+        IF (.not.associated(SCALARS(ng) % IJwater)) THEN
+          allocate ( SCALARS(ng) % IJwater((Lm(ng)+2)*(Mm(ng)+2),4) )
+        END IF
         SCALARS(ng) % IJwater = 0
 #endif
 
-        allocate ( SCALARS(ng) % Cs_r(N(ng)) )
+        IF (.not.associated(SCALARS(ng) % Cs_r)) THEN
+          allocate ( SCALARS(ng) % Cs_r(N(ng)) )
+        END IF
         SCALARS(ng) % Cs_r(1:N(ng)) = IniVal
 
-        allocate ( SCALARS(ng) % Cs_w(0:N(ng)) )
+        IF (.not.associated(SCALARS(ng) % Cs_w)) THEN
+          allocate ( SCALARS(ng) % Cs_w(0:N(ng)) )
+        END IF
         SCALARS(ng) % Cs_w(0:N(ng)) = IniVal
 
-        allocate ( SCALARS(ng) % sc_r(N(ng)) )
+        IF (.not.associated(SCALARS(ng) % sc_r)) THEN
+          allocate ( SCALARS(ng) % sc_r(N(ng)) )
+        END IF
         SCALARS(ng) % sc_r(1:N(ng)) = IniVal
 
-        allocate ( SCALARS(ng) % sc_w(0:N(ng)) )
+        IF (.not.associated(SCALARS(ng) % sc_w)) THEN
+          allocate ( SCALARS(ng) % sc_w(0:N(ng)) )
+        END IF
         SCALARS(ng) % sc_w(0:N(ng)) = IniVal
 
       END DO
@@ -1744,14 +1764,26 @@
 !  These variables are private for each thread to avoid collisions.
 !
 !$OMP PARALLEL
-      allocate ( PREDICTOR_2D_STEP(Ngrids) )
+      IF (.not.allocated(PREDICTOR_2D_STEP)) THEN
+        allocate ( PREDICTOR_2D_STEP(Ngrids) )
+      END IF
 
-      allocate ( indx1(Ngrids) )
-      allocate ( iic(Ngrids) )
-      allocate ( iif(Ngrids) )
+      IF (.not.allocated(indx1)) THEN
+        allocate ( indx1(Ngrids) )
+      END IF
+      IF (.not.allocated(iic)) THEN
+        allocate ( iic(Ngrids) )
+      END IF
+      IF (.not.allocated(iif)) THEN
+        allocate ( iif(Ngrids) )
+      END IF
 
-      allocate ( FrcRec(Ngrids) )
-      allocate ( SOrec(Ngrids) )
+      IF (.not.allocated(FrcRec)) THEN
+        allocate ( FrcRec(Ngrids) )
+      END IF
+      IF (.not.allocated(SOrec)) THEN
+        allocate ( SOrec(Ngrids) )
+      END IF
 !$OMP END PARALLEL
 !
 !-----------------------------------------------------------------------
@@ -1770,396 +1802,934 @@
 #endif
 
 #ifdef T_PASSIVE
-      allocate ( inert(NPT) )
+      IF (.not.allocated(inert)) THEN
+        allocate ( inert(NPT) )
+      END IF
 #endif
-      allocate ( PerfectRST(Ngrids) )
+      IF (.not.allocated(PerfectRST)) THEN
+        allocate ( PerfectRST(Ngrids) )
+      END IF
 
-      allocate ( ndtfast(Ngrids) )
-      allocate ( nfast(Ngrids) )
+      IF (.not.allocated(ndtfast)) THEN
+        allocate ( ndtfast(Ngrids) )
+      END IF
+      IF (.not.allocated(nfast)) THEN
+        allocate ( nfast(Ngrids) )
+      END IF
 
-      allocate ( dt(Ngrids) )
-      allocate ( dtfast(Ngrids) )
-      allocate ( TimeEnd(Ngrids) )
-      allocate ( AVGtime(Ngrids) )
-      allocate ( DIAtime(Ngrids) )
-      allocate ( IMPtime(Ngrids) )
-      allocate ( ObsTime(Ngrids) )
-      allocate ( FrcTime(Ngrids) )
+      IF (.not.allocated(dt)) THEN
+        allocate ( dt(Ngrids) )
+      END IF
+      IF (.not.allocated(dtfast)) THEN
+        allocate ( dtfast(Ngrids) )
+      END IF
+      IF (.not.allocated(TimeEnd)) THEN
+        allocate ( TimeEnd(Ngrids) )
+      END IF
+      IF (.not.allocated(AVGtime)) THEN
+        allocate ( AVGtime(Ngrids) )
+      END IF
+      IF (.not.allocated(DIAtime)) THEN
+        allocate ( DIAtime(Ngrids) )
+      END IF
+      IF (.not.allocated(IMPtime)) THEN
+        allocate ( IMPtime(Ngrids) )
+      END IF
+      IF (.not.allocated(ObsTime)) THEN
+        allocate ( ObsTime(Ngrids) )
+      END IF
+      IF (.not.allocated(FrcTime)) THEN
+        allocate ( FrcTime(Ngrids) )
+      END IF
 
-      allocate ( ntimes(Ngrids) )
-      allocate ( first_time(Ngrids) )
+      IF (.not.allocated(ntimes)) THEN
+        allocate ( ntimes(Ngrids) )
+      END IF
+      IF (.not.allocated(first_time)) THEN
+        allocate ( first_time(Ngrids) )
+      END IF
 
-      allocate ( ntfirst(Ngrids) )
-      allocate ( ntstart(Ngrids) )
-      allocate ( ntend(Ngrids) )
+      IF (.not.allocated(ntfirst)) THEN
+        allocate ( ntfirst(Ngrids) )
+      END IF
+      IF (.not.allocated(ntstart)) THEN
+        allocate ( ntstart(Ngrids) )
+      END IF
+      IF (.not.allocated(ntend)) THEN
+        allocate ( ntend(Ngrids) )
+      END IF
 !$OMP PARALLEL
-      allocate ( synchro_flag(Ngrids) )
-      allocate ( step_counter(Ngrids) )
-      allocate ( tdays(Ngrids) )
-      allocate ( time(Ngrids) )
-      allocate ( time_code(Ngrids) )
+      IF (.not.allocated(synchro_flag)) THEN
+        allocate ( synchro_flag(Ngrids) )
+      END IF
+      IF (.not.allocated(step_counter)) THEN
+        allocate ( step_counter(Ngrids) )
+      END IF
+      IF (.not.allocated(tdays)) THEN
+        allocate ( tdays(Ngrids) )
+      END IF
+      IF (.not.allocated(time)) THEN
+        allocate ( time(Ngrids) )
+      END IF
+      IF (.not.allocated(time_code)) THEN
+        allocate ( time_code(Ngrids) )
+      END IF
 !$OMP END PARALLEL
 
-      allocate ( NrecFrc(Ngrids) )
+      IF (.not.allocated(NrecFrc)) THEN
+        allocate ( NrecFrc(Ngrids) )
+      END IF
 
-      allocate ( NudgingCoeff(Ngrids) )
+      IF (.not.allocated(NudgingCoeff)) THEN
+        allocate ( NudgingCoeff(Ngrids) )
+      END IF
 
-      allocate ( ObcData(Ngrids) )
+      IF (.not.allocated(ObcData)) THEN
+        allocate ( ObcData(Ngrids) )
+      END IF
 
-      allocate ( Lbiology(Ngrids) )
-      allocate ( Lfloats(Ngrids) )
-      allocate ( Lsediment(Ngrids) )
-      allocate ( Lstations(Ngrids) )
+      IF (.not.allocated(Lbiology)) THEN
+        allocate ( Lbiology(Ngrids) )
+      END IF
+      IF (.not.allocated(Lfloats)) THEN
+        allocate ( Lfloats(Ngrids) )
+      END IF
+      IF (.not.allocated(Lsediment)) THEN
+        allocate ( Lsediment(Ngrids) )
+      END IF
+      IF (.not.allocated(Lstations)) THEN
+        allocate ( Lstations(Ngrids) )
+      END IF
 
-      allocate ( CompositeGrid(4,Ngrids) )
-      allocate ( RefinedGrid(Ngrids) )
-      allocate ( RefineScale(Ngrids) )
-      allocate ( GetDonorData(Ngrids) )
+      IF (.not.allocated(CompositeGrid)) THEN
+        allocate ( CompositeGrid(4,Ngrids) )
+      END IF
+      IF (.not.allocated(RefinedGrid)) THEN
+        allocate ( RefinedGrid(Ngrids) )
+      END IF
+      IF (.not.allocated(RefineScale)) THEN
+        allocate ( RefineScale(Ngrids) )
+      END IF
+      IF (.not.allocated(GetDonorData)) THEN
+        allocate ( GetDonorData(Ngrids) )
+      END IF
 
-      allocate ( EWperiodic(Ngrids) )
-      allocate ( NSperiodic(Ngrids) )
+      IF (.not.allocated(EWperiodic)) THEN
+        allocate ( EWperiodic(Ngrids) )
+      END IF
+      IF (.not.allocated(NSperiodic)) THEN
+        allocate ( NSperiodic(Ngrids) )
+      END IF
 
-      allocate ( VolCons(4,Ngrids) )
+      IF (.not.allocated(VolCons)) THEN
+        allocate ( VolCons(4,Ngrids) )
+      END IF
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
-      allocate ( ad_VolCons(4,Ngrids) )
-      allocate ( tl_VolCons(4,Ngrids) )
+      IF (.not.allocated(ad_VolCons)) THEN
+        allocate ( ad_VolCons(4,Ngrids) )
+      END IF
+      IF (.not.allocated(tl_VolCons)) THEN
+        allocate ( tl_VolCons(4,Ngrids) )
+      END IF
 #endif
 
-      allocate ( Lsponge(Ngrids) )
-      allocate ( LuvSponge(Ngrids) )
-      allocate ( LtracerSponge(MT,Ngrids) )
+      IF (.not.allocated(Lsponge)) THEN
+        allocate ( Lsponge(Ngrids) )
+      END IF
+      IF (.not.allocated(LuvSponge)) THEN
+        allocate ( LuvSponge(Ngrids) )
+      END IF
+      IF (.not.allocated(LtracerSponge)) THEN
+        allocate ( LtracerSponge(MT,Ngrids) )
+      END IF
 
-      allocate ( CLM_FILE(Ngrids) )
-      allocate ( Lclimatology(Ngrids) )
-      allocate ( LsshCLM(Ngrids) )
-      allocate ( Lm2CLM(Ngrids) )
-      allocate ( Lm3CLM(Ngrids) )
-      allocate ( LtracerCLM(MT,Ngrids) )
+      IF (.not.allocated(CLM_FILE)) THEN
+        allocate ( CLM_FILE(Ngrids) )
+      END IF
+      IF (.not.allocated(Lclimatology)) THEN
+        allocate ( Lclimatology(Ngrids) )
+      END IF
+      IF (.not.allocated(LsshCLM)) THEN
+        allocate ( LsshCLM(Ngrids) )
+      END IF
+      IF (.not.allocated(Lm2CLM)) THEN
+        allocate ( Lm2CLM(Ngrids) )
+      END IF
+      IF (.not.allocated(Lm3CLM)) THEN
+        allocate ( Lm3CLM(Ngrids) )
+      END IF
+      IF (.not.allocated(LtracerCLM)) THEN
+        allocate ( LtracerCLM(MT,Ngrids) )
+      END IF
 
-      allocate ( Lnudging(Ngrids) )
-      allocate ( LnudgeM2CLM(Ngrids) )
-      allocate ( LnudgeM3CLM(Ngrids) )
-      allocate ( LnudgeTCLM(MT,Ngrids) )
+      IF (.not.allocated(Lnudging)) THEN
+        allocate ( Lnudging(Ngrids) )
+      END IF
+      IF (.not.allocated(LnudgeM2CLM)) THEN
+        allocate ( LnudgeM2CLM(Ngrids) )
+      END IF
+      IF (.not.allocated(LnudgeM3CLM)) THEN
+        allocate ( LnudgeM3CLM(Ngrids) )
+      END IF
+      IF (.not.allocated(LnudgeTCLM)) THEN
+        allocate ( LnudgeTCLM(MT,Ngrids) )
+      END IF
 
-      allocate ( LuvSrc(Ngrids) )
-      allocate ( LwSrc(Ngrids) )
-      allocate ( LtracerSrc(MT,Ngrids) )
+      IF (.not.allocated(LuvSrc)) THEN
+        allocate ( LuvSrc(Ngrids) )
+      END IF
+      IF (.not.allocated(LwSrc)) THEN
+        allocate ( LwSrc(Ngrids) )
+      END IF
+      IF (.not.allocated(LtracerSrc)) THEN
+        allocate ( LtracerSrc(MT,Ngrids) )
+      END IF
 
-      allocate ( maxspeed(Ngrids) )
-      allocate ( maxrho(Ngrids) )
+      IF (.not.allocated(maxspeed)) THEN
+        allocate ( maxspeed(Ngrids) )
+      END IF
+      IF (.not.allocated(maxrho)) THEN
+        allocate ( maxrho(Ngrids) )
+      END IF
 
-      allocate ( levsfrc(Ngrids) )
-      allocate ( levbfrc(Ngrids) )
+      IF (.not.allocated(levsfrc)) THEN
+        allocate ( levsfrc(Ngrids) )
+      END IF
+      IF (.not.allocated(levbfrc)) THEN
+        allocate ( levbfrc(Ngrids) )
+      END IF
 
-      allocate ( Vtransform(Ngrids) )
-      allocate ( Vstretching(Ngrids) )
+      IF (.not.allocated(Vtransform)) THEN
+        allocate ( Vtransform(Ngrids) )
+      END IF
+      IF (.not.allocated(Vstretching)) THEN
+        allocate ( Vstretching(Ngrids) )
+      END IF
 
-      allocate ( Tcline(Ngrids) )
-      allocate ( hc(Ngrids) )
-      allocate ( theta_s(Ngrids) )
-      allocate ( theta_b(Ngrids) )
+      IF (.not.allocated(Tcline)) THEN
+        allocate ( Tcline(Ngrids) )
+      END IF
+      IF (.not.allocated(hc)) THEN
+        allocate ( hc(Ngrids) )
+      END IF
+      IF (.not.allocated(theta_s)) THEN
+        allocate ( theta_s(Ngrids) )
+      END IF
+      IF (.not.allocated(theta_b)) THEN
+        allocate ( theta_b(Ngrids) )
+      END IF
 
-      allocate ( hmin(Ngrids) )
-      allocate ( hmax(Ngrids) )
+      IF (.not.allocated(hmin)) THEN
+        allocate ( hmin(Ngrids) )
+      END IF
+      IF (.not.allocated(hmax)) THEN
+        allocate ( hmax(Ngrids) )
+      END IF
 
-      allocate ( xl(Ngrids) )
-      allocate ( el(Ngrids) )
+      IF (.not.allocated(xl)) THEN
+        allocate ( xl(Ngrids) )
+      END IF
+      IF (.not.allocated(el)) THEN
+        allocate ( el(Ngrids) )
+      END IF
 
-      allocate ( LonMin(Ngrids) )
-      allocate ( LonMax(Ngrids) )
-      allocate ( LatMin(Ngrids) )
-      allocate ( LatMax(Ngrids) )
+      IF (.not.allocated(LonMin)) THEN
+        allocate ( LonMin(Ngrids) )
+      END IF
+      IF (.not.allocated(LonMax)) THEN
+        allocate ( LonMax(Ngrids) )
+      END IF
+      IF (.not.allocated(LatMin)) THEN
+        allocate ( LatMin(Ngrids) )
+      END IF
+      IF (.not.allocated(LatMax)) THEN
+        allocate ( LatMax(Ngrids) )
+      END IF
 
-      allocate ( Idigits(Ngrids) )
-      allocate ( Jdigits(Ngrids) )
+      IF (.not.allocated(Idigits)) THEN
+        allocate ( Idigits(Ngrids) )
+      END IF
+      IF (.not.allocated(Jdigits)) THEN
+        allocate ( Jdigits(Ngrids) )
+      END IF
 #ifdef SOLVE3D
-      allocate ( Kdigits(Ngrids) )
+      IF (.not.allocated(Kdigits)) THEN
+        allocate ( Kdigits(Ngrids) )
+      END IF
 #endif
-      allocate ( TotVolume(Ngrids) )
-      allocate ( MinVolume(Ngrids) )
-      allocate ( MaxVolume(Ngrids) )
+      IF (.not.allocated(TotVolume)) THEN
+        allocate ( TotVolume(Ngrids) )
+      END IF
+      IF (.not.allocated(MinVolume)) THEN
+        allocate ( MinVolume(Ngrids) )
+      END IF
+      IF (.not.allocated(MaxVolume)) THEN
+        allocate ( MaxVolume(Ngrids) )
+      END IF
 
-      allocate ( DXmin(Ngrids) )
-      allocate ( DXmax(Ngrids) )
-      allocate ( DYmin(Ngrids) )
-      allocate ( DYmax(Ngrids) )
+      IF (.not.allocated(DXmin)) THEN
+        allocate ( DXmin(Ngrids) )
+      END IF
+      IF (.not.allocated(DXmax)) THEN
+        allocate ( DXmax(Ngrids) )
+      END IF
+      IF (.not.allocated(DYmin)) THEN
+        allocate ( DYmin(Ngrids) )
+      END IF
+      IF (.not.allocated(DYmax)) THEN
+        allocate ( DYmax(Ngrids) )
+      END IF
 #ifdef SOLVE3D
-      allocate ( DZmin(Ngrids) )
-      allocate ( DZmax(Ngrids) )
+      IF (.not.allocated(DZmin)) THEN
+        allocate ( DZmin(Ngrids) )
+      END IF
+      IF (.not.allocated(DZmax)) THEN
+        allocate ( DZmax(Ngrids) )
+      END IF
 #endif
 
-      allocate ( grdmax(Ngrids) )
+      IF (.not.allocated(grdmax)) THEN
+        allocate ( grdmax(Ngrids) )
+      END IF
 
 #ifdef DIFF_3DCOEF
-      allocate ( DiffMin(Ngrids) )
-      allocate ( DiffMax(Ngrids) )
+      IF (.not.allocated(DiffMin)) THEN
+        allocate ( DiffMin(Ngrids) )
+      END IF
+      IF (.not.allocated(DiffMax)) THEN
+        allocate ( DiffMax(Ngrids) )
+      END IF
 #endif
 
-      allocate ( Cg_min(Ngrids) )
-      allocate ( Cg_max(Ngrids) )
-      allocate ( Cg_Cor(Ngrids) )
+      IF (.not.allocated(Cg_min)) THEN
+        allocate ( Cg_min(Ngrids) )
+      END IF
+      IF (.not.allocated(Cg_max)) THEN
+        allocate ( Cg_max(Ngrids) )
+      END IF
+      IF (.not.allocated(Cg_Cor)) THEN
+        allocate ( Cg_Cor(Ngrids) )
+      END IF
 
 #ifdef VISC_3DCOEF
-      allocate ( ViscMin(Ngrids) )
-      allocate ( ViscMax(Ngrids) )
+      IF (.not.allocated(ViscMin)) THEN
+        allocate ( ViscMin(Ngrids) )
+      END IF
+      IF (.not.allocated(ViscMax)) THEN
+        allocate ( ViscMax(Ngrids) )
+      END IF
 #endif
 
-      allocate ( R0(Ngrids) )
-      allocate ( Tcoef(Ngrids) )
-      allocate ( Scoef(Ngrids) )
+      IF (.not.allocated(R0)) THEN
+        allocate ( R0(Ngrids) )
+      END IF
+      IF (.not.allocated(Tcoef)) THEN
+        allocate ( Tcoef(Ngrids) )
+      END IF
+      IF (.not.allocated(Scoef)) THEN
+        allocate ( Scoef(Ngrids) )
+      END IF
 
-      allocate ( T0(Ngrids) )
-      allocate ( S0(Ngrids) )
+      IF (.not.allocated(T0)) THEN
+        allocate ( T0(Ngrids) )
+      END IF
+      IF (.not.allocated(S0)) THEN
+        allocate ( S0(Ngrids) )
+      END IF
 
-      allocate ( gamma2(Ngrids) )
+      IF (.not.allocated(gamma2)) THEN
+        allocate ( gamma2(Ngrids) )
+      END IF
 
-      allocate ( lmd_Jwt(Ngrids) )
+      IF (.not.allocated(lmd_Jwt)) THEN
+        allocate ( lmd_Jwt(Ngrids) )
+      END IF
 
-      allocate ( rx0(Ngrids) )
-      allocate ( rx1(Ngrids) )
+      IF (.not.allocated(rx0)) THEN
+        allocate ( rx0(Ngrids) )
+      END IF
+      IF (.not.allocated(rx1)) THEN
+        allocate ( rx1(Ngrids) )
+      END IF
 
-      allocate ( rdrg(Ngrids) )
-      allocate ( rdrg2(Ngrids) )
+      IF (.not.allocated(rdrg)) THEN
+        allocate ( rdrg(Ngrids) )
+      END IF
+      IF (.not.allocated(rdrg2)) THEN
+        allocate ( rdrg2(Ngrids) )
+      END IF
 
-      allocate ( Zos(Ngrids) )
-      allocate ( Zob(Ngrids) )
+      IF (.not.allocated(Zos)) THEN
+        allocate ( Zos(Ngrids) )
+      END IF
+      IF (.not.allocated(Zob)) THEN
+        allocate ( Zob(Ngrids) )
+      END IF
 
-      allocate ( Dcrit(Ngrids) )
+      IF (.not.allocated(Dcrit)) THEN
+        allocate ( Dcrit(Ngrids) )
+      END IF
 
 #ifdef PROPAGATOR
-      allocate ( Nconv(Ngrids) )
+      IF (.not.allocated(Nconv)) THEN
+        allocate ( Nconv(Ngrids) )
+      END IF
 #endif
 
-      allocate ( weight(2,0:256,Ngrids) )
+      IF (.not.allocated(weight)) THEN
+        allocate ( weight(2,0:256,Ngrids) )
+      END IF
 
-      allocate ( Akk_bak(Ngrids) )
-      allocate ( Akp_bak(Ngrids) )
-      allocate ( Akv_bak(Ngrids) )
-      allocate ( Akv_limit(Ngrids) )
+      IF (.not.allocated(Akk_bak)) THEN
+        allocate ( Akk_bak(Ngrids) )
+      END IF
+      IF (.not.allocated(Akp_bak)) THEN
+        allocate ( Akp_bak(Ngrids) )
+      END IF
+      IF (.not.allocated(Akv_bak)) THEN
+        allocate ( Akv_bak(Ngrids) )
+      END IF
+      IF (.not.allocated(Akv_limit)) THEN
+        allocate ( Akv_limit(Ngrids) )
+      END IF
 
-      allocate ( ad_visc2(Ngrids) )
-      allocate ( nl_visc2(Ngrids) )
-      allocate ( tl_visc2(Ngrids) )
-      allocate ( visc2(Ngrids) )
+      IF (.not.allocated(ad_visc2)) THEN
+        allocate ( ad_visc2(Ngrids) )
+      END IF
+      IF (.not.allocated(nl_visc2)) THEN
+        allocate ( nl_visc2(Ngrids) )
+      END IF
+      IF (.not.allocated(tl_visc2)) THEN
+        allocate ( tl_visc2(Ngrids) )
+      END IF
+      IF (.not.allocated(visc2)) THEN
+        allocate ( visc2(Ngrids) )
+      END IF
 
-      allocate ( ad_visc4(Ngrids) )
-      allocate ( nl_visc4(Ngrids) )
-      allocate ( tl_visc4(Ngrids) )
-      allocate ( visc4(Ngrids) )
+      IF (.not.allocated(ad_visc4)) THEN
+        allocate ( ad_visc4(Ngrids) )
+      END IF
+      IF (.not.allocated(nl_visc4)) THEN
+        allocate ( nl_visc4(Ngrids) )
+      END IF
+      IF (.not.allocated(tl_visc4)) THEN
+        allocate ( tl_visc4(Ngrids) )
+      END IF
+      IF (.not.allocated(visc4)) THEN
+        allocate ( visc4(Ngrids) )
+      END IF
 
-      allocate ( tkenu2(Ngrids) )
-      allocate ( tkenu4(Ngrids) )
+      IF (.not.allocated(tkenu2)) THEN
+        allocate ( tkenu2(Ngrids) )
+      END IF
+      IF (.not.allocated(tkenu4)) THEN
+        allocate ( tkenu4(Ngrids) )
+      END IF
 
-      allocate ( Akt_bak(MT,Ngrids) )
-      allocate ( Akt_limit(NAT,Ngrids) )
-      allocate ( Kdiff(MT,Ngrids) )
+      IF (.not.allocated(Akt_bak)) THEN
+        allocate ( Akt_bak(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(Akt_limit)) THEN
+        allocate ( Akt_limit(NAT,Ngrids) )
+      END IF
+      IF (.not.allocated(Kdiff)) THEN
+        allocate ( Kdiff(MT,Ngrids) )
+      END IF
 
-      allocate ( ad_tnu2(MT,Ngrids) )
-      allocate ( nl_tnu2(MT,Ngrids) )
-      allocate ( tl_tnu2(MT,Ngrids) )
-      allocate ( tnu2(MT,Ngrids) )
+      IF (.not.allocated(ad_tnu2)) THEN
+        allocate ( ad_tnu2(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(nl_tnu2)) THEN
+        allocate ( nl_tnu2(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(tl_tnu2)) THEN
+        allocate ( tl_tnu2(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(tnu2)) THEN
+        allocate ( tnu2(MT,Ngrids) )
+      END IF
 
-      allocate ( ad_tnu4(MT,Ngrids) )
-      allocate ( nl_tnu4(MT,Ngrids) )
-      allocate ( tl_tnu4(MT,Ngrids) )
-      allocate ( tnu4(MT,Ngrids) )
+      IF (.not.allocated(ad_tnu4)) THEN
+        allocate ( ad_tnu4(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(nl_tnu4)) THEN
+        allocate ( nl_tnu4(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(tl_tnu4)) THEN
+        allocate ( tl_tnu4(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(tnu4)) THEN
+        allocate ( tnu4(MT,Ngrids) )
+      END IF
 
-      allocate ( tl_M2diff(Ngrids) )
-      allocate ( tl_M3diff(Ngrids) )
-      allocate ( tl_Tdiff(MT,Ngrids) )
+      IF (.not.allocated(tl_M2diff)) THEN
+        allocate ( tl_M2diff(Ngrids) )
+      END IF
+      IF (.not.allocated(tl_M3diff)) THEN
+        allocate ( tl_M3diff(Ngrids) )
+      END IF
+      IF (.not.allocated(tl_Tdiff)) THEN
+        allocate ( tl_Tdiff(MT,Ngrids) )
+      END IF
 
-      allocate ( ad_Akv_fac(Ngrids) )
-      allocate ( tl_Akv_fac(Ngrids) )
+      IF (.not.allocated(ad_Akv_fac)) THEN
+        allocate ( ad_Akv_fac(Ngrids) )
+      END IF
+      IF (.not.allocated(tl_Akv_fac)) THEN
+        allocate ( tl_Akv_fac(Ngrids) )
+      END IF
 
-      allocate ( ad_Akt_fac(MT,Ngrids) )
-      allocate ( tl_Akt_fac(MT,Ngrids) )
+      IF (.not.allocated(ad_Akt_fac)) THEN
+        allocate ( ad_Akt_fac(MT,Ngrids) )
+      END IF
+      IF (.not.allocated(tl_Akt_fac)) THEN
+        allocate ( tl_Akt_fac(MT,Ngrids) )
+      END IF
 
-      allocate ( LdefADJ(Ngrids) )
-      allocate ( LdefAVG(Ngrids) )
-      allocate ( LdefDAI(Ngrids) )
-      allocate ( LdefDIA(Ngrids) )
-      allocate ( LdefERR(Ngrids) )
-      allocate ( LdefFLT(Ngrids) )
-      allocate ( LdefHIS(Ngrids) )
-      allocate ( LdefHSS(Ngrids) )
-      allocate ( LdefINI(Ngrids) )
-      allocate ( LdefIRP(Ngrids) )
-      allocate ( LdefITL(Ngrids) )
-      allocate ( LdefLCZ(Ngrids) )
-      allocate ( LdefLZE(Ngrids) )
-      allocate ( LdefMOD(Ngrids) )
-      allocate ( LdefQCK(Ngrids) )
-      allocate ( LdefRST(Ngrids) )
-      allocate ( LdefSTA(Ngrids) )
-      allocate ( LdefTIDE(Ngrids) )
-      allocate ( LdefTLM(Ngrids) )
-      allocate ( LdefTLF(Ngrids) )
+      IF (.not.allocated(LdefADJ)) THEN
+        allocate ( LdefADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefAVG)) THEN
+        allocate ( LdefAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefDAI)) THEN
+        allocate ( LdefDAI(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefDIA)) THEN
+        allocate ( LdefDIA(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefERR)) THEN
+        allocate ( LdefERR(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefFLT)) THEN
+        allocate ( LdefFLT(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefHIS)) THEN
+        allocate ( LdefHIS(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefHSS)) THEN
+        allocate ( LdefHSS(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefINI)) THEN
+        allocate ( LdefINI(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefIRP)) THEN
+        allocate ( LdefIRP(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefITL)) THEN
+        allocate ( LdefITL(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefLCZ)) THEN
+        allocate ( LdefLCZ(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefLZE)) THEN
+        allocate ( LdefLZE(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefMOD)) THEN
+        allocate ( LdefMOD(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefQCK)) THEN
+        allocate ( LdefQCK(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefRST)) THEN
+        allocate ( LdefRST(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefSTA)) THEN
+        allocate ( LdefSTA(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefTIDE)) THEN
+        allocate ( LdefTIDE(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefTLM)) THEN
+        allocate ( LdefTLM(Ngrids) )
+      END IF
+      IF (.not.allocated(LdefTLF)) THEN
+        allocate ( LdefTLF(Ngrids) )
+      END IF
 
-      allocate ( LwrtADJ(Ngrids) )
-      allocate ( LwrtAVG(Ngrids) )
-      allocate ( LwrtDIA(Ngrids) )
-      allocate ( LwrtHIS(Ngrids) )
-      allocate ( LwrtPER(Ngrids) )
-      allocate ( LwrtQCK(Ngrids) )
-      allocate ( LwrtRST(Ngrids) )
-      allocate ( LwrtTLM(Ngrids) )
-      allocate ( LwrtTLF(Ngrids) )
+      IF (.not.allocated(LwrtADJ)) THEN
+        allocate ( LwrtADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtAVG)) THEN
+        allocate ( LwrtAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtDIA)) THEN
+        allocate ( LwrtDIA(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtHIS)) THEN
+        allocate ( LwrtHIS(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtPER)) THEN
+        allocate ( LwrtPER(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtQCK)) THEN
+        allocate ( LwrtQCK(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtRST)) THEN
+        allocate ( LwrtRST(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtTLM)) THEN
+        allocate ( LwrtTLM(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtTLF)) THEN
+        allocate ( LwrtTLF(Ngrids) )
+      END IF
 
-      allocate ( LdefNRM(4,Ngrids) )
-      allocate ( LwrtNRM(4,Ngrids) )
+      IF (.not.allocated(LdefNRM)) THEN
+        allocate ( LdefNRM(4,Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtNRM)) THEN
+        allocate ( LwrtNRM(4,Ngrids) )
+      END IF
 
 #if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
-      allocate ( LwrtState3d(Ngrids) )
-      allocate ( SOinitial(Ngrids) )
+      IF (.not.allocated(LwrtState3d)) THEN
+        allocate ( LwrtState3d(Ngrids) )
+      END IF
+      IF (.not.allocated(SOinitial)) THEN
+        allocate ( SOinitial(Ngrids) )
+      END IF
 #endif
 
-      allocate ( LwrtState2d(Ngrids) )
-      allocate ( LwrtTime(Ngrids) )
+      IF (.not.allocated(LwrtState2d)) THEN
+        allocate ( LwrtState2d(Ngrids) )
+      END IF
+      IF (.not.allocated(LwrtTime)) THEN
+        allocate ( LwrtTime(Ngrids) )
+      END IF
 
-      allocate ( Ladjusted(Ngrids) )
+      IF (.not.allocated(Ladjusted)) THEN
+        allocate ( Ladjusted(Ngrids) )
+      END IF
 
-      allocate ( LprocessOBC(Ngrids) )
-      allocate ( LprocessTides(Ngrids) )
+      IF (.not.allocated(LprocessOBC)) THEN
+        allocate ( LprocessOBC(Ngrids) )
+      END IF
+      IF (.not.allocated(LprocessTides)) THEN
+        allocate ( LprocessTides(Ngrids) )
+      END IF
 
-      allocate ( LwrtInfo(Ngrids) )
+      IF (.not.allocated(LwrtInfo)) THEN
+        allocate ( LwrtInfo(Ngrids) )
+      END IF
 
-      allocate ( ldefout(Ngrids) )
+      IF (.not.allocated(ldefout)) THEN
+        allocate ( ldefout(Ngrids) )
+      END IF
 
-      allocate ( ndefADJ(Ngrids) )
-      allocate ( ndefAVG(Ngrids) )
-      allocate ( ndefDIA(Ngrids) )
-      allocate ( ndefHIS(Ngrids) )
-      allocate ( ndefQCK(Ngrids) )
-      allocate ( ndefTLM(Ngrids) )
+      IF (.not.allocated(ndefADJ)) THEN
+        allocate ( ndefADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(ndefAVG)) THEN
+        allocate ( ndefAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(ndefDIA)) THEN
+        allocate ( ndefDIA(Ngrids) )
+      END IF
+      IF (.not.allocated(ndefHIS)) THEN
+        allocate ( ndefHIS(Ngrids) )
+      END IF
+      IF (.not.allocated(ndefQCK)) THEN
+        allocate ( ndefQCK(Ngrids) )
+      END IF
+      IF (.not.allocated(ndefTLM)) THEN
+        allocate ( ndefTLM(Ngrids) )
+      END IF
 
-      allocate ( ntsAVG(Ngrids) )
-      allocate ( ntsDIA(Ngrids) )
+      IF (.not.allocated(ntsAVG)) THEN
+        allocate ( ntsAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(ntsDIA)) THEN
+        allocate ( ntsDIA(Ngrids) )
+      END IF
 
-      allocate ( nADJ(Ngrids) )
-      allocate ( nAVG(Ngrids) )
-      allocate ( nDIA(Ngrids) )
-      allocate ( nFLT(Ngrids) )
-      allocate ( nHIS(Ngrids) )
-      allocate ( nQCK(Ngrids) )
-      allocate ( nRST(Ngrids) )
-      allocate ( nSTA(Ngrids) )
-      allocate ( nTLM(Ngrids) )
+      IF (.not.allocated(nADJ)) THEN
+        allocate ( nADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(nAVG)) THEN
+        allocate ( nAVG(Ngrids) )
+      END IF
+      IF (.not.allocated(nDIA)) THEN
+        allocate ( nDIA(Ngrids) )
+      END IF
+      IF (.not.allocated(nFLT)) THEN
+        allocate ( nFLT(Ngrids) )
+      END IF
+      IF (.not.allocated(nHIS)) THEN
+        allocate ( nHIS(Ngrids) )
+      END IF
+      IF (.not.allocated(nQCK)) THEN
+        allocate ( nQCK(Ngrids) )
+      END IF
+      IF (.not.allocated(nRST)) THEN
+        allocate ( nRST(Ngrids) )
+      END IF
+      IF (.not.allocated(nSTA)) THEN
+        allocate ( nSTA(Ngrids) )
+      END IF
+      IF (.not.allocated(nTLM)) THEN
+        allocate ( nTLM(Ngrids) )
+      END IF
 
-      allocate ( ninfo(Ngrids) )
+      IF (.not.allocated(ninfo)) THEN
+        allocate ( ninfo(Ngrids) )
+      END IF
 
-      allocate ( nOBC(Ngrids) )
-      allocate ( Nbrec(Ngrids) )
-      allocate ( OBCcount(Ngrids) )
+      IF (.not.allocated(nOBC)) THEN
+        allocate ( nOBC(Ngrids) )
+      END IF
+      IF (.not.allocated(Nbrec)) THEN
+        allocate ( Nbrec(Ngrids) )
+      END IF
+      IF (.not.allocated(OBCcount)) THEN
+        allocate ( OBCcount(Ngrids) )
+      END IF
 
 #ifdef ADJUST_BOUNDARY
-      allocate ( Lobc(4,MstateVar,Ngrids) )
+      IF (.not.allocated(Lobc)) THEN
+        allocate ( Lobc(4,MstateVar,Ngrids) )
+      END IF
 #endif
 
-      allocate ( nSFF(Ngrids) )
-      allocate ( Nfrec(Ngrids) )
-      allocate ( SFcount(Ngrids) )
+      IF (.not.allocated(nSFF)) THEN
+        allocate ( nSFF(Ngrids) )
+      END IF
+      IF (.not.allocated(Nfrec)) THEN
+        allocate ( Nfrec(Ngrids) )
+      END IF
+      IF (.not.allocated(SFcount)) THEN
+        allocate ( SFcount(Ngrids) )
+      END IF
 
 #ifdef ADJUST_STFLUX
-      allocate ( Lstflux(MT,Ngrids) )
+      IF (.not.allocated(Lstflux)) THEN
+        allocate ( Lstflux(MT,Ngrids) )
+      END IF
 #endif
 
-      allocate ( nrrec(Ngrids) )
+      IF (.not.allocated(nrrec)) THEN
+        allocate ( nrrec(Ngrids) )
+      END IF
 
-      allocate ( LastRec(Ngrids) )
+      IF (.not.allocated(LastRec)) THEN
+        allocate ( LastRec(Ngrids) )
+      END IF
 
-      allocate ( LcycleADJ(Ngrids) )
-      allocate ( LcycleRST(Ngrids) )
-      allocate ( LcycleTLM(Ngrids) )
+      IF (.not.allocated(LcycleADJ)) THEN
+        allocate ( LcycleADJ(Ngrids) )
+      END IF
+      IF (.not.allocated(LcycleRST)) THEN
+        allocate ( LcycleRST(Ngrids) )
+      END IF
+      IF (.not.allocated(LcycleTLM)) THEN
+        allocate ( LcycleTLM(Ngrids) )
+      END IF
 
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
-      allocate ( Hcount(Ngrids) )
+      IF (.not.allocated(Hcount)) THEN
+        allocate ( Hcount(Ngrids) )
+      END IF
 #endif
 
-      allocate ( KstrS(Ngrids) )
-      allocate ( KendS(Ngrids) )
+      IF (.not.allocated(KstrS)) THEN
+        allocate ( KstrS(Ngrids) )
+      END IF
+      IF (.not.allocated(KendS)) THEN
+        allocate ( KendS(Ngrids) )
+      END IF
 
-      allocate ( DstrS(Ngrids) )
-      allocate ( DendS(Ngrids) )
+      IF (.not.allocated(DstrS)) THEN
+        allocate ( DstrS(Ngrids) )
+      END IF
+      IF (.not.allocated(DendS)) THEN
+        allocate ( DendS(Ngrids) )
+      END IF
 
-      allocate ( TRnorm(Ngrids) )
+      IF (.not.allocated(TRnorm)) THEN
+        allocate ( TRnorm(Ngrids) )
+      END IF
 
-      allocate ( SO_decay(Ngrids) )
+      IF (.not.allocated(SO_decay)) THEN
+        allocate ( SO_decay(Ngrids) )
+      END IF
 #ifdef SOLVE3D
-      allocate ( SO_sdev(7+2*MT,Ngrids) )
+      IF (.not.allocated(SO_sdev)) THEN
+        allocate ( SO_sdev(7+2*MT,Ngrids) )
+      END IF
 #else
-      allocate ( SO_sdev(5,Ngrids) )
+      IF (.not.allocated(SO_sdev)) THEN
+        allocate ( SO_sdev(5,Ngrids) )
+      END IF
 #endif
 
 #if defined FOUR_DVAR || defined VERIFICATION
-      allocate ( Cnorm(2,MstateVar) )
-      allocate ( CnormB(MstateVar,4) )
+      IF (.not.allocated(Cnorm)) THEN
+        allocate ( Cnorm(2,MstateVar) )
+      END IF
+      IF (.not.allocated(CnormB)) THEN
+        allocate ( CnormB(MstateVar,4) )
+      END IF
 
-      allocate ( SporadicImpulse(Ngrids) )
-      allocate ( FrequentImpulse(Ngrids) )
+      IF (.not.allocated(SporadicImpulse)) THEN
+        allocate ( SporadicImpulse(Ngrids) )
+      END IF
+      IF (.not.allocated(FrequentImpulse)) THEN
+        allocate ( FrequentImpulse(Ngrids) )
+      END IF
 
-      allocate ( dTdz_min(Ngrids) )
-      allocate ( ml_depth(Ngrids) )
+      IF (.not.allocated(dTdz_min)) THEN
+        allocate ( dTdz_min(Ngrids) )
+      END IF
+      IF (.not.allocated(ml_depth)) THEN
+        allocate ( ml_depth(Ngrids) )
+      END IF
 
-      allocate ( LNM_depth(Ngrids) )
+      IF (.not.allocated(LNM_depth)) THEN
+        allocate ( LNM_depth(Ngrids) )
+      END IF
 
-      allocate ( balance(MstateVar) )
+      IF (.not.allocated(balance)) THEN
+        allocate ( balance(MstateVar) )
+      END IF
 
-      allocate ( Hdecay(2,MstateVar,Ngrids) )
-      allocate ( Vdecay(2,MstateVar,Ngrids) )
+      IF (.not.allocated(Hdecay)) THEN
+        allocate ( Hdecay(2,MstateVar,Ngrids) )
+      END IF
+      IF (.not.allocated(Vdecay)) THEN
+        allocate ( Vdecay(2,MstateVar,Ngrids) )
+      END IF
 
-      allocate ( Tdecay(MstateVar,Ngrids) )
+      IF (.not.allocated(Tdecay)) THEN
+        allocate ( Tdecay(MstateVar,Ngrids) )
+      END IF
 
-      allocate ( HdecayB(MstateVar,4,Ngrids) )
-      allocate ( VdecayB(MstateVar,4,Ngrids) )
+      IF (.not.allocated(HdecayB)) THEN
+        allocate ( HdecayB(MstateVar,4,Ngrids) )
+      END IF
+      IF (.not.allocated(VdecayB)) THEN
+        allocate ( VdecayB(MstateVar,4,Ngrids) )
+      END IF
 
-      allocate ( bgqc_type(Ngrids) )
-      allocate ( Nprovenance(Ngrids) )
-      allocate ( S_bgqc(MstateVar,Ngrids) )
+      IF (.not.allocated(bgqc_type)) THEN
+        allocate ( bgqc_type(Ngrids) )
+      END IF
+      IF (.not.allocated(Nprovenance)) THEN
+        allocate ( Nprovenance(Ngrids) )
+      END IF
+      IF (.not.allocated(S_bgqc)) THEN
+        allocate ( S_bgqc(MstateVar,Ngrids) )
+      END IF
 #endif
 
-      allocate ( obcfac(Ngrids) )
-      allocate ( FSobc_in(Ngrids,4) )
-      allocate ( FSobc_out(Ngrids,4) )
-      allocate ( M2obc_in(Ngrids,4) )
-      allocate ( M2obc_out(Ngrids,4) )
+      IF (.not.allocated(obcfac)) THEN
+        allocate ( obcfac(Ngrids) )
+      END IF
+      IF (.not.allocated(FSobc_in)) THEN
+        allocate ( FSobc_in(Ngrids,4) )
+      END IF
+      IF (.not.allocated(FSobc_out)) THEN
+        allocate ( FSobc_out(Ngrids,4) )
+      END IF
+      IF (.not.allocated(M2obc_in)) THEN
+        allocate ( M2obc_in(Ngrids,4) )
+      END IF
+      IF (.not.allocated(M2obc_out)) THEN
+        allocate ( M2obc_out(Ngrids,4) )
+      END IF
 
 #ifdef SOLVE3D
-      allocate ( M3obc_in(Ngrids,4) )
-      allocate ( M3obc_out(Ngrids,4) )
-      allocate ( Tobc_in(MT,Ngrids,4) )
-      allocate ( Tobc_out(MT,Ngrids,4) )
+      IF (.not.allocated(M3obc_in)) THEN
+        allocate ( M3obc_in(Ngrids,4) )
+      END IF
+      IF (.not.allocated(M3obc_out)) THEN
+        allocate ( M3obc_out(Ngrids,4) )
+      END IF
+      IF (.not.allocated(Tobc_in)) THEN
+        allocate ( Tobc_in(MT,Ngrids,4) )
+      END IF
+      IF (.not.allocated(Tobc_out)) THEN
+        allocate ( Tobc_out(MT,Ngrids,4) )
+      END IF
 #endif
 
-      allocate ( Znudg(Ngrids) )
-      allocate ( M2nudg(Ngrids) )
-      allocate ( M3nudg(Ngrids) )
-      allocate ( Tnudg(MT,Ngrids) )
+      IF (.not.allocated(Znudg)) THEN
+        allocate ( Znudg(Ngrids) )
+      END IF
+      IF (.not.allocated(M2nudg)) THEN
+        allocate ( M2nudg(Ngrids) )
+      END IF
+      IF (.not.allocated(M3nudg)) THEN
+        allocate ( M3nudg(Ngrids) )
+      END IF
+      IF (.not.allocated(Tnudg)) THEN
+        allocate ( Tnudg(MT,Ngrids) )
+      END IF
 
 #ifdef BULK_FLUXES
-      allocate ( blk_ZQ(Ngrids) )
-      allocate ( blk_ZT(Ngrids) )
-      allocate ( blk_ZW(Ngrids) )
+      IF (.not.allocated(blk_ZQ)) THEN
+        allocate ( blk_ZQ(Ngrids) )
+      END IF
+      IF (.not.allocated(blk_ZT)) THEN
+        allocate ( blk_ZT(Ngrids) )
+      END IF
+      IF (.not.allocated(blk_ZW)) THEN
+        allocate ( blk_ZW(Ngrids) )
+      END IF
 #endif
 
-      allocate ( gls_m(Ngrids) )
-      allocate ( gls_n(Ngrids) )
-      allocate ( gls_p(Ngrids) )
-      allocate ( gls_sigk(Ngrids) )
-      allocate ( gls_sigp(Ngrids) )
-      allocate ( gls_cmu0(Ngrids) )
-      allocate ( gls_cmupr(Ngrids) )
-      allocate ( gls_c1(Ngrids) )
-      allocate ( gls_c2(Ngrids) )
-      allocate ( gls_c3m(Ngrids) )
-      allocate ( gls_c3p(Ngrids) )
-      allocate ( gls_Kmin(Ngrids) )
-      allocate ( gls_Pmin(Ngrids) )
+      IF (.not.allocated(gls_m)) THEN
+        allocate ( gls_m(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_n)) THEN
+        allocate ( gls_n(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_p)) THEN
+        allocate ( gls_p(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_sigk)) THEN
+        allocate ( gls_sigk(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_sigp)) THEN
+        allocate ( gls_sigp(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_cmu0)) THEN
+        allocate ( gls_cmu0(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_cmupr)) THEN
+        allocate ( gls_cmupr(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_c1)) THEN
+        allocate ( gls_c1(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_c2)) THEN
+        allocate ( gls_c2(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_c3m)) THEN
+        allocate ( gls_c3m(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_c3p)) THEN
+        allocate ( gls_c3p(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_Kmin)) THEN
+        allocate ( gls_Kmin(Ngrids) )
+      END IF
+      IF (.not.allocated(gls_Pmin)) THEN
+        allocate ( gls_Pmin(Ngrids) )
+      END IF
 
-      allocate ( charnok_alpha(Ngrids) )
-      allocate ( zos_hsig_alpha(Ngrids) )
-      allocate ( sz_alpha(Ngrids) )
-      allocate ( crgban_cw(Ngrids) )
+      IF (.not.allocated(charnok_alpha)) THEN
+        allocate ( charnok_alpha(Ngrids) )
+      END IF
+      IF (.not.allocated(zos_hsig_alpha)) THEN
+        allocate ( zos_hsig_alpha(Ngrids) )
+      END IF
+      IF (.not.allocated(sz_alpha)) THEN
+        allocate ( sz_alpha(Ngrids) )
+      END IF
+      IF (.not.allocated(crgban_cw)) THEN
+        allocate ( crgban_cw(Ngrids) )
+      END IF
 
       RETURN
       END SUBROUTINE allocate_scalars

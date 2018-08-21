@@ -1019,7 +1019,7 @@
 !  'time-units since YYYY-MM-DD hh:mm:ss'.
 !
       IF (INT(r_time).gt.0) THEN                 ! day 0: Mar 1, 0000
-        calendar='gregorian_proleptic'
+        calendar='proleptic_gregorian'
         iyear=MAX(1,INT(r_time*0.0001_r8))
         month=MIN(12,MAX(1,INT((r_time-REAL(iyear*10000,r8))*0.01_r8)))
         day=r_time-AINT(r_time*0.01_r8)*100.0_r8
@@ -1037,7 +1037,7 @@
 !  365.2425 days
 !
       ELSE IF (INT(r_time).eq.0) THEN            ! day 0: Mar 1, 0000
-        calendar='gregorian_proleptic'
+        calendar='proleptic_gregorian'
         iyear=1
         month=1
         iday=1

@@ -118,7 +118,7 @@
      &                      ' (pid=',proc(0,MyModel,ng),') is active.'
 #endif
         END IF
- 10     FORMAT (a,i3,a,i8,a)
+ 10     FORMAT (a,i5,a,i8,a)
         thread_count=thread_count+1
         IF (thread_count.eq.NSUB) thread_count=0
 !$OMP END CRITICAL (START_WCLOCK)
@@ -263,7 +263,7 @@
           WRITE (stdout,10) ' Thread #', MyThread, ' CPU:',             &
      &                      Cend(region,MyModel,ng)
 #endif
- 10       FORMAT (a,i3,a,f12.3)
+ 10       FORMAT (a,i5,a,f12.3)
         END IF
 !
 !  Sum the elapsed time for each profile region by model.

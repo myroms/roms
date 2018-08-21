@@ -108,67 +108,103 @@
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL
-      allocate ( knew(Ngrids) )
+      IF (.not.allocated(knew)) THEN
+        allocate ( knew(Ngrids) )
+      END IF
       knew(1:Ngrids)=1
 
-      allocate ( krhs(Ngrids) )
+      IF (.not.allocated(krhs)) THEN
+        allocate ( krhs(Ngrids) )
+      END IF
       krhs(1:Ngrids)=1
 
-      allocate ( kstp(Ngrids) )
+      IF (.not.allocated(kstp)) THEN
+        allocate ( kstp(Ngrids) )
+      END IF
       kstp(1:Ngrids)=1
 
-      allocate ( nnew(Ngrids) )
+      IF (.not.allocated(nnew)) THEN
+        allocate ( nnew(Ngrids) )
+      END IF
       nnew(1:Ngrids)=1
 
-      allocate ( nrhs(Ngrids) )
+      IF (.not.allocated(nrhs)) THEN
+        allocate ( nrhs(Ngrids) )
+      END IF
       nrhs(1:Ngrids)=1
 
-      allocate ( nstp(Ngrids) )
+      IF (.not.allocated(nstp)) THEN
+        allocate ( nstp(Ngrids) )
+      END IF
       nstp(1:Ngrids)=1
 
 #ifdef FLOATS
-      allocate ( nf(Ngrids) )
+      IF (.not.allocated(nf)) THEN
+        allocate ( nf(Ngrids) )
+      END IF
       nf(1:Ngrids)=0
 
-      allocate ( nfp1(Ngrids) )
+      IF (.not.allocated(nfp1)) THEN
+        allocate ( nfp1(Ngrids) )
+      END IF
       nfp1(1:Ngrids)=1
 
-      allocate ( nfm3(Ngrids) )
+      IF (.not.allocated(nfm3)) THEN
+        allocate ( nfm3(Ngrids) )
+      END IF
       nfm3(1:Ngrids)=2
 
-      allocate ( nfm2(Ngrids) )
+      IF (.not.allocated(nfm2)) THEN
+        allocate ( nfm2(Ngrids) )
+      END IF
       nfm2(1:Ngrids)=3
 
-      allocate ( nfm1(Ngrids) )
+      IF (.not.allocated(nfm1)) THEN
+        allocate ( nfm1(Ngrids) )
+      END IF
       nfm1(1:Ngrids)=4
 #endif
 !$OMP END PARALLEL
 
 #ifdef ADJUST_BOUNDARY
-      allocate ( Lbinp(Ngrids) )
+      IF (.not.allocated(Lbinp)) THEN
+        allocate ( Lbinp(Ngrids) )
+      END IF
       Lbinp(1:Ngrids)=1
 
-      allocate ( Lbout(Ngrids) )
+      IF (.not.allocated(Lbout)) THEN
+        allocate ( Lbout(Ngrids) )
+      END IF
       Lbout(1:Ngrids)=1
 #endif
 
 #if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
-      allocate ( Lfinp(Ngrids) )
+      IF (.not.allocated(Lfinp)) THEN
+        allocate ( Lfinp(Ngrids) )
+      END IF
       Lfinp(1:Ngrids)=1
 
-      allocate ( Lfout(Ngrids) )
+      IF (.not.allocated(Lfout)) THEN
+        allocate ( Lfout(Ngrids) )
+      END IF
       Lfout(1:Ngrids)=1
 #endif
 
-      allocate ( Lnew(Ngrids) )
+      IF (.not.allocated(Lnew)) THEN
+        allocate ( Lnew(Ngrids) )
+      END IF
       Lnew(1:Ngrids)=1
 
-      allocate ( Lold(Ngrids) )
+      IF (.not.allocated(Lold)) THEN
+        allocate ( Lold(Ngrids) )
+      END IF
       Lold(1:Ngrids)=1
 
 #if defined SSH_TIDES || defined UV_TIDES
-      allocate ( NTC(Ngrids) )
+      IF (.not.allocated(NTC)) THEN
+        allocate ( NTC(Ngrids) )
+      END IF
 #endif
 
       RETURN

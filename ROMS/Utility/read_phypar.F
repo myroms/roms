@@ -6060,19 +6060,19 @@
      &        /,1x,'Header file   : ',a,                                &
      &        /,1x,'Analytical Dir: ',a)
 #endif
-  70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i4.4,'x',i4.4,'x',i3.3,  &
-     &        ',',2x,'Parallel Nodes: ',i3,',',2x,'Tiling: ',i3.3,      &
-     &        'x',i3.3)
-  80  FORMAT (/,' ROMS/TOMS: Wrong choice of domain ',i2.2,1x,          &
-     &        'partition or number of parallel threads.',               &
+  70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
+     &        ',',2x,'Parallel Nodes: ',i0,',',2x,'Tiling: ',i0,        &
+     &        'x',i0)
+  80  FORMAT (/,' ROMS/TOMS: Wrong choice of grid ',i2.2,1x,            &
+     &        'partition or number of parallel nodes.',                 &
      &        /,12x,'NtileI * NtileJ  must be equal to the number of ', &
      &        'parallel nodes.',                                        &
      &        /,12x,'Change -np value to mpirun or',                    &
      &        /,12x,'change domain partition in input script.')
-  90  FORMAT (/,' Resolution, Grid ',i2.2,': ',i4.4,'x',i4.4,'x',i3.3,  &
-     &        ',',2x,'Parallel Threads: ',i2,',',2x,'Tiling: ',i3.3,    &
-     &        'x',i3.3)
- 100  FORMAT (/,' ROMS/TOMS: Wrong choice of domain ',i3.3,1x,          &
+  90  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
+     &        ',',2x,'Parallel Threads: ',i0,',',2x,'Tiling: ',i0,      &
+     &        'x',i0)
+ 100  FORMAT (/,' ROMS/TOMS: Wrong choice of grid ',i2.2,1x,            &
      &        'partition or number of parallel threads.',               &
      &        /,12x,'NtileI*NtileJ must be a positive multiple of the', &
      &        ' number of threads.',                                    &

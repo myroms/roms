@@ -62,6 +62,11 @@
 !  Enclose Cinfo variables with single quotes so this file can be read with   !
 !  a free format statement.                                                   !
 !                                                                             !
+!  Notice that all export fields are kept in their original form.  The        !
+!  imported component does the proper scaling, physical units conversion,     !
+!  and other manipulations. It is done to avoid applying such transformations !
+!  twice.                                                                     !
+!                                                                             !
 !==============================================================================
 !
 !------------------------------------------------------------------------------

@@ -160,22 +160,35 @@
 !$OMP PARALLEL
 !  First and last tile to process in a tiled application.
 !
-      allocate ( first_tile(Ngrids) )
-      allocate ( last_tile (Ngrids) )
+      IF (.not.allocated(first_tile)) THEN
+        allocate ( first_tile(Ngrids) )
+      END IF
+      IF (.not.allocated(last_tile)) THEN
+        allocate ( last_tile(Ngrids) )
+      END IF
 !
 !  Time profiling variables.
 !
-      allocate ( proc(0:1,4,Ngrids) )
-      proc(0:1,1:4,1:Ngrids)=0
+      IF (.not.allocated(proc)) THEN
+        allocate ( proc(0:1,4,Ngrids) )
+        proc(0:1,1:4,1:Ngrids)=0
+      END IF
 
-      allocate ( Cstr(0:Nregion,4,Ngrids) )
-      Cstr(0:Nregion,1:4,1:Ngrids)=0.0_r8
+      IF (.not.allocated(Cstr)) THEN
+        allocate ( Cstr(0:Nregion,4,Ngrids) )
+        Cstr(0:Nregion,1:4,1:Ngrids)=0.0_r8
+      END IF
 
-      allocate ( Cend(0:Nregion,4,Ngrids) )
-      Cend(0:Nregion,1:4,1:Ngrids)=0.0_r8
+      IF (.not.allocated(Cend)) THEN
+        allocate ( Cend(0:Nregion,4,Ngrids) )
+        Cend(0:Nregion,1:4,1:Ngrids)=0.0_r8
+      END IF
 !$OMP END PARALLEL
-      allocate ( Csum(0:Nregion,4,Ngrids) )
-      Csum(0:Nregion,1:4,1:Ngrids)=0.0_r8
+
+      IF (.not.allocated(Csum)) THEN
+        allocate ( Csum(0:Nregion,4,Ngrids) )
+        Csum(0:Nregion,1:4,1:Ngrids)=0.0_r8
+      END IF
 !
 ! Initialize other profiling variables.
 !

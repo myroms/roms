@@ -40,6 +40,7 @@
       CALL flush_ (unit)
 #else
       CALL flush (unit)
+!!    FLUSH (unit)                     ! Fortran 2003 standard
 #endif
 
       RETURN
