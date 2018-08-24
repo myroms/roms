@@ -828,140 +828,140 @@
 !  Allocate module variables due to nested grids.
 !-----------------------------------------------------------------------
 !
-      IF (.not.allocated( Load_Zobs)) THEN
+      IF (.not.allocated(Load_Zobs)) THEN
         allocate ( Load_Zobs(Ngrids) )
       END IF
-      IF (.not.allocated( wrote_Zobs)) THEN
+      IF (.not.allocated(wrote_Zobs)) THEN
         allocate ( wrote_Zobs(Ngrids) )
       END IF
 
 
-      IF (.not.allocated( NstateVar)) THEN
+      IF (.not.allocated(NstateVar)) THEN
         allocate ( NstateVar(Ngrids) )
       END IF
-      IF (.not.allocated( NobsVar)) THEN
+      IF (.not.allocated(NobsVar)) THEN
         allocate ( NobsVar(Ngrids) )
       END IF
-      IF (.not.allocated( Ndatum)) THEN
+      IF (.not.allocated(Ndatum)) THEN
         allocate ( Ndatum(Ngrids) )
       END IF
-      IF (.not.allocated( Nsurvey)) THEN
+      IF (.not.allocated(Nsurvey)) THEN
         allocate ( Nsurvey(Ngrids) )
       END IF
-      IF (.not.allocated( ObsSurvey)) THEN
+      IF (.not.allocated(ObsSurvey)) THEN
         allocate ( ObsSurvey(Ngrids) )
       END IF
-      IF (.not.allocated( Nobs)) THEN
+      IF (.not.allocated(Nobs)) THEN
         allocate ( Nobs(Ngrids) )
       END IF
 
-      IF (.not.allocated( NstrObs)) THEN
+      IF (.not.allocated(NstrObs)) THEN
         allocate ( NstrObs(Ngrids) )
       END IF
-      IF (.not.allocated( NendObs)) THEN
+      IF (.not.allocated(NendObs)) THEN
         allocate ( NendObs(Ngrids) )
       END IF
 
-      IF (.not.allocated( Nmethod)) THEN
+      IF (.not.allocated(Nmethod)) THEN
         allocate ( Nmethod(Ngrids) )
       END IF
-      IF (.not.allocated( Rscheme)) THEN
+      IF (.not.allocated(Rscheme)) THEN
         allocate ( Rscheme(Ngrids) )
       END IF
 
-      IF (.not.allocated( Optimality)) THEN
+      IF (.not.allocated(Optimality)) THEN
         allocate ( Optimality(Ngrids) )
       END IF
-      IF (.not.allocated( ProcessObs)) THEN
+      IF (.not.allocated(ProcessObs)) THEN
         allocate ( ProcessObs(Ngrids) )
       END IF
 
-      IF (.not.allocated( wrtNLmod)) THEN
+      IF (.not.allocated(wrtNLmod)) THEN
         allocate ( wrtNLmod(Ngrids) )
       END IF
-      IF (.not.allocated( wrtObsScale)) THEN
+      IF (.not.allocated(wrtObsScale)) THEN
         allocate ( wrtObsScale(Ngrids) )
       END IF
-      IF (.not.allocated( wrtRPmod)) THEN
+      IF (.not.allocated(wrtRPmod)) THEN
         allocate ( wrtRPmod(Ngrids) )
       END IF
-      IF (.not.allocated( wrtTLmod)) THEN
+      IF (.not.allocated(wrtTLmod)) THEN
         allocate ( wrtTLmod(Ngrids) )
       END IF
-      IF (.not.allocated( wrtMisfit)) THEN
+      IF (.not.allocated(wrtMisfit)) THEN
         allocate ( wrtMisfit(Ngrids) )
       END IF
 
 # if defined IS4DVAR_SENSITIVITY
 #  ifdef OBS_IMPACT
-      IF (.not.allocated( wrtIMPACT_TOT)) THEN
+      IF (.not.allocated(wrtIMPACT_TOT)) THEN
         allocate ( wrtIMPACT_TOT(Ngrids) )
       END IF
 #  endif
 #  ifdef OBS_IMPACT_SPLIT
-      IF (.not.allocated( wrtIMPACT_IC)) THEN
+      IF (.not.allocated(wrtIMPACT_IC)) THEN
         allocate ( wrtIMPACT_IC(Ngrids) )
       END IF
 #   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-      IF (.not.allocated( wrtIMPACT_FC)) THEN
+      IF (.not.allocated(wrtIMPACT_FC)) THEN
         allocate ( wrtIMPACT_FC(Ngrids) )
       END IF
 #   endif
 #   if defined ADJUST_BOUNDARY
-      IF (.not.allocated( wrtIMPACT_BC)) THEN
+      IF (.not.allocated(wrtIMPACT_BC)) THEN
         allocate ( wrtIMPACT_BC(Ngrids) )
       END IF
 #   endif
 #  endif
 # endif
 
-      IF (.not.allocated( haveADmod)) THEN
+      IF (.not.allocated(haveADmod)) THEN
         allocate ( haveADmod(Ngrids) )
       END IF
-      IF (.not.allocated( haveNLmod)) THEN
+      IF (.not.allocated(haveNLmod)) THEN
         allocate ( haveNLmod(Ngrids) )
       END IF
-      IF (.not.allocated( haveTLmod)) THEN
+      IF (.not.allocated(haveTLmod)) THEN
         allocate ( haveTLmod(Ngrids) )
       END IF
-      IF (.not.allocated( haveObsMeta)) THEN
+      IF (.not.allocated(haveObsMeta)) THEN
         allocate ( haveObsMeta(Ngrids) )
       END IF
 
-      IF (.not.allocated( KhMin)) THEN
+      IF (.not.allocated(KhMin)) THEN
         allocate ( KhMin(Ngrids) )
       END IF
-      IF (.not.allocated( KhMax)) THEN
+      IF (.not.allocated(KhMax)) THEN
         allocate ( KhMax(Ngrids) )
       END IF
-      IF (.not.allocated( KvMin)) THEN
+      IF (.not.allocated(KvMin)) THEN
         allocate ( KvMin(Ngrids) )
       END IF
-      IF (.not.allocated( KvMax)) THEN
+      IF (.not.allocated(KvMax)) THEN
         allocate ( KvMax(Ngrids) )
       END IF
 
 # if defined BALANCE_OPERATOR
-      IF (.not.allocated( wrtZetaRef)) THEN
+      IF (.not.allocated(wrtZetaRef)) THEN
         allocate ( wrtZetaRef(Ngrids) )
       END IF
 # endif
 
 # ifdef WEAK_CONSTRAINT
-      IF (.not.allocated( WRTforce)) THEN
+      IF (.not.allocated(WRTforce)) THEN
         allocate ( WRTforce(Ngrids) )
       END IF
 #  ifdef RPM_RELAXATION
-      IF (.not.allocated( LweakRelax)) THEN
+      IF (.not.allocated(LweakRelax)) THEN
         allocate ( LweakRelax(Ngrids) )
       END IF
 #  endif
 #  if defined W4DPSAS_SENSITIVITY  || defined W4DVAR_SENSITIVITY
-      IF (.not.allocated( LsenPSAS)) THEN
+      IF (.not.allocated(LsenPSAS)) THEN
         allocate ( LsenPSAS(Ngrids) )
       END IF
 #  endif
-      IF (.not.allocated( ForceTime)) THEN
+      IF (.not.allocated(ForceTime)) THEN
         allocate ( ForceTime(Ngrids) )
       END IF
 # endif
@@ -1298,87 +1298,133 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef CURVGRID
-      allocate ( ObsAngler(Mobs) )
+      IF (.not.allocated(ObsAngler)) THEN
+        allocate ( ObsAngler(Mobs) )
+      END IF
       ObsAngler = IniVal
 #  endif
 
-      allocate ( ObsType(Mobs) )
+      IF (.not.allocated(ObsType)) THEN
+        allocate ( ObsType(Mobs) )
+      END IF
       ObsType = 0
 
-      allocate ( ObsState2Type(0:MAXVAL(NobsVar)) )
+      IF (.not.allocated(ObsState2Type)) THEN
+        allocate ( ObsState2Type(0:MAXVAL(NobsVar)) )
+      END IF
       ObsState2Type = 0
 
-      allocate ( ObsProv(Mobs) )
+      IF (.not.allocated(ObsProv)) THEN
+        allocate ( ObsProv(Mobs) )
+      END IF
       ObsProv = 0
 
-      allocate ( ObsErr(Mobs) )
+      IF (.not.allocated(ObsErr)) THEN
+        allocate ( ObsErr(Mobs) )
+      END IF
       ObsErr = IniVal
 
-      allocate ( ObsMeta(Mobs) )
+      IF (.not.allocated(ObsMeta)) THEN
+        allocate ( ObsMeta(Mobs) )
+      END IF
       ObsMeta = IniVal
 
-      allocate ( ObsScale(Mobs) )
+      IF (.not.allocated(ObsScale)) THEN
+        allocate ( ObsScale(Mobs) )
+      END IF
       ObsScale = IniVal
 
 #  ifndef WEAK_CONSTRAINT
-      allocate ( ObsScaleGlobal(MAXVAL(Ndatum)) )
+      IF (.not.allocated(ObsScaleGlobal)) THEN
+        allocate ( ObsScaleGlobal(MAXVAL(Ndatum)) )
+      END IF
       ObsScaleGlobal = IniVal
 #  endif
 
-      allocate ( ObsVetting(Mobs) )
+      IF (.not.allocated(ObsVetting)) THEN
+        allocate ( ObsVetting(Mobs) )
+      END IF
       ObsVetting = IniVal
 
-      allocate ( ObsVal(Mobs) )
+      IF (.not.allocated(ObsVal)) THEN
+        allocate ( ObsVal(Mobs) )
+      END IF
       ObsVal = IniVal
 
-      allocate ( Tobs(Mobs) )
+      IF (.not.allocated(Tobs)) THEN
+        allocate ( Tobs(Mobs) )
+      END IF
       Tobs = IniVal
 
-      allocate ( Xobs(Mobs) )
+      IF (.not.allocated(Xobs)) THEN
+        allocate ( Xobs(Mobs) )
+      END IF
       Xobs = IniVal
 
-      allocate ( Yobs(Mobs) )
+      IF (.not.allocated(Yobs)) THEN
+        allocate ( Yobs(Mobs) )
+      END IF
       Yobs = IniVal
 
 #  ifdef SOLVE3D
-      allocate ( Zobs(Mobs) )
+      IF (.not.allocated(Zobs)) THEN
+        allocate ( Zobs(Mobs) )
+      END IF
       Zobs = IniVal
 #  endif
 
-      allocate ( ADmodVal(Mobs) )
+      IF (.not.allocated(ADmodVal)) THEN
+        allocate ( ADmodVal(Mobs) )
+      END IF
       ADmodVal = IniVal
 
-      allocate ( NLmodVal(Mobs) )
+      IF (.not.allocated(NLmodVal)) THEN
+        allocate ( NLmodVal(Mobs) )
+      END IF
       NLmodVal = IniVal
 
 #  ifdef BGQC
-      allocate ( BgErr(Mobs) )
+      IF (.not.allocated(BgErr)) THEN
+        allocate ( BgErr(Mobs) )
+      END IF
       BgErr = IniVal
 
-      allocate ( BgThresh(Mobs) )
+      IF (.not.allocated(BgThresh)) THEN
+        allocate ( BgThresh(Mobs) )
+      END IF
       BgThresh = IniVal
 
-      allocate ( Jact_S(0:Ninner) )
+      IF (.not.allocated(Jact_S)) THEN
+        allocate ( Jact_S(0:Ninner) )
+      END IF
       Jact_S = IniVal
 #  endif
 
 #  ifdef TLM_OBS
-      allocate ( TLmodVal(Mobs) )
+      IF (.not.allocated(TLmodVal)) THEN
+        allocate ( TLmodVal(Mobs) )
+      END IF
       TLmodVal = IniVal
 #   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS  || \
        defined TL_W4DVAR            || defined W4DPSAS     || \
        defined W4DVAR               || defined ARRAY_MODES || \
        defined CLIPPING
       IF (Master) THEN                                ! Needed only
-        allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )   ! by master. It
-        TLmodVal_S = IniVal                           ! is a memory hog
-      END IF                                          ! in other nodes
+        IF (.not.allocated(TLmodVal_S)) THEN          ! by master. It
+          allocate ( TLmodVal_S(Mobs,Ninner,Nouter) ) ! is a memory hog
+        END IF                                        ! in other nodes
+        TLmodVal_S = IniVal
+      END IF
 #   endif
 #   if defined TL_W4DPSAS           || defined W4DPSAS    || \
        defined W4DPSAS_SENSITIVITY
-      allocate ( BCKmodVal(Mobs) )
+      IF (.not.allocated(BCKmodVal)) THEN
+        allocate ( BCKmodVal(Mobs) )
+      END IF
       BCKmodVal = IniVal
-      allocate ( Hbk(Mobs,Nouter) )
+      IF (.not.allocated(Hbk)) THEN
+        allocate ( Hbk(Mobs,Nouter) )
+      END IF
       Hbk = IniVal
 #   endif
 #  endif
@@ -1404,7 +1450,9 @@
 !  the awkward logic but we need a generic way to specify extra-
 !  observation operators.
 !
-      allocate ( ObsName(MAXVAL(NobsVar)) )
+      IF (.not.allocated(ObsName)) THEN
+        allocate ( ObsName(MAXVAL(NobsVar)) )
+      END IF
       icount=MAXVAL(NstateVar)
       ObsState2Type(0)=0
       DO i=1,icount                               ! 5+NT
@@ -1425,7 +1473,9 @@
 !
 !  Set inverse mapping type-to-state.
 !
-      allocate ( ObsType2State(0:MAXVAL(ObsState2Type)) )
+      IF (.not.allocated(ObsType2State)) THEN
+        allocate ( ObsType2State(0:MAXVAL(ObsState2Type)) )
+      END IF
       ObsType2State(0)=0
       ObsType2State(1:MAXVAL(ObsState2Type))=-1
       DO i=1,MAXVAL(NstateVar)
@@ -1447,120 +1497,190 @@
 !
 #   if defined TL_W4DPSAS          || defined TL_W4DVAR          || \
        defined W4DPSAS_SENSITIVITY || defined W4DVAR_SENSITIVITY
-      allocate ( ad_zcglwk(Mobs,Ninner+1) )
+      IF (.not.allocated(ad_zcglwk)) THEN
+        allocate ( ad_zcglwk(Mobs,Ninner+1) )
+      END IF
       ad_zcglwk = IniVal
 
-      allocate ( ad_zgrad0(Mobs) )
+      IF (.not.allocated(ad_zgrad0)) THEN
+        allocate ( ad_zgrad0(Mobs) )
+      END IF
       ad_zgrad0 = IniVal
 
-      allocate ( ad_cg_innov(Mobs) )
+      IF (.not.allocated(ad_cg_innov)) THEN
+        allocate ( ad_cg_innov(Mobs) )
+      END IF
       ad_cg_innov = IniVal
 
-      allocate ( ad_cg_pxsave(Mobs) )
+      IF (.not.allocated(ad_cg_pxsave)) THEN
+        allocate ( ad_cg_pxsave(Mobs) )
+      END IF
       ad_cg_pxsave = IniVal
 
-      allocate ( tl_zcglwk(Mobs,Ninner+1) )
+      IF (.not.allocated(tl_zcglwk)) THEN
+        allocate ( tl_zcglwk(Mobs,Ninner+1) )
+      END IF
       tl_zcglwk = IniVal
 
-      allocate ( tl_zgrad0(Mobs) )
+      IF (.not.allocated(tl_zgrad0)) THEN
+        allocate ( tl_zgrad0(Mobs) )
+      END IF
       tl_zgrad0 = IniVal
 
-      allocate ( tl_cg_innov(Mobs) )
+      IF (.not.allocated(tl_cg_innov)) THEN
+        allocate ( tl_cg_innov(Mobs) )
+      END IF
       tl_cg_innov = IniVal
 
-      allocate ( tl_cg_pxsave(Mobs) )
+      IF (.not.allocated(tl_cg_pxsave)) THEN
+        allocate ( tl_cg_pxsave(Mobs) )
+      END IF
       tl_cg_pxsave = IniVal
 
-      allocate ( tl_ObsVal(Mobs) )
+      IF (.not.allocated(tl_ObsVal)) THEN
+        allocate ( tl_ObsVal(Mobs) )
+      END IF
       tl_ObsVal = IniVal
 
 #    ifdef IMPACT_INNER
-      allocate ( ad_ObsVal(Mobs,Ninner) )
+      IF (.not.allocated(ad_ObsVal)) THEN
+        allocate ( ad_ObsVal(Mobs,Ninner) )
+      END IF
 #    else
-      allocate ( ad_ObsVal(Mobs) )
+      IF (.not.allocated(ad_ObsVal)) THEN
+        allocate ( ad_ObsVal(Mobs) )
+      END IF
 #    endif
       ad_ObsVal = IniVal
 #   endif
 
-      allocate ( cg_dla(Ninner,Nouter) )
+      IF (.not.allocated(cg_dla)) THEN
+        allocate ( cg_dla(Ninner,Nouter) )
+      END IF
       cg_dla = IniVal
 
 #   ifdef RPCG
-      allocate ( Jb0(0:Nouter) )
+      IF (.not.allocated(Jb0)) THEN
+        allocate ( Jb0(0:Nouter) )
+      END IF
       Jb0 = IniVal
 
-      allocate ( Hdx(Mobs) )
+      IF (.not.allocated(Hdx)) THEN
+        allocate ( Hdx(Mobs) )
+      END IF
       Hdx = IniVal
 
 #    ifdef W4DPSAS_SENSITIVITY
 
-      allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
+      IF (.not.allocated(zcglwk)) THEN
+        allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
+      END IF
       zcglwk = IniVal
 
-      allocate ( vcglwk(Mobs,Ninner+1,Nouter) )
+      IF (.not.allocated(vcglwk)) THEN
+        allocate ( vcglwk(Mobs,Ninner+1,Nouter) )
+      END IF
       vcglwk = IniVal
 
-      allocate ( vcglev(Mobs,Ninner,Nouter) )
+      IF (.not.allocated(vcglev)) THEN
+        allocate ( vcglev(Mobs,Ninner,Nouter) )
+      END IF
       vcglev = IniVal
 
-      allocate ( zgrad0(Mobs,Nouter) )
+      IF (.not.allocated(zgrad0)) THEN
+        allocate ( zgrad0(Mobs,Nouter) )
+      END IF
       zgrad0 = IniVal
 
 #    else
-      allocate ( zcglwk(Mobs+1,Ninner+1,Nouter) )
+      IF (.not.allocated(zcglwk)) THEN
+        allocate ( zcglwk(Mobs+1,Ninner+1,Nouter) )
+      END IF
       zcglwk = IniVal
 
-      allocate ( vcglwk(Mobs+1,Ninner+1,Nouter) )
+      IF (.not.allocated(vcglwk)) THEN
+        allocate ( vcglwk(Mobs+1,Ninner+1,Nouter) )
+      END IF
       vcglwk = IniVal
 
-      allocate ( vcglev(Mobs+1,Ninner,Nouter) )
+      IF (.not.allocated(vcglev)) THEN
+        allocate ( vcglev(Mobs+1,Ninner,Nouter) )
+      END IF
       vcglev = IniVal
 
-      allocate ( zgrad0(Mobs+1,Nouter) )
+      IF (.not.allocated(zgrad0)) THEN
+        allocate ( zgrad0(Mobs+1,Nouter) )
+      END IF
       zgrad0 = IniVal
 #    endif
 
-      allocate ( vgrad0(Mobs+1) )
+      IF (.not.allocated(vgrad0)) THEN
+        allocate ( vgrad0(Mobs+1) )
+      END IF
       vgrad0 = IniVal
 
-      allocate ( vgrad0s(Mobs+1) )
+      IF (.not.allocated(vgrad0s)) THEN
+        allocate ( vgrad0s(Mobs+1) )
+      END IF
       vgrad0s = IniVal
 
-      allocate ( cg_innov(Mobs+1) )
+      IF (.not.allocated(cg_innov)) THEN
+        allocate ( cg_innov(Mobs+1) )
+      END IF
       cg_innov = IniVal
 
 #     ifndef RPCG
-      allocate ( cg_pxsave(Mobs) )
+      IF (.not.allocated(cg_pxsave)) THEN
+        allocate ( cg_pxsave(Mobs) )
+      END IF
       cg_pxsave = IniVal
 #     endif
 
 #    else
 
-      allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
+      IF (.not.allocated(zcglwk)) THEN
+        allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
+      END IF
       zcglwk = IniVal
 
-      allocate ( vcglev(Mobs,Ninner,Nouter) )
+      IF (.not.allocated(vcglev)) THEN
+        allocate ( vcglev(Mobs,Ninner,Nouter) )
+      END IF
       vcglev = IniVal
 
-      allocate ( zgrad0(Mobs,Nouter) )
+      IF (.not.allocated(zgrad0)) THEN
+        allocate ( zgrad0(Mobs,Nouter) )
+      END IF
       zgrad0 = IniVal
 
-      allocate ( vgrad0(Mobs) )
+      IF (.not.allocated(vgrad0)) THEN
+        allocate ( vgrad0(Mobs) )
+      END IF
       vgrad0 = IniVal
 
-      allocate ( vgrad0s(Mobs) )
+      IF (.not.allocated(vgrad0s)) THEN
+        allocate ( vgrad0s(Mobs) )
+      END IF
       vgrad0s = IniVal
 
-      allocate ( gdgw(Mobs) )
+      IF (.not.allocated(gdgw)) THEN
+        allocate ( gdgw(Mobs) )
+      END IF
       gdgw = IniVal
 
-      allocate ( vgnorm(Nouter) )
+      IF (.not.allocated(vgnorm)) THEN
+        allocate ( vgnorm(Nouter) )
+      END IF
       vgnorm = IniVal
 
-      allocate ( cg_innov(Mobs) )
+      IF (.not.allocated(cg_innov)) THEN
+        allocate ( cg_innov(Mobs) )
+      END IF
       cg_innov = IniVal
 
-      allocate ( cg_pxsave(Mobs) )
+      IF (.not.allocated(cg_pxsave)) THEN
+        allocate ( cg_pxsave(Mobs) )
+      END IF
       cg_pxsave = IniVal
 #    endif
 #  endif
@@ -1590,28 +1710,44 @@
 !
 !  Allocate convolution parameters.
 !
-      allocate ( NHsteps(2,MstateVar) )
+      IF (.not.allocated(NHsteps)) THEN
+        allocate ( NHsteps(2,MstateVar) )
+      END IF
       NHsteps = 0
 
-      allocate ( NVsteps(2,MstateVar) )
+      IF (.not.allocated(NVsteps)) THEN
+        allocate ( NVsteps(2,MstateVar) )
+      END IF
       NVsteps = 0
 
-      allocate ( DTsizeH(2,MstateVar) )
+      IF (.not.allocated(DTsizeH)) THEN
+        allocate ( DTsizeH(2,MstateVar) )
+      END IF
       DTsizeH = IniVal
 
-      allocate ( DTsizeV(2,MstateVar) )
+      IF (.not.allocated(DTsizeV)) THEN
+        allocate ( DTsizeV(2,MstateVar) )
+      END IF
       DTsizeV = IniVal
 
-      allocate ( NVstepsB(4,MstateVar) )
+      IF (.not.allocated(NVstepsB)) THEN
+        allocate ( NVstepsB(4,MstateVar) )
+      END IF
       NVstepsB = 0
 
-      allocate ( NHstepsB(4,MstateVar) )
+      IF (.not.allocated(NHstepsB)) THEN
+        allocate ( NHstepsB(4,MstateVar) )
+      END IF
       NHstepsB = 0
 
-      allocate ( DTsizeHB(4,MstateVar) )
+      IF (.not.allocated(DTsizeHB)) THEN
+        allocate ( DTsizeHB(4,MstateVar) )
+      END IF
       DTsizeHB = IniVal
 
-      allocate ( DTsizeVB(4,MstateVar) )
+      IF (.not.allocated(DTsizeVB)) THEN
+        allocate ( DTsizeVB(4,MstateVar) )
+      END IF
       DTsizeVB = IniVal
 
 
@@ -1621,120 +1757,192 @@
 !
 #  if defined SENSITIVITY_4DVAR || defined TL_W4DPSAS  || \
       defined TL_W4DVAR
-      allocate ( ad_cg_beta(Ninner+1) )
+      IF (.not.allocated(ad_cg_beta)) THEN
+        allocate ( ad_cg_beta(Ninner+1) )
+      END IF
       ad_cg_beta = IniVal
 
-      allocate ( ad_cg_delta(Ninner) )
+      IF (.not.allocated(ad_cg_delta)) THEN
+        allocate ( ad_cg_delta(Ninner) )
+      END IF
       ad_cg_delta = IniVal
 
-      allocate ( ad_cg_QG(Ninner+1) )
+      IF (.not.allocated(ad_cg_QG)) THEN
+        allocate ( ad_cg_QG(Ninner+1) )
+      END IF
       ad_cg_QG = IniVal
 
-      allocate ( ad_cg_Gnorm(Nouter) )
+      IF (.not.allocated(ad_cg_Gnorm)) THEN
+        allocate ( ad_cg_Gnorm(Nouter) )
+      END IF
       ad_cg_Gnorm = IniVal
 
-      allocate ( tl_cg_beta(Ninner+1) )
+      IF (.not.allocated(tl_cg_beta)) THEN
+        allocate ( tl_cg_beta(Ninner+1) )
+      END IF
       tl_cg_beta = IniVal
 
-      allocate ( tl_cg_delta(Ninner) )
+      IF (.not.allocated(tl_cg_delta)) THEN
+        allocate ( tl_cg_delta(Ninner) )
+      END IF
       tl_cg_delta = IniVal
 
-      allocate ( tl_cg_QG(Ninner+1) )
+      IF (.not.allocated(tl_cg_QG)) THEN
+        allocate ( tl_cg_QG(Ninner+1) )
+      END IF
       tl_cg_QG = IniVal
 
-      allocate ( tl_cg_Gnorm(Nouter) )
+      IF (.not.allocated(tl_cg_Gnorm)) THEN
+        allocate ( tl_cg_Gnorm(Nouter) )
+      END IF
       tl_cg_Gnorm = IniVal
 #  endif
 
-      allocate ( cg_alpha(0:Ninner,Nouter) )
+      IF (.not.allocated(cg_alpha)) THEN
+        allocate ( cg_alpha(0:Ninner,Nouter) )
+      END IF
       cg_alpha = IniVal
 
-      allocate ( cg_beta(Ninner+1,Nouter) )
+      IF (.not.allocated(cg_beta)) THEN
+        allocate ( cg_beta(Ninner+1,Nouter) )
+      END IF
       cg_beta = IniVal
 
-      allocate ( cg_tau(0:Ninner,Nouter) )
+      IF (.not.allocated(cg_tau)) THEN
+        allocate ( cg_tau(0:Ninner,Nouter) )
+      END IF
       cg_tau = IniVal
 
-      allocate ( Ritz(Ninner+1) )
+      IF (.not.allocated(Ritz)) THEN
+        allocate ( Ritz(Ninner+1) )
+      END IF
       Ritz = IniVal
 
 # if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
      defined POSTERIOR_ERROR_F
 
-      allocate ( ae_beta(NpostI+1,Nouter) )
+      IF (.not.allocated(ae_beta)) THEN
+        allocate ( ae_beta(NpostI+1,Nouter) )
+      END IF
       ae_beta = IniVal
 
-      allocate ( ae_zv(NpostI,NpostI) )
+      IF (.not.allocated(ae_zv)) THEN
+        allocate ( ae_zv(NpostI,NpostI) )
+      END IF
       ae_zv = IniVal
 
-      allocate ( ae_delta(NpostI,Nouter) )
+      IF (.not.allocated(ae_delta)) THEN
+        allocate ( ae_delta(NpostI,Nouter) )
+      END IF
       ae_delta = IniVal
 
-      allocate ( ae_trace(NpostI+1) )
+      IF (.not.allocated(ae_trace)) THEN
+        allocate ( ae_trace(NpostI+1) )
+      END IF
       ae_trace = IniVal
 
-      allocate ( ae_Gnorm(Nouter) )
+      IF (.not.allocated(ae_Gnorm)) THEN
+        allocate ( ae_Gnorm(Nouter) )
+      END IF
       ae_Gnorm = IniVal
 
-      allocate ( ae_Tmatrix(NpostI,3) )
+      IF (.not.allocated(ae_Tmatrix)) THEN
+        allocate ( ae_Tmatrix(NpostI,3) )
+      END IF
       ae_Tmatrix = IniVal
 
-      allocate ( ae_Ritz(NpostI,Nouter) )
+      IF (.not.allocated(ae_Ritz)) THEN
+        allocate ( ae_Ritz(NpostI,Nouter) )
+      END IF
       ae_Ritz = IniVal
 
-      allocate ( ae_RitzErr(NpostI,Nouter) )
+      IF (.not.allocated(ae_RitzErr)) THEN
+        allocate ( ae_RitzErr(NpostI,Nouter) )
+      END IF
       ae_RitzErr = IniVal
 
 #  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      allocate ( zLanczos_coef(Ninner,Ninner) )
+      IF (.not.allocated(zLanczos_coef)) THEN
+        allocate ( zLanczos_coef(Ninner,Ninner) )
+      END IF
       zLanczos_coef = IniVal
 
-      allocate ( zLanczos_inv(Ninner,Ninner) )
+      IF (.not.allocated(zLanczos_inv)) THEN
+        allocate ( zLanczos_inv(Ninner,Ninner) )
+      END IF
       zLanczos_inv = IniVal
 
-      allocate ( zLanczos_err(Ninner,Ninner) )
+      IF (.not.allocated(zLanczos_err)) THEN
+        allocate ( zLanczos_err(Ninner,Ninner) )
+      END IF
       zLanczos_err = IniVal
 #  endif
 # endif
 
 #  ifdef WEAK_CONSTRAINT
-      allocate ( cg_zv(Ninner,Ninner,Nouter) )
+      IF (.not.allocated(cg_zv)) THEN
+        allocate ( cg_zv(Ninner,Ninner,Nouter) )
+      END IF
 #  else
-      allocate ( cg_zv(Ninner,Ninner) )
+      IF (.not.allocated(cg_zv)) THEN
+        allocate ( cg_zv(Ninner,Ninner) )
+      END IF
 #  endif
       cg_zv = IniVal
 
-      allocate ( cg_delta(Ninner,Nouter) )
+      IF (.not.allocated(cg_delta)) THEN
+        allocate ( cg_delta(Ninner,Nouter) )
+      END IF
       cg_delta = IniVal
 
-      allocate ( cg_gamma(Ninner,Nouter) )
+      IF (.not.allocated(cg_gamma)) THEN
+        allocate ( cg_gamma(Ninner,Nouter) )
+      END IF
       cg_gamma = IniVal
 
-      allocate ( cg_Gnorm(Nouter) )
+      IF (.not.allocated(cg_Gnorm)) THEN
+        allocate ( cg_Gnorm(Nouter) )
+      END IF
       cg_Gnorm = IniVal
 
-      allocate ( cg_Gnorm_v(Nouter) )
+      IF (.not.allocated(cg_Gnorm_v)) THEN
+        allocate ( cg_Gnorm_v(Nouter) )
+      END IF
       cg_Gnorm_v = IniVal
 
-      allocate ( cg_Gnorm_y(Nouter) )
+      IF (.not.allocated(cg_Gnorm_y)) THEN
+        allocate ( cg_Gnorm_y(Nouter) )
+      END IF
       cg_Gnorm_y = IniVal
 
-      allocate ( cg_Greduc(Ninner,Nouter) )
+      IF (.not.allocated(cg_Greduc)) THEN
+        allocate ( cg_Greduc(Ninner,Nouter) )
+      END IF
       cg_Greduc = IniVal
 
-      allocate ( cg_QG(Ninner+1,Nouter) )
+      IF (.not.allocated(cg_QG)) THEN
+        allocate ( cg_QG(Ninner+1,Nouter) )
+      END IF
       cg_QG = IniVal
 
-      allocate ( cg_Tmatrix(Ninner,3) )
+      IF (.not.allocated(cg_Tmatrix)) THEN
+        allocate ( cg_Tmatrix(Ninner,3) )
+      END IF
       cg_Tmatrix = IniVal
 
-      allocate ( cg_Ritz(Ninner,Nouter) )
+      IF (.not.allocated(cg_Ritz)) THEN
+        allocate ( cg_Ritz(Ninner,Nouter) )
+      END IF
       cg_Ritz = IniVal
 
-      allocate ( cg_RitzErr(Ninner,Nouter) )
+      IF (.not.allocated(cg_RitzErr)) THEN
+        allocate ( cg_RitzErr(Ninner,Nouter) )
+      END IF
       cg_RitzErr = IniVal
 
-      allocate ( cg_zu(Ninner,Nouter) )
+      IF (.not.allocated(cg_zu)) THEN
+        allocate ( cg_zu(Ninner,Nouter) )
+      END IF
       cg_zu = IniVal
 
 # endif
@@ -1742,36 +1950,54 @@
 !
 !  Allocate Lanczos algorithm coefficients.
 !
-      allocate ( cg_beta(Ninner+1,Nouter) )
+      IF (.not.allocated(cg_beta)) THEN
+        allocate ( cg_beta(Ninner+1,Nouter) )
+      END IF
       cg_beta = IniVal
 
-      allocate ( cg_delta(Ninner,Nouter) )
+      IF (.not.allocated(cg_delta)) THEN
+        allocate ( cg_delta(Ninner,Nouter) )
+      END IF
       cg_delta = IniVal
 
-      allocate ( cg_zu(Ninner,Nouter) )
+      IF (.not.allocated(cg_zu)) THEN
+        allocate ( cg_zu(Ninner,Nouter) )
+      END IF
       cg_zu = IniVal
 # endif
 # if defined HESSIAN_SV || defined HESSIAN_SO || defined HESSIAN_FSV
 !
 !  Allocate Lanczos algorithm coefficients.
 !
-      allocate ( cg_beta(Ninner+1,Nouter) )
+      IF (.not.allocated(cg_beta)) THEN
+        allocate ( cg_beta(Ninner+1,Nouter) )
+      END IF
       cg_beta = IniVal
 
-      allocate ( cg_delta(Ninner,Nouter) )
+      IF (.not.allocated(cg_delta)) THEN
+        allocate ( cg_delta(Ninner,Nouter) )
+      END IF
       cg_delta = IniVal
 
-      allocate ( zLanczos_diag(Ninner) )
+      IF (.not.allocated(zLanczos_diag)) THEN
+        allocate ( zLanczos_diag(Ninner) )
+      END IF
       zLanczos_diag = IniVal
 
-      allocate ( zLanczos_offdiag(Ninner) )
+      IF (.not.allocated(zLanczos_offdiag)) THEN
+        allocate ( zLanczos_offdiag(Ninner) )
+      END IF
       zLanczos_offdiag = IniVal
 #  ifdef LCZ_FINAL
 
-      allocate ( GSmatrix(Ninner,Ninner) )
+      IF (.not.allocated(GSmatrix)) THEN
+        allocate ( GSmatrix(Ninner,Ninner) )
+      END IF
       GSmatrix = IniVal
 
-      allocate ( GSmatinv(Ninner,Ninner) )
+      IF (.not.allocated(GSmatinv)) THEN
+        allocate ( GSmatinv(Ninner,Ninner) )
+      END IF
       GSmatinv = IniVal
 #  endif
 # endif

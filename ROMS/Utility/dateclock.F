@@ -41,6 +41,8 @@
 !                                                                      !
 !    time_string  Encodes current model time to a string.              !
 !                                                                      !
+!    time_units   Decodes time attributes units.                       !
+!                                                                      !
 !    yearday      Given (year,month,day) this integer function returns !
 !                   the day of the year.                               !
 !                                                                      !
@@ -59,6 +61,7 @@
       PUBLIC :: ref_clock
       PUBLIC :: ROMS_clock
       PUBLIC :: time_string
+      PUBLIC :: time_units
       PUBLIC :: yearday
 !
       CONTAINS
@@ -1273,6 +1276,174 @@
 !
       RETURN
       END SUBROUTINE time_string
+!
+!***********************************************************************
+      SUBROUTINE time_units (Ustring, year, month, day,                 &
+     &                       hour, minutes, seconds)
+!***********************************************************************
+!                                                                      !
+!  This routine decodes the time units attribute of the form:          !
+!                                                                      !
+!    'time-units since YYYY-MM-DD hh:mm:ss'                            !
+!    'time-units since YYYY-MM-DD hh:mm:ss.ss'                         !
+!                                                                      !
+!  and various CF compliant variants.                                  !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     U             Time attribute (string)                            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     yeae          Year including century (integer)                   !
+!     month         Month of the year, 1=Jan, ..., 12=Dec (integer)    !
+!     day           Day of the month (integer)                         !
+!     hour          Hour of the day (integer)                          !
+!     minutes       Minutes of the hour, 1 - 23 (integer)              !
+!     seconds       Seconds of the minute (real)                       !
+!                                                                      !
+!  Examples of valid unit attributes:                                  !
+!                                                                      !
+!     'days since 1900-01-01 00:00:00'                                 !
+!     'seconds since 1992-10-8 15:15:42.5 -6'                          !
+!     'hours since 1990-1-1 0:0:0'                                     !
+!     'days since 1582-10-15 1:30:15'                                  !
+!     'days since 1-1-1 0:0:0'                                         !
+!     'hour since 1997-4-30 1:5:30.5'                                  !
+!     'second since 1961-1-1'                                          !
+!     'years since -2000-02-29 00:00:0.000Z'                           !
+!     'days since 1-07-15 0:0:0'                                       !
+!     'days since 0000-01-01 0:0:0'                                    !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer,  intent(out) :: year, month, day, hour, minutes
+!
+      real(r8), intent(out) :: seconds
+!
+      character (len=*), intent(in) :: Ustring
+!
+!  Exported variable declarations.
+!
+      logical :: decode
+      integer :: i, iblank, ie, is, iscale, lstr, lvar, nval
+      integer :: Schar
+
+      real(r8) :: Rval(10)
+
+      character (len=20)       :: Vstring
+      character (LEN(Ustring)) :: Tstring
+!
+!-----------------------------------------------------------------------
+!  Decode time string attribute.
+!-----------------------------------------------------------------------
+!
+!  Initialize.
+!
+      year=0
+      month=0
+      day=0
+      hour=0
+      minutes=0
+      seconds=0.0_r8
+!
+      DO i=1,LEN(Tstring)
+        Tstring(i:i)=CHAR(32)                            ! blank space
+      END DO
+!
+!  Replace non-numeric characters with blanks.
+!
+      Tstring=ADJUSTL(TRIM(Ustring))
+      lstr=LEN_TRIM(Tstring)
+!
+!  Only the following ASCII charactes are unchanged:
+!
+!    Char  Dec  Control Action
+!    ------------------------------
+!    SP    32   Space
+!    +     43   Plus
+!    -     45   Hyphen, dash, minus
+!    .     46   Period
+!    0     48   Zero
+!    1     49   One
+!    2     50   Two
+!    3     51   Three
+!    4     52   Four
+!    5     53   Five
+!    6     54   Six
+!    7     55   Seven
+!    8     56   Eight
+!    9     57   Nine
+!
+      DO i=1,lstr
+        Schar=ICHAR(Tstring(i:i))
+        IF (.not.(((48.le.Schar).and.(Schar.le.57)).or.                 &
+     &            (Schar.eq.32).or.(Schar.eq.46))) THEN
+           Tstring(i:i)=CHAR(32)                          ! blank space
+        END IF
+      END DO
+      Tstring=ADJUSTL(TRIM(Tstring))
+      lstr=LEN_TRIM(Tstring)
+!
+!  Check for negative year indicating CE, BC or BCE (Common Era, Before
+!  Christ or Before Common Era).
+!
+      IF (INDEX(Ustring, 'since -').gt.0) THEN
+        iscale=-1
+      ELSE
+        iscale=1
+      END IF
+!
+!  Process numrical values.  Since CHAR(45) is retained, take the
+!  absolute value except for the first number representing the year.
+!  The year is the only numerical value that can be negative (BC or
+!  BCE.
+!
+      is=1
+      ie=lstr
+      iblank=0
+      nval=0
+      decode=.FALSE.
+      DO i=1,lstr
+        IF (Tstring(i:i).eq.CHAR(32)) THEN
+          IF (Tstring(i+1:i+1).ne.CHAR(32)) decode=.TRUE.
+          iblank=i
+        ELSE
+          ie=i
+        END IF
+        IF (decode.or.(i.eq.lstr)) THEN
+          nval=nval+1
+          Vstring=Tstring(is:ie)
+          lvar=LEN_TRIM(Vstring)
+          READ (Vstring(1:lvar),*) Rval(nval)
+          is=iblank+1
+          ie=lvar
+          decode=.FALSE.
+        END IF
+      END DO
+!
+!  Load values.
+!
+      DO i=1,nval
+        SELECT CASE (i)
+          CASE (1)
+            year=INT(Rval(i))*iscale
+          CASE (2)
+            month=INT(Rval(i))
+          CASE (3)
+            day=INT(Rval(i))
+          CASE (4)
+            hour=INT(Rval(i))
+          CASE (5)
+            minutes=INT(Rval(i))
+          CASE (6)
+            seconds=Rval(i)
+        END SELECT
+      END DO
+      RETURN
+      END SUBROUTINE time_units
 !
 !***********************************************************************
       INTEGER FUNCTION yearday (year, month, day) RESULT (yday)

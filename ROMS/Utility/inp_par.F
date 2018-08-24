@@ -1138,7 +1138,7 @@
 
       RETURN
       END SUBROUTINE inp_par
-
+!
       FUNCTION decode_line (line_text, KeyWord, Nval, Cval, Rval)
 !
 !=======================================================================
@@ -1183,32 +1183,99 @@
 
       integer :: decode_line
 
-      character (len=1 ), parameter :: blank = ' '
-      character (len=256) :: Vstring, line, string
+      character (len=256) :: Vstring, inpline, line, string
 !
 !------------------------------------------------------------------------
 !  Decode input line.
 !------------------------------------------------------------------------
 !
-!  Initialize.
+!  Initialize. Use CHAR(32) for blank space.
 !
       DO i=1,LEN(line)
-        line(i:i)=blank
-        Vstring(i:i)=blank
-        string(i:i)=blank
+        line(i:i)=CHAR(32)
+        inpline(i:i)=CHAR(32)
+        Vstring(i:i)=CHAR(32)
+        string(i:i)=CHAR(32)
       END DO
+!
+!  Check input line and remove illegal characters.  Replace control
+!  ASCII characters CHAR(0) to CHAR(31) with a blank space, CHAR(32).
+!
+!  Char  Dec  Key  Control Action
+!  ----------------------------------------------------------------------
+!  NUL   0    ^@   Null character
+!  SOH   1    ^A   Start of heading, = console interrupt
+!  STX   2    ^B   Start of text, maintenance mode on HP console
+!  ETX   3    ^C   End of text
+!  EOT   4    ^D   End of transmission, not the same as ETB
+!  ENQ   5    ^E   Enquiry, goes with ACK; old HP flow control
+!  ACK   6    ^F   Acknowledge, clears ENQ logon hand
+!  BEL   7    ^G   Bell, rings the bell...
+!  BS    8    ^H   Backspace, works on HP terminals/computers
+!  HT    9    ^I   Horizontal tab, move to next tab stop
+!  LF    10   ^J   Line Feed
+!  VT    11   ^K   Vertical tab
+!  FF    12   ^L   Form Feed, page eject
+!  CR    13   ^M   Carriage Return
+!  SO    14   ^N   Shift Out, alternate character set
+!  SI    15   ^O   Shift In, resume defaultn character set
+!  DLE   16   ^P   Data link escape
+!  DC1   17   ^Q   XON, with XOFF to pause listings; ":okay to send".
+!  DC2   18   ^R   Device control 2, block-mode flow control
+!  DC3   19   ^S   XOFF, with XON is TERM=18 flow control
+!  DC4   20   ^T   Device control 4
+!  NAK   21   ^U   Negative acknowledge
+!  SYN   22   ^V   Synchronous idle
+!  ETB   23   ^W   End transmission block, not the same as EOT
+!  CAN   24   ^X   Cancel line, MPE echoes !!!
+!  EM    25   ^Y   End of medium, Control-Y interrupt
+!  SUB   26   ^Z   Substitute
+!  ESC   27   ^[   Escape, next character is not echoed
+!  FS    28   ^\   File separator
+!  GS    29   ^]   Group separator
+!  RS    30   ^^   Record separator, block-mode terminator
+!  US    31   ^_   Unit separator
+!
+!  SP    32        Space
+!  !     33        Exclamation mark
+!  *     42        Asterisk (star, multiply)
+!  +     43        Plus
+!  -     45        Hyphen, dash, minus
+!  .     46        Period
+!  0     48        Zero
+!  1     49        One
+!  2     50        Two
+!  3     51        Three
+!  4     52        Four
+!  5     53        Five
+!  6     54        Six
+!  7     55        Seven
+!  8     56        Eight
+!  9     57        Nine
+!  =     61        Equals sign
+!  \     92        Reverse slant (Backslash)
+!  |    124        Vertical line
+!
+      inpline=TRIM(ADJUSTL(line_text))
+      Linp=LEN_TRIM(inpline)
+      DO i=1,LEN_TRIM(inpline)
+        j=ICHAR(inpline(i:i))
+        IF (j.lt.32) THEN
+          inpline(i:i)=char(32)                           ! blank space
+        END IF
+      END DO
+      inpline=TRIM(inpline)
 !
 !  Get length of "line". Remove comment after the KEYWORD, if any.
 !  Then, remove leading and trailing blanks.
 !
-      Linp=LEN(line_text)
-      IF ((Linp.gt.0).and.(line_text(1:1).ne.CHAR(33))) THEN
-        Icomm=INDEX(line_text,CHAR(33),BACK=.FALSE.)
+      IF ((Linp.gt.0).and.(inpline(1:1).ne.CHAR(33))) THEN
+        Icomm=INDEX(inpline,CHAR(33),BACK=.FALSE.)
         IF (Icomm.gt.0) Linp=Icomm-1
-        line=TRIM(ADJUSTL(line_text(1:Linp)))
+        line=TRIM(ADJUSTL(inpline(1:Linp)))
         Linp=LEN_TRIM(line)
       ELSE
-        line=TRIM(ADJUSTL(line_text))
+        line=TRIM(ADJUSTL(inpline))
         Linp=LEN_TRIM(line)
       END IF
 !
