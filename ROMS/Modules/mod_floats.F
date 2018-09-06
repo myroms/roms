@@ -170,28 +170,38 @@
 !
         DO ng=1,Ngrids
           allocate ( DRIFTER(ng) % bounded(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 
 # if defined SOLVE3D && defined FLOAT_STICKY
           allocate ( DRIFTER(ng) % stuck(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 # endif
 
           allocate ( DRIFTER(ng) % Findex(0:Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng)+1,r8)
 
           allocate ( DRIFTER(ng) % Ftype(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 
           allocate ( DRIFTER(ng) % Flon(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 
           allocate ( DRIFTER(ng) % Flat(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 
           allocate ( DRIFTER(ng) % Fz0(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 
           allocate ( DRIFTER(ng) % Tinfo(0:izrhs,Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL((izrhs+1)*Nfloats(ng),r8)
 
 # if defined SOLVE3D && defined FLOAT_VWALK
           allocate ( DRIFTER(ng) % rwalk(Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(Nfloats(ng),r8)
 # endif
 
           allocate ( DRIFTER(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
+          Dmem(ng)=Dmem(ng)+REAL(NFV(ng)*(NFT+1)*Nfloats(ng),r8)
         END DO
       END IF
 !

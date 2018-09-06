@@ -123,66 +123,105 @@
 !
       IF (.not.allocated(BioIter)) THEN
         allocate ( BioIter(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(AttS)) THEN
         allocate ( AttS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(AttW)) THEN
         allocate ( AttW(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(DIN_Cdepth)) THEN
         allocate ( DIN_Cdepth(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Dg)) THEN
         allocate ( Dg(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(E_dark)) THEN
         allocate ( E_dark(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(E_light)) THEN
         allocate ( E_light(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Gmax)) THEN
         allocate ( Gmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(G_eff)) THEN
         allocate ( G_eff(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(G_r)) THEN
         allocate ( G_r(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Kn)) THEN
         allocate ( Kn(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Tmin_growth)) THEN
         allocate ( Tmin_growth(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(srad_Cdepth)) THEN
         allocate ( srad_Cdepth(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(wDino)) THEN
         allocate ( wDino(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Mor_a)) THEN
         allocate ( Mor_a(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Mor_b)) THEN
         allocate ( Mor_b(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Mor_Q10)) THEN
         allocate ( Mor_Q10(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Mor_T0)) THEN
         allocate ( Mor_T0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
 #ifdef TANGENT
       IF (.not.allocated(tl_wDino)) THEN
         allocate ( tl_wDino(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
 #ifdef ADJOINT
       IF (.not.allocated(ad_wDino)) THEN
         allocate ( ad_wDino(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 !
@@ -190,6 +229,7 @@
 !
       IF (.not.allocated(idbio)) THEN
         allocate ( idbio(NBT) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !
 !-----------------------------------------------------------------------

@@ -70,23 +70,54 @@
 !
       integer, intent(in) :: ng, LBi, UBi, LBj, UBj
 !
+!  Local variable declarations.
+!
+      real(r8) :: size2d
+!
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
       IF (ng.eq.1) allocate ( BBL(Ngrids) )
 !
+!  Set horizontal array size.
+!
+      size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
+!
+!  Bottom boundary layer arrays.
+!
       allocate ( BBL(ng) % Iconv(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % Ubot(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % Ur(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % Vbot(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % Vr(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bustrc(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bvstrc(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bustrw(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bvstrw(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bustrcwmax(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( BBL(ng) % bvstrcwmax(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
 
       RETURN
       END SUBROUTINE allocate_bbl

@@ -84,6 +84,11 @@
 !  NDM3d      Number of diagnostic 3D momentum fields.                 !
 !  NDrhs      Number of diagnostic 3D right-hand-side fields.          !
 !                                                                      !
+!  Estimated Dynamical memory parameter: accumulate number of array    !
+!                                        elements.                     !
+!                                                                      !
+!  Dmem       Dynamical memory requirement (bytes)                     !
+!                                                                      !
 !=======================================================================
 !
       USE mod_kinds
@@ -111,6 +116,11 @@
 !  in each nested layer and number of nested layers.
 !
       integer, allocatable :: GridNumber(:,:)   ! [Ngrids,NestLayers]
+!
+!  Estimated dynamical memory requirement (number of array elements) for
+!  a particular application per nested grid.
+!
+      real(r8), allocatable :: Dmem(:)          ! [Ngrids]
 !
 !-----------------------------------------------------------------------
 !  Define derived type structure, T_IO, used to store information about
@@ -725,6 +735,11 @@
       END IF
       IF (.not.allocated(TileSize)) THEN
         allocate ( TileSize(Ngrids) )
+      END IF
+
+      IF (.not.allocated(Dmem)) THEN
+        allocate ( Dmem(Ngrids) )
+        Dmem=0.0_r8
       END IF
 
 #ifdef PROPAGATOR

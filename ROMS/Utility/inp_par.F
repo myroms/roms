@@ -98,7 +98,7 @@
       IF (Lwrite) WRITE (out,10) version, TRIM(date_str)
  10   FORMAT (80('-'),/,                                                &
               ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
-     &        26x,a,/,1x,80('-'))
+     &        26x,a,/,80('-'))
 
 #ifdef MODEL_COUPLING
 !
@@ -639,12 +639,12 @@
         END DO
 #ifdef SOLVE3D
  50     FORMAT (/,' Tile partition information for Grid ',i2.2,':',2x,  &
-     &          i4.4,'x',i4.4,'x',i4.4,2x,'tiling: ',i3.3,'x',i3.3,/,/, &
+     &          i0,'x',i0,'x',i0,2x,'tiling: ',i0,'x',i0,/,/,           &
      &          5x,'tile',5x,'Istr',5x,'Iend',5x,'Jstr',5x,'Jend',      &
      &          5x,'Npts',/)
 #else
  50     FORMAT (/,' Tile partition information for Grid ',i2.2,':',2x,  &
-     &          i4.4,'x',i4.4,2x,'tiling: ',i3.3,'x',i3.3,/,/,          &
+     &          i0,'x',i0,2x,'tiling: ',i0,'x',i0,/,/,                  &
      &          5x,'tile',5x,'Istr',5x,'Iend',5x,'Jstr',5x,'Jend',      &
      &          5x,'Npts',/)
 #endif
@@ -653,12 +653,12 @@
      &                       'Adjoint model.',/,11x,'Partitions are ',  &
      &          'allowed in distributed-menory (MPI) applications.'/)
 #endif
- 70     FORMAT (5(5x,i4),2x,i7)
+ 70     FORMAT (5(4x,i5),1x,i8)
  80     FORMAT (/,' INP_PAR - domain decomposition error in input ',    &
-     &                        'script file for grid: ',i2,/,            &
-     &          /,11x,'The domain partition parameter, ',a,i3,          &
-     &          /,11x,'is incompatible with grid size, ',a,i4,          &
-     &          /,11x,'because it yields too small tile, ',a,i3,a,i3,   &
+     &                        'script file for grid: ',i2.2,/,          &
+     &          /,11x,'The domain partition parameter, ',a,i0,          &
+     &          /,11x,'is incompatible with grid size, ',a,i0,          &
+     &          /,11x,'because it yields too small tile, ',a,i0,a,i0,   &
      &          /,11x,'Decrease partition parameter: ',a)
       END IF
 #ifdef DISTRIBUTE

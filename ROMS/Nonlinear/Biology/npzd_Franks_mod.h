@@ -93,58 +93,88 @@
 !
       IF (.not.allocated(BioIter)) THEN
         allocate ( BioIter(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(DetRR)) THEN
         allocate ( DetRR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(K_ext)) THEN
         allocate ( K_ext(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(K_NO3)) THEN
         allocate ( K_NO3(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(K_Phy)) THEN
         allocate ( K_Phy(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(PhyMR)) THEN
         allocate ( PhyMR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(Vm_NO3)) THEN
         allocate ( Vm_NO3(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(wDet)) THEN
         allocate ( wDet(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
 #ifdef TANGENT
       IF (.not.allocated(tl_wDet)) THEN
         allocate ( tl_wDet(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
 #ifdef ADJOINT
       IF (.not.allocated(ad_wDet)) THEN
         allocate ( ad_wDet(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
       IF (.not.allocated(ZooGR)) THEN
         allocate ( ZooGR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(ZooMR)) THEN
         allocate ( ZooMR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(ZooMD)) THEN
         allocate ( ZooMD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(ZooGA)) THEN
         allocate ( ZooGA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(ZooEC)) THEN
         allocate ( ZooEC(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !
 !  Allocate biological tracer vector.
 !
       IF (.not.allocated(idbio)) THEN
         allocate ( idbio(NBT) )
+        Dmem(1)=Dmem(1)+REAL(NBT,r8)
       END IF
 !
 !-----------------------------------------------------------------------

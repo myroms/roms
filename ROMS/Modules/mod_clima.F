@@ -162,27 +162,45 @@
 !
       integer, intent(in) :: ng, LBi, UBi, LBj, UBj
 !
+!  Local variable declarations.
+!
+      real(r8) :: size2d
+!
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
       IF (ng.eq.1) allocate ( CLIMA(Ngrids) )
 !
+!  Set horizontal array size.
+!
+      size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
+!
 !  Climatology/Nudging arrays.
 !
       IF (LsshCLM(ng)) THEN
         allocate ( CLIMA(ng) % ssh(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+
 #ifndef ANA_SSH
         allocate ( CLIMA(ng) % sshG(LBi:UBi,LBj:UBj,2) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 #endif
       END IF
 !
       IF (Lm2CLM(ng)) THEN
         allocate ( CLIMA(ng) % ubarclm(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+
         allocate ( CLIMA(ng) % vbarclm(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+
 #ifndef ANA_M2CLIMA
         allocate ( CLIMA(ng) % ubarclmG(LBi:UBi,LBj:UBj,2) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+
         allocate ( CLIMA(ng) % vbarclmG(LBi:UBi,LBj:UBj,2) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 #endif
       END IF
 
@@ -190,18 +208,28 @@
 !
       IF (Lm3CLM(ng)) THEN
         allocate ( CLIMA(ng) % uclm(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
         allocate ( CLIMA(ng) % vclm(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
 # ifndef ANA_M3CLIMA
         allocate ( CLIMA(ng) % uclmG(LBi:UBi,LBj:UBj,N(ng),2) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
         allocate ( CLIMA(ng) % vclmG(LBi:UBi,LBj:UBj,N(ng),2) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 # endif
       END IF
 !
       IF (ANY(LtracerCLM(:,ng)).or.ANY(LnudgeTCLM(:,ng))) THEN
         allocate ( CLIMA(ng) % tclm(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)*NTCLM(ng),r8)*size2d
+
 # ifndef ANA_TCLIMA
         allocate ( CLIMA(ng) % tclmG(LBi:UBi,LBj:UBj,N(ng),2,          &
      &                               NTCLM(ng)) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NTCLM(ng),r8)*size2d
 # endif
       END IF
 #endif
@@ -210,15 +238,18 @@
 !
       IF (LnudgeM2CLM(ng)) THEN
         allocate ( CLIMA(ng) % M2nudgcof(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
 
 #ifdef SOLVE3D
       IF (LnudgeM3CLM(ng)) THEN
         allocate ( CLIMA(ng) % M3nudgcof(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
 
       IF (ANY(LnudgeTCLM(:,ng))) THEN
         allocate ( CLIMA(ng) % Tnudgcof(LBi:UBi,LBj:UBj,N(ng),NTCLM(ng)) )
+        Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NTCLM(ng),r8)*size2d
       END IF
 #endif
 
@@ -229,23 +260,47 @@
 !  Adjoint-based algorithms arrays.
 !
       allocate ( CLIMA(ng) % zeta_ads(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( CLIMA(ng) % zeta_adsG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
       allocate ( CLIMA(ng) % ubar_ads(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( CLIMA(ng) % vbar_ads(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
       allocate ( CLIMA(ng) % ubar_adsG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+
       allocate ( CLIMA(ng) % vbar_adsG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
 # ifdef SOLVE3D
       allocate ( CLIMA(ng) % u_ads(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( CLIMA(ng) % v_ads(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( CLIMA(ng) % u_adsG(LBi:UBi,LBj:UBj,N(ng),2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
       allocate ( CLIMA(ng) % v_adsG(LBi:UBi,LBj:UBj,N(ng),2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
       allocate ( CLIMA(ng) % wvel_ads(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+
       allocate ( CLIMA(ng) % wvel_adsG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)+1,r8)*size2d
 
       allocate ( CLIMA(ng) % t_ads(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)*NT(ng),r8)*size2d
+
       allocate ( CLIMA(ng) % t_adsG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NT(ng),r8)*size2d
 # endif
 #endif
 

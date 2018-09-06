@@ -159,29 +159,41 @@
 !  Allocate point Sources/Sinks variables.
 !
       allocate ( SOURCES(ng) % Isrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Jsrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Dsrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Fsrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Qbar(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Qshape(Nsrc(ng),N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng)*N(ng),r8)
 
       allocate ( SOURCES(ng) % Qsrc(Nsrc(ng),N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng)*N(ng),r8)
 
       allocate ( SOURCES(ng) % Tsrc(Nsrc(ng),N(ng),NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng)*N(ng)*NT(ng),r8)
 
       allocate ( SOURCES(ng) % Xsrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % Ysrc(Nsrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nsrc(ng),r8)
 
 #ifndef ANA_PSOURCE
       allocate ( SOURCES(ng) % QbarG(Nsrc(ng),2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(Nsrc(ng),r8)
 
       allocate ( SOURCES(ng) % TsrcG(Nsrc(ng),N(ng),2,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(Nsrc(ng)*N(ng)*NT(ng),r8)
 #endif
 !
 !-----------------------------------------------------------------------

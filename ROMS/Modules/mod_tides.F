@@ -154,6 +154,8 @@
       logical :: foundit
 
       integer :: Nfiles, Vid, i, ifile, mg, nvatt, nvdim
+
+      real(r8) :: size2d
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
@@ -192,20 +194,35 @@
 !
       IF (ng.eq.1) allocate ( TIDES(Ngrids) )
 !
+!  Set horizontal array size.
+!
+      size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
+!
 !  Allocate tidal forcing variables.
 !
       allocate ( TIDES(ng) % Tperiod(MTC)  )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
 
 # if defined SSH_TIDES
       allocate ( TIDES(ng) % SSH_Tamp(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
+
       allocate ( TIDES(ng) % SSH_Tphase(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
 # endif
 
 # if defined UV_TIDES
       allocate ( TIDES(ng) % UV_Tangle(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
+
       allocate ( TIDES(ng) % UV_Tmajor(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
+
       allocate ( TIDES(ng) % UV_Tminor(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
+
       allocate ( TIDES(ng) % UV_Tphase(LBi:UBi,LBj:UBj,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)*size2d
 # endif
 
 # if defined AVERAGES && defined AVERAGES_DETIDE
@@ -214,45 +231,78 @@
 !  time-averaged fields.
 !
       allocate ( TIDES(ng) % CosOmega(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % SinOmega(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % CosW_avg(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % CosW_sum(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % SinW_avg(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % SinW_sum(MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC,r8)
+
       allocate ( TIDES(ng) % CosWCosW(MTC,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC*MTC,r8)
+
       allocate ( TIDES(ng) % SinWSinW(MTC,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC*MTC,r8)
+
       allocate ( TIDES(ng) % SinWCosW(MTC,MTC) )
+      Dmem(ng)=Dmem(ng)+REAL(MTC*MTC,r8)
 
       IF (Aout(idFsuD,ng)) THEN
         allocate ( TIDES(ng) % zeta_detided(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+
         allocate ( TIDES(ng) % zeta_tide(LBi:UBi,LBj:UBj,0:2*MTC) )
+        Dmem(ng)=Dmem(ng)+REAL(2*MTC+1,r8)*size2d
       END IF
 
       IF (Aout(idu2dD,ng)) THEN
         allocate ( TIDES(ng) % ubar_detided(LBi:UBi,LBj:UBj) )
+
         allocate ( TIDES(ng) % ubar_tide(LBi:UBi,LBj:UBj,0:2*MTC) )
+        Dmem(ng)=Dmem(ng)+REAL(2*MTC+1,r8)*size2d
       END IF
 
       IF (Aout(idv2dD,ng)) THEN
         allocate ( TIDES(ng) % vbar_detided(LBi:UBi,LBj:UBj) )
+
         allocate ( TIDES(ng) % vbar_tide(LBi:UBi,LBj:UBj,0:2*MTC) )
+        Dmem(ng)=Dmem(ng)+REAL(2*MTC+1,r8)*size2d
       END IF
 
 #  ifdef SOLVE3D
       IF (Aout(idu3dD,ng)) THEN
         allocate ( TIDES(ng) % u_detided(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
         allocate ( TIDES(ng) % u_tide(LBi:UBi,LBj:UBj,N(ng),0:2*MTC) )
+        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1),r8)*size2d
       END IF
 
       IF (Aout(idv3dD,ng)) THEN
         allocate ( TIDES(ng) % v_detided(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
         allocate ( TIDES(ng) % v_tide(LBi:UBi,LBj:UBj,N(ng),0:2*MTC) )
+        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1),r8)*size2d
       END IF
 
       IF (ANY(Aout(idTrcD(:),ng))) THEN
         allocate ( TIDES(ng) % t_detided(LBi:UBi,LBj:UBj,N(ng),NAT) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)*NAT,r8)*size2d
+
         allocate ( TIDES(ng) % t_tide(LBi:UBi,LBj:UBj,N(ng),            &
      &                                0:2*MTC,NAT) )
+        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1)*NAT,r8)*size2d
       END IF
 #  endif
 # endif

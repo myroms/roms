@@ -306,7 +306,7 @@
             END DO
             IF (ng.eq.1) THEN
               WRITE (stdout,20) ' Total:', total_cpu
- 20           FORMAT (a,8x,f14.3)
+ 20           FORMAT (a,10x,f14.3)
             END IF
           END IF
 #ifdef PROFILE

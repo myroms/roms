@@ -461,21 +461,39 @@
           SELECT CASE (ibry)
             CASE (iwest, ieast)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBj:UBj,          &
      &                                                N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
 # endif
             CASE (isouth, inorth)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % Jb(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
      &                                                N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
 # endif
           END SELECT
         END DO
@@ -488,18 +506,30 @@
 !
       IF (.not.allocated(Ibmin)) THEN
         allocate ( Ibmin(4,Ncontact) )
+        DO ng=1,Ngrids
+          Dmem(ng)=Dmem(ng)+4.0_r8*REAL(Ncontact,r8)
+        END DO
         Ibmin = -ispval
       END IF
       IF (.not.allocated(Ibmax)) THEN
         allocate ( Ibmax(4,Ncontact) )
+        DO ng=1,Ngrids
+          Dmem(ng)=Dmem(ng)+4.0_r8*REAL(Ncontact,r8)
+        END DO
         Ibmax = ispval
       END IF
       IF (.not.allocated(Jbmin)) THEN
         allocate ( Jbmin(4,Ncontact) )
+        DO ng=1,Ngrids
+          Dmem(ng)=Dmem(ng)+4.0_r8*REAL(Ncontact,r8)
+        END DO
         Jbmin = -ispval
       END IF
       IF (.not.allocated(Jbmax)) THEN
         allocate ( Jbmax(4,Ncontact) )
+        DO ng=1,Ngrids
+          Dmem(ng)=Dmem(ng)+4.0_r8*REAL(Ncontact,r8)
+        END DO
         Jbmax = ispval
       END IF
 !

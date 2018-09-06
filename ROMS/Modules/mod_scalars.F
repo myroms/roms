@@ -12,8 +12,7 @@
 #ifdef NO_4BYTE_REALS
         USE netcdf
 #endif
-!
-        implicit none
+!        implicit none
 !
 !-----------------------------------------------------------------------
 !  Multiple grid structure.
@@ -1706,59 +1705,51 @@
 !
       IF (.not.allocated(SCALARS)) THEN
         allocate ( SCALARS(Ngrids) )
-      END IF
 
-      DO ng=1,Ngrids
+        DO ng=1,Ngrids
 
 #ifdef SOLVE3D
-        IF (.not.associated(SCALARS(ng)% Fstate)) THEN
           allocate ( SCALARS(ng) % Fstate(8+2*MT) )
-        END IF
-        SCALARS(ng) % Fstate(1:7+2*MT) = .FALSE.
+          Dmem(ng)=Dmem(ng)+REAL(8+2*MT,r8)
+          SCALARS(ng) % Fstate = .FALSE.
 
-        IF (.not.associated(SCALARS(ng) % Lstate)) THEN
           allocate ( SCALARS(ng) % Lstate(8+2*MT) )
-        END IF
-        SCALARS(ng) % Lstate(1:5+MT) = .FALSE.
+          Dmem(ng)=Dmem(ng)+REAL(8+2*MT,r8)
+          SCALARS(ng) % Lstate = .FALSE.
 #else
-        IF (.not.associated(SCALARS(ng) % Fstate)) THEN
           allocate ( SCALARS(ng) % Fstate(5) )
-        END IF
-        SCALARS(ng) % Fstate(1:5) = .FALSE.
+          Dmem(ng)=Dmem(ng)+5.0_r8
+          SCALARS(ng) % Fstate = .FALSE.
 
-        IF(.not.associated(SCALARS(ng) % Lstate)) THEN
           allocate ( SCALARS(ng) % Lstate(3) )
-        END IF
-        SCALARS(ng) % Lstate(1:3) = .FALSE.
+          Dmem(ng)=Dmem(ng)+3.0_r8
+          SCALARS(ng) % Lstate = .FALSE.
 #endif
+
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
-        IF (.not.associated(SCALARS(ng) % IJwater)) THEN
           allocate ( SCALARS(ng) % IJwater((Lm(ng)+2)*(Mm(ng)+2),4) )
-        END IF
-        SCALARS(ng) % IJwater = 0
+          Dmem(ng)=Dmem(ng)+4.0_r8*REAL((Lm(ng)+2)*(Mm(ng)+2),r8)
+          SCALARS(ng) % IJwater = 0
 #endif
 
-        IF (.not.associated(SCALARS(ng) % Cs_r)) THEN
           allocate ( SCALARS(ng) % Cs_r(N(ng)) )
-        END IF
-        SCALARS(ng) % Cs_r(1:N(ng)) = IniVal
+          Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)
+          SCALARS(ng) % Cs_r = IniVal
 
-        IF (.not.associated(SCALARS(ng) % Cs_w)) THEN
           allocate ( SCALARS(ng) % Cs_w(0:N(ng)) )
-        END IF
-        SCALARS(ng) % Cs_w(0:N(ng)) = IniVal
+          Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)
+          SCALARS(ng) % Cs_w = IniVal
 
-        IF (.not.associated(SCALARS(ng) % sc_r)) THEN
           allocate ( SCALARS(ng) % sc_r(N(ng)) )
-        END IF
-        SCALARS(ng) % sc_r(1:N(ng)) = IniVal
+          Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)
+          SCALARS(ng) % sc_r = IniVal
 
-        IF (.not.associated(SCALARS(ng) % sc_w)) THEN
           allocate ( SCALARS(ng) % sc_w(0:N(ng)) )
-        END IF
-        SCALARS(ng) % sc_w(0:N(ng)) = IniVal
+          Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)
+          SCALARS(ng) % sc_w = IniVal
 
-      END DO
+        END DO
+      END IF
 !
 !  Allocate variables that require special treatment in shared-memory.
 !  These variables are private for each thread to avoid collisions.
@@ -1766,23 +1757,29 @@
 !$OMP PARALLEL
       IF (.not.allocated(PREDICTOR_2D_STEP)) THEN
         allocate ( PREDICTOR_2D_STEP(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(indx1)) THEN
         allocate ( indx1(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(iic)) THEN
         allocate ( iic(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(iif)) THEN
         allocate ( iif(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(FrcRec)) THEN
         allocate ( FrcRec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(SOrec)) THEN
         allocate ( SOrec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !$OMP END PARALLEL
 !
@@ -1802,933 +1799,1203 @@
 #endif
 
 #ifdef T_PASSIVE
-      IF (.not.allocated(inert)) THEN
+      IF (.not.associated(inert)) THEN
         allocate ( inert(NPT) )
+        Dmem(1)=Dmem(1)+REAL(NPT,r8)
       END IF
 #endif
       IF (.not.allocated(PerfectRST)) THEN
         allocate ( PerfectRST(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ndtfast)) THEN
         allocate ( ndtfast(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nfast)) THEN
         allocate ( nfast(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(dt)) THEN
         allocate ( dt(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(dtfast)) THEN
         allocate ( dtfast(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(TimeEnd)) THEN
         allocate ( TimeEnd(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(AVGtime)) THEN
         allocate ( AVGtime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DIAtime)) THEN
         allocate ( DIAtime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(IMPtime)) THEN
         allocate ( IMPtime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ObsTime)) THEN
         allocate ( ObsTime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(FrcTime)) THEN
         allocate ( FrcTime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ntimes)) THEN
         allocate ( ntimes(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(first_time)) THEN
         allocate ( first_time(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ntfirst)) THEN
         allocate ( ntfirst(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ntstart)) THEN
         allocate ( ntstart(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ntend)) THEN
         allocate ( ntend(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
 !$OMP PARALLEL
       IF (.not.allocated(synchro_flag)) THEN
         allocate ( synchro_flag(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(step_counter)) THEN
         allocate ( step_counter(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tdays)) THEN
         allocate ( tdays(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(time)) THEN
         allocate ( time(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(time_code)) THEN
         allocate ( time_code(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !$OMP END PARALLEL
 
       IF (.not.allocated(NrecFrc)) THEN
         allocate ( NrecFrc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(NudgingCoeff)) THEN
         allocate ( NudgingCoeff(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ObcData)) THEN
         allocate ( ObcData(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Lbiology)) THEN
         allocate ( Lbiology(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lfloats)) THEN
         allocate ( Lfloats(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lsediment)) THEN
         allocate ( Lsediment(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lstations)) THEN
         allocate ( Lstations(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(CompositeGrid)) THEN
         allocate ( CompositeGrid(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(RefinedGrid)) THEN
         allocate ( RefinedGrid(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(RefineScale)) THEN
         allocate ( RefineScale(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(GetDonorData)) THEN
         allocate ( GetDonorData(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(EWperiodic)) THEN
         allocate ( EWperiodic(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(NSperiodic)) THEN
         allocate ( NSperiodic(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(VolCons)) THEN
         allocate ( VolCons(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (.not.allocated(ad_VolCons)) THEN
         allocate ( ad_VolCons(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_VolCons)) THEN
         allocate ( tl_VolCons(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(Lsponge)) THEN
         allocate ( Lsponge(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LuvSponge)) THEN
         allocate ( LuvSponge(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LtracerSponge)) THEN
         allocate ( LtracerSponge(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(CLM_FILE)) THEN
         allocate ( CLM_FILE(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lclimatology)) THEN
         allocate ( Lclimatology(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LsshCLM)) THEN
         allocate ( LsshCLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lm2CLM)) THEN
         allocate ( Lm2CLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Lm3CLM)) THEN
         allocate ( Lm3CLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LtracerCLM)) THEN
         allocate ( LtracerCLM(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(Lnudging)) THEN
         allocate ( Lnudging(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LnudgeM2CLM)) THEN
         allocate ( LnudgeM2CLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LnudgeM3CLM)) THEN
         allocate ( LnudgeM3CLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LnudgeTCLM)) THEN
         allocate ( LnudgeTCLM(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(LuvSrc)) THEN
         allocate ( LuvSrc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwSrc)) THEN
         allocate ( LwSrc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LtracerSrc)) THEN
         allocate ( LtracerSrc(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(maxspeed)) THEN
         allocate ( maxspeed(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(maxrho)) THEN
         allocate ( maxrho(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(levsfrc)) THEN
         allocate ( levsfrc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(levbfrc)) THEN
         allocate ( levbfrc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Vtransform)) THEN
         allocate ( Vtransform(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Vstretching)) THEN
         allocate ( Vstretching(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Tcline)) THEN
         allocate ( Tcline(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(hc)) THEN
         allocate ( hc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(theta_s)) THEN
         allocate ( theta_s(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(theta_b)) THEN
         allocate ( theta_b(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(hmin)) THEN
         allocate ( hmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(hmax)) THEN
         allocate ( hmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(xl)) THEN
         allocate ( xl(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(el)) THEN
         allocate ( el(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LonMin)) THEN
         allocate ( LonMin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LonMax)) THEN
         allocate ( LonMax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LatMin)) THEN
         allocate ( LatMin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LatMax)) THEN
         allocate ( LatMax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Idigits)) THEN
         allocate ( Idigits(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Jdigits)) THEN
         allocate ( Jdigits(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #ifdef SOLVE3D
       IF (.not.allocated(Kdigits)) THEN
         allocate ( Kdigits(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
       IF (.not.allocated(TotVolume)) THEN
         allocate ( TotVolume(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(MinVolume)) THEN
         allocate ( MinVolume(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(MaxVolume)) THEN
         allocate ( MaxVolume(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(DXmin)) THEN
         allocate ( DXmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DXmax)) THEN
         allocate ( DXmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DYmin)) THEN
         allocate ( DYmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DYmax)) THEN
         allocate ( DYmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #ifdef SOLVE3D
       IF (.not.allocated(DZmin)) THEN
         allocate ( DZmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DZmax)) THEN
         allocate ( DZmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(grdmax)) THEN
         allocate ( grdmax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef DIFF_3DCOEF
       IF (.not.allocated(DiffMin)) THEN
         allocate ( DiffMin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DiffMax)) THEN
         allocate ( DiffMax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(Cg_min)) THEN
         allocate ( Cg_min(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Cg_max)) THEN
         allocate ( Cg_max(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Cg_Cor)) THEN
         allocate ( Cg_Cor(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef VISC_3DCOEF
       IF (.not.allocated(ViscMin)) THEN
         allocate ( ViscMin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ViscMax)) THEN
         allocate ( ViscMax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(R0)) THEN
         allocate ( R0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Tcoef)) THEN
         allocate ( Tcoef(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Scoef)) THEN
         allocate ( Scoef(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(T0)) THEN
         allocate ( T0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(S0)) THEN
         allocate ( S0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(gamma2)) THEN
         allocate ( gamma2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(lmd_Jwt)) THEN
         allocate ( lmd_Jwt(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(rx0)) THEN
         allocate ( rx0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(rx1)) THEN
         allocate ( rx1(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(rdrg)) THEN
         allocate ( rdrg(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(rdrg2)) THEN
         allocate ( rdrg2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Zos)) THEN
         allocate ( Zos(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Zob)) THEN
         allocate ( Zob(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Dcrit)) THEN
         allocate ( Dcrit(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef PROPAGATOR
       IF (.not.allocated(Nconv)) THEN
         allocate ( Nconv(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(weight)) THEN
         allocate ( weight(2,0:256,Ngrids) )
+        Dmem(1)=Dmem(1)+514.0_r8*REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Akk_bak)) THEN
         allocate ( Akk_bak(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Akp_bak)) THEN
         allocate ( Akp_bak(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Akv_bak)) THEN
         allocate ( Akv_bak(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Akv_limit)) THEN
         allocate ( Akv_limit(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_visc2)) THEN
         allocate ( ad_visc2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nl_visc2)) THEN
         allocate ( nl_visc2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_visc2)) THEN
         allocate ( tl_visc2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(visc2)) THEN
         allocate ( visc2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_visc4)) THEN
         allocate ( ad_visc4(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nl_visc4)) THEN
         allocate ( nl_visc4(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_visc4)) THEN
         allocate ( tl_visc4(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(visc4)) THEN
         allocate ( visc4(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(tkenu2)) THEN
         allocate ( tkenu2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tkenu4)) THEN
         allocate ( tkenu4(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Akt_bak)) THEN
         allocate ( Akt_bak(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(Akt_limit)) THEN
         allocate ( Akt_limit(NAT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NAT*Ngrids,r8)
       END IF
       IF (.not.allocated(Kdiff)) THEN
         allocate ( Kdiff(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_tnu2)) THEN
         allocate ( ad_tnu2(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(nl_tnu2)) THEN
         allocate ( nl_tnu2(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(tl_tnu2)) THEN
         allocate ( tl_tnu2(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(tnu2)) THEN
         allocate ( tnu2(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_tnu4)) THEN
         allocate ( ad_tnu4(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(nl_tnu4)) THEN
         allocate ( nl_tnu4(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(tl_tnu4)) THEN
         allocate ( tl_tnu4(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(tnu4)) THEN
         allocate ( tnu4(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(tl_M2diff)) THEN
         allocate ( tl_M2diff(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_M3diff)) THEN
         allocate ( tl_M3diff(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_Tdiff)) THEN
         allocate ( tl_Tdiff(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_Akv_fac)) THEN
         allocate ( ad_Akv_fac(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(tl_Akv_fac)) THEN
         allocate ( tl_Akv_fac(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ad_Akt_fac)) THEN
         allocate ( ad_Akt_fac(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(tl_Akt_fac)) THEN
         allocate ( tl_Akt_fac(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 
       IF (.not.allocated(LdefADJ)) THEN
         allocate ( LdefADJ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefAVG)) THEN
         allocate ( LdefAVG(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefDAI)) THEN
         allocate ( LdefDAI(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefDIA)) THEN
         allocate ( LdefDIA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefERR)) THEN
         allocate ( LdefERR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefFLT)) THEN
         allocate ( LdefFLT(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefHIS)) THEN
         allocate ( LdefHIS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefHSS)) THEN
         allocate ( LdefHSS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefINI)) THEN
         allocate ( LdefINI(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefIRP)) THEN
         allocate ( LdefIRP(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefITL)) THEN
         allocate ( LdefITL(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefLCZ)) THEN
         allocate ( LdefLCZ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefLZE)) THEN
         allocate ( LdefLZE(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefMOD)) THEN
         allocate ( LdefMOD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefQCK)) THEN
         allocate ( LdefQCK(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefRST)) THEN
         allocate ( LdefRST(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefSTA)) THEN
         allocate ( LdefSTA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefTIDE)) THEN
         allocate ( LdefTIDE(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefTLM)) THEN
         allocate ( LdefTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LdefTLF)) THEN
         allocate ( LdefTLF(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LwrtADJ)) THEN
         allocate ( LwrtADJ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtAVG)) THEN
         allocate ( LwrtAVG(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtDIA)) THEN
         allocate ( LwrtDIA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtHIS)) THEN
         allocate ( LwrtHIS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtPER)) THEN
         allocate ( LwrtPER(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtQCK)) THEN
         allocate ( LwrtQCK(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtRST)) THEN
         allocate ( LwrtRST(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtTLM)) THEN
         allocate ( LwrtTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtTLF)) THEN
         allocate ( LwrtTLF(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LdefNRM)) THEN
         allocate ( LdefNRM(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtNRM)) THEN
         allocate ( LwrtNRM(4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
 
 #if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
       IF (.not.allocated(LwrtState3d)) THEN
         allocate ( LwrtState3d(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(SOinitial)) THEN
         allocate ( SOinitial(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(LwrtState2d)) THEN
         allocate ( LwrtState2d(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LwrtTime)) THEN
         allocate ( LwrtTime(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(Ladjusted)) THEN
         allocate ( Ladjusted(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LprocessOBC)) THEN
         allocate ( LprocessOBC(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LprocessTides)) THEN
         allocate ( LprocessTides(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LwrtInfo)) THEN
         allocate ( LwrtInfo(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ldefout)) THEN
         allocate ( ldefout(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ndefADJ)) THEN
         allocate ( ndefADJ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ndefAVG)) THEN
         allocate ( ndefAVG(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ndefDIA)) THEN
         allocate ( ndefDIA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ndefHIS)) THEN
         allocate ( ndefHIS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ndefQCK)) THEN
         allocate ( ndefQCK(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ndefTLM)) THEN
         allocate ( ndefTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ntsAVG)) THEN
         allocate ( ntsAVG(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ntsDIA)) THEN
         allocate ( ntsDIA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(nADJ)) THEN
         allocate ( nADJ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nAVG)) THEN
         allocate ( nAVG(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nDIA)) THEN
         allocate ( nDIA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nFLT)) THEN
         allocate ( nFLT(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nHIS)) THEN
         allocate ( nHIS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nQCK)) THEN
         allocate ( nQCK(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nRST)) THEN
         allocate ( nRST(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nSTA)) THEN
         allocate ( nSTA(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(nTLM)) THEN
         allocate ( nTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(ninfo)) THEN
         allocate ( ninfo(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(nOBC)) THEN
         allocate ( nOBC(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Nbrec)) THEN
         allocate ( Nbrec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(OBCcount)) THEN
         allocate ( OBCcount(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef ADJUST_BOUNDARY
       IF (.not.allocated(Lobc)) THEN
         allocate ( Lobc(4,MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(nSFF)) THEN
         allocate ( nSFF(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Nfrec)) THEN
         allocate ( Nfrec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(SFcount)) THEN
         allocate ( SFcount(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef ADJUST_STFLUX
       IF (.not.allocated(Lstflux)) THEN
         allocate ( Lstflux(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(nrrec)) THEN
         allocate ( nrrec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LastRec)) THEN
         allocate ( LastRec(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LcycleADJ)) THEN
         allocate ( LcycleADJ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LcycleRST)) THEN
         allocate ( LcycleRST(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(LcycleTLM)) THEN
         allocate ( LcycleTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
       IF (.not.allocated(Hcount)) THEN
         allocate ( Hcount(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(KstrS)) THEN
         allocate ( KstrS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(KendS)) THEN
         allocate ( KendS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(DstrS)) THEN
         allocate ( DstrS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(DendS)) THEN
         allocate ( DendS(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(TRnorm)) THEN
         allocate ( TRnorm(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(SO_decay)) THEN
         allocate ( SO_decay(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #ifdef SOLVE3D
       IF (.not.allocated(SO_sdev)) THEN
         allocate ( SO_sdev(7+2*MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL((7+2*MT)*Ngrids,r8)
       END IF
 #else
       IF (.not.allocated(SO_sdev)) THEN
         allocate ( SO_sdev(5,Ngrids) )
+        Dmem(1)=Dmem(1)+5.0_r8*REAL(Ngrids,r8)
       END IF
 #endif
 
 #if defined FOUR_DVAR || defined VERIFICATION
       IF (.not.allocated(Cnorm)) THEN
         allocate ( Cnorm(2,MstateVar) )
+        Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar,r8)
       END IF
       IF (.not.allocated(CnormB)) THEN
         allocate ( CnormB(MstateVar,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar,r8)
       END IF
 
       IF (.not.allocated(SporadicImpulse)) THEN
         allocate ( SporadicImpulse(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(FrequentImpulse)) THEN
         allocate ( FrequentImpulse(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(dTdz_min)) THEN
         allocate ( dTdz_min(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(ml_depth)) THEN
         allocate ( ml_depth(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(LNM_depth)) THEN
         allocate ( LNM_depth(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(balance)) THEN
         allocate ( balance(MstateVar) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar,r8)
       END IF
 
       IF (.not.allocated(Hdecay)) THEN
         allocate ( Hdecay(2,MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
       IF (.not.allocated(Vdecay)) THEN
         allocate ( Vdecay(2,MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
 
       IF (.not.allocated(Tdecay)) THEN
         allocate ( Tdecay(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
 
       IF (.not.allocated(HdecayB)) THEN
         allocate ( HdecayB(MstateVar,4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
       IF (.not.allocated(VdecayB)) THEN
         allocate ( VdecayB(MstateVar,4,Ngrids) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
 
       IF (.not.allocated(bgqc_type)) THEN
         allocate ( bgqc_type(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Nprovenance)) THEN
         allocate ( Nprovenance(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(S_bgqc)) THEN
         allocate ( S_bgqc(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(obcfac)) THEN
         allocate ( obcfac(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(FSobc_in)) THEN
         allocate ( FSobc_in(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(FSobc_out)) THEN
         allocate ( FSobc_out(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(M2obc_in)) THEN
         allocate ( M2obc_in(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(M2obc_out)) THEN
         allocate ( M2obc_out(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
 
 #ifdef SOLVE3D
       IF (.not.allocated(M3obc_in)) THEN
         allocate ( M3obc_in(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(M3obc_out)) THEN
         allocate ( M3obc_out(Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Tobc_in)) THEN
         allocate ( Tobc_in(MT,Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MT*Ngrids,r8)
       END IF
       IF (.not.allocated(Tobc_out)) THEN
         allocate ( Tobc_out(MT,Ngrids,4) )
+        Dmem(1)=Dmem(1)+4.0_r8*REAL(MT*Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(Znudg)) THEN
         allocate ( Znudg(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(M2nudg)) THEN
         allocate ( M2nudg(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(M3nudg)) THEN
         allocate ( M3nudg(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(Tnudg)) THEN
         allocate ( Tnudg(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #ifdef BULK_FLUXES
       IF (.not.allocated(blk_ZQ)) THEN
         allocate ( blk_ZQ(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(blk_ZT)) THEN
         allocate ( blk_ZT(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(blk_ZW)) THEN
         allocate ( blk_ZW(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
       IF (.not.allocated(gls_m)) THEN
         allocate ( gls_m(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_n)) THEN
         allocate ( gls_n(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_p)) THEN
         allocate ( gls_p(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_sigk)) THEN
         allocate ( gls_sigk(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_sigp)) THEN
         allocate ( gls_sigp(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_cmu0)) THEN
         allocate ( gls_cmu0(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_cmupr)) THEN
         allocate ( gls_cmupr(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_c1)) THEN
         allocate ( gls_c1(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_c2)) THEN
         allocate ( gls_c2(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_c3m)) THEN
         allocate ( gls_c3m(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_c3p)) THEN
         allocate ( gls_c3p(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_Kmin)) THEN
         allocate ( gls_Kmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(gls_Pmin)) THEN
         allocate ( gls_Pmin(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       IF (.not.allocated(charnok_alpha)) THEN
         allocate ( charnok_alpha(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(zos_hsig_alpha)) THEN
         allocate ( zos_hsig_alpha(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(sz_alpha)) THEN
         allocate ( sz_alpha(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(crgban_cw)) THEN
         allocate ( crgban_cw(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
       RETURN
@@ -2739,7 +3006,7 @@
 !=======================================================================
 !                                                                      !
 !  This routine initializes several variables in module for all nested !
-!  grids.                                               !              !
+!  grids.                                                              !
 !                                                                      !
 !=======================================================================
 !

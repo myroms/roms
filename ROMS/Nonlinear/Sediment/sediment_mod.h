@@ -216,36 +216,50 @@
       IF (.not.allocated(newlayer_thick)) THEN
         allocate ( newlayer_thick(Ngrids) )
         newlayer_thick = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(minlayer_thick)) THEN
         allocate ( minlayer_thick(Ngrids) )
         minlayer_thick = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(bedload_coeff)) THEN
         allocate ( bedload_coeff(Ngrids) )
         bedload_coeff = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
 #if defined COHESIVE_BED || defined MIXED_BED
       IF (.not.allocated(tcr_min)) THEN
         allocate ( tcr_min(Ngrids) )
         tcr_min = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(tcr_max)) THEN
         allocate ( tcr_max(Ngrids) )
         tcr_max = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(tcr_slp)) THEN
         allocate ( tcr_slp(Ngrids) )
         tcr_slp = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(tcr_off)) THEN
         allocate ( tcr_off(Ngrids) )
         tcr_off = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(tcr_tim)) THEN
         allocate ( tcr_tim(Ngrids) )
         tcr_tim = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 
@@ -253,10 +267,13 @@
       IF (.not.allocated(transC)) THEN
         allocate ( transC(Ngrids) )
         transC = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
       IF (.not.allocated(transN)) THEN
         allocate ( transN(Ngrids) )
         transN = IniVal
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
 !
@@ -264,24 +281,37 @@
 !
       IF (.not.allocated(idsed)) THEN
         allocate ( idsed(MAX(1,NST)) )
+        Dmem(1)=Dmem(1)+REAL(MAX(1,NST),r8)
       END IF
+
       IF (.not.allocated(idmud)) THEN
         allocate ( idmud(MAX(1,NCS)) )
+        Dmem(1)=Dmem(1)+REAL(MAX(1,NCS),r8)
       END IF
+
       IF (.not.allocated(isand)) THEN
         allocate ( isand(MAX(1,NNS)) )
+        Dmem(1)=Dmem(1)+REAL(MAX(1,NNS),r8)
       END IF
+
       IF (.not.allocated(idBmas)) THEN
         allocate ( idBmas(NST) )
+        Dmem(1)=Dmem(1)+REAL(NST,r8)
       END IF
+
       IF (.not.allocated(idfrac)) THEN
         allocate ( idfrac(NST) )
+        Dmem(1)=Dmem(1)+REAL(NST,r8)
       END IF
+
       IF (.not.allocated(idUbld)) THEN
         allocate ( idUbld(NST) )
+        Dmem(1)=Dmem(1)+REAL(NST,r8)
       END IF
+
       IF (.not.allocated(idVbld)) THEN
         allocate ( idVbld(NST) )
+        Dmem(1)=Dmem(1)+REAL(NST,r8)
       END IF
 !
 !  Set cohesive and noncohesive suspended sediment tracers
