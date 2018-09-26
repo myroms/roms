@@ -76,7 +76,7 @@
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
-!  Set distribute-memory (MPI) world communictor.
+!  Set distribute-memory (mpi) world communictor.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(mpiCOMM)) THEN
@@ -382,7 +382,8 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Stop model and time profiling clocks.  Close output NetCDF files.
+!  Stop model and time profiling clocks, report memory requirements, and
+!  close output NetCDF files.
 !-----------------------------------------------------------------------
 !
 !  Stop time clocks.
@@ -399,6 +400,12 @@
         END DO
 !$OMP END PARALLEL
       END DO
+!
+!  Report dynamic memory and automatic memory requirements.
+!
+!$OMP PARALLEL
+      CALL memory
+!$OMP END PARALLEL
 !
 !  Close IO files.
 !

@@ -410,6 +410,7 @@
                   allocate ( SCALARS(ng) % Sflag(Nstation(ng)) )
                   allocate ( SCALARS(ng) % SposX(Nstation(ng)) )
                   allocate ( SCALARS(ng) % SposY(Nstation(ng)) )
+                  Dmem(ng)=Dmem(ng)+3.0_r8*REAL(Nstation(ng),r8)
                 END IF
               END DO
               is(1:Ngrids)=0

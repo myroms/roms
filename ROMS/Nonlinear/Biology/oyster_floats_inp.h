@@ -125,6 +125,7 @@
               IF (.not.allocated(swim_table)) THEN
                 allocate ( swim_table(swim_Im,swim_Jm) )
                 swim_table=0.0_r8
+                Dmem(1)=Dmem(1)+REAL(swim_Im*swim_Jm,r8)
               END IF
               READ (inp,*,ERR=20,END=30)                                &
                    ((swim_table(i,j),i=1,swim_Im),j=1,swim_Jm)
@@ -150,6 +151,7 @@
               IF (.not.allocated(Gfactor_table)) THEN
                 allocate ( Gfactor_table(Gfactor_Im,Gfactor_Jm) )
                 Gfactor_table=0.0_r8
+                Dmem(1)=Dmem(1)+REAL(Gfactor_Im*Gfactor_Jm)
               END IF
               READ (inp,*,ERR=20,END=30)                                &
                    ((Gfactor_table(i,j),i=1,Gfactor_Im),j=1,Gfactor_Jm)
@@ -175,6 +177,7 @@
               IF (.not.allocated(Grate_table)) THEN
                 allocate ( Grate_table(Grate_Im,Grate_Jm) )
                 Grate_table=0.0_r8
+                Dmem(1)*Dmem(1)+REAL(Grate_Im*Grate_Jm,r8)
               END IF
               READ (inp,*,ERR=20,END=30)                                &
                    ((Grate_table(i,j),i=1,Grate_Im),j=1,Grate_Jm)

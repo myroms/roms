@@ -84,10 +84,11 @@
 !  NDM3d      Number of diagnostic 3D momentum fields.                 !
 !  NDrhs      Number of diagnostic 3D right-hand-side fields.          !
 !                                                                      !
-!  Estimated Dynamical memory parameter: accumulate number of array    !
-!                                        elements.                     !
+!  Estimated Dynamic and automatic memory parameters:                  !
 !                                                                      !
-!  Dmem       Dynamical memory requirement (bytes)                     !
+!  BmemMax    Maximum automatic memory for distributed-memory buffers  !
+!               (bytes).                                               !
+!  Dmem       Dynamic memory requirements (array elements)             !
 !                                                                      !
 !=======================================================================
 !
@@ -117,7 +118,12 @@
 !
       integer, allocatable :: GridNumber(:,:)   ! [Ngrids,NestLayers]
 !
-!  Estimated dynamical memory requirement (number of array elements) for
+!  Maximum automatic memory (bytes) required in distributed-memory
+!  buffers due to parallel exchanges.
+!
+      real(r8), allocatable :: BmemMax(:)       ! [Ngrids]
+!
+!  Estimated dynamic memory requirement (number of array elements) for
 !  a particular application per nested grid.
 !
       real(r8), allocatable :: Dmem(:)          ! [Ngrids]
@@ -735,6 +741,11 @@
       END IF
       IF (.not.allocated(TileSize)) THEN
         allocate ( TileSize(Ngrids) )
+      END IF
+
+      IF (.not.allocated(BmemMax)) THEN
+        allocate ( BmemMax(Ngrids) )
+        BmemMax=0.0_r8
       END IF
 
       IF (.not.allocated(Dmem)) THEN

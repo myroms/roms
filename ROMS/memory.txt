@@ -72,9 +72,6 @@ my25_prestep      3   arrays dimensioned (IminS:ImaxS,N)
                   8   arrays dimensioned (IminS:ImaxS,JminS,JmaxS)
                   1   arrays dimensioned (IminS:ImaxS,JminS,JmaxS,N)
 
-mp_gather3d       2   arrays dimensioned (2+(Lm(ng)+2)*(Mm(ng)+2)*(N+1))
-mp_scatter3d      2   arrays dimensioned (2+(Lm(ng)+2)*(Mm(ng)+2)*(N+1))
-
 nf_fread3d        1   arrays dimensioned (2+(Lm(ng)+2)*(Mm(ng)+2)*(N+1))
 nf_fread4d        1   arrays dimensioned (2+(Lm(ng)+2)*(Mm(ng)+2)*(N+1))
 
@@ -125,3 +122,7 @@ uv3dmix2_geo     32   arrays dimensioned (IminS:ImaxS,JminS,JmaxS)
 
 uv3dmix4_geo     32   arrays dimensioned (IminS:ImaxS,JminS,JmaxS)
                   2   arrays dimensioned (IminS:ImaxS,JminS,JmaxS,N)
+
+The automatic arrays used in distributed-memory are accounted separately,
+and its maximum buffer size is stored in BmemMax(ng). That is, there is a
+value for each nested grid and parallel tile.

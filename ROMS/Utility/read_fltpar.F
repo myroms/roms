@@ -92,36 +92,47 @@
               IF (Ngrids.gt.1) Npts=MAXVAL(Nfloats)+1
               IF (.not.allocated(Fcoor)) THEN
                 allocate ( Fcoor (Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fcount)) THEN
                 allocate ( Fcount(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Ftype)) THEN
                 allocate ( Ftype (Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Ft0)) THEN
                 allocate ( Ft0(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fx0)) THEN
                 allocate ( Fx0(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fy0)) THEN
                 allocate ( Fy0(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fz0)) THEN
                 allocate ( Fz0(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fdt)) THEN
                 allocate ( Fdt(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fdx)) THEN
                 allocate ( Fdx(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fdy)) THEN
                 allocate ( Fdy(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               IF (.not.allocated(Fdz)) THEN
                 allocate ( Fdz(Npts,Ngrids) )
+                Dmem(1)=Dmem(1)+REAL(Npts*Ngrids,r8)
               END IF
               CALL allocate_floats (.TRUE.) ! allocate DRIFTER structure
               ncount(1:Ngrids)=0

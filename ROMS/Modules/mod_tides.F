@@ -285,7 +285,7 @@
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
         allocate ( TIDES(ng) % u_tide(LBi:UBi,LBj:UBj,N(ng),0:2*MTC) )
-        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1),r8)*size2d
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)*(2*MTC+1),r8)*size2d
       END IF
 
       IF (Aout(idv3dD,ng)) THEN
@@ -293,7 +293,7 @@
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
         allocate ( TIDES(ng) % v_tide(LBi:UBi,LBj:UBj,N(ng),0:2*MTC) )
-        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1),r8)*size2d
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)*(2*MTC+1),r8)*size2d
       END IF
 
       IF (ANY(Aout(idTrcD(:),ng))) THEN
@@ -302,7 +302,7 @@
 
         allocate ( TIDES(ng) % t_tide(LBi:UBi,LBj:UBj,N(ng),            &
      &                                0:2*MTC,NAT) )
-        Dmem(ng)=Dmem(ng)+REAL((N(ng)*(2*MTC+1)*NAT,r8)*size2d
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)*(2*MTC+1)*NAT,r8)*size2d
       END IF
 #  endif
 # endif

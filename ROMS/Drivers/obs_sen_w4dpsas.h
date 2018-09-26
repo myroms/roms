@@ -113,7 +113,7 @@
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
-!  Set distribute-memory (MPI) world communictor.
+!  Set distribute-memory (mpi) world communictor.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(mpiCOMM)) THEN
@@ -2158,7 +2158,8 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Stop model and time profiling clocks.  Close output NetCDF files.
+!  Stop model and time profiling clocks, report memory requirements, and
+!  close output NetCDF files.
 !-----------------------------------------------------------------------
 !
 !  Stop time clocks.
@@ -2167,7 +2168,7 @@
         WRITE (stdout,20)
  20     FORMAT (/,'Elapsed CPU time (seconds):',/)
       END IF
-
+!
       DO ng=1,Ngrids
 !$OMP PARALLEL
         DO thread=THREAD_RANGE
@@ -2175,6 +2176,12 @@
         END DO
 !$OMP END PARALLEL
       END DO
+!
+!  Report dynamic memory and automatic memory requirements.
+!
+!$OMP PARALLEL
+      CALL memory
+!$OMP END PARALLEL
 !
 !  Close IO files.
 !
