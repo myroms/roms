@@ -60,7 +60,7 @@
 
       integer :: Tindex, i, it1, it2, j
 
-      real(r8) :: fac, fac1, fac2
+      real(r8) :: SecScale, fac, fac1, fac2
 !
 !----------------------------------------------------------------------
 !  Set up requested field from data snapshots.
@@ -72,16 +72,19 @@
       Tindex=Iinfo(8,ifield,ng)
       update=.TRUE.
 !
-!  Set linear-interpolation factors.
+!  Set linear, time interpolation factors. Fractional seconds are
+!  rounded to the nearest milliseconds integer towards zero in the
+!  time interpolation weights.
 !
+      SecScale=1000.0_r8              ! seconds to milliseconds
       it1=3-Tindex
       it2=Tindex
 #if defined CRAY || defined SGI
-      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng))
-      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng))
+      fac1=ANINT((Tintrp(it2,ifield,ng)-time(ng))*SecScale)
+      fac2=ANINT((time(ng)-Tintrp(it1,ifield,ng))*SecScale)
 #else
-      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng),r8)
-      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng),r8)
+      fac1=ANINT((Tintrp(it2,ifield,ng)-time(ng))*SecScale,r8)
+      fac2=ANINT((time(ng)-Tintrp(it1,ifield,ng))*SecScale,r8)
 #endif
 !
 !  Load time-invariant data. Time interpolation is not necessary.
@@ -97,8 +100,8 @@
 !
       ELSE IF (((fac1*fac2).ge.0.0_r8).and.(fac1+fac2).gt.0.0_r8) THEN
         fac=1.0_r8/(fac1+fac2)
-        fac1=fac*fac1
-        fac2=fac*fac2
+        fac1=fac*fac1                             ! nondimensional
+        fac2=fac*fac2                             ! nondimensional
         DO j=1,Jrec
           DO i=Istr,Iend
             Fout(i,j)=fac1*Finp(i,j,it1)+fac2*Finp(i,j,it2)
@@ -121,7 +124,8 @@
      &                      Finfo(3,ifield,ng), Finfo(4,ifield,ng),     &
      &                      Tintrp(it1,ifield,ng)*sec2day,              &
      &                      Tintrp(it2,ifield,ng)*sec2day,              &
-     &                      fac1*sec2day, fac2*sec2day
+     &                      fac1*sec2day/SecScale,                      &
+     &                      fac2*sec2day/SecScale
         END IF
   10    FORMAT (/,' SET_NGFLD  - current model time',                   &
      &          ' exceeds ending value for variable: ',a,               &
