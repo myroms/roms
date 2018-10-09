@@ -524,6 +524,7 @@
 ** OPTIONS for grid nesting:                                                 **
 **                                                                           **
 ** NESTING             use to activate grid nesting: composite/refinement    **
+** NESTING_DEBUG       use to check mass fluxes conservation in refinement   **
 ** NO_CORRECT_TRACER   use to avoid two-way correction of boundary tracer    **
 ** ONE_WAY             use if one-way nesting in refinement grids            **
 ** TIME_INTERP_FLUX    time interpolate coarse mass flux instead of persist  **

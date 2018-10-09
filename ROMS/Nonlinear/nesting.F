@@ -46,9 +46,11 @@
 !                                                                      !
 !  bry_fluxes       Extracts horizontat advective fluxes the contact   !
 !                     boundary of donor and receiver grids.            !
+# ifdef NESTING_DEBUG
 !  check_massflux   If refinement, check mass fluxes between coarse    !
 !                     and fine grids for volume conservation. It is    !
 !                     use only for debugging and diagnostics.          !
+# endif
 !  correct_tracer   Correct coarse grid tracer at the refinement grid  !
 !                     boundary with the refined accumulated fluxes     !
 !  do_twoway        Logical function to determine at which time-step   !
@@ -101,7 +103,9 @@
       PUBLIC  :: do_twoway
 # endif
       PUBLIC  :: fill_contact
+# ifdef NESTING_DEBUG
       PUBLIC  :: check_massflux
+# endif
 # ifdef SOLVE3D
       PRIVATE :: correct_tracer
       PRIVATE :: correct_tracer_tile
@@ -254,6 +258,8 @@
             CALL put_refine (ng, model, tile, LputFsur)
           END DO
 !$OMP BARRIER
+
+# ifdef NESTING_DEBUG
 !
 !  If refinement, check mass flux conservation between coarser and
 !  finer grids.
@@ -262,6 +268,7 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL check_massflux (ng, model, tile)
           END DO
+# endif
 
 # ifndef ONE_WAY
 !
@@ -578,6 +585,8 @@
 
       RETURN
       END SUBROUTINE bry_fluxes
+
+# ifdef NESTING_DEBUG
 !
       SUBROUTINE check_massflux (ngf, model, tile)
 !
@@ -604,10 +613,10 @@
       USE mod_nesting
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_assemble
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -615,22 +624,20 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       integer :: ILB, IUB, JLB, JUB, NptsSN, NptsWE, my_tile
-# endif
+#  endif
       integer :: Iedge, Ibc, Ibc_min, Ibc_max, Ibf, Io
       integer :: Jedge, Jbc, Jbc_min, Jbc_max, Jbf, Jo
       integer :: Istr, Iend, Jstr, Jend
       integer :: cjcr, cr, dg, half, icr, isum, jsum, m, rg
       integer :: tnew, told
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       real(r8), parameter :: spv = 0.0_r8
-# endif
+#  endif
       real(r8) :: EastSum, NorthSum, SouthSum, WestSum
-# ifdef NESTING_DEBUG
       real(r8) :: MFratio
-# endif
 !
 !-----------------------------------------------------------------------
 !  Check mass and volume conservation during refinement between coarse
@@ -669,7 +676,7 @@
             END IF
           END DO
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
 !  Set global size of boundary edges for coarse grid (donor index).
 !
@@ -689,7 +696,7 @@
           BRY_CONTACT(ieast ,cjcr)%Mflux=spv
           BRY_CONTACT(isouth,cjcr)%Mflux=spv
           BRY_CONTACT(inorth,cjcr)%Mflux=spv
-# endif
+#  endif
 !
 !  Set finer grid center (half) and offset indices (Io and Jo) for
 !  coarser grid (I,J) coordinates.
@@ -707,7 +714,6 @@
           Jbc_min=J_bottom(ngf)
           Jbc_max=J_top(ngf)-1            ! interior points, no top
 !                                           left corner
-# ifdef NESTING_DEBUG
           IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,10) 'Western Boundary Mass Fluxes: ',          &
@@ -716,7 +722,6 @@
             END IF
           END IF
 !
-# endif
           DO Jbc=Jstr,Jend
             IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                  &
      &          ((Jbc_min.le.Jbc).and.(Jbc.le.Jbc_max))) THEN
@@ -737,8 +742,6 @@
 !  and finer grid is conserved.
 !
               BRY_CONTACT(iwest,cjcr)%Mflux(Jbc)=WestSum
-
-# ifdef NESTING_DEBUG
               IF (WestSum.ne.0) THEN
                 MFratio=REFINED(cr)%DU_avg2(1,m,tnew)/WestSum
               ELSE
@@ -747,7 +750,7 @@
               WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       WestSum, MFratio
               CALL my_flush (300)
-# endif
+
             END IF
           END DO
 !
@@ -760,7 +763,6 @@
           Jbc_min=J_bottom(ngf)
           Jbc_max=J_top(ngf)-1            ! interior points, no top
 !                                           right corner
-# ifdef NESTING_DEBUG
           IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,10) 'Eastern Boundary Mass Fluxes: ',          &
@@ -769,7 +771,6 @@
             END IF
           END IF
 !
-# endif
           DO Jbc=Jstr,Jend
             IF (((Istr.le.Ibc).and.(Ibc.le.Iend)).and.                  &
      &          ((Jbc_min.le.Jbc).and.(Jbc.le.Jbc_max))) THEN
@@ -790,8 +791,6 @@
 !  and finer grid is conserved.
 !
               BRY_CONTACT(ieast,cjcr)%Mflux(Jbc)=EastSum
-
-# ifdef NESTING_DEBUG
               IF (EastSum.ne.0) THEN
                 MFratio=REFINED(cr)%DU_avg2(1,m,tnew)/EastSum
               ELSE
@@ -800,7 +799,6 @@
               WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       EastSum, MFratio
               CALL my_flush (300)
-# endif
             END IF
           END DO
 !
@@ -813,7 +811,6 @@
           Ibc_min=I_left(ngf)
           Ibc_max=I_right(ngf)-1          ! interior points, no bottom
 !                                           right corner
-# ifdef NESTING_DEBUG
           IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,20) 'Southern Boundary Mass Fluxes: ',         &
@@ -822,7 +819,6 @@
             END IF
           END IF
 !
-# endif
           DO Ibc=Istr,Iend
             IF (((Ibc_min.le.Ibc).and.(Ibc.le.Ibc_max)).and.            &
      &          ((Jstr.le.Jbc).and.(Jbc.le.Jend))) THEN
@@ -844,8 +840,6 @@
 !  and finer grid is conserved.
 !
               BRY_CONTACT(isouth,cjcr)%Mflux(Ibc)=SouthSum
-
-# ifdef NESTING_DEBUG
               IF (SouthSum.ne.0) THEN
                 MFratio=REFINED(cr)%DV_avg2(1,m,tnew)/SouthSum
               ELSE
@@ -854,7 +848,6 @@
               WRITE (300,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       SouthSum, MFratio
               CALL my_flush (300)
-# endif
             END IF
           END DO
 !
@@ -867,7 +860,6 @@
           Ibc_min=I_left(ngf)
           Ibc_max=I_right(ngf)-1          ! interior points, no top
 !                                           right corner
-# ifdef NESTING_DEBUG
           IF (DOMAIN(ngf)%SouthWest_Test(tile)) THEN
             IF (Master) THEN
               WRITE (300,20) 'Northern Boundary Mass Fluxes: ',         &
@@ -876,7 +868,6 @@
             END IF
           END IF
 !
-# endif
           DO Ibc=Istr,Iend
             IF (((Ibc_min.le.Ibc).and.(Ibc.le.Ibc_max)).and.            &
      &          ((Jstr.le.Jbc).and.(Jbc.le.Jend))) THEN
@@ -898,8 +889,6 @@
 !  and finer grid is conserved.
 !
               BRY_CONTACT(inorth,cjcr)%Mflux(Ibc)=NorthSum
-
-# ifdef NESTING_DEBUG
               IF (NorthSum.ne.0) THEN
                 MFratio=REFINED(cr)%DV_avg2(1,m,tnew)/NorthSum
               ELSE
@@ -907,11 +896,10 @@
               END IF
               WRITE (300,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       NorthSum, MFratio
-# endif
             END IF
           END DO
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
 !  Collect data from all nodes.
 !
@@ -923,11 +911,9 @@
      &                      BRY_CONTACT(isouth,cjcr)%Mflux(ILB:))
           CALL mp_assemble (dg, model, NptsSN, spv,                      &
      &                      BRY_CONTACT(inorth,cjcr)%Mflux(ILB:))
-# endif
+#  endif
         END IF
       END DO
-
-# ifdef NESTING_DEBUG
 !
       CALL my_flush (300)
 !
@@ -942,10 +928,10 @@
      &        'Fine Grid',11x,'Ratio',/,4x,'Ib',9x,'DV_avg2',9x,        &
      &        'SUM(DV_avg2)',/)
   30  FORMAT (4x,i4.4,3(3x,1p,e15.8))
-# endif
 
       RETURN
       END SUBROUTINE check_massflux
+# endif
 
 # ifndef ONE_WAY
 !
@@ -5395,6 +5381,8 @@
         JUB=BOUNDS(ng)%UBj(my_tile)
         NptsWE=JUB-JLB+1
         NptsSN=IUB-ILB+1
+
+#  ifdef NESTING_DEBUG
 !
 !  If distributed-memory, initialize arrays used to check mass flux
 !  conservation with special value (zero) to facilitate the global
@@ -5404,6 +5392,7 @@
         BRY_CONTACT(ieast ,cr)%Mflux=spv
         BRY_CONTACT(isouth,cr)%Mflux=spv
         BRY_CONTACT(inorth,cr)%Mflux=spv
+#  endif
       END IF
 # endif
 !
@@ -5631,7 +5620,9 @@
 #  ifdef WET_DRY
             my_value=my_value*GRID(ng)%umask_wet(Istr,j)
 #  endif
+#  ifdef NESTING_DEBUG
             BRY_CONTACT(iwest,cr)%Mflux(j)=cff*my_value
+#  endif
             OCEAN(ng)%ubar(Istr,j,indx1(ng))=my_value
           END DO
         END IF
@@ -5661,7 +5652,9 @@
 #  ifdef WET_DRY
             my_value=my_value*GRID(ng)%umask_wet(Iend+1,j)
 #  endif
+#  ifdef NESTING_DEBUG
             BRY_CONTACT(ieast,cr)%Mflux(j)=cff*my_value
+#  endif
             OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=my_value
           END DO
         END IF
@@ -5691,7 +5684,9 @@
 #  ifdef WET_DRY
             my_value=my_value*GRID(ng)%vmask_wet(i,Jstr)
 #  endif
+#  ifdef NESTING_DEBUG
             BRY_CONTACT(isouth,cr)%Mflux(i)=cff*my_value
+#  endif
             OCEAN(ng)%vbar(i,Jstr,indx1(ng))=my_value
           END DO
         END IF
@@ -5721,7 +5716,9 @@
 #  ifdef WET_DRY
             my_value=my_value*GRID(ng)%vmask_wet(i,Jend+1)
 #  endif
+#  ifdef NESTING_DEBUG
             BRY_CONTACT(inorth,cr)%Mflux(i)=cff*my_value
+#  endif
             OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=my_value
           END DO
         END IF
@@ -5771,6 +5768,8 @@
      &                      OCEAN(ng)%vbar(:,:,1),                      &
      &                      OCEAN(ng)%vbar(:,:,2),                      &
      &                      OCEAN(ng)%vbar(:,:,3))
+
+#  ifdef NESTING_DEBUG
 !
         CALL mp_assemble (ng, model, NptsWE, spv,                        &
      &                    BRY_CONTACT(iwest ,cr)%Mflux(JLB:))
@@ -5780,6 +5779,7 @@
      &                    BRY_CONTACT(isouth,cr)%Mflux(ILB:))
         CALL mp_assemble (ng, model, NptsSN, spv,                        &
      &                    BRY_CONTACT(inorth,cr)%Mflux(ILB:))
+#  endif
       END IF
 # endif
 !

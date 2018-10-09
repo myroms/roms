@@ -304,7 +304,9 @@
 
         integer, pointer :: C2Bindex(:)    ! contact to boundary index
 
+# ifdef NESTING_DEBUG
         real(r8), pointer :: Mflux(:)      ! perimeter mass flux
+# endif
 # ifdef SOLVE3D
         real(r8), pointer :: Tflux(:,:,:)  ! perimeter tracer flux
 # endif
@@ -469,8 +471,10 @@
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBj:UBj) )
               Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
 
+# ifdef NESTING_DEBUG
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBj:UBj) )
               Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+# endif
 
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBj:UBj,          &
@@ -487,8 +491,10 @@
               allocate ( BRY_CONTACT(ibry,cr) % C2Bindex(LBi:UBi) )
               Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
 
+# ifdef NESTING_DEBUG
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBi:UBi) )
               Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+# endif
 
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
@@ -539,7 +545,9 @@
           BRY_CONTACT(ibry,cr) % Ib = ispval
           BRY_CONTACT(ibry,cr) % Jb = ispval
           BRY_CONTACT(ibry,cr) % C2Bindex = ispval
+# ifdef NESTING_DEBUG
           BRY_CONTACT(ibry,cr) % Mflux = 0.0_r8
+# endif
 # ifdef SOLVE3D
           BRY_CONTACT(ibry,cr) % Tflux = 0.0_r8
 # endif
