@@ -1093,7 +1093,7 @@
             END IF
           END DO
           status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOday),   &
-     &                   NF_FRST, 1, (/surveyDim/), Aval, Vinfo, ncname)
+     &                   NF_TOUT, 1, (/surveyDim/), Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
@@ -1209,7 +1209,7 @@
             END IF
           END DO
           status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsT),   &
-     &                   NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+     &                   NF_TOUT, 1, (/datumDim/), Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF

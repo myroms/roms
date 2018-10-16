@@ -40,7 +40,7 @@
 
       integer :: Fcount, Nfiles, i, ifile, lstr
 
-      real(r8) :: Tfinal, Tmax, Tmin, Tscale
+      real(dp) :: Tfinal, Tmax, Tmin, Tscale
 
       character (len=1), parameter :: blank = ' '
       character (len= 22) :: F_code, I_code, Tmin_code, Tmax_code
@@ -558,7 +558,7 @@
 
       character (*), intent(in) :: ncname
 
-      real(r8), intent(out) :: Tmin, Tmax, Tscale
+      real(dp), intent(out) :: Tmin, Tmax, Tscale
 !
 !  Local variable declarations.
 !

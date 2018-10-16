@@ -69,7 +69,7 @@
 !***********************************************************************
       SUBROUTINE caldate (CurrentTime,                                  &
      &                    yy_i, yd_i, mm_i, dd_i, h_i, m_i, s_i,        &
-     &                    yd_r8, dd_r8, h_r8, m_r8, s_r8)
+     &                    yd_dp, dd_dp, h_dp, m_dp, s_dp)
 !***********************************************************************
 !                                                                      !
 !  This routine converts current model time (in days) to calendar      !
@@ -77,7 +77,7 @@
 !  are all optional.  For Example, to get just the fractional (real)   !
 !  day-of-year:                                                        !
 !                                                                      !
-!     CALL caldate (tdays(ng), yd_r8=yday)                             !
+!     CALL caldate (tdays(ng), yd_dp=yday)                             !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -93,11 +93,11 @@
 !     m_i           Minutes of the hour, 1 - 23 (integer; OPTIONAL)    !
 !     s_i           Seconds of the minute (integer; OPTIONAL)          !
 !                                                                      !
-!     yd_r8         Day of the year (real, fraction; OPTIONAL)         !
-!     dd_r8         Day of the month (real, fraction; OPTIONAL)        !
-!     h_r8          Hour of the day (real, fraction; OPTION)           !
-!     m_r8          Minutes of the hour (real, fraction; OPTION)       !
-!     s_r8          Seconds of the minute (real, fraction; OPTIONAL)   !
+!     yd_dp         Day of the year (real, fraction; OPTIONAL)         !
+!     dd_dp         Day of the month (real, fraction; OPTIONAL)        !
+!     h_dp          Hour of the day (real, fraction; OPTION)           !
+!     m_dp          Minutes of the hour (real, fraction; OPTION)       !
+!     s_dp          Seconds of the minute (real, fraction; OPTIONAL)   !
 !                                                                      !
 !  Notice that a calendar obtained by extending backward in time from  !
 !  its invention or implementation is called the Proleptic version of  !
@@ -112,7 +112,7 @@
 !
 !  Imported variable declarations.
 !
-      real(r8), intent(in)  :: CurrentTime
+      real(dp), intent(in)  :: CurrentTime
 !
       integer,  intent(out), optional :: yy_i
       integer,  intent(out), optional :: yd_i
@@ -122,11 +122,11 @@
       integer,  intent(out), optional :: m_i
       integer,  intent(out), optional :: s_i
 !
-      real(r8), intent(out), optional :: yd_r8
-      real(r8), intent(out), optional :: dd_r8
-      real(r8), intent(out), optional :: h_r8
-      real(r8), intent(out), optional :: m_r8
-      real(r8), intent(out), optional :: s_r8
+      real(dp), intent(out), optional :: yd_dp
+      real(dp), intent(out), optional :: dd_dp
+      real(dp), intent(out), optional :: h_dp
+      real(dp), intent(out), optional :: m_dp
+      real(dp), intent(out), optional :: s_dp
 !
 !  Local variable declarations.
 !
@@ -135,8 +135,8 @@
       integer :: MyDay, MyHour, MyMinutes, MySeconds
       integer :: MyMonth, MyYday, MyYear
 
-      real(r8) :: DateNumber, DayFraction, RefDateNumber
-      real(r8) :: Hour, Minutes, Seconds
+      real(dp) :: DateNumber, DayFraction, RefDateNumber
+      real(dp) :: Hour, Minutes, Seconds
 !
 !-----------------------------------------------------------------------
 !  Get calendar date from model current time (days).
@@ -187,7 +187,7 @@
         IsDayUnits=.TRUE.
         CALL datevec (DateNumber, IsDayUnits, MyYear, MyMonth, MyDay,   &
      &                MyHour, MyMinutes, Seconds, Minutes, Hour)
-        MyYday=INT(DateNumber-REAL(MyYear*360,r8)+1)
+        MyYday=INT(DateNumber-REAL(MyYear*360,dp)+1)
         MySeconds=INT(Seconds)
 !
 !  The model clock is the elapsed time since reference time of the form
@@ -225,11 +225,11 @@
       IF (PRESENT(m_i ))  m_i =MyMinutes
       IF (PRESENT(s_i ))  s_i =MySeconds
 !
-      IF (PRESENT(yd_r8)) yd_r8=REAL(MyYday,r8)+DayFraction
-      IF (PRESENT(dd_r8)) dd_r8=REAL(MyDay,r8)+DayFraction
-      IF (PRESENT(h_r8 )) h_r8 =Hour
-      IF (PRESENT(m_r8 )) m_r8 =Minutes
-      IF (PRESENT(s_r8 )) s_r8 =Seconds
+      IF (PRESENT(yd_dp)) yd_dp=REAL(MyYday,dp)+DayFraction
+      IF (PRESENT(dd_dp)) dd_dp=REAL(MyDay,dp)+DayFraction
+      IF (PRESENT(h_dp )) h_dp =Hour
+      IF (PRESENT(m_dp )) m_dp =Minutes
+      IF (PRESENT(s_dp )) s_dp =Seconds
 !
       RETURN
       END SUBROUTINE caldate
@@ -309,9 +309,9 @@
       integer,  intent(in), optional :: hour
       integer,  intent(in), optional :: minutes
 
-      real(r8), intent(in), optional :: seconds
+      real(dp), intent(in), optional :: seconds
 
-      real(r8), intent(out), dimension(2) :: DateNumber
+      real(dp), intent(out), dimension(2) :: DateNumber
 !
 !  Local variable declarations.
 !
@@ -319,7 +319,7 @@
 
       integer :: MyDay, MyHour, MyMinutes, MyMonth, MyYear, y01
 
-      real(r8) :: MySeconds
+      real(dp) :: MySeconds
 !
 !-----------------------------------------------------------------------
 !  Initialize optional arguments.
@@ -340,7 +340,7 @@
       IF (PRESENT(seconds)) THEN
         MySeconds=seconds
       ELSE
-        MySeconds=0.0_r8
+        MySeconds=0.0_dp
       END IF
 !
 !-----------------------------------------------------------------------
@@ -392,13 +392,13 @@
 !
       ELSE
         MyMonth=MOD(month+9, 12)                  ! Mar=0, ..., Feb=11
-        MyYear=year-INT(0.1_r8*REAL(MyMonth,r8))  ! if Jan or Feb,
+        MyYear=year-INT(0.1_dp*REAL(MyMonth,dp))  ! if Jan or Feb,
 !                                                   substract 1
-        MyDay=INT(365.0_r8*REAL(MyYear,r8))+                            &
-     &        INT(0.25_r8*REAL(MyYear,r8))-                             &
-     &        INT(0.01_r8*REAL(MyYear,r8))+                             &
-     &        INT(0.0025_r8*REAL(MyYear,r8))+                           &
-     &        INT(0.1_r8*(REAL(MyMonth,r8)*306.0_r8 + 5.0_r8))+         &
+        MyDay=INT(365.0_dp*REAL(MyYear,dp))+                            &
+     &        INT(0.25_dp*REAL(MyYear,dp))-                             &
+     &        INT(0.01_dp*REAL(MyYear,dp))+                             &
+     &        INT(0.0025_dp*REAL(MyYear,dp))+                           &
+     &        INT(0.1_dp*(REAL(MyMonth,dp)*306.0_dp + 5.0_dp))+         &
      &        (day - 1)
 !
 !  Adjust for Matlab origin 0000-00-00 00:00:00, so we get the same
@@ -423,16 +423,16 @@
 !
 !  Fractional date number (units=day).
 !
-      DateNumber(1)=REAL(MyDay,r8)+                                     &
-     &              REAL(MyHour,r8)/24.0_r8+                            &
-     &              REAL(MyMinutes,r8)/1440.0_r8+                       &
-     &              MySeconds/86400.0_r8
+      DateNumber(1)=REAL(MyDay,dp)+                                     &
+     &              REAL(MyHour,dp)/24.0_dp+                            &
+     &              REAL(MyMinutes,dp)/1440.0_dp+                       &
+     &              MySeconds/86400.0_dp
 !
 !  Fractional date number (units=second).
 !
-      DateNumber(2)=REAL(MyDay,r8)*86400.0_r8+                          &
-     &              REAL(MyHour,r8)*360.0_r8+                           &
-     &              REAL(MyMinutes,r8)*60.0_r8+                         &
+      DateNumber(2)=REAL(MyDay,dp)*86400.0_dp+                          &
+     &              REAL(MyHour,dp)*360.0_dp+                           &
+     &              REAL(MyMinutes,dp)*60.0_dp+                         &
      &              MySeconds
 
       RETURN
@@ -463,7 +463,7 @@
 !
       logical,  intent(in) :: IsDayUnits
 
-      real(r8), intent(in) :: DateNumber
+      real(dp), intent(in) :: DateNumber
 
       character (len=*), intent(out) :: DateString
 !
@@ -471,7 +471,7 @@
 !
       integer :: i, year, month, day, hour, minutes
 
-      real(r8):: F_hour, F_minutes, seconds
+      real(dp):: F_hour, F_minutes, seconds
 
       character (len= 5) :: sec_string
       character (len=22) :: string
@@ -545,11 +545,11 @@
 !
       logical,  intent(in) :: IsDayUnits
 
-      real(r8), intent(in) :: DateNumber
+      real(dp), intent(in) :: DateNumber
 
       integer,  intent(out) :: year, month, day, hour, minutes
 
-      real(r8), intent(out) :: F_hour, F_minutes, seconds
+      real(dp), intent(out) :: F_hour, F_minutes, seconds
 !
 !  Local variable declarations.
 !
@@ -560,10 +560,10 @@
 
       integer, parameter :: gregorian = 2299161  ! 15 Oct, 1582 A.D.
 
-      real(r8), parameter :: offset = 61.0_r8
+      real(dp), parameter :: offset = 61.0_dp
 
-      real(r8) :: CT, DayFraction, MyDateNumber
-      real(r8) :: dd, jr, js, mo, yy
+      real(dp) :: CT, DayFraction, MyDateNumber
+      real(dp) :: dd, jr, js, mo, yy
 !
 !-----------------------------------------------------------------------
 !  Compute date vector from date number for the Julian with Gregorian
@@ -583,16 +583,16 @@
 !
       CALENDAR : IF (INT(time_ref).eq.-2) THEN
         IF (IsDayUnits) THEN
-          IF (DateNumber.ge.REAL(gregorian,r8)) THEN
+          IF (DateNumber.ge.REAL(gregorian,dp)) THEN
             MyDateNumber=DateNumber
           ELSE
             MyDateNumber=DateNumber+Rclock%DateNumber(1)
           END IF
         ELSE
-          IF (DateNumber.ge.(REAL(gregorian,r8)*86400.0_r8)) THEN
-            MyDateNumber=DateNumber/86400.0_r8
+          IF (DateNumber.ge.(REAL(gregorian,dp)*86400.0_dp)) THEN
+            MyDateNumber=DateNumber/86400.0_dp
           ELSE
-            MyDateNumber=(DateNumber+Rclock%DateNumber(2))/86400.0_r8
+            MyDateNumber=(DateNumber+Rclock%DateNumber(2))/86400.0_dp
           END IF
         END IF
         DayFraction=ABS(MyDateNumber-AINT(MyDateNumber))
@@ -600,53 +600,53 @@
         IF (ProlepticJulian) THEN            ! Proleptic Julian Calendar
           jday=INT(MyDateNumber)             ! origin: Jan 1, 4713 BC
           IF (jday.ge.gregorian) THEN
-            jalpha=INT(((jday-1867216)-0.25_r8)/36524.25_r8)! Gregorian
-            ja=jday+1+jalpha-INT(0.25_r8*REAL(jalpha,r8))   ! correction
+            jalpha=INT(((jday-1867216)-0.25_dp)/36524.25_dp)! Gregorian
+            ja=jday+1+jalpha-INT(0.25_dp*REAL(jalpha,dp))   ! correction
           ELSE
             ja=jday
           END IF
           jb=ja+1524
-          jc=INT(6680.0_r8+(REAL(jb-2439870,r8)-122.1_r8)/365.25_r8)
-          jd=365*jc+INT(0.25_r8*REAL(jc,r8))
-          je=INT(REAL(jb-jd,r8)/30.6001_r8)
-          day=jb-jd-INT(30.6001_r8*REAL(je,r8))
+          jc=INT(6680.0_dp+(REAL(jb-2439870,dp)-122.1_dp)/365.25_dp)
+          jd=365*jc+INT(0.25_dp*REAL(jc,dp))
+          je=INT(REAL(jb-jd,dp)/30.6001_dp)
+          day=jb-jd-INT(30.6001_dp*REAL(je,dp))
           month=je-1
           IF (month.gt.12) month=month-12
           year=jc-4715
           IF (month.gt.2) year=year-1
           IF (year .le.0) year=year-1
         ELSE                                    ! Proleptic Gregorian
-          jr=FLOOR(MyDateNumber)-1721119.0_r8   ! Calendar, origin:
-          js=4.0_r8*jr-1.0_r8                   ! Nov 24, 4713 BC
-          yy=FLOOR(js/146097.0_r8)
-          jr=js-146097.0_r8*yy
-          js=FLOOR(jr*0.25_r8)
-          js=4.0_r8*js+3.0_r8
-          jr=FLOOR(js/1461.0_r8)
-          dd=FLOOR(((js-1461.0_r8*jr)+4.0_r8)*0.25_r8)
-          js=5.0_r8*dd-3.0_r8
-          mo=FLOOR(js/153.0_r8)
-          yy=yy*100.0_r8+jr
+          jr=FLOOR(MyDateNumber)-1721119.0_dp   ! Calendar, origin:
+          js=4.0_dp*jr-1.0_dp                   ! Nov 24, 4713 BC
+          yy=FLOOR(js/146097.0_dp)
+          jr=js-146097.0_dp*yy
+          js=FLOOR(jr*0.25_dp)
+          js=4.0_dp*js+3.0_dp
+          jr=FLOOR(js/1461.0_dp)
+          dd=FLOOR(((js-1461.0_dp*jr)+4.0_dp)*0.25_dp)
+          js=5.0_dp*dd-3.0_dp
+          mo=FLOOR(js/153.0_dp)
+          yy=yy*100.0_dp+jr
 !
-          IF (mo.lt.10.0_r8) THEN
+          IF (mo.lt.10.0_dp) THEN
             year =INT(yy)
             month=INT(mo+3)
           ELSE
             year =INT(yy+1)
             month=INT(mo-9)
           END IF
-          day=INT(((js-153.0_r8*mo)+5.0_r8)*0.2_r8)
+          day=INT(((js-153.0_dp*mo)+5.0_dp)*0.2_dp)
         END IF
 !
-        seconds=DayFraction*86400.0_r8
-        CT=3.0_r8*EPSILON(seconds)           ! comparison tolerance
+        seconds=DayFraction*86400.0_dp
+        CT=3.0_dp*EPSILON(seconds)           ! comparison tolerance
         seconds=ROUND(seconds, CT)           ! tolerant round function
-        F_hour=seconds/3600.0_r8
+        F_hour=seconds/3600.0_dp
         hour=INT(F_hour)
-        seconds=ABS(seconds-REAL(hour*3600,r8))
-        F_minutes=seconds/60.0_r8
+        seconds=ABS(seconds-REAL(hour*3600,dp))
+        F_minutes=seconds/60.0_dp
         minutes=INT(F_minutes)
-        seconds=ABS(seconds-REAL(F_minutes*60,r8))
+        seconds=ABS(seconds-REAL(F_minutes*60,dp))
 !
 !-----------------------------------------------------------------------
 !  Compute date vector from date mumber for the 360_day calendar: the
@@ -657,24 +657,24 @@
         DayFraction=ABS(DateNumber-AINT(DateNumber))
 !
         IF (IsDayUnits) THEN
-          year=INT(DateNumber/360.0_r8)
-          yday=INT(DateNumber-REAL(year*360,r8)+1)
+          year=INT(DateNumber/360.0_dp)
+          yday=INT(DateNumber-REAL(year*360,dp)+1)
         ELSE
-          year=INT(DateNumber/31104000.0_r8)              ! 360*86400
-          yday=INT((DateNumber-REAL(year*31104000,r8)+1)/86400.0_r8)
+          year=INT(DateNumber/31104000.0_dp)              ! 360*86400
+          yday=INT((DateNumber-REAL(year*31104000,dp)+1)/86400.0_dp)
         END IF
         month=((yday-1)/30)+1
         day=MOD(yday-1,30)+1
 !
-        seconds=DayFraction*86400.0_r8
-        CT=3.0_r8*EPSILON(seconds)           ! comparison tolerance
+        seconds=DayFraction*86400.0_dp
+        CT=3.0_dp*EPSILON(seconds)           ! comparison tolerance
         seconds=ROUND(seconds, CT)           ! tolerant round function
-        F_hour=seconds/3600.0_r8
+        F_hour=seconds/3600.0_dp
         hour=INT(F_hour)
-        seconds=ABS(seconds-REAL(hour*3600,r8))
-        F_minutes=seconds/60.0_r8
+        seconds=ABS(seconds-REAL(hour*3600,dp))
+        F_minutes=seconds/60.0_dp
         minutes=INT(F_minutes)
-        seconds=ABS(seconds-REAL(F_minutes*60,r8))
+        seconds=ABS(seconds-REAL(F_minutes*60,dp))
 !
 !-----------------------------------------------------------------------
 !  Compute date vector from date number for the Gregorian and Gregorian
@@ -685,42 +685,42 @@
         IF (IsDayUnits) THEN                        ! fractional days
           MyDateNumber=DateNumber
         ELSE                                        ! fractional seconds
-          MyDateNumber=DateNumber/86400.0_r8
+          MyDateNumber=DateNumber/86400.0_dp
         END IF
         DayFraction=ABS(MyDateNumber-AINT(MyDateNumber))
 !
         IF (MyDateNumber.lt.offset) THEN            ! adjust for Matlab
-          MyDateNumber=MyDateNumber-offset+1.0_r8   ! zero origin,
+          MyDateNumber=MyDateNumber-offset+1.0_dp   ! zero origin,
         ELSE                                        ! datenum(0,0,0)=0,
           MyDateNumber=MyDateNumber-offset          ! 61 days offset
         ENDIF
 !
-        MyYear=INT((10000.0_r8*AINT(MyDateNumber)+14780.0_r8)/          &
-     &             3652425.0_r8)
+        MyYear=INT((10000.0_dp*AINT(MyDateNumber)+14780.0_dp)/          &
+     &             3652425.0_dp)
         MyDay=INT(MyDateNumber)-                                        &
-     &        (INT(365.0_r8*REAL(MyYear,r8))+                           &
-     &         INT(0.25_r8*REAL(MyYear,r8))-                            &
-     &         INT(0.01_r8*REAL(MyYear,r8))+                            &
-     &         INT(0.0025_r8*REAL(MyYear,r8)))
+     &        (INT(365.0_dp*REAL(MyYear,dp))+                           &
+     &         INT(0.25_dp*REAL(MyYear,dp))-                            &
+     &         INT(0.01_dp*REAL(MyYear,dp))+                            &
+     &         INT(0.0025_dp*REAL(MyYear,dp)))
         IF (MyDay.lt.0) THEN                        ! if less than Mar 1
           MyYear=MyYear-1                           ! easy on leap-years
           MyDay=INT(MyDateNumber)-                                      &
-     &          (INT(365.0_r8*REAL(MyYear,r8))+                         &
-     &           INT(0.25_r8*REAL(MyYear,r8))-                          &
-     &           INT(0.01_r8*REAL(MyYear,r8))+                          &
-     &           INT(0.0025_r8*REAL(MyYear,r8)))
+     &          (INT(365.0_dp*REAL(MyYear,dp))+                         &
+     &           INT(0.25_dp*REAL(MyYear,dp))-                          &
+     &           INT(0.01_dp*REAL(MyYear,dp))+                          &
+     &           INT(0.0025_dp*REAL(MyYear,dp)))
         END IF
-        MyMonth=INT((100.0_r8*REAL(MyDay,r8)+ 52.0_r8)/3060.0_r8)
+        MyMonth=INT((100.0_dp*REAL(MyDay,dp)+ 52.0_dp)/3060.0_dp)
         month=MOD(MyMonth+2, 12) + 1
         year=MyYear+                                                    &
-     &       INT((REAL(MyMonth,r8)+2.0_r8)/12.0_r8)
+     &       INT((REAL(MyMonth,dp)+2.0_dp)/12.0_dp)
         day=MyDay-                                                      &
-     &      INT(0.1_r8*(REAL(MyMonth,r8)*306.0_r8 + 5.0_r8)) + 1
+     &      INT(0.1_dp*(REAL(MyMonth,dp)*306.0_dp + 5.0_dp)) + 1
 !
 !  Fix to match Matlab "datestr" function values with the origin at
 !  0000-00-00 00:00:00
 !
-        IF (DateNumber.eq.0.0_r8) THEN
+        IF (DateNumber.eq.0.0_dp) THEN
           year=0
           month=1
           day=0
@@ -728,16 +728,16 @@
 !
 !  Convert fraction of a day.
 !
-        seconds=DayFraction*86400.0_r8
-        CT=3.0_r8*EPSILON(seconds)           ! comparison tolerance
+        seconds=DayFraction*86400.0_dp
+        CT=3.0_dp*EPSILON(seconds)           ! comparison tolerance
         seconds=ROUND(seconds, CT)           ! tolerant round function
 !
-        F_hour=seconds/3600.0_r8
+        F_hour=seconds/3600.0_dp
         hour=INT(F_hour)
-        seconds=ABS(seconds-REAL(hour*3600,r8))
-        F_minutes=seconds/60.0_r8
+        seconds=ABS(seconds-REAL(hour*3600,dp))
+        F_minutes=seconds/60.0_dp
         minutes=INT(F_minutes)
-        seconds=ABS(seconds-REAL(minutes*60,r8))
+        seconds=ABS(seconds-REAL(minutes*60,dp))
       END IF CALENDAR
 !
       RETURN
@@ -1000,16 +1000,16 @@
 !
 !  Imported variable declarations.
 !
-      real(r8), intent(in) :: r_time
+      real(dp), intent(in) :: r_time
 !
 !  Local variable declarations.
 !
       integer :: ifac
       integer :: iday, ihour, isec, iyear, leap, minute, month, yday
 
-      real(r8) :: day, sec
+      real(dp) :: day, sec
 
-      real(r8), dimension(2) :: DateNumber
+      real(dp), dimension(2) :: DateNumber
 
       character (len=19) :: string
       character (len=20) :: calendar
@@ -1023,17 +1023,17 @@
 !
       IF (INT(r_time).gt.0) THEN                 ! day 0: Mar 1, 0000
         calendar='proleptic_gregorian'
-        iyear=MAX(1,INT(r_time*0.0001_r8))
-        month=MIN(12,MAX(1,INT((r_time-REAL(iyear*10000,r8))*0.01_r8)))
-        day=r_time-AINT(r_time*0.01_r8)*100.0_r8
+        iyear=MAX(1,INT(r_time*0.0001_dp))
+        month=MIN(12,MAX(1,INT((r_time-REAL(iyear*10000,dp))*0.01_dp)))
+        day=r_time-AINT(r_time*0.01_dp)*100.0_dp
         iday=MAX(1,INT(day))
-        sec=(day-AINT(day))*86400.0_r8
-        ihour=INT(sec/3600.0_r8)
-        minute=INT(MOD(sec,3600.0_r8)/60.0_r8)
-        isec=INT(MOD(sec,60.0_r8))
+        sec=(day-AINT(day))*86400.0_dp
+        ihour=INT(sec/3600.0_dp)
+        minute=INT(MOD(sec,3600.0_dp)/60.0_dp)
+        isec=INT(MOD(sec,60.0_dp))
         yday=yearday(iyear, month, iday)
         CALL datenum (DateNumber, iyear, month, iday, ihour, minute,    &
-     &                REAL(isec,r8))
+     &                REAL(isec,dp))
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 0001-01-01 00:00:00'. It has a year length of
@@ -1050,7 +1050,7 @@
         yday=1
         yday=yearday(iyear, month, iday)
         CALL datenum (DateNumber, iyear, month, iday, ihour, minute,    &
-     &                REAL(isec,r8))
+     &                REAL(isec,dp))
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 0001-01-01 00:00:00'.  It has a year length of
@@ -1092,8 +1092,8 @@
         minute=0
         isec=0
         yday=360
-        DateNumber(1)=359.0_r8
-        DateNumber(2)=DateNumber(1)*86400.0_r8
+        DateNumber(1)=359.0_dp
+        DateNumber(2)=DateNumber(1)*86400.0_dp
 !
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 1968-05-23 00:00:00 GMT'. It is a Truncated Julian
@@ -1112,8 +1112,8 @@
         minute=0
         isec=0
         yday=yearday(iyear, month, iday)
-        DateNumber(1)=2440000.0_r8              ! Truncated offset
-        DateNumber(2)=DateNumber(1)*86400_r8
+        DateNumber(1)=2440000.0_dp              ! Truncated offset
+        DateNumber(2)=DateNumber(1)*86400_dp
       END IF
 !
 !-----------------------------------------------------------------------
@@ -1179,12 +1179,12 @@
 !
       integer, intent(in) :: year, month, day, hour, minutes
 
-      real(r8), intent(in)  :: seconds
-      real(r8), intent(out) :: ClockTime
+      real(dp), intent(in)  :: seconds
+      real(dp), intent(out) :: ClockTime
 !
 !  Local variable declarations.
 !
-      real(r8), dimension(2) :: DateNumber
+      real(dp), dimension(2) :: DateNumber
 !
 !-----------------------------------------------------------------------
 !  Compute ROMS clock ellapsed time since intialization in seconds from
@@ -1227,7 +1227,7 @@
 !
 !  Imported variable declarations.
 !
-      real(r8), intent(in) :: MyTime
+      real(dp), intent(in) :: MyTime
 
       character (len=22), intent(out) :: date_string
 !
@@ -1236,7 +1236,7 @@
       integer :: day, hour, minutes, month, year
       integer :: i
 
-      real(r8) :: Currenttime, seconds
+      real(dp) :: Currenttime, seconds
 
       character (len= 5) :: sec_string
       character (len=22) :: string
@@ -1247,7 +1247,7 @@
 !
 !  Convert current model time to calendar date.
 !
-      CurrentTime=MyTime/86400.0_r8                  ! seconds to days
+      CurrentTime=MyTime/86400.0_dp                  ! seconds to days
 !
       CALL caldate (CurrentTime,                                        &
      &              yy_i=year,                                          &
@@ -1255,7 +1255,7 @@
      &              dd_i=day,                                           &
      &              h_i=hour,                                           &
      &              m_i=minutes,                                        &
-     &              s_r8=seconds)
+     &              s_dp=seconds)
 
 !
 !  Encode fractional seconds to a string. Round to one digit.
@@ -1321,7 +1321,7 @@
 !
       integer,  intent(out) :: year, month, day, hour, minutes
 !
-      real(r8), intent(out) :: seconds
+      real(dp), intent(out) :: seconds
 !
       character (len=*), intent(in) :: Ustring
 !
@@ -1331,7 +1331,7 @@
       integer :: i, iblank, ie, is, iscale, lstr, lvar, nval
       integer :: Schar
 
-      real(r8) :: Rval(10)
+      real(dp) :: Rval(10)
 
       character (len=20)       :: Vstring
       character (LEN(Ustring)) :: Tstring
@@ -1347,7 +1347,7 @@
       day=0
       hour=0
       minutes=0
-      seconds=0.0_r8
+      seconds=0.0_dp
 !
       DO i=1,LEN(Tstring)
         Tstring(i:i)=CHAR(32)                            ! blank space

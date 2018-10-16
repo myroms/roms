@@ -22,6 +22,8 @@
 # endif
       USE mod_scalars
 !
+      USE inp_decode_mod
+!
       implicit none
 !
 !  Imported variable declarations
@@ -34,8 +36,6 @@
       integer :: Mstation, Npts, Nval
       integer :: flag, i, igrid, ista, itrc, ng, status
 
-      integer :: decode_line, load_i, load_l, load_r
-
       real(r8) :: Xpos, Ypos
 
       logical, dimension(Ngrids) :: Lswitch
@@ -43,11 +43,11 @@
 
       integer, dimension(Ngrids) :: is
 
-      real(r8), dimension(100) :: Rval
+      real(dp), dimension(nRval) :: Rval
 
       character (len=40 ) :: KeyWord
       character (len=256) :: line
-      character (len=256), dimension(200) :: Cval
+      character (len=256), dimension(nCval) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in stations parameters.
@@ -99,7 +99,7 @@
               Sout(idBath,1:Ngrids)=Lswitch(1:Ngrids)
 # endif
             CASE ('Sout(idTvar)')
-              Npts=load_l(Nval, Cval, MT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, MT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NT(ng)
                   Sout(idTvar(itrc),ng)=Ltracer(itrc,ng)
@@ -239,7 +239,7 @@
               Sout(idVair,1:Ngrids)=Lswitch(1:Ngrids)
 #  endif
             CASE ('Sout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Sout(idTsur(itrc),ng)=Ltracer(itrc,ng)

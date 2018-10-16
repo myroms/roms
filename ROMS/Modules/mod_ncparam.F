@@ -479,12 +479,11 @@
 
         integer, allocatable :: Iinfo(:,:,:)
 
-        real(r8), allocatable :: Finfo(:,:,:)
-        real(r8), allocatable :: Fpoint(:,:,:)
-        real(r8), allocatable :: Fscale(:,:)
-        real(r8), allocatable :: Tintrp(:,:,:)
-
-        real(r8), allocatable :: Vtime(:,:,:)
+        real(dp), allocatable :: Finfo(:,:,:)
+        real(dp), allocatable :: Fpoint(:,:,:)
+        real(dp), allocatable :: Fscale(:,:)
+        real(dp), allocatable :: Tintrp(:,:,:)
+        real(dp), allocatable :: Vtime(:,:,:)
 
         character (len=5  ) :: version = '3.7  '
         character (len=40 ) :: varnam(MV)
@@ -1068,10 +1067,10 @@
           Fscale(i,ng)=1.0_r8
           Fpoint(1,i,ng)=0.0_r8
           Fpoint(2,i,ng)=0.0_r8
-          Tintrp(1,i,ng)=0.0_r8
-          Tintrp(2,i,ng)=0.0_r8
-          Vtime(1,i,ng)=0.0_r8
-          Vtime(2,i,ng)=0.0_r8
+          Tintrp(1,i,ng)=0.0_dp
+          Tintrp(2,i,ng)=0.0_dp
+          Vtime(1,i,ng)=0.0_dp
+          Vtime(2,i,ng)=0.0_dp
           ncFRCid(i,ng)=-1
         END DO
       END DO

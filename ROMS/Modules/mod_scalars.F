@@ -53,10 +53,10 @@
           real(r8), pointer :: SposX(:)
           real(r8), pointer :: SposY(:)
 #endif
-          real(r8), pointer :: Cs_r(:)
-          real(r8), pointer :: Cs_w(:)
-          real(r8), pointer :: sc_r(:)
-          real(r8), pointer :: sc_w(:)
+          real(dp), pointer :: Cs_r(:)
+          real(dp), pointer :: Cs_w(:)
+          real(dp), pointer :: sc_r(:)
+          real(dp), pointer :: sc_w(:)
         END TYPE T_SCALARS
 !
         TYPE (T_SCALARS), allocatable :: SCALARS(:)
@@ -94,7 +94,7 @@
 !
 !                  'time-units since 2002-01-15 12:00:00'
 !
-        real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
+        real(dp) :: time_ref = 0.0_dp                    ! YYYYMMDD.dd
 !
       TYPE T_CLOCK
         integer :: yday                ! day of the year
@@ -104,9 +104,9 @@
         integer :: hour                ! hour of the day (1,...,23)
         integer :: minutes             ! minutes of the hour
 
-        real(r8) :: seconds            ! frational seconds of the minute
-        real(r8) :: base               ! reference date (YYYYMMDD.dd)
-        real(r8) :: DateNumber(2)      ! date number, [1]: days
+        real(dp) :: seconds            ! frational seconds of the minute
+        real(dp) :: base               ! reference date (YYYYMMDD.dd)
+        real(dp) :: DateNumber(2)      ! date number, [1]: days
                                        !              [2]: seconds
 
         character (len=22) :: string   ! YYYY-MM-DD hh:mm:ss.ss
@@ -218,24 +218,24 @@
         integer, allocatable :: ndtfast(:)
         integer, allocatable :: nfast(:)
 
-        real(r8), allocatable :: tdays(:)                ! days
-        real(r8), allocatable :: time(:)                 ! seconds
+        real(dp), allocatable :: tdays(:)                ! days
+        real(dp), allocatable :: time(:)                 ! seconds
 !$OMP THREADPRIVATE (tdays, time)
 
-        real(r8), allocatable :: dt(:)                   ! seconds
-        real(r8), allocatable :: dtfast(:)               ! seconds
+        real(dp), allocatable :: dt(:)                   ! seconds
+        real(dp), allocatable :: dtfast(:)               ! seconds
 
-        real(r8), allocatable :: TimeEnd(:)              ! seconds
-        real(r8), allocatable :: AVGtime(:)              ! seconds
-        real(r8), allocatable :: DIAtime(:)              ! seconds
-        real(r8), allocatable :: IMPtime(:)              ! seconds
-        real(r8), allocatable :: ObsTime(:)              ! seconds
-        real(r8), allocatable :: FrcTime(:)              ! seconds
+        real(dp), allocatable :: TimeEnd(:)              ! seconds
+        real(dp), allocatable :: AVGtime(:)              ! seconds
+        real(dp), allocatable :: DIAtime(:)              ! seconds
+        real(dp), allocatable :: IMPtime(:)              ! seconds
+        real(dp), allocatable :: ObsTime(:)              ! seconds
+        real(dp), allocatable :: FrcTime(:)              ! seconds
 
-        real(r8) :: dstart = 0.0_r8                      ! days
-        real(r8) :: io_time = 0.0_r8                     ! seconds
-        real(r8) :: run_time = 0.0_r8                    ! seconds
-        real(r8) :: tide_start = 0.0_r8                  ! days
+        real(dp) :: dstart = 0.0_dp                      ! days
+        real(dp) :: io_time = 0.0_dp                     ! seconds
+        real(dp) :: run_time = 0.0_dp                    ! seconds
+        real(dp) :: tide_start = 0.0_dp                  ! days
 
         character (len=22), allocatable :: time_code(:)  ! date string
 !$OMP THREADPRIVATE (time_code)
@@ -272,9 +272,9 @@
 !  more robust that the Hamming Window the squared cosine weights
 !  options in "set_weights".
 !
-        real(r8) :: Falpha = 2.0_r8
-        real(r8) :: Fbeta  = 4.0_r8
-        real(r8) :: Fgamma = 0.284_r8
+        real(dp) :: Falpha = 2.0_dp
+        real(dp) :: Fbeta  = 4.0_dp
+        real(dp) :: Fgamma = 0.284_dp
 #endif
 !
 !  Total number timesteps in current run. In 3D configurations, "ntimes"
@@ -359,20 +359,20 @@
 !    rhow          fresh water density (kg/m3).
 !    vonKar        von Karman constant.
 !
-        real(r8) :: Cp = 3985.0_r8              ! Joules/kg/degC
-        real(r8) :: Csolar = 1353.0_r8          ! 1360-1380 W/m2
-        real(r8) :: Infinity                    ! Infinity = 1.0/0.0
-        real(r8) :: Eradius = 6371315.0_r8      ! m
-        real(r8) :: StefBo = 5.67E-8_r8         ! Watts/m2/K4
-        real(r8) :: emmiss = 0.97_r8            ! non_dimensional
-        real(r8) :: rhow = 1000.0_r8            ! kg/m3
+        real(dp) :: Cp = 3985.0_dp              ! Joules/kg/degC
+        real(dp) :: Csolar = 1353.0_dp          ! 1360-1380 W/m2
+        real(dp) :: Infinity                    ! Infinity = 1.0/0.0
+        real(dp) :: Eradius = 6371315.0_dp      ! m
+        real(dp) :: StefBo = 5.67E-8_dp         ! Watts/m2/K4
+        real(dp) :: emmiss = 0.97_dp            ! non_dimensional
+        real(dp) :: rhow = 1000.0_dp            ! kg/m3
 #ifdef SOLITON
-        real(r8) :: g = 1.0_r8                  ! non-dimensional
+        real(dp) :: g = 1.0_dp                  ! non-dimensional
 #else
-        real(r8) :: g = 9.81_r8                 ! m/s2
+        real(dp) :: g = 9.81_dp                 ! m/s2
 #endif
-        real(r8) :: gorho0                      ! m4/s2/kg
-        real(r8) :: vonKar = 0.41_r8            ! non-dimensional
+        real(dp) :: gorho0                      ! m4/s2/kg
+        real(dp) :: vonKar = 0.41_dp            ! non-dimensional
 !
 !-----------------------------------------------------------------------
 !  Various model parameters.  Some of these parameters are overwritten
@@ -463,11 +463,11 @@
 !  Set threshold maximum speed (m/s) and density anomaly (kg/m3) to
 !  test if the model is blowing-up.
 !
-        real(r8), allocatable :: maxspeed(:)
-        real(r8), allocatable :: maxrho(:)
+        real(dp), allocatable :: maxspeed(:)
+        real(dp), allocatable :: maxrho(:)
 !
-        real(r8) :: max_speed = 20.0_r8         ! m/s
-        real(r8) :: max_rho = 200.0_r8          ! kg/m3
+        real(dp) :: max_speed = 20.0_dp         ! m/s
+        real(dp) :: max_rho = 200.0_dp          ! kg/m3
 !
 !  Interpolation scheme.
 !
@@ -516,15 +516,15 @@
 !    theta_s       S-coordinate surface control parameter.
 !    theta_b       S-coordinate bottom control parameter.
 !
-        real(r8), allocatable :: Tcline(:)      ! m, positive
-        real(r8), allocatable :: hc(:)          ! m, positive
-        real(r8), allocatable :: theta_s(:)     ! 0 < theta_s < 20
-        real(r8), allocatable :: theta_b(:)     ! 0 < theta_b < 1
+        real(dp), allocatable :: Tcline(:)      ! m, positive
+        real(dp), allocatable :: hc(:)          ! m, positive
+        real(dp), allocatable :: theta_s(:)     ! 0 < theta_s < 20
+        real(dp), allocatable :: theta_b(:)     ! 0 < theta_b < 1
 !
 !  Bathymetry range values.
 !
-        real(r8), allocatable :: hmin(:)        ! m, positive
-        real(r8), allocatable :: hmax(:)        ! m, positive
+        real(dp), allocatable :: hmin(:)        ! m, positive
+        real(dp), allocatable :: hmax(:)        ! m, positive
 !
 !  Length (m) of domain box in the XI- and ETA-directions.
 !
@@ -555,45 +555,45 @@
 !
         integer, allocatable :: first_time(:)
 
-        real(r8) :: avgke = 0.0_r8              ! Kinetic energy
-        real(r8) :: avgpe = 0.0_r8              ! Potential energy
-        real(r8) :: avgkp = 0.0_r8              ! Total energy
-        real(r8) :: volume = 0.0_r8             ! diagnostics volume
-        real(r8) :: ad_volume = 0.0_r8          ! adjoint volume
+        real(dp) :: avgke = 0.0_dp              ! Kinetic energy
+        real(dp) :: avgpe = 0.0_dp              ! Potential energy
+        real(dp) :: avgkp = 0.0_dp              ! Total energy
+        real(dp) :: volume = 0.0_dp             ! diagnostics volume
+        real(dp) :: ad_volume = 0.0_dp          ! adjoint volume
 
-        real(r8), allocatable :: TotVolume(:)   ! Total volume
-        real(r8), allocatable :: MinVolume(:)   ! Minimum cell volume
-        real(r8), allocatable :: MaxVolume(:)   ! Maximum cell volume
+        real(dp), allocatable :: TotVolume(:)   ! Total volume
+        real(dp), allocatable :: MinVolume(:)   ! Minimum cell volume
+        real(dp), allocatable :: MaxVolume(:)   ! Maximum cell volume
 !
 !  Minimun and maximum grid spacing
 !
-        real(r8), allocatable :: DXmin(:)
-        real(r8), allocatable :: DXmax(:)
-        real(r8), allocatable :: DYmin(:)
-        real(r8), allocatable :: DYmax(:)
+        real(dp), allocatable :: DXmin(:)
+        real(dp), allocatable :: DXmax(:)
+        real(dp), allocatable :: DYmin(:)
+        real(dp), allocatable :: DYmax(:)
 #ifdef SOLVE3D
-        real(r8), allocatable :: DZmin(:)
-        real(r8), allocatable :: DZmax(:)
+        real(dp), allocatable :: DZmin(:)
+        real(dp), allocatable :: DZmax(:)
 #endif
 !
 !  Maximum size of a grid node (m) over the whole curvilinear grid
 !  application. Used for scaling horizontal mixing by the grid size.
 !
-        real(r8), allocatable :: grdmax(:)
+        real(dp), allocatable :: grdmax(:)
 #ifdef DIFF_3DCOEF
-        real(r8), allocatable :: DiffMin(:)     ! Minimun diffusion
-        real(r8), allocatable :: DiffMax(:)     ! Maximum diffusion
+        real(dp), allocatable :: DiffMin(:)     ! Minimun diffusion
+        real(dp), allocatable :: DiffMax(:)     ! Maximum diffusion
 #endif
 #ifdef VISC_3DCOEF
-        real(r8), allocatable :: ViscMin(:)     ! Minimum viscosity
-        real(r8), allocatable :: ViscMax(:)     ! Maximum viscosity
+        real(dp), allocatable :: ViscMin(:)     ! Minimum viscosity
+        real(dp), allocatable :: ViscMax(:)     ! Maximum viscosity
 #endif
 !
 !  Courant Numbers due to gravity wave speed limits.
 !
-        real(r8), allocatable :: Cg_min(:)      ! Minimun barotropic
-        real(r8), allocatable :: Cg_max(:)      ! Maximun barotropic
-        real(r8), allocatable :: Cg_Cor(:)      ! Maximun Coriolis
+        real(dp), allocatable :: Cg_min(:)      ! Minimun barotropic
+        real(dp), allocatable :: Cg_max(:)      ! Maximun barotropic
+        real(dp), allocatable :: Cg_Cor(:)      ! Maximun Coriolis
 !
 !  Time dependent Counrant Numbers due to velocity components and
 !  indices location of maximum value.
@@ -645,8 +645,8 @@
 !
 !  Grid r-factor (non-dimensional).
 !
-        real(r8), allocatable :: rx0(:)         ! Beckmann and Haidvogel
-        real(r8), allocatable :: rx1(:)         ! Haney
+        real(dp), allocatable :: rx0(:)         ! Beckmann and Haidvogel
+        real(dp), allocatable :: rx1(:)         ! Haney
 !
 !  Linear (m/s) and quadratic (nondimensional) bottom drag coefficients.
 !
@@ -655,8 +655,8 @@
 !
 !  Minimum and maximum threshold for transfer coefficient of momentum.
 !
-        real(r8) :: Cdb_min = 0.000001_r8
-        real(r8) :: Cdb_max = 0.5_r8
+        real(dp) :: Cdb_min = 0.000001_dp
+        real(dp) :: Cdb_max = 0.5_dp
 !
 !  Surface and bottom roughness (m)
 !
@@ -670,11 +670,11 @@
 !  Mean density (Kg/m3) used when the Boussinesq approximation is
 !  inferred.
 !
-        real(r8) :: rho0 = 1025.0_r8
+        real(dp) :: rho0 = 1025.0_dp
 !
-!  Background Brunt-Vaisala frequency (1/s2)
+!  Background Brunt-Vaisala frequency (1/s2).
 !
-        real(r8) :: bvf_bak = 0.00001_r8
+        real(dp) :: bvf_bak = 0.00001_dp
 
 #ifdef PROPAGATOR
 !
@@ -682,7 +682,7 @@
 !  Ritz values.
 !
         integer, allocatable :: Nconv(:)
-        real(r8) :: Ritz_tol = 1.0E-15_r8
+        real(dp) :: Ritz_tol = 1.0E-15_dp
 #endif
 !
 !  Vector containing USER generic parameters.
@@ -692,22 +692,22 @@
 !
 !  Weights for the time average of 2D fields.
 !
-        real(r8), allocatable :: weight(:,:,:)
+        real(dp), allocatable :: weight(:,:,:)
 !
 !  Constants.
 !
-        real(r8), parameter :: pi = 3.14159265358979323846_r8
-        real(r8), parameter :: deg2rad = pi / 180.0_r8
-        real(r8), parameter :: rad2deg = 180.0_r8 / pi
-        real(r8), parameter :: day2sec = 86400.0_r8
-        real(r8), parameter :: sec2day = 1.0_r8 / 86400.0_r8
+        real(dp), parameter :: pi = 3.14159265358979323846_dp
+        real(dp), parameter :: deg2rad = pi / 180.0_dp
+        real(dp), parameter :: rad2deg = 180.0_dp / pi
+        real(dp), parameter :: day2sec = 86400.0_dp
+        real(dp), parameter :: sec2day = 1.0_dp / 86400.0_dp
 #ifdef NO_4BYTE_REALS
-        real(r8), parameter :: spval = NF90_FILL_DOUBLE
+        real(dp), parameter :: spval = NF90_FILL_DOUBLE
 #else
-        real(r8), parameter :: spval = 1.0E+37_r8
+        real(dp), parameter :: spval = 1.0E+37_dp
 #endif
-        real(r8), parameter :: Large = 1.0E+20_r8
-        real(r8), parameter :: jul_off = 2440000.0_r8
+        real(dp), parameter :: Large = 1.0E+20_dp
+        real(dp), parameter :: jul_off = 2440000.0_dp
 !
 !  Set special check value.  Notice that a smaller value is assigned
 !  to account for both NetCDF fill value and roundoff. There are
@@ -715,7 +715,7 @@
 !  the spval from the _FillValue attribute in single/double
 !  precision.
 !
-        real(r8), parameter :: spval_check = 1.0E+35_r8
+        real(dp), parameter :: spval_check = 1.0E+35_dp
 !
 !-----------------------------------------------------------------------
 !  Horizontal and vertical constant mixing coefficients.
@@ -962,7 +962,7 @@
 !
 !  Time (s) of surface forcing adjustment.
 !
-        real(r8), allocatable :: OBC_time(:,:)
+        real(dp), allocatable :: OBC_time(:,:)
 #endif
 !
 !  Number of timesteps between adjustment of 4DVAR surface forcing
@@ -993,7 +993,7 @@
 !
 !  Time (s) of surface forcing adjustment.
 !
-        real(r8), allocatable :: SF_time(:,:)
+        real(dp), allocatable :: SF_time(:,:)
 #endif
 !
 !  Restart time record to read from disk and use as the initial
@@ -1233,41 +1233,41 @@
         integer, parameter :: ieast = 3
         integer, parameter :: inorth = 4
 
-        real(r8), allocatable :: obcfac(:)
-        real(r8), allocatable :: FSobc_in(:,:)
-        real(r8), allocatable :: FSobc_out(:,:)
-        real(r8), allocatable :: M2obc_in(:,:)
-        real(r8), allocatable :: M2obc_out(:,:)
+        real(dp), allocatable :: obcfac(:)
+        real(dp), allocatable :: FSobc_in(:,:)
+        real(dp), allocatable :: FSobc_out(:,:)
+        real(dp), allocatable :: M2obc_in(:,:)
+        real(dp), allocatable :: M2obc_out(:,:)
 #ifdef SOLVE3D
-        real(r8), allocatable :: M3obc_in(:,:)
-        real(r8), allocatable :: M3obc_out(:,:)
-        real(r8), allocatable :: Tobc_in(:,:,:)
-        real(r8), allocatable :: Tobc_out(:,:,:)
+        real(dp), allocatable :: M3obc_in(:,:)
+        real(dp), allocatable :: M3obc_out(:,:)
+        real(dp), allocatable :: Tobc_in(:,:,:)
+        real(dp), allocatable :: Tobc_out(:,:,:)
 #endif
 !
 !  Inverse time-scales (1/s) for nudging at open boundaries and sponge
 !  areas.
 !
-        real(r8), allocatable :: Znudg(:)          ! Free-surface
-        real(r8), allocatable :: M2nudg(:)         ! 2D momentum
-        real(r8), allocatable :: M3nudg(:)         ! 3D momentum
-        real(r8), allocatable :: Tnudg(:,:)        ! Tracers
+        real(dp), allocatable :: Znudg(:)          ! Free-surface
+        real(dp), allocatable :: M2nudg(:)         ! 2D momentum
+        real(dp), allocatable :: M3nudg(:)         ! 3D momentum
+        real(dp), allocatable :: Tnudg(:,:)        ! Tracers
 !
 !  Variables used to impose mass flux conservation in open boundary
 !  configurations.
 !
-        real(r8) :: bc_area = 0.0_r8
-        real(r8) :: bc_flux = 0.0_r8
-        real(r8) :: ubar_xs = 0.0_r8
+        real(dp) :: bc_area = 0.0_dp
+        real(dp) :: bc_flux = 0.0_dp
+        real(dp) :: ubar_xs = 0.0_dp
 #if defined TANGENT || defined TL_IOMS
-        real(r8) :: tl_bc_area = 0.0_r8
-        real(r8) :: tl_bc_flux = 0.0_r8
-        real(r8) :: tl_ubar_xs = 0.0_r8
+        real(dp) :: tl_bc_area = 0.0_dp
+        real(dp) :: tl_bc_flux = 0.0_dp
+        real(dp) :: tl_ubar_xs = 0.0_dp
 #endif
 #ifdef ADJOINT
-        real(r8) :: ad_bc_area = 0.0_r8
-        real(r8) :: ad_bc_flux = 0.0_r8
-        real(r8) :: ad_ubar_xs = 0.0_r8
+        real(dp) :: ad_bc_area = 0.0_dp
+        real(dp) :: ad_bc_flux = 0.0_dp
+        real(dp) :: ad_ubar_xs = 0.0_dp
 #endif
 
 #ifdef BULK_FLUXES
@@ -1289,14 +1289,14 @@
 !    blk_tcw       Thermal conductivity of water (W/m/K).
 !    blk_visw      Kinematic viscosity water (m2/s).
 !
-        real(r8) :: blk_Cpa = 1004.67_r8      ! (J/kg/K), Businger 1982
-        real(r8) :: blk_Cpw = 4000.0_r8       ! (J/kg/K)
-        real(r8) :: blk_Rgas = 287.1_r8       ! (J/kg/K)
-        real(r8) :: blk_Zabl = 600.0_r8       ! (m)
-        real(r8) :: blk_beta = 1.2_r8         ! non-dimensional
-        real(r8) :: blk_dter = 0.3_r8         ! (K)
-        real(r8) :: blk_tcw = 0.6_r8          ! (W/m/K)
-        real(r8) :: blk_visw = 0.000001_r8    ! (m2/s)
+        real(dp) :: blk_Cpa = 1004.67_dp      ! (J/kg/K), Businger 1982
+        real(dp) :: blk_Cpw = 4000.0_dp       ! (J/kg/K)
+        real(dp) :: blk_Rgas = 287.1_dp       ! (J/kg/K)
+        real(dp) :: blk_Zabl = 600.0_dp       ! (m)
+        real(dp) :: blk_beta = 1.2_dp         ! non-dimensional
+        real(dp) :: blk_dter = 0.3_dp         ! (K)
+        real(dp) :: blk_tcw = 0.6_dp          ! (W/m/K)
+        real(dp) :: blk_visw = 0.000001_dp    ! (m2/s)
 
         real(r8), allocatable :: blk_ZQ(:)        ! (m)
         real(r8), allocatable :: blk_ZT(:)        ! (m)
@@ -1328,19 +1328,19 @@
 !
         integer, parameter :: sg_n = 20
 
-        real(r8), parameter :: sg_pi = pi
+        real(dp), parameter :: sg_pi = pi
 
-        real(r8) :: sg_Cdmax = 0.01_r8         ! non-dimensional
-        real(r8) :: sg_alpha = 1.0_r8          ! non-dimensional
-        real(r8) :: sg_g = 9.81_r8             ! (m/s2)
-        real(r8) :: sg_kappa = 0.41_r8         ! non-dimensional
-        real(r8) :: sg_nu = 0.00000119_r8      ! (m2/s)
-        real(r8) :: sg_tol = 0.0001_r8         ! non-dimensional
-        real(r8) :: sg_ustarcdef = 0.01_r8     ! (m/s)
-        real(r8) :: sg_z100 = 1.0_r8           ! (m)
-        real(r8) :: sg_z1min = 0.20_r8         ! (m)
-        real(r8) :: sg_z1p                     ! non-dimensional
-        real(r8) :: sg_znotcdef = 0.01_r8      ! (m)
+        real(dp) :: sg_Cdmax = 0.01_dp         ! non-dimensional
+        real(dp) :: sg_alpha = 1.0_dp          ! non-dimensional
+        real(dp) :: sg_g = 9.81_dp             ! (m/s2)
+        real(dp) :: sg_kappa = 0.41_dp         ! non-dimensional
+        real(dp) :: sg_nu = 0.00000119_dp      ! (m2/s)
+        real(dp) :: sg_tol = 0.0001_dp         ! non-dimensional
+        real(dp) :: sg_ustarcdef = 0.01_dp     ! (m/s)
+        real(dp) :: sg_z100 = 1.0_dp           ! (m)
+        real(dp) :: sg_z1min = 0.20_dp         ! (m)
+        real(dp) :: sg_z1p                     ! non-dimensional
+        real(dp) :: sg_znotcdef = 0.01_dp      ! (m)
 
         complex(c8) :: sg_mp
 # endif
@@ -3222,7 +3222,7 @@
 #endif
         maxspeed(ng)=-Large
         maxrho(ng)=-Large
-        TotVolume(ng)=0.0_r8
+        TotVolume(ng)=0.0_dp
         MinVolume(ng)= Large
         MaxVolume(ng)=-Large
         DXmin(ng)= Large
@@ -3243,7 +3243,7 @@
         Cg_Cor(ng)=-Large
 #ifdef VISC_3DCOEF
         ViscMin(ng)= Large
-        ViscMax(ng)= Large
+        ViscMax(ng)=-Large
 #endif
         rx0(ng)=-Large
         rx1(ng)=-Large
@@ -3300,19 +3300,19 @@
           ad_VolCons(i,ng)=.FALSE.
           tl_VolCons(i,ng)=.FALSE.
 #endif
-          FSobc_in (ng,i)=IniVal
-          FSobc_out(ng,i)=IniVal
-          M2obc_in (ng,i)=IniVal
-          M2obc_out(ng,i)=IniVal
+          FSobc_in (ng,i)=0.0_dp
+          FSobc_out(ng,i)=0.0_dp
+          M2obc_in (ng,i)=0.0_dp
+          M2obc_out(ng,i)=0.0_dp
 #ifdef SOLVE3D
-          M3obc_in (ng,i)=IniVal
-          M3obc_out(ng,i)=IniVal
+          M3obc_in (ng,i)=0.0_dp
+          M3obc_out(ng,i)=0.0_dp
 #endif
         END DO
       END DO
 #ifdef SOLVE3D
-      Tobc_in = IniVal
-      Tobc_out = IniVal
+      Tobc_in = 0.0_dp
+      Tobc_out = 0.0_dp
 #endif
 !
 !  Initialize thread private variables.

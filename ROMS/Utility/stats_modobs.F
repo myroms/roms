@@ -74,11 +74,12 @@
       real(r8), dimension(Ndatum(ng)) :: mod_value
       real(r8), dimension(Ndatum(ng)) :: obs_depths
       real(r8), dimension(Ndatum(ng)) :: obs_scale
+      real(dp), dimension(Ndatum(ng)) :: obs_time
       real(r8), dimension(Ndatum(ng)) :: obs_value
       real(r8), dimension(Ndatum(ng)) :: obs_Xgrid
       real(r8), dimension(Ndatum(ng)) :: obs_Ygrid
       real(r8), dimension(Ndatum(ng)) :: obs_work
-      real(r8), dimension(Nsurvey(ng)) :: survey
+      real(dp), dimension(Nsurvey(ng)) :: survey
 
       character (len=11), dimension(NobsVar(ng)) :: text, svar_name
 
@@ -165,14 +166,14 @@
 !  Read in and write out observation time.
 !
       CALL netcdf_get_time (ng, iNLM, OBS(ng)%name, Vname(1,idObsT),    &
-     &                      Rclock%DateNumber, obs_work,                &
+     &                      Rclock%DateNumber, obs_time,                &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsT),    &
-     &                      obs_work, (/1/), (/Ndatum(ng)/),            &
+     &                      obs_time, (/1/), (/Ndatum(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

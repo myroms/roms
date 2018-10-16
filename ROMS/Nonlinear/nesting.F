@@ -422,7 +422,7 @@
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: ILB, IUB, JLB, JUB
 
-      real(r8), intent(in) :: scale
+      real(dp), intent(in) :: scale
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: FX(IminS:,JminS:)
@@ -1081,7 +1081,7 @@
       integer, intent(in) :: cr, gtype, Npoints
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
-      real(r8), intent(in) :: SpValCheck
+      real(dp), intent(in) :: SpValCheck
 !
       character(len=*), intent(in) :: mvname
 !
@@ -5358,8 +5358,8 @@
 # ifdef DISTRIBUTE
       real(r8), parameter :: spv = 0.0_r8
 # endif
-      real(r8) :: Wnew, Wold
-      real(r8) :: cff, cff1, fac
+      real(dp) :: Wnew, Wold, fac
+      real(r8) :: cff, cff1
       real(r8) :: my_value
 
 # include "set_bounds.h"
@@ -5857,7 +5857,7 @@
 # endif
       integer :: i, itrc, j, k, m, tnew, told
 
-      real(r8) :: Wnew, Wold, fac
+      real(dp) :: Wnew, Wold, fac
       real(r8) :: my_value
 
 #  include "set_bounds.h"

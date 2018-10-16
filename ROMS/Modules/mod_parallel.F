@@ -138,6 +138,9 @@
 !!    integer, parameter :: MP_FLOAT = MPI_REAL4
 #  endif
 # endif
+# ifdef MPI
+      integer, parameter :: MP_DOUBLE = MPI_DOUBLE_PRECISION
+# endif
 #endif
 !
       CONTAINS

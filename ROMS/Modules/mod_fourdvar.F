@@ -211,7 +211,7 @@
 #  endif
         real(r8), allocatable :: ObsVetting(:)
         real(r8), allocatable :: ObsVal(:)
-        real(r8), allocatable :: Tobs(:)
+        real(dp), allocatable :: Tobs(:)
         real(r8), allocatable :: Xobs(:)
         real(r8), allocatable :: Yobs(:)
 #  ifdef SOLVE3D
@@ -1362,7 +1362,7 @@
         allocate ( Tobs(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
-      Tobs = IniVal
+      Tobs = 0.0_dp
 
       IF (.not.allocated(Xobs)) THEN
         allocate ( Xobs(Mobs) )

@@ -78,10 +78,10 @@
 !
 !  Mid-day of each month (YearDay = 0 for Jan 1, 00:00:00).
 !
-      real(r8), dimension(12) :: Month_MidDay =                         &
-     &          (/ 15.5_r8,  45.0_r8,  74.5_r8, 105.0_r8,               &
-     &            135.5_r8, 166.0_r8, 196.5_r8, 227.5_r8,               &
-     &            258.0_r8, 288.5_r8, 319.0_r8, 349.5_r8 /)
+      real(dp), dimension(12) :: Month_MidDay =                         &
+     &          (/ 15.5_dp,  45.0_dp,  74.5_dp, 105.0_dp,               &
+     &            135.5_dp, 166.0_dp, 196.5_dp, 227.5_dp,               &
+     &            258.0_dp, 288.5_dp, 319.0_dp, 349.5_dp /)
 !
 ! Monthly median germination potential.
 !

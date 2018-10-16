@@ -101,6 +101,7 @@
 !
       integer :: i, j
 #if defined ALBEDO || defined DIURNAL_SRFLUX
+      real(dp) :: hour, yday
       real(r8) :: Dangle, Hangle, LatRad
       real(r8) :: cff1, cff2, hour, yday
 # ifdef ALBEDO
@@ -140,11 +141,11 @@
 !
 !  Get time clock day-of-year and hour.
 !
-      CALL caldate (tdays(ng), yd_r8=yday, h_r8=hour)
+      CALL caldate (tdays(ng), yd_dp=yday, h_dp=hour)
 !
 !  Estimate solar declination angle (radians).
 !
-      Dangle=23.44_r8*COS((172.0_r8-yday)*2.0_r8*pi/365.25_r8)
+      Dangle=23.44_dp*COS((172.0_dp-yday)*2.0_dp*pi/365.25_dp)
       Dangle=Dangle*deg2rad
 !
 !  Compute hour angle (radians).

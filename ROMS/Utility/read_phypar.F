@@ -39,6 +39,8 @@
 #endif
       USE mod_strings
 !
+      USE inp_decode_mod
+!
       USE dateclock_mod, ONLY : ref_clock
       USE strings_mod,   ONLY : FoundError
 !
@@ -52,7 +54,7 @@
 !  Local variable declarations.
 !
       logical :: got_Ngrids, got_NestLayers
-      logical :: find_file, obc_data
+      logical :: obc_data
       logical :: Lvalue(1)
 #if defined SOLVE3D && defined SEDIMENT
       logical :: LreadNCS = .FALSE.
@@ -75,26 +77,25 @@
       integer :: Cdim, Clen, Rdim
       integer :: Ivalue(1)
 
-      integer :: decode_line, load_i, load_l, load_lbc, load_r
-      integer :: load_s1d, load_s2d
-
       integer, allocatable :: Nfiles(:)
       integer, allocatable :: Ncount(:,:)
 
+      real(dp), allocatable :: Dtracer(:,:)
       real(r8), allocatable :: Rtracer(:,:)
       real(r8), allocatable :: tracer(:,:)
 #ifdef NESTING
       real(r8), allocatable :: RunTimeDay(:), RunTimeSec(:)
 #endif
+      real(dp) :: Dvalue(1)
       real(r8) :: Rvalue(1)
 
-      real(r8), dimension(100) :: Rval
+      real(dp), dimension(nRval) :: Rval
 
       character (len=1  ), parameter :: blank = ' '
       character (len=40 ) :: KeyWord, text
       character (len=50 ) :: label
       character (len=256) :: fname, line
-      character (len=256), dimension(200) :: Cval
+      character (len=256), dimension(nCval) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Initialize.
@@ -366,6 +367,9 @@
                 RETURN
               END IF
 #endif
+              IF (.not.allocated(Dtracer)) THEN
+                allocate (Dtracer(NAT+NPT,Ngrids))
+              END IF
               IF (.not.allocated(Rtracer)) THEN
                 allocate (Rtracer(NAT+NPT,Ngrids))
               END IF
@@ -624,11 +628,11 @@
               nGST=Ivalue(1)
 #ifdef PROPAGATOR
             CASE ('Ritz_tol')
-              Npts=load_r(Nval, Rval, 1, Rvalue)
-              Ritz_tol=Rvalue(1)
+              Npts=load_r(Nval, Rval, 1, Dvalue)
+              Ritz_tol=Dvalue(1)
 #endif
             CASE ('TNU2')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   nl_tnu2(itrc,ng)=Rtracer(itrc,ng)
@@ -641,7 +645,7 @@
 #endif
               END DO
             CASE ('TNU4')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   nl_tnu4(itrc,ng)=Rtracer(itrc,ng)
@@ -654,7 +658,7 @@
 #endif
               END DO
             CASE ('ad_TNU2')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   ad_tnu2(itrc,ng)=Rtracer(itrc,ng)
@@ -669,7 +673,7 @@
 #endif
               END DO
             CASE ('ad_TNU4')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   ad_tnu4(itrc,ng)=Rtracer(itrc,ng)
@@ -701,7 +705,7 @@
               Npts=load_l(Nval, Cval, Ngrids, LuvSponge)
 #ifdef SOLVE3D
             CASE ('LtracerSponge')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   LtracerSponge(itrc,ng)=Ltracer(itrc,ng)
@@ -715,7 +719,7 @@
               END DO
 #endif
             CASE ('AKT_BAK')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Akt_bak(itrc,ng)=Rtracer(itrc,ng)
@@ -728,14 +732,14 @@
 # endif
               END DO
             CASE ('AKT_LIMIT')
-              Npts=load_r(Nval, Rval, NAT*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Akt_limit(itrc,ng)=Rtracer(itrc,ng)
                 END DO
               END DO
             CASE ('ad_AKT_fac')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   ad_Akt_fac(itrc,ng)=Rtracer(itrc,ng)
@@ -862,25 +866,25 @@
               Npts=load_r(Nval, Rval, 1, Rvalue)
               bvf_bak=Rvalue(1)
             CASE ('DSTART')
-              Npts=load_r(Nval, Rval, 1, Rvalue)
-              dstart=Rvalue(1)
+              Npts=load_r(Nval, Rval, 1, Dvalue)
+              dstart=Dvalue(1)
             CASE ('TIDE_START')
-              Npts=load_r(Nval, Rval, 1, Rvalue)
-              tide_start=Rvalue(1)
+              Npts=load_r(Nval, Rval, 1, Dvalue)
+              tide_start=Dvalue(1)
             CASE ('TIME_REF')
-              Npts=load_r(Nval, Rval, 1, Rvalue)
-              time_ref=Rvalue(1)
+              Npts=load_r(Nval, Rval, 1, Dvalue)
+              time_ref=Dvalue(1)
               CALL ref_clock (time_ref)
             CASE ('TNUDG')
-              Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Dtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
-                  Tnudg(itrc,ng)=Rtracer(itrc,ng)
+                  Tnudg(itrc,ng)=Dtracer(itrc,ng)
                 END DO
 # ifdef T_PASSIVE
                 DO i=1,NPT
                   itrc=inert(i)
-                  Tnudg(itrc,ng)=Rtracer(NAT+i,ng)
+                  Tnudg(itrc,ng)=Dtracer(NAT+i,ng)
                 END DO
 # endif
               END DO
@@ -919,7 +923,7 @@
               Npts=load_l(Nval, Cval, Ngrids, LwSrc)
 #ifdef SOLVE3D
             CASE ('LtracerSrc')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   LtracerSrc(itrc,ng)=Ltracer(itrc,ng)
@@ -940,7 +944,7 @@
             CASE ('Lm3CLM')
               Npts=load_l(Nval, Cval, Ngrids, Lm3CLM)
             CASE ('LtracerCLM')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   LtracerCLM(itrc,ng)=Ltracer(itrc,ng)
@@ -959,7 +963,7 @@
             CASE ('LnudgeM3CLM')
               Npts=load_l(Nval, Cval, Ngrids, LnudgeM3CLM)
             CASE ('LnudgeTCLM')
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   LnudgeTCLM(itrc,ng)=Ltracer(itrc,ng)
@@ -1184,7 +1188,7 @@
             CASE ('SO_sdev(isVvel)')
               Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isVvel,1))
             CASE ('SO_sdev(isTvar)')
-              Npts=load_r(Nval, Rval, MT*Ngrids, tracer)
+              Npts=load_r(Nval, Rval, MT, Ngrids, tracer)
               k=0
               DO ng=1,Ngrids
                 DO itrc=1,MT
@@ -1200,7 +1204,7 @@
               Npts=load_r(Nval, Rval, Ngrids, SO_sdev(isVstr,1))
 # ifdef SOLVE3D
             CASE ('SO_sdev(isTsur)')
-              Npts=load_r(Nval, Rval, MT*Ngrids, tracer)
+              Npts=load_r(Nval, Rval, MT, Ngrids, tracer)
               k=0
               DO ng=1,Ngrids
                 DO itrc=1,MT
@@ -1315,7 +1319,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -1696,7 +1700,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -1825,7 +1829,7 @@
               Hout(idMtls,1:Ngrids)=Lswitch(1:Ngrids)
 #if defined SOLVE3D && defined T_PASSIVE
             CASE ('Hout(inert)')
-              Npts=load_l(Nval, Cval, NPT*Ngrids, Linert)
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
@@ -1872,7 +1876,7 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
             CASE ('Qout(idTvar)')
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -1917,7 +1921,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idsurT(itrc)
@@ -2073,7 +2077,7 @@
 # endif
 #endif
             CASE ('Qout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -2127,7 +2131,7 @@
               Qout(idMtls,1:Ngrids)=Lswitch(1:Ngrids)
 #if defined SOLVE3D && defined T_PASSIVE
             CASE ('Qout(inert)')
-              Npts=load_l(Nval, Cval, NPT*Ngrids, Linert)
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
@@ -2135,7 +2139,7 @@
                 END DO
               END DO
             CASE ('Qout(Snert)')
-              Npts=load_l(Nval, Cval, NPT*Ngrids, Linert)
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idsurT(inert(i))
@@ -2181,7 +2185,7 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
             CASE ('Aout(idTvar)')
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -2264,7 +2268,7 @@
 #  endif
 # endif
             CASE ('Aout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -2388,7 +2392,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTrcD(itrc)
@@ -2470,7 +2474,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT+NPT
                   i=idTTav(itrc)
@@ -2483,7 +2487,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT+NPT
                   i=idUTav(itrc)
@@ -2496,7 +2500,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT+NPT
                   i=idVTav(itrc)
@@ -2509,7 +2513,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT+NPT
                   i=iHUTav(itrc)
@@ -2522,7 +2526,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT+NPT
                   i=iHVTav(itrc)
@@ -2532,7 +2536,7 @@
 # endif
 # if defined SOLVE3D && defined T_PASSIVE
             CASE ('Aout(inert)')
-              Npts=load_l(Nval, Cval, NPT*Ngrids, Linert)
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
@@ -2832,7 +2836,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTrate),ng)=Ltracer(itrc,ng)
@@ -2850,7 +2854,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iThadv),ng)=Ltracer(itrc,ng)
@@ -2868,7 +2872,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTxadv),ng)=Ltracer(itrc,ng)
@@ -2886,7 +2890,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTyadv),ng)=Ltracer(itrc,ng)
@@ -2904,7 +2908,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTvadv),ng)=Ltracer(itrc,ng)
@@ -2923,7 +2927,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iThdif),ng)=Ltracer(itrc,ng)
@@ -2941,7 +2945,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTxdif),ng)=Ltracer(itrc,ng)
@@ -2959,7 +2963,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTydif),ng)=Ltracer(itrc,ng)
@@ -2978,7 +2982,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTsdif),ng)=Ltracer(itrc,ng)
@@ -2998,7 +3002,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, (NAT+NPT)*Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Dout(idDtrc(itrc,iTvdif),ng)=Ltracer(itrc,ng)

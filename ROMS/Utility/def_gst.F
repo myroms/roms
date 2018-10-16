@@ -271,7 +271,7 @@
 !
         Vinfo( 1)='Ritz_tol'
         Vinfo( 2)='relative accuracy of computed Ritz values'
-        status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
+        status=def_var(ng, model, GST(ng)%ncid, varid, NF_TOUT,         &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &

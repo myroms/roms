@@ -292,7 +292,7 @@
 
       real(r8) :: pmonth                         ! months since Jan 1951
       real(r8) :: pCO2air_secular
-      real(r8) :: yday
+      real(dp) :: yday
 
       real(r8), parameter :: pi2 = 6.2831853071796_r8
 
@@ -1015,8 +1015,8 @@
 !
 !  Add in CO2 gas exchange.
 !
-            CALL caldate (tdays(ng), yd_r8=yday)
-            pmonth=2003.0_r8-1951.0_r8+yday/365.0_r8
+            CALL caldate (tdays(ng), yd_dp=yday)
+            pmonth=2003.0_dp-1951.0_dp+yday/365.0_dp
 !!          pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
 !!   &                         D2*SIN(pi2*pmonth+D3)+                   &
 !!   &                         D4*SIN(pi2*pmonth+D5)+                   &

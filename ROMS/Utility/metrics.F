@@ -288,16 +288,16 @@
       real(r8), parameter :: Uscale = 0.1_r8
 #endif
       real(r8) :: cff, cff1, cff2
-      real(r8) :: my_DXmax, my_DXmin, my_DYmax, my_DYmin
+      real(dp) :: my_DXmax, my_DXmin, my_DYmax, my_DYmin
 #ifdef SOLVE3D
-      real(r8) :: my_DZmax, my_DZmin
+      real(dp) :: my_DZmax, my_DZmin
 #endif
-      real(r8) :: my_Cg_Cor, my_Cg_max, my_Cg_min, my_grdmax
+      real(dp) :: my_Cg_Cor, my_Cg_max, my_Cg_min, my_grdmax
 #if defined DIFF_3DCOEF
-      real(r8) :: my_DiffMax, my_DiffMin
+      real(dp) :: my_DiffMax, my_DiffMin
 #endif
 #if defined VISC_3DCOEF
-      real(r8) :: my_ViscMax, my_ViscMin
+      real(dp) :: my_ViscMax, my_ViscMin
 #endif
 #if defined DIFF_3DCOEF || defined VISC_3DCOEF
       character (len=4) :: units
@@ -307,7 +307,7 @@
 #endif
 
 #ifdef DISTRIBUTE
-      real(r8), dimension(14) :: buffer
+      real(dp), dimension(14) :: buffer
       character (len=3), dimension(14) :: op_handle
 #endif
 

@@ -80,9 +80,9 @@
 
       integer, intent(out) :: Tindex, Tid
 
-      real(r8), intent(in) :: smday
+      real(dp), intent(in) :: smday
 
-      real(r8), intent(out) :: Tmax, Tmin, Tend, Tscale, Tstr, clength
+      real(dp), intent(out) :: Tmax, Tmin, Tend, Tscale, Tstr, clength
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: TvarName
@@ -94,8 +94,8 @@
 
       integer :: i, nvatt, nvdim
 
-      real(r8) :: mday, tstart
-      real(r8) :: Tval(ntime)
+      real(dp) :: mday, tstart
+      real(dp) :: Tval(ntime)
 
       character (len=40) :: tunits
 !

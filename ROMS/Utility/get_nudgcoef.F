@@ -57,7 +57,8 @@
       integer :: nvatt, nvdim, status, vindex
       integer :: Vsize(4)
 
-      real(r8) :: Fmax, Fmin, Fscl
+      real(dp) :: Fscl
+      real(r8) :: Fmax, Fmin
 
       character (len=40 ) :: tunits
       character (len=256) :: ncname
@@ -182,7 +183,7 @@
       IF (LnudgeM2CLM(ng)) THEN
         gtype=r2dvar
         vindex=idM2nc
-        Fscl=1.0_r8/day2sec                    ! default units: 1/day
+        Fscl=1.0_dp/day2sec                    ! default units: 1/day
 !
         CALL netcdf_inq_var (ng, model, ncname,                         &
      &                       ncid = NUD(ng)%ncid,                       &
@@ -196,9 +197,9 @@
           IF (TRIM(var_Aname(i)).eq.'units') THEN
             tunits=TRIM(var_Achar(i))
             IF (tunits(1:3).eq.'day') THEN
-              Fscl=1.0_r8/day2sec
+              Fscl=1.0_dp/day2sec
             ELSE IF (tunits(1:6).eq.'second') THEN
-              Fscl=1.0_r8
+              Fscl=1.0_dp
             END IF
           END IF
         END DO
@@ -247,7 +248,7 @@
       IF (LnudgeM3CLM(ng)) THEN
         gtype=r3dvar
         vindex=idM3nc
-        Fscl=1.0_r8/day2sec                    ! default units: 1/day
+        Fscl=1.0_dp/day2sec                    ! default units: 1/day
 !
         CALL netcdf_inq_var (ng, model, ncname,                         &
      &                       ncid = NUD(ng)%ncid,                       &
@@ -261,9 +262,9 @@
           IF (TRIM(var_Aname(i)).eq.'units') THEN
             tunits=TRIM(var_Achar(i))
             IF (tunits(1:3).eq.'day') THEN
-              Fscl=1.0_r8/day2sec
+              Fscl=1.0_dp/day2sec
             ELSE IF (tunits(1:6).eq.'second') THEN
-              Fscl=1.0_r8
+              Fscl=1.0_dp
             END IF
           END IF
         END DO
@@ -317,10 +318,10 @@
           gtype=r3dvar
           IF (got_specific(itrc)) THEN
             vindex=idTnud(itrc)                ! specific variable
-            Fscl=1.0_r8/day2sec                ! default units: 1/day
+            Fscl=1.0_dp/day2sec                ! default units: 1/day
           ELSE IF (got_generic) THEN
             vindex=idgTnc                      ! generic variable
-            Fscl=1.0_r8/day2sec                ! default units: 1/day
+            Fscl=1.0_dp/day2sec                ! default units: 1/day
           END IF
 !
           CALL netcdf_inq_var (ng, model, ncname,                       &
@@ -335,9 +336,9 @@
             IF (TRIM(var_Aname(i)).eq.'units') THEN
               tunits=TRIM(var_Achar(i))
               IF (tunits(1:3).eq.'day') THEN
-                Fscl=1.0_r8/day2sec
+                Fscl=1.0_dp/day2sec
               ELSE IF (tunits(1:6).eq.'second') THEN
-                Fscl=1.0_r8
+                Fscl=1.0_dp
               END IF
             END IF
           END DO

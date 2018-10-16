@@ -83,11 +83,20 @@
 #define RHO_SURF
 
 /*
-** Turn ON/OFF double precision for real type variables and
-** associated intrinsic functions.
+** Turn ON/OFF double precision arithmetic in numerical kernel (default)
+** and floating-point type variables and associated intrinsic functions.
 */
 
-#define DOUBLE_PRECISION
+#ifdef SINGLE_PRECISION
+# ifdef OUT_DOUBLE
+#   undef OUT_DOUBLE
+# endif
+# ifndef RST_SINGLE
+#   define RST_SINGLE
+# endif
+#else
+# define DOUBLE_PRECISION
+#endif
 
 /*
 ** Turn ON masking when wetting and drying is activated.

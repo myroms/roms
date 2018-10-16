@@ -198,6 +198,7 @@
 ** DIAGNOSTICS_UV      use if writing out momentum diagnostics               **
 ** DIAGNOSTICS_TS      use if writing out tracer diagnostics                 **
 ** ICESHELF            use if including ice shelf cavities                   **
+** SINGLE_PRECISION    use if single precision arithmetic numerical kernel   **
 ** SPHERICAL           use if analytical spherical grid                      **
 ** STATIONS            use if writing out station data                       **
 ** STATIONS_CGRID      use if extracting data at native C-grid               **

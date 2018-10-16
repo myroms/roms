@@ -145,8 +145,8 @@
         integer,  pointer :: Nrec(:)             ! NetCDF record size
         integer,  pointer :: Vid(:)              ! NetCDF variables IDs
         integer,  pointer :: Tid(:)              ! NetCDF tracers IDs
-        real(r8), pointer :: time_min(:)         ! starting time
-        real(r8), pointer :: time_max(:)         ! ending time
+        real(dp), pointer :: time_min(:)         ! starting time
+        real(dp), pointer :: time_max(:)         ! ending time
         character (len=50 ) :: label             ! structure label
         character (len=256) :: base              ! base file name
         character (len=256) :: name              ! current name

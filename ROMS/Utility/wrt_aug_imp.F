@@ -22,10 +22,6 @@
       USE mod_ocean
       USE mod_scalars
 !
-      USE nf_fread2d_mod,  ONLY : nf_fread2d
-# ifdef SOLVE3D
-      USE nf_fread3d_mod,  ONLY : nf_fread3d
-# endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -46,10 +42,9 @@
       integer :: Irec, MyType, Nrec
       integer :: INPncid, INPvid
       integer :: i, gtype, status, varid
-      integer :: ibuffer(2), Vsize(4)
+      integer :: ibuffer(2)
 
       real(r8) :: Fmin, Fmax, scale
-      real(r8) :: inp_time(1)
 
 # include "set_bounds.h"
 !
@@ -77,15 +72,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-!  Set Vsize to zero to deactivate interpolation of input data to model
-!  grid in "nf_fread2d".
-!
-      DO i=1,4
-        Vsize(i)=0
-      END DO
-!
       scale=1.0_r8
-
 !
 !  Process free-surface weak-constraint impulse forcing.
 !

@@ -71,8 +71,8 @@
       integer :: i, ifile, lstr, my_ncid, nvatt, nvdim
       integer :: Vsize(4)
 
-      real(r8) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
-      real(r8) :: scale
+      real(dp) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
+      real(dp) :: scale
 
       character (len=1  ), parameter :: blank = ' '
       character (len=3  ) :: label

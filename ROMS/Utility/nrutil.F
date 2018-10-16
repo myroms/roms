@@ -77,7 +77,7 @@
 !
 !  Imported variable declarations.
 !
-      real(r4), intent(in) :: src(:)
+      real(r4), intent(in)  :: src(:)
       real(r4), intent(out) :: dest(:)
 
       integer(i8b), intent(out) :: n_copied, n_not_copied
@@ -104,8 +104,8 @@
 !
 !  Imported variable declarations.
 !
-      real(r8), intent(in) :: src(:)
-      real(r8), intent(out) :: dest(:)
+      real(dp), intent(in)  :: src(:)
+      real(dp), intent(out) :: dest(:)
 
       integer(i8b), intent(out) :: n_copied, n_not_copied
 !
@@ -208,13 +208,14 @@
 !
       integer(i8b), intent(in) :: n
 
-      real(r8), intent(in) :: first, increment
-      real(r8), dimension(n) :: arth_d
+      real(dp), intent(in) :: first, increment
+      real(dp), dimension(n) :: arth_d
 !
 !  Local variable declarations.
 !
       integer(i8b) :: k, k2
-      real(r8) :: temp
+
+      real(dp) :: temp
 !
 !----------------------------------------------------------------------
 !  Set arithmetic progression.

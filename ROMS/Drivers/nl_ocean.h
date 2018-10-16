@@ -246,7 +246,7 @@
 !
 !  Imported variable declarations.
 !
-      real(r8), intent(in) :: RunInterval            ! seconds
+      real(dp), intent(in) :: RunInterval            ! seconds
 !
 !  Local variable declarations.
 !
@@ -257,7 +257,7 @@
 #if defined MODEL_COUPLING && !defined MCT_LIB
       integer :: NstrStep, NendStep
 #endif
-      real (r8) :: MyRunInterval
+      real (dp) :: MyRunInterval
 !
 !-----------------------------------------------------------------------
 !  Time-step nonlinear model over all nested grids, if applicable.

@@ -156,7 +156,7 @@
 !  of contact point data.
 !
       integer,  allocatable :: RollingIndex(:)      ! [Ncontact]
-      real(r8), allocatable :: RollingTime(:,:)     ! [Ncontact]
+      real(dp), allocatable :: RollingTime(:,:)     ! [Ncontact]
 !$OMP THREADPRIVATE (RollingIndex, RollingTime)
 !
 !  If refinement, donor grid (I,J) indices at PSI points used to extract

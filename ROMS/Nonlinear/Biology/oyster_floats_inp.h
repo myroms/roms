@@ -18,6 +18,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE inp_decode_mod
+!
       implicit none
 !
 !  Imported variable declarations
@@ -31,16 +33,14 @@
       integer :: i, j, igrid, mc, nc, ng, status
       integer :: Ivalue(1)
 
-      integer :: decode_line, load_i, load_l, load_r
-
       real(r8) :: Rvalue(1)
 
-      real(r8), dimension(100) :: Rval
+      real(dp), dimension(nRval) :: Rval
 
       character (len=35) :: frmt
       character (len=40) :: KeyWord
       character (len=256) :: line
-      character (len=256), dimension(200) :: Cval
+      character (len=256), dimension(nCval) :: Cval
 
       character (len=1 ), parameter :: blank = ' '
 !

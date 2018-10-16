@@ -19,7 +19,8 @@
       USE mod_coupler
       USE mod_iounits
       USE mod_scalars
-
+!
+      USE inp_decode_mod
 # ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasts
@@ -39,16 +40,14 @@
       integer :: Npts, Nval, i, ic, j, inp, ng, out, status
       integer :: Ivalue(1)
 
-      integer :: decode_line, load_i, load_l, load_r
-
-      real(r8), dimension(100) :: Rval
+      real(r8), dimension(nRval) :: Rval
 
       real(r8), allocatable :: MyRval(:)
 
       character (len=40) :: KeyWord
       character (len=256) :: line
       character (len=256) :: Cname
-      character (len=256), dimension(200) :: Cval
+      character (len=256), dimension(nCval) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Determine coupling standard input file name.  In distributed-memory,

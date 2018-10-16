@@ -61,7 +61,7 @@
 
       integer :: Tindex, i, it1, it2, j
 
-      real(r8) :: SecScale, fac, fac1, fac2
+      real(dp) :: SecScale, fac, fac1, fac2
 !
 !----------------------------------------------------------------------
 !  Set up requested field from data snapshots.
@@ -77,7 +77,7 @@
 !  rounded to the nearest milliseconds integer towards zero in the
 !  time interpolation weights.
 !
-      SecScale=1000.0_r8              ! seconds to milliseconds
+      SecScale=1000.0d0               ! seconds to milliseconds
       it1=3-Tindex
       it2=Tindex
 # if defined CRAY || defined SGI

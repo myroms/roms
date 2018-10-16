@@ -20,6 +20,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE inp_decode_mod
+!
       USE strings_mod, ONLY : FoundError
 !
       implicit none
@@ -31,8 +33,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: find_file
-
       integer :: Npts, Nval
       integer :: i, j, igrid, mc, nc, ng, status
 
@@ -40,11 +40,9 @@
 
       integer, allocatable :: Fcoor(:,:), Fcount(:,:), Ftype(:,:)
 
-      integer :: decode_line, load_i, load_l, load_r
-
       real(r8) :: xfloat, yfloat, zfloat
 
-      real(r8), dimension(100) :: Rval
+      real(dp), dimension(nRval) :: Rval
 
       real(r8), allocatable :: Ft0(:,:), Fx0(:,:), Fy0(:,:), Fz0(:,:)
       real(r8), allocatable :: Fdt(:,:), Fdx(:,:), Fdy(:,:), Fdz(:,:)
@@ -54,7 +52,7 @@
       character (len=35 ) :: frmt
       character (len=40 ) :: KeyWord
       character (len=256) :: fname, line
-      character (len=256), dimension(200) :: Cval
+      character (len=256), dimension(nCval) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.

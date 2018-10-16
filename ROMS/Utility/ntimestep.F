@@ -44,7 +44,7 @@
       integer, intent(inout) :: nl
       integer, intent(out)   :: Nsteps, Rsteps
 !
-      real(r8), intent(in)   :: RunInterval
+      real(dp), intent(in)   :: RunInterval
 !
 !  Local variable declarations.
 !

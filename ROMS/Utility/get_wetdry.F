@@ -43,7 +43,7 @@
       integer :: varid_pmask, varid_rmask, varid_umask, varid_vmask
       integer :: Vsize(4)
 
-      real(r8), parameter :: Fscl = 1.0_r8
+      real(dp), parameter :: Fscl = 1.0_r8
 
       real(r8) :: Fmax, Fmin
 
