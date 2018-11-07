@@ -137,56 +137,56 @@
 !
         TYPE T_FOURDVAR
 
-          integer , pointer :: NobsSurvey(:)
-          integer , pointer :: ObsCount(:)
-          integer , pointer :: ObsReject(:)
+          integer , allocatable :: NobsSurvey(:)
+          integer , allocatable :: ObsCount(:)
+          integer , allocatable :: ObsReject(:)
 #  ifdef FOUR_DVAR
-          real(r8), pointer :: BackCost(:)
-          real(r8), pointer :: Cost0(:)
-          real(r8), pointer :: CostFun(:)
-          real(r8), pointer :: CostFunOld(:)
-          real(r8), pointer :: CostNorm(:)
-          real(r8), pointer :: ObsCost(:)
-          real(r8), pointer :: DataPenalty(:)
+          real(r8), allocatable :: BackCost(:)
+          real(r8), allocatable :: Cost0(:)
+          real(r8), allocatable :: CostFun(:)
+          real(r8), allocatable :: CostFunOld(:)
+          real(r8), allocatable :: CostNorm(:)
+          real(r8), allocatable :: ObsCost(:)
+          real(r8), allocatable :: DataPenalty(:)
 #   if defined DATALESS_LOOPS || defined TL_W4DPSAS          || \
        defined W4DPSAS        || defined W4DPSAS_SENSITIVITY
-          real(r8), pointer :: NLPenalty(:)
+          real(r8), allocatable :: NLPenalty(:)
 #   endif
-          real(r8), pointer :: NLobsCost(:)
+          real(r8), allocatable :: NLobsCost(:)
 
 #   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-          real(r8), pointer :: bc_ak(:)
-          real(r8), pointer :: bc_bk(:)
+          real(r8), allocatable :: bc_ak(:)
+          real(r8), allocatable :: bc_bk(:)
 
-          real(r8), pointer :: zdf1(:)
-          real(r8), pointer :: zdf2(:)
-          real(r8), pointer :: zdf3(:)
+          real(r8), allocatable :: zdf1(:)
+          real(r8), allocatable :: zdf2(:)
+          real(r8), allocatable :: zdf3(:)
 
-          real(r8), pointer :: pc_r2d(:,:)
-          real(r8), pointer :: rhs_r2d(:,:)
-          real(r8), pointer :: r2d_ref(:,:)
-          real(r8), pointer :: zeta_ref(:,:)
+          real(r8), allocatable :: pc_r2d(:,:)
+          real(r8), allocatable :: rhs_r2d(:,:)
+          real(r8), allocatable :: r2d_ref(:,:)
+          real(r8), allocatable :: zeta_ref(:,:)
 
-          real(r8), pointer :: p_r2d(:,:,:)
-          real(r8), pointer :: r_r2d(:,:,:)
-          real(r8), pointer :: bp_r2d(:,:,:)
-          real(r8), pointer :: br_r2d(:,:,:)
+          real(r8), allocatable :: p_r2d(:,:,:)
+          real(r8), allocatable :: r_r2d(:,:,:)
+          real(r8), allocatable :: bp_r2d(:,:,:)
+          real(r8), allocatable :: br_r2d(:,:,:)
 
-          real(r8), pointer :: tl_rhs_r2d(:,:)
-          real(r8), pointer :: tl_r2d_ref(:,:)
-          real(r8), pointer :: tl_zeta_ref(:,:)
+          real(r8), allocatable :: tl_rhs_r2d(:,:)
+          real(r8), allocatable :: tl_r2d_ref(:,:)
+          real(r8), allocatable :: tl_zeta_ref(:,:)
 
-          real(r8), pointer :: ad_rhs_r2d(:,:)
-          real(r8), pointer :: ad_r2d_ref(:,:)
-          real(r8), pointer :: ad_zeta_ref(:,:)
+          real(r8), allocatable :: ad_rhs_r2d(:,:)
+          real(r8), allocatable :: ad_r2d_ref(:,:)
+          real(r8), allocatable :: ad_zeta_ref(:,:)
 #   endif
 #  endif
-          real(r8), pointer :: SurveyTime(:)
+          real(r8), allocatable :: SurveyTime(:)
 
 #  ifdef RPCG
-          real(r8), pointer :: cg_pxsave(:)
-          real(r8), pointer :: cg_pxsum(:)
-          real(r8), pointer :: cg_Dpxsum(:)
+          real(r8), allocatable :: cg_pxsave(:)
+          real(r8), allocatable :: cg_pxsum(:)
+          real(r8), allocatable :: cg_Dpxsum(:)
 #  endif
 
         END TYPE T_FOURDVAR
@@ -1074,183 +1074,257 @@
 #   endif
 #  endif
 !
+!  Allocate structure (1:Ngrids).
+!
       IF (.not.allocated( FOURDVAR)) THEN
         allocate ( FOURDVAR(Ngrids) )
-
-        DO ng=1,Ngrids
+      END IF
+!
+!  Allocate variables in structure.
+!
+      DO ng=1,Ngrids
 
 #  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-          LBi=BOUNDS(ng)%LBi(tile)
-          UBi=BOUNDS(ng)%UBi(tile)
-          LBj=BOUNDS(ng)%LBj(tile)
-          UBj=BOUNDS(ng)%UBj(tile)
+        LBi=BOUNDS(ng)%LBi(tile)
+        UBi=BOUNDS(ng)%UBi(tile)
+        LBj=BOUNDS(ng)%LBj(tile)
+        UBj=BOUNDS(ng)%UBj(tile)
 
-          size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
+        size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
 #  endif
 #  ifdef SOLVE3D
-          NstateVar(ng)=5+NT(ng)
+        NstateVar(ng)=5+NT(ng)
 #   ifdef ADJUST_STFLUX
-          NstateVar(ng)=NstateVar(ng)+NT(ng)
+        NstateVar(ng)=NstateVar(ng)+NT(ng)
 #   endif
 #  else
-          NstateVar(ng)=3
+        NstateVar(ng)=3
 #  endif
 #  ifdef ADJUST_WSTRESS
-          NstateVar(ng)=NstateVar(ng)+2
+        NstateVar(ng)=NstateVar(ng)+2
 #  endif
-          NobsVar(ng)=NstateVar(ng)+NextraObs
+        NobsVar(ng)=NstateVar(ng)+NextraObs
 
+        IF (.not.allocated(FOURDVAR(ng) % NobsSurvey)) THEN
           allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nsurvey(ng),r8)
           FOURDVAR(ng) % NobsSurvey = 0
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % SurveyTime)) THEN
           allocate ( FOURDVAR(ng) % SurveyTime(Nsurvey(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nsurvey(ng),r8)
           FOURDVAR(ng) % SurveyTime = IniVal
+        END IF
 
 #  ifdef FOUR_DVAR
+        IF (.not.allocated(FOURDVAR(ng) % BackCost)) THEN
           allocate ( FOURDVAR(ng) % BackCost(0:NstateVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NstateVar(ng)+1,r8)
           FOURDVAR(ng) % BackCost = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % Cost0)) THEN
           allocate ( FOURDVAR(ng) % Cost0(Nouter) )
           Dmem(ng)=Dmem(ng)+REAL(Nouter,r8)
           FOURDVAR(ng) % Cost0 = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % CostFun)) THEN
           allocate ( FOURDVAR(ng) % CostFun(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % CostFun = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % CostFunOld)) THEN
           allocate ( FOURDVAR(ng) % CostFunOld(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % CostFunOld = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % CostNorm)) THEN
           allocate ( FOURDVAR(ng) % CostNorm(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % CostNorm = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % ObsCost)) THEN
           allocate ( FOURDVAR(ng) % ObsCost(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % ObsCost = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % DataPenalty)) THEN
           allocate ( FOURDVAR(ng) % DataPenalty(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % DataPenalty = IniVal
+        END IF
 
 #   if defined DATALESS_LOOPS || defined TL_W4DPSAS          || \
        defined W4DPSAS        || defined W4DPSAS_SENSITIVITY
+        IF (.not.allocated(FOURDVAR(ng) % NLPenalty)) THEN
           allocate ( FOURDVAR(ng) % NLPenalty(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % NLPenalty = IniVal
+        END IF
 #   endif
 
+        IF (.not.allocated(FOURDVAR(ng) % NLobsCost)) THEN
           allocate ( FOURDVAR(ng) % NLobsCost(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % NLobsCost = IniVal
+        END IF
 
 #   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+        IF (.not.allocated(FOURDVAR(ng) % bc_ak)) THEN
           allocate ( FOURDVAR(ng) % bc_ak(Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)
           FOURDVAR(ng) % bc_ak = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % bc_bk)) THEN
           allocate ( FOURDVAR(ng) % bc_bk(Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)
           FOURDVAR(ng) % bc_bk = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % zdf1)) THEN
           allocate ( FOURDVAR(ng) % zdf1(Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)
           FOURDVAR(ng) % zdf1 = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % zdf2)) THEN
           allocate ( FOURDVAR(ng) % zdf2(Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)
           FOURDVAR(ng) % zdf2 = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % zdf3)) THEN
           allocate ( FOURDVAR(ng) % zdf3(Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)
           FOURDVAR(ng) % zdf3 = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % pc_r2d)) THEN
           allocate ( FOURDVAR(ng) % pc_r2d(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % pc_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % rhs_r2d)) THEN
           allocate ( FOURDVAR(ng) % rhs_r2d(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % rhs_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % r2d_ref)) THEN
           allocate ( FOURDVAR(ng) % r2d_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % r2d_ref = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % zeta_ref)) THEN
           allocate ( FOURDVAR(ng) % zeta_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % zeta_ref = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % p_r2d)) THEN
           allocate ( FOURDVAR(ng) % p_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)*size2d
           FOURDVAR(ng) % p_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % r_r2d)) THEN
           allocate ( FOURDVAR(ng) % r_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)*size2d
           FOURDVAR(ng) % r_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % bp_r2d)) THEN
           allocate ( FOURDVAR(ng) % bp_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)*size2d
           FOURDVAR(ng) % bp_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % br_r2d)) THEN
           allocate ( FOURDVAR(ng) % br_r2d(LBi:UBi,LBj:UBj,Nbico(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nbico(ng),r8)*size2d
           FOURDVAR(ng) % br_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % tl_rhs_r2d)) THEN
           allocate ( FOURDVAR(ng) % tl_rhs_r2d(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % tl_rhs_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % tl_r2d_ref)) THEN
           allocate ( FOURDVAR(ng) % tl_r2d_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % tl_r2d_ref = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % tl_zeta_ref)) THEN
           allocate ( FOURDVAR(ng) % tl_zeta_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % tl_zeta_ref = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % ad_rhs_r2d)) THEN
           allocate ( FOURDVAR(ng) % ad_rhs_r2d(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % ad_rhs_r2d = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % ad_r2d_ref)) THEN
           allocate ( FOURDVAR(ng) % ad_r2d_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % ad_r2d_ref = IniVal
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % ad_zeta_ref)) THEN
           allocate ( FOURDVAR(ng) % ad_zeta_ref(LBi:UBi,LBj:UBj) )
           Dmem(ng)=Dmem(ng)+size2d
           FOURDVAR(ng) % ad_zeta_ref = IniVal
+        END IF
 #   endif
 #  endif
 
+        IF (.not.allocated(FOURDVAR(ng) % ObsCount)) THEN
           allocate ( FOURDVAR(ng) % ObsCount(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % ObsCount = 0
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % ObsReject)) THEN
           allocate ( FOURDVAR(ng) % ObsReject(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
           FOURDVAR(ng) % ObsReject = 0
+        END IF
 
 #  ifdef RPCG
+        IF (.not.allocated(FOURDVAR(ng) % cg_pxsave)) THEN
           allocate ( FOURDVAR(ng) % cg_pxsave(Ndatum(ng)+1) )
           Dmem(ng)=Dmem(ng)+REAL(Ndatum(ng)+1,r8)
           FOURDVAR(ng) % cg_pxsave = 0
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % cg_pxsum)) THEN
           allocate ( FOURDVAR(ng) % cg_pxsum(Ndatum(ng)+1) )
           Dmem(ng)=Dmem(ng)+REAL(Ndatum(ng)+1,r8)
           FOURDVAR(ng) % cg_pxsum = 0
+        END IF
 
+        IF (.not.allocated(FOURDVAR(ng) % cg_Dpxsum)) THEN
           allocate ( FOURDVAR(ng) % cg_Dpxsum(Ndatum(ng)+1) )
           Dmem(ng)=Dmem(ng)+REAL(Ndatum(ng)+1,r8)
           FOURDVAR(ng) % cg_Dpxsum = 0
+        END IF
 #  endif
 
-        END DO
-      END IF
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Read in number of observations available per survey at their times.
@@ -2108,7 +2182,7 @@
         allocate ( GSmatinv(Ninner,Ninner) )
         Dmem(1)=Dmem(1)+REAL(Ninner*Ninner,r8)
       END IF
-      GSmatinv = IniValinn
+      GSmatinv = IniVal
 #  endif
 # endif
 !

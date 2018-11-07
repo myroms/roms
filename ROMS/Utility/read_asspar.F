@@ -508,11 +508,11 @@
                 allocate ( P_bgqc(MAXVAL(Nprovenance),Ngrids))
               END IF
             CASE ('Iprovenance')
-              Mval=MAXVAL(Nprovenance)*Ngrids
-              Npts=load_i(Nval, Rval, Mval, Iprovenance)
+              Mval=MAXVAL(Nprovenance)
+              Npts=load_i(Nval, Rval, Mval, Ngrids, Iprovenance)
             CASE ('P_bgqc')
-              Mval=MAXVAL(Nprovenance)*Ngrids
-              Npts=load_r(Nval, Rval, Mval, P_bgqc)
+              Mval=MAXVAL(Nprovenance)
+              Npts=load_r(Nval, Rval, Mval, Ngrids, P_bgqc)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
             CASE ('Lstflux')
