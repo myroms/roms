@@ -493,7 +493,7 @@
             END IF
           ELSE
             IF (Master) THEN
-              WRITE (stdout,80) string, TRIM(Vname(1,ibath)),           &
+              WRITE (stdout,80) string, TRIM(Vname(1,idbath)),          &
      &                          TRIM(ncname)
             END IF
             exit_flag=4
