@@ -1,3 +1,4 @@
+#include "cppdefs.h"
       MODULE mod_kinds
 !
 !svn $Id$

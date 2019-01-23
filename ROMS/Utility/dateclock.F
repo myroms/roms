@@ -431,7 +431,7 @@
 !  Fractional date number (units=second).
 !
       DateNumber(2)=REAL(MyDay,dp)*86400.0_dp+                          &
-     &              REAL(MyHour,dp)*360.0_dp+                           &
+     &              REAL(MyHour,dp)*3600.0_dp+                          &
      &              REAL(MyMinutes,dp)*60.0_dp+                         &
      &              MySeconds
 

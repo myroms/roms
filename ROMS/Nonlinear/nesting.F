@@ -5358,7 +5358,7 @@
 # ifdef DISTRIBUTE
       real(r8), parameter :: spv = 0.0_r8
 # endif
-      real(dp) :: Wnew, Wold, fac
+      real(dp) :: Wnew, Wold, SecScale, fac
       real(r8) :: cff, cff1
       real(r8) :: my_value
 
@@ -5401,15 +5401,19 @@
       told=3-RollingIndex(cr)
       tnew=RollingIndex(cr)
 !
-!  Set time interpolation weights.
+!  Set linear time interpolation weights. Fractional seconds are
+!  rounded to the nearest milliseconds integer towards zero in the
+!  time interpolation weights.
 !
-      Wold=RollingTime(tnew,cr)-time(ng)
-      Wnew=time(ng)-RollingTime(told,cr)
-      fac=1.0_r8/(Wold+Wnew)
+      SecScale=1000.0_dp              ! seconds to milliseconds
+!
+      Wold=ANINT((RollingTime(tnew,cr)-time(ng))*SecScale,dp)
+      Wnew=ANINT((time(ng)-RollingTime(told,cr))*SecScale,dp)
+      fac=1.0_dp/(Wold+Wnew)
       Wold=fac*Wold
       Wnew=fac*Wnew
 !
-      IF (((Wold*Wnew).lt.0.0_r8).or.((Wold+Wnew).le.0.0_r8)) THEN
+      IF (((Wold*Wnew).lt.0.0_dp).or.((Wold+Wnew).le.0.0_dp)) THEN
         IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) cr, dg, ng,                               &
@@ -5857,7 +5861,7 @@
 # endif
       integer :: i, itrc, j, k, m, tnew, told
 
-      real(dp) :: Wnew, Wold, fac
+      real(dp) :: Wnew, Wold, SecScale, fac
       real(r8) :: my_value
 
 #  include "set_bounds.h"
@@ -5872,15 +5876,19 @@
       told=3-RollingIndex(cr)
       tnew=RollingIndex(cr)
 !
-!  Set time interpolation weights.
+!  Set linear time interpolation weights. Fractional seconds are
+!  rounded to the nearest milliseconds integer towards zero in the
+!  time interpolation weights.
 !
-      Wold=RollingTime(tnew,cr)-time(ng)
-      Wnew=time(ng)-RollingTime(told,cr)
-      fac=1.0_r8/(Wold+Wnew)
+      SecScale=1000.0_dp              ! seconds to milliseconds
+!
+      Wold=ANINT((RollingTime(tnew,cr)-time(ng))*SecScale,dp)
+      Wnew=ANINT((time(ng)-RollingTime(told,cr))*SecScale,dp)
+      fac=1.0_dp/(Wold+Wnew)
       Wold=fac*Wold
       Wnew=fac*Wnew
 !
-      IF (((Wold*Wnew).lt.0.0_r8).or.((Wold+Wnew).le.0.0_r8)) THEN
+      IF (((Wold*Wnew).lt.0.0_dp).or.((Wold+Wnew).le.0.0_dp)) THEN
         IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) cr, dg, ng,                               &

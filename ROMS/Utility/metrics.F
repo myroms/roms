@@ -288,7 +288,11 @@
       real(r8), parameter :: Uscale = 0.1_r8
 #endif
       real(r8) :: cff, cff1, cff2
+#ifdef NESTING
+      real(r8) :: SecScale
+#endif
       real(dp) :: my_DXmax, my_DXmin, my_DYmax, my_DYmin
+
 #ifdef SOLVE3D
       real(dp) :: my_DZmax, my_DZmin
 #endif
@@ -1070,15 +1074,19 @@
 !  Check refined grid time-step.  The time-step size for refined grids
 !  needs to be an exact mode multiple of its coarser donor grid.  In
 !  principle, it can be a "RefineScale" factor smaller.  However, other
-!  integer smaller or larger factor are allowed such that:
+!  integer smaller or larger factor is allowed such that:
 !
-!          MOD(dt(dg), dt(rg)) = 0        dg:  donor  coarse grid
-!                                         rg:  receiver fine grid
+!    MOD(dt(dg)*SecScale, dt(rg)*SecScale) = 0   dg:  donor  coarse grid
+!                                                rg:  receiver fine grid
 !
+!  Notice that SecScale is used to avoid roundoff when the timestep
+!  between donor and receiver grids are small and less than one.
+!
+        SecScale=1000.0_dp              ! seconds to milliseconds
         DO ig=1,Ngrids
           IF (RefinedGrid(ig).and.(RefineScale(ig).gt.0)) THEN
             dg=CoarserDonor(ig)
-            IF (MOD(dt(dg),dt(ig)).ne.0.0d0) THEN
+            IF (MOD(dt(dg)*SecScale,dt(ig)*SecScale).ne.0.0_dp) THEN
               IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
                 IF (Master) THEN
                   WRITE (stdout,100) ig, dt(ig), dg, dt(dg),            &

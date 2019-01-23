@@ -109,8 +109,11 @@
      &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
-# if defined WET_DRY && defined DIAGNOSTICS_BIO
+# ifdef WET_DRY
+     &                   GRID(ng) % rmask_wet,                          &
+#  ifdef DIAGNOSTICS_BIO
      &                   GRID(ng) % rmask_full,                         &
+#  endif
 # endif
 #endif
      &                   GRID(ng) % Hz,                                 &
@@ -149,8 +152,11 @@
      &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
-# if defined WET_DRY && defined DIAGNOSTICS_BIO
+# if defined WET_DRY
+     &                         rmask_wet,                               &
+#  if def DIAGNOSTICS_BIO
      &                         rmask_full,                              &
+#  endif
 # endif
 #endif
      &                         Hz, z_r, z_w, srflx,                     &
@@ -187,8 +193,11 @@
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
-#  if defined WET_DRY && defined DIAGNOSTICS_BIO
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#   ifdef DIAGNOSTICS_BIO
       real(r8), intent(in) :: rmask_full(LBi:,LBj:)
+#   endif
 #  endif
 # endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
@@ -215,8 +224,11 @@
 #else
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-#  if defined WET_DRY && defined DIAGNOSTICS_BIO
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+#   ifdef DIAGNOSTICS_BIO
       real(r8), intent(in) :: rmask_full(LBi:UBi,LBj:UBj)
+#   endif
 #  endif
 # endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
@@ -1300,6 +1312,12 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               cff=Bio(i,k,ibio)-Bio_old(i,k,ibio)
+#ifdef MASKING
+              cff=cff*rmask(i,j)
+# ifdef WET_DRY
+              cff=cff*rmask_wet(i,j)
+# endif
+#endif
               t(i,j,k,nnew,ibio)=t(i,j,k,nnew,ibio)+cff*Hz(i,j,k)
             END DO
           END DO

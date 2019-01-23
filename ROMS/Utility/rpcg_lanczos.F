@@ -98,23 +98,23 @@
 !
       Ltrans=.FALSE.
 !
-      MASTER_THREAD : IF (Master) THEN
-!
 !  Initialize internal parameters.  This is needed here for output
 !  reasons.
 !
-        Jopt=0.0_r8
-        Jf=0.0_r8
-        Jdata=0.0_r8
-        Jmod=0.0_r8
-        Jb=Jb0(outLoop-1)
-        Jobs=0.0_r8
-        Jact=0.0_r8
-        eps=0.0_r8
-        preducv=0.0_r8
-        preducy=0.0_r8
-        zwork=0.0_r8
-        zgv=0.0_r8
+      Jopt=0.0_r8
+      Jf=0.0_r8
+      Jdata=0.0_r8
+      Jmod=0.0_r8
+      Jb=Jb0(outLoop-1)
+      Jobs=0.0_r8
+      Jact=0.0_r8
+      eps=0.0_r8
+      preducv=0.0_r8
+      preducy=0.0_r8
+      zwork=0.0_r8
+      zgv=0.0_r8
+!
+      MASTER_THREAD : IF (Master) THEN
 !
 !  Multiply TLmodVal by ObsScale to effectively remove any rejected
 !  observations from the analysis.
@@ -1054,6 +1054,14 @@
         CALL mp_bcastf (ng, model, cg_zv(:,:,outLoop))
         CALL mp_bcastf (ng, model, vcglev(:,:,outLoop))
       END IF
+      CALL mp_bcastf (ng, model, Jf)
+      CALL mp_bcastf (ng, model, Jdata)
+      CALL mp_bcastf (ng, model, Jmod)
+      CALL mp_bcastf (ng, model, Jopt)
+      CALL mp_bcastf (ng, model, Jobs)
+      CALL mp_bcastf (ng, model, Jact)
+      CALL mp_bcastf (ng, model, preducv)
+      CALL mp_bcastf (ng, model, preducy)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1069,8 +1077,8 @@
 # endif
       IF (innLoop.gt.0) THEN
          CALL cg_write_rpcg (ng, model, innLoop, outLoop,               &
-     &                  Jf, Jdata, Jmod, Jopt, Jb, Jobs, Jact,          &
-     &                  preducv, preducy)
+     &                       Jf, Jdata, Jmod, Jopt, Jb, Jobs, Jact,     &
+     &                       preducv, preducy)
       END IF
 
 # ifdef PROFILE
