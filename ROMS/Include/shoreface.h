@@ -9,7 +9,7 @@
 ** Options for Shore Face Planar Beach Test Case.
 **
 ** Application flag:   SHOREFACE
-** Input scripts:      ocean_shoreface.h
+** Input scripts:      roms_shoreface.h
 **                     sediment_shoreface.h
 */
 

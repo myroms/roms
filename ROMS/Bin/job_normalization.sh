@@ -62,16 +62,16 @@
  endif
  cp s4dvar.in $NORM
 
- $SUBSTITUTE $NORM ocean_std_m.nc $STDnameM
- $SUBSTITUTE $NORM ocean_std_i.nc $STDnameI
- $SUBSTITUTE $NORM ocean_std_b.nc $STDnameB
- $SUBSTITUTE $NORM ocean_std_f.nc $STDnameF
- $SUBSTITUTE $NORM ocean_nrm_m.nc $NRMnameM
- $SUBSTITUTE $NORM ocean_nrm_i.nc $NRMnameI
- $SUBSTITUTE $NORM ocean_nrm_b.nc $NRMnameB
- $SUBSTITUTE $NORM ocean_nrm_f.nc $NRMnameF
- $SUBSTITUTE $NORM ocean_obs.nc wc13_obs.nc
- $SUBSTITUTE $NORM ocean_hss.nc wc13_hss.nc
- $SUBSTITUTE $NORM ocean_lcz.nc wc13_lcz.nc
- $SUBSTITUTE $NORM ocean_mod.nc wc13_mod.nc
- $SUBSTITUTE $NORM ocean_err.nc wc13_err.nc
+ $SUBSTITUTE $NORM roms_std_m.nc $STDnameM
+ $SUBSTITUTE $NORM roms_std_i.nc $STDnameI
+ $SUBSTITUTE $NORM roms_std_b.nc $STDnameB
+ $SUBSTITUTE $NORM roms_std_f.nc $STDnameF
+ $SUBSTITUTE $NORM roms_nrm_m.nc $NRMnameM
+ $SUBSTITUTE $NORM roms_nrm_i.nc $NRMnameI
+ $SUBSTITUTE $NORM roms_nrm_b.nc $NRMnameB
+ $SUBSTITUTE $NORM roms_nrm_f.nc $NRMnameF
+ $SUBSTITUTE $NORM roms_obs.nc wc13_obs.nc
+ $SUBSTITUTE $NORM roms_hss.nc wc13_hss.nc
+ $SUBSTITUTE $NORM roms_lcz.nc wc13_lcz.nc
+ $SUBSTITUTE $NORM roms_mod.nc wc13_mod.nc
+ $SUBSTITUTE $NORM roms_err.nc wc13_err.nc

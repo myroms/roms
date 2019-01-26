@@ -9,7 +9,7 @@
 ** Options for Kelvin Wave Test.
 **
 ** Application flag:   KELVIN
-** Input script:       ocean_kelvin.in
+** Input script:       roms_kelvin.in
 */
 
 #define UV_ADV

@@ -9,7 +9,7 @@
 ** Options for Gravitational Overflow Test.
 **
 ** Application flag:   OVERFLOW
-** Input script:       ocean_overflow.in
+** Input script:       roms_overflow.in
 */
 
 #define UV_ADV

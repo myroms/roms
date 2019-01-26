@@ -438,7 +438,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !                    has the option, for example, to compute sediment in just
 !                    one of the nested grids. If so, this switch needs to be
 !                    consistent with the dimension parameter NST in input
-!                    script (ocean.in).  In order to make the model more
+!                    script (roms.in).  In order to make the model more
 !                    efficient in  memory usage, NST(:) should be zero in
 !                    such grids.
 !

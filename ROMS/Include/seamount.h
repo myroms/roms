@@ -9,7 +9,7 @@
 ** Options for Seamount Test.
 **
 ** Application flag:   SEAMOUNT
-** Input script:       ocean_seamount.in
+** Input script:       roms_seamount.in
 */
 
 #define UV_ADV

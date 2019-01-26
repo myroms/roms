@@ -9,7 +9,7 @@
 ** Options for K-Profile Parameterization Test.
 **
 ** Application flag:   LMD_TEST
-** Input script:       ocean_lmd_test.in
+** Input script:       roms_lmd_test.in
 */
 
 #define UV_ADV

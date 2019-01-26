@@ -3203,7 +3203,7 @@
 !
 !  Check if nesting parameters "NestLayers", "GridsInLayer", and
 !  "GridNumber" have been assigned.  The code below is necessary
-!  for compatability with old "ocean.in" input scripts.
+!  for compatability with old "roms.in" input scripts.
 !
 #ifndef NESTING
       IF (.not.got_NestLayers) THEN
@@ -6120,7 +6120,7 @@
      &        /,15x,'Grid ',i2.2,':',f14.1,' (sec)',2x,f14.2,' (days)', &
      &        /,15x,'Grid ',i2.2,':',f14.1,' (sec)',2x,f14.2,' (days)', &
      &        /,15x,'Adjust standard input parameter NTIMES in ',       &
-     &              '''ocean.in''.'/)
+     &              '''roms.in''.'/)
 
       RETURN
       END SUBROUTINE read_PhyPar

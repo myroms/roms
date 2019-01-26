@@ -73,16 +73,16 @@
  endif
  cp s4dvar.in $PSAS
 
- $SUBSTITUTE $PSAS ocean_std_m.nc $STDnameM
- $SUBSTITUTE $PSAS ocean_std_i.nc $STDnameI
- $SUBSTITUTE $PSAS ocean_std_b.nc $STDnameB
- $SUBSTITUTE $PSAS ocean_std_f.nc $STDnameF
- $SUBSTITUTE $PSAS ocean_nrm_m.nc $NRMnameM
- $SUBSTITUTE $PSAS ocean_nrm_i.nc $NRMnameI
- $SUBSTITUTE $PSAS ocean_nrm_b.nc $NRMnameB
- $SUBSTITUTE $PSAS ocean_nrm_f.nc $NRMnameF
- $SUBSTITUTE $PSAS ocean_obs.nc $OBSname
- $SUBSTITUTE $PSAS ocean_hss.nc wc13_hss.nc
- $SUBSTITUTE $PSAS ocean_lcz.nc wc13_lcz.nc
- $SUBSTITUTE $PSAS ocean_mod.nc wc13_mod.nc
- $SUBSTITUTE $PSAS ocean_err.nc wc13_err.nc
+ $SUBSTITUTE $PSAS roms_std_m.nc $STDnameM
+ $SUBSTITUTE $PSAS roms_std_i.nc $STDnameI
+ $SUBSTITUTE $PSAS roms_std_b.nc $STDnameB
+ $SUBSTITUTE $PSAS roms_std_f.nc $STDnameF
+ $SUBSTITUTE $PSAS roms_nrm_m.nc $NRMnameM
+ $SUBSTITUTE $PSAS roms_nrm_i.nc $NRMnameI
+ $SUBSTITUTE $PSAS roms_nrm_b.nc $NRMnameB
+ $SUBSTITUTE $PSAS roms_nrm_f.nc $NRMnameF
+ $SUBSTITUTE $PSAS roms_obs.nc $OBSname
+ $SUBSTITUTE $PSAS roms_hss.nc wc13_hss.nc
+ $SUBSTITUTE $PSAS roms_lcz.nc wc13_lcz.nc
+ $SUBSTITUTE $PSAS roms_mod.nc wc13_mod.nc
+ $SUBSTITUTE $PSAS roms_err.nc wc13_err.nc

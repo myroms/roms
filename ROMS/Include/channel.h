@@ -9,7 +9,7 @@
 ** Options for periodic uniform channel
 **
 ** Application flag:   CHANNEL
-** Input script:       ocean_channel.in
+** Input script:       roms_channel.in
 **
 **
 ** Available Driver options:  choose only one and activate it in the

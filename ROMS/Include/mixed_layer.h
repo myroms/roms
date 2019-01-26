@@ -10,7 +10,7 @@
 ** thermal stratification and wind stress.
 **
 ** Application flag:   MIXED_LAYER
-** Input script:       ocean_mixed_layer.in
+** Input script:       roms_mixed_layer.in
 */
 
 #define WRITE_GRID

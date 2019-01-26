@@ -9,7 +9,7 @@
 ** Options one-dimensional (vertical) Biology Toy.
 **
 ** Application flag:   BIO_TOY
-** Input script:       ocean_bio_toy.in
+** Input script:       roms_bio_toy.in
 **                     bioFennel.in, ecosim.in, npzd_Franks.in, npzd_Powell.in
 */
 

@@ -9,7 +9,7 @@
 ** Options for Upwelling Test.
 **
 ** Application flag:   UPWELLING
-** Input script:       ocean_upwelling.in
+** Input script:       roms_upwelling.in
 */
 
 #define UV_ADV

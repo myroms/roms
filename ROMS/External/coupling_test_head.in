@@ -78,7 +78,7 @@ Nthreads(waves) = 1
 ! Coupled model standard input file name, [1:Nmodels] KEYWORD entries are
 ! expected with the label code in parenthesis.
 
- INPname(ocean) = ROMS/External/ocean_test_head.in
+ INPname(ocean) = ROMS/External/roms_test_head.in
  INPname(waves) = Waves/SWAN/External/swan_test_head.in
 
 ! Coupled models variables information file name.

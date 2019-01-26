@@ -9,7 +9,7 @@
 ** Options for Estuary with Sediment Transport Test.
 **
 ** Application flag:   ESTUARY_TEST
-** Input script:       ocean_estuary_test.in
+** Input script:       roms_estuary_test.in
 **                     sediment_estuary_test.in
 */
 

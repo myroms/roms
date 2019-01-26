@@ -9,7 +9,7 @@
 ** Options for Atmosphere-Ocean Two-Way Coupling Test (WRF/ROMS).
 **
 ** Application flag:   COUPLING_TEST
-** Input script:       ocean_coupling_test.in
+** Input script:       roms_coupling_test.in
 */
 
 #define UV_ADV

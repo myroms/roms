@@ -9,7 +9,7 @@
 ** Options for Sediment Test Channel Case.
 **
 ** Application flag:   TEST_CHAN
-** Input scripts:      ocean_test_chan.in
+** Input scripts:      roms_test_chan.in
 **                     sediment_test_chan.in
 */
 

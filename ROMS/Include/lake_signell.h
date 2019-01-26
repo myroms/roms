@@ -9,7 +9,7 @@
 ** Options for Closed Basin (Lake) forced with wind.
 **
 ** Application flag:   LAKE_SIGNELL
-** Input script:       ocean_lake_signell.in
+** Input script:       roms_lake_signell.in
 **                     floats_lake_signell.in
 **                     sediment_lake_signell.in
 */

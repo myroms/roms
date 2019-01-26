@@ -10,7 +10,7 @@
 **
 ** Application flag: LAKE_JERSEY
 **
-** Input scripts:    ocean_lake_jersey.in
+** Input scripts:    roms_lake_jersey.in
 **                   sediment_lake_jersey.in
 */
 

@@ -10,7 +10,7 @@
 ** http://smig.usgs.gov/SMIG/features_0300/plumes_inline.html
 **
 ** Application flag:   RIVERPLUME2
-** Input script:       ocean_riverplume2.in
+** Input script:       roms_riverplume2.in
 */
 
 #define UV_ADV

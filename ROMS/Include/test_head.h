@@ -9,7 +9,7 @@
 ** Options for Sediment Test Headland Case.
 **
 ** Application flag:   TEST_HEAD
-** Input scripts:      ocean_test_head.in
+** Input scripts:      roms_test_head.in
 **                     coupling_test_head.in
 **                     sediment_test_head.in
 */

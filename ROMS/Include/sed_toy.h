@@ -9,7 +9,7 @@
 ** Options for One-Dimensional (vertical) Sediment Toy.
 **
 ** Application flag:   SED_TOY
-** Input scripts:      ocean_sed_toy.in
+** Input scripts:      roms_sed_toy.in
 **                     sediment_sed_toy.in
 */
 

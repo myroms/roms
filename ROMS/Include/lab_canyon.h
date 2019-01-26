@@ -9,7 +9,7 @@
 ** Options for Lab Canyon (Polar Coordinates).
 **
 ** Application flag:   LAB_CANYON
-** Input script:       ocean_lab_canyon.in
+** Input script:       roms_lab_canyon.in
 */
 
 #define UV_COR

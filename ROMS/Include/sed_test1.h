@@ -9,7 +9,7 @@
 ** Options for Suspended Sediment Test in a Channel.
 **
 ** Application flag:   SED_TEST1
-** Input scripts:      ocean_sed_test1.in
+** Input scripts:      roms_sed_test1.in
 **                     sediment_sed_test1.in
 */
 

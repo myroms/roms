@@ -9,7 +9,7 @@
 ** Options for Inlet Test Case, waves-ocean (SWAN/ROMS) two-way coupling.
 **
 ** Application flag:   INLET_TEST
-** Input script:       ocean_inlet_test.in
+** Input script:       roms_inlet_test.in
 **                     coupling_inlet_test.in
 **                     sediment_inlet_test.in
 */

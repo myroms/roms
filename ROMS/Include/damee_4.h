@@ -9,7 +9,7 @@
 ** Options for North Atlantic DAMEE Application, 3/4 degree resolution
 **
 ** Application flag:   DAMEE_4
-** Input script:       ocean_damee_4.in
+** Input script:       roms_damee_4.in
 */
 
 #define UV_ADV

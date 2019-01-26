@@ -9,7 +9,7 @@
 ** Options for an Idealized Canyon.
 **
 ** Application flag:   CANYON
-** Input script:       ocean_canyon2d.in, ocean_canyon3d.in
+** Input script:       roms_canyon2d.in, roms_canyon3d.in
 */
 
 #ifndef SOLVE3D                   /* 2D set-up */

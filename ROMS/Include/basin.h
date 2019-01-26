@@ -9,7 +9,7 @@
 ** Options for Big Bad Basin.
 **
 ** Application flag:   BASIN
-** Input script:       ocean_basin.in
+** Input script:       roms_basin.in
 */
 
 #define UV_ADV

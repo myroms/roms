@@ -9,7 +9,7 @@
 ** Boundary Layers Test.
 **
 ** Application flag:   BL_TEST
-** Input scripts:      ocean_bl_test.in
+** Input scripts:      roms_bl_test.in
 **                     stations_bl_test.in
 */
 

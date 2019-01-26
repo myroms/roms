@@ -1,5 +1,5 @@
 /*
-** svn $Id: wc13.h 1610 2015-01-07 22:48:23Z arango $
+** svn $Id: wc13.h 1748 2018-02-10 03:25:17Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2018 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -9,7 +9,7 @@
 ** Options for the California Current System, 1/3 degree resolution.
 **
 ** Application flag:   WC13
-** Input script:       ocean_wc13.in
+** Input script:       roms_wc13.in
 **                     s4dvar.in
 **
 ** Available Drivers options: choose only one and activate it in the

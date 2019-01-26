@@ -9,7 +9,7 @@
 ** Options for River Plume Test (original version).
 **
 ** Application flag:   RIVERPLUME1
-** Input script:       ocean_riverplume1.in
+** Input script:       roms_riverplume1.in
 */
 
 #define UV_ADV

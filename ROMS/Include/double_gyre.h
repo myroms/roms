@@ -9,7 +9,7 @@
 ** Options for 4DVar Data Assimilation Toy.
 **
 ** Application flag:   DOUBLE_GYRE
-** Input script:       ocean_double_gyre.in
+** Input script:       roms_double_gyre.in
 **
 **
 ** Available Driver options:  choose only one and activate it in the
