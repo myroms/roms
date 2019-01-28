@@ -18,6 +18,14 @@
 #       fi                                                              :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+separator=`perl -e "print ':' x 100;"`
+
+echo ""
+echo "${separator}"
+echo "Using customized library paths from:  $1"
+echo "${separator}"
+echo ""
+
 #--------------------------------------------------------------------------
 # Add MPI library to compile.
 #--------------------------------------------------------------------------
@@ -112,7 +120,7 @@ case "$FORT" in
     export          ESMF_COMM=${which_MPI}
     export          ESMF_SITE=default
 
-    export       ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
+    export      ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
     if [ -n "${USE_MPI:+1}" ]; then
       if [ "${which_MPI}" = "mpich" ]; then
         export       MPI_ROOT=/opt/intelsoft/mpich

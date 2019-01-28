@@ -5,7 +5,7 @@
 # Copyright (c) 2002-2018 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# WRF Compiling BASH Script                                              :::
+# WRF Compiling BASH Script                                             :::
 #                                                                       :::
 # Script to compile WRF where source code files are kept separate       :::
 # from the application configuration and build objects.                 :::
@@ -16,7 +16,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./build_wrf.bash [options]                                           :::
+#    ./build_wrf.bash [options]                                         :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -35,6 +35,8 @@
 export which_MPI=openmpi                      # default, overwritten below
 
 #Initialize.
+
+separator=`perl -e "print ':' x 100;"`
 
 parallel=0
 clean=1
@@ -166,9 +168,11 @@ done
  export USE_MY_LIBS=no           # use system default library paths
 #export USE_MY_LIBS=yes          # use my customized library paths
 
+#MY_PATHS=${ROMS_SRC_DIR}/Compilers/my_build_paths.bash
+ MY_PATHS=${HOME}/Compilers/ROMS/my_build_paths.bash
+
 if [ "${USE_MY_LIBS}" == 'yes' ]; then
-  source ${ROMS_SRC_DIR}/Compilers/my_build_paths.bash
-# source ${HOME}/Compilers/my_build_paths.bash
+  source ${MY_PATHS} ${MY_PATHS}
 fi
 
 #--------------------------------------------------------------------------
@@ -228,7 +232,9 @@ export  WRF_BIN_DIR=${WRF_BUILD_DIR}/Bin
 
 if [ "$clean" -eq "1" ]; then
   echo ""
+  echo "${separator}"
   echo "Cleaning WRF source code:  ${WRF_ROOT_DIR}/clean -a"
+  echo "${separator}"
   echo ""
   ${WRF_ROOT_DIR}/clean -a            # clean source code
   /bin/rm -rf ${WRF_BUILD_DIR}        # remove existing build directories
@@ -251,25 +257,33 @@ if [ "$config" -eq "1" ]; then
   fi
 
   CHECK_STRING='WRF-ROMS ESMF-NUOPC Coupling'
-  echo " "
+  echo ""
+  echo "${separator}"
   echo "If applicable, replacing several WRF files for WRF ESMF/NUOPC Coupling"
-  echo " "
+  echo "${separator}"
+  echo ""
 
 # Reworking linking NetCDF4 library dependencies
 
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/configure` -eq "0" ]; then
     mv -v ${WRF_ROOT_DIR}/configure ${WRF_ROOT_DIR}/configure.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_configure ${WRF_ROOT_DIR}/configure
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/configure"
   fi
 
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/Makefile` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/Makefile ${WRF_ROOT_DIR}/Makefile.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_Makefile  ${WRF_ROOT_DIR}/Makefile
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/Makefile"
   fi
 
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/arch/postamble` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/arch/postamble ${WRF_ROOT_DIR}/arch/postamble.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_postamble ${WRF_ROOT_DIR}/arch/postamble
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/arch/postamble"  else
   fi
 
 # Changing -openmp to -qopenmp, renaming ESMF/esmf to MYESMF/myesmf, adding
@@ -278,6 +292,8 @@ if [ "$config" -eq "1" ]; then
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/arch/configure.defaults` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/arch/configure.defaults ${WRF_ROOT_DIR}/arch/configure.defaults.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_configure.defaults ${WRF_ROOT_DIR}/arch/configure.defaults
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/arch/configure.defaults"
   fi
 
 # Renaming ESMF/esmf to MYESMF/myesmf
@@ -285,11 +301,15 @@ if [ "$config" -eq "1" ]; then
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/arch/Config.pl` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/arch/Config.pl ${WRF_ROOT_DIR}/arch/Config.pl.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_Config.pl ${WRF_ROOT_DIR}/arch/Config.pl
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/arch/Config.pl"
   fi
 
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/external/esmf_time_f90/Makefile` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/external/esmf_time_f90/Makefile ${WRF_ROOT_DIR}/external/esmf_time_f90/Makefile.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_Makefile.esmf ${WRF_ROOT_DIR}/external/esmf_time_f90/Makefile
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/external/esmf_time_f90/Makefile"
   fi
 
 # Correcting optional argument from defaultCalendar to defaultCalKind to
@@ -298,11 +318,16 @@ if [ "$config" -eq "1" ]; then
   if [ `grep -c "${CHECK_STRING}" ${WRF_ROOT_DIR}/external/esmf_time_f90/Test1.F90` -eq "0" ]; then
     mv -v  ${WRF_ROOT_DIR}/external/esmf_time_f90/Test1.F90 ${WRF_ROOT_DIR}/external/esmf_time_f90/Test1.F90.orig
     cp -fv ${ROMS_SRC_DIR}/ESM/wrf_Test1.F90 ${WRF_ROOT_DIR}/external/esmf_time_f90/Test1.F90
+  else
+    echo "   No need to replace: ${WRF_ROOT_DIR}/external/esmf_time_f90/Test1.F90"
   fi
 
   echo ""
+  echo "${separator}"
   echo "Configuring WRF code:  ${WRF_ROOT_DIR}/configure ${CONFIG_FLAGS}"
+  echo "${separator}"
   echo ""
+
   ${WRF_ROOT_DIR}/configure ${CONFIG_FLAGS}
 
 #  Custom CPP Macros for renaming ESMF/esmf to MYESMF/myesmf to avoid
@@ -362,6 +387,7 @@ else
 fi
 
 echo ""
+echo "${separator}"
 echo "Compiling WRF using  ${MY_PROJECT_DIR}/${0}:"
 echo ""
 echo "   ${WRF_ROOT_DIR}/compile ${WRF_CASE}"
@@ -369,6 +395,7 @@ echo "        WRF_DA_CORE = ${WRF_DA_CORE},    Data Assimilation core"
 echo "        WRF_EM_CORE = ${WRF_EM_CORE},    Eurelian Mass-coordinate core"
 echo "        WRF_NMM_CORE = ${WRF_EM_CORE},   Nonhydrostatic Mesoscale Model core"
 echo "        J = ${J},          number of compiling CPUs"
+echo "${separator}"
 echo ""
 
 ${WRF_ROOT_DIR}/compile ${WRF_CASE}
@@ -380,7 +407,9 @@ ${WRF_ROOT_DIR}/compile ${WRF_CASE}
 if [ "$move" -eq "1" ]; then
 
   echo ""
+  echo "${separator}"
   echo "Moving WRF objects to Build directory  ${WRF_BUILD_DIR}:"
+  echo "${separator}"
   echo ""
 
   if [ ! -d ${WRF_BUILD_DIR} ]; then
@@ -450,7 +479,9 @@ fi
 if [ "$WRF_CASE" == "em_real" ]; then
 
   echo ""
+  echo "${separator}"
   echo "Creating WRF data links:  Case em_real"
+  echo "${separator}"
   echo ""
 
   cd ${MY_PROJECT_DIR}
@@ -522,7 +553,9 @@ if [ "$WRF_CASE" == "em_real" ]; then
 # Remove links in WRF/test/em_real sub-directory
 
   echo ""
+  echo "${separator}"
   echo "Removing WRF data links from  ${WRF_ROOT_DIR}/test/em_real:"
+  echo "${separator}"
   echo ""
 
   find ${WRF_ROOT_DIR}/test/em_real -type l -exec /bin/rm -fv {} \;
