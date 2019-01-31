@@ -13,8 +13,13 @@
 # FFLAGS         Flags to the fortran compiler
 # CPP            Name of the C-preprocessor
 # CPPFLAGS       Flags to the C-preprocessor
+# HDF5_INCDIR    HDF5 include directory
+# HDF5_LIBDIR    HDF5 library directory
+# HDF5_LIBS      HDF5 library switches
+# NF_CONFIG      NetCDF Fortran configuration script
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF libary directory
+# NETCDF_LIBS    NetCDF library switches
 # LD             Program to load the objects into an executable
 # LDFLAGS        Flags to the loader
 # RANLIB         Name of ranlib command
@@ -84,6 +89,45 @@ ifdef CICE_APPLICATION
 endif
 
 #--------------------------------------------------------------------------
+# Coupled models.  Notice Linux needs the libraries repeated for
+# dependencies for some of the coupled components.
+#--------------------------------------------------------------------------
+
+ifdef USE_COAMPS
+             LIBS += $(COAMPS_LIB_DIR)/coamps_driver.a
+             LIBS += $(COAMPS_LIB_DIR)/libaa.a
+             LIBS += $(COAMPS_LIB_DIR)/libam.a
+             LIBS += $(COAMPS_LIB_DIR)/libashare.a
+             LIBS += $(COAMPS_LIB_DIR)/libcoamps.a
+             LIBS += $(COAMPS_LIB_DIR)/libfnoc.a
+             LIBS += $(COAMPS_LIB_DIR)/libaa.a
+             LIBS += $(COAMPS_LIB_DIR)/libam.a
+             LIBS += $(COAMPS_LIB_DIR)/libashare.a
+             LIBS += $(COAMPS_LIB_DIR)/libcoamps.a
+             LIBS += $(COAMPS_LIB_DIR)/libfnoc.a
+             LIBS += $(COAMPS_LIB_DIR)/libfishpak.a
+             LIBS += $(COAMPS_LIB_DIR)/libtracer.a
+endif
+
+ifdef USE_WRF
+             LIBS += $(WRF_LIB_DIR)/module_wrf_top.o
+             LIBS += $(WRF_LIB_DIR)/libwrflib.a
+             LIBS += $(WRF_LIB_DIR)/libfftpack.a
+             LIBS += $(WRF_LIB_DIR)/libio_grib1.a
+             LIBS += $(WRF_LIB_DIR)/libio_grib_share.a
+             LIBS += $(WRF_LIB_DIR)/libwrfio_int.a
+             LIBS += $(WRF_LIB_DIR)/libesmf_time.a
+             LIBS += $(WRF_LIB_DIR)/librsl_lite.a
+             LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
+             LIBS += $(WRF_LIB_DIR)/pack_utils.o
+             LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
+endif
+
+ifdef CICE_APPLICATION
+            SLIBS := $(LIBS) $(SLIBS)
+endif
+
+#--------------------------------------------------------------------------
 # Library locations, can be overridden by environment variables.
 #--------------------------------------------------------------------------
 #
@@ -103,14 +147,16 @@ ifdef USE_NETCDF4
 else
     NETCDF_INCDIR ?= /opt/pgisoft/serial/netcdf3/include
     NETCDF_LIBDIR ?= /opt/pgisoft/serial/netcdf3/lib
-             LIBS += -L$(NETCDF_LIBDIR) -lnetcdf
+      NETCDF_LIBS ?= -lnetcdf
+             LIBS += -L$(NETCDF_LIBDIR) $(NETCDF_LIBS)
            INCDIR += $(NETCDF_INCDIR) $(INCDIR)
 endif
 
 ifdef USE_HDF5
       HDF5_INCDIR ?= /opt/pgisoft/serial/hdf5/include
       HDF5_LIBDIR ?= /opt/pgisoft/serial/hdf5/lib
-             LIBS += -L$(HDF5_LIBDIR) -lhdf5_fortran -lhdf5hl_fortran -lhdf5 -lz
+        HDF5_LIBS ?= -lhdf5_fortran -lhdf5hl_fortran -lhdf5 -lz
+             LIBS += -L$(HDF5_LIBDIR) $(HDF5_LIBS)
            INCDIR += $(HDF5_INCDIR)
 endif
 
@@ -152,50 +198,6 @@ ifdef USE_ESMF
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
-endif
-
-ifdef USE_COAMPS
-             LIBS += $(COAMPS_LIB_DIR)/libashare.a
-             LIBS += $(COAMPS_LIB_DIR)/libcoamps.a
-             LIBS += $(COAMPS_LIB_DIR)/libaa.a
-             LIBS += $(COAMPS_LIB_DIR)/libam.a
-             LIBS += $(COAMPS_LIB_DIR)/libfishpak.a
-             LIBS += $(COAMPS_LIB_DIR)/libfnoc.a
-             LIBS += $(COAMPS_LIB_DIR)/libtracer.a
-#            LIBS += $(COAMPS_LIB_DIR)/libnl_beq.a
-endif
-
-ifdef CICE_APPLICATION
-            SLIBS += $(SLIBS) $(LIBS)
-endif
-
-ifdef USE_WRF
- ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-             LIBS += $(WRF_LIB_DIR)/main/module_wrf_top.o
-             LIBS += $(WRF_LIB_DIR)/main/libwrflib.a
-             LIBS += $(WRF_LIB_DIR)/external/fftpack/fftpack5/libfftpack.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib1/libio_grib1.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib_share/libio_grib_share.a
-             LIBS += $(WRF_LIB_DIR)/external/io_int/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libmyesmf_time.a
-             LIBS += $(WRF_LIB_DIR)/external/RSL_LITE/librsl_lite.a
-             LIBS += $(WRF_LIB_DIR)/frame/module_internal_header_util.o
-             LIBS += $(WRF_LIB_DIR)/frame/pack_utils.o
-             LIBS += $(WRF_LIB_DIR)/external/io_netcdf/libwrfio_nf.a
-     WRF_MOD_DIRS  = main frame phys share external/esmf_time_f90
- else
-             LIBS += $(WRF_LIB_DIR)/module_wrf_top.o
-             LIBS += $(WRF_LIB_DIR)/libwrflib.a
-             LIBS += $(WRF_LIB_DIR)/libfftpack.a
-             LIBS += $(WRF_LIB_DIR)/libio_grib1.a
-             LIBS += $(WRF_LIB_DIR)/libio_grib_share.a
-             LIBS += $(WRF_LIB_DIR)/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/libmyesmf_time.a
-             LIBS += $(WRF_LIB_DIR)/librsl_lite.a
-             LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
-             LIBS += $(WRF_LIB_DIR)/pack_utils.o
-             LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
- endif
 endif
 
 # Use full path of compiler.

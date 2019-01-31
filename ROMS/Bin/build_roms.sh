@@ -131,34 +131,6 @@ setenv MY_PROJECT_DIR        ${PWD}
 #setenv COMPILERS            ${HOME}/Compilers/ROMS
 
 #--------------------------------------------------------------------------
-# If coupling Earth Systems Models (ESM), set the location of the ESM
-# component libraries and modules. The strategy is to compile and link
-# each ESM component separately first, and then ROMS since it is driving
-# the coupled system. Only the ESM components activated are considered
-# and the rest are ignored.  Some components like WRF cannot be built
-# in a directory specified by the user but in it is the root directory,
-# and cannot be moved when debugging with tools like TotalView.
-#--------------------------------------------------------------------------
-
-setenv WRF_SRC_DIR         ${HOME}/ocean/repository/WRF
-
-if ($?USE_DEBUG) then
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coampsG
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcmG
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wamG
-# setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrfG
-  setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-else
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_cice
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coamps
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcm
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wam
-  setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrf
-# setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-endif
-
-#--------------------------------------------------------------------------
 # Set tunable CPP options.
 #--------------------------------------------------------------------------
 #
@@ -202,6 +174,34 @@ endif
  setenv USE_LARGE           on          # activate 64-bit compilation
 #setenv USE_NETCDF4         on          # compile with NetCDF-4 library
 #setenv USE_PARALLEL_IO     on          # Parallel I/O with NetCDF-4/HDF5
+
+#--------------------------------------------------------------------------
+# If coupling Earth Systems Models (ESM), set the location of the ESM
+# component libraries and modules. The strategy is to compile and link
+# each ESM component separately first, and then ROMS since it is driving
+# the coupled system. Only the ESM components activated are considered
+# and the rest are ignored.  Some components like WRF cannot be built
+# in a directory specified by the user but in it is the root directory,
+# and cannot be moved when debugging with tools like TotalView.
+#--------------------------------------------------------------------------
+
+setenv WRF_SRC_DIR         ${HOME}/ocean/repository/WRF
+
+if ($?USE_DEBUG) then
+  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
+  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coampsG
+  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcmG
+  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wamG
+# setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrfG
+  setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
+else
+  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_cice
+  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coamps
+  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcm
+  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wam
+  setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrf
+# setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
+endif
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.

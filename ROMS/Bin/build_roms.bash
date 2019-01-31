@@ -132,32 +132,6 @@ export     MY_PROJECT_DIR=${PWD}
 #export         COMPILERS=${HOME}/Compilers/ROMS
 
 #--------------------------------------------------------------------------
-# If Earth System Model (ESM) coupling, set location of ESM component
-# libraries and modules. The strategy is to compile and link each ESM
-# component separately first and ROMS last since it is driving the
-# coupled system. Only the ESM components activated are considered and
-# the rest ignored.
-#--------------------------------------------------------------------------
-
-export        WRF_SRC_DIR=${HOME}/ocean/repository/WRF
-
-if [ -n "${USE_DEBUG:+1}" ]; then
-  export     CICE_LIB_DIR=${MY_PROJECT_DIR}/Build_ciceG
-  export   COAMPS_LIB_DIR=${MY_PROJECT_DIR}/Build_coampsG
-  export    REGCM_LIB_DIR=${MY_PROJECT_DIR}/Build_regcmG
-  export      WAM_LIB_DIR=${MY_PROJECT_DIR}/Build_wamG
-# export      WRF_LIB_DIR=${MY_PROJECT_DIR}/Build_wrfG
-  export      WRF_LIB_DIR=${WRF_SRC_DIR}
-else
-  export     CICE_LIB_DIR=${MY_PROJECT_DIR}/Build_cice
-  export   COAMPS_LIB_DIR=${MY_PROJECT_DIR}/Build_coamps
-  export    REGCM_LIB_DIR=${MY_PROJECT_DIR}/Build_regcm
-  export      WAM_LIB_DIR=${MY_PROJECT_DIR}/Build_wam
-  export      WRF_LIB_DIR=${MY_PROJECT_DIR}/Build_wrf
-# export      WRF_LIB_DIR=${WRF_SRC_DIR}
-fi
-
-#--------------------------------------------------------------------------
 # Set tunable CPP options.
 #--------------------------------------------------------------------------
 #
@@ -201,6 +175,33 @@ fi
  export         USE_LARGE=on            # activate 64-bit compilation
 #export       USE_NETCDF4=on            # compile with NetCDF-4 library
 #export   USE_PARALLEL_IO=on            # Parallel I/O with NetCDF-4/HDF5
+
+
+#--------------------------------------------------------------------------
+# If Earth System Model (ESM) coupling, set location of ESM component
+# libraries and modules. The strategy is to compile and link each ESM
+# component separately first and ROMS last since it is driving the
+# coupled system. Only the ESM components activated are considered and
+# the rest ignored.
+#--------------------------------------------------------------------------
+
+export        WRF_SRC_DIR=${HOME}/ocean/repository/WRF
+
+if [ -n "${USE_DEBUG:+1}" ]; then
+  export     CICE_LIB_DIR=${MY_PROJECT_DIR}/Build_ciceG
+  export   COAMPS_LIB_DIR=${MY_PROJECT_DIR}/Build_coampsG
+  export    REGCM_LIB_DIR=${MY_PROJECT_DIR}/Build_regcmG
+  export      WAM_LIB_DIR=${MY_PROJECT_DIR}/Build_wamG
+# export      WRF_LIB_DIR=${MY_PROJECT_DIR}/Build_wrfG
+  export      WRF_LIB_DIR=${WRF_SRC_DIR}
+else
+  export     CICE_LIB_DIR=${MY_PROJECT_DIR}/Build_cice
+  export   COAMPS_LIB_DIR=${MY_PROJECT_DIR}/Build_coamps
+  export    REGCM_LIB_DIR=${MY_PROJECT_DIR}/Build_regcm
+  export      WAM_LIB_DIR=${MY_PROJECT_DIR}/Build_wam
+  export      WRF_LIB_DIR=${MY_PROJECT_DIR}/Build_wrf
+# export      WRF_LIB_DIR=${WRF_SRC_DIR}
+fi
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.

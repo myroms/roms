@@ -13,8 +13,13 @@
 # FFLAGS         Flags to the fortran compiler
 # CPP            Name of the C-preprocessor
 # CPPFLAGS       Flags to the C-preprocessor
+# HDF5_INCDIR    HDF5 include directory
+# HDF5_LIBDIR    HDF5 library directory
+# HDF5_LIBS      HDF5 library switches
+# NF_CONFIG      NetCDF Fortran configuration script
 # NETCDF_INCDIR  NetCDF include directory
-# NETCDF_LIBDIR  NetCDF library directory
+# NETCDF_LIBDIR  NetCDF libary directory
+# NETCDF_LIBS    NetCDF library switches
 # LD             Program to load the objects into an executable
 # LDFLAGS        Flags to the loader
 # RANLIB         Name of ranlib command
@@ -59,7 +64,7 @@ ifdef ROMS_APPLICATION
            FFLAGS += -fmax-stack-var-size=64000000
  else
            FFLAGS += -O3
-           FFLAGS += -ffast-math
+#          FFLAGS += -O3 -ffast-math
  endif
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 endif
@@ -82,70 +87,8 @@ ifdef CICE_APPLICATION
 endif
 
 #--------------------------------------------------------------------------
-# Library locations, can be overridden by environment variables.
+# Coupled models libraries.
 #--------------------------------------------------------------------------
-
-          LDFLAGS := $(FFLAGS)
-
-ifdef USE_NETCDF4
-        NF_CONFIG ?= nf-config
-    NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
-             LIBS += $(shell $(NF_CONFIG) --flibs)
-           INCDIR += $(NETCDF_INCDIR) $(INCDIR)
-else
-    NETCDF_INCDIR ?= /opt/gfortransoft/serial/netcdf3/include
-    NETCDF_LIBDIR ?= /opt/gfortransoft/serial/netcdf3/lib
-             LIBS += -L$(NETCDF_LIBDIR) -lnetcdf
-           INCDIR += $(NETCDF_INCDIR) $(INCDIR)
-endif
-
-ifdef USE_HDF5
-      HDF5_INCDIR ?= /opt/gfortransoft/serial/hdf5/include
-      HDF5_LIBDIR ?= /opt/gfortransoft/serial/hdf5/lib
-             LIBS += -L$(HDF5_LIBDIR) -lhdf5_fortran -lhdf5hl_fortran -lhdf5 -lz
-           INCDIR += $(HDF5_INCDIR)
-endif
-
-ifdef USE_ARPACK
- ifdef USE_MPI
-   PARPACK_LIBDIR ?= /opt/gfortransoft/PARPACK
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack
- endif
-    ARPACK_LIBDIR ?= /opt/gfortransoft/ARPACK
-             LIBS += -L$(ARPACK_LIBDIR) -larpack
-endif
-
-ifdef USE_MPI
-         CPPFLAGS += -DMPI
- ifdef USE_MPIF90
-               FC := mpif90
- else
-             LIBS += -lfmpi -lmpi
- endif
-endif
-
-ifdef USE_OpenMP
-         CPPFLAGS += -D_OPENMP
-           FFLAGS += -fopenmp -static-libgcc
-#            LIBS += -lgomp
-endif
-
-ifdef USE_MCT
-       MCT_INCDIR ?= /usr/local/mct/include
-       MCT_LIBDIR ?= /usr/local/mct/lib
-           FFLAGS += -I$(MCT_INCDIR)
-             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
-           INCDIR += $(MCT_INCDIR) $(INCDIR)
-endif
-
-ifdef USE_ESMF
-          ESMF_OS ?= $(OS)
-      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_COMM).$(ESMF_SITE)
-      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
-                     include $(ESMF_MK_DIR)/esmf.mk
-           FFLAGS += $(ESMF_F90COMPILEPATHS)
-             LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
-endif
 
 ifdef USE_COAMPS
              LIBS += $(COAMPS_LIB_DIR)/libashare.a
@@ -191,6 +134,82 @@ ifdef USE_WRF
  endif
 endif
 
+#--------------------------------------------------------------------------
+# Library locations, can be overridden by environment variables.
+#--------------------------------------------------------------------------
+
+          LDFLAGS := $(FFLAGS)
+
+ifdef USE_NETCDF4
+        NF_CONFIG ?= nf-config
+    NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
+             LIBS += $(shell $(NF_CONFIG) --flibs)
+           INCDIR += $(NETCDF_INCDIR) $(INCDIR)
+else
+    NETCDF_INCDIR ?= /opt/gfortransoft/serial/netcdf3/include
+    NETCDF_LIBDIR ?= /opt/gfortransoft/serial/netcdf3/lib
+      NETCDF_LIBS ?= -lnetcdf
+             LIBS += -L$(NETCDF_LIBDIR) $(NETCDF_LIBS)
+           INCDIR += $(NETCDF_INCDIR) $(INCDIR)
+endif
+
+ifdef USE_HDF5
+      HDF5_INCDIR ?= /opt/gfortransoft/serial/hdf5/include
+      HDF5_LIBDIR ?= /opt/gfortransoft/serial/hdf5/lib
+        HDF5_LIBS ?= -lhdf5_fortran -lhdf5hl_fortran -lhdf5 -lz
+             LIBS += -L$(HDF5_LIBDIR) $(HDF5_LIBS)
+           INCDIR += $(HDF5_INCDIR)
+endif
+
+ifdef USE_ARPACK
+ ifdef USE_MPI
+   PARPACK_LIBDIR ?= /opt/gfortransoft/PARPACK
+  ifdef USE_DEBUG
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack-debug
+  else
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+  endif
+ endif
+    ARPACK_LIBDIR ?= /opt/gfortransoft/ARPACK
+ ifdef USE_DEBUG
+             LIBS += -L$(ARPACK_LIBDIR) -larpack-debug
+ else
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
+ endif
+endif
+
+ifdef USE_MPI
+         CPPFLAGS += -DMPI
+ ifdef USE_MPIF90
+               FC := mpif90
+ else
+             LIBS += -lfmpi -lmpi
+ endif
+endif
+
+ifdef USE_OpenMP
+         CPPFLAGS += -D_OPENMP
+           FFLAGS += -fopenmp -static-libgcc
+#            LIBS += -lgomp
+endif
+
+ifdef USE_MCT
+       MCT_INCDIR ?= /usr/local/mct/include
+       MCT_LIBDIR ?= /usr/local/mct/lib
+           FFLAGS += -I$(MCT_INCDIR)
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
+           INCDIR += $(MCT_INCDIR) $(INCDIR)
+endif
+
+ifdef USE_ESMF
+          ESMF_OS ?= $(OS)
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_COMM).$(ESMF_SITE)
+      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
+                     include $(ESMF_MK_DIR)/esmf.mk
+           FFLAGS += $(ESMF_F90COMPILEPATHS)
+             LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
+endif
+
 # Use full path of compiler.
 
                FC := $(shell which ${FC})
@@ -228,7 +247,6 @@ ifdef ROMS_APPLICATION
  $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-none
  $(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-none
  $(SCRATCH_DIR)/biology.o: FFLAGS += -ffree-form -ffree-line-length-none
-
  ifdef USE_ADJOINT
   $(SCRATCH_DIR)/ad_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
  endif

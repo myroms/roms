@@ -45,34 +45,48 @@ echo ""
 # where the MPI library is installed is computer dependent. Recall
 # that you still need to use the appropriate "mpirun" to execute.
 
+export               MPI_ROOT=""
+
 if [ -n "${USE_MPIF90:+1}" ]; then
   case "$FORT" in
     ifort )
       if [ "${which_MPI}" = "mpich" ]; then
-        export PATH=/opt/intelsoft/mpich/bin:$PATH
+        export       MPI_ROOT=/opt/intelsoft/mpich
       elif [ "${which_MPI}" = "mpich2" ]; then
-        export PATH=/opt/intelsoft/mpich2/bin:$PATH
+        export       MPI_ROOT=/opt/intelsoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export PATH=/opt/intelsoft/openmpi/bin:$PATH
+        export       MPI_ROOT=/opt/intelsoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_ROOT=/opt/intelsoft/mvapich2
       fi
+      export             PATH=${MPI_ROOT}/bin:$PATH
+      export       MPI_INCDIR=${MPI_ROOT}/include
       ;;
 
     pgi )
       if [ "${which_MPI}" = "mpich" ]; then
-        export PATH=/opt/pgisoft/mpich/bin:$PATH
+        export       MPI_ROOT=/opt/pgisoft/mpich
       elif [ "${which_MPI}" = "mpich2" ]; then
-        export PATH=/opt/pgisoft/mpich2/bin:$PATH
+        export       MPI_ROOT=/opt/pgisoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export PATH=/opt/pgisoft/openmpi/bin:$PATH
+        export       MPI_ROOT=/opt/pgisoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_ROOT=/opt/pgisoft/mvapich2
       fi
+      export             PATH=${MPI_ROOT}/bin:$PATH
+      export       MPI_INCDIR=${MPI_ROOT}/include
       ;;
 
     gfortran )
       if [ "${which_MPI}" = "mpich2" ]; then
-        export PATH=/opt/gfortransoft/mpich2/bin:$PATH
+        export       MPI_ROOT=/opt/gfortransoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export PATH=/opt/gfortransoft/openmpi/bin:$PATH
+        export       MPI_ROOT=/opt/gfortransoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_ROOT=/opt/gfortransoft/mvapich2
       fi
+      export             PATH=${MPI_ROOT}/bin:$PATH
+      export       MPI_INCDIR=${MPI_ROOT}/include
       ;;
 
   esac
@@ -107,10 +121,12 @@ fi
 # with the compiler. We cannot activate MPI constructs in serial
 # or shared-memory ROMS code. Hybrid parallelism is not possible.
 
+export               MPI_SOFT=""
+
 case "$FORT" in
   ifort )
-    export           MPI_ROOT=""
     export      ESMF_COMPILER=intelgcc
+#   export      ESMF_COMPILER=intel
     if [ -n "${USE_DEBUG:+1}" ]; then
       export        ESMF_BOPT=g
     else
@@ -123,33 +139,35 @@ case "$FORT" in
     export      ARPACK_LIBDIR=/opt/intelsoft/serial/ARPACK
     if [ -n "${USE_MPI:+1}" ]; then
       if [ "${which_MPI}" = "mpich" ]; then
-        export       MPI_ROOT=/opt/intelsoft/mpich
+        export       MPI_SOFT=/opt/intelsoft/mpich
       elif [ "${which_MPI}" = "mpich2" ]; then
-        export       MPI_ROOT=/opt/intelsoft/mpich2
+        export       MPI_SOFT=/opt/intelsoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export       MPI_ROOT=/opt/intelsoft/openmpi
+        export       MPI_SOFT=/opt/intelsoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_SOFT=/opt/intelsoft/mvapich2
       fi
-      export       MCT_INCDIR=${MPI_ROOT}/mct/include
-      export       MCT_LIBDIR=${MPI_ROOT}/mct/lib
-      export   PARPACK_LIBDIR=${MPI_ROOT}/PARPACK
+      export       MCT_INCDIR=${MPI_SOFT}/mct/include
+      export       MCT_LIBDIR=${MPI_SOFT}/mct/lib
+      export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
     if [ -n "${USE_NETCDF4:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
-        export         NETCDF=${MPI_ROOT}/netcdf4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+        export         NETCDF=${MPI_SOFT}/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       else
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
         export         NETCDF=/opt/intelsoft/serial/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       fi
     else
-      export         ESMF_DIR=${MPI_ROOT}/esmf_nc3
+      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
       export           NETCDF=/opt/intelsoft/serial/netcdf3
       export    NETCDF_INCDIR=${NETCDF}/include
       export    NETCDF_LIBDIR=${NETCDF}/lib
@@ -158,7 +176,7 @@ case "$FORT" in
 
     if [ -n "${USE_HDF5:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export           HDF5=${MPI_ROOT}/hdf5
+        export           HDF5=${MPI_SOFT}/hdf5
         export    HDF5_LIBDIR=${HDF5}/lib
         export    HDF5_INCDIR=${HDF5}/include
       else
@@ -170,7 +188,6 @@ case "$FORT" in
     ;;
 
   pgi )
-    export           MPI_ROOT=""
     export      ESMF_COMPILER=pgi
     if [ -n "${USE_DEBUG:+1}" ]; then
       export        ESMF_BOPT=g
@@ -184,33 +201,35 @@ case "$FORT" in
     export      ARPACK_LIBDIR=/opt/pgisoft/serial/ARPACK
     if [ -n "${USE_MPI:+1}" ]; then
       if [ "${which_MPI}" = "mpich" ]; then
-        export       MPI_ROOT=/opt/pgisoft/mpich
+        export       MPI_SOFT=/opt/pgisoft/mpich
       elif [ "${which_MPI}" = "mpich2" ]; then
-        export       MPI_ROOT=/opt/pgisoft/mpich2
+        export       MPI_SOFT=/opt/pgisoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export       MPI_ROOT=/opt/pgisoft/openmpi
+        export       MPI_SOFT=/opt/pgisoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_SOFT=/opt/pgisoft/mvapich2
       fi
-      export       MCT_INCDIR=${MPI_ROOT}/mct/include
-      export       MCT_LIBDIR=${MPI_ROOT}/mct/lib
-      export   PARPACK_LIBDIR=${MPI_ROOT}/PARPACK
+      export       MCT_INCDIR=${MPI_SOFT}/mct/include
+      export       MCT_LIBDIR=${MPI_SOFT}/mct/lib
+      export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
     if [ -n "${USE_NETCDF4:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
-        export         NETCDF=${MPI_ROOT}/netcdf4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+        export         NETCDF=${MPI_SOFT}/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       else
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
         export         NETCDF=/opt/pgisoft/serial/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       fi
     else
-      export         ESMF_DIR=${MPI_ROOT}/esmf_nc3
+      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
       export           NETCDF=/opt/pgisoft/serial/netcdf3
       export    NETCDF_INCDIR=${NETCDF}/include
       export    NETCDF_LIBDIR=${NETCDF}/lib
@@ -219,7 +238,7 @@ case "$FORT" in
 
     if [ -n "${USE_HDF5:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export           HDF5=${MPI_ROOT}/hdf5
+        export           HDF5=${MPI_SOFT}/hdf5
         export    HDF5_LIBDIR=${HDF5}/lib
         export    HDF5_INCDIR=${HDF5}/include
       else
@@ -231,7 +250,6 @@ case "$FORT" in
     ;;
 
   gfortran )
-    export           MPI_ROOT=""
     export      ESMF_COMPILER=gfortran
     if [ -n "${USE_DEBUG:+1}" ]; then
       export        ESMF_BOPT=g
@@ -245,31 +263,33 @@ case "$FORT" in
     export      ARPACK_LIBDIR=/opt/gfortransoft/serial/ARPACK
     if [ -n "${USE_MPI:+1}" ]; then
       if [ "${which_MPI}" = "mpich2" ]; then
-        export       MPI_ROOT=/opt/gfortransoft/mpich2
+        export       MPI_SOFT=/opt/gfortransoft/mpich2
       elif [ "${which_MPI}" = "openmpi" ]; then
-        export       MPI_ROOT=/opt/gfortransoft/openmpi
+        export       MPI_SOFT=/opt/gfortransoft/openmpi
+      elif [ "${which_MPI}" = "mvapich2" ]; then
+        export       MPI_SOFT=/opt/gfortransoft/mvapich2
       fi
-      export       MCT_INCDIR=${MPI_ROOT}/mct/include
-      export       MCT_LIBDIR=${MPI_ROOT}/mct/lib
-      export   PARPACK_LIBDIR=${MPI_ROOT}/PARPACK
+      export       MCT_INCDIR=${MPI_SOFT}/mct/include
+      export       MCT_LIBDIR=${MPI_SOFT}/mct/lib
+      export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
     if [ -n "${USE_NETCDF4:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
-        export         NETCDF=${MPI_ROOT}/netcdf4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+        export         NETCDF=${MPI_SOFT}/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       else
-        export       ESMF_DIR=${MPI_ROOT}/esmf_nc4
+        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
         export         NETCDF=/opt/gfortransoft/serial/netcdf4
         export      NF_CONFIG=${NETCDF}/bin/nf-config
         export  NETCDF_INCDIR=${NETCDF}/include
         export        NETCDF4=1
       fi
     else
-      export         ESMF_DIR=${MPI_ROOT}/esmf_nc3
+      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
       export           NETCDF=/opt/gfortransoft/serial/netcdf3
       export    NETCDF_INCDIR=${NETCDF}/include
       export    NETCDF_LIBDIR=${NETCDF}/lib
@@ -278,7 +298,7 @@ case "$FORT" in
 
     if [ -n "${USE_HDF5:+1}" ]; then
       if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export           HDF5=${MPI_ROOT}/hdf5
+        export           HDF5=${MPI_SOFT}/hdf5
         export    HDF5_LIBDIR=${HDF5}/lib
         export    HDF5_INCDIR=${HDF5}/include
       else

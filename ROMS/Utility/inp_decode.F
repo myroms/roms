@@ -40,12 +40,14 @@
       implicit none
 !
       INTERFACE load_i
+        MODULE PROCEDURE load_0d_i       ! scalar integer
         MODULE PROCEDURE load_1d_i       ! 1D integer array
         MODULE PROCEDURE load_2d_i       ! 2D integer array
         MODULE PROCEDURE load_3d_i       ! 3D integer array
       END INTERFACE load_i
 
       INTERFACE load_l
+        MODULE PROCEDURE load_0d_l       ! scalar logical
         MODULE PROCEDURE load_1d_l       ! 1D logical array
         MODULE PROCEDURE load_2d_l       ! 2D logical array
         MODULE PROCEDURE load_3d_l       ! 3D logical array
@@ -53,10 +55,12 @@
 
       INTERFACE load_r
 #ifdef SINGLE_PRECISION
+        MODULE PROCEDURE load_0d_dp      ! scalar real(dp)
         MODULE PROCEDURE load_1d_dp      ! 1D real(dp) array
         MODULE PROCEDURE load_2d_dp      ! 2D real(dp) array
         MODULE PROCEDURE load_3d_dp      ! 3D real(dp) array
 #endif
+        MODULE PROCEDURE load_0d_r8      ! scalar real(r8)
         MODULE PROCEDURE load_1d_r8      ! 1D real(r8) array
         MODULE PROCEDURE load_2d_r8      ! 2D real(r8) array
         MODULE PROCEDURE load_3d_r8      ! 3D real(r8) array
@@ -437,6 +441,49 @@
       RETURN
       END FUNCTION find_file
 !
+      FUNCTION load_0d_i (Ninp, Vinp, Nout, Vout) RESULT (Nval)
+!
+!***********************************************************************
+!                                                                      !
+!  It loads input values into a requested model scalar integer         !
+!  variable.                                                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (1D real(dp) array)                      !
+!     Nout       Size of output integer variable dimension (not used)  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output scalar integer variable                        !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in) :: Ninp, Nout
+      real(dp), intent(in) :: Vinp(:)
+!
+      integer, intent(out) :: Vout
+!
+!  Local variable declarations.
+!
+      integer :: ic
+      integer :: Nval
+!
+!-----------------------------------------------------------------------
+!  Load scalar integer variable with input value.
+!-----------------------------------------------------------------------
+!
+      ic=1
+      Vout=INT(Vinp(ic))
+      Nval=ic
+
+      RETURN
+      END FUNCTION load_0d_i
+!
       FUNCTION load_1d_i (Ninp, Vinp, Nout, Vout) RESULT (Nval)
 !
 !***********************************************************************
@@ -630,6 +677,54 @@
       RETURN
       END FUNCTION load_3d_i
 !
+      FUNCTION load_0d_l (Ninp, Vinp, Nout, Vout) RESULT (Nval)
+!
+!***********************************************************************
+!                                                                      !
+!  It loads input values into a requested model scalar logical         !
+!  variable.                                                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (character 1D array)                     !
+!     Nout       Size of output logical variable dimension (not used)  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output scalar logical variable                        !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: Ninp, Nout
+      character (len=*), intent(in) :: Vinp(:)
+!
+      logical, intent(out) :: Vout
+!
+!  Local variable declarations.
+!
+      integer :: ic
+      integer :: Nval
+!
+!-----------------------------------------------------------------------
+!  Load scalar logical variable with input value.
+!-----------------------------------------------------------------------
+!
+      ic=1
+      IF ((Vinp(ic)(1:1).eq.'T').or.                                    &
+     &    (Vinp(ic)(1:1).eq.'t')) THEN
+        Vout=.TRUE.
+      ELSE
+        Vout=.FALSE.
+      END IF
+      Nval=ic
+!
+      RETURN
+      END FUNCTION load_0d_l
+!
       FUNCTION load_1d_l (Ninp, Vinp, Nout, Vout) RESULT (Nval)
 !
 !***********************************************************************
@@ -639,7 +734,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     Ninp       Number of input elements to process in Vinp (integer) !
-!     Vinp       Input values (charact 1D array)                       !
+!     Vinp       Input values (character 1D array)                     !
 !     Nout       Size of output logical variable dimension             !
 !                                                                      !
 !  On Output:                                                          !
@@ -664,7 +759,7 @@
       integer :: Nval
 !
 !-----------------------------------------------------------------------
-!  Load integer variable with input values.
+!  Load logical variable with input values.
 !-----------------------------------------------------------------------
 !
 !  If not all values are provided for variable, assume the last value
@@ -867,6 +962,49 @@
 
 #ifdef SINGLE_PRECISION
 !
+      FUNCTION load_0d_dp (Ninp, Vinp, Nout, Vout) RESULT (Nval)
+!
+!***********************************************************************
+!                                                                      !
+!  It loads input values into a requested model scalar double          !
+!  precision variable when numerical kernel is in single precision.    !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (1D real(dp) array)                      !
+!     Nout       Size of output integer variable dimension (not used)  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output scalar variable (real, KIND=dp)                !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in) :: Ninp, Nout
+      real(dp), intent(in) :: Vinp(:)
+!
+      real(dp), intent(out) :: Vout
+!
+!  Local variable declarations.
+!
+      integer :: ic
+      integer :: Nval
+!
+!-----------------------------------------------------------------------
+!  Load scalar foating-point variable with input value.
+!-----------------------------------------------------------------------
+!
+      ic=1
+      Vout=Vinp(ic)
+      Nval=ic
+!
+      RETURN
+      END FUNCTION load_0d_dp
+!
       FUNCTION load_1d_dp (Ninp, Vinp, Nout, Vout) RESULT (Nval)
 !
 !***********************************************************************
@@ -1063,6 +1201,53 @@
       RETURN
       END FUNCTION load_3d_dp
 #endif
+!
+      FUNCTION load_0d_r8 (Ninp, Vinp, Nout, Vout) RESULT (Nval)
+!
+!=======================================================================
+!                                                                      !
+!  It loads input values into a requested model scalar floating-point  !
+!  variable (KIND=r8).                                                 !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (1D real(dp) array)                      !
+!     Nout       Size of output integer variable dimension (not used)  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output scalar variable (real, KIND=r8)                !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in) :: Ninp, Nout
+      real(dp), intent(in) :: Vinp(:)
+!
+      real(r8), intent(out) :: Vout
+!
+!  Local variable declarations.
+!
+      integer :: ic
+      integer :: Nval
+!
+!-----------------------------------------------------------------------
+!  Load scalar floating-point variable with input value.
+!-----------------------------------------------------------------------
+!
+      ic=1
+#ifdef SINGLE_PRECISION
+      Vout=REAL(Vinp(ic),r8)
+#else
+      Vout=Vinp(ic)
+#endif
+      Nval=ic
+!
+      RETURN
+      END FUNCTION load_0d_r8
 !
       FUNCTION load_1d_r8 (Ninp, Vinp, Nout, Vout) RESULT (Nval)
 !

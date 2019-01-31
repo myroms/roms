@@ -353,7 +353,7 @@
 !    Eradius       Earth equatorial radius (m).
 !    Infinity      Value resulting when dividing by zero.
 !    StefBo        Stefan-Boltzmann constant (W/m2/K4).
-!    emmiss        Infrared emmissivity.
+!    emmiss        Infrared emissivity.
 !    g             Acceleration due to gravity (m/s2).
 !    gorho0        gravity divided by mean density anomaly.
 !    rhow          fresh water density (kg/m3).
