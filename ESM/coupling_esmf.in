@@ -63,7 +63,7 @@
 !
 ! Coupling import/export variables metadata filename.
 
-           CPLname = ROMS/External/coupling_esmf.dat
+           CPLname = coupling_esmf.dat
 
 ! Coupled models standard input script or namelist filename.
 
@@ -157,18 +157,25 @@
  TimeFrac(ICE-WAV) =  1                     ! seaice-wave coupling
  TimeFrac(WAV-DAT) =  1                     ! wave-data coupling
 
-! Debugging flags:   [0] no debug
-!                    [1] report informative messages
-!                    [2] <1> and write grid information in VTK format
-!                    [3] <2> and write exchange fields into NetCDF files
+! Weighted average coefficients for the merging of DATA component fields with
+! the same field from other ESM components. Both coefficients are positive and
+! MUST add to unity (WeightDAT + WeightESM = 1.0d0)
+
+         WeightDAT = 0.5d0                  ! DATA component weight
+         WeightESM = 0.5d0                  ! ESM  component weight
+
+! Coupling debug flag:      [0] no debugging
+!                           [1] reports informative messages
+!                           [2] <1> and writes grid information in VTK format
+!                           [3] <2> and writes exchange fields into NetCDF files
 !
         DebugLevel = 1
 
-! Set trace switch (T/F) for the ESMF library.  It writes voluminous tracing
-! information into the log file, which slowdown performance. Use only for
-! debugging.
+! Execution trace flag:     [0] no tracing
+!                           [1] reports run sequence of coupling subroutine calls
+!                           [2] <1> writes voluminous ESMF library tracing information
 
-        LtraceESMF = F
+        TraceLevel = 1
 
 ! Export/Import fields: Use the following string codes to set the fields
 !                       to export/import for each coupled model.
@@ -184,6 +191,7 @@
 ! Hair        atmos   roms, cice         surface specific humidity
 ! Tair        atmos   roms, cice         surface air temperature
 ! Pair        atmos   roms, cice         surface air pressure
+! Pmsl        atmos   roms               mean sea level pressure
 ! Qair        atmos   roms               surface relative humidity
 ! SWrad       atmos   roms               shortwave radiation flux
 ! SWrad_daily atmos   roms               daily averaged shortwave radiation flux
@@ -599,16 +607,41 @@ nDataExport(seaice) == 0                ! number of fields to export
 !                    PETs needed is the sum of all active coupled model
 !                    components.
 !
-! DebugLevel       Debugging level flag:
+! WeightDAT          Weighted average coefficient for DATA component field.
+!
+! WeightESM          Weighted average coefficient for ESM  component field.
+!
+!                    The weighted average coefficients are used for merging
+!                    fields from DATA and ESM components. Both coefficients
+!                    are positive and MUST add to unity:
+!
+!                      WeightDAT + WeightESM = 1.0d0
+!
+!                    Recall that the DATA component supplies needed data to
+!                    a particular ESM component.  For example, it may export
+!                    data to the atmosphere model at locations not covered
+!                    by the other ESM components because of smaller grid
+!                    coverage.  If the atmosphere and ocean model grids
+!                    are incongruent, the atmosphere component needs to
+!                    import sea surface temperature (SST) on those grid
+!                    points not covered by the ocean component. Thus, the
+!                    weightind coefficient are used to merge the SST data.
+!
+! DebugLevel       Coupling debugging flag:
 !
 !                    [0] no debug
-!                    [1] report informative messages
-!                    [2] <1> and write grid information in VTK format
-!                    [3] <2> and write exchange fields into NetCDF files
+!                    [1] reports informative messages
+!                    [2] <1> plus writes grid information in VTK format
+!                    [3] <2> plus writes exchange fields into NetCDF files
+!                            (it generates lots of small NetCDF files)
 !
-! LtraceESMF       Sets trace switch (T/F) for the ESMF library. It writes
-!                    voluminous tracing information into the log file, which
-!                    slowdown performance. Use only for debugging.
+! TraceLevel       Execution tracing flag:
+!
+!                    [0] no tracing
+!                    [1] reports run sequence of coupling subroutine calls
+!                    [2] <1> plus writes voluminous ESMF library tracing
+!                            information which slowdown performace, and
+!                            creates large log file
 !
 !------------------------------------------------------------------------------
 ! Time Managing.

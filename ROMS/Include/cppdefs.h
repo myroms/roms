@@ -542,6 +542,7 @@
 ** CICE_COUPLING       use if coupling to CICE sea ice model                 **
 ** COAMPS_COUPLING     use if coupling to COAMPS atmospheric model           **
 ** DATA_COUPLING       use if coupling to DATA model                         **
+** EXCLUDE_SPONGE      use if excluding sponge point in export fields        **
 ** FRC_COUPLING        use if forcing from Atmopheric or Data model          **
 ** REFDIF_COUPLING     use if coupling to REFDIT wave model                  **
 ** REGCM_COUPLING      use if coupling to RegCM atmospheric model            **
@@ -549,6 +550,7 @@
 ** TIME_INTERP         use if importing snapshots for time interpolation     **
 ** WAM_COUPLING        use if coupling to WAM wave model                     **
 ** WRF_COUPLING        use if coupling to WRF atmospheric model              **
+** WRF_TIMEAVG         use if time-averaged fields over coupling interval    **
 **                                                                           **
 ** Nearshore and shallow water model OPTIONS:                                **
 **                                                                           **
