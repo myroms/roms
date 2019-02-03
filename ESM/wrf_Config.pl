@@ -3,7 +3,7 @@
 # Modified for WRF-ROMS ESMF-NUOPC Coupling (Arango/Robertson, Jan 2019)
 #
 # Configuration script for WRF prototype code
-# 
+#
 # Be sure to run as ./configure (to avoid getting a system configure command by mistake)
 #
 
@@ -11,15 +11,15 @@ select((select(STDOUT), $|=1)[0]);
 $sw_perl_path = perl ;
 $sw_netcdf_path = "" ;
 $sw_pnetcdf_path = "" ;
-$sw_hdf5_path=""; 
-$sw_phdf5_path=""; 
-$sw_jasperlib_path=""; 
-$sw_jasperinc_path=""; 
+$sw_hdf5_path="";
+$sw_phdf5_path="";
+$sw_jasperlib_path="";
+$sw_jasperinc_path="";
 $sw_esmflib_path="";
 $sw_esmfinc_path="";
-$sw_ldflags=""; 
-$sw_compileflags=""; 
-$sw_opt_level=""; 
+$sw_ldflags="";
+$sw_compileflags="";
+$sw_opt_level="";
 $sw_rwordsize="\$\(NATIVE_RWORDSIZE\)";
 $sw_rttov_flag = "" ;
 $sw_rttov_inc = "" ;
@@ -41,10 +41,10 @@ $sw_dmparallel = "" ;
 $sw_ompparallel = "" ;
 $sw_stubmpi = "" ;
 $sw_usenetcdff = "" ;    # UNIDATA switches around library names a bit
-$sw_usenetcdf = "" ;    
+$sw_usenetcdf = "" ;
 $sw_time = "" ;          # name of a timer to time fortran compiles, e.g. timex or time
 $sw_ifort_r8 = 0 ;
-$sw_hdf5 = "-lhdf5 -lhdf5_hl";
+$sw_hdf5 = "-lhdf5_hl -lhdf5";
 $sw_zlib = "-lz";
 $sw_dep_lib_path = "";
 $sw_gpfs_path = "";
@@ -73,7 +73,7 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
   if ( substr( $ARGV[0], 1, 5 ) eq "gpfs=" )
   {
     $sw_gpfs_path = substr( $ARGV[0], 6 ) ;
-    if ( $sw_gpfs_path ne "" ) 
+    if ( $sw_gpfs_path ne "" )
       {
         if ( substr( $sw_gpfs_path, -1, 1 ) eq "/" )
           {
@@ -138,14 +138,14 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
   if ( substr( $ARGV[0], 1, 9 ) eq "wrf_core=" )
   {
     $sw_wrf_core = substr( $ARGV[0], 10 ) ;
-    if ( index ( $sw_wrf_core , "EM_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "EM_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=1" ;
       $sw_da_core = "-DDA_CORE=0" ;
       $sw_wrfplus_core = "-DWRFPLUS=0" ;
       $sw_nmm_core = "-DNMM_CORE=0" ;
     }
-    if ( index ( $sw_wrf_core , "WRF_PLUS_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "WRF_PLUS_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=1" ;
       $sw_da_core = "-DDA_CORE=0" ;
@@ -153,26 +153,26 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
       $sw_nmm_core = "-DNMM_CORE=0" ;
       $sw_dfi_radar = "-DDFI_RADAR=0" ;
     }
-    if ( index ( $sw_wrf_core , "DA_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "DA_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=1" ;
       $sw_da_core = "-DDA_CORE=1" ;
       $sw_wrfplus_core = "-DWRFPLUS=0" ;
       $sw_nmm_core = "-DNMM_CORE=0" ;
     }
-    if ( index ( $sw_wrf_core , "4D_DA_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "4D_DA_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=1" ;
       $sw_da_core = "-DDA_CORE=1" ;
       $sw_nmm_core = "-DNMM_CORE=0" ;
     }
-    if ( index ( $sw_wrf_core , "4D_DA_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "4D_DA_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=1" ;
       $sw_da_core = "-DDA_CORE=1" ;
       $sw_nmm_core = "-DNMM_CORE=0" ;
     }
-    if ( index ( $sw_wrf_core , "NMM_CORE" ) > -1 ) 
+    if ( index ( $sw_wrf_core , "NMM_CORE" ) > -1 )
     {
       $sw_em_core = "-DEM_CORE=0" ;
       $sw_da_core = "-DDA_CORE=0" ;
@@ -186,14 +186,14 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
     $sw_compileflags =~ s/!/ /g ;
 #   look for each known option
     $where_index = index ( $sw_compileflags , "-DWRF_CHEM" ) ;
-    if ( $where_index eq -1 ) 
+    if ( $where_index eq -1 )
     {
       $WRFCHEM = 0 ;
     }
     else
     {
       $WRFCHEM = 1 ;
-    } 
+    }
   }
   if ( substr( $ARGV[0], 1, 11 ) eq "dmparallel=" )
   {
@@ -223,11 +223,11 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
  $sw_comms_lib = "" ;
  $sw_comms_include = "" ;
  $sw_dmparallelflag = "" ;
- $sw_nest_opt = "" ; 
+ $sw_nest_opt = "" ;
  $sw_comms_external = "gen_comms_serial module_dm_serial" ;
 
 
- if ( $sw_dmparallel eq "RSL_LITE" ) 
+ if ( $sw_dmparallel eq "RSL_LITE" )
  {
   $sw_fc = "\$(DM_FC)" ;
   $sw_cc = "\$(DM_CC)" ;
@@ -237,9 +237,9 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
   $sw_comms_include = "-I\$(WRF_SRC_ROOT_DIR)/external/RSL_LITE" ;
  }
 
-# The jasper library is required to build Grib2 I/O.  User must set 
-# environment variables JASPERLIB and JASPERINC to paths to library and 
-# include files to enable this feature prior to running configure.  
+# The jasper library is required to build Grib2 I/O.  User must set
+# environment variables JASPERLIB and JASPERINC to paths to library and
+# include files to enable this feature prior to running configure.
 
  $I_really_want_to_output_grib2_from_WRF = "FALSE" ;
 
@@ -248,8 +248,8 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
    printf "Configuring to use jasper library to build Grib2 I/O...\n" ;
    printf("  \$JASPERLIB = %s\n",$ENV{JASPERLIB});
    printf("  \$JASPERINC = %s\n",$ENV{JASPERINC});
-   $sw_jasperlib_path = $ENV{JASPERLIB}; 
-   $sw_jasperinc_path = $ENV{JASPERINC}; 
+   $sw_jasperlib_path = $ENV{JASPERLIB};
+   $sw_jasperinc_path = $ENV{JASPERINC};
    }
  else
    {
@@ -267,15 +267,15 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
 # When compiling DA and WRFPLUS code, we need to always use 8-byte reals.
  if ( $ENV{WRF_DA_CORE} eq "1" || $sw_da_core eq "-DDA_CORE=1" )
    {
-     $sw_rwordsize = "8";  
+     $sw_rwordsize = "8";
      if(defined $ENV{'CRTM'})
        {
        if ( $ENV{CRTM} ne "0" )
          {
          $sw_crtm_flag = "-DCRTM";
          }
-       } 
-     else 
+       }
+     else
        {
          {
          $sw_crtm_flag = "-DCRTM";
@@ -304,10 +304,10 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
 
  $sw_rwordsize = "8" if ( $sw_wrfplus_core eq "-DWRFPLUS=1" );
 
-# A separately-installed ESMF library is required to build the ESMF 
-# implementation of WRF IOAPI in external/io_esmf.  This is needed 
-# to couple WRF with other ESMF components.  User must set environment 
-# variables ESMFLIB and ESMFINC to paths ESMF to library and include 
+# A separately-installed ESMF library is required to build the ESMF
+# implementation of WRF IOAPI in external/io_esmf.  This is needed
+# to couple WRF with other ESMF components.  User must set environment
+# variables ESMFLIB and ESMFINC to paths ESMF to library and include
 # files to enable this feature prior to running configure.
  if ( $ENV{ESMFLIB} && $ENV{ESMFINC} )
    {
@@ -327,7 +327,7 @@ while ( substr( $ARGV[0], 0, 1 ) eq "-" )
 
 $validresponse = 0 ;
 
-if ( ($sw_wrf_core eq "WRF_PLUS_CORE") || ($sw_wrf_core eq "4D_DA_CORE") ) 
+if ( ($sw_wrf_core eq "WRF_PLUS_CORE") || ($sw_wrf_core eq "4D_DA_CORE") )
    { @platforms = qw ( serial dmpar ) ; }
    else
    { @platforms = qw ( serial smpar dmpar dm+sm ) ; }
@@ -339,15 +339,15 @@ until ( $validresponse ) {
 
   $opt = 1 ;
   $optstr = "";
-  open CONFIGURE_DEFAULTS, "< ./arch/configure.defaults" 
+  open CONFIGURE_DEFAULTS, "< ./arch/configure.defaults"
       or die "Cannot open ./arch/configure.defaults for reading" ;
   while ( <CONFIGURE_DEFAULTS> ) {
 
      $currline = $_;
      chomp $currline;
-     # Look for our platform in the configuration option header. 
+     # Look for our platform in the configuration option header.
      # If we're going to list it, print parallelism options
-     if ( substr( $currline, 0, 5 ) eq "#ARCH" && ( index( $currline, $sw_os ) >= 0 ) 
+     if ( substr( $currline, 0, 5 ) eq "#ARCH" && ( index( $currline, $sw_os ) >= 0 )
          && ( index( $currline, $sw_mach ) >= 0 ) ) {
         $optstr = substr($currline,6) ;
 
@@ -408,21 +408,21 @@ until ( $validresponse ) {
 
   if ( $response == -1 ) { exit ; }
 
-  if ( $response >= 1 && $response <= $opt ) 
+  if ( $response >= 1 && $response <= $opt )
   { $validresponse = 1 ; }
   else
   { printf("\nInvalid response (%d)\n",$response);}
-  $response_opt = $response ; 
+  $response_opt = $response ;
   chop $response_opt ;
 }
 printf "------------------------------------------------------------------------\n" ;
 
 $optchoice = $response ;
 if ( $response == 2 || $response == 3 ) {
-  if ( $ENV{'TERRAIN_AND_LANDUSE'} eq "1" && index($sw_wrf_core, "EM_CORE") > -1 ) { 
+  if ( $ENV{'TERRAIN_AND_LANDUSE'} eq "1" && index($sw_wrf_core, "EM_CORE") > -1 ) {
     $sw_terrain_and_landuse =" -DTERRAIN_AND_LANDUSE" ;
   }
-} 
+}
 open CONFIGURE_DEFAULTS, "cat ./arch/configure.defaults |"  ;
 $latchon = 0 ;
 while ( <CONFIGURE_DEFAULTS> )
@@ -479,7 +479,7 @@ while ( <CONFIGURE_DEFAULTS> )
        $_ =~ s/#// ;
        $_ =~ s/#// ;
     }
-    if ( $sw_netcdf_path ) 
+    if ( $sw_netcdf_path )
       { $_ =~ s/CONFIGURE_WRFIO_NF/wrfio_nf/g ;
 	$_ =~ s:CONFIGURE_NETCDF_FLAG:-DNETCDF: ;
         if ( $ENV{NETCDF_LDFLAGS} ) {
@@ -490,13 +490,13 @@ while ( <CONFIGURE_DEFAULTS> )
 	  $_ =~ s:CONFIGURE_NETCDF_LIB_PATH:-L\$\(WRF_SRC_ROOT_DIR\)/external/io_netcdf -lwrfio_nf -L$sw_netcdf_path/lib $sw_usenetcdff $sw_usenetcdf : ;
         }
 	 }
-    else                   
+    else
       { $_ =~ s/CONFIGURE_WRFIO_NF//g ;
 	$_ =~ s:CONFIGURE_NETCDF_FLAG::g ;
 	$_ =~ s:CONFIGURE_NETCDF_LIB_PATH::g ;
 	 }
 
-    if ( $sw_pnetcdf_path ) 
+    if ( $sw_pnetcdf_path )
       { $_ =~ s/CONFIGURE_WRFIO_PNF/wrfio_pnf/g ;
 	$_ =~ s:CONFIGURE_PNETCDF_FLAG:-DPNETCDF: ;
         if ( $sw_os eq "Interix" ) {
@@ -505,13 +505,13 @@ while ( <CONFIGURE_DEFAULTS> )
 	  $_ =~ s:CONFIGURE_PNETCDF_LIB_PATH:-L\$\(WRF_SRC_ROOT_DIR\)/external/io_pnetcdf -lwrfio_pnf -L$sw_pnetcdf_path/lib -lpnetcdf: ;
         }
 	 }
-    else                   
+    else
       { $_ =~ s/CONFIGURE_WRFIO_PNF//g ;
 	$_ =~ s:CONFIGURE_PNETCDF_FLAG::g ;
 	$_ =~ s:CONFIGURE_PNETCDF_LIB_PATH::g ;
 	 }
 
-    if ( $sw_hdf5_path ) 
+    if ( $sw_hdf5_path )
       { $_ =~ s:CONFIGURE_HDF5_LIB_PATH:-L$sw_hdf5_path/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -lz: ;
         $_ =~ s:CONFIGURE_HDF5_FLAG:-DHDF5: ;
          }
@@ -520,25 +520,25 @@ while ( <CONFIGURE_DEFAULTS> )
         $_ =~ s:CONFIGURE_HDF5_FLAG::g ;
          }
 
-    if ( $sw_phdf5_path ) 
+    if ( $sw_phdf5_path )
 
       { $_ =~ s/CONFIGURE_WRFIO_PHDF5/wrfio_phdf5/g ;
 	$_ =~ s:CONFIGURE_PHDF5_FLAG:-DPHDF5: ;
 	$_ =~ s:CONFIGURE_PHDF5_LIB_PATH:-L\$\(WRF_SRC_ROOT_DIR\)/external/io_phdf5 -lwrfio_phdf5 -L$sw_phdf5_path/lib -lhdf5_fortran -lhdf5 -lm -lz -L$sw_phdf5_path/lib -lsz: ;
 	 }
-    else                   
+    else
       { $_ =~ s/CONFIGURE_WRFIO_PHDF5//g ;
 	$_ =~ s:CONFIGURE_PHDF5_FLAG::g ;
 	$_ =~ s:CONFIGURE_PHDF5_LIB_PATH::g ;
 	 }
 
-    if ( $sw_jasperlib_path && $sw_jasperinc_path ) 
+    if ( $sw_jasperlib_path && $sw_jasperinc_path )
       { $_ =~ s/CONFIGURE_WRFIO_GRIB2/wrfio_grib2/g ;
         $_ =~ s:CONFIGURE_GRIB2_FLAG:-DGRIB2:g ;
         $_ =~ s:CONFIGURE_GRIB2_INC:-I$sw_jasperinc_path:g ;
         $_ =~ s:CONFIGURE_GRIB2_LIB:-L\$\(WRF_SRC_ROOT_DIR\)/external/io_grib2 -lio_grib2 -L$sw_jasperlib_path -ljasper:g ;
       }
-    else                   
+    else
       { $_ =~ s/CONFIGURE_WRFIO_GRIB2//g ;
         $_ =~ s:CONFIGURE_GRIB2_FLAG::g ;
         $_ =~ s:CONFIGURE_GRIB2_INC::g ;
@@ -546,7 +546,7 @@ while ( <CONFIGURE_DEFAULTS> )
       }
 
    if ( $sw_terrain_and_landuse )
-     { 
+     {
         $_ =~ s/CONFIGURE_TERRAIN_AND_LANDUSE/$sw_terrain_and_landuse/g;
      }
    else
@@ -565,7 +565,7 @@ while ( <CONFIGURE_DEFAULTS> )
       $_ =~ s:ESMFIOLIB:\$\(ESMF_F90LINKPATHS\) \$\(ESMF_F90ESMFLINKLIBS\) -L\$\(WRF_SRC_ROOT_DIR\)/external/io_esmf -lwrfio_esmf: ;
       $_ =~ s:ESMFIOEXTLIB:\$\(ESMF_IO_LIB\): ;
 
-     
+
       $_ =~ s:ESMFLIBFLAG:\$\(ESMF_LDFLAG\):g ;
 #      $_ =~ s:ESMFINCLUDEGOESHERE:'include $(ESMFLIB)/esmf.mk': ;
 
@@ -597,11 +597,11 @@ while ( <CONFIGURE_DEFAULTS> )
      if ( $ENV{NETCDF4} )
        { if ( $ENV{NETCDF4} eq "1" )
            {
-             if ( /(^ARCH_LOCAL.*=|^TRADFLAG.*=)/ ) 
-               { $_  =~ s/\r|\n//g; 
-                 $_ .= " \$\(NETCDF4_IO_OPTS\)\n" ; 
+             if ( /(^ARCH_LOCAL.*=|^TRADFLAG.*=)/ )
+               { $_  =~ s/\r|\n//g;
+                 $_ .= " \$\(NETCDF4_IO_OPTS\)\n" ;
                }
-             if (/^LIB.*=/) 
+             if (/^LIB.*=/)
                { $_  =~ s/\r|\n//g ;
                  $_ .=" \$\(NETCDF4_DEP_LIB\)\n" ;
                }
@@ -615,16 +615,16 @@ while ( <CONFIGURE_DEFAULTS> )
     }
   }
 
-# nesting support 
+# nesting support
 # 0 = no nesting (only selectable for serial and smpar)
 # 1 = basic nesting (serial and smpar compile with RSL_LITE and STUBMPI; dmpar and dm+sm use RSL_LITE and MPI)
 # 2 = nesting with prescribed moves  (add -DMOVE_NESTS to ARCHFLAGS)
-# 3 = nesting with prescribed moves  (add -DMOVE_NESTS and -DVORTEX_CENTER to ARCHFLAGS) 
+# 3 = nesting with prescribed moves  (add -DMOVE_NESTS and -DVORTEX_CENTER to ARCHFLAGS)
 
   for $paropt ( @platforms )
   {
-    if ( substr( $_, 0, 5 ) eq "#ARCH" && $latchon == 0 
-          && ( index( $_, $sw_os ) >= 0 ) && ( index( $_, $sw_mach ) >= 0 ) 
+    if ( substr( $_, 0, 5 ) eq "#ARCH" && $latchon == 0
+          && ( index( $_, $sw_os ) >= 0 ) && ( index( $_, $sw_mach ) >= 0 )
           && ( index($_, $paropt) >= 0 ) )
     {
       # We are cycling through the configure.defaults file again.
@@ -664,7 +664,7 @@ while ( <CONFIGURE_DEFAULTS> )
                printf "Compile for nesting? (1=basic, 2=preset moves, 3=vortex following) [default 1]: " ;
              }
              $response = <STDIN> ;
-          } 
+          }
           printf "\n" ;
           lc $response ;
           chop $response ;
@@ -673,13 +673,13 @@ while ( <CONFIGURE_DEFAULTS> )
           else
             { printf("\nInvalid response (%d)\n",$response);}
         }
-        if ( $response == "" ) { 
+        if ( $response == "" ) {
           if ( ( $paropt eq 'serial' || $paropt eq 'smpar' ) ) { $response = 0 ; }
           else                                                 { $response = 1 ; }
         }
         if ( $response == 0 ) {
           if ( ! ( $paropt eq 'serial' || $paropt eq 'smpar' ) ) { $response = 1 ; }
-        } 
+        }
         $response_nesting = $response ;
         if ( ( $response == 1 ) || ( $response == 2 ) || ( $response == 3 ) ) {
           if ( ( $paropt eq 'serial' || $paropt eq 'smpar' ) ) {   # nesting without MPI
@@ -693,22 +693,22 @@ while ( <CONFIGURE_DEFAULTS> )
             $sw_dmparallel = "RSL_LITE" ;
             $sw_dmparallelflag = "-DDM_PARALLEL" ;
           }
-        } 
+        }
         if ( $response == 2 ) {
-          $sw_nest_opt = "-DMOVE_NESTS" ; 
+          $sw_nest_opt = "-DMOVE_NESTS" ;
           if ( $ENV{'TERRAIN_AND_LANDUSE'} eq "1" ) {
             $sw_terrain_and_landuse =" -DTERRAIN_AND_LANDUSE" ;
-            $sw_nest_opt = $sw_nest_opt . $sw_terrain_and_landuse; 
-          }  
+            $sw_nest_opt = $sw_nest_opt . $sw_terrain_and_landuse;
+          }
         } elsif ( $response == 3 ) {
-          $sw_nest_opt = "-DMOVE_NESTS -DVORTEX_CENTER" ; 
+          $sw_nest_opt = "-DMOVE_NESTS -DVORTEX_CENTER" ;
           if ( $ENV{'TERRAIN_AND_LANDUSE'} eq "1" ) {
             $sw_terrain_and_landuse =" -DTERRAIN_AND_LANDUSE" ;
-            $sw_nest_opt = $sw_nest_opt . $sw_terrain_and_landuse; 
+            $sw_nest_opt = $sw_nest_opt . $sw_terrain_and_landuse;
           }
         }
         if ( $paropt eq 'smpar' || $paropt eq 'dm+sm' ) { $sw_ompparallel = "OMP" ; }
-        if ( $paropt eq 'dmpar' || $paropt eq 'dm+sm' ) { 
+        if ( $paropt eq 'dmpar' || $paropt eq 'dm+sm' ) {
           if ( $sw_os ne "CYGWIN_NT" ) {
             $sw_comms_lib = "\$(WRF_SRC_ROOT_DIR)/external/RSL_LITE/librsl_lite.a" ;
             if ( $sw_wrf_core eq "4D_DA_CORE" )
@@ -806,7 +806,7 @@ while ( <ARCH_PREAMBLE> )
   if ( $sw_curl_path ne "" )
     { if (/^CURL.*=/)
         { $_  =~ s/\r|\n//g;
-          if ( $sw_curl_path ne "DEFAULT" ) 
+          if ( $sw_curl_path ne "DEFAULT" )
             { $_ .= " -L" . $sw_curl_path ; }
           $_ .= " " . $sw_curl_lib . "\n" ;
         }
