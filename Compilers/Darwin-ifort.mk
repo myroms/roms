@@ -54,7 +54,7 @@
 # Compiling flags for ROMS Applications.
 #--------------------------------------------------------------------------
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  ifdef USE_DEBUG
            FFLAGS += -g
 #          FFLAGS += -O3
@@ -233,7 +233,7 @@ endif
 # Set free form format in some ROMS source files to allow long string for
 # local directory and compilation flags inside the code.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -free
  $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free
  $(SCRATCH_DIR)/analytical.o: FFLAGS += -free

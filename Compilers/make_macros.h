@@ -16,6 +16,13 @@
 #include "../ROMS/Include/cppdefs.h"
 
 /*
+** Process ROMS model.
+*/
+
+  USE_ROMS := on
+
+
+/*
 ** Process adjoint model.
 */
 

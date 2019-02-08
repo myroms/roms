@@ -53,7 +53,7 @@
 # Compiling flags for ROMS Applications.
 #--------------------------------------------------------------------------
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  ifdef USE_DEBUG
            FFLAGS += -g
            FFLAGS += -fbounds-check
@@ -204,7 +204,7 @@ endif
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
 endif
 
@@ -212,7 +212,7 @@ endif
 # during -O3 optimization. This option should be applied only for
 # Gfortran versions >= 4.2.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  FC_TEST := $(findstring $(shell ${FC} --version | head -1 | \
                               awk '{ sub("Fortran 95", "Fortran"); print }' | \
                               cut -d " " -f 4 | \
@@ -227,7 +227,7 @@ endif
 # Set free form format in some ROMS source files to allow long string for
 # local directory and compilation flags inside the code.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-none
  $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-none
  $(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-none

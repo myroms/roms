@@ -58,7 +58,7 @@
 # speed-up. The user may want to have this option to allow similar,
 # if not identical solutions between different of the PGI compiler.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  ifdef USE_DEBUG
            FFLAGS += -g
            FFLAGS += -C
@@ -230,7 +230,7 @@ endif
 # Set free form format in some ROMS source files to allow long string for
 # local directory and compilation flags inside the code.
 
-ifdef ROMS_APPLICATION
+ifdef USE_ROMS
  $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
  $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
  $(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
