@@ -546,7 +546,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
-      USE strings_mod, ONLY : FoundError
+      USE strings_mod, ONLY : FoundError, lowercase
 !
       implicit none
 !
@@ -605,7 +605,7 @@
 !  'time' in the variable name.
 !
       DO i=1,n_var
-        IF ((INDEX(TRIM(var_name(i)),'time').ne.0).and.                 &
+        IF ((INDEX(TRIM(lowercase(var_name(i))),'time').ne.0).and.      &
      &            (var_ndim(i).eq.1)) THEN
           TvarName=TRIM(var_name(i))
           foundit=.TRUE.

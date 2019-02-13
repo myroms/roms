@@ -239,7 +239,7 @@
               Sout(idVair,1:Ngrids)=Lswitch(1:Ngrids)
 #  endif
             CASE ('Sout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, MT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Sout(idTsur(itrc),ng)=Ltracer(itrc,ng)
