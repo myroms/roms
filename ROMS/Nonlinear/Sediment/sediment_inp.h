@@ -394,7 +394,7 @@
               DO ng=1,Ngrids
                 DO itrc=1,NCS
                   i=idBmas(itrc)
-                  Hout(i,ng)=Lmud(itrc,ng)
+                  Qout(i,ng)=Lmud(itrc,ng)
                 END DO
               END DO
 #ifdef BEDLOAD
