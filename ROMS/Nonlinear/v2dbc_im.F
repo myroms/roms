@@ -100,6 +100,9 @@
       real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
       real(r8) :: cff, cff1, cff2, cff3, dt2d, dVde, dVdt, dVdx
       real(r8) :: obc_in, obc_out, phi, tau
+#if defined ATM_PRESS && defined PRESS_COMPENSATE
+      real(r8) :: OneAtm, fac
+#endif
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
@@ -119,6 +122,10 @@
         know=kstp
         dt2d=dtfast(ng)
       END IF
+#if defined ATM_PRESS && defined PRESS_COMPENSATE
+      OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
+      fac=100.0_r8/(g*rho0)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Lateral boundary conditions at the southern edge.
@@ -256,10 +263,21 @@
      &                            GRID(ng)%h(i,Jstr  )+                 &
      &                            zeta(i,Jstr  ,know)))
               Ce=SQRT(g*cff)
+#if defined ATM_PRESS && defined PRESS_COMPENSATE
+              vbar(i,Jstr,kout)=bry_val-                                &
+     &                          Ce*(0.5_r8*                             &
+     &                              (zeta(i,Jstr-1,know)+               &
+     &                               zeta(i,Jstr  ,know)+               &
+     &                               fac*(FORCES(ng)%Pair(i,Jstr-1)+    &
+     &                                    FORCES(ng)%Pair(i,Jstr  )-    &
+     &                                    2.0_r8*OneAtm))-              &
+     &                              BOUNDARY(ng)%zeta_south(i))
+#else
               vbar(i,Jstr,kout)=bry_val-                                &
      &                          Ce*(0.5_r8*(zeta(i,Jstr-1,know)+        &
      &                                      zeta(i,Jstr  ,know))-       &
      &                              BOUNDARY(ng)%zeta_south(i))
+#endif
 #ifdef MASKING
               vbar(i,Jstr,kout)=vbar(i,Jstr,kout)*                      &
      &                          GRID(ng)%vmask(i,Jstr)
@@ -587,10 +605,21 @@
      &                            GRID(ng)%h(i,Jend+1)+                 &
      &                            zeta(i,Jend+1,know)))
               Ce=SQRT(g*cff)
+#if defined ATM_PRESS && defined PRESS_COMPENSATE
+            vbar(i,Jend+1,kout)=bry_val+                                &
+     &                          Ce*(0.5_r8*                             &
+     &                              (zeta(i,Jend  ,know)+               &
+     &                               zeta(i,Jend+1,know)+               &
+     &                               fac*(FORCES(ng)%Pair(i,Jend  )+    &
+     &                                    FORCES(ng)%Pair(i,Jend+1)-    &
+     &                                    2.0_r8*OneAtm))-              &
+     &                              BOUNDARY(ng)%zeta_north(i))
+#else
               vbar(i,Jend+1,kout)=bry_val+                              &
      &                            Ce*(0.5_r8*(zeta(i,Jend  ,know)+      &
      &                                        zeta(i,Jend+1,know))-     &
      &                                BOUNDARY(ng)%zeta_north(i))
+#endif
 #ifdef MASKING
               vbar(i,Jend+1,kout)=vbar(i,Jend+1,kout)*                  &
      &                            GRID(ng)%vmask(i,Jend+1)

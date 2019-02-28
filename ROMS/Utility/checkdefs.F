@@ -1720,6 +1720,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' PJ_GRADPQ4,'
 #endif
+# if defined PRESS_COMPENSATE && defined ATM_PRESS
+!
+      IF (Master) WRITE (stdout,20) 'PRESS_COMPENSATE',                 &
+     &   'Compensate for boundary data without ATM pressure effect'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' PRESS_COMPENSATE,'
+# endif
 #ifdef POSITIVE_ZERO
 !
       IF (Master) WRITE (stdout,20) 'POSITIVE_ZERO',                    &
