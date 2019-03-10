@@ -507,7 +507,7 @@
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_PAIR
       allocate ( FORCES(ng) % PairG(LBi:UBi,LBj:UBj,2) )
-      Dmem(ng)=Dmem(ng)+size2d
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 #endif
 

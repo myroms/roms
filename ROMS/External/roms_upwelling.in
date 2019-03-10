@@ -160,7 +160,7 @@ GridsInLayer =  1
 
 ad_LBC(isFsur) ==   Per     Clo     Per     Clo         ! free-surface
 ad_LBC(isUbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D V-momentum
 ad_LBC(isUvel) ==   Per     Clo     Per     Clo         ! 3D U-momentum
 ad_LBC(isVvel) ==   Per     Clo     Per     Clo         ! 3D V-momentum
 ad_LBC(isMtke) ==   Per     Clo     Per     Clo         ! mixing TKE
@@ -691,7 +691,7 @@ Qout(idMtls) == F       ! gls                turbulent length scale
 ! switches can be activated using compact parameter specification.
 
  Qout(inert) == F       ! dye_01, ...        inert passive tracers
- Qout(Snert) == F       ! dye_01, ...        surface inert passive tracers
+ Qout(Snert) == F       ! dye_01_sur, ..     surface inert passive tracers
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! fields into AVERAGE output file.

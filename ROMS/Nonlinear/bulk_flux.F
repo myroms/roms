@@ -389,20 +389,30 @@
 !  Bye, J.A.T. and J.-O. Wolff, 1999: Atmosphere-ocean momentum exchange
 !     in general circulation models. J. Phys. Oceanogr. 29, 671-691.
 !
-      DO j=Jstr-1,JendR
-        DO i=Istr-1,IendR
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,MIN(Iend+1,Lm(ng))
           Uair(i,j)=Uwind(i,j)-                                         &
      &              0.5_r8*(u(i,j,N(ng),nrhs)+u(i+1,j,N(ng),nrhs))
+        END DO
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          Uair(Iend+1,j)=Uwind(Iend+1,j)-u(Iend,j,N(ng),nrhs)
+        END IF
+      END DO
+      DO i=Istr-1,Iend+1
+        DO j=Jstr-1,MIN(Jend+1,Mm(ng))
           Vair(i,j)=Vwind(i,j)-                                         &
      &              0.5_r8*(v(i,j,N(ng),nrhs)+v(i,j+1,N(ng),nrhs))
         END DO
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          Vair(i,Jend+1)=Vwind(i,Jend+1)-v(i,Jend,N(ng),nrhs)
+        END IF
       END DO
 #else
 !
 !  Load wind components to local arrays.
 !
-      DO j=Jstr-1,JendR
-        DO i=Istr-1,IendR
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
           Uair(i,j)=Uwind(i,j)
           Vair(i,j)=Vwind(i,j)
         END DO

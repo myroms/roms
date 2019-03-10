@@ -18,6 +18,10 @@
 !  from [-180 180] or [0 360].  Usually, the ROMS application have     !
 !  longitudes in the range [-180 180].                                 !
 !                                                                      !
+!  The Imin, Imax, Jmin, and Jmax indices are the global values of     !
+!  application domain in serial I/O. However, in parallel I/O they     !
+!  are the tiled values.                                               !
+!                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number (integer)                          !
@@ -157,16 +161,16 @@
         MyLonMax=LonMax(ng)
       END IF
       IF (EastLon) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
+        DO j=LBj,UBj
+          DO i=LBi,UBi
             MyXout(i,j)=MODULO(Xout(i,j), 360.0_r8)   ! range [0 360]
             IF ((MyXout(i,j).eq.0.0_r8).and.                            &
      &          (Xout(i,j).gt.0.0_r8)) MyXout(i,j)=360.0_r8
           END DO
         END DO
       ELSE
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
+        DO j=LBj,UBj
+          DO i=LBi,UBi
             MyXout(i,j)=Xout(i,j)                     ! range [-180 180]
           END DO
         END DO

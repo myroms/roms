@@ -202,6 +202,14 @@
 #endif
 
 /*
+** Single intrinsic Fortran functions.
+*/
+
+#ifdef SINGLE_PRECISION
+# define DSIGN SIGN
+#endif
+
+/*
 ** Set 4DVAR sensitivity switch.
 */
 
