@@ -29,8 +29,8 @@
 #
                FC := gfortran
            FFLAGS := -frepack-arrays
-       FIXEDFLAGS := -132
-        FREEFLAGS := -free
+       FIXEDFLAGS := -ffixed-form
+        FREEFLAGS := -ffree-form -ffree-line-length-none
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional -w              # -w turns of warnings
            INCDIR := /usr/include /usr/local/bin
@@ -76,7 +76,6 @@ ifdef CICE_APPLICATION
           CPPDEFS := -DLINUS $(MY_CPP_FLAGS)
  ifdef USE_DEBUG
            FFLAGS += -g
-#          FFLAGS += -O3
            FFLAGS += -fbounds-check
 #          FFLAGS += -fcheck=all
            FFLAGS += -fsanitize=address -fsanitize=undefined
@@ -106,22 +105,37 @@ ifdef USE_COAMPS
              LIBS += $(COAMPS_LIB_DIR)/libtracer.a
 endif
 
+ifdef CICE_APPLICATION
+            SLIBS += $(SLIBS) $(LIBS)
+endif
+
 ifdef USE_WRF
+ ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
+             LIBS += $(WRF_LIB_DIR)/main/module_wrf_top.o
+             LIBS += $(WRF_LIB_DIR)/main/libwrflib.a
+             LIBS += $(WRF_LIB_DIR)/external/fftpack/fftpack5/libfftpack.a
+             LIBS += $(WRF_LIB_DIR)/external/io_grib1/libio_grib1.a
+             LIBS += $(WRF_LIB_DIR)/external/io_grib_share/libio_grib_share.a
+             LIBS += $(WRF_LIB_DIR)/external/io_int/libwrfio_int.a
+             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libmyesmf_time.a
+             LIBS += $(WRF_LIB_DIR)/external/RSL_LITE/librsl_lite.a
+             LIBS += $(WRF_LIB_DIR)/frame/module_internal_header_util.o
+             LIBS += $(WRF_LIB_DIR)/frame/pack_utils.o
+             LIBS += $(WRF_LIB_DIR)/external/io_netcdf/libwrfio_nf.a
+     WRF_MOD_DIRS  = main frame phys share external/esmf_time_f90
+ else
              LIBS += $(WRF_LIB_DIR)/module_wrf_top.o
              LIBS += $(WRF_LIB_DIR)/libwrflib.a
              LIBS += $(WRF_LIB_DIR)/libfftpack.a
              LIBS += $(WRF_LIB_DIR)/libio_grib1.a
              LIBS += $(WRF_LIB_DIR)/libio_grib_share.a
              LIBS += $(WRF_LIB_DIR)/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/libesmf_time.a
+             LIBS += $(WRF_LIB_DIR)/libmyesmf_time.a
              LIBS += $(WRF_LIB_DIR)/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
              LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
-endif
-
-ifdef CICE_APPLICATION
-            SLIBS := $(LIBS) $(SLIBS)
+ endif
 endif
 
 #--------------------------------------------------------------------------
@@ -228,19 +242,19 @@ endif
 # local directory and compilation flags inside the code.
 
 ifdef USE_ROMS
- $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+ $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/analytical.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/biology.o: FFLAGS += $(FREEFLAGS)
 
  ifdef USE_ADJOINT
-  $(SCRATCH_DIR)/ad_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+  $(SCRATCH_DIR)/ad_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_REPRESENTER
-  $(SCRATCH_DIR)/rp_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+  $(SCRATCH_DIR)/rp_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_TANGENT
-  $(SCRATCH_DIR)/tl_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+  $(SCRATCH_DIR)/tl_biology.o: FFLAGS += $(FREEFLAGS)
  endif
 endif
 
@@ -269,25 +283,25 @@ endif
 # beyond column 72.
 
 ifdef USE_SWAN
- $(SCRATCH_DIR)/ocpcre.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/ocpids.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/ocpmix.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swancom1.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swancom2.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swancom3.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swancom4.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swancom5.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanmain.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanout1.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanout2.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanparll.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanpre1.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanpre2.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swanser.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swmod1.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/swmod2.o: FFLAGS += -ffixed-form
- $(SCRATCH_DIR)/m_constants.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/m_fileio.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += -ffree-form -ffree-line-length-none
- $(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += -ffree-form -ffree-line-length-none
+ $(SCRATCH_DIR)/ocpcre.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/ocpids.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/ocpmix.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swancom1.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swancom2.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swancom3.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swancom4.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swancom5.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanmain.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanout1.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanout2.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanparll.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanpre1.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanpre2.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swanser.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swmod1.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/swmod2.o: FFLAGS += $(FIXEDFLAGS)
+ $(SCRATCH_DIR)/m_constants.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/m_fileio.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += $(FREEFLAGS)
+ $(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += $(FREEFLAGS)
 endif
