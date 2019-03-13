@@ -147,7 +147,7 @@
 !
 !  Estimate solar declination angle (radians).
 !
-      Dangle=23.44_dp*COS((172.0_dp-yday)*2.0_dp*pi/365.25_dp)
+      Dangle=23.44_dp*COS((172.0_dp-yday)*2.0_dp*pi/365.2425_dp)
       Dangle=Dangle*deg2rad
 !
 !  Compute hour angle (radians).
