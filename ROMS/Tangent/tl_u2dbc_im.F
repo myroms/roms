@@ -69,6 +69,9 @@
       USE mod_forces
       USE mod_grid
       USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -100,11 +103,14 @@
 !
       integer :: Imin, Imax
       integer :: i, j, know
+#ifdef NESTING
+      integer :: Idg, Jdg, cr, dg, m, rg, tnew, told
+#endif
 
       real(r8) :: Ce, Cx, Zx
       real(r8) :: bry_pgr, bry_cor, bry_str
       real(r8) :: cff, cff1, cff2, cff3, dt2d
-      real(r8) :: obc_in, obc_out, tau
+      real(r8) :: obc_in, obc_out, tau, bry_val
 # if defined ATM_PRESS && defined PRESS_COMPENSATE
       real(r8) :: OneAtm, fac
 # endif
@@ -670,6 +676,49 @@
               tl_ubar(Istr,j,kout)=0.0_r8
             END IF
           END DO
+
+#ifdef NESTING
+!
+!  If refinement grid and western edge, impose mass flux from donor
+!  coaser grid for volume and mass conservation.
+!
+        ELSE IF (LBC(iwest,isUbar,ng)%nested) THEN
+          DO cr=1,Ncontact
+            dg=Ucontact(cr)%donor_grid
+            rg=Ucontact(cr)%receiver_grid
+            IF (RefinedGrid(ng).and.                                    &
+     &          (rg.eq.ng).and.(DXmax(dg).gt.DXmax(rg))) THEN
+              told=3-RollingIndex(cr)
+              tnew=RollingIndex(cr)
+              DO j=Jstr,Jend
+                m=BRY_CONTACT(iwest,cr)%C2Bindex(j)
+                Idg=Ucontact(cr)%Idg(m)             ! for debugging
+                Jdg=Ucontact(cr)%Jdg(m)             ! purposes
+                cff=0.5_r8*GRID(ng)%on_u(Istr,j)*                       &
+     &              (GRID(ng)%h(Istr-1,j)+zeta(Istr-1,j,kout)+          &
+     &               GRID(ng)%h(Istr  ,j)+zeta(Istr  ,j,kout))
+                tl_cff=0.5_r8*GRID(ng)%on_u(Istr,j)*                    &
+     &                 (GRID(ng)%tl_h(Istr-1,j)+tl_zeta(Istr-1,j,kout)+ &
+     &                  GRID(ng)%tl_h(Istr  ,j)+tl_zeta(Istr  ,j,kout))
+                cff1=GRID(ng)%on_u(Istr,j)/REFINED(cr)%on_u(m)
+                bry_val=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
+                tl_bry_val=cff1*REFINED(cr)%tl_DU_avg2(1,m,tnew)/cff-   &
+     &                     tl_cff*bry_val/cff
+# ifdef MASKING
+                bry_val=bry_val*GRID(ng)%umask(Istr,j)
+                tl_bry_val=tl_bry_val*GRID(ng)%umask(Istr,j)
+# endif
+!>              BRY_CONTACT(ieast,cr)%Mflux(j)=cff*bry_val
+!>
+                BRY_CONTACT(ieast,cr)%tl_Mflux(j)=tl_cff*bry_val+       &
+     &                                            cff*tl_bry_val
+!>              ubar(Istr,j,kout)=bry_val
+!>
+                tl_ubar(Istr,j,kout)=tl_bry_val
+              END DO
+            END IF
+          END DO
+#endif
         END IF
       END IF
 !
@@ -1206,6 +1255,49 @@
               tl_ubar(Iend+1,j,kout)=0.0_r8
             END IF
           END DO
+
+#ifdef NESTING
+!
+!  If refinement grid and eastern edge, impose mass flux from donor
+!  coaser grid for volume and mass conservation.
+!
+        ELSE IF (LBC(ieast,isUbar,ng)%nested) THEN
+          DO cr=1,Ncontact
+            dg=Ucontact(cr)%donor_grid
+            rg=Ucontact(cr)%receiver_grid
+            IF (RefinedGrid(ng).and.                                    &
+     &          (rg.eq.ng).and.(DXmax(dg).gt.DXmax(rg))) THEN
+              told=3-RollingIndex(cr)
+              tnew=RollingIndex(cr)
+              DO j=Jstr,Jend
+                m=BRY_CONTACT(ieast,cr)%C2Bindex(j)
+                Idg=Ucontact(cr)%Idg(m)             ! for debugging
+                Jdg=Ucontact(cr)%Jdg(m)             ! purposes
+                cff=0.5_r8*GRID(ng)%on_u(Iend+1,j)*                     &
+     &              (GRID(ng)%h(Iend+1,j)+zeta(Iend+1,j,kout)+          &
+     &               GRID(ng)%h(Iend  ,j)+zeta(Iend  ,j,kout))
+                tl_cff=0.5_r8*GRID(ng)%on_u(Iend+1,j)*                  &
+     &                 (GRID(ng)%tl_h(Iend+1,j)+tl_zeta(Iend+1,j,kout)+ &
+     &                  GRID(ng)%tl_h(Iend  ,j)+tl_zeta(Iend  ,j,kout))
+                cff1=GRID(ng)%on_u(Iend+1,j)/REFINED(cr)%on_u(m)
+                bry_val=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
+                tl_bry_val=cff1*REFINED(cr)%tl_DU_avg2(1,m,tnew)/cff-   &
+     &                     tl_cff*bry_val/cff
+# ifdef MASKING
+                bry_val=bry_val*GRID(ng)%umask(Iend+1,j)
+                tl_bry_val=tl_bry_val*GRID(ng)%umask(Iend+1,j)
+# endif
+!>              BRY_CONTACT(ieast,cr)%Mflux(j)=cff*bry_val
+!>
+                BRY_CONTACT(ieast,cr)%tl_Mflux(j)=tl_cff*bry_val+       &
+     &                                            cff*tl_bry_val
+!>              ubar(Iend+1,j,kout)=bry_val
+!>
+                tl_ubar(Iend+1,j,kout)=tl_bry_val
+              END DO
+            END IF
+          END DO
+#endif
         END IF
       END IF
 !

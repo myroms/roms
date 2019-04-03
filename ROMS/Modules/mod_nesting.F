@@ -260,6 +260,12 @@
 # endif
 # ifdef SOLVE3D
         real(r8), pointer :: Vweight(:,:,:)        ! vertical weights
+#  if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_Vweight(:,:,:)     ! vertical weights
+#  endif
+#  ifdef ADJOINT
+        real(r8), pointer :: ad_Vweight(:,:,:)     ! vertical weights
+#  endif
 # endif
       END TYPE T_NGC
 
@@ -306,9 +312,21 @@
 
 # ifdef NESTING_DEBUG
         real(r8), pointer :: Mflux(:)      ! perimeter mass flux
+#  if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_Mflux(:)   ! perimeter mass flux
+#  endif
+#  ifdef ADJOINT
+        real(r8), pointer :: ad_Mflux(:)   ! perimeter mass flux
+#  endif
 # endif
 # ifdef SOLVE3D
-        real(r8), pointer :: Tflux(:,:,:)  ! perimeter tracer flux
+        real(r8), pointer :: Tflux(:,:,:)     ! perimeter tracer flux
+#  if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_Tflux(:,:,:)  ! perimeter tracer flux
+#  endif
+#  ifdef ADJOINT
+        real(r8), pointer :: ad_Tflux(:,:,:)  ! perimeter tracer flux
+#  endif
 # endif
       END TYPE T_BCP
 
@@ -370,6 +388,28 @@
 
         real(r8), pointer :: rzeta(:,:)       ! [4,Npoints]
 
+# if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_bustr(:,:)    ! [4,Npoints]
+        real(r8), pointer :: tl_bvstr(:,:)    ! [4,Npoints)
+
+        real(r8), pointer :: tl_ubar(:,:,:)   ! [4,Npoints,2]
+        real(r8), pointer :: tl_vbar(:,:,:)   ! [4,Npoints,2]
+        real(r8), pointer :: tl_zeta(:,:,:)   ! [4,Npoints,2]
+
+        real(r8), pointer :: tl_rzeta(:,:)    ! [4,Npoints]
+# endif
+
+# ifdef ADJOINT
+        real(r8), pointer :: ad_bustr(:,:)    ! [4,Npoints]
+        real(r8), pointer :: ad_bvstr(:,:)    ! [4,Npoints)
+
+        real(r8), pointer :: ad_ubar(:,:,:)   ! [4,Npoints,2]
+        real(r8), pointer :: ad_vbar(:,:,:)   ! [4,Npoints,2]
+        real(r8), pointer :: ad_zeta(:,:,:)   ! [4,Npoints,2]
+
+        real(r8), pointer :: ad_rzeta(:,:)    ! [4,Npoints]
+# endif
+
 # ifdef SOLVE3D
         real(r8), pointer :: DU_avg1(:,:)     ! [4,Npoints]
         real(r8), pointer :: DV_avg1(:,:)     ! [4,Npoints]
@@ -382,6 +422,34 @@
         real(r8), pointer :: Hvom(:,:,:)      ! [4,k,Npoints]
 
         real(r8), pointer :: t(:,:,:,:)       ! [4,k,Npoints,itrc]
+
+#  if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_DU_avg1(:,:)  ! [4,Npoints]
+        real(r8), pointer :: tl_DV_avg1(:,:)  ! [4,Npoints]
+        real(r8), pointer :: tl_Zt_avg1(:,:)  ! [4,Npoints]
+
+        real(r8), pointer :: tl_u(:,:,:)      ! [4,k,Npoints]
+        real(r8), pointer :: tl_v(:,:,:)      ! [4,k,Npoints]
+
+        real(r8), pointer :: tl_Huon(:,:,:)   ! [4,k,Npoints]
+        real(r8), pointer :: tl_Hvom(:,:,:)   ! [4,k,Npoints]
+
+        real(r8), pointer :: tl_t(:,:,:,:)    ! [4,k,Npoints,itrc]
+#  endif
+
+#  ifdef ADJOINT
+        real(r8), pointer :: ad_DU_avg1(:,:)  ! [4,Npoints]
+        real(r8), pointer :: ad_DV_avg1(:,:)  ! [4,Npoints]
+        real(r8), pointer :: ad_Zt_avg1(:,:)  ! [4,Npoints]
+
+        real(r8), pointer :: ad_u(:,:,:)      ! [4,k,Npoints]
+        real(r8), pointer :: ad_v(:,:,:)      ! [4,k,Npoints]
+
+        real(r8), pointer :: ad_Huon(:,:,:)   ! [4,k,Npoints]
+        real(r8), pointer :: ad_Hvom(:,:,:)   ! [4,k,Npoints]
+
+        real(r8), pointer :: ad_t(:,:,:,:)    ! [4,k,Npoints,itrc]
+#  endif
 # endif
 
       END TYPE T_COMPOSITE
@@ -403,6 +471,24 @@
         real(r8), pointer :: DU_avg2(:,:,:)   ! [4,Npoints,t1:t2]
         real(r8), pointer :: DV_avg2(:,:,:)   ! [4,Npoints,t1:t2]
 
+# if defined TANGENT || defined TL_IOMS
+        real(r8), pointer :: tl_ubar(:,:,:)      ! [4,Npoints,t1:t2]
+        real(r8), pointer :: tl_vbar(:,:,:)      ! [4,Npoints,t1:t2]
+        real(r8), pointer :: tl_zeta(:,:,:)      ! [4,Npoints,t1:t2]
+
+        real(r8), pointer :: tl_DU_avg2(:,:,:)   ! [4,Npoints,t1:t2]
+        real(r8), pointer :: tl_DV_avg2(:,:,:)   ! [4,Npoints,t1:t2]
+# endif
+
+# ifdef ADJOINT
+        real(r8), pointer :: ad_ubar(:,:,:)      ! [4,Npoints,t1:t2]
+        real(r8), pointer :: ad_vbar(:,:,:)      ! [4,Npoints,t1:t2]
+        real(r8), pointer :: ad_zeta(:,:,:)      ! [4,Npoints,t1:t2]
+
+        real(r8), pointer :: ad_DU_avg2(:,:,:)   ! [4,Npoints,t1:t2]
+        real(r8), pointer :: ad_DV_avg2(:,:,:)   ! [4,Npoints,t1:t2]
+# endif
+
         real(r8), pointer :: on_u(:)          ! [Npoints]
         real(r8), pointer :: om_v(:)          ! [Npoints]
 
@@ -411,6 +497,22 @@
         real(r8), pointer :: v(:,:,:,:)       ! [4,k,Npoints,t1:t2]
 
         real(r8), pointer :: t(:,:,:,:,:)     ! [4,k,Npoints,t1:t2,itrc]
+
+#  if defined TANGENT || defined TL_IOMS
+
+        real(r8), pointer :: tl_u(:,:,:,:)    ! [4,k,Npoints,t1:t2]
+        real(r8), pointer :: tl_v(:,:,:,:)    ! [4,k,Npoints,t1:t2]
+
+        real(r8), pointer :: tl_t(:,:,:,:,:)  ! [4,k,Npoints,t1:t2,itrc]
+#  endif
+
+#  ifdef ADJOINT
+
+        real(r8), pointer :: ad_u(:,:,:,:)    ! [4,k,Npoints,t1:t2]
+        real(r8), pointer :: ad_v(:,:,:,:)    ! [4,k,Npoints,t1:t2]
+
+        real(r8), pointer :: ad_t(:,:,:,:,:)  ! [4,k,Npoints,t1:t2,itrc]
+#  endif
 # endif
       END TYPE T_REFINED
 !
@@ -474,12 +576,34 @@
 # ifdef NESTING_DEBUG
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBj:UBj) )
               Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+
+#  if defined TANGENT || defined TL_IOMS
+              allocate ( BRY_CONTACT(ibry,cr) % tl_Mflux(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+#  endif
+
+#  ifdef ADJOINT
+              allocate ( BRY_CONTACT(ibry,cr) % ad_Mflux(LBj:UBj) )
+              Dmem(rg)=Dmem(rg)+REAL(UBj-LBj,r8)
+#  endif
 # endif
 
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBj:UBj,          &
      &                                                N(rg),NT(rg)) )
               Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+
+#  if defined TANGENT || defined TL_IOMS
+              allocate ( BRY_CONTACT(ibry,cr) % tl_Tflux(LBj:UBj,       &
+     &                                                   N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+#  endif
+
+#  ifdef ADJOINT
+              allocate ( BRY_CONTACT(ibry,cr) % ad_Tflux(LBj:UBj,       &
+     &                                                   N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+#  endif
 # endif
             CASE (isouth, inorth)
               allocate ( BRY_CONTACT(ibry,cr) % Ib(LBi:UBi) )
@@ -494,12 +618,34 @@
 # ifdef NESTING_DEBUG
               allocate ( BRY_CONTACT(ibry,cr) % Mflux(LBi:UBi) )
               Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+
+#  if defined TANGENT || defined TL_IOMS
+              allocate ( BRY_CONTACT(ibry,cr) % tl_Mflux(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+#  endif
+
+#  ifdef ADJOINT
+              allocate ( BRY_CONTACT(ibry,cr) % ad_Mflux(LBi:UBi) )
+              Dmem(rg)=Dmem(rg)+REAL(UBi-LBi,r8)
+#  endif
 # endif
 
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
      &                                                N(rg),NT(rg)) )
               Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+
+#  if defined TANGENT || defined TL_IOMS
+              allocate ( BRY_CONTACT(ibry,cr) % tl_Tflux(LBi:UBi,       &
+     &                                                   N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+#  endif
+
+#  ifdef ADJOINT
+              allocate ( BRY_CONTACT(ibry,cr) % ad_Tflux(LBi:UBi,       &
+     &                                                   N(rg),NT(rg)) )
+              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+#  endif
 # endif
           END SELECT
         END DO
@@ -547,9 +693,21 @@
           BRY_CONTACT(ibry,cr) % C2Bindex = ispval
 # ifdef NESTING_DEBUG
           BRY_CONTACT(ibry,cr) % Mflux = 0.0_r8
+#  if defined TANGENT || defined TL_IOMS
+          BRY_CONTACT(ibry,cr) % tl_Mflux = 0.0_r8
+#  endif
+#  ifdef ADJOINT
+          BRY_CONTACT(ibry,cr) % ad_Mflux = 0.0_r8
+#  endif
 # endif
 # ifdef SOLVE3D
           BRY_CONTACT(ibry,cr) % Tflux = 0.0_r8
+#  if defined TANGENT || defined TL_IOMS
+          BRY_CONTACT(ibry,cr) % tl_Tflux = 0.0_r8
+#  endif
+#  ifdef ADJOINT
+          BRY_CONTACT(ibry,cr) % ad_Tflux = 0.0_r8
+#  endif
 # endif
         END DO
       END DO
@@ -736,6 +894,28 @@
 
           COMPOSITE(cr) % rzeta = IniVal
 
+# if defined TANGENT || defined TL_IOMS
+          COMPOSITE(cr) % tl_bustr = IniVal
+          COMPOSITE(cr) % tl_bvstr = IniVal
+
+          COMPOSITE(cr) % tl_ubar = IniVal
+          COMPOSITE(cr) % tl_vbar = IniVal
+          COMPOSITE(cr) % tl_zeta = IniVal
+
+          COMPOSITE(cr) % tl_rzeta = IniVal
+# endif
+
+# ifdef ADJOINT
+          COMPOSITE(cr) % ad_bustr = IniVal
+          COMPOSITE(cr) % ad_bvstr = IniVal
+
+          COMPOSITE(cr) % ad_ubar = IniVal
+          COMPOSITE(cr) % ad_vbar = IniVal
+          COMPOSITE(cr) % ad_zeta = IniVal
+
+          COMPOSITE(cr) % ad_rzeta = IniVal
+# endif
+
 # ifdef SOLVE3D
           COMPOSITE(cr) % DU_avg1 = IniVal
           COMPOSITE(cr) % DV_avg1 = IniVal
@@ -748,6 +928,34 @@
           COMPOSITE(cr) % Hvom = IniVal
 
           COMPOSITE(cr) % t = IniVal
+
+#  if defined TANGENT || defined TL_IOMS
+          COMPOSITE(cr) % tl_DU_avg1 = IniVal
+          COMPOSITE(cr) % tl_DV_avg1 = IniVal
+          COMPOSITE(cr) % tl_Zt_avg1 = IniVal
+
+          COMPOSITE(cr) % tl_u = IniVal
+          COMPOSITE(cr) % tl_v = IniVal
+
+          COMPOSITE(cr) % tl_Huon = IniVal
+          COMPOSITE(cr) % tl_Hvom = IniVal
+
+          COMPOSITE(cr) % tl_t = IniVal
+#  endif
+
+#  ifdef ADJOINT
+          COMPOSITE(cr) % ad_DU_avg1 = IniVal
+          COMPOSITE(cr) % ad_DV_avg1 = IniVal
+          COMPOSITE(cr) % ad_Zt_avg1 = IniVal
+
+          COMPOSITE(cr) % ad_u = IniVal
+          COMPOSITE(cr) % ad_v = IniVal
+
+          COMPOSITE(cr) % ad_Huon = IniVal
+          COMPOSITE(cr) % ad_Hvom = IniVal
+
+          COMPOSITE(cr) % ad_t = IniVal
+#  endif
 # endif
         END DO
       END IF
@@ -763,6 +971,24 @@
           REFINED(cr) % DU_avg2 = IniVal
           REFINED(cr) % DV_avg2 = IniVal
 
+# if defined TANGENT || defined TL_IOMS
+          REFINED(cr) % tl_ubar = IniVal
+          REFINED(cr) % tl_vbar = IniVal
+          REFINED(cr) % tl_zeta = IniVal
+
+          REFINED(cr) % tl_DU_avg2 = IniVal
+          REFINED(cr) % tl_DV_avg2 = IniVal
+# endif
+
+# ifdef ADJOINT
+          REFINED(cr) % ad_ubar = IniVal
+          REFINED(cr) % ad_vbar = IniVal
+          REFINED(cr) % ad_zeta = IniVal
+
+          REFINED(cr) % ad_DU_avg2 = IniVal
+          REFINED(cr) % ad_DV_avg2 = IniVal
+# endif
+
           REFINED(cr) % on_u = IniVal
           REFINED(cr) % om_v = IniVal
 
@@ -771,6 +997,20 @@
           REFINED(cr) % v = IniVal
 
           REFINED(cr) % t = IniVal
+
+#  if defined TANGENT || defined TL_IOMS
+          REFINED(cr) % tl_u = IniVal
+          REFINED(cr) % tl_v = IniVal
+
+          REFINED(cr) % tl_t = IniVal
+#  endif
+
+#  ifdef ADJOINT
+          REFINED(cr) % ad_u = IniVal
+          REFINED(cr) % ad_v = IniVal
+
+          REFINED(cr) % ad_t = IniVal
+#  endif
 # endif
         END DO
       END IF

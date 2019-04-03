@@ -580,7 +580,7 @@
 !
 !  If refinement grids, extract tracer horizontal advection fluxes
 !  (Hz*u*T/n, Hz*v*T/m) at the grid contact boundary (physical
-!  domain period) to be used in two-way nesting.
+!  domain perimeter) to be used in two-way nesting.
 !
          IF (RefinedGrid(ng)) THEN
            DO cr=1,Ncontact

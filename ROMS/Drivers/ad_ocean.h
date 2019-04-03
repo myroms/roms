@@ -174,13 +174,11 @@
 !-----------------------------------------------------------------------
 !
       Lstiffness=.FALSE.
-      DO ng=1,Ngrids
 !$OMP PARALLEL
-        CALL ad_initial (ng)
+      CALL ad_initial
 !$OMP END PARALLEL
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
+      IF (FoundError(exit_flag, NoError, __LINE__,                       &
+     &               __FILE__)) RETURN
 !
 !  Initialize run or ensemble counter.
 !

@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 #ifdef TANGENT
-      SUBROUTINE tl_initial (ng)
+      SUBROUTINE tl_initial
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -27,6 +27,9 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
@@ -50,6 +53,10 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces,          ONLY : initialize_forces
 # endif
+#ifdef NESTING
+      USE nesting_mod,         ONLY : nesting
+      USE tl_nesting_mod,      ONLY : tl_nesting
+#endif
      USE strings_mod,          ONLY : FoundError
 # if defined SENSITIVITY_4DVAR || \
      defined TL_W4DPSAS        || defined TL_W4DVAR  || \
@@ -80,17 +87,17 @@
 !
       implicit none
 !
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng
-!
 !  Local variable declarations.
 !
       logical :: update = .FALSE.
 
-      integer :: LBi, UBi, LBj, UBj
-      integer :: Fcount, IniRec, Tindex, wrtRec
-      integer :: thread, tile
+      integer :: Fcount, wrtRec
+      integer :: ng, thread, tile
+# ifdef NESTING
+      integer :: ig, nl
+# endif
+
+      integer, dimension(Ngrids) :: IniRec, Tindex
 !
 !=======================================================================
 !   Initialize model variables.
@@ -118,48 +125,45 @@
 !  Initialize time stepping indices and counters.
 !-----------------------------------------------------------------------
 !
-      iif(ng)=1
-      indx1(ng)=1
-      kstp(ng)=1
-      krhs(ng)=1
-      knew(ng)=1
-      PREDICTOR_2D_STEP(ng)=.FALSE.
+      DO ng=1,Ngrids
+        iif(ng)=1
+        indx1(ng)=1
+        kstp(ng)=1
+        krhs(ng)=1
+        knew(ng)=1
+        PREDICTOR_2D_STEP(ng)=.FALSE.
 !
-      iic(ng)=0
-      nstp(ng)=1
-      nrhs(ng)=1
-      nnew(ng)=1
+        iic(ng)=0
+        nstp(ng)=1
+        nrhs(ng)=1
+        nnew(ng)=1
 # ifdef FLOATS_NOT_YET
-      nf(ng)=0
-      nfp1(ng)=1
-      nfm1(ng)=4
-      nfm2(ng)=3
-      nfm3(ng)=2
+        nf(ng)=0
+        nfp1(ng)=1
+        nfm1(ng)=4
+        nfm2(ng)=3
+        nfm3(ng)=2
 # endif
 !
-      synchro_flag(ng)=.TRUE.
-      first_time(ng)=0
-      IF (ANY(tl_VolCons(:,ng))) THEN
-        tl_ubar_xs=0.0_r8
-      END IF
-      tdays(ng)=dstart
-      time(ng)=tdays(ng)*day2sec
+        synchro_flag(ng)=.TRUE.
+        first_time(ng)=0
+        IF (ANY(tl_VolCons(:,ng))) THEN
+          tl_ubar_xs=0.0_r8
+        END IF
+        tdays(ng)=dstart
+        time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
-      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend(ng)=ntstart(ng)+ntimes(ng)-1
-      ntfirst(ng)=ntstart(ng)
+        ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+        ntend(ng)=ntstart(ng)+ntimes(ng)-1
+        ntfirst(ng)=ntstart(ng)
 !$OMP END MASTER
 !$OMP BARRIER
 
-      CALL time_string (time(ng), time_code(ng))
+        CALL time_string (time(ng), time_code(ng))
 
-      IniRec=nrrec(ng)
-      Tindex=1
-
-      LBi=LBOUND(GRID(ng)%h,DIM=1)
-      UBi=UBOUND(GRID(ng)%h,DIM=1)
-      LBj=LBOUND(GRID(ng)%h,DIM=2)
-      UBj=UBOUND(GRID(ng)%h,DIM=2)
+        IniRec(ng)=nrrec(ng)
+        Tindex(ng)=1
+      END DO
 
 # ifdef PROFILE
 !
@@ -167,8 +171,10 @@
 !  Start time wall clocks.
 !-----------------------------------------------------------------------
 !
-      DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
+        END DO
       END DO
 !$OMP BARRIER
 # endif
@@ -181,7 +187,9 @@
 !
 !  Set initial conditions time record to read.
 !
-       IniRec=1
+      DO ng=1,Ngrids
+        IniRec(ng)=1
+      END DO
 
 # elif defined FOUR_DVAR    && \
      !(defined HESSIAN_SV   || defined HESSIAN_SO || \
@@ -201,16 +209,18 @@
 !  initial conditions for records 1 and 2.
 !
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
-        LdefITL(ng)=.TRUE.
-        CALL tl_def_ini (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-        CALL tl_wrt_ini (ng, Tindex, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-        CALL tl_wrt_ini (ng, Tindex, 2)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        DO ng=1,Ngrids
+          LdefITL(ng)=.TRUE.
+          CALL tl_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          CALL tl_wrt_ini (ng, Tindex, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          CALL tl_wrt_ini (ng, Tindex, 2)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
       END IF
 #   endif
 #   ifndef WEAK_CONSTRAINT
@@ -218,25 +228,33 @@
 !  Set switch to create tangent linear history file.
 !
       IF (Nrun.eq.ERstr) THEN
-        LdefTLM(ng)=.TRUE.
+        DO ng=1,Ngrids
+          LdefTLM(ng)=.TRUE.
+        END DO
       END IF
 #   endif
 !
 !  Set record to read from initial tangent linear NetCDF file.
 !
-      IniRec=ITL(ng)%Rindex
+      DO ng=1,Ngrids
+        IniRec(ng)=ITL(ng)%Rindex
+      END DO
 
 #   ifdef ADJUST_BOUNDARY
 !
 !  Initialize open boundary counter for storage arrays.
 !
-      OBCcount(ng)=0
+      DO ng=1,Ngrids
+        OBCcount(ng)=0
+      END DO
 #   endif
 #   if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
 !
-      SFcount(ng)=0
+      DO ng=1,Ngrids
+        SFcount(ng)=0
+      END DO
 #   endif
 #   if !defined WEAK_CONSTRAINT
 !
@@ -244,21 +262,27 @@
 !  counters are reset in every iteration pass. This file is created
 !  on the first iteration pass.
 !
-      TLM(ng)%Rindex=0
-      Fcount=TLM(ng)%Fcount
-      TLM(ng)%Nrec(Fcount)=0
-      LwrtTLM(ng)=.TRUE.
+      DO ng=1,Ngrids
+        TLM(ng)%Rindex=0
+        Fcount=TLM(ng)%Fcount
+        TLM(ng)%Nrec(Fcount)=0
+        LwrtTLM(ng)=.TRUE.
+      END DO
 !
 !  Insure that forward and history file names are the same. In 4DVar,
 !  the forward solution is computed by the nonlinear model and stored
 !  on HISNAME NetCDF file.
 !
 #    ifdef TLM_CHECK
-      FWD(ng)%name=TRIM(HIS(ng)%base)//'.nc'
-      FWD(ng)%ncid=-1
+      DO ng=1,Ngrids
+        FWD(ng)%name=TRIM(HIS(ng)%base)//'.nc'
+        FWD(ng)%ncid=-1
+      END DO
 #    else
-      FWD(ng)%name=HIS(ng)%name
-      FWD(ng)%ncid=HIS(ng)%ncid
+      DO ng=1,Ngrids
+        FWD(ng)%name=HIS(ng)%name
+        FWD(ng)%ncid=HIS(ng)%ncid
+      END DO
 #    endif
 #   endif
 #  endif
@@ -277,23 +301,27 @@
 !-----------------------------------------------------------------------
 !
 # ifdef ANA_GRID
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_grid (ng, tile, iTLM)
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_grid (ng, tile, iTLM)
 #  ifdef MASKING
-          CALL ana_mask (ng, tile, iTLM)
+            CALL ana_mask (ng, tile, iTLM)
 #  endif
+          END DO
         END DO
 !$OMP BARRIER
 # else
+        DO ng=1,Ngrids
 !$OMP MASTER
-        CALL get_grid (ng, iTLM)
+          CALL get_grid (ng, iTLM)
 !$OMP END MASTER
 !$OMP BARRIER
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag)
+          CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
 # endif
 
 # ifdef SOLVE3D
@@ -302,9 +330,11 @@
 !  Set vertical S-coordinate transformation function.
 !-----------------------------------------------------------------------
 !
+        DO ng=1,Ngrids
 !$OMP MASTER
-        CALL set_scoord (ng)
+          CALL set_scoord (ng)
 !$OMP END MASTER
+        END DO
 !$OMP BARRIER
 # endif
 
@@ -314,9 +344,11 @@
 !  Set barotropic time-steps average weighting function.
 !-----------------------------------------------------------------------
 !
+        DO ng=1,Ngrids
 !$OMP MASTER
-        CALL set_weights (ng)
+          CALL set_weights (ng)
 !$OMP END MASTER
+        END DO
 !$OMP BARRIER
 # endif
 !
@@ -324,10 +356,26 @@
 !  Compute various metric term combinations.
 !-----------------------------------------------------------------------
 !
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL metrics (ng, tile, iTLM)
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL metrics (ng, tile, iTLM)
+          END DO
         END DO
 !$OMP BARRIER
+
+#ifdef NESTING
+!
+!-----------------------------------------------------------------------
+!  If nesting, initialize grid spacing (on_u and om_v) in REFINED(:)
+!  structure.  They are used to impose mass flux at the finer grid
+!  physical boundaries.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL nesting (ng, iTLM, ndxdy)
+        END DO
+#endif
+
 
 # if defined WTYPE_GRID && defined ANA_WTYPE     && \
     (defined LMD_SKPP   || defined SOLAR_SOURCE)
@@ -336,8 +384,10 @@
 !  Set spatially varying Jerlov water type.
 !-----------------------------------------------------------------------
 !
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_wtype (ng, tile, iTLM)
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_wtype (ng, tile, iTLM)
+          END DO
         END DO
 !$OMP BARRIER
 # endif
@@ -348,24 +398,28 @@
 !-----------------------------------------------------------------------
 !
 # ifdef ANA_NUDGCOEF
-        IF (Lnudging(ng)) THEN
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ana_nudgcoef (ng, tile, iTLM)
-          END DO
+        DO ng=1,Ngrids
+          IF (Lnudging(ng)) THEN
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ana_nudgcoef (ng, tile, iTLM)
+            END DO
 !$OMP BARRIER
-        END IF
+          END IF
+        END DO
 # else
-        IF (Lnudging(ng)) THEN
+        DO ng=1,Ngrids
+          IF (Lnudging(ng)) THEN
 !$OMP MASTER
-          CALL get_nudgcoef (ng, iTLM)
+            CALL get_nudgcoef (ng, iTLM)
 !$OMP END MASTER
 #  ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iTLM, exit_flag)
+            CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
 !$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-        END IF
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
+          END IF
+        END DO
 # endif
       END IF
 !
@@ -378,10 +432,12 @@
 # endif
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ini_hmixcoef (ng, tile, iTLM)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ini_hmixcoef (ng, tile, iTLM)
+        END DO
 !$OMP BARRIER
+      END DO
 
 # ifdef ANA_SPONGE
 !
@@ -390,12 +446,14 @@
 !  analytical functions.
 !-----------------------------------------------------------------------
 !
-      IF (Lsponge(ng)) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_sponge (ng, tile, iTLM)
-        END DO
+      DO ng=1,Ngrids
+        IF (Lsponge(ng)) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_sponge (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 !
 !=======================================================================
@@ -410,13 +468,15 @@
 !
 !  Clear tangent linear state variables.
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL initialize_ocean (ng, tile, iTLM)
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iTLM)
 #   ifdef SOLVE3D
-        CALL initialize_coupling (ng, tile, 0)
+          CALL initialize_coupling (ng, tile, 0)
 #   endif
-      END DO
+        END DO
 !$OMP BARRIER
+      END DO
 
 #  else
 #   ifndef WEAK_CONSTRAINT
@@ -429,16 +489,18 @@
 !-----------------------------------------------------------------------
 !
       IF (inner.eq.0) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
 #    ifdef ADJUST_BOUNDARY
-          CALL initialize_boundary (ng, tile, iTLM)
+            CALL initialize_boundary (ng, tile, iTLM)
 #    endif
 #    if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-          CALL initialize_forces (ng, tile, iTLM)
+            CALL initialize_forces (ng, tile, iTLM)
 #    endif
-          CALL initialize_ocean (ng, tile, iTLM)
-        END DO
+            CALL initialize_ocean (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
+        END DO
 !
 !  Rewrite tangent linear initial NetCDF (record 1) with zero initial
 !  conditions since the model needs to be started from at the first
@@ -446,12 +508,14 @@
 !
         IF (Nrun.gt.1) THEN
           wrtRec=1
+          DO ng=1,Ngrids
 !$OMP MASTER
-          CALL tl_wrt_ini (ng, Tindex, wrtRec)
+            CALL tl_wrt_ini (ng, Tindex(ng), wrtRec)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
+          END DO
         END IF
       END IF
 #   endif
@@ -465,10 +529,12 @@
 !  depths with zero free-surface.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile, iTLM)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL set_depth (ng, tile, iTLM)
+        END DO
 !$OMP BARRIER
+      END DO
 # endif
 
 # if defined SENSITIVITY_4DVAR || \
@@ -479,10 +545,12 @@
 !  Initialize tangent linear bathymetry to zero.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL tl_bath (ng, tile)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_bath (ng, tile)
+        END DO
 !$OMP BARRIER
+      END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -493,48 +561,56 @@
 !
 !  Analytical initial conditions for momentum and active tracers.
 !
-      IF (nrrec(ng).eq.0) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_initial (ng, tile, iTLM)
-        END DO
+      DO ng=1,Ngrids
+        IF (nrrec(ng).eq.0) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_initial (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 
 # if defined ANA_PASSIVE && defined SOLVE3D
 !
 !  Analytical initial conditions for inert passive tracers.
 !
-      IF (nrrec(ng).eq.0) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_passive (ng, tile, iTLM)
-        END DO
+      DO ng=1,Ngrids
+        IF (nrrec(ng).eq.0) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_passive (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 
 # if defined ANA_BIOLOGY && defined SOLVE3D
 !
 !  Analytical initial conditions for biology.
 !
-      IF (nrrec(ng).eq.0) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_biology (ng, tile, iTLM)
-        END DO
+      DO ng=1,Ngrids
+        IF (nrrec(ng).eq.0) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_biology (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 
 # if defined ANA_SEDIMENT_NOT_YET && defined SOLVE3D
 !
 !  Analytical initial conditions for sediment.
 !
-      IF (nrrec(ng).eq.0) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_sediment (ng, tile, iTLM)
-        END DO
+      DO ng=1,Ngrids
+        IF (nrrec(ng).eq.0) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_sediment (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 
 # ifdef IS4DVAR_SENSITIVITY
@@ -542,33 +618,41 @@
 !  Initialize with the weighted sum of all Lanczos vectors computed
 !  from the first outer loop of the IS4DVAR Lanczos algorithm.
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ini_lanczos (ng, tile, Lnew(ng), Tindex)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ini_lanczos (ng, tile, Lnew(ng), Tindex(ng))
+        END DO
 !$OMP BARRIER
+      END DO
 
 # else
 !
 !  Read in initial conditions for initial or restart NetCDF file.
 !
 #  ifdef INI_FILE
+      DO ng=1,Ngrids
 !$OMP MASTER
-      CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
-!$OMP END MASTER
-!$OMP BARRIER
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-      time(ng)=io_time                       ! needed for shared-memory
-#  else
-      IF (nrrec(ng).ne.0) THEN
-!$OMP MASTER
-        CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
+        CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec(ng),          &
+     &                  Tindex(ng))
 !$OMP END MASTER
 !$OMP BARRIER
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
         time(ng)=io_time                     ! needed for shared-memory
-      END IF
+      END DO
+#  else
+      DO ng=1,Ngrids
+        IF (nrrec(ng).ne.0) THEN
+!$OMP MASTER
+          CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec(ng),        &
+     &                    Tindex(ng))
+!$OMP END MASTER
+!$OMP BARRIER
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          time(ng)=io_time                   ! needed for shared-memory
+        END IF
+      END DO
 #  endif
 # endif
 
@@ -578,24 +662,26 @@
 !  Process initial wet/dry masks.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
+!
 !  If restart, read in wet/dry masks.
 !
-      IF (nrrec(ng).ne.0) THEN
+        IF (nrrec(ng).ne.0) THEN
 !$OMP MASTER
-        CALL get_wetdry (ng, iTLM, IniRec(ng))
+          CALL get_wetdry (ng, iTLM, IniRec(ng))
 !$OMP END MASTER
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag)
+          CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
 !$OMP BARRIER
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      ELSE
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
-        END DO
+          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
+          END DO
 !$OMP BARRIER
-      END IF
+        END IF
+      END DO
 # endif
 
 # ifdef OBSERVATIONS
@@ -608,12 +694,14 @@
 !  the first "ObsTime" to process.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP MASTER
-      CALL obs_initial (ng, iTLM, .FALSE.)
+        CALL obs_initial (ng, iTLM, .FALSE.)
 !$OMP END MASTER
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
 !$OMP BARRIER
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
 # endif
 
 # if defined ANA_PERTURB && defined SANITY_CHECK
@@ -623,10 +711,12 @@
 !  expressions.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ana_perturb (ng, tile, iTLM)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ana_perturb (ng, tile, iTLM)
+        END DO
 !$OMP BARRIER
+      END DO
 # endif
 
 # ifdef TLM_CHECK
@@ -637,10 +727,12 @@
 !  (adjoint state).
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL tl_ini_perturb (ng, tile, Lnew(ng), Tindex)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tl_ini_perturb (ng, tile, Lnew(ng), Tindex(ng))
+        END DO
 !$OMP BARRIER
+      END DO
 #  endif
 
 # ifdef SOLVE3D
@@ -686,12 +778,14 @@
 !  to process internal Land/Sea masking arrays during initialization.
 !-----------------------------------------------------------------------
 !
-      IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_psource (ng, tile, iTLM)
-        END DO
-      END IF
+      DO ng=1,Ngrids
+        IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_psource (ng, tile, iTLM)
+          END DO
+        END IF
 !$OMP BARRIER
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------
@@ -703,16 +797,18 @@
 !  during initialization/restart.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP MASTER
-      CALL close_inp (ng, iTLM)
-      CALL check_multifile (ng, iTLM)
+        CALL close_inp (ng, iTLM)
+        CALL check_multifile (ng, iTLM)
 !$OMP END MASTER
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag)
+        CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
 !$OMP BARRIER
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from
@@ -720,16 +816,18 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP MASTER
-      CALL tl_get_idata (ng)
-      CALL tl_get_data (ng)
+        CALL tl_get_idata (ng)
+        CALL tl_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
 # ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag)
+        CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
 
 # ifdef MASKING
 !
@@ -737,10 +835,75 @@
 !  Set internal I/O mask arrays.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_masks (ng, tile, iTLM)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL set_masks (ng, tile, iTLM)
+        END DO
 !$OMP BARRIER
+      END DO
+# endif
+
+# ifdef NESTING
+#  if defined MASKING || defined WET_DRY
+!
+!-----------------------------------------------------------------------
+!  If nesting and Land/Sea masking, scale horizontal interpolation
+!  weights to account for land contact points.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL nesting (ng, iTLM, nmask)
+        END DO
+!$OMP BARRIER
+      END DO
+#  endif
+!
+!-----------------------------------------------------------------------
+!  If nesting, process state fields initial conditons in the contact
+!  regions.
+!-----------------------------------------------------------------------
+!
+!  Free-surface and 2D-momentum.
+!
+      DO nl=1,NestLayers
+        DO ig=1,GridsInLayer(nl)
+          ng=GridNumber(ig,nl)
+          IF (ANY(CompositeGrid(:,ng))) THEN
+            CALL nesting (ng, iTLM, nFSIC)        ! free-surface
+            CALL tl_nesting (ng, iTLM, nFSIC)     ! free-surface
+#  ifndef SOLVE3D
+            CALL nesting (ng, iTLM, n2dIC)        ! 2d momentum
+            CALL tl_nesting (ng, iTLM, n2dIC)     ! 2d momentum
+#  endif
+          END IF
+        END DO
+      END DO
+
+#  ifdef SOLVE3D
+!
+!  Determine vertical indices and vertical interpolation weights in
+!  the contact zone using initial unperturbed depth arrays.
+!
+      DO ng=1,Ngrids
+        CALL nesting (ng, iTLM, nzwgt)
+        CALL tl_nesting (ng, iTLM, nzwgt)
+      END DO
+!
+!  3D-momentum and tracers.
+!
+      DO nl=1,NestLayers
+        DO ig=1,GridsInLayer(nl)
+          ng=GridNumber(ig,nl)
+          IF (ANY(CompositeGrid(:,ng))) THEN
+            CALL nesting (ng, iTLM, n3dIC)        ! 3D momentum
+            CALL tl_nesting (ng, iTLM, n3dIC)     ! 3D momentum
+            CALL nesting (ng, iTLM, nTVIC)        ! Tracer variables
+            CALL tl_nesting (ng, iTLM, nTVIC)     ! Tracer variables
+          END IF
+        END DO
+      END DO
+#  endif
 # endif
 
 # if defined PROPAGATOR || \
@@ -751,10 +914,12 @@
 !  size of packed state arrays.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL wpoints (ng, tile, iTLM)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL wpoints (ng, tile, iTLM)
+        END DO
 !$OMP BARRIER
+      END DO
 # endif
 
 # ifdef WEAK_CONSTRAINT
@@ -768,15 +933,17 @@
 !  constraint but in observation space.
 !-----------------------------------------------------------------------
 !
-      IF (nADJ(ng).lt.ntimes(ng)) THEN
-        IniRec=1
+      DO ng=1,Ngrids
+        IF (nADJ(ng).lt.ntimes(ng)) THEN
+          IniRec(ng)=1
 !$OMP MASTER
-        CALL get_state (ng, 7, 7, TLF(ng)%name, IniRec, 1)
+          CALL get_state (ng, 7, 7, TLF(ng)%name, IniRec(ng), 1)
 !$OMP END MASTER
 !$OMP BARRIER
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END IF
+      END DO
 # endif
 
 # if defined ANA_DRAG && defined UV_DRAG_GRID
@@ -786,10 +953,12 @@
 !-----------------------------------------------------------------------
 !
       IF (Nrun.eq.ERstr) THEN
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_drag (ng, tile, iTLM)
-        END DO
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_drag (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
+        END DO
       END IF
 # endif
 !
@@ -799,10 +968,12 @@
 !
       IF (Lstiffness) THEN
         Lstiffness=.FALSE.
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL stiffness (ng, tile, iTLM)
-        END DO
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL stiffness (ng, tile, iTLM)
+          END DO
 !$OMP BARRIER
+        END DO
       END IF
 
 # if defined FLOATS_NOT_YET || defined STATIONS
@@ -812,10 +983,12 @@
 !  coordinates.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
 !$OMP MASTER
-      CALL grid_coords (ng, iTLM)
+        CALL grid_coords (ng, iTLM)
 !$OMP END MASTER
 !$OMP BARRIER
+      END DO
 # endif
 
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
@@ -824,9 +997,10 @@
 !  Read in initial forcing from coupled wave model.
 !-----------------------------------------------------------------------
 !
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ocn2wav_coupling (ng, tile)
-      END DO
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL ocn2wav_coupling (ng, tile)
+        END DO
 !$OMP BARRIER
 # endif
 !
@@ -837,10 +1011,12 @@
 !  Subsract one time unit to avoid special case due to initialization
 !  in the main time-stepping routine.
 !
-      iic(ng)=ntstart(ng)-1
+      DO ng=1,Ngrids
+        iic(ng)=ntstart(ng)-1
 !$OMP MASTER
-      time(ng)=time(ng)-dt(ng)
+        time(ng)=time(ng)-dt(ng)
 !$OMP END MASTER
+      END DO
 !$OMP BARRIER
 
 # ifdef PROFILE
@@ -849,10 +1025,12 @@
 !  Turn off initiialization time wall clock.
 !-----------------------------------------------------------------------
 !
-      DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
-      END DO
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
+        END DO
 !$OMP BARRIER
+      END DO
 # endif
       RETURN
       END SUBROUTINE tl_initial
