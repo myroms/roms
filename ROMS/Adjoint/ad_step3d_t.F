@@ -139,9 +139,6 @@
 !
       USE mod_param
       USE mod_clima
-# if defined NESTING && !defined ONE_WAY
-      USE mod_nesting
-# endif
       USE mod_ncparam
       USE mod_scalars
       USE mod_sources
@@ -155,10 +152,6 @@
 # endif
 # ifdef TS_MPDATA_NOT_YET
 !!    USE ad_mpdata_adiff_mod
-# endif
-# ifdef NESTING
-      USE nesting_mod, ONLY : bry_fluxes
-      USE ad_nesting_mod, ONLY : ad_bry_fluxes
 # endif
       USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
 !
@@ -271,10 +264,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef NESTING
-      integer :: ILB, IUB, JLB, JUB
-      integer :: dg, cr, rg
-# endif
       integer :: Isrc, Jsrc
       integer :: i, ic, is, itrc, j, k, ltrc
 # if defined AGE_MEAN && defined T_PASSIVE
@@ -336,17 +325,6 @@
 # endif
 
 # include "set_bounds.h"
-
-# ifdef NESTING
-!
-!  Notice that the trace flux boundary arrays are dimensioned with the
-!  global dimensions of grid to facilitate processing.
-!
-      ILB=BOUNDS(ng)%LBi(-1)
-      IUB=BOUNDS(ng)%UBi(-1)
-      JLB=BOUNDS(ng)%LBj(-1)
-      JUB=BOUNDS(ng)%UBj(-1)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -2333,282 +2311,6 @@
           END DO
 # undef I_RANGE
 # undef J_RANGE
-
-# ifdef NESTING
-!
-!   If nesting, we need to compute the basic state flux arrays.
-!
-#  if defined TS_C2HADVECTION_TL
-!
-!  Second-order, centered differences horizontal advective fluxes.
-!
-          DO j=Jstr,Jend
-            DO i=Istr,Iend+1
-              FX(i,j)=Huon(i,j,k)*                                      &
-     &                0.5_r8*(t(i-1,j,k,3,itrc)+                        &
-     &                        t(i  ,j,k,3,itrc))
-            END DO
-          END DO
-          DO j=Jstr,Jend+1
-            DO i=Istr,Iend
-              FE(i,j)=Hvom(i,j,k)*                                      &
-     &                0.5_r8*(t(i,j-1,k,3,itrc)+                        &
-     &                        t(i,j  ,k,3,itrc))
-            END DO
-          END DO
-
-#  elif defined TS_MPDATA_NOT_YET
-!
-!  First-order, upstream differences horizontal advective fluxes.
-!
-          DO j=JstrVm2,Jendp2i
-            DO i=IstrUm2,Iendp3
-              cff1=MAX(Huon(i,j,k),0.0_r8)
-              cff2=MIN(Huon(i,j,k),0.0_r8)
-              FX(i,j)=cff1*t(i-1,j,k,3,itrc)+                           &
-     &                cff2*t(i  ,j,k,3,itrc)
-            END DO
-          END DO
-          DO j=JstrVm2,Jendp3
-            DO i=IstrUm2,Iendp2i
-              cff1=MAX(Hvom(i,j,k),0.0_r8)
-              cff2=MIN(Hvom(i,j,k),0.0_r8)
-              FE(i,j)=cff1*t(i,j-1,k,3,itrc)+                           &
-     &                cff2*t(i,j  ,k,3,itrc)
-            END DO
-          END DO
-
-#  else
-!
-#   if defined TS_U3HADVECTION_TL
-!  Third-order, uptream-biased horizontal advective fluxes.
-#   elif defined TS_A4HADVECTION_TL
-!  Fourth-order, Akima horizontal advective fluxes.
-#   else
-!  Fourth-order, centered differences horizontal advective fluxes.
-#   endif
-!
-          DO j=Jstr,Jend
-            DO i=Istrm1,Iendp2
-              FX(i,j)=t(i  ,j,k,3,itrc)-                                &
-     &                t(i-1,j,k,3,itrc)
-#   ifdef MASKING
-              FX(i,j)=FX(i,j)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                FX(Istr-1,j)=FX(Istr,j)
-              END DO
-            END IF
-          END IF
-          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                FX(Iend+2,j)=FX(Iend+1,j)
-              END DO
-            END IF
-          END IF
-!
-          DO j=Jstr,Jend
-            DO i=Istr-1,Iend+1
-#   if defined TS_U3HADVECTION_TL
-              curv(i,j)=FX(i+1,j)-FX(i,j)
-#   elif defined TS_A4HADVECTION_TL
-              cff=2.0_r8*FX(i+1,j)*FX(i,j)
-              IF (cff.gt.eps) THEN
-                grad(i,j)=cff/(FX(i+1,j)+FX(i,j))
-              ELSE
-                grad(i,j)=0.0_r8
-              END IF
-#   else
-              grad(i,j)=0.5_r8*(FX(i+1,j)+FX(i,j))
-#   endif
-            END DO
-          END DO
-!
-          cff1=1.0_r8/6.0_r8
-          cff2=1.0_r8/3.0_r8
-          DO j=Jstr,Jend
-            DO i=Istr,Iend+1
-#   ifdef TS_U3HADVECTION_TL
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,3,itrc)+                               &
-     &                 t(i  ,j,k,3,itrc))-                              &
-     &                cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+        &
-     &                      curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
-#   else
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,3,itrc)+                               &
-     &                 t(i  ,j,k,3,itrc)-                               &
-     &                 cff2*(grad(i  ,j)-                               &
-     &                       grad(i-1,j)))
-#   endif
-            END DO
-          END DO
-!
-          DO j=Jstrm1,Jendp2
-            DO i=Istr,Iend
-              FE(i,j)=t(i,j  ,k,3,itrc)-                                &
-     &                t(i,j-1,k,3,itrc)
-#   ifdef MASKING
-              FE(i,j)=FE(i,j)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                FE(i,Jstr-1)=FE(i,Jstr)
-              END DO
-            END IF
-          END IF
-          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                FE(i,Jend+2)=FE(i,Jend+1)
-              END DO
-            END IF
-          END IF
-!
-          DO j=Jstr-1,Jend+1
-            DO i=Istr,Iend
-#   if defined TS_U3HADVECTION_TL
-              curv(i,j)=FE(i,j+1)-FE(i,j)
-#   elif defined TS_A4HADVECTION_TL
-              cff=2.0_r8*FE(i,j+1)*FE(i,j)
-              IF (cff.gt.eps) THEN
-                grad(i,j)=cff/(FE(i,j+1)+FE(i,j))
-              ELSE
-                grad(i,j)=0.0_r8
-              END IF
-#   else
-              grad(i,j)=0.5_r8*(FE(i,j+1)+FE(i,j))
-#   endif
-            END DO
-          END DO
-!
-          cff1=1.0_r8/6.0_r8
-          cff2=1.0_r8/3.0_r8
-          DO j=Jstr,Jend+1
-            DO i=Istr,Iend
-#   ifdef TS_U3HADVECTION_TL
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,3,itrc)+                               &
-     &                 t(i,j  ,k,3,itrc))-                              &
-     &                cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+        &
-     &                      curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
-#   else
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,3,itrc)+                               &
-     &                 t(i,j  ,k,3,itrc)-                               &
-     &                 cff2*(grad(i,j  )-                               &
-     &                       grad(i,j-1)))
-#   endif
-            END DO
-          END DO
-#  endif
-!
-!  Apply tracers point sources to the horizontal advection terms,
-!  if any.
-!
-          IF (LuvSrc(ng).and.ANY(LtracerSrc(:,ng))) THEN
-            DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
-#  ifdef TS_MPDATA_NOT_YET
-                IF (((IstrUm2.le.Isrc).and.(Isrc.le.Iendp3)).and.       &
-     &              ((JstrVm2.le.Jsrc).and.(Jsrc.le.Jendp2i))) THEN
-#  else
-                IF (((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.          &
-     &              ((Jstr.le.Jsrc).and.(Jsrc.le.Jend))) THEN
-#  endif
-                  IF (LtracerSrc(itrc,ng)) THEN
-                    FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                    &
-     &                            SOURCES(ng)%Tsrc(is,k,itrc)
-#  ifdef MASKING
-                  ELSE
-                    IF ((rmask(Isrc  ,Jsrc).eq.0.0_r8).and.             &
-     &                  (rmask(Isrc-1,Jsrc).eq.1.0_r8)) THEN
-                      FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc-1,Jsrc,k,3,itrc)
-                    ELSE IF ((rmask(Isrc  ,Jsrc).eq.1.0_r8).and.        &
-     &                       (rmask(Isrc-1,Jsrc).eq.0.0_r8)) THEN
-                      FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc  ,Jsrc,k,3,itrc)
-                    END IF
-#  endif
-                  END IF
-                END IF
-              ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
-#  ifdef TS_MPDATA_NOT_YET
-                IF (((IstrUm2.le.Isrc).and.(Isrc.le.Iendp2i)).and.      &
-     &              ((JstrVm2.le.Jsrc).and.(Jsrc.le.Jendp3))) THEN
-#  else
-                IF (((Istr.le.Isrc).and.(Isrc.le.Iend)).and.            &
-     &              ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1))) THEN
-#  endif
-                  IF (LtracerSrc(itrc,ng)) THEN
-                    FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                    &
-     &                            SOURCES(ng)%Tsrc(is,k,itrc)
-#  ifdef MASKING
-                  ELSE
-                    IF ((rmask(Isrc,Jsrc  ).eq.0.0_r8).and.             &
-     &                  (rmask(Isrc,Jsrc-1).eq.1.0_r8)) THEN
-                      FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc,Jsrc-1,k,3,itrc)
-                    ELSE IF ((rmask(Isrc,Jsrc  ).eq.1.0_r8).and.        &
-     &                       (rmask(Isrc,Jsrc-1).eq.0.0_r8)) THEN
-                      FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc,Jsrc  ,k,3,itrc)
-                    END IF
-#  endif
-                  END IF
-                END IF
-              END IF
-            END DO
-          END IF
-# endif
-
-# if defined NESTING && !defined ONE_WAY
-!
-!  If refinement grids, extract tracer horizontal advection fluxes
-!  (Hz*u*T/n, Hz*v*T/m) at the grid contact boundary (physical
-!  domain perimeter) to be used in two-way nesting.
-!
-!  AMM: Notice that we use bry_fluxes here. This routine is linear so
-!       a separate tl version is not required. We also need to compute
-!       the NLM Tflux here as well since it is used in "tl_nesting".
-!
-         IF (RefinedGrid(ng)) THEN
-           DO cr=1,Ncontact
-             dg=Rcontact(cr)%donor_grid
-             rg=Rcontact(cr)%receiver_grid
-             IF (ng.eq.rg) THEN
-               CALL bry_fluxes (dg, rg, cr, iNLM, tile,                 &
-     &                          IminS, ImaxS, JminS, JmaxS,             &
-     &                          ILB, IUB, JLB, JUB,                     &
-     &                          dt(ng), FX, FE,                         &
-     &                          BRY_CONTACT(iwest, cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(ieast, cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(isouth,cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(inorth,cr)%Tflux(:,k,itrc))
-               CALL ad_bry_fluxes (dg, rg, cr, iNLM, tile,              &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             ILB, IUB, JLB, JUB,                  &
-     &                             dt(ng), ad_FX, ad_FE,                &
-     &                       BRY_CONTACT(iwest, cr)%ad_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(ieast, cr)%ad_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(isouth,cr)%ad_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(inorth,cr)%ad_Tflux(:,k,itrc))
-             END IF
-           END DO
-         END IF
-# endif
-!
 !
 !  Apply adjoint tracers point sources to the horizontal advection
 !  terms, if any.

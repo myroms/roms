@@ -140,9 +140,6 @@
 !
       USE mod_param
       USE mod_clima
-# if defined NESTING && !defined ONE_WAY
-      USE mod_nesting
-# endif
       USE mod_scalars
       USE mod_sources
 !
@@ -155,9 +152,6 @@
 # endif
 # ifdef TS_MPDATA_NOT_YET
 !!    USE tl_mpdata_adiff_mod
-# endif
-# ifdef NESTING
-      USE nesting_mod, ONLY : bry_fluxes
 # endif
       USE tl_t3dbc_mod, ONLY : tl_t3dbc_tile
 !
@@ -270,10 +264,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef NESTING
-      integer :: ILB, IUB, JLB, JUB
-      integer :: dg, cr, rg
-# endif
       integer :: Isrc, Jsrc
       integer :: i, ic, is, itrc, j, k, ltrc
 # if defined AGE_MEAN && defined T_PASSIVE
@@ -329,17 +319,6 @@
 # endif
 
 # include "set_bounds.h"
-
-# ifdef NESTING
-!
-!  Notice that the trace flux boundary arrays are dimensioned with the
-!  global dimensions of grid to facilitate processing.
-!
-      ILB=BOUNDS(ng)%LBi(-1)
-      IUB=BOUNDS(ng)%UBi(-1)
-      JLB=BOUNDS(ng)%LBj(-1)
-      JUB=BOUNDS(ng)%UBj(-1)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step horizontal advection term.
@@ -413,12 +392,6 @@
 !>   &                0.5_r8*(t(i-1,j,k,3,itrc)+                        &
 !>   &                        t(i  ,j,k,3,itrc))
 !>
-#  ifdef NESTING
-              FX(i,j)=Huon(i,j,k)*                                      &
-     &                0.5_r8*(t(i-1,j,k,3,itrc)+                        &
-     &                        t(i  ,j,k,3,itrc))
-#  endif
-
               tl_FX(i,j)=0.5_r8*                                        &
      &                   (tl_Huon(i,j,k)*(t(i-1,j,k,3,itrc)+            &
      &                                    t(i  ,j,k,3,itrc))+           &
@@ -432,11 +405,6 @@
 !>   &                0.5_r8*(t(i,j-1,k,3,itrc)+                        &
 !>   &                        t(i,j  ,k,3,itrc))
 !>
-#  ifdef NESTING
-              FE(i,j)=Hvom(i,j,k)*                                      &
-     &                0.5_r8*(t(i,j-1,k,3,itrc)+                        &
-     &                        t(i,j  ,k,3,itrc))
-#  endif
               tl_FE(i,j)=0.5_r8*                                        &
      &                   (tl_Hvom(i,j,k)*(t(i,j-1,k,3,itrc)+            &
      &                                    t(i,j  ,k,3,itrc))+           &
@@ -458,10 +426,6 @@
 !>            FX(i,j)=cff1*t(i-1,j,k,3,itrc)+                           &
 !>   &                cff2*t(i  ,j,k,3,itrc)
 !>
-#   ifdef NESTING
-              FX(i,j)=cff1*t(i-1,j,k,3,itrc)+                           &
-     &                cff2*t(i  ,j,k,3,itrc)
-#   endif
               tl_FX(i,j)=tl_cff1*t(i-1,j,k,3,itrc)+                     &
      &                   cff1*tl_t(i-1,j,k,3,itrc)+                     &
      &                   tl_cff2*t(i  ,j,k,3,itrc)+                     &
@@ -477,10 +441,6 @@
 !>            FE(i,j)=cff1*t(i,j-1,k,3,itrc)+                           &
 !>   &                cff2*t(i,j  ,k,3,itrc)
 !>
-#   ifdef NESTING
-              FE(i,j)=cff1*t(i,j-1,k,3,itrc)+                           &
-     &                cff2*t(i,j  ,k,3,itrc)
-#   endif
               tl_FE(i,j)=tl_cff1*t(i,j-1,k,3,itrc)+                     &
      &                   cff1*tl_t(i,j-1,k,3,itrc)+                     &
      &                   tl_cff2*t(i,j  ,k,3,itrc)+                     &
@@ -563,13 +523,6 @@
 !>   &                cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+        &
 !>   &                      curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
 !>
-#   ifdef NESTING
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,3,itrc)+                               &
-     &                 t(i  ,j,k,3,itrc))-                              &
-     &                cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+        &
-     &                      curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
-#   endif
               tl_FX(i,j)=0.5_r8*                                        &
      &                   (tl_Huon(i,j,k)*                               &
      &                    (t(i-1,j,k,3,itrc)+                           &
@@ -593,13 +546,6 @@
 !>   &                 cff2*(grad(i  ,j)-                               &
 !>   &                       grad(i-1,j)))
 !>
-#   ifdef NESTING
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,3,itrc)+                               &
-     &                 t(i  ,j,k,3,itrc)-                               &
-     &                 cff2*(grad(i  ,j)-                               &
-     &                       grad(i-1,j)))
-#   endif
               tl_FX(i,j)=0.5_r8*                                        &
      &                   (tl_Huon(i,j,k)*                               &
      &                    (t(i-1,j,k,3,itrc)+                           &
@@ -680,13 +626,6 @@
 !>   &                cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+        &
 !>   &                      curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
 !>
-#   ifdef NESTING
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,3,itrc)+                               &
-     &                 t(i,j  ,k,3,itrc))-                              &
-     &                cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+        &
-     &                      curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
-#   endif
               tl_FE(i,j)=0.5_r8*                                        &
      &                   (tl_Hvom(i,j,k)*                               &
      &                    (t(i,j-1,k,3,itrc)+                           &
@@ -710,13 +649,6 @@
 !>   &                 cff2*(grad(i,j  )-                               &
 !>   &                       grad(i,j-1)))
 !>
-#   ifdef NESTING
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,3,itrc)+                               &
-     &                 t(i,j  ,k,3,itrc)-                               &
-     &                 cff2*(grad(i,j  )-                               &
-     &                       grad(i,j-1)))
-#   endif
               tl_FE(i,j)=0.5_r8*                                        &
      &                   (tl_Hvom(i,j,k)*                               &
      &                    (t(i,j-1,k,3,itrc)+                           &
@@ -752,10 +684,6 @@
 !>                  FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                    &
 !>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
 !>
-#  ifdef NESTING
-                    FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                    &
-     &                            SOURCES(ng)%Tsrc(is,k,itrc)
-#  endif
                     tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*              &
      &                               SOURCES(ng)%Tsrc(is,k,itrc)
 # ifdef MASKING
@@ -765,10 +693,6 @@
 !>                    FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
 !>   &                              t(Isrc-1,Jsrc,k,3,itrc)
 !>
-#  ifdef NESTING
-                      FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc-1,Jsrc,k,3,itrc)
-#  endif
                       tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*            &
      &                                 t(Isrc-1,Jsrc,k,3,itrc)+         &
      &                                 Huon(Isrc,Jsrc,k)*               &
@@ -778,10 +702,6 @@
 !>                    FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
 !>   &                              t(Isrc  ,Jsrc,k,3,itrc)
 !>
-#  ifdef NESTING
-                      FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc  ,Jsrc,k,3,itrc)
-#  endif
                       tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*            &
      &                                 t(Isrc  ,Jsrc,k,3,itrc)+         &
      &                                 Huon(Isrc,Jsrc,k)*               &
@@ -802,10 +722,6 @@
 !>                  FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                    &
 !>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
 !>
-#  ifdef NESTING
-                    FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                    &
-     &                            SOURCES(ng)%Tsrc(is,k,itrc)
-#  endif
                     tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*              &
      &                               SOURCES(ng)%Tsrc(is,k,itrc)
 # ifdef MASKING
@@ -815,10 +731,6 @@
 !>                    FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
 !>   &                              t(Isrc,Jsrc-1,k,3,itrc)
 !>
-#  ifdef NESTING
-                      FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc,Jsrc-1,k,3,itrc)
-#  endif
                       tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*            &
      &                                 t(Isrc,Jsrc-1,k,3,itrc)+         &
      &                                 Hvom(Isrc,Jsrc,k)*               &
@@ -828,10 +740,6 @@
 !>                    FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
 !>   &                              t(Isrc,Jsrc  ,k,3,itrc)
 !>
-#  ifdef NESTING
-                      FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                  &
-     &                              t(Isrc,Jsrc  ,k,3,itrc)
-#  endif
                       tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*            &
      &                                 t(Isrc,Jsrc  ,k,3,itrc)+         &
      &                                 Hvom(Isrc,Jsrc,k)*               &
@@ -843,42 +751,6 @@
               END IF
             END DO
           END IF
-
-# if defined NESTING && !defined ONE_WAY
-!
-!  If refinement grids, extract tracer horizontal advection fluxes
-!  (Hz*u*T/n, Hz*v*T/m) at the grid contact boundary (physical
-!  domain perimeter) to be used in two-way nesting.
-!
-!  AMM: Notice that we use bry_fluxes here. This routine is linear so
-!       a separate tl version is not required. We also need to compute
-!       the NLM Tflux here as well since it is used in "tl_nesting".
-!
-         IF (RefinedGrid(ng)) THEN
-           DO cr=1,Ncontact
-             dg=Rcontact(cr)%donor_grid
-             rg=Rcontact(cr)%receiver_grid
-             IF (ng.eq.rg) THEN
-               CALL bry_fluxes (dg, rg, cr, iNLM, tile,                 &
-     &                          IminS, ImaxS, JminS, JmaxS,             &
-     &                          ILB, IUB, JLB, JUB,                     &
-     &                          dt(ng), FX, FE,                         &
-     &                          BRY_CONTACT(iwest, cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(ieast, cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(isouth,cr)%Tflux(:,k,itrc), &
-     &                          BRY_CONTACT(inorth,cr)%Tflux(:,k,itrc))
-               CALL bry_fluxes (dg, rg, cr, iNLM, tile,                 &
-     &                          IminS, ImaxS, JminS, JmaxS,             &
-     &                          ILB, IUB, JLB, JUB,                     &
-     &                          dt(ng), tl_FX, tl_FE,                   &
-     &                       BRY_CONTACT(iwest, cr)%tl_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(ieast, cr)%tl_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(isouth,cr)%tl_Tflux(:,k,itrc), &
-     &                       BRY_CONTACT(inorth,cr)%tl_Tflux(:,k,itrc))
-             END IF
-           END DO
-         END IF
-# endif
 !
 # ifdef TS_MPDATA_NOT_YET
 !  Time-step horizontal advection for intermediate diffusive tracer, Ta.
