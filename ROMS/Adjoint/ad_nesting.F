@@ -1691,7 +1691,7 @@
 !  two time levels.
 !
           IF (.not.LputFsur) THEN
-            IF (time(dg).eq.time(rg)) THEN 
+            IF (time(dg).eq.time(rg)) THEN
               RollingIndex(cr)=3-RollingIndex(cr)
             END IF
             tnew=RollingIndex(cr)
@@ -2001,7 +2001,7 @@
 !>            tl_Tvalue=tl_Tvalue*GRID(ngc)%rmask(Ibc,Jbc)
 !>
               ad_Tvalue=ad_Tvalue*GRID(ngc)%rmask(Ibc,Jbc)
-         
+
 #  endif
               IF (LtracerCLM(itrc,ngc).and.LnudgeTCLM(itrc,ngc)) THEN
 !>              tl_Tvalue=tl_Tvalue-                                    &
@@ -2075,7 +2075,7 @@
 !>            tl_TFC=tl_TFC+                                            &
 !>   &                  BRY_CONTACT(inorth,rgcr)%tl_Tflux(Ibc,k,itrc)
 !>
-              BRY_CONTACT(inorth,rgcr)%ad_Tflux(Ibc,k,itrc)=            & 
+              BRY_CONTACT(inorth,rgcr)%ad_Tflux(Ibc,k,itrc)=            &
      &            BRY_CONTACT(inorth,rgcr)%ad_Tflux(Ibc,k,itrc)+ad_TFC
             END DO
 !>          tl_TFC=0.0_r8
@@ -3181,8 +3181,8 @@
       real(r8), parameter :: spv = 0.0_r8
 # endif
       real(dp) :: Wnew, Wold, SecScale, fac
-      real(r8) :: cff, cff1, my_value 
-      real(r8) :: ad_cff, adfac, adfac1, adfac2, ad_my_value 
+      real(r8) :: cff, cff1, my_value
+      real(r8) :: ad_cff, adfac, adfac1, adfac2, ad_my_value
 
 # include "set_bounds.h"
 !
@@ -3527,7 +3527,7 @@
             my_value=cff1*REFINED(cr)%DV_avg2(1,m,tnew)/cff
 !>          tl_my_value=cff1*REFINED(cr)%tl_DV_avg2(1,m,tnew)/cff-      &
 !>   &                  tl_cff*my_value/cff
-!>          
+!>
             adfac=ad_my_value/cff
             REFINED(cr)%ad_DV_avg2(1,m,tnew)=                           &
      &             REFINED(cr)%ad_DV_avg2(1,m,tnew)+cff1*adfac
@@ -4246,11 +4246,11 @@
           DO k=1,N(ng)
 !>          OCEAN(ng)%tl_v(i,j,k,1)=tl_my_value
 !>
-            ad_my_value=ad_my_value+OCEAN(ng)%ad_v(i,j,k,1) 
+            ad_my_value=ad_my_value+OCEAN(ng)%ad_v(i,j,k,1)
             OCEAN(ng)%ad_v(i,j,k,1)=0.0_r8
 !>          OCEAN(ng)%tl_v(i,j,k,2)=tl_my_value
 !>
-            ad_my_value=ad_my_value+OCEAN(ng)%ad_v(i,j,k,2) 
+            ad_my_value=ad_my_value+OCEAN(ng)%ad_v(i,j,k,2)
             OCEAN(ng)%ad_v(i,j,k,2)=0.0_r8
 #  ifdef MASKING
 !>          tl_my_value=tl_my_value*GRID(ng)%vmask(i,j)
@@ -4666,7 +4666,7 @@
                         ad_Zbot=ad_Zbot-adfac
                         ad_dz=ad_dz-r2*adfac
                         ad_r2=0.0_r8
-                    
+
 !>                      tl_dz=tl_Ztop-tl_Zbot
 !>
                         ad_Ztop=ad_Ztop+ad_dz
@@ -5023,7 +5023,7 @@
 !>
                         ad_r2=ad_r2-ad_r1
                         ad_r1=0.0_r8
-!>                      tl_r2=(tl_Zr-tl_Zbot)/dz-tl_dz*r2/dz 
+!>                      tl_r2=(tl_Zr-tl_Zbot)/dz-tl_dz*r2/dz
 !>
                         adfac=ad_r2/dz
                         ad_Zr=ad_Zr+adfac
@@ -5062,7 +5062,7 @@
                         adfac=Ucontact(cr)%Lweight(ii,m)*ad_Ztop
                         ad_Zd(ii,Kdg  ,m)=ad_Zd(ii,Kdg  ,m)+adfac
                       END DO
-                      ad_Ztop=0.0_r8 
+                      ad_Ztop=0.0_r8
                     END DO
                   END IF
 !>                tl_Zr=0.5_r8*(GRID(rg)%tl_z_r(Irg  ,Jrg,Krg)+         &
@@ -5712,7 +5712,7 @@
             ad_Ac(4,kdg  ,m)=ad_Ac(4,kdg  ,m)+cff(8)*ad_Ar(i,j,k)
 
             ad_Ar(i,j,k)=0.0_r8
-     
+
 !>          tl_cff(1)=contact(cr)%Lweight(1,m)*                         &
 !>   &                contact(cr)%tl_Vweight(1,k,m)
 !>          tl_cff(2)=contact(cr)%Lweight(2,m)*                         &
