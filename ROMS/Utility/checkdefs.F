@@ -2321,8 +2321,8 @@
 #endif
 #if defined TIME_INTERP && defined MODEL_COUPLING
 !
-      IF (Master) WRITE (stdout,20) 'TIME_INTERP',                  &
-     &   'Time interpolation from coupling snapshots arrays'
+      IF (Master) WRITE (stdout,20) 'TIME_INTERP',                      &
+     &   'Time interpolation from imported coupling snapshots data'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' TIME_INTERP,'
 #endif
