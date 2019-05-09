@@ -51,8 +51,8 @@
 #ifdef ADJUST_BOUNDARY
       integer :: IorJdim
 #endif
-      integer :: DimIDs(32), t2dgrd(3), u2dgrd(3), v2dgrd(3)
-      integer :: Vsize(4)
+      integer :: DimIDs(nDimID)
+      integer :: t2dgrd(3), u2dgrd(3), v2dgrd(3)
 
       integer :: def_dim
 
@@ -233,6 +233,11 @@
 # endif
 
 # ifdef ECOSIM
+        status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'Nbands',        &
+     &                 NBands, DimIDs(33))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
         status=def_dim(ng, iNLM, QCK(ng)%ncid, ncname, 'Nphy',          &
      &                 Nphy, DimIDs(25))
         IF (FoundError(exit_flag, NoError, __LINE__,                    &

@@ -498,6 +498,7 @@
 ** Bio-optical EcoSim model OPTIONS:                                         **
 **                                                                           **
 ** ECOSIM              use if bio-optical EcoSim model                       **
+** BIO_OPTICAL         use to compute underwater spectral light properties   **
 **                                                                           **
 ** Nemuro lower trophic level ecosystem model OPTIONS:                       **
 **                                                                           **

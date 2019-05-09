@@ -67,6 +67,9 @@
       USE bc_2d_mod
 # ifdef SOLVE3D
       USE bc_3d_mod
+#  ifdef ECOSIM
+      USE bc_4d_mod
+#  endif
 # endif
 # ifdef WET_DRY
       USE exchange_2d_mod
@@ -93,7 +96,7 @@
 !  Local variable declarations.
 !
       integer :: i, it, j, k
-      integer :: idiag
+      integer :: iband, idiag
 
       real(r8) :: fac
 
@@ -482,6 +485,29 @@
             END DO
           END DO
         END DO
+#  elif defined ECOSIM
+        DO idiag=1,NDbio3d
+          DO k=1,NDbands
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                DIAGS(ng)%DiaBio3d(i,j,k,idiag)=rfac(i,j)*              &
+     &                    DIAGS(ng)%DiaBio3d(i,j,k,idiag)
+              END DO
+            END DO
+          END DO
+        END DO
+        DO idiag=1,NDbio4d
+          DO iband=1,NDbands
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  DIAGS(ng)%DiaBio4d(i,j,k,iband,idiag)=rfac(i,j)*      &
+     &                      DIAGS(ng)%DiaBio4d(i,j,k,iband,idiag)
+                END DO
+              END DO
+            END DO
+          END DO
+        END DO
 #  endif
 # endif
 # ifdef DIAGNOSTICS_UV
@@ -621,6 +647,37 @@
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      DIAGS(ng)%DiaBio3d)
 #    endif
+#   elif defined ECOSIM
+!
+!  Biological terms 3D diagnostics.
+!
+        DO idiag=1,NDbio3d
+          CALL bc_r3d_tile (ng, tile,                                   &
+     &                      LBi, UBi, LBj, UBj, 1, NDbands,             &
+     &                      DIAGS(ng)%DiaBio3d(:,:,:,idiag))
+        END DO
+#    ifdef DISTRIBUTE
+        CALL mp_exchange4d (ng, tile, iNLM, 1,                          &
+     &                      LBi, UBi, LBj, UBj, 1, NDbands, 1, NDbio3d, &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      DIAGS(ng)%DiaBio3d)
+#    endif
+!
+!  Biological terms 4D diagnostics.
+!
+        DO idiag=1,NDbio4d
+          CALL bc_r4d_tile (ng, tile,                                   &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDbands,   &
+     &                      DIAGS(ng)%DiaBio4d(:,:,:,:,idiag))
+#    ifdef DISTRIBUTE
+          CALL mp_exchange4d (ng, tile, iNLM, 1,                        &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, NDbands, &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        DIAGS(ng)%DiaBio4d(:,:,:,:,idiag))
+#    endif
+        END DO
 #   endif
 #  endif
 # endif

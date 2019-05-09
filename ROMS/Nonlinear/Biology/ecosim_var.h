@@ -441,3 +441,35 @@
                   END DO
                 END DO
                 varid=varid+1
+
+#ifdef DIAGNOSTICS_BIO
+
+/*
+**  Biological tracers term diagnostics.
+*/
+              CASE ('iDbio3(idSpIr)')
+                iDbio3(idSpIr)=varid
+              CASE ('iDbio4(iddIrr)')
+                iDbio4(iddIrr)=varid
+              CASE ('iDbio4(idsIrr)')
+                iDbio4(idsIrr)=varid
+              CASE ('iDbio4(idLatt)')
+                iDbio4(idLatt)=varid
+              CASE ('iDbio4(idaPHY)')
+                iDbio4(idaPHY)=varid
+              CASE ('iDbio4(idaDET)')
+                iDbio4(idaDET)=varid
+              CASE ('iDbio4(idaCDC)')
+                iDbio4(idaCDC)=varid
+              CASE ('iDbio4(idAcos)')
+                iDbio4(idAcos)=varid
+              CASE ('iDbio4(idbPHY)')
+                iDbio4(idbPHY)=varid
+              CASE ('iDbio4(idsPHY)')
+                iDbio4(idsPHY)=varid
+              CASE ('iDbio4(idbTOT)')
+                iDbio4(idbTOT)=varid
+              CASE ('iDbio4(idsTOT)')
+                iDbio4(idsTOT)=varid
+#endif
+

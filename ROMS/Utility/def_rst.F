@@ -52,12 +52,11 @@
       integer :: i, j, nvd3, nvd4, nvd5
       integer :: recdim, status, varid
 
-      integer :: DimIDs(32)
+      integer :: DimIDs(nDimID)
       integer :: r2dgrd(4), ru2dgrd(4), rv2dgrd(4)
       integer :: sp2dgrd(3), sr2dgrd(3), su2dgrd(3), sv2dgrd(3)
       integer :: sr3dgrd(4), su3dgrd(4), sv3dgrd(4)
       integer :: t2dgrd(4), u2dgrd(4), v2dgrd(4)
-      integer :: Vsize(4)
 
       integer :: def_dim
 
@@ -230,6 +229,11 @@
 # endif
 
 # ifdef ECOSIM
+        status=def_dim(ng, iNLM, RST(ng)%ncid, ncname, 'Nbands',        &
+     &                 NBands, DimIDs(33))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
         status=def_dim(ng, iNLM, RST(ng)%ncid, ncname, 'Nphy',          &
      &                 Nphy, DimIDs(25))
         IF (FoundError(exit_flag, NoError, __LINE__,                    &

@@ -39,6 +39,18 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
+      IF (ncid.ne.DIA(ng)%ncid) THEN
+        CALL netcdf_put_fvar (ng, model, ncname, 'light',               &
+     &                        ec_wave_ab, (/1/), (/NBands/),            &
+     &                        ncid = ncid)
+#ifdef DIAGNOSTICS_BIO
+      ELSE
+        CALL netcdf_put_fvar (ng, model, ncname, 'light',               &
+     &                        dia_light, (/1/), (/NDbands/),            &
+     &                        ncid = ncid)
+#endif
+      END IF
+
       CALL netcdf_put_fvar (ng, model, ncname, 'HsNO3',                 &
      &                      HsNO3(:,ng), (/1/), (/Nphy/),               &
      &                      ncid = ncid)

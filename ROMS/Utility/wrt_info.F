@@ -32,6 +32,9 @@
 #endif
 #ifdef BIOLOGY
       USE mod_biology
+# ifdef ECOSIM
+      USE mod_eclight
+# endif
 #endif
       USE mod_grid
 #ifdef FOUR_DVAR

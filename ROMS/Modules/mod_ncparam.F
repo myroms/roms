@@ -78,6 +78,11 @@
         integer, parameter :: MV = 1400
         integer, parameter :: NV = 1400
 !
+!  Maximum number of dimension IDs stored in local array DimIDs used to
+!  defined variable dimensions in output NetCDF files.
+!
+        integer, parameter :: nDimID = 33
+!
 !  Input/output grid-type variables.
 !
         integer, parameter :: p2dvar = 1         ! 2D PSI-variable
@@ -90,6 +95,8 @@
         integer, parameter :: v3dvar = 8         ! 3D V-variable
         integer, parameter :: w3dvar = 9         ! 3D W-variable
         integer, parameter :: b3dvar = 10        ! 3D BED-sediment
+        integer, parameter :: l3dvar = 11        ! 3D spectral light
+        integer, parameter :: l4dvar = 12        ! 4D spectral light
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -1144,6 +1151,12 @@
               gtype=w3dvar
             CASE ('b3dvar')
               gtype=b3dvar
+#ifdef ECOSIM && defined DIAGNOSTICS_BIO
+            CASE ('l3dvar')
+              gtype=l3dvar
+            CASE ('l4dvar')
+              gtype=l4dvar
+#endif
             CASE DEFAULT
               gtype=0
           END SELECT

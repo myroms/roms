@@ -52,8 +52,8 @@
       integer :: fltdim, i, itrc, j, l
       integer :: recdim, status
 
-      integer :: DimIDs(32), fgrd(2), start(2), total(2)
-      integer :: Vsize(4)
+      integer :: DimIDs(nDimID)
+      integer :: fgrd(2), start(2), total(2)
 
       integer :: def_dim
 
@@ -127,6 +127,11 @@
 #  endif
 
 #  ifdef ECOSIM
+        status=def_dim(ng, iNLM, FLT(ng)%ncid, ncname, 'Nbands',        &
+     &                 NBands, DimIDs(33))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
         status=def_dim(ng, iNLM, FLT(ng)%ncid, ncname, 'Nphy',          &
      &                 Nphy, DimIDs(25))
         IF (FoundError(exit_flag, NoError, __LINE__,                    &

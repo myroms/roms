@@ -17,7 +17,7 @@
 !     model    Calling model identifier (integer).                     !
 !     ncid     NetCDF file ID (integer).                               !
 !     ncname   NetCDF file name (character).                           !
-!     DimIDs   NetCDF dimensions IDs (integer vector):                 !
+!     DimIDs   NetCDF dimensions IDs (integer vector of size nDimID):  !
 !                DimIDs( 1) => XI-dimension at RHO-points.             !
 !                DimIDs( 2) => XI-dimension at U-points.               !
 !                DimIDs( 3) => XI-dimension at V-points.               !
@@ -42,13 +42,14 @@
 !                DimIDs(23) => Dimension 3D water W-points.            !
 !                DimIDs(24) => Dimension sediment bed water points.    !
 !                DimIDs(25) => Number of EcoSim phytoplankton groups.  !
-!                DimIDs(26) => Number of EcoSim bateria groups.        !
+!                DimIDs(26) => Number of EcoSim bacteria groups.       !
 !                DimIDs(27) => Number of EcoSim DOM groups.            !
 !                DimIDs(28) => Number of EcoSim fecal groups.          !
 !                DimIDs(29) => Number of state variables.              !
 !                DimIDs(30) => Number of 3D variables time levels (2). !
 !                DimIDs(31) => Number of 2D variables time levels (3). !
 !                DimIDs(32) => Number of sediment tracers.             !
+!                DimIDs(33) => Number of light spectral bands.         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -80,7 +81,8 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, ncid
-      integer, intent(in) :: DimIDs(32)
+      integer, intent(in) :: DimIDs(nDimID)
+
       character (*), intent(in) :: ncname
 !
 !  Local variable declarations.
@@ -96,7 +98,7 @@
       integer :: statedim
 #endif
 #if defined BIOLOGY && defined ECOSIM
-      integer :: bacdim, domdim, fecdim, phydim
+      integer :: bacdim, domdim, fecdim, lightdim, phydim
 
       integer :: biodim(2)
 #endif
@@ -154,6 +156,7 @@
       fecdim=DimIDs(28)
       biodim(1)=phydim
       biodim(2)=fecdim
+      lightdim=DimIDs(33)
 #endif
 !
 !  Set dimension for generic user parameters.

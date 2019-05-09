@@ -53,6 +53,15 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
+      Vinfo( 1)='light'
+      Vinfo( 2)='center wavelength of spectral irradiance bands'
+      Vinfo( 3)='nanometer'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/lightdim/), Aval, Vinfo, ncname,              &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
       Vinfo( 1)='HsNO3'
       Vinfo( 2)='half-saturation for phytoplankton NO3 uptake'
       Vinfo( 3)='micromole_NO3 liter-1'

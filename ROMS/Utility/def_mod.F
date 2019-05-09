@@ -61,7 +61,7 @@
 # endif
       integer :: i, j, lstr, nvatt, nvdim, status, varid, vindex
       integer :: OBSncid
-      integer :: Vsize(4), vardim(3)
+      integer :: vardim(3)
 # ifdef DISTRIBUTE
       integer :: ibuffer(2)
 # endif
