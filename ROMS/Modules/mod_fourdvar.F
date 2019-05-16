@@ -1090,7 +1090,7 @@
         LBj=BOUNDS(ng)%LBj(tile)
         UBj=BOUNDS(ng)%UBj(tile)
 
-        size2d=REAL((UBi-LBi)*(UBj-LBj),r8)
+        size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
 #  endif
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
