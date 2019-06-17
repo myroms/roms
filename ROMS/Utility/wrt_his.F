@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE wrt_his (ng, tile)
 !
-!svn $Id$
+!git $Id: a5817a359b80bd314ba5ee9d55207d3ec880af09 $
+!svn $Id: wrt_his.F 954 2019-02-22 18:29:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

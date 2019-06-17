@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE mod_ncparam
 !
-!svn $Id$
+!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
+!svn $Id: mod_ncparam.F 968 2019-06-17 16:02:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -516,10 +517,10 @@
         character (len=256), dimension(4) :: BIONAME
 #endif
 !
-!  SVN revision and repository root URL.
+!  GIT and SVN revision and repository root URL.
 !
-        character (len=40 ) :: svn_rev
-        character (len=256) :: svn_url
+        character (len=80 ) :: git_rev, svn_rev
+        character (len=256) :: git_url, svn_url
 !
       CONTAINS
 !
@@ -914,7 +915,7 @@
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
 #endif
-      integer :: Lvar, Ntiles, i, ic, ie, is, j, ng
+      integer :: Lvar, Ntiles, i, ic, j, ng
       integer :: gtype, tile, varid
 
       real(r8), parameter :: spv = 0.0_r8
@@ -1082,6 +1083,29 @@
         END DO
       END DO
 !
+!  Set GIT and SVN Repository Root URL and revision.  Their values are
+!  assigned in the 'makefile' to the CPPFLAGS macro.
+!
+#ifdef GIT_URL
+      git_url=GIT_URL
+#else
+      git_url='https://www.myroms.org/git/src'
+#endif
+#ifdef GIT_REV
+      git_rev=GIT_REV
+#else
+      git_rev=' '
+#endif
+!
+#ifdef SVN_URL
+      svn_url=SVN_URL
+#else
+      svn_url='https://myroms.org/svn'
+#endif
+#ifdef SVN_REV
+      svn_rev=SVN_REV
+#endif
+!
 !-----------------------------------------------------------------------
 !  Define names of variables for Input/Output NetCDF files.
 !-----------------------------------------------------------------------
@@ -1095,31 +1119,19 @@
       STOP
   20  CONTINUE
 !
-!  Read in variable information.  Ignore blank and comment [char(33)=!]
-!  input lines.
+!  Read in variable information.  Ignore blank, comment [char(33)=!]
+!  input lines, and URL line [char(36)=$].
 !
       varid=0
       DO WHILE (.TRUE.)
         READ (inp,*,ERR=30,END=40) Vinfo(1)
         Lvar=LEN_TRIM(Vinfo(1))
 !
-!  Extract SVN Repository Root URL.
-!
-        IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).eq.CHAR(36))) THEN
-          is=INDEX(Vinfo(1),'https')
-          ie=INDEX(Vinfo(1),'/ROMS')-1
-          IF (ie.gt.is) THEN
-            svn_url=Vinfo(1)(is:ie)
-          ELSE
-            svn_url='https:://myroms.org/svn/src'
-          END IF
-#ifdef SVN_REV
-          svn_rev=SVN_REV
-#endif
-!
 !  Read in other variable information.
 !
-        ELSE IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).ne.CHAR(33))) THEN
+        IF ((Lvar.gt.0).and.                                            &
+     &      (Vinfo(1)(1:1).ne.CHAR(33)).and.                            &
+     &      (Vinfo(1)(1:1).ne.CHAR(36))) THEN
           READ (inp,*,ERR=30) Vinfo(2)
           READ (inp,*,ERR=30) Vinfo(3)
           READ (inp,*,ERR=30) Vinfo(4)

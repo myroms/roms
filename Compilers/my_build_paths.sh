@@ -1,4 +1,5 @@
-# svn $Id$
+# git $Id: d8c49eeae615c5a84611a5cb41094d8d169c11c7 $
+# svn $Id: my_build_paths.sh 943 2019-01-31 23:21:29Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

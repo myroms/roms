@@ -1,7 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!svn $Id$
+!git $Id: cf1568710ced2062e993fd2e2ec9de07f377ecd6 $
+!svn $Id: roms_nj_bight.in 968 2019-06-17 16:02:48Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -64,11 +65,11 @@
 !
 ! Application title.
 
-       TITLE = North East North America Application
+       TITLE = New York/New Jersey Bight, July 2001 Hindcasts
 
 ! C-preprocessing Flag.
 
-    MyAppCPP = NENA
+    MyAppCPP = NJ_BIGHT
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
@@ -91,8 +92,8 @@ GridsInLayer =  1
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
 
-          Lm == 384           ! Number of I-direction INTERIOR RHO-points
-          Mm == 128           ! Number of J-direction INTERIOR RHO-points
+          Lm == 109           ! Number of I-direction INTERIOR RHO-points
+          Mm == 239           ! Number of J-direction INTERIOR RHO-points
            N == 30            ! Number of vertical levels
 
         Nbed =  0             ! Number of sediment bed layers
@@ -107,7 +108,7 @@ GridsInLayer =  1
 ! indices (Istr,Iend) and (Jstr,Jend), [1:Ngrids].
 
       NtileI == 1                               ! I-direction partition
-      NtileJ == 16                              ! J-direction partition
+      NtileJ == 8                               ! J-direction partition
 
 ! Set lateral boundary conditions keyword. Notice that a value is expected
 ! for each boundary segment per nested grid for each state variable.
@@ -145,28 +146,28 @@ GridsInLayer =  1
 !
 !                   1       2       3       4
 
-   LBC(isFsur) ==   Cha     Cha     Cha     Clo         ! free-surface
-   LBC(isUbar) ==   Fla     Fla     Fla     Clo         ! 2D U-momentum
-   LBC(isVbar) ==   Fla     Fla     Fla     Clo         ! 2D V-momentum
-   LBC(isUvel) ==   Cla     Cla     Cla     Clo         ! 3D U-momentum
-   LBC(isVvel) ==   Cla     Cla     Fla     Clo         ! 3D V-momentum
-   LBC(isMtke) ==   Gra     Gra     Gra     Clo         ! mixing TKE
+   LBC(isFsur) ==   Clo     Cha     Cha     Clo         ! free-surface
+   LBC(isUbar) ==   Clo     Fla     Fla     Clo         ! 2D U-momentum
+   LBC(isVbar) ==   Clo     Fla     Fla     Clo         ! 2D V-momentum
+   LBC(isUvel) ==   Clo     Rad     Rad     Clo         ! 3D U-momentum
+   LBC(isVvel) ==   Clo     Rad     Rad     Clo         ! 3D V-momentum
+   LBC(isMtke) ==   Clo     Gra     Gra     Clo         ! mixing TKE
 
-   LBC(isTvar) ==   Cla     Cla     Cla     Clo \       ! temperature
-                    Cla     Cla     Cla     Clo         ! salinity
+   LBC(isTvar) ==   Clo     Rad     Rad     Clo \       ! temperature
+                    Clo     Rad     Rad     Clo         ! salinity
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
-ad_LBC(isFsur) ==   Cha     Cha     Cha     Clo         ! free-surface
-ad_LBC(isUbar) ==   Fla     Fla     Fla     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Fla     Fla     Fla     Clo         ! 2D U-momentum
-ad_LBC(isUvel) ==   Cla     Cla     Cla     Clo         ! 3D U-momentum
-ad_LBC(isVvel) ==   Cla     Cla     Cla     Clo         ! 3D V-momentum
-ad_LBC(isMtke) ==   Gra     Gra     Gra     Clo         ! mixing TKE
+ad_LBC(isFsur) ==   Clo     Cha     Cha     Clo         ! free-surface
+ad_LBC(isUbar) ==   Clo     Fla     Fla     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Clo     Fla     Fla     Clo         ! 2D U-momentum
+ad_LBC(isUvel) ==   Clo     Rad     Rad     Clo         ! 3D U-momentum
+ad_LBC(isVvel) ==   Clo     Rad     Rad     Clo         ! 3D V-momentum
+ad_LBC(isMtke) ==   Clo     Gra     Gra     Clo         ! mixing TKE
 
-ad_LBC(isTvar) ==   Cla     Cla     Cla     Clo \       ! temperature
-                    Cla     Cla     Cla     Clo         ! salinity
+ad_LBC(isTvar) ==   Clo     Rad     Rad     Clo \       ! temperature
+                    Clo     Rad     Rad     Clo         ! salinity
 
 ! Set lateral open boundary edge volume conservation switch for
 ! nonlinear model and adjoint-based algorithms. Usually activated
@@ -185,9 +186,9 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
 ! Time-Stepping parameters.
 
-      NTIMES == 58560
-          DT == 540.0d0
-     NDTFAST == 50
+      NTIMES == 6048
+          DT == 300.0d0
+     NDTFAST == 30
 
 ! Model iteration loops parameters.
 
@@ -208,35 +209,35 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
        NRREC == 0
    LcycleRST == T
-        NRST == 160
+        NRST == 36
         NSTA == 1
-        NFLT == 40
+        NFLT == 1
        NINFO == 1
 
 ! Output history, quicksave, average, and diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 480
-     NDEFHIS == 480
+        NHIS == 36
+     NDEFHIS == 2016
         NQCK == 0
      NDEFQCK == 0
       NTSAVG == 1
-        NAVG == 480
-     NDEFAVG == 480
+        NAVG == 72
+     NDEFAVG == 4032
       NTSDIA == 1
-        NDIA == 480
-     NDEFDIA == 0
+        NDIA == 72
+     NDEFDIA == 4038
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 480
+        NTLM == 36
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 480
+        NADJ == 36
      NDEFADJ == 0
-        NSFF == 480
-        NOBC == 480
+        NSFF == 36
+        NOBC == 36
 
 ! GST output and check pointing restart parameters.
 
@@ -252,17 +253,17 @@ ad_VolCons(north) ==  F                            ! northern boundary
 ! Harmonic/biharmonic horizontal diffusion of tracer for nonlinear model
 ! and adjoint-based algorithms: [1:NAT+NPT,Ngrids].
 
-        TNU2 == 20.0d0  20.0d0                  ! m2/s
-        TNU4 == 2.0d+8   2.0d+8                 ! m4/s
+        TNU2 == 5.0d0  5.0d0                    ! m2/s
+        TNU4 == 0.0d0  0.0d0                    ! m4/s
 
-     ad_TNU2 == 0.0d0    0.0d0                  ! m2/s
-     ad_TNU4 == 0.0d0    0.0d0                  ! m4/s
+     ad_TNU2 == 0.0d0  0.0d0                    ! m2/s
+     ad_TNU4 == 0.0d0  0.0d0                    ! m4/s
 
 ! Harmonic/biharmonic, horizontal viscosity coefficient for nonlinear model
 ! and adjoint-based algorithms: [Ngrids].
 
-       VISC2 == 50.0d0                          ! m2/s
-       VISC4 == 4.0d+8                          ! m4/s
+       VISC2 == 0.0d0                           ! m2/s
+       VISC4 == 0.0d0                           ! m4/s
 
     ad_VISC2 == 0.0d0                           ! m2/s
     ad_VISC4 == 0.0d0                           ! m4/s
@@ -331,7 +332,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
         RDRG == 3.0d-04                    ! m/s
        RDRG2 == 3.0d-03                    ! nondimensional
-         Zob == 0.02d0                     ! m
+         Zob == 0.001d0                    ! m
          Zos == 0.02d0                     ! m
 
 ! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
@@ -347,7 +348,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Various parameters.
 
        WTYPE == 1
-     LEVSFRC == 30
+     LEVSFRC == 15
      LEVBFRC == 1
 
 ! Set vertical, terrain-following coordinates transformation equation and
@@ -358,8 +359,8 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 
-     THETA_S == 5.0d0                      ! surface stretching parameter
-     THETA_B == 0.4d0                      ! bottom  stretching parameter
+     THETA_S == 0.01d0                     ! surface stretching parameter
+     THETA_B == 0.0d0                      ! bottom  stretching parameter
       TCLINE == 50.0d0                     ! critical depth (m)
 
 ! Mean Density and Brunt-Vaisala frequency.
@@ -371,23 +372,23 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  368.25d0                   ! days
+      DSTART =  12102.0d0                  ! days
   TIDE_START =  0.0d0                      ! days
-    TIME_REF =  19920101.0d0               ! yyyymmdd.dd
+    TIME_REF =  -2.0d0                     ! yyyymmdd.dd
 
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
 
-       TNUDG == 50.0d0  50.0d0             ! days
-       ZNUDG == 50.0d0                     ! days
-      M2NUDG == 50.0d0                     ! days
-      M3NUDG == 50.0d0                     ! days
+       TNUDG == 0.0d0  0.0d0               ! days
+       ZNUDG == 0.0d0                      ! days
+      M2NUDG == 0.0d0                      ! days
+      M3NUDG == 0.0d0                      ! days
 
 ! Factor between passive (outflow) and active (inflow) open boundary
 ! conditions, [1:Ngrids]. If OBCFAC > 1, nudging on inflow is stronger
 ! than on outflow (recommended).
 
-      OBCFAC == 10.0d0                     ! nondimensional
+      OBCFAC == 0.0d0                      ! nondimensional
 
 ! Linear equation of State parameters:
 
@@ -405,14 +406,14 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! point Sources/Sinks (like river runoff transport) and mass point
 ! Sources/Sinks (like volume vertical influx), [1:Ngrids].
 
-      LuvSrc == T                          ! horizontal momentum transport
+      LuvSrc == F                          ! horizontal momentum transport
        LwSrc == F                          ! volume vertical influx
 
 ! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
 ! (like river runoff) and to specify which tracer variables to consider:
 ! [1:NAT+NPT,Ngrids].  See glossary below for details.
 
-  LtracerSrc == T T                        ! temperature, salinity, inert
+  LtracerSrc == F F                        ! temperature, salinity, inert
 
 ! Logical switches (TRUE/FALSE) to read and process climatology fields.
 ! See glossary below for details.
@@ -516,20 +517,20 @@ Hout(idpthW) == F       ! z_w                time-varying depths of W-points
 
 Hout(idUsms) == T       ! sustr              surface U-stress
 Hout(idVsms) == T       ! svstr              surface V-stress
-Hout(idUbms) == F       ! bustr              bottom U-stress
-Hout(idVbms) == F       ! bvstr              bottom V-stress
+Hout(idUbms) == T       ! bustr              bottom U-stress
+Hout(idVbms) == T       ! bvstr              bottom V-stress
 
-Hout(idUbrs) == F       ! bustrc             bottom U-current stress
-Hout(idVbrs) == F       ! bvstrc             bottom V-current stress
-Hout(idUbws) == F       ! bustrw             bottom U-wave stress
-Hout(idVbws) == F       ! bvstrw             bottom V-wave stress
-Hout(idUbcs) == F       ! bustrcwmax         bottom max wave-current U-stress
-Hout(idVbcs) == F       ! bvstrcwmax         bottom max wave-current V-stress
+Hout(idUbrs) == T       ! bustrc             bottom U-current stress
+Hout(idVbrs) == T       ! bvstrc             bottom V-current stress
+Hout(idUbws) == T       ! bustrw             bottom U-wave stress
+Hout(idVbws) == T       ! bvstrw             bottom V-wave stress
+Hout(idUbcs) == T       ! bustrcwmax         bottom max wave-current U-stress
+Hout(idVbcs) == T       ! bvstrcwmax         bottom max wave-current V-stress
 
-Hout(idUbot) == F       ! Ubot               bed wave orbital U-velocity
-Hout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
-Hout(idUbur) == F       ! Ur                 bottom U-velocity above bed
-Hout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
+Hout(idUbot) == T       ! Ubot               bed wave orbital U-velocity
+Hout(idVbot) == T       ! Vbot               bed wave orbital V-velocity
+Hout(idUbur) == T       ! Ur                 bottom U-velocity above bed
+Hout(idVbvr) == T       ! Vr                 bottom V-velocity above bed
 
 Hout(idW2xx) == F       ! Sxx_bar            2D radiation stress, Sxx component
 Hout(idW2xy) == F       ! Sxy_bar            2D radiation stress, Sxy component
@@ -566,16 +567,16 @@ Hout(idLhea) == T       ! latent             latent heat flux
 Hout(idShea) == T       ! sensible           sensible heat flux
 Hout(idLrad) == T       ! lwrad              longwave radiation flux
 Hout(idSrad) == T       ! swrad              shortwave radiation flux
-Hout(idEmPf) == T       ! EminusP            E-P flux
-Hout(idevap) == T       ! evaporation        evaporation rate
-Hout(idrain) == T       ! rain               precipitation rate
+Hout(idEmPf) == F       ! EminusP            E-P flux
+Hout(idevap) == F       ! evaporation        evaporation rate
+Hout(idrain) == F       ! rain               precipitation rate
 
-Hout(idDano) == F       ! rho                density anomaly
+Hout(idDano) == T       ! rho                density anomaly
 Hout(idVvis) == T       ! AKv                vertical viscosity
 Hout(idTdif) == T       ! AKt                vertical T-diffusion
 Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
 Hout(idHsbl) == T       ! Hsbl               depth of surface boundary layer
-Hout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
+Hout(idHbbl) == T       ! Hbbl               depth of bottom boundary layer
 Hout(idMtke) == F       ! tke                turbulent kinetic energy
 Hout(idMtls) == F       ! gls                turbulent length scale
 
@@ -846,19 +847,19 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == nena_grd.nc
-     ININAME == nena_ini.nc
-     ITLNAME == nena_itl.nc
-     IRPNAME == nena_irp.nc
-     IADNAME == nena_iad.nc
-     FWDNAME == nena_fwd.nc
-     ADSNAME == nena_ads.nc
+     GRDNAME == njb1_grd_a.nc
+     ININAME == njb1_ini_jul11.nc
+     ITLNAME == njb1_itl.nc
+     IRPNAME == njb1_irp.nc
+     IADNAME == njb1_iad.nc
+     FWDNAME == njb1_fwd.nc
+     ADSNAME == njb1_ads.nc
 
 ! Nesting grids connectivity data: contact points information. This
 ! NetCDF file is special and complex. It is currently generated using
 ! the script "matlab/grid/contact.m" from the Matlab repository.
 
-     NGCNAME =  nena_ngc.nc
+     NGCNAME =  njb1_ngc.nc
 
 ! Input lateral boundary conditions and climatology file names.  The
 ! USER has the option to split input data time records into several
@@ -866,20 +867,20 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! line per entry with a vertical bar (|) symbol after each entry,
 ! except the last one.
 
-     BRYNAME == nena_bry.nc
-     CLMNAME == nena_clm.nc
+     BRYNAME == njb1_bry.nc
+     CLMNAME == njb1_clm.nc
 
 ! Input climatology nudging coefficients file name.
 
-     NUDNAME == nena_nud.nc
+     NUDNAME == njb1_nud.nc
 
 ! Input Sources/Sinks forcing (like river runoff) file name.
 
-     SSFNAME == nena_rivers.nc
+     SSFNAME == njb1_rivers.nc
 
 ! Input tidal forcing file name.
 
-    TIDENAME == nena_tides.nc
+    TIDENAME == njb1_tides_jul01.nc
 
 ! Input forcing NetCDF file name(s).
 !
@@ -899,26 +900,25 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! continuation (\) or a vertical bar (|) symbol after each entry, except
 ! the last one.
 
-     NFFILES == 2                          ! number of unique forcing files
+     NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == nena_ncep93.nc \
-                nena_coads.nc
+     FRCNAME == njb1_Fcoamps_jul01.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
-     DAINAME == nena_dai.nc
-     GSTNAME == nena_gst.nc
-     RSTNAME == nena_rst.nc
-     HISNAME == nena_his.nc
-     QCKNAME == nena_qck.nc
-     TLMNAME == nena_tlm.nc
-     TLFNAME == nena_tlf.nc
-     ADJNAME == nena_adj.nc
-     AVGNAME == nena_avg.nc
-     HARNAME == nena_har.nc
-     DIANAME == nena_dia.nc
-     STANAME == nena_sta.nc
-     FLTNAME == nena_flt.nc
+     DAINAME == njb1_dai.nc
+     GSTNAME == njb1_gst.nc
+     RSTNAME == njb1_rst.nc
+     HISNAME == njb1_his.nc
+     QCKNAME == njb1_qck.nc
+     TLMNAME == njb1_tlm.nc
+     TLFNAME == njb1_tlf.nc
+     ADJNAME == njb1_adj.nc
+     AVGNAME == njb1_avg.nc
+     HARNAME == njb1_har.nc
+     DIANAME == njb1_dia.nc
+     STANAME == njb1_sta.nc
+     FLTNAME == njb1_flt.nc
 
 ! Input ASCII parameter filenames.
 

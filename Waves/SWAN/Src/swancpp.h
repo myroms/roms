@@ -1,6 +1,7 @@
 /*
 ** Include file "swancpp.h"
 **
+** git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
 ** svn $Id$
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2019 The ROMS/TOMS Group                               **

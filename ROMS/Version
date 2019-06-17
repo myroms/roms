@@ -1,11 +1,14 @@
-ROMS/TOMS Framework: May 15, 2019
+ROMS/TOMS Framework: Jun 17, 2019
 ===================
 
 Copyright (c) 2002-2019 The ROMS/TOMS Group
   Licensed under a MIT/X style license
   See License_ROMS.txt
 
-svn: $HeadURL$
-svn: $LastChangedBy$
-svn: $LastChangedRevision$
-svn: $LastChangedDate$
+git: $URL: https://www.myroms.org/git/src $
+git: $Id: 2f07d7f23c47cb2a2364ff8b653addd1ebd0c699 $
+
+svn: $HeadURL: https://www.myroms.org/svn/src/trunk $
+svn: $LastChangedBy: arango $
+svn: $LastChangedRevision: 968 $
+svn: $LastChangedDate: 2019-06-17 12:02:48 -0400 (Mon, 17 Jun 2019) $

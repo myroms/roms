@@ -1,7 +1,8 @@
 !
 ! Multiple model coupling parameters: ESMF/NUOPC Library
 !
-!svn $Id$
+!git $Id: 5f7f11cb7e4f82f34667ec83c5317016f633dbb4 $
+!svn $Id: coupling_esmf.in 946 2019-02-03 16:32:28Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !

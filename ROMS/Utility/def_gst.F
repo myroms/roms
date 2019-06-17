@@ -2,7 +2,8 @@
 #if defined PROPAGATOR && defined CHECKPOINTING
       SUBROUTINE def_gst (ng, model)
 !
-!svn $Id$
+!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
+!svn $Id: def_gst.F 965 2019-05-09 03:07:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

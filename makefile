@@ -1,4 +1,5 @@
-# svn $Id$
+# git $Id: 65558c0d4b64dc8dc0626779b9486a5bcef22d3f $
+# svn $Id: makefile 968 2019-06-17 16:02:48Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::
@@ -322,7 +323,13 @@ OS := $(patsubst sn%,UNICOS-sn,$(OS))
 
 CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
 
-SVNREV ?= $(shell svnversion -n .)
+GITURL := $(shell git config remote.origin.url)
+GITREV := $(shell git log -n 1 --format=%H)
+
+SVNURL := $(shell grep HeadURL ./ROMS/Version | \
+            sed 's/.* \(https.*\)\/ROMS\/Version.*/\1/')
+SVNREV := $(shell grep Revision ./ROMS/Version | \
+            sed 's/.* \([0-9]*\) .*/\1/')
 
 ROOTDIR := $(shell pwd)
 
@@ -368,12 +375,10 @@ ifdef MY_ANALYTICAL
   CPPFLAGS += -D'MY_ANALYTICAL="$(MY_ANALYTICAL)"'
 endif
 
-ifdef SVNREV
-  CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
-else
-  SVNREV := $(shell grep Revision ./ROMS/Version | sed 's/.* \([0-9]*\) .*/\1/')
-  CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
-endif
+CPPFLAGS += -D'GIT_URL="$(GITURL)"'
+CPPFLAGS += -D'GIT_REV="$(GITREV)"'
+CPPFLAGS += -D'SVN_URL="$(SVNURL)"'
+CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 
 #--------------------------------------------------------------------------
 #  Build target directories.

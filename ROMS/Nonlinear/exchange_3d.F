@@ -2,7 +2,8 @@
       MODULE exchange_3d_mod
 #ifdef SOLVE3D
 !
-!svn $Id$
+!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!svn $Id: exchange_3d.F 937 2019-01-28 06:13:04Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

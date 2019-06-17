@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
-!svn $Id$
+!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!svn $Id: read_phypar.F 968 2019-06-17 16:02:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3591,19 +3592,18 @@
       IF (Lwrite) THEN
         lstr=INDEX(my_fflags, 'free')-2
         IF (lstr.le.0) lstr=LEN_TRIM(my_fflags)
+        WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
+     &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
 #ifdef DISTRIBUTE
-        WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
-     &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
      &                 OCN_COMM_WORLD, numthreads,                      &
-     &                 TRIM(Iname), TRIM(svn_url), TRIM(svn_rev),       &
-     &                 TRIM(Rdir), TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
-#else
-        WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
-     &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
-     &                 TRIM(svn_url), TRIM(svn_rev), TRIM(Rdir),        &
-     &                 TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
+     &                 TRIM(Iname),                                     &
 #endif
-
+#ifdef GIT_URL
+     &                 TRIM(git_url), TRIM(git_rev),                    &
+#endif
+     &                 TRIM(svn_url), TRIM(svn_rev),                    &
+     &                 TRIM(Rdir), TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
+!
         DO ng=1,Ngrids
 !
 !  Report grid size and domain decomposition.  Check for correct tile
@@ -6035,35 +6035,28 @@
 #endif
 
   50  FORMAT (/,' READ_PhyPar - Error while processing line: ',/,a)
-#ifdef DISTRIBUTE
   60  FORMAT (/,1x,a,/,                                                 &
      &        /,1x,'Operating system : ',a,                             &
      &        /,1x,'CPU/hardware     : ',a,                             &
      &        /,1x,'Compiler system  : ',a,                             &
      &        /,1x,'Compiler command : ',a,                             &
      &        /,1x,'Compiler flags   : ',a,                             &
+#ifdef DISTRIBUTE
      &        /,1x,'MPI Communicator : ',i0,2x,'PET size = ',i0,/,      &
-     &        /,1x,'Input Script  : ',a,/,                              &
-     &        /,1x,'SVN Root URL  : ',a,                                &
-     &        /,1x,'SVN Revision  : ',a,/,                              &
-     &        /,1x,'Local Root    : ',a,                                &
-     &        /,1x,'Header Dir    : ',a,                                &
-     &        /,1x,'Header file   : ',a,                                &
-     &        /,1x,'Analytical Dir: ',a)
+     &        /,1x,'Input Script     : ',a,/,                           &
 #else
-  60  FORMAT (/,1x,a,/,                                                 &
-     &        /,1x,'Operating system : ',a,                             &
-     &        /,1x,'CPU/hardware     : ',a,                             &
-     &        /,1x,'Compiler system  : ',a,                             &
-     &        /,1x,'Compiler command : ',a,                             &
-     &        /,1x,'Compiler flags   : ',a,/,                           &
-     &        /,1x,'SVN Root URL  : ',a,                                &
-     &        /,1x,'SVN Revision  : ',a,/,                              &
-     &        /,1x,'Local Root    : ',a,                                &
-     &        /,1x,'Header Dir    : ',a,                                &
-     &        /,1x,'Header file   : ',a,                                &
-     &        /,1x,'Analytical Dir: ',a)
+     &        /,                                                        &
 #endif
+#ifdef GIT_URL
+     &        /,1x,'GIT Root URL     : ',a,                             &
+     &        /,1x,'GIT Revision     : ',a,                             &
+#endif
+     &        /,1x,'SVN Root URL     : ',a,                             &
+     &        /,1x,'SVN Revision     : ',a,/,                           &
+     &        /,1x,'Local Root       : ',a,                             &
+     &        /,1x,'Header Dir       : ',a,                             &
+     &        /,1x,'Header file      : ',a,                             &
+     &        /,1x,'Analytical Dir   : ',a)
   70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
      &        ',',2x,'Parallel Nodes: ',i0,',',2x,'Tiling: ',i0,        &
      &        'x',i0)

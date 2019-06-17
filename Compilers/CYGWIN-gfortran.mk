@@ -1,4 +1,5 @@
-# svn $Id$
+# git $Id: fb61fdd13dd8a36db69a0eb3a90df48d7a755627 $
+# svn $Id: CYGWIN-gfortran.mk 956 2019-03-10 21:23:26Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

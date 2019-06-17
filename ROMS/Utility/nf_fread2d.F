@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE nf_fread2d_mod
 !
-!svn $Id$
+!git $Id: 0a8721f662f1d269ccfe1d52a33e4db912bcebcf $
+!svn $Id: nf_fread2d.F 953 2019-02-16 02:50:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

@@ -6,7 +6,8 @@
      &                   Imin, Imax, Jmin, Jmax,                        &
      &                   MyXout, Xout, Yout, Fout)
 !
-!svn $Id$
+!git $Id: a1f936a180bd9c6834d05ee6a96290926c0e8586 $
+!svn $Id: regrid.F 957 2019-03-10 22:28:13Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

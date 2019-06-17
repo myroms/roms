@@ -2,7 +2,8 @@
 #if defined TANGENT && defined SOLVE3D
       SUBROUTINE tl_main3d (RunInterval)
 !
-!svn $Id$
+!git $Id: b74206b2fdb575bfd204fd392aeb2ac76b7e8723 $
+!svn $Id: tl_main3d.F 962 2019-04-03 23:01:05Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

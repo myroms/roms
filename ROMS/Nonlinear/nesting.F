@@ -3,7 +3,8 @@
 
 #ifdef NESTING
 !
-!svn $Id$
+!git $Id: 1bc31513a02340a446f177ed8d654a7135349a71 $
+!svn $Id: nesting.F 960 2019-04-03 21:45:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !

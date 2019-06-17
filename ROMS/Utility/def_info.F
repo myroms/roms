@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE def_info (ng, model, ncid, ncname, DimIDs)
 !
-!svn $Id$
+!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
+!svn $Id: def_info.F 968 2019-06-17 16:02:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -801,6 +802,33 @@
           END IF
         END IF
 # endif
+#endif
+#ifdef GIT_URL
+!
+!  GIT repository information.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'git_url',             &
+     &                        TRIM(git_url))
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
+            IF (Master) WRITE (stdout,20) 'git_url', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#endif
+#if !defined DEBUGGING && defined GIT_REV
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'git_rev',             &
+     &                        TRIM(git_rev))
+          IF (FoundError(status, nf90_noerr, __LINE__,                  &
+     &                   __FILE__)) THEN
+            IF (Master) WRITE (stdout,20) 'git_rev', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
 #endif
 !
 !  SVN repository information.

@@ -1,7 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!svn $Id$
+!git $Id: cf1568710ced2062e993fd2e2ec9de07f377ecd6 $
+!svn $Id: roms_damee_4.in 968 2019-06-17 16:02:48Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -64,11 +65,11 @@
 !
 ! Application title.
 
-       TITLE = Eastern Australia Current Application, 1/8 resolution
+       TITLE = North Atlantic Damee #4, 0.75 Resolution
 
 ! C-preprocessing Flag.
 
-    MyAppCPP = EAC_8
+    MyAppCPP = DAMEE_4
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
@@ -92,8 +93,8 @@ GridsInLayer =  1
 ! these parameters correctly.
 
           Lm == 128           ! Number of I-direction INTERIOR RHO-points
-          Mm == 160           ! Number of J-direction INTERIOR RHO-points
-           N == 30            ! Number of vertical levels
+          Mm == 128           ! Number of J-direction INTERIOR RHO-points
+           N == 20            ! Number of vertical levels
 
         Nbed =  0             ! Number of sediment bed layers
 
@@ -107,7 +108,7 @@ GridsInLayer =  1
 ! indices (Istr,Iend) and (Jstr,Jend), [1:Ngrids].
 
       NtileI == 1                               ! I-direction partition
-      NtileJ == 4                               ! J-direction partition
+      NtileJ == 8                               ! J-direction partition
 
 ! Set lateral boundary conditions keyword. Notice that a value is expected
 ! for each boundary segment per nested grid for each state variable.
@@ -145,28 +146,28 @@ GridsInLayer =  1
 !
 !                   1       2       3       4
 
-   LBC(isFsur) ==   Clo     Cha     Cha     Cha         ! free-surface
-   LBC(isUbar) ==   Clo     Fla     Fla     Fla         ! 2D U-momentum
-   LBC(isVbar) ==   Clo     Fla     Fla     Fla         ! 2D V-momentum
-   LBC(isUvel) ==   Clo     Cla     Cla     Cla         ! 3D U-momentum
-   LBC(isVvel) ==   Clo     Cla     Cla     Cla         ! 3D V-momentum
-   LBC(isMtke) ==   Clo     Gra     Gra     Gra         ! mixing TKE
+   LBC(isFsur) ==   Clo     Clo     Clo     Clo         ! free-surface
+   LBC(isUbar) ==   Clo     Clo     Clo     Clo         ! 2D U-momentum
+   LBC(isVbar) ==   Clo     Clo     Clo     Clo         ! 2D V-momentum
+   LBC(isUvel) ==   Clo     Clo     Clo     Clo         ! 3D U-momentum
+   LBC(isVvel) ==   Clo     Clo     Clo     Clo         ! 3D V-momentum
+   LBC(isMtke) ==   Clo     Clo     Clo     Clo         ! mixing TKE
 
-   LBC(isTvar) ==   Clo     Cla     Cla     Cla \       ! temperature
-                    Clo     Cla     Cla     Cla         ! salinity
+   LBC(isTvar) ==   Clo     Clo     Clo     Clo \       ! temperature
+                    Clo     Clo     Clo     Clo         ! salinity
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
-ad_LBC(isFsur) ==   Clo     Cha     Cha     Cha         ! free-surface
-ad_LBC(isUbar) ==   Clo     Fla     Fla     Fla         ! 2D U-momentum
-ad_LBC(isVbar) ==   Clo     Fla     Fla     Fla         ! 2D U-momentum
-ad_LBC(isUvel) ==   Clo     Cla     Cla     Cla         ! 3D U-momentum
-ad_LBC(isVvel) ==   Clo     Cla     Cla     Cla         ! 3D V-momentum
-ad_LBC(isMtke) ==   Clo     Gra     Gra     Gra         ! mixing TKE
+ad_LBC(isFsur) ==   Clo     Clo     Clo     Clo         ! free-surface
+ad_LBC(isUbar) ==   Clo     Clo     Clo     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Clo     Clo     Clo     Clo         ! 2D U-momentum
+ad_LBC(isUvel) ==   Clo     Clo     Clo     Clo         ! 3D U-momentum
+ad_LBC(isVvel) ==   Clo     Clo     Clo     Clo         ! 3D V-momentum
+ad_LBC(isMtke) ==   Clo     Clo     Clo     Clo         ! mixing TKE
 
-ad_LBC(isTvar) ==   Clo     Cla     Cla     Cla \       ! temperature
-                    Clo     Cla     Cla     Cla         ! salinity
+ad_LBC(isTvar) ==   Clo     Clo     Clo     Clo \       ! temperature
+                    Clo     Clo     Clo     Clo         ! salinity
 
 ! Set lateral open boundary edge volume conservation switch for
 ! nonlinear model and adjoint-based algorithms. Usually activated
@@ -185,9 +186,9 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
 ! Time-Stepping parameters.
 
-      NTIMES == 28800
-          DT == 540.0d0
-     NDTFAST == 50
+      NTIMES == 57600
+          DT == 5400.0d0
+     NDTFAST == 27
 
 ! Model iteration loops parameters.
 
@@ -208,7 +209,7 @@ ad_VolCons(north) ==  F                            ! northern boundary
 
        NRREC == 0
    LcycleRST == T
-        NRST == 160
+        NRST == 480
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -216,27 +217,27 @@ ad_VolCons(north) ==  F                            ! northern boundary
 ! Output history, quicksave, average, and diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 16
+        NHIS == 480
      NDEFHIS == 0
         NQCK == 0
      NDEFQCK == 0
       NTSAVG == 1
-        NAVG == 800
+        NAVG == 480
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 160
+        NDIA == 480
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 160
+        NTLM == 480
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 160
+        NADJ == 480
      NDEFADJ == 0
-        NSFF == 160
-        NOBC == 160
+        NSFF == 480
+        NOBC == 480
 
 ! GST output and check pointing restart parameters.
 
@@ -252,20 +253,20 @@ ad_VolCons(north) ==  F                            ! northern boundary
 ! Harmonic/biharmonic horizontal diffusion of tracer for nonlinear model
 ! and adjoint-based algorithms: [1:NAT+NPT,Ngrids].
 
-        TNU2 == 20.0d0  20.0d0                  ! m2/s
-        TNU4 == 2.0d+8  2.0d+8                  ! m4/s
+        TNU2 == 50.0d0  50.0d0                  ! m2/s
+        TNU4 == 2.0d+12 2.0d+12                 ! m4/s
 
-     ad_TNU2 == 20.0d0  20.0d0                  ! m2/s
-     ad_TNU4 == 2.0d+8  2.0d+8                  ! m4/s
+     ad_TNU2 == 0.0d0  0.0d0                    ! m2/s
+     ad_TNU4 == 0.0d0  0.0d0                    ! m4/s
 
 ! Harmonic/biharmonic, horizontal viscosity coefficient for nonlinear model
 ! and adjoint-based algorithms: [Ngrids].
 
-       VISC2 == 50.0d0                          ! m2/s
-       VISC4 == 4.0d+8                          ! m4/s
+       VISC2 == 100.0d0                         ! m2/s
+       VISC4 == 8.0d+12                         ! m4/s
 
-    ad_VISC2 == 50.0d0                          ! m2/s
-    ad_VISC4 == 4.0d+8                          ! m4/s
+    ad_VISC2 == 0.0d0                           ! m2/s
+    ad_VISC4 == 0.0d0                           ! m4/s
 
 ! Logical switches (TRUE/FALSE) to increase/decrease horizontal viscosity
 ! and/or diffusivity in specific areas of the application domain (like
@@ -353,14 +354,14 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Set vertical, terrain-following coordinates transformation equation and
 ! stretching function (see below for details), [1:Ngrids].
 
-  Vtransform == 1                          ! transformation equation
- Vstretching == 1                          ! stretching function
+  Vtransform == 2                          ! transformation equation
+ Vstretching == 2                          ! stretching function
 
 ! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 
-     THETA_S == 5.0d0                      ! surface stretching parameter
-     THETA_B == 0.4d0                      ! bottom  stretching parameter
-      TCLINE == 50.0d0                     ! critical depth (m)
+     THETA_S == 7.0d0                      ! surface stretching parameter
+     THETA_B == 0.1d0                      ! bottom  stretching parameter
+      TCLINE == 200.0d0                    ! critical depth (m)
 
 ! Mean Density and Brunt-Vaisala frequency.
 
@@ -371,23 +372,23 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  179.0d0                    ! days
+      DSTART =  30.0d0                     ! days
   TIDE_START =  0.0d0                      ! days
-    TIME_REF =  20010101.0d0               ! yyyymmdd.dd
+    TIME_REF =  -1.0d0                     ! yyyymmdd.dd
 
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
 
-       TNUDG == 50.0d0 50.0d0              ! days
-       ZNUDG == 50.0d0                     ! days
-      M2NUDG == 50.0d0                     ! days
-      M3NUDG == 50.0d0                     ! days
+       TNUDG == 60.0d0 60.0d0              ! days
+       ZNUDG == 0.0d0                      ! days
+      M2NUDG == 0.0d0                      ! days
+      M3NUDG == 0.0d0                      ! days
 
 ! Factor between passive (outflow) and active (inflow) open boundary
 ! conditions, [1:Ngrids]. If OBCFAC > 1, nudging on inflow is stronger
 ! than on outflow (recommended).
 
-      OBCFAC == 10.0d0                     ! nondimensional
+      OBCFAC == 0.0d0                      ! nondimensional
 
 ! Linear equation of State parameters:
 
@@ -399,7 +400,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 == 1.0d0
+      GAMMA2 == -1.0d0
 
 ! Logical switches (TRUE/FALSE) to activate horizontal momentum transport
 ! point Sources/Sinks (like river runoff transport) and mass point
@@ -421,7 +422,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
       Lm2CLM == F                          ! 2D momentum
       Lm3CLM == F                          ! 3D momentum
 
-  LtracerCLM == F F                        ! temperature, salinity, inert
+  LtracerCLM == T T                        ! temperature, salinity, inert
 
 ! Logical switches (TRUE/FALSE) to nudge the desired climatology field(s).
 ! If not analytical climatology fields, users need to turn ON the logical
@@ -431,7 +432,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
  LnudgeM2CLM == F                          ! 2D momentum
  LnudgeM3CLM == F                          ! 3D momentum
 
-  LnudgeTCLM == F F                        ! temperature, salinity, inert
+  LnudgeTCLM == T T                        ! temperature, salinity, inert
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their
@@ -443,8 +444,8 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Starting and ending vertical levels of the 3D adjoint state variables
 ! whose sensitivity is required.
 
-       KstrS == 30                         ! starting level
-       KendS == 30                         ! ending level
+       KstrS == 1                          ! starting level
+       KendS == 1                          ! ending level
 
 ! Logical switches (TRUE/FALSE) to specify the adjoint state variables
 ! whose sensitivity is required.
@@ -505,7 +506,7 @@ Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
 Hout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Hout(idFsur) == T       ! zeta               free-surface
-Hout(idBath) == T       ! bath               time-dependent bathymetry
+Hout(idBath) == F       ! bath               time-dependent bathymetry
 
 Hout(idTvar) == T T     ! temp, salt         temperature and salinity
 
@@ -570,11 +571,11 @@ Hout(idEmPf) == F       ! EminusP            E-P flux
 Hout(idevap) == F       ! evaporation        evaporation rate
 Hout(idrain) == F       ! rain               precipitation rate
 
-Hout(idDano) == F       ! rho                density anomaly
-Hout(idVvis) == F       ! AKv                vertical viscosity
-Hout(idTdif) == F       ! AKt                vertical T-diffusion
-Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
-Hout(idHsbl) == F       ! Hsbl               depth of surface boundary layer
+Hout(idDano) == T       ! rho                density anomaly
+Hout(idVvis) == T       ! AKv                vertical viscosity
+Hout(idTdif) == T       ! AKt                vertical T-diffusion
+Hout(idSdif) == T       ! AKs                vertical Salinity diffusion
+Hout(idHsbl) == T       ! Hsbl               depth of surface boundary layer
 Hout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
 Hout(idMtke) == F       ! tke                turbulent kinetic energy
 Hout(idMtls) == F       ! gls                turbulent length scale
@@ -836,7 +837,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! Generic User parameters, [1:NUSER].
 
        NUSER =  0
-        USER =  0.0d0
+        USER =  0.d0
 
 ! NetCDF-4/HDF5 compression parameters for output files.
 
@@ -846,19 +847,19 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == eac_grid_8.nc
-     ININAME == eac_ini.nc
-     ITLNAME == eac_itl.nc
-     IRPNAME == eac_irp.nc
-     IADNAME == eac_iad.nc
-     FWDNAME == eac_fwd.nc
-     ADSNAME == eac_ads.nc
+     GRDNAME == damee4_grid_b.nc
+     ININAME == damee4_levfeb_b.nc
+     ITLNAME == damee4_itl.nc
+     IRPNAME == damee4_irp.nc
+     IADNAME == damee4_iad.nc
+     FWDNAME == damee4_fwd.nc
+     ADSNAME == damee4_ads.nc
 
 ! Nesting grids connectivity data: contact points information. This
 ! NetCDF file is special and complex. It is currently generated using
 ! the script "matlab/grid/contact.m" from the Matlab repository.
 
-     NGCNAME =  eac_ngc.nc
+     NGCNAME =  damee4_ngc.nc
 
 ! Input lateral boundary conditions and climatology file names.  The
 ! USER has the option to split input data time records into several
@@ -866,20 +867,20 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! line per entry with a vertical bar (|) symbol after each entry,
 ! except the last one.
 
-     BRYNAME == eac_ncom_bndy.nc
-     CLMNAME == eac_clm.nc
+     BRYNAME == damee4_bry.nc
+     CLMNAME == damee4_Lclm_b.nc
 
 ! Input climatology nudging coefficients file name.
 
-     NUDNAME == eac_nud.nc
+     NUDNAME == damee4_nudgcoef.nc
 
 ! Input Sources/Sinks forcing (like river runoff) file name.
 
-     SSFNAME == eac_rivers.nc
+     SSFNAME == damee4_rivers.nc
 
 ! Input tidal forcing file name.
 
-    TIDENAME == eac_tides.nc
+    TIDENAME == damee4_tides.nc
 
 ! Input forcing NetCDF file name(s).
 !
@@ -901,32 +902,32 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == eac_nogaps.nc              ! forcing file 1, grid 1
+     FRCNAME == damee4_coads.nc            ! forcing file 1, grid 1
 
 ! Output NetCDF file names, [1:Ngrids].
 
-     DAINAME == eac_dai.nc
-     GSTNAME == eac_gst.nc
-     RSTNAME == eac_rst.nc
-     HISNAME == eac_his.nc
-     QCKNAME == eac_qck.nc
-     TLMNAME == eac_tlm.nc
-     TLFNAME == eac_tlf.nc
-     ADJNAME == eac_adj.nc
-     HARNAME == eac_har.nc
-     AVGNAME == eac_avg.nc
-     DIANAME == eac_dia.nc
-     STANAME == eac_sta.nc
-     FLTNAME == eac_flt.nc
+     DAINAME == damee4_dai.nc
+     GSTNAME == damee4_gst.nc
+     RSTNAME == damee4_rst.nc
+     HISNAME == damee4_his.nc
+     QCKNAME == damee4_qck.nc
+     TLMNAME == damee4_tlm.nc
+     TLFNAME == damee4_tlf.nc
+     ADJNAME == damee4_adj.nc
+     AVGNAME == damee4_avg.nc
+     HARNAME == damee4_har.nc
+     DIANAME == damee4_dia.nc
+     STANAME == damee4_sta.nc
+     FLTNAME == damee4_flt.nc
 
 ! Input ASCII parameter filenames.
 
-     APARNAM =  s4dvar.in
-     SPOSNAM =  stations.in
-     FPOSNAM =  floats.in
-     BPARNAM =  bio_Fennel.in
-     SPARNAM =  sediment.in
-     USRNAME =  MyFile.dat
+     APARNAM =  ROMS/External/s4dvar.in
+     SPOSNAM =  ROMS/External/stations.in
+     FPOSNAM =  ROMS/External/floats.in
+     BPARNAM =  ROMS/External/bio_Fennel.in
+     SPARNAM =  ROMS/External/sediment.in
+     USRNAME =  ROMS/External/MyFile.dat
 
 !
 !  GLOSSARY:

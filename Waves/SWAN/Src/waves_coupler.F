@@ -3,7 +3,8 @@
 
 #if defined MODEL_COUPLING && defined MCT_LIB
 !
-!svn $Id$
+!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!svn $Id: waves_coupler.F 937 2019-01-28 06:13:04Z arango $
 !==================================================== John C. Warner ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !
 !   Licensed under a MIT/X style license                               !
