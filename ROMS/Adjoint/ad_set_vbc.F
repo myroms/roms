@@ -2,8 +2,8 @@
       MODULE ad_set_vbc_mod
 #ifdef ADJOINT
 !
-!git $Id: a5817a359b80bd314ba5ee9d55207d3ec880af09 $
-!svn $Id: ad_set_vbc.F 954 2019-02-22 18:29:15Z arango $
+!git $Id$
+!svn $Id: ad_set_vbc.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1125,8 +1125,9 @@
 !>
           ad_EmP=0.0_r8
 #   else
-!>        tl_EmP=0.0_r8
+!>        tl_EmP=tl_stflx(i,j,isalt)
 !>
+          ad_stflx(i,j,isalt)=ad_stflx(i,j,isalt)+ad_EmP
           ad_EmP=0.0_r8
 #   endif
         END DO
@@ -1210,9 +1211,9 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-!>        tl_stflx(i,j,itemp)=0.0_r8
+!>        tl_stflx(i,j,itemp)=0.0_r8      ! not needed in TLM
 !>
-          ad_stflx(i,j,itemp)=0.0_r8
+!!        ad_stflx(i,j,itemp)=0.0_r8      ! not needed in ADM
         END DO
       END DO
 #  endif

@@ -4,8 +4,8 @@
       SUBROUTINE rpcg_lanczos (ng, model, outLoop, innLoop, NinnLoop,   &
      &                         Lcgini)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: rpcg_lanczos.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: rpcg_lanczos.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -132,8 +132,8 @@
 !
         MINIMIZE : IF (innLoop.eq.0) THEN
 
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined TL_W4DPSAS || defined W4DPSAS_FCT_SENSITIVITY || \
+     defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
 !
           DO iobs=1,Ndatum(ng)
             BCKmodVal(iobs)=NLmodVal(iobs)
@@ -178,8 +178,8 @@
 !
 !  Selime code:  r=b.
 !
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined TL_W4DPSAS || defined W4DPSAS_FCT_SENSITIVITY || \
+     defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
               pgrad(iobs)=ObsScale(iobs)*                               &
      &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else

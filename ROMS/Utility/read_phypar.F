@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: read_phypar.F 968 2019-06-17 16:02:48Z arango $
+!git $Id$
+!svn $Id: read_phypar.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -70,7 +70,9 @@
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
     defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
     defined STOCHASTIC_OPT
+# ifndef OBS_SPACE
       logical, allocatable :: Ladsen(:)
+# endif
 #endif
 
       integer :: Npts, Nval, i, itrc, ivar, k, lstr, ng, nl, status
@@ -351,9 +353,11 @@
     defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
     defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
     defined STOCHASTIC_OPT
+# ifndef OBS_SPACE
               IF (.not.allocated(Ladsen)) THEN
                 allocate (Ladsen(MT*Ngrids))
               END IF
+# endif
 #endif
               IF (.not.allocated(Ltracer)) THEN
                 allocate (Ltracer(NAT+NPT,Ngrids))
@@ -476,6 +480,12 @@
               Npts=load_i(Nval, Rval, Ngrids, ntimes)
 #ifdef CORRELATION
               ntimes=1                 ! no time-stepping required
+#endif
+#ifdef W4DPSAS_FCT_SENSITIVITY
+            CASE ('NTIMES_ANA')
+              Npts=load_i(Nval, Rval, Ngrids, ntimes_ana)
+            CASE ('NTIMES_FCT')
+              Npts=load_i(Nval, Rval, Ngrids, ntimes_fct)
 #endif
             CASE ('DT')
               Npts=load_r(Nval, Rval, Ngrids, dt)
@@ -984,6 +994,7 @@
               Npts=load_r(Nval, Rval, Ngrids, DstrS)
             CASE ('DendS')
               Npts=load_r(Nval, Rval, Ngrids, DendS)
+# ifndef OBS_SPACE
             CASE ('KstrS')
               Npts=load_i(Nval, Rval, Ngrids, KstrS)
             CASE ('KendS')
@@ -1018,7 +1029,7 @@
               DO ng=1,Ngrids
                 SCALARS(ng)%Lstate(isVbar)=Ladsen(ng)
               END DO
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
             CASE ('Lstate(isUvel)')
               IF (isUvel.eq.0) THEN
                 IF (Master) WRITE (out,280) 'isUvel'
@@ -1064,6 +1075,7 @@
                   SCALARS(ng)%Lstate(i)=Ladsen(k)
                 END DO
               END DO
+#  endif
 # endif
 #endif
 #if defined FORCING_SV     || defined SO_SEMI || \
@@ -3110,6 +3122,26 @@
               label='ADS - adjoint sensitivity functional'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Nfiles, ADS)
+#ifdef W4DPSAS_FCT_SENSITIVITY
+# ifndef OBS_SPACE
+            CASE ('FOInameA')
+              label='FOIA - adjoint sensitivity functional A'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Nfiles, FOIA)
+            CASE ('FOInameB')
+              label='FOIB - adjoint sensitivity functional B'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Nfiles, FOIB)
+# endif
+            CASE ('FCTnameA')
+              label='FCTA - forecast state forward trajectory A'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Nfiles, FCTA)
+            CASE ('FCTnameB')
+              label='FCTB - forecast state forward trajectory A'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Nfiles, FCTB)
+#endif
             CASE ('NGCNAME')
               DO i=1,LEN(NGCname)
                 NGCname(i:i)=blank
@@ -3637,6 +3669,12 @@
           WRITE (out,110) ng
           WRITE (out,120) ntimes(ng), 'ntimes',                         &
      &          'Number of timesteps for 3-D equations.'
+#if defined W4DPSAS_FCT_SENSITIVITY
+          WRITE (out,120) ntimes_ana(ng), 'ntimes_ana',                 &
+     &          'Observation impacts analysis interval.'
+          WRITE (out,120) ntimes_fct(ng), 'ntimes_fct',                 &
+     &          'Observation impacts forecast interval.'
+#endif
           WRITE (out,140) dt(ng), 'dt',                                 &
      &          'Timestep size (s) for 3-D equations.'
           WRITE (out,130) ndtfast(ng), 'ndtfast',                       &
@@ -4347,7 +4385,8 @@
      &          'Starting day for ADM sensitivity forcing.'
           WRITE (out,140) DendS(ng), 'DendS',                           &
      &          'Ending day for ADM sensitivity forcing.'
-# ifdef SOLVE3D
+# ifndef OBS_SPACE
+#  ifdef SOLVE3D
           WRITE (out,120) KstrS(ng), 'KstrS',                           &
      &          'Deepest level whose ADM sensitivity is required.'
           IF ((KstrS(ng).lt.1).or.(KstrS(ng).gt.N(ng))) THEN
@@ -4364,7 +4403,7 @@
             exit_flag=5
             RETURN
           END IF
-# endif
+#  endif
           IF (SCALARS(ng)%Lstate(isFsur))                               &
      &       WRITE (out,170) SCALARS(ng)%Lstate(isFsur),                &
      &       'Lstate(isFsur)',                                          &
@@ -4377,7 +4416,7 @@
      &       WRITE (out,170) SCALARS(ng)%Lstate(isVbar),                &
      &       'Lstate(isVbar)',                                          &
      &       'Adjoint sensitivity on 2D V-momentum component.'
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
           IF (SCALARS(ng)%Lstate(isUvel))                               &
      &       WRITE (out,170) SCALARS(ng)%Lstate(isUvel),                &
      &       'Lstate(isUvel)',                                          &
@@ -4397,6 +4436,7 @@
      &         'Adjoint sensitivity on tracer ',                        &
      &         itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
+#  endif
 # endif
 #endif
 #if defined FORCING_SV || defined SO_SEMI || defined STOCHASTIC_OPT
@@ -5674,50 +5714,50 @@
           WRITE (out,220)
 #if !defined CORRELATION
 # if defined FOUR_DVAR || defined ENKF_RESTART
-          WRITE (out,230) 'Output DA Initial/Restart File:  ',          &
+          WRITE (out,230) '  Output DA Initial/Restart File:  ',        &
      &                    TRIM(DAI(ng)%name)
 # endif
 # ifdef PROPAGATOR
-          WRITE (out,230) '       Output GST Restart File:  ',          &
+          WRITE (out,230) '         Output GST Restart File:  ',        &
      &                    TRIM(GST(ng)%name)
 # endif
-          WRITE (out,230) '           Output Restart File:  ',          &
+          WRITE (out,230) '             Output Restart File:  ',        &
      &                    TRIM(RST(ng)%name)
           IF (LdefHIS(ng)) THEN
             IF (ndefHIS(ng).eq.0) THEN
-              WRITE (out,230) '           Output History File:  ',      &
+              WRITE (out,230) '             Output History File:  ',    &
      &                        TRIM(HIS(ng)%name)
             ELSE
-              WRITE (out,230) '      Prefix for History Files:  ',      &
+              WRITE (out,230) '        Prefix for History Files:  ',    &
      &                        TRIM(HIS(ng)%base)
             END IF
           END IF
 # ifdef TANGENT
           IF (ndefTLM(ng).eq.0) THEN
-            WRITE (out,230) '           Output Tangent File:  ',        &
+            WRITE (out,230) '             Output Tangent File:  ',      &
      &                      TRIM(TLM(ng)%name)
           ELSE
-            WRITE (out,230) '      Prefix for Tangent Files:  ',        &
+            WRITE (out,230) '        Prefix for Tangent Files:  ',      &
      &                      TRIM(TLM(ng)%base)
           END IF
 # endif
 # ifdef WEAK_CONSTRAINT
-          WRITE (out,230) '   Output Impulse Forcing File:  ',          &
+          WRITE (out,230) '     Output Impulse Forcing File:  ',        &
      &                    TRIM(TLF(ng)%name)
 # endif
 #endif
 #ifdef ADJOINT
           IF (ndefADJ(ng).eq.0) THEN
-            WRITE (out,230) '           Output Adjoint File:  ',        &
+            WRITE (out,230) '             Output Adjoint File:  ',      &
      &                      TRIM(ADM(ng)%name)
           ELSE
-            WRITE (out,230) '      Prefix for Adjoint Files:  ',        &
+            WRITE (out,230) '        Prefix for Adjoint Files:  ',      &
      &                      TRIM(ADM(ng)%base)
           END IF
 #endif
 #if !defined CORRELATION
 # if defined FORWARD_WRITE && !defined FOUR_DVAR
-          WRITE (out,230) '     Output Forward State File:  ',          &
+          WRITE (out,230) '       Output Forward State File:  ',        &
      &                    TRIM(FWD(ng)%name)
 # endif
 # if defined AVERAGES    || \
@@ -5725,51 +5765,51 @@
     (defined RP_AVERAGES && defined TL_IOMS) || \
     (defined TL_AVERAGES && defined TANGENT)
           IF (ndefAVG(ng).eq.0) THEN
-            WRITE (out,230) '          Output Averages File:  ',        &
+            WRITE (out,230) '            Output Averages File:  ',      &
      &                      TRIM(AVG(ng)%name)
           ELSE
-            WRITE (out,230) '     Prefix for Averages Files:  ',        &
+            WRITE (out,230) '       Prefix for Averages Files:  ',      &
      &                      TRIM(AVG(ng)%base)
           END IF
 # endif
 # if defined AVERAGES  && defined AVERAGES_DETIDE && \
     (defined SSH_TIDES || defined UV_TIDES)
-          WRITE (out,230) 'Output Detiding Harmonics File:  ',          &
+          WRITE (out,230) '  Output Detiding Harmonics File:  ',        &
      &                    TRIM(HAR(ng)%name)
 # endif
 # ifdef DIAGNOSTICS
           IF (ndefDIA(ng).eq.0) THEN
-            WRITE (out,230) '       Output Diagnostics File:  ',        &
+            WRITE (out,230) '         Output Diagnostics File:  ',      &
      &                      TRIM(DIA(ng)%name)
           ELSE
-            WRITE (out,230) '  Prefix for Diagnostics Files:  ',        &
+            WRITE (out,230) '    Prefix for Diagnostics Files:  ',      &
      &                      TRIM(DIA(ng)%base)
           END IF
 # endif
 # ifdef STATIONS
-          WRITE (out,230) '          Output Stations File:  ',          &
+          WRITE (out,230) '            Output Stations File:  ',        &
      &                    TRIM(STA(ng)%name)
 # endif
 # ifdef FLOATS
-          WRITE (out,230) '            Output Floats File:  ',          &
+          WRITE (out,230) '              Output Floats File:  ',        &
      &                    TRIM(FLT(ng)%name)
 # endif
 # ifdef MODEL_COUPLING
-          WRITE (out,230) '      Physical parameters File:  ',          &
+          WRITE (out,230) '        Physical parameters File:  ',        &
      &                    TRIM(Iname)
 # endif
 #endif
 #ifndef ANA_GRID
           fname=GRD(ng)%name
           IF (.not.find_file(ng, fname, 'GRDNAME')) GO TO 30
-          WRITE (out,230) '               Input Grid File:  ',          &
+          WRITE (out,230) '                 Input Grid File:  ',        &
      &                    TRIM(fname)
 #endif
 #if !defined CORRELATION
 # ifdef NESTING
           fname=NGCname
           IF (.not.find_file(ng, fname, 'NGCNAME')) GO TO 30
-          WRITE (out,230) 'Nesting grid connectivity File:  ',          &
+          WRITE (out,230) '  Nesting grid connectivity File:  ',        &
      &                    TRIM(fname)
 # endif
 #endif
@@ -5777,7 +5817,7 @@
 # ifdef NONLINEAR
           fname=INI(ng)%name
           IF (.not.find_file(ng, fname, 'ININAME')) GO TO 30
-          WRITE (out,230) '  Input Nonlinear Initial File:  ',          &
+          WRITE (out,230) '    Input Nonlinear Initial File:  ',        &
      &                    TRIM(fname)
 # endif
 # if !defined CORRELATION
@@ -5787,14 +5827,15 @@
        defined SENSITIVITY_4DVAR || defined TLM_CHECK)
           fname=ITL(ng)%name
           IF (.not.find_file(ng, fname, 'ITLNAME')) GO TO 30
-          WRITE (out,230) '    Input Tangent Initial File:  ',          &
+          WRITE (out,230) '      Input Tangent Initial File:  ',        &
      &                    TRIM(fname)
 #  endif
-#  if defined WEAK_CONSTRAINT && \
-     !(defined W4DPSAS        || defined W4DPSAS_SENSITIVITY)
+#  if defined WEAK_CONSTRAINT         && \
+    !(defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS || \
+      defined W4DPSAS_SENSITIVITY)
           fname=IRP(ng)%name
           IF (.not.find_file(ng, fname, 'IRPNAME')) GO TO 30
-          WRITE (out,230) 'Input Representer Initial File:  ',          &
+          WRITE (out,230) '  Input Representer Initial File:  ',        &
      &                    TRIM(fname)
 #  endif
 #  if defined ADJOINT && \
@@ -5807,7 +5848,7 @@
        defined HESSIAN_FSV)
           fname=IAD(ng)%name
           IF (.not.find_file(ng, fname, 'IADNAME')) GO TO 30
-          WRITE (out,230) '    Input Adjoint Initial File:  ',          &
+          WRITE (out,230) '      Input Adjoint Initial File:  ',        &
      &                    TRIM(fname)
 #  endif
 # endif
@@ -5817,7 +5858,7 @@
           IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
             fname=SSF(ng)%name
             IF (.not.find_file(ng, fname, 'SSFNAME')) GO TO 30
-            WRITE (out,230) '      Input Sources/Sinks File:  ',        &
+            WRITE (out,230) '        Input Sources/Sinks File:  ',      &
      &                      TRIM(fname)
           END IF
 # endif
@@ -5825,7 +5866,7 @@
           IF (ng.eq.1) THEN               ! only tidal forcing on grid 1
             fname=TIDE(ng)%name
             IF (.not.find_file(ng, fname, 'TIDENAME')) GO TO 30
-            WRITE (out,230) '            Tidal Forcing File:  ',        &
+            WRITE (out,230) '              Tidal Forcing File:  ',      &
      &                      TRIM(fname)
           END IF
 # endif
@@ -5835,7 +5876,7 @@
               fname=FRC(i,ng)%files(ifile)
               IF (.not.find_file(ng, fname, 'FRCNAME')) GO TO 30
               IF (ifile.eq.1) THEN
-                WRITE (out,310) '         Input Forcing File ', i,      &
+                WRITE (out,310) '           Input Forcing File ', i,    &
      &                          ':  ', TRIM(fname)
               ELSE
                 WRITE (out,'(35x,a)') TRIM(fname)
@@ -5848,7 +5889,7 @@
               fname=CLM(ng)%files(ifile)
               IF (.not.find_file(ng, fname, 'CLMNAME')) GO TO 30
               IF (ifile.eq.1) THEN
-                WRITE (out,230) '        Input Climatology File:  ',    &
+                WRITE (out,230) '          Input Climatology File:  ',  &
      &                          TRIM(fname)
               ELSE
                 WRITE (out,'(35x,a)') TRIM(fname)
@@ -5860,23 +5901,25 @@
      &        (ANY(LnudgeTCLM(:,ng)))) THEN
             fname=NUD(ng)%name
             IF (.not.find_file(ng, fname, 'NUDNAME')) GO TO 30
-            WRITE (out,230) ' Input Nudge Coefficients File:  ',        &
+            WRITE (out,230) '   Input Nudge Coefficients File:  ',      &
      &                      TRIM(fname)
           END IF
 # endif
 # if defined FORWARD_READ && !(defined FOUR_DVAR || defined PICARD_TEST)
           fname=FWD(ng)%name
           IF (.not.find_file(ng, fname, 'FWDNAME')) GO TO 30
-          WRITE (out,230) '      Input Forward State File:  ',          &
+          WRITE (out,230) '        Input Forward State File:  ',        &
      &                    TRIM(fname)
 # endif
 # if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
      defined SO_SEMI
+#  ifndef OBS_SPACE
           fname=ADS(ng)%name
           IF (.not.find_file(ng, fname, 'ADSNAME')) GO TO 30
-          WRITE (out,230) 'Input Adjoint Sensitivity File:  ',          &
+          WRITE (out,230) '  Input Adjoint Sensitivity File:  ',        &
      &                    TRIM(fname)
+#  endif
 # endif
 !
           IF (ObcData(ng)) THEN
@@ -5884,7 +5927,7 @@
               fname=BRY(ng)%files(ifile)
               IF (.not.find_file(ng, fname, 'BRYNAME')) GO TO 30
               IF (ifile.eq.1) THEN
-                WRITE (out,230) '           Input Boundary File:  ',    &
+                WRITE (out,230) '             Input Boundary File:  ',  &
      &                          TRIM(fname)
               ELSE
                 WRITE (out,'(35x,a)') TRIM(fname)
@@ -5894,27 +5937,27 @@
 # ifdef STATIONS
           fname=sposnam
           IF (.not.find_file(ng, fname, 'SPOSNAM')) GO TO 30
-          WRITE (out,230) '        Station positions File:  ',          &
+          WRITE (out,230) '          Station positions File:  ',        &
      &                    TRIM(fname)
 # endif
 #endif
 #ifdef FOUR_DVAR
           fname=aparnam
           IF (.not.find_file(ng, fname, 'APARNAM')) GO TO 30
-          WRITE (out,230) '  Assimilation Parameters File:  ',          &
+          WRITE (out,230) '    Assimilation Parameters File:  ',        &
      &                    TRIM(fname)
 #endif
 #if !defined CORRELATION
 # ifdef FLOATS
           fname=fposnam
           IF (.not.find_file(ng, fname, 'FPOSNAM')) GO TO 30
-          WRITE (out,230) ' Initial Floats Positions File:  ',          &
+          WRITE (out,230) '   Initial Floats Positions File:  ',        &
      &                    TRIM(fname)
 # endif
 # ifdef BIOLOGY
           fname=bparnam
           IF (.not.find_file(ng, fname, 'BPARNAM')) GO TO 30
-          WRITE (out,230) '       Biology Parameters File:  ',          &
+          WRITE (out,230) '         Biology Parameters File:  ',        &
      &                    TRIM(fname)
 # endif
 #endif
@@ -5935,7 +5978,7 @@
   40      CONTINUE
         END DO
         IF (Nuser.gt.0) THEN
-          WRITE (out,230) '        Input/Output USER File:  ',          &
+          WRITE (out,230) '          Input/Output USER File:  ',        &
      &                    TRIM(USRname)
         END IF
 !

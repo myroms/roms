@@ -2,8 +2,8 @@
 #ifdef FOUR_DVAR
       SUBROUTINE def_ini (ng)
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
-!svn $Id: def_ini.F 965 2019-05-09 03:07:37Z arango $
+!git $Id$
+!svn $Id: def_ini.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -348,7 +348,7 @@
 !  in addition to initialization time.
 !-----------------------------------------------------------------------
 
-#  ifdef ADJUST_BOUNDARY
+#  if defined ADJUST_BOUNDARY && !defined W4DPSAS_FCT_SENSITIVITY
 !
 !  Define free-surface open boundaries.
 !

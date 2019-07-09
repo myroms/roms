@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE wrt_info (ng, model, ncid, ncname)
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
-!svn $Id: wrt_info.F 965 2019-05-09 03:07:37Z arango $
+!git $Id$
+!svn $Id: wrt_info.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -142,6 +142,20 @@
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+
+#ifdef W4DPSAS_FCT_SENSITIVITY
+      CALL netcdf_put_ivar (ng, model, ncname, 'ntimes_ana',            &
+     &                      ntimes_ana(ng), (/0/), (/0/),               &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'ntimes_fct',            &
+     &                      ntimes_fct(ng), (/0/), (/0/),               &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+#endif
 
 #if defined HDF5 && defined DEFLATE
       CALL netcdf_put_ivar (ng, model, ncname, 'shuffle',               &
@@ -995,8 +1009,8 @@
      &                        NpostI, (/0/), (/0/),                     &
      &                        ncid = ncid)
 # endif
-# if defined IS4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
-     defined W4DVAR_SENSITIVITY
+# if defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY || \
+     defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY
         CALL netcdf_put_ivar (ng, model, ncname, 'Nimpact',             &
      &                        Nimpact, (/0/), (/0/),                    &
      &                        ncid = ncid)

@@ -2,8 +2,8 @@
 #if defined FOUR_DVAR || defined VERIFICATION
       SUBROUTINE def_mod (ng)
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
-!svn $Id: def_mod.F 965 2019-05-09 03:07:37Z arango $
+!git $Id$
+!svn $Id: def_mod.F 970 2019-07-09 02:45:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -272,6 +272,8 @@
             string=uppercase('w4dpsas')
 # elif defined W4DPSAS_SENSITIVITY
             string=uppercase('w4dpsas_sensitivity')
+# elif defined W4DPSAS_FCT_SENSITIVITY
+            string=uppercase('w4dpsas_fct_sensitivity')
 # elif defined W4DVAR
             string=uppercase('w4dvar')
 # elif defined W4DVAR_SENSITIVITY
@@ -521,8 +523,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
-# if defined IS4DVAR_SENSITIVITY || defined W4DPSAS_SENSITIVITY || \
-     defined W4DVAR_SENSITIVITY
+# if defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY || \
+     defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY
 !
 !  Observations impact/sensitivity outer loop beeing processed.
 !
@@ -928,8 +930,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
-# if defined TL_W4DPSAS          || defined W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined TL_W4DPSAS || defined W4DPSAS_FCT_SENSITIVITY || \
+     defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
 !
 !  Define NLM initial and final data penalty function.
 !
@@ -1710,8 +1712,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
-# if defined W4DVAR_SENSITIVITY  || defined W4DPSAS_SENSITIVITY || \
-     defined IS4DVAR_SENSITIVITY
+# if defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY || \
+     defined W4DPSAS_FCT_SENSITIVITY || W4DVAR_SENSITIVITY
 #  ifdef OBS_IMPACT
 !
 !  Define total observations impact.
@@ -1753,9 +1755,9 @@
      &                 __FILE__)) RETURN
 #  endif
 # endif
-# if defined OBS_IMPACT_SPLIT     && \
-     (defined W4DVAR_SENSITIVITY  || defined W4DPSAS_SENSITIVITY || \
-      defined IS4DVAR_SENSITIVITY)
+# if defined OBS_IMPACT_SPLIT         && \
+     (defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY ||\
+      defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY)
 !
 !  Define observation impact due to initial condition increments.
 !
