@@ -177,7 +177,7 @@ endif
 #  step (beggining and almost the end of ROMS library list).
 #--------------------------------------------------------------------------
 
-  libraries  := $(SCRATCH_DIR)/libUTIL.a
+   libraries := $(SCRATCH_DIR)/libNLM.a $(SCRATCH_DIR)/libUTIL.a
 
 #--------------------------------------------------------------------------
 #  Set Pattern rules.
