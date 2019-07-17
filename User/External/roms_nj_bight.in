@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_nj_bight.in 970 2019-07-09 02:45:45Z arango $
+!svn $Id: roms_nj_bight.in 973 2019-07-17 20:30:44Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -79,6 +79,12 @@
 ! Number of nested grids.
 
       Ngrids =  1
+
+! Number of timesteps for computing observation impacts during the
+! analysis-forecast cycle.
+
+  NTIMES_ANA == 200                                ! analysis interval
+  NTIMES_FCT == 200                                ! forecast interval
 
 ! Number of grid nesting layers.  This parameter is used to allow refinement
 ! and composite grid combinations.
@@ -860,6 +866,25 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
      IADNAME == njb1_iad.nc
      FWDNAME == njb1_fwd.nc
      ADSNAME == njb1_ads.nc
+
+! Input adjoint forcing NetCDF filenames for computing observations
+! impacts during the analysis-forecast cycle. If the forecast error
+! metric is defined in state-space, then FOInameA and FOInameB should
+! be regular adjoint forcing files just like ADSname. If the forecast
+! error metric is defined in observation space (OBS_SPACE is activated)
+! then the forecast is initialized OIFnameA and OIFnameB (specified in
+! s4dvar.in input script) will have the structure of a 4D-Var observation
+! file.
+
+    FOInameA == njb1_foi_a.nc
+    FOInameB == njb1_foi_b.nc
+
+! Input NetCDF filenames for the forecasts initialized from the analysis
+! of the current 4D-Var cycle (FCTnameA) and initialized from the analysis
+! of the previous 4D-Var cycle (FCTnameB).
+
+    FCTnameA == njb1_fct_a.nc
+    FCTnameB == njb1_fct_b.nc
 
 ! Input forcing NetCDF filenames for computing observations impacts
 ! during the analysis-forecast cycle when the forecast is initialized

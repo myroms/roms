@@ -2,7 +2,7 @@
       SUBROUTINE wrt_info (ng, model, ncid, ncname)
 !
 !git $Id$
-!svn $Id: wrt_info.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: wrt_info.F 973 2019-07-17 20:30:44Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1010,7 +1010,8 @@
      &                        ncid = ncid)
 # endif
 # if defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY || \
-     defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY
+     defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY  || \
+     defined ARRAY_MODES
         CALL netcdf_put_ivar (ng, model, ncname, 'Nimpact',             &
      &                        Nimpact, (/0/), (/0/),                    &
      &                        ncid = ncid)

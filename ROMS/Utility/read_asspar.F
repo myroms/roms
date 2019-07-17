@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: read_asspar.F 973 2019-07-17 20:30:44Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -826,6 +826,18 @@
        defined W4DPSAS_SENSITIVITY
           WRITE (out,80) Nimpact, 'Nimpact',                             &
      &            'Observations impact/sensitivity outer loop to use.'
+          IF (Nimpact.gt.Nouter) THEN
+            IF (Master) THEN
+              WRITE (out,240) 'Nimpact', Nimpact,                        &
+     &              'must be less or equal than Nouter'
+            END IF
+            exit_flag=5
+            RETURN
+          END IF
+#   endif
+#   if defined ARRAY_MODES
+          WRITE (out,80) Nimpact, 'Nimpact',                             &
+     &            'Array mode outer loop.'
           IF (Nimpact.gt.Nouter) THEN
             IF (Master) THEN
               WRITE (out,240) 'Nimpact', Nimpact,                        &

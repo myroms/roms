@@ -473,6 +473,7 @@
       rtime=0.0_r8
       DO ng=1,Ngrids
         rtime=MAX(rtime, dt(ng)*ntimes_fct(ng))
+        ntimes(ng)=ntimes_fct(ng)
       END DO
       RunInterval=rtime
 !
@@ -1011,6 +1012,7 @@
         rtime=0.0_r8
         DO ng=1,Ngrids
           rtime=MAX(rtime, dt(ng)*ntimes_ana(ng))
+          ntimes(ng)=ntimes_ana(ng)
         END DO
         RunInterval=rtime
 !

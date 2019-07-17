@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_eac_8.in 970 2019-07-09 02:45:45Z arango $
+!svn $Id: roms_eac_8.in 973 2019-07-17 20:30:44Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -861,12 +861,24 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
      FWDNAME == eac_fwd.nc
      ADSNAME == eac_ads.nc
 
-! Input forcing NetCDF filenames for computing observations impacts
-! during the analysis-forecast cycle when the forecast is initialized
-! with the 4D-Var analysis (FOInameA) or the 4D-Var background (FOInameB).
+! Input adjoint forcing NetCDF filenames for computing observations
+! impacts during the analysis-forecast cycle. If the forecast error
+! metric is defined in state-space, then FOInameA and FOInameB should
+! be regular adjoint forcing files just like ADSname. If the forecast
+! error metric is defined in observation space (OBS_SPACE is activated)
+! then the forecast is initialized OIFnameA and OIFnameB (specified in
+! s4dvar.in input script) will have the structure of a 4D-Var observation
+! file.
 
     FOInameA == eac_foi_a.nc
     FOInameB == eac_foi_b.nc
+
+! Input NetCDF filenames for the forecasts initialized from the analysis
+! of the current 4D-Var cycle (FCTnameA) and initialized from the analysis
+! of the previous 4D-Var cycle (FCTnameB).
+
+    FCTnameA == eac_fct_a.nc
+    FCTnameB == eac_fct_b.nc
 
 ! Nesting grids connectivity data: contact points information. This
 ! NetCDF file is special and complex. It is currently generated using

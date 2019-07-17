@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_dogbone_whole.in 970 2019-07-09 02:45:45Z arango $
+!svn $Id: roms_dogbone_whole.in 973 2019-07-17 20:30:44Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -868,7 +868,7 @@ Dout(iTvdif) == 2*T     ! temp_vdiff, ...    vertical diffusion
 ! be regular adjoint forcing files just like ADSname. If the forecast
 ! error metric is defined in observation space (OBS_SPACE is activated)
 ! then the forecast is initialized OIFnameA and OIFnameB (specified in
-! s4dva4.in input script) will have the structure of a 4D-Var observation
+! s4dvar.in input script) will have the structure of a 4D-Var observation
 ! file.
 
     FOInameA == dogbone_foi_a.nc

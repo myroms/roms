@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: array_modes_w4dvar.h 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: array_modes_w4dvar.h 973 2019-07-17 20:30:44Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -219,6 +219,11 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iTLM, LCZ(ng)%name, 'obs_scale',      &
+     &                        ObsScale)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
         CALL netcdf_get_fvar (ng, iTLM, LCZ(ng)%name, 'cg_beta',        &
      &                        cg_beta)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
@@ -378,7 +383,7 @@
       integer :: my_inner, my_outer
       integer :: Lbck, Lini, Rec1, Rec2
       integer :: i, ng, status, tile
-      integer :: Fcount, NRMrec
+      integer :: Fcount, NRMrec, TLMouter
 
       integer, dimension(Ngrids) :: Nrec
 
@@ -459,7 +464,7 @@
       DO ng=1,Ngrids
         LdefHIS(ng)=.TRUE.
         LwrtHIS(ng)=.TRUE.
-        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%base), outer
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%base), Nimpact-1
       END DO
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
@@ -577,8 +582,10 @@
 !  Define output 4DVAR NetCDF file containing all processed data
 !  at observation locations.
 !
+      TLMouter=1
       DO ng=1,Ngrids
         LdefMOD(ng)=.TRUE.
+        WRITE (DAV(ng)%name,10) TRIM(DAV(ng)%base), TLMouter+2
         CALL def_mod (ng)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -593,6 +600,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
+!
+#ifndef SKIP_NLM
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute basic state trajectory. It processes
@@ -621,6 +630,8 @@
         wrtNLmod(ng)=.FALSE.
         wrtObsScale(ng)=.FALSE.
       END DO
+!
+#endif
 !
 !  Set forward basic state NetCDF ID to nonlinear model trajectory to
 !  avoid the inquiring stage.
@@ -759,7 +770,7 @@
           CALL netcdf_put_fvar (ng, iRPM, DAV(ng)%name,                 &
      &                          'RP_iDataPenalty',                      &
      &                          FOURDVAR(ng)%DataPenalty(0:),           &
-     &                          (/1,outer/), (/NobsVar(ng)+1,1/),     &
+     &                          (/1,outer/), (/NobsVar(ng)+1,1/),       &
      &                          ncid = DAV(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
@@ -1311,13 +1322,21 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !
-      outer=1
+      outer=Nimpact
       inner=0
       DO ng=1,Ngrids
 #ifdef ARRAY_MODES
+#  ifdef RPCG
+        CALL rep_eigen (ng, iTLM, outer, Ninner-1)
+#  else
         CALL rep_eigen (ng, iTLM, outer, Ninner)
+#  endif
 #else
+#  ifdef RPCG
+        CALL rep_clip (ng, iTLM, outer, Ninner-1)
+#  else
         CALL rep_clip (ng, iTLM, outer, Ninner)
+#  endif
 #endif
       END DO
 !
@@ -1447,7 +1466,7 @@
 !  name here.
 !
       DO ng=1,Ngrids
-        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), outer+2
+        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), TLMouter+2
       END DO
 !
 !  Clear tangent linear forcing arrays before entering inner-loop.
@@ -1531,7 +1550,11 @@
 !
 #ifdef ARRAY_MODES
       DO ng=1,Ngrids
+#  ifdef RPCG
+        CALL rep_check (ng, iTLM, outer, Ninner-1)
+#  else
         CALL rep_check (ng, iTLM, outer, Ninner)
+#  endif
       END DO
 #endif
 
@@ -1552,8 +1575,13 @@
 !  name here.
 !
       DO ng=1,Ngrids
-        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), outer+3
+        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), TLMouter+3
+        WRITE (DAV(ng)%name,10) TRIM(DAV(ng)%base), TLMouter+3
         FrequentImpulse(ng)=.FALSE.
+        LdefMOD(ng)=.TRUE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                   __FILE__)) RETURN
       END DO
 !
 !  Initialize tangent linear model from ITL(ng)%name, record 1.
@@ -1626,8 +1654,13 @@
 !  name here.
 !
       DO ng=1,Ngrids
-        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), outer+4
+        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), TLMouter+4
+        WRITE (DAV(ng)%name,10) TRIM(DAV(ng)%base), TLMouter+4
         FrequentImpulse(ng)=.FALSE.
+        LdefMOD(ng)=.TRUE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                   __FILE__)) RETURN
       END DO
 !
 !  Initialize tangent linear model from ITL(ng)%name, record 1.
@@ -1700,7 +1733,13 @@
 !  name here.
 !
       DO ng=1,Ngrids
-        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), outer+5
+        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), TLMouter+5
+        WRITE (DAV(ng)%name,10) TRIM(DAV(ng)%base), TLMouter+5
+        FrequentImpulse(ng)=.FALSE.
+        LdefMOD(ng)=.TRUE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                   __FILE__)) RETURN
       END DO
 !
 !  Set basic state trajectory.
@@ -1776,9 +1815,15 @@
 !  The array mode will be saved in the TLM netcdf file, so define the
 !  name here.
 !
-          WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), outer+6
+          WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%base), TLMouter+6
+          WRITE (DAV(ng)%name,10) TRIM(DAV(ng)%base), TLMouter+6
+          FrequentImpulse(ng)=.FALSE.
+          LdefMOD(ng)=.TRUE.
+          CALL def_mod (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
-!  Assigne logical flag to turn on weak constraint forcing for model
+!  Assign logical flag to turn on weak constraint forcing for model
 !  error.
 !
           FrequentImpulse(ng)=.TRUE.

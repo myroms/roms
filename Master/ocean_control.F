@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 !!
-!!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!!svn $Id: ocean_control.F 937 2019-01-28 06:13:04Z arango $
+!!git $Id$
+!!svn $Id: ocean_control.F 973 2019-07-17 20:30:44Z arango $
 !!================================================= Hernan G. Arango ===
 !! Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !!   Licensed under a MIT/X style license                              !
@@ -10,45 +10,50 @@
 !!                                                                     !
 !!  Regional Ocean Model System (ROMS) Drivers:                        !
 !!                                                                     !
-!!  ad_ocean.h             Adjoint model driver                        !
-!!  adsen_ocean.h          Adjoint sensitivity analysis driver         !
-!!  afte_ocean.h           Adjoint finite time eigenmodes driver       !
-!!  array_modes_w4dvar.h   W4DVAR array modes driver                   !
-!!  correlation.h          Error covariance correlation driver         !
-!!  fte_ocean.h            Finite time eigenmodes driver               !
-!!  fsv_ocean.h            Forcing singular vectors driver             !
-!!  hessian_fsv_ocean.h    Hessian forcing singular vectors driver     !
-!!  hessian_op_ocean.h     Hessian singular vectors driver             !
-!!  hessian_so_ocean.h     Hessian stochastic optimals driver          !
-!!  is4dvar_ocean.h        Strong constraint, incremental 4DVar data   !
-!!                           assimilation driver                       !
-!!  nl_ocean.h             Nonlinear model driver (default)            !
-!!  op_ocean.h             Optimal perturbations driver                !
-!!  optobs_ocean.h         Optimal observations driver                 !
-!!  obs_sen_is4dvar.h      Observations sensitivity driver to the      !
-!!                           IS4DVAR data assimilation system          !
-!!  obs_sen_w4dpsas.h      Observations sensitivity driver to the      !
-!!                           W4DPSAS data assimilation system          !
-!!  obs_sen_w4dvar.h       Observations sensitivity driver to the      !
-!!                           W4DVAR  data assimilation system          !
-!!  rp_ocean.h             Representer tangent linear model driver     !
-!!  so_ocean.h             Stochastic optimals driver                  !
-!!  so_semi_ocean.h        Stochastic optimals, semi-norm driver       !
-!!  symmetry.h             Representer matrix, symmetry driver         !
-!!  pert_ocean.h           Tangent linear and adjoint models sanity    !
-!!                           test driver                               !
-!!  picard_ocean.h         Picard test for representers tangent linear !
-!!                           model driver                              !
-!!  tlcheck_ocean.h        Tangent linear model linearization test     !
-!!                           driver                                    !
-!!  tl_ocean.h             Tangent linear model driver                 !
-!!  tl_w4dpsas_ocean.h     Tangent linear driver to the W4DPSAS        !
-!!                           data assimilation system                  !
-!!  tl_w4dvar_ocean.h      Tangent linear driver to the W4DVAR         !
-!!                           data assimilation system                  !
-!!  w4dpsas_ocean.h        Weak constraint 4D-PSAS assimilation driver !
-!!  w4dvar_ocean.h         Weak constraint 4DVAR assimilation,         !
-!!                           indirect representer method               !
+!!  ad_ocean.h                  Adjoint model driver                   !
+!!  adsen_ocean.h               Adjoint sensitivity analysis driver    !
+!!  afte_ocean.h                Adjoint finite time eigenmodes driver  !
+!!  array_modes_w4dvar.h        W4DVAR array modes driver              !
+!!  correlation.h               Error covariance correlation driver    !
+!!  fte_ocean.h                 Finite time eigenmodes driver          !
+!!  fsv_ocean.h                 Forcing singular vectors driver        !
+!!  hessian_fsv_ocean.h         Hessian forcing singular vectors       !
+!!                                driver                               !
+!!  hessian_op_ocean.h          Hessian singular vectors driver        !
+!!  hessian_so_ocean.h          Hessian stochastic optimals driver     !
+!!  is4dvar_ocean.h             Strong constraint, incremental 4DVar   !
+!!                                data assimilation driver             !
+!!  nl_ocean.h                  Nonlinear model driver (default)       !
+!!  op_ocean.h                  Optimal perturbations driver           !
+!!  optobs_ocean.h              Optimal observations driver            !
+!!  obs_sen_is4dvar.h           Observations sensitivity driver to the !
+!!                                IS4DVAR data assimilation system     !
+!!  obs_sen_w4dpsas.h           Observations sensitivity driver to the !
+!!                                W4DPSAS data assimilation system     !
+!!  obs_sen_w4dpsas_forecast.h  Observations analysis and forecast     !
+!!                                sensitivity driver for W4DPSAS       !
+!!  obs_sen_w4dvar.h            Observations sensitivity driver to the !
+!!                                W4DVAR  data assimilation system     !
+!!  rp_ocean.h                  Representer tangent linear model       !
+!!                                driver                               !
+!!  so_ocean.h                  Stochastic optimals driver             !
+!!  so_semi_ocean.h             Stochastic optimals, semi-norm driver  !
+!!  symmetry.h                  Representer matrix, symmetry driver    !
+!!  pert_ocean.h                Tangent linear and adjoint models      !
+!!                                sanity test driver                   !
+!!  picard_ocean.h              Picard test for representers tangent   !
+!!                                linear model driver                  !
+!!  tlcheck_ocean.h             Tangent linear model linearization     !
+!!                                test driver                          !
+!!  tl_ocean.h                  Tangent linear model driver            !
+!!  tl_w4dpsas_ocean.h          Tangent linear driver to the W4DPSAS   !
+!!                                data assimilation system             !
+!!  tl_w4dvar_ocean.h           Tangent linear driver to the W4DVAR    !
+!!                                data assimilation system             !
+!!  w4dpsas_ocean.h             Weak constraint 4D-PSAS assimilation   !
+!!                                driver                               !
+!!  w4dvar_ocean.h              Weak constraint 4DVAR assimilation,    !
+!!                                indirect representer method          !
 !!                                                                     !
 !!======================================================================
 !!
@@ -94,6 +99,8 @@
 # include "w4dpsas_ocean.h"
 #elif defined W4DVAR
 # include "w4dvar_ocean.h"
+#elif defined W4DPSAS_FCT_SENSITIVITY
+# include "obs_sen_w4dpsas_forecast.h"
 #elif defined W4DPSAS_SENSITIVITY
 # include "obs_sen_w4dpsas.h"
 #elif defined TL_W4DPSAS
