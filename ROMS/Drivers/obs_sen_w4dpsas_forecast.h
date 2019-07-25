@@ -745,12 +745,14 @@
         Lstiffness=.FALSE.
 #ifdef OBS_SPACE
         LsenPSAS(ng)=.FALSE.
+        LsenFCT(ng)=.TRUE.
         Lobspace(ng)=.TRUE.
 # ifndef OBS_IMPACT
         LadjVAR(ng)=.FALSE.
 # endif
 #else
         LsenPSAS(ng)=.TRUE.
+        LsenFCT(ng)=.FALSE.
 #endif
 !$OMP PARALLEL
         CALL ad_initial (ng)
@@ -862,12 +864,14 @@
           Lstiffness=.FALSE.
 #ifdef OBS_SPACE
           LsenPSAS(ng)=.FALSE.
+          LsenFCT(ng)=.TRUE.
           Lobspace(ng)=.TRUE.
 # ifndef OBS_IMPACT
           LadjVAR(ng)=.FALSE.
 # endif
 #else
           LsenPSAS(ng)=.TRUE.
+          LsenFCT(ng)=.FALSE.
 #endif
 !$OMP PARALLEL
           CALL ad_initial (ng)
@@ -1048,12 +1052,14 @@
 !!AMM
 #ifdef OBS_SPACE
           LsenPSAS(ng)=.TRUE.
+          LsenFCT(ng)=.FALSE.
           Lobspace(ng)=.FALSE.
 # ifndef OBS_IMPACT
           LadjVAR(ng)=.FALSE.
 # endif
 #else
           LsenPSAS(ng)=.FALSE.
+          LsenFCT(ng)=.FALSE.
 #endif
 !!AMM
 !$OMP PARALLEL
@@ -1396,6 +1402,12 @@
 !$OMP END PARALLEL
         END DO
 !
+!  Set obs file flag for next call to ad_initial.
+!
+        DO ng=1,Ngrids
+          OBS(ng)%ncid=-1
+        END DO
+!
 # ifdef RPCG
         AD_INNER_LOOP : DO my_inner=Ninner,0,-1
 # else
@@ -1446,8 +1458,9 @@
 !
           DO ng=1,Ngrids
             LsenPSAS(ng)=.FALSE.
+            LsenFCT(ng)=.TRUE.
 #ifdef OBS_SPACE
-            Lobspace(ng)=.FALSE.
+            Lobspace(ng)=.TRUE.
 # ifndef OBS_IMPACT
             LadjVAR(ng)=.TRUE.
 # endif

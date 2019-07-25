@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_vbc.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: ad_set_vbc.F 974 2019-07-25 15:28:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1163,7 +1163,7 @@
 !>
           ad_cff2=ad_cff2+                                              &
      &            (1.0_r8-cff3*0.5_r8*(1.0_r8-SIGN(1.0_r8,cff2)))*      &
-     &            ad_stfx(i,j,itemp)
+     &            ad_stflx(i,j,itemp)
           ad_stflx(i,j,itemp)=0.0_r8
 !>        tl_cff3=0.5_r8*SIGN(1.0_r8, cff1-t(i,j,N(ng),nrhs,itemp))*0.0
 !>        tl_cff3=0.0_r8

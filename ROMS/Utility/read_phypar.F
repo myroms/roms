@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 973 2019-07-17 20:30:44Z arango $
+!svn $Id: read_phypar.F 974 2019-07-25 15:28:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -478,9 +478,6 @@
 #endif
             CASE ('NTIMES')
               Npts=load_i(Nval, Rval, Ngrids, ntimes)
-#ifdef CORRELATION
-              ntimes=1                 ! no time-stepping required
-#endif
 #ifdef W4DPSAS_FCT_SENSITIVITY
             CASE ('NTIMES_ANA')
               Npts=load_i(Nval, Rval, Ngrids, ntimes_ana)
@@ -3524,6 +3521,9 @@
         ELSE
           NSA=1
         END IF
+#  ifdef CORRELATION
+        ntimes=1                 ! no time-stepping required
+#  endif
 # else
         NSA=1
 # endif

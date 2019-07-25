@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE get_data (ng)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: get_data.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: get_data.F 974 2019-07-25 15:28:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,10 +29,10 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
-#if defined HYPOXIA_SRM         || defined NLM_OUTER || \
-    defined RED_TIDE            || defined TLM_CHECK || \
-    defined TL_W4DPSAS          || defined W4DPSAS   || \
-    defined W4DPSAS_SENSITIVITY
+#if defined HYPOXIA_SRM         || defined NLM_OUTER               ||\
+    defined RED_TIDE            || defined TLM_CHECK               ||\
+    defined TL_W4DPSAS          || defined W4DPSAS                 ||\
+    defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
       USE mod_ocean
 #endif
       USE mod_scalars
@@ -1157,8 +1157,9 @@
       END IF
 #endif
 
-#if defined NLM_OUTER || defined TL_W4DPSAS           || \
-    defined W4DPSAS   || defined W4DPSAS_SENSITIVITY
+#if defined NLM_OUTER               || defined TL_W4DPSAS          ||\
+    defined W4DPSAS                 || defined W4DPSAS_SENSITIVITY ||\
+    defined W4DPSAS_FCT_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Read weak contraint forcing snapshots. Notice that the forward

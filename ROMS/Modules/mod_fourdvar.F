@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: mod_fourdvar.F 974 2019-07-25 15:28:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -832,6 +832,9 @@
 #  ifdef RPM_RELAXATION
         logical, allocatable :: LweakRelax(:)
 #  endif
+#  ifdef W4DPSAS_FCT_SENSITIVITY
+        logical, allocatable :: LsenFCT(:)
+#  endif
 #  if defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY ||\
       defined W4DVAR_SENSITIVITY
 !
@@ -1030,6 +1033,12 @@
 #  ifdef RPM_RELAXATION
       IF (.not.allocated(LweakRelax)) THEN
         allocate ( LweakRelax(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#  endif
+#  ifdef W4DPSAS_FCT_SENSITIVITY
+      IF (.not.allocated(LsenFCT)) THEN
+        allocate ( LsenFCT(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #  endif
