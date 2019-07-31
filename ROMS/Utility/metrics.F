@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       MODULE metrics_mod
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: metrics.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: metrics.F 980 2019-07-31 15:36:21Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1300,7 +1300,7 @@
                 Text='South bry Hconvolution, NHstepsB, DTsizeHB ='
               ELSE IF (ibry.eq.ieast) THEN
                 Text='East  bry Hconvolution, NHstepsB, DTsizeHB ='
-              ELSE IF (ibry.eq.isouth) THEN
+              ELSE IF (ibry.eq.inorth) THEN
                 Text='North bry Hconvolution, NHstepsB, DTsizeHB ='
               END IF
               IF (HdecayB(is,ibry,ng).gt.0.0_r8) THEN
@@ -1322,7 +1322,7 @@
                 Text='South bry Vconvolution, NVstepsB, DTsizeVB ='
               ELSE IF (ibry.eq.ieast) THEN
                 Text='East  bry Vconvolution, NVstepsB, DTsizeVB ='
-              ELSE IF (ibry.eq.isouth) THEN
+              ELSE IF (ibry.eq.inorth) THEN
                 Text='North bry Vconvolution, NVstepsB, DTsizeVB ='
               END IF
               IF (VdecayB(is,ibry,ng).gt.0.0_r8) THEN
