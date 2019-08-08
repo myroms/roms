@@ -1,5 +1,5 @@
-# git $Id: fb61fdd13dd8a36db69a0eb3a90df48d7a755627 $
-# svn $Id: Darwin-ifort.mk 956 2019-03-10 21:23:26Z arango $
+# git $Id$
+# svn $Id: Darwin-ifort.mk 981 2019-08-08 19:59:02Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -17,6 +17,7 @@
 # HDF5_INCDIR    HDF5 include directory
 # HDF5_LIBDIR    HDF5 library directory
 # HDF5_LIBS      HDF5 library switches
+# LIBS           Required libraries during linking
 # NF_CONFIG      NetCDF Fortran configuration script
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF libary directory
@@ -38,7 +39,7 @@
            INCDIR := /usr/include /usr/local/bin
             SLIBS := -L/usr/local/lib -L/usr/lib
             ULIBS :=
-             LIBS :=
+             LIBS := $(SCRATCH_DIR)/libNLM.a         # cyclic dependencies
        MOD_SUFFIX := mod
                LD := $(FC)
           LDFLAGS :=

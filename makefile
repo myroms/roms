@@ -170,7 +170,7 @@ ifeq "$(strip $(SCRATCH_DIR))" "./"
 endif
 
 #--------------------------------------------------------------------------
-#  Notice that the token "libraries" is initialize with the ROMS/Utility
+#  Notice that the token "libraries" is initialized with the ROMS/Utility
 #  library to account for calls to objects in other ROMS libraries or
 #  cycling dependencies. These type of dependencies are problematic in
 #  some compilers during linking. This library appears twice at linking
