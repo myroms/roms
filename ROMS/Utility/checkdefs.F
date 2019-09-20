@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: checkdefs.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -682,6 +682,13 @@
      &   'Write out radiation celerity in forward file'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CELERITY_WRITE,'
+#endif
+#ifdef CHECK_OPEN_FILES
+!
+      IF (Master) WRITE (stdout,20) 'CHECK_OPEN_FILES',                 &
+     &   'Monitor the number opened, closed, and created NetCDF files'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' CHECK_OPEN_FILES,'
 #endif
 #ifdef CLIPPING
 !
@@ -1605,6 +1612,13 @@
      &   'Separate impact due to IC, surface forcing, and OBC'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' OBS_IMPACT_SPLIT,'
+#endif
+#if defined OBS_SPACE && defined W4DPSAS_FCT_SENSITIVITY
+!
+      IF (Master) WRITE (stdout,20) 'OBS_SPACE',                        &
+     &   'Forecast metric in obsrvation-space instead of state-space'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' OBS_SPACE,'
 #endif
 #ifdef NESTING
 # ifdef ONE_WAY

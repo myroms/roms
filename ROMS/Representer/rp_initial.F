@@ -2,8 +2,8 @@
 #ifdef TL_IOMS
       SUBROUTINE rp_initial (ng)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: rp_initial.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: rp_initial.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -88,6 +88,8 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, IniRec, Tindex
       integer :: thread, tile
+
+      real(dp) :: my_dstart
 !
 !=======================================================================
 !   Initialize model variables.
@@ -134,7 +136,27 @@
 !
       synchro_flag(ng)=.TRUE.
       first_time(ng)=0
+
+# ifdef GENERIC_DSTART
+!
+!  Rarely, the tangent linear model is initialized from a NetCDF file,
+!  so we do not know its actual initialization time. Usually, it is
+!  computed from DSTART, implying that its value is correct in the ROMS
+!  input script. Therefore, the user needs to check and update its value
+!  to every time that ROMS is executed. Alternatively, if available, we
+!  can use the initialization time from the nonlinear model, INItime.
+!  This variable is assigned when computing or processing the basic
+!  state trajectory needed to linearize the adjoint model.
+!
+      IF (INItime(ng).lt.0.0_dp) THEN
+        my_dstart=dstart                    ! ROMS input script
+      ELSE
+        my_dstart=INItime(ng)/86400.0_dp    ! NLM IC time is known
+      END IF
+      tdays(ng)=my_dstart
+# else
       tdays(ng)=dstart
+# endif
       time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1

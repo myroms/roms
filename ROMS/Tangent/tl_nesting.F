@@ -3,8 +3,8 @@
 
 #if defined NESTING && defined TANGENT
 !
-!git $Id: 561b1a751ac8e105e0fed1b318bb5deb1aabf341 $
-!svn $Id: tl_nesting.F 961 2019-04-03 21:47:00Z arango $
+!git $Id$
+!svn $Id: tl_nesting.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -784,9 +784,6 @@
       integer :: Tindex3d, itrc
 # endif
       integer :: LBi, UBi, LBj, UBj
-# ifdef NESTING_DEBUG
-      real :: IniTime
-# endif
 !
 !-----------------------------------------------------------------------
 !  Get donor grid data needed to process refinement grid contact points.
@@ -850,7 +847,6 @@
                 first=.FALSE.
                 WRITE (101,10)
               END IF
-              IniTime=dstart*86400.0_r8
               WRITE (101,20) ng, cr, dg, rg, iic(dg), iic(rg),          &
      &                       3-tnew, tnew, Tindex2d, Tindex3d,          &
      &                       INT(time(rg)),                             &

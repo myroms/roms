@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       MODULE mod_param
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
-!svn $Id: mod_param.F 965 2019-05-09 03:07:37Z arango $
+!git $Id$
+!svn $Id: mod_param.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -140,11 +140,14 @@
 !
 !  This structure is used to declare the variables associated with
 !  input and output files, like TYPE(IO) :: HIS(Ngrids). It is a
-!  compact way to store a lot of information.
+!  compact way to store a lot of information.  The "Fcount" variable
+!  is used during data processing in "check_multifile" and "inquiry"
+!  whereas "load" is used storing information in the structure.
 !
       TYPE T_IO
         integer :: Nfiles                        ! number of multi-files
         integer :: Fcount                        ! multi-file counter
+        integer :: load                          ! filename load counter
         integer :: Rindex                        ! NetCDF record index
         integer :: ncid                          ! NetCDF file ID
         integer,  pointer :: Nrec(:)             ! NetCDF record size
@@ -153,7 +156,8 @@
         real(dp), pointer :: time_min(:)         ! starting time
         real(dp), pointer :: time_max(:)         ! ending time
         character (len=50 ) :: label             ! structure label
-        character (len=256) :: base              ! base file name
+        character (len=256) :: head              ! head filename
+        character (len=256) :: base              ! base filename
         character (len=256) :: name              ! current name
         character (len=256), pointer :: files(:) ! multi-file names
       END TYPE T_IO
@@ -630,6 +634,9 @@
       integer :: iTLM = 2
       integer :: iRPM = 3
       integer :: iADM = 4
+
+      character (len=3), dimension(4) :: kernel =                       &
+     &                                   (/ 'NLM','TLM','RPM','ADM' /)
 !
 !-----------------------------------------------------------------------
 !  Domain partition parameters.

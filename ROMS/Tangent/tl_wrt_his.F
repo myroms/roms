@@ -2,8 +2,8 @@
 #if defined TANGENT || defined TL_IOMS
       SUBROUTINE tl_wrt_his (ng)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: tl_wrt_his.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: tl_wrt_his.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -103,7 +103,7 @@
 !  Set time record index.
 !
       TLM(ng)%Rindex=TLM(ng)%Rindex+1
-      Fcount=TLM(ng)%Fcount
+      Fcount=TLM(ng)%load
       TLM(ng)%Nrec(Fcount)=TLM(ng)%Nrec(Fcount)+1
 !
 !  If requested, set time index to recycle time records in the tangent

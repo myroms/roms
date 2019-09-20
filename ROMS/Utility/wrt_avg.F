@@ -5,8 +5,8 @@
    (defined TL_AVERAGES && defined TANGENT)
       SUBROUTINE wrt_avg (ng)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: wrt_avg.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: wrt_avg.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -84,7 +84,7 @@
 !  Set time record index.
 !
       AVG(ng)%Rindex=AVG(ng)%Rindex+1
-      Fcount=AVG(ng)%Fcount
+      Fcount=AVG(ng)%load
       AVG(ng)%Nrec(Fcount)=AVG(ng)%Nrec(Fcount)+1
 !
 !  Write out averaged time.

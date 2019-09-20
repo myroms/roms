@@ -2,8 +2,8 @@
 #ifdef TL_IOMS
       SUBROUTINE rp_output (ng)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: rp_output.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: rp_output.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -97,7 +97,11 @@
             Ldefine=.FALSE.
           END IF
           IF (Ldefine) THEN                     ! create new file or
-            Fcount=TLM(ng)%Fcount               ! inquire existing file
+            IF (iic(ng).eq.ntstart(ng)) THEN    ! inquire existing file
+              TLM(ng)%load=0                    ! reset filename counter
+            END IF
+            TLM(ng)%load=TLM(ng)%load+1
+            Fcount=TLM(ng)%load
             TLM(ng)%Nrec(Fcount)=0
             ifile=(iic(ng)-1)/ndefTLM(ng)+1
             IF (Master) THEN
@@ -107,6 +111,7 @@
 # ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iRPM, TLM(ng)%name)
 # endif
+            TLM(ng)%files(Fcount)=TRIM(TLM(ng)%name)
             IF (TLM(ng)%ncid.ne.-1) THEN
               CALL netcdf_close (ng, iRPM, TLM(ng)%ncid)
             END IF
@@ -190,7 +195,11 @@
             Ldefine=.FALSE.
           END IF
           IF (Ldefine) THEN
-            Fcount=AVG(ng)%Fcount
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              AVG(ng)%load=0                  ! reset filename counter
+            END IF
+            AVG(ng)%load=AVG(ng)%load+1
+            Fcount=AVG(ng)%load
             AVG(ng)%Nrec(Fcount)=0
             IF (ndefAVG(ng).eq.nAVG(ng)) THEN
               ifile=(iic(ng)-1)/ndefAVG(ng)
@@ -204,6 +213,7 @@
 #  ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iRPM, AVG(ng)%name)
 #  endif
+            AVG(ng)%files(Fcount)=TRIM(AVG(ng)%name)
             IF (AVG(ng)%ncid.ne.-1) THEN
               CALL netcdf_close (ng, iRPM, AVG(ng)%ncid)
             END IF

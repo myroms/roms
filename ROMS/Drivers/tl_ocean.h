@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
-!git $Id: b74206b2fdb575bfd204fd392aeb2ac76b7e8723 $
-!svn $Id: tl_ocean.h 962 2019-04-03 23:01:05Z arango $
+!git $Id$
+!svn $Id: tl_ocean.h 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -174,8 +174,26 @@
 !  grids, if applicable.
 !-----------------------------------------------------------------------
 !
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!  Set structure for the nonlinear surface fluxes to be processed by
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the BLK structure in routine "check_multifile".  Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('FWD2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+      END DO
+#endif
+!
+!  Initialize perturbation tangent linear model.
+!
       Lstiffness=.FALSE.
       DO ng=1,Ngrids
+        LreadFWD(ng)=.TRUE.
 !$OMP PARALLEL
         CALL tl_initial (ng, .TRUE.)
 !$OMP END PARALLEL
@@ -318,6 +336,9 @@
 !
 !  Close IO files.
 !
+      DO ng=1,Ngrids
+        CALL close_inp (ng, iTLM)
+      END DO
       CALL close_out
 
       RETURN

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: tl_w4dpsas_ocean.h 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: tl_w4dpsas_ocean.h 982 2019-09-20 03:33:52Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -369,7 +369,7 @@
 !
       DO ng=1,Ngrids
         INI(ng)%Rindex=1
-        Fcount=INI(ng)%Fcount
+        Fcount=INI(ng)%load
         INI(ng)%Nrec(Fcount)=1
         CALL wrt_ini (ng, 1)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
@@ -382,18 +382,10 @@
       DO ng=1,Ngrids
         LdefHIS(ng)=.TRUE.
         LwrtHIS(ng)=.TRUE.
-        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%base), outer
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), outer
+        lstr=LEN_TRIM(HIS(ng)%name)
+        HIS(ng)%base=HIS(ng)%name(1:lstr-3)
       END DO
-
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!  Set file name containing the nonlinear model bulk fluxes to be read
-!  and processed by other algorithms.
-!
-      DO ng=1,Ngrids
-        BLK(ng)%name=HIS(ng)%name
-      END DO
-#endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Model-error covariance normalization and stardard deviation factors.
@@ -521,6 +513,35 @@
         wrtObsScale(ng)=.FALSE.
       END DO
 !
+!  Set structure for the nonlinear forward trajectory to be processed
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the FWD structure in routine "check_multifile". Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('HIS2FWD')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadFWD(ng)=.TRUE.
+      END DO
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set structure for the nonlinear surface fluxes to be processed by
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the BLK structure in routine "check_multifile".  Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('HIS2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+      END DO
+#endif
+!
 !  Report data penalty function.
 !
       DO ng=1,Ngrids
@@ -553,13 +574,6 @@
 !  Clean penalty array before next run of NL model.
 !
         FOURDVAR(ng)%NLPenalty=0.0_r8
-      END DO
-!
-!  Set forward basic state NetCDF ID to nonlinear model trajectory to
-!  avoid the inquiring stage.
-!
-      DO ng=1,Ngrids
-        FWD(ng)%ncid=HIS(ng)%ncid
       END DO
 !
 !-----------------------------------------------------------------------
@@ -604,7 +618,9 @@
 !  (outer-1).
 !
         DO ng=1,Ngrids
-          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%base), outer-1
+          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%head), outer-1
+          lstr=LEN_TRIM(HIS(ng)%name)
+          HIS(ng)%base=HIS(ng)%name(1:lstr-3)
         END DO
 !
 !  Clear tangent linear forcing arrays before entering inner-loop.
@@ -692,7 +708,7 @@
             DO ng=1,Ngrids
               WRTforce(ng)=.TRUE.
               IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
-              Fcount=ADM(ng)%Fcount
+              Fcount=ADM(ng)%load
               ADM(ng)%Nrec(Fcount)=0
               ADM(ng)%Rindex=0
             END DO
@@ -813,7 +829,7 @@
 !  too many NetCDF files.
 !
               IF (inner.gt.1) LdefTLM(ng)=.FALSE.
-              Fcount=TLM(ng)%Fcount
+              Fcount=TLM(ng)%load
               TLM(ng)%Nrec(Fcount)=0
               TLM(ng)%Rindex=0
 !
@@ -889,7 +905,7 @@
         DO ng=1,Ngrids
           WRTforce(ng)=.TRUE.
           IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
-          Fcount=ADM(ng)%Fcount
+          Fcount=ADM(ng)%load
           ADM(ng)%Nrec(Fcount)=0
           ADM(ng)%Rindex=0
         END DO
@@ -971,11 +987,18 @@
 !  Set new basic state trajectory for next outer loop.
 !
         DO ng=1,Ngrids
+          idefHIS(ng)=-1
           LdefHIS(ng)=.TRUE.
           LwrtHIS(ng)=.TRUE.
           wrtNLmod(ng)=.TRUE.
           wrtTLmod(ng)=.FALSE.
-          WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%base), outer
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+          LreadBLK(ng)=.FALSE.
+#endif
+          LreadFWD(ng)=.FALSE.
+          WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), outer
+          lstr=LEN_TRIM(HIS(ng)%name)
+          HIS(ng)%base=HIS(ng)%name(1:lstr-3)
         END DO
 !
 !  If weak constraint, the impulses are time-interpolated at each
@@ -1052,6 +1075,35 @@
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
         END DO
+
+!  Set structure for the nonlinear forward trajectory to be processed
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the FWD structure in routine "check_multifile".  Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('HIS2FWD')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadFWD(ng)=.TRUE.
+      END DO
+
+#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set structure for the nonlinear surface fluxes to be processed by
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the BLK structure in routine "check_multifile".  Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('HIS2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+      END DO
+#endif
 !
 !  Report data penalty function.
 !
@@ -1093,6 +1145,7 @@
           CALL netcdf_close (ng, iNLM, FWD(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
+          HIS(ng)%ncid=-1
         END DO
 
       END DO OUTER_LOOP1
@@ -1137,7 +1190,9 @@
 !  (outer-1).
 !
         DO ng=1,Ngrids
-          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%base), outer-1
+          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%head), outer-1
+          lstr=LEN_TRIM(FWD(ng)%name)
+          FWD(ng)%base=FWD(ng)%name(1:lstr-3)
         END DO
 !
 !  Clear tangent linear forcing arrays before entering inner-loop.
@@ -1205,7 +1260,7 @@
             DO ng=1,Ngrids
               WRTforce(ng)=.TRUE.
               IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
-              Fcount=ADM(ng)%Fcount
+              Fcount=ADM(ng)%load
               ADM(ng)%Nrec(Fcount)=0
               ADM(ng)%Rindex=0
             END DO
@@ -1327,7 +1382,7 @@
 !
             DO ng=1,Ngrids
               IF (inner.gt.1) LdefTLM(ng)=.FALSE.
-              Fcount=TLM(ng)%Fcount
+              Fcount=TLM(ng)%load
               TLM(ng)%Nrec(Fcount)=0
               TLM(ng)%Rindex=0
             END DO
@@ -1397,7 +1452,7 @@
         DO ng=1,Ngrids
           WRTforce(ng)=.TRUE.
           IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
-          Fcount=ADM(ng)%Fcount
+          Fcount=ADM(ng)%load
           ADM(ng)%Nrec(Fcount)=0
           ADM(ng)%Rindex=0
         END DO
@@ -1478,7 +1533,9 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
         DO ng=1,Ngrids
-          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%base), outer
+          WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%head), outer
+          lstr=LEN_TRIM(FWD(ng)%name)
+          FWD(ng)%base=FWD(ng)%name(1:lstr-3)
         END DO
 !
 !  Initialize tangent linear model from initial impulse which is now
@@ -1517,7 +1574,7 @@
 !
         DO ng=1,Ngrids
 !! AMM    IF (inner.gt.1) LdefTLM(ng)=.FALSE.
-          Fcount=TLM(ng)%Fcount
+          Fcount=TLM(ng)%load
           TLM(ng)%Nrec(Fcount)=0
           TLM(ng)%Rindex=0
         END DO
@@ -1552,14 +1609,17 @@
         SourceFile=__FILE__ // ", ROMS_run"
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iTLM, TLM(ng)%ncid)
-          TLM(ng)%ncid=-1
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
 !
 !  Close current forward NetCDF file.
 !
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iNLM, FWD(ng)%ncid)
-          FWD(ng)%ncid=-1
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          HIS(ng)%ncid=-1
         END DO
 
       END DO OUTER_LOOP2
@@ -1608,7 +1668,7 @@
             IF (Master) WRITE (stdout,10)
  10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
      &                ' RESTART file',/)
-            Fcount=RST(ng)%Fcount
+            Fcount=RST(ng)%load
             IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
               RST(ng)%Rindex=2
               LcycleRST(ng)=.FALSE.
@@ -1648,6 +1708,9 @@
 !
 !  Close IO files.
 !
+      DO ng=1,Ngrids
+        CALL close_inp (ng, iNLM)
+      END DO
       CALL close_out
 
       RETURN

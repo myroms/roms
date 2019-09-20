@@ -2,8 +2,8 @@
 #ifdef WEAK_CONSTRAINT
       SUBROUTINE def_impulse (ng)
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
-!svn $Id: def_impulse.F 965 2019-05-09 03:07:37Z arango $
+!git $Id$
+!svn $Id: def_impulse.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -506,11 +506,13 @@
 !
 !  Open impulse forcing file for read/write.
 !
-        CALL netcdf_open (ng, iTLM, ncname, 1, TLF(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,30) TRIM(ncname)
-          RETURN
+        IF (TLF(ng)%ncid.eq.-1) THEN
+          CALL netcdf_open (ng, iTLM, ncname, 1, TLF(ng)%ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) THEN
+            WRITE (stdout,30) TRIM(ncname)
+            RETURN
+          END IF
         END IF
 !
 !  Inquire about the dimensions and check for consistency.

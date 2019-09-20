@@ -3,7 +3,7 @@
       SUBROUTINE def_ini (ng)
 !
 !git $Id$
-!svn $Id: def_ini.F 970 2019-07-09 02:45:45Z arango $
+!svn $Id: def_ini.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -544,11 +544,13 @@
 !
 !  Open initialization file for read/write.
 !
-        CALL netcdf_open (ng, iNLM, ncname, 1, INI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
-          WRITE (stdout,10) TRIM(ncname)
-          RETURN
+        IF (INI(ng)%ncid.eq.-1) THEN
+          CALL netcdf_open (ng, iNLM, ncname, 1, INI(ng)%ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) THEN
+            WRITE (stdout,10) TRIM(ncname)
+            RETURN
+          END IF
         END IF
 !
 !  Inquire about the dimensions and check for consistency.

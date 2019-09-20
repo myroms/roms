@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: nl_ocean.h 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: nl_ocean.h 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -258,7 +258,6 @@
 #if defined MODEL_COUPLING && !defined MCT_LIB
       integer :: NstrStep, NendStep
 #endif
-      real (dp) :: MyRunInterval
 !
 !-----------------------------------------------------------------------
 !  Time-step nonlinear model over all nested grids, if applicable.
@@ -370,7 +369,7 @@
             IF (Master) WRITE (stdout,10)
  10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
      &                ' RESTART file',/)
-            Fcount=RST(ng)%Fcount
+            Fcount=RST(ng)%load
             IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
               RST(ng)%Rindex=2
               LcycleRST(ng)=.FALSE.
@@ -410,6 +409,9 @@
 !
 !  Close IO files.
 !
+      DO ng=1,Ngrids
+        CALL close_inp (ng, iNLM)
+      END DO
       CALL close_out
 
       RETURN

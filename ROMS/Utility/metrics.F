@@ -2,7 +2,7 @@
       MODULE metrics_mod
 !
 !git $Id$
-!svn $Id: metrics.F 980 2019-07-31 15:36:21Z arango $
+!svn $Id: metrics.F 982 2019-09-20 03:33:52Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1206,8 +1206,8 @@
             IF (MOD(NVsteps(rec,is),2).ne.0) THEN
               NVsteps(rec,is)=NVsteps(rec,is)+1
             END IF
-# endif
           END IF
+# endif
         END DO
       END DO
 

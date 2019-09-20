@@ -3,8 +3,8 @@
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: ad_frc_adjust.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: ad_frc_adjust.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -148,7 +148,11 @@
         fac1=1.0_r8
         fac2=0.0_r8
       ELSE
+# ifdef GENERIC_DSTART
+        it1=MAX(0,(iic(ng)-ntstart(ng))/nSFF(ng))+1
+# else
         it1=MAX(0,(iic(ng)-1)/nSFF(ng))+1
+# endif
         it2=MIN(it1+1,Nfrec(ng))
         fac1=SF_time(it2,ng)-(time(ng)+dt(ng))
         fac2=(time(ng)+dt(ng))-SF_time(it1,ng)

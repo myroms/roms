@@ -3,7 +3,7 @@
       SUBROUTINE ad_wrt_his (ng)
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 980 2019-07-31 15:36:21Z arango $
+!svn $Id: ad_wrt_his.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -129,7 +129,7 @@
 !  Set time record index.
 !
       ADM(ng)%Rindex=ADM(ng)%Rindex+1
-      Fcount=ADM(ng)%Fcount
+      Fcount=ADM(ng)%load
       ADM(ng)%Nrec(Fcount)=ADM(ng)%Nrec(Fcount)+1
 !
 !  If requested, set time index to recycle time records in the adjoint

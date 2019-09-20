@@ -5,8 +5,8 @@
    (defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: adsen_force.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: adsen_force.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -201,10 +201,10 @@
 !
       adFac=0.0_r8
 #  ifdef IS4DVAR_SENSITIVITY
-      IF ((mod(iic(ng)-1,nHIS(ng)).eq.0).and.                           &
+      IF ((MOD(iic(ng)-1,nHIS(ng)).eq.0).and.                           &
      &    (DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
 #  else
-      IF ((mod(iic(ng)-1,nTLM(ng)).eq.0).and.                           &
+      IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                           &
      &    (DendS(ng).ge.tdays(ng)).and.(tdays(ng).ge.DstrS(ng))) THEN
 #  endif
           adFac=1.0_r8

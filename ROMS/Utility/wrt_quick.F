@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE wrt_quick (ng, tile)
 !
-!git $Id: a5817a359b80bd314ba5ee9d55207d3ec880af09 $
-!svn $Id: wrt_quick.F 954 2019-02-22 18:29:15Z arango $
+!git $Id$
+!svn $Id: wrt_quick.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -102,7 +102,7 @@
 !  Set time record index.
 !
       QCK(ng)%Rindex=QCK(ng)%Rindex+1
-      Fcount=QCK(ng)%Fcount
+      Fcount=QCK(ng)%load
       QCK(ng)%Nrec(Fcount)=QCK(ng)%Nrec(Fcount)+1
 !
 !  Write out model time (s).

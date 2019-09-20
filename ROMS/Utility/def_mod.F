@@ -3,7 +3,7 @@
       SUBROUTINE def_mod (ng)
 !
 !git $Id$
-!svn $Id: def_mod.F 973 2019-07-17 20:30:44Z arango $
+!svn $Id: def_mod.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -107,11 +107,16 @@
 !
 !  Open input observations NetCDF.
 !
-      CALL netcdf_open (ng, iNLM, OBS(ng)%name, 0, OBSncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
-        WRITE (stdout,30) TRIM(OBS(ng)%name)
-        RETURN
+      IF (OBS(ng)%ncid.eq.-1) THEN
+        CALL netcdf_open (ng, iNLM, OBS(ng)%name, 0, OBSncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) THEN
+          WRITE (stdout,30) TRIM(OBS(ng)%name)
+          RETURN
+        END IF
+        OBS(ng)%ncid=OBSncid
+      ELSE
+        OBSncid=OBS(ng)%ncid
       END IF
 !
 !  Inquire about input observations variables.
@@ -1862,13 +1867,6 @@
         CALL netcdf_enddef (ng, iNLM, ncname, DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-!
-!  Close input observations NetCDF file.
-!
-        CALL netcdf_close (ng, iNLM, OBSncid, OBS(ng)%name, .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-
       END IF DEFINE
 !
 !=======================================================================

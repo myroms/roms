@@ -3,8 +3,8 @@
 
 #ifdef WEAK_CONSTRAINT
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
-!svn $Id: frc_weak.F 937 2019-01-28 06:13:04Z arango $
+!git $Id$
+!svn $Id: frc_weak.F 982 2019-09-20 03:33:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -172,7 +172,11 @@
 !
 !  Set time records and interpolation factor, if any.
 !
+# ifdef GENERIC_DSTART
+      it1=MAX(0,(iic(ng)-ntstart(ng))/nADJ(ng))+1
+# else
       it1=MAX(0,(iic(ng)-1)/nADJ(ng))+1
+# endif
       it2=it1+1
       time1=dstart*day2sec+(it1-1)*nADJ(ng)*dt(ng)
       time2=dstart*day2sec+(it2-1)*nADJ(ng)*dt(ng)
