@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+
+# get first argument (full path name)
+$path = shift;
+
+if (0 < length($path)) {
+  # main processing loop
+  # read from stdin
+  while (<STDIN>) {
+    # replace keyword "Id"
+    s/git \$[Ii][Dd][^\$]*\$/git \$Id\$/g;
+  } continue {
+    # output generated text to stdout
+    print;
+  }
+}

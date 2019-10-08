@@ -2,7 +2,7 @@
       MODULE bulk_flux_mod
 #ifdef BULK_FLUXES
 !
-!git $Id: a1f936a180bd9c6834d05ee6a96290926c0e8586 $
+!git $Id$
 !svn $Id: bulk_flux.F 957 2019-03-10 22:28:13Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
-!git $Id: b74206b2fdb575bfd204fd392aeb2ac76b7e8723 $
+!git $Id$
 !svn $Id: ntimestep.F 962 2019-04-03 23:01:05Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

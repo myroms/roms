@@ -2,7 +2,7 @@
       MODULE exchange_4d_mod
 #ifdef SOLVE3D
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
+!git $Id$
 !svn $Id: exchange_4d.F 965 2019-05-09 03:07:37Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

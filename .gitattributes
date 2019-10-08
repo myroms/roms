@@ -3,12 +3,13 @@
 *.in         filter=id
 *.mk         filter=id
 *.sh         filter=id
+*.ksh        filter=id
 *.bash       filter=id
 makefile     filter=id
 Readme       filter=id
 *.pl         filter=id
 dates        filter=id
-cppclean     filter=id
+cpp_clean    filter=id
 sfmakedepend filter=id
 substitute   filter=id
 *.txt        filter=id

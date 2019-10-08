@@ -4,7 +4,7 @@
 
 #if defined NONLINEAR && defined SEDIMENT && !defined COHESIVE_BED
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!git $Id$
 !svn $Id: sed_bed.F 937 2019-01-28 06:13:04Z arango $
 !==================================================== John C. Warner ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !

@@ -1,4 +1,4 @@
-# git $Id: 65558c0d4b64dc8dc0626779b9486a5bcef22d3f $
+# git $Id$
 # svn $Id: makefile 968 2019-06-17 16:02:48Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group             Kate Hedstrom :::

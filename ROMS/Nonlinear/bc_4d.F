@@ -2,7 +2,7 @@
       MODULE bc_4d_mod
 #ifdef SOLVE3D
 !
-!git $Id: c0a36db015a04fd9811b2070af49d18ad8fa391c $
+!git $Id$
 !svn $Id: bc_4d.F 965 2019-05-09 03:07:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

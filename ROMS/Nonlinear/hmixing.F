@@ -4,7 +4,7 @@
 
 #if (defined DIFF_3DCOEF || defined VISC_3DCOEF) && defined SOLVE3D
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!git $Id$
 !svn $Id: hmixing.F 937 2019-01-28 06:13:04Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined SOLVE3D
 # define NEUMANN
 !
-!git $Id: 6c028d378d59b372df320d0ae156a85a985d5055 $
+!git $Id$
 !svn $Id: pre_step3d.F 964 2019-04-30 21:10:18Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

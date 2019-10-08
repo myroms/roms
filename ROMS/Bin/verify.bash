@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+# git $Id$
 # svn $Id: verify.bash 937 2019-01-28 06:13:04Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::

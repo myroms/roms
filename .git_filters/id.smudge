@@ -15,7 +15,25 @@ if (0 < length($path)) {
 
   # Need to grab filename and to use git log for this to be accurate.
   use IPC::Open3;
-  $pid = open3(0,\*READ,\*ERROR,"git", "log", "-n", "1", "--format=%H%n", "--", "$path");
+
+  # fetch log info from remote origin
+  $fetch = open3(0,\*READ,\*ERROR,"git", "fetch");
+  waitpid( $fetch, 0 );
+
+  # read error pipe
+  chomp($f_error = <ERROR>);
+
+  # If an error occurs, write out the file unchanged and exit
+  if (0 != length($f_error)) {
+    while (<STDIN>){
+      print;
+    }
+    exit;
+  }
+
+  # Grab log info for this file from the remote origin
+  # "--" is needed to separate branch specs from paths
+  $pid = open3(0,\*READ,\*ERROR,"git", "log", "-n", "1", "--format=%H%n", "origin/master", "--", "$path");
   waitpid( $pid, 0 );
 
   # read error pipe
@@ -23,7 +41,7 @@ if (0 < length($path)) {
 
   # if there is no error message
   if (0 == length($error)) {
-    # read the 3 output lines of svn log
+    # read the 2 output lines of svn log
     chomp($revision = <READ>); # 1st line is revision hash
 
     # main processing loop
@@ -33,6 +51,11 @@ if (0 < length($path)) {
       s/git \$([Ii][Dd])([^\$]*)\$/"git \$" . $1 . ": " . $revision . " \$"/eg;
     } continue {
       # output generated text to stdout
+      print;
+    }
+  } else {
+    # If an error occurs, write out the file unchanged
+    while (<STDIN>){
       print;
     }
   }

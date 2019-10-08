@@ -1,5 +1,5 @@
 /*
-** git $Id: a22e88226924f72d74cf6cdd8251baac388568ff $
+** git $Id$
 ** svn $Id: make_macros.h 950 2019-02-08 19:07:34Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2019 The ROMS/TOMS Group                               **
