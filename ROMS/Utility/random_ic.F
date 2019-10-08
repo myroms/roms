@@ -6,6 +6,8 @@
     defined POSTERIOR_ERROR_F)
 
 !
+!git $Id$
+!svn $Id: random_ic.F 983 2019-10-03 16:24:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !

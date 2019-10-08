@@ -2,7 +2,7 @@
 #if (defined TANGENT || defined TL_IOMS) && defined FOUR_DVAR
       SUBROUTINE rp_wrt_ini (ng, Tindex, OutRec)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!git $Id$
 !svn $Id: rp_wrt_ini.F 937 2019-01-28 06:13:04Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

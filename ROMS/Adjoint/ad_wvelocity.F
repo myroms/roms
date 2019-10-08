@@ -2,6 +2,8 @@
       MODULE ad_wvelocity_mod
 #if defined ADJOINT && defined SOLVE3D
 !
+!git $Id$
+!svn $Id: ad_wvelocity.F 983 2019-10-03 16:24:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

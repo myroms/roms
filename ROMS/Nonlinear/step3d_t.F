@@ -2,7 +2,7 @@
       MODULE step3d_t_mod
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
-!git $Id: 6c028d378d59b372df320d0ae156a85a985d5055 $
+!git $Id$
 !svn $Id: step3d_t.F 964 2019-04-30 21:10:18Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

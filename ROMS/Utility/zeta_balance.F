@@ -2,7 +2,7 @@
       MODULE zeta_balance_mod
 
 #if defined BALANCE_OPERATOR  && defined ZETA_ELLIPTIC
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!git $Id$
 !svn $Id: zeta_balance.F 937 2019-01-28 06:13:04Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !

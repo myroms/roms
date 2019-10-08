@@ -2,7 +2,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
       SUBROUTINE obs_read (ng, model, backward)
 !
-!git $Id: 560fb376ff8a4576170ebcd4b459de6bcce908f6 $
+!git $Id$
 !svn $Id: obs_read.F 937 2019-01-28 06:13:04Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

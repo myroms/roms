@@ -3,6 +3,8 @@
 
 #ifdef RPCG
 !
+!git $Id$
+!svn $Id: comp_Jb0.F 983 2019-10-03 16:24:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -279,7 +281,6 @@
 !
 !  Local variable declarations.
 !
-
       real(r8), dimension(0:NstateVar(ng)) :: dot
 
 # include "set_bounds.h"

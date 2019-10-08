@@ -2,7 +2,7 @@
 #ifdef STATIONS
       SUBROUTINE read_StaPar (model, inp, out, Lwrite)
 !
-!git $Id: 6eecb5ea928e0d7adbc54b512430fc5b5981a1c3 $
+!git $Id$
 !svn $Id: read_stapar.F 952 2019-02-13 03:42:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !

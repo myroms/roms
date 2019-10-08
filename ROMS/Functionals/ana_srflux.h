@@ -1,6 +1,6 @@
       SUBROUTINE ana_srflux (ng, tile, model)
 !
-!! git $Id: 85aebe8b1c84612f4426a776e45f13d9da861f55 $
+!! git $Id$
 !! svn $Id: ana_srflux.h 959 2019-03-13 15:59:03Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
