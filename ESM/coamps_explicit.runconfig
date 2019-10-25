@@ -1,0 +1,44 @@
+#
+# git $Id$
+# svn $Id: coamps_explicit.runconfig 984 2019-10-25 02:11:54Z arango $
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
+#                                                                       :::
+# DATA-COAMPS-ROMS semi-implicit ESMF coupling:                         :::
+#                                                                       :::
+# This ESMF configuration file includes the Run Sequence to couple      :::
+# DATA, COAMPS, and ROMS components. All the components interact with   :::
+# the same coupling time step. The connectors from ROMS to COAMPS and   :::
+# COAMPS to ROMS are explicit. It is recommended to use the semi-       :::
+# implicit RunSequence configuration to ensure conservation. Usually,   :::
+# the timestep of the atmosphere kernel is smaller than that for the    :::
+# ocean.                                                                :::
+#                                                                       :::
+# The User needs to check that the single coupling interval specified   :::
+# here is the same as for the ROMS coupling standard input script       :::
+# (keyword TimeStep).                                                   :::
+#                                                                       :::
+# It is not necessary to specify options to the connectors here for     :::
+# the "remapMethod" since it is specified in the input coupling         :::
+# metada file (keyword CPLname) for each exchanged field.               :::
+#                                                                       :::
+# The component label is specific to how is known in the ESMF driver.   :::
+# It is set in subroutine allocate_esmf_esm, variable MODELS(:)%name.   :::
+#                                                                       :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# Indian Ocean Application
+
+runSeq::
+  @300                       # 5 min coupling time step, single time loop
+    DATA -> COAMPS_01        # DATA to COAMPS connector
+    DATA
+    COAMPS_01 -> ROMS_01     # COAMPS to ROMS connector
+    ROMS_01 -> COAMPS_01     # ROMS to COAMPS connector
+    ROMS_01
+    COAMPS_01
+  @
+::
