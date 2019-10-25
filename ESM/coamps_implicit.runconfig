@@ -1,0 +1,46 @@
+#
+# git $Id$
+# svn $Id: coamps_implicit.runconfig 984 2019-10-25 02:11:54Z arango $
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
+#                                                                       :::
+# DATA-COAMPS-ROMS semi-implicit ESMF coupling:                         :::
+#                                                                       :::
+# This ESMF configuration file includes the Run Sequence to couple      :::
+# DATA, COAMPS, and ROMS components. All the components interact with   :::
+# the same coupling time step. The connector from ROMS to COAMP is      :::
+# explicit, whereas the connector from COAMPS to ROMS is semi-implicit. :::
+# Usually, the timestep of the atmosphere kernel is smaller than that   :::
+# for the ocean. COAMPS export fields are always time-averaged over     :::
+# the coupling interval, which is the same as the ROMS timestep. It     :::
+# is semi-implicit because ROMS right-hand-side terms are forced with   :::
+# n+1/2 COAMPS fields because of the time-averaging.                    :::
+#                                                                       :::
+# The User needs to check that the single coupling interval specified   :::
+# here is the same as for the ROMS coupling standard input script       :::
+# (keyword TimeStep).                                                   :::
+#                                                                       :::
+# It is not necessary to specify options to the connectors here for     :::
+# the "remapMethod" since it is specified in the input coupling         :::
+# metada file (keyword CPLname) for each exchanged field.               :::
+#                                                                       :::
+# The component label is specific to how is known in the ESMF driver.   :::
+# It is set in subroutine allocate_esmf_esm, variable MODELS(:)%name.   :::
+#                                                                       :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# Indian Ocean Application
+
+runSeq::
+  @300                       # 5 min coupling time step, single time loop
+    DATA -> COAMPS_01        # DATA to COAMPS connector
+    DATA
+    ROMS_01 -> COAMPS_01     # ROMS to COAMPS connector
+    COAMPS_01
+    COAMPS_01 -> ROMS_01     # COAMPS to ROMS connector
+    ROMS_01
+  @
+::
