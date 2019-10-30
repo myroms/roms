@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 982 2019-09-20 03:33:52Z arango $
+!svn $Id: read_phypar.F 986 2019-10-30 20:00:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -6024,6 +6024,8 @@
 #endif
           fname=varname
           IF (.not.find_file(ng, fname, 'VARNAME')) GO TO 30
+          WRITE (out,230) 'ROMS I/O variables Metadata File:  ',        &
+     &                    TRIM(fname)
           GO TO 40
   30      IF (Master) THEN
             IF (LEN_TRIM(fname).eq.0) THEN

@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: my_build_paths.sh 943 2019-01-31 23:21:29Z arango $
+# svn $Id: my_build_paths.sh 986 2019-10-30 20:00:14Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -179,6 +179,7 @@ switch ($FORT)
       setenv NETCDF             /opt/intelsoft/serial/netcdf3
       setenv NETCDF_INCDIR      ${NETCDF}/include
       setenv NETCDF_LIBDIR      ${NETCDF}/lib
+      setenv NETCDF_classic     1
     endif
 
     if ($?USE_HDF5) then
