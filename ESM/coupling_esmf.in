@@ -2,7 +2,7 @@
 ! Multiple model coupling parameters: ESMF/NUOPC Library
 !
 !git $Id$
-!svn $Id: coupling_esmf.in 946 2019-02-03 16:32:28Z arango $
+!svn $Id: coupling_esmf.in 987 2019-11-16 22:47:11Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -65,6 +65,10 @@
 ! Coupling import/export variables metadata filename.
 
            CPLname = coupling_esmf.dat
+
+! Coupling free-format run sequence configuration filename.
+
+          CONFname = esmApp.runconfig
 
 ! Coupled models standard input script or namelist filename.
 
@@ -139,7 +143,7 @@
           StopTime =  2014 01 06 00 00 00   ! Simulation stop time
           TimeStep =  0000 00 00 03 00 00   ! Coupler driver interval
 
-          Calendar =  gregorian             ! date calendar
+          Calendar =  gregorian
 
 ! Coupling time interval fraction (INTEGER) from driver TimeStep indicating
 ! how often the exchange of information between ESM components occurs. That
@@ -158,25 +162,34 @@
  TimeFrac(ICE-WAV) =  1                     ! seaice-wave coupling
  TimeFrac(WAV-DAT) =  1                     ! wave-data coupling
 
-! Weighted average coefficients for the merging of DATA component fields with
-! the same field from other ESM components. Both coefficients are positive and
-! MUST add to unity (WeightDAT + WeightESM = 1.0d0)
+! Internal ESMF parameters (see below for information).
 
-         WeightDAT = 0.5d0                  ! DATA component weight
-         WeightESM = 0.5d0                  ! ESM  component weight
+   extrapNumLevels =  4     ! number of levels for creep fill extrapolation
+
+! Weighted coefficients for the merging of DATA component fields with the same
+! field from other ESM components. Melding coefficients are positive and MUST
+! add to unity. They are read from an input NetCDF file ('WeightsFile'). The
+! user needs to specify the NetCDF variable names for the weights for the DATA
+! ('VnameDATA') and ESM ('VnameESM') components. Currently, the weight values
+! are only needed by the atmosphere component.
+
+WeightsFile(atmos) == meld_weights_atm.nc
+  VnameDATA(atmos) =  data_weight
+   VnameESM(atmos) =  ocean_weight
 
 ! Coupling debug flag:      [0] no debugging
 !                           [1] reports informative messages
-!                           [2] <1> and writes grid information in VTK format
+!                           [2] <1> and coupled components RunSequence
 !                           [3] <2> and writes exchange fields into NetCDF files
+!                           [4] <3> and writes grid information in VTK format
 !
         DebugLevel = 1
 
 ! Execution trace flag:     [0] no tracing
-!                           [1] reports run sequence of coupling subroutine calls
+!                           [1] reports the sequence of coupling subroutine calls
 !                           [2] <1> writes voluminous ESMF library tracing information
 
-        TraceLevel = 1
+        TraceLevel = 0
 
 ! Export/Import fields: Use the following string codes to set the fields
 !                       to export/import for each coupled model.
@@ -467,6 +480,8 @@ nDataExport(seaice) == 0                ! number of fields to export
 !
 ! CPL_name       Coupling import/export variables metadata filename.
 !
+! CONFname       Coupling free-format run sequence configuration filename.
+!
 ! INPname        Coupled models components standard input script or namelist
 !                  filenames:
 !
@@ -608,41 +623,71 @@ nDataExport(seaice) == 0                ! number of fields to export
 !                    PETs needed is the sum of all active coupled model
 !                    components.
 !
-! WeightDAT          Weighted average coefficient for DATA component field.
-!
-! WeightESM          Weighted average coefficient for ESM  component field.
-!
-!                    The weighted average coefficients are used for merging
-!                    fields from DATA and ESM components. Both coefficients
-!                    are positive and MUST add to unity:
-!
-!                      WeightDAT + WeightESM = 1.0d0
-!
-!                    Recall that the DATA component supplies needed data to
-!                    a particular ESM component.  For example, it may export
-!                    data to the atmosphere model at locations not covered
-!                    by the other ESM components because of smaller grid
-!                    coverage.  If the atmosphere and ocean model grids
-!                    are incongruent, the atmosphere component needs to
-!                    import sea surface temperature (SST) on those grid
-!                    points not covered by the ocean component. Thus, the
-!                    weightind coefficient are used to merge the SST data.
-!
 ! DebugLevel       Coupling debugging flag:
 !
-!                    [0] no debug
+!                    [0] no debugging
 !                    [1] reports informative messages
-!                    [2] <1> plus writes grid information in VTK format
-!                    [3] <2> plus writes exchange fields into NetCDF files
-!                            (it generates lots of small NetCDF files)
+!                    [2] <1> and coupled components RunSequence
+!                    [3] <2> and writes exchange fields into NetCDF files
+!                    [4] <3> and writes grid information in VTK format
 !
 ! TraceLevel       Execution tracing flag:
 !
 !                    [0] no tracing
-!                    [1] reports run sequence of coupling subroutine calls
+!                    [1] reports the sequence of coupling subroutine calls
 !                    [2] <1> plus writes voluminous ESMF library tracing
 !                            information which slowdown performace, and
 !                            creates large log file
+!
+!------------------------------------------------------------------------------
+! ESMF library internal parameters.
+!------------------------------------------------------------------------------
+!
+! extrapNumLevels  The number of levels for creep fill extrapolation of
+!                    unmapped destination points during regridding. After
+!                    regular regridding, the creep fill method of unmapped
+!                    points repeatedly moves data from mapped locations to
+!                    the neighboring unmapped locations by the specified
+!                    "extrapNumLevels" amount. For each creeped point, the
+!                    extrapolation value is the average of the immediate
+!                    neighbors from regridding. See ESMF Reference Manual
+!                    (version 8.0 or higher) for ESMF_EXTRAPMETHOD_CREEP
+!                    flag to ESMF_FieldRegridStore.
+!
+!------------------------------------------------------------------------------
+! Melding weighting coefficients.
+!------------------------------------------------------------------------------
+!
+! Melding coefficients used to combine fields from DATA and ESM components.
+! The weight factors are read from the input NetCDF specified in the
+! "WeightsFile(atmos)"  keyword.  The user has full control of how the
+! merging is done. It is recommended to provide a gradual transition between
+! the two components.  The weighting factors have the same dimension as
+! the atmosphere grid.
+!
+! Recall that the DATA component supplies needed data to a particular ESM
+! component.  For example, it may export data to the atmosphere model at
+! locations not covered by the other ESM components because of smaller grid
+! coverage.  If the atmosphere and ocean model grids are incongruent, the
+! atmosphere component needs to import sea surface temperature (SST) on
+! those grid points not covered by the ocean component. Thus, the weighting
+! coefficients are used to merge the SST data:
+!
+!   SST_atm(:,:) = Cesm(:,:) * SST_esm(;,;) + Cdat(:,:) * SST_dat(:,:)
+!
+! where Cesm(:,:) + Cdat(:,:) = 1.
+!
+! Currently, only the atmosphere component needs the weigth coefficients
+! when DATA_COUPLING is activated.
+!
+! WeightsFile(atmos) Input NetCDF containing weighting coefficients for the
+!                    atmosphere grid.
+!
+! VnameDATA(atmos)   NetCDF variable name containing the weight factor (Cdat)
+!                    for the DATA component.
+!
+! VnameESM(atmos)    NetCDF variable name containing the weight factor (Cesm)
+!                    for the ESM component (usually ocean: ROMS).
 !
 !------------------------------------------------------------------------------
 ! Time Managing.
