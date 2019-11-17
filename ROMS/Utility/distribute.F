@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 937 2019-01-28 06:13:04Z arango $
+!svn $Id: distribute.F 988 2019-11-17 01:27:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -5095,7 +5095,7 @@
 
 # ifdef SINGLE_PRECISION
 !
-      SUBROUTINE mp_reduce_0dp (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_0dp (ng, model, Asize, A, handle_op)
 !
 !***********************************************************************
 !                                                                      !
@@ -5109,7 +5109,7 @@
 !     model      Calling model identifier.                             !
 !     Asize      Number of scalar variables to reduce.                 !
 !     A          Vector of scalar variables to reduce.                 !
-!     op_handle  Reduction operation handle (string).  The following   !
+!     handle_op  Reduction operation handle (string).  The following   !
 !                  reduction operations are supported:                 !
 !                  'MIN', 'MAX', 'SUM'                                 !
 !                                                                      !
@@ -5130,7 +5130,7 @@
 !
       integer, intent(in) :: ng, model, Asize
 
-      character (len=*), intent(in) :: op_handle
+      character (len=*), intent(in) :: handle_op
 
       real(dp), intent(inout) :: A
 !
@@ -5172,11 +5172,11 @@
 !  Collect and reduce.
 !
 #  if defined REDUCE_ALLREDUCE
-      IF (op_handle(1:3).eq.'MIN') THEN
+      IF (handle_op(1:3).eq.'MIN') THEN
         handle=MPI_MIN
-      ELSE IF (op_handle(1:3).eq.'MAX') THEN
+      ELSE IF (handle_op(1:3).eq.'MAX') THEN
         handle=MPI_MAX
-      ELSE IF (op_handle(1:3).eq.'SUM') THEN
+      ELSE IF (handle_op(1:3).eq.'SUM') THEN
         handle=MPI_SUM
       END IF
       CALL mpi_allreduce (Asend, Areduce, Npts, MP_DOUBLE, handle,      &
@@ -5203,11 +5203,11 @@
       END IF
       Areduce=Arecv(0)
       DO rank=1,NtileI(ng)*NtileJ(ng)-1
-        IF (op_handle(1:3).eq.'MIN') THEN
+        IF (handle_op(1:3).eq.'MIN') THEN
           Areduce=MIN(Areduce,Arecv(rank))
-        ELSE IF (op_handle(1:3).eq.'MAX') THEN
+        ELSE IF (handle_op(1:3).eq.'MAX') THEN
           Areduce=MAX(Areduce,Arecv(rank))
-        ELSE IF (op_handle(1:3).eq.'SUM') THEN
+        ELSE IF (handle_op(1:3).eq.'SUM') THEN
           Areduce=Areduce+Arecv(rank)
         END IF
       END DO
@@ -5228,11 +5228,11 @@
             exit_flag=2
             RETURN
           END IF
-          IF (op_handle(1:3).eq.'MIN') THEN
+          IF (handle_op(1:3).eq.'MIN') THEN
             Areduce=MIN(Areduce,Arecv(rank))
-          ELSE IF (op_handle(1:3).eq.'MAX') THEN
+          ELSE IF (handle_op(1:3).eq.'MAX') THEN
             Areduce=MAX(Areduce,Arecv(rank))
-          ELSE IF (op_handle(1:3).eq.'SUM') THEN
+          ELSE IF (handle_op(1:3).eq.'SUM') THEN
             Areduce=Areduce+Arecv(rank)
           END IF
         END DO
@@ -5281,7 +5281,7 @@
       RETURN
       END SUBROUTINE mp_reduce_0dp
 !
-      SUBROUTINE mp_reduce_1dp (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_1dp (ng, model, Asize, A, handle_op)
 !
 !***********************************************************************
 !                                                                      !
@@ -5295,7 +5295,7 @@
 !     model      Calling model identifier.                             !
 !     Asize      Number of scalar variables to reduce.                 !
 !     A          Vector of scalar variables to reduce.                 !
-!     op_handle  Reduction operation handle (string).  The following   !
+!     handle_op  Reduction operation handle (string).  The following   !
 !                  reduction operations are supported:                 !
 !                  'MIN', 'MAX', 'SUM'                                 !
 !                                                                      !
@@ -5316,7 +5316,7 @@
 !
       integer, intent(in) :: ng, model, Asize
 
-      character (len=*), intent(in) :: op_handle(Asize)
+      character (len=*), intent(in) :: handle_op(Asize)
 
       real(dp), intent(inout) :: A(Asize)
 !
@@ -5365,11 +5365,11 @@
 !
 #  if defined REDUCE_ALLREDUCE
       DO i=1,Asize
-        IF (op_handle(i)(1:3).eq.'MIN') THEN
+        IF (handle_op(i)(1:3).eq.'MIN') THEN
           handle=MPI_MIN
-        ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+        ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
           handle=MPI_MAX
-        ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+        ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
           handle=MPI_SUM
         END IF
         CALL mpi_allreduce (Asend(i), Areduce(i), 1, MP_DOUBLE, handle, &
@@ -5398,11 +5398,11 @@
       DO i=1,Asize
         Areduce(i)=Arecv(i,0)
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
-          IF (op_handle(i)(1:3).eq.'MIN') THEN
+          IF (handle_op(i)(1:3).eq.'MIN') THEN
             Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
-          ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+          ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
             Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
-          ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+          ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
             Areduce(i)=Areduce(i)+Arecv(i,rank)
           END IF
         END DO
@@ -5427,11 +5427,11 @@
             RETURN
           END IF
           DO i=1,Asize
-            IF (op_handle(i)(1:3).eq.'MIN') THEN
+            IF (handle_op(i)(1:3).eq.'MIN') THEN
               Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
-            ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+            ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
               Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
-            ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+            ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
               Areduce(i)=Areduce(i)+Arecv(i,rank)
             END IF
           END DO
@@ -5484,7 +5484,7 @@
       END SUBROUTINE mp_reduce_1dp
 # endif
 !
-      SUBROUTINE mp_reduce_0d (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_0d (ng, model, Asize, A, handle_op)
 !
 !***********************************************************************
 !                                                                      !
@@ -5498,7 +5498,7 @@
 !     model      Calling model identifier.                             !
 !     Asize      Number of scalar variables to reduce.                 !
 !     A          Vector of scalar variables to reduce.                 !
-!     op_handle  Reduction operation handle (string).  The following   !
+!     handle_op  Reduction operation handle (string).  The following   !
 !                  reduction operations are supported:                 !
 !                  'MIN', 'MAX', 'SUM'                                 !
 !                                                                      !
@@ -5519,7 +5519,7 @@
 !
       integer, intent(in) :: ng, model, Asize
 
-      character (len=*), intent(in) :: op_handle
+      character (len=*), intent(in) :: handle_op
 
       real(r8), intent(inout) :: A
 !
@@ -5561,11 +5561,11 @@
 !  Collect and reduce.
 !
 # if defined REDUCE_ALLREDUCE
-      IF (op_handle(1:3).eq.'MIN') THEN
+      IF (handle_op(1:3).eq.'MIN') THEN
         handle=MPI_MIN
-      ELSE IF (op_handle(1:3).eq.'MAX') THEN
+      ELSE IF (handle_op(1:3).eq.'MAX') THEN
         handle=MPI_MAX
-      ELSE IF (op_handle(1:3).eq.'SUM') THEN
+      ELSE IF (handle_op(1:3).eq.'SUM') THEN
         handle=MPI_SUM
       END IF
       CALL mpi_allreduce (Asend, Areduce, Npts, MP_FLOAT, handle,       &
@@ -5592,11 +5592,11 @@
       END IF
       Areduce=Arecv(0)
       DO rank=1,NtileI(ng)*NtileJ(ng)-1
-        IF (op_handle(1:3).eq.'MIN') THEN
+        IF (handle_op(1:3).eq.'MIN') THEN
           Areduce=MIN(Areduce,Arecv(rank))
-        ELSE IF (op_handle(1:3).eq.'MAX') THEN
+        ELSE IF (handle_op(1:3).eq.'MAX') THEN
           Areduce=MAX(Areduce,Arecv(rank))
-        ELSE IF (op_handle(1:3).eq.'SUM') THEN
+        ELSE IF (handle_op(1:3).eq.'SUM') THEN
           Areduce=Areduce+Arecv(rank)
         END IF
       END DO
@@ -5617,11 +5617,11 @@
             exit_flag=2
             RETURN
           END IF
-          IF (op_handle(1:3).eq.'MIN') THEN
+          IF (handle_op(1:3).eq.'MIN') THEN
             Areduce=MIN(Areduce,Arecv(rank))
-          ELSE IF (op_handle(1:3).eq.'MAX') THEN
+          ELSE IF (handle_op(1:3).eq.'MAX') THEN
             Areduce=MAX(Areduce,Arecv(rank))
-          ELSE IF (op_handle(1:3).eq.'SUM') THEN
+          ELSE IF (handle_op(1:3).eq.'SUM') THEN
             Areduce=Areduce+Arecv(rank)
           END IF
         END DO
@@ -5670,7 +5670,7 @@
       RETURN
       END SUBROUTINE mp_reduce_0d
 !
-      SUBROUTINE mp_reduce_1d (ng, model, Asize, A, op_handle)
+      SUBROUTINE mp_reduce_1d (ng, model, Asize, A, handle_op)
 !
 !***********************************************************************
 !                                                                      !
@@ -5684,7 +5684,7 @@
 !     model      Calling model identifier.                             !
 !     Asize      Number of scalar variables to reduce.                 !
 !     A          Vector of scalar variables to reduce.                 !
-!     op_handle  Reduction operation handle (string).  The following   !
+!     handle_op  Reduction operation handle (string).  The following   !
 !                  reduction operations are supported:                 !
 !                  'MIN', 'MAX', 'SUM'                                 !
 !                                                                      !
@@ -5705,7 +5705,7 @@
 !
       integer, intent(in) :: ng, model, Asize
 
-      character (len=*), intent(in) :: op_handle(Asize)
+      character (len=*), intent(in) :: handle_op(Asize)
 
       real(r8), intent(inout) :: A(Asize)
 !
@@ -5754,11 +5754,11 @@
 !
 # if defined REDUCE_ALLREDUCE
       DO i=1,Asize
-        IF (op_handle(i)(1:3).eq.'MIN') THEN
+        IF (handle_op(i)(1:3).eq.'MIN') THEN
           handle=MPI_MIN
-        ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+        ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
           handle=MPI_MAX
-        ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+        ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
           handle=MPI_SUM
         END IF
         CALL mpi_allreduce (Asend(i), Areduce(i), 1, MP_FLOAT, handle,  &
@@ -5787,11 +5787,11 @@
       DO i=1,Asize
         Areduce(i)=Arecv(i,0)
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
-          IF (op_handle(i)(1:3).eq.'MIN') THEN
+          IF (handle_op(i)(1:3).eq.'MIN') THEN
             Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
-          ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+          ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
             Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
-          ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+          ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
             Areduce(i)=Areduce(i)+Arecv(i,rank)
           END IF
         END DO
@@ -5816,11 +5816,11 @@
             RETURN
           END IF
           DO i=1,Asize
-            IF (op_handle(i)(1:3).eq.'MIN') THEN
+            IF (handle_op(i)(1:3).eq.'MIN') THEN
               Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
-            ELSE IF (op_handle(i)(1:3).eq.'MAX') THEN
+            ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
               Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
-            ELSE IF (op_handle(i)(1:3).eq.'SUM') THEN
+            ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
               Areduce(i)=Areduce(i)+Arecv(i,rank)
             END IF
           END DO
@@ -5872,7 +5872,7 @@
       RETURN
       END SUBROUTINE mp_reduce_1d
 !
-      SUBROUTINE mp_reduce2 (ng, model, Isize, Jsize, A, op_handle)
+      SUBROUTINE mp_reduce2 (ng, model, Isize, Jsize, A, handle_op)
 !
 !***********************************************************************
 !                                                                      !
@@ -5889,7 +5889,7 @@
 !     Jsize      Size of J-dimension: number of different sets of      !
 !                  minimum and/or maximum to process.                  !
 !     A          Matrix of variables and qualifiers to reduce.         !
-!     op_handle  Reduction operation handle (string) of size Jsize.    !
+!     handle_op  Reduction operation handle (string) of size Jsize.    !
 !                  The following  reduction operations are supported:  !
 !                  'MINLOC', 'MAXLOC'                                  !
 !                                                                      !
@@ -5910,7 +5910,7 @@
 !
       integer, intent(in) :: ng, model, Isize, Jsize
 
-      character (len=*), intent(in) :: op_handle(Jsize)
+      character (len=*), intent(in) :: handle_op(Jsize)
 
       real(r8), intent(inout) :: A(Isize,Jsize)
 !
@@ -5950,9 +5950,9 @@
           Asend(1,i)=A(1,j)
           Asend(2,i)=A(i,j)
         END DO
-        IF (op_handle(j)(1:6).eq.'MINLOC') THEN
+        IF (handle_op(j)(1:6).eq.'MINLOC') THEN
           handle=MPI_MINLOC
-        ELSE IF (op_handle(j)(1:6).eq.'MAXLOC') THEN
+        ELSE IF (handle_op(j)(1:6).eq.'MAXLOC') THEN
           handle=MPI_MAXLOC
         END IF
         CALL mpi_allreduce (Asend, Areduce, Isize,                      &
