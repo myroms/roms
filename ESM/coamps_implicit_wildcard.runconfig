@@ -1,21 +1,23 @@
 #
 # git $Id$
-# svn $Id: wrf_explicit.runconfig 990 2019-12-03 04:00:29Z arango $
+# svn $Id: coamps_implicit_wildcard.runconfig 990 2019-12-03 04:00:29Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# DATA-WRF-ROMS explicit ESMF coupling:                                 :::
+# DATA-COAMPS-ROMS semi-implicit ESMF coupling:                         :::
 #                                                                       :::
 # This ESMF configuration file includes the Run Sequence to couple      :::
-# DATA, WRF, and ROMS components. All the components interact with      :::
-# the same coupling time step. The connectors from ROMS to WRF and      :::
-# WRF to ROMS are explicit. It is recommended to use the semi-          :::
-# implicit RunSequence configuration to ensure conservation. Usually,   :::
-# the timestep of the atmosphere kernel is smaller than that for the    :::
-# ocean, so time-averaging over the coupling interval is preferable.    :::
+# DATA, COAMPS, and ROMS components. All the components interact with   :::
+# the same coupling time step. The connector from ROMS to COAMP is      :::
+# explicit, whereas the connector from COAMPS to ROMS is semi-implicit. :::
+# Usually, the timestep of the atmosphere kernel is smaller than that   :::
+# for the ocean. COAMPS export fields are always time-averaged over     :::
+# the coupling interval, which is the same as the ROMS timestep. It     :::
+# is semi-implicit because ROMS right-hand-side terms are forced with   :::
+# n+1/2 COAMPS fields because of the time-averaging.                    :::
 #                                                                       :::
 # The User needs to check that the single coupling interval specified   :::
 # here is the same as for the ROMS coupling standard input script       :::
@@ -42,15 +44,15 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-# Hurricane Irene Application
+# Indian Ocean Application
 
 runSeq::
-  @240                       # timeStep = 4 min interval, single time loop
-    DATA -> WRF              # DATA to WRF connector
+  @*                         # timeStep = wildcard (*), single time loop
+    DATA -> COAMPS           # DATA to COAMPS connector
     DATA
-    WRF -> ROMS              # WRF to ROMS connector
-    ROMS -> WRF              # ROMS to WRF connector
+    ROMS -> COAMPS           # ROMS to COAMPS connector
+    COAMPS
+    COAMPS -> ROMS           # COAMPS to ROMS connector
     ROMS
-    WRF
   @
 ::

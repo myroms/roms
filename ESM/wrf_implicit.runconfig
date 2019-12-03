@@ -1,6 +1,6 @@
 #
 # git $Id$
-# svn $Id: wrf_implicit.runconfig 986 2019-10-30 20:00:14Z arango $
+# svn $Id: wrf_implicit.runconfig 990 2019-12-03 04:00:29Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -30,6 +30,18 @@
 # the "remapMethod" since it is specified in the input coupling         :::
 # metadata file (keyword CPLname) for each exchanged field.             :::
 #                                                                       :::
+# If the timeStep value (in seconds) coupling interval is a wildcard    :::
+# (*) character used for a single outer time loop in the run sequence,  :::
+# then the associated run clock is identical to the driver clock, which :::
+# is set up in standard input configuration script "coupling_esmf.in":  :::
+#                                                                       :::
+#     @*                                                                :::
+#       ...                                                             :::
+#       ...                                                             :::
+#     @                                                                 :::
+#                                                                       :::
+# Check NUOPC reference manual for more information (Chapter 3, API).   :::
+#                                                                       :::
 # The component label is specific to how is known in the ESMF driver.   :::
 # It is set in subroutine allocate_esmf_esm, variable MODELS(:)%name.   :::
 #                                                                       :::
@@ -38,12 +50,12 @@
 # Hurricane Irene Application
 
 runSeq::
-  @60                        # 1 min coupling time step, single time loop
-    DATA -> WRF_01           # DATA to WRF connector
+  @60                        # timeStep = 1 min interval, single time loop
+    DATA -> WRF              # DATA to WRF connector
     DATA
-    ROMS_01 -> WRF_01        # ROMS to WRF connector
-    WRF_01
-    WRF_01 -> ROMS_01        # WRF to ROMS connector
-    ROMS_01
+    ROMS -> WRF              # ROMS to WRF connector
+    WRF
+    WRF -> ROMS              # WRF to ROMS connector
+    ROMS
   @
 ::

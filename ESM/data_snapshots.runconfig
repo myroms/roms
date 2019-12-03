@@ -1,21 +1,24 @@
 #
 # git $Id$
-# svn $Id: wrf_explicit.runconfig 990 2019-12-03 04:00:29Z arango $
+# svn $Id: data_snapshots.runconfig 990 2019-12-03 04:00:29Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# DATA-WRF-ROMS explicit ESMF coupling:                                 :::
+# DATA-ROMS ESMF coupling: DATA Snapshots Exporting                     :::
 #                                                                       :::
-# This ESMF configuration file includes the Run Sequence to couple      :::
-# DATA, WRF, and ROMS components. All the components interact with      :::
-# the same coupling time step. The connectors from ROMS to WRF and      :::
-# WRF to ROMS are explicit. It is recommended to use the semi-          :::
-# implicit RunSequence configuration to ensure conservation. Usually,   :::
-# the timestep of the atmosphere kernel is smaller than that for the    :::
-# ocean, so time-averaging over the coupling interval is preferable.    :::
+# This ESMF configuration file includes the Run Sequence to couple the  :::
+# DATA and ROMS components. All the components interact with the same   :::
+# coupling time step.                                                   :::
+#                                                                       :::
+# The coupling between DATA and ROMS components is used to test the     :::
+# ROMS ESMF coupling framework. The atmospheric forcing fields are      :::
+# exported to ROMS from the DATA component instead of processing the    :::
+# directly the input NetCDF files specified in "roms.in".  The User     :::
+# needs to activate TIME_INTERP in "build_roms" to export the field     :::
+# time snapshots for ROMS to carry its time interpolation.              :::
 #                                                                       :::
 # The User needs to check that the single coupling interval specified   :::
 # here is the same as for the ROMS coupling standard input script       :::
@@ -42,15 +45,12 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-# Hurricane Irene Application
+# DOPPIO Application
 
 runSeq::
-  @240                       # timeStep = 4 min interval, single time loop
-    DATA -> WRF              # DATA to WRF connector
-    DATA
-    WRF -> ROMS              # WRF to ROMS connector
-    ROMS -> WRF              # ROMS to WRF connector
+  @10800                     # timeStep = 3 hours interval, single time loop
+    DATA -> ROMS             # DATA to ROMS connector
     ROMS
-    WRF
+    DATA
   @
 ::
