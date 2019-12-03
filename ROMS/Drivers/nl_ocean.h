@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: nl_ocean.h 982 2019-09-20 03:33:52Z arango $
+!svn $Id: nl_ocean.h 990 2019-12-03 04:00:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -251,19 +251,20 @@
 !
 !  Local variable declarations.
 !
-#if defined MODEL_COUPLING && !defined MCT_LIB
-      logical, save :: FirstPass = .TRUE.
-#endif
       integer :: ng
 #if defined MODEL_COUPLING && !defined MCT_LIB
-      integer :: NstrStep, NendStep
+      integer :: NstrStep, NendStep, extra
+!
+      real(dp) :: ENDtime, NEXTtime
 #endif
 !
 !-----------------------------------------------------------------------
-!  Time-step nonlinear model over all nested grids, if applicable.
+!  Time-step nonlinear model over nested grids, if applicable.
 #if defined MODEL_COUPLING && !defined MCT_LIB
-!  On first pass, add a timestep to the coupling interval to account
-!  for ROMS kernel delayed delayed output until next timestep.
+!  Since the ROMS kernel has a delayed output and line diagnostics by
+!  one timestep, subtact an extra value to the report of starting and
+!  ending timestep for clarity. Usually, the model coupling interval
+!  is of the same size as ROMS timestep.
 #endif
 !-----------------------------------------------------------------------
 !
@@ -271,15 +272,16 @@
       IF (Master) WRITE (stdout,'(1x)')
       DO ng=1,Ngrids
 #if defined MODEL_COUPLING && !defined MCT_LIB
+        NEXTtime=time(ng)+RunInterval
+        ENDtime=INItime(ng)+(ntimes(ng)-1)*dt(ng)
+        IF ((NEXTtime.eq.ENDtime).and.(ng.eq.1)) THEN
+          extra=0                                   ! last time interval
+        ELSE
+          extra=1
+        END IF
         step_counter(ng)=0
         NstrStep=iic(ng)
-        IF (FirstPass) THEN
-          NendStep=NstrStep+INT((RunInterval+dt(ng))/dt(ng))
-          IF (ng.eq.1) MyRunInterval=MyRunInterval+dt(ng)
-          FirstPass=.FALSE.
-        ELSE
-          NendStep=NstrStep+INT(MyRunInterval/dt(ng))
-        END IF
+        NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
         IF (Master) WRITE (stdout,10) 'NL', ng, NstrStep, NendStep
 #else
         IF (Master) WRITE (stdout,10) 'NL', ng, ntstart(ng), ntend(ng)

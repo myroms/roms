@@ -2,7 +2,7 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 982 2019-09-20 03:33:52Z arango $
+!svn $Id: inp_decode.F 990 2019-12-03 04:00:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1694,8 +1694,8 @@
       RETURN
       END FUNCTION load_lbc
 !
-      FUNCTION load_s1d (Nval, Fname, Fdim, line, label, igrid, Nfiles, &
-     &                   S)
+      FUNCTION load_s1d (Nval, Fname, Fdim, line, label, igrid,         &
+     &                   Mgrids, Nfiles, S)
 !
 !***********************************************************************
 !                                                                      !
@@ -1710,6 +1710,7 @@
 !     line       Current input line (string)                           !
 !     label      I/O structure label (string)                          !
 !     igrid      Nested grid counter (integer)                         !
+!     Mgrids     Number of nested grids (integer)                      !
 !     Nfiles     Number of files per grid (integer array)              !
 !     S          Derived type structure, TYPE(T_IO)                    !
 !                                                                      !
@@ -1729,21 +1730,21 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in)    :: Nval, Fdim
+      integer, intent(in)    :: Mgrids, Nval, Fdim
       integer, intent(inout) :: igrid
-      integer, intent(inout) :: Nfiles(Ngrids)
+      integer, intent(inout) :: Nfiles(Mgrids)
 
       character (len=*),   intent(in) :: line
       character (len=256), intent(in) :: Fname(Fdim)
       character (len=*),   intent(inout) :: label
 
-      TYPE(T_IO), intent(inout) :: S(Ngrids)
+      TYPE(T_IO), intent(inout) :: S(Mgrids)
 !
 !  Local variable declarations.
 !
       logical :: load, persist
 
-      integer :: Icont, Ipipe, i, j, lstr, my_Ngrids, ng
+      integer :: Icont, Ipipe, i, j, lstr, my_Mgrids, ng
       integer :: load_s1d
 
       character (len=1 ), parameter :: blank = ' '
@@ -1775,7 +1776,7 @@
       IF (.not.load) THEN
         igrid=igrid+MIN(1,Icont)
       END IF
-      IF (igrid.gt.Ngrids) THEN
+      IF (igrid.gt.Mgrids) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(line)
         END IF
@@ -1789,25 +1790,25 @@
 !
       IF (load) THEN
 !
-!  If nesting and the number of file name entries is less than Ngrids,
+!  If nesting and the number of file name entries is less than Mgrids,
 !  persist the last values provided.  This is the case when not enough
 !  entries are provided by "==" plural symbol after the KEYWORD.
 !
-        IF (igrid.lt.Ngrids) THEN
-          DO i=igrid+1,Ngrids
+        IF (igrid.lt.Mgrids) THEN
+          DO i=igrid+1,Mgrids
             Nfiles(i)=Nfiles(igrid)
           END DO
-          my_Ngrids=igrid
+          my_Mgrids=igrid
           persist=.TRUE.
         ELSE
-          my_Ngrids=Ngrids
+          my_Mgrids=Mgrids
           persist=.FALSE.
         END IF
 !
 !  Allocate various fields in structure, if not continuation or pipe
 !  symbol is found which indicates end of input data.
 !
-        DO ng=1,Ngrids
+        DO ng=1,Mgrids
           allocate ( S(ng)%Nrec(Nfiles(ng)) )
           allocate ( S(ng)%time_min(Nfiles(ng)) )
           allocate ( S(ng)%time_max(Nfiles(ng)) )
@@ -1826,7 +1827,7 @@
 !
 !  Intialize strings to blank to facilitate processing.
 !
-        DO ng=1,Ngrids
+        DO ng=1,Mgrids
           lstr=LEN(S(ng)%name)
           DO i=1,lstr
             S(ng)%head(i:i)=blank
@@ -1843,7 +1844,7 @@
 !  Initialize and load fields into structure.
 !
         i=0
-        DO ng=1,my_Ngrids
+        DO ng=1,my_Mgrids
           S(ng)%Nfiles=Nfiles(ng)              ! number of multi-files
           S(ng)%Fcount=1                       ! multi-file counter
           S(ng)%load=1                         ! filename load counter
@@ -1869,7 +1870,7 @@
 !  If appropriate, persist last value(s).
 !
         IF (persist) THEN
-          DO ng=igrid+1,Ngrids
+          DO ng=igrid+1,Mgrids
             S(ng)%Nfiles=S(igrid)%Nfiles
             S(ng)%Fcount=1
             S(ng)%load=1
@@ -1893,7 +1894,7 @@
 !  Reset counters and clean label.
 !
         igrid=1
-        DO ng=1,Ngrids
+        DO ng=1,Mgrids
           Nfiles(ng)=0
         END DO
         DO i=1,LEN(label)

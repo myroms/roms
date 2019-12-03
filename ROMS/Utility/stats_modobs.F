@@ -3,7 +3,7 @@
       SUBROUTINE stats_modobs (ng)
 !
 !git $Id$
-!svn $Id: stats_modobs.F 937 2019-01-28 06:13:04Z arango $
+!svn $Id: stats_modobs.F 990 2019-12-03 04:00:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -336,7 +336,7 @@
 !
 !-----------------------------------------------------------------------
 !  If appropriate, convert depth in vertical fractional coordinates to
-!  actual depths in meted (negative: downwards).
+!  actual depths in meters (negative: downwards).
 !-----------------------------------------------------------------------
 !
       obs_work(1:Ndatum(ng))=IniVal
