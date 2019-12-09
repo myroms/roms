@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 988 2019-11-17 01:27:27Z arango $
+!svn $Id: distribute.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1618,7 +1618,7 @@
 
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Asend
 
-# ifdef BOUNDARY_ALLGAHTER
+# ifdef BOUNDARY_ALLGATHER
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1),                      &
      &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
 # else
@@ -1675,7 +1675,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-#  ifdef BOUNDARY_ALLGAHTER
+#  ifdef BOUNDARY_ALLGATHER
       CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -1708,7 +1708,7 @@
 !  Unpack data: reduction sum.
 !-----------------------------------------------------------------------
 !
-# ifdef BOUNDARY_ALLGAHTER
+# ifdef BOUNDARY_ALLGATHER
       Nnodes=NtileI(ng)*NtileJ(ng)-1
       ik=0
       DO k=LBk,UBk
