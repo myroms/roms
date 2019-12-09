@@ -3,7 +3,7 @@
       SUBROUTINE stats_modobs (ng)
 !
 !git $Id$
-!svn $Id: stats_modobs.F 990 2019-12-03 04:00:29Z arango $
+!svn $Id: stats_modobs.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -252,7 +252,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-!  Read in and write out observations total error
+!  Read in and write out observations total error covariance
 !  (instrument + sampling + representation).
 !
       CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name, Vname(1,idOerr),    &

@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 974 2019-07-25 15:28:52Z arango $
+!svn $Id: mod_fourdvar.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -115,12 +115,20 @@
 !                  file.                                               !
 !  haveObsMeta   Logical switch indicating loading and processing of   !
 !                  observations meta field.                            !
-# ifdef BGQC
 !                                                                      !
+# ifdef FOUR_DVAR
+!  Variables in observation space needed Desroziers et al. (2005)      !
+!  statistics at observation locations:                                !
+!                                                                      !
+!  BgErr         4D-Var Background error standard deviation.           !
+!  increment     4D-Var increment, analysis minus background.          !
+!  innovation    4D-Var innovation, observations minus background.     !
+!  residual      4D-Var residual, observation minus analysis.          !
+!                                                                      !
+# endif
+# ifdef BGQC
 !  Background quality control of observations:                         !
 !                                                                      !
-!  BgErr         Background error standard deviation values at         !
-!                  observation locations.                              !
 !  BgThresh      Number of standard deviations threshold used in the   !
 !                  background quality control of observations.         !
 !  Jact_S        Saved actual cost function.                           !
@@ -521,16 +529,35 @@
 !
         logical, allocatable :: haveObsMeta(:)
 
+# ifdef FOUR_DVAR
+!
+!-----------------------------------------------------------------------
+!  Variables in observation space needed Desroziers et al. (2005)
+!  statistics at observation locations:
+!-----------------------------------------------------------------------
+!
+!  4D-Var background error standard deviation [Mobs].
+!
+        real(r8), allocatable :: BgErr(:)
+!
+!  4D-Var increment vector, analysis minus background {Mobs].
+!
+        real(r8), allocatable :: increment(:)
+!
+!  4D-Var innovation vector, observations minus background [Mobs].
+!
+        real(r8), allocatable :: innovation(:)
+!
+!  4D-Var residual vector, observation minus analysis [Mobs].
+!
+        real(r8), allocatable :: residual(:)
+# endif
+
 # ifdef BGQC
 !
 !-----------------------------------------------------------------------
 !  Background quality control of observations.
 !-----------------------------------------------------------------------
-!
-!  Background error standard deviation values at observation locations,
-!  [Mobs].
-!
-        real(r8), allocatable :: BgErr(:)
 !
 !  Threshhold for innovations for quality control, [Mobs].
 !
@@ -1207,11 +1234,25 @@
         deallocate (NLmodVal)
       END IF
 
-#  ifdef BGQC
+#  ifdef FOUR_DVAR
       IF (allocated(BgErr)) THEN
         deallocate (BgErr)
       END IF
 
+      IF (allocated(increment)) THEN
+        deallocate (increment)
+      END IF
+
+      IF (allocated(innovation)) THEN
+        deallocate (innovation)
+      END IF
+
+      IF (allocated(residual)) THEN
+        deallocate (residual)
+      END IF
+#  endif
+
+#  ifdef BGQC
       IF (allocated(BgThresh)) THEN
         deallocate (BgThresh)
       END IF
@@ -1968,13 +2009,33 @@
       END IF
       NLmodVal = IniVal
 
-#  ifdef BGQC
+#  ifdef FOUR_DVAR
       IF (.not.allocated(BgErr)) THEN
         allocate ( BgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       BgErr = IniVal
 
+      IF (.not.allocated(increment)) THEN
+        allocate ( increment(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      increment = IniVal
+
+      IF (.not.allocated(innovation)) THEN
+        allocate ( innovation(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      innovation = IniVal
+
+      IF (.not.allocated(residual)) THEN
+        allocate ( residual(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      residual = IniVal
+#  endif
+
+#  ifdef BGQC
       IF (.not.allocated(BgThresh)) THEN
         allocate ( BgThresh(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)

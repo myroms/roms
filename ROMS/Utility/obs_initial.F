@@ -3,7 +3,7 @@
       SUBROUTINE obs_initial (ng, model, backward)
 !
 !git $Id$
-!svn $Id: obs_initial.F 982 2019-09-20 03:33:52Z arango $
+!svn $Id: obs_initial.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -109,9 +109,6 @@
             got_var(idObsZ)=.TRUE.
             OBS(ng)%Vid(idObsZ)=var_id(i)
 # endif
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOvar))) THEN
-            got_var(idOvar)=.TRUE.
-            OBS(ng)%Vid(idOvar)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOerr))) THEN
             got_var(idOerr)=.TRUE.
             OBS(ng)%Vid(idOerr)=var_id(i)
@@ -179,12 +176,6 @@
           RETURN
         END IF
 # endif
-        IF (.not.got_var(idOvar)) THEN
-          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOvar)),          &
-     &                                  TRIM(OBS(ng)%name)
-          exit_flag=2
-          RETURN
-        END IF
         IF (.not.got_var(idOerr)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOerr)),          &
      &                                  TRIM(OBS(ng)%name)

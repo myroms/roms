@@ -4,7 +4,7 @@
     !defined WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: ad_misfit.F 972 2019-07-09 20:18:46Z arango $
+!svn $Id: ad_misfit.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -431,10 +431,10 @@
      &                           ObsState2Type(isRadial),               &
      &                           Mobs, 1, Nobs(ng),                     &
      &                           vXmin(ng), vXmax(ng),                  &
-     &                           vYmin(ng)+0.5_r8, vYmax(ng)+0.5_r8,    &
+     &                           vYmin(ng), vYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsVetting,                   &
-     &                           Tobs, Xobs, Yobs+0.5_r8, Zobs,         &
+     &                           Tobs, Xobs, Yobs, Zobs,                &
      &                           ad_v(:,:,:,nfrc), z_v,                 &
 #  ifdef MASKING
      &                           vmask,                                 &
@@ -452,11 +452,11 @@
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ObsState2Type(isRadial),               &
      &                           Mobs, 1, Nobs(ng),                     &
-     &                           uXmin(ng)+0.5_r8, uXmax(ng)+0.5_r8,    &
+     &                           uXmin(ng), uXmax(ng),                  &
      &                           uYmin(ng), uYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsVetting,                   &
-     &                           Tobs, Xobs+0.5_r8, Yobs, Zobs,         &
+     &                           Tobs, Xobs, Yobs, Zobs,                &
      &                           ad_u(:,:,:,nfrc), z_v,                 &
 #  ifdef MASKING
      &                           umask,                                 &

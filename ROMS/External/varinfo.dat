@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 965 2019-05-09 03:07:37Z arango $
+!svn $Id: varinfo.dat 991 2019-12-09 03:14:43Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -5525,18 +5525,9 @@
   'nulvar'
   1.0d0
 
-'obs_variance'                                     ! Input
-  'observation global variance'
-  'squared state variable units'                   ! [squared state units]
-  'nulvar'
-  'datum'
-  'idOvar'
-  'nulvar'
-  1.0d0
-
 'obs_error'                                        ! Input
-  'observation error, assigned weight'
-  'inverse squared state variable units'           ! [1/(squared state units)]
+  'observation error covariance'
+  'squared state variable units'                   ! [squared state units]
   'nulvar'
   'datum'
   'idOerr'
@@ -5572,7 +5563,7 @@
 
 'NLmodel_initial'                                  ! Output
   'initial nonlinear model at observation locations'
-  'nulvar'
+  'state variable units'
   'nulvar'
   'datum'
   'idNLmi'
@@ -5581,7 +5572,7 @@
 
 'NLmodel_value'                                    ! Output
   'nonlinear model at observation locations'
-  'nulvar'
+  'state variable units'
   'nulvar'
   'datum'
   'idNLmo'
@@ -5597,9 +5588,27 @@
   'nulvar'
   1.0d0
 
+'increment '                                       ! Output
+  '4D-Var increment: analysis minus background, dx_a = H(x_a) - H(x_b)'
+  'state variable units'                           ! [state units]
+  'nulvar'
+  'datum'
+  'idIncr'
+  'nulvar'
+  1.0d0
+
+'innovation'                                       ! Output
+  '4D-Var innovation: observation minus background, d_b = y - H(x_b)'
+  'state variable units'                           ! [state units]
+  'nulvar'
+  'datum'
+  'idInno'
+  'nulvar'
+  1.0d0
+
 'misfit_initial'                                   ! Output
   'initial model-observation misfit'
-  'nulvar'
+  'nondimensional'
   'nulvar'
   'datum'
   'idMOMi'
@@ -5608,16 +5617,25 @@
 
 'misfit_final'                                     ! Output
   'final model-observation misfit'
-  'nulvar'
+  'nondimensional'
   'nulvar'
   'datum'
   'idMOMf'
   'nulvar'
   1.0d0
 
-'BgError_value'                                    ! Output
-  'Background error at observation locations'
+'residual'                                       ! Output
+  '4D-Var residual: observation minus analysis, d_a = y - H(x_b + dx_a)'
+  'state variable units'                           ! [state units]
   'nulvar'
+  'datum'
+  'idResi'
+  'nulvar'
+  1.0d0
+
+'BgError_value'                                    ! Output
+  'Background error standard deviation at observation locations'
+  'state variable units'                           ! [state units]
   'nulvar'
   'datum'
   'idBgEr'
@@ -5625,8 +5643,8 @@
   1.0d0
 
 'BgThresh_value'                                   ! Output
-  'Threshold for background quality control check of observations'
-  'nulvar'
+  'Threshold number of standard deviations for background quality control of observations'
+  'nondimensional'
   'nulvar'
   'datum'
   'idBgTh'

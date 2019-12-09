@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 976 2019-07-25 16:33:34Z arango $
+!svn $Id: mod_ncparam.F 991 2019-12-09 03:14:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -202,6 +202,8 @@
         integer  :: idHice        ! depth of ice cover
         integer  :: idHsbl        ! depth of surface boundary layer
         integer  :: idHsno        ! depth of snow cover
+        integer  :: idIncr        ! 4D-Var analysis increment
+        integer  :: idInno        ! 4D-Var innovation vector
         integer  :: idKhor        ! convolution horizontal diffusion
         integer  :: idKver        ! convolution vertical diffusion
         integer  :: idLdwn        ! downwelling longwave radiation flux
@@ -231,7 +233,6 @@
         integer  :: idOpro        ! observations provenance
         integer  :: idOtyp        ! observations type
         integer  :: idOval        ! observations value
-        integer  :: idOvar        ! observations global variance
         integer  :: idOvel        ! omega vertical velocity
         integer  :: idQair        ! surface air humidity
         integer  :: idPair        ! surface air pressure
@@ -267,6 +268,7 @@
         integer  :: idSSTc        ! SST climatology
         integer  :: idShea        ! net sensible heat flux
         integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
+        integer  :: idResi        ! 4D-Var residual vector
         integer  :: idsfwf        ! surface freswater flux
         integer  :: idTLmo        ! TLM at observation locations
         integer  :: idTair        ! surface air temperature
@@ -1797,6 +1799,10 @@
               idBgEr=varid
             CASE ('idBgTh')
               idBgTh=varid
+            CASE ('idIncr')
+              idIncr=varid
+            CASE ('idInno')
+              idInno=varid
             CASE ('idNLmi')
               idNLmi=varid
             CASE ('idNLmo')
@@ -1831,8 +1837,8 @@
               idOtyp=varid
             CASE ('idOval')
               idOval=varid
-            CASE ('idOvar')
-              idOvar=varid
+            CASE ('idResi')
+              idResi=varid
             CASE ('idKhor')
               idKhor=varid
             CASE ('idKver')
