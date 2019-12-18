@@ -1,7 +1,7 @@
       SUBROUTINE read_BioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: fennel_inp.h 965 2019-05-09 03:07:37Z arango $
+!svn $Id: fennel_inp.h 992 2019-12-18 03:27:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -165,7 +165,7 @@
                 DO itrc=1,NBT
                   i=idbio(itrc)
                   ad_tnu4(i,ng)=Rbio(itrc,ng)
-                  ad_tnu4(i,ng)=Rbio(itrc,ng)
+                  tl_tnu4(i,ng)=Rbio(itrc,ng)
                 END DO
               END DO
             CASE ('LtracerSponge')
