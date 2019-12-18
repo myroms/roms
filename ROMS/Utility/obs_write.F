@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 991 2019-12-09 03:14:43Z arango $
+!svn $Id: obs_write.F 992 2019-12-18 03:27:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -62,7 +62,9 @@
       real(r8) :: df1, df2, Thresh
 # endif
       real(r8) :: misfit(Mobs), uradial(Mobs), vradial(Mobs)
+# ifndef VERIFICATION
       real(r8) :: uBgErr(Mobs), vBgErr(Mobs)
+# endif
 
       character (len=50) :: string
 
@@ -119,7 +121,7 @@
         IF (wrtNLmod(ng)) THEN
           DO iobs=Mstr,Mend
             NLmodVal(iobs)=IniVal
-#  ifdef BGQC
+#  ifndef VERIFICATION
             BgErr(iobs)=IniVal
             uBgErr(iobs)=IniVal
             vBgErr(iobs)=IniVal
@@ -183,6 +185,7 @@
      &                        GRID(ng)%rmask,                           &
 #  endif
      &                        NLmodVal)
+#  ifndef VERIFICATION
           CALL extract_obs2d (ng, 0, Lm(ng)+1, 0, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ObsState2Type(isFsur),                    &
@@ -193,12 +196,13 @@
      &                        ObsType, ObsVetting,                      &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%e_zeta(:,:,1),                  &
-#  ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%rmask,                           &
-#  endif
+#   endif
      &                        BgErr)
-# endif
+#  endif
         END IF
+# endif
 # ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isFsur).gt.0)) THEN
@@ -240,6 +244,7 @@
      &                        GRID(ng)%umask,                           &
 #  endif
      &                        NLmodVal)
+#  ifndef VERIFICATION
           CALL extract_obs2d (ng, 1, Lm(ng)+1, 0, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ObsState2Type(isUbar),                    &
@@ -250,10 +255,11 @@
      &                        ObsType, ObsVetting,                      &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%e_ubar(:,:,1),                  &
-#  ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%umask,                           &
-#  endif
+#   endif
      &                        BgErr)
+#  endif
         END IF
 # endif
 # ifdef TLM_OBS
@@ -297,6 +303,7 @@
      &                        GRID(ng)%vmask,                           &
 #  endif
      &                        NLmodVal)
+#  ifndef VERIFICATION
           CALL extract_obs2d (ng, 0, Lm(ng)+1, 1, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ObsState2Type(isVbar),                    &
@@ -307,10 +314,11 @@
      &                        ObsType, ObsVetting,                      &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%e_vbar(:,:,1),                  &
-#  ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%vmask,                           &
-#  endif
+#   endif
      &                        BgErr)
+#  endif
         END IF
 # endif
 # ifdef TLM_OBS
@@ -365,6 +373,7 @@
      &                        GRID(ng)%umask,                           &
 #   endif
      &                        NLmodVal)
+#   ifndef VERIFICATION
           CALL extract_obs3d (ng, 1, Lm(ng)+1, 0, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        ObsState2Type(isUvel),                    &
@@ -376,10 +385,11 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%e_u(:,:,:,1),                   &
      &                        GRID(ng)%z_v,                             &
-#   ifdef MASKING
+#    ifdef MASKING
      &                        GRID(ng)%umask,                           &
-#   endif
+#    endif
      &                        BgErr)
+#   endif
         END IF
 #  endif
 #  ifdef TLM_OBS
@@ -441,6 +451,7 @@
      &                        GRID(ng)%vmask,                           &
 #   endif
      &                        NLmodVal)
+#   ifndef VERIFICATION
           CALL extract_obs3d (ng, 0, Lm(ng)+1, 1, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        ObsState2Type(isVvel),                    &
@@ -452,10 +463,11 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%e_v(:,:,:,1),                   &
      &                        GRID(ng)%z_v,                             &
-#   ifdef MASKING
+#    ifdef MASKING
      &                        GRID(ng)%vmask,                           &
-#   endif
+#    endif
      &                        BgErr)
+#   endif
         END IF
 #  endif
 #  ifdef TLM_OBS
@@ -564,6 +576,7 @@
      &                        GRID(ng)%umask,                           &
 #   endif
      &                        uradial)
+#   ifndef VERIFICATION
             CALL extract_obs3d (ng, 1, Lm(ng)+1, 0, Mm(ng)+1,           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          ObsState2Type(isRadial),                &
@@ -575,10 +588,11 @@
      &                          Tobs, Xobs, Yobs, Zobs,                 &
      &                          OCEAN(ng)%e_u(:,:,:,1),                 &
      &                          GRID(ng)%z_v,                           &
-#   ifdef MASKING
+#    ifdef MASKING
      &                          GRID(ng)%umask,                         &
-#   endif
+#    endif
      &                          uBgErr)
+#   endif
 !
 !  Radial NLM v-component.
 !
@@ -605,6 +619,7 @@
      &                        GRID(ng)%vmask,                           &
 #   endif
      &                        vradial)
+#   ifndef VERIFICATION
           CALL extract_obs3d (ng, 0, Lm(ng)+1, 1, Mm(ng)+1,             &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        ObsState2Type(isRadial),                  &
@@ -616,10 +631,11 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%e_v(:,:,:,1),                   &
      &                        GRID(ng)%z_v,                             &
-#   ifdef MASKING
+#    ifdef MASKING
      &                        GRID(ng)%vmask,                           &
-#   endif
+#    endif
      &                        vBgErr)
+#   endif
 !
 !  Compute NLM radial velocity.
 !
@@ -644,7 +660,9 @@
      &                       vradial(iobs)*COS(ObsMeta(iobs))
 #    endif
 #   endif
+#   ifndef VERIFICATION
               BgErr(iobs)=MAX(uBgErr(iobs), vBgErr(iobs))
+#   endif
             END IF
           END DO
         END IF
@@ -784,6 +802,7 @@
      &                          GRID(ng)%rmask,                         &
 #   endif
      &                          NLmodVal)
+#   ifndef VERIFICATION
             CALL extract_obs3d (ng, 0, Lm(ng)+1, 0, Mm(ng)+1,           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          ObsState2Type(isTvar(itrc)),            &
@@ -795,10 +814,11 @@
      &                          Tobs, Xobs, Yobs, Zobs,                 &
      &                          OCEAN(ng)%e_t(:,:,:,1,itrc),            &
      &                          GRID(ng)%z_r,                           &
-#   ifdef MASKING
+#    ifdef MASKING
      &                          GRID(ng)%rmask,                         &
-#   endif
+#    endif
      &                          BgErr)
+#   endif
           END IF
 #  endif
 #  ifdef TLM_OBS
@@ -956,15 +976,16 @@
      &                     NLmodVal)
 #   endif
         END IF
-
+#   ifndef VERIFICATION
         IF (wrtObsScale(ng).and.wrtNLmod(ng)) THEN
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
 #    if defined WEAK_CONSTRAINT
      &                     BgErr(Mstr:))
-#   else
+#    else
      &                     BgErr)
-#   endif
+#    endif
         END IF
+#   endif
 #  endif
 
 #  ifdef TLM_OBS

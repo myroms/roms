@@ -1,7 +1,7 @@
       SUBROUTINE read_SedPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: sediment_inp.h 983 2019-10-03 16:24:14Z arango $
+!svn $Id: sediment_inp.h 992 2019-12-18 03:27:55Z arango $
 !=======================================================================
 !                                                                      !
 !  This routine reads in cohesive and non-cohesive sediment model      !
@@ -210,7 +210,7 @@
                 DO itrc=1,NCS
                   i=idsed(itrc)
                   ad_tnu4(i,ng)=Rmud(itrc,ng)
-                  nl_tnu4(i,ng)=Rmud(itrc,ng)
+                  tl_tnu4(i,ng)=Rmud(itrc,ng)
                 END DO
               END DO
             CASE ('MUD_Sponge')
