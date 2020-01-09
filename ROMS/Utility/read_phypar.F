@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 990 2019-12-03 04:00:29Z arango $
+!svn $Id: read_phypar.F 993 2020-01-09 21:49:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3629,13 +3629,15 @@
         IF ((nAVG(ng).gt.0).and.(ndefAVG(ng).gt.0)) THEN
           OutFiles=ntimes(ng)/ndefAVG(ng)
           CALL edit_file_struct (ng, OutFiles, AVG)
-        END IF
+          AVG(ng)%load=0       ! because delayed creation of NetCDF file
+        END IF                 ! due to time-aveeraging
 #endif
 #ifdef DIAGNOSTICS
         IF ((nDIA(ng).gt.0).and.(ndefDIA(ng).gt.0)) THEN
           OutFiles=ntimes(ng)/ndefDIA(ng)
           CALL edit_file_struct (ng, OutFiles, DIA)
-        END IF
+          DIA(ng)%load=0       ! because delayed creation of NetCDF file
+        END IF                 ! due to time-aveeraging
 #endif
 #if defined TANGENT || defined TL_IOMS
         IF ((nTLM(ng).gt.0).and.(ndefTLM(ng).gt.0)) THEN
