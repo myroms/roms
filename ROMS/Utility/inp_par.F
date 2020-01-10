@@ -2,7 +2,7 @@
       SUBROUTINE inp_par (model)
 !
 !git $Id$
-!svn $Id: inp_par.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: inp_par.F 1001 2020-01-10 22:41:16Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -170,11 +170,11 @@
 !
 !  Determine the number of ghost-points in the halo region.
 !
-#if defined TS_MPDATA || defined UV_VIS4
-      NghostPoints=3
-#else
-      NghostPoints=2
-#endif
+      IF (ThreeGhostPoints) THEN
+        NghostPoints=3
+      ELSE
+        NghostPoints=2
+      END IF
       IF (ANY(CompositeGrid).or.ANY(RefinedGrid)) THEN
         NghostPoints=MAX(3,NghostPoints)
       END IF
@@ -760,6 +760,8 @@
       OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
 
       CALL read_BioPar (model, 15, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 #ifdef SEDIMENT
 !
@@ -770,6 +772,8 @@
       OPEN (25, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
 
       CALL read_SedPar (model, 25, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
 !
@@ -780,6 +784,8 @@
       OPEN (35, FILE=TRIM(aparnam), FORM='formatted', STATUS='old')
 
       CALL read_AssPar (model, 35, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 #ifdef FLOATS
 !
@@ -790,6 +796,8 @@
       OPEN (45, FILE=TRIM(fposnam), FORM='formatted', STATUS='old')
 
       CALL read_FltPar (model, 45, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 #if defined FLOATS && defined FLOAT_BIOLOGY
 !
@@ -800,6 +808,8 @@
       OPEN (50, FILE=TRIM(fbionam), FORM='formatted', STATUS='old')
 
       CALL read_FltBioPar (model, 50, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #endif
 #ifdef STATIONS
 !
@@ -810,6 +820,62 @@
       OPEN (55, FILE=TRIM(sposnam), FORM='formatted', STATUS='old')
 
       CALL read_StaPar (model, 55, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+#endif
+#ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Report tracer advection scheme.
+!-----------------------------------------------------------------------
+!
+      IF (Master) THEN
+        WRITE (out,120) 'NLM'
+ 120    FORMAT (/,1x,'Tracer Advection Scheme: ',a,/,1x,24('='),/,      &
+     &          /,1x,'Variable',t25,'Grid',t31,'Horizontal',            &
+     &          t50,'Vertical', /,1x,'---------',t25,'----',            &
+     &          t31,2('------------',7x))
+      END IF
+      CALL tadv_report (out, iNLM, Hadvection, Vadvection)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+!
+      IF (Master) THEN
+        WRITE (out,120) 'TLM, RPM, and ADM'
+      END IF
+      CALL tadv_report (out, iADM, ad_Hadvection, ad_Vadvection)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+# endif
+#endif
+#if defined TANGENT || defined TL_IOMS
+!
+!  Set tracer advection scheme switches for the tangent linear models
+!  (TLM and RPM) to the same values as the adjoint model.
+!
+      DO ng=1,Ngrids
+        DO i=1,NT(ng)
+          tl_Hadvection(i,ng)%AKIMA4    = Hadvection(i,ng)%AKIMA4
+          tl_Hadvection(i,ng)%CENTERED2 = Hadvection(i,ng)%CENTERED2
+          tl_Hadvection(i,ng)%CENTERED4 = Hadvection(i,ng)%CENTERED4
+          tl_Hadvection(i,ng)%HSIMT     = Hadvection(i,ng)%HSIMT
+          tl_Hadvection(i,ng)%MPDATA    = Hadvection(i,ng)%MPDATA
+          tl_Hadvection(i,ng)%SPLINES   = Hadvection(i,ng)%SPLINES
+          tl_Hadvection(i,ng)%SPLIT_U3  = Hadvection(i,ng)%SPLIT_U3
+          tl_Hadvection(i,ng)%UPSTREAM3 = Hadvection(i,ng)%UPSTREAM3
+!
+          tl_Vadvection(i,ng)%AKIMA4    = Vadvection(i,ng)%AKIMA4
+          tl_Vadvection(i,ng)%CENTERED2 = Vadvection(i,ng)%CENTERED2
+          tl_Vadvection(i,ng)%CENTERED4 = Vadvection(i,ng)%CENTERED4
+          tl_Vadvection(i,ng)%HSIMT     = Vadvection(i,ng)%HSIMT
+          tl_Vadvection(i,ng)%MPDATA    = Vadvection(i,ng)%MPDATA
+          tl_Vadvection(i,ng)%SPLINES   = Vadvection(i,ng)%SPLINES
+          tl_Vadvection(i,ng)%SPLIT_U3  = Vadvection(i,ng)%SPLIT_U3
+          tl_Vadvection(i,ng)%UPSTREAM3 = Vadvection(i,ng)%UPSTREAM3
+        END DO
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------
@@ -817,8 +883,8 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (out,120) 'NLM'
- 120    FORMAT (/,1x,'Lateral Boundary Conditions: ',a,/,1x,28('='),/,  &
+        WRITE (out,130) 'NLM'
+ 130    FORMAT (/,1x,'Lateral Boundary Conditions: ',a,/,1x,28('='),/,  &
      &          /,1x,'Variable',t25,'Grid',t31,'West Edge',             &
      &          t44,'South Edge', t57,'East Edge',t70,'North Edge',     &
      &          /,1x,'---------',t25,'----',t31,4('----------',3x))
@@ -827,7 +893,8 @@
         END DO
 
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
-        WRITE (out,120) 'TLM, RPM, and ADM'
+!
+        WRITE (out,130) 'TLM, RPM, and ADM'
         DO ifield=1,nLBCvar
           CALL lbc_report (out, ifield, ad_LBC)
         END DO
@@ -1088,8 +1155,8 @@
         IF (ANY(LnudgeTCLM(i,:))) THEN
           varid=varid+1
           IF (varid.gt.MV) THEN
-            WRITE (stdout,130) MV, varid
- 130        FORMAT (/,' INP_PAR - too small dimension ',                &
+            WRITE (stdout,140) MV, varid
+ 140        FORMAT (/,' INP_PAR - too small dimension ',                &
      &              'parameter, MV = ',2i5,/,15x,                       &
      &              'change file  mod_ncparam.F  and recompile.')
             STOP

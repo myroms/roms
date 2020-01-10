@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: shoreface.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: shoreface.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -23,7 +23,6 @@
 #define NEARSHORE_MELLOR08
 #define OUT_DOUBLE
 #define UV_ADV
-#define TS_MPDATA
 #define DJ_GRADPS
 #define SALINITY
 #define SPLINES_VDIFF

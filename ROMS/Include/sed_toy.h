@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: sed_toy.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: sed_toy.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -17,9 +17,6 @@
 #undef  BODYFORCE
 #undef  LOG_PROFILE
 #define DJ_GRADPS
-#undef  TS_U3HADVECTION
-#undef  TS_C2VADVECTION
-#define TS_MPDATA
 #undef  SALINITY
 #define OUT_DOUBLE
 #define ANA_GRID

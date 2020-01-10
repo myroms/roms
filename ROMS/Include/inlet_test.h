@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: inlet_test.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: inlet_test.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -23,7 +23,6 @@
 #undef  UV_COR
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
-#define TS_MPDATA
 #define DJ_GRADPS
 #define FSOBC_REDUCED
 #define SOLVE3D

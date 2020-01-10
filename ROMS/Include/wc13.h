@@ -61,8 +61,6 @@
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
 #define TS_DIF2
-#define TS_U3HADVECTION
-#define TS_C4VADVECTION
 #define SOLVE3D
 #define SALINITY
 #define NONLIN_EOS

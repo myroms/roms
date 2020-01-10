@@ -2,10 +2,10 @@
 #define MPDATA_HOT
 
       MODULE mpdata_adiff_mod
-#if defined NONLINEAR && defined TS_MPDATA && defined SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: mpdata_adiff.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mpdata_adiff.F 1001 2020-01-10 22:41:16Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group        John C. Warner   !
 !    Licensed under a MIT/X style license                              !

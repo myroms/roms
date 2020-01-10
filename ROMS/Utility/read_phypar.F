@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: read_phypar.F 1001 2020-01-10 22:41:16Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -382,6 +382,62 @@
               IF (.not.allocated(tracer)) THEN
                 allocate (tracer(MT,Ngrids))
               END IF
+#ifdef SOLVE3D
+            CASE ('Hadvection')
+              IF (itracer.lt.(NAT+NPT)) THEN
+                itracer=itracer+1
+              ELSE
+                itracer=1                      ! next nested grid
+              END IF
+              itrc=itracer
+              Npts=load_tadv(Nval, Cval, line, nline, itrc, igrid,      &
+     &                       itracer, 1, NAT+NPT,                       &
+     &                       Vname(1,idTvar(itrc)),                     &
+     &                       Hadvection)
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            CASE ('Vadvection')
+              IF (itracer.lt.(NAT+NPT)) THEN
+                itracer=itracer+1
+              ELSE
+                itracer=1                      ! next nested grid
+              END IF
+              itrc=itracer
+              Npts=load_tadv(Nval, Cval, line, nline, itrc, igrid,      &
+     &                       itracer, 1, NAT+NPT,                       &
+     &                       Vname(1,idTvar(itrc)),                     &
+     &                       Vadvection)
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+            CASE ('ad_Hadvection')
+              IF (itracer.lt.(NAT+NPT)) THEN
+                itracer=itracer+1
+              ELSE
+                itracer=1                      ! next nested grid
+              END IF
+              itrc=itracer
+              Npts=load_tadv(Nval, Cval, line, nline, itrc, igrid,      &
+     &                       itracer, 1, NAT+NPT,                       &
+     &                       Vname(1,idTvar(itrc)),                     &
+     &                       ad_Hadvection)
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            CASE ('ad_Vadvection')
+              IF (itracer.lt.(NAT+NPT)) THEN
+                itracer=itracer+1
+              ELSE
+                itracer=1                      ! next nested grid
+              END IF
+              itrc=itracer
+              Npts=load_tadv(Nval, Cval, line, nline, itrc, igrid,      &
+     &                       itracer, 1, NAT+NPT,                       &
+     &                       Vname(1,idTvar(itracer)),                  &
+     &                       ad_Vadvection)
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+# endif
+#endif
             CASE ('LBC(isFsur)')
               Npts=load_lbc(Nval, Cval, line, nline, isFsur, igrid,     &
      &                      0, 0, Vname(1,idFsur), LBC)
@@ -3231,6 +3287,16 @@
 !-----------------------------------------------------------------------
 !  Process input parameters.
 !-----------------------------------------------------------------------
+!
+!  Set switch for three ghost-points in the halo region.
+!
+#ifdef UV_VIS4
+      ThreeGhostPoints=.TRUE.
+#else
+      IF (ANY(Hadvection(:,:)%MPDATA)) THEN
+        ThreeGhostPoints=.TRUE.
+      END IF
+#endif
 !
 !  Check if nesting parameters "NestLayers", "GridsInLayer", and
 !  "GridNumber" have been assigned.  The code below is necessary

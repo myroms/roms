@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: channel_neck.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: channel_neck.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -27,8 +27,6 @@
 #define UV_VIS2
 #define MIX_GEO_UV
 #define DJ_GRADPS
-#undef  TS_A4HADVECTION
-#undef  TS_A4VADVECTION
 #undef  TS_DIF2
 #undef  MIX_GEO_TS
 #define SOLVE3D

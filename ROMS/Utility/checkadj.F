@@ -2,7 +2,7 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: checkadj.F 1001 2020-01-10 22:41:16Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -50,7 +50,7 @@
      &                               'stability problems, WARNING'
       END IF
 
-      string=uppercase('ts_u3adv_split')
+      string=uppercase('split_u3')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
         IF (Master) WRITE(stdout,10) TRIM(string),                      &
@@ -465,15 +465,38 @@
      &                               'not allowed, FATAL ERROR'
       END IF
 
-# if !(defined TS_HADVECTION_TL && defined TS_VADVECTION_TL)
-      string=uppercase('ts_mpdata')
-      ifound=INDEX(TRIM(Coptions), TRIM(string))
-      IF (ifound.ne.0) THEN
-        ic=ic+1
-        IF (Master) WRITE(stdout,20) TRIM(string),                      &
-     &                               'not coded, FATAL ERROR'
+      IF (ANY(tl_Hadvection(:,:)%MPDATA).or.                            &
+     &    ANY(tl_Vadvection(:,:)%MPDATA)) THEN
+        string=uppercase('mpdata')
+        ifound=INDEX(TRIM(Coptions), TRIM(string))
+        IF (ifound.ne.0) THEN
+          ic=ic+1
+          IF (Master) WRITE(stdout,20) TRIM(string),                    &
+     &                                 'not coded, FATAL ERROR'
+        END IF
       END IF
-# endif
+
+      IF (ANY(tl_Hadvection(:,:)%HSIMT).or.                             &
+     &    ANY(tl_Vadvection(:,:)%HSIMT)) THEN
+        string=uppercase('hsimt')
+        ifound=INDEX(TRIM(Coptions), TRIM(string))
+        IF (ifound.ne.0) THEN
+          ic=ic+1
+          IF (Master) WRITE(stdout,20) TRIM(string),                    &
+     &                                 'not coded, FATAL ERROR'
+        END IF
+      END IF
+
+      IF (ANY(tl_Hadvection(:,:)%SPLIT_U3).or.                          &
+     &    ANY(tl_Vadvection(:,:)%SPLIT_U3)) THEN
+        string=uppercase('split_u3')
+        ifound=INDEX(TRIM(Coptions), TRIM(string))
+        IF (ifound.ne.0) THEN
+          ic=ic+1
+          IF (Master) WRITE(stdout,20) TRIM(string),                    &
+     &                                 'not coded, FATAL ERROR'
+        END IF
+      END IF
 
       string=uppercase('ts_smagorinsky')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
@@ -482,16 +505,6 @@
         IF (Master) WRITE(stdout,20) TRIM(string),                      &
      &                               'not coded, FATAL ERROR'
       END IF
-
-# if !defined TS_HADVECTION_TL
-      string=uppercase('ts_u3adv_split')
-      ifound=INDEX(TRIM(Coptions), TRIM(string))
-      IF (ifound.ne.0) THEN
-        ic=ic+1
-        IF (Master) WRITE(stdout,20) TRIM(string),                      &
-     &                               'not coded, FATAL ERROR'
-      END IF
-# endif
 
       string=uppercase('uv_smagorinsky')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
