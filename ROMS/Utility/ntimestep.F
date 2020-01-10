@@ -2,7 +2,7 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 990 2019-12-03 04:00:29Z arango $
+!svn $Id: ntimestep.F 994 2020-01-10 02:56:54Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -51,6 +51,11 @@
 !
       integer :: extra, gn, ig, il, ng, ngm1
       integer, dimension(Ngrids) :: WindowSteps, my_Nsteps
+
+#if defined MODEL_COUPLING && !defined MCT_LIB
+!
+      real(dp) :: ENDtime, NEXTtime
+#endif
 !
 !=======================================================================
 !  Set number of time steps to execute for grid "ng".

@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 993 2020-01-09 21:49:09Z arango $
+!svn $Id: read_phypar.F 994 2020-01-10 02:56:54Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3125,20 +3125,20 @@
             CASE ('FOInameA')
               label='FOIA - adjoint sensitivity functional A'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, FOIA)
+     &                      Ngrids, Nfiles, FOIA)
             CASE ('FOInameB')
               label='FOIB - adjoint sensitivity functional B'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, FOIB)
+     &                      Ngrids, Nfiles, FOIB)
 # endif
             CASE ('FCTnameA')
               label='FCTA - forecast state forward trajectory A'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, FCTA)
+     &                      Ngrids, Nfiles, FCTA)
             CASE ('FCTnameB')
               label='FCTB - forecast state forward trajectory B'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, FCTB)
+     &                      Ngrids, Nfiles, FCTB)
 #endif
             CASE ('NGCNAME')
               DO i=1,LEN(NGCname)

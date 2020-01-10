@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_wrf.sh 964 2019-04-30 21:10:18Z arango $
+# svn $Id: build_wrf.sh 994 2020-01-10 02:56:54Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
@@ -393,7 +393,7 @@ echo ""
 echo "   ${WRF_ROOT_DIR}/compile ${WRF_CASE}"
 echo "        WRF_DA_CORE = ${WRF_DA_CORE},    Data Assimilation core"
 echo "        WRF_EM_CORE = ${WRF_EM_CORE},    Eurelian Mass-coordinate core"
-echo "        WRF_NMM_CORE = ${WRF_EM_CORE},   Nonhydrostatic Mesoscale Model core"
+echo "        WRF_NMM_CORE = ${WRF_NMM_CORE}, Nonhydrostatic Mesoscale Model core"
 echo "        J = ${J},          number of compiling CPUs"
 echo "${separator}"
 echo ""
