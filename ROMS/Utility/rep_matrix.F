@@ -3,9 +3,9 @@
       SUBROUTINE rep_matrix (ng, model, outLoop, NinnLoop)
 !
 !git $Id$
-!svn $Id: rep_matrix.F 937 2019-01-28 06:13:04Z arango $
+!svn $Id: rep_matrix.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

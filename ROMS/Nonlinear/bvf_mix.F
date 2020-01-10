@@ -3,9 +3,9 @@
 #if defined NONLINEAR && defined BVF_MIXING
 !
 !git $Id$
-!svn $Id: bvf_mix.F 937 2019-01-28 06:13:04Z arango $
+!svn $Id: bvf_mix.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

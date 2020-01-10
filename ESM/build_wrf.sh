@@ -1,9 +1,9 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_wrf.sh 994 2020-01-10 02:56:54Z arango $
+# svn $Id: build_wrf.sh 995 2020-01-10 04:01:28Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # WRF Compiling CSH Script                                              :::

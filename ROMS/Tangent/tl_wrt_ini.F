@@ -3,9 +3,9 @@
       SUBROUTINE tl_wrt_ini (ng, Tindex, OutRec)
 !
 !git $Id$
-!svn $Id: tl_wrt_ini.F 937 2019-01-28 06:13:04Z arango $
+!svn $Id: tl_wrt_ini.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

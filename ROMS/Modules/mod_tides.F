@@ -3,9 +3,9 @@
 #if defined SSH_TIDES || defined UV_TIDES
 !
 !git $Id$
-!svn $Id: mod_tides.F 967 2019-05-16 01:51:28Z arango $
+!svn $Id: mod_tides.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
