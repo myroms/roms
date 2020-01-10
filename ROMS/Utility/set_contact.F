@@ -3,9 +3,9 @@
       SUBROUTINE set_contact (ng, model)
 !
 !git $Id$
-!svn $Id: set_contact.F 990 2019-12-03 04:00:29Z arango $
+!svn $Id: set_contact.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

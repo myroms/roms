@@ -3,9 +3,9 @@
       SUBROUTINE obs_initial (ng, model, backward)
 !
 !git $Id$
-!svn $Id: obs_initial.F 991 2019-12-09 03:14:43Z arango $
+!svn $Id: obs_initial.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

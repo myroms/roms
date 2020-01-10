@@ -2,9 +2,9 @@
       MODULE analytical_mod
 !
 !git $Id$
-!svn $Id: analytical.F 953 2019-02-16 02:50:41Z arango $
+!svn $Id: analytical.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

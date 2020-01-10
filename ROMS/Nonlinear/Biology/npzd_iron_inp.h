@@ -1,9 +1,9 @@
       SUBROUTINE read_BioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: npzd_iron_inp.h 992 2019-12-18 03:27:55Z arango $
+!svn $Id: npzd_iron_inp.h 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

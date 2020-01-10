@@ -1,9 +1,9 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: symmetry.h 982 2019-09-20 03:33:52Z arango $
+!svn $Id: symmetry.h 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

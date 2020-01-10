@@ -3,9 +3,9 @@
 #if defined ADJOINT && defined OBSERVATIONS && defined WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: ad_htobs.F 991 2019-12-09 03:14:43Z arango $
+!svn $Id: ad_htobs.F 995 2020-01-10 04:01:28Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
