@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: overflow.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: overflow.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -21,8 +21,6 @@
 #define DJ_GRADPS
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
-#define TS_U3HADVECTION
-#define TS_SVADVECTION
 #define TS_DIF2
 #define MIX_ISO_TS
 #define SOLVE3D

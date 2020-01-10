@@ -4,7 +4,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: pre_step3d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: pre_step3d.F 1001 2020-01-10 22:41:16Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -282,14 +282,10 @@
 # if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
       integer :: idiag
 # endif
-# ifdef TS_MPDATA
-      real(r8), parameter :: Gamma = 0.5_r8
-# else
-      real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
-# endif
       real(r8), parameter :: eps = 1.0E-16_r8
 
       real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: Gamma
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
@@ -343,178 +339,185 @@
 !
       T_LOOP1 :DO itrc=1,NT(ng)
         K_LOOP: DO k=1,N(ng)
-
-#  if defined TS_C2HADVECTION
+!
+          HADV_FLUX : IF (Hadvection(itrc,ng)%CENTERED2) THEN
 !
 !  Second-order, centered differences horizontal advective fluxes.
 !
-          DO j=Jstr,Jend
-            DO i=Istr,Iend+1
-              FX(i,j)=Huon(i,j,k)*                                      &
-     &                0.5_r8*(t(i-1,j,k,nstp,itrc)+                     &
-     &                        t(i  ,j,k,nstp,itrc))
+            DO j=Jstr,Jend
+              DO i=Istr,Iend+1
+                FX(i,j)=Huon(i,j,k)*                                    &
+     &                  0.5_r8*(t(i-1,j,k,nstp,itrc)+                   &
+     &                          t(i  ,j,k,nstp,itrc))
+              END DO
             END DO
-          END DO
-          DO j=Jstr,Jend+1
-            DO i=Istr,Iend
-              FE(i,j)=Hvom(i,j,k)*                                      &
-     &                0.5_r8*(t(i,j-1,k,nstp,itrc)+                     &
-     &                        t(i,j  ,k,nstp,itrc))
+            DO j=Jstr,Jend+1
+              DO i=Istr,Iend
+                FE(i,j)=Hvom(i,j,k)*                                    &
+     &                  0.5_r8*(t(i,j-1,k,nstp,itrc)+                   &
+     &                          t(i,j  ,k,nstp,itrc))
+              END DO
             END DO
-          END DO
-
-#  elif defined TS_MPDATA
+!
+          ELSE IF ((Hadvection(itrc,ng)%MPDATA).or.                     &
+     &             (Hadvection(itrc,ng)%HSIMT)) THEN
 !
 !  First-order, upstream differences horizontal advective fluxes.
 !
-          DO j=Jstr,Jend
-            DO i=Istr,Iend+1
-              cff1=MAX(Huon(i,j,k),0.0_r8)
-              cff2=MIN(Huon(i,j,k),0.0_r8)
-              FX(i,j)=cff1*t(i-1,j,k,nstp,itrc)+                        &
-     &                cff2*t(i  ,j,k,nstp,itrc)
-            END DO
-          END DO
-          DO j=Jstr,Jend+1
-            DO i=Istr,Iend
-              cff1=MAX(Hvom(i,j,k),0.0_r8)
-              cff2=MIN(Hvom(i,j,k),0.0_r8)
-              FE(i,j)=cff1*t(i,j-1,k,nstp,itrc)+                        &
-     &                cff2*t(i,j  ,k,nstp,itrc)
-            END DO
-          END DO
-#  else
-!
-#   if defined TS_U3HADVECTION
-!  Third-order, uptream-biased horizontal advective fluxes.
-#   elif defined TS_A4HADVECTION
-!  Fourth-order, Akima horizontal advective fluxes.
-#   else
-!  Fourth-order, centered differences horizontal advective fluxes.
-#   endif
-!
-          DO j=Jstr,Jend
-            DO i=Istrm1,Iendp2
-              FX(i,j)=t(i  ,j,k,nstp,itrc)-                             &
-     &                t(i-1,j,k,nstp,itrc)
-#   ifdef MASKING
-              FX(i,j)=FX(i,j)*umask(i,j)
-#   endif
-            END DO
-          END DO
-          IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                FX(Istr-1,j)=FX(Istr,j)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend+1
+                cff1=MAX(Huon(i,j,k),0.0_r8)
+                cff2=MIN(Huon(i,j,k),0.0_r8)
+                FX(i,j)=cff1*t(i-1,j,k,nstp,itrc)+                      &
+     &                  cff2*t(i  ,j,k,nstp,itrc)
               END DO
-            END IF
-          END IF
-          IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-              DO j=Jstr,Jend
-                FX(Iend+2,j)=FX(Iend+1,j)
-              END DO
-            END IF
-          END IF
-!
-          DO j=Jstr,Jend
-            DO i=Istr-1,Iend+1
-#   if defined TS_U3HADVECTION
-              curv(i,j)=FX(i+1,j)-FX(i,j)
-#   elif defined TS_A4HADVECTION
-              cff=2.0_r8*FX(i+1,j)*FX(i,j)
-              IF (cff.gt.eps) THEN
-                grad(i,j)=cff/(FX(i+1,j)+FX(i,j))
-              ELSE
-                grad(i,j)=0.0_r8
-              END IF
-#   else
-              grad(i,j)=0.5_r8*(FX(i+1,j)+FX(i,j))
-#   endif
             END DO
-          END DO
-!
-          cff1=1.0_r8/6.0_r8
-          cff2=1.0_r8/3.0_r8
-          DO j=Jstr,Jend
-            DO i=Istr,Iend+1
-#   ifdef TS_U3HADVECTION
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,nstp,itrc)+                            &
-     &                 t(i  ,j,k,nstp,itrc))-                           &
-     &                cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+        &
-     &                      curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
-#   else
-              FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,nstp,itrc)+                            &
-     &                 t(i  ,j,k,nstp,itrc)-                            &
-     &                 cff2*(grad(i  ,j)-                               &
-     &                       grad(i-1,j)))
-#   endif
-            END DO
-          END DO
-!
-          DO j=Jstrm1,Jendp2
-            DO i=Istr,Iend
-              FE(i,j)=t(i,j  ,k,nstp,itrc)-                             &
-     &                t(i,j-1,k,nstp,itrc)
-#   ifdef MASKING
-              FE(i,j)=FE(i,j)*vmask(i,j)
-#   endif
-            END DO
-          END DO
-          IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+            DO j=Jstr,Jend+1
               DO i=Istr,Iend
-                FE(i,Jstr-1)=FE(i,Jstr)
+                cff1=MAX(Hvom(i,j,k),0.0_r8)
+                cff2=MIN(Hvom(i,j,k),0.0_r8)
+                FE(i,j)=cff1*t(i,j-1,k,nstp,itrc)+                      &
+     &                  cff2*t(i,j  ,k,nstp,itrc)
               END DO
-            END IF
-          END IF
-          IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
-            IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-              DO i=Istr,Iend
-                FE(i,Jend+2)=FE(i,Jend+1)
-              END DO
-            END IF
-          END IF
-!
-          DO j=Jstr-1,Jend+1
-            DO i=Istr,Iend
-#   if defined TS_U3HADVECTION
-              curv(i,j)=FE(i,j+1)-FE(i,j)
-#   elif defined TS_A4HADVECTION
-              cff=2.0_r8*FE(i,j+1)*FE(i,j)
-              IF (cff.gt.eps) THEN
-                grad(i,j)=cff/(FE(i,j+1)+FE(i,j))
-              ELSE
-                grad(i,j)=0.0_r8
-              END IF
-#   else
-              grad(i,j)=0.5_r8*(FE(i,j+1)+FE(i,j))
-#   endif
             END DO
-          END DO
 !
-          cff1=1.0_r8/6.0_r8
-          cff2=1.0_r8/3.0_r8
-          DO j=Jstr,Jend+1
-            DO i=Istr,Iend
-#   ifdef TS_U3HADVECTION
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,nstp,itrc)+                            &
-     &                 t(i,j  ,k,nstp,itrc))-                           &
-     &                cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+        &
-     &                      curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
-#   else
-              FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,nstp,itrc)+                            &
-     &                 t(i,j  ,k,nstp,itrc)-                            &
-     &                 cff2*(grad(i,j  )-                               &
-     &                       grad(i,j-1)))
-#   endif
-            END DO
-          END DO
+          ELSE IF ((Hadvection(itrc,ng)%AKIMA4).or.                     &
+     &             (Hadvection(itrc,ng)%CENTERED4).or.                  &
+     &             (Hadvection(itrc,ng)%SPLIT_U3).or.                   &
+     &             (Hadvection(itrc,ng)%UPSTREAM3)) THEN
+!
+!  Fourth-order Akima, fourth-order centered differences, or third-order
+!  upstream-biased horizontal advective fluxes.
+!
+            DO j=Jstr,Jend
+              DO i=Istrm1,Iendp2
+                FX(i,j)=t(i  ,j,k,nstp,itrc)-                           &
+     &                  t(i-1,j,k,nstp,itrc)
+#  ifdef MASKING
+                FX(i,j)=FX(i,j)*umask(i,j)
 #  endif
+              END DO
+            END DO
+            IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                DO j=Jstr,Jend
+                  FX(Istr-1,j)=FX(Istr,j)
+                END DO
+              END IF
+            END IF
+            IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                DO j=Jstr,Jend
+                  FX(Iend+2,j)=FX(Iend+1,j)
+                END DO
+              END IF
+            END IF
+!
+            DO j=Jstr,Jend
+              DO i=Istr-1,Iend+1
+                IF (Hadvection(itrc,ng)%UPSTREAM3) THEN
+                  curv(i,j)=FX(i+1,j)-FX(i,j)
+                ELSE IF (Hadvection(itrc,ng)%AKIMA4) THEN
+                  cff=2.0_r8*FX(i+1,j)*FX(i,j)
+                  IF (cff.gt.eps) THEN
+                    grad(i,j)=cff/(FX(i+1,j)+FX(i,j))
+                  ELSE
+                    grad(i,j)=0.0_r8
+                  END IF
+                ELSE IF ((Hadvection(itrc,ng)%CENTERED4).or.            &
+     &                   (Hadvection(itrc,ng)%SPLIT_U3)) THEN
+                  grad(i,j)=0.5_r8*(FX(i+1,j)+FX(i,j))
+                END IF
+              END DO
+            END DO
+!
+            cff1=1.0_r8/6.0_r8
+            cff2=1.0_r8/3.0_r8
+            DO j=Jstr,Jend
+              DO i=Istr,Iend+1
+                IF (Hadvection(itrc,ng)%UPSTREAM3) THEN
+                  FX(i,j)=Huon(i,j,k)*0.5_r8*                           &
+     &                    (t(i-1,j,k,nstp,itrc)+                        &
+     &                     t(i  ,j,k,nstp,itrc))-                       &
+     &                    cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+    &
+     &                          curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
+                ELSE IF ((Hadvection(itrc,ng)%AKIMA4).or.               &
+     &                   (Hadvection(itrc,ng)%CENTERED4).or.            &
+     &                   (Hadvection(itrc,ng)%SPLIT_U3)) THEN
+
+                  FX(i,j)=Huon(i,j,k)*0.5_r8*                           &
+     &                    (t(i-1,j,k,nstp,itrc)+                        &
+     &                     t(i  ,j,k,nstp,itrc)-                        &
+     &                     cff2*(grad(i  ,j)-                           &
+     &                           grad(i-1,j)))
+                END IF
+              END DO
+            END DO
+!
+            DO j=Jstrm1,Jendp2
+              DO i=Istr,Iend
+                FE(i,j)=t(i,j  ,k,nstp,itrc)-                           &
+     &                  t(i,j-1,k,nstp,itrc)
+#  ifdef MASKING
+                FE(i,j)=FE(i,j)*vmask(i,j)
+#  endif
+              END DO
+            END DO
+            IF (.not.(CompositeGrid(isouth,ng).or.NSperiodic(ng))) THEN
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                DO i=Istr,Iend
+                  FE(i,Jstr-1)=FE(i,Jstr)
+                END DO
+              END IF
+            END IF
+            IF (.not.(CompositeGrid(inorth,ng).or.NSperiodic(ng))) THEN
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                DO i=Istr,Iend
+                  FE(i,Jend+2)=FE(i,Jend+1)
+                END DO
+              END IF
+            END IF
+!
+            DO j=Jstr-1,Jend+1
+              DO i=Istr,Iend
+                IF (Hadvection(itrc,ng)%UPSTREAM3) THEN
+                  curv(i,j)=FE(i,j+1)-FE(i,j)
+                ELSE IF (Hadvection(itrc,ng)%AKIMA4) THEN
+                  cff=2.0_r8*FE(i,j+1)*FE(i,j)
+                  IF (cff.gt.eps) THEN
+                    grad(i,j)=cff/(FE(i,j+1)+FE(i,j))
+                  ELSE
+                   grad(i,j)=0.0_r8
+                  END IF
+                ELSE IF ((Hadvection(itrc,ng)%CENTERED4).or.            &
+     &                   (Hadvection(itrc,ng)%SPLIT_U3)) THEN
+                  grad(i,j)=0.5_r8*(FE(i,j+1)+FE(i,j))
+                END IF
+              END DO
+            END DO
+!
+            cff1=1.0_r8/6.0_r8
+            cff2=1.0_r8/3.0_r8
+            DO j=Jstr,Jend+1
+              DO i=Istr,Iend
+                IF (Hadvection(itrc,ng)%UPSTREAM3) THEN
+                  FE(i,j)=Hvom(i,j,k)*0.5_r8*                           &
+     &                    (t(i,j-1,k,nstp,itrc)+                        &
+     &                     t(i,j  ,k,nstp,itrc))-                       &
+     &                    cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+    &
+     &                          curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
+                ELSE IF ((Hadvection(itrc,ng)%AKIMA4).or.               &
+     &                   (Hadvection(itrc,ng)%CENTERED4).or.            &
+     &                   (Hadvection(itrc,ng)%SPLIT_U3)) THEN
+                  FE(i,j)=Hvom(i,j,k)*0.5_r8*                           &
+     &                    (t(i,j-1,k,nstp,itrc)+                        &
+     &                     t(i,j  ,k,nstp,itrc)-                        &
+     &                     cff2*(grad(i,j  )-                           &
+     &                           grad(i,j-1)))
+                END IF
+              END DO
+            END DO
+          END IF HADV_FLUX
 !
 !  Apply tracers point sources to the horizontal advection terms,
 !  if any.
@@ -546,6 +549,12 @@
 !
 !  Time-step horizontal advection (m Tunits).
 !
+          IF ((Hadvection(itrc,ng)%MPDATA).or.                          &
+     &        (Hadvection(itrc,ng)%HSIMT)) THEN
+            Gamma=0.5_r8
+          ELSE
+            Gamma=1.0_r8/6.0_r8
+          END IF
           IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
             cff1=1.0_r8
@@ -567,221 +576,209 @@
         END DO K_LOOP
       END DO T_LOOP1
 
-#  if (defined AGE_MEAN && defined T_PASSIVE) && !defined TS_MPDATA
+#  if defined AGE_MEAN && defined T_PASSIVE
 !
 !  If inert passive tracer and Mean Age, compute age concentration (even
 !  inert index) forced by the right-hand-side term that is concentration
 !  of an associated conservative passive tracer (odd inert index).
 !  Implemented and tested by W.G. Zhang and J. Wilkin. (m Tunits)
 !
-      IF (iic(ng).eq.ntfirst(ng)) THEN
-        cff=0.5_r8*dt(ng)
-      ELSE
-        cff=(1.0_r8-Gamma)*dt(ng)
-      END IF
-!
       DO itrc=1,NPT,2
-        iage=inert(itrc+1)                     ! even inert tracer index
-        DO k=1,N(ng)
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-              t(i,j,k,3,iage)=t(i,j,k,3,iage)+                          &
-     &                        cff*Hz(i,j,k)*                            &
-     &                        t(i,j,k,nnew,inert(itrc))
+        IF (.not.((Hadvection(inert(itrc),ng)%MPDATA).or.               &
+     &            (Hadvection(inert(itrc),ng)%HSIMT))) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
+            cff=0.5_r8*dt(ng)
+          ELSE
+            Gamma=1.0_r8/6.0_r8
+           cff=(1.0_r8-Gamma)*dt(ng)
+          END IF
+          iage=inert(itrc+1)                   ! even inert tracer index
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                t(i,j,k,3,iage)=t(i,j,k,3,iage)+                        &
+     &                          cff*Hz(i,j,k)*                          &
+     &                          t(i,j,k,nnew,inert(itrc))
+              END DO
             END DO
           END DO
-        END DO
+        END IF
       END DO
 #  endif
-!
-!  Compute artificial continuity equation (same for all tracers) and
-!  load it into private array DC (1/m). Notice pipelined J-loop.
-!
-      J_LOOP1 : DO j=Jstr,Jend
-        IF (iic(ng).eq.ntfirst(ng)) THEN
-          cff=0.5_r8*dt(ng)
-        ELSE
-          cff=(1.0_r8-Gamma)*dt(ng)
-        END IF
-        DO k=1,N(ng)
-          DO i=Istr,Iend
-            DC(i,k)=1.0_r8/(Hz(i,j,k)-                                  &
-     &                      cff*pm(i,j)*pn(i,j)*                        &
-     &                      (Huon(i+1,j,k)-Huon(i,j,k)+                 &
-     &                       Hvom(i,j+1,k)-Hvom(i,j,k)+                 &
-     &                      (W(i,j,k)-W(i,j,k-1))))
-          END DO
-        END DO
 !
 !-----------------------------------------------------------------------
 !  Compute time rate of change of intermediate tracer due to vertical
 !  advection.  Impose artificial continuity equation.
 !-----------------------------------------------------------------------
 !
+      J_LOOP1 : DO j=Jstr,Jend
         T_LOOP2: DO itrc=1,NT(ng)
-
-#  ifdef TS_SVADVECTION
+!
+          VADV_FLUX : IF (Vadvection(itrc,ng)%SPLINES) THEN
 !
 !  Build conservative parabolic splines for the vertical derivatives
 !  "FC" of the tracer.  Then, the interfacial "FC" values are
 !  converted to vertical advective flux.
 !
-          DO i=Istr,Iend
-#   ifdef NEUMANN
-            FC(i,0)=1.5_r8*t(i,j,1,nstp,itrc)
-            CF(i,1)=0.5_r8
-#   else
-            FC(i,0)=2.0_r8*t(i,j,1,nstp,itrc)
-            CF(i,1)=1.0_r8
-#   endif
-          END DO
-          DO k=1,N(ng)-1
             DO i=Istr,Iend
-              cff=1.0_r8/(2.0_r8*Hz(i,j,k)+                             &
-     &                    Hz(i,j,k+1)*(2.0_r8-CF(i,k)))
-              CF(i,k+1)=cff*Hz(i,j,k)
-              FC(i,k)=cff*(3.0_r8*(Hz(i,j,k  )*t(i,j,k+1,nstp,itrc)+    &
-     &                             Hz(i,j,k+1)*t(i,j,k  ,nstp,itrc))-   &
-     &                     Hz(i,j,k+1)*FC(i,k-1))
+#  ifdef NEUMANN
+              FC(i,0)=1.5_r8*t(i,j,1,nstp,itrc)
+              CF(i,1)=0.5_r8
+#  else
+              FC(i,0)=2.0_r8*t(i,j,1,nstp,itrc)
+              CF(i,1)=1.0_r8
+#  endif
             END DO
-          END DO
-          DO i=Istr,Iend
-#   ifdef NEUMANN
-            FC(i,N(ng))=(3.0_r8*t(i,j,N(ng),nstp,itrc)-                 &
-     &                   FC(i,N(ng)-1))/(2.0_r8-CF(i,N(ng)))
-#   else
-            FC(i,N(ng))=(2.0_r8*t(i,j,N(ng),nstp,itrc)-                 &
-     &                   FC(i,N(ng)-1))/(1.0_r8-CF(i,N(ng)))
-#   endif
-          END DO
-          DO k=N(ng)-1,0,-1
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(2.0_r8*Hz(i,j,k)+                           &
+     &                      Hz(i,j,k+1)*(2.0_r8-CF(i,k)))
+                CF(i,k+1)=cff*Hz(i,j,k)
+                FC(i,k)=cff*(3.0_r8*(Hz(i,j,k  )*t(i,j,k+1,nstp,itrc)+  &
+     &                               Hz(i,j,k+1)*t(i,j,k  ,nstp,itrc))- &
+     &                       Hz(i,j,k+1)*FC(i,k-1))
+              END DO
+            END DO
             DO i=Istr,Iend
-              FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
-              FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+#  ifdef NEUMANN
+              FC(i,N(ng))=(3.0_r8*t(i,j,N(ng),nstp,itrc)-               &
+     &                     FC(i,N(ng)-1))/(2.0_r8-CF(i,N(ng)))
+#  else
+              FC(i,N(ng))=(2.0_r8*t(i,j,N(ng),nstp,itrc)-               &
+     &                     FC(i,N(ng)-1))/(1.0_r8-CF(i,N(ng)))
+#  endif
             END DO
-          END DO
-          DO i=Istr,Iend
-            FC(i,N(ng))=0.0_r8
-            FC(i,0)=0.0_r8
-          END DO
-
-#  elif defined TS_A4VADVECTION
+            DO k=N(ng)-1,0,-1
+              DO i=Istr,Iend
+                FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
+                FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+              END DO
+            END DO
+            DO i=Istr,Iend
+              FC(i,N(ng))=0.0_r8
+              FC(i,0)=0.0_r8
+            END DO
+!
+          ELSE IF (Vadvection(itrc,ng)%AKIMA4) THEN
 !
 !  Fourth-order, Akima vertical advective flux.
 !
-          DO k=1,N(ng)-1
-            DO i=Istr,Iend
-              FC(i,k)=t(i,j,k+1,nstp,itrc)-                             &
-     &                t(i,j,k  ,nstp,itrc)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                FC(i,k)=t(i,j,k+1,nstp,itrc)-                           &
+     &                  t(i,j,k  ,nstp,itrc)
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-            FC(i,0)=FC(i,1)
-            FC(i,N(ng))=FC(i,N(ng)-1)
-          END DO
-          DO k=1,N(ng)
             DO i=Istr,Iend
-              cff=2.0_r8*FC(i,k)*FC(i,k-1)
-              IF (cff.gt.eps) THEN
-                CF(i,k)=cff/(FC(i,k)+FC(i,k-1))
-              ELSE
-                CF(i,k)=0.0_r8
-              END IF
+              FC(i,0)=FC(i,1)
+              FC(i,N(ng))=FC(i,N(ng)-1)
             END DO
-          END DO
-          cff1=1.0_r8/3.0_r8
-          DO k=1,N(ng)-1
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                cff=2.0_r8*FC(i,k)*FC(i,k-1)
+                IF (cff.gt.eps) THEN
+                  CF(i,k)=cff/(FC(i,k)+FC(i,k-1))
+                ELSE
+                  CF(i,k)=0.0_r8
+                END IF
+              END DO
+            END DO
+            cff1=1.0_r8/3.0_r8
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                FC(i,k)=W(i,j,k)*                                       &
+     &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
+     &                          t(i,j,k+1,nstp,itrc)-                   &
+     &                          cff1*(CF(i,k+1)-CF(i,k)))
+              END DO
+            END DO
             DO i=Istr,Iend
-              FC(i,k)=W(i,j,k)*                                         &
-     &                0.5_r8*(t(i,j,k  ,nstp,itrc)+                     &
-     &                        t(i,j,k+1,nstp,itrc)-                     &
-     &                        cff1*(CF(i,k+1)-CF(i,k)))
+#  ifdef SED_MORPH
+              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
+#  else
+              FC(i,0)=0.0_r8
+#  endif
+              FC(i,N(ng))=0.0_r8
             END DO
-          END DO
-          DO i=Istr,Iend
-#   ifdef SED_MORPH
-            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#   else
-            FC(i,0)=0.0_r8
-#   endif
-            FC(i,N(ng))=0.0_r8
-          END DO
-
-#  elif defined TS_C2VADVECTION
+!
+          ELSE IF (Vadvection(itrc,ng)%CENTERED2) THEN
 !
 !  Second-order, central differences vertical advective flux.
 !
-          DO k=1,N(ng)-1
-            DO i=Istr,Iend
-              FC(i,k)=W(i,j,k)*                                         &
-     &                0.5_r8*(t(i,j,k  ,nstp,itrc)+                     &
-     &                        t(i,j,k+1,nstp,itrc))
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                FC(i,k)=W(i,j,k)*                                       &
+     &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
+     &                          t(i,j,k+1,nstp,itrc))
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-#   ifdef SED_MORPH
-            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#   else
-            FC(i,0)=0.0_r8
-#   endif
-            FC(i,N(ng))=0.0_r8
-          END DO
-
-#  elif defined TS_MPDATA
+            DO i=Istr,Iend
+#  ifdef SED_MORPH
+              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
+#  else
+              FC(i,0)=0.0_r8
+#  endif
+              FC(i,N(ng))=0.0_r8
+            END DO
+!
+          ELSE IF ((Vadvection(itrc,ng)%MPDATA).or.                     &
+     &             (Vadvection(itrc,ng)%HSIMT)) THEN
 !
 !  First_order, upstream differences vertical advective flux.
 !
-          DO k=1,N(ng)-1
-            DO i=Istr,Iend
-              cff1=MAX(W(i,j,k),0.0_r8)
-              cff2=MIN(W(i,j,k),0.0_r8)
-              FC(i,k)=cff1*t(i,j,k  ,nstp,itrc)+                        &
-     &                cff2*t(i,j,k+1,nstp,itrc)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=MAX(W(i,j,k),0.0_r8)
+                cff2=MIN(W(i,j,k),0.0_r8)
+                FC(i,k)=cff1*t(i,j,k  ,nstp,itrc)+                      &
+     &                  cff2*t(i,j,k+1,nstp,itrc)
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-#    ifdef SED_MORPH
-            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#    else
-            FC(i,0)=0.0_r8
-#    endif
-            FC(i,N(ng))=0.0_r8
-          END DO
+            DO i=Istr,Iend
+#  ifdef SED_MORPH
+              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
 #  else
+              FC(i,0)=0.0_r8
+#  endif
+              FC(i,N(ng))=0.0_r8
+            END DO
+!
+          ELSE IF ((Vadvection(itrc,ng)%CENTERED4).or.                  &
+     &             (Vadvection(itrc,ng)%SPLIT_U3)) THEN
 !
 !  Fourth-order, central differences vertical advective flux.
 !
-          cff1=0.5_r8
-          cff2=7.0_r8/12.0_r8
-          cff3=1.0_r8/12.0_r8
-          DO k=2,N(ng)-2
-            DO i=Istr,Iend
-              FC(i,k)=W(i,j,k)*                                         &
-     &                (cff2*(t(i,j,k  ,nstp,itrc)+                      &
-     &                       t(i,j,k+1,nstp,itrc))-                     &
-     &                 cff3*(t(i,j,k-1,nstp,itrc)+                      &
-     &                       t(i,j,k+2,nstp,itrc)))
+            cff1=0.5_r8
+            cff2=7.0_r8/12.0_r8
+            cff3=1.0_r8/12.0_r8
+            DO k=2,N(ng)-2
+              DO i=Istr,Iend
+                FC(i,k)=W(i,j,k)*                                       &
+     &                  (cff2*(t(i,j,k  ,nstp,itrc)+                    &
+     &                         t(i,j,k+1,nstp,itrc))-                   &
+     &                   cff3*(t(i,j,k-1,nstp,itrc)+                    &
+     &                         t(i,j,k+2,nstp,itrc)))
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-#   ifdef SED_MORPH
-            FC(i,0)=W(i,j,0)*2.0_r8*                                    &
-     &              (cff2*t(i,j,1,nstp,itrc)-                           &
-     &               cff3*t(i,j,2,nstp,itrc))
-#   else
-            FC(i,0)=0.0_r8
-#   endif
-            FC(i,1)=W(i,j,1)*                                           &
-     &              (cff1*t(i,j,1,nstp,itrc)+                           &
-     &               cff2*t(i,j,2,nstp,itrc)-                           &
-     &               cff3*t(i,j,3,nstp,itrc))
-            FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                               &
-     &                    (cff1*t(i,j,N(ng)  ,nstp,itrc)+               &
-     &                     cff2*t(i,j,N(ng)-1,nstp,itrc)-               &
-     &                     cff3*t(i,j,N(ng)-2,nstp,itrc))
-            FC(i,N(ng))=0.0_r8
-          END DO
+            DO i=Istr,Iend
+#  ifdef SED_MORPH
+              FC(i,0)=W(i,j,0)*2.0_r8*                                  &
+     &                (cff2*t(i,j,1,nstp,itrc)-                         &
+     &                 cff3*t(i,j,2,nstp,itrc))
+#  else
+              FC(i,0)=0.0_r8
 #  endif
+              FC(i,1)=W(i,j,1)*                                         &
+     &                (cff1*t(i,j,1,nstp,itrc)+                         &
+     &                 cff2*t(i,j,2,nstp,itrc)-                         &
+     &                 cff3*t(i,j,3,nstp,itrc))
+              FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                             &
+     &                      (cff1*t(i,j,N(ng)  ,nstp,itrc)+             &
+     &                       cff2*t(i,j,N(ng)-1,nstp,itrc)-             &
+     &                       cff3*t(i,j,N(ng)-2,nstp,itrc))
+              FC(i,N(ng))=0.0_r8
+            END DO
+          END IF VADV_FLUX
 !
 !  Apply mass point sources (volume vertical influx), if any.
 !  (Notice the j-loop is pipelined above).
@@ -804,13 +801,35 @@
             END DO
           END IF
 !
-! Time-step vertical advection of tracers (Tunits).
+!  Compute artificial continuity equation and load it into private
+!  array DC (1/m). It is needed to preserve tracer constancy. It is
+!  not the same for all the tracer advection schemes because of the
+!  Gamma value.
 !
+          IF ((Vadvection(itrc,ng)%MPDATA).or.                          &
+     &        (Vadvection(itrc,ng)%HSIMT)) THEN
+            Gamma=0.5_r8
+          ELSE
+            Gamma=1.0_r8/6.0_r8
+          END IF
           IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
           ELSE
             cff=(1.0_r8-Gamma)*dt(ng)
           END IF
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              DC(i,k)=1.0_r8/(Hz(i,j,k)-                                &
+     &                        cff*pm(i,j)*pn(i,j)*                      &
+     &                        (Huon(i+1,j,k)-Huon(i,j,k)+               &
+     &                         Hvom(i,j+1,k)-Hvom(i,j,k)+               &
+     &                        (W(i,j,k)-W(i,j,k-1))))
+            END DO
+          END DO
+!
+! Time-step vertical advection of tracers (Tunits). Impose artificial
+! continuity equation.
+!
           DO k=1,N(ng)
             DO i=Istr,Iend
               cff1=cff*pm(i,j)*pn(i,j)

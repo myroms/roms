@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: weddell.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: weddell.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -21,8 +21,6 @@
 #undef  MIX_S_UV
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
-#define TS_A4HADVECTION
-#define TS_A4VADVECTION
 #undef  TS_DIF4
 #undef  MIX_GEO_TS
 #define SOLVE3D

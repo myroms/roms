@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: mixed_layer.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: mixed_layer.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -27,7 +27,6 @@
 #define ANA_BTFLUX
 #define ANA_SSFLUX
 #define ANA_BSFLUX
-#define TS_U3HADVECTION
 
 #undef  MY25_MIXING
 #define GLS_MIXING

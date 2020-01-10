@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: sed_test1.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: sed_test1.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -20,8 +20,6 @@
 #define MIX_S_UV
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
-#define TS_U3HADVECTION
-#define TS_C4VADVECTION
 #define TS_DIF4
 #define MIX_S_TS
 #define SALINITY

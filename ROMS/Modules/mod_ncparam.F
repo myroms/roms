@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_ncparam.F 1001 2020-01-10 22:41:16Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -495,7 +495,7 @@
         real(dp), allocatable :: Tintrp(:,:,:)
         real(dp), allocatable :: Vtime(:,:,:)
 
-        character (len=5  ) :: version = '3.8  '
+        character (len=5  ) :: version = '3.9  '
         character (len=40 ) :: varnam(MV)
         character (len=44 ) :: date_str
         character (len=46 ) :: Tname(0:NV)

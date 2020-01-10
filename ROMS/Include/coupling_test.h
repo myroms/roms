@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: coupling_test.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: coupling_test.h 1001 2020-01-10 22:41:16Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -19,8 +19,6 @@
 #undef  UV_VIS2
 #define SPLINES_VDIFF
 #define SPLINES_VVISC
-#define TS_U3HADVECTION
-#define TS_C4VADVECTION
 #define DJ_GRADPS
 #undef  TS_DIF2
 #undef  MIX_GEO_TS
