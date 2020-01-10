@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 990 2019-12-03 04:00:29Z arango $
+!svn $Id: read_asspar.F 994 2020-01-10 02:56:54Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -633,11 +633,11 @@
             CASE ('OIFnameA')
               label='OIFA - observartion impacts forecast, analysis'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, OIFA)
+     &                      Ngrids, Nfiles, OIFA)
             CASE ('OIFnameB')
               label='OIFB - observartion impacts forecast, background'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Nfiles, OIFB)
+     &                      Ngrids, Nfiles, OIFB)
 #endif
           END SELECT
         END IF
