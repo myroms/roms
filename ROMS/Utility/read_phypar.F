@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: read_phypar.F 1002 2020-01-13 22:04:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3714,7 +3714,7 @@
 #endif
       END DO
 
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#ifdef BULK_FLUXES
 !
 !  Allocate and initialize BLK I/O structure with the same values as
 !  HIS.
