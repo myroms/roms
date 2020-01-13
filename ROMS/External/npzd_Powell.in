@@ -1,7 +1,7 @@
 !  Nutrient-Phytoplankton-Zooplankton-Detritus Biological Model Parameters.
 !
 !git $Id$
-!svn $Id: npzd_Powell.in 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: npzd_Powell.in 1002 2020-01-13 22:04:50Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -196,7 +196,6 @@ LtracerSponge == 4*F
 ad_Hadvection == U3                             ! idbio(:), compact
 
 ad_Vadvection == C4                             ! idbio(:), compact
-
 
 ! Set lateral boundary conditions keyword. Notice that a value is expected
 ! for each boundary segment per nested grid for each state variable.
