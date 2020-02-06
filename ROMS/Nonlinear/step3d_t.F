@@ -3,7 +3,7 @@
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: step3d_t.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: step3d_t.F 1005 2020-02-06 23:03:06Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -332,25 +332,23 @@
 !
 !  Compute reciprocal thickness, 1/Hz.
 !
-      IF (ANY(Vadvection(:,ng)%MPDATA).or.                              &
-     &    ANY(Vadvection(:,ng)%HSIMT)) THEN
-        IminT=Istrm2
-        ImaxT=Iendp2
-        JminT=Jstrm2
-        JmaxT=Jendp2
-      ELSE
-        IminT=Istr
-        ImaxT=Iend
-        JminT=Jstr
-        JmaxT=Jend
-      END IF
-      DO k=1,N(ng)
-        DO j=JminT,JmaxT
-          DO i=IminT,ImaxT
-            oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+      IF (Lmpdata) THEN
+        DO k=1,N(ng)
+          DO j=Jstrm2,Jendp2
+            DO i=Istrm2,Iendp2
+              oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+            END DO
           END DO
         END DO
-      END DO
+      ELSE
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+            END DO
+          END DO
+        END DO
+      END IF
 !
 !  Horizontal tracer advection.  It is possible to have a different
 !  advection schme for each tracer.
@@ -824,7 +822,7 @@
 !
           IF (Hadvection(itrc,ng)%MPDATA) THEN
             DO j=JstrVm2,Jendp2i
-              DO i=IstrUm2,IstrUm2
+              DO i=IstrUm2,Iendp2i
                 cff=dt(ng)*pm(i,j)*pn(i,j)
                 cff1=cff*(FX(i+1,j)-FX(i,j))
                 cff2=cff*(FE(i,j+1)-FE(i,j))
@@ -1358,79 +1356,81 @@
 #  endif
               END DO
             END DO
-          END IF
-# else
+          ELSE
+# endif
 !
 !  Compute off-diagonal coefficients FC [lambda*dt*Akt/Hz] for the
 !  implicit vertical diffusion terms at future time step, located
 !  at horizontal RHO-points and vertical W-points.
 !  Also set FC at the top and bottom levels.
 !
-          cff=-dt(ng)*lambda
-          DO k=1,N(ng)-1
-            DO i=Istr,Iend
-              cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-              FC(i,k)=cff*cff1*Akt(i,j,k,ltrc)
+            cff=-dt(ng)*lambda
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
+                FC(i,k)=cff*cff1*Akt(i,j,k,ltrc)
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-            FC(i,0)=0.0_r8
-            FC(i,N(ng))=0.0_r8
-          END DO
+            DO i=Istr,Iend
+              FC(i,0)=0.0_r8
+              FC(i,N(ng))=0.0_r8
+            END DO
 !
 !  Compute diagonal matrix coefficients BC and load right-hand-side
 !  terms for the tracer equation into DC.
 !
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              BC(i,k)=Hz(i,j,k)-FC(i,k)-FC(i,k-1)
-              DC(i,k)=t(i,j,k,nnew,itrc)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                BC(i,k)=Hz(i,j,k)-FC(i,k)-FC(i,k-1)
+                DC(i,k)=t(i,j,k,nnew,itrc)
+              END DO
             END DO
-          END DO
 !
 !  Solve the tridiagonal system.
 !
-          DO i=Istr,Iend
-            cff=1.0_r8/BC(i,1)
-            CF(i,1)=cff*FC(i,1)
-            DC(i,1)=cff*DC(i,1)
-          END DO
-          DO k=2,N(ng)-1
             DO i=Istr,Iend
-              cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
-              CF(i,k)=cff*FC(i,k)
-              DC(i,k)=cff*(DC(i,k)-FC(i,k-1)*DC(i,k-1))
+              cff=1.0_r8/BC(i,1)
+              CF(i,1)=cff*FC(i,1)
+              DC(i,1)=cff*DC(i,1)
             END DO
-          END DO
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
+                CF(i,k)=cff*FC(i,k)
+                DC(i,k)=cff*(DC(i,k)-FC(i,k-1)*DC(i,k-1))
+              END DO
+            END DO
 !
 !  Compute new solution by back substitution.
 !
-          DO i=Istr,Iend
-#  ifdef DIAGNOSTICS_TS
-             cff1=t(i,j,N(ng),nnew,itrc)*oHz(i,j,N(ng))
-#  endif
-             DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/     &
-     &                   (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
-             t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
-#  ifdef DIAGNOSTICS_TS
-             DiaTwrk(i,j,N(ng),itrc,iTvdif)=                            &
+            DO i=Istr,Iend
+# ifdef DIAGNOSTICS_TS
+               cff1=t(i,j,N(ng),nnew,itrc)*oHz(i,j,N(ng))
+# endif
+               DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/   &
+     &                     (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
+               t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
+# ifdef DIAGNOSTICS_TS
+               DiaTwrk(i,j,N(ng),itrc,iTvdif)=                          &
      &                              DiaTwrk(i,j,N(ng),itrc,iTvdif)+     &
      &                              t(i,j,N(ng),nnew,itrc)-cff1
-#  endif
-          END DO
-          DO k=N(ng)-1,1,-1
-            DO i=Istr,Iend
-#  ifdef DIAGNOSTICS_TS
-              cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
-#  endif
-              DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
-              t(i,j,k,nnew,itrc)=DC(i,k)
-#  ifdef DIAGNOSTICS_TS
-              DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+    &
-     &                                   t(i,j,k,nnew,itrc)-cff1
-#  endif
+# endif
             END DO
-          END DO
+            DO k=N(ng)-1,1,-1
+              DO i=Istr,Iend
+# ifdef DIAGNOSTICS_TS
+                cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
+# endif
+                DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
+                t(i,j,k,nnew,itrc)=DC(i,k)
+# ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+  &
+     &                                     t(i,j,k,nnew,itrc)-cff1
+# endif
+              END DO
+            END DO
+# ifdef SPLINES_VDIFF
+          END IF
 # endif
         END DO
       END DO J_LOOP2

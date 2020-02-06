@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1002 2020-01-13 22:04:50Z arango $
+!svn $Id: read_phypar.F 1005 2020-02-06 23:03:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3292,11 +3292,10 @@
 !
 #ifdef UV_VIS4
       ThreeGhostPoints=.TRUE.
-#else
+#endif
       IF (ANY(Hadvection(:,:)%MPDATA)) THEN
         ThreeGhostPoints=.TRUE.
       END IF
-#endif
 !
 !  Check if nesting parameters "NestLayers", "GridsInLayer", and
 !  "GridNumber" have been assigned.  The code below is necessary

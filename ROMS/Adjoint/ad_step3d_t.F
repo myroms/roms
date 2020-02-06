@@ -4,7 +4,7 @@
 #if !defined TS_FIXED && (defined ADJOINT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: ad_step3d_t.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: ad_step3d_t.F 1005 2020-02-06 23:03:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -605,23 +605,22 @@
 !
       IF (ANY(ad_Vadvection(:,ng)%MPDATA).or.                           &
      &    ANY(ad_Vadvection(:,ng)%HSIMT)) THEN
-        IminT=Istrm2
-        ImaxT=Iendp2
-        JminT=Jstrm2
-        JmaxT=Jendp2
-      ELSE
-        IminT=Istr
-        ImaxT=Iend
-        JminT=Jstr
-        JmaxT=Jend
-      END IF
-      DO k=1,N(ng)
-        DO j=JminT,JmaxT
-          DO i=IminT,ImaxT
-            oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+        DO k=1,N(ng)
+          DO j=Jstrm2,Jendp2
+            DO i=Istrm2,Iendp2
+              oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+            END DO
           END DO
         END DO
-      END DO
+      ELSE
+        DO k=1,N(ng)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              oHz(i,j,k)=1.0_r8/Hz(i,j,k)
+            END DO
+          END DO
+        END DO
+      END IF
 !
 !  Compute adjoint vertical diffusion term.
 !
@@ -813,154 +812,154 @@
                 ad_FC(i,k)=0.0_r8
               END DO
             END DO
-          END IF
-# else
+          ELSE
+# endif
 !
 !  Compute off-diagonal BASIC STATE coefficients FC [lambda*dt*Akt/Hz]
 !  for the implicit vertical diffusion terms at future time step,
 !  located at horizontal RHO-points and vertical W-points.
 !  Also set FC at the top and bottom levels.
 !
-          cff=-dt(ng)*lambda
-          DO k=1,N(ng)-1
-            DO i=Istr,Iend
-              cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-              FC(i,k)=cff*cff1*Akt(i,j,k,ltrc)
+            cff=-dt(ng)*lambda
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
+                FC(i,k)=cff*cff1*Akt(i,j,k,ltrc)
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-            FC(i,0)=0.0_r8
-            FC(i,N(ng))=0.0_r8
-          END DO
+            DO i=Istr,Iend
+              FC(i,0)=0.0_r8
+              FC(i,N(ng))=0.0_r8
+            END DO
 !
 !  Compute diagonal matrix coefficients BC.
 !
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              BC(i,k)=Hz(i,j,k)-FC(i,k)-FC(i,k-1)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                BC(i,k)=Hz(i,j,k)-FC(i,k)-FC(i,k-1)
+              END DO
             END DO
-          END DO
 !
 !  Compute new solution by back substitution.
 !  (DC is a tangent linear variable here).
 !
-          DO i=Istr,Iend
-            cff=1.0_r8/BC(i,1)
-            CF(i,1)=cff*FC(i,1)
-          END DO
-          DO k=2,N(ng)-1
             DO i=Istr,Iend
-              cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
-              CF(i,k)=cff*FC(i,k)
+              cff=1.0_r8/BC(i,1)
+              CF(i,1)=cff*FC(i,1)
             END DO
-          END DO
-!>        DO k=N(ng)-1,1,-1
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
+                CF(i,k)=cff*FC(i,k)
+              END DO
+            END DO
+!>          DO k=N(ng)-1,1,-1
 !>
-          DO k=1,N(ng)-1
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+# ifdef DIAGNOSTICS_TS
+!!              DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+  &
+!!   &                                     t(i,j,k,nnew,itrc)-cff1
+# endif
+!>              tl_t(i,j,k,nnew,itrc)=DC(i,k)
+!>
+                ad_DC(i,k)=ad_DC(i,k)+ad_t(i,j,k,nnew,itrc)
+                ad_t(i,j,k,nnew,itrc)=0.0_r8
+!>              DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
+!>
+                ad_DC(i,k+1)=-CF(i,k)*ad_DC(i,k)
+# ifdef DIAGNOSTICS_TS
+!!              cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
+# endif
+              END DO
+            END DO
             DO i=Istr,Iend
-#  ifdef DIAGNOSTICS_TS
-!!            DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+    &
-!!   &                                   t(i,j,k,nnew,itrc)-cff1
-#  endif
-!>            tl_t(i,j,k,nnew,itrc)=DC(i,k)
-!>
-              ad_DC(i,k)=ad_DC(i,k)+ad_t(i,j,k,nnew,itrc)
-              ad_t(i,j,k,nnew,itrc)=0.0_r8
-!>            DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
-!>
-              ad_DC(i,k+1)=-CF(i,k)*ad_DC(i,k)
-#  ifdef DIAGNOSTICS_TS
-!!            cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
-#  endif
-            END DO
-          END DO
-          DO i=Istr,Iend
-#  ifdef DIAGNOSTICS_TS
-!!          DiaTwrk(i,j,N(ng),itrc,iTvdif)=                             &
+# ifdef DIAGNOSTICS_TS
+!!            DiaTwrk(i,j,N(ng),itrc,iTvdif)=                           &
 !!   &                             DiaTwrk(i,j,N(ng),itrc,iTvdif)+      &
 !!   &                             t(i,j,N(ng),nnew,itrc)-cff1
-#  endif
-!>          tl_t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
+# endif
+!>            tl_t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
 !>
-            ad_DC(i,N(ng))=ad_DC(i,N(ng))+ad_t(i,j,N(ng),nnew,itrc)
-            ad_t(i,j,N(ng),nnew,itrc)=0.0_r8
-!>          DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/      &
-!>   &                  (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
+              ad_DC(i,N(ng))=ad_DC(i,N(ng))+ad_t(i,j,N(ng),nnew,itrc)
+              ad_t(i,j,N(ng),nnew,itrc)=0.0_r8
+!>            DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/    &
+!>   &                    (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
 !>
-            adfac=ad_DC(i,N(ng))/                                       &
-     &            (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
-            ad_DC(i,N(ng)-1)=ad_DC(i,N(ng)-1)-FC(i,N(ng)-1)*adfac
-            ad_DC(i,N(ng)  )=adfac
-          END DO
+              adfac=ad_DC(i,N(ng))/                                     &
+     &              (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
+              ad_DC(i,N(ng)-1)=ad_DC(i,N(ng)-1)-FC(i,N(ng)-1)*adfac
+              ad_DC(i,N(ng)  )=adfac
+            END DO
 !
 !  Solve the adjoint tridiagonal system.
 !  (DC is a tangent linear variable here).
 !
-          DO k=N(ng)-1,2,-1
-            DO i=Istr,Iend
-              cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
-!>            DC(i,k)=cff*(DC(i,k)-FC(i,k-1)*DC(i,k-1))
+            DO k=N(ng)-1,2,-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)-FC(i,k-1)*CF(i,k-1))
+!>              DC(i,k)=cff*(DC(i,k)-FC(i,k-1)*DC(i,k-1))
 !>
-              adfac=cff*ad_DC(i,k)
-              ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k-1)*adfac
-              ad_DC(i,k  )=adfac
+                adfac=cff*ad_DC(i,k)
+                ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k-1)*adfac
+                ad_DC(i,k  )=adfac
+              END DO
             END DO
-          END DO
-          DO i=Istr,Iend
-            cff=1.0_r8/BC(i,1)
-!>          DC(i,1)=cff*DC(i,1)
+            DO i=Istr,Iend
+              cff=1.0_r8/BC(i,1)
+!>            DC(i,1)=cff*DC(i,1)
 !>
-            ad_DC(i,1)=cff*ad_DC(i,1)
-          END DO
+              ad_DC(i,1)=cff*ad_DC(i,1)
+            END DO
 !
-          DO i=Istr,Iend
-!>          DC(i,N(ng))=tl_t(i,j,N(ng),nnew,itrc)-                      &
-!>   &                  (tl_FC(i,N(ng)-1)*t(i,j,N(ng)-1,nnew,itrc)+     &
-!>   &                   tl_BC(i,N(ng)  )*t(i,j,N(ng)  ,nnew,itrc))
-!>
-            ad_BC(i,N(ng)  )=-t(i,j,N(ng)  ,nnew,itrc)*ad_DC(i,N(ng))
-            ad_FC(i,N(ng)-1)=-t(i,j,N(ng)-1,nnew,itrc)*ad_DC(i,N(ng))
-            ad_t(i,j,N(ng),nnew,itrc)=ad_DC(i,N(ng))
-            ad_DC(i,N(ng))=0.0_r8
-!>          DC(i,1)=tl_t(i,j,1,nnew,itrc)-                              &
-!>   &              (tl_BC(i,1)*t(i,j,1,nnew,itrc)+                     &
-!>   &               tl_FC(i,1)*t(i,j,2,nnew,itrc))
-!>
-            ad_FC(i,1)=-t(i,j,2,nnew,itrc)*ad_DC(i,1)
-            ad_BC(i,1)=-t(i,j,1,nnew,itrc)*ad_DC(i,1)
-            ad_t(i,j,1,nnew,itrc)=ad_DC(i,1)
-            ad_DC(i,1)=0.0_r8
-          END DO
-          DO k=2,N(ng)-1
             DO i=Istr,Iend
-!>            DC(i,k)=tl_t(i,j,k,nnew,itrc)-                            &
-!>   &                (tl_FC(i,k-1)*t(i,j,k-1,nnew,itrc)+               &
-!>   &                 tl_BC(i,k  )*t(i,j,k  ,nnew,itrc)+               &
-!>   &                 tl_FC(i,k  )*t(i,j,k+1,nnew,itrc))
+!>            DC(i,N(ng))=tl_t(i,j,N(ng),nnew,itrc)-                    &
+!>   &                    (tl_FC(i,N(ng)-1)*t(i,j,N(ng)-1,nnew,itrc)+   &
+!>   &                     tl_BC(i,N(ng)  )*t(i,j,N(ng)  ,nnew,itrc))
 !>
-              ad_FC(i,k-1)=ad_FC(i,k-1)-                                &
-     &                     t(i,j,k-1,nnew,itrc)*ad_DC(i,k)
-              ad_FC(i,k  )=ad_FC(i,k  )-                                &
-     &                     t(i,j,k+1,nnew,itrc)*ad_DC(i,k)
-              ad_BC(i,k)=ad_BC(i,k)-                                    &
-     &                   t(i,j,k  ,nnew,itrc)*ad_DC(i,k)
-              ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+ad_DC(i,k)
-              ad_DC(i,k)=0.0_r8
+              ad_BC(i,N(ng)  )=-t(i,j,N(ng)  ,nnew,itrc)*ad_DC(i,N(ng))
+              ad_FC(i,N(ng)-1)=-t(i,j,N(ng)-1,nnew,itrc)*ad_DC(i,N(ng))
+              ad_t(i,j,N(ng),nnew,itrc)=ad_DC(i,N(ng))
+              ad_DC(i,N(ng))=0.0_r8
+!>            DC(i,1)=tl_t(i,j,1,nnew,itrc)-                            &
+!>   &                (tl_BC(i,1)*t(i,j,1,nnew,itrc)+                   &
+!>   &                 tl_FC(i,1)*t(i,j,2,nnew,itrc))
+!>
+              ad_FC(i,1)=-t(i,j,2,nnew,itrc)*ad_DC(i,1)
+              ad_BC(i,1)=-t(i,j,1,nnew,itrc)*ad_DC(i,1)
+              ad_t(i,j,1,nnew,itrc)=ad_DC(i,1)
+              ad_DC(i,1)=0.0_r8
             END DO
-          END DO
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+!>              DC(i,k)=tl_t(i,j,k,nnew,itrc)-                          &
+!>   &                  (tl_FC(i,k-1)*t(i,j,k-1,nnew,itrc)+             &
+!>   &                   tl_BC(i,k  )*t(i,j,k  ,nnew,itrc)+             &
+!>   &                   tl_FC(i,k  )*t(i,j,k+1,nnew,itrc))
+!>
+                ad_FC(i,k-1)=ad_FC(i,k-1)-                              &
+     &                       t(i,j,k-1,nnew,itrc)*ad_DC(i,k)
+                ad_FC(i,k  )=ad_FC(i,k  )-                              &
+     &                       t(i,j,k+1,nnew,itrc)*ad_DC(i,k)
+                ad_BC(i,k)=ad_BC(i,k)-                                  &
+     &                     t(i,j,k  ,nnew,itrc)*ad_DC(i,k)
+                ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+ad_DC(i,k)
+                ad_DC(i,k)=0.0_r8
+              END DO
+            END DO
 !
 !  Compute diagonal matrix coefficients BC.
 !
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-!>            tl_BC(i,k)=tl_Hz(i,j,k)-tl_FC(i,k)-tl_FC(i,k-1)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+!>              tl_BC(i,k)=tl_Hz(i,j,k)-tl_FC(i,k)-tl_FC(i,k-1)
 !>
-              ad_FC(i,k-1)=ad_FC(i,k-1)-ad_BC(i,k)
-              ad_FC(i,k  )=ad_FC(i,k  )-ad_BC(i,k)
-              ad_Hz(i,j,k)=ad_Hz(i,j,k)+ad_BC(i,k)
-              ad_BC(i,k)=0.0_r8
+                ad_FC(i,k-1)=ad_FC(i,k-1)-ad_BC(i,k)
+                ad_FC(i,k  )=ad_FC(i,k  )-ad_BC(i,k)
+                ad_Hz(i,j,k)=ad_Hz(i,j,k)+ad_BC(i,k)
+                ad_BC(i,k)=0.0_r8
+              END DO
             END DO
-          END DO
 !
 !  Compute off-diagonal coefficients FC [lambda*dt*Akt/Hz] for the
 !  implicit vertical diffusion terms at future time step, located
@@ -973,33 +972,35 @@
 !        Here, tl_A*t and tl_r are known, so we must solve for tl_t
 !        by inverting A*tl_t=tl_r-tl_A*t.
 !
-          DO i=Istr,Iend
-!>          tl_FC(i,N(ng))=0.0_r8
-!>
-            ad_FC(i,N(ng))=0.0_r8
-!>          tl_FC(i,0)=0.0_r8
-!>
-            ad_FC(i,0)=0.0_r8
-          END DO
-          cff=-dt(ng)*lambda
-          DO k=1,N(ng)-1
             DO i=Istr,Iend
-              cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-!>            tl_FC(i,k)=cff*(tl_cff1*Akt(i,j,k,ltrc)+                  &
-!>   &                          cff1*tl_Akt(i,j,k,ltrc))
+!>            tl_FC(i,N(ng))=0.0_r8
 !>
-              adfac=cff*ad_FC(i,k)
-              ad_Akt(i,j,k,ltrc)=ad_Akt(i,j,k,ltrc)+cff1*adfac
-              ad_cff1=ad_cff1+Akt(i,j,k,ltrc)*adfac
-              ad_FC(i,k)=0.0_r8
-!>            tl_cff1=-cff1*cff1*(tl_z_r(i,j,k+1)-tl_z_r(i,j,k))
+              ad_FC(i,N(ng))=0.0_r8
+!>            tl_FC(i,0)=0.0_r8
 !>
-              adfac=-cff1*cff1*ad_cff1
-              ad_z_r(i,j,k  )=ad_z_r(i,j,k  )-adfac
-              ad_z_r(i,j,k+1)=ad_z_r(i,j,k+1)+adfac
-              ad_cff1=0.0_r8
+              ad_FC(i,0)=0.0_r8
             END DO
-          END DO
+            cff=-dt(ng)*lambda
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
+!>              tl_FC(i,k)=cff*(tl_cff1*Akt(i,j,k,ltrc)+                &
+!>   &                           cff1*tl_Akt(i,j,k,ltrc))
+!>
+                adfac=cff*ad_FC(i,k)
+                ad_Akt(i,j,k,ltrc)=ad_Akt(i,j,k,ltrc)+cff1*adfac
+                ad_cff1=ad_cff1+Akt(i,j,k,ltrc)*adfac
+                ad_FC(i,k)=0.0_r8
+!>              tl_cff1=-cff1*cff1*(tl_z_r(i,j,k+1)-tl_z_r(i,j,k))
+!>
+                adfac=-cff1*cff1*ad_cff1
+                ad_z_r(i,j,k  )=ad_z_r(i,j,k  )-adfac
+                ad_z_r(i,j,k+1)=ad_z_r(i,j,k+1)+adfac
+                ad_cff1=0.0_r8
+              END DO
+            END DO
+# ifdef SPLINES_VDIFF
+          END IF
 # endif
         END DO
       END DO
