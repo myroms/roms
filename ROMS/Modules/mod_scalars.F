@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: mod_scalars.F 1007 2020-02-25 22:29:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -480,6 +480,10 @@
         integer :: exit_flag = 0
         integer :: blowup = 0
         integer :: NoError = 0
+!
+!  Blow-up string.
+!
+        character (len=80) :: blowup_string
 !
 !  Set threshold maximum speed (m/s) and density anomaly (kg/m3) to
 !  test if the model is blowing-up.
@@ -3361,6 +3365,12 @@
       Tobc_in = 0.0_dp
       Tobc_out = 0.0_dp
 #endif
+!
+!  Initialize blowup string.
+!
+      DO i=1,LEN(blowup_string)
+        blowup_string(i:i)=' '
+      END DO
 !
 !  Initialize thread private variables.
 !

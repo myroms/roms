@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: close_io.F 1007 2020-02-25 22:29:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -335,11 +335,11 @@
      &               __FILE__))) THEN
         WRITE (stdout,40) Rerror(exit_flag), exit_flag
       END IF
-      IF (exit_flag.eq.NoError) THEN
+      IF (blowup.ne.0) THEN
+        IF (Master) WRITE (stdout,50) TRIM(blowup_string)
+      ELSE IF (exit_flag.eq.NoError) THEN
         CALL get_date (date_str)
-        IF (Master) WRITE (stdout,50) TRIM(date_str)
-      ELSE IF ((exit_flag.eq.1).or.(blowup.ne.0)) THEN
-        IF (Master) WRITE (stdout,60)
+        IF (Master) WRITE (stdout,60) TRIM(date_str)
       ELSE IF (exit_flag.eq.2) THEN
         IF (Master) WRITE (stdout,70) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.3) THEN
@@ -372,8 +372,9 @@
      &        a,' file = ',i8.8)
  30   FORMAT (/,a,/)
  40   FORMAT (/,a,i3,/)
- 50   FORMAT (/,' ROMS/TOMS: DONE... ',a)
- 60   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.')
+ 50   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.',/,               &
+     &          ' REASON: ',a)
+ 60   FORMAT (/,' ROMS/TOMS: DONE... ',a)
  70   FORMAT (/,' ERROR: Abnormal termination: NetCDF INPUT.',/,        &
      &          ' REASON: ',a)
  80   FORMAT (/,' ERROR: Abnormal termination: NetCDF OUTPUT.',/,       &

@@ -2,7 +2,7 @@
       SUBROUTINE wrt_quick (ng, tile)
 !
 !git $Id$
-!svn $Id: wrt_quick.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_quick.F 1007 2020-02-25 22:29:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1006,6 +1006,31 @@
      &                 __FILE__)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idPair)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
+# if defined BULK_FLUXES
+!
+!  Write out surface air temperature.
+!
+      IF (Qout(idTair,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid, QCK(ng)%Vid(idTair), &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     FORCES(ng) % Tair)
+        IF (FoundError(status, nf90_noerr, __LINE__,                    &
+     &                 __FILE__)) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTair)), QCK(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status

@@ -2,7 +2,7 @@
 ! Multiple model coupling parameters: ESMF/NUOPC Library
 !
 !git $Id$
-!svn $Id: coupling_esmf.in 995 2020-01-10 04:01:28Z arango $
+!svn $Id: coupling_esmf.in 1007 2020-02-25 22:29:41Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -202,12 +202,14 @@
 ! field from other ESM components. Melding coefficients are positive and MUST
 ! add to unity. They are read from an input NetCDF file ('WeightsFile'). The
 ! user needs to specify the NetCDF variable names for the weights for the DATA
-! ('VnameDATA') and ESM ('VnameESM') components. Currently, the weight values
-! are only needed by the atmosphere component.
+! ('VnameDATA') and ESM ('VnameESM') components. Also, specify which grid
+! ('NestedGrid') needs a merged field from DATA and ESM components. Currently,
+! the weight values are only needed by the atmosphere component.
 
-WeightsFile(atmos) == meld_weights_atm.nc
+WeightsFile(atmos) =  meld_weights_atm.nc
   VnameDATA(atmos) =  data_weight
    VnameESM(atmos) =  ocean_weight
+ NestedGrid(atmos) =  1
 
 ! Coupling debug flag:      [0] no debugging
 !                           [1] reports informative messages
@@ -678,8 +680,16 @@ nDataExport(seaice) = 0                 ! number of fields to export
 !                    [0] no debugging
 !                    [1] reports informative messages
 !                    [2] <1> and coupled components RunSequence
-!                    [3] <2> and writes exchange fields into NetCDF files
+!                    [3] <2> and writes exchanged fields into NetCDF files
 !                    [4] <3> and writes grid information in VTK format
+!
+!                    If DebugLevel >= 3, a single NetCDF file is created for
+!                    every exchanged field when the "debug_write" switch in
+!                    the Import/Export metadata file CPL_name is .TRUE. for
+!                    field.  WARNING: Lot and lots of small NetCDF files are
+!                    created that will slow down computations and fill disk
+!                    space. Use this capability only during debugging to
+!                    ensure that the regridding is doing correctly.
 !
 ! TraceLevel       Execution tracing flag:
 !
@@ -738,6 +748,11 @@ nDataExport(seaice) = 0                 ! number of fields to export
 !
 ! VnameESM(atmos)    NetCDF variable name containing the weight factor (Cesm)
 !                    for the ESM component (usually ocean: ROMS).
+!
+! NestedGrid(atmos)  Atmosphere grid number needing a merged field from
+!                    DATA and ESM components. Usually, NestedGrid=1, but it
+!                    is possible to merge DATA and an ESM component in a
+!                    particular Atmosphere component nested grid.
 !
 !------------------------------------------------------------------------------
 ! Time Managing.
