@@ -2,7 +2,7 @@
 !  Export/Import Coupling Variables
 !
 !git $Id$
-!svn $Id: coupling_esmf_wrf.dat 995 2020-01-10 04:01:28Z arango $
+!svn $Id: coupling_esmf_wrf.dat 1007 2020-02-25 22:29:41Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2018 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -46,6 +46,7 @@
 !       connected     Field connected to coupler (logical):                   !
 !                       .FALSE.         => derived from exchanged field       !
 !                       .TRUE.          => interpolated (regridded, exchanged)!
+!       debug_write   Write out (TRUE/FALSE) exchanged field if DebugLevel>2  !
 !       add_offset    Value added to imported data (real)                     !
 !       scale         Scale to convert imported data to model units (real)    !
 !                                                                             !
@@ -72,11 +73,6 @@
 !                                                                             !
 !==============================================================================
 !
-!------------------------------------------------------------------------------
-!  ROMS Import.
-!------------------------------------------------------------------------------
-!
-!  ROMS Import fields from Data Model.
 
 'dLWrad'
   'surface_downward_longwave_flux'                 ! standard name
@@ -91,6 +87,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -107,6 +104,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -123,6 +121,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -139,6 +138,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -155,6 +155,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -171,6 +172,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -187,6 +189,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   0.01d0                                           ! importing scale
 
@@ -203,6 +206,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   0.01d0                                           ! importing scale
 
@@ -219,6 +223,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   -273.15d0                                        ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -235,6 +240,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1000.0d0                                         ! importing scale
 
@@ -251,6 +257,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   0.01d0                                           ! importing scale
 
@@ -267,6 +274,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -283,6 +291,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -299,6 +308,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -315,6 +325,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
  -1.0d0                                            ! importing scale
 
@@ -331,6 +342,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -347,6 +359,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -363,6 +376,7 @@
   'bilinear'                                       ! regridding method
   'none'                                           ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .FALSE.                                          ! debug write into a NetCDF file
   0.0d0                                            ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -379,6 +393,7 @@
   'bilinear'                                       ! regridding method
   'nearest'                                        ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .TRUE.                                          ! debug write into a NetCDF file
   273.15d0                                         ! importing add offset
   1.0d0                                            ! importing scale
 
@@ -395,5 +410,6 @@
   'bilinear'                                       ! regridding method
   'nearest'                                        ! unmapped extrapolation method
   .TRUE.                                           ! connected to coupler
+  .TRUE.                                           ! debug write into a NetCDF file
   273.15d0                                         ! importing add offset
   1.0d0                                            ! importing scale

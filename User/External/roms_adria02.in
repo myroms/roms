@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_adria02.in 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: roms_adria02.in 1007 2020-02-25 22:29:41Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -601,6 +601,7 @@ Hout(idWorb) == T       ! Ub_swan            wave bottom orbital velocity
 Hout(idWdis) == T       ! Wave_dissip        wave dissipation
 
 Hout(idPair) == F       ! Pair               surface air pressure
+Hout(idTair) == F       ! Tair               surface air temperature
 Hout(idUair) == F       ! Uair               surface U-wind component
 Hout(idVair) == F       ! Vair               surface V-wind component
 
@@ -705,6 +706,7 @@ Qout(idWorb) == F       ! Ub_swan            wave bottom orbital velocity
 Qout(idWdis) == F       ! Wave_dissip        wave dissipation
 
 Qout(idPair) == F       ! Pair               surface air pressure
+Qout(idTair) == F       ! Tair               surface air temperature
 Qout(idUair) == F       ! Uair               surface U-wind component
 Qout(idVair) == F       ! Vair               surface V-wind component
 
@@ -777,6 +779,7 @@ Aout(idU3Sd) == F       ! u_stokes           3D U-Stokes velocity
 Aout(idV3Sd) == F       ! v_stokes           3D V-Stokes velocity
 
 Aout(idPair) == F       ! Pair               surface air pressure
+Aout(idTair) == F       ! Tair               surface air temperature
 Aout(idUair) == F       ! Uair               surface U-wind component
 Aout(idVair) == F       ! Vair               surface V-wind component
 
@@ -2444,6 +2447,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! Hout(idWdis)   Write out wave dissipation.
 !
 ! Hout(idPair)   Write out surface air pressure.
+! Hout(idTair)   Write out surface air temperature.
 ! Hout(idUair)   Write out surface U-wind component.
 ! Hout(idVair)   Write out surface V-wind component.
 !
@@ -2543,6 +2547,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! Qout(idWdis)   Write out wave dissipation.
 !
 ! Qout(idPair)   Write out surface air pressure.
+! Qout(idTair)   Write out surface air temperature.
 ! Qout(idUair)   Write out surface U-wind component.
 ! Qout(idVair)   Write out surface V-wind component.
 !
@@ -2610,6 +2615,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! Aout(idV3Sd)   Write out 3D V-Stokes velocity.
 !
 ! Aout(idPair)   Write out surface air pressure.
+! Aout(idTair)   Write out surface air temperature.
 ! Aout(idUair)   Write out surface U-wind component.
 ! Aout(idVair)   Write out surface V-wind component.
 !

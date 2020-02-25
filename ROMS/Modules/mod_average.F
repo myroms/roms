@@ -6,7 +6,7 @@
    (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
-!svn $Id: mod_average.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_average.F 1007 2020-02-25 22:29:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -201,6 +201,9 @@
 # ifdef SOLVE3D
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           real(r8), pointer :: avgPair(:,:)
+#  endif
+#  if defined BULK_FLUXES
+          real(r8), pointer :: avgTair(:,:)
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM
           real(r8), pointer :: avgUwind(:,:)
@@ -457,6 +460,12 @@
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
       IF (Aout(idPair,ng)) THEN
         allocate ( AVERAGE(ng) % avgPair(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+#  endif
+#  if defined BULK_FLUXES
+      IF (Aout(idTair,ng)) THEN
+        allocate ( AVERAGE(ng) % avgTair(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  endif
@@ -983,6 +992,15 @@
         DO j=Jmin,Jmax
           DO i=Imin,Imax
             AVERAGE(ng) % avgPair(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+#  if defined BULK_FLUXES
+      IF (Aout(idTair,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgTair(i,j) = IniVal
           END DO
         END DO
       END IF
