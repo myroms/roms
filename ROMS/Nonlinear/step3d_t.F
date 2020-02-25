@@ -3,7 +3,7 @@
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: step3d_t.F 1005 2020-02-06 23:03:06Z arango $
+!svn $Id: step3d_t.F 1006 2020-02-25 16:46:01Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1043,10 +1043,10 @@
                     a1= cc1*KaZ(k)+cc2-cc3*oKaZ(k)
                     b1=-cc1*KaZ(k)+cc2+cc3*oKaZ(k)
                     betaD=a1+b1*rD
-                    sw=t(i,j,k,3,itrc)+                                 &
-     &                 0.5_r8*MAX(0.0_r8,                               &
-     &                            MIN(2.0_r8, 2.0_r8*rD*rkaD, betaD))*  &
-     &                 gradZ(k)*KaZ(k)
+                    cff=0.5_r8*MAX(0.0_r8,                              &
+     &                             MIN(2.0_r8, 2.0_r8*rD*rkaD, betaD))* &
+     &                  gradZ(k)*KaZ(k)
+                    sw=t(i,j,k,3,itrc)+cff
                   ELSE
                     IF (ABS(gradZ(k)).le.eps1) THEN
                       rU=0.0_r8
@@ -1058,10 +1058,10 @@
                     a1= cc1*KaZ(k)+cc2-cc3*oKaZ(k)
                     b1=-cc1*KaZ(k)+cc2+cc3*oKaZ(k)
                     betaU=a1+b1*rU
-                    sw=t(i,j,k+1,3,itrc)-                               &
-     &                 0.5_r8*MAX(0.0_r8,                               &
-     &                            MIN(2.0_r8, 2.0_r8*rU*rkaU, betaU))*  &
-     &                 gradZ(k)*KaZ(k)
+                    cff=0.5_r8*MAX(0.0_r8,                              &
+     &                             MIN(2.0_r8, 2.0_r8*rU*rkaU, betaU))* &
+     &                  gradZ(k)*KaZ(k)
+                    sw=t(i,j,k+1,3,itrc)-cff
                   END IF
                   FC(i,k)=W(i,j,k)*sw
                 END IF
