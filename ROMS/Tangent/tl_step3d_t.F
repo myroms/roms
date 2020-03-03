@@ -4,7 +4,7 @@
 #if !defined TS_FIXED && (defined TANGENT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: tl_step3d_t.F 1006 2020-02-25 16:46:01Z arango $
+!svn $Id: tl_step3d_t.F 1011 2020-03-03 22:54:05Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -319,12 +319,14 @@
 !-----------------------------------------------------------------------
 !  Time-step horizontal advection term.
 !-----------------------------------------------------------------------
+!
+      Lmpdata=ANY(tl_Hadvection(:,ng)%MPDATA).and.                      &
+     &        ANY(tl_Vadvection(:,ng)%MPDATA)
+
 # ifdef TL_SUPPORTED
 !
 !  Allocate local arrays for MPDATA.
 !
-      Lmpdata=ANY(tl_Hadvection(:,ng)%MPDATA).and.                      &
-     &        ANY(tl_Vadvection(:,ng)%MPDATA)
       IF (Lmpdata) THEN
 #  ifdef DIAGNOSTICS_TS
         IF (.not.allocated(Dhadv)) THEN
