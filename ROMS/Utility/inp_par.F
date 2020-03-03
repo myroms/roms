@@ -2,7 +2,7 @@
       SUBROUTINE inp_par (model)
 !
 !git $Id$
-!svn $Id: inp_par.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: inp_par.F 1009 2020-03-03 20:38:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -146,17 +146,43 @@
  40   CONTINUE
 # endif
 #endif
-
+!
       CALL read_PhyPar (model, inp, out, Lwrite)
 #ifdef DISTRIBUTE
       CALL mp_bcasti (1, model, exit_flag)
 #endif
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+#ifdef BIOLOGY
+!
+!-----------------------------------------------------------------------
+!  Read in biological model input parameters.
+!-----------------------------------------------------------------------
+!
+      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+
+      CALL read_BioPar (model, 15, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+#endif
+#ifdef SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Read in sediment model input parameters.
+!-----------------------------------------------------------------------
+!
+      OPEN (25, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
+
+      CALL read_SedPar (model, 25, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+#endif
 #ifdef NESTING
 !
+!-----------------------------------------------------------------------
 !  Read in nesting contact points NetCDF file and allocate and
 !  initialize several structures and variables.
+!-----------------------------------------------------------------------
 !
       CALL set_contact (1, model)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
@@ -167,6 +193,14 @@
 !  Set lower and upper bounds indices per domain partition for all
 !  nested grids.
 !-----------------------------------------------------------------------
+!
+!  Set switch for three ghost-points in the halo region.
+!
+      ThreeGhostPoints=ANY(Hadvection(:,:)%MPDATA).or.                  &
+     &                 ANY(Hadvection(:,:)%HSIMT)
+#ifdef UV_VIS4
+      ThreeGhostPoints=.TRUE.
+#endif
 !
 !  Determine the number of ghost-points in the halo region.
 !
@@ -751,30 +785,6 @@
       END DO
 #endif
 
-#ifdef BIOLOGY
-!
-!-----------------------------------------------------------------------
-!  Read in biological model input parameters.
-!-----------------------------------------------------------------------
-!
-      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
-
-      CALL read_BioPar (model, 15, out, Lwrite)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-#endif
-#ifdef SEDIMENT
-!
-!-----------------------------------------------------------------------
-!  Read in sediment model input parameters.
-!-----------------------------------------------------------------------
-!
-      OPEN (25, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
-
-      CALL read_SedPar (model, 25, out, Lwrite)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-#endif
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !-----------------------------------------------------------------------

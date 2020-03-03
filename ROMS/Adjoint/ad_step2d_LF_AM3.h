@@ -3,7 +3,7 @@
       SUBROUTINE ad_step2d (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1009 2020-03-03 20:38:52Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -223,6 +223,7 @@
 !
       USE mod_param
       USE mod_clima
+      USE mod_ncparam
       USE mod_scalars
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       USE mod_sediment

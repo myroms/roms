@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_basin.in 1007 2020-02-25 22:29:41Z arango $
+!svn $Id: roms_basin.in 1009 2020-03-03 20:38:52Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1225,17 +1225,17 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 ! or in nested applications
 !
 !  Hadvection == U3       \                     ! temperature, Grid 1
-!                U3       \                     ! temperature, Grid 2
-!                U3       \                     ! temperature, Grid 3
 !                HSIMT    \                     ! salinity,    Grid 1
+!                U3       \                     ! temperature, Grid 2
 !                HSIMT    \                     ! salinity,    Grid 2
+!                U3       \                     ! temperature, Grid 3
 !                HSIMT                          ! salinity,    Grid 3
 !
 !  Vadvection == C4       \                     ! temperature, Grid 1
-!                C4       \                     ! temperature, Grid 2
-!                C4       \                     ! temperature, Grid 3
 !                HSIMT    \                     ! salinity,    Grid 1
+!                C4       \                     ! temperature, Grid 2
 !                HSIMT    \                     ! salinity,    Grid 2
+!                C4       \                     ! temperature, Grid 3
 !                HSIMT                          ! salinity,    Grid 3
 !
 !------------------------------------------------------------------------------
