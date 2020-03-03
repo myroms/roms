@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1006 2020-02-25 16:46:01Z arango $
+!svn $Id: read_phypar.F 1009 2020-03-03 20:38:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3307,14 +3307,6 @@
 !-----------------------------------------------------------------------
 !  Process input parameters.
 !-----------------------------------------------------------------------
-!
-!  Set switch for three ghost-points in the halo region.
-!
-      ThreeGhostPoints=ANY(Hadvection(:,:)%MPDATA).or.                  &
-     &                 ANY(Hadvection(:,:)%HSIMT)
-#ifdef UV_VIS4
-      ThreeGhostPoints=.TRUE.
-#endif
 !
 !  Check if nesting parameters "NestLayers", "GridsInLayer", and
 !  "GridNumber" have been assigned.  The code below is necessary

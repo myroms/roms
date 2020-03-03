@@ -2,7 +2,7 @@
 !  EcoSim Biological Model Parameters.
 !
 !git $Id$
-!svn $Id: ecosim.in 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: ecosim.in 1009 2020-03-03 20:38:52Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group              W. Paul Bissett   !
 !    Licensed under a MIT/X style license                                     !
@@ -1266,17 +1266,17 @@ ad_LBC(isTvar) ==   Per     Per     Per     Per      ! idbio(:), compact
 ! or in nested applications
 !
 !  Hadvection == U3       \                     ! temperature, Grid 1
-!                U3       \                     ! temperature, Grid 2
-!                U3       \                     ! temperature, Grid 3
 !                HSIMT    \                     ! salinity,    Grid 1
+!                U3       \                     ! temperature, Grid 2
 !                HSIMT    \                     ! salinity,    Grid 2
+!                U3       \                     ! temperature, Grid 3
 !                HSIMT                          ! salinity,    Grid 3
 !
 !  Vadvection == C4       \                     ! temperature, Grid 1
-!                C4       \                     ! temperature, Grid 2
-!                C4       \                     ! temperature, Grid 3
 !                HSIMT    \                     ! salinity,    Grid 1
+!                C4       \                     ! temperature, Grid 2
 !                HSIMT    \                     ! salinity,    Grid 2
+!                C4       \                     ! temperature, Grid 3
 !                HSIMT                          ! salinity,    Grid 3
 !
 ! It is convinient to use the compact specification format for biological and
