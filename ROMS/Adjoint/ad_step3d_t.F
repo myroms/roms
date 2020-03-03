@@ -4,7 +4,7 @@
 #if !defined TS_FIXED && (defined ADJOINT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: ad_step3d_t.F 1005 2020-02-06 23:03:06Z arango $
+!svn $Id: ad_step3d_t.F 1011 2020-03-03 22:54:05Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -325,12 +325,14 @@
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
+!
+      Lmpdata=ANY(ad_Hadvection(:,ng)%MPDATA).and.                      &
+     &        ANY(ad_Vadvection(:,ng)%MPDATA)
+
 # ifdef AD_SUPPORTED
 !
 !  Allocate local arrays for MPDATA.
 !
-      Lmpdata=ANY(ad_Hadvection(:,ng)%MPDATA).and.                      &
-     &        ANY(ad_Vadvection(:,ng)%MPDATA)
       IF (Lmpdata) THEN
 #  ifdef DIAGNOSTICS_TS
         IF (.not.allocated(Dhadv)) THEN
