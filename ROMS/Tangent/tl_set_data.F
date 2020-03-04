@@ -3,7 +3,7 @@
       SUBROUTINE tl_set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: tl_set_data.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_set_data.F 1012 2020-03-04 22:09:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1537,6 +1537,8 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+
+#   ifndef SOLVE3D
 !
 !  Set 2D momentum forcing.
 !
@@ -1555,8 +1557,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
-#   ifdef SOLVE3D
+#   else
 !
 !  Set 3D momentum forcing.
 !
