@@ -3,7 +3,7 @@
       SUBROUTINE tl_get_data (ng)
 !
 !git $Id$
-!svn $Id: tl_get_data.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_get_data.F 1012 2020-03-04 22:09:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1369,15 +1369,17 @@
      &                  OCEAN(ng) % f_zetaG)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+
+#   ifndef SOLVE3D
 !
 !  Read 2D momentum forcing.
 !
         CALL get_2dfld (ng, iTLM, idUbtf, TLF(ng)%ncid,                 &
      &                  1, TLF(ng), update(1),                          &
      &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#   ifdef MASKING
+#    ifdef MASKING
      &                  GRID(ng) % umask,                               &
-#   endif
+#    endif
      &                  OCEAN(ng) % f_ubarG)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -1385,14 +1387,13 @@
         CALL get_2dfld (ng, iTLM, idVbtf, TLF(ng)%ncid,                 &
      &                  1, TLF(ng), update(1),                          &
      &                  LBi, UBi, LBj, UBj, 2, 1,                       &
-#   ifdef MASKING
+#     ifdef MASKING
      &                  GRID(ng) % vmask,                               &
-#   endif
+#     endif
      &                  OCEAN(ng) % f_vbarG)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
-#   ifdef SOLVE3D
+#   else
 !
 !  Read in 3D momentum forcing.
 !
