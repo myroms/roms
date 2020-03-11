@@ -4,7 +4,7 @@
 #if !defined TS_FIXED && (defined ADJOINT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: ad_step3d_t.F 1011 2020-03-03 22:54:05Z arango $
+!svn $Id: ad_step3d_t.F 1013 2020-03-11 01:46:00Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -266,7 +266,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: LapplySrc, Lmpdata
+      logical :: LapplySrc, Lhsimt, Lmpdata
 !
       integer :: IminT, ImaxT, JminT, JmaxT
       integer :: Isrc, Jsrc
@@ -326,6 +326,8 @@
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
+      Lhsimt =ANY(ad_Hadvection(:,ng)%HSIMT).and.                       &
+     &        ANY(ad_Vadvection(:,ng)%HSIMT)
       Lmpdata=ANY(ad_Hadvection(:,ng)%MPDATA).and.                      &
      &        ANY(ad_Vadvection(:,ng)%MPDATA)
 
@@ -3032,8 +3034,7 @@
 !
 !  Compute adjoint inverse thickness.
 !
-      IF (ANY(ad_Vadvection(:,ng)%MPDATA).or.                           &
-     &    ANY(ad_Vadvection(:,ng)%HSIMT)) THEN
+      IF (Lmpdata.or.Lhsimt) THEN
         IminT=Istrm2
         ImaxT=Iendp2
         JminT=Jstrm2

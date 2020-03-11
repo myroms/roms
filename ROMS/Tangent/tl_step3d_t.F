@@ -4,7 +4,7 @@
 #if !defined TS_FIXED && (defined TANGENT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: tl_step3d_t.F 1011 2020-03-03 22:54:05Z arango $
+!svn $Id: tl_step3d_t.F 1013 2020-03-11 01:46:00Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -265,7 +265,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: LapplySrc, Lmpdata
+      logical :: LapplySrc, Lhsimt, Lmpdata
 !
       integer :: IminT, ImaxT, JminT, JmaxT
       integer :: Isrc, Jsrc
@@ -320,6 +320,8 @@
 !  Time-step horizontal advection term.
 !-----------------------------------------------------------------------
 !
+      Lhsimt =ANY(tl_Hadvection(:,ng)%HSIMT).and.                       &
+     &        ANY(tl_Vadvection(:,ng)%HSIMT)
       Lmpdata=ANY(tl_Hadvection(:,ng)%MPDATA).and.                      &
      &        ANY(tl_Vadvection(:,ng)%MPDATA)
 
@@ -375,7 +377,7 @@
 !
 !  Compute reciprocal thickness, 1/Hz.
 !
-      IF (Lmpdata) THEN
+      IF (Lmpdata.or.Lhsimt) THEN
         DO k=1,N(ng)
           DO j=Jstrm2,Jendp2
             DO i=Istrm2,Iendp2
