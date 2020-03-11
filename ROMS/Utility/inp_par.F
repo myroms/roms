@@ -2,7 +2,7 @@
       SUBROUTINE inp_par (model)
 !
 !git $Id$
-!svn $Id: inp_par.F 1009 2020-03-03 20:38:52Z arango $
+!svn $Id: inp_par.F 1013 2020-03-11 01:46:00Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -867,23 +867,23 @@
 !
       DO ng=1,Ngrids
         DO i=1,NT(ng)
-          tl_Hadvection(i,ng)%AKIMA4    = Hadvection(i,ng)%AKIMA4
-          tl_Hadvection(i,ng)%CENTERED2 = Hadvection(i,ng)%CENTERED2
-          tl_Hadvection(i,ng)%CENTERED4 = Hadvection(i,ng)%CENTERED4
-          tl_Hadvection(i,ng)%HSIMT     = Hadvection(i,ng)%HSIMT
-          tl_Hadvection(i,ng)%MPDATA    = Hadvection(i,ng)%MPDATA
-          tl_Hadvection(i,ng)%SPLINES   = Hadvection(i,ng)%SPLINES
-          tl_Hadvection(i,ng)%SPLIT_U3  = Hadvection(i,ng)%SPLIT_U3
-          tl_Hadvection(i,ng)%UPSTREAM3 = Hadvection(i,ng)%UPSTREAM3
+          tl_Hadvection(i,ng)%AKIMA4    = ad_Hadvection(i,ng)%AKIMA4
+          tl_Hadvection(i,ng)%CENTERED2 = ad_Hadvection(i,ng)%CENTERED2
+          tl_Hadvection(i,ng)%CENTERED4 = ad_Hadvection(i,ng)%CENTERED4
+          tl_Hadvection(i,ng)%HSIMT     = ad_Hadvection(i,ng)%HSIMT
+          tl_Hadvection(i,ng)%MPDATA    = ad_Hadvection(i,ng)%MPDATA
+          tl_Hadvection(i,ng)%SPLINES   = ad_Hadvection(i,ng)%SPLINES
+          tl_Hadvection(i,ng)%SPLIT_U3  = ad_Hadvection(i,ng)%SPLIT_U3
+          tl_Hadvection(i,ng)%UPSTREAM3 = ad_Hadvection(i,ng)%UPSTREAM3
 !
-          tl_Vadvection(i,ng)%AKIMA4    = Vadvection(i,ng)%AKIMA4
-          tl_Vadvection(i,ng)%CENTERED2 = Vadvection(i,ng)%CENTERED2
-          tl_Vadvection(i,ng)%CENTERED4 = Vadvection(i,ng)%CENTERED4
-          tl_Vadvection(i,ng)%HSIMT     = Vadvection(i,ng)%HSIMT
-          tl_Vadvection(i,ng)%MPDATA    = Vadvection(i,ng)%MPDATA
-          tl_Vadvection(i,ng)%SPLINES   = Vadvection(i,ng)%SPLINES
-          tl_Vadvection(i,ng)%SPLIT_U3  = Vadvection(i,ng)%SPLIT_U3
-          tl_Vadvection(i,ng)%UPSTREAM3 = Vadvection(i,ng)%UPSTREAM3
+          tl_Vadvection(i,ng)%AKIMA4    = ad_Vadvection(i,ng)%AKIMA4
+          tl_Vadvection(i,ng)%CENTERED2 = ad_Vadvection(i,ng)%CENTERED2
+          tl_Vadvection(i,ng)%CENTERED4 = ad_Vadvection(i,ng)%CENTERED4
+          tl_Vadvection(i,ng)%HSIMT     = ad_Vadvection(i,ng)%HSIMT
+          tl_Vadvection(i,ng)%MPDATA    = ad_Vadvection(i,ng)%MPDATA
+          tl_Vadvection(i,ng)%SPLINES   = ad_Vadvection(i,ng)%SPLINES
+          tl_Vadvection(i,ng)%SPLIT_U3  = ad_Vadvection(i,ng)%SPLIT_U3
+          tl_Vadvection(i,ng)%UPSTREAM3 = ad_Vadvection(i,ng)%UPSTREAM3
         END DO
       END DO
 #endif
