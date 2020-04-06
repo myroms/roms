@@ -2,7 +2,7 @@
       MODULE strings_mod
 !
 !git $Id$
-!svn $Id: strings.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: strings.F 1014 2020-04-06 15:48:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -64,7 +64,7 @@
 !
       USE mod_iounits,  ONLY : stdout
       USE mod_parallel, ONLY : Master
-
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: flag, NoErr, line

@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: read_asspar.F 1014 2020-04-06 15:48:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -576,35 +576,35 @@
             CASE ('STDnameI')
               label='STD - initial conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, STD(1,:))
+     &                      Ngrids, Nfiles, 4, 1, STD)
             CASE ('STDnameM')
               label='STD - model error standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, STD(2,:))
+     &                      Ngrids, Nfiles, 4, 2, STD)
             CASE ('STDnameB')
               label='STD - boundary conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, STD(3,:))
+     &                      Ngrids, Nfiles, 4, 3, STD)
             CASE ('STDnameF')
               label='STD - surface forcing standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, STD(4,:))
+     &                      Ngrids, Nfiles, 4, 4, STD)
             CASE ('NRMnameI')
               label='NRM - initial conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, NRM(1,:))
+     &                      Ngrids, Nfiles, 4, 1, NRM)
             CASE ('NRMnameM')
               label='NRM - model error normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, NRM(2,:))
+     &                      Ngrids, Nfiles, 4, 2, NRM)
             CASE ('NRMnameB')
               label='NRM - boundary conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, NRM(3,:))
+     &                      Ngrids, Nfiles, 4, 3, NRM)
             CASE ('NRMnameF')
               label='NRM - surface forcing normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, NRM(4,:))
+     &                      Ngrids, Nfiles, 4, 4, NRM)
             CASE ('OBSname')
               label='OBS - data assimilation observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &

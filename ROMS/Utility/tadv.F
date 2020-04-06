@@ -1,7 +1,8 @@
 #include "cppdefs.h"
+#ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: tadv.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: tadv.F 1014 2020-04-06 15:48:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -410,3 +411,8 @@
 !
       RETURN
       END SUBROUTINE tadv_report
+#else
+      SUBROUTINE tadv
+      RETURN
+      END SUBROUTINE tadv
+#endif

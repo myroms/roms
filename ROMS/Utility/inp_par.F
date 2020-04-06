@@ -2,7 +2,7 @@
       SUBROUTINE inp_par (model)
 !
 !git $Id$
-!svn $Id: inp_par.F 1013 2020-03-11 01:46:00Z arango $
+!svn $Id: inp_par.F 1014 2020-04-06 15:48:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,6 +52,8 @@
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
       real(r8), parameter :: spv = 0.0_r8
+!
+      SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
 !  Read in and report input model parameters.
@@ -196,8 +198,10 @@
 !
 !  Set switch for three ghost-points in the halo region.
 !
+#ifdef SOLVE3D
       ThreeGhostPoints=ANY(Hadvection(:,:)%MPDATA).or.                  &
      &                 ANY(Hadvection(:,:)%HSIMT)
+#endif
 #ifdef UV_VIS4
       ThreeGhostPoints=.TRUE.
 #endif

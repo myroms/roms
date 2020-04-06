@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: checkdefs.F 1014 2020-04-06 15:48:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2167,6 +2167,13 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
+#ifdef SPHERICAL
+!
+      IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &
+     &   'Spherical grid configuration'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' SPHERICAL,'
+#endif
 #if defined SPLINES_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
 !
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
@@ -2187,13 +2194,6 @@
      &   'Parabolic Spline Reconstruction for Vertical Viscosity'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' SPLINES_VVISC,'
-#endif
-#ifdef SPHERICAL
-!
-      IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &
-     &   'Spherical grid configuration'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' SPHERICAL,'
 #endif
 #if defined SSH_TIDES
 !
