@@ -1,7 +1,7 @@
       SUBROUTINE ana_psource (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_psource.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_psource.h 1016 2020-04-27 02:06:37Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -266,7 +266,9 @@
           DO k=1,N(ng)
             DO is=1,Nsrc(ng)
               SOURCES(ng)%Tsrc(is,k,itemp)=???
+#  ifdef SALINITY
               SOURCES(ng)%Tsrc(is,k,isalt)=???
+#  endif
             END DO
           END DO
         END IF

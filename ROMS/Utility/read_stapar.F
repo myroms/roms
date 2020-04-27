@@ -3,7 +3,7 @@
       SUBROUTINE read_StaPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_stapar.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: read_stapar.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -685,9 +685,11 @@
             IF (Sout(idTsur(itemp),ng)) WRITE (out,90)                  &
      &          Sout(idTsur(itemp),ng), 'Sout(idTsur)',                 &
      &          'Write out surface net heat flux.'
+#  ifdef SALINITY
             IF (Sout(idTsur(isalt),ng)) WRITE (out,90)                  &
      &          Sout(idTsur(isalt),ng), 'Sout(idTsur)',                 &
      &          'Write out surface net salt flux.'
+#  endif
 #  ifdef SHORTWAVE
             IF (Sout(idSrad,ng)) WRITE (out,90) Sout(idSrad,ng),        &
      &          'Sout(idSrad)',                                         &

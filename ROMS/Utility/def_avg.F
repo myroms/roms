@@ -6,7 +6,7 @@
       SUBROUTINE def_avg (ng, ldef)
 !
 !git $Id$
-!svn $Id: def_avg.F 1007 2020-02-25 22:29:41Z arango $
+!svn $Id: def_avg.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1467,6 +1467,8 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
+
+#  ifdef SALINITY
 !
 !  Define surface net salt flux.
 !
@@ -1479,9 +1481,9 @@
           Vinfo(12)='downward flux, salting (net evaporation)'
           Vinfo(14)=Vname(4,idTsur(isalt))
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#  endif
+#   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idTsur(isalt),ng),r8)
           status=def_var(ng, model, AVG(ng)%ncid,                       &
@@ -1490,6 +1492,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
+#  endif
 
 #  ifdef BULK_FLUXES
 !
@@ -2266,10 +2269,12 @@
      &             TRIM(Vname(1,idTsur(itemp)))) THEN
             got_var(idTsur(itemp))=.TRUE.
             AVG(ng)%Vid(idTsur(itemp))=var_id(i)
+#  ifdef SALINITY
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idTsur(isalt)))) THEN
             got_var(idTsur(isalt))=.TRUE.
             AVG(ng)%Vid(idTsur(isalt))=var_id(i)
+#  endif
 #  ifdef BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
@@ -2698,12 +2703,14 @@
           exit_flag=3
           RETURN
         END IF
+#  ifdef SALINITY
         IF (.not.got_var(idTsur(isalt)).and.Aout(idTsur(isalt),ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTsur(isalt))),   &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
+#  endif
 #  ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Aout(idLhea,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idLhea)),          &

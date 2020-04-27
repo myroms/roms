@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: mod_ncparam.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1236,12 +1236,16 @@
               idDano=varid
             CASE ('idsurT(itemp)')
               idsurT(itemp)=varid
+#ifdef SALINITY
             CASE ('idsurT(isalt)')
               idsurT(isalt)=varid
+#endif
             CASE ('idTvar(itemp)')
               idTvar(itemp)=varid
+#ifdef SALINITY
             CASE ('idTvar(isalt)')
               idTvar(isalt)=varid
+#endif
             CASE ('idUsms')
               idUsms=varid
             CASE ('idVsms')
@@ -1264,16 +1268,22 @@
               iddQdT=varid
             CASE ('idsfwf')
               idsfwf=varid
+#ifdef SALINITY
             CASE ('idTsur(isalt)')
               idTsur(isalt)=varid
+#endif
             CASE ('idTbot(itemp)')
               idTbot(itemp)=varid
+#ifdef SALINITY
             CASE ('idTbot(isalt)')
               idTbot(isalt)=varid
+#endif
             CASE ('idGhat(itemp)')
               idGhat(itemp)=varid
+#ifdef SALINITY
             CASE ('idGhat(isalt)')
               idGhat(isalt)=varid
+#endif
             CASE ('idMtke')
               idMtke=varid
             CASE ('idMtls')
@@ -1283,9 +1293,11 @@
             CASE ('idTdif')
               idTdif=varid
               idDiff(itemp)=idTdif
+#ifdef SALINITY
             CASE ('idSdif')
               idSdif=varid
               idDiff(isalt)=idSdif
+#endif
             CASE ('idVmLS')
               idVmLS=varid
             CASE ('idVmKK')
@@ -1340,6 +1352,7 @@
               idTbry(isouth,itemp)=varid
             CASE ('idTbry(inorth,itemp)')
               idTbry(inorth,itemp)=varid
+#ifdef SALINITY
             CASE ('idTbry(iwest,isalt)')
               idTbry(iwest,isalt)=varid
             CASE ('idTbry(ieast,isalt)')
@@ -1348,6 +1361,7 @@
               idTbry(isouth,isalt)=varid
             CASE ('idTbry(inorth,isalt)')
               idTbry(inorth,isalt)=varid
+#endif
             CASE ('idPwet')
               idPwet=varid
             CASE ('idRwet')
@@ -1460,8 +1474,10 @@
               idRflg=varid
             CASE ('idRtrc(itemp)')
               idRtrc(itemp)=varid
+#ifdef SALINITY
             CASE ('idRtrc(isalt)')
               idRtrc(isalt)=varid
+#endif
             CASE ('idHsbl')
               idHsbl=varid
             CASE ('idHbbl')
@@ -1515,8 +1531,10 @@
               idVads=varid
             CASE ('idTads(itemp)')
               idTads(itemp)=varid
+# ifdef SALINITY
             CASE ('idTads(isalt)')
               idTads(isalt)=varid
+# endif
             CASE ('idWads')
               idWads=varid
 #endif
@@ -1533,8 +1551,10 @@
               idVtlf=varid
             CASE ('idTtlf(itemp)')
               idTtlf(itemp)=varid
+# ifdef SALINITY
             CASE ('idTtlf(isalt)')
               idTtlf(isalt)=varid
+# endif
 #endif
             CASE ('idM2nc')
               idM2nc=varid
@@ -1578,10 +1598,12 @@
               idTrcD(itemp)=varid
             CASE ('idTrcH(itemp)')
               idTrcH(itemp)=varid
+#  ifdef SALINITY
             CASE ('idTrcD(isalt)')
               idTrcD(isalt)=varid
             CASE ('idTrcH(isalt)')
               idTrcH(isalt)=varid
+#  endif
 # endif
 #endif
             CASE ('idU2av')

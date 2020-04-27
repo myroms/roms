@@ -2,7 +2,7 @@
       SUBROUTINE def_rst (ng)
 !
 !git $Id$
-!svn $Id: def_rst.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_rst.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1681,10 +1681,12 @@
      &             TRIM(Vname(1,idGhat(itemp)))) THEN
             got_var(idGhat(itemp))=.TRUE.
             RST(ng)%Vid(idGhat(itemp))=var_id(i)
+#  ifdef SALINITY
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idGhat(isalt)))) THEN
             got_var(idGhat(isalt))=.TRUE.
             RST(ng)%Vid(idGhat(isalt))=var_id(i)
+#  endif
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.

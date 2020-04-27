@@ -1,7 +1,7 @@
       SUBROUTINE ana_tobc (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_tobc.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_tobc.h 1016 2020-04-27 02:06:37Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -95,7 +95,9 @@
         DO k=1,N(ng)
           DO j=JstrT,JendT
             BOUNDARY(ng)%t_east(j,k,itemp)=T0(ng)
+# ifdef SALINITY
             BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
+# endif
 # ifdef SEDIMENT
             DO ised=1,NST
               BOUNDARY(ng)%t_east(j,k,idsed(ised))=0.0_r8
@@ -110,7 +112,9 @@
         DO k=1,N(ng)
           DO j=JstrT,JendT
             BOUNDARY(ng)%t_west(j,k,itemp)=T0(ng)
+# ifdef SALINITY
             BOUNDARY(ng)%t_west(j,k,isalt)=30.0_r8
+# endif
 # ifdef SEDIMENT
             DO ised=1,NST
               BOUNDARY(ng)%t_west(j,k,idsed(ised))=0.0_r8
@@ -141,6 +145,7 @@
      &                                        (3.24031805390397E-05_r8+ &
      &                                         1.26282685769027E-07_r8*
      &                                         z_r(Iend+1,j,k)))))))
+# ifdef SALINITY
               BOUNDARY(ng)%t_east(j,k,isalt)=3.06648914919313E+01_r8-   &
      &                                       z_r(Iend+1,j,k)*           &
      &                                       (1.47672526294673E-01_r8+  &
@@ -156,10 +161,13 @@
      &                                        (3.19179236195422E-05_r8+ &
      &                                         6.17735263440932E-07_r8*
      &                                         z_r(Iend+1,j,k)))))))
+# endif
             ELSE
               cff=TANH(1.1_r8*z_r(Iend+1,j,k)+15.9_r8)
               t_east(j,k,itemp)=14.6_r8+6.70_r8*cff
+# ifdef SALINITY
               t_east(j,k,isalt)=31.3_r8-0.55_r8*cff
+# endif
             END IF
           END DO
         END DO
@@ -185,6 +193,7 @@
      &                                         (3.24031805390397E-05_r8+&
      &                                          1.26282685769027E-07_r8*
      &                                          z_r(i,Jstr-1,k)))))))
+# ifdef SALINITY
               BOUNDARY(ng)%t_south(i,k,isalt)=3.06648914919313E+01_r8-  &
      &                                        z_r(i,Jstr-1,k)*          &
      &                                        (1.47672526294673E-01_r8+ &
@@ -200,10 +209,13 @@
      &                                         (3.19179236195422E-05_r8+&
      &                                          6.17735263440932E-07_r8*
      &                                          z_r(i,Jstr-1,k)))))))
+# endif
             ELSE
               cff=TANH(1.1_r8*depth+15.9_r8)
               BOUNDARY(ng)%t_south(i,k,itemp)=14.6_r8+6.70_r8*cff
+# ifdef SALINITY
               BOUNDARY(ng)%t_south(i,k,isalt)=31.3_r8-0.55_r8*cff
+# endif
             END IF
           END DO
         END DO
@@ -215,7 +227,9 @@
         DO k=1,N(ng)
           DO j=JstrT,JendT
             BOUNDARY(ng)%t_east(j,k,itemp)=20.0_r8
+# ifdef SALINITY
             BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
+# endif
           END DO
         END DO
       END IF
