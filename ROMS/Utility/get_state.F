@@ -2,7 +2,7 @@
       SUBROUTINE get_state (ng, model, msg, ncname, IniRec, Tindex)
 !
 !git $Id$
-!svn $Id: get_state.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: get_state.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -183,7 +183,8 @@
 !
 !  Turn on time wall clock.
 !
-      CALL wclock_on (ng, IDmod, 42, __LINE__, __FILE__)
+      CALL wclock_on (ng, IDmod, 42, __LINE__,                          &
+     &                __FILE__)
 #endif
 !
 !  Set switch to process variables for nonlinear model perfect restart.
@@ -6120,7 +6121,8 @@
 !
 !  Turn off time wall clock.
 !
-      CALL wclock_off (ng, IDmod, 42, __LINE__, __FILE__)
+      CALL wclock_off (ng, IDmod, 42, __LINE__,                         &
+     &                 __FILE__)
 #endif
 !
   10  FORMAT (/,a,'GET_STATE - unable to open input NetCDF file: ',a)

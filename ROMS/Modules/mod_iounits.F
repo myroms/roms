@@ -2,7 +2,7 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_iounits.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -65,6 +65,12 @@
 !    TIDE      Input tide forcing                                      !
 !    TLF       Input/output tangent linear model impulse forcing       !
 !    TLM       Output tangent linear model history                     !
+#ifdef SP4DVAR
+!    SCA       Output adjoint scratch state vector file                !
+!    SCT       Output tangent scratch state vector file                !
+!    SPA       Output adjoint Arnoldi state vector file                !
+!    SPT       Output tangent Arnoldi state vector file                !
+#endif
 !    SSF       Input Sources/Sinks forcing (river runoff)              !
 !    STA       Output station data                                     !
 !    STD       Input error covariance standard deviations              !
@@ -93,6 +99,7 @@
 !                                                                      !
 !  Miscellaneous variables:                                            !
 !                                                                      !
+!  CalledFrom  Calling routine in IO operations.                       !
 !  FRCids      NetCDF file ID associated with each forcing field.      !
 !  Rerror      Running error messages.                                 !
 !  SourceFile  Current executed file name. It is used for IO error     !
@@ -155,6 +162,12 @@
 #endif
       TYPE(T_IO), allocatable :: QCK(:)     ! quicksave fields
       TYPE(T_IO), allocatable :: RST(:)     ! restart fields
+#ifdef SP4DVAR
+      TYPE(T_IO), allocatable :: SCA(:)     ! ADM scratch state vector
+      TYPE(T_IO), allocatable :: SCT(:)     ! TLM scratch state vector
+      TYPE(T_IO), allocatable :: SPA(:)     ! ADM Arnoldi state vector
+      TYPE(T_IO), allocatable :: SPT(:)     ! TLM Arnoldi state vector
+#endif
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
       TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
@@ -200,6 +213,7 @@
 !
       integer :: ioerror = 0                ! I/O error flag
 
+      character (len=256) :: CalledFrom     ! routine calling IO
       character (len=256) :: MyAppCPP       ! application CPP flag
       character (len=256) :: SourceFile     ! current executed ROMS file
       character (len=256) :: ncfile         ! current NetCDF file
@@ -330,6 +344,20 @@
       IF (.not.allocated(RST)) THEN
         allocate ( RST(Ngrids) )
       END IF
+#ifdef SP4DVAR
+      IF (.not.allocated(SCA)) THEN
+        allocate ( SCA(Ngrids) )
+      END IF
+      IF (.not.allocated(SCT)) THEN
+        allocate ( SCT(Ngrids) )
+      END IF
+      IF (.not.allocated(SPA)) THEN
+        allocate ( SPA(Ngrids) )
+      END IF
+      IF (.not.allocated(SPT)) THEN
+        allocate ( SPT(Ngrids) )
+      END IF
+#endif
       IF (.not.allocated(SSF)) THEN
         allocate ( SSF(Ngrids) )
       END IF

@@ -371,6 +371,8 @@
       USE mod_stepping
 !
       USE convolve_mod,      ONLY : error_covariance
+      USE ini_adjust_mod,    ONLY : load_ADtoTL
+      USE ini_adjust_mod,    ONLY : load_TLtoAD
 #ifdef ADJUST_BOUNDARY
       USE mod_boundary,      ONLY : initialize_boundary
 #endif
@@ -378,11 +380,10 @@
       USE mod_ocean,         ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
       USE strings_mod,       ONLY : FoundError, uppercase
+      USE wrt_ini_mod,       ONLY : wrt_ini
 #if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod,  ONLY : balance_ref, biconj
 #endif
-      USE ini_adjust_mod,     ONLY : load_ADtoTL
-      USE ini_adjust_mod,     ONLY : load_TLtoAD!
 !
 !  Imported variable declarations
 !

@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_netcdf.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -8167,6 +8167,10 @@
       END IF
 #else
       my_cmode=IOR(nf90_clobber, CMODE)
+# if defined DISTRIBUTE        && !defined HDF5       && \
+    (defined CONCURRENT_KERNEL || defined DISJOINTED)
+      my_cmode=IOR(my_cmode, nf90_share)
+# endif
       IF (OutThread) THEN
         status=nf90_create(TRIM(ncname), my_cmode, ncid)
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
@@ -8342,7 +8346,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: status
+      integer :: my_omode, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer :: ibuffer(3)
@@ -8396,11 +8400,26 @@
       IF (InpThread) THEN
         SELECT CASE (omode)
           CASE (0)
-            status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+            my_omode=nf90_nowrite
+# if defined DISTRIBUTE        && !defined HDF5       && \
+    (defined CONCURRENT_KERNEL || defined DISJOINTED)
+            my_omode=IOR(my_omode, nf90_share)
+# endif
+            status=nf90_open(TRIM(ncname), my_omode, ncid)
           CASE (1)
-            status=nf90_open(TRIM(ncname), nf90_write, ncid)
+            my_omode=nf90_write
+# if defined DISTRIBUTE        && !defined HDF5       && \
+    (defined CONCURRENT_KERNEL || defined DISJOINTED)
+            my_omode=IOR(my_omode, nf90_share)
+# endif
+            status=nf90_open(TRIM(ncname), my_omode, ncid)
           CASE DEFAULT
-            status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+            my_omode=nf90_nowrite
+# if defined DISTRIBUTE        && !defined HDF5       && \
+    (defined CONCURRENT_KERNEL || defined DISJOINTED)
+            my_omode=IOR(my_omode, nf90_share)
+# endif
+            status=nf90_open(TRIM(ncname), my_omode, ncid)
         END SELECT
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
@@ -8562,7 +8581,7 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Create requested NetCDF file.
+!  Synchronize requested NetCDF file.
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN

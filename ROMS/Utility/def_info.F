@@ -2,7 +2,7 @@
       SUBROUTINE def_info (ng, model, ncid, ncname, DimIDs)
 !
 !git $Id$
-!svn $Id: def_info.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: def_info.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -296,6 +296,16 @@
           type='ROMS/TOMS quicksave file'
         ELSE IF (ncid.eq.RST(ng)%ncid) THEN
           type='ROMS/TOMS restart file'
+# ifdef SP4DVAR
+        ELSE IF (ncid.eq.SCA(ng)%ncid) THEN
+          type='ROMS/TOMS AD scratch file'
+        ELSE IF (ncid.eq.SCT(ng)%ncid) THEN
+          type='ROMS/TOMS TL scratch file'
+        ELSE IF (ncid.eq.SPA(ng)%ncid) THEN
+          type='ROMS/TOMS AD Arnoldi file'
+        ELSE IF (ncid.eq.SPT(ng)%ncid) THEN
+          type='ROMS/TOMS TL Arnoldi file'
+# endif
         ELSE IF (ncid.eq.STA(ng)%ncid) THEN
           type='ROMS/TOMS station file'
         ELSE IF (ncid.eq.TLF(ng)%ncid) THEN

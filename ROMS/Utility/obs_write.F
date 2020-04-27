@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: obs_write.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -155,7 +155,7 @@
           END IF
 #  endif
         END IF
-#  ifdef TLM_OBS
+#  if defined TLM_OBS && !defined SP4DVAR
         IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
           DO iobs=Mstr,Mend
             TLmodVal(iobs)=IniVal

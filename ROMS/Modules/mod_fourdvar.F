@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_fourdvar.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -158,7 +158,8 @@
           real(r8), allocatable :: ObsCost(:)
           real(r8), allocatable :: DataPenalty(:)
 #   if defined DATALESS_LOOPS || defined SENSITIVITY_4DVAR || \
-       defined TL_W4DPSAS     || defined W4DPSAS
+       defined SP4DVAR        || defined TL_W4DPSAS        || \
+       defined W4DPSAS
           real(r8), allocatable :: NLPenalty(:)
 #   endif
           real(r8), allocatable :: NLobsCost(:)
@@ -231,12 +232,19 @@
 #  endif
         real(r8), allocatable :: ADmodVal(:)
         real(r8), allocatable :: NLmodVal(:)
+#  ifdef SP4DVAR
+        real(r8), allocatable :: ADmodVal_S(:,:)
+        real(r8), allocatable :: harnoldi(:,:,:)
+        real(r8), allocatable :: gmze(:,:)
+        real(r8), allocatable :: cg_beta0(:)
+        real(r8), allocatable :: Jobs(:,:)
+#  endif
 #  ifdef TLM_OBS
         real(r8), allocatable :: TLmodVal(:)
-#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS  || \
-       defined TL_W4DVAR            || defined W4DPSAS     || \
-       defined W4DVAR               || defined ARRAY_MODES || \
-       defined CLIPPING
+#   if defined ARRAY_MODES          || defined CLIPPING    || \
+       defined SENSITIVITY_4DVAR    || defined SP4DVAR     || \
+       defined TL_W4DPSAS           || defined TL_W4DVAR   || \
+       defined W4DPSAS              || defined W4DVAR
         real(r8), allocatable :: TLmodVal_S(:,:,:)
 #    if defined RPCG              && \
        (defined SENSITIVITY_4DVAR || defined TL_W4DPSAS || \
@@ -458,6 +466,13 @@
 !  locations.
 !
         logical, allocatable :: ProcessObs(:)
+#  ifdef SP4DVAR
+!
+!  Switch to (de)activate the assimilation of observations during
+!  saddle point 4D-Var.
+!
+        logical, allocatable :: Lsadd(:)
+#  endif
 !
 !  Switch to activate writting of nonlinear model values at
 !  observations locations into observations NetCDF file.
@@ -962,6 +977,13 @@
         allocate ( ProcessObs(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
+#  ifdef SP4DVAR
+      IF (.not.allocated(Lsadd)) THEN
+        allocate ( Lsadd(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#  endif
 
       IF (.not.allocated(wrtNLmod)) THEN
         allocate ( wrtNLmod(Ngrids) )
@@ -1682,7 +1704,8 @@
         END IF
 
 #   if defined DATALESS_LOOPS || defined SENSITIVITY_4DVAR || \
-       defined TL_W4DPSAS     || defined W4DPSAS
+       defined SP4DVAR        || defined TL_W4DPSAS        || \
+       defined W4DPSAS
         IF (.not.allocated(FOURDVAR(ng) % NLPenalty)) THEN
           allocate ( FOURDVAR(ng) % NLPenalty(0:NobsVar(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(NobsVar(ng)+1,r8)
@@ -2009,6 +2032,38 @@
       END IF
       NLmodVal = IniVal
 
+#  ifdef SP4DVAR
+      IF (.not.allocated(ADmodVal_S)) THEN
+        allocate ( ADmodVal_S(Mobs, Ninner+4) )
+        Dmem(1)=Dmem(1)+REAL(Mobs*(Ninner+4),r8)
+      END IF
+      ADmodVal_S = IniVal
+
+      IF (.not.allocated(harnoldi)) THEN
+        allocate ( harnoldi(Ninner+1, Ninner, Nouter) )
+        Dmem(1)=Dmem(1)+REAL((Ninner+1)*Ninner*Nouter,r8)
+      END IF
+      harnoldi = IniVal
+
+      IF (.not.allocated(gmze)) THEN
+        allocate ( gmze(Ninner, Nouter) )
+        Dmem(1)=Dmem(1)+REAL(Ninner*Nouter,r8)
+      END IF
+      gmze = IniVal
+
+      IF (.not.allocated(cg_beta0)) THEN
+        allocate ( cg_beta0(Nouter) )
+        Dmem(1)=Dmem(1)+REAL(Nouter,r8)
+      END IF
+      cg_beta0 = IniVal
+
+      IF (.not.allocated(Jobs)) THEN
+        allocate ( Jobs(0:Ninner,1:Nouter) )
+        Dmem(1)=Dmem(1)+REAL((Ninner+1)*Nouter,r8)
+      END IF
+      Jobs = IniVal
+#  endif
+
 #  ifdef FOUR_DVAR
       IF (.not.allocated(BgErr)) THEN
         allocate ( BgErr(Mobs) )
@@ -2056,26 +2111,25 @@
       END IF
       TLmodVal = IniVal
 
-#   if defined SENSITIVITY_4DVAR    || defined TL_W4DPSAS  || \
-       defined TL_W4DVAR            || defined W4DPSAS     || \
-       defined W4DVAR               || defined ARRAY_MODES || \
-       defined CLIPPING
-
+#   if defined ARRAY_MODES       || defined CLIPPING  || \
+       defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
+       defined TL_W4DPSAS        || defined TL_W4DVAR || \
+       defined W4DPSAS           || defined W4DVAR
 !
 !  The following arrays are only needed and used by the master node.
 !  In order to avoid hogging memory penalties in the other nodes, they
 !  are only allocated by the master node.
 !
-      IF (Master) THEN
-        IF (.not.allocated(TLmodVal_S)) THEN
-          allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
-          Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
-        END IF
-        TLmodVal_S = IniVal
+      IF (.not.allocated(TLmodVal_S)) THEN
+        allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
+        Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
+      END IF
+      TLmodVal_S = IniVal
 
 #    if defined RPCG              && \
        (defined SENSITIVITY_4DVAR || defined TL_W4DPSAS || \
         defined TL_W4DVAR)
+      IF (Master) THEN
         IF (.not.allocated(tl_TLmodVal_S)) THEN
           allocate ( tl_TLmodVal_S(Mobs,Ninner,Nouter) )
           Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
@@ -2087,9 +2141,8 @@
           Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
         END IF
         ad_TLmodVal_S = IniVal
-#    endif
       END IF
-
+#    endif
 #   endif
 
 #   if defined ARRAY_MODES || defined SENSITIVITY_4DVAR || \
@@ -2858,6 +2911,9 @@
       DO ng=1,Ngrids
         Load_Zobs(ng)=.FALSE.
         ProcessObs(ng)=.FALSE.
+# ifdef SP4DVAR
+        Lsadd(ng)=.FALSE.
+# endif
         haveObsMeta(ng)=.FALSE.
         wrote_Zobs(ng)=.FALSE.
         wrtMisfit(ng)=.FALSE.

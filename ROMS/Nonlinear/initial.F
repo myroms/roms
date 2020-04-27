@@ -2,7 +2,7 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: initial.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -86,6 +86,9 @@
     defined ADJUST_STFLUX   || defined ADJUST_WSTRESS
       integer :: irec
 #endif
+#ifdef SP4DVAR
+      real(dp) :: my_dstart
+#endif
 !
 !=======================================================================
 !   Initialize model variables.
@@ -138,7 +141,15 @@
 !
         synchro_flag(ng)=.TRUE.
         first_time(ng)=0
+#ifdef SP4DVAR
+        IF (INItime(ng).lt.0.0_dp) THEN
+          my_dstart=dstart
+        ELSE
+          my_dstart=INItime(ng)/86400.0_dp
+        END IF
+#else
         tdays(ng)=dstart
+#endif
         time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
         ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1

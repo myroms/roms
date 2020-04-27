@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_roms.bash 995 2020-01-10 04:01:28Z arango $
+# svn $Id: build_roms.bash 1017 2020-04-27 22:19:14Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -44,13 +44,13 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-which_MPI=openmpi                             # default, overwritten below
+export which_MPI=openmpi                       # default, overwritten below
 
 parallel=0
 clean=1
 dprint=0
 
-MY_CPP_FLAGS=
+export MY_CPP_FLAGS=
 
 while [ $# -gt 0 ]
 do

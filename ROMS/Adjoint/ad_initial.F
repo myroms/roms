@@ -3,7 +3,7 @@
       SUBROUTINE ad_initial (ng)
 !
 !git $Id$
-!svn $Id: ad_initial.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_initial.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -159,7 +159,7 @@
       time(ng)=tdays(ng)*day2sec
 !$OMP MASTER
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend(ng)=ntstart(ng)-ntimes(ng)-1
+      ntend(ng)=ntstart(ng)-ntimes(ng)
       ntfirst(ng)=ntend(ng)
 !$OMP END MASTER
 !$OMP BARRIER
@@ -408,6 +408,7 @@
 !
       DO tile=first_tile(ng),last_tile(ng),+1
         CALL initialize_ocean (ng, tile, iNLM)
+        CALL initialize_forces (ng, tile, iNLM)
         CALL initialize_ocean (ng, tile, iADM)
 #  if defined SOLVE3D
         CALL initialize_coupling (ng, tile, iADM)

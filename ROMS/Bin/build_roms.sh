@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_roms.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: build_roms.sh 1017 2020-04-27 22:19:14Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -44,7 +44,7 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-set which_MPI = openmpi                      #  default, overwritten below
+setenv which_MPI openmpi                      #  default, overwritten below
 
 set parallel = 0
 set clean = 1

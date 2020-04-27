@@ -3,7 +3,7 @@
       SUBROUTINE set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: set_data.F 1012 2020-03-04 22:09:28Z arango $
+!svn $Id: set_data.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1350,8 +1350,9 @@
 #  endif
 # endif
 
-# if defined NLM_OUTER           || defined W4DPSAS                 ||\
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined NLM_OUTER           || defined SP4DVAR                 ||\
+     defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY ||\
+     defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Set weak contraint forcing.

@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1014 2020-04-06 15:48:43Z arango $
+!svn $Id: checkdefs.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -86,30 +86,33 @@
 #if defined ADJUST_BOUNDARY     && \
    (defined CORRELATION         || defined IS4DVAR           || \
     defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
-    defined W4DPSAS             || defined W4DVAR)
+    defined SP4DVAR             || defined W4DPSAS           || \
+    defined W4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_BOUNDARY',                  &
-     &   'Including boundary conditions in 4DVar state estimation'
+     &   'Including boundary conditions in 4D-Var state estimation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' ADJUST_BOUNDARY,'
 #endif
 #if defined ADJUST_STFLUX       && \
    (defined CORRELATION         || defined IS4DVAR           || \
     defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
-    defined W4DPSAS             || defined W4DVAR)
+    defined SP4DVAR             || defined W4DPSAS           || \
+    defined W4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_STFLUX',                    &
-     &   'Including surface tracer flux in 4DVar state estimation'
+     &   'Including surface tracer flux in 4D-Var state estimation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' ADJUST_STFLUX,'
 #endif
 #if defined ADJUST_WSTRESS      && \
    (defined CORRELATION         || defined IS4DVAR           || \
     defined IS4DVAR_SENSITIVITY || defined SENSITIVITY_4DVAR || \
-    defined W4DPSAS             || defined W4DVAR)
+    defined SP4DVAR             || defined W4DPSAS           || \
+    defined W4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_WSTRESS',                   &
-     &   'Including surface wind stress in 4DVar state estimation'
+     &   'Including surface wind stress in 4D-Var state estimation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' ADJUST_WSTRESS,'
 #endif
@@ -730,6 +733,14 @@
       Coptions(is:is+17)=' !COLLECT_ALL...,'
 # endif
 #endif
+#if defined CONCURRENT_KERNEL && defined DISJOINTED && \
+    defined DISTRIBUTE        && defined SP4DVAR
+!
+      IF (Master) WRITE (stdout,20) 'CONCURRENT_KERNEL',                &
+     &   'Concurrent TLM and ADM in saddle-point 4D-Var'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' CONCURRENT_KERNEL,'
+#endif
 #ifdef CORRELATION
 !
       IF (Master) WRITE (stdout,20) 'CORRELATION',                      &
@@ -879,6 +890,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' DIFF_GRID,'
 # endif
+#endif
+#if defined DISJOINTED && defined DISTRIBUTE
+!
+      IF (Master) WRITE (stdout,20) 'DISJOINTED',                       &
+     &   'Split mpi-communicator into disjointed subgroups'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' DISJOINTED,'
 #endif
 #ifdef DIURNAL_SRFLUX
 !
@@ -1068,6 +1086,13 @@
       Coptions(is:is+12)=' !FULL_GRID,'
 # endif
 #endif
+#ifdef GENERIC_DSTART
+!
+      IF (Master) WRITE (stdout,20) 'GENERIC_DSTART',                   &
+     &   'Avoid using ''dstart'' as initial time in ADM, TLM, and RPM'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' GENERIC_DSTART,'
+#endif
 #if defined GEOPOTENTIAL_HCONV && defined FOUR_DVAR && defined SOLVE3D
 !
       IF (Master) WRITE (stdout,20) 'GEOPOTENTIAL_HCONV',               &
@@ -1202,7 +1227,7 @@
 #ifdef IS4DVAR
 !
       IF (Master) WRITE (stdout,20) 'IS4DVAR',                          &
-     &   'Incremental strong constraint 4D-Var data assimilation'
+     &   'Incremental, strong constraint 4D-Var data assimilation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' IS4DVAR,'
       idriver=idriver+1
@@ -1591,14 +1616,14 @@
 #ifdef OBSERVATIONS
 !
       IF (Master) WRITE (stdout,20) 'OBSERVATIONS',                     &
-     &   'Processing 4DVar observations'
+     &   'Processing 4D-Var observations'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' OBSERVATIONS,'
 #endif
 #ifdef OBS_IMPACT
 !
       IF (Master) WRITE (stdout,20) 'OBS_IMPACT',                       &
-     &   'Compute observation impact to the 4DVAR system'
+     &   'Compute observation impact to the 4D-Var system'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' OBS_IMPACT,'
 #endif
@@ -1612,7 +1637,7 @@
 #if defined OBS_SPACE && defined W4DPSAS_FCT_SENSITIVITY
 !
       IF (Master) WRITE (stdout,20) 'OBS_SPACE',                        &
-     &   'Forecast metric in obsrvation-space instead of state-space'
+     &   'Forecast metric in observation-space instead of state-space'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' OBS_SPACE,'
 #endif
@@ -1882,7 +1907,7 @@
 #if defined RECOMPUTE_4DVAR && defined FOUR_DVAR
 !
       IF (Master) WRITE (stdout,20) 'RECOMPUTE_4DVAR',                  &
-     &   'Recomputing 4DVar during data assimilation analysis'
+     &   'Recomputing 4D-Var during data assimilation analysis'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' RECOMPUTE_4DVAR,'
 #endif
@@ -2167,6 +2192,13 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
+#ifdef SP4DVAR
+      IF (Master) WRITE (stdout,20) 'SP4DVAR',                          &
+     &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' SP4DVAR,'
+      idriver=idriver+1
+#endif
 #ifdef SPHERICAL
 !
       IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &
@@ -2176,7 +2208,7 @@
 #endif
 #if defined SPLINES_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
 !
-      IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
+      IF (Master) WRITE (stdout,20) 'SPLINES_VCONV',                    &
      &   'Implicit, Parabolic Splines Vertical Convolution Algorithm'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' SPLINES_VCONV,'
@@ -2675,7 +2707,7 @@
 #ifdef W4DVAR
 !
       IF (Master) WRITE (stdout,20) 'W4DVAR',                           &
-     &   'Weak constraint 4DVAR data assimilation'
+     &   'Weak constraint, Representers 4D-Var data assimilation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' W4DVAR,'
       idriver=idriver+1
@@ -2683,14 +2715,14 @@
 #ifdef W4DVAR_SENSITIVITY
 !
       IF (Master) WRITE (stdout,20) 'W4DVAR_SENSITIVITY',               &
-     &   'Weak constraint 4DVAR observation sensitivity'
+     &   'Weak constraint 4D-Var observation sensitivity'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' W4DVAR_SENSITIVITY,'
       idriver=idriver+1
 #endif
 #ifdef WAV_COUPLING
 !
-      IF (Master) WRITE (stdout,20) 'WAV_COUPLING',                      &
+      IF (Master) WRITE (stdout,20) 'WAV_COUPLING',                     &
      &   'Two-way wave-ocean models coupling'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' WAV_COUPLING,'
@@ -2701,6 +2733,13 @@
      &   'Activated weak constraint assimilation set-up'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' WEAK_CONSTRAINT,'
+#endif
+#if defined WEAK_NOINTERP && defined WEAK_CONSTRAINT
+!
+      IF (Master) WRITE (stdout,20) 'WEAK_NOINTERP',                    &
+     &   'Avoid time interpolation in weak constraint forcing'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' WEAK_NOINTERP,'
 #endif
 #if defined WRITE_WATER && defined MASKING
 !

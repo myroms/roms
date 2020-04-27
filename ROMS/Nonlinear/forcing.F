@@ -1,11 +1,12 @@
 #include "cppdefs.h"
       MODULE forcing_mod
 
-#if defined NLM_OUTER  || defined SENSITIVITY_4DVAR || \
-    defined TL_W4DPSAS || defined W4DPSAS
+#if defined NLM_OUTER || defined SENSITIVITY_4DVAR || \
+    defined SP4DVAR   || defined TL_W4DPSAS        || \
+    defined W4DPSAS
 !
 !git $Id$
-!svn $Id: forcing.F 1012 2020-03-04 22:09:28Z arango $
+!svn $Id: forcing.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

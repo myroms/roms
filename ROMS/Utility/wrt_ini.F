@@ -1,9 +1,10 @@
 #include "cppdefs.h"
+      MODULE wrt_ini_mod
+
 #ifdef FOUR_DVAR
-      SUBROUTINE wrt_ini (ng, Tindex)
 !
 !git $Id$
-!svn $Id: wrt_ini.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_ini.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -24,6 +25,21 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+!
+      PUBLIC :: wrt_ini
+# if defined ADJUST_BOUNDARY || \
+     defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
+      PUBLIC :: wrt_frc
+      PUBLIC :: wrt_frc_AD
+# endif
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE wrt_ini (ng, Tindex, OutRec)
+!***********************************************************************
+!
       USE mod_param
       USE mod_parallel
       USE mod_fourdvar
@@ -39,6 +55,7 @@
 # endif
       USE mod_stepping
 !
+      USE dateclock_mod,   ONLY : time_string
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 # ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
@@ -50,15 +67,20 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Tindex
+
+      integer, intent(in), optional :: OutRec
 !
 !  Local variable declarations.
 !
+      logical :: SetFillVal
+!
       integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, gfactor, gtype, i, itrc, status, varid
-
-      real(r8) :: my_time, scale
-
-      logical :: SetFillVal
+!
+      real(r8) :: Fmin, Fmax, my_time, scale
+!
+      character (len=15) :: Tstring
+      character (len=22) :: t_code
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -94,7 +116,11 @@
 !
 !  Set time record index.
 !
-      INI(ng)%Rindex=INI(ng)%Rindex+1
+      IF (PRESENT(OutRec)) THEN
+        INI(ng)%Rindex=OutRec
+      ELSE
+        INI(ng)%Rindex=INI(ng)%Rindex+1
+      END IF
       Fcount=INI(ng)%Fcount
       INI(ng)%Nrec(Fcount)=INI(ng)%Nrec(Fcount)+1
 !
@@ -109,7 +135,20 @@
      &                      ncid = INI(ng)%ncid,                        &
      &                      varid = INI(ng)%Vid(idtime))
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+     &               __FILE__)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), TRIM(INI(ng)%name),  &
+     &                      INI(ng)%Rindex
+        END IF
+        RETURN
+      ELSE
+        IF (Master) THEN
+          CALL time_string (my_time, t_code)
+          WRITE (Tstring,'(f15.4)') my_time*sec2day
+          WRITE (stdout,20) t_code, ng, TRIM(ADJUSTL(Tstring)),         &
+     &                      TRIM(INI(ng)%name), INI(ng)%Rindex, Tindex
+        END IF
+      END IF
 !
 !  Write out free-surface (m)
 !
@@ -121,21 +160,27 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
+     &                   OCEAN(ng) % zeta(:,:,Tindex),                  &
 # ifdef WET_DRY
-     &                   OCEAN(ng) % zeta(:,:,Tindex),                  &
-     &                   SetFillVal = .FALSE.)
+     &                   SetFillVal = .FALSE.,                          &
 # else
-     &                   OCEAN(ng) % zeta(:,:,Tindex),                  &
-     &                   SetFillVal)
+     &                   SetFillVal = SetFillVal,                       &
 # endif
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idFsur)), INI(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), TRIM(INI(ng)%name),  &
+     &                      INI(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
         RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idFsur)), Fmin, Fmax
+        END IF
       END IF
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
@@ -149,15 +194,22 @@
      &                   GRID(ng) % umask_full,                         &
 # endif
      &                   OCEAN(ng) % ubar(:,:,Tindex),                  &
-     &                   SetFillVal)
+     &                   SetFillVal = SetFillVal,                       &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbar)), INI(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idUbar)),  TRIM(INI(ng)%name), &
+     &                      INI(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
         RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idUbar)), Fmin, Fmax
+        END IF
       END IF
 !
 !  Write out 2D momentum component (m/s) in the ETA-direction.
@@ -171,15 +223,22 @@
      &                   GRID(ng) % vmask_full,                         &
 # endif
      &                   OCEAN(ng) % vbar(:,:,Tindex),                  &
-     &                   SetFillVal)
+     &                   SetFillVal = SetFillVal,                       &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbar)), INI(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idVbar)), TRIM(INI(ng)%name),  &
+     &                      INI(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
         RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idVbar)), Fmin, Fmax
+        END IF
       END IF
 
 # ifdef SOLVE3D
@@ -195,15 +254,22 @@
      &                   GRID(ng) % umask_full,                         &
 #  endif
      &                   OCEAN(ng) % u(:,:,:,Tindex),                   &
-     &                   SetFillVal)
+     &                   SetFillVal = SetFillVal,                       &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUvel)), INI(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idUvel)), TRIM(INI(ng)%name),  &
+     &                      INI(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
         RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idUvel)), Fmin, Fmax
+        END IF
       END IF
 !
 !  Write out 3D momentum component (m/s) in the ETA-direction.
@@ -217,15 +283,22 @@
      &                   GRID(ng) % vmask_full,                         &
 #  endif
      &                   OCEAN(ng) % v(:,:,:,Tindex),                   &
-     &                   SetFillVal)
+     &                   SetFillVal = SetFillVal,                       &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVvel)), INI(ng)%Rindex
+          WRITE (stdout,10) TRIM(Vname(1,idVvel)), TRIM(INI(ng)%name),  &
+     &                      INI(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
         RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idVvel)), Fmin, Fmax
+        END IF
       END IF
 !
 !  Write out tracer type variables.
@@ -240,15 +313,22 @@
      &                     GRID(ng) % rmask,                            &
 #  endif
      &                     OCEAN(ng) % t(:,:,:,Tindex,itrc),            &
-     &                     SetFillVal)
+     &                     SetFillVal = SetFillVal,                     &
+     &                     MinValue = Fmin,                             &
+     &                     MaxValue = Fmax)
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))), INI(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
+     &                        TRIM(INI(ng)%name), INI(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
           RETURN
+        ELSE
+          IF (Master) THEN
+            WRITE (stdout,30) TRIM(Vname(2,idTvar(itrc))), Fmin, Fmax
+          END IF
         END IF
       END DO
 
@@ -257,50 +337,72 @@
 !
 !  If defined, write out vertical viscosity coefficient.
 !
-      IF (INI(ng)%Vid(idVvis).gt.0) THEN
-        scale=1.0_r8
-        gtype=gfactor*w3dvar
-        status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idVvis), &
-     &                     INI(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     MIXING(ng) % Akv,                            &
-     &                     SetFillVal = .FALSE.)
+      IF (INI(ng)%Vid(idVvis).le.0) THEN
+        CALL netcdf_inq_varid (ng, iNLM, INI(ng)%name, Vname(1,idVvis), &
+     &                         INI(ng)%ncid, INI(ng)%Vid(idVvis))
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
-     &                 __FILE__)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvis)), INI(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+     &                 __FILE__)) RETURN
+      END IF
+      scale=1.0_r8
+      gtype=gfactor*w3dvar
+      status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idVvis),   &
+     &                   INI(ng)%Rindex, gtype,                         &
+     &                   LBi, UBi, LBj, UBj, 0, N(ng), scale,           &
+#   ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+#   endif
+     &                   MIXING(ng) % Akv,                              &
+     &                   SetFillVal = .FALSE.,                          &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVvis)),                      &
+     &                      TRIM(INI(ng)%name), INI(ng)%Rindex
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idVvis)), Fmin, Fmax
         END IF
       END IF
 !
 !  If defined, write out vertical diffusion coefficient for potential
 !  temperature.
 !
-      IF (INI(ng)%Vid(idTdif).gt.0) THEN
-        scale=1.0_r8
-        gtype=gfactor*w3dvar
-        status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idTdif), &
-     &                     INI(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     MIXING(ng) % Akt(:,:,:,itemp),               &
-     &                     SetFillVal = .FALSE.)
+      IF (INI(ng)%Vid(idTdif).le.0) THEN
+        CALL netcdf_inq_varid (ng, iNLM, INI(ng)%name, Vname(1,idTdif), &
+     &                         INI(ng)%ncid, INI(ng)%Vid(idTdif))
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
-     &                 __FILE__)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTdif)), INI(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+     &                 __FILE__)) RETURN
+      END IF
+      scale=1.0_r8
+      gtype=gfactor*w3dvar
+      status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idTdif),   &
+     &                   INI(ng)%Rindex, gtype,                         &
+     &                   LBi, UBi, LBj, UBj, 0, N(ng), scale,           &
+#   ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+#   endif
+     &                   MIXING(ng) % Akt(:,:,:,itemp),                 &
+     &                   SetFillVal = .FALSE.,                          &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idTdif)),                      &
+     &                      TRIM(INI(ng)%name), INI(ng)%Rindex
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idTdif)), Fmin, Fmax
         END IF
       END IF
 
@@ -308,25 +410,36 @@
 !
 !  If defined, write out vertical diffusion coefficient for salinity.
 !
-      IF (INI(ng)%Vid(idSdif).gt.0) THEN
-        scale=1.0_r8
-        gtype=gfactor*w3dvar
-        status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idSdif), &
-     &                     INI(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
-#    ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#    endif
-     &                     MIXING(ng) % Akt(:,:,:,isalt),               &
-     &                     SetFillVal = .FALSE.)
+      IF (INI(ng)%Vid(idSdif).le.0) THEN
+        CALL netcdf_inq_varid (ng, iNLM, INI(ng)%name, Vname(1,idSdif), &
+     &                         INI(ng)%ncid, INI(ng)%Vid(idSdif))
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
-     &                 __FILE__)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSdif)), INI(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+     &                 __FILE__)) RETURN
+      END IF
+      scale=1.0_r8
+      gtype=gfactor*w3dvar
+      status=nf_fwrite3d(ng, iNLM, INI(ng)%ncid, INI(ng)%Vid(idSdif),   &
+     &                   INI(ng)%Rindex, gtype,                         &
+     &                   LBi, UBi, LBj, UBj, 0, N(ng), scale,           &
+#    ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+#    endif
+     &                   MIXING(ng) % Akt(:,:,:,isalt),                 &
+     &                   SetFillVal = .FALSE.,                          &
+     &                   MinValue = Fmin,                               &
+     &                   MaxValue = Fmax)
+      IF (FoundError(status, nf90_noerr, __LINE__,                      &
+     &               __FILE__)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idSdif)),                      &
+     &                      TRIM(INI(ng)%name), INI(ng)%Rindex
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      ELSE
+        IF (Master) THEN
+          WRITE (stdout,30) TRIM(Vname(2,idSdif)), Fmin, Fmax
         END IF
       END IF
 #   endif
@@ -341,45 +454,21 @@
       CALL netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
-      IF (Master) THEN
-# ifdef SOLVE3D
-#  ifdef NESTING
-        WRITE (stdout,20) Nrun, Tindex, Tindex, INI(ng)%Rindex, ng
-#  else
-        WRITE (stdout,20) Nrun, Tindex, Tindex, INI(ng)%Rindex
-#  endif
-# else
-#  ifdef NESTING
-        WRITE (stdout,20) Nrun, Tindex, INI(ng)%Rindex, ng
-#  else
-        WRITE (stdout,20) Nrun, Tindex, INI(ng)%Rindex
-#  endif
-# endif
-      END IF
 !
   10  FORMAT (/,' WRT_INI - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
-# ifdef SOLVE3D
-  20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
-#  ifdef NESTING
-     &           ', Index=',i1,',',i1,', Rec=',i4.4,', Grid 'i2.2,')')
-#  else
-     &           ', Index=',i1,',',i1,', Rec=',i4.4,')')
-#  endif
-# else
-  20  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
-#  ifdef NESTING
-     &           ', Index=',i1,', Rec=',i4.4,', Grid ',i2.2,')')
-#  else
-     &           ', Index=',i1,', Rec=',i4.4,')')
-#  endif
-# endif
+  20  FORMAT ('NLM: WRT_INI - Writing initial state fields,',t75,a,     &
+     &        /,19x,'(Grid ',i2.2,', t = ',a,', File: ',a,              &
+     &        ', Rec=',i4.4,', Index=',i1,')')
+  30  FORMAT (16x,'- ',a,/,19x,'(Min = ',1p,e15.8,                      &
+     &        ' Max = ',1p,e15.8,')')
+!
       RETURN
       END SUBROUTINE wrt_ini
 
 # if defined ADJUST_BOUNDARY || \
      defined ADJUST_WSTRESS  || defined ADJUST_STFLUX
+!
       SUBROUTINE wrt_frc (ng, Tindex, OutRec)
 !
 !=======================================================================
@@ -724,7 +813,7 @@
 
       RETURN
       END SUBROUTINE wrt_frc
-
+!
       SUBROUTINE wrt_frc_AD (ng, Tindex, OutRec)
 !
 !=======================================================================
@@ -1065,8 +1154,5 @@
       RETURN
       END SUBROUTINE wrt_frc_AD
 # endif
-#else
-      SUBROUTINE wrt_ini
-      RETURN
-      END SUBROUTINE wrt_ini
 #endif
+      END MODULE wrt_ini_mod

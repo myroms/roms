@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: main3d.F 1017 2020-04-27 22:19:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -49,8 +49,9 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod,       ONLY : nl_dotproduct
 # endif
-# if defined NLM_OUTER           || defined W4DPSAS                 ||\
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined NLM_OUTER           || defined SP4DVAR                 || \
+     defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY || \
+     defined W4DPSAS_SENSITIVITY
       USE forcing_mod,          ONLY : forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -218,8 +219,8 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 
-# if defined NLM_OUTER           || defined W4DPSAS                 ||\
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined NLM_OUTER               || defined W4DPSAS             || \
+     defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
@@ -231,13 +232,23 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              IF (FrequentImpulse(ng)) THEN
-                DO tile=first_tile(ng),last_tile(ng),+1
-                  CALL forcing (ng, tile, kstp(ng), nstp(ng))
-                  CALL set_depth (ng, tile, iNLM)
-                END DO
+#  if defined WEAK_NOINTERP
+              IF ((iic(ng).gt.1).and.(iic(ng).ne.ntend(ng)+1).and.      &
+     &            (MOD(iic(ng)-1,nadj(ng)).eq.0)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,*) ' FORCING NLM at iic = ',iic(ng)
+                END IF
+#  endif
+                IF (FrequentImpulse(ng)) THEN
+                  DO tile=first_tile(ng),last_tile(ng),+1
+                    CALL forcing (ng, tile, kstp(ng), nstp(ng))
+                    CALL set_depth (ng, tile, iNLM)
+                  END DO
 !$OMP BARRIER
+                END IF
+#  if defined WEAK_NOINTERP
               END IF
+#  endif
             END DO
 # endif
 !

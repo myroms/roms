@@ -3,7 +3,7 @@
       SUBROUTINE obs_initial (ng, model, backward)
 !
 !git $Id$
-!svn $Id: obs_initial.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: obs_initial.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -210,10 +210,12 @@
             Ifirst=MAX(Ifirst,i)
           END IF
         END DO
+# ifndef SP4DVAR
         IF (Ifirst.eq.0) THEN
           WRITE (stdout,30) tend, tdays(ng)
           STOP
         END IF
+# endif
       ELSE
         Ifirst=Nsurvey(ng)
         tend=(time(ng)+ntimes(ng)*dt(ng))*sec2day
@@ -223,10 +225,12 @@
             Ifirst=MIN(Ifirst,i)
           END IF
         END DO
+# ifndef SP4DVAR
         IF (Ifirst.eq.0) THEN
           WRITE (stdout,30) tdays(ng), tend
           STOP
         END IF
+# endif
       END IF
       ObsTime(ng)=FOURDVAR(ng)%SurveyTime(Ifirst)*day2sec
 !
@@ -292,9 +296,23 @@
 !
       DO i=1,Mobs
         NLmodVal(i)=IniVal
-        TLmodVal(i)=IniVal
         ObsVetting(i)=IniVal
+#  ifndef SP4DVAR
+        TLmodVal(i)=IniVal
+#  endif
+#  if defined SP4DVAR           && defined DISJOINTED && \
+      defined CONCURRENT_KERNEL
+        TLmodVal(i)=IniVal
+#  endif
       END DO
+#  if defined SP4DVAR           && defined DISJOINTED && \
+     !defined CONCURRENT_KERNEL
+      IF (model.ne.iADM) THEN
+        DO i=1,Mobs
+          TLmodVal(i)=IniVal
+        END DO
+      END IF
+#  endif
 # endif
 !
   20  FORMAT (/,' OBS_INITIAL - unable to open input NetCDF file: ',a)

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: is4dvar_ocean.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: is4dvar_ocean.h 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -284,6 +284,11 @@
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
+#if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+    defined ADJUST_WSTRESS
+      USE wrt_ini_mod,        ONLY : wrt_frc
+#endif
+      USE wrt_ini_mod,        ONLY : wrt_ini
 #if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod,   ONLY : balance_ref, biconj
 #endif

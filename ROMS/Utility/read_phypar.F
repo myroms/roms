@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: read_phypar.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -78,6 +78,7 @@
       integer :: Npts, Nval, i, itrc, ivar, k, lstr, ng, nl, status
       integer :: ifield, ifile, igrid, itracer, nline, max_Ffiles
       integer :: Cdim, Clen, Rdim
+      integer :: nPETs, maxPETs
       integer :: OutFiles
       integer :: Ivalue(1)
 
@@ -570,6 +571,9 @@
             CASE ('Ninner')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Ninner=Ivalue(1)
+            CASE ('Nsaddle')
+              Npts=load_i(Nval, Rval, 1, Ivalue)
+              Nsaddle=Ivalue(1)
             CASE ('Nintervals')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nintervals=Ivalue(1)
@@ -891,9 +895,6 @@
               Npts=load_i(Nval, Rval, Ngrids, levsfrc)
             CASE ('LEVBFRC')
               Npts=load_i(Nval, Rval, Ngrids, levbfrc)
-            CASE ('Ltracing')
-              Npts=load_l(Nval, Cval, 1, Lvalue)
-              Ltracing=Lvalue(1)
             CASE ('Vtransform')
               Npts=load_i(Nval, Rval, Ngrids, Vtransform)
               DO ng=1,Ngrids
@@ -3363,11 +3364,32 @@
      &           'Because LwSrc  is also ON; only one method is legal.'
            WRITE (out,260) 'LwSrc', LwSrc(ng),                          &
      &           'Because LuvSrc is also ON; only one method is legal.'
-           exit_flag=4
-           RETURN
          END IF
+         exit_flag=4
+         RETURN
        END IF
      END DO
+
+#ifdef SP4DVAR
+!
+!  Check if the number of split time intervals (Nsaddle) in the saddle-
+!  point 4D-Var is legal for a simulation.
+!
+     DO ng=1,Ngrids
+       IF (MOD((ntimes(ng)/nHIS(ng)),Nsaddle).ne.0) THEN
+         IF (Master) THEN
+           WRITE (out,350) 'Nsaddle = ', Nsaddle, ng,                   &
+    &                      'ntimes/nHIS = ', ntimes(ng)/nHIS(ng),       &
+    &                      'MOD(ntimes/nHis,Nsaddle) = ',               &
+    &                      MOD((ntimes(ng)/nHIS(ng)),Nsaddle),          &
+    &                      'must be zero for legal computations.',      &
+    &                      'Revise input parameters.'
+         END IF
+         exit_flag=4
+         RETURN
+       END IF
+     END DO
+#endif
 
 #if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
@@ -3579,13 +3601,17 @@
 !  and standard deviation factors.
 !
 # if defined CORRELATION || defined WEAK_CONSTRAINT
+#  ifdef SP4DVAR
+        NSA=2
+#  else
         IF (nADJ(ng).lt.ntimes(ng)) THEN
           NSA=2
         ELSE
           NSA=1
         END IF
-#  ifdef CORRELATION
+#   ifdef CORRELATION
         ntimes=1                 ! no time-stepping required
+#   endif
 #  endif
 # else
         NSA=1
@@ -3598,8 +3624,18 @@
 !  time-steps between writing of fields the same as the basic
 !  state.  Disallow recycling.
 !
+#  ifdef SP4DVAR
+        nTLM(ng)=ntimes(ng)/Nsaddle
+        nADJ(ng)=nTLM(ng)
+        nSPT(ng)=nTLM(ng)
+        nSPA(ng)=nTLM(ng)
+        nSCT(ng)=nTLM(ng)
+        nSCA(ng)=nTLM(ng)
+        LcycleTLM(ng)=.FALSE.
+#  else
         nTLM(ng)=nHIS(ng)
         LcycleTLM(ng)=.FALSE.
+#  endif
 # endif
 #endif
 #if defined TIME_CONV && defined WEAK_CONSTRAINT
@@ -3769,7 +3805,17 @@
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
 #ifdef DISTRIBUTE
+# ifdef DISJOINTED
+     &                 FULL_COMM_WORLD, FullSize, NsubGroups,           &
+     &                 FORK_COMM_WORLD, ForkSize,                       &
+     &                 0, (FullSize/ForkSize)-1,                        &
+#  ifdef CONCURRENT_KERNEL
+     &                 TASK_COMM_WORLD, TaskSize,                       &
+     &                 0, (FullSize/TaskSize)-1,                        &
+#  endif
+# else
      &                 OCN_COMM_WORLD, numthreads,                      &
+# endif
      &                 TRIM(Iname),                                     &
 #endif
 #ifdef GIT_URL
@@ -3786,8 +3832,30 @@
 #ifdef DISTRIBUTE
           WRITE (out,70) ng, Lm(ng), Mm(ng), N(ng), numthreads,         &
      &                   NtileI(ng), NtileJ(ng)
-          IF ((NtileI(ng)*NtileJ(ng)).ne.numthreads) THEN
-            WRITE (out,80) ng
+
+# ifdef SP4DVAR
+#  ifdef DISJOINTED
+#   ifdef CONCURRENT_KERNEL
+          maxPETs=FullSize
+          nPETs=NtileI(ng)*NtileJ(ng)*Nsaddle*2
+          label='NtileI * NtileJ * Nsaddle * 2 ='
+#   else
+          maxPETs=FullSize
+          nPETs=NtileI(ng)*NtileJ(ng)*Nsaddle
+          label='NtileI * NtileJ * Nsaddle ='
+#   endif
+#  else
+          maxPETs=numthreads
+          nPETs=NtileI(ng)*NtileJ(ng)
+          label='NtileI * NtileJ ='
+#  endif
+# else
+          maxPETs=numthreads
+          nPETs=NtileI(ng)*NtileJ(ng)
+          label='NtileI * NtileJ ='
+# endif
+          IF (nPETs.ne.maxPETs) THEN
+            WRITE (out,80) ng, TRIM(label), nPETS, maxPETs
             exit_flag=6
             RETURN
           END IF
@@ -3831,13 +3899,17 @@
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
 #if defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR || \
-    defined TL_W4DPSAS        || defined TL_W4DVAR           || \
-    defined W4DPSAS           || defined W4DVAR              || \
-    defined HESSIAN_SV        || defined HESSIAN_SO          || \
-    defined HESSIAN_FSV
+    defined HESSIAN_FSV       || defined HESSIAN_SO          || \
+    defined HESSIAN_SV        || defined SENSITIVITY_4DVAR   || \
+    defined SP4DVAR           || defined TL_W4DPSAS          || \
+    defined TL_W4DVAR         || defined W4DPSAS             || \
+    defined W4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximum number of 4DVAR inner loop iterations.'
+# ifdef SP4DVAR
+          WRITE (out,120) Nsaddle, 'Nsaddle',                           &
+     &          'Number of intervals for saddle point algorithm.'
+# endif
 #endif
 #ifdef STOCHASTIC_OPT
           WRITE (out,120) Nintervals, 'Nintervals',                     &
@@ -4276,8 +4348,6 @@
           END IF
 # endif
 #endif
-          WRITE (out,170) Ltracing, 'Ltracing',                         &
-     &          'Switch to report sequence of ROMS routine calls.'
 #ifdef SOLVE3D
           WRITE (out,120) Vtransform(ng), 'Vtransform',                 &
      &          'S-coordinate transformation equation.'
@@ -6002,7 +6072,8 @@
      &                    TRIM(fname)
 #  endif
 #  if defined WEAK_CONSTRAINT         && \
-    !(defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS || \
+    !(defined SP4DVAR                 || defined W4DPSAS || \
+      defined W4DPSAS_FCT_SENSITIVITY || \
       defined W4DPSAS_SENSITIVITY)
           fname=IRP(ng)%name
           IF (.not.find_file(ng, fname, 'IRPNAME')) GO TO 30
@@ -6258,14 +6329,26 @@
 
   50  FORMAT (/,' READ_PhyPar - Error while processing line: ',/,a)
   60  FORMAT (/,1x,a,/,                                                 &
-     &        /,1x,'Operating system : ',a,                             &
-     &        /,1x,'CPU/hardware     : ',a,                             &
-     &        /,1x,'Compiler system  : ',a,                             &
-     &        /,1x,'Compiler command : ',a,                             &
-     &        /,1x,'Compiler flags   : ',a,                             &
+     &        /,1x,'Operating system  : ',a,                            &
+     &        /,1x,'CPU/hardware      : ',a,                            &
+     &        /,1x,'Compiler system   : ',a,                            &
+     &        /,1x,'Compiler command  : ',a,                            &
+     &        /,1x,'Compiler flags    : ',a,                            &
 #ifdef DISTRIBUTE
-     &        /,1x,'MPI Communicator : ',i0,2x,'PET size = ',i0,/,      &
-     &        /,1x,'Input Script     : ',a,/,                           &
+# ifdef DISJOINTED
+     &        /,1x,'Full Communicator : ',i0,',  PET size = ',i0,       &
+     &         ',  Disjointed Subgroups = ',i0,                         &
+     &        /,1x,'Fork Communicator : ',i0,',  PET size = ',i0,       &
+     &         ',  Color Range = ',i0,' to ',i0,                        &
+#  ifdef CONCURRENT_KERNEL
+     &        /,1x,'Task Communicator : ',i0,',  PET size = ',i0,       &
+     &         ',  Color Range = ',i0,' to ',i0,                        &
+#  endif
+              /,                                                        &
+# else
+     &        /,1x,'OCN Communicator  : ',i0,',  PET size = ',i0,/,     &
+# endif
+     &        /,1x,'Input Script      : ',a,/,                          &
 #else
      &        /,                                                        &
 #endif
@@ -6284,9 +6367,9 @@
      &        'x',i0)
   80  FORMAT (/,' ROMS/TOMS: Wrong choice of grid ',i2.2,1x,            &
      &        'partition or number of parallel nodes.',                 &
-     &        /,12x,'NtileI * NtileJ  must be equal to the number of ', &
-     &        'parallel nodes.',                                        &
-     &        /,12x,'Change -np value to mpirun or',                    &
+     &        /,12x,a,1x,i0,/,12x,                                      &
+     &        'must be equal to the number of parallel processes = ',   &
+     &        i0,/,12x,'Change -np value to mpirun or',                 &
      &        /,12x,'change domain partition in input script.')
   90  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
      &        ',',2x,'Parallel Threads: ',i0,',',2x,'Tiling: ',i0,      &
@@ -6336,6 +6419,7 @@
      &        /,15x,'Grid ',i2.2,':',f14.1,' (sec)',2x,f14.2,' (days)', &
      &        /,15x,'Adjust standard input parameter NTIMES in ',       &
      &              '''roms.in''.'/)
-
+ 350  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
+     &        ', for grid ',i2.2,/,15x,a,i0,', ',a,i0,/,15x,a,/,15x,a)
       RETURN
       END SUBROUTINE read_PhyPar

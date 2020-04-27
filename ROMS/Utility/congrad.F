@@ -1,11 +1,11 @@
 #include "cppdefs.h"
 
-#if defined WEAK_CONSTRAINT && !defined RPCG
+#if defined WEAK_CONSTRAINT && !defined RPCG && !defined SP4DVAR
       SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
      &                    Lcgini)
 !
 !git $Id$
-!svn $Id: congrad.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: congrad.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
