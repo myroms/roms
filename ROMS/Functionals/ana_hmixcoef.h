@@ -1,7 +1,7 @@
       SUBROUTINE ana_sponge (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_hmixcoef.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_hmixcoef.h 1016 2020-04-27 02:06:37Z arango $
 !!================================================= Hernan G. Arango ===
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -170,7 +170,9 @@
 !  et al 2003.
 !
       cff1_t=tnu2(itemp,ng)
+#  ifdef SALINITY
       cff1_s=tnu2(isalt,ng)
+#  endif
       cff2_t=50.0_r8
       cff2_s=50.0_r8
 !
@@ -178,10 +180,14 @@
 !
       DO j=JstrT,MIN(Iwrk,JendT)
         cff_t=cff1_t+REAL(Iwrk-j,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+#  ifdef SALINITY
         cff_s=cff1_s+REAL(Iwrk-j,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+#  endif
         DO i=IstrT,IendT
           MIXING(ng) % diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+#  ifdef SALINITY
           MIXING(ng) % diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+#  endif
         END DO
       END DO
 !
@@ -189,10 +195,14 @@
 !
       DO j=MAX(JstrT,Mm(ng)+1-Iwrk),JendT
         cff_t=cff2_t-REAL(Mm(ng)+1-j,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+#  ifdef SALINITY
         cff_s=cff2_s-REAL(Mm(ng)+1-j,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+#  endif
         DO i=IstrT,IendT
           MIXING(ng) % diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+#  ifdef SALINITY
           MIXING(ng) % diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+#  endif
         END DO
       END DO
 !
@@ -201,9 +211,13 @@
       DO i=IstrT,MIN(Iwrk,IendT)
         DO j=MAX(JstrT,i),MIN(Mm(ng)+1-i,JendT)
           cff_t=cff1_t+REAL(Iwrk-i,r8)*(cff2_t-cff1_t)/REAL(Iwrk,r8)
+#  ifdef SALINITY
           cff_s=cff1_s+REAL(Iwrk-i,r8)*(cff2_s-cff1_s)/REAL(Iwrk,r8)
+#  endif
           MIXING(ng) % diff2(i,j,itemp)=MAX(MIN(cff_t,cff2_t),cff1_t)
+#  ifdef SALINITY
           MIXING(ng) % diff2(i,j,isalt)=MAX(MIN(cff_s,cff2_s),cff1_s)
+#  endif
         END DO
       END DO
 # endif

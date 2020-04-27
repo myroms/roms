@@ -3,7 +3,7 @@
       SUBROUTINE wrt_diags (ng)
 !
 !git $Id$
-!svn $Id: wrt_diags.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_diags.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -84,7 +84,7 @@
 !  Write out averaged time.
 !
       CALL netcdf_put_fvar (ng, iNLM, DIA(ng)%name,                     &
-     &                      TRIM(Vname(idtime,ng)), DIAtime(ng:),       &
+     &                      TRIM(Vname(1,idtime)), DIAtime(ng:),        &
      &                      (/DIA(ng)%Rindex/), (/1/),                  &
      &                      ncid = DIA(ng)%ncid,                        &
      &                      varid = DIA(ng)%Vid(idtime))

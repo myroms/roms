@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1014 2020-04-06 15:48:43Z arango $
+!svn $Id: read_asspar.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -325,9 +325,11 @@
                 Cnorm(1,i)=Ltracer(itrc)
               END DO
 #  endif
+#  ifdef SALINITY
             CASE ('balance(isSalt)')
               Npts=load_l(Nval, Cval, 1, Lvalue)
               balance(isTvar(isalt))=Lvalue(1)
+#  endif
             CASE ('balance(isFsur)')
               Npts=load_l(Nval, Cval, 1, Lvalue)
               balance(isFsur)=Lvalue(1)
@@ -711,6 +713,7 @@
 !-----------------------------------------------------------------------
 !
 #   ifdef SOLVE3D
+#    ifdef SALINITY
       IF (.not.balance(isTvar(isalt)).and.balance(isFsur)) THEN
         balance(isTvar(isalt))=.TRUE.
       END IF
@@ -720,6 +723,7 @@
       IF (balance(isTvar(isalt))) THEN
         balance(isTvar(itemp))=.TRUE.
       END IF
+#    endif
       IF (balance(isVvel)) THEN
         balance(isUvel)=.TRUE.
       END IF
@@ -800,8 +804,10 @@
           WRITE (out,70) balance(isFsur), 'balance(isFsur)',            &
                   'Switch to include free-surface in balance operator.'
 #    ifdef SOLVE3D
+#     ifdef SALINITY
           WRITE (out,70) balance(isTvar(isalt)), 'balance(isSalt)',     &
                   'Switch to include salinity in balance operator.'
+#     endif
           WRITE (out,70) balance(isVvel), 'balance(isVvel)',            &
                   'Switch to include 3D momentum in balance operator.'
 #    else

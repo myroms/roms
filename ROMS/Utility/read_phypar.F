@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1013 2020-03-11 01:46:00Z arango $
+!svn $Id: read_phypar.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -797,7 +797,7 @@
 # endif
               END DO
             CASE ('AKT_LIMIT')
-              Npts=load_r(Nval, Rval, NAT, Ngrids, Rtracer)
+              Npts=load_r(Nval, Rval, NAT+NPT, Ngrids, Rtracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   Akt_limit(itrc,ng)=Rtracer(itrc,ng)
@@ -891,6 +891,9 @@
               Npts=load_i(Nval, Rval, Ngrids, levsfrc)
             CASE ('LEVBFRC')
               Npts=load_i(Nval, Rval, Ngrids, levbfrc)
+            CASE ('Ltracing')
+              Npts=load_l(Nval, Cval, 1, Lvalue)
+              Ltracing=Lvalue(1)
             CASE ('Vtransform')
               Npts=load_i(Nval, Rval, Ngrids, Vtransform)
               DO ng=1,Ngrids
@@ -1386,7 +1389,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -1777,7 +1780,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -1864,6 +1867,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idTdif,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SALINITY
             CASE ('Hout(idSdif)')
               IF (idSdif.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idSdif'
@@ -1872,6 +1876,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idSdif,1:Ngrids)=Lswitch(1:Ngrids)
+#endif
             CASE ('Hout(idHsbl)')
               IF (idHsbl.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idHsbl'
@@ -1953,7 +1958,7 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
             CASE ('Qout(idTvar)')
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -1998,7 +2003,7 @@
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idsurT(itrc)
@@ -2159,7 +2164,7 @@
 # endif
 #endif
             CASE ('Qout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -2196,9 +2201,11 @@
             CASE ('Qout(idTdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idTdif,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SALINITY
             CASE ('Qout(idSdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idSdif,1:Ngrids)=Lswitch(1:Ngrids)
+#endif
             CASE ('Qout(idHsbl)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idHsbl,1:Ngrids)=Lswitch(1:Ngrids)
@@ -2267,7 +2274,7 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
             CASE ('Aout(idTvar)')
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTvar(itrc)
@@ -2355,7 +2362,7 @@
 #  endif
 # endif
             CASE ('Aout(idTsur)')
-              Npts=load_l(Nval, Cval, NAT, Ngrids, Ltracer)
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
                 DO itrc=1,NAT
                   i=idTsur(itrc)
@@ -2389,9 +2396,11 @@
             CASE ('Aout(idTdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idTdif,1:Ngrids)=Lswitch(1:Ngrids)
+# ifdef SALINITY
             CASE ('Aout(idSdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idSdif,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
             CASE ('Aout(idHsbl)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idHsbl,1:Ngrids)=Lswitch(1:Ngrids)
@@ -4267,6 +4276,8 @@
           END IF
 # endif
 #endif
+          WRITE (out,170) Ltracing, 'Ltracing',                         &
+     &          'Switch to report sequence of ROMS routine calls.'
 #ifdef SOLVE3D
           WRITE (out,120) Vtransform(ng), 'Vtransform',                 &
      &          'S-coordinate transformation equation.'
@@ -4310,7 +4321,7 @@
      &            'Nudging/relaxation time scale (days)',               &
      &            'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
-# ifdef SCORRECTION
+# if defined SCORRECTION && defined SALINITY
           IF (Tnudg(isalt,ng).le.0.0_r8) THEN
             WRITE (out,265) 'Tnudg(isalt) = ', Tnudg(isalt,ng),         &
      &            'Must be greater than zero for salt flux correction.'
@@ -4925,9 +4936,11 @@
             IF (Hout(idTsur(itemp),ng)) WRITE (out,170)                 &
      &          Hout(idTsur(itemp),ng), 'Hout(idTsur)',                 &
      &         'Write out surface net heat flux.'
+# ifdef SALINITY
             IF (Hout(idTsur(isalt),ng)) WRITE (out,170)                 &
      &          Hout(idTsur(isalt),ng), 'Hout(idTsur)',                 &
      &         'Write out surface net salt flux.'
+# endif
 # ifdef SHORTWAVE
             IF (Hout(idSrad,ng)) WRITE (out,170) Hout(idSrad,ng),       &
      &         'Hout(idSrad)',                                          &
@@ -4964,9 +4977,11 @@
             IF (Hout(idTdif,ng)) WRITE (out,170) Hout(idTdif,ng),       &
      &         'Hout(idTdif)',                                          &
      &         'Write out vertical diffusion: AKt(itemp).'
+# ifdef SALINITY
             IF (Hout(idSdif,ng)) WRITE (out,170) Hout(idSdif,ng),       &
      &         'Hout(idSdif)',                                          &
      &         'Write out vertical diffusion: AKt(isalt).'
+# endif
 # ifdef LMD_SKPP
             IF (Hout(idHsbl,ng)) WRITE (out,170) Hout(idHsbl,ng),       &
      &         'Hout(idHsbl)',                                          &
@@ -5234,9 +5249,11 @@
             IF (Qout(idTsur(itemp),ng)) WRITE (out,170)                 &
      &          Qout(idTsur(itemp),ng), 'Qout(idTsur)',                 &
      &         'Write out surface net heat flux.'
+# ifdef SALINITY
             IF (Qout(idTsur(isalt),ng)) WRITE (out,170)                 &
      &          Qout(idTsur(isalt),ng), 'Qout(idTsur)',                 &
      &         'Write out surface net salt flux.'
+# endif
 # ifdef SHORTWAVE
             IF (Qout(idSrad,ng)) WRITE (out,170) Qout(idSrad,ng),       &
      &         'Qout(idSrad)',                                          &
@@ -5273,9 +5290,11 @@
             IF (Qout(idTdif,ng)) WRITE (out,170) Qout(idTdif,ng),       &
      &         'Qout(idTdif)',                                          &
      &         'Write out vertical diffusion: AKt(itemp).'
+# ifdef SALINITY
             IF (Qout(idSdif,ng)) WRITE (out,170) Qout(idSdif,ng),       &
      &         'Qout(idSdif)',                                          &
      &         'Write out vertical diffusion: AKt(isalt).'
+# endif
 # ifdef LMD_SKPP
             IF (Qout(idHsbl,ng)) WRITE (out,170) Qout(idHsbl,ng),       &
      &         'Qout(idHsbl)',                                          &
@@ -5437,9 +5456,11 @@
             IF (Aout(idTsur(itemp),ng)) WRITE (out,170)                 &
      &          Aout(idTsur(itemp),ng), 'Aout(idTsur)',                 &
      &         'Write out averaged surface net heat flux.'
+#  ifdef SALINITY
             IF (Aout(idTsur(isalt),ng)) WRITE (out,170)                 &
      &          Aout(idTsur(isalt),ng), 'Aout(idTsur)',                 &
      &         'Write out averaged surface net salt flux.'
+#  endif
 #  ifdef SHORTWAVE
             IF (Aout(idSrad,ng)) WRITE (out,170) Aout(idSrad,ng),       &
      &         'Aout(idSrad)',                                          &
@@ -5474,9 +5495,11 @@
             IF (Aout(idTdif,ng)) WRITE (out,170) Aout(idTdif,ng),       &
      &         'Aout(idTdif)',                                          &
      &         'Write out averaged vertical diffusion: AKt(itemp).'
+#   ifdef SALINITY
             IF (Aout(idSdif,ng)) WRITE (out,170) Aout(idSdif,ng),       &
      &         'Aout(idSdif)',                                          &
      &         'Write out averaged vertical diffusion: AKt(isalt).'
+#   endif
 #  endif
 #  ifdef LMD_SKPP
             IF (Aout(idHsbl,ng)) WRITE (out,170) Aout(idHsbl,ng),       &

@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: mod_param.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1095,13 +1095,9 @@
 #endif
       END DO
 !
-!  Set maximum number of tracer between all nested grids.
+!  Set the maximum number of tracer between all nested grids.
 !
-#if defined IS4DVAR || defined W4DVAR || defined W4DPSAS
       MT=MAX(NAT,MAXVAL(NT))
-#else
-      MT=MAX(2,MAXVAL(NT))
-#endif
 !
 !-----------------------------------------------------------------------
 !  Allocate Lateral Boundary Conditions switches structure.

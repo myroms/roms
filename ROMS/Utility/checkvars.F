@@ -3,7 +3,7 @@
      &                      Nvar,tvarnam, get_var, have_var)
 !
 !git $Id$
-!svn $Id: checkvars.F 1012 2020-03-04 22:09:28Z arango $
+!svn $Id: checkvars.F 1016 2020-04-27 02:06:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -350,8 +350,10 @@
 #  ifdef LMD_NONLOCAL
         ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idGhat(itemp)))) THEN
           have_var(idGhat(itemp))=.TRUE.
+#   ifdef SALINITY
         ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idGhat(isalt)))) THEN
           have_var(idGhat(isalt))=.TRUE.
+#   endif
 #  endif
 # endif
 # if defined GLS_MIXING || defined MY25_MIXING
