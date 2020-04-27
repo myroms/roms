@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_initial.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -22,6 +22,9 @@
 # ifdef FOUR_DVAR
 #  ifdef SOLVE3D
       USE mod_coupling
+#  endif
+#  ifdef SP4DVAR
+      USE mod_forces
 #  endif
       USE mod_fourdvar
 # endif
@@ -146,7 +149,7 @@
         tl_ubar_xs=0.0_r8
       END IF
 
-# ifdef GENERIC_DSTART
+# if defined GENERIC_DSTART
 !
 !  Rarely, the tangent linear model is initialized from a NetCDF file,
 !  so we do not know its actual initialization time. Usually, it is
@@ -425,6 +428,10 @@
         CALL initialize_ocean (ng, tile, iTLM)
 #   ifdef SOLVE3D
         CALL initialize_coupling (ng, tile, 0)
+#   endif
+#   ifdef SP4DVAR
+        CALL initialize_ocean (ng, tile, iNLM)
+        CALL initialize_forces (ng, tile, iNLM)
 #   endif
       END DO
 !$OMP BARRIER

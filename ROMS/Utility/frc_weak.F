@@ -4,7 +4,7 @@
 #ifdef WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: frc_weak.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: frc_weak.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -172,11 +172,20 @@
 !
 !  Set time records and interpolation factor, if any.
 !
-# ifdef GENERIC_DSTART
+# ifdef WEAK_NOINTERP
+#   ifdef GENERIC_DSTART
       it1=MAX(0,(iic(ng)-ntstart(ng))/nADJ(ng))+1
-# else
+#   else
       it1=MAX(0,(iic(ng)-1)/nADJ(ng))+1
-# endif
+#   endif
+      it2=it1+1
+      time2=dstart*day2sec+(it2-1)*nADJ(ng)*dt(ng)
+# else
+#   ifdef GENERIC_DSTART
+      it1=MAX(0,(iic(ng)-ntstart(ng))/nADJ(ng))+1
+#   else
+      it1=MAX(0,(iic(ng)-1)/nADJ(ng))+1
+#   endif
       it2=it1+1
       time1=dstart*day2sec+(it1-1)*nADJ(ng)*dt(ng)
       time2=dstart*day2sec+(it2-1)*nADJ(ng)*dt(ng)
@@ -185,6 +194,7 @@
       fac=1.0_r8/(fac1+fac2)
       fac1=fac*fac1
       fac2=fac*fac2
+# endif
 !
 !  Set weak-constraint force time.
 !
@@ -259,15 +269,25 @@
       IF (LwrtState2d(ng)) THEN
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+           f_zetaG(i,j,1)=ad_zeta(i,j,kout)
+           f_zetaG(i,j,2)=ad_zeta(i,j,kout)
+# else
            f_zetaG(i,j,1)=f_zetaG(i,j,1)+fac1*ad_zeta(i,j,kout)
            f_zetaG(i,j,2)=f_zetaG(i,j,2)+fac2*ad_zeta(i,j,kout)
+# endif
           END DO
         END DO
       ELSE
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+           f_zetaG(i,j,1)=ad_zeta_sol(i,j)
+           f_zetaG(i,j,2)=ad_zeta_sol(i,j)
+# else
            f_zetaG(i,j,1)=f_zetaG(i,j,1)+fac1*ad_zeta_sol(i,j)
            f_zetaG(i,j,2)=f_zetaG(i,j,2)+fac2*ad_zeta_sol(i,j)
+# endif
           END DO
         END DO
       END IF
@@ -279,27 +299,47 @@
       IF (LwrtState2d(ng)) THEN
         DO j=JstrR,JendR
           DO i=Istr,IendR
+# ifdef WEAK_NOINTERP
+             f_ubarG(i,j,1)=ad_ubar(i,j,kout)
+             f_ubarG(i,j,2)=ad_ubar(i,j,kout)
+# else
              f_ubarG(i,j,1)=f_ubarG(i,j,1)+fac1*ad_ubar(i,j,kout)
              f_ubarG(i,j,2)=f_ubarG(i,j,2)+fac2*ad_ubar(i,j,kout)
+# endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+             f_vbarG(i,j,1)=ad_vbar(i,j,kout)
+             f_vbarG(i,j,2)=ad_vbar(i,j,kout)
+# else
              f_vbarG(i,j,1)=f_vbarG(i,j,1)+fac1*ad_vbar(i,j,kout)
              f_vbarG(i,j,2)=f_vbarG(i,j,2)+fac2*ad_vbar(i,j,kout)
+# endif
           END DO
         END DO
       ELSE
         DO j=JstrR,JendR
           DO i=Istr,IendR
+# ifdef WEAK_NOINTERP
+             f_ubarG(i,j,1)=ad_ubar_sol(i,j)
+             f_ubarG(i,j,2)=ad_ubar_sol(i,j)
+# else
              f_ubarG(i,j,1)=f_ubarG(i,j,1)+fac1*ad_ubar_sol(i,j)
              f_ubarG(i,j,2)=f_ubarG(i,j,2)+fac2*ad_ubar_sol(i,j)
+# endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+             f_vbarG(i,j,1)=ad_vbar_sol(i,j)
+             f_vbarG(i,j,2)=ad_vbar_sol(i,j)
+# else
              f_vbarG(i,j,1)=f_vbarG(i,j,1)+fac1*ad_vbar_sol(i,j)
              f_vbarG(i,j,2)=f_vbarG(i,j,2)+fac2*ad_vbar_sol(i,j)
+# endif
           END DO
         END DO
       END IF
@@ -311,16 +351,26 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
+# ifdef WEAK_NOINTERP
+           f_uG(i,j,k,1)=ad_u(i,j,k,nout)
+           f_uG(i,j,k,2)=ad_u(i,j,k,nout)
+# else
            f_uG(i,j,k,1)=f_uG(i,j,k,1)+fac1*ad_u(i,j,k,nout)
            f_uG(i,j,k,2)=f_uG(i,j,k,2)+fac2*ad_u(i,j,k,nout)
+# endif
           END DO
         END DO
       END DO
       DO k=1,N(ng)
         DO j=Jstr,JendR
           DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+           f_vG(i,j,k,1)=ad_v(i,j,k,nout)
+           f_vG(i,j,k,2)=ad_v(i,j,k,nout)
+# else
            f_vG(i,j,k,1)=f_vG(i,j,k,1)+fac1*ad_v(i,j,k,nout)
            f_vG(i,j,k,2)=f_vG(i,j,k,2)+fac2*ad_v(i,j,k,nout)
+# endif
           END DO
         END DO
       END DO
@@ -331,10 +381,15 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
+# ifdef WEAK_NOINTERP
+             f_tG(i,j,k,1,itrc)=ad_t(i,j,k,nout,itrc)
+             f_tG(i,j,k,2,itrc)=ad_t(i,j,k,nout,itrc)
+# else
              f_tG(i,j,k,1,itrc)=f_tG(i,j,k,1,itrc)+                     &
      &                          fac1*ad_t(i,j,k,nout,itrc)
              f_tG(i,j,k,2,itrc)=f_tG(i,j,k,2,itrc)+                     &
      &                          fac2*ad_t(i,j,k,nout,itrc)
+# endif
             END DO
           END DO
         END DO

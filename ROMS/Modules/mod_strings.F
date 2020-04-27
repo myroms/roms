@@ -2,7 +2,7 @@
       MODULE mod_strings
 !
 !git $Id$
-!svn $Id: mod_strings.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_strings.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -21,7 +21,7 @@
 !                ( 2) previous state initial conditions                !
 !                ( 3) previous adjoint state solution                  !
 !                ( 4) latest adjoint state solution                    !
-!                ( 5) surface forcion and or OBC increments            !
+!                ( 5) surface forcing and or OBC increments            !
 !                ( 6) tangent linear model error forcing               !
 !                ( 7) impulse forcing                                  !
 !                ( 8) v-space increments                               !
@@ -34,6 +34,7 @@
 !                (15) model error normalization factors                !
 !                (16) OBC normalization factors                        !
 !                (17) surface forcing normalization factors            !
+!                (18) saddle-point Arnoldi state vector                !
 !                                                                      !
 !  Pregion     Model regions identifiers used for time profiling:      !
 !                ( 1) Allocation and array initialization              !
@@ -81,20 +82,20 @@
 !                (43) 4D-Var minimization solver                       !
 !                (44) Background error covariance matrix               !
 !                (45) Posterior error covariance matrix                !
-!                (46) Unused 01                                        !
-!                (47) Unused 02                                        !
-!                (48) Unused 03                                        !
-!                (49) Unused 04                                        !
-!                (50) Unused 05                                        !
-!                (51) Unused 06                                        !
-!                (52) Unused 07                                        !
-!                (53) Unused 08                                        !
-!                (54) Unused 09                                        !
-!                (55) Unused 10                                        !
-!                (56) Unused 11                                        !
-!                (57) Unused 12                                        !
-!                (58) Unused 13                                        !
-!                (59) Unused 14                                        !
+!                (46) 4D-var solver pre-conditioning                   !
+!                (47) Writing model state vector                       !
+!                (48) Unused 01                                        !
+!                (49) Unused 02                                        !
+!                (50) Unused 03                                        !
+!                (51) Unused 04                                        !
+!                (52) Unused 05                                        !
+!                (53) Unused 06                                        !
+!                (54) Unused 07                                        !
+!                (55) Unused 08                                        !
+!                (56) Unused 09                                        !
+!                (57) Unused 10                                        !
+!                (58) Unused 11                                        !
+!                (59) Unused 12                                        !
 !                (60) Message Passage: 2D halo exchanges               !
 !                (61) Message Passage: 3D halo exchanges               !
 !                (62) Message Passage: 4D halo exchanges               !
@@ -120,7 +121,7 @@
         integer, parameter :: Mregion = 60
         integer, parameter :: Nregion = 73
 
-        character (len=48), dimension(17) :: StateMsg =                 &
+        character (len=48), dimension(18) :: StateMsg =                 &
      &    (/'state initial conditions,                       ',         & !01
      &      'previous state initial conditions,              ',         & !02
      &      'previous adjoint state solution,                ',         & !03
@@ -137,7 +138,8 @@
      &      'IC normalization factors,                       ',         & !14
      &      'model error normalization factors,              ',         & !15
      &      'OBC normalization factors,                      ',         & !16
-     &      'surface forcing normalization factors,          '/)          !17
+     &      'surface forcing normalization factors,          ',         & !17
+     &      'saddle-point Arnoldi state vector,              '/)          !18
 
         character (len=50), dimension(Nregion) :: Pregion =             &
      &    (/'Allocation and array initialization ..............',       & !01
@@ -185,20 +187,20 @@
      &      '4D-Var minimization solver .......................',       & !43
      &      'Background error covariance matrix ...............',       & !44
      &      'Posterior error covariance matrix ................',       & !45
-     &      'Unused 01 ........................................',       & !46
-     &      'Unused 02 ........................................',       & !47
-     &      'Unused 03 ........................................',       & !48
-     &      'Unused 04 ........................................',       & !49
-     &      'Unused 05 ........................................',       & !50
-     &      'Unused 06 ........................................',       & !51
-     &      'Unused 07 ........................................',       & !52
-     &      'Unused 08 ........................................',       & !53
-     &      'Unused 09 ........................................',       & !54
-     &      'Unused 10 ........................................',       & !55
-     &      'Unused 11 ........................................',       & !56
-     &      'Unused 12 ........................................',       & !57
-     &      'Unused 13 ........................................',       & !58
-     &      'Unused 14 ........................................',       & !59
+     &      '4D-Var solver pre-conditioning ...................',       & !46
+     &      'Writing model state vector .......................',       & !47
+     &      'Unused 01 ........................................',       & !48
+     &      'Unused 02 ........................................',       & !49
+     &      'Unused 03 ........................................',       & !50
+     &      'Unused 04 ........................................',       & !51
+     &      'Unused 05 ........................................',       & !52
+     &      'Unused 06 ........................................',       & !53
+     &      'Unused 07 ........................................',       & !54
+     &      'Unused 08 ........................................',       & !55
+     &      'Unused 09 ........................................',       & !56
+     &      'Unused 10 ........................................',       & !57
+     &      'Unused 11 ........................................',       & !58
+     &      'Unused 12 ........................................',       & !59
      &      'Message Passage: 2D halo exchanges ...............',       & !60
      &      'Message Passage: 3D halo exchanges ...............',       & !61
      &      'Message Passage: 4D halo exchanges ...............',       & !62

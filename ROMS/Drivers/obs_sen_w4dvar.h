@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: obs_sen_w4dvar.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: obs_sen_w4dvar.h 1017 2020-04-27 22:19:14Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -345,6 +345,8 @@
       USE mod_ocean,         ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
       USE strings_mod,       ONLY : FoundError, uppercase
+      USE strings_mod,       ONLY : FoundError
+      USE wrt_ini_mod,       ONLY : wrt_ini
 #if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod,  ONLY : balance_ref, biconj
 #endif

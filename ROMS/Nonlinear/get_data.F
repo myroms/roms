@@ -2,7 +2,7 @@
       SUBROUTINE get_data (ng)
 !
 !git $Id$
-!svn $Id: get_data.F 1012 2020-03-04 22:09:28Z arango $
+!svn $Id: get_data.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,10 +29,11 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
-#if defined HYPOXIA_SRM         || defined NLM_OUTER               ||\
-    defined RED_TIDE            || defined TLM_CHECK               ||\
-    defined TL_W4DPSAS          || defined W4DPSAS                 ||\
-    defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+#if defined HYPOXIA_SRM         || defined NLM_OUTER               || \
+    defined RED_TIDE            || defined SP4DVAR                 || \
+    defined TLM_CHECK           || defined TL_W4DPSAS              || \
+    defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY || \
+    defined W4DPSAS_SENSITIVITY
       USE mod_ocean
 #endif
       USE mod_scalars
@@ -1157,9 +1158,9 @@
       END IF
 #endif
 
-#if defined NLM_OUTER               || defined TL_W4DPSAS          ||\
-    defined W4DPSAS                 || defined W4DPSAS_SENSITIVITY ||\
-    defined W4DPSAS_FCT_SENSITIVITY
+#if defined NLM_OUTER               || defined SP4DVAR             || \
+    defined TL_W4DPSAS              || defined W4DPSAS             || \
+    defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Read weak contraint forcing snapshots. Notice that the forward

@@ -7,7 +7,7 @@
     (defined ADJOINT   && defined TANGENT)
 !
 !git $Id$
-!svn $Id: ini_adjust.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ini_adjust.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -23,7 +23,8 @@
       PRIVATE
 # if defined ADJOINT && defined TANGENT
 #  if defined IS4DVAR || defined TL_W4DPSAS          || \
-      defined W4DPSAS || defined W4DPSAS_SENSITIVITY
+      defined W4DPSAS || defined W4DPSAS_SENSITIVITY || \
+      defined SP4DVAR
       PUBLIC :: ini_adjust
 #  endif
 # endif
@@ -51,7 +52,7 @@
       CONTAINS
 
 # if defined ADJOINT && defined TANGENT
-#  if defined IS4DVAR
+#  if defined IS4DVAR || defined SP4DVAR
       SUBROUTINE ini_adjust (ng, tile, Linp, Lout)
 !
 !=======================================================================

@@ -2,7 +2,7 @@
       MODULE nf_fwrite3d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fwrite3d_bry.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: nf_fwrite3d_bry.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -33,6 +33,8 @@
 !  On Output:                                                          !
 !                                                                      !
 !     status       Error flag (integer).                               !
+!     MinValue     Minimum value (real, OPTIONAL)                      !
+!     MaxValue     Maximum value (real, OPTIONAL)                      !
 !                                                                      !
 #ifdef POSITIVE_ZERO
 !  Starting F95 zero values can be signed (-0 or +0) following the     !
@@ -54,7 +56,8 @@
      &                          ncvname, ncvarid,                       &
      &                          tindex, gtype,                          &
      &                          LBij, UBij, LBk, UBk, Nrec,             &
-     &                          Ascl, A)  RESULT(status)
+     &                          Ascl, A,                                &
+     &                          MinValue, MaxValue) RESULT(status)
 !***********************************************************************
 !
       USE mod_param
@@ -82,6 +85,8 @@
 #else
       real(r8), intent(in) :: A(LBij:UBij,LBk:UBk,4,Nrec)
 #endif
+      real(r8), intent(out), optional :: MinValue
+      real(r8), intent(out), optional :: MaxValue
 !
 !  Local variable declarations.
 !
@@ -217,10 +222,27 @@
 #ifdef DISTRIBUTE
 !
 !  If distributed-memory set-up, collect data from all spawned
-!  nodes.
+!  processes.
 !
       CALL mp_collect (ng, model, Npts, Aspv, Awrk)
 #endif
+!
+!-----------------------------------------------------------------------
+!  If applicable, compute output field minimum and maximum values.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(MinValue)) THEN
+        IF (OutThread) THEN
+          MinValue=spval
+          MaxValue=-spval
+          DO i=1,Npts
+            IF (ABS(Awrk(i)).lt.spval) THEN
+              MinValue=MIN(MinValue,Awrk(i))
+              MaxValue=MAX(MaxValue,Awrk(i))
+            END IF
+          END DO
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Write output buffer into NetCDF file.

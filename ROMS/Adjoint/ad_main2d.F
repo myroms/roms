@@ -3,7 +3,7 @@
       SUBROUTINE ad_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: ad_main2d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_main2d.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -170,6 +170,12 @@
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
+#  ifdef SP4DVAR
+!
+!  Skip assimilation of obs on first timestep unless inter=Nsaddle.
+!
+          IF ((iic(ng).ne.ntstart(ng)).or.Lsadd(ng)) THEN
+#  endif
 #  ifdef SENSITIVITY_4DVAR
           IF (.not.LsenPSAS(ng)) THEN
 #  endif
@@ -198,6 +204,9 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 #  ifdef SENSITIVITY_4DVAR
+          END IF
+#  endif
+#  ifdef SP4DVAR
           END IF
 #  endif
         END DO
@@ -492,7 +501,7 @@
         END DO
 # endif
 
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT && !defined SP4DVAR
 !
 !-----------------------------------------------------------------------
 !  Gather weak constraint forcing to storage arrays.
@@ -521,7 +530,7 @@
      &                   __FILE__)) RETURN
         END DO
 
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT && !defined SP4DVAR
 !
 !-----------------------------------------------------------------------
 !  Copy storage arrays index 1 into index 2, and clear index 1.

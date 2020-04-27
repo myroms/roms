@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: make_macros.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: make_macros.h 1017 2020-04-27 22:19:14Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -137,11 +137,12 @@
 ** Determine if the ARPACK library is needed.
 */
 
-#if defined ARRAY_MODES         || defined CLIPPING           || \
-    defined PROPAGATOR          || defined IS4DVAR            || \
-    defined TL_W4DPSAS          || defined TL_W4DVAR          || \
-    defined W4DPSAS             || defined W4DVAR             || \
-    defined W4DPSAS_SENSITIVITY || defined W4DVAR_SENSITIVITY
+#if defined ARRAY_MODES        || defined CLIPPING            || \
+    defined PROPAGATOR         || defined IS4DVAR             || \
+    defined SP4DVAR            || defined TL_W4DPSAS          || \
+    defined TL_W4DVAR          || defined W4DPSAS             || \
+    defined W4DVAR             || defined W4DPSAS_SENSITIVITY || \
+    defined W4DVAR_SENSITIVITY
   USE_ARPACK := on
 #else
   USE_ARPACK :=

@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1001 2020-01-10 22:41:16Z arango $
+** svn $Id: globaldefs.h 1017 2020-04-27 22:19:14Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -55,7 +55,7 @@
 
 #ifdef DISTRIBUTE
 # if !(defined REDUCE_ALLGATHER || defined REDUCE_ALLREDUCE)
-#  define REDUCE_ALLGATHER
+#  define REDUCE_ALLREDUCE
 # endif
 #endif
 
@@ -237,10 +237,10 @@
     defined OPT_OBSERVATIONS    || defined PICARD_TEST         || \
     defined R_SYMMETRY          || defined RPM_DRIVER          || \
     defined SANITY_CHECK        || defined SENSITIVITY_4DVAR   || \
-    defined STOCHASTIC_OPT      || defined TLM_CHECK           || \
-    defined TLM_DRIVER          || defined TL_W4DPSAS          || \
-    defined TL_W4DVAR           || defined W4DPSAS             || \
-    defined W4DVAR
+    defined SP4DVAR             || defined STOCHASTIC_OPT      || \
+    defined TLM_CHECK           || defined TLM_DRIVER          || \
+    defined TL_W4DPSAS          || defined TL_W4DVAR           || \
+    defined W4DPSAS             || defined W4DVAR
 # define TANGENT
 #endif
 #if defined AD_SENSITIVITY      || defined ADM_DRIVER          || \
@@ -252,10 +252,10 @@
     defined IS4DVAR_SENSITIVITY || defined OPT_PERTURBATION    || \
     defined OPT_OBSERVATIONS    || defined R_SYMMETRY          || \
     defined SANITY_CHECK        || defined SENSITIVITY_4DVAR   || \
-    defined SO_SEMI             || defined STOCHASTIC_OPT      || \
-    defined TLM_CHECK           || defined TL_W4DPSAS          || \
-    defined TL_W4DVAR           || defined W4DPSAS             || \
-    defined W4DVAR
+    defined SO_SEMI             || defined SP4DVAR             || \
+    defined STOCHASTIC_OPT      || defined TLM_CHECK           || \
+    defined TL_W4DPSAS          || defined TL_W4DVAR           || \
+    defined W4DPSAS             || defined W4DVAR
 # define ADJOINT
 #endif
 #if defined PICARD_TEST        || defined RPM_DRIVER         || \
@@ -350,12 +350,13 @@
 ** Set internal switches for all the 4DVAR schemes.
 */
 
-#if !defined WEAK_CONSTRAINT    && \
-    (defined ARRAY_MODES        || defined CLIPPING                || \
-     defined R_SYMMETRY         || defined TL_W4DPSAS              || \
-     defined TL_W4DVAR          || defined W4DPSAS                 || \
-     defined W4DVAR             || defined W4DPSAS_SENSITIVITY     || \
-     defined W4DVAR_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY)
+#if !defined WEAK_CONSTRAINT     && \
+    (defined ARRAY_MODES         || defined CLIPPING                || \
+     defined R_SYMMETRY          || defined SP4DVAR                 || \
+     defined TL_W4DPSAS          || defined TL_W4DVAR               || \
+     defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY || \
+     defined W4DPSAS_SENSITIVITY || defined W4DVAR                  || \
+     defined W4DVAR_SENSITIVITY)
 # define WEAK_CONSTRAINT
 #endif
 #if !defined WEAK_CONSTRAINT     && defined RPM_RELAXATION
@@ -364,8 +365,8 @@
 #if defined CORRELATION          || defined HESSIAN_FSV         || \
     defined HESSIAN_SO           || defined HESSIAN_SV          || \
     defined IS4DVAR              || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS     || defined TLM_CHECK           || \
-    defined WEAK_CONSTRAINT
+    defined OPT_OBSERVATIONS     || defined SP4DVAR             || \
+    defined TLM_CHECK            || defined WEAK_CONSTRAINT
 # define FOUR_DVAR
 #endif
 #if defined IS4DVAR
@@ -394,21 +395,21 @@
 ** Activate internal switch to process 4DVAR observations.
 */
 
-#if defined IS4DVAR            || defined IS4DVAR_SENSITIVITY || \
-    defined SENSITIVITY_4DVAR  || defined TLM_CHECK           || \
-    defined TL_W4DPSAS         || defined TL_W4DVAR           || \
-    defined VERIFICATION       || defined W4DPSAS             || \
-    defined W4DVAR             || defined ARRAY_MODES         || \
-    defined CLIPPING
+#if defined ARRAY_MODES        || defined CLIPPING            || \
+    defined IS4DVAR            || defined IS4DVAR_SENSITIVITY || \
+    defined SENSITIVITY_4DVAR  || defined SP4DVAR             || \
+    defined TLM_CHECK          || defined TL_W4DPSAS          || \
+    defined TL_W4DVAR          || defined VERIFICATION        || \
+    defined W4DPSAS            || defined W4DVAR
 # define OBSERVATIONS
 #endif
 
-#if defined IS4DVAR            || defined IS4DVAR_SENSITIVITY || \
+#if defined ARRAY_MODES        || defined CLIPPING            || \
+    defined IS4DVAR            || defined IS4DVAR_SENSITIVITY || \
     defined R_SYMMETRY         || defined SENSITIVITY_4DVAR   || \
-    defined TLM_CHECK          || defined TL_W4DPSAS          || \
-    defined TL_W4DVAR          || defined W4DPSAS             || \
-    defined W4DVAR             || defined ARRAY_MODES         || \
-    defined CLIPPING
+    defined SP4DVAR            || defined TLM_CHECK           || \
+    defined TL_W4DPSAS         || defined TL_W4DVAR           || \
+    defined W4DPSAS            || defined W4DVAR
 # define TLM_OBS
 #endif
 
@@ -420,16 +421,17 @@
     (defined ARRAY_MODES       || defined CLIPPING            || \
      defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
      defined PROPAGATOR        || defined SENSITIVITY_4DVAR   || \
-     defined TL_W4DPSAS        || defined TL_W4DVAR           || \
-     defined W4DPSAS           || defined W4DVAR)
+     defined SP4DVAR           || defined TL_W4DPSAS          || \
+     defined TL_W4DVAR         || defined W4DPSAS             || \
+     defined W4DVAR)
 # define FORWARD_READ
 #endif
 #if !defined FORWARD_WRITE     && \
     (defined ARRAY_MODES       || defined CLIPPING            || \
      defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-     defined SENSITIVITY_4DVAR || defined TL_W4DPSAS          || \
-     defined TL_W4DVAR         || defined W4DPSAS             || \
-     defined W4DVAR)
+     defined SENSITIVITY_4DVAR || defined SP4DVAR             || \
+     defined TL_W4DPSAS        || defined TL_W4DVAR           || \
+     defined W4DPSAS           || defined W4DVAR)
 # define FORWARD_WRITE
 #endif
 

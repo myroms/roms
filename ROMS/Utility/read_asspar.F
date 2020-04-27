@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: read_asspar.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -631,6 +631,24 @@
               label='ERR - 4D-Var posterior error covariance'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, ERR)
+#ifdef SP4DVAR
+            CASE ('SPTname')
+              label='SPT - TLM Arnoldi vectors'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, SPT)
+            CASE ('SPAname')
+              label='SPA - ADM Arnoldi vectors'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, SPA)
+            CASE ('SCTname')
+              label='SCT - TLM Arnoldi vectors'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, SCT)
+            CASE ('SCAname')
+              label='SCA - ADM Arnoldi vectors'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, SCA)
+#endif
 #if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
             CASE ('OIFnameA')
               label='OIFA - observartion impacts forecast, analysis'
@@ -872,7 +890,7 @@
      &            'Number of iterations for randomization.'
             END IF
           END IF
-#     if defined SENSITIVITY_4DVAR || \
+#     if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
          defined TL_W4DPSAS        || defined TL_W4DVAR || \
          defined W4DPSAS           || defined W4DVAR
           IF (ANY(LwrtNRM(:,ng))) THEN
@@ -979,7 +997,7 @@
      &            'Vertical diffusion factor, boundary conditions.'
 #     endif
 #    endif
-#    if defined SENSITIVITY_4DVAR || \
+#    if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
         defined TL_W4DPSAS        || defined TL_W4DVAR || \
         defined W4DPSAS           || defined W4DVAR
          IF (nADJ(ng).lt.ntimes(ng)) THEN
@@ -1218,17 +1236,18 @@
 !
           WRITE (out,150)
 #  ifdef VERIFICATION
-          WRITE (out,160) ' Verification Parameters File:  ',           &
+          WRITE (out,160) '     Verification Parameters File:  ',       &
      &                    TRIM(aparnam)
 #  else
-          WRITE (out,160) ' Assimilation Parameters File:  ',           &
+          WRITE (out,160) '     Assimilation Parameters File:  ',       &
      &                    TRIM(aparnam)
 #  endif
-#  if defined FOUR_DVAR || (defined HESSIAN_SV && defined BNORM)
-#   if defined IS4DVAR          || defined OBS_SENSITIVITY || \
-       defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
-#    if defined SENSITIVITY_4DVAR || \
-        defined TL_W4DPSAS        || defined TL_W4DVAR || \
+#  if defined FOUR_DVAR           || \
+     (defined HESSIAN_SV          && defined BNORM)
+#   if defined IS4DVAR            || defined OBS_SENSITIVITY || \
+       defined OPT_OBSERVATIONS   || defined WEAK_CONSTRAINT
+#    if defined SENSITIVITY_4DVAR || defined SP4DVAR         || \
+        defined TL_W4DPSAS        || defined TL_W4DVAR       || \
         defined W4DPSAS           || defined W4DVAR
           fname=STD(2,ng)%name
           IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
@@ -1252,9 +1271,9 @@
      &                    TRIM(fname)
 #    endif
 #   endif
-#   if defined SENSITIVITY_4DVAR || defined TL_W4DPSAS  || \
-       defined TL_W4DVAR         || defined W4DPSAS     || \
-       defined W4DVAR
+#   if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
+       defined TL_W4DPSAS        || defined TL_W4DVAR || \
+       defined W4DPSAS           || defined W4DVAR
           fname=NRM(2,ng)%name
           WRITE (out,160) '                  Model Norm File:  ',       &
      &                    TRIM(fname)
@@ -1346,6 +1365,16 @@
           WRITE (out,160) '         Output verification File:  ',       &
      &                    TRIM(DAV(ng)%name)
 #   else
+#    ifdef SP4DVAR
+          WRITE (out,160) '    Input/Output TLM Arnoldi File:  ',       &
+     &                    TRIM(SPT(ng)%name)
+          WRITE (out,160) '    Input/Output ADM Arnoldi File:  ',       &
+     &                    TRIM(SPA(ng)%name)
+          WRITE (out,160) '    Input/Output TLM Scratch File:  ',       &
+     &                    TRIM(SCT(ng)%name)
+          WRITE (out,160) '    Input/Output ADM Scratch File:  ',       &
+     &                    TRIM(SCA(ng)%name)
+#    endif
           WRITE (out,160) '                Output 4DVAR File:  ',       &
      &                    TRIM(DAV(ng)%name)
 #   endif

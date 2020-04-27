@@ -3,7 +3,7 @@
       SUBROUTINE tl_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main2d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_main2d.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -128,7 +128,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 
-# if defined WEAK_CONSTRAINT || defined FORCING_SV
+# if (defined WEAK_CONSTRAINT || defined FORCING_SV) && \
+     !defined SP4DVAR
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to
@@ -140,12 +141,22 @@
 !
         DO ng=1,Ngrids
 #  ifdef WEAK_CONSTRAINT
-          IF (FrequentImpulse(ng)) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
-            END DO
+#   ifdef WEAK_NOINTERP
+          IF ((iic(ng).gt.1).and.(iic(ng).ne.ntend(ng)+1).and.          &
+     &        (MOD(iic(ng)-1,nadj(ng)).eq.0)) THEN
+            IF (Master) THEN
+              WRITE (stdout,*) ' FORCING TLM at iic = ',iic(ng)
+            END IF
+#   endif
+            IF (FrequentImpulse(ng)) THEN
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+              END DO
 !$OMP BARRIER
+            END IF
+#   ifdef WEAK_NOINTERP
           END IF
+#   endif
 #  else
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))

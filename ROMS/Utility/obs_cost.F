@@ -3,7 +3,7 @@
       SUBROUTINE obs_cost (ng, model)
 !
 !git $Id$
-!svn $Id: obs_cost.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: obs_cost.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -115,7 +115,7 @@
       END IF
 
 # elif defined TL_W4DPSAS          || defined W4DPSAS || \
-       defined W4DPSAS_SENSITIVITY
+       defined W4DPSAS_SENSITIVITY || defined SP4DVAR
 !
 !  Compute nonlinear model data penalty function.
 !
@@ -197,7 +197,7 @@
           END DO
         END IF
 # elif defined TL_W4DPSAS          || defined W4DPSAS || \
-       defined W4DPSAS_SENSITIVITY
+       defined W4DPSAS_SENSITIVITY || defined SP4DVAR
         IF (model.eq.iNLM) THEN
           DO ivar=0,NobsVar(ng)
             FOURDVAR(ng)%NLPenalty(ivar)=my_ObsCost(ivar)+              &

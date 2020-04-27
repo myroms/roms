@@ -3,7 +3,7 @@
       SUBROUTINE ad_wrt_his (ng)
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_wrt_his.F 1017 2020-04-27 22:19:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -145,7 +145,7 @@
         IF (LwrtPER(ng)) THEN
           Tval(1)=REAL(ADM(ng)%Rindex,r8)*day2sec
         ELSE
-# ifdef WEAK_CONSTRAINT
+# if defined WEAK_CONSTRAINT && !defined WEAK_NOINTERP
           Tval(1)=ForceTime(ng)
 # else
           Tval(1)=time(ng)
