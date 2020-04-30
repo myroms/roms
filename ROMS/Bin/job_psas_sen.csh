@@ -1,30 +1,33 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_r4dvar.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_psas_sen.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Strong/Weak constraint R4D-Var job script:                          #
+# Strong/Weak constraint 4D-PSAS observation impact or sensitivity    #
+# job script:                                                         #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #
 #   (1) It copies a new clean nonlinear model initial conditions      #
 #       file. The nonlinear model is initialized from the             #
 #       background or reference state.                                #
-#   (2) It copies representer model initial condition, same as        #
-#       nonlinear model.                                              #
-#   (3) Specify model, initial conditions, boundary conditions, and   #
+#   (2) It copies Lanczos vectors from previous 4D-PSAS run. They     #
+#       are stored in 4D-Var data assimilation file.                  #
+#   (3) It copies the adjoint sensitivy functional file for the       #
+#       observation impact or sensitivity.                            #
+#   (4) Specify model, initial conditions, boundary conditions, and   #
 #       surface forcing error convariance input standard deviations   #
 #       files.                                                        #
-#   (4) Specify model, initial conditions, boundary conditions, and   #
+#   (5) Specify model, initial conditions, boundary conditions, and   #
 #       surface forcing error convariance input/output normalization  #
 #       factors files.                                                #
-#   (5) Copy a clean copy of the observations NetCDF file.            #
-#   (6) Create 4D-Var input script "r4dvar.in" from template and      #
+#   (6) Copy a clean copy of the observations NetCDF file.            #
+#   (7) Create 4D-Var input script "psas.in" from template and        #
 #       specify the error covariance standard deviation, error        #
 #       covariance normalization factors, and observation files to    #
 #       be used.                                                      #
@@ -39,15 +42,18 @@
 
  set SUBSTITUTE=${ROMS_ROOT}/ROMS/Bin/substitute
 
-# Copy nonlinear model initial conditions file, use background or
-# first guess state.
+# Copy nonlinear model initial conditions file.
 
  cp -p ${Dir}/Data/wc13_ini.nc wc13_ini.nc
 
-# Copy representer model initial conditions file, same as nonlinear
-# model.
+# Copy Lanczos vectors from previous 4D-PSAS run. They are stored
+# in 4D-Var data assimilation file.
 
- cp -p ${Dir}/Data/wc13_ini.nc wc13_irp.nc
+ cp -p ${Dir}/PSAS/wc13_mod.nc wc13_lcz.nc
+
+# Copy adjoint sensitivity functional.
+
+ cp -p ${Dir}/Data/wc13_ads.nc wc13_ads.nc
 
 # Set model, initial conditions, boundary conditions and surface
 # forcing error covariance standard deviations files.
@@ -76,22 +82,22 @@
 
 # Modify 4D-Var template input script and specify above files.
 
- set R4DVAR=r4dvar.in
- if (-e $R4DVAR) then
-   /bin/rm $R4DVAR
+ set PSAS=psas.in
+ if (-e $PSAS) then
+   /bin/rm $PSAS
  endif
- cp s4dvar.in $R4DVAR
+ cp s4dvar.in $PSAS
 
- $SUBSTITUTE $R4DVAR roms_std_m.nc $STDnameM
- $SUBSTITUTE $R4DVAR roms_std_i.nc $STDnameI
- $SUBSTITUTE $R4DVAR roms_std_b.nc $STDnameB
- $SUBSTITUTE $R4DVAR roms_std_f.nc $STDnameF
- $SUBSTITUTE $R4DVAR roms_nrm_m.nc $NRMnameM
- $SUBSTITUTE $R4DVAR roms_nrm_i.nc $NRMnameI
- $SUBSTITUTE $R4DVAR roms_nrm_b.nc $NRMnameB
- $SUBSTITUTE $R4DVAR roms_nrm_f.nc $NRMnameF
- $SUBSTITUTE $R4DVAR roms_obs.nc $OBSname
- $SUBSTITUTE $R4DVAR roms_hss.nc wc13_hss.nc
- $SUBSTITUTE $R4DVAR roms_lcz.nc wc13_lcz.nc
- $SUBSTITUTE $R4DVAR roms_mod.nc wc13_mod.nc
- $SUBSTITUTE $R4DVAR roms_err.nc wc13_err.nc
+ $SUBSTITUTE $PSAS roms_std_m.nc $STDnameM
+ $SUBSTITUTE $PSAS roms_std_i.nc $STDnameI
+ $SUBSTITUTE $PSAS roms_std_b.nc $STDnameB
+ $SUBSTITUTE $PSAS roms_std_f.nc $STDnameF
+ $SUBSTITUTE $PSAS roms_nrm_m.nc $NRMnameM
+ $SUBSTITUTE $PSAS roms_nrm_i.nc $NRMnameI
+ $SUBSTITUTE $PSAS roms_nrm_b.nc $NRMnameB
+ $SUBSTITUTE $PSAS roms_nrm_f.nc $NRMnameF
+ $SUBSTITUTE $PSAS roms_obs.nc $OBSname
+ $SUBSTITUTE $PSAS roms_hss.nc wc13_hss.nc
+ $SUBSTITUTE $PSAS roms_lcz.nc wc13_lcz.nc
+ $SUBSTITUTE $PSAS roms_mod.nc wc13_mod.nc
+ $SUBSTITUTE $PSAS roms_err.nc wc13_err.nc

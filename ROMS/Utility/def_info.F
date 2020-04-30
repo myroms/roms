@@ -2,7 +2,7 @@
       SUBROUTINE def_info (ng, model, ncid, ncname, DimIDs)
 !
 !git $Id$
-!svn $Id: def_info.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: def_info.F 1018 2020-04-30 01:07:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -113,7 +113,7 @@
 
       real(r8) :: Aval(6)
 
-      character (len=11 ) :: frcatt
+      character (len=11 ) :: bryatt, clmatt, frcatt
       character (len=50 ) :: tiling
       character (len=80 ) :: type
       character (len=120) :: Vinfo(Natt)
@@ -699,7 +699,7 @@
           DO i=1,nFfiles(ng)
             CALL join_string (FRC(i,ng)%files, FRC(i,ng)%Nfiles,        &
      &                        string, lstr)
-            WRITE (frcatt,30) i
+            WRITE (frcatt,30) 'frc_file_', i
             status=nf90_put_att(ncid, nf90_global, frcatt,              &
      &                          string(1:lstr))
             IF (FoundError(status, nf90_noerr, __LINE__,                &
@@ -714,35 +714,41 @@
 #endif
 
         IF (ObcData(ng)) THEN
-          IF (exit_flag.eq.NoError) THEN
-            CALL join_string (BRY(ng)%files, BRY(ng)%Nfiles,            &
-     &                        string, lstr)
-            status=nf90_put_att(ncid, nf90_global, 'bry_file',          &
-     &                          string(1:lstr))
-            IF (FoundError(status, nf90_noerr, __LINE__,                &
+          DO i=1,nBCfiles(ng)
+            IF (exit_flag.eq.NoError) THEN
+              CALL join_string (BRY(i,ng)%files, BRY(i,ng)%Nfiles,      &
+     &                          string, lstr)
+              WRITE (bryatt,30) 'clm_file_', i
+              status=nf90_put_att(ncid, nf90_global, bryatt,            &
+     &                            string(1:lstr))
+              IF (FoundError(status, nf90_noerr, __LINE__,              &
      &                     __FILE__)) THEN
-              IF (Master) WRITE (stdout,20) 'bry_file', TRIM(ncname)
-              exit_flag=3
-              ioerror=status
+                IF (Master) WRITE (stdout,20) TRIM(bryatt), TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
             END IF
-          END IF
+          END DO
         END IF
 
 #if !(defined ANA_SSH     || defined ANA_M2CLIMA || \
       defined ANA_M3CLIMA || defined ANA_TCLIMA)
         IF (Lclimatology(ng)) THEN
-          IF (exit_flag.eq.NoError) THEN
-            CALL join_string (CLM(ng)%files, CLM(ng)%Nfiles,            &
-     &                        string,lstr)
-            status=nf90_put_att(ncid, nf90_global, 'clm_file',          &
-     &                          string(1:lstr))
-            IF (FoundError(status, nf90_noerr, __LINE__,                &
+          DO i=1,nCLMfiles(ng)
+            IF (exit_flag.eq.NoError) THEN
+              CALL join_string (CLM(i,ng)%files, CLM(i,ng)%Nfiles,      &
+     &                          string, lstr)
+              WRITE (clmatt,30) 'clm_file_', i
+              status=nf90_put_att(ncid, nf90_global, clmatt,            &
+     &                            string(1:lstr))
+              IF (FoundError(status, nf90_noerr, __LINE__,              &
      &                     __FILE__)) THEN
-              IF (Master) WRITE (stdout,20) 'clm_file', TRIM(ncname)
-              exit_flag=3
-              ioerror=status
+                IF (Master) WRITE (stdout,20) TRIM(clmatt), TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
             END IF
-          END IF
+          END DO
         END IF
 #endif
 
@@ -3712,7 +3718,7 @@
   10  FORMAT (i3.3,'x',i3.3)
   20  FORMAT (/,' DEF_INFO - error while creating global attribute: ',  &
      &        a,/,12x,a)
-  30  FORMAT ('frc_file_',i2.2)
+  30  FORMAT (a,i2.2)
 
       RETURN
       END SUBROUTINE def_info

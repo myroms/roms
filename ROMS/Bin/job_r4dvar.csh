@@ -1,14 +1,14 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_array_modes.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_r4dvar.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Stabilized representer matrix array modes job script:               #
+# Strong/Weak constraint R4D-Var job script:                          #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #
@@ -17,16 +17,14 @@
 #       background or reference state.                                #
 #   (2) It copies representer model initial condition, same as        #
 #       nonlinear model.                                              #
-#   (3) It copies Lanczos vectors from previous R4D-Var run. They     #
-#       are stored in 4D-Var data assimilation file.                  #
-#   (4) Specify model, initial conditions, boundary conditions, and   #
+#   (3) Specify model, initial conditions, boundary conditions, and   #
 #       surface forcing error convariance input standard deviations   #
 #       files.                                                        #
-#   (5) Specify model, initial conditions, boundary conditions, and   #
+#   (4) Specify model, initial conditions, boundary conditions, and   #
 #       surface forcing error convariance input/output normalization  #
 #       factors files.                                                #
-#   (6) Copy a clean copy of the observations NetCDF file.            #
-#   (7) Create 4D-Var input script "r4dvar.in" from template and      #
+#   (5) Copy a clean copy of the observations NetCDF file.            #
+#   (6) Create 4D-Var input script "r4dvar.in" from template and      #
 #       specify the error covariance standard deviation, error        #
 #       covariance normalization factors, and observation files to    #
 #       be used.                                                      #
@@ -50,11 +48,6 @@
 # model.
 
  cp -p ${Dir}/Data/wc13_ini.nc wc13_irp.nc
-
-# Copies Lanczos vectors from previous R4D-Var run. They are stored
-# in 4D-Var data assimilation file.
-
- cp -p ${Dir}/R4DVAR/wc13_mod.nc wc13_lcz.nc
 
 # Set model, initial conditions, boundary conditions and surface
 # forcing error covariance standard deviations files.

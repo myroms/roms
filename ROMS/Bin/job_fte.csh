@@ -1,17 +1,17 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_so_semi.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_fte.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-#  Generalized Stability Theory: Stochastic Optimals, seminorm        #
+#  Generalized Stability Theory: Finite Time Eigenmodes               #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS stochastic optimals with  #
-#  respect to the seminorm of the chosen functional.                  #
+#  This script is used to run the ROMS/TOMS Finite Time Eigenmodes    #
+#  algorithm.                                                         #
 #                                                                     #
 #######################################################################
 
@@ -33,12 +33,10 @@ if (-e $FWDname) then
 endif
 ln -s -v $HISname $FWDname
 
-# Set adjoint model initial conditions file: zero fields.
+# Set tangent linear model initial conditions file: zero fields.
 
-set IADname=gyre3d_iad.nc
-
-if (-e $IADname) then
-  /bin/rm $IADname
+set ITLname=gyre3d_itl.nc
+if (-e $ITLname) then
+  /bin/rm $ITLname
 endif
-
-ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $IADname
+ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $ITLname

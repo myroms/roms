@@ -1,31 +1,27 @@
-#!/bin/csh -f
+#!/bin/env csh
 #
 # git $Id$
-# svn $Id: job_i4dvar_sen.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_i4dvar.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Incremental I4D-Var observations impact job script:                 #
+# Incremental strong constraint I4D-Var job script:                   #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #
 #   (1) It copies a new clean nonlinear model initial conditions      #
 #       file. The nonlinear model is initialized from the             #
 #       background or reference state.                                #
-#   (2) It copies the Lanczos vectors from a previos I4D-Var run.     #
-#       They are stored in the output adjoint NetCDF file.            #
-#   (3) It copies the adjoint sensitivy functional file for the       #
-#       observation impact.                                           #
-#   (4) Specify initial conditions, boundary conditions, and surface  #
+#   (2) Specify initial conditions, boundary conditions, and surface  #
 #       forcing error convariance input standard deviations files.    #
-#   (5) Specify initial conditions, boundary conditions, and surface  #
+#   (3) Specify initial conditions, boundary conditions, and surface  #
 #       forcing error convariance input/output normalization factors  #
 #       files.                                                        #
-#   (6) Copy a clean copy of the observations NetCDF file.            #
-#   (7) Create 4D-Var input script "i4dvar.in" from template and      #
+#   (4) Copy a clean copy of the observations NetCDF file.            #
+#   (5) Create 4D-Var input script "i4dvar.in" from template and      #
 #       specify the error covariance standard deviation, error        #
 #       covariance normalization factors, and observation files to    #
 #       be used.                                                      #
@@ -43,15 +39,6 @@
 # Copy nonlinear model initial conditions file.
 
  cp -p ${Dir}/Data/wc13_ini.nc wc13_ini.nc
-
-# Copy Lanczos vectors (adjoint Netcdf file) from a previous I4D-Var
-# run.
-
- cp -p ${Dir}/I4DVAR/wc13_adj_001.nc wc13_lcz.nc
-
-# Copy adjoint sensitivity functional.
-
- cp -p ${Dir}/Data/wc13_ads.nc wc13_ads.nc
 
 # Set initial conditions, boundary conditions and surface forcing
 # error covariance standard deviations files.

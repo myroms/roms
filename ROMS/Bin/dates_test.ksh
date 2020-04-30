@@ -1,7 +1,7 @@
-#!/bin/ksh
+#!/usr/bin/env ksh
 #
 # git $Id$
-# svn $Id: dates_test.ksh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: dates_test.ksh 1018 2020-04-30 01:07:09Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

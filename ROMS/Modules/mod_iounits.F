@@ -2,7 +2,7 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: mod_iounits.F 1018 2020-04-30 01:07:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -99,8 +99,10 @@
 !                                                                      !
 !  Miscellaneous variables:                                            !
 !                                                                      !
-!  CalledFrom  Calling routine in IO operations.                       !
+!  BRYids      NetCDF file ID associated with each boundary field.     !
+!  CLMids      NetCDF file ID associated with each climatology field.  !
 !  FRCids      NetCDF file ID associated with each forcing field.      !
+!  CalledFrom  Calling routine in IO operations.                       !
 !  Rerror      Running error messages.                                 !
 !  SourceFile  Current executed file name. It is used for IO error     !
 !                purposes.                                             !
@@ -126,8 +128,6 @@
       TYPE(T_IO), allocatable :: ADS(:)     ! sensitivity functional
       TYPE(T_IO), allocatable :: AVG(:)     ! time-averaged fields
       TYPE(T_IO), allocatable :: BLK(:)     ! bulk fluxes fields
-      TYPE(T_IO), allocatable :: BRY(:)     ! open boundary data
-      TYPE(T_IO), allocatable :: CLM(:)     ! climatology fields
       TYPE(T_IO), allocatable :: DAI(:)     ! Data assilation IC/restart
       TYPE(T_IO), allocatable :: DAV(:)     ! 4D-Var variables
       TYPE(T_IO), allocatable :: DIA(:)     ! diagnostics fields
@@ -174,6 +174,20 @@
       TYPE(T_IO), allocatable :: TIDE(:)    ! tidal forcing
       TYPE(T_IO), allocatable :: TLF(:)     ! TLM impulse fields
       TYPE(T_IO), allocatable :: TLM(:)     ! TLM history fields
+!
+!  Input boundary condition data.
+!
+      integer, allocatable :: nBCfiles(:)
+      integer, allocatable :: BRYids(:,:)
+
+      TYPE(T_IO), allocatable :: BRY(:,:)
+!
+!  Input climatology data.
+!
+      integer, allocatable :: nCLMfiles(:)
+      integer, allocatable :: CLMids(:,:)
+
+      TYPE(T_IO), allocatable :: CLM(:,:)
 !
 !  Input forcing data.
 !
@@ -250,12 +264,6 @@
       END IF
       IF (.not.allocated(BLK)) THEN
         allocate ( BLK(Ngrids) )
-      END IF
-      IF (.not.allocated(BRY)) THEN
-        allocate ( BRY(Ngrids) )
-      END IF
-      IF (.not.allocated(CLM)) THEN
-        allocate ( CLM(Ngrids) )
       END IF
       IF (.not.allocated(DAI)) THEN
         allocate ( DAI(Ngrids) )
@@ -385,6 +393,12 @@
 !  Allocate variables.
 !-----------------------------------------------------------------------
 !
+      IF (.not.allocated(nBCfiles)) THEN
+        allocate ( nBCfiles(Ngrids) )
+      END IF
+      IF (.not.allocated(nCLMfiles)) THEN
+        allocate ( nCLMfiles(Ngrids) )
+      END IF
       IF (.not.allocated(nFfiles)) THEN
         allocate ( nFfiles(Ngrids) )
       END IF
@@ -398,8 +412,6 @@
         ADS(ng)%ncid=-1
         AVG(ng)%ncid=-1
         BLK(ng)%ncid=-1
-        BRY(ng)%ncid=-1
-        CLM(ng)%ncid=-1
         DAI(ng)%ncid=-1
         DAV(ng)%ncid=-1
         DIA(ng)%ncid=-1
@@ -466,14 +478,6 @@
           BLK(ng)%head(i:i)=blank
           BLK(ng)%base(i:i)=blank
           BLK(ng)%name(i:i)=blank
-
-          BRY(ng)%head(i:i)=blank
-          BRY(ng)%base(i:i)=blank
-          BRY(ng)%name(i:i)=blank
-
-          CLM(ng)%head(i:i)=blank
-          CLM(ng)%base(i:i)=blank
-          CLM(ng)%name(i:i)=blank
 
           DAI(ng)%head(i:i)=blank
           DAI(ng)%base(i:i)=blank

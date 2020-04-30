@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # git $Id$
-# svn $Id: build_roms.bash 1017 2020-04-27 22:19:14Z arango $
+# svn $Id: build_roms.sh 1018 2020-04-30 01:07:09Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
