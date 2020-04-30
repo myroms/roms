@@ -1,14 +1,14 @@
-#!/usr/bin/env csh
+#!/bin/csh -f
 #
 # git $Id$
-# svn $Id: job_psas.csh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_psas.csh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Strong/Weak constraint 4D-PSAS job script:                          #
+# Strong/Weak constraint 4D-PSAS job CSH script:                      #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #

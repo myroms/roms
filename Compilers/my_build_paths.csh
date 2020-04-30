@@ -1,22 +1,25 @@
+#!/bin/csh -f
+#
 # git $Id$
-# svn $Id: my_build_paths.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: my_build_paths.csh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# ROMS/TOMS Customized Compiling Libraries Script                       :::
+# ROMS Customized Compiling Libraries CSH Script                        :::
 #                                                                       :::
 # This C-shell script sets the customized library paths needed by the   :::
 # build script when the enviromental variable USE_MY_LIBS has a 'yes'   :::
 # value.                                                                :::
 #                                                                       :::
-# For example, in build_roms.sh we have:                                :::
+# For example, in build_roms.csh we have:                               :::
 #                                                                       :::
 #       if ($USE_MY_LIBS == 'yes') then                                 :::
-#          source ${COMPILERS}/my_build_paths.sh                        :::
+#          source ${COMPILERS}/my_build_paths.csh                       :::
 #       endif                                                           :::
+#                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 set separator = `perl -e "print ':' x 100;"`

@@ -1,14 +1,14 @@
-#!/usr/bin/env csh
+#!/bin/csh -f
 #
 # git $Id$
-# svn $Id: copyright.csh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: copyright.csh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 #                                                                       :::
-# ROMS/TOMS Copyright Update Script                                     :::
+# ROMS Copyright Update CSH Script                                      :::
 #                                                                       :::
 # Script to update the copyright information on ROMS source files.      :::
 # This script replaces the copyright string in the source files and     :::
@@ -17,7 +17,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./ROMS/Bin/copyright.sh [options]                                  :::
+#    ./ROMS/Bin/copyright.csh [options]                                 :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::

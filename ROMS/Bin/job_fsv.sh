@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: job_fsv.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_fsv.sh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -10,7 +10,7 @@
 #                                                                     #
 #  Generalized Stability Theory: Forcing Singular Vectors             #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS Forcing Singular Vectors  #
+#  This script is used to set-up ROMS Forcing Singular Vectors        #
 #  algorithm.                                                         #
 #                                                                     #
 #######################################################################

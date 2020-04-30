@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: verify.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: verify.sh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -16,7 +16,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    verify.bash [options]                                              :::
+#    verify.sh [options]                                                :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -42,12 +42,12 @@
 #                                                                       :::
 # Examples:                                                             :::
 #                                                                       :::
-# (1) verify.bash -in roms_upwelling.in branches/arango nesting         :::
+# (1) verify.sh - in roms_upwelling.in branches/arango nesting          :::
 #                                                                       :::
 #                 It will compile, run and compare all configurations   :::
 #                   of branches/arango and nesting                      :::
 #                                                                       :::
-# (2) verify.bash -nobuild -in roms_upwelling.in                        :::
+# (2) verify.sh - nobuild -in roms_upwelling.in                         :::
 #                 /Users/arango/ocean/repository/trunk                  :::
 #                                                                       :::
 #                 This run and compare all configuration of trunk       :::
