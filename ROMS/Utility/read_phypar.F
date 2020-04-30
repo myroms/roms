@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: read_phypar.F 1018 2020-04-30 01:07:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -77,6 +77,7 @@
 
       integer :: Npts, Nval, i, itrc, ivar, k, lstr, ng, nl, status
       integer :: ifield, ifile, igrid, itracer, nline, max_Ffiles
+      integer :: ibcfile, iclmfile
       integer :: Cdim, Clen, Rdim
       integer :: nPETs, maxPETs
       integer :: OutFiles
@@ -84,6 +85,8 @@
 
       integer, allocatable :: Nfiles(:)
       integer, allocatable :: Ncount(:,:)
+      integer, allocatable :: NBCcount(:,:)
+      integer, allocatable :: NCLMcount(:,:)
 
       real(dp), allocatable :: Dtracer(:,:)
       real(r8), allocatable :: Rtracer(:,:)
@@ -107,6 +110,8 @@
 !-----------------------------------------------------------------------
 !
       ifile=1                            ! multiple file counter
+      ibcfile=1                          ! multiple BC file counter
+      iclmfile=1                         ! multiple CLM file counter
       igrid=1                            ! nested grid counter
       itracer=0                          ! LBC tracer counter
       nline=0                            ! LBC multi-line counter
@@ -3231,14 +3236,49 @@
                 NGCname(i:i)=blank
               END DO
               NGCname=TRIM(ADJUSTL(Cval(Nval)))
+            CASE ('NBCFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nBCfiles)
+              DO ng=1,Ngrids
+                IF (nBCfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,260) 'NBCFILES', nBCfiles(ng), &
+     &                            'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              max_Ffiles=MAXVAL(nBCfiles)
+              allocate ( BRY(max_Ffiles,Ngrids) )
+              allocate ( BRYids(max_Ffiles,Ngrids) )
+              allocate ( NBCcount(max_Ffiles,Ngrids) )
+              BRYids(1:max_Ffiles,1:Ngrids)=-1
+              NBCcount(1:max_Ffiles,1:Ngrids)=0
             CASE ('BRYNAME')
               label='BRY - lateral open boundary conditions'
-              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, BRY)
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, ibcfile,     &
+     &                      igrid, Ngrids, nBCfiles, NBCcount,          &
+     &                      max_Ffiles, BRY)
+            CASE ('NCLMFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nCLMfiles)
+              DO ng=1,Ngrids
+                IF (nCLMfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,260) 'NCLMFILES',              &
+     &               nCLMfiles(ng),                                     &
+     &              'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              max_Ffiles=MAXVAL(nCLMfiles)
+              allocate ( CLM(max_Ffiles,Ngrids) )
+              allocate ( CLMids(max_Ffiles,Ngrids) )
+              allocate ( NCLMcount(max_Ffiles,Ngrids) )
+              CLMids(1:max_Ffiles,1:Ngrids)=-1
+              NCLMcount(1:max_Ffiles,1:Ngrids)=0
             CASE ('CLMNAME')
               label='CLM - climatology fields'
-              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, CLM)
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, iclmfile,    &
+     &                      igrid, Ngrids, nCLMfiles, NCLMcount,        &
+     &                      max_Ffiles, CLM)
             CASE ('NUDNAME')
               label='NUD - nudging coefficients'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -6126,18 +6166,20 @@
             END DO
           END DO
 # endif
-          IF (CLM_FILE(ng)) THEN
-            DO ifile=1,CLM(ng)%Nfiles
-              fname=CLM(ng)%files(ifile)
-              IF (.not.find_file(ng, fname, 'CLMNAME')) GO TO 30
-              IF (ifile.eq.1) THEN
-                WRITE (out,230) '          Input Climatology File:  ',  &
-     &                          TRIM(fname)
-              ELSE
-                WRITE (out,'(37x,a)') TRIM(fname)
-              END IF
-            END DO
-          END IF
+          DO i=1,nCLMfiles(ng)
+            IF (CLM_FILE(ng)) THEN
+              DO ifile=1,CLM(i,ng)%Nfiles
+                fname=CLM(i,ng)%files(ifile)
+                IF (.not.find_file(ng, fname, 'CLMNAME')) GO TO 30
+                IF (ifile.eq.1) THEN
+                  WRITE (out,310) '       Input Climatology File ', i,  &
+     &                            ':  ', TRIM(fname)
+                ELSE
+                  WRITE (out,'(37x,a)') TRIM(fname)
+                END IF
+              END DO
+            END IF
+          END DO
 # ifndef ANA_NUDGCOEF
           IF (LnudgeM2CLM(ng).or.LnudgeM3CLM(ng).or.                    &
      &        (ANY(LnudgeTCLM(:,ng)))) THEN
@@ -6171,15 +6213,17 @@
 # endif
 !
           IF (ObcData(ng)) THEN
-            DO ifile=1,BRY(ng)%Nfiles
-              fname=BRY(ng)%files(ifile)
-              IF (.not.find_file(ng, fname, 'BRYNAME')) GO TO 30
-              IF (ifile.eq.1) THEN
-                WRITE (out,230) '             Input Boundary File:  ',  &
-     &                          TRIM(fname)
-              ELSE
-                WRITE (out,'(37x,a)') TRIM(fname)
-              END IF
+            DO i=1,nBCfiles(ng)
+              DO ifile=1,BRY(i,ng)%Nfiles
+                fname=BRY(i,ng)%files(ifile)
+                IF (.not.find_file(ng, fname, 'BRYNAME')) GO TO 30
+                IF (ifile.eq.1) THEN
+                  WRITE (out,310) '  Input Lateral Boundary File ', i,  &
+     &                            ':  ', TRIM(fname)
+                ELSE
+                  WRITE (out,'(37x,a)') TRIM(fname)
+                END IF
+              END DO
             END DO
           END IF
 # ifdef STATIONS

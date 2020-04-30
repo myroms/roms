@@ -1,17 +1,17 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_fsv.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_afte.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-#  Generalized Stability Theory: Forcing Singular Vectors             #
+#  Generalized Stability Theory: Adjoint Finite Time Eigenmodes       #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS Forcing Singular Vectors  #
-#  algorithm.                                                         #
+#  This script is used to run the ROMS/TOMS Adjoint Finite Time       #
+#  Eigenmodes algorithm.                                              #
 #                                                                     #
 #######################################################################
 
@@ -33,10 +33,13 @@ if (-e $FWDname) then
 endif
 ln -s -v $HISname $FWDname
 
-# Set tangent linear model initial conditions file: zero fields.
+# Set adjoint and tangent linear model initial conditions file:
+# zero fields.
 
-set ITLname=gyre3d_itl.nc
-if (-e $ITLname) then
-  /bin/rm $ITLname
+set IADname=gyre3d_iad.nc
+
+if (-e $IADname) then
+  /bin/rm $IADname
 endif
-ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $ITLname
+
+ln -s -v ${Dir}/Data/gyre3d_ini_zero.nc $IADname

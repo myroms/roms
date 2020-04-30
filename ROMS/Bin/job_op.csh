@@ -1,16 +1,16 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_fte.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_op.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-#  Generalized Stability Theory: Finite Time Eigenmodes               #
+#  Generalized Stability Theory: Optimal Perturbations                #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS Finite Time Eigenmodes    #
+#  This script is used to run the ROMS/TOMS optimal perturbations     #
 #  algorithm.                                                         #
 #                                                                     #
 #######################################################################

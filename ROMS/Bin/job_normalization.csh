@@ -1,14 +1,14 @@
-#!/bin/csh -f
+#!/usr/bin/env csh
 #
 # git $Id$
-# svn $Id: job_psas.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: job_normalization.csh 1018 2020-04-30 01:07:09Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Strong/Weak constraint 4D-PSAS job script:                          #
+# 4D-Var error covariance normalization coefficients job script:      #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #
@@ -20,12 +20,10 @@
 #       files.                                                        #
 #   (3) Specify model, initial conditions, boundary conditions, and   #
 #       surface forcing error convariance input/output normalization  #
-#       factors files.                                                #
-#   (4) Copy a clean copy of the observations NetCDF file.            #
-#   (5) Create 4D-Var input script "psas.in" from template and        #
-#       specify the error covariance standard deviation, error        #
-#       covariance normalization factors, and observation files to    #
-#       be used.                                                      #
+#       factors filenames.                                            #
+#   (4) Create 4D-Var input script "c4dvar.in" from a template and    #
+#       specify the error covariance standard deviation, and error    #
+#       covariance normalization factors files to be used.            #
 #                                                                     #
 #######################################################################
 
@@ -50,40 +48,31 @@
  set STDnameF=${Dir}/Data/wc13_std_f.nc
 
 # Set model, initial conditions, boundary conditions and surface
-# forcing error covariance normalization factors files.
+# forcing error covariance normalization factors filenames.
 
- set NRMnameM=${Dir}/Data/wc13_nrm_m.nc
- set NRMnameI=${Dir}/Data/wc13_nrm_i.nc
- set NRMnameB=${Dir}/Data/wc13_nrm_b.nc
- set NRMnameF=${Dir}/Data/wc13_nrm_f.nc
-
-# Set observations file.
-
- set OBSname=wc13_obs.nc
-
-# Get a clean copy of the observation file.  This is really
-# important since this file is modified.
-
- cp -p ${Dir}/Data/${OBSname} .
+ set NRMnameM=wc13_nrm_m.nc
+ set NRMnameI=wc13_nrm_i.nc
+ set NRMnameB=wc13_nrm_b.nc
+ set NRMnameF=wc13_nrm_f.nc
 
 # Modify 4D-Var template input script and specify above files.
 
- set PSAS=psas.in
- if (-e $PSAS) then
-   /bin/rm $PSAS
+ set NORM=c4dvar.in
+ if (-e $NORM) then
+   /bin/rm $NORM
  endif
- cp s4dvar.in $PSAS
+ cp s4dvar.in $NORM
 
- $SUBSTITUTE $PSAS roms_std_m.nc $STDnameM
- $SUBSTITUTE $PSAS roms_std_i.nc $STDnameI
- $SUBSTITUTE $PSAS roms_std_b.nc $STDnameB
- $SUBSTITUTE $PSAS roms_std_f.nc $STDnameF
- $SUBSTITUTE $PSAS roms_nrm_m.nc $NRMnameM
- $SUBSTITUTE $PSAS roms_nrm_i.nc $NRMnameI
- $SUBSTITUTE $PSAS roms_nrm_b.nc $NRMnameB
- $SUBSTITUTE $PSAS roms_nrm_f.nc $NRMnameF
- $SUBSTITUTE $PSAS roms_obs.nc $OBSname
- $SUBSTITUTE $PSAS roms_hss.nc wc13_hss.nc
- $SUBSTITUTE $PSAS roms_lcz.nc wc13_lcz.nc
- $SUBSTITUTE $PSAS roms_mod.nc wc13_mod.nc
- $SUBSTITUTE $PSAS roms_err.nc wc13_err.nc
+ $SUBSTITUTE $NORM roms_std_m.nc $STDnameM
+ $SUBSTITUTE $NORM roms_std_i.nc $STDnameI
+ $SUBSTITUTE $NORM roms_std_b.nc $STDnameB
+ $SUBSTITUTE $NORM roms_std_f.nc $STDnameF
+ $SUBSTITUTE $NORM roms_nrm_m.nc $NRMnameM
+ $SUBSTITUTE $NORM roms_nrm_i.nc $NRMnameI
+ $SUBSTITUTE $NORM roms_nrm_b.nc $NRMnameB
+ $SUBSTITUTE $NORM roms_nrm_f.nc $NRMnameF
+ $SUBSTITUTE $NORM roms_obs.nc wc13_obs.nc
+ $SUBSTITUTE $NORM roms_hss.nc wc13_hss.nc
+ $SUBSTITUTE $NORM roms_lcz.nc wc13_lcz.nc
+ $SUBSTITUTE $NORM roms_mod.nc wc13_mod.nc
+ $SUBSTITUTE $NORM roms_err.nc wc13_err.nc
