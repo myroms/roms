@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: submit_i4dvar.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: submit_i4dvar.sh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -27,7 +27,7 @@
 #  To submit a job in the batch queue.  Use the following command     #
 #  in MPI applications to avoid running on the head node NO_LOCAL:    #
 #                                                                     #
-#      batch now -f submit_i4dvar.bash                                #
+#      batch now -f submit_i4dvar.sh                                  #
 #                                                                     #
 #  To check batch use:                                                #
 #                                                                     #

@@ -1,14 +1,14 @@
-#!/bin/env csh
+#!/bin/csh -f
 #
 # git $Id$
-# svn $Id: job_i4dvar.csh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_i4dvar.csh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Incremental strong constraint I4D-Var job script:                   #
+# Incremental strong constraint I4D-Var job CSH script:               #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #

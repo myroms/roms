@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: job_r4dvar_sen.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_r4dvar_sen.sh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -9,7 +9,7 @@
 #######################################################################
 #                                                                     #
 # Strong/Weak constraint R4D-Var observation impact or sensitivity    #
-# job script:                                                         #
+# job BASH script:                                                    #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #

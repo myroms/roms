@@ -1,14 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: build_roms.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: build_roms.sh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# ROMS/TOMS Compiling BASH Script                                       :::
+# ROMS Compiling BASH Script                                            :::
 #                                                                       :::
 # Script to compile an user application where the application-specific  :::
 # files are kept separate from the ROMS source code.                    :::
@@ -26,7 +26,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./build_roms.bash [options]                                        :::
+#    ./build_roms.sh [options]                                          :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -35,7 +35,7 @@
 #                                                                       :::
 #    -p macro    Prints any Makefile macro value. For example,          :::
 #                                                                       :::
-#                  build.bash -p FFLAGS                                 :::
+#                  build.sh -p FFLAGS                                   :::
 #                                                                       :::
 #    -noclean    Do not clean already compiled objects                  :::
 #                                                                       :::
@@ -90,7 +90,7 @@ do
       echo "              omit argument for all avaliable CPUs"
       echo ""
       echo "-p macro    Prints any Makefile macro value"
-      echo "              For example:  build.bash -p FFLAGS"
+      echo "              For example:  build.sh -p FFLAGS"
       echo ""
       echo "-noclean    Do not clean already compiled objects"
       echo ""
@@ -212,7 +212,7 @@ fi
  export USE_MY_LIBS=no            # use system default library paths
 #export USE_MY_LIBS=yes           # use my customized library paths
 
-MY_PATHS=${COMPILERS}/my_build_paths.bash
+MY_PATHS=${COMPILERS}/my_build_paths.sh
 
 if [ "${USE_MY_LIBS}" = "yes" ]; then
   source ${MY_PATHS} ${MY_PATHS}

@@ -1,14 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: job_normalization.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_normalization.sh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# 4D-Var error covariance normalization coefficients job script:      #
+# 4D-Var error covariance normalization coefficients job BASH script: #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #

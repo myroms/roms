@@ -1,7 +1,7 @@
-#!/usr/bin/env csh
+#!/bin/csh -f
 #
 # git $Id$
-# svn $Id: job_so_semi.csh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_so_semi.csh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -10,7 +10,7 @@
 #                                                                     #
 #  Generalized Stability Theory: Stochastic Optimals, seminorm        #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS stochastic optimals with  #
+#  This script is used to set-up ROMS stochastic optimals with        #
 #  respect to the seminorm of the chosen functional.                  #
 #                                                                     #
 #######################################################################

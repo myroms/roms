@@ -1,7 +1,7 @@
-#!/usr/bin/env csh
+#!/bin/csh -f
 #
 # git $Id$
-# svn $Id: job_fte.csh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: job_fte.csh 1019 2020-04-30 20:46:51Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -10,7 +10,7 @@
 #                                                                     #
 #  Generalized Stability Theory: Finite Time Eigenmodes               #
 #                                                                     #
-#  This script is used to run the ROMS/TOMS Finite Time Eigenmodes    #
+#  This script is used to set-up ROMS Finite Time Eigenmodes          #
 #  algorithm.                                                         #
 #                                                                     #
 #######################################################################

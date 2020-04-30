@@ -2,7 +2,7 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: mod_iounits.F 1019 2020-04-30 20:46:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -454,6 +454,10 @@
 
         NRM(1:4,ng)%ncid=-1
         STD(1:4,ng)%ncid=-1
+
+        nBCfiles(ng)=-1
+        nCLMfiles(ng)=-1
+        nFfiles(ng)=-1
       END DO
 !
 !-----------------------------------------------------------------------

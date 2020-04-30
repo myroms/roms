@@ -1,14 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # git $Id$
-# svn $Id: check_nc.sh 1018 2020-04-30 01:07:09Z arango $
+# svn $Id: check_nc.sh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 #                                                                       :::
-# ROMS/TOMS NetCDF file checker between simulations:                    :::
+# ROMS NetCDF file checker between simulations:                         :::
 #                                                                       :::
 # This script compares the binary differences of all ROMS/TOMS output   :::
 # NetCDF files between two simulations of the same application.  The    :::

@@ -2,6 +2,7 @@
 *.h          filter=id
 *.in         filter=id
 *.mk         filter=id
+*.csh        filter=id
 *.sh         filter=id
 *.ksh        filter=id
 *.bash       filter=id
