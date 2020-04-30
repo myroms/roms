@@ -1,22 +1,25 @@
+#!/bin/bash
+#
 # git $Id$
-# svn $Id: my_build_paths.bash 995 2020-01-10 04:01:28Z arango $
+# svn $Id: my_build_paths.sh 1019 2020-04-30 20:46:51Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# ROMS/TOMS Customized Compiling Libraries Script                       :::
+# ROMS Customized Compiling Libraries BASH Script:                      :::
 #                                                                       :::
 # This bash script sets the customized library paths needed by the      :::
 # build script when the enviromental variable USE_MY_LIBS has a 'yes'   :::
 # value.                                                                :::
 #                                                                       :::
-# For example, in build_roms.bash we have:                              :::
+# For example, in build_roms.sh we have:                                :::
 #                                                                       :::
 #       if [ "${USE_MY_LIBS}" = "yes" ]; then                           :::
-#         source ${COMPILERS}/my_build_paths.bash                       :::
+#         source ${COMPILERS}/my_build_paths.sh                         :::
 #       fi                                                              :::
+#                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 separator=`perl -e "print ':' x 100;"`
