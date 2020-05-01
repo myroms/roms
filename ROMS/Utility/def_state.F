@@ -34,6 +34,9 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+#ifdef SEDIMENT
+      USE mod_sediment
+#endif
 !
       USE def_var_mod, ONLY : def_var
       USE strings_mod, ONLY : FoundError
