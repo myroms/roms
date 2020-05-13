@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: double_gyre.h 1001 2020-01-10 22:41:16Z arango $
+** svn $Id: double_gyre.h 1022 2020-05-13 03:03:15Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -22,18 +22,16 @@
 ** GRADIENT_CHECK             TLM/ADM Gradient Check
 ** FORCING_SV                 Forcing Singular Vectors
 ** FT_EIGENMODES              Finite Time Eigenmodes
-** IS4DVAR_OLD                Old Incremental, strong constraint 4DVAR
-** IS4DVAR                    Incremental, strong constraint 4DVAR
+** I4DVAR                     Incremental, strong constraint 4D-Var
 ** NLM_DRIVER                 Nonlinear Basic State trajectory
 ** OPT_PERTURBATION           Optimal perturbations
 ** PICARD_TEST                Picard Iterations Tes
+** RBL4DVAR                   Strong/Weak constraint RBL4D-Var
+** R4DVAR                     Strong/Weak constraint R4D-Var
 ** R_SYMMETRY                 Representer Matrix Symmetry Tes
-** S4DVAR                     Strong constraint 4DVAR
 ** SANITY_CHECK               Sanity Check
 ** SO_SEMI                    Stochastic Optimals: Semi-norm
 ** TLM_CHECK                  Tangent Linear Model Check
-** W4DPSAS                    Weak constraint 4D-PSAS
-** W4DVAR                     Weak constraint 4DVAR
 */
 
 #define SOLVE3D
@@ -162,8 +160,8 @@
 **-----------------------------------------------------------------------------
 */
 
-#if defined AFT_EIGENMODES || defined FT_EIGENMODES    ||
-    defined FORCING_SV     || defined OPT_PERTURBATION ||
+#if defined AFT_EIGENMODES || defined FT_EIGENMODES    || \
+    defined FORCING_SV     || defined OPT_PERTURBATION || \
     defined SO_SEMI
 # if defined SOLVE3D                   /* 3D Application */
 #  define UV_ADV
@@ -201,9 +199,9 @@
 **-----------------------------------------------------------------------------
 */
 
-#if defined CORRELATION || defined IS4DVAR   ||
-    defined R_SYMMETRY  || defined TLM_CHECK ||
-    defined W4DPSAS     || defined W4DVAR
+#if defined CORRELATION || defined I4DVAR    || \
+    defined RBL4DVAR    || defined R4DVAR    || \
+    defined R_SYMMETRY  || defined TLM_CHECK
 # if defined SOLVE3D                   /* 3D Application */
 #  undef  UV_C2ADVECTION
 #  undef  UV_C4ADVECTION
@@ -238,7 +236,7 @@
 #  define OUT_DOUBLE
 #  define VCONVOLUTION
 #  define IMPLICIT_VCONV
-#  ifdef W4DVAR
+#  ifdef R4DVAR
 #   define RPM_RELAXATION
 #  endif
 # else                                 /* 2D Application */

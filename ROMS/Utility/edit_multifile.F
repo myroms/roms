@@ -2,7 +2,7 @@
       SUBROUTINE edit_multifile (task)
 !
 !git $Id$
-!svn $Id: edit_multifile.F 1002 2020-01-13 22:04:50Z arango $
+!svn $Id: edit_multifile.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -114,7 +114,7 @@
               BLK(ng)%files(1)=TRIM(FWD(ng)%name)
             END IF
 
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
 !
 !  Save FWD information into the HIS structure so it can be used to
 !  process the NLM background trajectory by the ADM and TLM kernels.

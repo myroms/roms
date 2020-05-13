@@ -2,7 +2,7 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: checkadj.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -70,6 +70,62 @@
         IF (Master) WRITE(stdout,10) TRIM(string),                      &
      &                               'stability problems, WARNING'
       END IF
+
+#ifdef IS4DVAR
+      string=uppercase('is4dvar')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                             uppercase('i4dvar') //               &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef IS4DVAR_SENSITIVITY
+      string=uppercase('is4dvar_sensitivity')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                         uppercase('i4dvar_ana_sensitivity') //   &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef W4DPSAS
+      string=uppercase('w4dpsas')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                             uppercase('rbl4dvar') //             &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef W4DPSAS_SENSITIVITY
+      string=uppercase('w4dpsas_sensitivity')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                         uppercase('rbl4dvar_ana_sensitivity') // &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef W4DPSAS_FCT_SENSITIVITY
+      string=uppercase('w4dpsas_fct_sensitivity')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                         uppercase('rbl4dvar_fct_sensitivity') // &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef W4DVAR
+      string=uppercase('w4dvar')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                             uppercase('r4dvar') //               &
+     &                             ' instead, WARNING'
+#endif
+
+#ifdef W4DVAR_SENSITIVITY
+      string=uppercase('w4dvar_sensitivity')
+      IF (Master) WRITE(stdout,10) TRIM(string),                        &
+     &                             'deprecated option, use ' //         &
+     &                         uppercase('r4dvar_ana_sensitivity') //   &
+     &                             ' instead, WARNING'
+#endif
 
 #if defined TANGENT || defined TL_IOMS || defined ADJOINT
 !

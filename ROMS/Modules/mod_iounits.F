@@ -2,7 +2,7 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1019 2020-04-30 20:46:51Z arango $
+!svn $Id: mod_iounits.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -23,12 +23,12 @@
 !    DAV       Output 4D-Var data assimilation variables               !
 !    DIA       Output diagnostics fields                               !
 !    ERR       Output 4DVar posterior error estimate                   !
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
 !    FCTA      Input basic state forecast solution                     !
 !    FCTB      Input basic state forecast solution                     !
 #endif
 !    FLT       Output Lagrangian trajectories data                     !
-#if defined W4DPSAS_FCT_SENSITIVITY && !defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
 !    FOIA      Input Forecast Observation Impacts forcing data when    !
 !                initialized from the 4D-Var Analysis (red curve)      !
 !    FOIB      Input Forecast Observation Impacts forcing data when    !
@@ -54,7 +54,7 @@
 !                NRM(4,ng)  surface forcing                            !
 !    NUD       Input climatology nudging coefficients                  !
 !    OBS       Input/output 4D-Var observations                        !
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
 !    OIFA      Input Observations Impact Forcing at datum locations if !
 !                initialized from the 4D-Var Analysis (red curve)      !
 !    OIFB      Input Observations Impact Forcing at datum locations if !
@@ -133,11 +133,11 @@
       TYPE(T_IO), allocatable :: DIA(:)     ! diagnostics fields
       TYPE(T_IO), allocatable :: ERR(:)     ! 4D-Var posterior error
       TYPE(T_IO), allocatable :: FLT(:)     ! Lagrangian trajectories
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
       TYPE(T_IO), allocatable :: FCTA(:)    ! forecast for impacts, A
       TYPE(T_IO), allocatable :: FCTB(:)    ! forecast for impacts, B
 #endif
-#if defined W4DPSAS_FCT_SENSITIVITY && !defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
       TYPE(T_IO), allocatable :: FOIA(:)    ! observation impacts, A
       TYPE(T_IO), allocatable :: FOIB(:)    ! observation impacts, B
 #endif
@@ -156,7 +156,7 @@
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
       TYPE(T_IO), allocatable :: OBS(:)     ! observations
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       TYPE(T_IO), allocatable :: OIFA(:)    ! observation impacts, A
       TYPE(T_IO), allocatable :: OIFB(:)    ! observation impacts, B
 #endif
@@ -280,7 +280,7 @@
       IF (.not.allocated(FLT)) THEN
         allocate ( FLT(Ngrids) )
       END IF
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
       IF (.not.allocated(FCTA)) THEN
         allocate ( FCTA(Ngrids) )
       END IF
@@ -288,7 +288,7 @@
         allocate ( FCTB(Ngrids) )
       END IF
 #endif
-#if defined W4DPSAS_FCT_SENSITIVITY && !defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
       IF (.not.allocated(FOIA)) THEN
         allocate ( FOIA(Ngrids) )
       END IF
@@ -338,7 +338,7 @@
       IF (.not.allocated(OBS)) THEN
         allocate ( OBS(Ngrids) )
       END IF
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       IF (.not.allocated(OIFA)) THEN
         allocate ( OIFA(Ngrids) )
       END IF
@@ -417,11 +417,11 @@
         DIA(ng)%ncid=-1
         ERR(ng)%ncid=-1
         FLT(ng)%ncid=-1
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
         FCTA(ng)%ncid=-1
         FCTB(ng)%ncid=-1
 #endif
-#if defined W4DPSAS_FCT_SENSITIVITY && !defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
         FOIA(ng)%ncid=-1
         FOIB(ng)%ncid=-1
 #endif
@@ -439,7 +439,7 @@
         LZE(ng)%ncid=-1
         NUD(ng)%ncid=-1
         OBS(ng)%ncid=-1
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
         OIFA(ng)%ncid=-1
         OIFB(ng)%ncid=-1
 #endif
@@ -503,7 +503,7 @@
           FLT(ng)%base(i:i)=blank
           FLT(ng)%name(i:i)=blank
 
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
           FCTA(ng)%head(i:i)=blank
           FCTA(ng)%base(i:i)=blank
           FCTA(ng)%name(i:i)=blank
@@ -513,7 +513,7 @@
           FCTB(ng)%name(i:i)=blank
 #endif
 
-#if defined W4DPSAS_FCT_SENSITIVITY && !defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
           FOIA(ng)%head(i:i)=blank
           FOIA(ng)%base(i:i)=blank
           FOIA(ng)%name(i:i)=blank
@@ -579,7 +579,7 @@
           OBS(ng)%base(i:i)=blank
           OBS(ng)%name(i:i)=blank
 
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           OIFA(ng)%head(i:i)=blank
           OIFA(ng)%base(i:i)=blank
           OIFA(ng)%name(i:i)=blank

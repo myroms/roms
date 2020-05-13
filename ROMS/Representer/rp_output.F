@@ -3,7 +3,7 @@
       SUBROUTINE rp_output (ng)
 !
 !git $Id$
-!svn $Id: rp_output.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_output.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -279,7 +279,8 @@
 #   endif
         CALL obs_read (ng, iRPM, .FALSE.)
         CALL obs_write (ng, tile, iRPM)
-#   if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
+#   if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+       defined TL_R4DVAR
         CALL obs_cost (ng, iRPM)
 #   endif
       ELSE

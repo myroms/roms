@@ -3,7 +3,7 @@
       SUBROUTINE def_ini (ng)
 !
 !git $Id$
-!svn $Id: def_ini.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_ini.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -348,7 +348,7 @@
 !  in addition to initialization time.
 !-----------------------------------------------------------------------
 
-#  if defined ADJUST_BOUNDARY && !defined W4DPSAS_FCT_SENSITIVITY
+#  if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
 !
 !  Define free-surface open boundaries.
 !

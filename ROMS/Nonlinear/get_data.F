@@ -2,7 +2,7 @@
       SUBROUTINE get_data (ng)
 !
 !git $Id$
-!svn $Id: get_data.F 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: get_data.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,11 +29,15 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
-#if defined HYPOXIA_SRM         || defined NLM_OUTER               || \
-    defined RED_TIDE            || defined SP4DVAR                 || \
-    defined TLM_CHECK           || defined TL_W4DPSAS              || \
-    defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY || \
-    defined W4DPSAS_SENSITIVITY
+#if defined HYPOXIA_SRM              || \
+    defined NLM_OUTER                || \
+    defined RBL4DVAR                 || \
+    defined RBL4DVAR_ANA_SENSITIVITY || \
+    defined RBL4DVAR_FCT_SENSITIVITY || \
+    defined RED_TIDE                 || \
+    defined SP4DVAR                  || \
+    defined TLM_CHECK                || \
+    defined TL_RBL4DVAR
       USE mod_ocean
 #endif
       USE mod_scalars
@@ -1183,9 +1187,12 @@
       END IF
 #endif
 
-#if defined NLM_OUTER               || defined SP4DVAR             || \
-    defined TL_W4DPSAS              || defined W4DPSAS             || \
-    defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS_SENSITIVITY
+#if defined NLM_OUTER                || \
+    defined RBL4DVAR                 || \
+    defined RBL4DVAR_ANA_SENSITIVITY || \
+    defined RBL4DVAR_FCT_SENSITIVITY || \
+    defined SP4DVAR                  || \
+    defined TL_RBL4DVAR
 !
 !-----------------------------------------------------------------------
 !  Read weak contraint forcing snapshots. Notice that the forward

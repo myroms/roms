@@ -1,11 +1,13 @@
 #include "cppdefs.h"
       MODULE tl_t3drelax_mod
 
-#if defined TL_IOMS && defined RPM_RELAXATION && defined SOLVE3D && \
-    defined W4DVAR_SENSITIVITY
+#if defined TL_IOMS                && \
+    defined RPM_RELAXATION         && \
+    defined R4DVAR_ANA_SENSITIVITY && \
+    defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_t3drelax.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_t3drelax.F 1022 2020-05-13 03:03:15Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !

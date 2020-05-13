@@ -2,7 +2,7 @@
       MODULE state_read_mod
 !
 !git $Id$
-!svn $Id: state_read.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: state_read.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -231,7 +231,7 @@
 !
 !  Turn on time wall clock.
 !
-      CALL wclock_on (ng, model, 42, __LINE__,                          &
+      CALL wclock_on (ng, model, 80, __LINE__,                          &
      &                __FILE__)
 #endif
 !
@@ -801,7 +801,7 @@
 !
 !  Turn off time wall clock.
 !
-      CALL wclock_off (ng, model, 42, __LINE__,                         &
+      CALL wclock_off (ng, model, 80, __LINE__,                         &
      &                 __FILE__)
 #endif
 !

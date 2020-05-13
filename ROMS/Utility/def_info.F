@@ -2,7 +2,7 @@
       SUBROUTINE def_info (ng, model, ncid, ncname, DimIDs)
 !
 !git $Id$
-!svn $Id: def_info.F 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: def_info.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -275,15 +275,15 @@
         ELSE IF (ncid.eq.HAR(ng)%ncid) THEN
           type='ROMS/TOMS Least-squared Detiding Harmonics file'
         ELSE IF (ncid.eq.HSS(ng)%ncid) THEN
-          type='ROMS/TOMS 4DVAR Hessian eigenvectors file'
+          type='ROMS/TOMS 4D-Var Hessian eigenvectors file'
         ELSE IF (ncid.eq.HIS(ng)%ncid) THEN
           type='ROMS/TOMS history file'
         ELSE IF (ncid.eq.ITL(ng)%ncid) THEN
           type='ROMS/TOMS tangent linear model initial file'
         ELSE IF (ncid.eq.LCZ(ng)%ncid) THEN
-          type='ROMS/TOMS 4DVAR Lanczos vectors file'
+          type='ROMS/TOMS 4D-Var Lanczos vectors file'
         ELSE IF (ncid.eq.LZE(ng)%ncid) THEN
-          type='ROMS/TOMS 4DVAR Evolved Lanczos vectors file'
+          type='ROMS/TOMS 4D-Var Evolved Lanczos vectors file'
         ELSE IF (ncid.eq.NRM(1,ng)%ncid) THEN
           type='ROMS/TOMS initial conditions error covariance norm file'
         ELSE IF (ncid.eq.NRM(2,ng)%ncid) THEN
@@ -552,9 +552,9 @@
 # endif
 
 # if defined ADJOINT && \
-    !(defined AD_SENSITIVITY      || defined FOUR_DVAR        || \
-      defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SENSITIVITY_4DVAR   || defined SO_SEMI          || \
+    !(defined AD_SENSITIVITY         || defined FOUR_DVAR        || \
+      defined I4DVAR_ANA_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SENSITIVITY_4DVAR      || defined SO_SEMI          || \
       defined STOCHASTIC_OPT )
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'iad_file',            &
@@ -569,7 +569,7 @@
 # endif
 #endif
 
-#if defined IS4DVAR         || defined OPT_OBSERVATIONS || \
+#if defined I4DVAR          || defined OPT_OBSERVATIONS || \
     defined WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'nrm_file',            &
@@ -609,7 +609,7 @@
         END IF
 #endif
 
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'fcta_file',           &
      &                        TRIM(FCTA(ng)%name))
@@ -780,8 +780,8 @@
         END IF
 #endif
 
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+#if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'ads_file',            &
@@ -1223,7 +1223,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
       Vinfo( 1)='ntimes_ana'
       Vinfo( 2)='number of time-steps for observation impacts, '//      &
      &          'analysis interval'
@@ -1369,7 +1369,7 @@
 #ifdef ADJUST_BOUNDARY
       Vinfo( 1)='nOBC'
       Vinfo( 2)=                                                        &
-     &  'number of time-steps between 4DVAR open boundary adjustment'
+     &  'number of time-steps between 4D-Var open boundary adjustment'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -1380,7 +1380,7 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       Vinfo( 1)='nSFF'
       Vinfo( 2)=                                                        &
-     &  'number of time-steps between 4DVAR surface forcing adjustment'
+     &  'number of time-steps between 4D-Var surface forcing adjustment'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -2315,7 +2315,7 @@
 #endif
 #ifdef FOUR_DVAR
 !
-!  4DVAR assimilation parameters.
+!  4D-Var assimilation parameters.
 !
 # ifdef ADJUST_STFLUX
       Vinfo( 1)='Lstflux'
@@ -2339,7 +2339,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
-# ifndef IS4DVAR_SENSITIVITY
+# ifndef I4DVAR_ANA_SENSITIVITY
       Vinfo( 1)='LhessianEV'
       Vinfo( 2)='switch to compute Hessian eigenvectors'
       Vinfo( 9)='.FALSE.'
@@ -2403,9 +2403,11 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
-# if defined IS4DVAR_SENSITIVITY     || defined W4DPSAS_SENSITIVITY || \
-     defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY  || \
-     defined ARRAY_MODES
+# if defined ARRAY_MODES              || \
+     defined I4DVAR_ANA_SENSITIVITY   || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined R4DVAR_ANA_SENSITIVITY
       Vinfo( 1)='Nimpact'
       Vinfo( 2)='Observations impact/sensitivity outer loop to use'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
@@ -2414,7 +2416,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
-# ifndef IS4DVAR_SENSITIVITY
+# ifndef I4DVAR_ANA_SENSITIVITY
       Vinfo( 1)='GradErr'
       Vinfo( 2)='Upper bound on relative error of the gradient'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
@@ -2697,8 +2699,8 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+#if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
@@ -3629,8 +3631,8 @@
      &                   __FILE__)) RETURN
         END IF
 #endif
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+#if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.

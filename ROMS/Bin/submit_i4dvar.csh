@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: submit_i4dvar.csh 1019 2020-04-30 20:46:51Z arango $
+# svn $Id: submit_i4dvar.csh 1022 2020-05-13 03:03:15Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
@@ -17,7 +17,7 @@
 #    $MYROOT/                                                         #
 #           /Data                                                     #
 #           /Forward                                                  #
-#           /IS4DVAR                                                  #
+#           /I4DVAR                                                   #
 #           /OBS                                                      #
 #           /Storage                                                  #
 #                                                                     #
@@ -38,7 +38,7 @@
 
 echo "  "
 echo "**************************************************************"
-echo "***     ROMS/TOMS Incremental, Strong Constraint 4DVar     ***"
+echo "***     ROMS/TOMS Incremental, Strong Constraint 4D-Var    ***"
 echo "***  Master Execution Script: Sequential State Estimation  ***"
 echo "**************************************************************"
 echo "***"
@@ -122,9 +122,9 @@ set VARINFO=${MYROOT}/Data/varinfo.dat
 
 #  Set 4DVar input script.
 
-set IS4DVAR_TEMPLATE=s4dvar.in
+set I4DVAR_TEMPLATE=s4dvar.in
 
-set IS4DVAR_PARAM=is4dvar.in
+set I4DVAR_PARAM=is4dvar.in
 
 #  Set string manipulations perl script.
 
@@ -198,12 +198,12 @@ while ($DAY <= $END_DAY)
 # Run 4DVar Algorithm.
 #---------------------------------------------------------------------
 
-  cd $MYROOT/IS4DVAR
+  cd $MYROOT/I4DVAR
 
 # Clean directory by removing all existing NetCDF files.
 
   if (-e $ITLname) then
-    /bin/rm -f $MYROOT/IS4DVAR/*.nc
+    /bin/rm -f $MYROOT/I4DVAR/*.nc
   endif
   set ITLname=${PREFIX}_itl_${DAY}.nc
 
@@ -228,15 +228,15 @@ while ($DAY <= $END_DAY)
 
 # Modify 4DVar template input script and specify above files.
 
-  if (-e $IS4DVAR_PARAM) then
-    /bin/rm $IS4DVAR_PARAM
+  if (-e $I4DVAR_PARAM) then
+    /bin/rm $I4DVAR_PARAM
   endif
-  cp $IS4DVAR_TEMPLATE $IS4DVAR_PARAM
+  cp $I4DVAR_TEMPLATE $I4DVAR_PARAM
 
-  $SUBSTITUTE $IS4DVAR_PARAM roms_std.nc $STDname
-  $SUBSTITUTE $IS4DVAR_PARAM roms_nrm.nc $NRMname
-  $SUBSTITUTE $IS4DVAR_PARAM roms_obs.nc $OBSname
-  $SUBSTITUTE $IS4DVAR_PARAM roms_mod.nc ${PREFIX}_mod_${DAY}.nc
+  $SUBSTITUTE $I4DVAR_PARAM roms_std.nc $STDname
+  $SUBSTITUTE $I4DVAR_PARAM roms_nrm.nc $NRMname
+  $SUBSTITUTE $I4DVAR_PARAM roms_obs.nc $OBSname
+  $SUBSTITUTE $I4DVAR_PARAM roms_mod.nc ${PREFIX}_mod_${DAY}.nc
 
 # Modify 4DVar ROMS standard input script.
 
@@ -264,11 +264,11 @@ while ($DAY <= $END_DAY)
   $SUBSTITUTE $DA_STDINP roms_avg.nc ${PREFIX}_avg_${DAY}.nc
   $SUBSTITUTE $DA_STDINP roms_tlm.nc ${PREFIX}_tlm_${DAY}.nc
   $SUBSTITUTE $DA_STDINP roms_adj.nc ${PREFIX}_adj_${DAY}.nc
-  $SUBSTITUTE $DA_STDINP s4dvar.in $IS4DVAR_PARAM
+  $SUBSTITUTE $DA_STDINP s4dvar.in $I4DVAR_PARAM
 
 # Run incremental 4DVar algorithm.
 
-  echo ">>> Running IS4DVAR algorithm, starting day: $DAY"
+  echo ">>> Running I4DVAR algorithm, starting day: $DAY"
 
   if (-e da_log.$DAY) then
     /bin/rm -f da_log.$DAY
@@ -277,7 +277,7 @@ while ($DAY <= $END_DAY)
 
 # Move estimated initial conditions, misfit, and log files to storage.
 
-  echo ">>> Done running IS4DVAR, moving initial conditions to storage"
+  echo ">>> Done running I4DVAR, moving initial conditions to storage"
 
   mv -f $INIname $STORAGE
   mv -f ${PREFIX}_mod_${DAY}.nc $STORAGE

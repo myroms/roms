@@ -1,12 +1,15 @@
 #include "cppdefs.h"
 
-#if defined RPCG && (defined SENSITIVITY_4DVAR || defined TL_W4DPSAS || \
-    defined TL_W4DVAR)
+#if defined RPCG              && \
+   (defined SENSITIVITY_4DVAR || \
+    defined TL_RBL4DVAR       || \
+    defined TL_R4DVAR)
+
       SUBROUTINE ad_rpcg_lanczos (ng, model, outLoop, innLoop,          &
      &                            NinnLoop, Lcgini)
 !
 !git $Id$
-!svn $Id: ad_rpcg_lanczos.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_rpcg_lanczos.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -16,7 +19,7 @@
 !  Weak Constraint 4-Dimensional Variational (4DVar) Restricted        !
 !      Pre-conditioned Conjugate Gradient (RPCG) Algorithm             !
 
-# if defined TL_W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined R4DVAR_ANA_SENSITIVITY || defined TL_R4DVAR
 !                                                                      !
 !  The indirect representer method solves the system:                  !
 !                                                                      !
@@ -57,8 +60,9 @@
 !    Chua, B. S. and A. F. Bennett,  2001:  An inverse ocean modeling  !
 !      sytem, Ocean Modelling, 3, 137-165.                             !
 
-# elif defined TL_W4DPSAS || defined W4DPSAS_SENSITIVITY || \
-       defined W4DPSAS_FCT_SENSITIVITY
+# elif defined RBL4DVAR_ANA_SENSITIVITY || \
+       defined RBL4DVAR_FCT_SENSITIVITY || \
+       defined TL_RBL4DVAR
 !                                                                      !
 !  Solve the system (following Courtier, 1997):                        !
 !                                                                      !
@@ -242,8 +246,10 @@
 !
         MINIMIZE : IF (innLoop.eq.0) THEN
 
-# if defined W4DPSAS || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR
 !
           DO iobs=1,Ndatum(ng)
             BCKmodVal(iobs)=NLmodVal(iobs)
@@ -303,13 +309,15 @@
 !  zero in which case the residual is just: (obs-model).
 !
             DO iobs=1,Ndatum(ng)
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR
 !>            pgrad(iobs)=ObsScale(iobs)*                               &
 !>   &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else
 !
-!  NOTE: THIS CODE IS NOT CORRECT YET FOR W4DVAR
+!  NOTE: THIS CODE IS NOT CORRECT YET FOR R4D-Var
 !
 !>            pgrad(iobs)=ObsScale(iobs)*                               &
 !>   &                    (ObsVal(iobs)-                                &
@@ -335,8 +343,10 @@
      &                           pgrad(iobs)/ObsErr(iobs)
                  ad_pgrad(iobs)=ad_pgrad(iobs)/ObsErr(iobs)
               END IF
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR
 !>            tl_pgrad(iobs)=ObsScale(iobs)*                            &
 !>   &                       (tl_ObsVal(iobs)-tl_BCKmodVal(iobs))+      &
 !>   &                       tl_ObsScale(iobs)*                         &
@@ -355,7 +365,7 @@
      &                          (ObsVal(iobs)-BCKmodVal(iobs))
               ad_pgrad(iobs)=0.0_r8
 # else
-!  NOTE: THIS CODE IS NOT CORRECT YET FOR W4DVAR
+!  NOTE: THIS CODE IS NOT CORRECT YET FOR R4D-Var
 !
 !>            tl_pgrad(iobs)=ObsScale(iobs)*                            &
 !>   &                       (tl_ObsVal(iobs)-tl_TLmodVal(iobs))
@@ -411,7 +421,7 @@
 !>            END DO
 !>          END IF
 !!
-!!  NOTE: CODE WON'T WORK FOR W4DVAR AT THE MOMENT SINCE THIS IS
+!!  NOTE: CODE WON'T WORK FOR R4D-Var AT THE MOMENT SINCE THIS IS
 !!  THE WRONG TLmodVal HERE!!!
 !!
             DO iobs=1,Ndatum(ng)
@@ -421,7 +431,8 @@
               ad_Hbk(iobs)=0.0_r8
             END DO
           END IF
-# if defined W4DPSAS_SENSITIVITY || defined W4DPSAS_FCT_SENSITIVITY
+# if defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY
 !
           DO iobs=1,Ndatum(ng)
 !>          tl_BCKmodVal(iobs)=0.0_r8
@@ -1553,8 +1564,9 @@
 #  endif
       CALL mp_bcastf (ng, model, ad_ObsErr)
       CALL mp_bcastf (ng, model, ad_ObsScale)
-#  if defined SENSITIVITY_4DVAR || \
-      defined W4DPSAS           || defined W4DVAR
+#  if defined RBL4DVAR          || \
+      defined R4DVAR            || \
+      defined SENSITIVITY_4DVAR
       CALL mp_bcastf (ng, model, ad_Hbk(:))
       CALL mp_bcastf (ng, model, ad_Jb0(outLoop-1))
 #  endif

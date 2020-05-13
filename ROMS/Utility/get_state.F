@@ -2,7 +2,7 @@
       SUBROUTINE get_state (ng, model, msg, ncname, IniRec, Tindex)
 !
 !git $Id$
-!svn $Id: get_state.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: get_state.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -183,7 +183,7 @@
 !
 !  Turn on time wall clock.
 !
-      CALL wclock_on (ng, IDmod, 42, __LINE__,                          &
+      CALL wclock_on (ng, IDmod, 80, __LINE__,                          &
      &                __FILE__)
 #endif
 !
@@ -397,7 +397,7 @@
           t_code=' '              ! time is meaningless for these fields
         END IF
         WRITE (Tstring,'(f15.4)') tdays(ng)
-#if defined IS4DVAR         || defined IS4DVAR_SENSITIVITY || \
+#if defined I4DVAR          || defined I4DVAR_ANA_SENSITIVITY || \
     defined WEAK_CONSTRAINT
         WRITE (stdout,40) string, 'Reading '//TRIM(StateMsg(msg)),      &
      &                    t_code, ng, ', Outer=', outer,                &
@@ -5400,10 +5400,13 @@
       END IF FRC_STATE
 #endif
 
-#if (defined TL_W4DPSAS      || defined W4DPSAS_FCT_SENSITIVITY || \
-     defined W4DPSAS         || defined W4DPSAS_SENSITIVITY)    && \
-    (defined ADJUST_BOUNDARY || defined ADJUST_WSTRESS          || \
-     defined ADJUST_STFLUX)
+#if (defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR)             && \
+    (defined ADJUST_BOUNDARY          || \
+     defined ADJUST_STFLUX            || \
+     defined ADJUST_WSTRESS)
 !
 !-----------------------------------------------------------------------
 !  Read in tangent linear forcing corrections.
@@ -5412,7 +5415,7 @@
       TLM_FORCING: IF (model.eq.5) THEN
 !
 !  Set switch to process surface forcing and/or open boundaries during
-!  4DVar minimization.
+!  4D-Var minimization.
 !
         get_adjust=.TRUE.
 
@@ -6121,7 +6124,7 @@
 !
 !  Turn off time wall clock.
 !
-      CALL wclock_off (ng, IDmod, 42, __LINE__,                         &
+      CALL wclock_off (ng, IDmod, 80, __LINE__,                         &
      &                 __FILE__)
 #endif
 !

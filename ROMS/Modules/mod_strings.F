@@ -2,7 +2,7 @@
       MODULE mod_strings
 !
 !git $Id$
-!svn $Id: mod_strings.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: mod_strings.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -13,6 +13,7 @@
 !  fflags      F90/F95 compiler flags.                                 !
 !  title       Title of model run.                                     !
 !  Coptions    Activated C-preprocessing options.                      !
+!  Fregion     Start index of 4D-Var profiling region.                 !
 !  Mregion     Start index of message passage code profiling region.   !
 !  Nregion     Number of total code profiling regions.                 !
 !                                                                      !
@@ -78,24 +79,24 @@
 !                (39) Two-way coupling to Atmosphere Model             !
 !                (40) Two-way coupling to Sea Ice Model                !
 !                (41) Two-way coupling to Wave Model                   !
-!                (42) Reading model state vector                       !
-!                (43) 4D-Var minimization solver                       !
-!                (44) Background error covariance matrix               !
-!                (45) Posterior error covariance matrix                !
-!                (46) 4D-var solver pre-conditioning                   !
-!                (47) Writing model state vector                       !
-!                (48) Unused 01                                        !
-!                (49) Unused 02                                        !
-!                (50) Unused 03                                        !
-!                (51) Unused 04                                        !
-!                (52) Unused 05                                        !
-!                (53) Unused 06                                        !
-!                (54) Unused 07                                        !
-!                (55) Unused 08                                        !
-!                (56) Unused 09                                        !
-!                (57) Unused 10                                        !
-!                (58) Unused 11                                        !
-!                (59) Unused 12                                        !
+!                (42) Unused 01                                        !
+!                (43) Unused 02                                        !
+!                (44) Unused 03                                        !
+!                (45) Unused 04                                        !
+!                (46) Unused 05                                        !
+!                (47) Unused 06                                        !
+!                (48) Unused 07                                        !
+!                (49) Unused 08                                        !
+!                (50) Unused 09                                        !
+!                (51) Unused 10                                        !
+!                (52) Unused 11                                        !
+!                (53) Unused 12                                        !
+!                (54) Unused 13                                        !
+!                (55) Unused 14                                        !
+!                (56) Unused 15                                        !
+!                (57) Unused 16                                        !
+!                (58) Unused 17                                        !
+!                (59) Unused 18                                        !
 !                (60) Message Passage: 2D halo exchanges               !
 !                (61) Message Passage: 3D halo exchanges               !
 !                (62) Message Passage: 4D halo exchanges               !
@@ -110,17 +111,35 @@
 !                (71) Message Passage: nesting array data gathering    !
 !                (72) Message Passage: synchronization barrier         !
 !                (73) Message Passage: multi-model coupling            !
+!                (74) Unused 01                                        !
+!                (75) Unused 02                                        !
+!                (76) Unused 03                                        !
+!                (77) Unused 04                                        !
+!                (78) Unused 05                                        !
+!                (79) Unused 06                                        !
+!                (80) 4D-Var: reading model state vector               !
+!                (81) 4D-Var: writing model state vector               !
+!                (82) 4D-Var: prior error covariance matrix            !
+!                (83) 4D-Var: posterior error covariance matrix        !
+!                (84) 4D-Var: pre-conditioning                         !
+!                (85) 4D-Var: minimization solver                      !
+!                (86) 4D-Var: background phase                         !
+!                (87) 4D-Var: increment phase                          !
+!                (88) 4D-Var: analysis phase                           !
+!                (89) Unused 01                                        !
+!                (90) Unused 02                                        !
 !                                                                      !
 !=======================================================================
 !
         implicit none
-
+!
         character (len=80)   :: title
         character (len=2048) :: Coptions
-
-        integer, parameter :: Mregion = 60
-        integer, parameter :: Nregion = 73
-
+!
+        integer, parameter :: Fregion = 80      ! start of 4D-Var region
+        integer, parameter :: Mregion = 60      ! start of mpi-region
+        integer, parameter :: Nregion = 88
+!
         character (len=48), dimension(18) :: StateMsg =                 &
      &    (/'state initial conditions,                       ',         & !01
      &      'previous state initial conditions,              ',         & !02
@@ -140,7 +159,7 @@
      &      'OBC normalization factors,                      ',         & !16
      &      'surface forcing normalization factors,          ',         & !17
      &      'saddle-point Arnoldi state vector,              '/)          !18
-
+!
         character (len=50), dimension(Nregion) :: Pregion =             &
      &    (/'Allocation and array initialization ..............',       & !01
      &      'Ocean state initialization .......................',       & !02
@@ -183,24 +202,24 @@
      &      'Two-way coupling to Atmosphere Model .............',       & !39
      &      'Two-way coupling to Sea Ice Model ................',       & !40
      &      'Two-way coupling to Wave Model ...................',       & !41
-     &      'Reading model state vector .......................',       & !42
-     &      '4D-Var minimization solver .......................',       & !43
-     &      'Background error covariance matrix ...............',       & !44
-     &      'Posterior error covariance matrix ................',       & !45
-     &      '4D-Var solver pre-conditioning ...................',       & !46
-     &      'Writing model state vector .......................',       & !47
-     &      'Unused 01 ........................................',       & !48
-     &      'Unused 02 ........................................',       & !49
-     &      'Unused 03 ........................................',       & !50
-     &      'Unused 04 ........................................',       & !51
-     &      'Unused 05 ........................................',       & !52
-     &      'Unused 06 ........................................',       & !53
-     &      'Unused 07 ........................................',       & !54
-     &      'Unused 08 ........................................',       & !55
-     &      'Unused 09 ........................................',       & !56
-     &      'Unused 10 ........................................',       & !57
-     &      'Unused 11 ........................................',       & !58
-     &      'Unused 12 ........................................',       & !59
+     &      'Unused 01 ........................................',       & !42
+     &      'Unused 02 ........................................',       & !43
+     &      'Unused 03 ........................................',       & !44
+     &      'Unused 04 ........................................',       & !45
+     &      'Unused 05 ........................................',       & !46
+     &      'Unused 06 ........................................',       & !47
+     &      'Unused 07 ........................................',       & !48
+     &      'Unused 08 ........................................',       & !49
+     &      'Unused 09 ........................................',       & !50
+     &      'Unused 10 ........................................',       & !51
+     &      'Unused 11 ........................................',       & !52
+     &      'Unused 12 ........................................',       & !53
+     &      'Unused 13 ........................................',       & !54
+     &      'Unused 14 ........................................',       & !55
+     &      'Unused 15 ........................................',       & !56
+     &      'Unused 16 ........................................',       & !57
+     &      'Unused 17 ........................................',       & !58
+     &      'Unused 18 ........................................',       & !59
      &      'Message Passage: 2D halo exchanges ...............',       & !60
      &      'Message Passage: 3D halo exchanges ...............',       & !61
      &      'Message Passage: 4D halo exchanges ...............',       & !62
@@ -214,7 +233,22 @@
      &      'Message Passage: nesting point data gathering ....',       & !70
      &      'Message Passage: nesting array data gathering ....',       & !71
      &      'Message Passage: synchronization barrier .........',       & !72
-     &      'Message Passage: multi-model coupling ............'/)        !73
+     &      'Message Passage: multi-model coupling ............',       & !73
+     &      'Unused 01 ........................................',       & !74
+     &      'Unused 02 ........................................',       & !75
+     &      'Unused 03 ........................................',       & !76
+     &      'Unused 04 ........................................',       & !77
+     &      'Unused 05 ........................................',       & !78
+     &      'Unused 06 ........................................',       & !79
+     &      '4D-Var: reading model state vector ...............',       & !80
+     &      '4D-Var: writing model state vector ...............',       & !81
+     &      '4D-Var: prior error covariance matrix ............',       & !82
+     &      '4D-Var: posterior error covariance matrix ........',       & !83
+     &      '4D-Var: pre-conditioning .........................',       & !84
+     &      '4D-Var: minimization solver ......................',       & !85
+     &      '4D-Var: background phase .........................',       & !86
+     &      '4D-Var: increment phase ..........................',       & !87
+     &      '4D-Var: analysis phase ...........................'/)        !88
 !
 !  The following variables are assigned during C-preprocessing.  They
 !  have information about operating sytem, CPU hardware, compiling
