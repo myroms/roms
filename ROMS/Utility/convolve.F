@@ -4,7 +4,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: convolve.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: convolve.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -117,7 +117,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iADM, 44, __LINE__,                         &
+        CALL wclock_on (ng, iADM, 82, __LINE__,                         &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -131,7 +131,7 @@
         END DO
 !$OMP END PARALLEL
 # ifdef PROFILE
-        CALL wclock_off (ng, iADM, 44, __LINE__,                        &
+        CALL wclock_off (ng, iADM, 82, __LINE__,                        &
      &                   __FILE__)
 # endif
       END DO
@@ -146,7 +146,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iTLM, 44, __LINE__,                         &
+        CALL wclock_on (ng, iTLM, 82, __LINE__,                         &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -160,7 +160,7 @@
         END DO
 !$OMP END PARALLEL
 # ifdef PROFILE
-        CALL wclock_off (ng, iTLM, 44, __LINE__,                        &
+        CALL wclock_off (ng, iTLM, 82, __LINE__,                        &
      &                   __FILE__)
 # endif
       END DO
@@ -194,10 +194,10 @@
       USE tl_variability_mod, ONLY : tl_variability
       USE ini_adjust_mod,     ONLY : load_ADtoTL
       USE ini_adjust_mod,     ONLY : load_TLtoAD
-# if defined ARRAY_MODES        || defined W4DVAR || \
-     defined W4DVAR_SENSITIVITY
+# if defined ARRAY_MODES            || defined R4DVAR || \
+     defined R4DVAR_ANA_SENSITIVITY
       USE ini_adjust_mod,     ONLY : rp_ini_adjust
-# elif defined W4DPSAS  || defined W4DPSAS_SENSITIVITY
+# elif defined RBL4DVAR  || defined RBL4DVAR_ANA_SENSITIVITY
       USE ini_adjust_mod,     ONLY : ini_adjust
 # endif
       USE mod_forces,         ONLY : initialize_forces
@@ -319,7 +319,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, model, 44, __LINE__,                        &
+        CALL wclock_on (ng, model, 82, __LINE__,                        &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -338,7 +338,7 @@
         END DO
 !$OMP END PARALLEL
 # ifdef PROFILE
-        CALL wclock_off (ng, model, 44, __LINE__,                       &
+        CALL wclock_off (ng, model, 82, __LINE__,                       &
      &                   __FILE__)
 # endif
       END DO
@@ -354,7 +354,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, model, 44, __LINE__,                        &
+        CALL wclock_on (ng, model, 82, __LINE__,                        &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -382,13 +382,13 @@
         END IF
 # endif
 # ifdef PROFILE
-        CALL wclock_off (ng, model, 44, __LINE__,                       &
+        CALL wclock_off (ng, model, 82, __LINE__,                       &
      &                   __FILE__)
 # endif
       END DO
 
-# if defined ARRAY_MODES        || defined W4DVAR || \
-     defined W4DVAR_SENSITIVITY
+# if defined ARRAY_MODES            || defined R4DVAR || \
+     defined R4DVAR_ANA_SENSITIVITY
 !
 !  Copy back to adjoint state arrays when done with the convolution.
 !  Compute representer model initial conditions by adding convolved
@@ -396,7 +396,7 @@
 !  record Rbck).
 !
       IF ((model.eq.iRPM).and.                                          &
-     &    (INDEX(driver,'w4dvar').ne.0)) THEN
+     &    (INDEX(driver,'r4dvar').ne.0)) THEN
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
@@ -415,7 +415,7 @@
         END DO
       END IF
 
-# elif defined W4DPSAS || defined W4DPSAS_SENSITIVITY
+# elif defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY
 #  ifndef RPCG
 !
 !  Copy back to adjoint state arrays when done with the convolution.
@@ -424,7 +424,7 @@
 !  record Rbck).
 !
       IF ((model.eq.iNLM).and.                                          &
-     &    (INDEX(driver,'w4dpsas').ne.0)) THEN
+     &    (INDEX(driver,'rbl4dvar').ne.0)) THEN
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
@@ -456,15 +456,15 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END DO
-# if defined ARRAY_MODES        || defined W4DVAR || \
-     defined W4DVAR_SENSITIVITY
+# if defined ARRAY_MODES            || defined R4DVAR || \
+     defined R4DVAR_ANA_SENSITIVITY
       ELSE IF (model.eq.iRPM) THEN
         DO ng=1,Ngrids
           CALL rp_wrt_ini (ng, Rold(ng), Rec2)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END DO
-# elif (defined W4DPSAS || defined W4DPSAS_SENSITIVITY) && \
+# elif (defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY) && \
        !defined RPCG
       ELSE IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
@@ -590,7 +590,7 @@
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 # ifdef PROFILE
-          CALL wclock_on (ng, model, 44, __LINE__,                      &
+          CALL wclock_on (ng, model, 82, __LINE__,                      &
      &                    __FILE__)
 # endif
           DO irec=1,Nrec(ng)-1
@@ -644,7 +644,7 @@
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 # ifdef PROFILE
-        CALL wclock_off (ng, model, 44, __LINE__,                       &
+        CALL wclock_off (ng, model, 82, __LINE__,                       &
      &                   __FILE__)
 # endif
         END IF
@@ -667,7 +667,7 @@
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 # ifdef PROFILE
-          CALL wclock_on (ng, model, 44, __LINE__,                      &
+          CALL wclock_on (ng, model, 82, __LINE__,                      &
      &                    __FILE__)
 # endif
           ADM(ng)%Rindex=0
@@ -712,7 +712,7 @@
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 # ifdef PROFILE
-          CALL wclock_off (ng, model, 44, __LINE__,                     &
+          CALL wclock_off (ng, model, 82, __LINE__,                     &
      &                     __FILE__)
 # endif
         END IF
@@ -730,7 +730,7 @@
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 # ifdef PROFILE
-          CALL wclock_on (ng, model, 44, __LINE__,                      &
+          CALL wclock_on (ng, model, 82, __LINE__,                      &
      &                    __FILE__)
 # endif
           DO irec=1,Nrec(ng)-1
@@ -805,7 +805,7 @@
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 # ifdef PROFILE
-          CALL wclock_off (ng, model, 44, __LINE__,                     &
+          CALL wclock_off (ng, model, 82, __LINE__,                     &
      &                     __FILE__)
 # endif
         END IF
@@ -888,7 +888,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iADM, 44, __LINE__,                         &
+        CALL wclock_on (ng, iADM, 82, __LINE__,                         &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -905,7 +905,7 @@
         END DO
 !$OMP END PARALLEL
 # ifdef PROFILE
-        CALL wclock_off (ng, iADM, 44, __LINE__,                        &
+        CALL wclock_off (ng, iADM, 82, __LINE__,                        &
      &                   __FILE__)
 # endif
       END DO
@@ -920,7 +920,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iTLM, 44, __LINE__,                         &
+        CALL wclock_on (ng, iTLM, 82, __LINE__,                         &
      &                  __FILE__)
 # endif
 !$OMP PARALLEL
@@ -934,7 +934,7 @@
         END DO
 !$OMP END PARALLEL
 # ifdef PROFILE
-        CALL wclock_off (ng, iTLM, 44, __LINE__,                        &
+        CALL wclock_off (ng, iTLM, 82, __LINE__,                        &
      &                   __FILE__)
 # endif
       END DO

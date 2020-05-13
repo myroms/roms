@@ -3,7 +3,7 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_rhs3d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_rhs3d.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -35,7 +35,7 @@
       USE mod_diags
 # endif
       USE mod_forces
-# if defined W4DVAR_SENSITIVITY && defined RPM_RELAXATION
+# if defined R4DVAR_ANA_SENSITIVITY && defined RPM_RELAXATION
       USE mod_fourdvar
 # endif
       USE mod_grid
@@ -55,7 +55,7 @@
       USE tl_t3dmix_mod, ONLY : tl_t3dmix4
 #  endif
 # endif
-# if defined W4DVAR_SENSITIVITY && defined RPM_RELAXATION
+# if defined R4DVAR_ANA_SENSITIVITY && defined RPM_RELAXATION
       USE tl_t3drelax_mod, ONLY : tl_t3drelax
       USE tl_uv3drelax_mod, ONLY : tl_uv3drelax
 # endif
@@ -104,7 +104,7 @@
       CALL tl_t3dmix4 (ng, tile)
 #  endif
 # endif
-# if defined W4DVAR_SENSITIVITY && defined RPM_RELAXATION
+# if defined R4DVAR_ANA_SENSITIVITY && defined RPM_RELAXATION
 !
 !-----------------------------------------------------------------------
 !  Improve stability and convergence of the tangent linear representer
@@ -198,7 +198,7 @@
 !
       CALL tl_uv3dmix4 (ng, tile)
 # endif
-# if defined W4DVAR_SENSITIVITY && defined RPM_RELAXATION
+# if defined R4DVAR_ANA_SENSITIVITY && defined RPM_RELAXATION
 !
 !-----------------------------------------------------------------------
 !  Improve stability and convergence of the tangent linear representer

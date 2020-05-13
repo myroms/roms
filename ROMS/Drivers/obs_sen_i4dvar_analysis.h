@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: obs_sen_is4dvar.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: obs_sen_i4dvar_analysis.h 1022 2020-05-13 03:03:15Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -29,7 +29,7 @@
 !                                                                      !
 !    |----------------------------> TLM                                !
 !                                                                      !
-!  (1) We begin by running an IS4DVAR Lanczos calculation using k      !
+!  (1) We begin by running an I4D-Var Lanczos calculation using k      !
 !      inner-loops and 1 outer-loop for the period t=t0 to t1. We      !
 !      will denote by xb(0) the background initial condition, and      !
 !      the observations vector by y.  The resulting Lanczos vectors    !
@@ -39,7 +39,7 @@
 !  (2) Next we run the NLM for the combined assimilation+forecast      !
 !      period t=t0 to t2, where t2>t1. This represents the final       !
 !      sweep of the NLM for the period t=t0 to t1 after exiting the    !
-!      inner-loop in the IS4DVAR plus the forecast period t=t1 to t2.  !
+!      inner-loop in the I4D-Var plus the forecast period t=t1 to t2.  !
 !      The initial condition for the NLM at t=t0 is xb(0) and not      !
 !      the new estimated initial conditions. We save the basic state   !
 !      trajectory, xb(t), of this NLM run for use in the adjoint       !
@@ -88,11 +88,11 @@
 !  (7) Finally, we run the TLM from t=t0 to t=t1 using z from (6) as   !
 !      the TLM initial condition. During this run of the TLM, we       !
 !      need to read and process the observations that we used in       !
-!      the IS4DVAR of step (1) and write the TLM solution at the       !
+!      the I4D-Var of step (1) and write the TLM solution at the       !
 !      observation points and times to the DAV(ng)%name NetCDF file.   !
 !      The values that we write into this DAV(ng)%name are actually    !
 !      the TLM values multiplied by error variance assigned to each    !
-!      observation during the IS4DVAR in step (1).                     !
+!      observation during the I4D-Var in step (1).                     !
 !                                                                      !
 !  These routines control the initialization,  time-stepping,  and     !
 !  finalization of  ROMS/TOMS  model following ESMF conventions:       !
@@ -223,7 +223,6 @@
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
-!$OMP PARALLEL
 #if defined _OPENMP
       MyThread=my_threadnum()
 #elif defined DISTRIBUTE
@@ -236,7 +235,6 @@
         first_tile(ng)=MyThread*chunk_size
         last_tile (ng)=first_tile(ng)+chunk_size-1
       END DO
-!$OMP END PARALLEL
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -248,18 +246,14 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL
           DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0, __LINE__, __FILE__)
           END DO
-!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
-!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
-!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -285,8 +279,8 @@
 !
 !-----------------------------------------------------------------------
 !  Read in Lanczos algorithm coefficients (cg_beta, cg_delta) from
-!  file LCZ(ng)%name NetCDF (IS4DVAR adjoint file), as computed in the
-!  IS4DVAR Lanczos data assimilation algorithm for the first outer
+!  file LCZ(ng)%name NetCDF (I4D-Var adjoint file), as computed in the
+!  I4D-Var Lanczos data assimilation algorithm for the first outer
 !  loop.  They are needed here, in routine "ini_lanczos", to compute
 !  the tangent linear model initial conditions as the weighted sum
 !  of the Lanczos vectors. The weighting coefficient are computed
@@ -466,7 +460,7 @@
       END DO
 !
 !  Initialize nonlinear model with the estimated initial conditions
-!  from the IS4DVAR Lanczos algorithm.  Notice that the LreadBLK and
+!  from the I4D-Var Lanczos algorithm.  Notice that the LreadBLK and
 !  LreadFWD switches are turned off to suppress processing of the
 !  structures when "check_multifile" during
 !  nonlinear model execution.
@@ -482,10 +476,8 @@
         Fcount=RST(ng)%load
         RST(ng)%Nrec(Fcount)=0
       END DO
-
-!$OMP PARALLEL
+!
       CALL initial
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -496,12 +488,10 @@
 !
       IF (balance(isFsur)) THEN
         DO ng=1,Ngrids
-!$OMP PARALLEL
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL balance_ref (ng, tile, Lini)
             CALL biconj (ng, tile, iNLM, Lini)
           END DO
-!$OMP END PARALLEL
           wrtZetaRef(ng)=.TRUE.
         END DO
       END IF
@@ -517,14 +507,12 @@
           WRITE (stdout,10) 'NL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 # ifdef SOLVE3D
       CALL main3d (RunInterval)
 # else
       CALL main2d (RunInterval)
 # endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 #endif
@@ -562,9 +550,7 @@
 !
       Lstiffness=.FALSE.
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL ad_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
@@ -626,14 +612,12 @@
             WRITE (stdout,10) 'AD', ng, ntstart(ng), ntend(ng)
           END IF
         END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
         CALL ad_main3d (RunInterval)
 #else
         CALL ad_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END IF
@@ -664,7 +648,6 @@
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
 #ifdef BALANCE_OPERATOR
           CALL ad_balance (ng, tile, Lini, Lnew(ng))
@@ -672,12 +655,11 @@
           CALL ad_variability (ng, tile, Lnew(ng), Lweak)
           CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
-!  as the IS4DVAR Lanczos algorithm.
+!  as the I4D-Var Lanczos algorithm.
 !
       SourceFile=__FILE__ // ", ROMS_run"
       DO ng=1,Ngrids
@@ -691,7 +673,7 @@
 !
 !  Initialize nonlinear model with the same initial conditions, xb(0),
 !  Lbck record in INI(ng)%name. This is the first guess NLM initial
-!  conditions used to start the IS4DVAR Lanczos algorithm. Notice that
+!  conditions used to start the I4D-Var Lanczos algorithm. Notice that
 !  the LreadBLK and LreadFWD switches are turned off to suppress
 !  processing of the structures when "check_multifile" during
 !  nonlinear model execution.
@@ -709,10 +691,8 @@
         Fcount=RST(ng)%load
         RST(ng)%Nrec(Fcount)=0
       END DO
-
-!$OMP PARALLEL
+!
       CALL initial
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -725,14 +705,12 @@
           WRITE (stdout,10) 'NL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 # ifdef SOLVE3D
       CALL main3d (RunInterval)
 # else
       CALL main2d (RunInterval)
 # endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -771,9 +749,7 @@
 !  above.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
         LdefTLM(ng)=.TRUE.
@@ -784,7 +760,6 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL tl_convolution (ng, tile, Litl, Lweak, 2)
           CALL tl_variability (ng, tile, Litl, Lweak)
@@ -792,7 +767,6 @@
           CALL tl_balance (ng, tile, Lini, Litl)
 #endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Define output 4DVAR NetCDF file containing the sensitivity at the
@@ -828,14 +802,12 @@
           WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #else
       CALL tl_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -872,21 +844,18 @@
 !  Clear the adjoint forcing and boundary condition increment arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL initialize_forces (ng, tile, iADM)
 # ifdef ADJUST_BOUNDARY
           CALL initialize_boundary (ng, tile, iADM)
 # endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
 # ifdef BALANCE_OPERATOR
           CALL ad_balance (ng, tile, Lini, Lnew(ng))
@@ -894,12 +863,11 @@
           CALL ad_variability (ng, tile, Lnew(ng), Lweak)
           CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
-!  as the IS4DVAR Lanczos algorithm.
+!  as the I4D-Var Lanczos algorithm.
 !
       SourceFile=__FILE__ // ", ROMS_run"
       DO ng=1,Ngrids
@@ -914,9 +882,7 @@
 !  above.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
         LdefTLM(ng)=.TRUE.
@@ -935,7 +901,6 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL tl_convolution (ng, tile, Litl, Lweak, 2)
           CALL tl_variability (ng, tile, Litl, Lweak)
@@ -943,7 +908,6 @@
           CALL tl_balance (ng, tile, Lini, Litl)
 # endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -954,14 +918,12 @@
           WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 # ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 # else
       CALL tl_main2d (RunInterval)
 # endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
@@ -998,21 +960,18 @@
 !  arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL initialize_ocean (ng, tile, iADM)
 #  ifdef ADJUST_BOUNDARY
           CALL initialize_boundary (ng, tile, iADM)
 #  endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
 #  ifdef BALANCE_OPERATOR
           CALL ad_balance (ng, tile, Lini, Lnew(ng))
@@ -1020,12 +979,11 @@
           CALL ad_variability (ng, tile, Lnew(ng), Lweak)
           CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
-!  as the IS4DVAR Lanczos algorithm.
+!  as the I4D-Var Lanczos algorithm.
 !
       SourceFile=__FILE__ // ", ROMS_run"
       DO ng=1,Ngrids
@@ -1040,9 +998,7 @@
 !  above.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
         LdefTLM(ng)=.TRUE.
@@ -1059,7 +1015,6 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL tl_convolution (ng, tile, Litl, Lweak, 2)
           CALL tl_variability (ng, tile, Litl, Lweak)
@@ -1067,7 +1022,6 @@
           CALL tl_balance (ng, tile, Lini, Litl)
 #  endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -1078,14 +1032,12 @@
           WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #  ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #  else
       CALL tl_main2d (RunInterval)
 #  endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
@@ -1122,19 +1074,16 @@
 !  Clear the adjoint increment initial condition and forcing arrays.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL initialize_ocean (ng, tile, iADM)
           CALL initialize_forces (ng, tile, iADM)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Convert adjoint solution to v-space since the Lanczos vectors
 !  are in v-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
 #  ifdef BALANCE_OPERATOR
           CALL ad_balance (ng, tile, Lini, Lnew(ng))
@@ -1142,12 +1091,11 @@
           CALL ad_variability (ng, tile, Lnew(ng), Lweak)
           CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
-!  as the IS4DVAR Lanczos algorithm.
+!  as the I4D-Var Lanczos algorithm.
 !
       SourceFile=__FILE__ // ", ROMS_run"
       DO ng=1,Ngrids
@@ -1162,9 +1110,7 @@
 !  above.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
         LdefTLM(ng)=.TRUE.
@@ -1181,7 +1127,6 @@
 !  Convert TL initial condition from v-space to x-space.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL tl_convolution (ng, tile, Litl, Lweak, 2)
           CALL tl_variability (ng, tile, Litl, Lweak)
@@ -1189,7 +1134,6 @@
           CALL tl_balance (ng, tile, Lini, Litl)
 #  endif
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
@@ -1200,14 +1144,12 @@
           WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #  ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #  else
       CALL tl_main2d (RunInterval)
 #  endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
@@ -1281,18 +1223,14 @@
       END IF
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO thread=THREAD_RANGE
           CALL wclock_off (ng, iNLM, 0, __LINE__, __FILE__)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Report dynamic memory and automatic memory requirements.
 !
-!$OMP PARALLEL
       CALL memory
-!$OMP END PARALLEL
 !
 !  Close IO files.
 !

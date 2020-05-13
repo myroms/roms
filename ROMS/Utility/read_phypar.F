@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1019 2020-04-30 20:46:51Z arango $
+!svn $Id: read_phypar.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -66,9 +66,9 @@
       logical, allocatable :: Linert(:,:)
 #endif
       logical, allocatable :: Ltracer(:,:)
-#if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
-    defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
-    defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
+#if defined AD_SENSITIVITY    || defined I4DVAR_ANA_SENSITIVITY || \
+    defined FORCING_SV        || defined OPT_OBSERVATIONS       || \
+    defined SENSITIVITY_4DVAR || defined SO_SEMI                || \
     defined STOCHASTIC_OPT
 # ifndef OBS_SPACE
       logical, allocatable :: Ladsen(:)
@@ -356,9 +356,9 @@
               CALL initialize_scalars  ! number of nested grids and
               CALL allocate_ncparam    ! domain parameters are known
               CALL initialize_ncparam
-#if defined AD_SENSITIVITY    || defined IS4DVAR_SENSITIVITY || \
-    defined FORCING_SV        || defined OPT_OBSERVATIONS    || \
-    defined SENSITIVITY_4DVAR || defined SO_SEMI             || \
+#if defined AD_SENSITIVITY    || defined I4DVAR_ANA_SENSITIVITY || \
+    defined FORCING_SV        || defined OPT_OBSERVATIONS       || \
+    defined SENSITIVITY_4DVAR || defined SO_SEMI                || \
     defined STOCHASTIC_OPT
 # ifndef OBS_SPACE
               IF (.not.allocated(Ladsen)) THEN
@@ -541,7 +541,7 @@
 #endif
             CASE ('NTIMES')
               Npts=load_i(Nval, Rval, Ngrids, ntimes)
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
             CASE ('NTIMES_ANA')
               Npts=load_i(Nval, Rval, Ngrids, ntimes_ana)
             CASE ('NTIMES_FCT')
@@ -1050,8 +1050,8 @@
 # endif
               END DO
 #endif
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+#if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
             CASE ('DstrS')
               Npts=load_r(Nval, Rval, Ngrids, DstrS)
@@ -3211,7 +3211,7 @@
               label='ADS - adjoint sensitivity functional'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, ADS)
-#ifdef W4DPSAS_FCT_SENSITIVITY
+#ifdef RBL4DVAR_FCT_SENSITIVITY
 # ifndef OBS_SPACE
             CASE ('FOInameA')
               label='FOIA - adjoint sensitivity functional A'
@@ -3590,7 +3590,7 @@
 # endif
 #endif
 
-#if defined IS4DVAR || defined WEAK_CONSTRAINT
+#if defined I4DVAR || defined WEAK_CONSTRAINT
 !
 !  If weak constraint, disallow recycling of the adjoint model.
 !
@@ -3627,14 +3627,14 @@
         END DO
 # endif
 #endif
-#if defined IS4DVAR
+#if defined I4DVAR
 !
 !  If strong constraint, write only final adjoint solution since only
 !  we are estimating initial conditions.
 !
         nADJ(ng)=ntimes(ng)
 #endif
-#if defined W4DPSAS || defined W4DVAR
+#if defined RBL4DVAR || defined R4DVAR
 !
 !  If dual formulation and strong constraint, limit writing the adjoint
 !  solution to the end of time-stepping.
@@ -3643,7 +3643,7 @@
           nADJ(ng)=ntimes(ng)
         END IF
 #endif
-#if defined IS4DVAR || defined W4DPSAS || defined W4DVAR
+#if defined I4DVAR || defined RBL4DVAR || defined R4DVAR
 !
 !  Ensure that restart file is written only at least at the end.  In
 !  sequential data assimilation the restart file can be used as the
@@ -3724,7 +3724,7 @@
 !  is not associated with time records.
 !
         ndefADJ(ng)=0
-# if defined IS4DVAR || defined IS4DVAR_SENSITIVITY
+# if defined I4DVAR || defined I4DVAR_ANA_SENSITIVITY
         ndefTLM(ng)=0
 # endif
 #endif
@@ -3949,7 +3949,7 @@
           WRITE (out,110) ng
           WRITE (out,120) ntimes(ng), 'ntimes',                         &
      &          'Number of timesteps for 3-D equations.'
-#if defined W4DPSAS_FCT_SENSITIVITY
+#if defined RBL4DVAR_FCT_SENSITIVITY
           WRITE (out,120) ntimes_ana(ng), 'ntimes_ana',                 &
      &          'Observation impacts analysis interval.'
           WRITE (out,120) ntimes_fct(ng), 'ntimes_fct',                 &
@@ -3968,14 +3968,14 @@
           WRITE (out,120) Nouter, 'Nouter',                             &
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
-#if defined IS4DVAR           || defined IS4DVAR_SENSITIVITY || \
-    defined HESSIAN_FSV       || defined HESSIAN_SO          || \
-    defined HESSIAN_SV        || defined SENSITIVITY_4DVAR   || \
-    defined SP4DVAR           || defined TL_W4DPSAS          || \
-    defined TL_W4DVAR         || defined W4DPSAS             || \
-    defined W4DVAR
+#if defined I4DVAR       || defined I4DVAR_ANA_SENSITIVITY || \
+    defined HESSIAN_FSV  || defined HESSIAN_SO             || \
+    defined HESSIAN_SV   || defined SENSITIVITY_4DVAR      || \
+    defined RBL4DVAR     || defined R4DVAR                 || \
+    defined SP4DVAR      || defined TL_RBL4DVAR            || \
+    defined TL_R4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
-     &          'Maximum number of 4DVAR inner loop iterations.'
+     &          'Maximum number of 4D-Var inner loop iterations.'
 # ifdef SP4DVAR
           WRITE (out,120) Nsaddle, 'Nsaddle',                           &
      &          'Number of intervals for saddle point algorithm.'
@@ -4085,7 +4085,7 @@
 #ifdef ADJUST_BOUNDARY
           WRITE (text,'(i8)') Nbrec(ng)
           WRITE (out,130) nOBC(ng), 'nOBC',                             &
-     &          'Number of timesteps between 4DVAR adjustment of',      &
+     &          'Number of timesteps between 4D-Var adjustment of',     &
      &          'open boundaries, Nbrec = '//TRIM(ADJUSTL(text))
           IF (Nbrec(ng).gt.500) THEN
             WRITE (out,'(t32,a)') 'WARNING: ''Nbrec'' is large, '//     &
@@ -4095,7 +4095,7 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           WRITE (text,'(i8)') Nfrec(ng)
           WRITE (out,130) nSFF(ng), 'nSFF',                             &
-     &          'Number of timesteps between 4DVAR adjustment of',      &
+     &          'Number of timesteps between 4D-Var adjustment of',     &
      &          'surface forcing fields, Nfrec = '//TRIM(ADJUSTL(text))
           IF (Nfrec(ng).gt.500) THEN
             WRITE (out,'(t32,a)') 'WARNING: ''Nfrec'' is large, '//     &
@@ -4662,8 +4662,8 @@
           END DO
 # endif
 #endif
-#if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+#if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
           WRITE (out,140) DstrS(ng), 'DstrS',                           &
      &          'Starting day for ADM sensitivity forcing.'
@@ -6133,30 +6133,31 @@
 # endif
 # if !defined CORRELATION
 #  if defined TANGENT && \
-     !(defined FOUR_DVAR         || defined IS4DVAR_SENSITIVITY || \
-       defined OPT_OBSERVATIONS  || defined SANITY_CHECK        || \
+     !(defined FOUR_DVAR         || defined I4DVAR_ANA_SENSITIVITY || \
+       defined OPT_OBSERVATIONS  || defined SANITY_CHECK           || \
        defined SENSITIVITY_4DVAR || defined TLM_CHECK)
           fname=ITL(ng)%name
           IF (.not.find_file(ng, fname, 'ITLNAME')) GO TO 30
           WRITE (out,230) '      Input Tangent Initial File:  ',        &
      &                    TRIM(fname)
 #  endif
-#  if defined WEAK_CONSTRAINT         && \
-    !(defined SP4DVAR                 || defined W4DPSAS || \
-      defined W4DPSAS_FCT_SENSITIVITY || \
-      defined W4DPSAS_SENSITIVITY)
+#  if defined WEAK_CONSTRAINT          && \
+    !(defined RBL4DVAR                 || \
+      defined RBL4DVAR_ANA_SENSITIVITY || \
+      defined RBL4DVAR_FCT_SENSITIVITY || \
+      defined SP4DVAR)
           fname=IRP(ng)%name
           IF (.not.find_file(ng, fname, 'IRPNAME')) GO TO 30
           WRITE (out,230) '  Input Representer Initial File:  ',        &
      &                    TRIM(fname)
 #  endif
 #  if defined ADJOINT && \
-     !(defined AD_SENSITIVITY      || defined FOUR_DVAR         || \
-       defined IS4DVAR_SENSITIVITY || defined FORCING_SV        || \
-       defined OPT_OBSERVATIONS    || defined OPT_PERTURBATION  || \
-       defined SANITY_CHECK        || defined SENSITIVITY_4DVAR || \
-       defined SO_SEMI             || defined STOCHASTIC_OPT    || \
-       defined HESSIAN_SV          || defined HESSIAN_SO        || \
+     !(defined AD_SENSITIVITY         || defined FOUR_DVAR         || \
+       defined I4DVAR_ANA_SENSITIVITY || defined FORCING_SV        || \
+       defined OPT_OBSERVATIONS       || defined OPT_PERTURBATION  || \
+       defined SANITY_CHECK           || defined SENSITIVITY_4DVAR || \
+       defined SO_SEMI                || defined STOCHASTIC_OPT    || \
+       defined HESSIAN_SV             || defined HESSIAN_SO        || \
        defined HESSIAN_FSV)
           fname=IAD(ng)%name
           IF (.not.find_file(ng, fname, 'IADNAME')) GO TO 30
@@ -6231,8 +6232,8 @@
             END IF
           END DO
 # endif
-# if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR   || \
+# if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
      defined SO_SEMI
 #  ifndef OBS_SPACE
           fname=ADS(ng)%name

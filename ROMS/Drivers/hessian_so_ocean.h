@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: hessian_so_ocean.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: hessian_so_ocean.h 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -121,7 +121,6 @@
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
-!$OMP PARALLEL
 #if defined _OPENMP
       MyThread=my_threadnum()
 #elif defined DISTRIBUTE
@@ -134,7 +133,6 @@
         first_tile(ng)=MyThread*chunk_size
         last_tile (ng)=first_tile(ng)+chunk_size-1
       END DO
-!$OMP END PARALLEL
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -146,18 +144,14 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL
           DO thread=THREAD_RANGE
             CALL wclock_on (ng, iTLM, 0, __LINE__, __FILE__)
           END DO
-!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
-!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
-!$OMP END PARALLEL
 !
 !  Allocate and initialize 4D-Var arrays.
 !
@@ -206,16 +200,14 @@
 !
       DO ng=1,Ngrids
         LreadFWD(ng)=.TRUE
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
 !
 !-----------------------------------------------------------------------
 !  Read in Lanczos algorithm coefficients ("cg_beta", "cg_delta") from
-!  file LCZ(ng)%name NetCDF (IS4DVAR adjoint file), as computed in the
+!  file LCZ(ng)%name NetCDF (I4D-Var adjoint file), as computed in the
 !  I4D-Var Lanczos data assimilation algorithm for the first outer
 !  loop.  They are needed here, in routine "tl_inner2state", to compute
 !  the tangent linear model initial conditions as the weighted sum
@@ -480,10 +472,8 @@
             Ie=Is+Nsize(ng)-1
             ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
           END DO
-
-!$OMP PARALLEL
+!
           CALL propagator (RunInterval, iter, state, ad_state)
-!$OMP END PARALLEL
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         ELSE
@@ -582,10 +572,8 @@
                   state(ng)%vector => STORAGE(ng)%Rvector(Is:Ie,i)
                   ad_state(ng)%vector => SworkR(Is:Ie)
                 END DO
-
-!$OMP PARALLEL
+!
                 CALL propagator (RunInterval, -i, state, ad_state)
-!$OMP END PARALLEL
                 IF (FoundError(exit_flag, NoError, __LINE__,            &
      &                         __FILE__)) RETURN
 !
@@ -723,19 +711,14 @@
       END IF
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO thread=THREAD_RANGE
           CALL wclock_off (ng, iTLM, 0, __LINE__, __FILE__)
         END DO
-!$OMP END PARALLEL
-
       END DO
 !
 !  Report dynamic memory and automatic memory requirements.
 !
-!$OMP PARALLEL
       CALL memory
-!$OMP END PARALLEL
 !
 !  Close IO files.
 !

@@ -3,7 +3,7 @@
       SUBROUTINE tl_output (ng)
 !
 !git $Id$
-!svn $Id: tl_output.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: tl_output.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -264,12 +264,6 @@
 !  locations. Compute misfit (model-observations) cost function.
 !-----------------------------------------------------------------------
 !
-#   ifdef SP4DVAR
-!
-!  Do not assimilate obs on the last time step unless inter=Nsaddle.
-!
-      IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
-#   endif
         IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.              &
      &      (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
           ProcessObs(ng)=.TRUE.
@@ -279,16 +273,22 @@
           tile=-1
 #   endif
           CALL obs_read (ng, iTLM, .FALSE.)
+#   ifdef SP4DVAR
+!
+!  Do not assimilate obs on the last time step unless inter=Nsaddle.
+!
+          IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
+            CALL obs_write (ng, tile, iTLM)
+          END IF
+#   else
           CALL obs_write (ng, tile, iTLM)
+#   endif
 #   ifndef WEAK_CONSTRAINT
           CALL obs_cost (ng, iTLM)
 #   endif
         ELSE
           ProcessObs(ng)=.FALSE.
         END IF
-#   ifdef SP4DVAR
-      END IF
-#   endif
 #  endif
 # endif
 # ifdef PROFILE

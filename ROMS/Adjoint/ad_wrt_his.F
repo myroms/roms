@@ -3,7 +3,7 @@
       SUBROUTINE ad_wrt_his (ng)
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: ad_wrt_his.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -916,7 +916,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Hout(idTsur(itrc),ng)) THEN
-#   if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+#   if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
        defined OPT_OBSERVATIONS
           IF (itrc.eq.itemp) THEN
 !!          scale=rho0*Cp
@@ -955,7 +955,7 @@
 !  Write out surface U-momentum stress.
 !
       IF (Hout(idUsms,ng)) THEN
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+#  if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
       defined OPT_OBSERVATIONS
 !!      scale=rho0
         scale=1.0_r8/rho0
@@ -985,7 +985,7 @@
 !
       IF (Hout(idVsms,ng)) THEN
 !!      scale=rho0
-#  if defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+#  if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #  else

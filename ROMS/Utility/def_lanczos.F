@@ -1,9 +1,9 @@
 #include "cppdefs.h"
-#if defined IS4DVAR
+#if defined I4DVAR
       SUBROUTINE def_lanczos (ng)
 !
 !git $Id$
-!svn $Id: def_lanczos.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_lanczos.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

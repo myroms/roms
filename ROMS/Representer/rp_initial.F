@@ -3,7 +3,7 @@
       SUBROUTINE rp_initial (ng)
 !
 !git $Id$
-!svn $Id: rp_initial.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_initial.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -100,7 +100,8 @@
 # if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-# elif defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
+# elif defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+       defined TL_R4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
@@ -204,7 +205,6 @@
         CALL rp_def_ini (ng)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-      ELSE
       END IF
       IniRec=IRP(ng)%Rindex
 

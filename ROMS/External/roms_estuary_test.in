@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_estuary_test.in 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: roms_estuary_test.in 1022 2020-05-13 03:03:15Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1349,11 +1349,11 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !
 ! NTIMES_ANA   Total number of timesteps for computing observations impacts
 !                interval during the analysis cycle. It is only used when
-!                W4DPSAS_FCT_SENSITIVITY is activated.
+!                RBL4DVAR_FCT_SENSITIVITY is activated.
 !
 ! NTIMES_FCT   Total number of timesteps for computing observations impacts
 !                interval during the forecast cycle. It is only used when
-!                W4DPSAS_FCT_SENSITIVITY is activated.
+!                RBL4DVAR_FCT_SENSITIVITY is activated.
 !
 !------------------------------------------------------------------------------
 ! Model iteration loops parameters.
@@ -2817,7 +2817,7 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 !
 !
 ! Input adjoint forcing filenames for computing observations impacts
-! during the analysis-forecast cycle when W4DPSAS_FCT_SENSITIVITY is
+! during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY is
 ! activated.  The files FOInameA and FOInameB are used when the forecast
 ! metric is defined in state-space (CPP option OBS_SPACE is off). Both
 ! are regular adjoint forcing files just like ADSname.

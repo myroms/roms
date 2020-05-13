@@ -3,7 +3,7 @@
       SUBROUTINE obs_initial (ng, model, backward)
 !
 !git $Id$
-!svn $Id: obs_initial.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: obs_initial.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -249,7 +249,7 @@
 !
       ProcessObs(ng)=.FALSE.
 
-# ifdef IS4DVAR
+# ifdef I4DVAR
 !
 !  Initialize cost function misfit between model and observations.
 !  The IF statement is to avoid rewritting its value before it is

@@ -3,7 +3,7 @@
       SUBROUTINE rp_get_data (ng)
 !
 !git $Id$
-!svn $Id: rp_get_data.F 1019 2020-04-30 20:46:51Z arango $
+!svn $Id: rp_get_data.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1377,7 +1377,8 @@
 #   endif
 #  endif
 
-#  if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
+#  if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+      defined TL_R4DVAR
 !
 !-----------------------------------------------------------------------
 !  Read frequent impulse forcing for weak constraint.

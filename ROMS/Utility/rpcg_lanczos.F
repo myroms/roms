@@ -5,23 +5,23 @@
      &                         Lcgini)
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rpcg_lanczos.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  Weak Constraint 4-Dimensional Variational (4DVar) Restricted        !
+!  Weak Constraint 4-Dimensional Variational (4D-Var) Restricted       !
 !        B-preconditioned Lanczos (RBLanczos) Algorithm                !
 !                      (Gurol et al., 2014)                            !
 !                                                                      !
-!  4DVar dual formulation (space spanned by observation vector)        !
+!  4D-Var dual formulation (space spanned by observation vector)       !
 !  minimization algorithm.  The RBLanczos is equivalent to the         !
 !  Restricted B-preconditioned Conjugate Gradient (RBCG) used in       !
 !  the primal formulation (Gurol et al., 2014).  It has similar        !
 !  convergence properties to the primal formulation minimization       !
-!  algorithms making weak-constraint 4DVar very affordable.            !
+!  algorithms making weak-constraint 4D-Var very affordabl.            !
 !                                                                      !
 !  References:                                                         !
 !                                                                      !
@@ -75,14 +75,15 @@
       character (len=13) :: string
 !
 !=======================================================================
-!  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
+!  Weak constraint 4D-Var conjugate gradient, Lanczos-based algorithm.
 !=======================================================================
 
 # ifdef PROFILE
 !
 !  Turn on time clock.
 !
-      CALL wclock_on (ng, model, 43, __LINE__, __FILE__)
+      CALL wclock_on (ng, model, 85, __LINE__,                          &
+     &                __FILE__)
 # endif
 !
 !  This conjugate gradient algorithm is not run in parallel since the
@@ -132,8 +133,10 @@
 !
         MINIMIZE : IF (innLoop.eq.0) THEN
 
-# if defined TL_W4DPSAS || defined W4DPSAS_FCT_SENSITIVITY || \
-     defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR
 !
           DO iobs=1,Ndatum(ng)
             BCKmodVal(iobs)=NLmodVal(iobs)
@@ -150,7 +153,7 @@
               Hbk(iobs,outLoop)=0.0_r8
             END DO
           ELSE
-!! NOTE: CODE WILL NOT WORK FOR W4DVAR AT THE MOMENT SINCE THIS IS
+!! NOTE: CODE WILL NOT WORK FOR R4D-Var AT THE MOMENT SINCE THIS IS
 !! THE WRONG TLmodVal HERE!!!
             DO iobs=1,Ndatum(ng)
               Hbk(iobs,outLoop)=-TLmodVal(iobs)
@@ -178,8 +181,10 @@
 !
 !  Selime code:  r=b.
 !
-# if defined TL_W4DPSAS || defined W4DPSAS_FCT_SENSITIVITY || \
-     defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined TL_RBL4DVAR
               pgrad(iobs)=ObsScale(iobs)*                               &
      &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else
@@ -507,14 +512,14 @@
 !     Jobs  = the ACTUAL data penalty function.
 !     Jact  = the ACTUAL total penalty function.
 !
-!  NOTE:  Unlike IS4DVAR where we compute the actual cost function
+!  NOTE:  Unlike I4D-Var where we compute the actual cost function
 !         for each iteration that decreases with increasing
 !         number of iterations, the various penalty terms
 !         represent the optimal values (i.e. the values when
 !         optimal state estimate has been identified). Therefore
 !         the various penalty terms will only be correct when the
 !         optimal state has been found. Therefore, as the
-!         W4DVAR proceeds, Jopt, Jdata and Jmod will asymptote
+!         R4D-Var proceeds, Jopt, Jdata and Jmod will asymptote
 !         to their final values and WILL NOT necessary decrease
 !         with increasing iteration number.
 !
@@ -1029,9 +1034,9 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_bcastf (ng, model, ADmodVal)
-#  if defined SENSITIVITY_4DVAR || \
-      defined TL_W4DPSAS        || defined TL_W4DVAR || \
-      defined W4DPSAS           || defined W4DVAR
+#  if defined RBL4DVAR          || defined R4DVAR      || \
+      defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
+      defined TL_R4DVAR
 !!    CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))   ! not needed
       CALL mp_bcastf (ng, model, Hbk(:,outLoop))
       CALL mp_bcastf (ng, model, Jb0(outLoop-1))
@@ -1066,7 +1071,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!  Write out conjugate gradient vectors into 4D-Var NetCDF file.
 !-----------------------------------------------------------------------
 !
 # ifdef BGQC
@@ -1086,7 +1091,8 @@
 !
 !  Turn off time clock.
 !
-      CALL wclock_off (ng, model, 43, __LINE__, __FILE__)
+      CALL wclock_off (ng, model, 85, __LINE__,                         &
+     &                 __FILE__)
 # endif
 !
  20   FORMAT (/,' RPCG_LANCZOS - Fatal error, not possitive definite',  &
@@ -1398,7 +1404,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
+!  This routine writes conjugate gradient vectors into 4D-Var NetCDF   !
 !  for restart purposes.                                               !
 !                                                                      !
 !=======================================================================

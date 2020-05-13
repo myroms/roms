@@ -3,7 +3,7 @@
       SUBROUTINE ad_def_his (ng, ldef)
 !
 !git $Id$
-!svn $Id: ad_def_his.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_def_his.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -56,7 +56,7 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-# if defined IS4DVAR
+# if defined I4DVAR
       integer :: MinnerDim, NinnerDim, NouterDim
       integer :: vardim(2)
 # endif
@@ -302,7 +302,7 @@
      &                 __FILE__)) RETURN
 # endif
 
-# if defined IS4DVAR
+# if defined I4DVAR
         status=def_dim(ng, iADM, ADM(ng)%ncid, ncname, 'Ninner',        &
      &                 Ninner, NinnerDim)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
@@ -521,7 +521,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
-# if defined IS4DVAR
+# if defined I4DVAR
 !
 !  Define Lanczos algorithm coefficients which can be used to
 !  compute the sensitivity of the observations to the 4DVAR

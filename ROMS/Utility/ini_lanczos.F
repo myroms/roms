@@ -1,10 +1,10 @@
 #include "cppdefs.h"
       MODULE ini_lanczos_mod
 
-#ifdef IS4DVAR_SENSITIVITY
+#ifdef I4DVAR_ANA_SENSITIVITY
 !
 !git $Id$
-!svn $Id: ini_lanczos.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ini_lanczos.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -13,16 +13,16 @@
 !                                                                      !
 !  This routine computes the tangent linear model  initial conditions  !
 !  as the weighted sum of all Lanczos vectors computed from the first  !
-!  outer loop of the  IS4DVAR Lanczos  algorithm. It is used to study  !
+!  outer loop of the  I4D-Var Lanczos  algorithm. It is used to study  !
 !  the spatial/temporal impact of observations on the circulation.     !
 !                                                                      !
 !  Notice:                                                             !
 !                                                                      !
 !    (1) Additional outer loops will required different scaling and    !
-!        saving of the Lanczos vectors. Currently, IS4DVAR destroys    !
+!        saving of the Lanczos vectors. Currently, I4D-Var destroys    !
 !        the Lanczos vectors in each outer loop.                       !
 !                                                                      !
-!    (2) The IS4DVAR algorithm computes Ninner+1 Lanczos vectors in    !
+!    (2) The I4D-Var algorithm computes Ninner+1 Lanczos vectors in    !
 !        the inner loop (0:Ninner).  The input NetCDF file contains    !
 !        Ninner+1 records.  We will ignore the last record since it    !
 !        has gradient information that is only relevant to the next    !
@@ -462,7 +462,7 @@
 !
 !    T * b_i = a_i,       where i = 1,2,...k
 !
-!  Here T is (k,k) matrix computed from the IS4DVAR Lanczos algorithm
+!  Here T is (k,k) matrix computed from the I4D-Var Lanczos algorithm
 !  and b_i is the solution to the tri-diagonal system.  The Lanczos
 !  algorithms coefficients (cg_beta, cg_gamma) used to build the
 !  tri-diagonal system are assumed to be read elsewhere.
@@ -524,7 +524,7 @@
      &                       tl_zeta)
 !
 !  Read in the Lanczos vectors (q_i, where i=1,2,...k) computed from
-!  k inner-loops of the IS4DVAR algorithm first outer loop. Load
+!  k inner-loops of the I4D-Var algorithm first outer loop. Load
 !  Lanczos vectors into ADJOINT STATE ARRAYS at index Lwrk.
 !
       IF (Ladj.eq.3) THEN

@@ -1,21 +1,23 @@
 #include "cppdefs.h"
 
 #if defined WEAK_CONSTRAINT && !defined RPCG && !defined SP4DVAR
+
       SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
      &                    Lcgini)
 !
 !git $Id$
-!svn $Id: congrad.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: congrad.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  Weak Constraint 4-Dimensional Variational (4DVar) Pre-conditioned   !
+!  Weak Constraint 4-Dimensional Variational (4D-Var) Pre-conditioned  !
 !                     Conjugate Gradient Algorithm                     !
 
-# if defined TL_W4DVAR || defined W4DVAR || defined W4DVAR_SENSITIVITY
+# if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+     defined TL_R4DVAR
 !                                                                      !
 !  The indirect representer method solves the system:                  !
 !                                                                      !
@@ -56,8 +58,8 @@
 !    Chua, B. S. and A. F. Bennett,  2001:  An inverse ocean modeling  !
 !      sytem, Ocean Modelling, 3, 137-165.                             !
 
-# elif defined TL_W4DPSAS || \
-       defined W4DPSAS    || defined W4DPSAS_SENSITIVITY
+# elif defined RBL4DVAR    || defined RBL4DVAR_ANA_SENSITIVITY || \
+       defined TL_RBL4DVAR
 !                                                                      !
 !  Solve the system (following Courtier, 1997):                        !
 !                                                                      !
@@ -160,14 +162,15 @@
       SourceFile=__FILE__
 !
 !=======================================================================
-!  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
+!  Weak constraint 4D-Var conjugate gradient, Lanczos-based algorithm.
 !=======================================================================
 
 # ifdef PROFILE
 !
 !  Turn on time clock.
 !
-      CALL wclock_on (ng, model, 43, __LINE__, __FILE__)
+      CALL wclock_on (ng, model, 85, __LINE__,                          &
+     &                __FILE__)
 # endif
 !
 !  This conjugate gradient algorithm is not run in parallel since the
@@ -206,8 +209,9 @@
 !
         MINIMIZE : IF (innLoop.eq.0) THEN
 
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined TL_RBL4DVAR
 !
 !  If this is the first inner-loop, save NLmodVal in BCKmodVal.
 !
@@ -234,8 +238,9 @@
 !  observation error standard deviations (i.e. sqrt(ObsErr)).
 !
             DO iobs=1,Ndatum(ng)
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined TL_RBL4DVAR
               pgrad(iobs)=-ObsScale(iobs)*                              &
      &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else
@@ -323,8 +328,9 @@
 !
               DO iobs=1,Ndatum(ng)
                 ADmodVal(iobs)=cg_pxsave(iobs)
-# if defined W4DPSAS             || defined TL_W4DPSAS || \
-     defined W4DPSAS_SENSITIVITY
+# if defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined TL_RBL4DVAR
                 cg_innov(iobs)=-ObsScale(iobs)*                         &
      &                         (ObsVal(iobs)-BCKmodVal(iobs))
 # else
@@ -431,9 +437,9 @@
 !
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
-# if defined SENSITIVITY_4DVAR || \
-     defined TL_W4DPSAS        || defined TL_W4DVAR || \
-     defined W4DPSAS           || defined W4DVAR
+# if defined RBL4DVAR           || defined R4DVAR      || \
+     defined SENSITIVITY_4DVAR  || defined TL_RBL4DVAR || \
+     defined TL_R4DVAR
             TLmodVal_S(iobs,innLoop,outLoop)=TLmodVal(iobs)
 # endif
 !
@@ -698,14 +704,14 @@
 !     Jobs  = the ACTUAL data penalty function.
 !     Jact  = the ACTUAL total penalty function.
 !
-!  NOTE:  Unlike IS4DVAR where we compute the actual cost function
+!  NOTE:  Unlike I4D-Var where we compute the actual cost function
 !         for each iteration that decreases with increasing
 !         number of iterations, the various penalty terms
 !         represent the optimal values (i.e. the values when
 !         optimal state estimate has been identified). Therefore
 !         the various penalty terms will only be correct when the
 !         optimal state has been found. Therefore, as the
-!         W4DVAR proceeds, Jopt, Jdata and Jmod will asymptote
+!         R4D-Var proceeds, Jopt, Jdata and Jmod will asymptote
 !         to their final values and WILL NOT necessary decrease
 !         with increasing iteration number.
 !
@@ -1152,9 +1158,9 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_bcastf (ng, model, ADmodVal)
-#  if defined SENSITIVITY_4DVAR || \
-      defined TL_W4DPSAS        || defined TL_W4DVAR || \
-      defined W4DPSAS           || defined W4DVAR
+#  if defined RBL4DVAR          || defined R4DVAR      || \
+      defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
+      defined TL_R4DVAR
 !!    CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))   ! not needed
 #  endif
       CALL mp_bcasti (ng, model, info)
@@ -1177,7 +1183,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!  Write out conjugate gradient vectors into 4D-Var NetCDF file.
 !-----------------------------------------------------------------------
 !
       CALL cg_write (ng, model, innLoop, outLoop,                       &
@@ -1188,7 +1194,8 @@
 !
 !  Turn off time clock.
 !
-      CALL wclock_off (ng, model, 43, __LINE__, __FILE__)
+      CALL wclock_off (ng, model, 85, __LINE__,                         &
+     &                 __FILE__)
 # endif
 !
  20   FORMAT (/,' CONGRAD - Fatal error, not possitive definite',       &
@@ -1483,7 +1490,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
+!  This routine writes conjugate gradient vectors into 4D-Var NetCDF   !
 !  for restart purposes.                                               !
 !                                                                      !
 !=======================================================================

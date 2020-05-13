@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: main3d.F 1022 2020-05-13 03:03:15Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -49,9 +49,11 @@
 # ifdef TLM_CHECK
       USE dotproduct_mod,       ONLY : nl_dotproduct
 # endif
-# if defined NLM_OUTER           || defined SP4DVAR                 || \
-     defined W4DPSAS             || defined W4DPSAS_FCT_SENSITIVITY || \
-     defined W4DPSAS_SENSITIVITY
+# if defined NLM_OUTER                || \
+     defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY || \
+     defined SP4DVAR
       USE forcing_mod,          ONLY : forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -219,8 +221,10 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 
-# if defined NLM_OUTER               || defined W4DPSAS             || \
-     defined W4DPSAS_FCT_SENSITIVITY || defined W4DPSAS_SENSITIVITY
+# if defined NLM_OUTER                || \
+     defined RBL4DVAR                 || \
+     defined RBL4DVAR_ANA_SENSITIVITY || \
+     defined RBL4DVAR_FCT_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution impulse forcing to

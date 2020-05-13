@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_vbc.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_set_vbc.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1062,7 +1062,7 @@
 !>
           ad_t(i,j,1,nrhs,isalt)=ad_t(i,j,1,nrhs,isalt)+                &
      &                           btflx(i,j,isalt)*ad_btflx(i,j,isalt)
-#   if !(defined AD_SENSITIVITY   || defined IS4DVAR_SENSITIVITY || \
+#   if !(defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
          defined OPT_OBSERVATIONS || defined SO_SEMI)
           ad_btflx(i,j,isalt)=0.0_r8
 #   endif
@@ -1084,8 +1084,8 @@
      &                               EmP*ad_stflx(i,j,isalt)
           ad_EmP=ad_EmP+                                                &
                  t(i,j,N(ng),nrhs,isalt)*ad_stflx(i,j,isalt)
-#    if !(defined ADJUST_STFLUX       || defined AD_SENSITIVITY   || \
-          defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+#    if !(defined ADJUST_STFLUX          || defined AD_SENSITIVITY   || \
+          defined I4DVAR_ANA_SENSITIVITY || defined OPT_OBSERVATIONS || \
           defined SO_SEMI)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
@@ -1101,8 +1101,8 @@
      &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))*adfac
           ad_t(i,j,N(ng),nrhs,isalt)=ad_t(i,j,N(ng),nrhs,isalt)+        &
      &                               Hz(i,j,N(ng))*adfac
-#    if !(defined ADJUST_STFLUX       || defined AD_SENSITIVITY   || \
-          defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+#    if !(defined ADJUST_STFLUX          || defined AD_SENSITIVITY   || \
+          defined I4DVAR_ANA_SENSITIVITY || defined OPT_OBSERVATIONS || \
           defined SO_SEMI)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
@@ -1114,8 +1114,8 @@
      &                               EmP*ad_stflx(i,j,isalt)
           ad_EmP=ad_EmP+                                                &
                  t(i,j,N(ng),nrhs,isalt)*ad_stflx(i,j,isalt)
-#    if !(defined ADJUST_STFLUX       || defined AD_SENSITIVITY   || \
-          defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+#    if !(defined ADJUST_STFLUX          || defined AD_SENSITIVITY   || \
+          defined I4DVAR_ANA_SENSITIVITY || defined OPT_OBSERVATIONS || \
           defined SO_SEMI)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
@@ -1191,8 +1191,8 @@
 !>
           ad_t(i,j,N(ng),nrhs,itemp)=ad_t(i,j,N(ng),nrhs,itemp)+        &
      &                               dqdt(i,j)*ad_stflx(i,j,itemp)
-#   if !(defined ADJUST_STFLUX       || defined AD_SENSITIVITY   || \
-         defined IS4DVAR_SENSITIVITY || defined OPT_OBSERVATIONS || \
+#   if !(defined ADJUST_STFLUX          || defined AD_SENSITIVITY   || \
+         defined I4DVAR_ANA_SENSITIVITY || defined OPT_OBSERVATIONS || \
          defined SO_SEMI)
           ad_stflx(i,j,itemp)=0.0_r8
 #   endif

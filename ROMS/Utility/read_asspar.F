@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: read_asspar.F 1022 2020-05-13 03:03:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -649,7 +649,7 @@
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, SCA)
 #endif
-#if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
             CASE ('OIFnameA')
               label='OIFA - observartion impacts forecast, analysis'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -780,8 +780,8 @@
 #     endif
 #    endif
 #   endif
-#   ifndef IS4DVAR_SENSITIVITY
-#    ifdef IS4DVAR
+#   ifndef I4DVAR_ANA_SENSITIVITY
+#    ifdef I4DVAR
           WRITE (out,100) GradErr, 'GradErr',                           &
      &            'Upper bound on relative error of the gradient.'
           WRITE (out,100) HevecErr, 'HevecErr',                         &
@@ -846,8 +846,9 @@
           WRITE (out,80) NpostI, 'NpostI',                              &
      &            'Number of Lanczos iterations in posterior analysis.'
 #   endif
-#   if defined W4DPSAS_FCT_SENSITIVITY || defined W4DVAR_SENSITIVITY ||\
-       defined W4DPSAS_SENSITIVITY
+#   if defined RBL4DVAR_ANA_SENSITIVITY || \
+       defined RBL4DVAR_FCT_SENSITIVITY || \
+       defined R4DVAR_ANA_SENSITIVITY
           WRITE (out,80) Nimpact, 'Nimpact',                             &
      &            'Observations impact/sensitivity outer loop to use.'
           IF (Nimpact.gt.Nouter) THEN
@@ -872,7 +873,7 @@
           END IF
 #   endif
 #   ifndef TLM_CHECK
-#    ifndef IS4DVAR_SENSITIVITY
+#    ifndef I4DVAR_ANA_SENSITIVITY
           WRITE (out,170) LdefNRM(1:4,ng), 'LdefNRM',                   &
      &            'Switch to create a normalization NetCDF file.'
           WRITE (out,170) LwrtNRM(1:4,ng), 'LwrtNRM',                   &
@@ -890,9 +891,9 @@
      &            'Number of iterations for randomization.'
             END IF
           END IF
-#     if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
-         defined TL_W4DPSAS        || defined TL_W4DVAR || \
-         defined W4DPSAS           || defined W4DVAR
+#     if defined RBL4DVAR           || defined R4DVAR    || \
+         defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
+         defined TL_RBL4DVAR        || defined TL_R4DVAR
           IF (ANY(LwrtNRM(:,ng))) THEN
             WRITE (out,70) Cnorm(2,isFsur), 'CnormM(isFsur)',           &
      &            'Compute model 2D RHO-normalization factors.'
@@ -997,9 +998,9 @@
      &            'Vertical diffusion factor, boundary conditions.'
 #     endif
 #    endif
-#    if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
-        defined TL_W4DPSAS        || defined TL_W4DVAR || \
-        defined W4DPSAS           || defined W4DVAR
+#    if defined RBL4DVAR           || defined R4DVAR    || \
+        defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
+        defined TL_RBL4DVAR        || defined TL_R4DVAR
          IF (nADJ(ng).lt.ntimes(ng)) THEN
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
      &            'Model decorrelation H-scale (m), free-surface.'
@@ -1244,11 +1245,11 @@
 #  endif
 #  if defined FOUR_DVAR           || \
      (defined HESSIAN_SV          && defined BNORM)
-#   if defined IS4DVAR            || defined OBS_SENSITIVITY || \
+#   if defined I4DVAR             || defined OBS_SENSITIVITY || \
        defined OPT_OBSERVATIONS   || defined WEAK_CONSTRAINT
-#    if defined SENSITIVITY_4DVAR || defined SP4DVAR         || \
-        defined TL_W4DPSAS        || defined TL_W4DVAR       || \
-        defined W4DPSAS           || defined W4DVAR
+#    if defined RBL4DVAR          || defined R4DVAR          || \
+        defined SENSITIVITY_4DVAR || defined SP4DVAR         || \
+        defined TL_RBL4DVAR       || defined TL_R4DVAR
           fname=STD(2,ng)%name
           IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
           WRITE (out,160) '                   Model STD File:  ',       &
@@ -1271,9 +1272,9 @@
      &                    TRIM(fname)
 #    endif
 #   endif
-#   if defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
-       defined TL_W4DPSAS        || defined TL_W4DVAR || \
-       defined W4DPSAS           || defined W4DVAR
+#   if defined RBL4DVAR          || defined R4DVAR    || \
+       defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
+       defined TL_RBL4DVAR       || defined TL_R4DVAR
           fname=NRM(2,ng)%name
           WRITE (out,160) '                  Model Norm File:  ',       &
      &                    TRIM(fname)
@@ -1346,7 +1347,7 @@
 #   if !defined CORRELATION
           WRITE (out,160) '        Input/Output Lanczos File:  ',       &
      &                    TRIM(LCZ(ng)%name)
-#    ifndef IS4DVAR_SENSITIVITY
+#    ifndef I4DVAR_ANA_SENSITIVITY
           WRITE (out,160) '        Input/Output Hessian File:  ',       &
      &                    TRIM(HSS(ng)%name)
 #    endif
@@ -1375,7 +1376,7 @@
           WRITE (out,160) '    Input/Output ADM Scratch File:  ',       &
      &                    TRIM(SCA(ng)%name)
 #    endif
-          WRITE (out,160) '                Output 4DVAR File:  ',       &
+          WRITE (out,160) '               Output 4D-Var File:  ',       &
      &                    TRIM(DAV(ng)%name)
 #   endif
 #  endif
@@ -1384,7 +1385,7 @@
           WRITE (out,160) '      Output Posterior Error File:  ',       &
      &                    TRIM(ERR(ng)%name)
 #  endif
-#  if defined W4DPSAS_FCT_SENSITIVITY && defined OBS_SPACE
+#  if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           fname=OIFA(ng)%name
 !!        IF (.not.find_file(ng, fname, 'OIFnameA')) GO TO 30
           WRITE (out,160) '  Input Obs Impacts Analysis File:  ',       &
