@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_wrf.bash 995 2020-01-10 04:01:28Z arango $
+# svn $Id: build_wrf.sh 1025 2020-05-14 22:31:20Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
@@ -17,7 +17,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./build_wrf.bash [options]                                         :::
+#    ./build_wrf.sh [options]                                           :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -169,8 +169,8 @@ done
  export USE_MY_LIBS=no           # use system default library paths
 #export USE_MY_LIBS=yes          # use my customized library paths
 
-#MY_PATHS=${ROMS_SRC_DIR}/Compilers/my_build_paths.bash
- MY_PATHS=${HOME}/Compilers/ROMS/my_build_paths.bash
+#MY_PATHS=${ROMS_SRC_DIR}/Compilers/my_build_paths.sh
+ MY_PATHS=${HOME}/Compilers/ROMS/my_build_paths.sh
 
 if [ "${USE_MY_LIBS}" == 'yes' ]; then
   source ${MY_PATHS} ${MY_PATHS}
