@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_wrf.sh 995 2020-01-10 04:01:28Z arango $
+# svn $Id: build_wrf.csh 1025 2020-05-14 22:31:20Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
@@ -17,7 +17,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./build_wrf.sh [options]                                           :::
+#    ./build_wrf.csh [options]                                          :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -33,7 +33,7 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-set which_MPI = openmpi                        # default, overwriten below
+setenv which_MPI openmpi                        # default, overwriten below
 
 # Initialize.
 
@@ -168,8 +168,8 @@ end
  setenv USE_MY_LIBS no           # use system default library paths
 #setenv USE_MY_LIBS yes          # use my customized library paths
 
-#set MY_PATHS = ${ROMS_SRC_DIR}/Compilers/my_build_paths.sh
- set MY_PATHS = ${HOME}/Compilers/ROMS/my_build_paths.sh
+#set MY_PATHS = ${ROMS_SRC_DIR}/Compilers/my_build_paths.csh
+ set MY_PATHS = ${HOME}/Compilers/ROMS/my_build_paths.csh
 
 if ($USE_MY_LIBS == 'yes') then
   source ${MY_PATHS} ${MY_PATHS}
