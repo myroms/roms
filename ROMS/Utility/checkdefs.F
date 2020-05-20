@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: checkdefs.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -84,9 +84,12 @@
       Coptions(is:is+9)=' ADJOINT,'
 #endif
 #if defined ADJUST_BOUNDARY        && \
-   (defined CORRELATION            || defined I4DVAR            || \
-    defined I4DVAR_ANA_SENSITIVITY || defined RBL4DVAR          || \
-    defined R4DVAR                 || defined SENSITIVITY_4DVAR || \
+   (defined CORRELATION            || \
+    defined I4DVAR                 || \
+    defined I4DVAR_ANA_SENSITIVITY || \
+    defined RBL4DVAR               || \
+    defined R4DVAR                 || \
+    defined SENSITIVITY_4DVAR      || \
     defined SP4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_BOUNDARY',                  &
@@ -95,9 +98,12 @@
       Coptions(is:is+17)=' ADJUST_BOUNDARY,'
 #endif
 #if defined ADJUST_STFLUX          && \
-   (defined CORRELATION            || defined I4DVAR            || \
-    defined I4DVAR_ANA_SENSITIVITY || defined RBL4DVAR          || \
-    defined R4DVAR                 || defined SENSITIVITY_4DVAR || \
+   (defined CORRELATION            || \
+    defined I4DVAR                 || \
+    defined I4DVAR_ANA_SENSITIVITY || \
+    defined RBL4DVAR               || \
+    defined R4DVAR                 || \
+    defined SENSITIVITY_4DVAR      || \
     defined SP4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_STFLUX',                    &
@@ -106,9 +112,12 @@
       Coptions(is:is+15)=' ADJUST_STFLUX,'
 #endif
 #if defined ADJUST_WSTRESS         && \
-   (defined CORRELATION            || defined I4DVAR            || \
-    defined I4DVAR_ANA_SENSITIVITY || defined RBL4DVAR          || \
-    defined R4DVAR                 || defined SENSITIVITY_4DVAR || \
+   (defined CORRELATION            || \
+    defined I4DVAR                 || \
+    defined I4DVAR_ANA_SENSITIVITY || \
+    defined RBL4DVAR               || \
+    defined R4DVAR                 || \
+    defined SENSITIVITY_4DVAR      || \
     defined SP4DVAR)
 !
       IF (Master) WRITE (stdout,20) 'ADJUST_WSTRESS',                   &
@@ -340,9 +349,11 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' ANA_RESPIRATION,'
 #endif
-#if defined ANA_SCOPE        && \
-   (defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
+#if defined ANA_SCOPE              && \
+   (defined AD_SENSITIVITY         || \
+    defined I4DVAR_ANA_SENSITIVITY || \
+    defined OPT_OBSERVATIONS       || \
+    defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI)
 !
       IF (Master) WRITE (stdout,20) 'ANA_SCOPE',                        &
@@ -1227,7 +1238,7 @@
       Coptions(is:is+15)=' INNER_PRODUCT,'
       idriver=idriver+1
 #endif
-#ifdef I4DVAR
+#if defined I4DVAR && !defined SPLIT_4DVAR
 !
       IF (Master) WRITE (stdout,20) 'I4DVAR',                           &
      &   'Incremental, strong constraint 4D-Var data assimilation'
@@ -1900,7 +1911,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' RAMP_TIDES,'
 #endif
-#ifdef RBL4DVAR
+#if defined RBL4DVAR && !defined SPLIT_RBL4DVAR
 !
       IF (Master) WRITE (stdout,20) 'RBL4DVAR',                         &
      &   'Strong/Weak constraint RBL4D-VAR data assimilation'
@@ -2075,7 +2086,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' !RST_SINGLE,'
 #endif
-#ifdef R4DVAR
+#if defined R4DVAR && !defined SPLIT_R4DVAR
 !
       IF (Master) WRITE (stdout,20) 'R4DVAR',                           &
      &   'Strong/Weak constraint, R4D-Var data assimilation'
@@ -2236,11 +2247,44 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
-#ifdef SP4DVAR
+#ifdef SPLIT_I4DVAR
+!
+      IF (Master) WRITE (stdout,20) 'SPLIT_I4DVAR',                     &
+     &   'Incremental, strong constraint Split 4D-Var data assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' SPLIT_I4DVAR,'
+      idriver=idriver+1
+#endif
+#ifdef SPLIT_RBL4DVAR
+!
+      IF (Master) WRITE (stdout,20) 'SPLIT_RBL4DVAR',                   &
+     &   'Strong/Weak constraint Split RBL4D-VAR data assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' SPLIT_RBL4DVAR,'
+      idriver=idriver+1
+#endif
+#ifdef SPLIT_R4DVAR
+!
+      IF (Master) WRITE (stdout,20) 'SPLIT_R4DVAR',                     &
+     &   'Strong/Weak constraint, Split R4D-Var data assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' SPLIT_R4DVAR,'
+      idriver=idriver+1
+#endif
+#ifdef SPLIT_SP4DVAR
+!
+      IF (Master) WRITE (stdout,20) 'SPLIT_SP4DVAR',                    &
+     &   'Weak Constraint, Saddle-Point Split 4D-Var Data Assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SPLIT_SP4DVAR,'
+      idriver=idriver+1
+#endif
+#if defined SP4DVAR && !defined SPLIT_4DVAR
+!
       IF (Master) WRITE (stdout,20) 'SP4DVAR',                          &
      &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' SP4DVAR,'
+      Coptions(is:is+9)=' SP4DVAR,'
       idriver=idriver+1
 #endif
 #ifdef SPHERICAL

@@ -3,7 +3,7 @@
       SUBROUTINE wrt_diags (ng)
 !
 !git $Id$
-!svn $Id: wrt_diags.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: wrt_diags.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -46,8 +46,8 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, gfactor, gtype, ifield, itrc, ivar, status
-
-      real(r8) :: scale
+!
+      real(dp) :: scale
 # ifdef BIOLOGY
       real(r8) :: dtBIO
 # endif
@@ -98,7 +98,7 @@
       DO ivar=1,NDM2d
         ifield=idDu2d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/dt(ng)
+          scale=1.0_dp/dt(ng)
           gtype=gfactor*u2dvar
           status=nf_fwrite2d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -122,7 +122,7 @@
 !
         ifield=idDv2d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/dt(ng)
+          scale=1.0_dp/dt(ng)
           gtype=gfactor*v2dvar
           status=nf_fwrite2d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -152,7 +152,7 @@
       DO ivar=1,NDM3d
         ifield=idDu3d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/dt(ng)
+          scale=1.0_dp/dt(ng)
           gtype=gfactor*u3dvar
           status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -176,7 +176,7 @@
 !
         ifield=idDv3d(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/dt(ng)
+          scale=1.0_dp/dt(ng)
           gtype=gfactor*v3dvar
           status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -208,7 +208,7 @@
         DO ivar=1,NDT
           ifield=idDtrc(itrc,ivar)
           IF (Dout(ifield,ng)) THEN
-            scale=1.0_r8/dt(ng)
+            scale=1.0_dp/dt(ng)
             gtype=gfactor*r3dvar
             status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid,                  &
      &                         DIA(ng)%Vid(ifield),                     &
@@ -243,9 +243,9 @@
         ifield=iDbio2(ivar)
         IF (Dout(ifield,ng)) THEN
           IF (ivar.eq.ipCO2) THEN
-            scale=1.0_r8
+            scale=1.0_dp
           ELSE
-            scale=1.0_r8/dtBIO                       ! mmole m-2 day-1
+            scale=1.0_dp/dtBIO                       ! mmole m-2 day-1
           END IF
           gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iNLM, DIA(ng)%ncid,                    &
@@ -276,7 +276,7 @@
       DO ivar=1,NDbio3d
         ifield=iDbio3(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8/dtBIO                         ! mmole m-3 day-1
+          scale=1.0_dp/dtBIO                         ! mmole m-3 day-1
           gtype=gfactor*r3dvar
           status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -306,7 +306,7 @@
       DO ivar=1,NDbio3d
         ifield=iDbio3(ivar)
         IF (Dout(ifield,ng)) THEN
-          scale=1.0_r8                               ! micromole m-2 s-1
+          scale=1.0_dp                               ! micromole m-2 s-1
           gtype=gfactor*l3dvar
           status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &
@@ -335,7 +335,7 @@
       DO ivar=1,NDbio4d
         ifield=iDbio4(ivar)
         IF (Dout(ifield,ng)) THEN
-            scale=1.0_r8                 ! micromole m-2 s-1 or m-1
+          scale=1.0_dp                   ! micromole m-2 s-1 or m-1
           gtype=gfactor*l4dvar
           status=nf_fwrite4d(ng, iNLM, DIA(ng)%ncid,                    &
      &                       DIA(ng)%Vid(ifield),                       &

@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: obs_write.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1337,7 +1337,7 @@
         IF (wrtZetaRef(ng).and.balance(isFsur)) THEN
           status=nf_fwrite2d(ng, model, DAV(ng)%ncid,                   &
      &                       DAV(ng)%Vid(idFsur), 0, r2dvar,            &
-     &                       LBi, UBi, LBj, UBj, 1.0_r8,                &
+     &                       LBi, UBi, LBj, UBj, 1.0_dp,                &
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #  endif

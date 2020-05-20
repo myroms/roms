@@ -2,7 +2,7 @@
       SUBROUTINE wrt_rst (ng)
 !
 !git $Id$
-!svn $Id: wrt_rst.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: wrt_rst.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -54,7 +54,8 @@
 # if defined PERFECT_RESTART || defined SOLVE3D
       integer :: ntmp(1)
 # endif
-      real(r8) :: scale
+!
+      real(dp) :: scale
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -152,7 +153,7 @@
 !  Write out time-dependent bathymetry (m)
 !
       IF (Hout(idbath,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idbath), &
      &                     RST(ng)%Rindex, gtype,                       &
@@ -177,7 +178,7 @@
 !
 !  Write out wet/dry mask at PSI-points.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*p2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idPwet),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -199,7 +200,7 @@
 !
 !  Write out wet/dry mask at RHO-points.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRwet),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -221,7 +222,7 @@
 !
 !  Write out wet/dry mask at U-points.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idUwet),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -243,7 +244,7 @@
 !
 !  Write out wet/dry mask at V-points.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVwet),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -266,7 +267,7 @@
 !
 !  Write out free-surface (m).
 !
-      scale=1.0_r8
+      scale=1.0_dp
 #ifdef PERFECT_RESTART
       gtype=gfactor*r3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idFsur),   &
@@ -309,7 +310,7 @@
 !
 !  Write out RHS of free-surface equation.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRzet),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -331,7 +332,7 @@
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
 #ifdef PERFECT_RESTART
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idUbar),   &
@@ -366,7 +367,7 @@
 !
 !  Write out RHS of 2D momentum equation in the XI-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRu2d),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -389,7 +390,7 @@
 !
 !  Write out 2D momentum component (m/s) in the ETA-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
 #ifdef PERFECT_RESTART
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVbar),   &
@@ -423,7 +424,7 @@
 !
 !  Write out RHS of 2D momentum equation in the ETA-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRv2d),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -447,7 +448,7 @@
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
 # ifdef PERFECT_RESTART
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idUvel),   &
@@ -480,7 +481,7 @@
 !
 !  Write out RHS of 3D momentum equation in the XI-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRu3d),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -503,7 +504,7 @@
 !
 !  Write out momentum component (m/s) in the ETA-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
 # ifdef PERFECT_RESTART
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVvel),   &
@@ -536,7 +537,7 @@
 !
 !  Write out RHS of 3D momentum equation in the ETA-direction.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idRv3d),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -560,7 +561,7 @@
 !  Write out tracer type variables.
 !
       DO itrc=1,NT(ng)
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r3dvar
 # ifdef PERFECT_RESTART
         status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Tid(itrc),   &
@@ -592,7 +593,7 @@
 !
 !  Write out density anomaly.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idDano),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -614,7 +615,7 @@
 !
 !  Write out depth of surface boundary layer.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idHsbl),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -637,7 +638,7 @@
 !
 !  Write out depth of bottom boundary layer.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r2dvar
       status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idHbbl),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -661,7 +662,7 @@
 !  Write out KPP nonlocal transport.
 !
       DO i=1,NAT
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid,                      &
      &                       RST(ng)%Vid(idGhat(i)),                    &
@@ -687,7 +688,7 @@
 !
 !  Write out vertical viscosity coefficient.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVvis),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -709,7 +710,7 @@
 !
 !  Write out vertical diffusion coefficient for potential temperature.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idTdif),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -733,7 +734,7 @@
 !
 !  Write out vertical diffusion coefficient for salinity.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idSdif),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -759,7 +760,7 @@
 !
 !  Write out turbulent kinetic energy.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idMtke),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -781,7 +782,7 @@
 !
 !  Define turbulent kinetic energy time length scale.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite4d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idMtls),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -803,7 +804,7 @@
 !
 !  Define vertical mixing turbulent length scale.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVmLS),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -824,7 +825,7 @@
 !
 !  Define turbulent kinetic energy vertical diffusion coefficient.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVmKK),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -846,7 +847,7 @@
 !
 !  Define turbulent length scale vertical diffusion coefficient.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*w3dvar
       status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idVmKP),   &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -872,7 +873,7 @@
 !  Write out bed load transport in U-direction.
 !
       DO i=1,NST
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*u2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid,                      &
      &                     RST(ng)%Vid(idUbld(i)),                      &
@@ -896,7 +897,7 @@
 !  Write out bed load transport in V-direction.
 !
       DO i=1,NST
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*v2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid,                      &
      &                     RST(ng)%Vid(idVbld(i)),                      &
@@ -921,7 +922,7 @@
 !  Write out sediment fraction of each size class in each bed layer.
 !
       DO i=1,NST
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*b3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid,                      &
      &                     RST(ng)%Vid(idfrac(i)),                      &
@@ -945,7 +946,7 @@
 !  Write out sediment mass of each size class in each bed layer.
 !
       DO i=1,NST
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*b3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid,                      &
      &                     RST(ng)%Vid(idBmas(i)),                      &
@@ -972,7 +973,7 @@
         IF (i.eq.itauc) THEN
           scale=rho0
         ELSE
-          scale=1.0_r8
+          scale=1.0_dp
         END IF
         gtype=gfactor*b3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid,                      &
@@ -1002,7 +1003,7 @@
 !  ripple length and ripple height) are written.
 !
       DO i=1,6
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid,                      &
      &                     RST(ng)%Vid(idBott(i)),                      &
@@ -1028,7 +1029,7 @@
 !
 !  Write out 2D U-momentum stokes velocity.
 !
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*u2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idU2Sd), &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -1048,7 +1049,7 @@
 !
 !  Write out 2D V-momentum stokes velocity.
 !
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*v2dvar
         status=nf_fwrite2d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idV2Sd), &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -1069,7 +1070,7 @@
 !
 !  Write out 3D U-momentum stokes velocity.
 !
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*u3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idU3Sd), &
      &                   RST(ng)%Rindex, gtype,                         &
@@ -1089,7 +1090,7 @@
 !
 !  Write out 3D V-momentum stokes velocity.
 !
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*v3dvar
         status=nf_fwrite3d(ng, iNLM, RST(ng)%ncid, RST(ng)%Vid(idV3Sd), &
      &                   RST(ng)%Rindex, gtype,                         &

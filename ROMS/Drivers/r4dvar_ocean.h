@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: r4dvar_ocean.h 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: r4dvar_ocean.h 1026 2020-05-20 02:05:37Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -160,7 +160,8 @@
 !
         DO ng=1,Ngrids
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iNLM, 0, __LINE__, __FILE__)
+            CALL wclock_on (ng, iNLM, 0, __LINE__,                      &
+     &                      __FILE__)
           END DO
         END DO
 !
@@ -240,7 +241,7 @@
       integer :: my_outer, ng
 !
 !=======================================================================
-!  Run W4D-PSAS Data Assimilation algorithm.
+!  Run R4D-Var Data Assimilation algorithm.
 !=======================================================================
 !
 !  Initialize several global parameters.
@@ -380,20 +381,21 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Stop model and time profiling clocks, report memory requirements, and
-!  close output NetCDF files.
+!  Stop model and time profiling clocks, report memory requirements,
+!  and close output NetCDF files.
 !-----------------------------------------------------------------------
 !
 !  Stop time clocks.
 !
       IF (Master) THEN
         WRITE (stdout,20)
- 20     FORMAT (/,'Elapsed CPU time (seconds):',/)
+ 20     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
       END IF
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 0, __LINE__, __FILE__)
+          CALL wclock_off (ng, iNLM, 0, __LINE__,                       &
+     &                     __FILE__)
         END DO
       END DO
 !

@@ -4,7 +4,7 @@
       SUBROUTINE wrt_tides (ng)
 !
 !git $Id$
-!svn $Id: wrt_tides.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_tides.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,8 +42,8 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gtype, itide, itrc, status, varid
-
-      real(r8) :: scale
+!
+      real(dp) :: scale
       real(r8) :: Work(NTC(ng))
 !
       SourceFile=__FILE__
@@ -151,7 +151,7 @@
 !  Write out free-surface time-accumulated tide harmonics (m).
 !
       IF (Aout(idFsuD,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=r3dvar
         status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
      &                     HAR(ng)%Vid(idFsuH), 0, gtype,               &
@@ -175,7 +175,7 @@
 !  Write out 2D u-momentum time-accumulated tide harmonics (m/s).
 !
       IF (Aout(idu2dD,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=u3dvar
         status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
      &                     HAR(ng)%Vid(idu2dH), 0, gtype,               &
@@ -199,7 +199,7 @@
 !  Write out 2D v-momentum time-accumulated tide harmonics (m/s).
 !
       IF (Aout(idv2dD,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=v3dvar
         status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
      &                     HAR(ng)%Vid(idv2dH), 0, gtype,               &
@@ -225,7 +225,7 @@
 !  Write out 3D u-momentum time-accumulated tide harmonics (m/s).
 !
       IF (Aout(idu3dD,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=u3dvar
         status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                      &
      &                     HAR(ng)%Vid(idu3dH), 0, gtype,               &
@@ -250,7 +250,7 @@
 !  Write out 3D v-momentum time-accumulated tide harmonics (m/s).
 !
       IF (Aout(idv3dD,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=v3dvar
         status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                      &
      &                     HAR(ng)%Vid(idv3dH), 0, gtype,               &
@@ -276,7 +276,7 @@
 !
       DO itrc=1,NAT
         IF (Aout(idTrcD(itrc),ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=r3dvar
           status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                    &
      &                       HAR(ng)%Vid(idTrcH(itrc)), 0, gtype,       &

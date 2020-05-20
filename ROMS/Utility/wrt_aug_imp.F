@@ -3,7 +3,7 @@
       SUBROUTINE wrt_aug_imp (ng, tile, model, Iinp, Iout, INPncname)
 !
 !git $Id$
-!svn $Id: wrt_aug_imp.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_aug_imp.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -45,7 +45,8 @@
       integer :: i, gtype, status, varid
       integer :: ibuffer(2)
 
-      real(r8) :: Fmin, Fmax, scale
+      real(r8) :: Fmin, Fmax
+      real(dp) :: scale
 
 # include "set_bounds.h"
 !
@@ -73,7 +74,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-      scale=1.0_r8
+      scale=1.0_dp
 !
 !  Process free-surface weak-constraint impulse forcing.
 !

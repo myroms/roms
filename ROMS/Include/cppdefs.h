@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1022 2020-05-13 03:03:15Z arango $
+** svn $Id: cppdefs.h 1026 2020-05-20 02:05:37Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -358,7 +358,7 @@
 ** OPT_PERTURBATION           if optimal perturbations, singular vectors     **
 ** PICARD_TEST                if representer tangent linear model test       **
 ** PSEUDOSPECTRA              if pseudospectra of tangent linear resolvant   **
-** RBL4DVAR                   if weak constraint 4DPSAS data assimilation    **
+** RBL4DVAR                   if weak constraint RBL4D-Var data assimilation **
 ** RBL4DVAR_ANA_SENSITIVITY   if RBL4D-Var analysis observation sensitivity  **
 ** RBL4DVAR_FCT_SENSITIVITY   if RBL4D-Var forecast observation sensitivity  **
 ** RPM_DRIVER                 if generic representers model                  **
@@ -368,6 +368,10 @@
 ** SANITY_CHECK               if tangent/adjoint codes sanity check          **
 ** SO_SEMI                    if stochastic optimals driver, semi-norm       **
 ** SO_TRACE                   if stochastic optimals, randomized trace       **
+** SPLIT_I4DVAR               if split I4D-Var data assimilation             **
+** SPLIT_RBL4DVAR             if split RBL4D-Var data assimilation           **
+** SPLIT_R4DVAR               if split R4D-Var data assimilation             **
+** SPLIT_SP4DVAR              if split SP4D-Var data assimilation            **
 ** SP4DVAR                    if Saddle-Point 4D-Var data assimilation       **
 ** STOCHASTIC_OPT             if stochastic optimals                         **
 ** TLM_CHECK                  if tangent linear model linearization check    **

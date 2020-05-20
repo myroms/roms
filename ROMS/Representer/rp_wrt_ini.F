@@ -3,7 +3,7 @@
       SUBROUTINE rp_wrt_ini (ng, Tindex, OutRec)
 !
 !git $Id$
-!svn $Id: rp_wrt_ini.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_wrt_ini.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -71,9 +71,9 @@
       integer :: LBij, UBij
 # endif
       integer :: gfactor, gtype, i, itrc, status, varid
-
-      real(r8) :: my_time, scale
-
+!
+      real(dp) :: my_time, scale
+!
       character (len=15) :: string
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
@@ -118,7 +118,7 @@
 !
 !  Write out free-surface (m)
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r2dvar
       status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idFsur),   &
      &                   OutRec, gtype,                                 &
@@ -147,7 +147,7 @@
 !  Write out free-surface open boundaries.
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
      &                          IRP(ng)%Vid(idSbry(isFsur)),            &
@@ -169,7 +169,7 @@
 !
 !  Write out 2D U-momentum component (m/s).
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u2dvar
       status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUbar),   &
      &                   OutRec, gtype,                                 &
@@ -193,7 +193,7 @@
 !  Write out 2D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
      &                          IRP(ng)%Vid(idSbry(isUbar)),            &
@@ -215,7 +215,7 @@
 !
 !  Write out 2D V-momentum component (m/s).
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v2dvar
       status=nf_fwrite2d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVbar),   &
      &                   OutRec, gtype,                                 &
@@ -239,7 +239,7 @@
 !  Write out 2D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
      &                          IRP(ng)%Vid(idSbry(isVbar)),            &
@@ -266,7 +266,7 @@
 !  at other times in addition to initialization time.
 !
 !!    scale=rho0
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUsms),   &
      &                   OutRec, gtype,                                 &
@@ -288,7 +288,7 @@
 !  Write out surface V-momentum stress.
 !
 !!    scale=rho0
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVsms),   &
      &                   OutRec, gtype,                                 &
@@ -312,7 +312,7 @@
 !
 !  Write out 3D U-momentum component (m/s).
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idUvel),   &
      &                   OutRec, gtype,                                 &
@@ -336,7 +336,7 @@
 !  Write out 3D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
      &                          IRP(ng)%Vid(idSbry(isUvel)),            &
@@ -358,7 +358,7 @@
 !
 !  Write out 3D V-momentum component (m/s).
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Vid(idVvel),   &
      &                   OutRec, gtype,                                 &
@@ -382,7 +382,7 @@
 !  Write out 3D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
      &                          IRP(ng)%Vid(idSbry(isVvel)),            &
@@ -405,7 +405,7 @@
 !  Write out tracer type variables.
 !
       DO itrc=1,NT(ng)
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid, IRP(ng)%Tid(itrc),   &
      &                     OutRec, gtype,                               &
@@ -431,7 +431,7 @@
 !
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           status=nf_fwrite3d_bry (ng, iRPM, IRP(ng)%name, IRP(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
      &                            IRP(ng)%Vid(idSbry(isTvar(itrc))),    &
@@ -462,7 +462,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Lstflux(itrc,ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*r3dvar
           status=nf_fwrite3d(ng, iRPM, IRP(ng)%ncid,                    &
      &                       IRP(ng)%Vid(idTsur(itrc)),                 &

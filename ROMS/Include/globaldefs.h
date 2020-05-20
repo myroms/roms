@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1022 2020-05-13 03:03:15Z arango $
+** svn $Id: globaldefs.h 1026 2020-05-20 02:05:37Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -257,7 +257,40 @@
 #endif
 
 /*
-** Set 4DVAR sensitivity switch.
+** Set multiple excutables split 4D-Var.
+*/
+
+#if defined SPLIT_I4DVAR   || \
+    defined SPLIT_RBL4DVAR || \
+    defined SPLIT_R4DVAR   || \
+    defined SPLIT_SP4DVAR
+# define SPLIT_4DVAR
+#endif
+
+/*
+** If split 4D-Var, activate the unsplit option since both share
+** identical configuration to avoid too many directives changes.
+*/
+
+#if !defined I4DVAR && defined SPLIT_I4DVAR
+# define I4DVAR
+#endif
+
+#if !defined RBL4DVAR && defined SPLIT_RBL4DVAR
+# define RBL4DVAR
+#endif
+
+#if !defined R4DVAR && defined SPLIT_R4DVAR
+# define R4DVAR
+#endif
+
+#if !defined SP4DVAR && defined SPLIT_SP4DVAR
+# define SP4DVAR
+#endif
+
+
+/*
+** Set 4D-Var sensitivity switch.
 */
 
 #if defined RBL4DVAR_ANA_SENSITIVITY || \
@@ -266,7 +299,10 @@
 # define SENSITIVITY_4DVAR
 #endif
 
-#if defined RBL4DVAR && defined OBS_SPACE
+#if (defined RBL4DVAR       && \
+     defined OBS_SPACE)     || \
+    (defined SPLIT_RBL4DVAR && \
+     defined OBS_SPACE)
 # undef OBS_SPACE
 #endif
 
@@ -295,6 +331,10 @@
     defined R_SYMMETRY             || \
     defined SANITY_CHECK           || \
     defined SENSITIVITY_4DVAR      || \
+    defined SPLIT_I4DVAR           || \
+    defined SPLIT_RBL4DVAR         || \
+    defined SPLIT_R4DVAR           || \
+    defined SPLIT_SP4DVAR          || \
     defined SP4DVAR                || \
     defined STOCHASTIC_OPT         || \
     defined TLM_CHECK              || \
@@ -325,6 +365,10 @@
     defined SANITY_CHECK           || \
     defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI                || \
+    defined SPLIT_I4DVAR           || \
+    defined SPLIT_RBL4DVAR         || \
+    defined SPLIT_R4DVAR           || \
+    defined SPLIT_SP4DVAR          || \
     defined SP4DVAR                || \
     defined STOCHASTIC_OPT         || \
     defined TLM_CHECK              || \
@@ -456,12 +500,16 @@
      defined R4DVAR                   || \
      defined R4DVAR_ANA_SENSITIVITY   || \
      defined R_SYMMETRY               || \
+     defined SPLIT_RBL4DVAR           || \
+     defined SPLIT_R4DVAR             || \
+     defined SPLIT_SP4DVAR            || \
+     defined SP4DVAR                  || \
      defined TL_RBL4DVAR              || \
      defined TL_R4DVAR)
 # define WEAK_CONSTRAINT
 #endif
 
-#if !defined WEAK_CONSTRAINT     && defined RPM_RELAXATION
+#if !defined WEAK_CONSTRAINT && defined RPM_RELAXATION
 # undef RPM_RELAXATION
 #endif
 
@@ -472,7 +520,6 @@
     defined I4DVAR                 || \
     defined I4DVAR_ANA_SENSITIVITY || \
     defined OPT_OBSERVATIONS       || \
-    defined SP4DVAR                || \
     defined TLM_CHECK              || \
     defined WEAK_CONSTRAINT
 # define FOUR_DVAR
@@ -518,6 +565,10 @@
     defined RBL4DVAR               || \
     defined R4DVAR                 || \
     defined SENSITIVITY_4DVAR      || \
+    defined SPLIT_I4DVAR           || \
+    defined SPLIT_RBL4DVAR         || \
+    defined SPLIT_R4DVAR           || \
+    defined SPLIT_SP4DVAR          || \
     defined SP4DVAR                || \
     defined TLM_CHECK              || \
     defined TL_RBL4DVAR            || \
@@ -554,6 +605,10 @@
      defined RBL4DVAR               || \
      defined R4DVAR                 || \
      defined SENSITIVITY_4DVAR      || \
+     defined SPLIT_I4DVAR           || \
+     defined SPLIT_RBL4DVAR         || \
+     defined SPLIT_R4DVAR           || \
+     defined SPLIT_SP4DVAR          || \
      defined SP4DVAR                || \
      defined TL_RBL4DVAR            || \
      defined TL_R4DVAR)
@@ -568,6 +623,10 @@
      defined RBL4DVAR               || \
      defined R4DVAR                 || \
      defined SENSITIVITY_4DVAR      || \
+     defined SPLIT_I4DVAR           || \
+     defined SPLIT_RBL4DVAR         || \
+     defined SPLIT_R4DVAR           || \
+     defined SPLIT_SP4DVAR          || \
      defined SP4DVAR                || \
      defined TL_RBL4DVAR            || \
      defined TL_R4DVAR)

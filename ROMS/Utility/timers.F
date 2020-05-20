@@ -3,7 +3,7 @@
 !
 
 !git $Id$
-!svn $Id: timers.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: timers.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -179,7 +179,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: imodel, iregion, MyModel, NSUB
+      integer :: ig, imodel, iregion, MyModel, NSUB
 #ifdef DISTRIBUTE
       integer :: MyCOMM, nPETs, PETrank
 # ifdef ROMS_STDOUT
@@ -302,7 +302,7 @@
           END DO
         END DO
 !
-!  Compute total elapsed CPU wall time between all parallel threads.
+!  Compute total elapsed CPU wall time between all parallel processes.
 !
         IF (thread_count.eq.NSUB) THEN
           thread_count=0
@@ -332,7 +332,10 @@
             END DO
             IF (ng.eq.1) THEN
               WRITE (stdout,20) ' Total:', total_cpu
- 20           FORMAT (a,10x,f14.3)
+ 20           FORMAT (a,t18,f14.3)
+              IF (numthreads.gt.1) THEN
+                WRITE (stdout,20) ' Average:', total_cpu/numthreads
+              END IF
             END IF
           END IF
 #ifdef PROFILE
@@ -488,6 +491,49 @@
               WRITE (stdout,50) sumsum, sumper
             END IF
           END IF
+
+#  ifdef NESTING
+!
+!  Report total elapsed time for message passage communications for
+!  all nested grids.
+!
+          IF (ng.eq.Ngrids) THEN
+            total=0.0_r8
+            DO ig=1,Ngrids
+              DO iregion=Mregion,Fregion-1
+                DO imodel=1,4
+                  total=total+Csum(iregion,imodel,ig)
+                END DO
+              END DO
+            END DO
+            IF (Master.and.(total.gt.0.0_r8)) THEN
+               WRITE (stdout,90) uppercase('mpi'),                         &
+     &                      'communications profile over all nested grids:'
+ 90            FORMAT (/,1x,a,1x,a,/)
+            END IF
+            IF (total.gt.0.0_r8) THEN
+              sumper=0.0_r8
+              sumsum=0.0_r8
+              DO iregion=Mregion,Fregion-1
+                sumcpu=0.0_r8
+                DO ig=1,Ngrids
+                  DO imodel=1,4
+                    sumcpu=sumcpu+Csum(iregion,imodel,ig)
+                  END DO
+                END DO
+                IF (Master.and.(sumcpu.gt.0.0_r8)) THEN
+                  percent=100.0_r8*sumcpu/total_cpu
+                  WRITE (stdout,40) Pregion(iregion), sumcpu, percent
+                  sumsum=sumsum+sumcpu
+                  sumper=sumper+percent
+                END IF
+              END DO
+              IF (Master.and.(total.gt.0.0_r8)) THEN
+                WRITE (stdout,50) sumsum, sumper
+              END IF
+            END IF
+          END IF
+#  endif
 # endif
 #endif
         END IF

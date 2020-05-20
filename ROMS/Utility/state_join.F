@@ -40,10 +40,10 @@
       USE dateclock_mod,   ONLY : time_string
       USE nf_fread2d_mod,  ONLY : nf_fread2d
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
-# ifdef SOLVE3D
+#ifdef SOLVE3D
       USE nf_fread3d_mod,  ONLY : nf_fread3d
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
-# endif
+#endif
       USE strings_mod,     ONLY : FoundError
 !
 !  Imported variable declarations.
@@ -63,7 +63,8 @@
 
       integer :: Vsize(4)
 !
-      real(r8) :: Fmin, Fmax, Fscl, stime
+      real(r8) :: Fmin, Fmax
+      real(dp) :: Fscl, stime
 !
       character (len=15) :: Tstring
       character (len=22) :: t_code
@@ -115,7 +116,7 @@
 !
       OutRec=OutStrRec-1
       Tindex=1
-      Fscl=1.0_r8
+      Fscl=1.0_dp
 !
       REC_LOOP : DO InpRec=InpStrRec,InpEndRec
         OutRec=OutRec+1
@@ -124,8 +125,9 @@
 !  Time.
 !
           CHECK1 : IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
-            CALL netcdf_get_fvar (ng, model, InpName,                   &
-     &                            TRIM(var_name(i)), stime,             &
+            CALL netcdf_get_time (ng, model, InpName,                   &
+     &                            TRIM(var_name(i)),                    &
+     &                            Rclock%DateNumber, stime,             &
      &                            ncid = InpID,                         &
      &                            start = (/InpRec/),                   &
      &                            total = (/1/))

@@ -1,14 +1,14 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: job_psas.csh 1019 2020-04-30 20:46:51Z arango $
+# svn $Id: job_rbl4dvar.csh 1026 2020-05-20 02:05:37Z arango $
 #######################################################################
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 #######################################################################
 #                                                                     #
-# Strong/Weak constraint 4D-PSAS job CSH script:                      #
+# Strong/Weak constraint RBL4D-Var job CSH script:                    #
 #                                                                     #
 # This script NEEDS to be run before any run:                         #
 #                                                                     #
@@ -22,7 +22,7 @@
 #       surface forcing error convariance input/output normalization  #
 #       factors files.                                                #
 #   (4) Copy a clean copy of the observations NetCDF file.            #
-#   (5) Create 4D-Var input script "psas.in" from template and        #
+#   (5) Create 4D-Var input script "rbl4dvar.in" from template and    #
 #       specify the error covariance standard deviation, error        #
 #       covariance normalization factors, and observation files to    #
 #       be used.                                                      #
@@ -68,22 +68,22 @@
 
 # Modify 4D-Var template input script and specify above files.
 
- set PSAS=psas.in
- if (-e $PSAS) then
-   /bin/rm $PSAS
+ set RBL4DVAR=rbl4dvar.in
+ if (-e $RBL4DVAR) then
+   /bin/rm $RBL4DVAR
  endif
- cp s4dvar.in $PSAS
+ cp s4dvar.in $RBL4DVAR
 
- $SUBSTITUTE $PSAS roms_std_m.nc $STDnameM
- $SUBSTITUTE $PSAS roms_std_i.nc $STDnameI
- $SUBSTITUTE $PSAS roms_std_b.nc $STDnameB
- $SUBSTITUTE $PSAS roms_std_f.nc $STDnameF
- $SUBSTITUTE $PSAS roms_nrm_m.nc $NRMnameM
- $SUBSTITUTE $PSAS roms_nrm_i.nc $NRMnameI
- $SUBSTITUTE $PSAS roms_nrm_b.nc $NRMnameB
- $SUBSTITUTE $PSAS roms_nrm_f.nc $NRMnameF
- $SUBSTITUTE $PSAS roms_obs.nc $OBSname
- $SUBSTITUTE $PSAS roms_hss.nc wc13_hss.nc
- $SUBSTITUTE $PSAS roms_lcz.nc wc13_lcz.nc
- $SUBSTITUTE $PSAS roms_mod.nc wc13_mod.nc
- $SUBSTITUTE $PSAS roms_err.nc wc13_err.nc
+ $SUBSTITUTE $RBL4DVAR roms_std_m.nc $STDnameM
+ $SUBSTITUTE $RBL4DVAR roms_std_i.nc $STDnameI
+ $SUBSTITUTE $RBL4DVAR roms_std_b.nc $STDnameB
+ $SUBSTITUTE $RBL4DVAR roms_std_f.nc $STDnameF
+ $SUBSTITUTE $RBL4DVAR roms_nrm_m.nc $NRMnameM
+ $SUBSTITUTE $RBL4DVAR roms_nrm_i.nc $NRMnameI
+ $SUBSTITUTE $RBL4DVAR roms_nrm_b.nc $NRMnameB
+ $SUBSTITUTE $RBL4DVAR roms_nrm_f.nc $NRMnameF
+ $SUBSTITUTE $RBL4DVAR roms_obs.nc $OBSname
+ $SUBSTITUTE $RBL4DVAR roms_hss.nc wc13_hss.nc
+ $SUBSTITUTE $RBL4DVAR roms_lcz.nc wc13_lcz.nc
+ $SUBSTITUTE $RBL4DVAR roms_mod.nc wc13_mod.nc
+ $SUBSTITUTE $RBL4DVAR roms_err.nc wc13_err.nc
