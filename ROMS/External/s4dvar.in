@@ -1,7 +1,7 @@
-!  4DVar assimilation input parameters.
+!  4D-Var assimilation input parameters.
 !
 !git $Id$
-!svn $Id: s4dvar.in 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: s4dvar.in 1026 2020-05-20 02:05:37Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -118,7 +118,7 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
         NritzEV = 0
 
-! If weak constraint 4DVar, set number of iterations in the Lanczos
+! If weak constraint 4D-Var, set number of iterations in the Lanczos
 ! algorithm used to estimate the posterior analysis error covariance
 ! matrix.
 
@@ -128,6 +128,14 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 ! outer loop to process. It must be less or equal that Nouter.
 
         Nimpact = 1
+
+! If multiple executables 4D-Var, set the current outer counter and
+! its computation phase (string). The 4D-Var running script assigns
+! their values.
+
+      OuterLoop = MyOuterLoop
+
+     Phase4DVAR = MyPhase4DVAR
 
 ! Number of extra-observation classes (NextraObs), observation type
 ! indices (ExtraIndex), and observation type names (ExtraName) to
@@ -149,7 +157,7 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
       ExtraName = radial
 
-! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
+! If weak constraint 4D-Var, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
 
@@ -575,8 +583,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   If zero, use HevecErr parameter to determine the number
 !                   of converged eigenpairs.
 !
-!  NpostI         If weak constraint 4DVar (RBL4DVAR or R4DVAR), set number of
-!                 iterations in the Lanczos algorithm used to estimate the
+!  NpostI         If weak constraint 4D-Var (RBL4DVAR or R4DVAR), set number
+!                 of iterations in the Lanczos algorithm used to estimate the
 !                 posterior analysis error covariance matrix.
 !
 !------------------------------------------------------------------------------
@@ -589,6 +597,25 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 applications.  The observation analysis needs to be computed
 !                 separately for each outer loop.  The full analysis for all
 !                 outer loops is combined offline.
+!
+!------------------------------------------------------------------------------
+! Outer loop counter and phase for split 4D-Var in multiple executables.
+!------------------------------------------------------------------------------
+!
+!  OuterLoop      Current outer loop counter. It is set by the running shell
+!                 script.
+!
+!  Phase4DVAR     Current split 4D-Var algorithm elementary phases to compute:
+!
+!                   Phase4DVAR = 'background'         Xb
+!                   Phase4DVAR = 'increment'          dXa
+!                   Phase4DVAR = 'analysis'           Xa = Xb + dXa
+!                   Phase4DVAR = 'post_analysis'      (posterior analysis)
+!                   Phase4DVAR = 'post_error'         (posterior error)
+!
+!                 There is a 'prior_error' phase that it is always done in
+!                 'ROMS_initialize'.
+!
 !
 !------------------------------------------------------------------------------
 ! Additional observation operators.
@@ -633,7 +660,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! Diffusive relaxation coefficients.
 !------------------------------------------------------------------------------
 !
-! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this
+! If weak constraint 4D-Var and RPM_RELAXATION flag is activated, this
 ! coefficients are use to relax the representer tangent lineas solution
 ! to previous outer loop linearized trajectory during the Picard
 ! iterations. The user may turn off relaxation on a particular variable
@@ -869,7 +896,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 grid. Used when bgqc_type = 2.
 !
 !------------------------------------------------------------------------------
-! 4DVAR adjustment switches.
+! 4D-Var adjustment switches.
 !------------------------------------------------------------------------------
 !
 !  Lstflux        Logical switches (T/F) used to adjust surface tracer flux,

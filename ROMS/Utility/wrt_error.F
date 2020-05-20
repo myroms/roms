@@ -4,7 +4,7 @@
       SUBROUTINE wrt_error (ng, kout, nout)
 !
 !git $Id$
-!svn $Id: wrt_error.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: wrt_error.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -64,7 +64,8 @@
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
-      real(r8) :: scale
+!
+      real(dp) :: scale
 !
       SourceFile=__FILE__
 !
@@ -131,7 +132,7 @@
 !
 !  Write out free-surface error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*r2dvar
       status=nf_fwrite2d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idFsur),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -155,7 +156,7 @@
 !  Write out free-surface open boundaries error variance.
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
      &                          ERR(ng)%Vid(idSbry(isFsur)),            &
@@ -178,7 +179,7 @@
 !
 !  Write out 2D U-momentum component error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u2dvar
       status=nf_fwrite2d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idUbar),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -202,7 +203,7 @@
 !  Write out 2D U-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
      &                          ERR(ng)%Vid(idSbry(isUbar)),            &
@@ -225,7 +226,7 @@
 !
 !  Write out 2D V-momentum component error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v2dvar
       status=nf_fwrite2d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idVbar),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -249,7 +250,7 @@
 !  Write out 2D V-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
      &                          ERR(ng)%Vid(idSbry(isVbar)),            &
@@ -274,7 +275,7 @@
 !
 !  Write out 3D U-momentum component error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idUvel),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -298,7 +299,7 @@
 !  Write out 3D U-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
      &                          ERR(ng)%Vid(idSbry(isUvel)),            &
@@ -321,7 +322,7 @@
 !
 !  Write out 3D V-momentum component error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idVvel),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -345,7 +346,7 @@
 !  Write out 3D V-momentum component open boundaries error variance.
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
      &                          ERR(ng)%Vid(idSbry(isVvel)),            &
@@ -369,7 +370,7 @@
 !  Write out tracer type variables error variance.
 !
       DO itrc=1,NT(ng)
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Tid(itrc),   &
      &                     ERR(ng)%Rindex, gtype,                       &
@@ -396,7 +397,7 @@
 !
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           status=nf_fwrite3d_bry (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
      &                            ERR(ng)%Vid(idSbry(isTvar(itrc))),    &
@@ -427,7 +428,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Lstflux(itrc,ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*r3dvar
           status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid,                    &
      &                       ERR(ng)%Vid(idTsur(itrc)),                 &
@@ -457,7 +458,7 @@
 !  stress has its own fixed time-dimension (of size Nfrec) to allow
 !  4DVar adjustments at other times in addition to initialization time.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idUsms),   &
      &                   ERR(ng)%Rindex, gtype,                         &
@@ -478,7 +479,7 @@
 !
 !  Write out surface V-momentum stress error variance.
 !
-      scale=1.0_r8
+      scale=1.0_dp
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ERR(ng)%ncid, ERR(ng)%Vid(idVsms),   &
      &                   ERR(ng)%Rindex, gtype,                         &

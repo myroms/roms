@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: obs_sen_rbl4dvar_analysis.h 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: obs_sen_rbl4dvar_analysis.h 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -9,17 +9,18 @@
 !=======================================================================
 !                                                                      !
 !  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
-!    Assimilation and Observation Sensitivity Driver: Physical-space   !
-!    Statistical Analysis System (4D-PSAS).                            !
-!    Dual formulation in observarion space.                            !
+!    Assimilation and Observation Sensitivity Driver: Restricted       !
+!    B-preconditioned Lanczos (RBL4D-Var).                             !
 !                                                                      !
-!  This driver is used for weak constraint 4D-Var where errors are     !
-!  considered in both model and observations. It also computes the     !
-!  the sensitivity of the assimilation system to each observation.     !
-!  It measures the degree to which each observation contributes to     !
-!  the uncertainty in the estimate.  This analysis  can be used to     !
-!  determine the type of measurements that need to be made,  where     !
-!  to observe, and when.                                               !
+!  This driver is used for the dual formulation (observation space),   !
+!  strong or weak constraint 4D-Var where errors may be considered     !
+!  in both model and observations.                                     !
+!                                                                      !
+!  It also computes the sensitivity of the assimilation system to      !
+!  each observation. It measures the degree to which each observation  !
+!  contributes to the uncertainty in the estimate. This analysis can   !
+!  be used to determine the type of measurements that need to be made, !
+!  where to observe, and when.                                         !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
 !  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
@@ -404,7 +405,7 @@
 
       real(r8) :: str_day, end_day
 
-      character (len=15) :: driver
+      character (len=25) :: driver
       character (len=20) :: string
 !
 !=======================================================================
@@ -434,10 +435,10 @@
       inner=0
       ERstr=1
       ERend=Nouter
-      driver='obs_sen_w4dpsas'
+      driver='obs_sen_rbl4dvar_analysis'
 !
 !-----------------------------------------------------------------------
-!  Configure weak constraint 4DVAR algorithm: PSAS Approach.
+!  Configure weak constraint RBL4D-Var algorithm.
 !-----------------------------------------------------------------------
 !
 !  Initialize the switch to gather weak constraint forcing.
@@ -1264,7 +1265,7 @@
 !
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  Adjoint of 4D-PSAS to compute the observation sensitivity.
+!  Adjoint of RBL4D-Var to compute the observation sensitivity.
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !
@@ -1545,7 +1546,7 @@
 # endif
 
           IF (Master) THEN
-            WRITE (stdout,60) 'Adjoint of', uppercase('w4dpsas'),       &
+            WRITE (stdout,60) 'Adjoint of', uppercase('rbl4dvar'),      &
      &                        outer, inner
           END IF
 # ifdef RPCG
@@ -2262,7 +2263,7 @@
 !
       IF (Master) THEN
         WRITE (stdout,20)
- 20     FORMAT (/,'Elapsed CPU time (seconds):',/)
+ 20     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
       END IF
 !
       DO ng=1,Ngrids

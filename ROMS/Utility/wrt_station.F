@@ -3,7 +3,7 @@
       SUBROUTINE wrt_station (ng)
 !
 !git $Id$
-!svn $Id: wrt_station.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: wrt_station.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -57,7 +57,7 @@
       integer :: NposB, NposR, NposW, LBi, UBi, LBj, UBj
       integer :: Fcount, i, ifield, k, np, status, tile
 
-      real(r8) :: scale
+      real(dp) :: scale
 
       real(r8), dimension(Nstation(ng)) :: Xpos, Ypos, Zpos, psta
 # ifdef SOLVE3D
@@ -152,7 +152,7 @@
 !  Write out free-surface (m).
 !
       IF (Sout(idFsur,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idFsur, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%zeta(:,:,KOUT),            &
@@ -171,7 +171,7 @@
 !  Define time-varying bathymetry.
 !
       IF (Sout(idbath,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idbath, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, GRID(ng)%h,                          &
@@ -189,7 +189,7 @@
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
       IF (Sout(idUbar,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idUbar, u2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%ubar(:,:,KOUT),            &
@@ -206,7 +206,7 @@
 !  Write out 2D momentum component (m/s) in the ETA-direction.
 !
       IF (Sout(idVbar,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idVbar, v2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%vbar(:,:,KOUT),            &
@@ -248,7 +248,7 @@
      &                    OCEAN(ng) % vbar(:,:,KOUT),                   &
      &                    Ur2d, Vr2d)
 
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idu2dE, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, Ur2d,                                &
@@ -282,7 +282,7 @@
 !  Write out 3D momentum component (m/s) in the XI-direction.
 !
       IF (Sout(idUvel,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idUvel, u3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
@@ -300,7 +300,7 @@
 !  Write out 3D momentum component (m/s) in the ETA-direction.
 !
       IF (Sout(idVvel,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idVvel, v3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
@@ -343,7 +343,7 @@
      &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
      &                    Ur3d, Vr3d)
 
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idu3dE, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, Ur3d,                                &
@@ -377,7 +377,7 @@
 !  Write out vertical velocity (m/s).
 !
       IF (Sout(idWvel,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idWvel, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, OCEAN(ng)%wvel,                      &
@@ -395,7 +395,7 @@
 !  Write S-coordinate "omega" vertical velocity (m3/s).
 !
       IF (Sout(idOvel,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idOvel, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, OCEAN(ng)%W,                         &
@@ -415,7 +415,7 @@
       DO i=1,NT(ng)
         ifield=idTvar(i)
         IF (Sout(ifield,ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           CALL extract_sta3d (ng, iNLM, Cgrid, ifield, r3dvar,          &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        scale, OCEAN(ng)%t(:,:,:,NOUT,i),         &
@@ -434,7 +434,7 @@
 !  Write out density anomaly.
 !
       IF (Sout(idDano,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idDano, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%rho,                       &
@@ -454,7 +454,7 @@
 !  Write out depth of surface boundary layer.
 !
       IF (Sout(idHsbl,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idHsbl, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng)%hsbl,                     &
@@ -473,7 +473,7 @@
 !  Write out depth of bottom boundary layer.
 !
       IF (Sout(idHbbl,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idHbbl, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng)%hbbl,                     &
@@ -491,7 +491,7 @@
 !  Write out vertical viscosity coefficient.
 !
       IF (Sout(idVvis,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idVvis, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akv,                      &
@@ -509,7 +509,7 @@
 !  Write out vertical diffusion coefficient for potential temperature.
 !
       IF (Sout(idTdif,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idTdif, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akt(:,:,:,itemp),         &
@@ -529,7 +529,7 @@
 !  Write out vertical diffusion coefficient for salinity.
 !
       IF (Sout(idSdif,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idSdif, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akt(:,:,:,isalt),         &
@@ -549,7 +549,7 @@
 !  Write out turbulent kinetic energy.
 !
       IF (Sout(idMtke,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idMtke, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%tke(:,:,:,NOUT),          &
@@ -567,7 +567,7 @@
 !  Write out turbulent kinetic energy times length scale.
 !
       IF (Sout(idMtls,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idMtls, w3dvar,            &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%gls(:,:,:,NOUT),          &
@@ -587,7 +587,7 @@
 !  Write out surface air pressure.
 !
       IF (Sout(idPair,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idPair, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%Pair,                     &
@@ -606,7 +606,7 @@
 !  Write out surface winds.
 !
       IF (Sout(idUair,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idUair, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%Uwind,                    &
@@ -621,7 +621,7 @@
       END IF
 
       IF (Sout(idVair,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idVair, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%Vwind,                    &
@@ -660,7 +660,7 @@
 !
       IF (Sout(idTsur(isalt),ng)) THEN
         ifield=idTsur(isalt)
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, ifield, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%stflx(:,:,isalt),         &
@@ -753,7 +753,7 @@
 !  Write out E-P (m/s).
 !
       IF (Sout(idEmPf,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idEmPf, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%EminusP,                  &
@@ -770,7 +770,7 @@
 !  Write out evaportaion rate (kg/m2/s).
 !
       IF (Sout(idevap,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idevap, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%evap,                     &
@@ -787,7 +787,7 @@
 !  Write out precipitation rate (kg/m2/s).
 !
       IF (Sout(idrain,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idrain, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%rain,                     &
@@ -979,7 +979,7 @@
 !  Write out wind-induced, bed wave orbital U-velocity.
 !
       IF (Sout(idUbot,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idUbot, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Ubot,                        &
@@ -996,7 +996,7 @@
 !  Write out wind-induced, bed wave orbital V-velocity.
 !
       IF (Sout(idVbot,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idVbot, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Vbot,                        &
@@ -1013,7 +1013,7 @@
 !  Write out bottom U-velocity above bed.
 !
       IF (Sout(idUbur,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idUbur, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Ur,                          &
@@ -1030,7 +1030,7 @@
 !  Write out bottom V-velocity above bed.
 !
       IF (Sout(idVbvr,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idVbvr, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Vr,                          &
@@ -1051,7 +1051,7 @@
 !
       DO i=1,NST
         IF (Sout(idfrac(i),ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           CALL extract_sta3d (ng, iNLM, Cgrid, idfrac(i), b3dvar,       &
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        scale, SEDBED(ng)%bed_frac(:,:,:,i),      &
@@ -1069,7 +1069,7 @@
 !  Write out sediment mass of each size class in each bed layer.
 !
         IF (Sout(idBmas(i),ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           CALL extract_sta3d (ng, iNLM, Cgrid, idBmas(i), b3dvar,       &
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        scale,                                    &
@@ -1090,7 +1090,7 @@
 !
       DO i=1,MBEDP
         IF (Sout(idSbed(i),ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           CALL extract_sta3d (ng, iNLM, Cgrid, idSbed(i), b3dvar,       &
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        scale, SEDBED(ng)%bed(:,:,:,i),           &
@@ -1113,7 +1113,7 @@
 !
       DO i=1,MBEDP
         IF (Sout(idBott(i),ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           CALL extract_sta2d (ng, iNLM, Cgrid, idBott(i), r2dvar,       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        scale, SEDBED(ng)%bottom(:,:,i),          &
@@ -1135,7 +1135,7 @@
 !  Write out 2D radiation stress, Sxx-component.
 !
       IF (Sout(idW2xx,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idW2xx, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng) % Sxx_bar,                &
@@ -1152,7 +1152,7 @@
 !  Write out 2D radiation stress, Sxy-component.
 !
       IF (Sout(idW2xy,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idW2xy, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng) % Sxy_bar,                &
@@ -1169,7 +1169,7 @@
 !  Write out 2D radiation stress, Syy-component.
 !
       IF (Sout(idW2yy,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idW2yy, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng) % Syy_bar,                &
@@ -1220,7 +1220,7 @@
 !  Write out 2D U-momentum Stokes drift velocity.
 !
       IF (Sout(idU2Sd,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idU2Sd, u2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng) % ubar_stokes,             &
@@ -1237,7 +1237,7 @@
 !  Write out 2D V-momentum Stokes drift velocity.
 !
       IF (Sout(idV2Sd,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idV2Sd, v2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng) % ubar_stokes,             &
@@ -1256,7 +1256,7 @@
 !  Write out 3D radiation stress, Sxx-horizontal component.
 !
       IF (Sout(idW3xx,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idW3xx, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, MIXING(ng) % Sxx,                    &
@@ -1274,7 +1274,7 @@
 !  Write out 3D radiation stress, Sxy-horizontal component.
 !
       IF (Sout(idW3xy,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idW3xy, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, MIXING(ng) % Sxy,                    &
@@ -1292,7 +1292,7 @@
 !  Write out 3D radiation stress, Syy-horizontal component.
 !
       IF (Sout(idW3yy,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idW3yy, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, MIXING(ng) % Syy,                    &
@@ -1312,7 +1312,7 @@
 !  Write out 3D radiation stress, Szx-vertical component.
 !
       IF (Sout(idW3zx,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idW3zx, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%rho,                       &
@@ -1330,7 +1330,7 @@
 !  Write out 3D radiation stress, Szy-vertical component.
 !
       IF (Sout(idW3zy,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idW3zy, r3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, MIXING(ng) % Szx,                    &
@@ -1385,7 +1385,7 @@
 !  Write out 3D U-momentum Stokes drift velocity.
 !
       IF (Sout(idU3Sd,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idU3Sd, u3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng) % u_stokes,                &
@@ -1403,7 +1403,7 @@
 !  Write out 3D V-momentum stokes velocity.
 !
       IF (Sout(idV3Sd,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta3d (ng, iNLM, Cgrid, idV3Sd, v3dvar,            &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng) % v_stokes,                &
@@ -1424,7 +1424,7 @@
 !  Write out wind-induced wave height.
 !
       IF (Sout(idWamp,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idWamp, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng) % Hwave,                  &
@@ -1443,7 +1443,7 @@
 !  Write out wind-induced wave length.
 !
       IF (Sout(idWlen,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idWlen, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng) % Lwave,                  &

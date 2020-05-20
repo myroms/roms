@@ -2,7 +2,7 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: initial.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -610,8 +610,8 @@
 !
 !-----------------------------------------------------------------------
 !  Read in the surface forcing and or open boundary conditions
-!  increments for PSAS from record IniRec of the NLM initial NetCDF
-!  file.
+!  increments for RBL4D-Var from record IniRec of the NLM initial
+!  NetCDF file.
 !-----------------------------------------------------------------------
 !
       IF (Nrun.gt.1) THEN

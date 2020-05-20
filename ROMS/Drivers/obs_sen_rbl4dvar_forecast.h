@@ -9,17 +9,18 @@
 !=======================================================================
 !                                                                      !
 !  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
-!    Assimilation and Observation Sensitivity Driver: Physical-space   !
-!    Statistical Analysis System (4D-PSAS).                            !
-!    Dual formulation in observarion space.                            !
+!    Assimilation and Observation Sensitivity Driver: Restricted       !
+!    B-preconditioned Lanczos (RBL4D-Var).                             !
 !                                                                      !
-!  This driver is used for weak constraint 4D-Var where errors are     !
-!  considered in both model and observations. It also computes the     !
-!  the sensitivity of the assimilation system to each observation.     !
-!  It measures the degree to which each observation contributes to     !
-!  the uncertainty in the estimate.  This analysis  can be used to     !
-!  determine the type of measurements that need to be made,  where     !
-!  to observe, and when.                                               !
+!  This driver is used for the dual formulation (observation space),   !
+!  strong or weak constraint 4D-Var where errors may be considered     !
+!  in both model and observations.                                     !
+!                                                                      !
+!  It also computes the sensitivity of the assimilation system to      !
+!  each observation. It measures the degree to which each observation  !
+!  contributes to the uncertainty in the estimate. This analysis can   !
+!  be used to determine the type of measurements that need to be made, !
+!  where to observe, and when.                                         !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
 !  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
@@ -407,7 +408,7 @@
 #ifdef OBS_SPACE
       character (len=1) :: charC
 #endif
-      character (len=15) :: driver
+      character (len=25) :: driver
       character (len=20) :: string
 !
 !=======================================================================
@@ -437,7 +438,7 @@
       inner=0
       ERstr=1
       ERend=Nouter
-      driver='obs_sen_w4dpsas_forecast'
+      driver='obs_sen_rbl4dvar_forecast'
       charA='A'
       charB='B'
 #ifdef OBS_SPACE
@@ -479,7 +480,7 @@
       RunInterval=rtime
 !
 !-----------------------------------------------------------------------
-!  Configure weak constraint 4DVAR algorithm: PSAS Approach.
+!  Configure weak constraint RBL4D-Var algorithm.
 !-----------------------------------------------------------------------
 !
 !  Initialize the switch to gather weak constraint forcing.
@@ -526,14 +527,14 @@
       END DO
 !
 !  The FWD structure is used several times and contains the nonnlinear
-!  background trajectories (PSAS, FCTA, and FCTB) used to linearize the
-!  tangent linear and adjoint models.  These trajectories can be split
-!  into multi-files.  If so, the user needs to specified such multiple
-!  files in the standard input script (roms.in). Since the HIS structure
-!  is not used here, copy the original FWD containing the trajectory
-!  information loaded during configuration in "inp_par", which has the
-!  values for the regular PSAS at specified outer loop into the HIS
-!  structure.
+!  background trajectories (RBL4DVAR, FCTA, and FCTB) used to linearize
+!  the tangent linear and adjoint models.  These trajectories can be
+!  split into multi-files. If so, the user needs to specified such
+!  multiple files in the standard input script (roms.in). Since the HIS
+!  structure is not used here, copy the original FWD containing the
+!  trajectory information loaded during configuration in "inp_par",
+!  which has the values for the regular RBL4D-Var at specified outer
+!  loop into the HIS structure.
 !
       CALL edit_multifile ('FWD2HIS')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
@@ -985,7 +986,7 @@
 !
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  Adjoint of 4D-PSAS to compute the observation sensitivity.
+!  Adjoint of RBL4D-Var to compute the observation sensitivity.
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !
@@ -1052,7 +1053,7 @@
         END DO
 !
 !  Set structure for the nonlinear forward trajectory (from regular
-!  PSAS) to be processed by the tangent linear and adjoint models.
+!  RBL4DVAR) to be processed by the tangent linear and adjoint models.
 !  Also, set switches to process the FWD structure in routine
 !  "check_multifile". Notice that it is possible to split solution
 !  into multiple NetCDF files to reduce their size.
@@ -1064,9 +1065,9 @@
           LreadFWD(ng)=.TRUE.
         END DO
 !
-!  Set structure for the nonlinear surface fluxes (from regular PSAS)
-!  to be processed by by the tangent linear and adjoint models.
-!  Also, set switches to process the BLK structure in routine
+!  Set structure for the nonlinear surface fluxes (from regular
+!  RBL4DVAR) to be processed by by the tangent linear and adjoint
+!  models. Also, set switches to process the BLK structure in routine
 !  "check_multifile".  Notice that it is possible to split solution
 !  into multiple NetCDF files to reduce their size.
 !
@@ -1469,7 +1470,7 @@
           END IF
 # endif
           IF (Master) THEN
-            WRITE (stdout,60) 'Adjoint of', uppercase('w4dpsas'),       &
+            WRITE (stdout,60) 'Adjoint of', uppercase('rbl4dvar'),      &
      &                        outer, inner
           END IF
 # ifdef RPCG
@@ -2196,7 +2197,7 @@
 !
       IF (Master) THEN
         WRITE (stdout,20)
- 20     FORMAT (/,'Elapsed CPU time (seconds):',/)
+ 20     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
       END IF
 !
       DO ng=1,Ngrids

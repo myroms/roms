@@ -3,14 +3,14 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: r4dvar.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This module splits the W4D-PSAS data assimilation algorithm into    !
+!  This module splits the R4D-Var data assimilation algorithm into     !
 !  its logical components routines:                                    !
 !                                                                      !
 !    background        Xb, nonlinear trajectory used to linearize the  !

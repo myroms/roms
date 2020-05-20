@@ -2,7 +2,7 @@
       MODULE state_read_mod
 !
 !git $Id$
-!svn $Id: state_read.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: state_read.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -214,7 +214,8 @@
 
       integer, dimension(4) :: Vsize
 
-      real(r8) :: Fmin, Fmax, scale, stime
+      real(r8) :: Fmin, Fmax
+      real(dp) :: stime, scale
 
       character (len=15) :: Tstring
       character (len=22) :: t_code
@@ -261,7 +262,8 @@
 !
 !  Read in time.
 !
-      CALL netcdf_get_fvar (ng, model, ncname, Vname(1,idtime), stime,  &
+      CALL netcdf_get_time (ng, model, ncname, Vname(1,idtime),         &
+     &                      Rclock%DateNumber, stime,                   &
      &                      ncid, (/rec/), (/1/))
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

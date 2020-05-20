@@ -2,7 +2,7 @@
       MODULE nf_fwrite2d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fwrite2d_bry.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: nf_fwrite2d_bry.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -73,11 +73,12 @@
 !
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBij, UBij, Nrec
-      real(r8), intent(in) :: Ascl
-
+!
+      real(dp), intent(in) :: Ascl
+!
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
-
+!
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: A(LBij:,:,:)
 #else

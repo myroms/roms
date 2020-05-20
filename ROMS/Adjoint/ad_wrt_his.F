@@ -3,7 +3,7 @@
       SUBROUTINE ad_wrt_his (ng)
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_wrt_his.F 1026 2020-05-20 02:05:37Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -72,7 +72,8 @@
 # ifdef SOLVE3D
       integer :: itrc, k, nout
 # endif
-      real(r8) :: scale
+!
+      real(dp) :: scale
       real(r8) :: Tval(1)
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
@@ -166,7 +167,7 @@
 !  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
 !  at other times in addition to initialization time.
 !
-      scale=1.0_r8                          ! m2/s2
+      scale=1.0_dp                          ! m2/s2
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idUsms),   &
      &                   ADM(ng)%Rindex, gtype,                         &
@@ -187,7 +188,7 @@
 !
 !  Write out surface V-momentum stress.
 !
-      scale=1.0_r8                          ! m2/s2
+      scale=1.0_dp                          ! m2/s2
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idVsms),   &
      &                   ADM(ng)%Rindex, gtype,                         &
@@ -214,7 +215,7 @@
 !
       DO itrc=1,NT(ng)
         IF (Lstflux(itrc,ng)) THEN
-          scale=1.0_r8                      ! kinematic flux units
+          scale=1.0_dp                      ! kinematic flux units
           gtype=gfactor*r3dvar
           status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idTsur(itrc)),                 &
@@ -240,7 +241,7 @@
 !  Write out bathymetry.
 !
       IF (Hout(idbath,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idbath), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -266,7 +267,7 @@
       IF (Hout(idFsur,ng)) THEN
 # ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idFsur),                       &
@@ -287,7 +288,7 @@
           END IF
         ELSE
 # endif
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*r2dvar
           IF (LwrtState2d(ng)) THEN
             status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                  &
@@ -337,7 +338,7 @@
 !  Write out free-surface open boundaries.
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid,   &
      &                          Vname(1,idSbry(isFsur)),                &
      &                          ADM(ng)%Vid(idSbry(isFsur)),            &
@@ -363,7 +364,7 @@
       IF (Hout(idUbar,ng)) THEN
 # ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*u2dvar
           status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idUbar),                       &
@@ -384,7 +385,7 @@
           END IF
         ELSE
 # endif
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*u2dvar
           IF (LwrtState2d(ng)) THEN
             status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                  &
@@ -424,7 +425,7 @@
 !  Write out 2D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid,   &
      &                          Vname(1,idSbry(isUbar)),                &
      &                          ADM(ng)%Vid(idSbry(isUbar)),            &
@@ -450,7 +451,7 @@
       IF (Hout(idVbar,ng)) THEN
 # ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*v2dvar
           status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idVbar),                       &
@@ -471,7 +472,7 @@
           END IF
         ELSE
 # endif
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*v2dvar
           IF (LwrtState2d(ng)) THEN
             status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                  &
@@ -511,7 +512,7 @@
 !  Write out 2D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite2d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid,   &
      &                          Vname(1,idSbry(isVbar)),                &
      &                          ADM(ng)%Vid(idSbry(isVbar)),            &
@@ -539,7 +540,7 @@
       IF (Hout(idUvel,ng)) THEN
 #  ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*u3dvar
           status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idUvel),                       &
@@ -560,7 +561,7 @@
           END IF
         ELSE
 #  endif
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*u3dvar
 #  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
           IF (LwrtState3d(ng)) THEN
@@ -604,7 +605,7 @@
 !  Write out 3D U-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid,   &
      &                          Vname(1,idSbry(isUvel)),                &
      &                          ADM(ng)%Vid(idSbry(isUvel)),            &
@@ -630,7 +631,7 @@
       IF (Hout(idVvel,ng)) THEN
 #  ifdef WEAK_CONSTRAINT
         IF (WRTforce(ng)) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*v3dvar
           status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                    &
      &                       ADM(ng)%Vid(idVvel),                       &
@@ -651,7 +652,7 @@
           END IF
         ELSE
 #  endif
-          scale=1.0_r8
+          scale=1.0_dp
           gtype=gfactor*v3dvar
 #  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
           IF (LwrtState3d(ng)) THEN
@@ -695,7 +696,7 @@
 !  Write out 3D V-momentum component open boundaries.
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         status=nf_fwrite3d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid,   &
      &                          Vname(1,idSbry(isVvel)),                &
      &                          ADM(ng)%Vid(idSbry(isVvel)),            &
@@ -722,7 +723,7 @@
         IF (Hout(idTvar(itrc),ng)) THEN
 #  ifdef WEAK_CONSTRAINT
           IF (WRTforce(ng)) THEN
-            scale=1.0_r8
+            scale=1.0_dp
             gtype=gfactor*r3dvar
             status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                  &
      &                         ADM(ng)%Tid(itrc),                       &
@@ -744,7 +745,7 @@
             END IF
           ELSE
 #  endif
-            scale=1.0_r8
+            scale=1.0_dp
             gtype=gfactor*r3dvar
 #  if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
             IF (LwrtState3d(ng)) THEN
@@ -791,7 +792,7 @@
 !
       DO itrc=1,NT(ng)
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
-          scale=1.0_r8
+          scale=1.0_dp
           status=nf_fwrite3d_bry (ng, iADM, ADM(ng)%name, ADM(ng)%ncid, &
      &                            Vname(1,idSbry(isTvar(itrc))),        &
      &                            ADM(ng)%Vid(idSbry(isTvar(itrc))),    &
@@ -817,7 +818,7 @@
 !  Write out density anomaly.
 !
       IF (Hout(idDano,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idDano), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -840,7 +841,7 @@
 !  Write out vertical viscosity coefficient.
 !
       IF (Hout(idVvis,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idVvis), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -864,7 +865,7 @@
 !  Write out vertical diffusion coefficient for potential temperature.
 !
       IF (Hout(idTdif,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idTdif), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -889,7 +890,7 @@
 !  Write out vertical diffusion coefficient for salinity.
 !
       IF (Hout(idSdif,ng)) THEN
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*w3dvar
         status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idSdif), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -920,12 +921,12 @@
        defined OPT_OBSERVATIONS
           IF (itrc.eq.itemp) THEN
 !!          scale=rho0*Cp
-            scale=1.0_r8/(rho0*Cp)
+            scale=1.0_dp/(rho0*Cp)
           ELSE
-            scale=1.0_r8
+            scale=1.0_dp
           END IF
 #   else
-          scale=1.0_r8
+          scale=1.0_dp
 #   endif
           gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid,                    &
@@ -958,9 +959,9 @@
 #  if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
       defined OPT_OBSERVATIONS
 !!      scale=rho0
-        scale=1.0_r8/rho0
+        scale=1.0_dp/rho0
 #  else
-        scale=1.0_r8
+        scale=1.0_dp
 #  endif
         gtype=gfactor*u2dvar
         status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idUsms), &
@@ -987,9 +988,9 @@
 !!      scale=rho0
 #  if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
       defined OPT_OBSERVATIONS
-        scale=1.0_r8/rho0
+        scale=1.0_dp/rho0
 #  else
-        scale=1.0_r8
+        scale=1.0_dp
 #  endif
         gtype=gfactor*v2dvar
         status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idVsms), &
@@ -1015,7 +1016,7 @@
 !
       IF (Hout(idUbms,ng)) THEN
 !!      scale=-rho0
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*u2dvar
         status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idUbms), &
      &                     ADM(ng)%Rindex, gtype,                       &
@@ -1039,7 +1040,7 @@
 !
       IF (Hout(idVbms,ng)) THEN
 !!      scale=-rho0
-        scale=1.0_r8
+        scale=1.0_dp
         gtype=gfactor*v2dvar
         status=nf_fwrite2d(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idVbms), &
      &                     ADM(ng)%Rindex, gtype,                       &
