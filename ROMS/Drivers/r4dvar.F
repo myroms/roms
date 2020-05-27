@@ -3,7 +3,7 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: r4dvar.F 1027 2020-05-27 17:06:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -53,7 +53,6 @@
 !
       implicit none
 !
-      PRIVATE
       PUBLIC  :: background
       PUBLIC  :: increment
       PUBLIC  :: analysis

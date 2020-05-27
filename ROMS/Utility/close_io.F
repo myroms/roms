@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: close_io.F 1027 2020-05-27 17:06:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -47,8 +47,9 @@
 !
       DO i=1,nFfiles(ng)
         IF ((FRC(i,ng)%Nfiles.gt.0).and.(FRC(i,ng)%ncid.ne.-1)) THEN
+          Fcount=FRC(i,ng)%Fcount
           CALL netcdf_close (ng, model, FRC(i,ng)%ncid,                 &
-     &                       FRC(i,ng)%files(i), .FALSE.)
+     &                       FRC(i,ng)%files(Fcount), .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
           FRCids=-1
@@ -65,8 +66,9 @@
       IF (ObcData(ng)) THEN
         DO i=1,nBCfiles(ng)
           IF ((BRY(i,ng)%Nfiles.gt.0).and.(BRY(i,ng)%ncid.ne.-1)) THEN
+            Fcount=BRY(i,ng)%Fcount
             CALL netcdf_close (ng, model, BRY(i,ng)%ncid,               &
-     &                         BRY(i,ng)%files(i),  .FALSE.)
+     &                         BRY(i,ng)%files(Fcount),  .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                   __FILE__)) RETURN
             BRYids=-1
@@ -83,8 +85,9 @@
       IF (CLM_FILE(ng)) THEN
         DO i=1,nCLMfiles(ng)
           IF ((CLM(i,ng)%Nfiles.gt.0).and.(CLM(i,ng)%ncid.ne.-1)) THEN
+            Fcount=CLM(i,ng)%Fcount
             CALL netcdf_close (ng, model, CLM(i,ng)%ncid,                 &
-     &                         CLM(i,ng)%files(i),  .FALSE.)
+     &                         CLM(i,ng)%files(Fcount),  .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
             CLMids=-1

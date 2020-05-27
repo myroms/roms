@@ -3,7 +3,7 @@
 !
 
 !git $Id$
-!svn $Id: timers.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: timers.F 1027 2020-05-27 17:06:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -195,10 +195,10 @@
       real(r8) :: my_wtime
 
 #ifdef DISTRIBUTE
-# ifdef ROMS_STDOUT
+      real(r8) :: TendMin, TendMax
+
       real(r8), parameter :: Tspv = 0.0_r8
       real(r8), allocatable :: Tend(:)
-# endif
       real(r8), dimension(0:Nregion) :: buffer
 
       character (len= 3), dimension(0:Nregion) :: op_handle
@@ -266,23 +266,24 @@
         IF (ng.eq.1) THEN
 #ifdef DISTRIBUTE
           CALL mp_barrier (ng, model, MyCOMM)
-# ifdef ROMS_STDOUT
           IF (.not.allocated(Tend)) THEN
             allocate ( Tend(nPETs) )
             Tend=0.0_r8
           END IF
           Tend(PETrank+1)=Cend(region,MyModel,ng)
           CALL mp_collect (ng, model, nPETs, Tspv, Tend, MyCOMM)
+          TendMin=MINVAL(Tend)
+          TendMax=MAXVAL(Tend)
+# ifdef ROMS_STDOUT
           IF (Master) THEN
             DO node=1,nPETs
                WRITE (stdout,10) ' Node   #', node-1,                   &
      &                           ' CPU:', Tend(node)
             END DO
           END IF
-          IF (allocated(Tend)) deallocate (Tend)
 # else
-          WRITE (stdout,10) ' Node   #', PETrank, ' CPU:',              &
-     &                      Cend(region,MyModel,ng)
+          WRITE (stdout,10) ' Node   #', PETrank,                       &
+     &                      ' CPU:', Tend(PETrank+1)
 # endif
           CALL my_flush (stdout)
 #else
@@ -335,9 +336,18 @@
  20           FORMAT (a,t18,f14.3)
               IF (numthreads.gt.1) THEN
                 WRITE (stdout,20) ' Average:', total_cpu/numthreads
+#ifdef DISTRIBUTE
+                WRITE (stdout,20) ' Minimum:', TendMin
+                WRITE (stdout,20) ' Maximum:', TendMax
+#endif
               END IF
             END IF
           END IF
+
+#ifdef DISTRIBUTE
+          IF (allocated(Tend)) deallocate (Tend)
+#endif
+
 #ifdef PROFILE
 !
 !  Report profiling times.
