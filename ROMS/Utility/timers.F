@@ -3,7 +3,7 @@
 !
 
 !git $Id$
-!svn $Id: timers.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: timers.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -163,9 +163,7 @@
 #ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_barrier, mp_reduce
-# ifdef ROMS_STDOUT
       USE distribute_mod, ONLY : mp_collect
-# endif
       USE strings_mod,    ONLY : uppercase
 #endif
 !

@@ -3,7 +3,7 @@
       SUBROUTINE wrt_aug_imp (ng, tile, model, Iinp, Iout, INPncname)
 !
 !git $Id$
-!svn $Id: wrt_aug_imp.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_aug_imp.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -275,15 +275,15 @@
 
       IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLF(ng)%name)
 !
-  10  FORMAT (/,' WRT_IMPULSE - unable to open input NetCDF file: ',a)
-  20  FORMAT (/,' WRT_IMPULSE - error while reading variable: ',a,2x,   &
+  10  FORMAT (/,' WRT_AUG_IMP - unable to open input NetCDF file: ',a)
+  20  FORMAT (/,' WRT_AUG_IMP - error while reading variable: ',a,2x,   &
      &        'at time record = ',i3,/,17x,'in input NetCDF file: ',a)
-  30  FORMAT (/,' WRT_IMPULSE - error while writing variable: ',a,2x,   &
+  30  FORMAT (/,' WRT_AUG_IMP - error while writing variable: ',a,2x,   &
      &        'at time record = ',i3,/,17x,'into NetCDF file: ',a)
-  40  FORMAT (/,' WRT_IMPULSE - cannot find state variable: ',a,        &
+  40  FORMAT (/,' WRT_AUG_IMP - cannot find state variable: ',a,        &
      &        /,12x,'in input NetCDF file: ',a)
-  50  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
-     &           'records: 001 to ',i3.3,/,18x,'file: ',a)
+  50  FORMAT (4x,'WRT_AUG_IMP - wrote convolved adjoint impulses, ',    &
+     &           'records: 1 to ',i0,/,18x,'file: ',a)
 
       RETURN
       END SUBROUTINE wrt_aug_imp

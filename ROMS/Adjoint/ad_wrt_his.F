@@ -3,7 +3,7 @@
       SUBROUTINE ad_wrt_his (ng)
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: ad_wrt_his.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1076,13 +1076,13 @@
 # endif
 !
   10  FORMAT (/,' AD_WRT_HIS - error while writing variable: ',a,/,14x, &
-     &        'into adjoint NetCDF file for time record: ',i4)
+     &        'into adjoint NetCDF file for time record: ',i0)
 # ifdef SOLVE3D
   20  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
-     &        ',',i1,') into time record = ',i7.7)
+     &        ',',i1,') into time record = ',i0)
 # else
   20  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
-     &        ') into time record = ',i7.7)
+     &        ') into time record = ',i0)
 # endif
       RETURN
       END SUBROUTINE ad_wrt_his

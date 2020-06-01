@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: close_io.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -391,9 +391,9 @@
  10   FORMAT (/,' ROMS/TOMS - Output NetCDF summary for Grid ',         &
      &        i2.2,':')
  20   FORMAT (13x,'number of time records written in ',                 &
-     &        a,' file = ',i8.8)
+     &        a,' file = ',i0)
  30   FORMAT (/,a,/)
- 40   FORMAT (/,a,i3,/)
+ 40   FORMAT (/,a,i0,/)
  50   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.',/,               &
      &          ' REASON: ',a)
  60   FORMAT (/,' ROMS/TOMS: DONE... ',a)

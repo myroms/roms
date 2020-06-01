@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: mod_netcdf.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -345,7 +345,7 @@
      &                     __FILE__ //                                  &
      &                     ", netcdf_get_dim")) THEN
               WRITE (stdout,10) dim_id(i), TRIM(ncname),                &
-     &                          TRIM(SourceFile)
+     &                          TRIM(SourceFile), nf90_strerror(status)
               exit_flag=2
               ioerror=status
               EXIT
@@ -425,7 +425,8 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_DIM - error while reading dimension ID:',  &
-     &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
+     &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',     &
+     &        2x,a,/,18x,a)
   20  FORMAT (/,' NETCDF_GET_DIM - too small dimension parameter,',a,   &
      &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
   30  FORMAT (/,' NETCDF_GET_DIM - unable to inquire about contents',   &
@@ -1464,13 +1465,15 @@
       &                                     xtype = att_kind(i),        &
       &                                     attnum = att_id)
               IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile)
+                WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile),     &
+      &                          nf90_strerror(status)
                 exit_flag=2
                 ioerror=status
                 EXIT
               END IF
             ELSE
-              WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile)
+              WRITE (stdout,5) i, TRIM(ncname), TRIM(SourceFile),       &
+      &                        nf90_strerror(status)
               exit_flag=2
               ioerror=status
               EXIT
@@ -1499,7 +1502,8 @@
                     END IF
                   ELSE
                     WRITE (stdout,10) j, TRIM(var_name(i)),             &
-     &                                TRIM(ncname), TRIM(SourceFile)
+     &                                TRIM(ncname), TRIM(SourceFile),   &
+     &                                nf90_strerror(status)
                     exit_flag=2
                     ioerror=status
                     EXIT
@@ -1507,7 +1511,8 @@
                 END DO
               ELSE
                 WRITE (stdout,20) var_id(i), TRIM(ncname),              &
-     &                            TRIM(SourceFile)
+     &                            TRIM(SourceFile),                     &
+     &                            nf90_strerror(status)
                 exit_flag=2
                 ioerror=status
                 EXIT
@@ -1610,7 +1615,8 @@
      &                       __FILE__ //                                &
      &                       ", netcdf_inq_var")) THEN
                 WRITE (stdout,50) i, TRIM(myVarName), TRIM(ncname),     &
-     &                            TRIM(SourceFile)
+     &                            TRIM(SourceFile),                     &
+     &                            nf90_strerror(status)
                 exit_flag=2
                 ioerror=status
                 EXIT
@@ -1637,7 +1643,8 @@
      &                                    TRIM(var_Aname(i)),           &
      &                                    TRIM(myVarName),              &
      &                                    TRIM(ncname),                 &
-     &                                    TRIM(SourceFile)
+     &                                    TRIM(SourceFile),             &
+     &                                    nf90_strerror(status)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -1655,7 +1662,8 @@
      &                                    TRIM(var_Aname(i)),           &
      &                                    TRIM(myVarName),              &
      &                                    TRIM(ncname),                 &
-     &                                    TRIM(SourceFile)
+     &                                    TRIM(SourceFile),             &
+     &                                    nf90_strerror(status)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -1671,7 +1679,8 @@
      &                                    TRIM(var_Aname(i)),           &
      &                                    TRIM(myVarName),              &
      &                                    TRIM(ncname),                 &
-     &                                    TRIM(SourceFile)
+     &                                    TRIM(SourceFile),             &
+     &                                    nf90_strerror(status)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -1680,7 +1689,8 @@
                     END IF
                   ELSE
                     WRITE (stdout,10) i, TRIM(myVarName), TRIM(ncname), &
-     &                                TRIM(SourceFile)
+     &                                TRIM(SourceFile),                 &
+     &                                nf90_strerror(status)
                     exit_flag=2
                     ioerror=status
                     EXIT
@@ -1745,27 +1755,30 @@
 !
    5  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring global',       &
      &        ' attribute: ',i2.2,/,18x,'in input file:',2x,a,          &
-     &        /,18x,'call from:',2x,a)
+     &        /,18x,'call from:',2x,a,/,18x,a)
   10  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring attribute ',   &
      &        i1,' for variable: ',a,/,18x,'in input file:',2x,a,       &
-     &        /,18x,'call from:',2x,a)
+     &        /,18x,'call from:',2x,a,/18x,a)
   20  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring variable ID:', &
-     &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
+     &        2x,i3,/,18x,'in input file:',2x,a,/,18x,'call from:',     &
+     &        2x,a,/,18x,a)
   30  FORMAT (/,' NETCDF_INQ_VAR - too small dimension parameter, ',a,  &
      &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
   40  FORMAT (/,' NETCDF_INQ_VAR - unable to inquire about contents',   &
-     &          ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a)
+     &        ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a,    &
+     &        /,18x,a)
   50  FORMAT (/,' NETCDF_INQ_VAR - error while inquiring dimension ',   &
      &        i1,' for variable:',2x,a,/,18x,'in input file:',2x,a,     &
-     &        /,18x,'call from:',2x,a)
+     &        /,18x,'call from:',2x,a,/,18x,a)
   60  FORMAT (/,' NETCDF_INQ_VAR - error while reading ',a,             &
      &        'attribute:',1x,a,' for variable ',a,/,18x,               &
-     &        'in input file:',2x,a,/,18x,'call from:',2x,a)
+     &        'in input file:',2x,a,/,18x,'call from:',2x,a,/,18x,a)
   70  FORMAT (/,' NETCDF_INQ_VAR - unable to inquire name of ',         &
      &        'attribute ',i1,' for variable ',a,/,18x,                 &
-     &        'in input file:',2x,a,/,18x,'call from:',2x,a)
+     &        'in input file:',2x,a,/,18x,'call from:',2x,a,/,18x,a)
   80  FORMAT (/,' NETCDF_INQ_VAR - requested variable:',2x,a,/18x,      &
-     &        'not found in input file:',2x,a,/,18x,'call from:',2x,a)
+     &        'not found in input file:',2x,a,/,18x,'call from:',2x,a,  &
+     &        /,18x,a)
 
       RETURN
       END SUBROUTINE netcdf_inq_var
@@ -1827,7 +1840,7 @@
      &                 __FILE__ //                                      &
      &                 ", netcdf_inq_varid")) THEN
           WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -1845,7 +1858,7 @@
 !
   10  FORMAT (/,' NETCDF_INQ_VARID - error while inquiring ID for ',    &
      &        'variable:',2x,a,/,20x,'in input file:',2x,a,/,           &
-     &        20x,'call from:',2x,a)
+     &        20x,'call from:',2x,a,/,20x,a)
 
       RETURN
       END SUBROUTINE netcdf_inq_varid
@@ -1962,7 +1975,8 @@
                     IF (Master) WRITE (stdout,10) TRIM(AttName(i)),     &
      &                                            TRIM(my_Vname),       &
      &                                            TRIM(ncname),         &
-     &                                            TRIM(SourceFile)
+     &                                            TRIM(SourceFile),     &
+     &                                            nf90_strerror(status)
                     exit_flag=2
                     ioerror=status
                   END IF
@@ -1974,7 +1988,8 @@
               IF (Master) WRITE (stdout,20) j,                          &
      &                                      TRIM(my_Vname),             &
      &                                      TRIM(ncname),               &
-     &                                      TRIM(SourceFile)
+     &                                      TRIM(SourceFile),           &
+     &                                      nf90_strerror(status)
               exit_flag=2
               ioerror=status
               EXIT
@@ -1994,7 +2009,8 @@
         ELSE
           IF (Master) WRITE (stdout,30) TRIM(my_Vname),                 &
      &                                  TRIM(ncname),                   &
-     &                                  TRIM(SourceFile)
+     &                                  TRIM(SourceFile),               &
+     &                                  nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -2029,13 +2045,13 @@
 !
   10  FORMAT (/,' NETCDF_GET_FATT - error while reading attribute:',    &
      &        1x,a,'for variable',1x,a,/,19x,'in input file:',2x,a,/,   &
-     &        19x,'call from:',2x,a)
+     &        19x,'call from:',2x,a,/,19x,a)
   20  FORMAT (/,' NETCDF_GET_FATT - error while inquiring attribute:',  &
      &        1x,i2.2,'for variable',1x,a,/,19x,'in input file:',2x,a,  &
-     &        /,19x,'call from:',2x,a)
+     &        /,19x,'call from:',2x,a,/,19x,a)
   30  FORMAT (/,' NETCDF_GET_FATT - error while inquiring number of ',  &
      &        'attributes for variable:',1x,a,/,19x,'in input file:',   &
-     &        2x,a,/,19x,'call from:',2x,a)
+     &        2x,a,/,19x,'call from:',2x,a,/,19x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fatt
@@ -2152,7 +2168,8 @@
                     IF (Master) WRITE (stdout,10) TRIM(AttName(i)),     &
      &                                            TRIM(my_Vname),       &
      &                                            TRIM(ncname),         &
-     &                                            TRIM(SourceFile)
+     &                                            TRIM(SourceFile),     &
+     &                                            nf90_strerror(status)
                     exit_flag=2
                     ioerror=status
                   END IF
@@ -2164,7 +2181,8 @@
               IF (Master) WRITE (stdout,20) j,                          &
      &                                      TRIM(my_Vname),             &
      &                                      TRIM(ncname),               &
-     &                                      TRIM(SourceFile)
+     &                                      TRIM(SourceFile),           &
+     &                                      nf90_strerror(status)
               exit_flag=2
               ioerror=status
               EXIT
@@ -2183,7 +2201,8 @@
         ELSE
           IF (Master) WRITE (stdout,30) TRIM(my_Vname),                 &
      &                                  TRIM(ncname),                   &
-     &                                  TRIM(SourceFile)
+     &                                  TRIM(SourceFile),               &
+     &                                  nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -2218,13 +2237,13 @@
 !
   10  FORMAT (/,' NETCDF_GET_SATT - error while reading attribute:',    &
      &        1x,a,'for variable',1x,a,/,19x,'in input file:',2x,a,/,   &
-     &        19x,'call from:',2x,a)
+     &        19x,'call from:',2x,a,/,19x,a)
   20  FORMAT (/,' NETCDF_GET_SATT - error while inquiring attribute:',  &
      &        1x,i2.2,'for variable',1x,a,/,19x,'in input file:',2x,a,  &
-     &        /,19x,'call from:',2x,a)
+     &        /,19x,'call from:',2x,a,/,19x,a)
   30  FORMAT (/,' NETCDF_GET_SATT - error while inquiring number of ',  &
      &        'attributes for variable:',1x,a,/,19x,'in input file:',   &
-     &        2x,a,/,19x,'call from:',2x,a)
+     &        2x,a,/,19x,'call from:',2x,a,/19x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_satt
@@ -2351,13 +2370,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -2395,10 +2414,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_0D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fvar_0d
@@ -2542,13 +2562,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -2644,10 +2664,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_1D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fvar_1d
@@ -2792,12 +2813,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
+          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+     &                      nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -2899,10 +2921,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_2D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fvar_2d
@@ -3046,13 +3069,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -3162,10 +3185,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_3D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fvar_3d
@@ -3311,13 +3335,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -3433,10 +3457,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_FVAR_4D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_4D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_fvar_4d
@@ -3564,19 +3589,19 @@
      &                     __FILE__ //                                  &
      &                     ", netcdf_get_lvar")) THEN
               WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),          &
-     &                        TRIM(SourceFile)
+     &                          TRIM(SourceFile), nf90_strerror(status)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -3603,13 +3628,14 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_LVAR_0D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring type for ',&
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   30  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_lvar_0d
@@ -3740,19 +3766,19 @@
      &                     __FILE__ //                                  &
      &                     ", netcdf_get_lvar")) THEN
               WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),          &
-     &                        TRIM(SourceFile)
+     &                          TRIM(SourceFile), nf90_strerror(status)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -3779,13 +3805,14 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_LVAR_1D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring type for ',&
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   30  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_lvar_1d
@@ -3885,13 +3912,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -3918,10 +3945,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_0D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_IVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_ivar_0d
@@ -4019,13 +4047,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4052,10 +4080,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_1D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_IVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_ivar_1d
@@ -4154,13 +4183,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4187,10 +4216,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_IVAR_2D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_IVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_ivar_2d
@@ -4297,13 +4327,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4330,10 +4360,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_0D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_SVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_svar_0d
@@ -4436,13 +4467,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4469,10 +4500,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_1D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_SVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_svar_1d
@@ -4575,13 +4607,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4608,10 +4640,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_2D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_SVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_svar_2d
@@ -4714,13 +4747,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -4747,10 +4780,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_SVAR_3D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_SVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_svar_3d
@@ -4881,13 +4915,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -5033,10 +5067,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_TIME_0D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_TIME_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_time_0d
@@ -5176,13 +5211,13 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_get_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
           WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
-     &                      TRIM(SourceFile)
+     &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
@@ -5337,10 +5372,11 @@
       END IF
 !
   10  FORMAT (/,' NETCDF_GET_TIME_1D - error while reading variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
   20  FORMAT (/,' NETCDF_GET_TIME_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_get_time_1d
@@ -5435,7 +5471,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5456,7 +5492,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5482,9 +5518,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while writing variable:', &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_0dp
@@ -5576,7 +5613,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5592,7 +5629,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5618,9 +5655,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while writing variable:', &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_1dp
@@ -5712,7 +5750,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5728,7 +5766,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5754,9 +5792,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while writing variable:', &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_2dp
@@ -5850,7 +5889,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5871,7 +5910,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -5897,9 +5936,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_0d
@@ -5991,7 +6031,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6007,7 +6047,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6033,9 +6073,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_1d
@@ -6127,7 +6168,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6143,7 +6184,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6169,9 +6210,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_2d
@@ -6263,7 +6305,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6279,7 +6321,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6305,9 +6347,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_3d
@@ -6399,7 +6442,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6415,7 +6458,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_fvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6441,9 +6484,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_fvar_4d
@@ -6537,7 +6581,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6558,7 +6602,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6584,9 +6628,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_ivar_0d
@@ -6678,7 +6723,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6694,7 +6739,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6720,9 +6765,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_ivar_1d
@@ -6814,7 +6860,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6830,7 +6876,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_ivar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6856,9 +6902,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_ivar_2d
@@ -6956,7 +7003,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -6986,7 +7033,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7012,9 +7059,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_lvar_0d
@@ -7111,7 +7159,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7138,7 +7186,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7164,9 +7212,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_lvar_1d
@@ -7263,7 +7312,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7292,7 +7341,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_lvar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7318,9 +7367,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_lvar_2d
@@ -7422,7 +7472,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7438,7 +7488,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7464,9 +7514,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_svar_0d
@@ -7570,7 +7621,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7586,7 +7637,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7612,9 +7663,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_svar_1d
@@ -7716,7 +7768,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7732,7 +7784,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7758,9 +7810,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_svar_2d
@@ -7862,7 +7915,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7878,7 +7931,7 @@
      &                   __FILE__ //                                    &
      &                   ", netcdf_put_svar")) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
-     &                        TRIM(SourceFile)
+     &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -7904,9 +7957,10 @@
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a)
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
 
       RETURN
       END SUBROUTINE netcdf_put_svar_3d
@@ -8028,7 +8082,8 @@
      &                       __FILE__ //                                &
      &                       ", netcdf_close")) THEN
                 WRITE (stdout,10) 'bio_file', TRIM(my_ncname),          &
-     &                            TRIM(SourceFile)
+     &                            TRIM(SourceFile),                     &
+     &                            nf90_strerror(status)
                 exit_flag=3
                 ioerror=status
               END IF
@@ -8044,7 +8099,8 @@
           IF (FoundError(status, nf90_noerr, __LINE__,                  &
      &                   __FILE__ //                                    &
      &                   ", netcdf_close")) THEN
-            WRITE (stdout,20) ncid, TRIM(my_ncname), TRIM(SourceFile)
+            WRITE (stdout,20) ncid, TRIM(my_ncname), TRIM(SourceFile),  &
+     &                        nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -8074,9 +8130,10 @@
 !
   10  FORMAT (/,' NETCDF_CLOSE - error while writing global ',          &
      &        'attribute:',2x,a,/,16x,'file:',2x,a,/,16x,               &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,16x,a)
   20  FORMAT (/,' NETCDF_CLOSE - error during closing of file, ',       &
-     &        'ncid = ',i3,/,16x,'file:',2x,a,/,16x,'call from:',2x,a)
+     &        'ncid = ',i3,/,16x,'file:',2x,a,/,16x,'call from:',2x,a,  &
+     &        /,16x,a)
 
       RETURN
       END SUBROUTINE netcdf_close
@@ -8148,7 +8205,8 @@
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__ //                                        &
      &               ", netcdf_create")) THEN
-        IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+        IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile),   &
+     &                                nf90_strerror(status)
         exit_flag=3
         ioerror=status
       END IF
@@ -8160,7 +8218,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_create")) THEN
-          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile), &
+     &                                  nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8176,7 +8235,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_create")) THEN
-          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile),             &
+     &                      nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8195,7 +8255,9 @@
           IF (FoundError(status, nf90_noerr, __LINE__,                  &
      &                   __FILE__ //                                    &
      &                   ", netcdf_create")) THEN
-            IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+            IF (Master) WRITE (stdout,10) TRIM(ncname),                 &
+     &                                    TRIM(SourceFile),             &
+     &                                    nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
@@ -8214,9 +8276,10 @@
 !
   10  FORMAT (/,' NETCDF_CREATE - unable to create output NetCDF ',     &
 #if defined PARALLEL_IO && defined DISTRIBUTE
-     &        'parallel I/O file:',/,17x,a,/,17x,'call from:',2x,a)
+     &        'parallel I/O file:',/,17x,a,/,17x,'call from:',2x,a,     &
+     &        /,17x,a)
 #else
-     &        'file:',/,17x,a,/,17x,'call from:',2x,a)
+     &        'file:',/,17x,a,/,17x,'call from:',2x,a,/,17x,a)
 #endif
 
       RETURN
@@ -8282,7 +8345,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_enddef")) THEN
-          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile), &
+     &                                  nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8297,7 +8361,7 @@
 # endif
 !
   10  FORMAT (/,' NETCDF_ENDDEF - unable to end definition mode for',   &
-     &        ' file:',/,17x,a,/,17x,'call from:',2x,a)
+     &        ' file:',/,17x,a,/,17x,'call from:',2x,a,/,17x,a)
 #endif
 
       RETURN
@@ -8392,7 +8456,8 @@
       IF (FoundError(status, nf90_noerr, __LINE__,                      &
      &               __FILE__ //                                        &
      &               ", netcdf_open")) THEN
-        IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+        IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile),   &
+     &                                nf90_strerror(status)
         exit_flag=3
         ioerror=status
       END IF
@@ -8424,7 +8489,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_open")) THEN
-          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile),             &
+     &                      nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8452,9 +8518,9 @@
   10  FORMAT (/,' NETCDF_OPEN - unable to open existing NetCDF ',       &
 #if defined PARALLEL_IO && defined DISTRIBUTE
      &        'file for parallel access:',/,15x,a,/,15x,                &
-     &        'call from:',2x,a)
+     &        'call from:',2x,a,/,15x,a)
 #else
-     &        'file:',/,15x,a,/,15x,'call from:',2x,a)
+     &        'file:',/,15x,a,/,15x,'call from:',2x,a,/,15x,a)
 #endif
 
       RETURN
@@ -8513,7 +8579,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_redef")) THEN
-          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          IF (Master) WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile), &
+     &                                  nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8528,7 +8595,7 @@
 #endif
 !
   10  FORMAT (/,' NETCDF_REDEF - unable to put in definition mode',     &
-     &        ' file:',/,16x,a,/,16x,'call from:',2x,a)
+     &        ' file:',/,16x,a,/,16x,'call from:',2x,a,/,16x,a)
 
       RETURN
       END SUBROUTINE netcdf_redef
@@ -8589,7 +8656,8 @@
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__ //                                      &
      &                 ", netcdf_sync")) THEN
-          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile)
+          WRITE (stdout,10) TRIM(ncname), TRIM(SourceFile),             &
+     &                      nf90_strerror(status)
           exit_flag=3
           ioerror=status
         END IF
@@ -8604,7 +8672,7 @@
 #endif
 !
   10  FORMAT (/,' NETCDF_SYNC - unable to synchronize to disk file:',   &
-     &        /,15x,a,/,15x,'call from:',2x,a)
+     &        /,15x,a,/,15x,'call from:',2x,a,/15x,a)
 
       RETURN
       END SUBROUTINE netcdf_sync

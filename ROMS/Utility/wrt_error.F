@@ -4,7 +4,7 @@
       SUBROUTINE wrt_error (ng, kout, nout)
 !
 !git $Id$
-!svn $Id: wrt_error.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_error.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -523,20 +523,20 @@
 # endif
 !
   10  FORMAT (/,' WRT_ERROR - error while writing variable: ',a,/,      &
-     &        15x,'into 4DVar error NetCDF file for time record: ',i4)
+     &        15x,'into 4DVar error NetCDF file for time record: ',i0)
 # ifdef SOLVE3D
   20  FORMAT (3x,'WRT_ERROR    - wrote error    fields (Index=', i1,    &
 #  ifdef NESTING
-     &        ',',i1,') into time record = ',i7.7,2x,i2.2)
+     &        ',',i1,') into time record = ',i0,2x,i2.2)
 #  else
-     &        ',',i1,') into time record = ',i7.7)
+     &        ',',i1,') into time record = ',i0)
 #  endif
 # else
   20  FORMAT (3x,'WRT_ERROR    - wrote error    fields (Index=', i1,    &
 #  ifdef NESTING
-     &        ') into time record = ',i7.7,2x,i2.2)
+     &        ') into time record = ',i0,2x,i2.2)
 #  else
-     &        ') into time record = ',i7.7)
+     &        ') into time record = ',i0)
 #  endif
 # endif
       RETURN

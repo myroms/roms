@@ -3,7 +3,7 @@
       SUBROUTINE def_mod (ng)
 !
 !git $Id$
-!svn $Id: def_mod.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: def_mod.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1729,6 +1729,19 @@
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+!
+        Vinfo( 1)='vcglev'
+        Vinfo( 2)='converged Lanczos vectors, observation space'
+        vardim(1)=datumDimp
+        vardim(2)=NinnerDim
+        vardim(3)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 3, vardim, Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
         Vinfo( 1)='zcglwk'
         Vinfo( 2)='Lanczos vectors, observation space'
         vardim(1)=datumDimp
@@ -2099,6 +2112,18 @@
             haveTLmod(ng)=.TRUE.
             DAV(ng)%Vid(idTLmo)=var_id(i)
 # endif
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBgEr))) THEN
+            got_var(idBgEr)=.TRUE.
+            DAV(ng)%Vid(idBgEr)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idInno))) THEN
+            got_var(idInno)=.TRUE.
+            DAV(ng)%Vid(idInno)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idIncr))) THEN
+            got_var(idIncr)=.TRUE.
+            DAV(ng)%Vid(idIncr)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idResi))) THEN
+            got_var(idResi)=.TRUE.
+            DAV(ng)%Vid(idResi)=var_id(i)
 # if defined I4DVAR || defined WEAK_CONSTRAINT
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMOMi))) THEN
             got_var(idMOMi)=.TRUE.
@@ -2201,6 +2226,30 @@
           RETURN
         END IF
 # endif
+        IF (.not.got_var(idBgEr)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idBgEr)),          &
+     &                                  TRIM(DAV(ng)%name)
+          exit_flag=2
+          RETURN
+        END IF
+        IF (.not.got_var(idInno)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idInno)),          &
+     &                                  TRIM(DAV(ng)%name)
+          exit_flag=2
+          RETURN
+        END IF
+        IF (.not.got_var(idIncr)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idIncr)),          &
+     &                                  TRIM(DAV(ng)%name)
+          exit_flag=2
+          RETURN
+        END IF
+        IF (.not.got_var(idResi)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idResi)),          &
+     &                                  TRIM(DAV(ng)%name)
+          exit_flag=2
+          RETURN
+        END IF
 # if defined I4DVAR || defined WEAK_CONSTRAINT
         IF (.not.got_var(idMOMi)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idMOMi)),          &

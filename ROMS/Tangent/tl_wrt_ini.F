@@ -3,7 +3,7 @@
       SUBROUTINE tl_wrt_ini (ng, Tindex, OutRec)
 !
 !git $Id$
-!svn $Id: tl_wrt_ini.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: tl_wrt_ini.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -584,21 +584,21 @@
         END IF
 # endif
 # ifdef SOLVE3D
-        WRITE (stdout,30) string, Nrun, Tindex, Tindex, OutRec
+        WRITE (stdout,30) string, outer, inner, Tindex, Tindex, OutRec
 # else
-        WRITE (stdout,30) string, Nrun, Tindex, OutRec
+        WRITE (stdout,30) string, outer, inner, Tindex, OutRec
 # endif
       END IF
 !
   10  FORMAT (/,' TL_WRT_INI - unable to open initial NetCDF file: ',a)
   20  FORMAT (/,' TL_WRT_INI - error while writing variable: ',a,/,14x, &
-     &        'into tangent initial NetCDF file for time record: ',i4)
+     &        'into tangent initial NetCDF file for time record: ',i0)
 # ifdef SOLVE3D
-  30  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
-     &        i1,',',i1,', Rec=',i4.4,')')
+  30  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Outer=',i2.2,', Inner=',  &
+     &        i3.3,', Index=',i0,',',i0,', Rec=',i0,')')
 # else
-  30  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',   &
-     &        i1,', Rec=',i4.4,')')
+  30  FORMAT (3x,'TL_WRT_INI   - wrote ',a,' (Outer=',i2.2,', Inner=',  &
+     &        i3.3,', Index=',i0,', Rec=',i0,')')
 # endif
 
 #else

@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: obs_write.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1466,7 +1466,7 @@
   10  FORMAT (10x,a,t25,4(1x,i10))
   20  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
      &        /,10x,'Obs Tally',t47,2(1x,i10),/)
-  30  FORMAT (1x,a,' datum = ',i7.7,' - ',i7.7,/)
+  30  FORMAT (1x,a,' datum = ',i0,' - ',i0,/)
 
       RETURN
       END SUBROUTINE obs_write
