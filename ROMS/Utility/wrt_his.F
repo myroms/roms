@@ -2,7 +2,7 @@
       SUBROUTINE wrt_his (ng, tile)
 !
 !git $Id$
-!svn $Id: wrt_his.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_his.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2697,20 +2697,20 @@
 #endif
 !
   10  FORMAT (/,' WRT_HIS - error while writing variable: ',a,/,11x,    &
-     &        'into history NetCDF file for time record: ',i4)
+     &        'into history NetCDF file for time record: ',i0)
 #ifdef SOLVE3D
   20  FORMAT (6x,'WRT_HIS     - wrote history', t39,                    &
 # ifdef NESTING
-     &        'fields (Index=',i1,',',i1,') in record = ',i7.7,t92,i2.2)
+     &        'fields (Index=',i1,',',i1,') in record = ',i0,t92,i2.2)
 # else
-     &        'fields (Index=',i1,',',i1,') in record = ',i7.7)
+     &        'fields (Index=',i1,',',i1,') in record = ',i0)
 # endif
 #else
   20  FORMAT (6x,'WRT_HIS     - wrote history', t39,                    &
 # ifdef NESTING
-     &        'fields (Index=',i1,')   in record = ',i7.7,t92,i2.2)
+     &        'fields (Index=',i1,')   in record = ',i0,t92,i2.2)
 # else
-     &        'fields (Index=',i1,')   in record = ',i7.7)
+     &        'fields (Index=',i1,')   in record = ',i0)
 # endif
 #endif
       RETURN

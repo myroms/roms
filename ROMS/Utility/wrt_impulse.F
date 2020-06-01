@@ -3,7 +3,7 @@
       SUBROUTINE wrt_impulse (ng, tile, model, INPncname)
 !
 !git $Id$
-!svn $Id: wrt_impulse.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_impulse.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -502,7 +502,7 @@
      &        /,12x,'in input NetCDF file: ',a)
   50  FORMAT (/,' WRT_IMPULSE - unable to close input NetCDF file: ',a)
   60  FORMAT (4x,'WRT_IMPULSE - wrote convolved adjoint impulses, ',    &
-     &           'records: 001 to ',i3.3,/,18x,'file: ',a)
+     &           'records: 1 to ',i0,/,18x,'file: ',a)
 
       RETURN
       END SUBROUTINE wrt_impulse

@@ -162,7 +162,7 @@
         WRITE (Tstring,'(f15.4)') stime*sec2day
         WRITE (stdout,10) TRIM(label), TRIM(string), t_code,            &
      &                    ng, TRIM(ADJUSTL(Tstring)), TRIM(S(ng)%name), &
-     &                    OutRec, i3d, CalledFrom(Sstr:Send)
+     &                    i3d, OutRec, CalledFrom(Sstr:Send)
       END IF
 !
 !  Write out model time (s).
@@ -864,7 +864,7 @@
 !
   10  FORMAT (1x,a,': WRT_STATE - ',a,t75,a,                            &
      &        /,19x,'(Grid ',i2.2,', t = ',a,', File: ',a,              &
-     &        ', Rec=',i4.4,', Index=',i1,')',                          &
+     &        ', Index=',i1,', Rec=',i0,')',                            &
      &        /,19x,'Called from ''',a,'''')
   20  FORMAT (/,' WRT_STATE - error while writing variable: ',a,        &
      &        /,13x,'into ',a,' NetCDF file: ',a,                       &

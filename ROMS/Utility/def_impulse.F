@@ -3,7 +3,7 @@
       SUBROUTINE def_impulse (ng)
 !
 !git $Id$
-!svn $Id: def_impulse.F 1012 2020-03-04 22:09:28Z arango $
+!svn $Id: def_impulse.F 1028 2020-06-01 00:24:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -47,6 +47,7 @@
 
       integer :: i, j, nvd3, nvd4
       integer :: recdim, status, varid
+      integer :: Fcount
 
       integer :: DimIDs(nDimID)
       integer :: t2dgrd(3), u2dgrd(3), v2dgrd(3)
@@ -628,6 +629,8 @@
 !  Set unlimited time record dimension to the appropriate value.
 !
         TLF(ng)%Rindex=rec_size
+        Fcount=TLF(ng)%Fcount
+        TLF(ng)%Nrec(Fcount)=rec_size
       END IF QUERY
 !
   10  FORMAT (/,' DEF_IMPULSE - unable to create impulse forcing',      &
