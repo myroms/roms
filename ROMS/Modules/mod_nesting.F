@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: mod_nesting.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_nesting.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -500,7 +500,7 @@
 # ifdef SOLVE3D
               allocate ( BRY_CONTACT(ibry,cr) % Tflux(LBi:UBi,          &
      &                                                N(rg),NT(rg)) )
-              Dmem(rg)=Dmem(rg)+REAL((UBj-LBj)*N(rg)*NT(rg),r8)
+              Dmem(rg)=Dmem(rg)+REAL((UBi-LBi)*N(rg)*NT(rg),r8)
 # endif
           END SELECT
         END DO

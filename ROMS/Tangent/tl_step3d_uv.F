@@ -3,7 +3,7 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_step3d_uv.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_step3d_uv.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -121,7 +121,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iTLM, 34, __LINE__, __FILE__)
 # endif
-
+!
       RETURN
       END SUBROUTINE tl_step3d_uv
 !
@@ -175,8 +175,8 @@
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d
 # endif
-      USE tl_u3dbc_mod, ONLY : tl_u3dbc_tile
-      USE tl_v3dbc_mod, ONLY : tl_v3dbc_tile
+      USE tl_u3dbc_mod,    ONLY : tl_u3dbc_tile
+      USE tl_v3dbc_mod,    ONLY : tl_v3dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -320,10 +320,10 @@
 !  Local variable declarations.
 !
       integer :: i, idiag, is, j, k
-
+!
       real(r8) :: cff, cff1, cff2
       real(r8) :: tl_cff, tl_cff1, tl_cff2
-
+!
       real(r8), dimension(IminS:ImaxS) :: CF1
       real(r8), dimension(IminS:ImaxS) :: FC1
 # ifdef NEARSHORE_MELLOR
@@ -1388,7 +1388,8 @@
      &                          tl_z_w(i  ,j,k)-tl_z_w(i  ,j,k-1))
 !>              u(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*cff1
 !>
-                tl_u(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*tl_cff1
+                tl_u(i,j,k,nnew)=SOURCES(ng)%tl_Qsrc(is,k)*cff1+        &
+     &                           SOURCES(ng)%Qsrc(is,k)*tl_cff1
               END DO
             ELSE
               DO k=1,N(ng)
@@ -1400,7 +1401,8 @@
      &                          tl_z_w(i,j  ,k)-tl_z_w(i,j  ,k-1))
 !>              v(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*cff1
 !>
-                tl_v(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*tl_cff1
+                tl_v(i,j,k,nnew)=SOURCES(ng)%tl_Qsrc(is,k)*cff1+        &
+     &                           SOURCES(ng)%Qsrc(is,k)*tl_cff1
               END DO
             END IF
           END IF
@@ -2141,7 +2143,7 @@
      &                    tl_ubar(:,:,1), tl_vbar(:,:,1),               &
      &                    tl_ubar(:,:,2), tl_vbar(:,:,2))
 # endif
-
+!
       RETURN
       END SUBROUTINE tl_step3d_uv_tile
 #endif

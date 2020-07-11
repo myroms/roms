@@ -3,7 +3,7 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_omega.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_omega.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -201,6 +201,11 @@
 !
 !  Apply mass point sources (volume vertical influx), if any.
 !
+!  Overwrite W(Isrc,Jsrc,k) with the same divergence of Huon,Hvom as
+!  above but add in point source Qsrc(k) and reaccumulate the vertical
+!  sum to obtain the correct net Qbar given in user input - J. Levin
+!  (Jupiter Intelligence Inc.) and J. Wilkin
+!
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
             ii=SOURCES(ng)%Isrc(is)
@@ -209,8 +214,14 @@
      &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
      &          (j.eq.jj)) THEN
               DO k=1,N(ng)
-                W(ii,jj,k)=W(ii,jj,k)+SOURCES(ng)%Qsrc(is,k)
-!!              tl_W(ii,jj,k)=tl_W(ii,jj,k)+0.0_r8
+                W(ii,jj,k)=W(ii,jj,k-1)-                                &
+     &                     (Huon(ii+1,jj,k)-Huon(ii,jj,k)+              &
+     &                      Hvom(ii,jj+1,k)-Hvom(ii,jj,k))+             &
+     &                     SOURCES(ng)%Qsrc(is,k)
+                tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                          &
+     &                        (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+     &
+     &                         tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+    &
+     &                        SOURCES(ng)%tl_Qsrc(is,k)
               END DO
             END IF
           END DO

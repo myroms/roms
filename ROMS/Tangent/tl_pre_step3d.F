@@ -4,7 +4,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: tl_pre_step3d.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: tl_pre_step3d.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -726,7 +726,9 @@
 !>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
 !>
                     tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*              &
-     &                               SOURCES(ng)%Tsrc(is,k,itrc)
+     &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+     &                               Huon(Isrc,Jsrc,k)*                 &
+     &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)
                   ELSE
 !>                  FX(Isrc,Jsrc)=0.0_r8
 !>
@@ -738,7 +740,9 @@
 !>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
 !>
                     tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*              &
-     &                               SOURCES(ng)%Tsrc(is,k,itrc)
+     &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+     &                               Hvom(Isrc,Jsrc,k)*                 &
+     &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)
                   ELSE
 !>                  FE(Isrc,Jsrc)=0.0_r8
 !>
@@ -831,7 +835,7 @@
 !
 !-----------------------------------------------------------------------
 !  Compute time rate of change of intermediate tracer due to vertical
-!  advection.
+!  advection.  Impose artificial continuity equation.
 !-----------------------------------------------------------------------
 !
       J_LOOP1 : DO j=Jstr,Jend
@@ -1163,29 +1167,6 @@
               tl_FC(i,N(ng))=0.0_r8
             END DO
           END IF VADV_FLUX
-!
-!  Apply mass point sources (volume vertical influx), if any.
-!  (Notice the j-loop is pipelined above).
-!
-          IF (LwSrc(ng)) THEN
-            DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (LtracerSrc(itrc,ng).and.                              &
-     &            ((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.            &
-     &            (j.eq.Jsrc)) THEN
-                DO k=1,N(ng)-1
-!>                FC(Isrc,k)=FC(Isrc,k)+0.5_r8*                         &
-!>   &                       (SOURCES(ng)%Qsrc(is,k  )*                 &
-!>   &                        SOURCES(ng)%Tsrc(is,k  ,itrc)+            &
-!>   &                        SOURCES(ng)%Qsrc(is,k+1)*                 &
-!>   &                        SOURCES(ng)%Tsrc(is,k+1,itrc))
-!>
-                  tl_FC(Isrc,k)=tl_FC(Isrc,k)+0.0_r8
-                END DO
-              END IF
-            END DO
-          END IF
 !
 !  Compute artificial continuity equation and load it into private
 !  array DC (1/m). It is imposed to preserve tracer constancy. It is
