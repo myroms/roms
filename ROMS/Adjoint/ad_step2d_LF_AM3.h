@@ -3,7 +3,7 @@
       SUBROUTINE ad_step2d (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1009 2020-03-03 20:38:52Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1029 2020-07-11 02:11:09Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -140,6 +140,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 9, __LINE__, __FILE__)
 # endif
+!
       RETURN
       END SUBROUTINE ad_step2d
 !
@@ -233,16 +234,16 @@
       USE ad_exchange_2d_mod
       USE exchange_2d_mod
 # ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-      USE mp_exchange_mod, ONLY : mp_exchange2d
+      USE mp_exchange_mod,   ONLY : ad_mp_exchange2d
+      USE mp_exchange_mod,   ONLY : mp_exchange2d
 # endif
       USE obc_volcons_mod
       USE ad_obc_volcons_mod
-      USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
-      USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
-      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
+      USE ad_u2dbc_mod,      ONLY : ad_u2dbc_tile
+      USE ad_v2dbc_mod,      ONLY : ad_v2dbc_tile
+      USE ad_zetabc_mod,     ONLY : ad_zetabc_tile
 # ifdef WET_DRY_NOT_YET
-!>    USE wetdry_mod, ONLY : wetdry_tile
+!>    USE wetdry_mod,        ONLY : wetdry_tile
 # endif
 !
 !  Imported variable declarations.
@@ -508,18 +509,20 @@
 !  Local variable declarations.
 !
       logical :: CORRECTOR_2D_STEP
-
+!
       integer :: i, is, j, ptsk
 # ifdef DIAGNOSTICS_UV
 !!    integer :: idiag
 # endif
-
+!
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
       real(r8) :: fac, fac1, fac2, fac3
       real(r8) :: ad_cff, ad_cff1, ad_cff2, ad_cff3, ad_cff4
       real(r8) :: ad_fac, ad_fac1
       real(r8) :: adfac, adfac1, adfac2, adfac3, adfac4
-
+!
+      real(r8), parameter :: IniVal = 0.0_r8
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dnew
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Drhs
@@ -611,48 +614,80 @@
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
-      ad_cff=0.0_r8
-      ad_cff1=0.0_r8
-      ad_cff2=0.0_r8
-      ad_cff3=0.0_r8
-      ad_cff4=0.0_r8
-      ad_fac=0.0_r8
-      ad_fac1=0.0_r8
+      ad_cff=IniVal
+      ad_cff1=IniVal
+      ad_cff2=IniVal
+      ad_cff3=IniVal
+      ad_cff4=IniVal
+      ad_fac=IniVal
+      ad_fac1=IniVal
       DO j=JminS,JmaxS
         DO i=IminS,ImaxS
-          ad_Dgrad(i,j)=0.0_r8
-          ad_Dnew(i,j)=0.0_r8
-          ad_Drhs(i,j)=0.0_r8
-          ad_Drhs_p(i,j)=0.0_r8
-          ad_Dstp(i,j)=0.0_r8
-          ad_DUon(i,j)=0.0_r8
-          ad_DVom(i,j)=0.0_r8
+          ad_Dgrad(i,j)=IniVal
+          ad_Dnew(i,j)=IniVal
+          ad_Drhs(i,j)=IniVal
+          ad_Drhs_p(i,j)=IniVal
+          ad_Dstp(i,j)=IniVal
+          ad_DUon(i,j)=IniVal
+          ad_DVom(i,j)=IniVal
 # ifdef NEARSHORE_MELLOR
-          ad_DUSon(i,j)=0.0_r8
-          ad_DVSom(i,j)=0.0_r8
+          ad_DUSon(i,j)=IniVal
+          ad_DVSom(i,j)=IniVal
 # endif
 # ifdef UV_VIS4
-          ad_LapU(i,j)=0.0_r8
-          ad_LapV(i,j)=0.0_r8
+          ad_LapU(i,j)=IniVal
+          ad_LapV(i,j)=IniVal
 # endif
-          ad_UFe(i,j)=0.0_r8
-          ad_UFx(i,j)=0.0_r8
-          ad_VFe(i,j)=0.0_r8
-          ad_VFx(i,j)=0.0_r8
-          ad_grad(i,j)=0.0_r8
-          ad_gzeta(i,j)=0.0_r8
-          ad_gzeta2(i,j)=0.0_r8
+          ad_UFe(i,j)=IniVal
+          ad_UFx(i,j)=IniVal
+          ad_VFe(i,j)=IniVal
+          ad_VFx(i,j)=IniVal
+          ad_grad(i,j)=IniVal
+          ad_gzeta(i,j)=IniVal
+          ad_gzeta2(i,j)=IniVal
 # if defined VAR_RHO_2D && defined SOLVE3D
-          ad_gzetaSA(i,j)=0.0_r8
+          ad_gzetaSA(i,j)=IniVal
 # endif
-          ad_rhs_ubar(i,j)=0.0_r8
-          ad_rhs_vbar(i,j)=0.0_r8
-          ad_rhs_zeta(i,j)=0.0_r8
-          ad_rhs_zeta(i,j)=0.0_r8
-          ad_zeta_new(i,j)=0.0_r8
-          ad_zwrk(i,j)=0.0_r8
-          ad_DUon(i,j)=0.0_r8
-          ad_DVom(i,j)=0.0_r8
+          ad_rhs_ubar(i,j)=IniVal
+          ad_rhs_vbar(i,j)=IniVal
+          ad_rhs_zeta(i,j)=IniVal
+          ad_zeta_new(i,j)=IniVal
+          ad_zwrk(i,j)=IniVal
+          ad_DUon(i,j)=IniVal
+          ad_DVom(i,j)=IniVal
+
+# ifdef INITIALIZE_AUTOMATIC
+          Dgrad(i,j)=IniVal
+          Dnew(i,j)=IniVal
+          Drhs(i,j)=IniVal
+          Drhs_p(i,j)=IniVal
+          Dstp(i,j)=IniVal
+          DUon(i,j)=IniVal
+          DVom(i,j)=IniVal
+#  ifdef NEARSHORE_MELLOR
+          DUSon(i,j)=IniVal
+          DVSom(i,j)=IniVal
+#  endif
+#  ifdef UV_VIS4
+          LapU(i,j)=IniVal
+          LapV(i,j)=IniVal
+          UFe(i,j)=IniVal
+          UFx(i,j)=IniVal
+          VFe(i,j)=IniVal
+          VFx(i,j)=IniVal
+#  endif
+          grad(i,j)=IniVal
+          gzeta(i,j)=IniVal
+          gzeta2(i,j)=IniVal
+#  if defined VAR_RHO_2D && defined SOLVE3D
+          gzetaSA(i,j)=IniVal
+#  endif
+          rhs_ubar(i,j)=IniVal
+          rhs_vbar(i,j)=IniVal
+          rhs_zeta(i,j)=IniVal
+          zeta_new(i,j)=IniVal
+          zwrk(i,j)=IniVal
+# endif
         END DO
       END DO
 !
@@ -873,9 +908,13 @@
                 cff=1.0_r8/(on_u(i,j)*                                  &
      &                      0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+          &
      &                              zeta(i  ,j,knew)+h(i  ,j)))
-!>              tl_ubar(i,j,knew)=SOURCES(ng)%Qbar(is)*tl_cff
+!>              tl_ubar(i,j,knew)=SOURCES(ng)%tl_Qbar(is)*cff+          &
+!>   &                            SOURCES(ng)%Qbar(is)*tl_cff
 !>
-                ad_cff=ad_cff+SOURCES(ng)%Qbar(is)*ad_ubar(i,j,knew)
+                SOURCES(ng)%ad_Qbar(is)=SOURCES(ng)%ad_Qbar(is)+        &
+     &                                  cff*ad_ubar(i,j,knew)
+                ad_cff=ad_cff+                                          &
+     &                 SOURCES(ng)%Qbar(is)*ad_ubar(i,j,knew)
                 ad_ubar(i,j,knew)=0.0_r8
 !>              tl_cff=-cff*cff*on_u(i,j)*                              &
 !>   &                 0.5_r8*(tl_zeta(i-1,j,knew)+tl_h(i-1,j)+         &
@@ -891,9 +930,13 @@
                 cff=1.0_r8/(om_v(i,j)*                                  &
      &                      0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+          &
      &                              zeta(i,j  ,knew)+h(i,j  )))
-!>              tl_vbar(i,j,knew)=SOURCES(ng)%Qbar(is)*tl_cff
+!>              tl_vbar(i,j,knew)=SOURCES(ng)%tl_Qbar(is)*cff+          &
+!>   &                            SOURCES(ng)%Qbar(is)*tl_cff
 !>
-                ad_cff=ad_cff+SOURCES(ng)%Qbar(is)*ad_vbar(i,j,knew)
+                SOURCES(ng)%ad_Qbar(is)=SOURCES(ng)%ad_Qbar(is)+        &
+     &                                  cff*ad_vbar(i,j,knew)
+                ad_cff=ad_cff+                                          &
+     &                 SOURCES(ng)%Qbar(is)*ad_vbar(i,j,knew)
                 ad_vbar(i,j,knew)=0.0_r8
 !>              tl_cff=-cff*cff*om_v(i,j)*                              &
 !>   &                 0.5_r8*(tl_zeta(i,j-1,knew)+tl_h(i,j-1)+         &
@@ -4038,10 +4081,13 @@
           cff1=dtfast(ng)
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-              rhs_zeta(i,j)=(DUon(i,j)-DUon(i+1,j))+                    &
-     &                      (DVom(i,j)-DVom(i,j+1))
-              zeta_new(i,j)=zeta(i,j,kstp)+                             &
-     &                      pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>            rhs_zeta(i,j)=(DUon(i,j)-DUon(i+1,j))+                    &
+!>   &                      (DVom(i,j)-DVom(i,j+1))
+!>            zeta_new(i,j)=zeta(i,j,kstp)+                             &
+!>   &                      pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>
+!>                                                use background instead
+              zeta_new(i,j)=zeta(i,j,knew)
 # ifdef MASKING
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 # endif
@@ -4062,10 +4108,13 @@
           cff5=1.0_r8-2.0_r8*cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-              rhs_zeta(i,j)=(DUon(i,j)-DUon(i+1,j))+                    &
-     &                      (DVom(i,j)-DVom(i,j+1))
-              zeta_new(i,j)=zeta(i,j,kstp)+                             &
-     &                      pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>            rhs_zeta(i,j)=(DUon(i,j)-DUon(i+1,j))+                    &
+!>   &                      (DVom(i,j)-DVom(i,j+1))
+!>            zeta_new(i,j)=zeta(i,j,kstp)+                             &
+!>   &                      pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>
+!>                                                use background instead
+              zeta_new(i,j)=zeta(i,j,knew)
 # ifdef MASKING
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 # endif
@@ -4089,12 +4138,15 @@
           cff5=1.0_r8-cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-              cff=cff1*((DUon(i,j)-DUon(i+1,j))+                        &
-     &                  (DVom(i,j)-DVom(i,j+1)))
-              zeta_new(i,j)=zeta(i,j,kstp)+                             &
-     &                      pm(i,j)*pn(i,j)*(cff+                       &
-     &                                       cff2*rzeta(i,j,kstp)-      &
-     &                                       cff3*rzeta(i,j,ptsk))
+!>            cff=cff1*((DUon(i,j)-DUon(i+1,j))+                        &
+!>   &                  (DVom(i,j)-DVom(i,j+1)))
+!>            zeta_new(i,j)=zeta(i,j,kstp)+                             &
+!>   &                      pm(i,j)*pn(i,j)*(cff+                       &
+!>   &                                       cff2*rzeta(i,j,kstp)-      &
+!>   &                                       cff3*rzeta(i,j,ptsk))
+!>
+!>                                                use background instead
+              zeta_new(i,j)=zeta(i,j,knew)
 # ifdef MASKING
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 # endif
@@ -5075,6 +5127,7 @@
         END DO
       END DO
 # endif
+!
       RETURN
       END SUBROUTINE ad_step2d_tile
 #else

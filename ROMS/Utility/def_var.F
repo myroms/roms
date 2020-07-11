@@ -2,7 +2,7 @@
       MODULE def_var_mod
 !
 !git $Id$
-!svn $Id: def_var.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_var.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -965,7 +965,7 @@
 #if defined MASKING && !defined WRITE_WATER
 !
 !  If land/sea masking, define "_FillValue" attribute since masking
-!  areas are overwrite with special value (spval) during output.
+!  areas are overwritten with special value (spval) during output.
 !  Notice that the coordinate attribute is used to check which
 !  variables need the "_FillValue" attribute.
 !

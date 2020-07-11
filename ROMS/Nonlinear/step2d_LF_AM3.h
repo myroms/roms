@@ -2,7 +2,7 @@
       SUBROUTINE step2d (ng, tile)
 !
 !git $Id$
-!svn $Id: step2d_LF_AM3.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: step2d_LF_AM3.h 1029 2020-07-11 02:11:09Z arango $
 !=======================================================================
 !                                                                      !
 !  Nonlinear shallow-water primitive equations predictor (Leap-frog)   !
@@ -116,7 +116,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 9, __LINE__, __FILE__)
 # endif
-
+!
       RETURN
       END SUBROUTINE step2d
 !
@@ -200,11 +200,11 @@
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
       USE obc_volcons_mod, ONLY : obc_flux_tile, set_DUV_bc_tile
-      USE u2dbc_mod, ONLY : u2dbc_tile
-      USE v2dbc_mod, ONLY : v2dbc_tile
-      USE zetabc_mod, ONLY : zetabc_tile
+      USE u2dbc_mod,       ONLY : u2dbc_tile
+      USE v2dbc_mod,       ONLY : v2dbc_tile
+      USE zetabc_mod,      ONLY : zetabc_tile
 # ifdef WET_DRY
-      USE wetdry_mod, ONLY : wetdry_tile
+      USE wetdry_mod,      ONLY : wetdry_tile
 # endif
 !
 !  Imported variable declarations.
@@ -426,15 +426,15 @@
 !  Local variable declarations.
 !
       logical :: CORRECTOR_2D_STEP
-
+!
       integer :: i, is, j, ptsk
 # ifdef DIAGNOSTICS_UV
       integer :: idiag
 # endif
-
+!
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
       real(r8) :: fac, fac1, fac2, fac3
-
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dnew
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Drhs
@@ -2478,7 +2478,7 @@
      &                    ubar(:,:,knew),                               &
      &                    vbar(:,:,knew))
 # endif
-
+!
       RETURN
       END SUBROUTINE step2d_tile
 #else

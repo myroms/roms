@@ -5,7 +5,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: ad_pre_step3d.F 1001 2020-01-10 22:41:16Z arango $
+!svn $Id: ad_pre_step3d.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1216,27 +1216,6 @@
             END DO
           END IF VADV_FLUX1
 !
-!  Apply BASIC STATE mass point sources (volume vertical influx), if
-!  any. (Notice the j-loop is pipelined above).
-!
-          IF (LwSrc(ng)) THEN
-            DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (LtracerSrc(itrc,ng).and.                              &
-     &            ((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.            &
-     &            (j.eq.Jsrc)) THEN
-                DO k=1,N(ng)-1
-                  FC(Isrc,k)=FC(Isrc,k)+0.5_r8*                         &
-     &                       (SOURCES(ng)%Qsrc(is,k  )*                 &
-     &                        SOURCES(ng)%Tsrc(is,k  ,itrc)+            &
-     &                        SOURCES(ng)%Qsrc(is,k+1)*                 &
-     &                        SOURCES(ng)%Tsrc(is,k+1,itrc))
-                END DO
-              END IF
-            END DO
-          END IF
-!
 !  Compute BASIC STATE artificial continuity equation and load it
 !  into private array DC (1/m). It is needed to preserve tracer
 !  constancy. It is not the same for all the tracer advection
@@ -1910,11 +1889,17 @@
                 IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
                   IF (LtracerSrc(itrc,ng)) THEN
 !>                  tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*              &
-!>   &                               SOURCES(ng)%Tsrc(is,k,itrc)
+!>   &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+!>   &                               Huon(Isrc,Jsrc,k)*                 &
+!>   &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)
 !>
                     ad_Huon(Isrc,Jsrc,k)=ad_Huon(Isrc,Jsrc,k)+          &
      &                                   SOURCES(ng)%Tsrc(is,k,itrc)*   &
      &                                   ad_FX(Isrc,Jsrc)
+                    SOURCES(ng)%ad_Tsrc(is,k,itrc)=                     &
+     &                                 SOURCES(ng)%ad_Tsrc(is,k,itrc)+  &
+     &                                 Huon(Isrc,Jsrc,k)*               &
+     &                                 ad_FX(Isrc,Jsrc)
                     ad_FX(Isrc,Jsrc)=0.0_r8
                   ELSE
 !>                  tl_FX(Isrc,Jsrc)=0.0_r8
@@ -1924,11 +1909,17 @@
                 ELSE
                   IF (LtracerSrc(itrc,ng)) THEN
 !>                  tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*              &
-!>   &                               SOURCES(ng)%Tsrc(is,k,itrc)
+!>   &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+!>   &                               Hvom(Isrc,Jsrc,k)*                 &
+!>   &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)
 !>
                     ad_Hvom(Isrc,Jsrc,k)=ad_Hvom(Isrc,Jsrc,k)+          &
      &                                   SOURCES(ng)%Tsrc(is,k,itrc)*   &
      &                                   ad_FE(Isrc,Jsrc)
+                    SOURCES(ng)%ad_Tsrc(is,k,itrc)=                     &
+     &                                 SOURCES(ng)%ad_Tsrc(is,k,itrc)+  &
+     &                                 Hvom(Isrc,Jsrc,k)*               &
+     &                                 ad_FE(Isrc,Jsrc)
                     ad_FE(Isrc,Jsrc)=0.0_r8
                   ELSE
 !>                  tl_FE(Isrc,Jsrc)=0.0_r8

@@ -4,7 +4,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: rp_pre_step3d.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: rp_pre_step3d.F 1029 2020-07-11 02:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -782,11 +782,15 @@
      &            ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1))) THEN
                 IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
                   IF (LtracerSrc(itrc,ng)) THEN
-!>                  FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                    &
-!>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
-!>
+                    FX(Isrc,Jsrc)=Huon(Isrc,Jsrc,k)*                    &
+     &                            SOURCES(ng)%Tsrc(is,k,itrc)
                     tl_FX(Isrc,Jsrc)=tl_Huon(Isrc,Jsrc,k)*              &
-     &                               SOURCES(ng)%Tsrc(is,k,itrc)
+     &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+     &                               Huon(Isrc,Jsrc,k)*                 &
+     &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)-    &
+#  ifdef TL_IOMS
+     &                               FX(Isrc,Jsrc)
+#  endif
                   ELSE
 !>                  FX(Isrc,Jsrc)=0.0_r8
 !>
@@ -794,11 +798,15 @@
                   END IF
                 ELSE
                   IF (LtracerSrc(itrc,ng)) THEN
-!>                  FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                    &
-!>   &                            SOURCES(ng)%Tsrc(is,k,itrc)
-!>
+                    FE(Isrc,Jsrc)=Hvom(Isrc,Jsrc,k)*                    &
+     &                            SOURCES(ng)%Tsrc(is,k,itrc)
                     tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*              &
-     &                               SOURCES(ng)%Tsrc(is,k,itrc)
+     &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &
+     &                               Hvom(Isrc,Jsrc,k)*                 &
+     &                               SOURCES(ng)%tl_Tsrc(is,k,itrc)-    &
+#  ifdef TL_IOMS
+     &                               FE(Isrc,Jsrc)
+#  endif
                   ELSE
 !>                  FE(Isrc,Jsrc)=0.0_r8
 !>
@@ -866,7 +874,7 @@
             cff=0.5_r8*dt(ng)
           ELSE
             Gamma=1.0_r8/6.0_r8
-           cff=(1.0_r8-Gamma)*dt(ng)
+            cff=(1.0_r8-Gamma)*dt(ng)
           END IF
           iage=inert(itrc+1)                   ! even inert tracer index
           DO k=1,N(ng)
@@ -1287,31 +1295,8 @@
             END DO
           END IF VADV_FLUX
 !
-!  Apply mass point sources (volume vertical influx), if any.
-!  (Notice the j-loop is pipelined above).
-!
-          IF (LwSrc(ng)) THEN
-            DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (LtracerSrc(itrc,ng).and.                              &
-     &            ((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.            &
-     &            (j.eq.Jsrc)) THEN
-                DO k=1,N(ng)-1
-!>                FC(Isrc,k)=FC(Isrc,k)+0.5_r8*                         &
-!>   &                       (SOURCES(ng)%Qsrc(is,k  )*                 &
-!>   &                        SOURCES(ng)%Tsrc(is,k  ,itrc)+            &
-!>   &                        SOURCES(ng)%Qsrc(is,k+1)*                 &
-!>   &                        SOURCES(ng)%Tsrc(is,k+1,itrc))
-!>
-                  tl_FC(Isrc,k)=tl_FC(Isrc,k)+0.0_r8
-                END DO
-              END IF
-            END DO
-          END IF
-!
 !  Compute artificial continuity equation and load it into private
-!  array DC (1/m). It is needed to preserve tracer constancy. It is
+!  array DC (1/m). It is imposed to preserve tracer constancy. It is
 !  not the same for all the tracer advection schemes because of the
 !  Gamma value.
 !

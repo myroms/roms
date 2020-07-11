@@ -3,7 +3,7 @@
       SUBROUTINE rp_step2d (ng, tile)
 !
 !git $Id$
-!svn $Id: rp_step2d_LF_AM3.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_step2d_LF_AM3.h 1029 2020-07-11 02:11:09Z arango $
 !=======================================================================
 !                                                                      !
 !  Representer model shallow-water primitive equations predictor       !
@@ -140,7 +140,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iRPM, 9, __LINE__, __FILE__)
 # endif
-
+!
       RETURN
       END SUBROUTINE rp_step2d
 !
@@ -233,15 +233,15 @@
 !
       USE exchange_2d_mod
 # ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
+      USE mp_exchange_mod,   ONLY : mp_exchange2d
 # endif
       USE obc_volcons_mod
       USE rp_obc_volcons_mod
-      USE rp_u2dbc_mod, ONLY : rp_u2dbc_tile
-      USE rp_v2dbc_mod, ONLY : rp_v2dbc_tile
-      USE rp_zetabc_mod, ONLY : rp_zetabc_tile
+      USE rp_u2dbc_mod,      ONLY : rp_u2dbc_tile
+      USE rp_v2dbc_mod,      ONLY : rp_v2dbc_tile
+      USE rp_zetabc_mod,     ONLY : rp_zetabc_tile
 # ifdef WET_DRY_NOT_YET
-!>    USE wetdry_mod, ONLY : wetdry_tile
+!>    USE wetdry_mod,        ONLY : wetdry_tile
 # endif
 !
 !  Imported variable declarations.
@@ -509,17 +509,19 @@
 !  Local variable declarations.
 !
       logical :: CORRECTOR_2D_STEP
-
+!
       integer :: i, is, j, ptsk
 # ifdef DIAGNOSTICS_UV
 !!    integer :: idiag
 # endif
-
+!
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
       real(r8) :: fac, fac1, fac2, fac3
       real(r8) :: tl_cff, tl_cff1, tl_cff2, tl_cff3, tl_cff4
       real(r8) :: tl_fac, tl_fac1
-
+!
+      real(r8), parameter :: IniVal = 0.0_r8
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dnew
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Drhs
@@ -605,6 +607,79 @@
  20     FORMAT (' iic = ',i5.5,' predictor = ',l1,' kstp = ',i1,        &
      &          ' krhs = ',i1,' knew = ',i1,' ptsk = ',i1)
       END IF
+# endif
+# ifdef INITIALIZE_AUTOMATIC
+!
+!-----------------------------------------------------------------------
+!  Initialize local automatic arrays to zero to facilitate debugging
+!  in TotalView when comparing "checksum" with other solutions.
+!-----------------------------------------------------------------------
+!
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
+          Dgrad(i,j)=IniVal
+          Dnew(i,j)=IniVal
+          Drhs(i,j)=IniVal
+          Drhs_p(i,j)=IniVal
+          Dstp(i,j)=IniVal
+          DUon(i,j)=IniVal
+          DVom(i,j)=IniVal
+#  ifdef NEARSHORE_MELLOR
+          DUSon(i,j)=IniVal
+          DVSom(i,j)=IniVal
+#  endif
+#  ifdef UV_VIS4
+          LapU(i,j)=IniVal
+          LapV(i,j)=IniVal
+#  endif
+          UFe(i,j)=IniVal
+          UFx(i,j)=IniVal
+          VFe(i,j)=IniVal
+          VFx(i,j)=IniVal
+          grad(i,j)=IniVal
+          gzeta(i,j)=IniVal
+          gzeta2(i,j)=IniVal
+#  if defined VAR_RHO_2D && defined SOLVE3D
+          gzetaSA(i,j)=IniVal
+#  endif
+          rhs_ubar(i,j)=IniVal
+          rhs_vbar(i,j)=IniVal
+          rhs_zeta(i,j)=IniVal
+          zeta_new(i,j)=IniVal
+          zwrk(i,j)=IniVal
+!
+          tl_Dgrad(i,j)=IniVal
+          tl_Dnew(i,j)=IniVal
+          tl_Drhs(i,j)=IniVal
+          tl_Drhs_p(i,j)=IniVal
+          tl_Dstp(i,j)=IniVal
+          tl_DUon(i,j)=IniVal
+          tl_DVom(i,j)=IniVal
+#  ifdef NEARSHORE_MELLOR
+          tl_DUSon(i,j)=IniVal
+          tl_DVSom(i,j)=IniVal
+#  endif
+#  ifdef UV_VIS4
+          tl_LapU(i,j)=IniVal
+          tl_LapV(i,j)=IniVal
+#  endif
+          tl_UFe(i,j)=IniVal
+          tl_UFx(i,j)=IniVal
+          tl_VFe(i,j)=IniVal
+          tl_VFx(i,j)=IniVal
+          tl_grad(i,j)=IniVal
+          tl_gzeta(i,j)=IniVal
+          tl_gzeta2(i,j)=IniVal
+#  if defined VAR_RHO_2D && defined SOLVE3D
+          tl_gzetaSA(i,j)=IniVal
+#  endif
+          tl_rhs_ubar(i,j)=IniVal
+          tl_rhs_vbar(i,j)=IniVal
+          tl_rhs_zeta(i,j)=IniVal
+          tl_zeta_new(i,j)=IniVal
+          tl_zwrk(i,j)=IniVal
+        END DO
+      END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1054,8 +1129,11 @@
 # endif
             tl_rhs_zeta(i,j)=(tl_DUon(i,j)-tl_DUon(i+1,j))+             &
      &                       (tl_DVom(i,j)-tl_DVom(i,j+1))
-            zeta_new(i,j)=zeta(i,j,kstp)+                               &
-     &                    pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>          zeta_new(i,j)=zeta(i,j,kstp)+                               &
+!>   &                    pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>
+!>                                                use background instead
+            zeta_new(i,j)=zeta(i,j,knew)
             tl_zeta_new(i,j)=tl_zeta(i,j,kstp)+                         &
      &                       pm(i,j)*pn(i,j)*cff1*tl_rhs_zeta(i,j)
 # ifdef MASKING
@@ -1116,8 +1194,11 @@
 # endif
             tl_rhs_zeta(i,j)=(tl_DUon(i,j)-tl_DUon(i+1,j))+             &
      &                       (tl_DVom(i,j)-tl_DVom(i,j+1))
-            zeta_new(i,j)=zeta(i,j,kstp)+                               &
-     &                    pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>          zeta_new(i,j)=zeta(i,j,kstp)+                               &
+!>   &                    pm(i,j)*pn(i,j)*cff1*rhs_zeta(i,j)
+!>
+!>                                                use background instead
+            zeta_new(i,j)=zeta(i,j,knew)
             tl_zeta_new(i,j)=tl_zeta(i,j,kstp)+                         &
      &                       pm(i,j)*pn(i,j)*cff1*tl_rhs_zeta(i,j)
 # ifdef MASKING
@@ -1170,14 +1251,18 @@
         cff5=1.0_r8-cff4
         DO j=JstrV-1,Jend
           DO i=IstrU-1,Iend
-            cff=cff1*((DUon(i,j)-DUon(i+1,j))+                          &
-     &                (DVom(i,j)-DVom(i,j+1)))
+!>          cff=cff1*((DUon(i,j)-DUon(i+1,j))+                          &
+!>   &                (DVom(i,j)-DVom(i,j+1)))
+!>
             tl_cff=cff1*((tl_DUon(i,j)-tl_DUon(i+1,j))+                 &
      &                   (tl_DVom(i,j)-tl_DVom(i,j+1)))
-            zeta_new(i,j)=zeta(i,j,kstp)+                               &
-     &                    pm(i,j)*pn(i,j)*(cff+                         &
-     &                                     cff2*rzeta(i,j,kstp)-        &
-     &                                     cff3*rzeta(i,j,ptsk))
+!>          zeta_new(i,j)=zeta(i,j,kstp)+                               &
+!>   &                    pm(i,j)*pn(i,j)*(cff+                         &
+!>   &                                     cff2*rzeta(i,j,kstp)-        &
+!>   &                                     cff3*rzeta(i,j,ptsk))
+!>
+!>                                                use background instead
+            zeta_new(i,j)=zeta(i,j,knew)
             tl_zeta_new(i,j)=tl_zeta(i,j,kstp)+                         &
      &                       pm(i,j)*pn(i,j)*(tl_cff+                   &
      &                                        cff2*tl_rzeta(i,j,kstp)-  &
@@ -2937,7 +3022,7 @@
      &          om_u(i,j)*on_u(i,j)
 !>          rhs_ubar(i,j)=rhs_ubar(i,j)+                                &
 !>   &                    cff*(Drhs(i-1,j)+Drhs(i,j))*                  &
-!>   &                        (CLIMA(ng)%ubarclm(i,j)-
+!>   &                        (CLIMA(ng)%ubarclm(i,j)-                  &
 !>   &                         ubar(i,j,krhs))
 !>
             tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                          &
@@ -3957,7 +4042,11 @@
 # endif
 !>            ubar(i,j,knew)=SOURCES(ng)%Qbar(is)*cff
 !>
-              tl_ubar(i,j,knew)=SOURCES(ng)%Qbar(is)*tl_cff
+              tl_ubar(i,j,knew)=SOURCES(ng)%tl_Qbar(is)*cff+            &
+     &                          SOURCES(ng)%Qbar(is)*tl_cff-            &
+# ifdef TL_IOMS
+     &                          SOURCES(ng)%Qbar(is)*cff
+# endif
             ELSE
               cff=1.0_r8/(om_v(i,j)*                                    &
      &                    0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+            &
@@ -3970,7 +4059,11 @@
 # endif
 !>            vbar(i,j,knew)=SOURCES(ng)%Qbar(is)*cff
 !>
-              tl_vbar(i,j,knew)=SOURCES(ng)%Qbar(is)*tl_cff
+              tl_vbar(i,j,knew)=SOURCES(ng)%tl_Qbar(is)*cff+            &
+     &                          SOURCES(ng)%Qbar(is)*tl_cff-            &
+# ifdef TL_IOMS
+     &                          SOURCES(ng)%Qbar(is)*cff
+# endif
             END IF
           END IF
         END DO
@@ -4012,7 +4105,7 @@
      &                    tl_ubar(:,:,knew),                            &
      &                    tl_vbar(:,:,knew))
 # endif
-
+!
       RETURN
       END SUBROUTINE rp_step2d_tile
 #else
