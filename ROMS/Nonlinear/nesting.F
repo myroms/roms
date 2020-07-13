@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: nesting.F 1030 2020-07-13 01:01:08Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -188,10 +188,17 @@
 !
 !-----------------------------------------------------------------------
 !  Process vertical indices and interpolation weigths associated with
-!  depth.
+!  depth. Currently, vertical weights are used in composite grids
+!  because their grids are not coincident. They are not needed in
+!  refinement grids because the donor and receiver grids have the same
+!  number of vertical levels and matching bathymetry.  However, in
+!  the future, it is possible to have configurations that require
+!  vertical weights in refinement. The switch "get_Vweights" controls
+!  if such weights are computed or not.  If false, it will accelerate
+!  computations because of less distributed-memory communications.
 !-----------------------------------------------------------------------
 !
-      IF (isection.eq.nzwgt) THEN
+      IF ((isection.eq.nzwgt).and.get_Vweights) THEN
         DO tile=last_tile(ng),first_tile(ng),-1
           CALL z_weights (ng, model, tile)
         END DO
