@@ -3,7 +3,7 @@
       SUBROUTINE set_contact (ng, model)
 !
 !git $Id$
-!svn $Id: set_contact.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: set_contact.F 1030 2020-07-13 01:01:08Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -980,6 +980,15 @@
         END DO
         RefinedGrid(rg)=Lrefinement(cr)
       END DO
+!
+!  Set the switch to compute vertical interpolation weights. Currently,
+!  they are only needed in non-coincident composite grids.
+!
+      IF (.not.ANY(Lcoincident).and.ANY(Lcomposite)) THEN
+        get_Vweights=.TRUE.
+      ELSE
+        get_Vweights=.FALSE.
+      END IF
 !
 !  Refinement grid scale factor.
 !

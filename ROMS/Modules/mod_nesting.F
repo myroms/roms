@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: mod_nesting.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: mod_nesting.F 1030 2020-07-13 01:01:08Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -110,6 +110,19 @@
 !
       logical, allocatable :: Telescoping(:)        ! [Ngrids]
 !$OMP THREADPRIVATE (Telescoping)
+!
+!  Switch to compute depth-dependent, vertical interpolation weights.
+!  Currently, vertical weights are used in composite grids because
+!  their grids are not coincident. They are not needed in refinement
+!  grids because the donor and receiver grids have the same number of
+!  vertical levels and have matching bathymetry.  However, in the
+!  future, it is possible to have configurations that require vertical
+!  weights in refinement. The switch "get_Vweights" controls if such
+!  weights are computed or not. If false, it will accelerate the
+!  computations because of less distributed-memory communications.
+!
+      logical :: get_Vweights
+!$OMP THREADPRIVATE (get_Vweights)
 !
 !  If refinement, it contains the coarser donor grid number to finer
 !  receiver grid external contact points.  The donor grid is always
