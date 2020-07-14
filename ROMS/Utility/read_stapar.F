@@ -3,7 +3,7 @@
       SUBROUTINE read_StaPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_stapar.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: read_stapar.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -478,7 +478,7 @@
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Lwrite) THEN
+      IF (Master.and.Lwrite) THEN
         DO ng=1,Ngrids
           IF (Lstations(ng)) THEN
             WRITE (out,70) ng

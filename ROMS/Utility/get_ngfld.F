@@ -5,7 +5,7 @@
      &                      Fout)
 !
 !git $Id$
-!svn $Id: get_ngfld.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: get_ngfld.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -51,6 +51,9 @@
       USE mod_scalars
 !
       USE dateclock_mod, ONLY : time_string
+#ifdef CHECKSUM_NG
+      USE get_hash_mod,  ONLY : get_hash
+#endif
       USE strings_mod,   ONLY : FoundError
 !
       implicit none
@@ -58,22 +61,25 @@
 !  Imported variable declarations.
 !
       logical, intent(out) :: update
-
+!
       integer, intent(in) :: ng, model, ifield, nfiles
       integer, intent(in) :: LBi, UBi, UBj, UBk, Istr, Iend, Jrec
       integer :: ncid
-
+!
       TYPE(T_IO), intent(inout) :: S(nfiles)
-
+!
       real(r8), intent(inout) :: Fout(LBi:UBi,UBj,UBk)
 !
 !  Local variable declarations.
 !
       logical :: Linquire, Liocycle, Lmulti, Lonerec
-
+!
       integer :: Nrec, Tid, Tindex, Trec, Vid, Vtype
       integer :: i, ic, j, job, lend, lstr, npts, status
-
+#ifdef CHECKSUM_NG
+      integer(i8b) :: Fhash
+#endif
+!
       real(r8) :: Aval, Fmax, Fmin
 
       real(dp) :: Clength, Tdelta, Tend
@@ -81,7 +87,7 @@
       real(dp) :: Tsec, Tval
 
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
-
+!
       character (len=22) :: t_code
 !
       SourceFile=__FILE__
@@ -252,6 +258,10 @@
      &                            ng, Trec, Tindex, ncfile(lstr:lend),  &
      &                            Tmin, Tmax, Tval, Fmin, Fmax
               END IF
+#ifdef CHECKSUM_NG
+              CALL get_hash (A, npts, Fhash)
+              WRITE (stdout,80) Fhash
+#endif
             END IF
             update=.TRUE.
           END IF
@@ -286,11 +296,14 @@
   60  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Grid = ',i2.2,             &
      &        ', Min = ',1pe15.8,' Max = ', 1pe15.8,')')
   70  FORMAT (3x,' GET_NGFLD   - ',a,',',t68,a,/,19x,                   &
-     &        '(Grid= ',i2.2,', Rec=',i7.7,', Index=',i1,               &
+     &        '(Grid= ',i2.2,', Rec=',i0,', Index=',i1,                 &
      &        ', File: ',a,')',/,19x,                                   &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',                   &
      &        t71, 't = ', f15.4 ,/, 19x,                               &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
-
+#ifdef CHECKSUM_NG
+  80  FORMAT (19x,'(CheckSum = ',i0,')')
+#endif
+!
       RETURN
       END SUBROUTINE get_ngfld

@@ -3,7 +3,7 @@
       SUBROUTINE output (ng)
 !
 !git $Id$
-!svn $Id: output.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: output.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -550,9 +550,16 @@
      &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
         ProcessObs=.TRUE.
         CALL obs_read (ng, iNLM, .FALSE.)
+#   ifdef SP4DVAR
+        IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
+          CALL obs_write (ng, tile, iNLM)
+          CALL obs_cost (ng, iNLM)
+        END IF
+#   else
         CALL obs_write (ng, tile, iNLM)
-#   if !(defined R4DVAR || defined VERIFICATION)
+#    if !(defined R4DVAR || defined VERIFICATION)
         CALL obs_cost (ng, iNLM)
+#    endif
 #   endif
       ELSE
         ProcessObs=.FALSE.

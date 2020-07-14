@@ -1,7 +1,7 @@
       SUBROUTINE read_FltBioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: oyster_floats_inp.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: oyster_floats_inp.h 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -197,7 +197,7 @@
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Lwrite) THEN
+      IF (Master.and.Lwrite) THEN
         DO ng=1,Ngrids
           WRITE (out,60) ng
           WRITE (out,70) Larvae_size0(ng), 'Larvae_size0',              &

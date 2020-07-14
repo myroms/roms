@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_initial.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -47,14 +47,13 @@
 # ifdef I4DVAR_ANA_SENSITIVITY
       USE ini_lanczos_mod,     ONLY : ini_lanczos
 # endif
-      USE metrics_mod,         ONLY : metrics
 # ifdef ADJUST_BOUNDARY
       USE mod_boundary,        ONLY : initialize_boundary
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces,          ONLY : initialize_forces
 # endif
-     USE strings_mod,          ONLY : FoundError
+      USE strings_mod,         ONLY : FoundError
 # if defined RBL4DVAR           || defined R4DVAR      || \
      defined SENSITIVITY_4DVAR  || defined TL_RBL4DVAR || \
      defined TL_R4DVAR
@@ -171,16 +170,23 @@
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
       ntend(ng)=ntstart(ng)+ntimes(ng)-1
       ntfirst(ng)=ntstart(ng)
-
+!
       CALL time_string (time(ng), time_code(ng))
-
+!
       IniRec=nrrec(ng)
       Tindex=1
-
+!
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+!  Initialize global diagnostics variables.
+!
+      avgke=0.0_dp
+      avgpe=0.0_dp
+      avgkp=0.0_dp
+      volume=0.0_dp
 
 # ifdef PROFILE
 !
@@ -189,7 +195,8 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iTLM, 2, __LINE__, __FILE__)
+        CALL wclock_on (ng, iTLM, 2, __LINE__,                          &
+     &                  __FILE__)
       END DO
 # endif
 
@@ -272,92 +279,14 @@
 #  endif
 # endif
 !
-!=======================================================================
-!  On first pass of ensemble run loop, initialize model configuration.
-!=======================================================================
-!
-      IF (Nrun.eq.ERstr) THEN
-!
 !-----------------------------------------------------------------------
-!  Set horizontal grid, bathymetry, and Land/Sea masking (if any).
-!  Use analytical functions or read in from a grid NetCDF.
+!  Set application grid, metrics, and associated variables and
+!  parameters.
 !-----------------------------------------------------------------------
 !
-# ifdef ANA_GRID
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_grid (ng, tile, iTLM)
-#  ifdef MASKING
-          CALL ana_mask (ng, tile, iTLM)
-#  endif
-        END DO
-# else
-        CALL get_grid (ng, iTLM)
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag)
-#  endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-# endif
-
-# ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Set vertical S-coordinate transformation function.
-!-----------------------------------------------------------------------
-!
-        CALL set_scoord (ng)
-# endif
-
-# ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Set barotropic time-steps average weighting function.
-!-----------------------------------------------------------------------
-!
-        CALL set_weights (ng)
-# endif
-!
-!-----------------------------------------------------------------------
-!  Compute various metric term combinations.
-!-----------------------------------------------------------------------
-!
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL metrics (ng, tile, iTLM)
-        END DO
-
-# if defined WTYPE_GRID && defined ANA_WTYPE     && \
-    (defined LMD_SKPP   || defined SOLAR_SOURCE)
-!
-!-----------------------------------------------------------------------
-!  Set spatially varying Jerlov water type.
-!-----------------------------------------------------------------------
-!
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_wtype (ng, tile, iTLM)
-        END DO
-# endif
-!
-!-----------------------------------------------------------------------
-!  If appropriate, set spatially varying nudging coefficients time
-!  scales.
-!-----------------------------------------------------------------------
-!
-# ifdef ANA_NUDGCOEF
-        IF (Lnudging(ng)) THEN
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ana_nudgcoef (ng, tile, iTLM)
-          END DO
-        END IF
-# else
-        IF (Lnudging(ng)) THEN
-          CALL get_nudgcoef (ng, iTLM)
-#  ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iTLM, exit_flag)
-#  endif
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-        END IF
-# endif
+      IF (SetGridConfig(ng)) THEN
+        CALL set_grid (ng, iTLM)
+        SetGridConfig(ng)=.FALSE.
       END IF
 !
 !-----------------------------------------------------------------------
@@ -795,9 +724,11 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iTLM, 2, __LINE__, __FILE__)
+        CALL wclock_off (ng, iTLM, 2, __LINE__,                         &
+     &                   __FILE__)
       END DO
 # endif
+!
       RETURN
       END SUBROUTINE tl_initial
 #else

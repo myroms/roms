@@ -2,7 +2,7 @@
       MODULE stiffness_mod
 !
 !git $Id$
-!svn $Id: stiffness.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: stiffness.F 1031 2020-07-14 01:39:55Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -286,7 +286,7 @@
         rx1(ng)=buffer(5)
 # endif
 #endif
-        IF (Master) THEN
+        IF (Master.and.LwrtInfo(ng)) THEN
           WRITE (stdout,10) ng
   10      FORMAT (/,' Basin information for Grid ',i2.2,':',/)
 #ifdef SOLVE3D

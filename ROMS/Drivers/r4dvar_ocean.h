@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: r4dvar_ocean.h 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: r4dvar_ocean.h 1031 2020-07-14 01:39:55Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -65,6 +65,7 @@
       USE mod_iounits
       USE mod_scalars
 !
+      USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
@@ -192,7 +193,8 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Proccess background and mode prior error covariance standard
+!  Set application grid, metrics, and associated variables. Then,
+!  Proccess background and model prior error covariance standard
 !  deviations and normalization coefficients.
 !-----------------------------------------------------------------------
 !
@@ -200,6 +202,7 @@
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+        SetGridConfig(ng)=.FALSE.
       END DO
 !
       RETURN

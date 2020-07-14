@@ -3,7 +3,7 @@
       SUBROUTINE def_ini (ng)
 !
 !git $Id$
-!svn $Id: def_ini.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: def_ini.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -47,10 +47,10 @@
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
 # ifdef ADJUST_BOUNDARY
-      integer :: IorJdim, brecdim
+      integer :: IorJdim, brecdim, brecsize
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      integer :: frecdim
+      integer :: frecdim, frecsize
 # endif
       integer :: DimIDs(nDimID)
 # ifdef ADJUST_BOUNDARY
@@ -152,9 +152,27 @@
         IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
           got_var(idUsms)=.TRUE.
           INI(ng)%Vid(idUsms)=var_id(i)
+          IF (var_ndim(i).ne.4) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idUsms)),                  &
+     &                          var_ndim(i), 'frc_adjust',              &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            RETURN
+          END IF
         ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsms))) THEN
           got_var(idVsms)=.TRUE.
           INI(ng)%Vid(idVsms)=var_id(i)
+          IF (var_ndim(i).ne.4) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idUsms)),                  &
+     &                          var_ndim(i), 'frc_adjust',              &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            RETURN
+          END IF
         END IF
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -163,6 +181,15 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
               got_var(idTsur(itrc))=.TRUE.
               INI(ng)%Vid(idTsur(itrc))=var_id(i)
+              IF (var_ndim(i).ne.4) THEN
+                IF (Master) THEN
+                  WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),        &
+     &                              var_ndim(i), 'frc_adjust',          &
+     &                              TRIM(ncname)
+                 END IF
+                 exit_flag=2
+                 RETURN
+               END IF
             END IF
           END IF
         END DO
@@ -177,7 +204,8 @@
       IF (.not.got_var(idSbry(isUvel))) Ldefine=.TRUE.
       IF (.not.got_var(idSbry(isVvel))) Ldefine=.TRUE.
       DO itrc=1,NT(ng)
-        IF (.not.got_var(idSbry(isTvar(itrc)))) Ldefine=.TRUE.
+        IF (.not.got_var(idSbry(isTvar(itrc))).and.                     &
+     &      ANY(Lobc(:,isTvar(itrc),ng))) Ldefine=.TRUE.
       END DO
 #   endif
 #  endif
@@ -199,7 +227,7 @@
         CALL netcdf_redef (ng, iNLM, ncname, INI(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) THEN
-          IF (Master) WRITE (stdout,20) TRIM(ncname)
+          IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
       END IF
@@ -249,11 +277,13 @@
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
             CASE ('frc_adjust')
               frecdim=dim_id(i)
+              frecsize=dim_size(i)
               got_frc_adjust=.TRUE.
 #  endif
 #  ifdef ADJUST_BOUNDARY
             CASE ('obc_adjust')
               brecdim=dim_id(i)
+              brecsize=dim_size(i)
               got_obc_adjust=.TRUE.
 #  endif
           END SELECT
@@ -352,7 +382,8 @@
 !
 !  Define free-surface open boundaries.
 !
-        IF (ANY(Lobc(:,isFsur,ng))) THEN
+        IF (.not.got_var(idSbry(isFsur)).and.                           &
+     &      ANY(Lobc(:,isFsur,ng))) THEN
           ifield=idSbry(isFsur)
           Vinfo( 1)=Vname(1,ifield)
           Vinfo( 2)=Vname(2,ifield)
@@ -369,7 +400,8 @@
 !
 !  Define 2D U-momentum component open boundaries.
 !
-        IF (ANY(Lobc(:,isUbar,ng))) THEN
+        IF (.not.got_var(idSbry(isUbar)).and.                           &
+     &      ANY(Lobc(:,isUbar,ng))) THEN
           ifield=idSbry(isUbar)
           Vinfo( 1)=Vname(1,ifield)
           Vinfo( 2)=Vname(2,ifield)
@@ -386,7 +418,8 @@
 !
 !  Define 2D V-momentum component open boundaries.
 !
-        IF (ANY(Lobc(:,isVbar,ng))) THEN
+        IF (.not.got_var(idSbry(isVbar)).and.                           &
+     &      ANY(Lobc(:,isVbar,ng))) THEN
           ifield=idSbry(isVbar)
           Vinfo( 1)=Vname(1,ifield)
           Vinfo( 2)=Vname(2,ifield)
@@ -405,7 +438,8 @@
 !
 !  Define 3D U-momentum component open boundaries.
 !
-        IF (ANY(Lobc(:,isUvel,ng))) THEN
+        IF (.not.got_var(idSbry(isUvel)).and.                           &
+     &      ANY(Lobc(:,isUvel,ng))) THEN
           ifield=idSbry(isUvel)
           Vinfo( 1)=Vname(1,ifield)
           Vinfo( 2)=Vname(2,ifield)
@@ -422,7 +456,8 @@
 !
 !  Define 3D V-momentum component open boundaries.
 !
-        IF (ANY(Lobc(:,isVvel,ng))) THEN
+        IF (.not.got_var(idSbry(isVvel)).and.                           &
+     &      ANY(Lobc(:,isVvel,ng))) THEN
           ifield=idSbry(isVvel)
           Vinfo( 1)=Vname(1,ifield)
           Vinfo( 2)=Vname(2,ifield)
@@ -440,7 +475,8 @@
 !  Define tracer type variables open boundaries.
 !
         DO itrc=1,NT(ng)
-          IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+          IF (.not.got_var(idSbry(isTvar(itrc))).and.                   &
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             ifield=idSbry(isTvar(itrc))
             Vinfo( 1)=Vname(1,ifield)
             Vinfo( 2)=Vname(2,ifield)
@@ -589,6 +625,28 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
             INI(ng)%Vid(idVbar)=var_id(i)
+# ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isFsur)))) THEN
+            got_var(idSbry(isFsur))=.TRUE.
+            INI(ng)%Vid(idSbry(isFsur))=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isUbar)))) THEN
+            got_var(idSbry(isUbar))=.TRUE.
+            INI(ng)%Vid(idSbry(isUbar))=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isVbar)))) THEN
+            got_var(idSbry(isVbar))=.TRUE.
+            INI(ng)%Vid(idSbry(isVbar))=var_id(i)
+# endif
+# ifdef ADJUST_WSTRESS
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            got_var(idUsms)=.TRUE.
+            INI(ng)%Vid(idUsms)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            got_var(idVsms)=.TRUE.
+            INI(ng)%Vid(idVsms)=var_id(i)
+# endif
 # ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
@@ -596,6 +654,16 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
             INI(ng)%Vid(idVvel)=var_id(i)
+#  ifdef ADJUST_BOUNDARY
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isUvel)))) THEN
+            got_var(idSbry(isUvel))=.TRUE.
+            INI(ng)%Vid(idSbry(isUvel))=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.                                &
+     &             TRIM(Vname(1,idSbry(isVvel)))) THEN
+            got_var(idSbry(isVvel))=.TRUE.
+            INI(ng)%Vid(idSbry(isVvel))=var_id(i)
+#  endif
 #  if defined BVF_MIXING || defined LMD_MIXING || \
       defined GLS_MIXING || defined MY25_MIXING
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
@@ -615,6 +683,18 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
               got_var(idTvar(itrc))=.TRUE.
               INI(ng)%Tid(itrc)=var_id(i)
+#  ifdef ADJUST_BOUNDARY
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idSbry(isTvar(itrc))))) THEN
+              got_var(idSbry(isTvar(itrc)))=.TRUE.
+              INI(ng)%Vid(idSbry(isTvar(itrc)))=var_id(i)
+#  endif
+#  ifdef ADJUST_STFLUX
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              INI(ng)%Vid(idTsur(itrc))=var_id(i)
+#  endif
             END IF
           END DO
 # endif
@@ -624,49 +704,120 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
+# ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSbry(isFsur)).and.                           &
+     &      ANY(Lobc(:,isFsur,ng))) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isFsur))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isUbar)).and.                           &
+     &      ANY(Lobc(:,isUbar,ng))) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isUbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isVbar)).and.                           &
+     &      ANY(Lobc(:,isVbar,ng))) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isVbar))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef ADJUST_WSTRESS
+        IF (.not.got_var(idUsms)) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUsms)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVsms)) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVsms)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
+#  ifdef ADJUST_BOUNDARY
+        IF (.not.got_var(idSbry(isUvel)).and.                           &
+     &      ANY(Lobc(:,isUvel,ng))) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isUvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idSbry(isVvel)).and.                           &
+     &      ANY(Lobc(:,isVvel,ng))) THEN
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isVvel))),  &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,30) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
+#  ifdef ADJUST_BOUNDARY
+          IF (.not.got_var(idSbry(isTvar(itrc))).and.                   &
+     &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
+            IF (Master) WRITE (stdout,40)                               &
+     &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
+     &                        TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+#  endif
+#  ifdef ADJUST_STFLUX
+          IF (.not.got_var(idTsur(itrc)).and.Lstflux(itrc,ng)) THEN
+            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTsur(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+#  endif
         END DO
 # endif
 !
@@ -678,9 +829,13 @@
       END IF
 !
   10  FORMAT (/,' DEF_INI - unable to open initial NetCDF file: ',a)
-  20  FORMAT (/,' DEF_INI - unable to put in define mode initial',      &
+  20  FORMAT (/,' DEF_INI - illegal dimensions for variable: ',a,       &
+     &        /,11x,'Nvardims = ',i0,', missing dimension: ''',a,'''',  &
+     &        /,11x,'in file: ',a,                                      &
+     &        /,11x,'Remove such variable from input file.')
+  30  FORMAT (/,' DEF_INI - unable to put in define mode initial',      &
      &        ' NetCDF file: ',a)
-  30  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
+  40  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
      &        ' in file: ',a)
 
       RETURN

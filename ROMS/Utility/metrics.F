@@ -2,7 +2,7 @@
       MODULE metrics_mod
 !
 !git $Id$
-!svn $Id: metrics.F 1018 2020-04-30 01:07:09Z arango $
+!svn $Id: metrics.F 1031 2020-07-14 01:39:55Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1357,7 +1357,6 @@
 !  Report convolution parameters.
 !
       IF (Master.and.LwrtInfo(ng)) THEN
-        LwrtInfo(ng)=.FALSE.
         DO rec=1,NSA
           DO is=1,NstateVar(ng)
             IF (rec.eq.1) THEN
