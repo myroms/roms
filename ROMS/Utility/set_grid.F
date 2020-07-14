@@ -2,7 +2,7 @@
       SUBROUTINE set_grid (ng, model)
 !
 !git $Id$
-!svn $Id: set_grid.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: set_grid.F 1032 2020-07-14 15:14:34Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+#ifdef NESTING
+      USE mod_nesting
+#endif
       USE mod_scalars
 !
       USE analytical_mod
